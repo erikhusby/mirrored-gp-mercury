@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.columns;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
+import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchTerm;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -29,7 +30,7 @@ public class BspSampleSearchAddRowsListener implements ConfigurableList.AddRowsL
     }
 
     @Override
-    public void addRows(List<?> entityList, Map<String, Object> context, List<ColumnTabulation> nonPluginTabulations) {
+    public void addRows(List<?> entityList, SearchContext context, List<ColumnTabulation> nonPluginTabulations) {
 
         List<String> sampleIDs = new ArrayList<>();
         for (Object entity : entityList) {

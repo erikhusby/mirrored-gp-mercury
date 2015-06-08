@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.columns;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
+import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchTerm;
@@ -20,7 +21,6 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -77,7 +77,7 @@ public class ConfigurableListContainerTest extends Arquillian {
             }
         }
 
-        Map<String, Object> context = buildSearchContext();
+        SearchContext context = buildSearchContext();
         configurableList.addRows(labVessels, context);
 
         ConfigurableList.ResultList resultList = configurableList.getResultList();
@@ -138,9 +138,9 @@ public class ConfigurableListContainerTest extends Arquillian {
      *  BSP user lookup required in column eval expression
      *  Use context to avoid need to test in container
      */
-    private Map<String, Object> buildSearchContext(){
-        Map<String, Object> evalContext = new HashMap<>();
-        evalContext.put(SearchInstance.CONTEXT_KEY_BSP_USER_LIST, bspUserList );
+    private SearchContext buildSearchContext(){
+        SearchContext evalContext = new SearchContext();
+        evalContext.setBspUserList( bspUserList );
 
         return evalContext;
     }

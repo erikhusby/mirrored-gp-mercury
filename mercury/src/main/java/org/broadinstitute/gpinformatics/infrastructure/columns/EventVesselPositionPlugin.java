@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.columns;
 
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
+import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchTerm;
@@ -42,7 +43,7 @@ public abstract class EventVesselPositionPlugin implements ListPlugin {
      */
     @Override
     public List<ConfigurableList.Row> getData(List<?> entityList, ConfigurableList.HeaderGroup headerGroup
-            , Map<String, Object> context) {
+            , SearchContext context) {
         return null;
     }
 
@@ -55,7 +56,7 @@ public abstract class EventVesselPositionPlugin implements ListPlugin {
      */
     @Override
     public abstract ConfigurableList.ResultList getNestedTableData(Object entity, ColumnTabulation columnTabulation
-            , @Nonnull Map<String, Object> context);
+            , @Nonnull SearchContext context);
 
 
     /**
@@ -65,7 +66,7 @@ public abstract class EventVesselPositionPlugin implements ListPlugin {
      * @return
      */
     protected ConfigurableList.ResultList getTargetNestedTableData(LabEvent labEvent
-            , @Nonnull Map<String, Object> context) {
+            , @Nonnull SearchContext context) {
         VesselContainer containerVessel = findEventTargetContainer(labEvent);
         if( containerVessel == null || containerVessel.getMapPositionToVessel().isEmpty() ) {
             return null;
@@ -82,11 +83,11 @@ public abstract class EventVesselPositionPlugin implements ListPlugin {
      * @return
      */
     protected ConfigurableList.ResultList getSourceNestedTableData(LabEvent labEvent
-            , @Nonnull Map<String, Object> context) {
+            , @Nonnull SearchContext context) {
 
         // If destination layout is selected, ignore source vessels for in-place events
         if( labEvent.getInPlaceLabVessel() != null ) {
-            SearchInstance searchInstance = (SearchInstance) context.get( SearchInstance.CONTEXT_KEY_SEARCH_INSTANCE );
+            SearchInstance searchInstance = context.getSearchInstance();
             List<String> displayColumnNames = searchInstance.getPredefinedViewColumns();
             if( displayColumnNames.contains("Destination Layout")) {
                 return null;
@@ -135,12 +136,12 @@ public abstract class EventVesselPositionPlugin implements ListPlugin {
      * Builds and populates the data structures for the container positions
      * @param containerVessel
      */
-    private void populatePositionLabelMaps(VesselContainer containerVessel, Map<String, Object> context) {
+    private void populatePositionLabelMaps(VesselContainer containerVessel, SearchContext context) {
 
         // Hold previously set context values
-        Object originalTerm = context.get(SearchInstance.CONTEXT_KEY_SEARCH_TERM);
-        Object delimiter =  context.get(SearchInstance.CONTEXT_KEY_MULTI_VALUE_DELIMITER);
-        context.put(SearchInstance.CONTEXT_KEY_MULTI_VALUE_DELIMITER, ", ");
+        SearchTerm originalTerm = context.getSearchTerm();
+        String delimiter =  context.getMultiValueDelimiter();
+        context.setMultiValueDelimiter(", ");
 
         List<SearchTerm> parentTermsToDisplay = getParentTermsToDisplay( context );
 
@@ -162,10 +163,10 @@ public abstract class EventVesselPositionPlugin implements ListPlugin {
 
         // Restore previously set context values
         if( delimiter != null ) {
-            context.put(SearchInstance.CONTEXT_KEY_MULTI_VALUE_DELIMITER, delimiter);
+            context.setMultiValueDelimiter(delimiter);
         }
         if( originalTerm != null ){
-            context.put(SearchInstance.CONTEXT_KEY_SEARCH_TERM, originalTerm);
+            context.setSearchTerm(originalTerm);
         }
 
         resultMatrix = new VesselPosition[geometry.getRowCount()][geometry.getColumnCount()];
@@ -182,11 +183,11 @@ public abstract class EventVesselPositionPlugin implements ListPlugin {
      * @param context
      * @return
      */
-    private List<SearchTerm> getParentTermsToDisplay( Map<String, Object> context ) {
+    private List<SearchTerm> getParentTermsToDisplay( SearchContext context ) {
         // Logic is tied to context values ...
-        SearchInstance searchInstance = (SearchInstance) context.get( SearchInstance.CONTEXT_KEY_SEARCH_INSTANCE );
-        ColumnEntity columnEntity = (ColumnEntity) context.get( SearchInstance.CONTEXT_KEY_ENTITY_TYPE );
-        SearchTerm thisSearchTerm = (SearchTerm) context.get( SearchInstance.CONTEXT_KEY_SEARCH_TERM );
+        SearchInstance searchInstance = context.getSearchInstance();
+        ColumnEntity columnEntity = context.getColumnEntityType();
+        SearchTerm thisSearchTerm = context.getSearchTerm();
 
         List<SearchTerm> parentTermsToDisplay = new ArrayList<>();
 
@@ -221,10 +222,10 @@ public abstract class EventVesselPositionPlugin implements ListPlugin {
      * @param valueHolder
      */
     private void appendDataForParentTerms(LabVessel labVessel, StringBuilder valueHolder,
-                                          List<SearchTerm> parentTermsToDisplay, Map<String, Object> context) {
+                                          List<SearchTerm> parentTermsToDisplay, SearchContext context) {
         for( SearchTerm parentTerm : parentTermsToDisplay ) {
             // Need if sample metadata is included in selection
-            context.put(SearchInstance.CONTEXT_KEY_SEARCH_TERM, parentTerm);
+            context.setSearchTerm(parentTerm);
             Object value = parentTerm.getDisplayValueExpression().evaluate(labVessel, context );
             valueHolder.append("\n")
                     .append(parentTerm.getName())

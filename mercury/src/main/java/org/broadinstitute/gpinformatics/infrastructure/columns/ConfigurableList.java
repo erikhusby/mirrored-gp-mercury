@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.columns;
 
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.broadinstitute.gpinformatics.athena.entity.preference.ColumnSetsPreference;
+import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchTerm;
 import org.broadinstitute.gpinformatics.infrastructure.spreadsheet.SpreadsheetCreator;
@@ -48,7 +49,7 @@ public class ConfigurableList {
      * A way to capture high latency bulk data for a page of results
      */
     public interface AddRowsListener {
-        void addRows(List<?> entityList, Map<String, Object> context, List<ColumnTabulation> nonPluginTabulations);
+        void addRows(List<?> entityList, SearchContext context, List<ColumnTabulation> nonPluginTabulations);
         void reset();
     }
 
@@ -111,7 +112,7 @@ public class ConfigurableList {
             ColumnSetsPreference columnSets) {
 
         // If re-enabled, do not allow this context to stomp any existing evaluation context!
-//        Map<String, Object> context = new HashMap<>();
+//        SearchContext context = new SearchContext();
 //        context.put(SearchInstance.CONTEXT_KEY_COLUMN_SET_TYPE, columnSetType);
 /*
         context.put("bspDomainUser", bspDomainUser);
@@ -423,23 +424,22 @@ public class ConfigurableList {
      */
     @Deprecated
     public void addRows(List<?> entityList) {
-        Map<String, Object> context = new HashMap<>();
-        addRows(entityList, context);
+        addRows(entityList, new SearchContext() );
     }
 
     /**
      * Enhanced addRows to provide ability to supply context objects
      * @param entityList list of objects, where each object is likely to be the root of a
      *                   graph that is navigated by column definition expressions.
-     * @param context Any required context objects (e.g.as required in eval expressions
+     * @param context Any required context objects (e.g. as required in eval expressions)
      */
-    public void addRows(List<?> entityList, @Nonnull Map<String, Object> context ) {
+    public void addRows(List<?> entityList, @Nonnull SearchContext context ) {
 
-        context.put(SearchInstance.CONTEXT_KEY_MULTI_VALUE_DELIMITER, multiValueDelimiter);
+        context.setMultiValueDelimiter(multiValueDelimiter);
 
         for (Map.Entry<String,AddRowsListener> entry : addRowsListeners.entrySet()) {
             entry.getValue().addRows(entityList, context, nonPluginTabulations);
-            context.put(entry.getKey(),entry.getValue());
+            context.addRowsListener(entry.getKey(), entry.getValue());
         }
         for (Object entity : entityList) {
             // evaluate expression to get ID
@@ -463,7 +463,7 @@ public class ConfigurableList {
                     ListPlugin listPlugin = null;
                     listPlugin = getPlugin(columnTabulation.getPluginClass());
                     // Nested table will never be a SearchValue ... cast to SearchTerm
-                    context.put(SearchInstance.CONTEXT_KEY_SEARCH_TERM, (SearchTerm)columnTabulation);
+                    context.setSearchTerm((SearchTerm) columnTabulation);
                     ResultList nestedResultList = listPlugin.getNestedTableData(entity, columnTabulation, context);
                     if( nestedResultList != null ) {
                         row.getNestedTableEntities().put(columnTabulation, nestedResultList);
@@ -495,14 +495,14 @@ public class ConfigurableList {
     }
 
     @SuppressWarnings("unchecked")
-    private void recurseColumns(Map<String, Object> context, Object entity, Row row, ColumnTabulation columnTabulation,
+    private void recurseColumns(SearchContext context, Object entity, Row row, ColumnTabulation columnTabulation,
             String headerGroupName) {
         HeaderGroup headerGroup = headerGroupMap.get(headerGroupName);
 
         // For child terms, header may be value extracted from parent
         //   (e.g metadata value = "Male" for metadata name = "Gender" header name )
         if( columnTabulation instanceof SearchInstance.SearchValue ) {
-            context.put(SearchInstance.CONTEXT_KEY_SEARCH_VALUE, columnTabulation);
+            context.setSearchValue((SearchInstance.SearchValue)columnTabulation);
         }
 
         // Evaluate value expression (value and header count and order must be same, unless header count == 1).
@@ -580,7 +580,7 @@ public class ConfigurableList {
      * @param context Objects which may be required in evaluation
      * @return Simple nested table data set for use in UI
      */
-    private ResultList buildNestedTable(ColumnTabulation columnTabulation, Collection<?> nestedEntityList, Map<String, Object> context) {
+    private ResultList buildNestedTable(ColumnTabulation columnTabulation, Collection<?> nestedEntityList, SearchContext context) {
         List<ResultRow> rows = new ArrayList<>();
         List<Header> headers = new ArrayList<>();
         List<Comparable<?>> emptySortableCells = new ArrayList<>();

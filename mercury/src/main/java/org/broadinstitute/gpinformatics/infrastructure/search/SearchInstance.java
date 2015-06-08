@@ -39,17 +39,6 @@ public class SearchInstance implements Serializable {
 
     public static final String CHOOSE_VALUE = "(Choose one)";
 
-    public static final String CONTEXT_KEY_BSP_USER_LIST = "bspUserList";
-    public static final String CONTEXT_KEY_COLUMN_SET_TYPE = "columnSetType";
-    public static final String CONTEXT_KEY_SEARCH_VALUE = "searchValue";
-    public static final String CONTEXT_KEY_SEARCH_TERM = "searchTerm";
-    public static final String CONTEXT_KEY_SEARCH_INSTANCE = "searchInstance";
-    public static final String CONTEXT_KEY_ENTITY_TYPE = "columnEntityType";
-    public static final String CONTEXT_KEY_SEARCH_STRING = "searchString";
-    public static final String CONTEXT_KEY_BSP_SAMPLE_SEARCH = "BSPSampleSearchService";
-    public static final String CONTEXT_KEY_OPTION_VALUE_DAO = "OptionValueDao";
-    public static final String CONTEXT_KEY_MULTI_VALUE_DELIMITER = "MultiValueDelimiter";
-
     @XmlAccessorType(XmlAccessType.FIELD)
     public static class SearchValue implements ColumnTabulation, Serializable {
 
@@ -170,11 +159,8 @@ public class SearchInstance implements Serializable {
                 return null;
             }
             if (!evaluatedConstrainedValues) {
-                Map<String, Object> context = new HashMap<>();
-                context.put(CONTEXT_KEY_SEARCH_VALUE, this);
-                if( getSearchInstance().getEvalContext() != null ) {
-                    context.putAll(getSearchInstance().getEvalContext());
-                }
+                SearchContext context = getSearchInstance().getEvalContext();
+                context.setSearchValue(this);
                 constrainedValues = searchTerm.getConstrainedValues(context);
                 evaluatedConstrainedValues = true;
             }
@@ -191,8 +177,8 @@ public class SearchInstance implements Serializable {
                 if (searchTerm.getConstrainedValuesSizeLimitExpression() == null) {
                     constrainedValuesSizeLimit = 1000;
                 } else {
-                    Map<String, Object> context = new HashMap<>();
-                    context.put(CONTEXT_KEY_SEARCH_VALUE, this);
+                    SearchContext context = getSearchInstance().getEvalContext();
+                    context.setSearchValue(this);
                     constrainedValuesSizeLimit = searchTerm.getConstrainedValuesSizeLimitExpression().evaluate(
                             null, context);
                 }
@@ -222,8 +208,8 @@ public class SearchInstance implements Serializable {
             SearchTerm.Evaluator<String> propertyNameExpression =
                     searchTerm.getCriteriaPaths().get(0).getPropertyNameExpression();
             if (propertyNameExpression != null) {
-                Map<String, Object> context = new HashMap<>();
-                context.put(CONTEXT_KEY_SEARCH_VALUE, this);
+                SearchContext context = getSearchInstance().getEvalContext();
+                context.setSearchValue(this);
                 propertyName = propertyNameExpression.evaluate(null, context);
             }
 
@@ -237,8 +223,8 @@ public class SearchInstance implements Serializable {
          */
         public ColumnValueType getDataType() {
             if (dataType == null) {
-                Map<String, Object> context = new HashMap<>();
-                context.put(CONTEXT_KEY_SEARCH_VALUE, this);
+                SearchContext context = getSearchInstance().getEvalContext();
+                context.setSearchValue(this);
                 dataType = searchTerm.evalValueTypeExpression(null, context);
             }
             return dataType;
@@ -342,12 +328,9 @@ public class SearchInstance implements Serializable {
                 SimpleDateFormat mdyDateFormat = new SimpleDateFormat("MM/dd/yyyy");
                 for (String value : getValues()) {
                     if (searchTerm.getSearchValueConversionExpression() != null) {
-                        Map<String, Object> localContext = new HashMap<>();
-                        if( searchInstance.getEvalContext() != null ) {
-                            localContext.putAll(searchInstance.getEvalContext());
-                        }
-                        localContext.put(CONTEXT_KEY_SEARCH_VALUE, this);
-                        localContext.put(CONTEXT_KEY_SEARCH_STRING, value);
+                        SearchContext localContext = searchInstance.getEvalContext();
+                        localContext.setSearchValue(this);
+                        localContext.setSearchValueString(value);
                         propertyValues.add(searchTerm.getSearchValueConversionExpression().evaluate(null, localContext));
                     } else {
                         switch(getDataType()) {
@@ -380,7 +363,7 @@ public class SearchInstance implements Serializable {
             return propertyValues;
         }
 
-        public String evalDisplayExpression(Object root, Map<String, Object> context) {
+        public String evalDisplayExpression(Object root, SearchContext context) {
             context = addValueToContext(context);
             try {
                 return getSearchTerm().evalFormattedExpression(root, context);
@@ -390,7 +373,7 @@ public class SearchInstance implements Serializable {
             }
         }
 
-        public Object evalHeaderExpression(Object root, Map<String, Object> context) {
+        public Object evalHeaderExpression(Object root, SearchContext context) {
             // If the header is an expression, evaluate it.
             if (getSearchTerm().getViewHeaderExpression() == null) {
                 return getSearchTerm().getName();
@@ -493,17 +476,17 @@ public class SearchInstance implements Serializable {
         }
 
         @Override
-        public Object evalValueExpression(Object entity, Map<String, Object> context) {
+        public Object evalValueExpression(Object entity, SearchContext context) {
             return searchTerm.evalValueExpression(entity, context);
         }
 
         @Override
-        public String evalFormattedExpression(Object value, Map<String, Object> context) {
+        public String evalFormattedExpression(Object value, SearchContext context) {
             return evalDisplayExpression(value, context);
         }
 
         @Override
-        public Object evalViewHeaderExpression(Object entity, Map<String, Object> context) {
+        public Object evalViewHeaderExpression(Object entity, SearchContext context) {
             return evalHeaderExpression(entity, context);
         }
 
@@ -537,16 +520,16 @@ public class SearchInstance implements Serializable {
 
 
         @Override
-        public Object evalDownloadHeader1Expression(Object entity, Map<String, Object> context) {
+        public Object evalDownloadHeader1Expression(Object entity, SearchContext context) {
             return evalHeaderExpression(entity, context);
         }
 
         @Override
-        public Object evalDownloadHeader2Expression(Object entity, Map<String, Object> context) {
+        public Object evalDownloadHeader2Expression(Object entity, SearchContext context) {
             return null;
         }
 
-        public Collection<?> evalNestedTableExpression(Object entity, Map<String, Object> context) {
+        public Collection<?> evalNestedTableExpression(Object entity, SearchContext context) {
             return getSearchTerm().evalNestedTableExpression(entity, context);
         }
 
@@ -616,7 +599,7 @@ public class SearchInstance implements Serializable {
         }
 
         @Override
-        public ColumnValueType evalValueTypeExpression(Object value, Map<String, Object> context) {
+        public ColumnValueType evalValueTypeExpression(Object value, SearchContext context) {
             return getSearchTerm().evalValueTypeExpression(value,context);
         }
 
@@ -640,12 +623,15 @@ public class SearchInstance implements Serializable {
                    || (getConstrainedValues() != null && !getConstrainedValues().isEmpty());
         }
 
-        private Map<String, Object> addValueToContext( Map<String, Object> context ){
+        private SearchContext addValueToContext( SearchContext context ){
             if( context == null ) {
-                context = new HashMap<>();
+                context = getSearchInstance().getEvalContext();
+                if( context == null ) {
+                    context = new SearchContext();
+                }
             }
             // May require this SearchTerm to extract metadata key from column name
-            context.put(SearchInstance.CONTEXT_KEY_SEARCH_VALUE, this);
+            context.setSearchValue(this);
             return context;
         }
     }
@@ -747,7 +733,7 @@ public class SearchInstance implements Serializable {
      * Context for evaluation of expressions.
      */
     @XmlTransient
-    private Map<String, Object> evalContext;
+    private SearchContext evalContext;
 
     /**
      * Should searches include ancestors/descendants of directly located base entities?
@@ -836,8 +822,7 @@ public class SearchInstance implements Serializable {
         recurseRelationships(configurableSearchDefinition, searchValues, null);
         buildTraversalOptions(configurableSearchDefinition);
         // Context as passed through processing needs a reference to the SearchInstance
-        getEvalContext().put(CONTEXT_KEY_SEARCH_INSTANCE, this);
-        getEvalContext().put(CONTEXT_KEY_ENTITY_TYPE, configurableSearchDefinition.getResultEntity());
+        getEvalContext().setColumnEntityType(configurableSearchDefinition.getResultEntity());
     }
 
     /**
@@ -1083,14 +1068,15 @@ public class SearchInstance implements Serializable {
         this.predefinedDownloadColumns = predefinedDownloadColumns;
     }
 
-    public Map<String, Object> getEvalContext() {
+    public SearchContext getEvalContext() {
         if( evalContext == null ) {
-            evalContext = new HashMap<>();
+            evalContext = new SearchContext();
         }
+        evalContext.setSearchInstance(this);
         return evalContext;
     }
 
-    public void setEvalContext(Map<String, Object> evalContext) {
+    public void setEvalContext(SearchContext evalContext) {
         this.evalContext = evalContext;
     }
 

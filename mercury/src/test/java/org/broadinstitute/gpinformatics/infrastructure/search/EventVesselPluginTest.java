@@ -46,7 +46,7 @@ public class EventVesselPluginTest extends Arquillian {
         }
 
         // ColumnTabulation and context not required for vessel position matrix
-        ConfigurableList.ResultList resultList = eventVesselSourcePositionPlugin.getNestedTableData(labEvent, null, new HashMap<String,Object>());
+        ConfigurableList.ResultList resultList = eventVesselSourcePositionPlugin.getNestedTableData(labEvent, null, new SearchContext());
         // Matrix96 12 columns + label on left, 8 rows + header label
         // Event ia a PoolingTransfer of all tubes into A-01 position
 
@@ -75,7 +75,7 @@ public class EventVesselPluginTest extends Arquillian {
         }
 
         // ColumnTabulation and context not required for vessel position matrix
-        resultList = eventVesselTargetPositionPlugin.getNestedTableData(labEvent, null, new HashMap<String,Object>());
+        resultList = eventVesselTargetPositionPlugin.getNestedTableData(labEvent, null, new SearchContext());
         // Matrix96 12 columns + label on left, 8 rows + header label
         Assert.assertEquals( resultList.getHeaders().size(), 13 );
         Assert.assertEquals( resultList.getResultRows().size(), 8 );

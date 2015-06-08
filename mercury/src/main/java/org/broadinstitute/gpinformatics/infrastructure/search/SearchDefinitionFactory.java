@@ -33,8 +33,8 @@ public class SearchDefinitionFactory {
      */
     private static SearchTerm.Evaluator<Object> lcsetConverter = new SearchTerm.Evaluator<Object>() {
         @Override
-        public Object evaluate(Object entity, Map<String, Object> context) {
-            String value = (String) context.get(SearchInstance.CONTEXT_KEY_SEARCH_STRING);
+        public Object evaluate(Object entity, SearchContext context) {
+            String value = context.getSearchValueString();
             if( value.matches("[0-9]*")){
                 value = "LCSET-" + value;
             }
@@ -47,8 +47,8 @@ public class SearchDefinitionFactory {
      */
     private static SearchTerm.Evaluator<Object> pdoConverter = new SearchTerm.Evaluator<Object>() {
         @Override
-        public Object evaluate(Object entity, Map<String, Object> context) {
-            String value = (String) context.get(SearchInstance.CONTEXT_KEY_SEARCH_STRING);
+        public Object evaluate(Object entity, SearchContext context) {
+            String value = context.getSearchValueString();
             if( value.matches("[0-9]*")){
                 value = "PDO-" + value;
             }
@@ -68,6 +68,7 @@ public class SearchDefinitionFactory {
 
     public static ConfigurableSearchDefinition getForEntity(String entity) {
         /* **** Change condition to true during development to rebuild for JVM hot-swap changes **** */
+        //noinspection ConstantIfStatement
         if( false ) {
             SearchDefinitionFactory fact = new SearchDefinitionFactory();
             fact.buildLabEventSearchDef();
@@ -112,8 +113,6 @@ public class SearchDefinitionFactory {
 
     /**
      * Shared logic to extract the type of any lab vessel
-     * @param vessel
-     * @return
      */
     static String findVesselType( LabVessel vessel ) {
         String vesselTypeName;
@@ -132,7 +131,7 @@ public class SearchDefinitionFactory {
             break;
         default:
             // Not sure of others for in-place vessels
-            vesselTypeName = vessel.getType()==null?"":vessel.getType().getName();
+            vesselTypeName = vessel.getType().getName();
         }
         return vesselTypeName;
     }
@@ -143,7 +142,7 @@ public class SearchDefinitionFactory {
      */
     static class EventTypeValuesExpression extends SearchTerm.Evaluator<List<ConstrainedValue>> {
         @Override
-        public List<ConstrainedValue> evaluate(Object entity, Map<String, Object> context) {
+        public List<ConstrainedValue> evaluate(Object entity, SearchContext context) {
             List<ConstrainedValue> constrainedValues = new ArrayList<>();
             for (LabEventType labEventType : LabEventType.values()) {
                 constrainedValues.add(new ConstrainedValue(labEventType.toString(), labEventType.getName()));
@@ -158,8 +157,8 @@ public class SearchDefinitionFactory {
      */
     static class EventTypeValueConversionExpression extends SearchTerm.Evaluator<Object> {
         @Override
-        public LabEventType evaluate(Object entity, Map<String, Object> context) {
-            return Enum.valueOf(LabEventType.class, (String) context.get(SearchInstance.CONTEXT_KEY_SEARCH_STRING));
+        public LabEventType evaluate(Object entity, SearchContext context) {
+            return Enum.valueOf(LabEventType.class, context.getSearchValueString());
         }
     }
 
@@ -183,13 +182,13 @@ public class SearchDefinitionFactory {
         /**
          * Locates sample metadata values by navigating back in vessel/event hierarchy using SampleInstanceV2 logic
          * Shared by LabEvent, LabVessel, and MercurySample display code
-         * @param entity
-         * @param context
-         * @return
+         * @param entity  Can be an instance of LabVessel, LabEvent, or MercurySample depending on which search type
+         *                this shared SampleMetadataDisplayExpression is used with
+         * @param context Any named objects supplied by call stack
          */
         @Override
-        public Set<String> evaluate(Object entity, Map<String, Object> context) {
-            SearchTerm searchTerm = (SearchTerm) context.get(SearchInstance.CONTEXT_KEY_SEARCH_TERM);
+        public Set<String> evaluate(Object entity, SearchContext context) {
+            SearchTerm searchTerm = context.getSearchTerm();
             String metaName = searchTerm.getName();
 
             if( entity instanceof LabVessel) {

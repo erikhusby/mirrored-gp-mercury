@@ -1,8 +1,9 @@
 package org.broadinstitute.gpinformatics.infrastructure.columns;
 
+import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
+
 import javax.annotation.Nonnull;
 import java.util.List;
-import java.util.Map;
 
 /**
  * The contents of Configurable Lists are typically driven by object graph navigation
@@ -21,7 +22,7 @@ public interface ListPlugin {
      * @return list of rows of cells, with each cell having a reference to a header
      */
     public List<ConfigurableList.Row> getData(List<?> entityList, ConfigurableList.HeaderGroup headerGroup
-            , @Nonnull Map<String, Object> context);
+            , @Nonnull SearchContext context);
 
     /**
      * Defines a mechanism for creating nested table data
@@ -32,5 +33,5 @@ public interface ListPlugin {
      * @return ResultList containing nested table data
      */
     public ConfigurableList.ResultList getNestedTableData(Object entity, ColumnTabulation columnTabulation
-            , @Nonnull Map<String, Object> context);
+            , @Nonnull SearchContext context);
 }
