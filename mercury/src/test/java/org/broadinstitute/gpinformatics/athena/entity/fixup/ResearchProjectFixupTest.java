@@ -8,6 +8,8 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -19,7 +21,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD;
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
 /**
  * This "test" is an example of how to fixup some data.  Each fix method includes the JIRA ticket ID.
@@ -36,9 +38,12 @@ public class ResearchProjectFixupTest extends Arquillian {
     @Inject
     private BSPUserList bspUserList;
 
+    @Inject
+    private UserBean userBean;
+
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWar(PROD, "prod");
+        return DeploymentBuilder.buildMercuryWar(DEV, "dev");
     }
 
     /**
@@ -130,5 +135,13 @@ public class ResearchProjectFixupTest extends Arquillian {
     @Test(enabled = false)
     public void reassignRPUserGPLIM_1156() {
         changeProjectOwner("namrata", "RP-57");
+    }
+
+    @Test(enabled = false)
+    public void changeRegulatoryDesignationSUPPORT796() {
+        userBean.loginOSUser();
+        ResearchProject researchProject = rpDao.findByBusinessKey("RP-976");
+        researchProject.setRegulatoryDesignation(ResearchProject.RegulatoryDesignation.GENERAL_CLIA_CAP);
+        rpDao.persist(new FixupCommentary("SUPPORT-796 updating incorrectly selected regulatory designation"));
     }
 }
