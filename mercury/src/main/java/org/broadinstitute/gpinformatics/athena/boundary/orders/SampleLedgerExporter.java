@@ -296,7 +296,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
      * @param workCompleteMessageBySample    any work complete messages for the product order, by sample
      * @param sampleLedgerRow                sample data to be written
      */
-    private void writeRow(List<PriceItem> sortedPriceItems, List<Product> sortedAddOns,
+    void writeRow(List<PriceItem> sortedPriceItems, List<Product> sortedAddOns,
                           Collection<PriceItem> historicalPriceItems, ProductOrderSample sample,
                           int sortOrder, Map<String, WorkCompleteMessage> workCompleteMessageBySample,
                           SampleLedgerRow sampleLedgerRow) {
@@ -311,10 +311,10 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
         writer.writeCell(sample.getSampleKey());
 
         // collaborator sample ID, looks like this is properly initialized.
-        writer.writeCell(sampleData.getCollaboratorsSampleName());
+        writer.writeCell(sampleData != null ? sampleData.getCollaboratorsSampleName() : "");
 
         // Material type.
-        writer.writeCell(sampleData.getMaterialType());
+        writer.writeCell(sampleData != null ? sampleData.getMaterialType() : "");
 
         // Risk Information.
         String riskString = sample.getRiskString();
@@ -385,7 +385,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
             writer.writeCell(percentCoverageAt100x, getPercentageStyle());
         }
 
-        writer.writeCell(sample.getSampleData().getSampleType());
+        writer.writeCell(sampleData != null ? sampleData.getSampleType() : "");
 
         // Tableau link
         String pdoKey = productOrder.getJiraTicketKey();

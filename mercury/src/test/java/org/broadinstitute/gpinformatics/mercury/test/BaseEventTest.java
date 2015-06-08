@@ -453,17 +453,14 @@ public class BaseEventTest {
     /**
      * Creates an entity graph for Illumina Content Exome.
      *
-     * @param pondRegRack         The pond registration rack coming out of the library construction process.
-     * @param pondRegRackBarcode  The pond registration rack barcode.
-     * @param pondRegTubeBarcodes A list of pond registration tube barcodes.
+     * @param pondRegRacks         The pond registration racks coming out of the library construction process.
      * @param barcodeSuffix       Makes unique the generated vessel barcodes. Don't use date if test quickly invoked twice.
      *
      * @return Returns the entity builder that contains the entities after this process has been invoked.
      */
-    public IceEntityBuilder runIceProcess(TubeFormation pondRegRack, String pondRegRackBarcode,
-                                          List<String> pondRegTubeBarcodes, String barcodeSuffix) {
-        return new IceEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(), pondRegRack,
-                pondRegRackBarcode, pondRegTubeBarcodes, barcodeSuffix, IceJaxbBuilder.PlexType.PLEX96).invoke();
+    public IceEntityBuilder runIceProcess(List<TubeFormation> pondRegRacks, String barcodeSuffix) {
+        return new IceEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(), pondRegRacks,
+                barcodeSuffix, IceJaxbBuilder.PlexType.PLEX96).invoke();
     }
 
     /**
@@ -554,11 +551,12 @@ public class BaseEventTest {
      *
      * @param mapBarcodeToTube source tubes
      *
+     * @param workflowBatch
      * @return destination tube formation
      */
-    public TubeFormation daughterPlateTransfer(Map<String, BarcodedTube> mapBarcodeToTube) {
+    public TubeFormation daughterPlateTransfer(Map<String, BarcodedTube> mapBarcodeToTube, LabBatch workflowBatch) {
         List<String> daughterTubeBarcodes = generateDaughterTubeBarcodes(mapBarcodeToTube);
-        return getDaughterTubeFormation(mapBarcodeToTube, daughterTubeBarcodes);
+        return getDaughterTubeFormation(mapBarcodeToTube, daughterTubeBarcodes, workflowBatch);
     }
 
     /**
@@ -568,14 +566,15 @@ public class BaseEventTest {
      * @param mapBarcodeToTube  source tubes
      * @param mapBarcodeToTube2 second rack of source tubes
      *
+     * @param workflowBatch
      * @return destination tube formation
      */
     public TubeFormation mismatchedDaughterPlateTransfer(Map<String, BarcodedTube> mapBarcodeToTube,
-                                                         Map<String, BarcodedTube> mapBarcodeToTube2,
-                                                         List<Integer> wellsToReplace) {
+            Map<String, BarcodedTube> mapBarcodeToTube2,
+            List<Integer> wellsToReplace, LabBatch workflowBatch) {
         List<String> daughterTubeBarcodes = generateDaughterTubeBarcodes(mapBarcodeToTube);
         return getDaughterTubeFormationCherryPick(mapBarcodeToTube, mapBarcodeToTube2, daughterTubeBarcodes,
-                                                  wellsToReplace);
+                                                  wellsToReplace, workflowBatch);
     }
 
     /**
@@ -600,10 +599,11 @@ public class BaseEventTest {
      * @param mapBarcodeToTube     source tubes
      * @param daughterTubeBarcodes destination tubes
      *
+     * @param workflowBatch
      * @return destination tube formation
      */
     private TubeFormation getDaughterTubeFormation(Map<String, BarcodedTube> mapBarcodeToTube,
-                                                   List<String> daughterTubeBarcodes) {
+            List<String> daughterTubeBarcodes, LabBatch workflowBatch) {
         PlateTransferEventType daughterPlateTransferJaxb =
                 bettaLimsMessageTestFactory.buildRackToRack("SamplesDaughterPlateCreation", "MotherRack",
                                                             new ArrayList<>(mapBarcodeToTube.keySet()), "DaughterRack",
@@ -629,6 +629,7 @@ public class BaseEventTest {
         posControlTube.addSample(new MercurySample(POSITIVE_CONTROL, bspSampleDataPos));
         nameToSampleData.put(POSITIVE_CONTROL, bspSampleDataPos);
         mapBarcodeToDaughterTube.put(VesselPosition.H11, posControlTube);
+        workflowBatch.addLabVessel(posControlTube);
 
         BarcodedTube negControlTube = new BarcodedTube("C2");
         BspSampleData bspSampleDataNeg = new BspSampleData(
@@ -638,6 +639,7 @@ public class BaseEventTest {
         negControlTube.addSample(new MercurySample(NEGATIVE_CONTROL, bspSampleDataNeg));
         nameToSampleData.put(NEGATIVE_CONTROL, bspSampleDataNeg);
         mapBarcodeToDaughterTube.put(VesselPosition.H12, negControlTube);
+        workflowBatch.addLabVessel(negControlTube);
 
         return new TubeFormation(mapBarcodeToDaughterTube, RackOfTubes.RackType.Matrix96);
     }
@@ -653,9 +655,10 @@ public class BaseEventTest {
      * @return destination tube formation
      */
     private TubeFormation getDaughterTubeFormationCherryPick(Map<String, BarcodedTube> mapBarcodeToTube,
-                                                             Map<String, BarcodedTube> mapBarcodeToTube2,
-                                                             List<String> daughterTubeBarcodes,
-                                                             List<Integer> wellsToReplace) {
+            Map<String, BarcodedTube> mapBarcodeToTube2,
+            List<String> daughterTubeBarcodes,
+            List<Integer> wellsToReplace,
+            LabBatch workflowBatch) {
 
         List<String> sourceTubeBarcodes = new ArrayList<>(mapBarcodeToTube.keySet());
         List<String> sourceTubeBarcodes2 = new ArrayList<>(mapBarcodeToTube2.keySet());
@@ -718,6 +721,7 @@ public class BaseEventTest {
         posControlTube.addSample(new MercurySample(POSITIVE_CONTROL, bspSampleDataPos));
         nameToSampleData.put(POSITIVE_CONTROL, bspSampleDataPos);
         mapBarcodeToDaughterTube.put(VesselPosition.H11, posControlTube);
+        workflowBatch.addLabVessel(posControlTube);
 
         BarcodedTube negControlTube = new BarcodedTube("C2");
         BspSampleData bspSampleDataNeg = new BspSampleData(
@@ -728,6 +732,7 @@ public class BaseEventTest {
         negControlTube.addSample(new MercurySample(NEGATIVE_CONTROL, bspSampleDataNeg));
         nameToSampleData.put(NEGATIVE_CONTROL, bspSampleDataNeg);
         mapBarcodeToDaughterTube.put(VesselPosition.H12, negControlTube);
+        workflowBatch.addLabVessel(negControlTube);
 
         return new TubeFormation(mapBarcodeToDaughterTube, RackOfTubes.RackType.Matrix96);
     }
@@ -785,10 +790,8 @@ public class BaseEventTest {
     }
 
     public static void validateWorkflow(String nextEventTypeName, List<LabVessel> labVessels) {
-        SystemRouter systemRouter = new SystemRouter(null, null, new WorkflowLoader(), null, null);
-        SystemRouter.System system = systemRouter.routeForVessels(labVessels,
-                controlCollaboratorIdList, nameToSampleData,
-                SystemRouter.Intent.ROUTE, false);
+        SystemRouter systemRouter = new SystemRouter(null, new WorkflowLoader(), null);
+        SystemRouter.System system = systemRouter.routeForVesselsDaoFree(labVessels, SystemRouter.Intent.ROUTE);
         Assert.assertEquals(system, expectedRouting);
 
         WorkflowValidator workflowValidator = new WorkflowValidator();

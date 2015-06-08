@@ -285,7 +285,7 @@
         }
 
         function initializeQuoteOptions() {
-            <c:if test="${actionBean.editOrder.allowedToSkipQuote()}">
+            <c:if test="${actionBean.editOrder.canSkipQuote()}">
                 skipQuote = $j("#skipQuoteReason").is(":empty");
                 $j("#skipQuote").prop('checked', skipQuote);
             </c:if>

@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.fixup;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectEjb;
@@ -8,9 +9,12 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.jvnet.inflector.Noun;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -19,7 +23,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD;
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
 /**
  * This "test" is an example of how to fixup some data.  Each fix method includes the JIRA ticket ID.
@@ -34,11 +38,14 @@ public class ResearchProjectFixupTest extends Arquillian {
     private ResearchProjectDao rpDao;
 
     @Inject
+    private UserBean userBean;
+
+    @Inject
     private BSPUserList bspUserList;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWar(PROD, "prod");
+        return DeploymentBuilder.buildMercuryWar(DEV, "dev");
     }
 
     /**
@@ -70,6 +77,29 @@ public class ResearchProjectFixupTest extends Arquillian {
         // The entity is already persistent, this call to persist is solely to begin and end a transaction, so the
         // change gets flushed.  This is an artifact of the test environment.
         rpDao.persistAll(rpListToPersist);
+    }
+
+    /**
+     * Hacohen_cancer_exome_sequencing (RP-944) was created by accident. Can this please be deleted? Thanks!
+     */
+    @Test(enabled = false)
+    public void fixupGPLIM3526_Delete_RP944() {
+        userBean.loginOSUser();
+        String RP944 = "RP-944";
+
+        ResearchProject researchProject = rpDao.findByJiraTicketKey(RP944);
+        if (researchProject == null) {
+            Assert.fail(String.format("Research Project %s doesn't exist.", RP944));
+        }
+
+        if (CollectionUtils.isNotEmpty(researchProject.getProductOrders())) {
+            int pdoCount = researchProject.getProductOrders().size();
+            Assert.fail(String.format("Cannot delete %s: %d %s exist", RP944, pdoCount,
+                    Noun.pluralOf("product", pdoCount)));
+        }
+
+        rpDao.remove(researchProject);
+        rpDao.persist(new FixupCommentary("see https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-3526"));
     }
 
     /**

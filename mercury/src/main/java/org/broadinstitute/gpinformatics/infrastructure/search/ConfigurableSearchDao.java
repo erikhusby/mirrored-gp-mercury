@@ -279,6 +279,7 @@ public class ConfigurableSearchDao extends GenericDao {
         }
 
         // TODO set join fetch paths? would require access to column defs
+        // todo jmt shouldn't be newing DAO
         PaginationDao paginationDao = new PaginationDao();
 
         // Determine if we need to expand the core entity list via a user selectable traversal option

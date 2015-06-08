@@ -21,6 +21,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -112,6 +113,14 @@ public class LabVesselSearchDefinition {
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("bucketEntries", "labVesselId",
                 "labVessel", BucketEntry.class));
 
+        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("labBatches", "labVesselId",
+                "labVessel", LabBatchStartingVessel.class));
+
+        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("vesselById", "labVesselId",
+                "labVesselId", LabVessel.class));
+        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("reworkLabBatches", "rework.labVesselId",
+                "reworks", "rework", LabBatch.class));
+
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("mercurySample", "labVesselId",
                 "mercurySamples", LabVessel.class));
 
@@ -141,8 +150,18 @@ public class LabVesselSearchDefinition {
         SearchTerm searchTerm = new SearchTerm();
         searchTerm.setName("LCSET");
         List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
+        // Non-reworks
         SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
-        criteriaPath.setCriteria(Arrays.asList("bucketEntries", "labBatch"));
+        criteriaPath.setCriteria(Arrays.asList("labBatches", "labBatch"));
+        criteriaPath.setPropertyName("batchName");
+        criteriaPath.setJoinFetch(Boolean.TRUE);
+        criteriaPaths.add(criteriaPath);
+        // Reworks
+        SearchTerm.CriteriaPath nestedCriteriaPath = new SearchTerm.CriteriaPath();
+        nestedCriteriaPath.setCriteria(Arrays.asList("reworkLabBatches"));
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList("vesselById", "labVesselId"));
+        criteriaPath.setNestedCriteriaPath(nestedCriteriaPath);
         criteriaPath.setPropertyName("batchName");
         criteriaPath.setJoinFetch(Boolean.TRUE);
         criteriaPaths.add(criteriaPath);
@@ -152,28 +171,10 @@ public class LabVesselSearchDefinition {
             public Set<String> evaluate(Object entity, Map<String, Object> context) {
                 Set<String> results = new HashSet<>();
                 LabVessel labVessel = (LabVessel) entity;
-                for (BucketEntry bucketEntry : labVessel.getBucketEntries()) {
-                    if (bucketEntry.getLabBatch() != null) {
-                        results.add(bucketEntry.getLabBatch().getBatchName());
-                    }
-                }
-                if( results.isEmpty() ) {
-                    // Try navigating back to sample instance batch
-                    for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
-                        if( sampleInstanceV2.getSingleBatch() != null ) {
-                            results.add( sampleInstanceV2.getSingleBatch().getBatchName());
-                        }
-                    }
-                }
-                if( results.isEmpty() ) {
-                    // Try navigating back to sample bucket entries
-                    for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
-                        for (BucketEntry bucketEntry : sampleInstanceV2.getAllBucketEntries()) {
-                            LabBatch batch = bucketEntry.getLabBatch();
-                            if( batch != null ) {
-                                results.add( bucketEntry.getLabBatch().getBatchName());
-                            }
-                        }
+                // Navigate back to sample(s)
+                for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+                    for( LabBatchStartingVessel labBatchStartingVessel : sampleInstanceV2.getAllBatchVessels() ) {
+                        results.add(labBatchStartingVessel.getLabBatch().getBatchName());
                     }
                 }
                 return results;
@@ -273,7 +274,7 @@ public class LabVesselSearchDefinition {
             public String evaluate(Object entity, Map<String, Object> context) {
                 LabVessel labVessel = (LabVessel) entity;
                 Collection<MercurySample> mercurySamples = labVessel.getMercurySamples();
-                if( !mercurySamples.isEmpty() ) {
+                if (!mercurySamples.isEmpty()) {
                     MercurySample mercurySample = mercurySamples.iterator().next();
                     BspSampleSearchAddRowsListener bspColumns = (BspSampleSearchAddRowsListener) context.get(
                             SearchInstance.CONTEXT_KEY_BSP_SAMPLE_SEARCH);

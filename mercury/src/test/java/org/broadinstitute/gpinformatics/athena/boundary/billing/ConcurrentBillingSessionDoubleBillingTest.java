@@ -8,10 +8,12 @@ import org.apache.deltaspike.core.api.provider.BeanProvider;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
+import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePlatformType;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
@@ -31,6 +33,7 @@ import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -60,8 +63,7 @@ public class ConcurrentBillingSessionDoubleBillingTest extends ConcurrentBaseTes
 
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWarWithAlternatives(DummyPMBQuoteService.class,
-                RegisterWorkAlwaysWorks.class);
+        return DeploymentBuilder.buildMercuryWarWithAlternatives(RegisterWorkAlwaysWorks.class);
     }
 
     /**
@@ -216,6 +218,22 @@ public class ConcurrentBillingSessionDoubleBillingTest extends ConcurrentBaseTes
         @Override
         public Quote getQuoteWithPriceItems(String alphaId) throws QuoteServerException, QuoteNotFoundException {
             return getQuoteByAlphaId(alphaId);
+        }
+
+        @Override
+        public Set<Funding> getAllFundingSources() throws QuoteServerException, QuoteNotFoundException{
+            return null;
+        }
+
+        @Override
+        public Quotes getAllQuotes() throws QuoteServerException, QuoteNotFoundException {
+            return null;
+        }
+
+        @Override
+        public PriceList getPlatformPriceItems(QuotePlatformType quotePlatformType)
+                throws QuoteServerException, QuoteNotFoundException {
+            return getAllPriceItems();
         }
     }
 

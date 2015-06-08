@@ -4,12 +4,14 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 
 import javax.enterprise.inject.Alternative;
 import java.util.Date;
+import java.util.Set;
 
 @Stub
 @Alternative
 public class QuoteServiceStub implements QuoteService {
 
     private static int workItemId = 1;
+    private static volatile int invocationCount = 0;
 
     public QuoteServiceStub() {
 
@@ -17,6 +19,7 @@ public class QuoteServiceStub implements QuoteService {
 
     @Override
     public PriceList getAllPriceItems() throws QuoteServerException, QuoteNotFoundException {
+        invocationCount++;
         PriceList priceList;
 
         try {
@@ -65,5 +68,27 @@ public class QuoteServiceStub implements QuoteService {
         return getQuoteByAlphaId(alphaId);
     }
 
+    @Override
+    public Set<Funding> getAllFundingSources() throws QuoteServerException, QuoteNotFoundException{
+        return null;
+    }
 
+    @Override
+    public Quotes getAllQuotes() throws QuoteServerException, QuoteNotFoundException {
+        return null;
+    }
+
+    @Override
+    public PriceList getPlatformPriceItems(QuotePlatformType quotePlatformType)
+            throws QuoteServerException, QuoteNotFoundException {
+        return getAllPriceItems();
+    }
+
+    public static void resetInvocationCount() {
+        invocationCount = 0;
+    }
+
+    public static int getInvocationCount() {
+        return invocationCount;
+    }
 }

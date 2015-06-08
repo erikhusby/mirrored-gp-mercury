@@ -10,7 +10,9 @@ public enum QuotePlatformType {
 
     BSP("Biological Samples"),
     SEQ("DNA Sequencing"),
-    GAP("Genome Analysis");
+    GAP("Genome Analysis"),
+    CRSP("CRSP"),
+    GSP("Genomics Special Products");
 
     private String platformName;
 

@@ -20,6 +20,10 @@ public class LabBatchDao extends GenericDao {
         return findListByList(LabBatch.class, LabBatch_.batchName, searchList);
     }
 
+    public List<LabBatch> findByType(LabBatch.LabBatchType labBatchType) {
+        return findList(LabBatch.class, LabBatch_.labBatchType, labBatchType);
+    }
+
     public LabBatch findByBusinessKey(String businessKey) {
         return findByName(businessKey);
     }

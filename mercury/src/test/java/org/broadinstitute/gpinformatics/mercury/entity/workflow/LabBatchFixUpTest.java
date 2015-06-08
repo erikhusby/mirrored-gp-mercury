@@ -13,19 +13,34 @@ package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.common.BaseSplitter;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.ReworkDetail;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -34,6 +49,10 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import javax.transaction.HeuristicMixedException;
 import javax.transaction.HeuristicRollbackException;
 import javax.transaction.NotSupportedException;
@@ -42,14 +61,20 @@ import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.GregorianCalendar;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+
+//import com.jprofiler.api.agent.Controller;
 
 @Test(groups = TestGroups.FIXUP)
 public class LabBatchFixUpTest extends Arquillian {
@@ -70,10 +95,19 @@ public class LabBatchFixUpTest extends Arquillian {
     private BucketDao bucketDao;
 
     @Inject
+    private UserTransaction userTransaction;
+
+    @Inject
+    private ControlDao controlDao;
+
+    @Inject
+    private SampleDataFetcher sampleDataFetcher;
+
+    @Inject
     private UserBean userBean;
 
     @Inject
-    private UserTransaction userTransaction;
+    private MercurySampleDao mercurySampleDao;
 
     // Use (RC, "rc"), (PROD, "prod") to push the backfill to RC and production respectively.
     @Deployment
@@ -227,6 +261,214 @@ public class LabBatchFixUpTest extends Arquillian {
         BucketEntry bucketEntry = new BucketEntry(labVessel, productOrder, BucketEntry.BucketEntryType.PDO_ENTRY);
         bucketEntry.setStatus(BucketEntry.Status.Archived);
         labBatch.addBucketEntry(bucketEntry);
+        labBatchDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim3547() {
+        userBean.loginOSUser();
+        try {
+            userTransaction.begin();
+            String batchName = "LCSET-7158";
+            LabBatch labBatch = labBatchDao.findByName(batchName);
+
+            Map<String, String> mapOldSampleIdToNew = new HashMap<>();
+            mapOldSampleIdToNew.put("SM-9LIRY", "SM-9MKCY");
+            mapOldSampleIdToNew.put("SM-9LIRZ", "SM-9MKCZ");
+            mapOldSampleIdToNew.put("SM-9LIS1", "SM-9MKD1");
+            mapOldSampleIdToNew.put("SM-9LIS2", "SM-9MKD2");
+            mapOldSampleIdToNew.put("SM-9LIS3", "SM-9MKD3");
+            Map<String, MercurySample> mapIdToMercurySample = mercurySampleDao.findMapIdToMercurySample(
+                    mapOldSampleIdToNew.values());
+
+            int foundCount = 0;
+            Set<LabVessel> oldLabVessels = new HashSet<>();
+            Set<LabVessel> newLabVessels = new HashSet<>();
+
+            // Change bucket entries
+            for (BucketEntry bucketEntry : labBatch.getBucketEntries()) {
+                Set<SampleInstanceV2> sampleInstancesV2 = bucketEntry.getLabVessel().getSampleInstancesV2();
+                Assert.assertEquals(sampleInstancesV2.size(), 1);
+                SampleInstanceV2 sampleInstanceV2 = sampleInstancesV2.iterator().next();
+                String newMercurySampleId = mapOldSampleIdToNew.get(sampleInstanceV2.getNearestMercurySampleName());
+                if (newMercurySampleId != null) {
+                    MercurySample newMercurySample = mapIdToMercurySample.get(newMercurySampleId);
+                    oldLabVessels.add(bucketEntry.getLabVessel());
+                    Assert.assertEquals(newMercurySample.getLabVessel().size(), 1);
+                    LabVessel newLabVessel = newMercurySample.getLabVessel().iterator().next();
+                    bucketEntry.setLabVessel(newLabVessel);
+                    newLabVessels.add(newLabVessel);
+                    foundCount++;
+                }
+            }
+            Assert.assertEquals(foundCount, 5);
+
+            // Change reworks
+            for (LabVessel oldLabVessel : oldLabVessels) {
+                Assert.assertTrue(labBatch.getReworks().remove(oldLabVessel));
+            }
+            labBatch.getReworks().addAll(newLabVessels);
+
+            labBatchDao.persist(new FixupCommentary("GPLIM-3547 change bucket entries for " + batchName));
+            labBatchDao.flush();
+            userTransaction.commit();
+        } catch (NotSupportedException | SystemException | RollbackException | HeuristicMixedException |
+                HeuristicRollbackException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Generate a file to back populate controls into LCSETs.
+     */
+    @Test(enabled = false)
+    public void fixupGplim3442GenFile() {
+//        Controller.startCPURecording(true);
+//        Controller.startProbeRecording(Controller.PROBE_NAME_JDBC, true);
+
+        Map<String, List<LabEventType>> mapBucketToEvents = new HashMap<>();
+        mapBucketToEvents.put("Pico/Plating Bucket", Collections.singletonList(LabEventType.SHEARING_TRANSFER));
+        mapBucketToEvents.put("Shearing Bucket", Collections.singletonList(LabEventType.SHEARING_TRANSFER));
+        mapBucketToEvents.put("ICE Bucket", Collections.singletonList(LabEventType.ICE_POOLING_TRANSFER));
+        mapBucketToEvents.put("Hybridization Bucket", Collections.singletonList(LabEventType.HYBRIDIZATION));
+        mapBucketToEvents.put("Pooling Bucket", Collections.singletonList(LabEventType.POOLING_TRANSFER));
+
+        List<Control> controls = controlDao.findAllActive();
+        List<String> controlAliases = new ArrayList<>();
+        for (Control control : controls) {
+            controlAliases.add(control.getCollaboratorParticipantId());
+        }
+
+        List<LabBatch> workflowLabBatches = labBatchDao.findByType(LabBatch.LabBatchType.WORKFLOW);
+        List<String> batchNames = new ArrayList<>();
+        for (LabBatch workflowLabBatch : workflowLabBatches) {
+            batchNames.add(workflowLabBatch.getBatchName());
+        }
+        labBatchDao.clear();
+        Collections.sort(batchNames);
+        List<Collection<String>> listListBatchNames = BaseSplitter.split(batchNames, 20);
+
+        for (Collection<String> listBatchName : listListBatchNames) {
+            workflowLabBatches = labBatchDao.findByListIdentifier(new ArrayList<>(listBatchName));
+            for (LabBatch workflowLabBatch : workflowLabBatches) {
+                int bucketEntryCount = workflowLabBatch.getBucketEntries().size();
+                Set<LabVessel> labVessels = new HashSet<>();
+                for (BucketEntry bucketEntry : workflowLabBatch.getBucketEntries()) {
+                    LabVessel bucketEntryLabVessel = bucketEntry.getLabVessel();
+                    if (bucketEntry.getBucket() == null) {
+                        continue;
+                    }
+                    String bucketDefinitionName = bucketEntry.getBucket().getBucketDefinitionName();
+                    List<LabEventType> labEventTypes = mapBucketToEvents.get(bucketDefinitionName);
+                    if (labEventTypes == null) {
+                        throw new RuntimeException("No event types for bucket " + bucketDefinitionName);
+                    }
+                    labVessels.addAll(getEventLabVessels(labEventTypes, bucketEntryLabVessel));
+                }
+                boolean found = false;
+                if (!labVessels.isEmpty()) {
+                    List<String> sampleNames = new ArrayList<>();
+                    for (LabVessel labVessel : labVessels) {
+                        for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+                            sampleNames.add(sampleInstanceV2.getEarliestMercurySampleName());
+                        }
+                    }
+                    Map<String, SampleData> mapSampleNameToData = sampleDataFetcher.fetchSampleData(sampleNames);
+                    for (LabVessel labVessel : labVessels) {
+                        int foundCount;
+                        if (OrmUtil.proxySafeIsInstance(labVessel, BarcodedTube.class)) {
+                            foundCount = labVessels.size();
+                        } else if (OrmUtil.proxySafeIsInstance(labVessel, TubeFormation.class)) {
+                            foundCount = labVessel.getContainerRole().getContainedVessels().size();
+                        } else {
+                            throw new RuntimeException("Unexpected class " + labVessel.getClass());
+                        }
+                        System.out.println("For " + workflowLabBatch.getBatchName() +
+                                ", found lab vessels count = " + foundCount +
+                                ", bucket entries size = " + bucketEntryCount);
+                        int difference = foundCount - bucketEntryCount;
+                        if (difference < 0 || difference > 4) {
+                            System.out.println("Difference out of range: " + difference);
+                        }
+                        if (OrmUtil.proxySafeIsInstance(labVessel, BarcodedTube.class)) {
+                            found = processTube(workflowLabBatch, found, (BarcodedTube) labVessel,
+                                    mapSampleNameToData, controlAliases);
+                        } else if (OrmUtil.proxySafeIsInstance(labVessel, TubeFormation.class)) {
+                            for (LabVessel containedVessel : labVessel.getContainerRole().getContainedVessels()) {
+                                found = processTube(workflowLabBatch, found, (BarcodedTube) containedVessel,
+                                        mapSampleNameToData, controlAliases);
+                            }
+                        }
+                    }
+                }
+                if (!found) {
+                    System.out.println("Failed to find any controls for " + workflowLabBatch.getBatchName());
+                }
+            }
+            System.out.println("Clear session");
+            labBatchDao.clear();
+        }
+//        Controller.stopProbeRecording(Controller.PROBE_NAME_JDBC);
+//        Controller.stopCPURecording();
+    }
+
+    private Set<LabVessel> getEventLabVessels(List<LabEventType> labEventTypes, LabVessel bucketEntryLabVessel) {
+        Set<LabVessel> labVessels = new HashSet<>();
+        for (LabEvent labEvent : bucketEntryLabVessel.getTransfersFrom()) {
+            if (labEventTypes.contains(labEvent.getLabEventType())) {
+                labVessels.addAll(labEvent.getSourceLabVessels());
+            }
+        }
+        if (labVessels.isEmpty()) {
+            Map<LabEvent, Set<LabVessel>> vesselsForLabEventTypes =
+                    bucketEntryLabVessel.findVesselsForLabEventTypes(labEventTypes,
+                            Arrays.asList(TransferTraverserCriteria.TraversalDirection.Descendants), false);
+            for (Set<LabVessel> vessels : vesselsForLabEventTypes.values()) {
+                labVessels.addAll(vessels);
+            }
+        }
+        return labVessels;
+    }
+
+    private boolean processTube(LabBatch workflowLabBatch, boolean found,
+            BarcodedTube labVessel, Map<String, SampleData> mapSampleNameToData, List<String> controlAliases) {
+        Set<SampleInstanceV2> sampleInstances = labVessel.getSampleInstancesV2();
+        if (sampleInstances.size() == 1) {
+            SampleInstanceV2 sampleInstance = sampleInstances.iterator().next();
+            SampleData sampleData = mapSampleNameToData.get(sampleInstance.getEarliestMercurySampleName());
+            if (controlAliases.contains(sampleData.getCollaboratorParticipantId())) {
+                found = true;
+                System.out.println("Add " + labVessel.getLabel() + " to " +
+                        workflowLabBatch.getBatchName() + " " +
+                        sampleInstance.getEarliestMercurySampleName());
+            }
+        }
+        return found;
+    }
+
+    /**
+     * Read a file to back populate controls into LCSETs.
+     */
+    @Test(enabled = false)
+    public void fixupGplim3442() {
+        userBean.loginOSUser();
+        InputStream testSpreadSheetInputStream = VarioskanParserTest.getTestResource("BackfillInput.txt");
+        BufferedReader reader = new BufferedReader(new InputStreamReader(testSpreadSheetInputStream));
+        try {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] words = line.split("\\s+");
+                if (words[0].startsWith("#")) {
+                    continue;
+                }
+                LabVessel labVessel = labVesselDao.findByIdentifier(words[0]);
+                LabBatch labBatch = labBatchDao.findByName(words[1]);
+                labBatch.addLabVessel(labVessel);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        labBatchDao.persist(new FixupCommentary("GPLIM-3442 back fill controls into LCSETs"));
         labBatchDao.flush();
     }
 

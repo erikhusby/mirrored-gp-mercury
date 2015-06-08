@@ -4,7 +4,6 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
-import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
@@ -32,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -693,73 +693,116 @@ public class VesselContainer<T extends LabVessel> {
      */
     @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public Set<LabBatch> getComputedLcSetsForSection(SBSSection section) {
-        Map<LabBatch, Integer> mapLabBatchToCount = new HashMap<>();
-        int numSampleInstanceWithBucketEntries = 0;
+        Map<SampleInstanceV2.LabBatchDepth, Integer> mapLabBatchToCount = new HashMap<>();
+        int numVesselsWithWorkflow = 0;
         for (VesselPosition vesselPosition : section.getWells()) {
-            numSampleInstanceWithBucketEntries = collateLcSets(mapLabBatchToCount, numSampleInstanceWithBucketEntries,
+            numVesselsWithWorkflow = collateLcSets(mapLabBatchToCount, numVesselsWithWorkflow,
                     getSampleInstancesAtPositionV2(vesselPosition));
         }
-        return computeLcSets(mapLabBatchToCount, numSampleInstanceWithBucketEntries);
+        return computeLcSets(mapLabBatchToCount, numVesselsWithWorkflow);
     }
 
     /**
-     * Calculates the number of bucket entries for each LCSET.
-     * @param mapLabBatchToCount map from LCSET to count of bucket entries
-     * @param numSampleInstanceWithBucketEntries number of sample instances that have at least one bucket entry
+     * Calculates the number of workflow associations for each LCSET.
+     * @param mapLabBatchToCount map from LCSET to count of workflow associations, this is the primary output from
+     *                           this method
+     * @param numVesselsWithWorkflow number of vessels that have at least one workflow association
      * @param sampleInstancesAtPosition Sample instances to evaluate
-     * @return changed numSampleInstanceWithBucketEntries
+     * @return changed numVesselsWithWorkflow
      */
-    public static int collateLcSets(Map<LabBatch, Integer> mapLabBatchToCount, int numSampleInstanceWithBucketEntries,
-                                    Set<SampleInstanceV2> sampleInstancesAtPosition ) {
-        Set<LabBatch> labBatches = new HashSet<>();
-        if (sampleInstancesAtPosition.size() == 1) {
+    public static int collateLcSets(Map<SampleInstanceV2.LabBatchDepth, Integer> mapLabBatchToCount,
+            int numVesselsWithWorkflow,
+            Set<SampleInstanceV2> sampleInstancesAtPosition ) {
+        Set<SampleInstanceV2.LabBatchDepth> labBatches = new HashSet<>();
+        if (sampleInstancesAtPosition.size() > 1) {
+            // We are dealing with a pool
+            // todo jmt hardcoded depth, and -1 as an indicator, are not ideal
             for (SampleInstanceV2 sampleInstance : sampleInstancesAtPosition) {
-                List<BucketEntry> allBucketEntries = sampleInstance.getAllBucketEntries();
-                for (BucketEntry bucketEntry : allBucketEntries) {
-                    if (bucketEntry.getLabBatch() != null) {
-                        labBatches.add(bucketEntry.getLabBatch());
+                LabBatch labBatch = sampleInstance.getSingleBatch();
+                if (labBatch == null) {
+                    // Didn't find a single batch, so pick the nearest
+                    List<LabBatch> allWorkflowBatches = sampleInstance.getAllWorkflowBatches();
+                    if (!allWorkflowBatches.isEmpty()) {
+                        labBatch = allWorkflowBatches.iterator().next();
                     }
                 }
-
-                if (!labBatches.isEmpty()) {
-                    numSampleInstanceWithBucketEntries++;
+                if (labBatch != null) {
+                    labBatches.add(new SampleInstanceV2.LabBatchDepth(100, labBatch));
                 }
             }
-            for (LabBatch labBatch : labBatches) {
-                Integer count = mapLabBatchToCount.get(labBatch);
-                if (count == null) {
-                    count = 1;
-                } else {
-                    count = count + 1;
+            numVesselsWithWorkflow = -1;
+        } else {
+            for (SampleInstanceV2 sampleInstance : sampleInstancesAtPosition) {
+                labBatches.addAll(sampleInstance.getAllWorkflowBatchDepths());
+                if (!labBatches.isEmpty()) {
+                    numVesselsWithWorkflow++;
                 }
-                mapLabBatchToCount.put(labBatch, count);
             }
         }
-        return numSampleInstanceWithBucketEntries;
+        for (SampleInstanceV2.LabBatchDepth labBatch : labBatches) {
+            Integer count = mapLabBatchToCount.get(labBatch);
+            if (count == null) {
+                count = 1;
+            } else {
+                count = count + 1;
+            }
+            mapLabBatchToCount.put(labBatch, count);
+        }
+        return numVesselsWithWorkflow;
     }
 
     /**
      * Determine the common LCSET between sample instances.
-     * @param mapLabBatchToCount map from LCSET to count of bucket entries
-     * @param numSampleInstanceWithBucketEntries    number of sample instances that have at least one bucket entry
+     * @param mapLabBatchToCount map from LCSET to count of workflow associations
+     * @param numVesselsWithWorkflow    number of vessels that have at least one workflow association
      * @return LCSET that all sample instances have in common
      */
-    public static Set<LabBatch> computeLcSets(Map<LabBatch, Integer> mapLabBatchToCount,
-            int numSampleInstanceWithBucketEntries) {
-        Set<LabBatch> computedLcSets = new HashSet<>();
-        if (LabVessel.DIAGNOSTICS) {
-            System.out.println("numSampleInstanceWithBucketEntries " + numSampleInstanceWithBucketEntries);
+    public static Set<LabBatch> computeLcSets(Map<SampleInstanceV2.LabBatchDepth, Integer> mapLabBatchToCount,
+            int numVesselsWithWorkflow) {
+        if (numVesselsWithWorkflow == -1) {
+            // The vessels are pooled
+            Set<LabBatch> lcsets = new HashSet<>();
+            for (SampleInstanceV2.LabBatchDepth labBatchDepth : mapLabBatchToCount.keySet()) {
+                lcsets.add(labBatchDepth.getLabBatch());
+            }
+            return lcsets;
         }
-        for (Map.Entry<LabBatch, Integer> labBatchIntegerEntry : mapLabBatchToCount.entrySet()) {
-            if (labBatchIntegerEntry.getValue() == numSampleInstanceWithBucketEntries) {
-                computedLcSets.add(labBatchIntegerEntry.getKey());
+        List<SampleInstanceV2.LabBatchDepth> labBatchDepths = new ArrayList<>();
+        if (LabVessel.DIAGNOSTICS) {
+            System.out.println("numVesselsWithWorkflow " + numVesselsWithWorkflow);
+        }
+        for (Map.Entry<SampleInstanceV2.LabBatchDepth, Integer> labBatchIntegerEntry : mapLabBatchToCount.entrySet()) {
+            if (labBatchIntegerEntry.getValue() == numVesselsWithWorkflow) {
+                labBatchDepths.add(labBatchIntegerEntry.getKey());
             }
             if (LabVessel.DIAGNOSTICS) {
-                System.out.println("LabBatch " + labBatchIntegerEntry.getKey().getBatchName() + " count " +
+                System.out.println("LabBatch " + labBatchIntegerEntry.getKey().getLabBatch().getBatchName() + " count " +
                                    labBatchIntegerEntry.getValue());
             }
         }
-        return computedLcSets;
+        // If exactly the same set of tubes appears in different LCSETs at different levels, e.g. an initial set of
+        // tubes at Shearing are all reworked at Hybridization, we want the deepest LCSET, Hybridization.
+        Collections.sort(labBatchDepths, new Comparator<SampleInstanceV2.LabBatchDepth>() {
+            @Override
+            public int compare(SampleInstanceV2.LabBatchDepth o1, SampleInstanceV2.LabBatchDepth o2) {
+                return o2.getDepth() - o1.getDepth();
+            }
+        });
+
+        Set<LabBatch> computedLcsets = new HashSet<>();
+        if (!labBatchDepths.isEmpty()) {
+            int previousDepth = labBatchDepths.get(0).getDepth();
+            for (SampleInstanceV2.LabBatchDepth labBatchDepth : labBatchDepths) {
+                if (labBatchDepth.getDepth() == previousDepth) {
+                    computedLcsets.add(labBatchDepth.getLabBatch());
+                } else {
+                    break;
+                }
+                previousDepth = labBatchDepth.getDepth();
+            }
+        }
+
+        return computedLcsets;
     }
 
     /**
@@ -790,33 +833,6 @@ public class VesselContainer<T extends LabVessel> {
                 criteria = new TransferTraverserCriteria.NearestTubeAncestorsCriteria();
         applyCriteriaToAllPositions(criteria);
         return new ArrayList<>(criteria.getVesselAndPositions());
-    }
-
-    @Transient
-    private Set<LabBatch> containedLabBatches;
-
-    /**
-     * This is primarily used by getSampleInstances in inference of LCSETs for controls.
-     */
-    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
-    public LabBatch getSingleBatch() {
-        if (containedLabBatches == null) {
-            containedLabBatches = new HashSet<>();
-            for (LabVessel containedVessel : getContainedVessels()) {
-                Set<SampleInstanceV2> sampleInstances = containedVessel.getSampleInstancesV2();
-                if (sampleInstances.size() == 1) {
-                    BucketEntry containedSingleBucketEntry =
-                            sampleInstances.iterator().next().getSingleBucketEntry();
-                    if (containedSingleBucketEntry != null) {
-                        containedLabBatches.add(containedSingleBucketEntry.getLabBatch());
-                    }
-                }
-            }
-        }
-        if (containedLabBatches.size() == 1) {
-            return containedLabBatches.iterator().next();
-        }
-        return null;
     }
 
     /**
@@ -1106,7 +1122,6 @@ public class VesselContainer<T extends LabVessel> {
      */
     public void clearCaches() {
         mapPositionToSampleInstances.clear();
-        containedLabBatches = null;
     }
 
 }
