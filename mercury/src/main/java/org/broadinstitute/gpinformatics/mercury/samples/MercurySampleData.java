@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.samples;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.sample.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
@@ -24,7 +25,6 @@ public class MercurySampleData implements SampleData {
     private String visit;
     private final boolean hasData;
     private Date receiptDate;
-    private boolean received;
     private String materialType;
 
     public MercurySampleData(@Nonnull String sampleId, @Nonnull Set<Metadata> metadata) {
