@@ -84,7 +84,7 @@ public class SearchInstance implements Serializable {
         /**
          * True if this term should be displayed in the results.
          */
-        private Boolean includeInResults;
+        private Boolean includeInResults = Boolean.FALSE;
 
         /**
          * True if comparisons should ignore case.
