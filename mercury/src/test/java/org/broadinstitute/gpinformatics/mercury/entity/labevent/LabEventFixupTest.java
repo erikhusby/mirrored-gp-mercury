@@ -34,6 +34,7 @@ import javax.transaction.NotSupportedException;
 import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.GregorianCalendar;
@@ -757,4 +758,24 @@ public class LabEventFixupTest extends Arquillian {
             throw new RuntimeException(e);
         }
     }
+
+    @Test(enabled = false)
+    public void fixupGplim3601() {
+        userBean.loginOSUser();
+        List<Long> labEventIds = new ArrayList<Long>() {{
+            add(916835L);
+            add(916836L);
+            add(916837L);
+        }};
+        List<LabEvent> labEvents = labEventDao.findListByList(LabEvent.class, LabEvent_.labEventId, labEventIds);
+        Assert.assertEquals(labEvents.size(), 3);
+        LabBatch labBatch = labBatchDao.findByName("LCSET-7385");
+        Assert.assertNotNull(labBatch);
+        for (LabEvent labEvent : labEvents) {
+            labEvent.setManualOverrideLcSet(labBatch);
+        }
+        labEventDao.persist(new FixupCommentary("GPLIM-3601 fixup PicoMicrofluorTransfers due to ambiguous LCSET."));
+        labEventDao.flush();
+    }
+
 }
