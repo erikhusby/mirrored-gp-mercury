@@ -271,13 +271,17 @@ public class MercurySampleFixupTest extends Arquillian {
 
     }
 
-    @Test(groups = TestGroups.FIXUP, enabled = false)
+    /**
+     * For this to run successfully, a VM argument (-Dsamples.received=[full file path]) needs to be added to the
+     * JBoss Server when run
+     */
+    @Test(groups = TestGroups.FIXUP, enabled = true)
     public void backfillReceiptForSamples_GPLIM3487() {
         Map<String, MercurySample> nonReceivedSamplesByKey = mercurySampleDao.findNonReceivedCrspSamples();
 
         List<SampleReceiptFixup> sampleReceiptFixupList = getSamplesToFixup(nonReceivedSamplesByKey);
 
-        int counter = 0;
+        long counter = 0;
         Date lastDate = null;
         Collections.sort(sampleReceiptFixupList, SampleReceiptFixup.BY_DATE);
         List<String> updatedSamples = new ArrayList<>();
@@ -293,14 +297,15 @@ public class MercurySampleFixupTest extends Arquillian {
             } else {
                 currentFixup.getReceivedSample().getLabVessel().iterator()
                         .next().setReceiptEvent(bspUserList.getByUsername(currentFixup.getReceiptUserName()),
-                        currentFixup.getReceiptDate(), counter++);
+                        currentFixup.getReceiptDate(), counter);
                 updatedSamples.add(currentFixup.getReceivedSample().getSampleKey());
             }
             lastDate = currentFixup.getReceiptDate();
         }
 
-        mercurySampleDao.persist(new FixupCommentary(String.format("GPLIM-3487: Added receipt dates for %d samples: %s",
-                updatedSamples.size(), StringUtils.join(updatedSamples, "\n"))));
+        mercurySampleDao.persist(new FixupCommentary(String.format("GPLIM-3487: Added receipt dates for %d samples",
+                updatedSamples.size())));
+        mercurySampleDao.flush();
     }
 
     private List<SampleReceiptFixup> getSamplesToFixup(Map<String, MercurySample> samplesByKey) {
