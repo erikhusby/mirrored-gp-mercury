@@ -275,7 +275,7 @@ public class MercurySampleFixupTest extends Arquillian {
      * For this to run successfully, a VM argument (-Dsamples.received=[full file path]) needs to be added to the
      * JBoss Server when run
      */
-    @Test(groups = TestGroups.FIXUP, enabled = true)
+    @Test(groups = TestGroups.FIXUP, enabled = false)
     public void backfillReceiptForSamples_GPLIM3487() {
         Map<String, MercurySample> nonReceivedSamplesByKey = mercurySampleDao.findNonReceivedCrspSamples();
 
