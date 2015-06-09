@@ -46,6 +46,9 @@ public class MercurySampleSearchDefinition {
         criteriaProjections.add( new ConfigurableSearchDefinition.CriteriaProjection("SampleID",
                 "mercurySampleId", "mercurySampleId", MercurySample.class));
 
+        criteriaProjections.add( new ConfigurableSearchDefinition.CriteriaProjection("mercurySample",
+                "mercurySampleId", "metadata", MercurySample.class));
+
         ConfigurableSearchDefinition configurableSearchDefinition = new ConfigurableSearchDefinition(
                 ColumnEntity.MERCURY_SAMPLE, 100, criteriaProjections, mapGroupSearchTerms);
 
@@ -205,7 +208,7 @@ public class MercurySampleSearchDefinition {
         });
         criteriaPaths = new ArrayList<>();
         criteriaPath = new SearchTerm.CriteriaPath();
-        criteriaPath.setCriteria(Arrays.asList("mercurySample", "mercurySamples", "metadata" /* Metadata */));
+        criteriaPath.setCriteria(Arrays.asList("mercurySample", "metadata"));
         criteriaPath.setPropertyNameExpression(new SearchTerm.Evaluator<String>() {
             @Override
             // Defensive coding
@@ -257,7 +260,7 @@ public class MercurySampleSearchDefinition {
         searchTerm.setAddDependentTermsToSearchTermList(Boolean.TRUE);
         criteriaPaths = new ArrayList<>();
         criteriaPath = new SearchTerm.CriteriaPath();
-        criteriaPath.setCriteria(Arrays.asList( "mercurySample", "mercurySamples", "metadata" ));
+        criteriaPath.setCriteria(Arrays.asList("mercurySample", "metadata"));
         criteriaPath.setPropertyName("key");
         criteriaPaths.add(criteriaPath);
         searchTerm.setCriteriaPaths(criteriaPaths);
