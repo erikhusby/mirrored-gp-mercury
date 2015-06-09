@@ -754,7 +754,7 @@ function formatInput(item) {
                 <security:authorizeBlock roles="<%= roles(Developer, PDM, BillingManager) %>">
                     <stripes:param name="selectedProductOrderBusinessKeys" value="${actionBean.editOrder.businessKey}"/>
                     <stripes:submit name="downloadBillingTracker" value="Download Billing Tracker" class="btn"
-                                    style="margin-right:5px;"/>
+                                    style="margin-right:30px;"/>
                 </security:authorizeBlock>
 
                 <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
@@ -770,16 +770,10 @@ function formatInput(item) {
                             </stripes:link>
                         </c:otherwise>
                     </c:choose>
-                    &nbsp;
-                    <c:choose>
-                        <c:when test="${actionBean.productOrderListEntry.billing}">
-                            <span class="badge badge-info">
-                                <%=ProductOrderListEntry.LedgerStatus.BILLING.getDisplayName()%>
-                            </span>
-                            &nbsp;
-                            Upload not allowed while billing is in progress
-                        </c:when>
-                    </c:choose>
+                    <c:if test="${actionBean.productOrderListEntry.billing}">
+                        &#160;
+                        Upload not allowed while billing is in progress
+                    </c:if>
                 </security:authorizeBlock>
 
             </c:if>
@@ -1044,7 +1038,7 @@ function formatInput(item) {
                 </c:when>
                 <c:when test="${actionBean.productOrderListEntry.billing}">
                         <span class="badge badge-info">
-                            <%=ProductOrderListEntry.LedgerStatus.BILLING.getDisplayName()%>
+                            <%=ProductOrderListEntry.LedgerStatus.BILLING_STARTED.getDisplayName()%>
                         </span>
                 </c:when>
                 <c:when test="${actionBean.productOrderListEntry.readyForBilling}">
