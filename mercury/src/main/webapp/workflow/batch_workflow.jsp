@@ -5,6 +5,8 @@
 <stripes:layout-render name="/layout.jsp" pageTitle="Batch Workflow" sectionTitle="Batch Workflow">
     <stripes:layout-component name="content">
         <h3>${actionBean.labBatch.batchName}</h3>
+        ${actionBean.effectiveWorkflowDef.productWorkflowDef.name}, version ${actionBean.effectiveWorkflowDef.version},
+        ${actionBean.effectiveWorkflowDef.effectiveDate}
         <table class="table simple">
             <tr>
                 <th>Workflow Step</th>

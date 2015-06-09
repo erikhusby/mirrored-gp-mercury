@@ -35,7 +35,7 @@ public class BatchWorkflowActionBean extends CoreActionBean {
     private LabBatch labBatch;
 
     /** Fetched from labBatch. */
-    private ProductWorkflowDef workflowDef;
+    private ProductWorkflowDefVersion effectiveWorkflowDef;
 
     /** Posted in form. */
     private LabEventType labEventType;
@@ -58,11 +58,11 @@ public class BatchWorkflowActionBean extends CoreActionBean {
     public Resolution view() {
         if (batchName != null) {
             labBatch = labBatchDao.findByName(batchName);
-            workflowDef = workflowLoader.load().getWorkflowByName(labBatch.getWorkflowName());
-            ProductWorkflowDefVersion effectiveVersion = workflowDef.getEffectiveVersion(labBatch.getCreatedOn());
+            ProductWorkflowDef workflowDef = workflowLoader.load().getWorkflowByName(labBatch.getWorkflowName());
+            effectiveWorkflowDef = workflowDef.getEffectiveVersion(labBatch.getCreatedOn());
             // Set relationship between steps and process
-            effectiveVersion.buildLabEventGraph();
-            workflowEvents = workflowMatcher.match(effectiveVersion, labBatch);
+            effectiveWorkflowDef.buildLabEventGraph();
+            workflowEvents = workflowMatcher.match(effectiveWorkflowDef, labBatch);
         }
         return new ForwardResolution(VIEW_PAGE);
     }
@@ -77,8 +77,9 @@ public class BatchWorkflowActionBean extends CoreActionBean {
         labEvent.setLabBatch(labBatch);
         labBatchDao.flush();
 
-        workflowDef = workflowLoader.load().getWorkflowByName(labBatch.getWorkflowName());
-        workflowEvents = workflowMatcher.match(workflowDef.getEffectiveVersion(labBatch.getCreatedOn()), labBatch);
+        ProductWorkflowDef workflowDef = workflowLoader.load().getWorkflowByName(labBatch.getWorkflowName());
+        effectiveWorkflowDef =  workflowDef.getEffectiveVersion(labBatch.getCreatedOn());
+        workflowEvents = workflowMatcher.match(effectiveWorkflowDef, labBatch);
         return new ForwardResolution(VIEW_PAGE);
     }
 
@@ -90,8 +91,8 @@ public class BatchWorkflowActionBean extends CoreActionBean {
         return labBatch;
     }
 
-    public ProductWorkflowDef getWorkflowDef() {
-        return workflowDef;
+    public ProductWorkflowDefVersion getEffectiveWorkflowDef() {
+        return effectiveWorkflowDef;
     }
 
     public List<WorkflowMatcher.WorkflowEvent> getWorkflowEvents() {

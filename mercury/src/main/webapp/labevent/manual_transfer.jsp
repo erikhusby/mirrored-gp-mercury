@@ -30,6 +30,7 @@
 
         <stripes:form beanclass="${actionBean.class.name}" id="transferForm">
             <c:if test="${not empty actionBean.stationEvent}">
+                ${empty actionBean.workflowStepDef ? '' : actionBean.workflowStepDef.instructions}
                 <stripes:hidden name="stationEvent.eventType" value="${actionBean.stationEvent.eventType}"/>
                 <stripes:hidden name="workflowProcessName" value="${actionBean.workflowProcessName}"/>
                 <stripes:hidden name="workflowStepName" value="${actionBean.workflowStepName}"/>

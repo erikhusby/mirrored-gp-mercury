@@ -974,8 +974,8 @@
     <workflowProcessDefs>
         <name>Clinical Whole Blood Extraction</name>
         <workflowProcessDefVersions>
-            <version>1.0</version>
-            <effectiveDate>2015-04-25T22:04:23.932-04:00</effectiveDate>
+            <version>02</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
             <workflowStepDefs>
                 <name>Prep Reagents</name>
                 <labEventTypes>PREP</labEventTypes>
@@ -1004,6 +1004,8 @@
             <workflowStepDefs>
                 <name>Transfer to microcentrifuge tube</name>
                 <labEventTypes>EXTRACT_BLOOD_TO_MICRO</labEventTypes>
+                <reagentTypes>Proteinase K</reagentTypes>
+                <reagentTypes>Buffer AL</reagentTypes>
                 <instructions>Label one microcentrifuge tube for each sample. Pipet 20ul of proteinase K into the tube.
                     Add 200ul of blood to each microcentrifuge tube.
                     Add 200ul of Buffer AL to each microcentrifuge tube.
@@ -1060,8 +1062,8 @@
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
-                <name>Discard Ethanol</name>
-                <labEventTypes>DISCARD</labEventTypes>
+                <name>Move After Ethanol</name>
+                <labEventTypes>MOVE</labEventTypes>
                 <workflowQualifier>Ethanol</workflowQualifier>
                 <instructions>Place the column in a clean 2ml collection tube and discard the tube with the filtrate.
                 </instructions>
@@ -1083,8 +1085,8 @@
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
-                <name>Discard AW1</name>
-                <labEventTypes>DISCARD</labEventTypes>
+                <name>Move After AW1</name>
+                <labEventTypes>MOVE</labEventTypes>
                 <workflowQualifier>AW1</workflowQualifier>
                 <instructions>Place the column in a clean 2ml collection tube and discard the tube with the filtrate.
                 </instructions>
@@ -1106,23 +1108,23 @@
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
-                <name>Discard AW2</name>
-                <labEventTypes>DISCARD</labEventTypes>
+                <name>Move After AW2</name>
+                <labEventTypes>MOVE</labEventTypes>
                 <workflowQualifier>AW2</workflowQualifier>
                 <instructions>Place the column in a clean 2ml collection tube and discard the tube with the filtrate.
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
-                <name>Centrifuge after AW2 discard</name>
+                <name>Second Centrifuge After AW2</name>
                 <labEventTypes>CENTRIFUGE</labEventTypes>
-                <workflowQualifier>AW2Discard</workflowQualifier>
+                <workflowQualifier>AW2_2</workflowQualifier>
                 <instructions>Spin at full speed for 1 minute.
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
-                <name>Discard AW2 centrifuged</name>
-                <labEventTypes>DISCARD</labEventTypes>
-                <workflowQualifier>AW2Discard</workflowQualifier>
+                <name>Second Move After AW2</name>
+                <labEventTypes>MOVE</labEventTypes>
+                <workflowQualifier>AW2_2</workflowQualifier>
                 <instructions>Place the column in a clean 1.5ml microcentrifuge tube and discard the tube with the filtrate.
                 </instructions>
             </workflowStepDefs>
@@ -1290,8 +1292,8 @@
     <productWorkflowDefs>
         <name>Clinical Whole Blood Extraction</name>
         <productWorkflowDefVersions>
-            <version>1.0</version>
-            <effectiveDate>2015-04-25T22:04:23.932-04:00</effectiveDate>
+            <version>02</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
             <workflowProcessDefs>Clinical Whole Blood Extraction</workflowProcessDefs>
         </productWorkflowDefVersions>
     </productWorkflowDefs>

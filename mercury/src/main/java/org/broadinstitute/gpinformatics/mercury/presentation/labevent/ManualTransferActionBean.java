@@ -66,6 +66,8 @@ public class ManualTransferActionBean extends CoreActionBean {
     private Date workflowEffectiveDate;
     /** Parameter from batch workflow page. */
     private String batchName;
+    /** Loaded based on parameters. */
+    private WorkflowStepDef workflowStepDef;
 
     /** Constructed in the init method. */
     private BettaLIMSMessage bettaLIMSMessage;
@@ -140,9 +142,13 @@ public class ManualTransferActionBean extends CoreActionBean {
 
     @HandlesEvent(CHOOSE_EVENT_TYPE_ACTION)
     public Resolution chooseLabEventType() {
-        WorkflowStepDef workflowStepDef = getWorkflowStepDef();
-        List<String> reagentNames =  labEventType.getReagentNames() == null ? workflowStepDef.getReagentTypes() :
-                Arrays.asList(labEventType.getReagentNames());
+        loadWorkflowStepDef();
+        List<String> reagentNames;
+        if (workflowStepDef != null) {
+            reagentNames = workflowStepDef.getReagentTypes();
+        } else {
+            reagentNames = Arrays.asList(labEventType.getReagentNames());
+        }
         for (String reagentName : reagentNames) {
             ReagentType reagentType = new ReagentType();
             reagentType.setKitType(reagentName);
@@ -205,8 +211,8 @@ public class ManualTransferActionBean extends CoreActionBean {
     }
 
     @Nullable
-    private WorkflowStepDef getWorkflowStepDef() {
-        WorkflowStepDef workflowStepDef = null;
+    private WorkflowStepDef loadWorkflowStepDef() {
+        workflowStepDef = null;
         if (workflowProcessName != null) {
             WorkflowConfig workflowConfig = workflowLoader.load();
             workflowStepDef = workflowConfig.getStep(workflowProcessName, workflowStepName,
@@ -282,7 +288,7 @@ public class ManualTransferActionBean extends CoreActionBean {
     @HandlesEvent(TRANSFER_ACTION)
     public Resolution transfer() {
         // todo jmt handle unique constraint violation, increment disambiguator?
-        WorkflowStepDef workflowStepDef = getWorkflowStepDef();
+        loadWorkflowStepDef();
 
         bettaLIMSMessage.setMode(LabEventFactory.MODE_MERCURY);
         stationEvent.setEventType(labEventType.getName());
@@ -370,5 +376,9 @@ public class ManualTransferActionBean extends CoreActionBean {
 
     public void setBatchName(String batchName) {
         this.batchName = batchName;
+    }
+
+    public WorkflowStepDef getWorkflowStepDef() {
+        return workflowStepDef;
     }
 }
