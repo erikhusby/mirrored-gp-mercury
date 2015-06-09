@@ -1,9 +1,11 @@
 package org.broadinstitute.gpinformatics.infrastructure.columns;
 
-import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
+import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
+import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
+import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
+import org.broadinstitute.gpinformatics.infrastructure.search.SearchTerm;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
@@ -11,10 +13,10 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Builds a dynamically sized table of barcodes based upon lab vessel container geometry
@@ -41,7 +43,7 @@ public abstract class EventVesselPositionPlugin implements ListPlugin {
      */
     @Override
     public List<ConfigurableList.Row> getData(List<?> entityList, ConfigurableList.HeaderGroup headerGroup
-            , Map<String, Object> context) {
+            , SearchContext context) {
         return null;
     }
 
@@ -54,7 +56,7 @@ public abstract class EventVesselPositionPlugin implements ListPlugin {
      */
     @Override
     public abstract ConfigurableList.ResultList getNestedTableData(Object entity, ColumnTabulation columnTabulation
-            , @Nonnull Map<String, Object> context);
+            , @Nonnull SearchContext context);
 
 
     /**
@@ -64,12 +66,12 @@ public abstract class EventVesselPositionPlugin implements ListPlugin {
      * @return
      */
     protected ConfigurableList.ResultList getTargetNestedTableData(LabEvent labEvent
-            , @Nonnull Map<String, Object> context) {
-        VesselContainer containerVessel = findEventTargetContainer( labEvent );
+            , @Nonnull SearchContext context) {
+        VesselContainer containerVessel = findEventTargetContainer(labEvent);
         if( containerVessel == null || containerVessel.getMapPositionToVessel().isEmpty() ) {
             return null;
         }
-        populatePositionLabelMaps( containerVessel );
+        populatePositionLabelMaps( containerVessel, context );
         ConfigurableList.ResultList resultList = buildResultList();
         return resultList;
     }
@@ -81,18 +83,22 @@ public abstract class EventVesselPositionPlugin implements ListPlugin {
      * @return
      */
     protected ConfigurableList.ResultList getSourceNestedTableData(LabEvent labEvent
-            , @Nonnull Map<String, Object> context) {
+            , @Nonnull SearchContext context) {
 
-        // Ignore source vessels for in-place events
+        // If destination layout is selected, ignore source vessels for in-place events
         if( labEvent.getInPlaceLabVessel() != null ) {
-            return null;
+            SearchInstance searchInstance = context.getSearchInstance();
+            List<String> displayColumnNames = searchInstance.getPredefinedViewColumns();
+            if( displayColumnNames.contains("Destination Layout")) {
+                return null;
+            }
         }
 
         VesselContainer containerVessel = findEventSourceContainer( labEvent );
         if( containerVessel == null || containerVessel.getMapPositionToVessel().isEmpty() ) {
             return null;
         }
-        populatePositionLabelMaps( containerVessel );
+        populatePositionLabelMaps( containerVessel, context );
         ConfigurableList.ResultList resultList = buildResultList();
         return resultList;
     }
@@ -130,7 +136,14 @@ public abstract class EventVesselPositionPlugin implements ListPlugin {
      * Builds and populates the data structures for the container positions
      * @param containerVessel
      */
-    private void populatePositionLabelMaps(VesselContainer containerVessel) {
+    private void populatePositionLabelMaps(VesselContainer containerVessel, SearchContext context) {
+
+        // Hold previously set context values
+        SearchTerm originalTerm = context.getSearchTerm();
+        String delimiter =  context.getMultiValueDelimiter();
+        context.setMultiValueDelimiter(", ");
+
+        List<SearchTerm> parentTermsToDisplay = getParentTermsToDisplay( context );
 
         positionLabelMap = new HashMap<>();
         geometry = containerVessel.getEmbedder().getVesselGeometry();
@@ -142,9 +155,18 @@ public abstract class EventVesselPositionPlugin implements ListPlugin {
             if( labVessel != null ) {
                 valueHolder.append("Vessel Barcode: ")
                         .append(labVessel.getLabel());
-                appendAncestorSampleData( labVessel, valueHolder );
+
+                appendDataForParentTerms(labVessel, valueHolder, parentTermsToDisplay, context);
             }
-            positionLabelMap.put(vesselPosition, valueHolder.toString() );
+            positionLabelMap.put(vesselPosition, valueHolder.toString());
+        }
+
+        // Restore previously set context values
+        if( delimiter != null ) {
+            context.setMultiValueDelimiter(delimiter);
+        }
+        if( originalTerm != null ){
+            context.setSearchTerm(originalTerm);
         }
 
         resultMatrix = new VesselPosition[geometry.getRowCount()][geometry.getColumnCount()];
@@ -157,36 +179,77 @@ public abstract class EventVesselPositionPlugin implements ListPlugin {
     }
 
     /**
-     * Appends any available ancestor lab vessel collaborator patient IDs to display.
+     * User can select terms which are also displayed in the vessel position cells
+     * @param context
+     * @return
+     */
+    private List<SearchTerm> getParentTermsToDisplay( SearchContext context ) {
+        // Logic is tied to context values ...
+        SearchInstance searchInstance = context.getSearchInstance();
+        ColumnEntity columnEntity = context.getColumnEntityType();
+        SearchTerm thisSearchTerm = context.getSearchTerm();
+
+        List<SearchTerm> parentTermsToDisplay = new ArrayList<>();
+
+        // Build a list of user selected columns
+        List<String> displayColumnNames = new ArrayList<>();
+        for( String displayColumnName : searchInstance.getPredefinedViewColumns() ) {
+            displayColumnNames.add(displayColumnName);
+        }
+        // Add search values to the list
+        for(SearchInstance.SearchValue searchValue : searchInstance.getSearchValues()) {
+            if( searchValue.getIncludeInResults()) {
+                displayColumnNames.add(searchValue.getName());
+            }
+        }
+
+        ConfigurableSearchDefinition configurableSearchDefinition = SearchDefinitionFactory.getForEntity( columnEntity.getEntityName() );
+
+        // Find the parent terms this plugin handles
+        for( String columnName : displayColumnNames ){
+            SearchTerm selectedParentSearchTerm = configurableSearchDefinition.getSearchTerm(columnName);
+            if( thisSearchTerm.isParentTermHandledByChild(selectedParentSearchTerm)){
+                parentTermsToDisplay.add(selectedParentSearchTerm);
+            }
+        }
+
+        return parentTermsToDisplay;
+    }
+
+    /**
+     * Appends parent data handled in nested table to displayed position cell.
      * @param labVessel
      * @param valueHolder
      */
-    private void appendAncestorSampleData( LabVessel labVessel, StringBuilder valueHolder ) {
-        boolean foundOne = false;
-        for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
-            MercurySample sample = sampleInstanceV2.getRootOrEarliestMercurySample();
-            if( sample == null ) {
-                return;
-            }
-
-            Set<Metadata> metadata = sample.getMetadata();
-            if( metadata == null || metadata.isEmpty() ) {
-                return;
-            }
-
-            // Find collaborator sample
-            for( Metadata meta : metadata ) {
-                if( meta.getKey() == Metadata.Key.PATIENT_ID ){
-                    valueHolder.append( (foundOne?", ":" \nCollaborator Patient ID(s): [") )
-                            .append(meta.getValue());
-                    foundOne = true;
+    private void appendDataForParentTerms(LabVessel labVessel, StringBuilder valueHolder,
+                                          List<SearchTerm> parentTermsToDisplay, SearchContext context) {
+        for( SearchTerm parentTerm : parentTermsToDisplay ) {
+            // Need if sample metadata is included in selection
+            context.setSearchTerm(parentTerm);
+            Object value = parentTerm.getDisplayValueExpression().evaluate(labVessel, context );
+            valueHolder.append("\n")
+                    .append(parentTerm.getName())
+                    .append(": ");
+            if( value instanceof Collection ){
+                Collection multiVal = (Collection)value;
+                if( multiVal.isEmpty() ) {
+                    valueHolder.append("[No Data]");
+                } else {
+                    valueHolder.append("[")
+                            .append(parentTerm.evalFormattedExpression(multiVal, context))
+                            .append("]");
+                }
+            } else {
+                if (value == null || value.toString().isEmpty()) {
+                    valueHolder.append("[No Data]");
+                } else {
+                    valueHolder.append("[")
+                            .append(parentTerm.evalFormattedExpression(value, context))
+                            .append("]");
                 }
             }
         }
 
-        if( foundOne ) {
-            valueHolder.append("]");
-        }
     }
 
 

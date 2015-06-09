@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
 import org.broadinstitute.gpinformatics.infrastructure.columns.EventVesselSourcePositionPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.EventVesselTargetPositionPlugin;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
@@ -14,7 +15,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToVesselTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -40,7 +41,18 @@ public class LabEventSearchDefinition {
     public ConfigurableSearchDefinition buildSearchDefinition() {
         Map<String, List<SearchTerm>> mapGroupSearchTerms = new LinkedHashMap<>();
 
-        List<SearchTerm> searchTerms = buildLabEventBatch();
+        // Need references to source and destination nested table search terms to add parent terms to handle
+        SearchTerm sourceLayoutTerm = new SearchTerm();
+        sourceLayoutTerm.setName("Source Layout");
+        sourceLayoutTerm.setIsNestedParent(Boolean.TRUE);
+        sourceLayoutTerm.setPluginClass(EventVesselSourcePositionPlugin.class);
+
+        SearchTerm destinationLayoutTerm = new SearchTerm();
+        destinationLayoutTerm.setName("Destination Layout");
+        destinationLayoutTerm.setIsNestedParent(Boolean.TRUE);
+        destinationLayoutTerm.setPluginClass(EventVesselTargetPositionPlugin.class);
+
+        List<SearchTerm> searchTerms = buildLabEventBatch(sourceLayoutTerm, destinationLayoutTerm);
         mapGroupSearchTerms.put("Lab Batch", searchTerms);
 
         searchTerms = buildLabEventIds();
@@ -52,7 +64,12 @@ public class LabEventSearchDefinition {
         searchTerms = buildLabEventReagents();
         mapGroupSearchTerms.put("Reagents", searchTerms);
 
+        searchTerms = buildEventSampleOptions( sourceLayoutTerm, destinationLayoutTerm );
+        mapGroupSearchTerms.put("Sample Metadata", searchTerms);
+
         searchTerms = buildLabEventNestedTables();
+        searchTerms.add(sourceLayoutTerm);
+        searchTerms.add(destinationLayoutTerm);
         mapGroupSearchTerms.put("Nested Data", searchTerms);
 
         List<ConfigurableSearchDefinition.CriteriaProjection> criteriaProjections = new ArrayList<>();
@@ -117,7 +134,7 @@ public class LabEventSearchDefinition {
         searchTerm.setCriteriaPaths(criteriaPaths);
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public Long evaluate(Object entity, Map<String, Object> context) {
+            public Long evaluate(Object entity, SearchContext context) {
                 LabEvent labEvent = (LabEvent) entity;
                 return labEvent.getLabEventId();
             }
@@ -135,7 +152,7 @@ public class LabEventSearchDefinition {
         searchTerm.setCriteriaPaths(criteriaPaths);
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public Date evaluate(Object entity, Map<String, Object> context) {
+            public Date evaluate(Object entity, SearchContext context) {
                 LabEvent labEvent = (LabEvent) entity;
                 return labEvent.getEventDate();
             }
@@ -153,16 +170,15 @@ public class LabEventSearchDefinition {
         searchTerm.setCriteriaPaths(criteriaPaths);
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public String evaluate(Object entity, Map<String, Object> context) {
+            public String evaluate(Object entity, SearchContext context) {
                 LabEvent labEvent = (LabEvent) entity;
                 return labEvent.getEventLocation();
             }
         });
         searchTerm.setConstrainedValuesExpression(new SearchTerm.Evaluator<List<ConstrainedValue>>() {
             @Override
-            public List<ConstrainedValue> evaluate(Object entity, Map<String, Object> context) {
-                ConstrainedValueDao constrainedValueDao =
-                        (ConstrainedValueDao) context.get(SearchInstance.CONTEXT_KEY_OPTION_VALUE_DAO);
+            public List<ConstrainedValue> evaluate(Object entity, SearchContext context) {
+                ConstrainedValueDao constrainedValueDao = context.getOptionValueDao();
                 return constrainedValueDao.getLabEventLocationOptionList();
             }
         });
@@ -177,8 +193,8 @@ public class LabEventSearchDefinition {
         searchTerm.setCriteriaPaths(criteriaPaths);
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public String evaluate(Object entity, Map<String, Object> context) {
-                BSPUserList bspUserList = (BSPUserList)context.get(SearchInstance.CONTEXT_KEY_BSP_USER_LIST);
+            public String evaluate(Object entity, SearchContext context) {
+                BSPUserList bspUserList = context.getBspUserList();
                 LabEvent labEvent = (LabEvent) entity;
                 Long userId = labEvent.getEventOperator();
                 BspUser bspUser = bspUserList.getById(userId);
@@ -192,16 +208,15 @@ public class LabEventSearchDefinition {
         searchTerm.setConstrainedValuesExpression(new SearchTerm.Evaluator<List<ConstrainedValue>>() {
             // Pick actual users out of lab events
             @Override
-            public List<ConstrainedValue> evaluate(Object entity, Map<String, Object> context) {
-                ConstrainedValueDao constrainedValueDao =
-                        (ConstrainedValueDao) context.get(SearchInstance.CONTEXT_KEY_OPTION_VALUE_DAO);
+            public List<ConstrainedValue> evaluate(Object entity, SearchContext context) {
+                ConstrainedValueDao constrainedValueDao = context.getOptionValueDao();
                 return constrainedValueDao.getLabEventUserNameList();
             }
         });
         searchTerm.setSearchValueConversionExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public Long evaluate(Object entity, Map<String, Object> context) {
-                return Long.valueOf( (String) context.get(SearchInstance.CONTEXT_KEY_SEARCH_STRING));
+            public Long evaluate(Object entity, SearchContext context) {
+                return Long.valueOf( context.getSearchValueString());
             }
         });
         searchTerms.add(searchTerm);
@@ -216,7 +231,7 @@ public class LabEventSearchDefinition {
         searchTerm.setCriteriaPaths(criteriaPaths);
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public String evaluate(Object entity, Map<String, Object> context) {
+            public String evaluate(Object entity, SearchContext context) {
                 LabEvent labEvent = (LabEvent) entity;
                 return labEvent.getLabEventType().getName();
             }
@@ -234,10 +249,8 @@ public class LabEventSearchDefinition {
         criteriaPaths.add(criteriaPath);
         searchTerm.setCriteriaPaths(criteriaPaths);
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
-            //private BSPUserList bspUserList = ServiceAccessUtility.getBean(BSPUserList.class);
-
             @Override
-            public String evaluate(Object entity, Map<String, Object> context) {
+            public String evaluate(Object entity, SearchContext context) {
                 LabEvent labEvent = (LabEvent) entity;
                 String programName = labEvent.getProgramName();
                 return (programName == null ? "" : programName);
@@ -246,9 +259,8 @@ public class LabEventSearchDefinition {
         });
         searchTerm.setConstrainedValuesExpression(new SearchTerm.Evaluator<List<ConstrainedValue>>() {
             @Override
-            public List<ConstrainedValue> evaluate(Object entity, Map<String, Object> context) {
-                ConstrainedValueDao constrainedValueDao =
-                        (ConstrainedValueDao) context.get(SearchInstance.CONTEXT_KEY_OPTION_VALUE_DAO);
+            public List<ConstrainedValue> evaluate(Object entity, SearchContext context) {
+                ConstrainedValueDao constrainedValueDao = context.getOptionValueDao();
                 return constrainedValueDao.getLabEventProgramNameList();
             }
         });
@@ -270,7 +282,7 @@ public class LabEventSearchDefinition {
         parentSearchTerm.setIsNestedParent(Boolean.TRUE);
         parentSearchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public Collection<Reagent> evaluate(Object entity, Map<String, Object> context) {
+            public Collection<Reagent> evaluate(Object entity, SearchContext context) {
                 LabEvent labEvent = (LabEvent) entity;
                 return labEvent.getReagents();
             }
@@ -286,7 +298,7 @@ public class LabEventSearchDefinition {
         searchTerm.setCriteriaPaths(criteriaPaths);
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public String evaluate(Object entity, Map<String, Object> context) {
+            public String evaluate(Object entity, SearchContext context) {
                 Reagent reagent = (Reagent) entity;
                 return ( reagent.getName()==null?"":reagent.getName() );
             }
@@ -302,7 +314,7 @@ public class LabEventSearchDefinition {
         searchTerm.setCriteriaPaths(criteriaPaths);
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public String evaluate(Object entity, Map<String, Object> context) {
+            public String evaluate(Object entity, SearchContext context) {
                 Reagent reagent = (Reagent) entity;
                 return ( reagent.getLot()==null?"":reagent.getLot() );
             }
@@ -318,26 +330,13 @@ public class LabEventSearchDefinition {
         searchTerm.setCriteriaPaths(criteriaPaths);
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public Date evaluate(Object entity, Map<String, Object> context) {
+            public Date evaluate(Object entity, SearchContext context) {
                 Reagent reagent = (Reagent) entity;
                 return reagent.getExpiration();
             }
         });
         searchTerm.setValueType(ColumnValueType.DATE);
         parentSearchTerm.addNestedEntityColumn(searchTerm);
-
-        parentSearchTerm = new SearchTerm();
-        parentSearchTerm.setName("Source Layout");
-        parentSearchTerm.setIsNestedParent(Boolean.TRUE);
-        parentSearchTerm.setPluginClass(EventVesselSourcePositionPlugin.class);
-        searchTerms.add(parentSearchTerm);
-
-        parentSearchTerm = new SearchTerm();
-        parentSearchTerm.setName("Destination Layout");
-        parentSearchTerm.setIsNestedParent(Boolean.TRUE);
-        parentSearchTerm.setPluginClass(EventVesselTargetPositionPlugin.class);
-        searchTerms.add(parentSearchTerm);
-
 
         return searchTerms;
     }
@@ -353,7 +352,7 @@ public class LabEventSearchDefinition {
         searchTerm.setName("Reagent Type");
         searchTerm.setDisplayValueExpression( new SearchTerm.Evaluator<Object>() {
             @Override
-            public List<String> evaluate(Object entity, Map<String, Object> context) {
+            public List<String> evaluate(Object entity, SearchContext context) {
                 LabEvent labEvent = (LabEvent)entity;
                 List<String> reagents = new ArrayList<>();
                 for (Reagent reagent : labEvent.getReagents()) {
@@ -381,7 +380,7 @@ public class LabEventSearchDefinition {
         searchTerm.setCriteriaPaths(criteriaPaths);
         searchTerm.setDisplayValueExpression( new SearchTerm.Evaluator<Object>() {
             @Override
-            public List<String> evaluate(Object entity, Map<String, Object> context) {
+            public List<String> evaluate(Object entity, SearchContext context) {
                 LabEvent labEvent = (LabEvent)entity;
                 List<String> reagents = new ArrayList<>();
                 for (Reagent reagent : labEvent.getReagents()) {
@@ -403,7 +402,7 @@ public class LabEventSearchDefinition {
         searchTerm.setCriteriaPaths(criteriaPaths);
         searchTerm.setDisplayValueExpression( new SearchTerm.Evaluator<Object>() {
             @Override
-            public List<Date> evaluate(Object entity, Map<String, Object> context) {
+            public List<Date> evaluate(Object entity, SearchContext context) {
                 LabEvent labEvent = (LabEvent)entity;
                 List<Date> reagents = new ArrayList<>();
                 for (Reagent reagent : labEvent.getReagents()) {
@@ -417,7 +416,85 @@ public class LabEventSearchDefinition {
         return searchTerms;
     }
 
-    private List<SearchTerm> buildLabEventBatch() {
+    /**
+     * Mercury sample metadata values
+     * These are displayed in both results row and source and/or destination layouts (if selected)
+     *
+     * @return List of search terms/column definitions for lab event vessel samples
+     */
+    private List<SearchTerm> buildEventSampleOptions( SearchTerm... nestedTableTerms ) {
+        List<SearchTerm> searchTerms = new ArrayList<>();
+
+        SearchTerm searchTerm = new SearchTerm();
+        searchTerm.setName("Sample Tube Barcode");
+        searchTerm.setHelpText("Value(s) will appear in both the result row and source and/or destination layout positions.");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Set<String> evaluate(Object entity, SearchContext context) {
+                // Has to handle LabEvent from parent term and LabVessel from nested table
+                LabVessel labVessel;
+                LabEvent labEvent;
+
+                Set<String> results = new HashSet<>();
+
+                if( entity instanceof LabEvent ) {
+                    labEvent = (LabEvent) entity;
+                    labVessel = labEvent.getInPlaceLabVessel();
+                    if (labVessel == null) {
+                        for( LabVessel srcVessel : labEvent.getSourceLabVessels() ) {
+                            addSampleLabelsFromVessel( srcVessel, results );
+                        }
+                        return results;
+                    }
+                } else {
+                    labVessel = (LabVessel) entity;
+                }
+
+                if (labVessel != null) {
+                    addSampleLabelsFromVessel( labVessel, results );
+                }
+
+                return results;
+            }
+
+            private void addSampleLabelsFromVessel( LabVessel labVessel, Set<String> results ){
+                if (labVessel != null) {
+                    for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+                        if(sampleInstanceV2.getRootOrEarliestMercurySample() != null){
+                            for (LabVessel rootSampleVessel : sampleInstanceV2.getRootOrEarliestMercurySample()
+                                    .getLabVessel()) {
+                                results.add(rootSampleVessel.getLabel());
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        // Sample Tube Barcode also handled by source/destination layout nested table cell display
+        for( SearchTerm nestedTableTerm : nestedTableTerms ) {
+            nestedTableTerm.addParentTermHandledByChild(searchTerm);
+        }
+        searchTerms.add(searchTerm);
+
+        SearchDefinitionFactory.SampleMetadataDisplayExpression sampleMetadataDisplayExpression = new SearchDefinitionFactory.SampleMetadataDisplayExpression();
+        for (Metadata.Key meta : Metadata.Key.values()) {
+            if (meta.getCategory() == Metadata.Category.SAMPLE) {
+                searchTerm = new SearchTerm();
+                searchTerm.setName(meta.getDisplayName());
+                searchTerm.setHelpText("Value(s) will appear in both the result row and source and/or destination layout positions.");
+                searchTerm.setDisplayValueExpression(sampleMetadataDisplayExpression);
+                // These also handled by source/destination layout nested table cell display
+                for( SearchTerm nestedTableTerm : nestedTableTerms ) {
+                    nestedTableTerm.addParentTermHandledByChild(searchTerm);
+                }
+                searchTerms.add(searchTerm);
+            }
+        }
+
+        return searchTerms;
+    }
+
+    private List<SearchTerm> buildLabEventBatch( SearchTerm... nestedTableTerms ) {
         List<SearchTerm> searchTerms = new ArrayList<>();
 
         SearchTerm searchTerm = new SearchTerm();
@@ -425,13 +502,15 @@ public class LabEventSearchDefinition {
         searchTerm.setSearchValueConversionExpression(SearchDefinitionFactory.getPdoInputConverter());
         List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
         SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
-        criteriaPath.setCriteria(Arrays.asList(/* LabEvent*/ "inPlaceLabEvents", /* LabVessel */ "bucketEntries", /* BucketEntry */ "productOrder" /* ProductOrder */));
+        criteriaPath.setCriteria(
+                Arrays.asList(/* LabEvent*/ "inPlaceLabEvents", /* LabVessel */ "bucketEntries", /* BucketEntry */
+                        "productOrder" /* ProductOrder */));
         criteriaPath.setPropertyName("jiraTicketKey");
         criteriaPaths.add(criteriaPath);
         searchTerm.setCriteriaPaths(criteriaPaths);
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public Set<String> evaluate(Object entity, Map<String, Object> context) {
+            public Set<String> evaluate(Object entity, SearchContext context) {
                 LabEvent labEvent = (LabEvent) entity;
                 Set<String> productNames = new HashSet<String>();
                 LabVessel labVessel = labEvent.getInPlaceLabVessel();
@@ -471,7 +550,7 @@ public class LabEventSearchDefinition {
         searchTerm.setCriteriaPaths(criteriaPaths);
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public Set<String> evaluate(Object entity, Map<String, Object> context) {
+            public Set<String> evaluate(Object entity, SearchContext context) {
                 LabEvent labEvent = (LabEvent) entity;
                 Set<String> lcSetNames = new HashSet<>();
 
@@ -523,6 +602,10 @@ public class LabEventSearchDefinition {
 
         searchTerm = new SearchTerm();
         searchTerm.setName("Mercury Sample ID");
+        searchTerm.setHelpText("This term searches for events that involve vessels with a sample barcode. Use traversal checkboxes to see other events in the chain of custody.");
+        for( SearchTerm nestedTableTerm : nestedTableTerms ) {
+            nestedTableTerm.addParentTermHandledByChild(searchTerm);
+        }
         criteriaPaths = new ArrayList<>();
         criteriaPath = new SearchTerm.CriteriaPath();
         criteriaPath.setCriteria(Arrays.asList("mercurySample", "mercurySamples"));
@@ -531,15 +614,32 @@ public class LabEventSearchDefinition {
         searchTerm.setCriteriaPaths(criteriaPaths);
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public List<String> evaluate(Object entity, Map<String, Object> context) {
-                LabEvent labEvent = (LabEvent) entity;
-                List<String> results = new ArrayList<>();
+            public Set<String> evaluate(Object entity, SearchContext context) {
 
-                // todo jmt this needs to do more than in place, and it needs to get sample instances
-                LabVessel labVessel = labEvent.getInPlaceLabVessel();
+                // Has to handle LabEvent from parent term and LabVessel from nested table
+                LabVessel labVessel;
+                LabEvent labEvent;
+
+                Set<String> results = new HashSet<>();
+
+                if( entity instanceof LabEvent ) {
+                    labEvent = (LabEvent) entity;
+                    labVessel = labEvent.getInPlaceLabVessel();
+                    if (labVessel == null) {
+                        for( LabVessel srcVessel : labEvent.getSourceLabVessels() ) {
+                            for( SampleInstanceV2 sample : srcVessel.getSampleInstancesV2()) {
+                                results.add(sample.getRootOrEarliestMercurySampleName());
+                            }
+                        }
+                        return results;
+                    }
+                } else {
+                    labVessel = (LabVessel) entity;
+                }
+
                 if (labVessel != null) {
-                    for (MercurySample sample : labVessel.getMercurySamples()) {
-                        results.add(sample.getSampleKey());
+                    for( SampleInstanceV2 sample : labVessel.getSampleInstancesV2()) {
+                        results.add(sample.getRootOrEarliestMercurySampleName());
                     }
                 }
                 return results;
@@ -581,7 +681,7 @@ public class LabEventSearchDefinition {
         searchTerm.setCriteriaPaths(criteriaPaths);
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public List<String> evaluate(Object entity, Map<String, Object> context) {
+            public List<String> evaluate(Object entity, SearchContext context) {
                 LabEvent labEvent = (LabEvent) entity;
                 List<String> results = new ArrayList<>();
                 LabVessel inPlaceLabVessel = labEvent.getInPlaceLabVessel();
@@ -738,7 +838,7 @@ public class LabEventSearchDefinition {
         searchTerm.setName("Source Lab Vessel Type");
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public String evaluate(Object entity, Map<String, Object> context) {
+            public String evaluate(Object entity, SearchContext context) {
                 return findEventSourceContainerType((LabEvent) entity);
             }
         });
@@ -748,7 +848,7 @@ public class LabEventSearchDefinition {
         searchTerm.setName("Source Barcode");
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public List<String> evaluate(Object entity, Map<String, Object> context) {
+            public List<String> evaluate(Object entity, SearchContext context) {
                 List<String> results = new ArrayList<>();
                 LabEvent labEvent = (LabEvent) entity;
 
@@ -787,7 +887,7 @@ public class LabEventSearchDefinition {
         searchTerm.setName("Destination Lab Vessel Type");
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public String evaluate(Object entity, Map<String, Object> context) {
+            public String evaluate(Object entity, SearchContext context) {
                 return findEventTargetContainerType( (LabEvent) entity );
             }
         });
@@ -797,7 +897,7 @@ public class LabEventSearchDefinition {
         searchTerm.setName("Destination Barcode");
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public List<String> evaluate(Object entity, Map<String, Object> context) {
+            public List<String> evaluate(Object entity, SearchContext context) {
                 List<String> results = new ArrayList<>();
                 LabEvent labEvent = (LabEvent) entity;
 
