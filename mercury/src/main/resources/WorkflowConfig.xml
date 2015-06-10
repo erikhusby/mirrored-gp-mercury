@@ -1062,7 +1062,7 @@
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
-                <name>Move After Ethanol</name>
+                <name>Move Column After Ethanol</name>
                 <labEventTypes>MOVE</labEventTypes>
                 <workflowQualifier>Ethanol</workflowQualifier>
                 <instructions>Place the column in a clean 2ml collection tube and discard the tube with the filtrate.
@@ -1085,7 +1085,7 @@
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
-                <name>Move After AW1</name>
+                <name>Move Column After AW1</name>
                 <labEventTypes>MOVE</labEventTypes>
                 <workflowQualifier>AW1</workflowQualifier>
                 <instructions>Place the column in a clean 2ml collection tube and discard the tube with the filtrate.
@@ -1108,7 +1108,7 @@
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
-                <name>Move After AW2</name>
+                <name>Move Column After AW2</name>
                 <labEventTypes>MOVE</labEventTypes>
                 <workflowQualifier>AW2</workflowQualifier>
                 <instructions>Place the column in a clean 2ml collection tube and discard the tube with the filtrate.
@@ -1122,7 +1122,7 @@
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
-                <name>Second Move After AW2</name>
+                <name>Second Move Column After AW2</name>
                 <labEventTypes>MOVE</labEventTypes>
                 <workflowQualifier>AW2_2</workflowQualifier>
                 <instructions>Place the column in a clean 1.5ml microcentrifuge tube and discard the tube with the filtrate.
