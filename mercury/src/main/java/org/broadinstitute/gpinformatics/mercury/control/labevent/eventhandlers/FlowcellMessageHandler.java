@@ -135,8 +135,8 @@ public class FlowcellMessageHandler extends AbstractEventHandler {
 
         if (flowcellBatches.size() > 1) {
             if (flowcell.getFlowcellType() == IlluminaFlowcell.FlowcellType.MiSeqFlowcell) {
-                String emptyBatchListMessage = "There are two many MiSeq Flowcell batch tickets for " +
-                                                     flowcell.getLabel() + " to determine which one to update";
+                String emptyBatchListMessage = "There are too many MiSeq Flowcell batch tickets for " +
+                        flowcell.getLabel() + " to determine which one to update";
                 logger.error(emptyBatchListMessage);
                 emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(),
                         "[Mercury] Failed update FCT Ticket", emptyBatchListMessage);
