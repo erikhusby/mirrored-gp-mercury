@@ -267,8 +267,11 @@ public class LabEventTest extends BaseEventTest {
                                                           hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(),
                                                           "1");
 
+        LabVessel denatureSource =
+                qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
+        LabBatch fctBatch = new LabBatch(FCT_TICKET, Collections.singleton(denatureSource), LabBatch.LabBatchType.FCT);
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
-                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1", null,
+                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1", FCT_TICKET,
                                             ProductionFlowcellPath.STRIPTUBE_TO_FLOWCELL, "Squid Designation",
                                             Workflow.HYBRID_SELECTION);
 
@@ -888,8 +891,11 @@ public class LabEventTest extends BaseEventTest {
                                                                hybridSelectionEntityBuilder2.getNormCatchBarcodes(),
                                                                hybridSelectionEntityBuilder2
                                                                        .getMapBarcodeToNormCatchTubes(), "2");
+            LabVessel denatureSource =
+                    qtpEntityBuilder2.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
+            LabBatch fctBatch = new LabBatch(FCT_TICKET, Collections.singleton(denatureSource), LabBatch.LabBatchType.FCT);
             HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder2 =
-                    runHiSeq2500FlowcellProcess(qtpEntityBuilder2.getDenatureRack(), "2" + "ADXX", null,
+                    runHiSeq2500FlowcellProcess(qtpEntityBuilder2.getDenatureRack(), "2" + "ADXX", FCT_TICKET,
                             ProductionFlowcellPath.STRIPTUBE_TO_FLOWCELL, "squidDesignationName",
                             Workflow.AGILENT_EXOME_EXPRESS);
 
@@ -905,8 +911,11 @@ public class LabEventTest extends BaseEventTest {
                                                               hybridSelectionEntityBuilder.getNormCatchBarcodes(),
                                                               hybridSelectionEntityBuilder
                                                                       .getMapBarcodeToNormCatchTubes(), "1");
+            denatureSource =
+                    qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
+            fctBatch = new LabBatch(FCT_TICKET, Collections.singleton(denatureSource), LabBatch.LabBatchType.FCT);
             HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
-                    runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1" + "ADXX", null,
+                    runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1" + "ADXX", FCT_TICKET,
                                                 ProductionFlowcellPath.STRIPTUBE_TO_FLOWCELL, "squidDesignationName",
                                                 Workflow.AGILENT_EXOME_EXPRESS);
 
@@ -1313,8 +1322,11 @@ public class LabEventTest extends BaseEventTest {
                 runQtpProcess(sageEntityBuilder.getSageCleanupRack(), sageEntityBuilder.getSageCleanupTubeBarcodes(),
                               sageEntityBuilder.getMapBarcodeToSageUnloadTubes(), "1");
 
+        LabVessel denatureSource =
+                qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
+        LabBatch fctBatch = new LabBatch(FCT_TICKET, Collections.singleton(denatureSource), LabBatch.LabBatchType.FCT);
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
-                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1", null,
+                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1", FCT_TICKET,
                                             ProductionFlowcellPath.STRIPTUBE_TO_FLOWCELL, "Squid Designation",
                                             Workflow.WHOLE_GENOME);
 

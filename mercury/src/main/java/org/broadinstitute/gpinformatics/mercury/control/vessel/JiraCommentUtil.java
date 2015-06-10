@@ -111,7 +111,8 @@ public class JiraCommentUtil {
         Set<JiraTicket> tickets = new HashSet<>();
         for (LabVessel vessel : vessels) {
             // For cherry picks, update JIRA only for the tubes that are sources for transfers, not the entire rack.
-            if (vessel.getContainerRole() != null && labEvent != null && !labEvent.getCherryPickTransfers().isEmpty()) {
+            if (vessel.getContainerRole() != null && !vessel.getContainerRole().getContainedVessels().isEmpty() &&
+                    labEvent != null && !labEvent.getCherryPickTransfers().isEmpty()) {
                 for (CherryPickTransfer cherryPickTransfer : labEvent.getCherryPickTransfers()) {
                     if (cherryPickTransfer.getSourceVesselContainer().equals(vessel.getContainerRole())) {
                         accumulateTickets(tickets,

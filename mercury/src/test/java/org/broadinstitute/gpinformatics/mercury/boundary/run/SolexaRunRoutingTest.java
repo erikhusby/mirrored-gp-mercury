@@ -22,6 +22,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.test.BaseEventTest;
@@ -44,6 +45,7 @@ import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.io.File;
 import java.text.SimpleDateFormat;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -53,6 +55,7 @@ import java.util.Map;
 public class SolexaRunRoutingTest extends BaseEventTest {
 
     private static final int NUM_POSITIONS_IN_RACK = 96;
+    public static final String FCT_NAME = "FCT-1";
 
     private final SimpleDateFormat dateFormat = new SimpleDateFormat(IlluminaSequencingRun.RUN_FORMAT_PATTERN);
     private String reagentBlockBarcode;
@@ -110,8 +113,11 @@ public class SolexaRunRoutingTest extends BaseEventTest {
                 runQtpProcess(sageEntityBuilder.getSageCleanupRack(), sageEntityBuilder.getSageCleanupTubeBarcodes(),
                               sageEntityBuilder.getMapBarcodeToSageUnloadTubes(), "1");
 
+        LabVessel denatureSource =
+                qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
+        LabBatch fctBatch = new LabBatch(FCT_NAME, Collections.singleton(denatureSource), LabBatch.LabBatchType.FCT);
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
-                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1", null,
+                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1", FCT_NAME,
                                             ProductionFlowcellPath.STRIPTUBE_TO_FLOWCELL, "designation",
                                             Workflow.WHOLE_GENOME);
 
