@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFa
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchTerm;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
@@ -17,6 +18,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Builds a dynamically sized table of barcodes based upon lab vessel container geometry
@@ -68,7 +70,7 @@ public abstract class EventVesselPositionPlugin implements ListPlugin {
     protected ConfigurableList.ResultList getTargetNestedTableData(LabEvent labEvent
             , @Nonnull SearchContext context) {
         VesselContainer containerVessel = findEventTargetContainer(labEvent);
-        if( containerVessel == null || containerVessel.getMapPositionToVessel().isEmpty() ) {
+        if( containerVessel == null ) {
             return null;
         }
         populatePositionLabelMaps( containerVessel, context );
@@ -94,7 +96,7 @@ public abstract class EventVesselPositionPlugin implements ListPlugin {
             }
         }
 
-        VesselContainer containerVessel = findEventSourceContainer( labEvent );
+        VesselContainer containerVessel = findEventSourceContainer(labEvent);
         if( containerVessel == null || containerVessel.getMapPositionToVessel().isEmpty() ) {
             return null;
         }
@@ -150,14 +152,8 @@ public abstract class EventVesselPositionPlugin implements ListPlugin {
         StringBuilder valueHolder = new StringBuilder();
 
         for (VesselPosition vesselPosition : geometry.getVesselPositions()) {
-            LabVessel labVessel = containerVessel.getVesselAtPosition(vesselPosition);
             valueHolder.setLength(0);
-            if( labVessel != null ) {
-                valueHolder.append("Vessel Barcode: ")
-                        .append(labVessel.getLabel());
-
-                appendDataForParentTerms(labVessel, valueHolder, parentTermsToDisplay, context);
-            }
+            appendDataForParentTerms(containerVessel, vesselPosition, valueHolder, parentTermsToDisplay, context);
             positionLabelMap.put(vesselPosition, valueHolder.toString());
         }
 
@@ -218,20 +214,55 @@ public abstract class EventVesselPositionPlugin implements ListPlugin {
 
     /**
      * Appends parent data handled in nested table to displayed position cell.
-     * @param labVessel
-     * @param valueHolder
+     * @param containerVessel Extract vessel/sample data from positions
+     * @param vesselPosition The position in the container
+     * @param valueHolder Holds cell data accumulated for the vessel position
+     * @param parentTermsToDisplay Collection of parent search result columns which can be displayed in nested table
+     * @param context Values passed along call stack
      */
-    private void appendDataForParentTerms(LabVessel labVessel, StringBuilder valueHolder,
+    private void appendDataForParentTerms(VesselContainer containerVessel, VesselPosition vesselPosition,
+                                          StringBuilder valueHolder,
                                           List<SearchTerm> parentTermsToDisplay, SearchContext context) {
+
+        Object displayValue;
+
+        LabVessel labVessel = containerVessel.getVesselAtPosition(vesselPosition);
+        Set<SampleInstanceV2> samples = null;
+
+        // Vessel barcodes are always displayed
+        if( labVessel != null ) {
+            valueHolder.append("Vessel Barcode: ")
+                    .append(labVessel.getLabel());
+        } else {
+            // Don't bother digging up samples unless some are selected
+            if( !parentTermsToDisplay.isEmpty() ) {
+                samples = containerVessel.getSampleInstancesAtPositionV2(vesselPosition);
+            }
+        }
+
         for( SearchTerm parentTerm : parentTermsToDisplay ) {
             // Need if sample metadata is included in selection
             context.setSearchTerm(parentTerm);
-            Object value = parentTerm.getDisplayValueExpression().evaluate(labVessel, context );
-            valueHolder.append("\n")
-                    .append(parentTerm.getName())
+
+            displayValue = null;
+
+            if( labVessel != null ) {
+                displayValue = parentTerm.getDisplayValueExpression().evaluate(labVessel, context );
+            } else {
+                Collection<String> sampleValues = new ArrayList<>();
+                for( SampleInstanceV2 sample : samples ) {
+                    sampleValues.addAll( (Collection<String>) parentTerm.getDisplayValueExpression().evaluate(sample.getRootOrEarliestMercurySample(), context ) );
+                }
+                displayValue = sampleValues;
+            }
+
+            if(valueHolder.length() > 0 ) {
+                valueHolder.append("\n");
+            }
+            valueHolder.append(parentTerm.getName())
                     .append(": ");
-            if( value instanceof Collection ){
-                Collection multiVal = (Collection)value;
+            if( displayValue instanceof Collection ){
+                Collection multiVal = (Collection)displayValue;
                 if( multiVal.isEmpty() ) {
                     valueHolder.append("[No Data]");
                 } else {
@@ -240,11 +271,11 @@ public abstract class EventVesselPositionPlugin implements ListPlugin {
                             .append("]");
                 }
             } else {
-                if (value == null || value.toString().isEmpty()) {
+                if (displayValue == null || displayValue.toString().isEmpty()) {
                     valueHolder.append("[No Data]");
                 } else {
                     valueHolder.append("[")
-                            .append(parentTerm.evalFormattedExpression(value, context))
+                            .append(parentTerm.evalFormattedExpression(displayValue, context))
                             .append("]");
                 }
             }
