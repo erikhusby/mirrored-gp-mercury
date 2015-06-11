@@ -173,4 +173,9 @@
         </sql>
     </changeSet>
 
+    <changeSet author="breilly" id="GPLIM-3580-1">
+        <addUniqueConstraint tableName="BILLING_LEDGER" constraintName="UK_BILLING_LEDGER" schemaName="athena"
+                             columnNames="PRODUCT_ORDER_SAMPLE_ID, PRICE_ITEM_ID, BILLING_SESSION"/>
+    </changeSet>
+
 </databaseChangeLog>
