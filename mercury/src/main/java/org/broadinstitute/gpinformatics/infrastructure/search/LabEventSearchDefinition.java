@@ -433,13 +433,13 @@ public class LabEventSearchDefinition {
             @Override
             public Set<String> evaluate(Object entity, SearchContext context) {
                 // Has to handle LabEvent from parent term and LabVessel from nested table
-                LabVessel labVessel;
+                LabVessel labVessel = null;
                 LabEvent labEvent;
 
                 Set<String> results = new HashSet<>();
 
-                if( entity instanceof LabEvent ) {
-                    labEvent = (LabEvent) entity;
+                if( OrmUtil.proxySafeIsInstance( entity, LabEvent.class ) ) {
+                    labEvent = OrmUtil.proxySafeCast(entity, LabEvent.class);
                     labVessel = labEvent.getInPlaceLabVessel();
                     if (labVessel == null) {
                         for( LabVessel srcVessel : labEvent.getSourceLabVessels() ) {
@@ -447,9 +447,10 @@ public class LabEventSearchDefinition {
                         }
                         return results;
                     }
-                } else {
-                    labVessel = (LabVessel) entity;
+                } else if( OrmUtil.proxySafeIsInstance( entity, LabVessel.class ) ) {
+                    labVessel = OrmUtil.proxySafeCast(entity, LabVessel.class);
                 }
+                // Else quietly die on null labVessel
 
                 if (labVessel != null) {
                     addSampleLabelsFromVessel( labVessel, results );
@@ -623,8 +624,8 @@ public class LabEventSearchDefinition {
 
                 Set<String> results = new HashSet<>();
 
-                if( entity instanceof LabEvent ) {
-                    labEvent = (LabEvent) entity;
+                if( OrmUtil.proxySafeIsInstance( entity, LabEvent.class ) ) {
+                    labEvent = OrmUtil.proxySafeCast(entity, LabEvent.class);
                     labVessel = labEvent.getInPlaceLabVessel();
                     if (labVessel == null) {
                         for( LabVessel srcVessel : labEvent.getSourceLabVessels() ) {
@@ -634,13 +635,14 @@ public class LabEventSearchDefinition {
                         }
                         return results;
                     }
-                } else if( entity instanceof MercurySample) {
-                    MercurySample mercurySample = (MercurySample) entity;
-                    results.add(mercurySample.getSampleKey());
-                    return results;
-                } else {
-                    labVessel = (LabVessel) entity;
+                } else if( OrmUtil.proxySafeIsInstance( entity, MercurySample.class ) ) {
+                        MercurySample mercurySample = OrmUtil.proxySafeCast(entity, MercurySample.class);
+                        results.add(mercurySample.getSampleKey());
+                        return results;
+                } else if( OrmUtil.proxySafeIsInstance( entity, LabVessel.class ) ) {
+                    labVessel = OrmUtil.proxySafeCast(entity, LabVessel.class);
                 }
+                // Else quietly die on null labVessel...
 
                 if (labVessel != null) {
                     for( SampleInstanceV2 sample : labVessel.getSampleInstancesV2()) {
