@@ -213,7 +213,10 @@ public class SearchDefinitionFactory {
                 // Sample from MercurySample search
                 Set<String> results = new HashSet<>();
                 MercurySample sample = (MercurySample) entity;
-                results.add(getSampleMetadataForDisplay(sample, metaName));
+                String value = getSampleMetadataForDisplay(sample, metaName);
+                if( value != null && !value.isEmpty() ) {
+                    results.add(value);
+                }
                 return results;
             }
         }
