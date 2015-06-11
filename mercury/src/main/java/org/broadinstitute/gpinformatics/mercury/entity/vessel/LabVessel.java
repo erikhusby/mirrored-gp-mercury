@@ -8,6 +8,7 @@ import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
@@ -182,6 +183,14 @@ public abstract class LabVessel implements Serializable {
     @BatchSize(size = 100)
     private Set<MercurySample> mercurySamples = new HashSet<>();
 
+    public Set<VesselToVesselTransfer> getVesselToVesselTransfersThisAsSource() {
+        return vesselToVesselTransfersThisAsSource;
+    }
+
+    public Set<VesselToVesselTransfer> getVesselToVesselTransfersThisAsTarget() {
+        return vesselToVesselTransfersThisAsTarget;
+    }
+
     // todo jmt set these fields db-free
     @OneToMany(mappedBy = "sourceVessel", cascade = CascadeType.PERSIST)
     @BatchSize(size = 100)
@@ -231,23 +240,24 @@ public abstract class LabVessel implements Serializable {
     }
 
     public boolean isDNA() {
-        for (SampleInstanceV2 si : getSampleInstancesV2()) {
-            if (si.getRootOrEarliestMercurySample().getSampleData().getMaterialType().startsWith("DNA")) {
-                return true;
+        boolean willSourceEventsProduceDNA = willSourceEventsProduceDNA();
+        if (!willSourceEventsProduceDNA) {
+            for (SampleInstanceV2 si : getSampleInstancesV2()) {
+                if (si.getRootOrEarliestMercurySample().getSampleData().getMaterialType().startsWith("DNA")) {
+                    return true;
+                }
             }
         }
-
-        return willSourceEventsProduceDNA();
+        return willSourceEventsProduceDNA;
     }
 
     private boolean willSourceEventsProduceDNA() {
         TransferTraverserCriteria.LabEventsWithMaterialTypeTraverserCriteria materialTypeTraverserCriteria =
-                new TransferTraverserCriteria.LabEventsWithMaterialTypeTraverserCriteria(
-                        Collections.singleton(MaterialType.DNA), false);
+                new TransferTraverserCriteria.LabEventsWithMaterialTypeTraverserCriteria(MaterialType.DNA);
 
         evaluateCriteria(materialTypeTraverserCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
 
-        return !materialTypeTraverserCriteria.getVesselsForMaterialType().isEmpty();
+        return materialTypeTraverserCriteria.getVesselForMaterialType() != null;
     }
 
     /**
@@ -636,7 +646,25 @@ public abstract class LabVessel implements Serializable {
         }
     }
 
-    public enum MaterialType {DNA,RNA,FFPE}
+    public enum MaterialType implements Displayable {
+        CELL_SUSPENSION("Cell Suspension"),
+        DNA("DNA"),
+        FFPE("FFPE"),
+        FRESH_BLOOD("Fresh Blood"),
+        FRESH_FROZEN_BLOOD("Fresh Frozen Blood"),
+        RNA("RNA");
+
+        private final String displayName;
+
+        MaterialType(String displayName) {
+            this.displayName = displayName;
+        }
+
+        @Override
+        public String getDisplayName() {
+            return displayName;
+        }
+    }
 
 
     /**
@@ -1041,7 +1069,7 @@ public abstract class LabVessel implements Serializable {
      *
      * @return descendant and events
      */
-    private List<VesselEvent> getDescendants() {
+    protected List<VesselEvent> getDescendants() {
         List<VesselEvent> vesselEvents = new ArrayList<>();
         for (VesselToVesselTransfer vesselToVesselTransfer : vesselToVesselTransfersThisAsSource) {
             vesselEvents.add(new VesselEvent(vesselToVesselTransfer.getTargetVessel(), null, null,

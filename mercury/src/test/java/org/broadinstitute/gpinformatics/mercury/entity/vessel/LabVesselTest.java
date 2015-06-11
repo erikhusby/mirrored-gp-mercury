@@ -1,11 +1,19 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
+import com.google.common.collect.ImmutableMap;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.MetadataType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReagentType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleTransferEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
+import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsObjectFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ChildVesselBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ParentVesselBean;
+import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
@@ -153,5 +161,44 @@ public class LabVesselTest {
         Assert.assertEquals(labVessel.isDNA(), false);
     }
 
+    public static LabEvent doVesselToVesselTransfer(LabVessel sourceVessel,
+                                                    LabVessel destinationVessel,
+                                                    LabVessel.MaterialType sampleMaterialType,
+                                                    LabEventType labEventType,
+                                                    MercurySample.MetadataSource metadataSource,
+                                                    LabEventFactory labEventFactory) {
+        SampleDataTestFactory.getTestMercurySample(sampleMaterialType, metadataSource);
 
+        MercurySample destinationSample =
+                new MercurySample("SM-2", metadataSource);
+        destinationSample.addLabVessel(destinationVessel);
+
+        ReceptacleTransferEventType receptacleTransferEventType = new ReceptacleTransferEventType();
+        receptacleTransferEventType.setEventType(labEventType.getName());
+        receptacleTransferEventType.setOperator("QADudePM");
+        receptacleTransferEventType.setProgram(LabEvent.UI_PROGRAM_NAME);
+        receptacleTransferEventType.setStation(LabEvent.UI_EVENT_LOCATION);
+        receptacleTransferEventType.setDisambiguator(1L);
+        receptacleTransferEventType.setStart(new Date());
+
+
+        ReceptacleType sourceReceptacle = BettaLimsObjectFactory.createReceptacleType(sourceVessel.getLabel(),
+                labEventType.getSourceVesselTypeGeometry().getDisplayName(), "",
+                sampleMaterialType.getDisplayName(), null, null, null,
+                Collections.<ReagentType>emptyList(),
+                Collections.<MetadataType>emptyList());
+        receptacleTransferEventType.setSourceReceptacle(sourceReceptacle);
+
+        ReceptacleType destinationReceptacle = BettaLimsObjectFactory.createReceptacleType(destinationVessel.getLabel(),
+                labEventType.getTargetVesselTypeGeometry().getDisplayName(), "",
+                null, null, null, null,
+                Collections.<ReagentType>emptyList(),
+                Collections.<MetadataType>emptyList());
+        receptacleTransferEventType.setReceptacle(destinationReceptacle);
+
+        Map<String, LabVessel> labVesselMap =
+                ImmutableMap.of(sourceVessel.getLabel(), sourceVessel, destinationVessel.getLabel(), destinationVessel);
+
+        return labEventFactory.buildReceptacleTransferEventDbFree(receptacleTransferEventType, labVesselMap);
+    }
 }

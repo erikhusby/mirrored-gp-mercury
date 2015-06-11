@@ -9,7 +9,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStarting
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -688,19 +687,13 @@ public interface TransferTraverserCriteria {
      * Traverse LabVessels and LabEvents for events producing MaterialTypes
      */
     class LabEventsWithMaterialTypeTraverserCriteria implements TransferTraverserCriteria {
-        private final Collection<LabVessel.MaterialType> materialTypes;
-        private final boolean useTargetVessels;
-        private Map<LabVessel.MaterialType, Set<LabVessel>> vesselsForMaterialType= new HashMap<>();
+        private final LabVessel.MaterialType materialType;
+        private LabVessel vesselForMaterialType = null;
 
-        public LabEventsWithMaterialTypeTraverserCriteria(LabVessel.MaterialType... materialTypes) {
-            this(new HashSet<>(Arrays.asList(materialTypes)), true);
+        public LabEventsWithMaterialTypeTraverserCriteria(LabVessel.MaterialType materialTypes) {
+            this.materialType = materialTypes;
         }
 
-        public LabEventsWithMaterialTypeTraverserCriteria(Collection<LabVessel.MaterialType> materialTypes,
-                                                          boolean useTargetVessels) {
-            this.useTargetVessels = useTargetVessels;
-            this.materialTypes = materialTypes;
-        }
 
         @Override
         public TraversalControl evaluateVesselPreOrder(Context context) {
@@ -710,65 +703,27 @@ public interface TransferTraverserCriteria {
                 evaluateEvent(vessel, event);
             }
             if (vessel != null) {
-                //check all in place events and descendant in place events
-                for (LabEvent inPlaceEvent : vessel.getInPlaceLabEvents()) {
-                    evaluateEvent(vessel, inPlaceEvent);
-                }
-                Collection<LabVessel> traversalVessels;
-                if( context.getTraversalDirection() == TraversalDirection.Ancestors ) {
-                    traversalVessels = vessel.getAncestorVessels();
-                } else {
-                    traversalVessels = vessel.getDescendantVessels();
-                }
-                for (LabVessel traversalVessel : traversalVessels) {
-                    Set<LabEvent> inPlaceEvents = traversalVessel.getInPlaceLabEvents();
-                    for (LabEvent inPlaceEvent : inPlaceEvents) {
-                        evaluateEvent(vessel, inPlaceEvent);
-                    }
-                }
+                evaluateTransfers(context.getTraversalDirection(), vessel);
             }
+
             return TraversalControl.ContinueTraversing;
         }
 
-        private void evaluateEvent(LabVessel vessel, LabEvent event) {
-            LabVessel.MaterialType eventMaterialType = event.getLabEventType().getResultingMaterialType();
-            if (materialTypes.contains(eventMaterialType)) {
-                // If this is in place just add the vessel
-                if (event.getInPlaceLabVessel() != null) {
-                    Set<LabVessel> vessels = vesselsForMaterialType.get(eventMaterialType);
-                    if (vessels == null) {
-                        vessels = new HashSet<>();
-                    }
-                    vessels.add(event.getInPlaceLabVessel());
-                    vesselsForMaterialType.put(eventMaterialType, vessels);
-                }
-                // Otherwise check the target or source vessels
-                Set<LabVessel> labXferVessels;
-                if( useTargetVessels ) {
-                    labXferVessels = event.getTargetLabVessels();
-                } else {
-                    labXferVessels = event.getSourceLabVessels();
-                }
+        private void evaluateTransfers(TraversalDirection traversalDirection, LabVessel vessel) {
+            Set<LabEvent> transferEvents = null;
+            if (traversalDirection == TraversalDirection.Ancestors) {
+                transferEvents = vessel.getTransfersTo();
+            } else {
+                transferEvents = vessel.getTransfersFrom();
+            }
+            for (LabEvent labEvent : transferEvents) {
+                evaluateEvent(vessel, labEvent);
+            }
+        }
 
-                for (LabVessel targetVessel : labXferVessels) {
-                    Set<LabVessel> vessels = vesselsForMaterialType.get(eventMaterialType);
-                    if (vessels == null) {
-                        vessels = new HashSet<>();
-                    }
-                    if (vessel == null) {
-                        vessels.add(targetVessel);
-                        vesselsForMaterialType.put(eventMaterialType, vessels);
-                    } else {
-                        vessels.add(vessel);
-                        //if we are a container and we contain the vessel then add it
-                        if (targetVessel.getContainerRole() != null
-                            && targetVessel.getContainerRole().getContainedVessels().contains(vessel)) {
-                            vesselsForMaterialType.put(eventMaterialType, vessels);
-                        } else if (targetVessel.equals(vessel)) {
-                            vesselsForMaterialType.put(eventMaterialType, vessels);
-                        }
-                    }
-                }
+        private void evaluateEvent(LabVessel vessel, LabEvent event) {
+            if (materialType == event.getLabEventType().getResultingMaterialType() && vesselForMaterialType == null) {
+                vesselForMaterialType = vessel;
             }
         }
 
@@ -780,8 +735,8 @@ public interface TransferTraverserCriteria {
         public void evaluateVesselPostOrder(Context context) {
         }
 
-        public Map<LabVessel.MaterialType, Set<LabVessel>> getVesselsForMaterialType() {
-            return vesselsForMaterialType;
+        public LabVessel getVesselForMaterialType() {
+            return vesselForMaterialType;
         }
     }
 

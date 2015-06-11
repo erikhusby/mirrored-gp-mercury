@@ -1310,7 +1310,7 @@ public class LabEventFactory implements Serializable {
     }
 
     @DaoFree
-    private LabEvent buildReceptacleTransferEventDbFree(ReceptacleTransferEventType receptacleTransferEventType,
+    public LabEvent buildReceptacleTransferEventDbFree(ReceptacleTransferEventType receptacleTransferEventType,
             Map<String, LabVessel> mapBarcodeToVessel) {
         LabEvent labEvent = constructReferenceData(receptacleTransferEventType, labEventRefDataFetcher);
         LabVessel sourceLabVessel = mapBarcodeToVessel.get(receptacleTransferEventType.getSourceReceptacle().getBarcode());

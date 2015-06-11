@@ -1,13 +1,15 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
 import com.google.common.collect.ImmutableSet;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSetVolumeConcentration;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSetVolumeConcentrationProducer;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ParentVesselBean;
+import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactory;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
@@ -15,6 +17,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVesselTest;
 import org.testng.Assert;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.DataProvider;
@@ -58,10 +61,19 @@ public class WorkflowTest {
     private WorkflowProcessDefVersion preLcProcessVersion;
     private WorkflowProcessDef picoProcess;
     private WorkflowProcessDefVersion picoProcessVersion;
+    private LabEventFactory labEventFactory;
+    private LabVesselFactory labVesselFactory;
 
     @BeforeTest
     public void setupWorkflow() {
         workflowConfig = new WorkflowLoader().load();
+        BSPUserList testUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
+        BSPSetVolumeConcentration bspSetVolumeConcentration = BSPSetVolumeConcentrationProducer.stubInstance();
+        labEventFactory = new LabEventFactory(testUserList, bspSetVolumeConcentration);
+
+        labVesselFactory = new LabVesselFactory();
+        labVesselFactory.setBspUserList(testUserList);
+
     }
 
     @Test
@@ -346,16 +358,16 @@ public class WorkflowTest {
         for (MercurySample.MetadataSource metadataSource : MercurySample.MetadataSource.values()) {
             for (LabEventType labEventType : dnaLabEventTypes) {
                 // All these lab events should allow the sample into the pico/plating bucket, regardless of MaterialType
-                result.add(new Object[]{labEventType, LabVessel.MaterialType.DNA, metadataSource, true});
+                result.add(new Object[]{labEventType, LabVessel.MaterialType.DNA, metadataSource, true, true});
                 // Blood should pass here because there has been an extraction.
-                result.add(new Object[]{labEventType, LabVessel.MaterialType.FFPE, metadataSource, true});
+                result.add(new Object[]{labEventType, LabVessel.MaterialType.FFPE, metadataSource, true, true});
             }
 
             for (LabEventType labEventType : nonDnaLabEventTypes) {
                 // DNA should always pass because DNA is a valid materialType for the pico/plating bucket
-                result.add(new Object[]{labEventType, LabVessel.MaterialType.DNA, metadataSource, true});
+                result.add(new Object[]{labEventType, LabVessel.MaterialType.DNA, metadataSource, false, true});
                 // BLOOD will never pass because DNA is a valid materialType for the pico/plating bucket
-                result.add(new Object[]{labEventType, LabVessel.MaterialType.FFPE, metadataSource, false});
+                result.add(new Object[]{labEventType, LabVessel.MaterialType.FFPE, metadataSource, false, false});
             }
         }
         return result.iterator();
@@ -363,33 +375,36 @@ public class WorkflowTest {
 
     @Test(dataProvider = "bucketScenariosDataProvider")
     public void testBucketEntryForManyScenarios(LabEventType labEventType, LabVessel.MaterialType sampleMaterialType,
-                                                                  MercurySample.MetadataSource metadataSource,
-                                                                  boolean meetsBucketCriteria) {
-        LabVessel labVessel =
-                createLabVesselWithSample("SM-1234", labEventType, sampleMaterialType.name(), metadataSource);
+                                                MercurySample.MetadataSource metadataSource,
+                                                boolean doTransfer,
+                                                boolean meetsBucketCriteriaExpected) {
+        LabVessel labVessel = createLabVesselWithSample(labEventType, sampleMaterialType, metadataSource, doTransfer);
 
         WorkflowBucketDef workflowBucketDef = new WorkflowBucketDef();
-        workflowBucketDef.setBucketEntryEvaluators(
-                Collections.singletonList(DnaBucketEntryEvaluator.class.getCanonicalName()));
+        workflowBucketDef.setBucketEntryEvaluators(Collections.singletonList(DnaBucketEntryEvaluator.class.getCanonicalName()));
 
-        assertThat(workflowBucketDef.meetsBucketCriteria(labVessel), is(meetsBucketCriteria));
+        boolean actualBucketCriteria = workflowBucketDef.meetsBucketCriteria(labVessel);
+        assertThat(actualBucketCriteria, is(meetsBucketCriteriaExpected));
     }
 
-    private LabVessel createLabVesselWithSample(String sampleId, LabEventType labEventType,
-                                                String sampleMaterialType, MercurySample.MetadataSource metadataSource) {
-        LabVesselFactory labVesselFactory = new LabVesselFactory();
-        labVesselFactory.setBspUserList(new BSPUserList(BSPManagerFactoryProducer.stubInstance()));
-        ParentVesselBean parentVesselBean = new ParentVesselBean(sampleId, sampleId, "Blood tube", null);
-        MercurySample mercurySample = createNewMercurySample(sampleId, sampleMaterialType, metadataSource);
-        Map<String, MercurySample> mercurySampleMap = Collections.singletonMap(sampleId, mercurySample);
+    private LabVessel createLabVesselWithSample(LabEventType labEventType,
+                                                LabVessel.MaterialType sampleMaterialType,
+                                                MercurySample.MetadataSource metadataSource,
+                                                boolean doTransfer) {
+        BarcodedTube sourceVessel = new BarcodedTube("A_SOURCE_VESSEL", BarcodedTube.BarcodedTubeType.MatrixTube075);
+        MercurySample mercurySample = SampleDataTestFactory.getTestMercurySample(sampleMaterialType, metadataSource);
+        mercurySample.addLabVessel(sourceVessel);
 
-        Map<String, Set<ProductOrderSample>> pdoSampleMap = Collections.singletonMap(sampleId,
-                        Collections.singleton(new ProductOrderSample(sampleId, mercurySample.getSampleData())));
-
-        return labVesselFactory.buildLabVesselDaoFree(Collections.<String, LabVessel>emptyMap(),
-                mercurySampleMap, pdoSampleMap, "QADudePM", new Date(),
-                Collections.singletonList(parentVesselBean),
-                labEventType, metadataSource).get(0);
+        if (doTransfer) {
+            BarcodedTube destinationVessel =
+                    new BarcodedTube("A_DESTINATION_VESSEL", BarcodedTube.BarcodedTubeType.MatrixTube075);
+            LabVesselTest
+                    .doVesselToVesselTransfer(sourceVessel, destinationVessel, sampleMaterialType, labEventType,
+                            metadataSource, labEventFactory);
+            return destinationVessel;
+        } else {
+            return sourceVessel;
+        }
     }
 }
 
