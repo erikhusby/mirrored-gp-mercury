@@ -15,6 +15,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToVesselTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
@@ -617,7 +618,7 @@ public class LabEventSearchDefinition {
             public Set<String> evaluate(Object entity, SearchContext context) {
 
                 // Has to handle LabEvent from parent term and LabVessel from nested table
-                LabVessel labVessel;
+                LabVessel labVessel = null;
                 LabEvent labEvent;
 
                 Set<String> results = new HashSet<>();
@@ -633,6 +634,10 @@ public class LabEventSearchDefinition {
                         }
                         return results;
                     }
+                } else if( entity instanceof MercurySample) {
+                    MercurySample mercurySample = (MercurySample) entity;
+                    results.add(mercurySample.getSampleKey());
+                    return results;
                 } else {
                     labVessel = (LabVessel) entity;
                 }
