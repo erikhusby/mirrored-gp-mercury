@@ -243,7 +243,8 @@ public abstract class LabVessel implements Serializable {
         boolean willSourceEventsProduceDNA = willSourceEventsProduceDNA();
         if (!willSourceEventsProduceDNA) {
             for (SampleInstanceV2 si : getSampleInstancesV2()) {
-                if (si.getRootOrEarliestMercurySample().getSampleData().getMaterialType().startsWith("DNA")) {
+                if (si.getRootOrEarliestMercurySample().getSampleData().getMaterialType()
+                        .startsWith(MaterialType.DNA.name())) {
                     return true;
                 }
             }
