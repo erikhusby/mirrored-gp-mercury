@@ -359,10 +359,12 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     // Keep non-static so it can be easily called from JSP.
     public String getAttestationMessage() {
-        return "By checking this box, I am attesting that I am fully aware of the regulatory requirements for this "
-               + "project, that these requirements have been met, and that the information I have provided is "
-               + "accurate. Disregard of relevant requirements and/or falsification of information may lead to "
-               + "quarantining of data.";
+        return "By checking this box, I attest that I am fully aware of the regulatory requirements for this project, "
+               + "that these requirements have been met (e.g. review by an IRB or the Broad's Office of Research "
+               + "Subject Protection), and that the information provided below is accurate. Disregard of relevant "
+               + "regulatory requirements and/or falsification of information may lead to quarantining of data. "
+               + "If you have any questions regarding the federal regulations associated with your project, "
+               + "please contact orsp@broadinstitute.org.";
     }
 
     /**
