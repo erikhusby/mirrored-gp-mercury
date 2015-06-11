@@ -344,7 +344,7 @@
                                     </c:when>
                                     <c:when test="${order.billing}">
                                         <span class="badge badge-info">
-                                            <%=ProductOrderListEntry.LedgerStatus.BILLING.getDisplayName()%>
+                                            <%=ProductOrderListEntry.LedgerStatus.BILLING_STARTED.getDisplayName()%>
                                         </span>
                                     </c:when>
                                     <c:when test="${order.readyForBilling}">
