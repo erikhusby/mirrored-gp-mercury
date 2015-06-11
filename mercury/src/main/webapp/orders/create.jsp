@@ -974,14 +974,13 @@
                                        title="Click if no IRB/ORSP review is required."/>No IRB/ORSP Review Required
                             </div>
                             <div id="skipRegulatoryDiv" class="controls controls-text">
-                                Please enter a reason for not including regulatory information<br/>(eg: mouse
-                                samples)<br/>
                                 If this order involves human-derived samples (even if commercially available, or
                                 established cell lines), either an IRB approval or a Broad Office of Research Subject
                                 Protection (ORSP) determination is required. Contact orsp@broadinstitute.org for more
                                 information about obtaining an ORSP determination. Note: Internal technical
                                 development/validation projects using a Coriell cell line have already received a
                                 blanket determination (ORSP-995).
+                                <br/>
                                 <br/>
                                 If your order does not involve human-derived samples, then neither ORSP nor IRB review
                                 is required. However your order must identify the specific type of samples involved
