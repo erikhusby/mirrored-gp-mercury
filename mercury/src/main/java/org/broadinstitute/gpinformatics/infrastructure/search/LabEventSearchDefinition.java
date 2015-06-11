@@ -15,6 +15,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToVesselTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
@@ -432,13 +433,13 @@ public class LabEventSearchDefinition {
             @Override
             public Set<String> evaluate(Object entity, SearchContext context) {
                 // Has to handle LabEvent from parent term and LabVessel from nested table
-                LabVessel labVessel;
+                LabVessel labVessel = null;
                 LabEvent labEvent;
 
                 Set<String> results = new HashSet<>();
 
-                if( entity instanceof LabEvent ) {
-                    labEvent = (LabEvent) entity;
+                if( OrmUtil.proxySafeIsInstance( entity, LabEvent.class ) ) {
+                    labEvent = OrmUtil.proxySafeCast(entity, LabEvent.class);
                     labVessel = labEvent.getInPlaceLabVessel();
                     if (labVessel == null) {
                         for( LabVessel srcVessel : labEvent.getSourceLabVessels() ) {
@@ -446,8 +447,11 @@ public class LabEventSearchDefinition {
                         }
                         return results;
                     }
+                } else if( OrmUtil.proxySafeIsInstance( entity, LabVessel.class ) ) {
+                    labVessel = OrmUtil.proxySafeCast(entity, LabVessel.class);
                 } else {
-                    labVessel = (LabVessel) entity;
+                    throw new RuntimeException("Unhandled display value type for 'Sample Tube Barcode': "
+                                               + OrmUtil.getProxyObjectClass(entity).getSimpleName());
                 }
 
                 if (labVessel != null) {
@@ -617,13 +621,13 @@ public class LabEventSearchDefinition {
             public Set<String> evaluate(Object entity, SearchContext context) {
 
                 // Has to handle LabEvent from parent term and LabVessel from nested table
-                LabVessel labVessel;
+                LabVessel labVessel = null;
                 LabEvent labEvent;
 
                 Set<String> results = new HashSet<>();
 
-                if( entity instanceof LabEvent ) {
-                    labEvent = (LabEvent) entity;
+                if( OrmUtil.proxySafeIsInstance( entity, LabEvent.class ) ) {
+                    labEvent = OrmUtil.proxySafeCast(entity, LabEvent.class);
                     labVessel = labEvent.getInPlaceLabVessel();
                     if (labVessel == null) {
                         for( LabVessel srcVessel : labEvent.getSourceLabVessels() ) {
@@ -633,8 +637,15 @@ public class LabEventSearchDefinition {
                         }
                         return results;
                     }
+                } else if( OrmUtil.proxySafeIsInstance( entity, MercurySample.class ) ) {
+                        MercurySample mercurySample = OrmUtil.proxySafeCast(entity, MercurySample.class);
+                        results.add(mercurySample.getSampleKey());
+                        return results;
+                } else if( OrmUtil.proxySafeIsInstance( entity, LabVessel.class ) ) {
+                    labVessel = OrmUtil.proxySafeCast(entity, LabVessel.class);
                 } else {
-                    labVessel = (LabVessel) entity;
+                    throw new RuntimeException("Unhandled display value type for 'Mercury Sample ID': "
+                                               + OrmUtil.getProxyObjectClass(entity).getSimpleName());
                 }
 
                 if (labVessel != null) {
