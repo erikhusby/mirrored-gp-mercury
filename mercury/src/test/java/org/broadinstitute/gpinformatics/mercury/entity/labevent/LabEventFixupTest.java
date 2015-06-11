@@ -11,7 +11,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -35,6 +37,7 @@ import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
 import java.util.Collection;
 import java.util.GregorianCalendar;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -653,5 +656,26 @@ public class LabEventFixupTest extends Arquillian {
                 RollbackException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Test(enabled = false)
+    public void fixupSupport815() {
+        userBean.loginOSUser();
+        // Flip source rack in ShearingTransfer (traversal code doesn't currently honor PlateTransferEventType.isFlipped)
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, 896861L);
+        Assert.assertEquals(labEvent.getLabEventType(), LabEventType.SHEARING_TRANSFER);
+        SectionTransfer sectionTransfer = labEvent.getSectionTransfers().iterator().next();
+        TubeFormation tubeFormation = (TubeFormation) sectionTransfer.getSourceVesselContainer().getEmbedder();
+        VesselPosition[] vesselPositions = tubeFormation.getVesselGeometry().getVesselPositions();
+        Map<VesselPosition, BarcodedTube> mapPositionToTube = new HashMap<>();
+        for (int i = 0; i < vesselPositions.length; i++) {
+            mapPositionToTube.put(vesselPositions[95 - i],
+                    tubeFormation.getContainerRole().getVesselAtPosition(vesselPositions[i]));
+        }
+        TubeFormation newTubeFormation = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
+        sectionTransfer.setSourceVesselContainer(newTubeFormation.getContainerRole());
+        labEventDao.persist(new FixupCommentary("SUPPORT-815 plate flip"));
+        labEventDao.flush();
+        // Verify 150605_SL-HAA_0467_AC6DNDANXX
     }
 }
