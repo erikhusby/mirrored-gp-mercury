@@ -449,8 +449,10 @@ public class LabEventSearchDefinition {
                     }
                 } else if( OrmUtil.proxySafeIsInstance( entity, LabVessel.class ) ) {
                     labVessel = OrmUtil.proxySafeCast(entity, LabVessel.class);
+                } else {
+                    throw new RuntimeException("Unhandled display value type for 'Sample Tube Barcode': "
+                                               + OrmUtil.getProxyObjectClass(entity).getSimpleName());
                 }
-                // Else quietly die on null labVessel
 
                 if (labVessel != null) {
                     addSampleLabelsFromVessel( labVessel, results );
@@ -641,8 +643,10 @@ public class LabEventSearchDefinition {
                         return results;
                 } else if( OrmUtil.proxySafeIsInstance( entity, LabVessel.class ) ) {
                     labVessel = OrmUtil.proxySafeCast(entity, LabVessel.class);
+                } else {
+                    throw new RuntimeException("Unhandled display value type for 'Mercury Sample ID': "
+                                               + OrmUtil.getProxyObjectClass(entity).getSimpleName());
                 }
-                // Else quietly die on null labVessel...
 
                 if (labVessel != null) {
                     for( SampleInstanceV2 sample : labVessel.getSampleInstancesV2()) {
