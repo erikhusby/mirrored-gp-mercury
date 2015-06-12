@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToVesselTransfer;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
@@ -653,6 +654,42 @@ public class LabEventSearchDefinition {
                         results.add(sample.getRootOrEarliestMercurySampleName());
                     }
                 }
+                return results;
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Molecular Index");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public List<String> evaluate(Object entity, SearchContext context) {
+                LabEvent labEvent = (LabEvent) entity;
+                List<String> results = new ArrayList<>();
+
+
+                LabVessel labVessel = labEvent.getInPlaceLabVessel();
+                if (labVessel == null) {
+                    for (LabVessel srcVessel : labEvent.getSourceLabVessels()) {
+                        for (SampleInstanceV2 sample : srcVessel.getSampleInstancesV2()) {
+                            for( Reagent reagent : sample.getReagents() ) {
+                                if( reagent instanceof MolecularIndexReagent ) {
+                                    results.add(
+                                            ((MolecularIndexReagent) reagent).getMolecularIndexingScheme().getName());
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    for (SampleInstanceV2 sample : labVessel.getSampleInstancesV2()) {
+                        for( Reagent reagent : sample.getReagents() ) {
+                            if( reagent instanceof MolecularIndexReagent ) {
+                                results.add(((MolecularIndexReagent) reagent ).getMolecularIndexingScheme().getName());
+                            }
+                        }
+                    }
+                }
+
                 return results;
             }
         });

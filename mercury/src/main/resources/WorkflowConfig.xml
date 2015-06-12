@@ -1,4 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!-- WorkflowConfig.xml file represents the workflow configuration and is kept in-sync with the contents of
+         ATHENA.PREF_PREFERENCE.DATA field for PREFERENCE_TYPE = 'WORKFLOW_CONFIGURATION'.
+     The file is used for DBFree testing.  The PREF_PREFERENCE table is used for container tests and the deployed app.
+         (See org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader)
+     Use org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowPrefXmlReloadFixupTest to load changes
+         to the configuration in this file to the PREF_PREFERENCE table.
+     -->
 <workflowConfig>
     <workflowProcessDefs>
         <name>Preflight</name>
@@ -374,6 +381,7 @@
                     <project>LCSET</project>
                     <statusTransition>In Hyb Sel</statusTransition>
                 </jiraTransition>
+                <ancestryEtlFlag>true</ancestryEtlFlag>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Pond Pico</name>
@@ -512,6 +520,7 @@
                     <project>LCSET</project>
                     <statusTransition>In QTP</statusTransition>
                 </jiraTransition>
+                <ancestryEtlFlag>true</ancestryEtlFlag>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Catch Pico</name>
@@ -681,6 +690,7 @@
                     <project>LCSET</project>
                     <statusTransition>In QTP</statusTransition>
                 </jiraTransition>
+                <ancestryEtlFlag>true</ancestryEtlFlag>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>IceCatchPico</name> <!-- will change on deck, from CatchPico -->
@@ -759,6 +769,7 @@
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
+                <ancestryEtlFlag>true</ancestryEtlFlag>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Normalization Transfer</name>
@@ -952,6 +963,7 @@
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
+                <ancestryEtlFlag>true</ancestryEtlFlag>
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>

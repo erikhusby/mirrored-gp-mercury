@@ -16,5 +16,6 @@ TRAILING NULLCOLS
  station_name,
  lab_vessel_id,
  event_date DATE "YYYYMMDDHH24MISS",
- program_name
+ program_name,
+ molecular_indexing_scheme
 )

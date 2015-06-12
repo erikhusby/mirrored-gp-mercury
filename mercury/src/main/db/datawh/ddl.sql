@@ -191,8 +191,21 @@ CREATE TABLE event_fact (
   station_name     VARCHAR2(255),
   lab_vessel_id    NUMERIC(19),
   event_date       DATE        NOT NULL,
-  etl_date         DATE        NOT NULL,
-  program_name     VARCHAR2(255)
+  program_name     VARCHAR2(255),
+  molecular_indexing_scheme   VARCHAR2(255),
+  etl_date         DATE        NOT NULL
+);
+
+CREATE TABLE library_ancestry_fact
+(
+  lab_event_id              NUMBER(19) NOT NULL,
+  ancestor_library_id       NUMBER(19) NOT NULL,
+  ancestor_library_type     VARCHAR2(255) NOT NULL,
+  ancestor_library_creation DATE NOT NULL,
+  child_library_id          NUMBER(19) NOT NULL,
+  child_library_type        VARCHAR2(255) NOT NULL,
+  child_library_creation    DATE NOT NULL,
+  etl_date                  DATE NOT NULL
 );
 
 CREATE TABLE sequencing_sample_fact (
@@ -475,7 +488,22 @@ CREATE TABLE im_event_fact (
   lab_vessel_id    NUMERIC(19),
   program_name     VARCHAR2(255),
   event_date       DATE,
-  event_fact_id    NUMERIC(28) --this gets populated by merge_import.sql
+  event_fact_id    NUMERIC(28), --this gets populated by merge_import.sql
+  molecular_indexing_scheme   VARCHAR2(255)
+);
+
+CREATE TABLE im_library_ancestry_fact
+(
+  line_number               NUMERIC(9) NOT NULL,
+  etl_date                  DATE NOT NULL,
+  is_delete                 CHAR(1) NOT NULL,
+  lab_event_id              NUMBER(19) NOT NULL,
+  ancestor_library_id       NUMBER(19) NOT NULL,
+  ancestor_library_type     VARCHAR2(255) NOT NULL,
+  ancestor_library_creation DATE NOT NULL,
+  child_library_id          NUMBER(19) NOT NULL,
+  child_library_type        VARCHAR2(255) NOT NULL,
+  child_library_creation    DATE NOT NULL
 );
 
 CREATE TABLE im_product_order_sample_risk (
@@ -669,6 +697,8 @@ CREATE INDEX pdo_add_on_idx2 ON product_order_add_on (product_id);
 CREATE INDEX event_fact_idx1 ON event_fact (event_date);
 CREATE INDEX event_fact_idx2 ON event_fact (product_order_id, sample_name);
 CREATE INDEX event_fact_idx3 ON event_fact (lab_event_id);
+CREATE INDEX idx_ancestry_fact_hierarchy on library_ancestry_fact (child_library_id, ancestor_library_id );
+CREATE INDEX idx_ancestry_fact_reverse on library_ancestry_fact (ancestor_library_id, child_library_id );
 CREATE INDEX ix_parent_project ON research_project (parent_research_project_id);
 CREATE INDEX ix_root_project ON research_project (root_research_project_id);
 CREATE UNIQUE INDEX seq_sample_fact_idx1 ON sequencing_sample_fact (flowcell_barcode, lane, molecular_indexing_scheme);

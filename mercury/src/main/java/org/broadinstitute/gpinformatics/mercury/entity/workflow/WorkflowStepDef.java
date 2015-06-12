@@ -112,9 +112,16 @@ public class WorkflowStepDef implements Serializable {
      * process */
     private boolean deadEndBranch = false;
 
+    private boolean ancestryEtlFlag = false;
+
     private transient WorkflowProcessDef processDef;
 
     private transient WorkflowProcessDefVersion processDefVersion;
+
+
+    /** For JAXB */
+    WorkflowStepDef() {
+    }
 
     public void setProcessDef(WorkflowProcessDef processDef) {
         this.processDef = processDef;
@@ -126,10 +133,6 @@ public class WorkflowStepDef implements Serializable {
 
     public WorkflowStepDef(String name) {
         this.name = name;
-    }
-
-    /** For JAXB */
-    WorkflowStepDef() {
     }
 
     public WorkflowStepDef addLabEvent(LabEventType labEventType) {
@@ -187,5 +190,9 @@ public class WorkflowStepDef implements Serializable {
 
     public boolean isDeadEndBranch() {
         return deadEndBranch;
+    }
+
+    public boolean doAncestryEtl(){
+        return ancestryEtlFlag;
     }
 }

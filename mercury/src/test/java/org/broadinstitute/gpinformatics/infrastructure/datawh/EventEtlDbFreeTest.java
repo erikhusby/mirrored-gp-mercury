@@ -182,7 +182,7 @@ public class EventEtlDbFreeTest {
         List<LabEventEtl.EventFactDto> dtos = tst.makeEventFacts(entityId);
         Assert.assertEquals(dtos.size(), 1);
         Assert.assertFalse(dtos.get(0).canEtl());
-        Assert.assertTrue(dtos.get(0).getSampleInstanceIndexes().startsWith(misName));
+        Assert.assertTrue(dtos.get(0).getMolecularIndexName().startsWith(misName));
 
         EasyMock.verify(mocks);
     }

@@ -13,6 +13,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Web service resource used to invoke ETL methods.
@@ -133,6 +134,7 @@ public class ExtractTransformResource {
     public String analyzeEvent(@PathParam("labEventId") long labEventId) {
         Long id = null;
         String type = null;
+        int columnCount = 9;
 
         Collection<EventFactDto> dtos = extractTransform.analyzeEvent(labEventId);
 
@@ -141,14 +143,15 @@ public class ExtractTransformResource {
         for (EventFactDto dto : dtos) {
             id = (dto.getLabEvent() != null) ? dto.getLabEvent().getLabEventId() : null;
             type = (dto.getLabEvent() != null ? dto.getLabEvent().getLabEventType().toString() : null);
-            if (!StringUtils.isBlank(dto.getSampleInstanceIndexes())) {
+            if (!StringUtils.isBlank(dto.getMolecularIndexName())) {
                 showMolecularBarcodes = true;
+                columnCount = 10;
             }
         }
 
         StringBuilder sb = new StringBuilder();
         sb.append("<html><head/><body>")
-                .append("<p>LabEventId ").append(id).append(", EventName ").append(type).append("</p>")
+                .append("<p>LabEventId: ").append(id).append(", EventName: ").append(type).append(", Count: ").append(dtos.size()).append("</p>")
                 .append("<table cellpadding=\"3\">");
 
         // Outputs the table header row.
@@ -179,7 +182,7 @@ public class ExtractTransformResource {
             sb.append(showMolecularBarcodes ?
                     formatRow(String.valueOf(dto.canEtl()),
                             dto.getLabVessel() != null ? dto.getLabVessel().getLabel() : "null",
-                            dto.getSampleInstanceIndexes(),
+                            dto.getMolecularIndexName(),
                             dto.getBatchName(),
                             dto.getWorkflowName(),
                             dto.getSample() != null ? dto.getSample().getSampleKey() : "null",
@@ -197,11 +200,39 @@ public class ExtractTransformResource {
                             dto.getWfDenorm() != null ? dto.getWfDenorm().getWorkflowProcessName() : "null",
                             dto.getWfDenorm() != null ? dto.getWfDenorm().getWorkflowStepName() : "null")
             );
+            buildAncestryTable(sb, columnCount, dto.getAncestryFactDtos());
         }
 
         sb.append("</table></body></html>");
 
         return sb.toString();
+    }
+
+    public void buildAncestryTable( StringBuilder sb, int columnCount, List<EventAncestryEtlUtil.AncestryFactDto> ancestryFactDtoList ){
+        if( ancestryFactDtoList == null || ancestryFactDtoList.isEmpty() ) {
+            return;
+        }
+        sb.append("<tr><td>&nbsp;</td><td colspan=\"").append(columnCount - 1).append("\"><table cellpadding=\"3\">");
+        sb.append(
+                formatHeaderRow("ancestorEventID",
+                        "ancestorLibraryName",
+                        "ancestorLibraryType",
+                        "ancestorLibraryCreated",
+                        "childLibraryName",
+                        "childLibraryType",
+                        "childLibraryCreated") );
+
+        for(EventAncestryEtlUtil.AncestryFactDto ancestryDto : ancestryFactDtoList ){
+            sb.append(formatRow(
+                    ancestryDto.getAncestorEventId().toString(),
+                    ancestryDto.getAncestorVessel().getLabVesselId().toString(),
+                    ancestryDto.getAncestorLibraryTypeName(),
+                    ancestryDto.getAncestorCreated().toString(),
+                    ancestryDto.getChildVessel().getLabVesselId().toString(),
+                    ancestryDto.getChildLibraryTypeName(),
+                    ancestryDto.getChildCreated().toString()));
+        }
+        sb.append("</td></table></tr>");
     }
 
 
