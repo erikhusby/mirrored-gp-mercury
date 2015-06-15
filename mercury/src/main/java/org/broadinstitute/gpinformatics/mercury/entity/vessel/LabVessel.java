@@ -183,14 +183,6 @@ public abstract class LabVessel implements Serializable {
     @BatchSize(size = 100)
     private Set<MercurySample> mercurySamples = new HashSet<>();
 
-    public Set<VesselToVesselTransfer> getVesselToVesselTransfersThisAsSource() {
-        return vesselToVesselTransfersThisAsSource;
-    }
-
-    public Set<VesselToVesselTransfer> getVesselToVesselTransfersThisAsTarget() {
-        return vesselToVesselTransfersThisAsTarget;
-    }
-
     @OneToMany(mappedBy = "sourceVessel", cascade = CascadeType.PERSIST)
     @BatchSize(size = 100)
     private Set<VesselToVesselTransfer> vesselToVesselTransfersThisAsSource = new HashSet<>();
@@ -283,6 +275,14 @@ public abstract class LabVessel implements Serializable {
 
     public Set<VesselToSectionTransfer> getVesselToSectionTransfersThisAsSource() {
         return vesselToSectionTransfersThisAsSource;
+    }
+
+    public Set<VesselToVesselTransfer> getVesselToVesselTransfersThisAsSource() {
+        return vesselToVesselTransfersThisAsSource;
+    }
+
+    public Set<VesselToVesselTransfer> getVesselToVesselTransfersThisAsTarget() {
+        return vesselToVesselTransfersThisAsTarget;
     }
 
     public void addMetric(LabMetric labMetric) {
