@@ -90,7 +90,7 @@
                 </div>
             </div>
         </stripes:form>
-        <c:if test="${actionBean.labMetricRun != null}">
+        <c:if test="${!actionBean.hasErrors() && actionBean.labMetricRun != null}">
             Type: ${actionBean.labMetricRun.metricType.displayName}
             <br/>
             Run Date: <fmt:formatDate value="${actionBean.labMetricRun.runDate}" pattern="${actionBean.dateTimePattern}"/>

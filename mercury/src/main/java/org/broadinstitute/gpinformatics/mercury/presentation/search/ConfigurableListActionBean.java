@@ -15,6 +15,7 @@ import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableListFactory;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.search.PaginationDao;
+import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 import org.broadinstitute.gpinformatics.infrastructure.spreadsheet.SpreadsheetCreator;
@@ -28,7 +29,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -147,7 +147,7 @@ public class ConfigurableListActionBean extends CoreActionBean {
         }
 
         // Get each page and add it to the configurable list
-        Map<String, Object> context = buildSearchContext();
+        SearchContext context = buildSearchContext();
         for (int i = 0; i < pagination.getNumberPages(); i++) {
             List resultsPage = paginationDao.getPage(pagination, i);
             configurableList.addRows(resultsPage, context);
@@ -160,9 +160,9 @@ public class ConfigurableListActionBean extends CoreActionBean {
      *  BSP user lookup required in column eval expression
      *  Use context to avoid need to test in container
      */
-    private Map<String, Object> buildSearchContext(){
-        Map<String, Object> evalContext = new HashMap<>();
-        evalContext.put(SearchInstance.CONTEXT_KEY_BSP_USER_LIST, bspUserList );
+    private SearchContext buildSearchContext(){
+        SearchContext evalContext = new SearchContext();
+        evalContext.setBspUserList( bspUserList );
 
         return evalContext;
     }

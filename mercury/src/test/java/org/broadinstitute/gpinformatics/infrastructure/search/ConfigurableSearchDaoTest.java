@@ -101,7 +101,7 @@ public class ConfigurableSearchDaoTest extends Arquillian {
         Criteria criteria = configurableSearchDao.buildCriteria(configurableSearchDefinition, searchInstance);
         @SuppressWarnings("unchecked")
         List<LabEvent> list = criteria.list();
-        Assert.assertEquals(list.size(), 11);
+        Assert.assertEquals(list.size(), 12);
     }
 
     public void testEventVessels() {

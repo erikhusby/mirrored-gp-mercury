@@ -246,7 +246,7 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
         PDOSamples pdoSamples = new PDOSamples();
 
         for (String sampleId : sampleIds) {
-            pdoSamples.addPdoSample(pdoKey, sampleId, false, false);
+            pdoSamples.addPdoSample(pdoKey, sampleId, false, false, new Date());
         }
         return pdoSamples;
     }

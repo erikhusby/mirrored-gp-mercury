@@ -6,9 +6,12 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.RapSheet;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -31,9 +34,12 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -239,7 +245,7 @@ public class MercurySample extends AbstractSample {
     public void addMetadata(Set<Metadata> metadata) {
         if (metadataSource == MetadataSource.MERCURY) {
             this.metadata.addAll(metadata);
-            setSampleData(new MercurySampleData(sampleKey, this.metadata));
+            setSampleData(new MercurySampleData(sampleKey, this.metadata, getReceivedDate()));
         } else {
             throw new IllegalStateException(String.format(
                     "MercurySamples with metadata source of %s cannot have Mercury metadata", metadataSource));
@@ -256,6 +262,19 @@ public class MercurySample extends AbstractSample {
 
     public Set<LabVessel> getLabVessel() {
         return labVessel;
+    }
+
+    public Date getReceivedDate() {
+
+        for(LabVessel currentVessel:labVessel) {
+            Map<LabEvent,Set<LabVessel>> vesselsForEvent =
+                    currentVessel.findVesselsForLabEventType(LabEventType.SAMPLE_RECEIPT,true);
+            if (!vesselsForEvent.isEmpty()) {
+                return vesselsForEvent.keySet().iterator().next().getEventDate();
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -293,7 +312,7 @@ public class MercurySample extends AbstractSample {
         case BSP:
             return new BspSampleData();
         case MERCURY:
-            return new MercurySampleData(sampleKey, Collections.<Metadata>emptySet());
+            return new MercurySampleData(sampleKey, Collections.<Metadata>emptySet(), getReceivedDate());
         default:
             throw new IllegalStateException("Unknown sample data source: " + metadataSource);
         }

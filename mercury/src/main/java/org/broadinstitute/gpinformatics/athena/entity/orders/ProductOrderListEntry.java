@@ -323,7 +323,7 @@ public class ProductOrderListEntry implements Serializable {
                 entry.readyForBillingCount = count;
             }
         },
-        BILLING("Billing Started") {
+        BILLING_STARTED("Billing Started") {
             @Override
             public boolean entryMatch(ProductOrderListEntry entry) {
                 return entry.isBilling();

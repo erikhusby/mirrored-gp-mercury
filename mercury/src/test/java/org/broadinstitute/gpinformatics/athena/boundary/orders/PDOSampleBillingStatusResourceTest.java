@@ -14,6 +14,7 @@ import org.testng.annotations.Test;
 import javax.ws.rs.core.MediaType;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
@@ -40,9 +41,10 @@ public class PDOSampleBillingStatusResourceTest extends RestServiceContainerTest
     public void testPDOSampleBilling(@ArquillianResource URL baseUrl)
             throws Exception {
         List<PDOSample> pdoSamplesList = new ArrayList<>();
-        PDOSample pdoSample1 = new PDOSample("PDO-872", "SM-47KKU", null);
-        PDOSample pdoSample2 = new PDOSample("PDO-1133", "0113404606", null);
-        PDOSample pdoSample3 = new PDOSample("PDO-ONE_BILLION", "DooDoo", null);
+        Date receiptDate = new Date();
+        PDOSample pdoSample1 = new PDOSample("PDO-872", "SM-47KKU", null, receiptDate);
+        PDOSample pdoSample2 = new PDOSample("PDO-1133", "0113404606", null, receiptDate);
+        PDOSample pdoSample3 = new PDOSample("PDO-ONE_BILLION", "DooDoo", null, receiptDate);
         pdoSamplesList.add(pdoSample1);
         pdoSamplesList.add(pdoSample2);
         pdoSamplesList.add(pdoSample3);

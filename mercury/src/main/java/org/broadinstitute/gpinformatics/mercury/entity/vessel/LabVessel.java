@@ -7,6 +7,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
@@ -50,6 +51,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
+import java.io.IOException;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -619,6 +621,13 @@ public abstract class LabVessel implements Serializable {
      */
     public boolean canBeUsedForAccessioning() {
         return !doesChainOfCustodyInclude(LabEventType.COLLABORATOR_TRANSFER);
+    }
+
+    public void setReceiptEvent(BspUser user, Date receivedDate, long disambiguator) {
+        LabEvent receiptEvent =
+                new LabEvent(LabEventType.SAMPLE_RECEIPT, receivedDate, LabEvent.UI_EVENT_LOCATION,
+                        disambiguator, user.getUserId(), LabEvent.UI_PROGRAM_NAME);
+        addInPlaceEvent(receiptEvent);
     }
 
     public enum ContainerType {
@@ -1491,9 +1500,7 @@ public abstract class LabVessel implements Serializable {
      * @return A map of lab vessels keyed off the event they were present at filtered by type.
      */
     public Map<LabEvent, Set<LabVessel>> findVesselsForLabEventType(LabEventType type, boolean useTargetVessels) {
-        List<LabEventType> eventTypeList = new ArrayList<>();
-        eventTypeList.add(type);
-        return findVesselsForLabEventTypes(eventTypeList, useTargetVessels);
+        return findVesselsForLabEventTypes(Collections.singletonList(type), useTargetVessels);
     }
 
     /**

@@ -260,4 +260,26 @@
                 columnNames="REAGENT_NAME, LOT, EXPIRATION"/>
     </changeSet>
 
+    <changeSet author="scottmat" id="GPLIM-3487-1">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists columnName="RECEIPT_TICKET" schemaName="mercury" tableName="MANIFEST_SESSION" />
+            </not>
+        </preConditions>
+        <addColumn tableName="MANIFEST_SESSION" schemaName="mercury">
+            <column name="RECEIPT_TICKET" type="varchar(255)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="scottmat" id="GPLIM-3487-2">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists columnName="RECEIPT_TICKET" schemaName="mercury" tableName="MANIFEST_SESSION_AUD" />
+            </not>
+        </preConditions>
+        <addColumn tableName="MANIFEST_SESSION_AUD" schemaName="mercury">
+            <column name="RECEIPT_TICKET" type="varchar(255)" />
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>

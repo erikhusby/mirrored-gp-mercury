@@ -11,9 +11,11 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.Updatable;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.UpdatedEntityInterceptor;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
+import org.broadinstitute.gpinformatics.mercury.boundary.zims.CrspPipelineUtils;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.UpdateData;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -41,6 +43,7 @@ import javax.persistence.OneToMany;
 import javax.persistence.OrderColumn;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -61,6 +64,7 @@ import java.util.Set;
 public class ManifestSession implements Updatable {
 
     public static final String VESSEL_LABEL = "Vessel barcode";
+    public static final String RECEIPT_BSP_USER = "receiptBspUser";
 
     @Id
     @SequenceGenerator(name = "SEQ_MANIFEST_SESSION", schema = "mercury", sequenceName = "SEQ_MANIFEST_SESSION")
@@ -110,6 +114,9 @@ public class ManifestSession implements Updatable {
 
     @Column(name = "FROM_SAMPLE_KIT")
     private boolean fromSampleKit;
+
+    @Column(name = "RECEIPT_TICKET")
+    private String receiptTicket;
 
     /**
      * For JPA.
@@ -164,6 +171,13 @@ public class ManifestSession implements Updatable {
     public void addRecord(ManifestRecord record) {
         records.add(record);
         record.setManifestSession(this);
+        if(record.getManifestRecordIndex() == null) {
+            /*  ManifestRecords use a zero-based offset.  Normally the spreadsheet parser assigns these but the
+                addition of LabEvents for receipt utilizing this index makes it necessary for us to set this value
+                even without spreadsheet upload
+                */
+            record.setManifestRecordIndex(getRecords().size()-1);
+        }
         if(isFromSampleKit()) {
             if(status == SessionStatus.PENDING_SAMPLE_INFO) {
                 setStatus(SessionStatus.ACCESSIONING);
@@ -193,6 +207,14 @@ public class ManifestSession implements Updatable {
 
     public boolean isFromSampleKit() {
         return fromSampleKit;
+    }
+
+    public String getReceiptTicket() {
+        return receiptTicket;
+    }
+
+    public void setReceiptTicket(String receiptTicket) {
+        this.receiptTicket = receiptTicket;
     }
 
     /**
@@ -553,9 +575,8 @@ public class ManifestSession implements Updatable {
     /**
      * Encapsulates the logic required to informatically execute a transfer from the collaborator provided tube to
      * a broad tube.  This is primarily done by marking a record within this session as having been transferred.
-     *
      * @param sourceCollaboratorSample Sample ID for the source sample.  This should correspond to a record within
-     *                                 the session
+*                                 the session
      * @param targetSample             Mercury Sample to which the transfer will be associated
      * @param targetVessel             Lab Vessel to which the transfer will be associated
      * @param user                     Represents the user attempting to make the transfer
@@ -571,7 +592,9 @@ public class ManifestSession implements Updatable {
             sourceRecord = findRecordForTransferByKey(Metadata.Key.BROAD_SAMPLE_ID, targetSample.getSampleKey());
         }
 
-        targetSample.addMetadata(sourceRecord.getMetadata());
+        Set<Metadata> metadataToTransfer = new HashSet<>(sourceRecord.getMetadata());
+        targetSample.addMetadata(metadataToTransfer);
+
         sourceRecord.setStatus(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE);
 
         LabEvent collaboratorTransferEvent =
@@ -596,6 +619,17 @@ public class ManifestSession implements Updatable {
         }
         manifestRecord.accessionScan(recordSampleKey, recordReferenceValue);
     }
+
+    public boolean canSessionExcludeReceiptTicket() {
+
+        boolean result = true;
+
+        if(StringUtils.isBlank(getReceiptTicket())) {
+            result = false;
+        }
+        return result;
+    }
+
 
     /**
      * Indicator to denote the availability (complete or otherwise) of a manifest session for the sample registration
