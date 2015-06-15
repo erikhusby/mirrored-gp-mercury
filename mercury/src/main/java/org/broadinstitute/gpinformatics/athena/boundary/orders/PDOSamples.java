@@ -11,6 +11,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -31,13 +32,15 @@ public class PDOSamples {
     }
 
     public void addPdoSample(@Nonnull String pdoKey, @Nonnull String sampleName,
-                             Boolean hasPrimaryPriceItemBeenBilled, Boolean atRisk) {
-        addPdoSample(pdoKey, sampleName, hasPrimaryPriceItemBeenBilled, atRisk, true);
+                             Boolean hasPrimaryPriceItemBeenBilled, Boolean atRisk, Date receiptDate) {
+        addPdoSample(pdoKey, sampleName, hasPrimaryPriceItemBeenBilled, atRisk, true, receiptDate);
     }
 
     public void addPdoSample(@Nonnull String pdoKey, @Nonnull String sampleName,
-                             Boolean hasPrimaryPriceItemBeenBilled, Boolean atRisk, boolean isCalculated) {
-        pdoSamples.add(new PDOSample(pdoKey, sampleName, hasPrimaryPriceItemBeenBilled, atRisk, isCalculated));
+                             Boolean hasPrimaryPriceItemBeenBilled, Boolean atRisk, boolean isCalculated,
+                             Date receiptDate) {
+        pdoSamples.add(new PDOSample(pdoKey, sampleName, hasPrimaryPriceItemBeenBilled, atRisk, isCalculated,
+                receiptDate));
     }
 
     public void addError(String errorMessage) {
@@ -101,7 +104,7 @@ public class PDOSamples {
 
                     PDOSample pdoSampleBean =
                             new PDOSample(requestedPdoKey, requestedSampleName, pdoSample.isCompletelyBilled(),
-                                    pdoSample.isOnRisk(), !pdoSample.getRiskItems().isEmpty());
+                                    pdoSample.isOnRisk(), !pdoSample.getRiskItems().isEmpty(), pdoSample.getReceiptDate());
 
                     Collection<String> riskCategories = new HashSet<>();
                     Collection<String> riskInformation = new ArrayList<>(pdoSample.getRiskItems().size());
@@ -120,7 +123,7 @@ public class PDOSamples {
             }
 
             if (!foundIt) {
-                pdoSamplesResults.addPdoSample(requestedPdoKey, requestedSampleName, null, null, false);
+                pdoSamplesResults.addPdoSample(requestedPdoKey, requestedSampleName, null, null, false, null);
                 String errorMessage = MessageFormat
                         .format("Could not find sample {0} in PDO {1}.", requestedSampleName, requestedPdoKey);
                 pdoSamplesResults.addError(errorMessage);

@@ -20,7 +20,12 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.math.BigDecimal;
 import java.text.Format;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Generic metadata storage class with String keys and values.
@@ -255,7 +260,8 @@ public class Metadata {
         INSTRUMENT_NAME(Category.LAB_METRIC_RUN, DataType.STRING, "Instrument Name", Visibility.USER),
         INSTRUMENT_SERIAL_NUMBER(Category.LAB_METRIC_RUN, DataType.STRING, "Serial Number", Visibility.USER),
 
-        TOTAL_NG(Category.LAB_METRIC, DataType.NUMBER, "Total ng", Visibility.USER);
+        TOTAL_NG(Category.LAB_METRIC, DataType.NUMBER, "Total ng", Visibility.USER),
+        RECEIPT_RECORD(Category.SAMPLE, DataType.STRING, "Receipt Record", Visibility.NONE);
 
         private final Category category;
         private final DataType dataType;

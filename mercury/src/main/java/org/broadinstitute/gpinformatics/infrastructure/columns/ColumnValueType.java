@@ -2,12 +2,12 @@ package org.broadinstitute.gpinformatics.infrastructure.columns;
 
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
+import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchTerm;
 
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Date;
-import java.util.Map;
 
 /**
  * Uniform method of identifying column data types and handling conversion and formatting.
@@ -26,7 +26,7 @@ public enum ColumnValueType {
             },
             new SearchTerm.Evaluator<ColumnValueType>() {
                 @Override
-                public ColumnValueType evaluate(Object entity, Map<String, Object> context) {
+                public ColumnValueType evaluate(Object entity, SearchContext context) {
                     return ColumnValueType.DATE;
                 }
             }
@@ -43,7 +43,7 @@ public enum ColumnValueType {
             },
             new SearchTerm.Evaluator<ColumnValueType>() {
                 @Override
-                public ColumnValueType evaluate(Object entity, Map<String, Object> context) {
+                public ColumnValueType evaluate(Object entity, SearchContext context) {
                     return ColumnValueType.DATE_TIME;
                 }
             }
@@ -64,7 +64,7 @@ public enum ColumnValueType {
             },
             new SearchTerm.Evaluator<ColumnValueType>() {
                 @Override
-                public ColumnValueType evaluate(Object entity, Map<String, Object> context) {
+                public ColumnValueType evaluate(Object entity, SearchContext context) {
                     return ColumnValueType.UNSIGNED;
                 }
             }
@@ -85,7 +85,7 @@ public enum ColumnValueType {
             },
             new SearchTerm.Evaluator<ColumnValueType>() {
                 @Override
-                public ColumnValueType evaluate(Object entity, Map<String, Object> context) {
+                public ColumnValueType evaluate(Object entity, SearchContext context) {
                     return ColumnValueType.TWO_PLACE_DECIMAL;
                 }
             }
@@ -102,7 +102,7 @@ public enum ColumnValueType {
             },
             new SearchTerm.Evaluator<ColumnValueType>() {
                 @Override
-                public ColumnValueType evaluate(Object entity, Map<String, Object> context) {
+                public ColumnValueType evaluate(Object entity, SearchContext context) {
                     return ColumnValueType.STRING;
                 }
             }
@@ -119,7 +119,7 @@ public enum ColumnValueType {
             },
             new SearchTerm.Evaluator<ColumnValueType>() {
                 @Override
-                public ColumnValueType evaluate(Object entity, Map<String, Object> context) {
+                public ColumnValueType evaluate(Object entity, SearchContext context) {
                     return ColumnValueType.BOOLEAN;
                 }
             }

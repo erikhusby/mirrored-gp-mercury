@@ -218,4 +218,8 @@ public class QtpJaxbBuilder {
     public BettaLIMSMessage getStep06FlowcellLoadMessage() {
         return flowcellLoadMessage;
     }
+
+    public List<String> getDenatureTubeBarcodes() {
+        return denatureTubeBarcodes;
+    }
 }

@@ -16,9 +16,9 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 
 /**
  * Represents the definition of a term in a user-defined search. Intended to be XStreamed.
@@ -32,7 +32,7 @@ public class SearchTerm implements Serializable, ColumnTabulation {
      * @param <T>
      */
     public abstract static class Evaluator <T> {
-        public abstract T evaluate(Object entity, Map<String, Object> context);
+        public abstract T evaluate(Object entity, SearchContext context);
     }
 
     /**
@@ -249,6 +249,13 @@ public class SearchTerm implements Serializable, ColumnTabulation {
     private Boolean isNestedParent = Boolean.FALSE;
 
     /**
+     * Handles cases where a display result column can be selected by user
+     *   , but can only be displayed in a nested child table plugin.
+     * This list holds columns that, if selected by user, will be handled by the child plugin display
+     */
+    private Set<String> parentTermsHandledByChild;
+
+    /**
      * Flag this for search criteria only, do not display as column option.
      * (Don't want parent term to show up in columns list)
      */
@@ -270,7 +277,7 @@ public class SearchTerm implements Serializable, ColumnTabulation {
      * @param context any additional entities referred to by the expression
      * @return list of constrained values
      */
-    public List<ConstrainedValue> getConstrainedValues(Map<String, Object> context) {
+    public List<ConstrainedValue> getConstrainedValues(SearchContext context) {
         if (this.getConstrainedValuesExpression() == null) {
             return Collections.emptyList();
         }
@@ -286,7 +293,7 @@ public class SearchTerm implements Serializable, ColumnTabulation {
      * @return
      */
     public List<ConstrainedValue> getConstrainedValues() {
-        return getConstrainedValues(new HashMap<String, Object>());
+        return getConstrainedValues(new SearchContext());
     }
 
     public String getName() {
@@ -388,6 +395,20 @@ public class SearchTerm implements Serializable, ColumnTabulation {
     @Override
     public void setIsNestedParent(Boolean isNestedParent) {
         this.isNestedParent = isNestedParent;
+    }
+
+    public void addParentTermHandledByChild( SearchTerm parentTermHandledByChild){
+        if( parentTermsHandledByChild == null ) {
+            parentTermsHandledByChild = new HashSet<>();
+        }
+        parentTermsHandledByChild.add(parentTermHandledByChild.getName());
+    }
+
+    public boolean isParentTermHandledByChild( SearchTerm searchTerm){
+        if( parentTermsHandledByChild == null ) {
+            return false;
+        }
+        return parentTermsHandledByChild.contains( searchTerm.getName() );
     }
 
     /**
@@ -552,7 +573,7 @@ public class SearchTerm implements Serializable, ColumnTabulation {
     }
 
     @Override
-    public Object evalValueExpression(Object entity, Map<String, Object> context) {
+    public Object evalValueExpression(Object entity, SearchContext context) {
         context = addTermToContext(context);
         return getDisplayValueExpression().evaluate(entity, context);
     }
@@ -562,7 +583,7 @@ public class SearchTerm implements Serializable, ColumnTabulation {
      * @return
      */
     @Override
-    public ColumnValueType evalValueTypeExpression( Object value, Map<String, Object> context ) {
+    public ColumnValueType evalValueTypeExpression( Object value, SearchContext context ) {
         context = addTermToContext(context);
         if( valueTypeExpression == null ) {
             return valueType.getDefaultEvaluator().evaluate( value, context);
@@ -572,14 +593,14 @@ public class SearchTerm implements Serializable, ColumnTabulation {
     }
 
     @Override
-    public String evalFormattedExpression(Object value, Map<String, Object> context) {
+    public String evalFormattedExpression(Object value, SearchContext context) {
         context = addTermToContext(context);
-        String multiValueDelimiter = (String) context.get(SearchInstance.CONTEXT_KEY_MULTI_VALUE_DELIMITER );
+        String multiValueDelimiter = context.getMultiValueDelimiter();
         return evalValueTypeExpression(value, context).format(value, multiValueDelimiter);
     }
 
     @Override
-    public Object evalViewHeaderExpression(Object entity, Map<String, Object> context) {
+    public Object evalViewHeaderExpression(Object entity, SearchContext context) {
         if (getViewHeaderExpression() == null) {
             return getName();
         } else {
@@ -592,22 +613,21 @@ public class SearchTerm implements Serializable, ColumnTabulation {
      * Get the collection of entities associated with parent row
      * Convenience method to eliminate ambiguity of calling evalPlainTextExpression
      * @param entity  root of object graph that expression navigates.
-     * @param context name / value pairs of other variables used in the expression.
-     * @return Nested table entity collection
+     * @param context Other objects which (may be) used in the expression.
      */
     @Override
-    public Collection<?> evalNestedTableExpression(Object entity, Map<String, Object> context) {
+    public Collection<?> evalNestedTableExpression(Object entity,SearchContext context) {
         context = addTermToContext(context);
         return (Collection<?>) getDisplayValueExpression().evaluate(entity, context);
     }
 
     @Override
-    public Object evalDownloadHeader1Expression(Object entity, Map<String, Object> context) {
+    public Object evalDownloadHeader1Expression(Object entity, SearchContext context) {
         return null;
     }
 
     @Override
-    public Object evalDownloadHeader2Expression(Object entity, Map<String, Object> context) {
+    public Object evalDownloadHeader2Expression(Object entity, SearchContext context) {
         return null;
     }
 
@@ -634,12 +654,12 @@ public class SearchTerm implements Serializable, ColumnTabulation {
         return Collections.emptyList();
     }
 
-    private Map<String, Object> addTermToContext( Map<String, Object> context ){
+    private SearchContext addTermToContext( SearchContext context ){
         if( context == null ) {
-            context = new HashMap<>();
+            context = new SearchContext();
         }
         // May require this SearchTerm to extract metadata key from column name
-        context.put(SearchInstance.CONTEXT_KEY_SEARCH_TERM, this);
+        context.setSearchTerm(this);
         return context;
     }
 }

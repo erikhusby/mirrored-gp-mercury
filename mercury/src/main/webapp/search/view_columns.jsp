@@ -150,7 +150,9 @@ buttons to move columns from one to the other --%>
                             <c:forEach items="${entry.value}" var="columnConfig">
                                 <%-- Some criteria terms are excluded from result selection --%>
                                 <c:if test="${not columnConfig.isExcludedFromResultColumns()}">
-                                    <option ondblclick="chooseColumns($j('#sourceColumnDefNames')[0], $j('#selectedColumnDefNames')[0]);">${columnConfig.name}</option>
+                                    <option id="${columnConfig.uiId}_col" value="${columnConfig.name}"
+                                        <c:if test="${not empty columnConfig.helpText}"> class="help-option"</c:if>
+                                        ondblclick="chooseColumns($j('#sourceColumnDefNames')[0], $j('#selectedColumnDefNames')[0]);">${columnConfig.name}</option>
                                 </c:if>
                             </c:forEach>
                         </optgroup>

@@ -39,6 +39,7 @@ import java.util.Map;
 public class BettaLimsMessageTestFactory {
     public static final int NUMBER_OF_RACK_COLUMNS = 12;
     public static final String HISEQ_SEQUENCING_STATION_MACHINE_NAME = "SL-HBU";
+    public static final String MISEQ_SEQUENCING_STATION_MACHINE_NAME = "SL-MAA";
 
     private long time = System.currentTimeMillis();
     /**

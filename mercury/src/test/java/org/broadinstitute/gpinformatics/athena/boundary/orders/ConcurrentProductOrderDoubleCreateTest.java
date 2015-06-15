@@ -300,6 +300,11 @@ public class ConcurrentProductOrderDoubleCreateTest extends ConcurrentBaseTest {
         }
 
         @Override
+        public void deleteLink(String jiraIssueLinkId) throws IOException {
+
+        }
+
+        @Override
         public String getResolution(String jiraIssueKey) throws IOException {
             return null;
         }
