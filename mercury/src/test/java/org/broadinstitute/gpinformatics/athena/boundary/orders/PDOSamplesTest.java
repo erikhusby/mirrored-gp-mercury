@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
@@ -14,6 +15,7 @@ import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -36,10 +38,11 @@ public class PDOSamplesTest {
     public void setUp() {
         pdoSamplesList = new ArrayList<>();
         pdoSamples = new PDOSamples();
-        pdoSamples.addPdoSample(pdoKey, sample1, null, null);
-        pdoSamples.addPdoSample(pdoKey, sample2, null, null);
+        Date receiptDate = new Date();
+        pdoSamples.addPdoSample(pdoKey, sample1, null, null, receiptDate);
+        pdoSamples.addPdoSample(pdoKey, sample2, null, null, receiptDate);
 
-        ProductOrderSample pdoSample1 = new ProductOrderSample(sample1);
+        ProductOrderSample pdoSample1 = new ProductOrderSample(sample1, new BspSampleData());
         Product dummyProduct = ProductTestFactory.createDummyProduct(Workflow.AGILENT_EXOME_EXPRESS, "partNumber");
         riskyProduct = ProductTestFactory.createDummyProduct(Workflow.AGILENT_EXOME_EXPRESS, "partNumber", true, false);
         ProductOrder pdo1 = new ProductOrder(ResearchProjectTestFactory.TEST_CREATOR, "containerTest Product Order Test1",
@@ -52,7 +55,7 @@ public class PDOSamplesTest {
 
         pdo1.addSample(pdoSample1);
 
-        ProductOrderSample pdoSample2 = new ProductOrderSample(sample2);
+        ProductOrderSample pdoSample2 = new ProductOrderSample(sample2, new BspSampleData());
         ProductOrder pdo2 = new ProductOrder(ResearchProjectTestFactory.TEST_CREATOR, "containerTest Product Order Test2",
                         Arrays.asList(pdoSample2),
                                 "newQuote", riskyProduct,
@@ -95,7 +98,7 @@ public class PDOSamplesTest {
     }
 
     public void testSomeSamplesAreNotFound() {
-        pdoSamples.addPdoSample("PDO-NOTFOUND", "SM-NOTTHERE", null, null);
+        pdoSamples.addPdoSample("PDO-NOTFOUND", "SM-NOTTHERE", null, null, new Date());
 
         PDOSamples pdoSamplesResult = pdoSamples.buildOutputPDOSamplePairsFromInputAndQueryResults(pdoSamplesList);
         Assert.assertEquals(pdoSamplesResult.getPdoSamples().size(),3);
@@ -127,7 +130,7 @@ public class PDOSamplesTest {
     }
 
     public void testListToMapConversion() {
-        pdoSamples.addPdoSample(pdoKey2, sample1, null, null);
+        pdoSamples.addPdoSample(pdoKey2, sample1, null, null, new Date());
         Map<String,Set<String>> pdoToSamples = pdoSamples.convertPdoSamplePairsListToMap();
         Assert.assertEquals(pdoToSamples.keySet().size(),2);
         Assert.assertTrue(pdoToSamples.containsKey(pdoKey));

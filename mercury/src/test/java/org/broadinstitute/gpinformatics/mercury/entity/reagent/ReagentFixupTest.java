@@ -32,9 +32,11 @@ import java.io.FileReader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -497,5 +499,66 @@ public class ReagentFixupTest extends Arquillian {
                 HeuristicMixedException e) {
             throw new RuntimeException(e);
         }
+    }
+    @Test(enabled = false)
+    public void fixupSupport660() {
+        // Used SQL to verify that RG-8552 is used only by the 9 events in question, so it's safe to change it.
+        userBean.loginOSUser();
+        GenericReagent genericReagentRg150 = genericReagentDao.findByReagentNameAndLot("HS buffer", "RG-150");
+        Assert.assertNull(genericReagentRg150);
+        GenericReagent genericReagentRg8552 = genericReagentDao.findByReagentNameAndLot("HS buffer", "RG-8552");
+        genericReagentRg8552.setLot("RG-150");
+        genericReagentDao.persist(new FixupCommentary("SUPPORT-660 change lot"));
+        genericReagentDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim3538ReagentBarcode() {
+        userBean.loginOSUser();
+        // Change lab_event 872452 reagents from reagentId 813365 (EWS reagent having lot 10D06A0004)
+        // to reagentId 929964 (EWS reagent having lot BATCH-001).
+        Reagent reagentEws10d06a0004 = genericReagentDao.findById(GenericReagent.class, 813365L);
+        Assert.assertEquals(reagentEws10d06a0004.getName(), "EWS");
+        Assert.assertEquals(reagentEws10d06a0004.getLot(), "10D06A0004");
+
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, 872452L);
+        Assert.assertTrue(labEvent.getReagents().remove(reagentEws10d06a0004));
+
+        Reagent reagentEwsBatch001 = genericReagentDao.findById(GenericReagent.class, 929964L);
+        Assert.assertEquals(reagentEwsBatch001.getName(), "EWS");
+        Assert.assertEquals(reagentEwsBatch001.getLot(), "BATCH-001");
+
+        labEvent.addReagent(reagentEwsBatch001);
+        Assert.assertEquals(labEvent.getReagents().size(), 3);
+
+        // Change lot from 'rgt4828222' to '10029298' (Mercury reagent id 933959).
+        // This reagent is used in only one lab event, so it's safe to update it.
+        Reagent reagentRgt = genericReagentDao.findById(Reagent.class, 933959L);
+        Assert.assertEquals(reagentRgt.getLot(), "rgt4828222");
+        reagentRgt.setLot("10029298");
+        genericReagentDao.persist(new FixupCommentary("GPLIM-3538 change lot due to reagent script failure"));
+        genericReagentDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim3588() {
+        userBean.loginOSUser();
+        // Change reagent on labEventId 897423
+        // from "Rapid Capture Kit Box 2 (HP3, EE1)" lot 15C11A0054 expiration 10/22/2015 (reagentId 934964)
+        // to same type reagent but with lot 15C27A0012 and expiration 11/25/15 (reagentId 937963).
+        Reagent undesired = genericReagentDao.findByReagentNameLotExpiration("Rapid Capture Kit Box 2 (HP3, EE1)",
+                "15C11A0054", new GregorianCalendar(2015, Calendar.OCTOBER, 22).getTime());
+        Assert.assertNotNull(undesired);
+
+        Reagent desired = genericReagentDao.findByReagentNameLotExpiration(undesired.getName(),
+                "15C27A0012", new GregorianCalendar(2015, Calendar.NOVEMBER, 25).getTime());
+        Assert.assertNotNull(desired);
+
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, 897423L);
+        Assert.assertTrue(labEvent.getReagents().remove(undesired));
+        labEvent.addReagent(desired);
+
+        genericReagentDao.persist(new FixupCommentary("GPLIM-3588 change reagent used on Ice Capture 2 event."));
+        genericReagentDao.flush();
     }
 }

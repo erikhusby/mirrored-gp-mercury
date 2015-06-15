@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.endsWith;
+import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.nullValue;
 
@@ -174,7 +175,8 @@ public class ClinicalResourceDbFreeTest {
         stubValidLogin();
         try {
             ClinicalResourceBean clinicalResourceBean = ClinicalSampleTestFactory
-                    .createClinicalResourceBean(TEST_USER, MANIFEST_NAME, RP_1, true, Collections.singleton(new Sample()));
+                    .createClinicalResourceBean(TEST_USER, MANIFEST_NAME, RP_1, true, Collections.singleton(
+                            new Sample()));
             clinicalResource.createManifestWithSamples(clinicalResourceBean);
             Assert.fail();
         } catch (IllegalArgumentException e) {
@@ -211,6 +213,22 @@ public class ClinicalResourceDbFreeTest {
         }
     }
 
+    public void testAddSampleToManifestRequiredMaterialTypeMissing() throws Exception {
+        stubValidLogin();
+
+        try {
+            Map<Metadata.Key, String> metadata = new HashMap<Metadata.Key, String>() {{
+                    put(Metadata.Key.SAMPLE_ID, "SM-NOTGOODENOUGH");
+            }};
+            Sample sample = ClinicalSampleTestFactory.createSample(metadata);
+            ClinicalResourceBean clinicalResourceBean = ClinicalSampleTestFactory
+                    .createClinicalResourceBean(TEST_USER, MANIFEST_NAME, RP_1, true, Collections.singletonList(sample));
+            clinicalResource.createManifestWithSamples(clinicalResourceBean);
+            Assert.fail();
+        } catch (IllegalArgumentException e) {
+            assertThat(e.getMessage(), startsWith(ClinicalResource.REQUIRED_FIELD_MISSING));
+        }
+    }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testFromSampleKitNull() throws JAXBException {

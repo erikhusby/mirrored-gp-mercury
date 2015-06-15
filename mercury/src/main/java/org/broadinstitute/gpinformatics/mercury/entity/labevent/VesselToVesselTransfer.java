@@ -44,6 +44,11 @@ public class VesselToVesselTransfer extends VesselTransfer {
         return targetVessel;
     }
 
+    /** For fixups only. */
+    void setTargetVessel(LabVessel targetVessel) {
+        this.targetVessel = targetVessel;
+    }
+
     public LabEvent getLabEvent() {
         return labEvent;
     }

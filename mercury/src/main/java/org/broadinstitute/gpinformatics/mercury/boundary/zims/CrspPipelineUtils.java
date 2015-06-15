@@ -112,7 +112,7 @@ public class CrspPipelineUtils {
      * Returns the hardcoded research project id (RP-XYZ)
      * used for aggregating positive controls for CRSP
      */
-    public String getResearchProjectForCrspPositiveControls() {
+    public static String getResearchProjectForCrspPositiveControls() {
         return "RP-805";
     }
 }

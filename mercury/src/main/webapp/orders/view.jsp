@@ -3,6 +3,7 @@
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
 <%@ page import="org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance" %>
+<%@ page import="org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -64,6 +65,11 @@ $j(document).ready(function () {
 var bspDataCount = 0;
 
 function setupDialogs() {
+    function handleCancelEvent () {
+        $j(this).dialog("close");
+        $j("#dialogAction").attr("name", "");
+    }
+
     $j("#confirmDialog").dialog({
         modal: true,
         autoOpen: false,
@@ -79,9 +85,7 @@ function setupDialogs() {
             },
             {
                 text: "Cancel",
-                click: function () {
-                    $j(this).dialog("close");
-                }
+                click: handleCancelEvent
             }
         ]
     });
@@ -102,9 +106,7 @@ function setupDialogs() {
             },
             {
                 text: "Cancel",
-                click: function () {
-                    $j(this).dialog("close");
-                }
+                click: handleCancelEvent
             }
         ]
     });
@@ -127,9 +129,7 @@ function setupDialogs() {
             },
             {
                 text: "Cancel",
-                click: function () {
-                    $j(this).dialog("close");
-                }
+                click: handleCancelEvent
             }
         ]
     });
@@ -152,9 +152,7 @@ function setupDialogs() {
             },
             {
                 text: "Cancel",
-                click: function () {
-                    $j(this).dialog("close");
-                }
+                click: handleCancelEvent
             }
         ]
     });
@@ -177,9 +175,7 @@ function setupDialogs() {
             },
             {
                 text: "Cancel",
-                click: function () {
-                    $j(this).dialog("close");
-                }
+                click: handleCancelEvent
             }
         ]
     });
@@ -200,9 +196,7 @@ function setupDialogs() {
             },
             {
                 text: "Cancel",
-                click: function () {
-                    $j(this).dialog("close");
-                }
+                click: handleCancelEvent
             }
         ]
     });
@@ -225,9 +219,7 @@ function setupDialogs() {
             },
             {
                 text: "Cancel",
-                click: function () {
-                    $j(this).dialog("close");
-                }
+                click: handleCancelEvent
             }
         ]
     });
@@ -247,9 +239,7 @@ function setupDialogs() {
             },
             {
                 text: "Cancel",
-                click: function () {
-                    $j(this).dialog("close");
-                }
+                click: handleCancelEvent
             }
         ]
     });
@@ -753,15 +743,26 @@ function formatInput(item) {
                 <security:authorizeBlock roles="<%= roles(Developer, PDM, BillingManager) %>">
                     <stripes:param name="selectedProductOrderBusinessKeys" value="${actionBean.editOrder.businessKey}"/>
                     <stripes:submit name="downloadBillingTracker" value="Download Billing Tracker" class="btn"
-                                    style="margin-right:5px;"/>
+                                    style="margin-right:30px;"/>
                 </security:authorizeBlock>
 
                 <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
-                    <stripes:link
-                            beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.UploadTrackerActionBean"
-                            event="view">
-                        Upload Billing Tracker
-                    </stripes:link>
+                    <c:choose>
+                        <c:when test="${actionBean.productOrderListEntry.billing}">
+                            <span class="disabled-link" title="Upload not allowed while billing is in progress">Upload Billing Tracker</span>
+                        </c:when>
+                        <c:otherwise>
+                            <stripes:link
+                                    beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.UploadTrackerActionBean"
+                                    event="view" >
+                                Upload Billing Tracker
+                            </stripes:link>
+                        </c:otherwise>
+                    </c:choose>
+                    <c:if test="${actionBean.productOrderListEntry.billing}">
+                        &#160;
+                        Upload not allowed while billing is in progress
+                    </c:if>
                 </security:authorizeBlock>
 
             </c:if>
@@ -992,7 +993,7 @@ function formatInput(item) {
 
 
 <div class="view-control-group control-group">
-    <label class="control-label label-form">Can Bill</label>
+    <label class="control-label label-form">Can Bill / Ledger Status</label>
 
     <div class="controls">
         <div class="form-value">
@@ -1016,6 +1017,24 @@ function formatInput(item) {
                 <c:otherwise>
                     No
                 </c:otherwise>
+            </c:choose>
+            &nbsp;
+            <c:choose>
+                <c:when test="${actionBean.productOrderListEntry.readyForReview}">
+                        <span class="badge badge-warning">
+                            <%=ProductOrderListEntry.LedgerStatus.READY_FOR_REVIEW.getDisplayName()%>
+                        </span>
+                </c:when>
+                <c:when test="${actionBean.productOrderListEntry.billing}">
+                        <span class="badge badge-info">
+                            <%=ProductOrderListEntry.LedgerStatus.BILLING_STARTED.getDisplayName()%>
+                        </span>
+                </c:when>
+                <c:when test="${actionBean.productOrderListEntry.readyForBilling}">
+                        <span class="badge badge-success">
+                            <%=ProductOrderListEntry.LedgerStatus.READY_TO_BILL.getDisplayName()%>
+                        </span>
+                </c:when>
             </c:choose>
         </div>
     </div>
@@ -1264,7 +1283,7 @@ function formatInput(item) {
                             ${sample.labEventSampleDTO.samplePackagedDate}
                     </td>
                     <td id="receipt-date-${sample.productOrderSampleId}">
-                            ${sample.labEventSampleDTO.sampleReceiptDate}
+                            ${sample.formattedReceiptDate}
                     </td>
 
                     <td id="sample-type-${sample.productOrderSampleId}"></td>

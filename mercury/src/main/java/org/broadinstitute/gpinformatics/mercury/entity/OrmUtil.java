@@ -39,4 +39,22 @@ public class OrmUtil {
         }
         return subClass.isInstance(obj);
     }
+
+    /**
+     * @param obj  Object that may be a {@link HibernateProxy} or a concrete class
+     * @return The {@link HibernateProxy}'s underlying implementation class or
+     *          the concrete object's class if argument is not a HibernateProxy
+     */
+    public static Class getProxyObjectClass(Object obj) {
+
+        if( obj == null ) {
+            return null;
+        }
+
+        if (obj instanceof HibernateProxy) {
+           return ((HibernateProxy) obj).getHibernateLazyInitializer().getImplementation().getClass();
+        }
+
+        return obj.getClass();
+    }
 }

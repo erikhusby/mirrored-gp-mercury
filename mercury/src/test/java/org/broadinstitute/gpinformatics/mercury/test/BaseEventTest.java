@@ -45,6 +45,7 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventRefDataFetcher;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.DenatureToDilutionTubeHandler;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.EventHandlerSelector;
+import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.FlowcellLoadedHandler;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.FlowcellMessageHandler;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.SamplesDaughterPlateHandler;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
@@ -195,16 +196,21 @@ public class BaseEventTest {
         labEventFactory = new LabEventFactory(testUserList, bspSetVolumeConcentration);
         labEventFactory.setLabEventRefDataFetcher(labEventRefDataFetcher);
 
-        final FlowcellMessageHandler flowcellMessageHandler =
-                new FlowcellMessageHandler();
-        flowcellMessageHandler.setJiraService(JiraServiceProducer.stubInstance());
-        flowcellMessageHandler.setEmailSender(new EmailSender());
-        flowcellMessageHandler.setAppConfig(new AppConfig(
-                Deployment.DEV));
+        AppConfig appConfig = new AppConfig(Deployment.DEV);
+        EmailSender emailSender = new EmailSender();
 
-        EventHandlerSelector eventHandlerSelector =
-                new EventHandlerSelector(new DenatureToDilutionTubeHandler(),
-                                         flowcellMessageHandler, new SamplesDaughterPlateHandler());
+        FlowcellMessageHandler flowcellMessageHandler = new FlowcellMessageHandler();
+        flowcellMessageHandler.setJiraService(JiraServiceProducer.stubInstance());
+        flowcellMessageHandler.setEmailSender(emailSender);
+        flowcellMessageHandler.setAppConfig(appConfig);
+
+        FlowcellLoadedHandler flowcellLoadedHandler = new FlowcellLoadedHandler();
+        flowcellLoadedHandler.setJiraService(JiraServiceProducer.stubInstance());
+        flowcellLoadedHandler.setEmailSender(emailSender);
+        flowcellLoadedHandler.setAppConfig(appConfig);
+
+        EventHandlerSelector eventHandlerSelector = new EventHandlerSelector(new DenatureToDilutionTubeHandler(),
+                flowcellMessageHandler, new SamplesDaughterPlateHandler(), flowcellLoadedHandler);
         labEventFactory.setEventHandlerSelector(eventHandlerSelector);
 
         bucketEjb = new BucketEjb(labEventFactory, jiraService, null, null, null, null,
@@ -453,17 +459,14 @@ public class BaseEventTest {
     /**
      * Creates an entity graph for Illumina Content Exome.
      *
-     * @param pondRegRack         The pond registration rack coming out of the library construction process.
-     * @param pondRegRackBarcode  The pond registration rack barcode.
-     * @param pondRegTubeBarcodes A list of pond registration tube barcodes.
+     * @param pondRegRacks         The pond registration racks coming out of the library construction process.
      * @param barcodeSuffix       Makes unique the generated vessel barcodes. Don't use date if test quickly invoked twice.
      *
      * @return Returns the entity builder that contains the entities after this process has been invoked.
      */
-    public IceEntityBuilder runIceProcess(TubeFormation pondRegRack, String pondRegRackBarcode,
-                                          List<String> pondRegTubeBarcodes, String barcodeSuffix) {
-        return new IceEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(), pondRegRack,
-                pondRegRackBarcode, pondRegTubeBarcodes, barcodeSuffix, IceJaxbBuilder.PlexType.PLEX96).invoke();
+    public IceEntityBuilder runIceProcess(List<TubeFormation> pondRegRacks, String barcodeSuffix) {
+        return new IceEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(), pondRegRacks,
+                barcodeSuffix, IceJaxbBuilder.PlexType.PLEX96).invoke();
     }
 
     /**

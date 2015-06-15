@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDao;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.search.PaginationDao;
+import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchTerm;
@@ -46,7 +47,7 @@ public class ConfigurableListFactory {
             @Nonnull String downloadColumnSetName,
             @Nonnull String entityName,
             @Nonnull ColumnEntity entityId,
-            @Nonnull Map<String, Object> evalContext) {
+            @Nonnull SearchContext evalContext) {
 
         List<ColumnTabulation> columnTabulations = buildColumnSetTabulations(downloadColumnSetName, entityName);
         ConfigurableList configurableList = new ConfigurableList(columnTabulations, 0, "ASC", entityId);

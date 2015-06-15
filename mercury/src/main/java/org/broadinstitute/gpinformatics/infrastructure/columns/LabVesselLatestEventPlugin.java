@@ -3,7 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.columns;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
+import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Fetches data for the last event of any descendant vessels in a lab vessel search.
@@ -56,10 +55,10 @@ public class LabVesselLatestEventPlugin implements ListPlugin {
      */
     @Override
     public List<ConfigurableList.Row> getData(List<?> entityList, ConfigurableList.HeaderGroup headerGroup
-            , @Nonnull Map<String, Object> context) {
+            , @Nonnull SearchContext context) {
         List<LabVessel> labVesselList = (List<LabVessel>) entityList;
         List<ConfigurableList.Row> eventRows = new ArrayList<>();
-        BSPUserList bspUserList = (BSPUserList)context.get(SearchInstance.CONTEXT_KEY_BSP_USER_LIST);
+        BSPUserList bspUserList = context.getBspUserList();
         String cellValue;
 
         // Append headers for event data of interest.
@@ -117,7 +116,7 @@ public class LabVesselLatestEventPlugin implements ListPlugin {
 
     @Override
     public ConfigurableList.ResultList getNestedTableData(Object entity, ColumnTabulation columnTabulation,
-                                                          Map<String, Object> context) {
+                                                          SearchContext context) {
         throw new UnsupportedOperationException("Method getNestedTableData not implemented in "
                                                 + getClass().getSimpleName() );
     }

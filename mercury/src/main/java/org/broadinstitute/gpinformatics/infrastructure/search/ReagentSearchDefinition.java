@@ -52,7 +52,7 @@ public class ReagentSearchDefinition {
         searchTerm.setCriteriaPaths(criteriaPaths);
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public String evaluate(Object entity, Map<String, Object> context) {
+            public String evaluate(Object entity, SearchContext context) {
                 Reagent reagent = (Reagent) entity;
                 return reagent.getName();
             }
@@ -70,7 +70,7 @@ public class ReagentSearchDefinition {
         searchTerm.setCriteriaPaths(criteriaPaths);
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public String evaluate(Object entity, Map<String, Object> context) {
+            public String evaluate(Object entity, SearchContext context) {
                 Reagent reagent = (Reagent) entity;
                 return reagent.getLot();
             }
@@ -89,7 +89,7 @@ public class ReagentSearchDefinition {
         searchTerm.setCriteriaPaths(criteriaPaths);
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public Date evaluate(Object entity, Map<String, Object> context) {
+            public Date evaluate(Object entity, SearchContext context) {
                 Reagent reagent = (Reagent) entity;
                 return reagent.getExpiration();
             }

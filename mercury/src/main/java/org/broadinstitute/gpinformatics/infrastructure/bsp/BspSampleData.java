@@ -376,7 +376,7 @@ public class BspSampleData implements SampleData {
     }
 
     @Override
-    public Date getReceiptDate() throws ParseException {
+    public Date getReceiptDate() {
         return getDate(BSPSampleSearchColumn.RECEIPT_DATE);
     }
 

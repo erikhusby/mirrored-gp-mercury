@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.labevent;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
@@ -35,7 +36,9 @@ import javax.transaction.NotSupportedException;
 import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
@@ -678,4 +681,125 @@ public class LabEventFixupTest extends Arquillian {
         labEventDao.flush();
         // Verify 150605_SL-HAA_0467_AC6DNDANXX
     }
+
+    /** Delete Activity Begin and End event sent by a Bravo simulator. */
+    @Test(enabled = false)
+    public void fixupGplim3568() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+        Collection<LabEvent> labEvents = labEventDao.findListByList(LabEvent.class, LabEvent_.eventLocation,
+                Collections.singletonList("EPOLK-VM"));
+        Assert.assertTrue(CollectionUtils.isNotEmpty(labEvents));
+        for (LabEvent labEvent : labEvents) {
+            Assert.assertTrue(labEvent.getLabEventType() == LabEventType.ACTIVITY_BEGIN ||
+                              labEvent.getLabEventType() == LabEventType.ACTIVITY_END);
+            System.out.println("Deleting " + labEvent.getLabEventId());
+            labEventDao.remove(labEvent);
+        }
+        labEventDao.persist(new FixupCommentary("GPLIM-3568 delete activity events sent by a simulator."));
+        labEventDao.flush();
+        utx.commit();
+    }
+
+
+
+    @Test(enabled = false)
+    public void fixupSwap150() {
+        userBean.loginOSUser();
+        LabEvent dilutionToFlowcell = labEventDao.findById(LabEvent.class, 887920L);
+        Assert.assertEquals(dilutionToFlowcell.getLabEventType(), LabEventType.DILUTION_TO_FLOWCELL_TRANSFER);
+        VesselToSectionTransfer vesselToSectionTransfer =
+                dilutionToFlowcell.getVesselToSectionTransfers().iterator().next();
+        Assert.assertEquals(vesselToSectionTransfer.getSourceVessel().getLabel(), "0177366427");
+        System.out.print("Changing " + dilutionToFlowcell.getLabEventId() + " from " +
+                vesselToSectionTransfer.getSourceVessel().getLabel() + " to ");
+        vesselToSectionTransfer.setSourceVessel(barcodedTubeDao.findByBarcode("0177366410"));
+        System.out.println(vesselToSectionTransfer.getSourceVessel().getLabel());
+        labEventDao.persist(new FixupCommentary("SWAP-150 change source of dilution to flowcell transfer"));
+        labEventDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim3586() {
+        userBean.loginOSUser();
+
+        fixupVesselToVessel(884183L, "SM-74PCZ", "0175568017");
+        fixupVesselToVessel(885072L, "SM-74NF3", "0175567592");
+        fixupVesselToVessel(884176L, "SM-74PDC", "0175568014");
+
+        labEventDao.persist(new FixupCommentary("GPLIM-3586 fixup extraction transfers"));
+        labEventDao.flush();
+    }
+
+    private void fixupVesselToVessel(long labEventId, String oldTargetBarcode, String newTargetBarcode) {
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, labEventId);
+        VesselToVesselTransfer vesselToVesselTransfer = labEvent.getVesselToVesselTransfers().iterator().next();
+        Assert.assertEquals(vesselToVesselTransfer.getTargetVessel().getLabel(), oldTargetBarcode);
+        System.out.print("In " + labEvent.getLabEventId() + " changing " +
+                vesselToVesselTransfer.getTargetVessel().getLabel() + " to ");
+        vesselToVesselTransfer.setTargetVessel(barcodedTubeDao.findByBarcode(newTargetBarcode));
+        System.out.println(vesselToVesselTransfer.getTargetVessel().getLabel());
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim3591() {
+        userBean.loginOSUser();
+
+        fixupVesselToVessel(891067L, "SM-74P3F", "0175568242");
+        fixupVesselToVessel(891109L, "SM-74NEQ", "0175567599");
+        fixupVesselToVessel(891072L, "SM-74P55", "0175568173");
+        fixupVesselToVessel(899707L, "SM-74NE2", "0175567623");
+
+        labEventDao.persist(new FixupCommentary("GPLIM-3591 fixup extraction transfers"));
+        labEventDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim3591Part2() {
+        userBean.loginOSUser();
+
+        fixupVesselToVessel(891071L, "SM-74P42", "0175568216");
+
+        labEventDao.persist(new FixupCommentary("GPLIM-3591 fixup another extraction transfer"));
+        labEventDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void fixupIpi61573() {
+        try {
+            userBean.loginOSUser();
+            utx.begin();
+            LabEvent labEvent = labEventDao.findById(LabEvent.class, 909443L);
+            Assert.assertEquals(labEvent.getLabEventType(), LabEventType.FLOWCELL_TRANSFER);
+            System.out.println("Deleting " + labEvent.getLabEventType() + " " + labEvent.getLabEventId());
+            labEvent.getReagents().clear();
+            labEventDao.remove(labEvent);
+            labEventDao.persist(new FixupCommentary("IPI-61573 delete duplicate event"));
+            labEventDao.flush();
+            utx.commit();
+        } catch (NotSupportedException | SystemException | HeuristicMixedException | HeuristicRollbackException |
+                RollbackException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim3601() {
+        userBean.loginOSUser();
+        List<Long> labEventIds = new ArrayList<Long>() {{
+            add(916835L);
+            add(916836L);
+            add(916837L);
+        }};
+        List<LabEvent> labEvents = labEventDao.findListByList(LabEvent.class, LabEvent_.labEventId, labEventIds);
+        Assert.assertEquals(labEvents.size(), 3);
+        LabBatch labBatch = labBatchDao.findByName("LCSET-7385");
+        Assert.assertNotNull(labBatch);
+        for (LabEvent labEvent : labEvents) {
+            labEvent.setManualOverrideLcSet(labBatch);
+        }
+        labEventDao.persist(new FixupCommentary("GPLIM-3601 fixup PicoMicrofluorTransfers due to ambiguous LCSET."));
+        labEventDao.flush();
+    }
+
 }
