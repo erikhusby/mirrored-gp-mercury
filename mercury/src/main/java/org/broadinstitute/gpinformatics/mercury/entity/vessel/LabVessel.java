@@ -1322,6 +1322,7 @@ public abstract class LabVessel implements Serializable {
             workLabBatches.add(sampleInstance.getSingleBatch());
         }
         if (workLabBatches.isEmpty()) {
+            // Vessel is used in more than a single lab batch, so use the lab batch with the latest creation date.
             for (SampleInstanceV2 sampleInstance : sampleInstancesLocal) {
                 if (!sampleInstance.getAllWorkflowBatches().isEmpty()) {
                     workLabBatches.add(sampleInstance.getAllWorkflowBatches().get(
