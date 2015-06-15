@@ -715,4 +715,46 @@ public class LabEventFixupTest extends Arquillian {
         vesselToVesselTransfer.setTargetVessel(barcodedTubeDao.findByBarcode(newTargetBarcode));
         System.out.println(vesselToVesselTransfer.getTargetVessel().getLabel());
     }
+
+    @Test(enabled = false)
+    public void fixupGplim3591() {
+        userBean.loginOSUser();
+
+        fixupVesselToVessel(891067L, "SM-74P3F", "0175568242");
+        fixupVesselToVessel(891109L, "SM-74NEQ", "0175567599");
+        fixupVesselToVessel(891072L, "SM-74P55", "0175568173");
+        fixupVesselToVessel(899707L, "SM-74NE2", "0175567623");
+
+        labEventDao.persist(new FixupCommentary("GPLIM-3591 fixup extraction transfers"));
+        labEventDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim3591Part2() {
+        userBean.loginOSUser();
+
+        fixupVesselToVessel(891071L, "SM-74P42", "0175568216");
+
+        labEventDao.persist(new FixupCommentary("GPLIM-3591 fixup another extraction transfer"));
+        labEventDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void fixupIpi61573() {
+        try {
+            userBean.loginOSUser();
+            utx.begin();
+            LabEvent labEvent = labEventDao.findById(LabEvent.class, 909443L);
+            Assert.assertEquals(labEvent.getLabEventType(), LabEventType.FLOWCELL_TRANSFER);
+            System.out.println("Deleting " + labEvent.getLabEventType() + " " + labEvent.getLabEventId());
+            labEvent.getReagents().clear();
+            labEventDao.remove(labEvent);
+            labEventDao.persist(new FixupCommentary("IPI-61573 delete duplicate event"));
+            labEventDao.flush();
+            utx.commit();
+        } catch (NotSupportedException | SystemException | HeuristicMixedException | HeuristicRollbackException |
+                RollbackException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }
