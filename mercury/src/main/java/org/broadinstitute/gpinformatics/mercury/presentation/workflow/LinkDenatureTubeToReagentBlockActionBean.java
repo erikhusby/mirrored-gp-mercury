@@ -8,14 +8,11 @@ import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidationMethod;
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResource;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.VesselTransferEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
@@ -32,18 +29,17 @@ public class LinkDenatureTubeToReagentBlockActionBean extends CoreActionBean {
     @Validate(required = true, on = SAVE_ACTION)
     private String reagentBlockBarcode;
     @Inject
-    protected LabVesselDao labVesselDao;
+    private LabVesselDao labVesselDao;
     @Inject
-    protected BettaLimsMessageResource bettaLimsMessageResource;
+    private BettaLimsMessageResource bettaLimsMessageResource;
     @Inject
-    protected VesselTransferEjb vesselTransferEjb;
+    private VesselTransferEjb vesselTransferEjb;
     @Inject
-    protected ProductOrderDao productOrderDao;
+    private ProductOrderDao productOrderDao;
 
     @Validate(required = true, on = SAVE_ACTION)
-    public String denatureTubeBarcode;
+    private String denatureTubeBarcode;
     private BarcodedTube denatureTube;
-    protected String workflowName;
 
     public String getReagentBlockBarcode() {
         return reagentBlockBarcode;
@@ -84,17 +80,13 @@ public class LinkDenatureTubeToReagentBlockActionBean extends CoreActionBean {
 
     public LabVessel getDenatureTube() {
         if (denatureTube == null && !denatureTubeBarcode.isEmpty()) {
-            loadDenatureTubeAndWorkflow();
+            loadDenatureTube();
         }
         return denatureTube;
     }
 
     public void setDenatureTube(BarcodedTube denatureTube) {
         this.denatureTube = denatureTube;
-    }
-
-    public String getWorkflowName() {
-        return workflowName;
     }
 
     public String getDenatureTubeBarcode() {
@@ -107,21 +99,11 @@ public class LinkDenatureTubeToReagentBlockActionBean extends CoreActionBean {
 
     @HandlesEvent("denatureInfo")
     public ForwardResolution denatureTubeInfo() {
-        loadDenatureTubeAndWorkflow();
+        loadDenatureTube();
         return new ForwardResolution("/workflow/denature_tube_info.jsp");
     }
 
-    private void loadDenatureTubeAndWorkflow() {
+    private void loadDenatureTube() {
         denatureTube = (BarcodedTube) labVesselDao.findByIdentifier(denatureTubeBarcode);
-        if (denatureTube != null) {
-            for (SampleInstance sample : denatureTube.getAllSamplesOfType(LabVessel.SampleType.WITH_PDO)) {
-                String productOrderKey = sample.getProductOrderKey();
-                if (StringUtils.isNotEmpty(productOrderKey)) {
-                    ProductOrder order = productOrderDao.findByBusinessKey(productOrderKey);
-                    workflowName = order.getProduct().getWorkflow().getWorkflowName();
-                    break;
-                }
-            }
-        }
     }
 }

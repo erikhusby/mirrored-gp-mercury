@@ -410,30 +410,6 @@ public class LabBatchEjb {
     }
 
     /**
-     * Primarily utilized by the deck messaging, this method will validate that all given Vessels have previously been
-     * defined in a batch known to the Mercury System.
-     *
-     * @param batchVessels The vessels to check the batches of
-     *
-     * @return A boolean that determines if the vessels passed in are all in a batch known to Mercury
-     */
-    public boolean validatePriorBatch(Collection<LabVessel> batchVessels) {
-        boolean result = false;
-
-        Iterator<LabVessel> vesselIterator = batchVessels.iterator();
-        LabVessel firstVessel = vesselIterator.next();
-
-        for (LabBatch testBatch : firstVessel.getNearestLabBatches()) {
-            if (testBatch.getStartingBatchLabVessels().containsAll(batchVessels)) {
-                result = true;
-                break;
-            }
-        }
-
-        return result;
-    }
-
-    /**
      * This method adds bucket entries, from PDO creation or rework, to an existing lab batch.
      *
      * @param businessKey    the business key for the lab batch we are adding samples to
