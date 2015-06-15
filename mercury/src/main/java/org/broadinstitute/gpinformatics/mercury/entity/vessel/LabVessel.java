@@ -710,7 +710,7 @@ public abstract class LabVessel implements Serializable {
     }
 
     public int getSampleInstanceCount() {
-        return getSampleInstancesV2().size();
+        return getSampleInstanceCount(SampleType.ANY, null);
     }
 
     public int getSampleInstanceCount(SampleType sampleType, @Nullable LabBatch.LabBatchType batchType) {
@@ -1311,26 +1311,14 @@ public abstract class LabVessel implements Serializable {
     }
 
     public Collection<LabBatch> getNearestWorkflowLabBatches() {
-        Set<LabBatch> workLabBatches = new HashSet<>();
-        Set<SampleInstanceV2> sampleInstancesLocal;
         if (getContainerRole() != null) {
-            sampleInstancesLocal = getContainerRole().getSampleInstancesV2();
+            return getContainerRole().getNearestLabBatches(LabBatch.LabBatchType.WORKFLOW);
         } else {
-            sampleInstancesLocal = getSampleInstancesV2();
+            TransferTraverserCriteria.NearestLabBatchFinder batchCriteria =
+                    new TransferTraverserCriteria.NearestLabBatchFinder(LabBatch.LabBatchType.WORKFLOW);
+            evaluateCriteria(batchCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
+            return batchCriteria.getNearestLabBatches();
         }
-        for (SampleInstanceV2 sampleInstance : sampleInstancesLocal) {
-            workLabBatches.add(sampleInstance.getSingleBatch());
-        }
-        if (workLabBatches.isEmpty()) {
-            // Vessel is used in more than a single lab batch, so use the lab batch with the latest creation date.
-            for (SampleInstanceV2 sampleInstance : sampleInstancesLocal) {
-                if (!sampleInstance.getAllWorkflowBatches().isEmpty()) {
-                    workLabBatches.add(sampleInstance.getAllWorkflowBatches().get(
-                            sampleInstance.getAllWorkflowBatches().size() - 1));
-                }
-            }
-        }
-        return workLabBatches;
     }
 
     /**
