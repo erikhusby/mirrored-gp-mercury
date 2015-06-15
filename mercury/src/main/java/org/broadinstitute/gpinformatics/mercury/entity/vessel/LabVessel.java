@@ -231,8 +231,8 @@ public abstract class LabVessel implements Serializable {
     }
 
     public boolean isDNA() {
-        boolean willSourceEventsProduceDNA = willSourceEventsProduceDNA();
-        if (!willSourceEventsProduceDNA) {
+        boolean hasMaterialConvertedToDNA = hasMaterialConvertedTo(MaterialType.DNA);
+        if (!hasMaterialConvertedToDNA) {
             for (SampleInstanceV2 si : getSampleInstancesV2()) {
                 if (si.getRootOrEarliestMercurySample().getSampleData().getMaterialType()
                         .startsWith(MaterialType.DNA.name())) {
@@ -240,13 +240,12 @@ public abstract class LabVessel implements Serializable {
                 }
             }
         }
-        return willSourceEventsProduceDNA;
+        return hasMaterialConvertedToDNA;
     }
 
-    private boolean willSourceEventsProduceDNA() {
+    private boolean hasMaterialConvertedTo(MaterialType materialType) {
         TransferTraverserCriteria.LabEventsWithMaterialTypeTraverserCriteria materialTypeTraverserCriteria =
-                new TransferTraverserCriteria.LabEventsWithMaterialTypeTraverserCriteria(MaterialType.DNA);
-
+                new TransferTraverserCriteria.LabEventsWithMaterialTypeTraverserCriteria(materialType);
         evaluateCriteria(materialTypeTraverserCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
 
         return materialTypeTraverserCriteria.getVesselForMaterialType() != null;
