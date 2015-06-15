@@ -541,8 +541,8 @@ public class LabVesselSearchDefinition {
                 LabVessel labVessel = (LabVessel) entity;
                 Set<String> positions = null;
 
-                VesselDescendantTraverserCriteria eval
-                        = new VesselDescendantTraverserCriteria(Collections.singletonList(LabEventType.SHEARING_TRANSFER) );
+                VesselDescendantTraverserCriteria eval = new VesselDescendantTraverserCriteria(
+                        Collections.singletonList(LabEventType.SHEARING_TRANSFER), false, false );
                 labVessel.evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
 
                 if (!eval.getPositions().isEmpty()) {
@@ -566,8 +566,8 @@ public class LabVesselSearchDefinition {
                 LabVessel labVessel = (LabVessel) entity;
                 Set<String> barcodes = null;
 
-                VesselDescendantTraverserCriteria eval
-                        = new VesselDescendantTraverserCriteria(Collections.singletonList(LabEventType.SHEARING_TRANSFER) );
+                VesselDescendantTraverserCriteria eval = new VesselDescendantTraverserCriteria(
+                        Collections.singletonList(LabEventType.SHEARING_TRANSFER), false, false );
                 labVessel.evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
 
                 if (!eval.getPositions().isEmpty()) {
@@ -877,19 +877,25 @@ public class LabVesselSearchDefinition {
 
     /**
      * Searches for lab vessel descendant events of specific type(s)
-     * Records barcode and position of all descendant vessel(s)
+     * Records barcode and position of all descendant event vessel(s)
+     * Optional flags:
+     *   Stop at first descendant event found (default is to continue on to all descendant events)
+     *   Use source vessels (default is to use target vessels)
      */
     private class VesselDescendantTraverserCriteria implements TransferTraverserCriteria {
 
+        // Optional flags
         private boolean stopTraverseAtFirstFind = false;
+        private boolean useEventTarget = true;
+
         private List<LabEventType> labEventTypes;
 
         private Set<Pair<String, VesselPosition>> positions = new HashSet<>();
 
         /**
          * Searches for descendant events of specific type(s).
-         * The list of types is intended to be mutually exclusive based upon different workflows (ICE/Agilent)
-         * @param labEventTypes
+         * @param labEventTypes List of event types to locate
+         *                      Should be mutually exclusive based upon different workflows (ICE/Agilent)
          */
         public VesselDescendantTraverserCriteria( List<LabEventType> labEventTypes ) {
             this.labEventTypes = labEventTypes;
@@ -898,12 +904,25 @@ public class LabVesselSearchDefinition {
         /**
          * Searches for descendant events and allow for traversal to be stopped at the first child vessel.
          * Saves the traversal overhead when it's known that there will be no other rework events (e.g. sample import)
-         * @param labEventTypes
-         * @param stopTraverseAtFirstFind
+         * @param labEventTypes List of event types to locate (should be mutually exclusive)
+         * @param stopTraverseAtFirstFind Stop traversing at first matching event type (defaults to false)
          */
         public VesselDescendantTraverserCriteria( List<LabEventType> labEventTypes, boolean stopTraverseAtFirstFind ) {
             this(labEventTypes);
             this.stopTraverseAtFirstFind = stopTraverseAtFirstFind;
+        }
+
+        /**
+         * Searches for descendant events and allow for traversal to be stopped at the first child vessel.
+         * Saves the traversal overhead when it's known that there will be no other rework events (e.g. sample import)
+         * @param labEventTypes List of event types to locate (should be mutually exclusive)
+         * @param stopTraverseAtFirstFind Stop traversing at first matching event type (defaults to false)
+         * @param useEventTarget Use to switch from default of true to false (use event source)
+         */
+        public VesselDescendantTraverserCriteria( List<LabEventType> labEventTypes, boolean stopTraverseAtFirstFind,
+                                                  boolean useEventTarget) {
+            this(labEventTypes, stopTraverseAtFirstFind);
+            this.useEventTarget = useEventTarget;
         }
 
         public Set<Pair<String, VesselPosition>> getPositions(){
@@ -917,20 +936,31 @@ public class LabVesselSearchDefinition {
             TransferTraverserCriteria.TraversalControl outcome
                     = TransferTraverserCriteria.TraversalControl.ContinueTraversing;
 
-            if( context.getEvent() != null && labEventTypes.contains( context.getEvent().getLabEventType() ) ) {
+            LabEvent labEvent = context.getEvent();
+
+            if( labEvent != null && labEventTypes.contains( labEvent.getLabEventType() ) ) {
+
                 String barcode = "";
-                VesselPosition position = null;
-                if( context.getLabVessel() != null ) {
+                VesselPosition position = context.getVesselPosition();
+
+                if (context.getLabVessel() != null) {
                     barcode = context.getLabVessel().getLabel();
-                } else if( context.getVesselContainer() != null && context.getVesselContainer().getEmbedder() != null ) {
+                } else if (context.getVesselContainer() != null
+                           && context.getVesselContainer().getEmbedder() != null) {
                     barcode = context.getVesselContainer().getEmbedder().getLabel();
                 }
 
-                if( context.getVesselPosition() != null ) {
-                    position = context.getVesselPosition();
+                // Searching descendants uses default of target container
+                if( useEventTarget ) {
+                   positions.add(Pair.of(barcode, position));
+                } else {
+                    // Dig out source container attributes
+                    if (context.getVesselContainer() != null ) {
+                        for( LabVessel.VesselEvent vesselEvent : context.getVesselContainer().getAncestors(position) ) {
+                            positions.add(Pair.of(vesselEvent.getLabVessel().getLabel(), vesselEvent.getPosition() ));
+                        }
+                    }
                 }
-
-                positions.add(Pair.of(barcode, position));
 
                 if( stopTraverseAtFirstFind ) {
                     outcome = TransferTraverserCriteria.TraversalControl.StopTraversing;
