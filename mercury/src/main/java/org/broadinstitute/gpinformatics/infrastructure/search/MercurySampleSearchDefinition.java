@@ -103,15 +103,10 @@ public class MercurySampleSearchDefinition {
             public Set<String> evaluate(Object entity, SearchContext context) {
                 MercurySample sample = (MercurySample) entity;
                 Set<String> results = new HashSet<>();
-                LabBatch labBatch;
                 for( LabVessel sampleVessel : sample.getLabVessel() ) {
                     for (SampleInstanceV2 sampleInstanceV2 : sampleVessel.getSampleInstancesV2()) {
-                        for( LabBatchStartingVessel labBatchStartingVessel : sampleInstanceV2.getAllBatchVessels() ) {
-                            // Ignore non-workflow batches
-                            labBatch = labBatchStartingVessel.getLabBatch();
-                            if( labBatch != null && labBatch.getLabBatchType() == LabBatch.LabBatchType.WORKFLOW ) {
-                                results.add(labBatch.getBatchName());
-                            }
+                        for( LabBatch labBatch : sampleInstanceV2.getAllWorkflowBatches() ) {
+                            results.add(labBatch.getBatchName());
                         }
                     }
                 }
