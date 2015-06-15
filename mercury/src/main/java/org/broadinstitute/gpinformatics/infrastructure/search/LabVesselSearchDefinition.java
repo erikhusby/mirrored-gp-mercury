@@ -171,10 +171,15 @@ public class LabVesselSearchDefinition {
             public Set<String> evaluate(Object entity, SearchContext context) {
                 Set<String> results = new HashSet<>();
                 LabVessel labVessel = (LabVessel) entity;
+                LabBatch labBatch;
                 // Navigate back to sample(s)
                 for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
                     for( LabBatchStartingVessel labBatchStartingVessel : sampleInstanceV2.getAllBatchVessels() ) {
-                        results.add(labBatchStartingVessel.getLabBatch().getBatchName());
+                        // Ignore non-workflow batches
+                        labBatch = labBatchStartingVessel.getLabBatch();
+                        if( labBatch != null && labBatch.getLabBatchType() == LabBatch.LabBatchType.WORKFLOW ) {
+                            results.add(labBatch.getBatchName());
+                        }
                     }
                 }
                 return results;

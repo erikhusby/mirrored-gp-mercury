@@ -6,8 +6,10 @@ import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
 import org.broadinstitute.gpinformatics.infrastructure.columns.SampleMetadataPlugin;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -101,9 +103,16 @@ public class MercurySampleSearchDefinition {
             public Set<String> evaluate(Object entity, SearchContext context) {
                 MercurySample sample = (MercurySample) entity;
                 Set<String> results = new HashSet<>();
+                LabBatch labBatch;
                 for( LabVessel sampleVessel : sample.getLabVessel() ) {
-                    for( LabBatch batch : sampleVessel.getLabBatches() ) {
-                        results.add(batch.getBatchName());
+                    for (SampleInstanceV2 sampleInstanceV2 : sampleVessel.getSampleInstancesV2()) {
+                        for( LabBatchStartingVessel labBatchStartingVessel : sampleInstanceV2.getAllBatchVessels() ) {
+                            // Ignore non-workflow batches
+                            labBatch = labBatchStartingVessel.getLabBatch();
+                            if( labBatch != null && labBatch.getLabBatchType() == LabBatch.LabBatchType.WORKFLOW ) {
+                                results.add(labBatch.getBatchName());
+                            }
+                        }
                     }
                 }
                 return results;
