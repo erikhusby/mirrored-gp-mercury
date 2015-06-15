@@ -191,7 +191,6 @@ public abstract class LabVessel implements Serializable {
         return vesselToVesselTransfersThisAsTarget;
     }
 
-    // todo jmt set these fields db-free
     @OneToMany(mappedBy = "sourceVessel", cascade = CascadeType.PERSIST)
     @BatchSize(size = 100)
     private Set<VesselToVesselTransfer> vesselToVesselTransfersThisAsSource = new HashSet<>();
