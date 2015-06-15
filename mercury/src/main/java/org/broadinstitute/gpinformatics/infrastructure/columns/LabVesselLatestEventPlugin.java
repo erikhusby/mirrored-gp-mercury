@@ -6,11 +6,10 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -26,8 +25,8 @@ public class LabVesselLatestEventPlugin implements ListPlugin {
         EVENT_LOCATION( "Event Location"),
         EVENT_DATE( "Event Date");
 
-        String displayName;
-        ConfigurableList.Header header;
+        private String displayName;
+        private ConfigurableList.Header header;
 
         LatestEventColumn( String displayName ){
             this.displayName = displayName;
@@ -36,7 +35,7 @@ public class LabVesselLatestEventPlugin implements ListPlugin {
 
         @Override
         public String getDisplayName() {
-            return null;
+            return displayName;
         }
 
         public ConfigurableList.Header getHeader(){
@@ -59,7 +58,6 @@ public class LabVesselLatestEventPlugin implements ListPlugin {
         List<LabVessel> labVesselList = (List<LabVessel>) entityList;
         List<ConfigurableList.Row> eventRows = new ArrayList<>();
         BSPUserList bspUserList = context.getBspUserList();
-        String cellValue;
 
         // Append headers for event data of interest.
         for( LatestEventColumn column : LatestEventColumn.values() ){
@@ -69,18 +67,14 @@ public class LabVesselLatestEventPlugin implements ListPlugin {
         // Populate rows with any available event data.
         for( LabVessel labVessel : labVesselList ) {
             ConfigurableList.Row row = new ConfigurableList.Row( labVessel.getLabel() );
-            // No good... stops at DilutionToFlowcellTransfer and misses FlowcellLoaded
-            // LabEvent lastEvent = labVessel.getLatestEvent();
 
-            LabVessel lastVessel = null;
+            TransferTraverserCriteria.LabEventDescendantCriteria eventTraversalCriteria =
+                    new TransferTraverserCriteria.LabEventDescendantCriteria();
+            labVessel.evaluateCriteria(eventTraversalCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
+
             LabEvent lastEvent = null;
-            Collection<LabVessel> descendants = labVessel.getDescendantVessels();
-            Iterator iter = descendants.iterator();
-            while( iter.hasNext() ) {
-                lastVessel = (LabVessel)iter.next();
-            }
-            if( lastVessel != null ) {
-                lastEvent = lastVessel.getLatestEvent();
+            for (LabEvent labEvent : eventTraversalCriteria.getAllEvents()) {
+                lastEvent = labEvent;
             }
 
             if( lastEvent == null ) {
@@ -90,7 +84,7 @@ public class LabVesselLatestEventPlugin implements ListPlugin {
                 }
             } else {
                 // Event Name
-                cellValue = lastEvent.getLabEventType().getName();
+                String cellValue = lastEvent.getLabEventType().getName();
                 row.addCell( new ConfigurableList.Cell(LatestEventColumn.EVENT_NAME.getHeader(), cellValue, cellValue ));
                 // Event Operator
                 Long userId = lastEvent.getEventOperator();
@@ -116,7 +110,7 @@ public class LabVesselLatestEventPlugin implements ListPlugin {
 
     @Override
     public ConfigurableList.ResultList getNestedTableData(Object entity, ColumnTabulation columnTabulation,
-                                                          SearchContext context) {
+            @Nonnull SearchContext context) {
         throw new UnsupportedOperationException("Method getNestedTableData not implemented in "
                                                 + getClass().getSimpleName() );
     }
