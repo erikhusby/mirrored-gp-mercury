@@ -650,8 +650,8 @@ public class ProductOrderFixupTest extends Arquillian {
             }
             pdoToChange.addRegulatoryInfo(selectedRegulatoryInfo);
 
-            productOrderDao.persist(new FixupCommentary("Support-809:  Updated PDOs which did not have the correct Regulatory Info associated with them."));
         }
+        productOrderDao.persist(new FixupCommentary("Support-809:  Updated PDOs which did not have the correct Regulatory Info associated with them."));
     }
 
     private static class RegulatoryInfoSelection {
