@@ -710,7 +710,11 @@ public abstract class LabVessel implements Serializable {
     }
 
     public int getSampleInstanceCount() {
-        return getSampleInstanceCount(SampleType.ANY, null);
+        Set<SampleInstanceV2> sampleInstancesV2 = getSampleInstancesV2();
+        if (sampleInstancesV2.size() == 1 && sampleInstancesV2.iterator().next().isReagentOnly()) {
+            return 0;
+        }
+        return sampleInstancesV2.size();
     }
 
     public int getSampleInstanceCount(SampleType sampleType, @Nullable LabBatch.LabBatchType batchType) {
@@ -1311,14 +1315,28 @@ public abstract class LabVessel implements Serializable {
     }
 
     public Collection<LabBatch> getNearestWorkflowLabBatches() {
+        Set<LabBatch> workLabBatches = new HashSet<>();
+        Set<SampleInstanceV2> sampleInstancesLocal;
         if (getContainerRole() != null) {
-            return getContainerRole().getNearestLabBatches(LabBatch.LabBatchType.WORKFLOW);
+            sampleInstancesLocal = getContainerRole().getSampleInstancesV2();
         } else {
-            TransferTraverserCriteria.NearestLabBatchFinder batchCriteria =
-                    new TransferTraverserCriteria.NearestLabBatchFinder(LabBatch.LabBatchType.WORKFLOW);
-            evaluateCriteria(batchCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
-            return batchCriteria.getNearestLabBatches();
+            sampleInstancesLocal = getSampleInstancesV2();
         }
+        for (SampleInstanceV2 sampleInstance : sampleInstancesLocal) {
+            if (sampleInstance.getSingleBatch() != null) {
+                workLabBatches.add(sampleInstance.getSingleBatch());
+            }
+        }
+        if (workLabBatches.isEmpty()) {
+            // Vessel is used in more than a single lab batch, so use the lab batch with the latest creation date.
+            for (SampleInstanceV2 sampleInstance : sampleInstancesLocal) {
+                if (!sampleInstance.getAllWorkflowBatches().isEmpty()) {
+                    workLabBatches.add(sampleInstance.getAllWorkflowBatches().get(
+                            sampleInstance.getAllWorkflowBatches().size() - 1));
+                }
+            }
+        }
+        return workLabBatches;
     }
 
     /**
