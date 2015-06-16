@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.projects.RegulatoryInfoDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -63,7 +64,6 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD;
 
 /**
  * This "test" is an example of how to fixup some data.  Each fix method includes the JIRA ticket ID.
@@ -100,6 +100,9 @@ public class ProductOrderFixupTest extends Arquillian {
 
     @Inject
     private UserBean userBean;
+
+    @Inject
+    private RegulatoryInfoDao regulatoryInfoDao;
 
     // When you run this on prod, change to PROD and prod.
     @Deployment
@@ -607,5 +610,73 @@ public class ProductOrderFixupTest extends Arquillian {
         productOrder.setResearchProject(researchProject);
         productOrderDao.persist(new FixupCommentary("IPI-61545 Change PDO-6074 from RP-623 to RP-627"));
         productOrderDao.flush();
+    }
+
+    @Test(enabled = true)
+    public void fixupSupport809SwitchRegulatoryInfo() {
+
+        List<RegulatoryInfoSelection> regulatoryInfoAdditions = Arrays.asList(
+                new RegulatoryInfoSelection("PDO-5563", "ORSP-1175", RegulatoryInfo.Type.ORSP_NOT_ENGAGED),
+                new RegulatoryInfoSelection("PDO-5569", "ORSP-1366", RegulatoryInfo.Type.IRB),
+                new RegulatoryInfoSelection("PDO-5572", "ORSP-1366", RegulatoryInfo.Type.IRB),
+                new RegulatoryInfoSelection("PDO-5577", "ORSP-1366", RegulatoryInfo.Type.IRB),
+                new RegulatoryInfoSelection("PDO-5655", "ORSP-1175", RegulatoryInfo.Type.ORSP_NOT_ENGAGED),
+                new RegulatoryInfoSelection("PDO-5656", "ORSP-1175", RegulatoryInfo.Type.ORSP_NOT_ENGAGED),
+                new RegulatoryInfoSelection("PDO-5660", "ORSP-1366", RegulatoryInfo.Type.IRB),
+                new RegulatoryInfoSelection("PDO-5913", "ORSP-1366", RegulatoryInfo.Type.IRB),
+                new RegulatoryInfoSelection("PDO-5915", "ORSP-1366", RegulatoryInfo.Type.IRB),
+                new RegulatoryInfoSelection("PDO-5973", "ORSP-1476", RegulatoryInfo.Type.IRB),
+                new RegulatoryInfoSelection("PDO-6035", "ORSP-1366", RegulatoryInfo.Type.IRB),
+                new RegulatoryInfoSelection("PDO-6265", "orsp-1654",
+                        RegulatoryInfo.Type.ORSP_NOT_HUMAN_SUBJECTS_RESEARCH),
+                new RegulatoryInfoSelection("PDO-6361", "ORSP-1366", RegulatoryInfo.Type.IRB),
+                new RegulatoryInfoSelection("PDO-6163", "2011P001787", RegulatoryInfo.Type.IRB),
+                new RegulatoryInfoSelection("PDO-6190", "10-02-0053", RegulatoryInfo.Type.IRB));
+
+        for (RegulatoryInfoSelection orderToRegInfo: regulatoryInfoAdditions) {
+            ProductOrder pdoToChange = productOrderDao.findByBusinessKey(orderToRegInfo.getProductOrderKey());
+
+            RegulatoryInfo selectedRegulatoryInfo = null;
+            for(RegulatoryInfo candidate: pdoToChange.getResearchProject().getRegulatoryInfos()) {
+                if(candidate.getIdentifier().equals(orderToRegInfo.getRegulatoryInfoIdentifier()) &&
+                        candidate.getType() == orderToRegInfo.getRegulatoryInfoType()) {
+                    selectedRegulatoryInfo = candidate;
+                    break;
+                }
+            }
+            Assert.assertNotNull(selectedRegulatoryInfo, "No matching Regulatory Info was found");
+            if(StringUtils.isNotBlank(pdoToChange.getSkipRegulatoryReason())) {
+                pdoToChange.setSkipRegulatoryReason("");
+            }
+            pdoToChange.addRegulatoryInfo(selectedRegulatoryInfo);
+
+            productOrderDao.persist(new FixupCommentary("Support-809:  Updated PDOs which did not have the correct Regulatory Info associated with them."));
+        }
+    }
+
+    private static class RegulatoryInfoSelection {
+        private String productOrderKey;
+        private String regulatoryInfoIdentifier;
+        private RegulatoryInfo.Type regulatoryInfoType;
+
+
+        public RegulatoryInfoSelection(String productOrderKey, String regulatoryInfoIdentifier,
+                                       RegulatoryInfo.Type regulatoryInfoType) {
+            this.productOrderKey = productOrderKey;
+            this.regulatoryInfoIdentifier = regulatoryInfoIdentifier;
+            this.regulatoryInfoType = regulatoryInfoType;
+        }
+
+        public String getProductOrderKey() {
+            return productOrderKey;
+        }
+
+        public String getRegulatoryInfoIdentifier() {
+            return regulatoryInfoIdentifier;
+        }
+
+        public RegulatoryInfo.Type getRegulatoryInfoType() {
+            return regulatoryInfoType;
+        }
     }
 }
