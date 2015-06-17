@@ -367,6 +367,10 @@ public class ProductOrderActionBean extends CoreActionBean {
                + "please contact orsp@broadinstitute.org.";
     }
 
+    public String getComplianceStatement() {
+        return String.format(ResearchProject.REGULATORY_COMPLIANCE_STATEMENT, "this order involves");
+    }
+
     /**
      * @return the list of role names that can modify the order being edited.
      */

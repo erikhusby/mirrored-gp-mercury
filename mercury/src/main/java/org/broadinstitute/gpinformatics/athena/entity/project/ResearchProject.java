@@ -57,6 +57,15 @@ import java.util.TreeSet;
 @Table(name = "RESEARCH_PROJECT", schema = "athena")
 public class ResearchProject implements BusinessObject, JiraProject, Comparable<ResearchProject>, Serializable {
 
+    public static final String REGULATORY_COMPLIANCE_STATEMENT =
+            "If %s human-derived samples (even if commercially "
+            + "available, or established cell lines), either an IRB approval or a Broad Office of Research Subject "
+            + "Protection (ORSP) determination is required. Contact orsp@broadinstitute.org for more information about "
+            + "obtaining an ORSP determination. Note: Internal technical development/validation projects using a "
+            + "Coriell cell line have already received a blanket determination (ORSP-995).<br/><br/> If your order "
+            + "does not involve human-derived samples, then neither ORSP nor IRB review is required. However your "
+            + "order must identify the specific type of samples involved (e.g mouse cells, artificial DNA).";
+
     public enum RegulatoryDesignation {
         // changing enum names requires integration testing with the pipeline,
         // but descriptions can change without impacting the pipeline

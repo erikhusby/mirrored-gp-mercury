@@ -522,15 +522,7 @@
             <a href="#" id="addRegulatoryInfo" class="pull-right"><i class="icon-plus"></i>Add Regulatory Information</a>
         </div>
         <div>
-            <h5>If orders created from this Research Project involve human-derived samples (even if commercially
-                available, or established cell lines), either an IRB approval or a Broad Office of Research Subject
-                Protection (ORSP) determination is required. Contact orsp@broadinstitute.org for more information about
-                obtaining an ORSP determination. Note: Internal technical development/validation projects using a
-                Coriell cell line have already received a blanket determination (ORSP-995).
-                <br/><br/>
-                If your order does not involve human-derived samples, then neither ORSP nor IRB review is required.
-                However your order must identify the specific type of samples involved (e.g mouse cells, artificial
-                DNA).</h5>
+            <h5>${actionBean.complianceStatement}</h5>
         </div>
 
         <stripes:form beanclass="${actionBean.class.name}">
