@@ -644,14 +644,12 @@ public class ProductOrderFixupTest extends Arquillian {
                     break;
                 }
             }
-            Assert.assertNotNull(selectedRegulatoryInfo, "No matching Regulatory Info was found");
-            if(StringUtils.isNotBlank(pdoToChange.getSkipRegulatoryReason())) {
-                pdoToChange.setSkipRegulatoryReason("");
-            }
+            pdoToChange.setSkipRegulatoryReason(null);
             pdoToChange.addRegulatoryInfo(selectedRegulatoryInfo);
 
         }
-        productOrderDao.persist(new FixupCommentary("Support-809:  Updated PDOs which did not have the correct Regulatory Info associated with them."));
+        productOrderDao.persist(new FixupCommentary(
+                "Support-809:  Updated PDOs which did not have the correct Regulatory Info associated with them."));
     }
 
     private static class RegulatoryInfoSelection {
