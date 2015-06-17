@@ -1161,4 +1161,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public void setSampleKitRecipient(SampleKitRecipient sampleKitRecipient) {
         this.sampleKitRecipient = sampleKitRecipient;
     }
+
+    public String getComplianceStatement() {
+        return String.format(ResearchProject.REGULATORY_COMPLIANCE_STATEMENT,
+                "orders created from this Research Project involve");
+    }
 }

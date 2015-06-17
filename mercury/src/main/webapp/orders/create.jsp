@@ -974,8 +974,7 @@
                                        title="Click if no IRB/ORSP review is required."/>No IRB/ORSP Review Required
                             </div>
                             <div id="skipRegulatoryDiv" class="controls controls-text">
-                                Please enter a reason for not including regulatory information<br/>(eg: mouse
-                                samples)<br/>
+                                ${actionBean.complianceStatement}<br/>
                                 <stripes:text id="skipRegulatoryInfoReason" name="editOrder.skipRegulatoryReason"
                                               maxlength="255"/>
                             </div>
