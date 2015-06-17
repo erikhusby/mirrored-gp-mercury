@@ -9,6 +9,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
@@ -182,7 +183,6 @@ public abstract class LabVessel implements Serializable {
     @BatchSize(size = 100)
     private Set<MercurySample> mercurySamples = new HashSet<>();
 
-    // todo jmt set these fields db-free
     @OneToMany(mappedBy = "sourceVessel", cascade = CascadeType.PERSIST)
     @BatchSize(size = 100)
     private Set<VesselToVesselTransfer> vesselToVesselTransfersThisAsSource = new HashSet<>();
@@ -219,12 +219,24 @@ public abstract class LabVessel implements Serializable {
     }
 
     public boolean isDNA() {
-        for (SampleInstanceV2 si : getSampleInstancesV2()) {
-            if (!si.getRootOrEarliestMercurySample().getSampleData().getMaterialType().startsWith("DNA")) {
-                return false;
+        boolean hasMaterialConvertedToDNA = hasMaterialConvertedTo(MaterialType.DNA);
+        if (!hasMaterialConvertedToDNA) {
+            for (SampleInstanceV2 si : getSampleInstancesV2()) {
+                if (si.getRootOrEarliestMercurySample().getSampleData().getMaterialType()
+                        .startsWith(MaterialType.DNA.name())) {
+                    return true;
+                }
             }
         }
-        return true;
+        return hasMaterialConvertedToDNA;
+    }
+
+    private boolean hasMaterialConvertedTo(MaterialType materialType) {
+        TransferTraverserCriteria.LabEventsWithMaterialTypeTraverserCriteria materialTypeTraverserCriteria =
+                new TransferTraverserCriteria.LabEventsWithMaterialTypeTraverserCriteria(materialType);
+        evaluateCriteria(materialTypeTraverserCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
+
+        return materialTypeTraverserCriteria.getVesselForMaterialType() != null;
     }
 
     /**
@@ -250,6 +262,14 @@ public abstract class LabVessel implements Serializable {
 
     public Set<VesselToSectionTransfer> getVesselToSectionTransfersThisAsSource() {
         return vesselToSectionTransfersThisAsSource;
+    }
+
+    public Set<VesselToVesselTransfer> getVesselToVesselTransfersThisAsSource() {
+        return vesselToVesselTransfersThisAsSource;
+    }
+
+    public Set<VesselToVesselTransfer> getVesselToVesselTransfersThisAsTarget() {
+        return vesselToVesselTransfersThisAsTarget;
     }
 
     public void addMetric(LabMetric labMetric) {
@@ -578,6 +598,26 @@ public abstract class LabVessel implements Serializable {
 
         public String getName() {
             return name;
+        }
+    }
+
+    public enum MaterialType implements Displayable {
+        CELL_SUSPENSION("Cell Suspension"),
+        DNA("DNA"),
+        FFPE("FFPE"),
+        FRESH_BLOOD("Fresh Blood"),
+        FRESH_FROZEN_BLOOD("Fresh Frozen Blood"),
+        RNA("RNA");
+
+        private final String displayName;
+
+        MaterialType(String displayName) {
+            this.displayName = displayName;
+        }
+
+        @Override
+        public String getDisplayName() {
+            return displayName;
         }
     }
 
@@ -988,7 +1028,7 @@ public abstract class LabVessel implements Serializable {
      *
      * @return descendant and events
      */
-    private List<VesselEvent> getDescendants() {
+    protected List<VesselEvent> getDescendants() {
         List<VesselEvent> vesselEvents = new ArrayList<>();
         for (VesselToVesselTransfer vesselToVesselTransfer : vesselToVesselTransfersThisAsSource) {
             vesselEvents.add(new VesselEvent(vesselToVesselTransfer.getTargetVessel(), null, null,
@@ -1744,7 +1784,7 @@ public abstract class LabVessel implements Serializable {
                 new TransferTraverserCriteria.LabEventDescendantCriteria();
         evaluateCriteria(eventTraversalCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
 
-        return LabEvent.isEventPresent(eventTraversalCriteria.getAllEvents(), LabEventType.COLLABORATOR_TRANSFER);
+        return LabEvent.isEventPresent(eventTraversalCriteria.getAllEvents(), labEventType);
     }
 
     /**
