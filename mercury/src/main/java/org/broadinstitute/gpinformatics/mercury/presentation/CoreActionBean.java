@@ -30,9 +30,12 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.boundary.BuildInfoBean;
+import org.broadinstitute.gpinformatics.athena.presentation.DisplayableItem;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObjectFinder;
 import org.broadinstitute.gpinformatics.infrastructure.presentation.JiraLink;
 import org.broadinstitute.gpinformatics.infrastructure.presentation.PortalLink;
 import org.broadinstitute.gpinformatics.infrastructure.presentation.SampleLink;
@@ -47,6 +50,7 @@ import javax.servlet.RequestDispatcher;
 import javax.servlet.http.HttpServletResponse;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -631,5 +635,26 @@ public abstract class CoreActionBean implements ActionBean, MessageReporter {
      */
     public SampleLink getSampleLink(@Nonnull AbstractSample sample) {
         return sampleLinkFactory.create(sample);
+    }
+
+    public DisplayableItem getDisplayableItemInfo(String businessKey, BusinessObjectFinder dao) {
+        BusinessObject object = dao.findByBusinessKey(businessKey);
+        if (object == null) {
+            // Object of that business key was not found.
+            return null;
+        }
+
+        DisplayableItem displayableItem = new DisplayableItem(object.getBusinessKey(), object.getName());
+
+        return displayableItem;
+    }
+
+    public Collection<DisplayableItem> makeDisplayableItemCollection(List<? extends BusinessObject> items) {
+        Collection<DisplayableItem> displayableItems = new ArrayList<>(items.size());
+
+        for (BusinessObject item : items) {
+            displayableItems.add(new DisplayableItem(item.getBusinessKey(), item.getName()));
+        }
+        return displayableItems;
     }
 }

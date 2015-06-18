@@ -30,9 +30,10 @@ import org.broadinstitute.gpinformatics.athena.presentation.DisplayableItem;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.MaterialTypeTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.PriceItemTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProductTokenInput;
-import org.broadinstitute.gpinformatics.infrastructure.mercury.MercuryClientService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
+import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.AnalysisTypeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
@@ -67,9 +68,6 @@ public class ProductActionBean extends CoreActionBean {
     private static final String DOWNLOAD_PRODUCT_LIST = "downloadProductDescriptions";
 
     @Inject
-    private MercuryClientService mercuryClientService;
-
-    @Inject
     private ProductFamilyDao productFamilyDao;
 
     @Inject
@@ -89,6 +87,12 @@ public class ProductActionBean extends CoreActionBean {
 
     @Inject
     private MaterialTypeTokenInput materialTypeTokenInput;
+
+    @Inject
+    private AnalysisTypeDao analysisTypeDao;
+
+    @Inject
+    private ReagentDesignDao reagentDesignDao;
 
     // Data needed for displaying the view.
     private List<ProductFamily> productFamilies;
@@ -505,7 +509,7 @@ public class ProductActionBean extends CoreActionBean {
      * @return List of strings representing the reagent designs
      */
     public Collection<DisplayableItem> getReagentDesigns() {
-        return mercuryClientService.getReagentDesigns();
+        return makeDisplayableItemCollection(reagentDesignDao.findAll());
     }
 
     /**
@@ -516,7 +520,7 @@ public class ProductActionBean extends CoreActionBean {
      * @return UI helper object {@link DisplayableItem} representing the reagent design
      */
     public DisplayableItem getReagentDesign(String businessKey) {
-        return mercuryClientService.getReagentDesign(businessKey);
+        return getDisplayableItemInfo(businessKey, reagentDesignDao);
     }
 
     /**
@@ -527,7 +531,7 @@ public class ProductActionBean extends CoreActionBean {
      * @return UI helper object {@link DisplayableItem} representing the analysis type
      */
     public DisplayableItem getAnalysisType(String businessKey) {
-        return mercuryClientService.getAnalysisType(businessKey);
+        return getDisplayableItemInfo(businessKey, analysisTypeDao);
     }
 
     /**
@@ -536,7 +540,7 @@ public class ProductActionBean extends CoreActionBean {
      * @return List of strings representing the analysis types
      */
     public Collection<DisplayableItem> getAnalysisTypes() {
-        return mercuryClientService.getAnalysisTypes();
+        return makeDisplayableItemCollection(analysisTypeDao.findAll());
     }
 
     /**
