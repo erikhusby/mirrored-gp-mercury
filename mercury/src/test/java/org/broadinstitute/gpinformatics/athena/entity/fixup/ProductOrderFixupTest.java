@@ -64,6 +64,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD;
 
 /**
  * This "test" is an example of how to fixup some data.  Each fix method includes the JIRA ticket ID.
@@ -631,7 +632,8 @@ public class ProductOrderFixupTest extends Arquillian {
                         RegulatoryInfo.Type.ORSP_NOT_HUMAN_SUBJECTS_RESEARCH),
                 new RegulatoryInfoSelection("PDO-6361", "ORSP-1366", RegulatoryInfo.Type.IRB),
                 new RegulatoryInfoSelection("PDO-6163", "2011P001787", RegulatoryInfo.Type.IRB),
-                new RegulatoryInfoSelection("PDO-6190", "10-02-0053", RegulatoryInfo.Type.IRB));
+                new RegulatoryInfoSelection("PDO-6190", "10-02-0053", RegulatoryInfo.Type.IRB),
+                new RegulatoryInfoSelection("PDO-5657", "ORSP-1175", RegulatoryInfo.Type.ORSP_NOT_ENGAGED));
 
         for (RegulatoryInfoSelection orderToRegInfo: regulatoryInfoAdditions) {
             ProductOrder pdoToChange = productOrderDao.findByBusinessKey(orderToRegInfo.getProductOrderKey());
