@@ -76,6 +76,7 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressSheari
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.IceEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.InfiniumEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.PreFlightEntityBuilder;
@@ -1576,6 +1577,18 @@ public class LabEventTest extends BaseEventTest {
         fluidigmMessagesBuilder.buildObjectGraph();
     }
 
+    /**
+     * Build object graph for infinium messages
+     */
+    @Test(groups = {TestGroups.DATABASE_FREE})
+    public void testInfinium() {
+        expectedRouting = SystemRouter.System.MERCURY;
+        int numSamples = NUM_POSITIONS_IN_RACK - 2;
+        ProductOrder productOrder = ProductOrderTestFactory.buildInfiniumProductOrder(numSamples);
+        List<StaticPlate> sourcePlates = buildSamplePlates(productOrder);
+        InfiniumEntityBuilder infiniumEntityBuilder = runInfiniumProcess(sourcePlates.get(0), "Infinium");
+    }
+
     private void verifyEventSequence(List<String> labEventNames, String[] expectedEventNames) {
         /*
         * First, make sure that all expected event names are present. Then, check for extra events. Finally, make sure
@@ -1822,5 +1835,26 @@ public class LabEventTest extends BaseEventTest {
         }
         baitTube.addReagent(new DesignedReagent(reagent));
         return baitTube;
+    }
+
+    public static List<StaticPlate> buildSamplePlates(ProductOrder productOrder) {
+        List<StaticPlate> samplePlates = new ArrayList<>();
+        List<ProductOrderSample> samples = productOrder.getSamples();
+        for(int i = 0; i < productOrder.getSamples().size(); i++) {
+            StaticPlate samplePlate = new StaticPlate("AmpPlate" + (i / SBSSection.ALL96.getWells().size()),
+                    StaticPlate.PlateType.Eppendorf96);
+            for(VesselPosition vesselPosition: SBSSection.ALL96.getWells()) {
+                if(i >= samples.size())
+                    break;
+                PlateWell plateWell = new PlateWell(samplePlate, vesselPosition);
+                MercurySample mercurySample =
+                        new MercurySample(samples.get(i).getSampleKey(), MercurySample.MetadataSource.MERCURY);
+                plateWell.addSample(mercurySample);
+                samplePlate.getContainerRole().addContainedVessel(plateWell, vesselPosition);
+                i++;
+            }
+            samplePlates.add(samplePlate);
+        }
+        return samplePlates;
     }
 }
