@@ -41,19 +41,39 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.nullValue;
 
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ProductOrderSampleTest {
 
-    public static ProductOrderSample createBilledSample(String name, LedgerEntry.PriceItemType priceItemType) {
+    private static ProductOrderSample createOrderedSample(String name) {
         ProductOrderSample sample = new ProductOrderSample(name);
-        LedgerEntry billedEntry = LedgerEntryTest.createBilledLedgerEntry(sample, priceItemType);
-        sample.getLedgerItems().add(billedEntry);
+        ProductOrder order = new ProductOrder();
+        Product product = new Product();
+        PriceItem primaryPriceItem = new PriceItem("primary", "", null, "primary");
+        product.setPrimaryPriceItem(primaryPriceItem);
+        order.setProduct(product);
+        order.addSample(sample);
+        return sample;
+    }
+
+    public static ProductOrderSample createBilledSample(String name, LedgerEntry.PriceItemType priceItemType) {
+        ProductOrderSample sample = createOrderedSample(name);
+
+        PriceItem billedPriceItem;
+        if (priceItemType == LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM) {
+            billedPriceItem = sample.getProductOrder().getProduct().getPrimaryPriceItem();
+        } else {
+            billedPriceItem = new PriceItem(priceItemType.name(), "", null, priceItemType.name());
+        }
+        sample.addLedgerItem(new Date(), billedPriceItem, 1);
+        LedgerEntry entry = sample.getLedgerItems().iterator().next();
+        entry.setPriceItemType(priceItemType);
+        entry.setBillingMessage(BillingSession.SUCCESS);
+
         return sample;
     }
 
@@ -61,8 +81,8 @@ public class ProductOrderSampleTest {
         return createBilledSample(name, LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM);
     }
 
-    public static ProductOrderSample createUnbilledSampleWithLedger(String name) {
-        ProductOrderSample sample = new ProductOrderSample(name);
+    private static ProductOrderSample createUnbilledSampleWithLedger(String name) {
+        ProductOrderSample sample = createOrderedSample(name);
         LedgerEntry billedEntry = LedgerEntryTest.createOneLedgerEntry(sample, "price item", 1, new Date());
         sample.getLedgerItems().add(billedEntry);
         return sample;
@@ -73,14 +93,56 @@ public class ProductOrderSampleTest {
         return new Object[][]{
                 {createBilledSample("ABC"), true},
                 {createBilledSample("ABC", LedgerEntry.PriceItemType.ADD_ON_PRICE_ITEM), false},
+                {createBilledSample("ABC", LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM), true},
                 {createUnbilledSampleWithLedger("ABC"), false},
-                {new ProductOrderSample("ABC"), false}
+                {createOrderedSample("ABC"), false}
         };
     }
 
     @Test(dataProvider = "testIsBilled")
     public void testIsBilled(ProductOrderSample sample, boolean isBilled) {
         Assert.assertEquals(sample.isCompletelyBilled(), isBilled);
+    }
+
+    /**
+     * Tests {@link ProductOrderSample#isCompletelyBilled()} with each possible {@link LedgerEntry.PriceItemType}. This
+     * test will fail if a PriceItemType is added without considering how it would affect the calculation for whether or
+     * not a sample has been billed.
+     *
+     * @param priceItemType    the price item type to create a ledger for before invoking isCompletelyBilled()
+     */
+    @Test(dataProvider = "getPriceItemTypes")
+    public void testIsCompletelyBilledHandlesAllPriceItemTypes(LedgerEntry.PriceItemType priceItemType) {
+        ProductOrderSample productOrderSample = createBilledSample("SM-123", priceItemType);
+        productOrderSample.isCompletelyBilled();
+    }
+
+    @DataProvider
+    public Object[][] getPriceItemTypes() {
+        Object[][] result = new Object[LedgerEntry.PriceItemType.values().length][];
+        int index = 0;
+        for (LedgerEntry.PriceItemType priceItemType : LedgerEntry.PriceItemType.values()) {
+            result[index++] = new Object[]{priceItemType};
+        }
+        return result;
+    }
+
+
+    /**
+     * {@link ProductOrderSample#isCompletelyBilled()} should return false when the sample has been billed but then
+     * credited, bringing the net quantity billed back to 0.
+     */
+    public void testIsBilledWithCredits() {
+        ProductOrderSample sample = createBilledSample("test");
+
+        // credit the price item already billed
+        PriceItem billedPriceItem = sample.getProductOrder().getProduct().getPrimaryPriceItem();
+        sample.addLedgerItem(new Date(), billedPriceItem, -1);
+        LedgerEntry entry = sample.getLedgerItems().iterator().next();
+        entry.setPriceItemType(LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM);
+        entry.setBillingMessage(BillingSession.SUCCESS);
+
+        Assert.assertFalse(sample.isCompletelyBilled());
     }
 
     static final org.broadinstitute.bsp.client.sample.MaterialType BSP_MATERIAL_TYPE =
@@ -141,10 +203,7 @@ public class ProductOrderSampleTest {
     @Test(dataProvider = "getBillablePriceItems")
     public void testGetBillablePriceItems(ProductOrderSample sample, List<PriceItem> priceItems) {
         List<PriceItem> generatedItems = sample.getBillablePriceItems();
-        assertThat(generatedItems.size(), is(equalTo(priceItems.size())));
-
-        generatedItems.removeAll(priceItems);
-        assertThat(generatedItems, is(empty()));
+        assertThat(generatedItems, contains(priceItems.toArray()));
     }
 
     @DataProvider(name = "autoBillSample")
