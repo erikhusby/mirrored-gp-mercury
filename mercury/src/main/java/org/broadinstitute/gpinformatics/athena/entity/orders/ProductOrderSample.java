@@ -243,15 +243,67 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         return canRinScoreBeUsed;
     }
 
+    public boolean isCompletelyBilledOld() {
+        for (LedgerEntry entry : ledgerItems) {
+            if (entry.isBilled() && entry.getPriceItemType() != LedgerEntry.PriceItemType.ADD_ON_PRICE_ITEM) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /**
      * A sample is completely billed if its primary or replacement for the primary price item has been billed. If
-     * only an add-on has been billed, it's not yet completely billed.
+     * only an add-on has been billed, it's not yet completely billed. If the net billed quantity is 0 due to a credit
+     * being billed after a debit, the sample has not been billed. Add-ons are only considered if the same price item
+     * has also been billed as a primary or replacement.
      *
      * @return true if this sample has been completely billed.
      */
     public boolean isCompletelyBilled() {
-        for (LedgerEntry entry : ledgerItems) {
-            if (entry.isBilled() && entry.getPriceItemType() != LedgerEntry.PriceItemType.ADD_ON_PRICE_ITEM) {
+
+        /*
+         * Gather the net quantity billed to each price item by price item type. Separate Maps are used because they
+         * contribute to this calculation in different ways. This is like {@link getLedgerQuantities}, but only counts
+         * quantities actually billed and also separates the quantities depending on price item type.
+         */
+        Map<PriceItem, Double> primaryAndReplacementQuantities = new HashMap<>();
+        Map<PriceItem, Double> addOnQuantities = new HashMap<>();
+        for (LedgerEntry item : ledgerItems) {
+            if (item.isBilled()) {
+
+                // Guard against some initial testing data that is billed but doesn't have a price item type.
+                if (item.getPriceItemType() != null) {
+                    Map<PriceItem, Double> typeSpecificQuantities = null;
+                    switch (item.getPriceItemType()) {
+                    case PRIMARY_PRICE_ITEM:
+                    case REPLACEMENT_PRICE_ITEM:
+                        typeSpecificQuantities = primaryAndReplacementQuantities;
+                        break;
+                    case ADD_ON_PRICE_ITEM:
+                        typeSpecificQuantities = addOnQuantities;
+                        break;
+                    }
+
+                    PriceItem priceItem = item.getPriceItem();
+                    Double currentQuantity = typeSpecificQuantities.get(priceItem);
+                    if (currentQuantity == null) {
+                        currentQuantity = 0.0;
+                    }
+                    typeSpecificQuantities.put(priceItem, currentQuantity + item.getQuantity());
+                }
+            }
+        }
+
+        for (Map.Entry<PriceItem, Double> entry : primaryAndReplacementQuantities.entrySet()) {
+            PriceItem priceItem = entry.getKey();
+            Double quantity = entry.getValue();
+
+            // Include add-on quantities if this price item was accidentally billed as an add-on as well as a primary.
+            if (addOnQuantities.containsKey(priceItem)) {
+                quantity += addOnQuantities.get(priceItem);
+            }
+            if (quantity > 0) {
                 return true;
             }
         }
@@ -548,6 +600,9 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
                             "Sample already has the same quantity to bill, PDO: {0}, sample: {1}, price item: {2}, quantity {3}",
                             productOrder.getJiraTicketKey(), sampleName, priceItem.getName(), quantity));
                 } else {
+                    /*
+                     * Why overwrite what a user likely manually uploaded? This seems wrong and/or dangerous.
+                     */
                     for (LedgerEntry item : getLedgerItems()) {
                         if (item.getPriceItem().equals(priceItem)) {
                             item.setQuantity(quantity);
