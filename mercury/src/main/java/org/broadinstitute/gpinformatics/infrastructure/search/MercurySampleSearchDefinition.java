@@ -71,11 +71,15 @@ public class MercurySampleSearchDefinition {
         searchTerm.setCriteriaPaths(criteriaPaths);
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public String evaluate(Object entity, SearchContext context) {
+            public List<String> evaluate(Object entity, SearchContext context) {
                 MercurySample sample = (MercurySample) entity;
                 Set<ProductOrderSample> productOrderSamples = sample.getProductOrderSamples();
                 if (!productOrderSamples.isEmpty()) {
-                    return productOrderSamples.iterator().next().getProductOrder().getJiraTicketKey();
+                    List<String> results = new ArrayList<>();
+                    for( ProductOrderSample productOrderSample : productOrderSamples ) {
+                        results.add( productOrderSample.getProductOrder().getJiraTicketKey() );
+                    }
+                    return results;
                 }
                 return null;
             }
