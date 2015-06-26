@@ -31,6 +31,7 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 
 import java.io.InputStream;
+import java.util.Date;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
@@ -59,8 +60,6 @@ public class WorkflowPrefXmlReloadFixupTest extends Arquillian {
         //userBean.loginOSUser();
         userBean.login("QADudeTest");
 
-        Preference workflowConfigPref = null;
-
         // Do an unmarshall for a validation sanity check
         // As of 05/2015, cannot marshall back to XML
         WorkflowConfig workflowConfig = null;
@@ -75,20 +74,21 @@ public class WorkflowPrefXmlReloadFixupTest extends Arquillian {
             Assert.fail("JAXB unmarshall failure", e );
         }
 
-        // Preference shouldn't exist at initial load!
-        workflowConfigPref = preferenceDao.getGlobalPreference(PreferenceType.WORKFLOW_CONFIGURATION);
-
-        if( workflowConfigPref != null ) {
-            Assert.fail("Global preference WORKFLOW_CONFIGURATION should not exist at initial load.");
-        }
-
         InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream("WorkflowConfig.xml");
         String xml = IOUtils.toString( in, null );
         IOUtils.closeQuietly(in);
 
-        workflowConfigPref = new Preference( userBean.getBspUser().getUserId(),
+        Preference workflowConfigPref = preferenceDao.getGlobalPreference(PreferenceType.WORKFLOW_CONFIGURATION);
+
+        if( workflowConfigPref == null ) {
+            workflowConfigPref = new Preference( userBean.getBspUser().getUserId(),
                     PreferenceType.WORKFLOW_CONFIGURATION, xml );
-        preferenceDao.persist(workflowConfigPref);
+            preferenceDao.persist(workflowConfigPref);
+        } else {
+            workflowConfigPref.setData(xml);
+            workflowConfigPref.setModifiedBy(userBean.getBspUser().getUserId());
+            workflowConfigPref.setModifiedDate(new Date());
+        }
 
         preferenceDao.persist(new FixupCommentary("GPLIM-3557 Load Workflow Config From File to Global Preference"));
         preferenceDao.flush();

@@ -16,10 +16,11 @@ CREATE TABLE im_library_ancestry_fact
   line_number               NUMERIC(9) NOT NULL,
   etl_date                  DATE NOT NULL,
   is_delete                 CHAR(1) NOT NULL,
-  lab_event_id              NUMBER(19) NOT NULL,
+  ancestor_event_id         NUMBER(19) NOT NULL,
   ancestor_library_id       NUMBER(19) NOT NULL,
   ancestor_library_type     VARCHAR2(255) NOT NULL,
   ancestor_library_creation DATE NOT NULL,
+  child_event_id            NUMBER(19) NOT NULL,
   child_library_id          NUMBER(19) NOT NULL,
   child_library_type        VARCHAR2(255) NOT NULL,
   child_library_creation    DATE NOT NULL
@@ -27,10 +28,11 @@ CREATE TABLE im_library_ancestry_fact
 
 CREATE TABLE library_ancestry_fact
 (
-  lab_event_id              NUMBER(19) NOT NULL,
+  ancestor_event_id         NUMBER(19) NOT NULL,
   ancestor_library_id       NUMBER(19) NOT NULL,
   ancestor_library_type     VARCHAR2(255) NOT NULL,
   ancestor_library_creation DATE NOT NULL,
+  child_event_id            NUMBER(19) NOT NULL,
   child_library_id          NUMBER(19) NOT NULL,
   child_library_type        VARCHAR2(255) NOT NULL,
   child_library_creation    DATE NOT NULL,

@@ -578,8 +578,16 @@ public class ExtractTransform implements Serializable {
         return incrementalRunStartTime;
     }
 
+    /**
+     * Supports REST call to analyze a single event
+     * @param labEventId The event ID to process
+     * @return Denormalized lab event warehouse data
+     */
     public Collection<EventFactDto> analyzeEvent(long labEventId) {
-        return labEventEtlAnalysis.makeEventFacts(labEventId);
+        List<EventFactDto> dtos = labEventEtlAnalysis.makeEventFacts(labEventId);
+        // Prevent Hibernate recursive relationship stack overflow error at XA commit
+        auditReaderDao.clear();
+        return dtos;
     }
 
     public Collection<SequencingRunDto> analyzeSequencingRun(long sequencingRunId) {

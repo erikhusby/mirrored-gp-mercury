@@ -141,12 +141,12 @@ public class ExtractTransformResource {
         // Supresses the "molecularIndex" column if no indexes are given.
         boolean showMolecularBarcodes = false;
         for (EventFactDto dto : dtos) {
-            id = (dto.getLabEvent() != null) ? dto.getLabEvent().getLabEventId() : null;
-            type = (dto.getLabEvent() != null ? dto.getLabEvent().getLabEventType().toString() : null);
-            if (!StringUtils.isBlank(dto.getMolecularIndexName())) {
+            if (!StringUtils.isBlank(dto.getMolecularIndex())) {
                 showMolecularBarcodes = true;
                 columnCount = 10;
             }
+            id = dto.getEventId();
+            type = dto.getEventType().toString();
         }
 
         StringBuilder sb = new StringBuilder();
@@ -181,24 +181,24 @@ public class ExtractTransformResource {
         for (EventFactDto dto : dtos) {
             sb.append(showMolecularBarcodes ?
                     formatRow(String.valueOf(dto.canEtl()),
-                            dto.getLabVessel() != null ? dto.getLabVessel().getLabel() : "null",
-                            dto.getMolecularIndexName(),
-                            dto.getBatchName(),
-                            dto.getWorkflowName(),
-                            dto.getSample() != null ? dto.getSample().getSampleKey() : "null",
-                            dto.getProductOrder() != null ? dto.getProductOrder().getBusinessKey() : "null",
-                            dto.getWfDenorm() != null ? dto.getWfDenorm().getProductWorkflowName() : "null",
-                            dto.getWfDenorm() != null ? dto.getWfDenorm().getWorkflowProcessName() : "null",
-                            dto.getWfDenorm() != null ? dto.getWfDenorm().getWorkflowStepName() : "null") :
+                            dto.getVesselBarcode() == null ? "null": dto.getVesselBarcode(),
+                            dto.getMolecularIndex() == null ? "null": dto.getMolecularIndex(),
+                            dto.getBatchName() == null ? "null": dto.getBatchName(),
+                            dto.getWfName() == null ? "null": dto.getWfName(),
+                            dto.getSampleId() == null ? "null": dto.getSampleId(),
+                            dto.getPdoName() == null ? "null": dto.getPdoName(),
+                            dto.getWfName() == null ? "null": dto.getWfName(),
+                            dto.getWfProcessName() == null ? "null": dto.getWfProcessName(),
+                            dto.getWfStepName() == null ? "null": dto.getWfStepName() ) :
                     formatRow(String.valueOf(dto.canEtl()),
-                            dto.getLabVessel() != null ? dto.getLabVessel().getLabel() : "null",
-                            dto.getBatchName(),
-                            dto.getWorkflowName(),
-                            dto.getSample() != null ? dto.getSample().getSampleKey() : "null",
-                            dto.getProductOrder() != null ? dto.getProductOrder().getBusinessKey() : "null",
-                            dto.getWfDenorm() != null ? dto.getWfDenorm().getProductWorkflowName() : "null",
-                            dto.getWfDenorm() != null ? dto.getWfDenorm().getWorkflowProcessName() : "null",
-                            dto.getWfDenorm() != null ? dto.getWfDenorm().getWorkflowStepName() : "null")
+                            dto.getVesselBarcode() == null ? "null": dto.getVesselBarcode(),
+                            dto.getBatchName() == null ? "null": dto.getBatchName(),
+                            dto.getWfName() == null ? "null": dto.getWfName(),
+                            dto.getSampleId() == null ? "null": dto.getSampleId(),
+                            dto.getPdoName() == null ? "null": dto.getPdoName(),
+                            dto.getWfName() == null ? "null": dto.getWfName(),
+                            dto.getWfProcessName() == null ? "null": dto.getWfProcessName(),
+                            dto.getWfStepName() == null ? "null": dto.getWfStepName() )
             );
             buildAncestryTable(sb, columnCount, dto.getAncestryFactDtos());
         }
@@ -218,19 +218,21 @@ public class ExtractTransformResource {
                         "ancestorLibraryName",
                         "ancestorLibraryType",
                         "ancestorLibraryCreated",
+                        "childEventID",
                         "childLibraryName",
                         "childLibraryType",
                         "childLibraryCreated") );
-
         for(EventAncestryEtlUtil.AncestryFactDto ancestryDto : ancestryFactDtoList ){
-            sb.append(formatRow(
-                    ancestryDto.getAncestorEventId().toString(),
-                    ancestryDto.getAncestorVessel().getLabVesselId().toString(),
-                    ancestryDto.getAncestorLibraryTypeName(),
-                    ancestryDto.getAncestorCreated().toString(),
-                    ancestryDto.getChildVessel().getLabVesselId().toString(),
-                    ancestryDto.getChildLibraryTypeName(),
-                    ancestryDto.getChildCreated().toString()));
+            sb.append(
+                formatRow(
+                        ancestryDto.getAncestorEventId().toString(),
+                        ancestryDto.getAncestorVesselId().toString(),
+                        ancestryDto.getAncestorLibraryTypeName(),
+                        ExtractTransform.formatTimestamp(ancestryDto.getAncestorCreated()),
+                        ancestryDto.getChildEventId().toString(),
+                        ancestryDto.getChildVesselId().toString(),
+                        ancestryDto.getChildLibraryTypeName(),
+                        ExtractTransform.formatTimestamp(ancestryDto.getChildCreated() ) ) );
         }
         sb.append("</td></table></tr>");
     }

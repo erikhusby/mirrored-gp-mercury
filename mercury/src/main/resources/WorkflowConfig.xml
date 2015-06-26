@@ -769,7 +769,6 @@
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
-                <ancestryEtlFlag>true</ancestryEtlFlag>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Normalization Transfer</name>
@@ -809,6 +808,7 @@
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
+                <ancestryEtlFlag>true</ancestryEtlFlag>
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>
@@ -963,7 +963,6 @@
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
-                <ancestryEtlFlag>true</ancestryEtlFlag>
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>

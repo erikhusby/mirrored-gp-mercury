@@ -159,6 +159,16 @@ public class WorkflowConfigLookup implements Serializable {
         return denormConfigs;
     }
 
+    public static boolean isSynthetic(String workflowName){
+        for( WorkflowConfigDenorm workflowConfigDenorm : SYNTHETIC_WORKFLOW_CONFIGS  ){
+            if( workflowConfigDenorm.getProductWorkflowName() == workflowName ) {
+                return true;
+            }
+        }
+        return false;
+
+    }
+
     /** Returns true if event can be ETL'd without a batch name. */
     public static boolean needsBatch(String workflowStepEventName) {
         return !ACCEPT_WITHOUT_BATCH_NAME.contains(workflowStepEventName);

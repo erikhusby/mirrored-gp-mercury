@@ -68,7 +68,14 @@ AS
   PROCEDURE DO_DELETES
   AS
   BEGIN
-    -- For this fact table, a re-export of audited entity ids should replace existing ones.
+
+    -- For event fact table, a re-export of audited entity ids should replace existing ones.
+    DELETE FROM LIBRARY_ANCESTRY_FACT
+     WHERE CHILD_EVENT_ID IN (
+       SELECT DISTINCT LAB_EVENT_ID
+         FROM IM_EVENT_FACT );
+    DBMS_OUTPUT.PUT_LINE( 'Deleted ' || SQL%ROWCOUNT || ' LIBRARY_ANCESTRY_FACT child rows' );
+
     DELETE FROM event_fact
     WHERE lab_event_id IN (SELECT
                              DISTINCT lab_event_id
@@ -688,6 +695,45 @@ AS
     END LOOP;
   END MERGE_SEQUENCING_RUN;
 
+  PROCEDURE MERGE_REGULATORY_INFO
+  IS
+  BEGIN
+    -- Regulatory info data
+    FOR new IN ( SELECT *
+                 FROM im_regulatory_info
+                 WHERE is_delete = 'F' ) LOOP
+      BEGIN
+        UPDATE regulatory_info
+        SET regulatory_info_id = new.regulatory_info_id,
+          identifier = new.identifier,
+          type       = new.type,
+          name       = new.name,
+          etl_date   = new.etl_date
+        WHERE regulatory_info_id = new.regulatory_info_id;
+
+        IF SQL%ROWCOUNT = 0 THEN
+          INSERT INTO regulatory_info (
+            regulatory_info_id,
+            identifier,
+            type,
+            name,
+            etl_date
+          ) VALUES (
+            new.regulatory_info_id,
+            new.identifier,
+            new.type,
+            new.name,
+            new.etl_date );
+        END IF;
+        EXCEPTION WHEN OTHERS THEN
+        errmsg := SQLERRM;
+        DBMS_OUTPUT.PUT_LINE(
+            TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_regulatory_info.dat line ' || new.line_number || '  ' || errmsg);
+        CONTINUE;
+      END;
+    END LOOP;
+  END MERGE_REGULATORY_INFO;
+
   PROCEDURE MERGE_PRODUCT_ORDER
   IS
   BEGIN
@@ -750,40 +796,7 @@ AS
 
     END LOOP;
 
-    -- Regulatory info data
-    FOR new IN ( SELECT *
-                   FROM im_regulatory_info
-                  WHERE is_delete = 'F' ) LOOP
-      BEGIN
-        UPDATE regulatory_info
-        SET regulatory_info_id = new.regulatory_info_id,
-          identifier = new.identifier,
-          type       = new.type,
-          name       = new.name,
-          etl_date   = new.etl_date
-        WHERE regulatory_info_id = new.regulatory_info_id;
 
-        IF SQL%ROWCOUNT = 0 THEN
-          INSERT INTO regulatory_info (
-            regulatory_info_id,
-            identifier,
-            type,
-            name,
-            etl_date
-          ) VALUES (
-            new.regulatory_info_id,
-            new.identifier,
-            new.type,
-            new.name,
-            new.etl_date );
-        END IF;
-        EXCEPTION WHEN OTHERS THEN
-        errmsg := SQLERRM;
-        DBMS_OUTPUT.PUT_LINE(
-            TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_regulatory_info.dat line ' || new.line_number || '  ' || errmsg);
-        CONTINUE;
-      END;
-    END LOOP;
 
     -- Many to many mapping table pdo_regulatory_infos
     -- List of regulatory_info_id's associated with each product_order_id in a list
@@ -1607,30 +1620,32 @@ AS
 
     -- Merge imported data (order is important to support parent-child dependencies)
     MERGE_RESEARCH_PROJECT();
+    MERGE_RESEARCH_PROJECT_STATUS();
     MERGE_PRICE_ITEM();
     MERGE_PRODUCT();
     MERGE_LAB_VESSEL();
-    MERGE_LAB_METRIC();
     MERGE_WORKFLOW();
     MERGE_WORKFLOW_PROCESS();
     MERGE_SEQUENCING_RUN();
+    MERGE_REGULATORY_INFO();
     MERGE_PRODUCT_ORDER();
+    MERGE_PRODUCT_ORDER_STATUS();
+    MERGE_LAB_METRIC();
     MERGE_PRODUCT_ORDER_ADD_ON();
-    MERGE_RESEARCH_PROJECT_STATUS();
     MERGE_RESEARCH_PROJECT_PERSON();
     MERGE_RESEARCH_PROJECT_FUNDING();
     MERGE_RESEARCH_PROJECT_COHORT();
     MERGE_RESEARCH_PROJECT_IRB();
     MERGE_PRODUCT_ORDER_SAMPLE();
+    MERGE_PDO_SAMPLE_STATUS();
     MERGE_EVENT_FACT();
+    MERGE_ANCESTRY_FACT();
 
     -- Level 3 (depends on level 2 tables)
-    MERGE_PRODUCT_ORDER_STATUS();
-    MERGE_PDO_SAMPLE_STATUS();
     MERGE_PDO_SAMPLE_RISK();
+    MERGE_LEDGER_ENTRY();
     MERGE_PDO_SAMPLE_BILL();
     MERGE_BILLING_SESSION();
-    MERGE_LEDGER_ENTRY();
     MERGE_SEQUENCING_SAMPLE_FACT();
 
     COMMIT;

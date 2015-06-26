@@ -86,35 +86,34 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
         try {
             for (EventFactDto fact : makeEventFacts(entity)) {
                 if (fact.canEtl()) {
-                    ProductOrder pdo = fact.getProductOrder();
-                    LabEventType.LibraryType libraryType = fact.getLabEvent().getLabEventType().getLibraryType();
-                    eventFactRecords.add(genericRecord(etlDateStr, isDelete,
-                            fact.getLabEvent().getLabEventId(),
-                            format(fact.getWfDenorm().getWorkflowId()),
-                            format(fact.getWfDenorm().getProcessId()),
-                            format(pdo != null ? pdo.getProductOrderId() : null),
-                            format(fact.getSample() == null ? null : fact.getSample().getSampleKey()),
-                            format(fact.getBatchName()),
-                            format(fact.getLabEvent().getEventLocation()),
-                            format(fact.getLabVessel() == null ? null : fact.getLabVessel().getLabVesselId()),
-                            format(ExtractTransform.formatTimestamp(fact.getLabEvent().getEventDate())),
-                            format(fact.getLabEvent().getProgramName()),
-                            format(fact.getMolecularIndexName()),
-                            format(libraryType == LabEventType.LibraryType.NONE_ASSIGNED ?
-                                    null : libraryType.getDisplayName()),
+                    eventFactRecords.add(
+                        genericRecord(etlDateStr, isDelete,
+                            format( fact.getEventId() ),
+                            format( fact.getWfId() ),
+                            format( fact.getWfProcessId() ),
+                            format( fact.getPdoId() ),
+                            format( fact.getSampleId() ),
+                            format( fact.getBatchName() ),
+                            format( fact.getEventLocation() ),
+                            format( fact.getVesselId() ),
+                            ExtractTransform.formatTimestamp(fact.getEventDate()),
+                            format(fact.getEventProgram()),
+                            format(fact.getMolecularIndex()),
                             "E"
-                    ));
+                        )
+                    );
 
                     if( fact.getAncestryFactDtos() != null ) {
                         for (EventAncestryEtlUtil.AncestryFactDto ancestryDto : fact.getAncestryFactDtos()) {
                             eventFactRecords.add(genericRecord(etlDateStr, isDelete,
-                                    format(ancestryDto.getAncestorEventId()),
-                                    format(ancestryDto.getAncestorVessel().getLabVesselId()),
-                                    format(ancestryDto.getAncestorLibraryTypeName()),
-                                    format(ancestryDto.getAncestorCreated()),
-                                    format(ancestryDto.getChildVessel().getLabVesselId()),
-                                    format(ancestryDto.getChildLibraryTypeName()),
-                                    format(ancestryDto.getChildCreated()),
+                                    format( ancestryDto.getAncestorEventId()),
+                                    format( ancestryDto.getAncestorVesselId()),
+                                    format( ancestryDto.getAncestorLibraryTypeName()),
+                                    ExtractTransform.formatTimestamp(ancestryDto.getAncestorCreated()),
+                                    format( ancestryDto.getChildEventId()),
+                                    format( ancestryDto.getChildVesselId()),
+                                    format( ancestryDto.getChildLibraryTypeName()),
+                                    ExtractTransform.formatTimestamp(ancestryDto.getChildCreated()),
                                     "A"
                             ));
                         }
@@ -267,88 +266,168 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
     }
 
 
-
+    /**
+     * Holds extract data for lab event ETL.  Data should be considered immutable after constructor. <br />
+     * Note: Hibernate causes stack overflow errors at commit stage due to what appears to be
+     *    an old bug caused by recursive relationships.
+     * To prevent, all entities are detached from persistence context at makeEventFacts method.
+     * Any data access via entity lazy fetches or Hibernate proxies will fail
+     */
     public static class EventFactDto {
-        private LabEvent labEvent;
-        private LabVessel labVessel;
-        private String molecularIndexName;
-        private String batchName;
-        private String workflowName;
-        private MercurySample sample;
-        private ProductOrder productOrder;
-        private WorkflowConfigDenorm wfDenorm;
+
         private boolean canEtl;
         private List<EventAncestryEtlUtil.AncestryFactDto> ancestryFactDtos;
+        private Object[] data;
+
+        private static final int COL_EVENT_ID       = 0;
+        private static final int COL_WORKFLOW_ID    = 1;
+        private static final int COL_PROCESS_ID     = 2;
+        private static final int COL_PDO_ID         = 3;
+        private static final int COL_SAMPLE_ID      = 4;
+        private static final int COL_BATCH_NAME     = 5;
+        private static final int COL_LOCATION       = 6;
+        private static final int COL_VESSEL_ID      = 7;
+        private static final int COL_EVENT_DATE     = 8;
+        private static final int COL_PROGRAM_NAME   = 9;
+        private static final int COL_INDEX_NAME     = 10;
+        private static final int COL_LIBRARY_NAME   = 11;
+        private static final int COL_VESSEL_BARCODE = 12;
+        private static final int COL_WORKFLOW_NAME  = 13;
+        private static final int COL_PROCESS_NAME   = 14;
+        private static final int COL_PDO_NAME       = 15;
+        private static final int COL_STEP_NAME      = 16;
+        private static final int COL_EVENT_TYPE     = 17;
+        private static final int COL_BATCH_DATE     = 18;
 
         EventFactDto(LabEvent labEvent, LabVessel labVessel, String molecularIndexName, String batchName,
                      String workflowName, MercurySample sample, ProductOrder productOrder,
                      WorkflowConfigDenorm wfDenorm, boolean canEtl) {
-            this.labEvent = labEvent;
-            this.labVessel = labVessel;
-            this.molecularIndexName = molecularIndexName;
-            this.batchName = batchName;
-            this.workflowName = workflowName;
-            this.sample = sample;
-            this.productOrder = productOrder;
-            this.wfDenorm = wfDenorm;
+
+            data = new Object[19];
+
+            // LabEvent never null
+            data[COL_EVENT_ID] = labEvent.getLabEventId();
+            data[COL_EVENT_TYPE] = labEvent.getLabEventType();
+            data[COL_LOCATION] = labEvent.getEventLocation();
+            data[COL_EVENT_DATE] = labEvent.getEventDate();
+            data[COL_PROGRAM_NAME] = format(labEvent.getProgramName());
+            data[COL_LIBRARY_NAME] =
+                    labEvent.getLabEventType().getLibraryType() == LabEventType.LibraryType.NONE_ASSIGNED ?
+                            null : labEvent.getLabEventType().getLibraryType().getDisplayName();
+
+            data[COL_INDEX_NAME] = molecularIndexName;
+            data[COL_BATCH_NAME] = batchName;
+
+            data[COL_BATCH_DATE] = labEvent.getLabBatch() == null ? null : labEvent.getLabBatch().getCreatedOn();
+            data[COL_WORKFLOW_NAME] = workflowName;
+
+            // Remaining entities can be null - validate before access
+            data[COL_WORKFLOW_ID] = wfDenorm == null ? null : wfDenorm.getWorkflowId();
+            data[COL_WORKFLOW_NAME] = wfDenorm == null ? null : wfDenorm.getProductWorkflowName();
+            data[COL_PROCESS_ID] = wfDenorm == null ? null : wfDenorm.getProcessId();
+            data[COL_PROCESS_NAME] = wfDenorm == null ? null : wfDenorm.getWorkflowProcessName();
+            data[COL_STEP_NAME] = wfDenorm == null ? null : wfDenorm.getWorkflowStepName();
+            data[COL_PDO_ID] = productOrder == null ? null : productOrder.getProductOrderId();
+            data[COL_PDO_NAME] = productOrder == null ? null : productOrder.getBusinessKey();
+            data[COL_SAMPLE_ID] = sample == null ? null : sample.getSampleKey();
+
+            data[COL_VESSEL_ID] = labVessel == null ? null : labVessel.getLabVesselId();
+            data[COL_VESSEL_BARCODE] = labVessel == null ? null : labVessel.getLabel();
+
             this.canEtl = canEtl;
         }
-
 
         public static final Comparator<EventFactDto> BY_SAMPLE_KEY = new Comparator<EventFactDto>() {
             // Sorting a null sample key will put it after non-null sample keys.
             private final static String NULLS_LAST = "zzzzzzzzzz";
             @Override
             public int compare(EventFactDto lhs, EventFactDto rhs) {
-                String s1 = lhs.getSample() == null || lhs.getSample().getSampleKey() == null ?
-                            NULLS_LAST : lhs.getSample().getSampleKey();
-                String s2 = rhs.getSample() == null || rhs.getSample().getSampleKey() == null ?
-                        NULLS_LAST : rhs.getSample().getSampleKey();
+                String s1 = lhs.getSampleId() == null || lhs.getSampleId().isEmpty() ?
+                            NULLS_LAST : lhs.getSampleId();
+                String s2 = rhs.getSampleId() == null || rhs.getSampleId().isEmpty() ?
+                        NULLS_LAST : rhs.getSampleId();
                 return s1.compareTo(s2);
             }
         };
 
-        public LabEvent getLabEvent() {
-            return labEvent;
-        }
-
-        public LabVessel getLabVessel() {
-            return labVessel;
-        }
-
-        public String getMolecularIndexName() {
-            return molecularIndexName;
-        }
-
-        public String getBatchName() {
-            return batchName;
-        }
-
-        public String getWorkflowName() {
-            return workflowName;
-        }
-
-        public MercurySample getSample() {
-            return sample;
-        }
-
-        public ProductOrder getProductOrder() {
-            return productOrder;
-        }
-
-        public WorkflowConfigDenorm getWfDenorm() {
-            return wfDenorm;
-        }
-
-        public boolean canEtl() {
+        public boolean canEtl(){
             return canEtl;
         }
 
-        public void addAncestryDto( EventAncestryEtlUtil.AncestryFactDto ancestryFactDto ) {
-            if( ancestryFactDtos == null ) {
-                ancestryFactDtos = new ArrayList<>();
-            }
-            ancestryFactDtos.add(ancestryFactDto);
+        public Long getEventId() {
+            return (Long) data[COL_EVENT_ID];
+        }
+
+        public LabEventType getEventType() {
+            return (LabEventType) data[COL_EVENT_TYPE];
+        }
+
+        public String getEventLocation() {
+            return (String) data[COL_LOCATION];
+        }
+
+        public Date getEventDate() {
+            return (Date) data[COL_EVENT_DATE];
+        }
+
+        public String getEventProgram() {
+            return (String) data[COL_PROGRAM_NAME];
+        }
+
+        public String getLibraryName() {
+            return (String) data[COL_LIBRARY_NAME];
+        }
+
+        public String getMolecularIndex() {
+            return (String) data[COL_INDEX_NAME];
+        }
+
+        public String getBatchName() {
+            return (String) data[COL_BATCH_NAME];
+        }
+
+        public Date getBatchDate() {
+            return (Date) data[COL_BATCH_NAME];
+        }
+
+        public String getWfName() {
+            return (String) data[COL_WORKFLOW_NAME];
+        }
+
+        public Long getWfId() {
+            return (Long) data[COL_WORKFLOW_ID];
+        }
+
+        public Long getWfProcessId() {
+            return (Long) data[COL_PROCESS_ID];
+        }
+
+        public String getWfProcessName() {
+            return (String) data[COL_PROCESS_NAME];
+        }
+
+        public String getWfStepName() {
+            return (String) data[COL_STEP_NAME];
+        }
+
+        public Long getPdoId() {
+            return (Long) data[COL_PDO_ID];
+        }
+
+        public String getPdoName() {
+            return (String) data[COL_PDO_NAME];
+        }
+
+        public String getSampleId() {
+            return (String) data[COL_SAMPLE_ID];
+        }
+
+        public Long getVesselId() {
+            return (Long) data[COL_VESSEL_ID];
+        }
+
+        public String getVesselBarcode() {
+            return (String) data[COL_VESSEL_BARCODE];
         }
 
         public void addAllAncestryDtos( List<EventAncestryEtlUtil.AncestryFactDto> ancestryFactDtos ) {
@@ -379,6 +458,9 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
 
     private List<EventFactDto> makeEventFacts(LabEvent entity) {
         List<EventFactDto> dtos = new ArrayList<>();
+
+        // Hand off event DTOs to see if ancestry should be added
+        EventAncestryEtlUtil ancestryUtil = new EventAncestryEtlUtil();
 
         if (entity != null && entity.getLabEventType() != null) {
             String eventName = entity.getLabEventType().getName();
@@ -414,32 +496,32 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                             sampleInstances = containedVessel.getSampleInstancesV2();
                             dtosFromEvent = createDtoFromEventVessel(entity, containedVessel, sampleInstances, workflowEffectiveDate);
                             dtos.addAll(dtosFromEvent);
+                            ancestryUtil.generateAncestryData( dtosFromEvent, entity, vessel );
                             dtosFromEvent.clear();
                         }
                     } else {
                         VesselContainer container = vessel.getContainerRole();
                         for( VesselPosition position : container.getEmbedder().getVesselGeometry().getVesselPositions() ) {
                             sampleInstances = container.getSampleInstancesAtPositionV2(position);
-                            dtosFromEvent = createDtoFromEventVessel(entity, vessel, sampleInstances, workflowEffectiveDate);
-                            dtos.addAll(dtosFromEvent);
-                            dtosFromEvent.clear();
+                            if( sampleInstances != null && !sampleInstances.isEmpty() ) {
+                                dtosFromEvent = createDtoFromEventVessel(entity, vessel, sampleInstances,
+                                        workflowEffectiveDate);
+                                dtos.addAll(dtosFromEvent);
+                                ancestryUtil.generateAncestryData( dtosFromEvent, entity, vessel );
+                                dtosFromEvent.clear();
+                            }
                         }
                     }
                 } else {
                     sampleInstances = vessel.getSampleInstancesV2();
                     dtosFromEvent = createDtoFromEventVessel( entity, vessel, sampleInstances, workflowEffectiveDate );
                     dtos.addAll(dtosFromEvent);
+                    ancestryUtil.generateAncestryData( dtosFromEvent, entity, vessel );
                     dtosFromEvent.clear();
                 }
             }
 
         }
-
-        // Hand off event DTOs to see if ancestry should be added
-        EventAncestryEtlUtil ancestryUtil = new EventAncestryEtlUtil();
-        ancestryUtil.generateAncestryData(dtos);
-
-        dao.getEntityManager().clear();
 
         Collections.sort(dtos, EventFactDto.BY_SAMPLE_KEY);
 
@@ -473,6 +555,9 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                             si.getMolecularIndexingScheme().getName() : null;
 
                     String batchName = labBatch != null ? labBatch.getBatchName() : NONE;
+                    if( labBatch != null ){
+                        workflowEffectiveDate = labBatch.getCreatedOn();
+                    }
                     String workflowName = labBatch != null ? labBatch.getWorkflowName() : null;
                     if (StringUtils.isBlank(workflowName) && pdo != null) {
                         workflowName = pdo.getProduct().getWorkflow().getWorkflowName();
@@ -543,8 +628,8 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
         // No vessel on event.
         for (Iterator<EventFactDto> iter = dtos.iterator(); iter.hasNext(); ) {
             EventFactDto fact = iter.next();
-            if (fact.getLabVessel() == null) {
-                errorIds.add(fact.getLabEvent().getLabEventId());
+            if (fact.getVesselId() == null) {
+                errorIds.add(fact.getEventId() );
                 iter.remove();
             }
         }
@@ -557,9 +642,9 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
         // No sampleInstance on vessel.
         for (Iterator<EventFactDto> iter = dtos.iterator(); iter.hasNext(); ) {
             EventFactDto fact = iter.next();
-            if (fact.getProductOrder() == null && fact.getMolecularIndexName() == null) {
-                errorIds.add(fact.getLabEvent().getLabEventId());
-                otherIds.add(fact.getLabVessel().getLabVesselId());
+            if (fact.getPdoId() == null && fact.getMolecularIndex() == null ) {
+                errorIds.add( fact.getEventId() );
+                otherIds.add( fact.getVesselId() );
                 iter.remove();
             }
         }
@@ -573,9 +658,9 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
         // No pdo on sampleInstance, or no pdo entity for pdoKey.
         for (Iterator<EventFactDto> iter = dtos.iterator(); iter.hasNext(); ) {
             EventFactDto fact = iter.next();
-            if (fact.getProductOrder() == null) {
-                errorIds.add(fact.getLabEvent().getLabEventId());
-                otherIds.add(fact.getLabVessel().getLabVesselId());
+            if (fact.getPdoId() == null ) {
+                errorIds.add( fact.getEventId() );
+                otherIds.add( fact.getVesselId() );
                 iter.remove();
             }
         }
@@ -589,9 +674,9 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
         // No starting sample on sampleInstance.
         for (Iterator<EventFactDto> iter = dtos.iterator(); iter.hasNext(); ) {
             EventFactDto fact = iter.next();
-            if (fact.getSample() == null) {
-                errorIds.add(fact.getLabEvent().getLabEventId());
-                otherIds.add(fact.getLabVessel().getLabVesselId());
+            if (fact.getSampleId() == null) {
+                errorIds.add( fact.getEventId() );
+                otherIds.add( fact.getVesselId() );
                 iter.remove();
             }
         }
@@ -605,8 +690,8 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
         // No lab batch.
         for (Iterator<EventFactDto> iter = dtos.iterator(); iter.hasNext(); ) {
             EventFactDto fact = iter.next();
-            if (fact.getBatchName() == null || fact.getBatchName().equals(NONE)) {
-                errorIds.add(fact.getLabEvent().getLabEventId());
+            if (fact.getBatchName() == null || fact.getBatchName().equals(NONE) ) {
+                errorIds.add( fact.getEventId() );
                 iter.remove();
             }
         }
@@ -620,7 +705,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
         for (Iterator<EventFactDto> iter = dtos.iterator(); iter.hasNext(); ) {
             EventFactDto fact = iter.next();
             if (fact.getBatchName().equals(MULTIPLE)) {
-                errorIds.add(fact.getLabEvent().getLabEventId());
+                errorIds.add( fact.getEventId() );
                 iter.remove();
             }
         }
@@ -633,13 +718,13 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
         // No workflowConfig for (eventName, workflowName, eventDate).
         for (Iterator<EventFactDto> iter = dtos.iterator(); iter.hasNext(); ) {
             EventFactDto fact = iter.next();
-            if (fact.getWfDenorm() == null) {
-                errorIds.add(fact.getLabEvent().getLabEventId());
+            if (fact.getWfId() == null) {
+                errorIds.add( fact.getEventId() );
                 iter.remove();
             }
         }
         if (errorIds.size() > 0) {
-            logger.debug("Missing workflowConfig for labEvents: " + StringUtils.join(errorIds, ", "));
+            logger.debug("Missing workflow for labEvents: " + StringUtils.join(errorIds, ", "));
         }
         errorIds.clear();
         otherIds.clear();
