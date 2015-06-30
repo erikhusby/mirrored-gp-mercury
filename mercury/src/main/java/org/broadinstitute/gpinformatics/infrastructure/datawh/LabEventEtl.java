@@ -300,6 +300,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
         private static final int COL_BATCH_DATE     = 18;
 
         EventFactDto(LabEvent labEvent, LabVessel labVessel, String molecularIndexName, String batchName,
+                     Date workflowEffectiveDate,
                      String workflowName, MercurySample sample, ProductOrder productOrder,
                      WorkflowConfigDenorm wfDenorm, boolean canEtl) {
 
@@ -318,7 +319,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
             data[COL_INDEX_NAME] = molecularIndexName;
             data[COL_BATCH_NAME] = batchName;
 
-            data[COL_BATCH_DATE] = labEvent.getLabBatch() == null ? null : labEvent.getLabBatch().getCreatedOn();
+            data[COL_BATCH_DATE] = workflowEffectiveDate;
             data[COL_WORKFLOW_NAME] = workflowName;
 
             // Remaining entities can be null - validate before access
@@ -482,7 +483,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                 // pattern is used in other fact table etl that are exposed in ExtractTransformResource.
                 WorkflowConfigDenorm wfDenorm = workflowConfigLookup.lookupWorkflowConfig(
                         eventName, null, workflowEffectiveDate);
-                dtos.add(new EventFactDto(entity, null, null, null, null, null, null, wfDenorm, true));
+                dtos.add(new EventFactDto(entity, null, null, null, null, null, null, null, wfDenorm, true));
 
                 logger.debug("Skipping ETL on labEvent " + entity.getLabEventId() +
                              ": No event vessels" );
@@ -496,7 +497,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                             sampleInstances = containedVessel.getSampleInstancesV2();
                             dtosFromEvent = createDtoFromEventVessel(entity, containedVessel, sampleInstances, workflowEffectiveDate);
                             dtos.addAll(dtosFromEvent);
-                            ancestryUtil.generateAncestryData( dtosFromEvent, entity, vessel );
+                            ancestryUtil.generateAncestryData( dtosFromEvent, entity, containedVessel );
                             dtosFromEvent.clear();
                         }
                     } else {
@@ -575,7 +576,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
 
                     MercurySample sample = si.getRootOrEarliestMercurySample();
                     if (sample != null) {
-                        dtos.add( new EventFactDto(labEvent, vessel, molecularIndexingSchemeName, batchName, workflowName,
+                        dtos.add( new EventFactDto(labEvent, vessel, molecularIndexingSchemeName, batchName, workflowEffectiveDate, workflowName,
                                 sample, pdo, wfDenorm, canEtl) );
                     } else {
                         // Use of the full constructor which in this case has multiple nulls is intentional
@@ -584,7 +585,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
 
                         dtos.add( new EventFactDto(labEvent, vessel,
                                 MolecularIndexReagent.getIndexesString(vessel.getIndexesForSampleInstance(si)).trim(),
-                                null, null, null, pdo, null, false) );
+                                null, null, null, null, pdo, null, false) );
                         logger.debug("Skipping ETL on labEvent " + labEvent.getLabEventId() +
                                      " on vessel " + vessel.getLabel() + ": RootOrEarliestMercurySample is null" );
                     }
@@ -593,7 +594,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                 // Use of the full constructor which in this case has multiple nulls is intentional
                 // since exactly which fields are null is used as indicator in postEtlLogging, and this
                 // pattern is used in other fact table etl that are exposed in ExtractTransformResource.
-                dtos.add( new EventFactDto(labEvent, vessel, null, null, null, null, null, null, false) );
+                dtos.add( new EventFactDto(labEvent, vessel, null, null, null, null, null, null, null, false) );
                 logger.debug("Skipping ETL on labEvent " + labEvent.getLabEventId() +
                              " on vessel " + vessel.getLabel() + ": No SampleInstanceV2 instances" );
             }

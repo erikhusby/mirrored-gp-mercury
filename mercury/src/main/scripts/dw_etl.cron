@@ -246,7 +246,7 @@ do
     select to_char(${TIMESTAMP}) from dual;
     spool off;
     spool ${ERROR_DIR}/${TIMESTAMP}_sqlplus.log;
-    exec merge_import;
+    exec MERGE_ETL_IMPORT.DO_ETL;
     quit;
 !
 

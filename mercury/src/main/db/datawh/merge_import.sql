@@ -1225,7 +1225,7 @@ AS
         WHEN INVALID_LAB_BATCH THEN
         DBMS_OUTPUT.PUT_LINE(
             TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_event_fact.dat line ' || new.line_number || '  ' ||
-            'Event fact has invalid lab batch name: ' || NVL(new.batch_name, 'NONE'));
+            'Event fact has invalid lab batch name: ' || NVL(new.batch_name, '(null)'));
         CONTINUE;
 
         WHEN OTHERS THEN
@@ -1238,6 +1238,43 @@ AS
     END LOOP;
   END MERGE_EVENT_FACT;
 
+
+  PROCEDURE MERGE_ANCESTRY_FACT
+  IS
+  BEGIN
+    FOR new IN (SELECT *
+                  FROM im_library_ancestry_fact
+                 WHERE is_delete = 'F') LOOP
+      BEGIN
+        INSERT INTO library_ancestry_fact (
+          ancestor_event_id,
+          ancestor_library_id,
+          ancestor_library_type,
+          ancestor_library_creation,
+          child_event_id,
+          child_library_id,
+          child_library_type,
+          child_library_creation,
+          etl_date
+        ) VALUES (
+          new.ancestor_event_id,
+          new.ancestor_library_id,
+          new.ancestor_library_type,
+          new.ancestor_library_creation,
+          new.child_event_id,
+          new.child_library_id,
+          new.child_library_type,
+          new.child_library_creation,
+          new.etl_date
+        );
+        EXCEPTION WHEN OTHERS THEN
+          errmsg := SQLERRM;
+          DBMS_OUTPUT.PUT_LINE(
+              TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_library_ancestry_fact.dat line ' || new.line_number || '  ' || errmsg);
+          CONTINUE;
+        END;
+    END LOOP;
+  END MERGE_ANCESTRY_FACT;
 
   PROCEDURE MERGE_PRODUCT_ORDER_STATUS
   IS

@@ -118,8 +118,11 @@ public class WorkflowConfig implements PreferenceDefinitionValue {
         for( WorkflowProcessDef processDef : workflowDef.getWorkflowProcessDefs() ){
             // Process definition version sequential steps
             // Stop at the workflow step corresponding to the current event
-            for( WorkflowStepDef workflowStepDef : processDef.getEffectiveVersion(effectiveDate).getWorkflowStepDefs() ) {
-                workflowStepList.add(workflowStepDef);
+            WorkflowProcessDefVersion workflowProcessDefVersion =  processDef.getEffectiveVersion(effectiveDate);
+            if( workflowProcessDefVersion != null ) {
+                for( WorkflowStepDef workflowStepDef : processDef.getEffectiveVersion(effectiveDate).getWorkflowStepDefs() ) {
+                    workflowStepList.add(workflowStepDef);
+                }
             }
         }
 

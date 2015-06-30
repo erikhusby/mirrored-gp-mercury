@@ -41,6 +41,13 @@ CREATE TABLE library_ancestry_fact
 
 CREATE INDEX idx_ancestry_fact_hierarchy on library_ancestry_fact (child_library_id, ancestor_library_id );
 CREATE INDEX idx_ancestry_fact_reverse on library_ancestry_fact (ancestor_library_id, child_library_id );
+CREATE UNIQUE INDEX IDX_VESSEL_LABEL ON LAB_VESSEL( LABEL ) COMPUTE STATISTICS;
+CREATE INDEX IDX_EVENT_VESSEL ON EVENT_FACT( LAB_VESSEL_ID ) COMPUTE STATISTICS;
+-- Warehouse query performance
+CREATE INDEX IDX_ANCESTRY_CHILD_LIBRARY ON LIBRARY_ANCESTRY_FACT( CHILD_LIBRARY_ID ) COMPUTE STATISTICS;
+-- ETL delete performance
+CREATE INDEX IDX_ANCESTRY_CHILD_EVENT ON LIBRARY_ANCESTRY_FACT( CHILD_EVENT_ID ) COMPUTE STATISTICS;
+DROP PROCEDURE MERGE_IMPORT;
 
 --  -------------------------------------------------------
 -- Release 1.61
