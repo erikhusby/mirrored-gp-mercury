@@ -114,6 +114,8 @@ public class ProductOrderSampleTest {
     @Test(dataProvider = "getPriceItemTypes")
     public void testIsCompletelyBilledHandlesAllPriceItemTypes(LedgerEntry.PriceItemType priceItemType) {
         ProductOrderSample productOrderSample = createBilledSample("SM-123", priceItemType);
+
+        // No assert here, just making sure that an exception is not thrown if an unknown PriceItemType is encountered.
         productOrderSample.isCompletelyBilled();
     }
 
@@ -140,6 +142,34 @@ public class ProductOrderSampleTest {
         sample.addLedgerItem(new Date(), billedPriceItem, -1);
         LedgerEntry entry = sample.getLedgerItems().iterator().next();
         entry.setPriceItemType(LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM);
+        entry.setBillingMessage(BillingSession.SUCCESS);
+
+        Assert.assertFalse(sample.isCompletelyBilled());
+    }
+
+    /**
+     * {@link ProductOrderSample#isCompletelyBilled()} should accumulate quantity accidentally billed as an add-on for
+     * price items that have also been billed as a primary or replacement. The notion is that, if there has been a
+     * billing event for a price item as a primary or replacement, all quantity billed against that price item should
+     * be considered even if it was accidentally billed as an add-on.
+     *
+     * This makes primary/replacement billing more "sticky" than add-on billing in the sense that accidental billing as
+     * a primary or replacement will promote add-on billing of the same price item to be treated as primary. As of this
+     * change (July 2015), the only instances in production of price items being billed as both primary/replacement and
+     * add-on are due to a primary or replacement being incorrectly classified as an add-on. Therefore, the promotion of
+     * these add-ons is correct.
+     *
+     * Hopefully the product/add-on system will be cleaned up before the opposite case is encountered (if ever). If not,
+     * then probably either the new case needs a data fix-up or the old cases will need data fix-ups.
+     */
+    public void testIsBilledWithCreditsAndAddOn() {
+        ProductOrderSample sample = createBilledSample("test");
+
+        // credit the price item with an add-on ledger entry
+        PriceItem billedPriceItem = sample.getProductOrder().getProduct().getPrimaryPriceItem();
+        sample.addLedgerItem(new Date(), billedPriceItem, -1);
+        LedgerEntry entry = sample.getLedgerItems().iterator().next();
+        entry.setPriceItemType(LedgerEntry.PriceItemType.ADD_ON_PRICE_ITEM);
         entry.setBillingMessage(BillingSession.SUCCESS);
 
         Assert.assertFalse(sample.isCompletelyBilled());
