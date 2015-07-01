@@ -56,6 +56,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
@@ -1585,8 +1586,11 @@ public class LabEventTest extends BaseEventTest {
         expectedRouting = SystemRouter.System.MERCURY;
         int numSamples = NUM_POSITIONS_IN_RACK - 2;
         ProductOrder productOrder = ProductOrderTestFactory.buildInfiniumProductOrder(numSamples);
-        List<StaticPlate> sourcePlates = buildSamplePlates(productOrder);
-        InfiniumEntityBuilder infiniumEntityBuilder = runInfiniumProcess(sourcePlates.get(0), "Infinium");
+        List<StaticPlate> sourcePlates = buildSamplePlates(productOrder, "AmpPlate");
+        StaticPlate sourcePlate = sourcePlates.get(0);
+        InfiniumEntityBuilder infiniumEntityBuilder = runInfiniumProcess(sourcePlate, "Infinium");
+        Set<SampleInstanceV2> samples = infiniumEntityBuilder.getHybChip().getSampleInstancesV2();
+        Assert.assertEquals(samples.size(), 24, "Wrong number of sample instances");
     }
 
     private void verifyEventSequence(List<String> labEventNames, String[] expectedEventNames) {
@@ -1837,11 +1841,11 @@ public class LabEventTest extends BaseEventTest {
         return baitTube;
     }
 
-    public static List<StaticPlate> buildSamplePlates(ProductOrder productOrder) {
+    public static List<StaticPlate> buildSamplePlates(ProductOrder productOrder, String platePrefix) {
         List<StaticPlate> samplePlates = new ArrayList<>();
         List<ProductOrderSample> samples = productOrder.getSamples();
         for(int i = 0; i < productOrder.getSamples().size(); i++) {
-            StaticPlate samplePlate = new StaticPlate("AmpPlate" + (i / SBSSection.ALL96.getWells().size()),
+            StaticPlate samplePlate = new StaticPlate(platePrefix + (i / SBSSection.ALL96.getWells().size()),
                     StaticPlate.PlateType.Eppendorf96);
             for(VesselPosition vesselPosition: SBSSection.ALL96.getWells()) {
                 if(i >= samples.size())

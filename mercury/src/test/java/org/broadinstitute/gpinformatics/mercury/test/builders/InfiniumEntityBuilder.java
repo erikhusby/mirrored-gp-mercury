@@ -22,6 +22,7 @@ public class InfiniumEntityBuilder {
     private InfiniumJaxbBuilder infiniumJaxbBuilder;
     private LabEvent amplifcationEvent;
     private StaticPlate amplificationPlate;
+    private StaticPlate hybChip;
 
     public InfiniumEntityBuilder(
             BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
@@ -84,7 +85,7 @@ public class InfiniumEntityBuilder {
         LabEvent hybEvent = labEventFactory.buildFromBettaLims(
                 infiniumJaxbBuilder.getInfiniumHybridizationJaxb(), mapBarcodeToVessel);
         labEventHandler.processEvent(hybEvent);
-        StaticPlate hybChip = (StaticPlate) hybEvent.getTargetLabVessels().iterator().next();
+        hybChip = (StaticPlate) hybEvent.getTargetLabVessels().iterator().next();
 
         LabEvent washEvent = labEventFactory.buildFromBettaLimsPlateEventDbFree(
                 infiniumJaxbBuilder.getInfiniumWashJaxb(), hybChip);
@@ -95,5 +96,9 @@ public class InfiniumEntityBuilder {
         labEventHandler.processEvent(xstainEvent);
 
         return this;
+    }
+
+    public StaticPlate getHybChip() {
+        return hybChip;
     }
 }
