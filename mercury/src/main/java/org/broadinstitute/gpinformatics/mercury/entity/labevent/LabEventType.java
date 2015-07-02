@@ -1382,7 +1382,7 @@ public enum LabEventType {
         HYBRID_SELECTION_AGILENT_CATCH("Enriched Catch"),
         HYBRID_SELECTION_ICE_ENRICHED_CATCH("Enriched Catch"),
         QTP_ECO_POOL("ECO Pool"),
-        MISEQ_FLOWCELL("MiSEQ Flowcell"),
+        MISEQ_FLOWCELL("MiSeq Flowcell"),
         NONE_ASSIGNED("");
 
         private LibraryType( String displayName ){
