@@ -5,7 +5,6 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntryTest;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataSourceResolver;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
@@ -41,10 +40,8 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.nullValue;
 
 
 @Test(groups = TestGroups.DATABASE_FREE)
@@ -98,9 +95,7 @@ public class ProductOrderSampleTest {
             order.setQuoteId(quoteId);
 
             product = order.getProduct();
-            MaterialType materialType = new MaterialType(BSP_MATERIAL_TYPE.getCategory(), BSP_MATERIAL_TYPE.getName());
             addOn = ProductTestFactory.createDummyProduct(Workflow.AGILENT_EXOME_EXPRESS, "partNumber");
-            addOn.addAllowableMaterialType(materialType);
             addOn.setPrimaryPriceItem(new PriceItem("A", "B", "C", "D"));
             product.addAddOn(addOn);
 
@@ -110,9 +105,6 @@ public class ProductOrderSampleTest {
                     }};
             sample1 = new ProductOrderSample("Sample1", new BspSampleData(dataMap));
 
-            dataMap = new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
-                put(BSPSampleSearchColumn.MATERIAL_TYPE, "XXX:XXX");
-            }};
             sample2 = new ProductOrderSample("Sample2", new BspSampleData(dataMap));
 
             List<ProductOrderSample> samples = new ArrayList<>();
@@ -122,29 +114,15 @@ public class ProductOrderSampleTest {
         }
     }
 
-    @DataProvider(name = "getBillablePriceItems")
-    public static Object[][] makeGetBillablePriceItemsData() {
+    public void testGetBillablePriceItems() {
         TestPDOData data = new TestPDOData("GSP-123");
-        Product product = data.product;
-        Product addOn = data.addOn;
 
         List<PriceItem> expectedItems = new ArrayList<>();
-        expectedItems.add(product.getPrimaryPriceItem());
-        expectedItems.add(addOn.getPrimaryPriceItem());
+        expectedItems.add(data.product.getPrimaryPriceItem());
+        expectedItems.add(data.addOn.getPrimaryPriceItem());
 
-        return new Object[][]{
-                new Object[]{data.sample1, expectedItems},
-                new Object[]{data.sample2, Collections.singletonList(product.getPrimaryPriceItem())}
-        };
-    }
-
-    @Test(dataProvider = "getBillablePriceItems")
-    public void testGetBillablePriceItems(ProductOrderSample sample, List<PriceItem> priceItems) {
-        List<PriceItem> generatedItems = sample.getBillablePriceItems();
-        assertThat(generatedItems.size(), is(equalTo(priceItems.size())));
-
-        generatedItems.removeAll(priceItems);
-        assertThat(generatedItems, is(empty()));
+        List<PriceItem> generatedItems = data.sample1.getBillablePriceItems();
+        assertThat(generatedItems.size(), is(equalTo(expectedItems.size())));
     }
 
     @DataProvider(name = "autoBillSample")
@@ -160,13 +138,14 @@ public class ProductOrderSampleTest {
         ledger.setBillingMessage(BillingSession.SUCCESS);
         ledger.setBillingSession(new BillingSession(0L, Collections.singleton(ledger)));
 
+        LedgerEntry unpaid = new LedgerEntry(data.sample2, data.addOn.getPrimaryPriceItem(), completedDate, 1);
         return new Object[][]{
                 // Create ledger items from a single sample.
                 new Object[]{data.sample1, completedDate, ledgers},
                 // Update existing ledger items with "new" bill count.
                 new Object[]{data.sample1, completedDate, ledgers},
                 // If sample is already billed, don't create any ledger items.
-                new Object[]{data.sample2, completedDate, Collections.emptySet()}
+                new Object[]{data.sample2, completedDate, Collections.singleton(unpaid)}
         };
     }
 

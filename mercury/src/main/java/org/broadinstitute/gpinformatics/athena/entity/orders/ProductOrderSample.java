@@ -8,7 +8,6 @@ import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
-import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.broadinstitute.gpinformatics.athena.entity.samples.SampleReceiptValidation;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
@@ -486,32 +485,17 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     }
 
     /**
-     * Given a sample, compute its billable price items based on its material type.  We assume that all add-ons
-     * in the sample's order's product that can accept the sample's material type are required, in addition to the
-     * product's primary price item.
+     * Given a sample, find all primary price items for this sample's product and its add-ons.
      *
-     * @return the list of required add-ons.
+     * @return the list of price items
      */
     List<PriceItem> getBillablePriceItems() {
         List<PriceItem> items = new ArrayList<>();
-        items.add(getProductOrder().getProduct().getPrimaryPriceItem());
-        org.broadinstitute.bsp.client.sample.MaterialType materialTypeObject =
-                getSampleData().getMaterialTypeObject();
-        Set<Product> productAddOns = productOrder.getProduct().getAddOns();
-        if (materialTypeObject != null && !productAddOns.isEmpty()) {
-            MaterialType sampleMaterialType =
-                    new MaterialType(materialTypeObject.getCategory(), materialTypeObject.getName());
-            for (Product addOn : productAddOns) {
-                for (MaterialType materialType : addOn.getAllowableMaterialTypes()) {
-                    if (materialType.equals(sampleMaterialType)) {
-                        items.add(addOn.getPrimaryPriceItem());
-                        // Skip to the next add-on.
-                        break;
-                    }
-                }
-            }
+        Product product = getProductOrder().getProduct();
+        items.add(product.getPrimaryPriceItem());
+        for (Product productAddOn : product.getAddOns()) {
+            items.add(productAddOn.getPrimaryPriceItem());
         }
-
         return items;
     }
 
