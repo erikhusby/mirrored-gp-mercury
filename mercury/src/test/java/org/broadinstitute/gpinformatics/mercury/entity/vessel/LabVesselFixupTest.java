@@ -1047,13 +1047,13 @@ public class LabVesselFixupTest extends Arquillian {
         Assert.assertTrue(CollectionUtils.isNotEmpty(plateIds));
         System.out.println("Found " + plateIds.size() + " plate ids");
 
-        final int BATCHSIZE = 200;  // This small batch size still takes minutes to commit.
+        final int BATCHSIZE = 400;
         int count = 1;
         for (List<Long> plateIdSubset : Lists.partition(plateIds, BATCHSIZE)) {
             utx.begin();
             List<StaticPlate> plates = staticPlateDao.findListByList(StaticPlate.class, StaticPlate_.labVesselId,
                     plateIdSubset);
-            Assert.assertTrue(CollectionUtils.isNotEmpty(plates));
+            Assert.assertEquals(plates.size(), plateIdSubset.size());
 
             for (StaticPlate plate : plates) {
                 for (PlateWell well : plate.getContainerRole().getContainedVessels()) {
