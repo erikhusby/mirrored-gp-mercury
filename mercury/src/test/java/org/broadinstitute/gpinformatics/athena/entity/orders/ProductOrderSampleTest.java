@@ -32,9 +32,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import java.util.EnumMap;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -99,13 +97,8 @@ public class ProductOrderSampleTest {
             addOn.setPrimaryPriceItem(new PriceItem("A", "B", "C", "D"));
             product.addAddOn(addOn);
 
-            Map<BSPSampleSearchColumn, String> dataMap =
-                    new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
-                        put(BSPSampleSearchColumn.MATERIAL_TYPE, BSP_MATERIAL_TYPE.getFullName());
-                    }};
-            sample1 = new ProductOrderSample("Sample1", new BspSampleData(dataMap));
-
-            sample2 = new ProductOrderSample("Sample2", new BspSampleData(dataMap));
+            sample1 = new ProductOrderSample("Sample1");
+            sample2 = new ProductOrderSample("Sample2");
 
             List<ProductOrderSample> samples = new ArrayList<>();
             samples.add(sample1);
@@ -114,45 +107,32 @@ public class ProductOrderSampleTest {
         }
     }
 
-    public void testGetBillablePriceItems() {
-        TestPDOData data = new TestPDOData("GSP-123");
-
-        List<PriceItem> expectedItems = new ArrayList<>();
-        expectedItems.add(data.product.getPrimaryPriceItem());
-        expectedItems.add(data.addOn.getPrimaryPriceItem());
-
-        List<PriceItem> generatedItems = data.sample1.getBillablePriceItems();
-        assertThat(generatedItems.size(), is(equalTo(expectedItems.size())));
-    }
-
     @DataProvider(name = "autoBillSample")
     public static Object[][] makeAutoBillSampleData() {
         TestPDOData data = new TestPDOData("GSP-123");
         Date completedDate = new Date();
-        Set<LedgerEntry> ledgers = new HashSet<>();
-        ledgers.add(new LedgerEntry(data.sample1, data.product.getPrimaryPriceItem(), completedDate, 1));
-        ledgers.add(new LedgerEntry(data.sample1, data.addOn.getPrimaryPriceItem(), completedDate, 1));
+        LedgerEntry ledgerEntry = new LedgerEntry(data.sample1, data.product.getPrimaryPriceItem(), completedDate, 1);
 
+        // Bill sample2.
         data.sample2.addLedgerItem(completedDate, data.product.getPrimaryPriceItem(), 1);
         LedgerEntry ledger = data.sample2.getLedgerItems().iterator().next();
         ledger.setBillingMessage(BillingSession.SUCCESS);
         ledger.setBillingSession(new BillingSession(0L, Collections.singleton(ledger)));
 
-        LedgerEntry unpaid = new LedgerEntry(data.sample2, data.addOn.getPrimaryPriceItem(), completedDate, 1);
         return new Object[][]{
                 // Create ledger items from a single sample.
-                new Object[]{data.sample1, completedDate, ledgers},
+                new Object[]{data.sample1, completedDate, Collections.singleton(ledgerEntry)},
                 // Update existing ledger items with "new" bill count.
-                new Object[]{data.sample1, completedDate, ledgers},
+                new Object[]{data.sample1, completedDate, Collections.singleton(ledgerEntry)},
                 // If sample is already billed, don't create any ledger items.
-                new Object[]{data.sample2, completedDate, Collections.singleton(unpaid)}
+                new Object[]{data.sample2, completedDate, Collections.emptySet()}
         };
     }
 
     @Test(dataProvider = "autoBillSample")
     public void testAutoBillSample(ProductOrderSample sample, Date completedDate, Set<LedgerEntry> ledgerEntries) {
         sample.autoBillSample(completedDate, 1);
-        assertThat(sample.getBillableLedgerItems(), is(equalTo(ledgerEntries)));
+        assertThat(sample.getBillableLedgerItems(), is(ledgerEntries));
     }
 
     @Test(expectedExceptions = IllegalStateException.class)

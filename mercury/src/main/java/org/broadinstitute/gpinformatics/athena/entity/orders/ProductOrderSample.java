@@ -6,7 +6,6 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
-import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.samples.SampleReceiptValidation;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
@@ -485,21 +484,6 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     }
 
     /**
-     * Given a sample, find all primary price items for this sample's product and its add-ons.
-     *
-     * @return the list of price items
-     */
-    List<PriceItem> getBillablePriceItems() {
-        List<PriceItem> items = new ArrayList<>();
-        Product product = getProductOrder().getProduct();
-        items.add(product.getPrimaryPriceItem());
-        for (Product productAddOn : product.getAddOns()) {
-            items.add(productAddOn.getPrimaryPriceItem());
-        }
-        return items;
-    }
-
-    /**
      * Automatically generate the billing ledger items for this sample.  Once this is done, its price items will be
      * correctly billed when the next billing session is created.
      *
@@ -508,36 +492,33 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
      */
     public void autoBillSample(Date completedDate, double quantity) {
         Date now = new Date();
-
-        List<PriceItem> itemsToBill = getBillablePriceItems();
         Map<PriceItem, LedgerQuantities> ledgerQuantitiesMap = getLedgerQuantities();
+        PriceItem priceItem = getProductOrder().getProduct().getPrimaryPriceItem();
 
-        for (PriceItem priceItem : itemsToBill) {
-            LedgerQuantities quantities = ledgerQuantitiesMap.get(priceItem);
-            if (quantities == null) {
-                // No ledger item exists for this price item, create it using the current order's price item
-                addAutoLedgerItem(completedDate, priceItem, quantity, now);
+        LedgerQuantities quantities = ledgerQuantitiesMap.get(priceItem);
+        if (quantities == null) {
+            // No ledger item exists for this price item, create it using the current order's price item
+            addAutoLedgerItem(completedDate, priceItem, quantity, now);
+        } else {
+            // This price item already has a ledger entry.
+            // - If it's been billed, don't bill it again, but report this as an issue.
+            // - If it hasn't been billed check & see if the quantity is the same as the current.  If they differ,
+            // replace the existing quantity with the new quantity. When replacing, also set the timestamp so
+            // the PDM can be warned about downloading the spreadsheet AFTER this change.
+            if (quantities.getBilled() != 0) {
+                log.debug(MessageFormat.format(
+                        "Trying to update an already billed sample, PDO: {0}, sample: {1}, price item: {2}",
+                        productOrder.getJiraTicketKey(), sampleName, priceItem.getName()));
+            } else if (MathUtils.isSame(quantities.getUploaded(), quantity)) {
+                log.debug(MessageFormat.format(
+                        "Sample already has the same quantity to bill, PDO: {0}, sample: {1}, price item: {2}, quantity {3}",
+                        productOrder.getJiraTicketKey(), sampleName, priceItem.getName(), quantity));
             } else {
-                // This price item already has a ledger entry.
-                // - If it's been billed, don't bill it again, but report this as an issue.
-                // - If it hasn't been billed check & see if the quantity is the same as the current.  If they differ,
-                // replace the existing quantity with the new quantity. When replacing, also set the timestamp so
-                // the PDM can be warned about downloading the spreadsheet AFTER this change.
-                if (quantities.getBilled() != 0) {
-                    log.debug(MessageFormat.format(
-                            "Trying to update an already billed sample, PDO: {0}, sample: {1}, price item: {2}",
-                            productOrder.getJiraTicketKey(), sampleName, priceItem.getName()));
-                } else if (MathUtils.isSame(quantities.getUploaded(), quantity)) {
-                    log.debug(MessageFormat.format(
-                            "Sample already has the same quantity to bill, PDO: {0}, sample: {1}, price item: {2}, quantity {3}",
-                            productOrder.getJiraTicketKey(), sampleName, priceItem.getName(), quantity));
-                } else {
-                    for (LedgerEntry item : getLedgerItems()) {
-                        if (item.getPriceItem().equals(priceItem)) {
-                            item.setQuantity(quantity);
-                            item.setAutoLedgerTimestamp(now);
-                            break;
-                        }
+                for (LedgerEntry item : getLedgerItems()) {
+                    if (item.getPriceItem().equals(priceItem)) {
+                        item.setQuantity(quantity);
+                        item.setAutoLedgerTimestamp(now);
+                        break;
                     }
                 }
             }
