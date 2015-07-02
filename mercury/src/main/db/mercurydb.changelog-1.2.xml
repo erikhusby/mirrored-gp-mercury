@@ -282,4 +282,10 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="GPLIM-3631" author="epolk">
+        <createIndex tableName="LV_MAP_POSITION_TO_VESSEL" indexName="IX_LV_MAP_POS_TO_VESSEL_MP2V">
+	    <column name="MAP_POSITION_TO_VESSEL"/>
+        </createIndex>
+    </changeSet>
+
 </databaseChangeLog>
