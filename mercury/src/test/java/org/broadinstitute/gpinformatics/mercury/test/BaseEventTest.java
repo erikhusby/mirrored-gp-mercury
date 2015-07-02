@@ -73,6 +73,7 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellE
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.IceEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.IceJaxbBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.InfiniumEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.MiSeqReagentKitEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityBuilder;
@@ -549,6 +550,11 @@ public class BaseEventTest {
                                             List<String> pondRegTubeBarcodes) {
         return new SageEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
                                      pondRegRackBarcode, pondRegRack, pondRegTubeBarcodes).invoke();
+    }
+
+    public InfiniumEntityBuilder runInfiniumProcess(StaticPlate sourcePlate, String barcodeSuffix) {
+        return new InfiniumEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
+                sourcePlate, barcodeSuffix).invoke();
     }
 
     /**
