@@ -345,20 +345,18 @@ public class ProductOrderFixupTest extends Arquillian {
         }
     }
 
-    @Test(enabled = false)
+    @Test(enabled = true)
     public void fixupGplim2913() throws ProductOrderEjb.NoSuchPDOException, IOException {
         // Update PDO-2959 So its status matches that of the Jira PDO (Completed)
         // un-complete PDOs but no PDOs in the database should be completed yet.
         String pdoKey = "PDO-2959";
 
-        MessageReporter.LogReporter reporter = new MessageReporter.LogReporter(log);
-        productOrderEjb.updateOrderStatus(pdoKey, reporter);
-
         ProductOrder order = productOrderDao.findByBusinessKey(pdoKey);
-        assertThat(order.getOrderStatus(), is(ProductOrder.OrderStatus.Completed));
+        assertThat(order.getOrderStatus(), is(ProductOrder.OrderStatus.Submitted));
+
+        order.setOrderStatus(ProductOrder.OrderStatus.Completed);
 
         productOrderDao.persist(new FixupCommentary("See https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-2913"));
-        productOrderDao.flush();
     }
 
     @Test(enabled = false)
