@@ -1378,9 +1378,9 @@ public enum LabEventType {
     private String[] reagentNames;
 
     public enum LibraryType {
-        ENRICHED_POND("Library Construction Enriched Pond"),
-        HYBRID_SELECTION_AGILENT_CATCH("Agilent Enriched Hybrid Selection Catch"),
-        HYBRID_SELECTION_ICE_ENRICHED_CATCH("ICE Enriched Hybrid Selection Catch"),
+        ENRICHED_POND("Enriched Pond"),
+        HYBRID_SELECTION_AGILENT_CATCH("Enriched Catch"),
+        HYBRID_SELECTION_ICE_ENRICHED_CATCH("Enriched Catch"),
         QTP_ECO_POOL("ECO Pool"),
         MISEQ_FLOWCELL("MiSEQ Flowcell"),
         NONE_ASSIGNED("");
