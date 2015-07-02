@@ -345,7 +345,7 @@ public class ProductOrderFixupTest extends Arquillian {
         }
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void fixupGplim2913() throws ProductOrderEjb.NoSuchPDOException, IOException {
         // Update PDO-2959 So its status matches that of the Jira PDO (Completed)
         // un-complete PDOs but no PDOs in the database should be completed yet.
