@@ -57,8 +57,7 @@ public class WorkflowPrefXmlReloadFixupTest extends Arquillian {
     @Test(enabled = false)
     public void gplim3557LoadWorkflowConfigPrefsFromFile() throws Exception {
 
-        //userBean.loginOSUser();
-        userBean.login("QADudeTest");
+        userBean.loginOSUser();
 
         // Do an unmarshall for a validation sanity check
         // As of 05/2015, cannot marshall back to XML

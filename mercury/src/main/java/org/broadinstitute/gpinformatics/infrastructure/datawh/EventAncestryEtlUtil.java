@@ -70,53 +70,56 @@ public class EventAncestryEtlUtil {
                 continue;
             }
 
-            // Data is fully denormalized on Event-Vessel-Sample. Don't re-analyze the same event for ancestry flag
-            if( ignoreAncestryForEventList.contains(eventFact.getEventId()) ) {
+            // Data is fully denormalized on Event-Vessel-Sample.
+            // Don't re-analyze the same event if ancestry flag is false
+            // Don't keep re-analyzing same vessel in same event
+            if( ignoreAncestryForEventList.contains(eventFact.getEventId())
+                    || ignoreForDuplicateVesselList.contains(eventFact.getVesselId() ) ) {
                 continue;
             }
 
             // No need to keep rebuilding workflow for the same event ...
             if( !eventFact.getEventId().equals(previousEventId)) {
                 workflowStepList = getWorkflowStepsUpToEvent(eventFact, wfconfig);
+                ignoreForDuplicateVesselList.clear();
                 previousEventId = eventFact.getEventId();
             }
 
             // Ignore events for which ancestry etl on current event is not flagged
-            List<LabEventType> nextAncestorEventTypes = new ArrayList<>();
+            List<LabEventType> ancestorEventTypesToFind = new ArrayList<>();
             if( workflowStepList.isEmpty() || ! workflowStepList.get( workflowStepList.size() - 1 ).doAncestryEtl() ) {
                 // Skip any subsequent denormalized events
                 ignoreAncestryForEventList.add( eventFact.getEventId() );
                 continue;
-            } else {
-                // Find the next nearest ancestor event type(s)
-                nextAncestorEventTypes.addAll( findAllAncestorEtlEventTypes(workflowStepList) );
             }
 
-            if( !ignoreForDuplicateVesselList.contains(eventFact.getVesselId()) ) {
-                eventFact.addAllAncestryDtos(buildAncestryFacts(labEvent, labVessel, nextAncestorEventTypes));
-                ignoreForDuplicateVesselList.add( eventFact.getVesselId() );
-            }
+            // Find the next nearest ancestor event type(s)
+            ancestorEventTypesToFind.addAll(findAllAncestorEtlEventTypes(workflowStepList));
+            // Build the ancestry dtos
+            eventFact.addAllAncestryDtos(buildAncestryFacts(labEvent, labVessel, ancestorEventTypesToFind));
+            // Don't repeat for same event-vessel with denormalized samples
+            ignoreForDuplicateVesselList.add( eventFact.getVesselId() );
         }
     }
 
     /**
-     * Navigate the event vessel ancestry and find the first ancestor event of the specified types
-     * (workflow allows multiple event types at a step, hopefully only a single type if flagged for ancestry)
-     * @param childLabEvent The child (current) event (as opposed to ancestor event)
-     * @param childLabVessel A vessel associated with the child (current) event
-     * @param nextAncestorEventTypes Event type(s) to search the ancestry for
+     * Navigate the event vessel ancestry, find all ancestor events of the specified types,
+     *   and create ancestry records linking to labEvent
+     * @param labEvent The event from which to start ancestry search
+     * @param labVessel The vessel associated with the labEvent argument
+     * @param ancestorEventTypes Event type(s) to search the ancestry for
      * @return Any ancestry facts found for the event-vessel combination, empty list if none
      */
-    private List<AncestryFactDto> buildAncestryFacts(LabEvent childLabEvent, LabVessel childLabVessel,
-                                                     List<LabEventType> nextAncestorEventTypes) {
+    private List<AncestryFactDto> buildAncestryFacts(LabEvent labEvent, LabVessel labVessel,
+                                                     List<LabEventType> ancestorEventTypes) {
         List<AncestryFactDto> ancestryFactDtos = new ArrayList<>();
 
-        if( nextAncestorEventTypes.isEmpty() ) {
+        if( ancestorEventTypes.isEmpty() ) {
             return ancestryFactDtos;
         }
 
-        Map<LabEvent, Set<LabVessel>> ancestorEventVesselMap = childLabVessel.findVesselsForLabEventTypes(
-                nextAncestorEventTypes, Arrays.asList(TransferTraverserCriteria.TraversalDirection.Ancestors), true);
+        Map<LabEvent, Set<LabVessel>> ancestorEventVesselMap = labVessel.findVesselsForLabEventTypes(
+                ancestorEventTypes, Arrays.asList(TransferTraverserCriteria.TraversalDirection.Ancestors), true);
 
         for( LabEvent ancestorLabEvent : ancestorEventVesselMap.keySet() ) {
             for( LabVessel ancestorLabVessel : ancestorEventVesselMap.get(ancestorLabEvent) ) {
@@ -132,10 +135,10 @@ public class EventAncestryEtlUtil {
                                     containedVessel,
                                     ancestorLabEvent.getLabEventType().getLibraryType().getDisplayName(),
                                     ancestorLabEvent.getEventDate(),
-                                    childLabEvent.getLabEventId(),
-                                    childLabVessel,
-                                    childLabEvent.getLabEventType().getLibraryType().getDisplayName(),
-                                    childLabEvent.getEventDate()));
+                                    labEvent.getLabEventId(),
+                                    labVessel,
+                                    labEvent.getLabEventType().getLibraryType().getDisplayName(),
+                                    labEvent.getEventDate()));
                         }
                     }
                 } else {
@@ -145,10 +148,10 @@ public class EventAncestryEtlUtil {
                             ancestorLabVessel,
                             ancestorLabEvent.getLabEventType().getLibraryType().getDisplayName(),
                             ancestorLabEvent.getEventDate(),
-                            childLabEvent.getLabEventId(),
-                            childLabVessel,
-                            childLabEvent.getLabEventType().getLibraryType().getDisplayName(),
-                            childLabEvent.getEventDate()));
+                            labEvent.getLabEventId(),
+                            labVessel,
+                            labEvent.getLabEventType().getLibraryType().getDisplayName(),
+                            labEvent.getEventDate()));
                 }
             }
         }
@@ -183,10 +186,10 @@ public class EventAncestryEtlUtil {
     private List<WorkflowStepDef> getWorkflowStepsUpToEvent( LabEventEtl.EventFactDto eventFact, WorkflowConfig wfconfig){
 
         Date eventEffectiveDate;
-        if( eventFact.getBatchName().isEmpty() ) {
-            eventEffectiveDate = eventFact.getBatchDate();
-        } else {
+        if( eventFact.getBatchName().equals(LabEventEtl.NONE ) ) {
             eventEffectiveDate = eventFact.getEventDate();
+        } else {
+            eventEffectiveDate = eventFact.getBatchDate();
         }
 
         String workflowName = eventFact.getWfName();
@@ -211,59 +214,58 @@ public class EventAncestryEtlUtil {
 
         private Object[] data;
 
-        private static final int COL_ANCESTOR_EVENT_ID     = 0;
-        private static final int COL_CHILD_EVENT_ID        = 1;
-        private static final int COL_ANCESTOR_VESSEL_ID    = 2;
-        private static final int COL_ANCESTOR_LIBRARY_NAME = 3;
-        private static final int COL_ANCESTOR_CREATED      = 4;
-        private static final int COL_CHILD_VESSEL_ID       = 5;
-        private static final int COL_CHILD_LIBRARY_NAME    = 6;
-        private static final int COL_CHILD_CREATED         = 7;
+        private Long ancestorEventId;
+        private Long childEventId;
+        private Long ancestorVesselId;
+        private String ancestorLibraryName;
+        private Date ancestorLibraryCreated;
+        private Long childVesselId;
+        private String childLibraryName;
+        private Date childLibraryCreated;
 
         public AncestryFactDto(Long ancestorEventId, LabVessel ancestorVessel, String ancestorLibraryTypeName,
                                Date ancestorLibraryCreated, Long childEventId, LabVessel childVessel,
                                String childLibraryTypeName, Date childLibraryCreated ){
-            data = new Object[8];
-            data[COL_ANCESTOR_EVENT_ID]     = ancestorEventId;
-            data[COL_ANCESTOR_VESSEL_ID]    = ancestorVessel.getLabVesselId();
-            data[COL_ANCESTOR_LIBRARY_NAME] = ancestorLibraryTypeName;
-            data[COL_ANCESTOR_CREATED]      = ancestorLibraryCreated;
-            data[COL_CHILD_EVENT_ID]        = childEventId;
-            data[COL_CHILD_VESSEL_ID]       = childVessel.getLabVesselId();
-            data[COL_CHILD_LIBRARY_NAME]    = childLibraryTypeName;
-            data[COL_CHILD_CREATED]         = childLibraryCreated;
+            this.ancestorEventId        = ancestorEventId;
+            this.ancestorVesselId       = ancestorVessel.getLabVesselId();
+            this.ancestorLibraryName    = ancestorLibraryTypeName;
+            this.ancestorLibraryCreated = ancestorLibraryCreated;
+            this.childEventId           = childEventId;
+            this.childVesselId          = childVessel.getLabVesselId();
+            this.childLibraryName       = childLibraryTypeName;
+            this.childLibraryCreated    = childLibraryCreated;
         }
 
         public Long getAncestorEventId(){
-            return (Long) data[COL_ANCESTOR_EVENT_ID];
+            return ancestorEventId;
         }
 
         public Long getAncestorVesselId(){
-            return (Long) data[COL_ANCESTOR_VESSEL_ID];
+            return ancestorVesselId;
         }
 
         public String getAncestorLibraryTypeName(){
-            return (String) data[COL_ANCESTOR_LIBRARY_NAME];
+            return ancestorLibraryName;
         }
 
         public Date getAncestorCreated(){
-            return (Date) data[COL_ANCESTOR_CREATED];
+            return ancestorLibraryCreated;
         }
 
         public Long getChildEventId(){
-            return (Long) data[COL_CHILD_EVENT_ID];
+            return childEventId;
         }
 
         public Long getChildVesselId(){
-            return (Long) data[COL_CHILD_VESSEL_ID];
+            return childVesselId;
         }
 
         public String getChildLibraryTypeName(){
-            return (String) data[COL_CHILD_LIBRARY_NAME];
+            return childLibraryName;
         }
 
         public Date getChildCreated(){
-            return (Date) data[COL_CHILD_CREATED];
+            return childLibraryCreated;
         }
     }
 

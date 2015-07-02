@@ -35,31 +35,37 @@ AS
     V_VAL      VARCHAR2(19);
     V_PK_ARR   PK_ARR_TY;
     V_INPUT    VARCHAR2(1024);
-    BEGIN
-      V_INPUT := TRIM( V_ARRAYSTR );
+  BEGIN
+    V_INPUT := TRIM( V_ARRAYSTR );
 
-      -- Nothing to do, return empty array
-      IF V_INPUT IS NULL OR LENGTH(V_INPUT) < 3 THEN
-        RETURN V_PK_ARR;
-      END IF;
-
-      -- Wish there was a split() function...
-      V_CUR_POS := 2;
-      LOOP
-        V_NEXT_POS := INSTR( V_INPUT, ',', V_CUR_POS );
-        IF V_NEXT_POS = 0 THEN
-          V_VAL := SUBSTR( V_INPUT, V_CUR_POS, LENGTH(V_INPUT) - V_CUR_POS);
-        ELSE
-          V_VAL := SUBSTR( V_INPUT, V_CUR_POS, V_NEXT_POS - V_CUR_POS );
-          V_CUR_POS := V_NEXT_POS + 1;
-        END IF;
-        V_PK_ARR( V_PK_ARR.COUNT + 1 ) := TO_NUMBER( TRIM( V_VAL ) );
-        EXIT WHEN V_NEXT_POS = 0;
-      END LOOP;
-
+    -- Nothing to do, return empty array
+    IF V_INPUT IS NULL OR LENGTH(V_INPUT) < 3 THEN
       RETURN V_PK_ARR;
+    END IF;
 
-    END PKS_FROM_JAVA_ARRAYSTOSTRING;
+    -- Wish there was a split() function...
+    V_CUR_POS := 2;
+    LOOP
+      V_NEXT_POS := INSTR( V_INPUT, ',', V_CUR_POS );
+      IF V_NEXT_POS = 0 THEN
+        V_VAL := SUBSTR( V_INPUT, V_CUR_POS, LENGTH(V_INPUT) - V_CUR_POS);
+      ELSE
+        V_VAL := SUBSTR( V_INPUT, V_CUR_POS, V_NEXT_POS - V_CUR_POS );
+        V_CUR_POS := V_NEXT_POS + 1;
+      END IF;
+      V_PK_ARR( V_PK_ARR.COUNT + 1 ) := TO_NUMBER( TRIM( V_VAL ) );
+      EXIT WHEN V_NEXT_POS = 0;
+    END LOOP;
+
+    RETURN V_PK_ARR;
+
+  END PKS_FROM_JAVA_ARRAYSTOSTRING;
+
+  PROCEDURE SHOW_ETL_STATS( A_UPD_COUNT PLS_INTEGER, A_INS_COUNT PLS_INTEGER, A_TBL_NAME VARCHAR2 )
+  IS
+  BEGIN
+    DBMS_OUTPUT.PUT_LINE('Table ' || A_TBL_NAME || ': ' || A_UPD_COUNT || ' updates, ' || A_INS_COUNT || ' inserts.' );
+  END SHOW_ETL_STATS;
 
   /* ************************
    * Deletes rows in the reporting tables when the import has is_delete = 'T'.
@@ -259,7 +265,11 @@ AS
 
   PROCEDURE MERGE_RESEARCH_PROJECT
   IS
+    V_INS_COUNT PLS_INTEGER;
+    V_UPD_COUNT PLS_INTEGER;
   BEGIN
+    V_INS_COUNT := 0;
+    V_UPD_COUNT := 0;
     FOR new IN (SELECT *
                   FROM im_research_project
                  WHERE is_delete = 'F')
@@ -276,6 +286,8 @@ AS
           root_research_project_id = new.root_research_project_id,
           etl_date = new.etl_date
         WHERE research_project_id = new.research_project_id;
+
+        V_UPD_COUNT := V_UPD_COUNT + SQL%ROWCOUNT;
 
         INSERT INTO research_project (
           research_project_id,
@@ -305,7 +317,9 @@ AS
               FROM research_project
               WHERE research_project_id = new.research_project_id
           );
-        EXCEPTION WHEN OTHERS THEN
+
+        V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;
+      EXCEPTION WHEN OTHERS THEN
         errmsg := SQLERRM;
         DBMS_OUTPUT.PUT_LINE(
             TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_research_project.dat line ' || new.line_number || '  ' ||
@@ -313,11 +327,16 @@ AS
         CONTINUE;
       END;
     END LOOP;
+    SHOW_ETL_STATS(  V_UPD_COUNT, V_INS_COUNT, 'research_project' );
   END MERGE_RESEARCH_PROJECT;
 
   PROCEDURE MERGE_PRICE_ITEM
   IS
+    V_INS_COUNT PLS_INTEGER;
+    V_UPD_COUNT PLS_INTEGER;
   BEGIN
+    V_INS_COUNT := 0;
+    V_UPD_COUNT := 0;
     FOR new IN (SELECT *
                   FROM im_price_item
                  WHERE is_delete = 'F') LOOP
@@ -332,6 +351,8 @@ AS
           units = new.units,
           etl_date = new.etl_date
         WHERE price_item_id = new.price_item_id;
+
+        V_UPD_COUNT := V_UPD_COUNT + SQL%ROWCOUNT;
 
         INSERT INTO price_item (
           price_item_id,
@@ -359,93 +380,106 @@ AS
               FROM price_item
               WHERE price_item_id = new.price_item_id
           );
-        EXCEPTION WHEN OTHERS THEN
+
+        V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;
+      EXCEPTION WHEN OTHERS THEN
         errmsg := SQLERRM;
         DBMS_OUTPUT.PUT_LINE(
             TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_price_item.dat line ' || new.line_number || '  ' || errmsg);
         CONTINUE;
       END;
-
     END LOOP;
+    SHOW_ETL_STATS(  V_UPD_COUNT, V_INS_COUNT, 'price_item' );
   END MERGE_PRICE_ITEM;
 
   PROCEDURE MERGE_PRODUCT
   IS
-    BEGIN
-      FOR new IN (SELECT
-                    *
-                  FROM im_product
-                  WHERE is_delete = 'F') LOOP
-        BEGIN
-          UPDATE product
-          SET
-            product_name  = new.product_name,
-            part_number  = new.part_number,
-            availability_date = new.availability_date,
-            discontinued_date = new.discontinued_date,
-            expected_cycle_time_sec = new.expected_cycle_time_sec,
-            guaranteed_cycle_time_sec = new.guaranteed_cycle_time_sec,
-            samples_per_week = new.samples_per_week,
-            is_top_level_product = new.is_top_level_product,
-            workflow_name = new.workflow_name,
-            product_family_name = new.product_family_name,
-            primary_price_item_id = new.primary_price_item_id,
-            aggregation_data_type = new.aggregation_data_type,
-            etl_date = new.etl_date
-          WHERE product_id = new.product_id;
+    V_INS_COUNT PLS_INTEGER;
+    V_UPD_COUNT PLS_INTEGER;
+  BEGIN
+    V_INS_COUNT := 0;
+    V_UPD_COUNT := 0;
+    FOR new IN (SELECT
+                  *
+                FROM im_product
+                WHERE is_delete = 'F') LOOP
+      BEGIN
+        UPDATE product
+        SET
+          product_name  = new.product_name,
+          part_number  = new.part_number,
+          availability_date = new.availability_date,
+          discontinued_date = new.discontinued_date,
+          expected_cycle_time_sec = new.expected_cycle_time_sec,
+          guaranteed_cycle_time_sec = new.guaranteed_cycle_time_sec,
+          samples_per_week = new.samples_per_week,
+          is_top_level_product = new.is_top_level_product,
+          workflow_name = new.workflow_name,
+          product_family_name = new.product_family_name,
+          primary_price_item_id = new.primary_price_item_id,
+          aggregation_data_type = new.aggregation_data_type,
+          etl_date = new.etl_date
+        WHERE product_id = new.product_id;
 
-          INSERT INTO product (
-            product_id,
-            product_name,
-            part_number,
-            availability_date,
-            discontinued_date,
-            expected_cycle_time_sec,
-            guaranteed_cycle_time_sec,
-            samples_per_week,
-            is_top_level_product,
-            workflow_name,
-            product_family_name,
-            primary_price_item_id,
-            aggregation_data_type,
-            etl_date
-          )
-            SELECT
-              new.product_id,
-              new.product_name,
-              new.part_number,
-              new.availability_date,
-              new.discontinued_date,
-              new.expected_cycle_time_sec,
-              new.guaranteed_cycle_time_sec,
-              new.samples_per_week,
-              new.is_top_level_product,
-              new.workflow_name,
-              new.product_family_name,
-              new.primary_price_item_id,
-              new.aggregation_data_type,
-              new.etl_date
-            FROM DUAL
-            WHERE NOT EXISTS(
-                SELECT
-                  1
-                FROM product
-                WHERE product_id = new.product_id
-            );
-          EXCEPTION WHEN OTHERS THEN
-          errmsg := SQLERRM;
-          DBMS_OUTPUT.PUT_LINE(
-              TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_product.dat line ' || new.line_number || '  ' || errmsg);
-          CONTINUE;
-        END;
+        V_UPD_COUNT := V_UPD_COUNT + SQL%ROWCOUNT;
 
-      END LOOP;
+        INSERT INTO product (
+          product_id,
+          product_name,
+          part_number,
+          availability_date,
+          discontinued_date,
+          expected_cycle_time_sec,
+          guaranteed_cycle_time_sec,
+          samples_per_week,
+          is_top_level_product,
+          workflow_name,
+          product_family_name,
+          primary_price_item_id,
+          aggregation_data_type,
+          etl_date
+        )
+          SELECT
+            new.product_id,
+            new.product_name,
+            new.part_number,
+            new.availability_date,
+            new.discontinued_date,
+            new.expected_cycle_time_sec,
+            new.guaranteed_cycle_time_sec,
+            new.samples_per_week,
+            new.is_top_level_product,
+            new.workflow_name,
+            new.product_family_name,
+            new.primary_price_item_id,
+            new.aggregation_data_type,
+            new.etl_date
+          FROM DUAL
+          WHERE NOT EXISTS(
+              SELECT
+                1
+              FROM product
+              WHERE product_id = new.product_id
+          );
 
-    END MERGE_PRODUCT;
+        V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;
+      EXCEPTION WHEN OTHERS THEN
+        errmsg := SQLERRM;
+        DBMS_OUTPUT.PUT_LINE(
+            TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_product.dat line ' || new.line_number || '  ' || errmsg);
+        CONTINUE;
+      END;
+    END LOOP;
+    SHOW_ETL_STATS(  V_UPD_COUNT, V_INS_COUNT, 'product' );
+  END MERGE_PRODUCT;
 
   PROCEDURE MERGE_LAB_VESSEL
   IS
+    V_INS_COUNT PLS_INTEGER;
+    V_UPD_COUNT PLS_INTEGER;
   BEGIN
+    V_INS_COUNT := 0;
+    V_UPD_COUNT := 0;
     FOR new IN (SELECT *
                   FROM im_lab_vessel
                  WHERE is_delete = 'F') LOOP
@@ -457,6 +491,8 @@ AS
           lab_vessel_type = new.lab_vessel_type,
           etl_date = new.etl_date
         WHERE lab_vessel_id = new.lab_vessel_id;
+
+        V_UPD_COUNT := V_UPD_COUNT + SQL%ROWCOUNT;
 
         INSERT INTO lab_vessel (
           lab_vessel_id,
@@ -476,19 +512,25 @@ AS
               FROM lab_vessel
               WHERE lab_vessel_id = new.lab_vessel_id
           );
-        EXCEPTION WHEN OTHERS THEN
+
+        V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;
+      EXCEPTION WHEN OTHERS THEN
         errmsg := SQLERRM;
         DBMS_OUTPUT.PUT_LINE(
             TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_lab_vessel.dat line ' || new.line_number || '  ' || errmsg);
         CONTINUE;
       END;
-
     END LOOP;
+    SHOW_ETL_STATS(  V_UPD_COUNT, V_INS_COUNT, 'lab_vessel' );
   END MERGE_LAB_VESSEL;
 
   PROCEDURE MERGE_LAB_METRIC
   IS
+    V_INS_COUNT PLS_INTEGER;
+    V_UPD_COUNT PLS_INTEGER;
   BEGIN
+    V_INS_COUNT := 0;
+    V_UPD_COUNT := 0;
     FOR new IN (SELECT * FROM im_lab_metric WHERE is_delete = 'F') LOOP
       BEGIN
 
@@ -506,6 +548,8 @@ AS
           vessel_position = new.vessel_position,
           etl_date = new.etl_date
         WHERE lab_metric_id = new.lab_metric_id;
+
+        V_UPD_COUNT := V_UPD_COUNT + SQL%ROWCOUNT;
 
         INSERT INTO lab_metric (
           lab_metric_id,
@@ -536,20 +580,25 @@ AS
             new.etl_date
           FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM lab_metric WHERE lab_metric_id = new.lab_metric_id);
 
+        V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;
+
         EXCEPTION WHEN OTHERS THEN
         errmsg := SQLERRM;
         DBMS_OUTPUT.PUT_LINE(
             TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_lab_metric.dat line ' || new.line_number || '  ' || errmsg);
         CONTINUE;
       END;
-
     END LOOP;
-
+    SHOW_ETL_STATS(  V_UPD_COUNT, V_INS_COUNT, 'lab_metric' );
   END MERGE_LAB_METRIC;
 
   PROCEDURE MERGE_WORKFLOW
   IS
+    V_INS_COUNT PLS_INTEGER;
+    V_UPD_COUNT PLS_INTEGER;
   BEGIN
+    V_INS_COUNT := 0;
+    V_UPD_COUNT := 0;
     FOR new IN (SELECT *
                   FROM im_workflow
                  WHERE is_delete = 'F') LOOP
@@ -561,6 +610,8 @@ AS
           workflow_version = new.workflow_version,
           etl_date = new.etl_date
         WHERE workflow_id = new.workflow_id;
+
+        V_UPD_COUNT := V_UPD_COUNT + SQL%ROWCOUNT;
 
         INSERT INTO workflow (
           workflow_id,
@@ -580,19 +631,25 @@ AS
               FROM workflow
               WHERE workflow_id = new.workflow_id
           );
-        EXCEPTION WHEN OTHERS THEN
+
+        V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;
+      EXCEPTION WHEN OTHERS THEN
         errmsg := SQLERRM;
         DBMS_OUTPUT.PUT_LINE(
             TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_workflow.dat line ' || new.line_number || '  ' || errmsg);
         CONTINUE;
       END;
-
     END LOOP;
+    SHOW_ETL_STATS(  V_UPD_COUNT, V_INS_COUNT, 'workflow' );
   END MERGE_WORKFLOW;
 
   PROCEDURE MERGE_WORKFLOW_PROCESS
   IS
+    V_INS_COUNT PLS_INTEGER;
+    V_UPD_COUNT PLS_INTEGER;
   BEGIN
+    V_INS_COUNT := 0;
+    V_UPD_COUNT := 0;
     FOR new IN (SELECT *
                   FROM im_workflow_process
                  WHERE is_delete = 'F') LOOP
@@ -606,6 +663,8 @@ AS
           event_name = new.event_name,
           etl_date = new.etl_date
         WHERE process_id = new.process_id;
+
+        V_UPD_COUNT := V_UPD_COUNT + SQL%ROWCOUNT;
 
         INSERT INTO workflow_process (
           process_id,
@@ -629,20 +688,26 @@ AS
               FROM workflow_process
               WHERE process_id = new.process_id
           );
-        EXCEPTION WHEN OTHERS THEN
+
+        V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;
+      EXCEPTION WHEN OTHERS THEN
         errmsg := SQLERRM;
         DBMS_OUTPUT.PUT_LINE(
             TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_workflow_process.dat line ' || new.line_number || '  ' ||
             errmsg);
         CONTINUE;
       END;
-
     END LOOP;
+    SHOW_ETL_STATS(  V_UPD_COUNT, V_INS_COUNT, 'workflow_process' );
   END MERGE_WORKFLOW_PROCESS;
 
   PROCEDURE MERGE_SEQUENCING_RUN
   IS
+    V_INS_COUNT PLS_INTEGER;
+    V_UPD_COUNT PLS_INTEGER;
   BEGIN
+    V_INS_COUNT := 0;
+    V_UPD_COUNT := 0;
     FOR new IN (SELECT *
                   FROM im_sequencing_run
                  WHERE is_delete = 'F') LOOP
@@ -657,6 +722,8 @@ AS
           actual_read_structure = new.actual_read_structure,
           etl_date = new.etl_date
         WHERE sequencing_run_id = new.sequencing_run_id;
+
+        V_UPD_COUNT := V_UPD_COUNT + SQL%ROWCOUNT;
 
         INSERT INTO sequencing_run (
           sequencing_run_id,
@@ -684,20 +751,26 @@ AS
               FROM sequencing_run
               WHERE sequencing_run_id = new.sequencing_run_id
           );
-        EXCEPTION WHEN OTHERS THEN
+
+        V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;
+      EXCEPTION WHEN OTHERS THEN
         errmsg := SQLERRM;
         DBMS_OUTPUT.PUT_LINE(
             TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_sequencing_run.dat line ' || new.line_number || '  ' ||
             errmsg);
         CONTINUE;
       END;
-
     END LOOP;
+    SHOW_ETL_STATS(  V_UPD_COUNT, V_INS_COUNT, 'sequencing_run' );
   END MERGE_SEQUENCING_RUN;
 
   PROCEDURE MERGE_REGULATORY_INFO
   IS
+    V_INS_COUNT PLS_INTEGER;
+    V_UPD_COUNT PLS_INTEGER;
   BEGIN
+    V_INS_COUNT := 0;
+    V_UPD_COUNT := 0;
     -- Regulatory info data
     FOR new IN ( SELECT *
                  FROM im_regulatory_info
@@ -710,6 +783,8 @@ AS
           name       = new.name,
           etl_date   = new.etl_date
         WHERE regulatory_info_id = new.regulatory_info_id;
+
+        V_UPD_COUNT := V_UPD_COUNT + SQL%ROWCOUNT;
 
         IF SQL%ROWCOUNT = 0 THEN
           INSERT INTO regulatory_info (
@@ -724,19 +799,25 @@ AS
             new.type,
             new.name,
             new.etl_date );
+          V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;
         END IF;
-        EXCEPTION WHEN OTHERS THEN
+      EXCEPTION WHEN OTHERS THEN
         errmsg := SQLERRM;
         DBMS_OUTPUT.PUT_LINE(
             TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_regulatory_info.dat line ' || new.line_number || '  ' || errmsg);
         CONTINUE;
       END;
     END LOOP;
+    SHOW_ETL_STATS(  V_UPD_COUNT, V_INS_COUNT, 'regulatory_info' );
   END MERGE_REGULATORY_INFO;
 
   PROCEDURE MERGE_PRODUCT_ORDER
   IS
+    V_INS_COUNT PLS_INTEGER;
+    V_UPD_COUNT PLS_INTEGER;
   BEGIN
+    V_INS_COUNT := 0;
+    V_UPD_COUNT := 0;
     FOR new IN (SELECT *
                   FROM im_product_order
                 WHERE is_delete = 'F') LOOP
@@ -756,6 +837,8 @@ AS
           skip_regulatory_reason = new.skip_regulatory_reason,
           etl_date = new.etl_date
         WHERE product_order_id = new.product_order_id;
+
+        V_UPD_COUNT := V_UPD_COUNT + SQL%ROWCOUNT;
 
         IF SQL%ROWCOUNT = 0 THEN
           INSERT INTO product_order (
@@ -786,18 +869,21 @@ AS
             new.placed_date,
             new.skip_regulatory_reason,
             new.etl_date );
+
+          V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;
         END IF ;
-        EXCEPTION WHEN OTHERS THEN
+      EXCEPTION WHEN OTHERS THEN
         errmsg := SQLERRM;
         DBMS_OUTPUT.PUT_LINE(
             TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_product_order.dat line ' || new.line_number || '  ' || errmsg);
         CONTINUE;
       END;
-
     END LOOP;
 
+    SHOW_ETL_STATS(  V_UPD_COUNT, V_INS_COUNT, 'product_order' );
 
-
+    V_INS_COUNT := 0;
+    V_UPD_COUNT := 0;
     -- Many to many mapping table pdo_regulatory_infos
     -- List of regulatory_info_id's associated with each product_order_id in a list
     -- See function PKS_FROM_JAVA_ARRAYSTOSTRING
@@ -818,9 +904,10 @@ AS
               new.product_order_id,
               V_PK_ARR(V_INDEX),
               new.etl_date );
+            V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;
           END LOOP;
         END IF;
-        EXCEPTION WHEN OTHERS THEN
+      EXCEPTION WHEN OTHERS THEN
         errmsg := SQLERRM;
         DBMS_OUTPUT.PUT_LINE(
             TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_product_order.dat line, pdo_regulatory_infos data '
@@ -828,11 +915,16 @@ AS
         CONTINUE;
       END;
     END LOOP;
+    SHOW_ETL_STATS(  V_UPD_COUNT, V_INS_COUNT, 'pdo_regulatory_infos' );
   END MERGE_PRODUCT_ORDER;
 
   PROCEDURE MERGE_PRODUCT_ORDER_ADD_ON
   IS
+    V_INS_COUNT PLS_INTEGER;
+    V_UPD_COUNT PLS_INTEGER;
   BEGIN
+    V_INS_COUNT := 0;
+    V_UPD_COUNT := 0;
     FOR new IN (SELECT *
                   FROM im_product_order_add_on
                  WHERE is_delete = 'F') LOOP
@@ -843,6 +935,8 @@ AS
           product_id = new.product_id,
           etl_date = new.etl_date
         WHERE product_order_add_on_id = new.product_order_add_on_id;
+
+        V_UPD_COUNT := V_UPD_COUNT + SQL%ROWCOUNT;
 
         INSERT INTO product_order_add_on (
           product_order_add_on_id,
@@ -862,20 +956,26 @@ AS
               FROM product_order_add_on
               WHERE product_order_add_on_id = new.product_order_add_on_id
           );
-        EXCEPTION WHEN OTHERS THEN
+
+        V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;
+      EXCEPTION WHEN OTHERS THEN
         errmsg := SQLERRM;
         DBMS_OUTPUT.PUT_LINE(
             TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_product_order_add_on.dat line ' || new.line_number || '  ' ||
             errmsg);
         CONTINUE;
       END;
-
     END LOOP;
+    SHOW_ETL_STATS(  V_UPD_COUNT, V_INS_COUNT, 'product_order_add_on' );
   END MERGE_PRODUCT_ORDER_ADD_ON;
 
   PROCEDURE MERGE_RESEARCH_PROJECT_STATUS
   IS
+    V_INS_COUNT PLS_INTEGER;
+    V_UPD_COUNT PLS_INTEGER;
   BEGIN
+    V_INS_COUNT := 0;
+    V_UPD_COUNT := 0;
     FOR new IN (SELECT *
                   FROM im_research_project_status
                  WHERE is_delete = 'F') LOOP
@@ -887,6 +987,8 @@ AS
           etl_date = new.etl_date
         WHERE research_project_id = new.research_project_id
               AND status_date = new.status_date;
+
+        V_UPD_COUNT := V_UPD_COUNT + SQL%ROWCOUNT;
 
         INSERT INTO research_project_status (
           research_project_id,
@@ -907,7 +1009,9 @@ AS
               WHERE research_project_id = new.research_project_id
                     AND status_date = new.status_date
           );
-        EXCEPTION WHEN OTHERS THEN
+
+        V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;
+      EXCEPTION WHEN OTHERS THEN
         errmsg := SQLERRM;
         DBMS_OUTPUT.PUT_LINE(
             TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_research_project_status.dat line ' || new.line_number || '  '
@@ -915,12 +1019,17 @@ AS
         CONTINUE;
       END;
     END LOOP;
+    SHOW_ETL_STATS(  V_UPD_COUNT, V_INS_COUNT, 'research_project_status' );
   END MERGE_RESEARCH_PROJECT_STATUS;
 
 
   PROCEDURE MERGE_RESEARCH_PROJECT_PERSON
   IS
+    V_INS_COUNT PLS_INTEGER;
+    V_UPD_COUNT PLS_INTEGER;
   BEGIN
+    V_INS_COUNT := 0;
+    V_UPD_COUNT := 0;
     FOR new IN (SELECT *
                   FROM im_research_project_person
                  WHERE is_delete = 'F') LOOP
@@ -935,6 +1044,8 @@ AS
           username = new.username,
           etl_date = new.etl_date
         WHERE research_project_person_id = new.research_project_person_id;
+
+        V_UPD_COUNT := V_UPD_COUNT + SQL%ROWCOUNT;
 
         INSERT INTO research_project_person (
           research_project_person_id,
@@ -962,21 +1073,27 @@ AS
               FROM research_project_person
               WHERE research_project_person_id = new.research_project_person_id
           );
-        EXCEPTION WHEN OTHERS THEN
+
+        V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;
+      EXCEPTION WHEN OTHERS THEN
         errmsg := SQLERRM;
         DBMS_OUTPUT.PUT_LINE(
             TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_research_project_person.dat line ' || new.line_number || '  '
             || errmsg);
         CONTINUE;
       END;
-
     END LOOP;
+    SHOW_ETL_STATS(  V_UPD_COUNT, V_INS_COUNT, 'research_project_person' );
   END MERGE_RESEARCH_PROJECT_PERSON;
 
 
   PROCEDURE MERGE_RESEARCH_PROJECT_FUNDING
   IS
+    V_INS_COUNT PLS_INTEGER;
+    V_UPD_COUNT PLS_INTEGER;
   BEGIN
+    V_INS_COUNT := 0;
+    V_UPD_COUNT := 0;
     FOR new IN (SELECT *
                   FROM im_research_project_funding
                  WHERE is_delete = 'F') LOOP
@@ -986,6 +1103,8 @@ AS
           funding_id = new.funding_id,
           etl_date = new.etl_date
         WHERE research_project_funding_id = new.research_project_funding_id;
+
+        V_UPD_COUNT := V_UPD_COUNT + SQL%ROWCOUNT;
 
         INSERT INTO research_project_funding (
           research_project_id,
@@ -1005,21 +1124,27 @@ AS
               FROM research_project_funding
               WHERE research_project_funding_id = new.research_project_funding_id
           );
-        EXCEPTION WHEN OTHERS THEN
+
+        V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;
+      EXCEPTION WHEN OTHERS THEN
         errmsg := SQLERRM;
         DBMS_OUTPUT.PUT_LINE(
             TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_research_project_funding.dat line ' || new.line_number || '  '
             || errmsg);
         CONTINUE;
       END;
-
     END LOOP;
+    SHOW_ETL_STATS(  V_UPD_COUNT, V_INS_COUNT, 'research_project_funding' );
   END MERGE_RESEARCH_PROJECT_FUNDING;
 
 
   PROCEDURE MERGE_RESEARCH_PROJECT_COHORT
   IS
+    V_INS_COUNT PLS_INTEGER;
+    V_UPD_COUNT PLS_INTEGER;
   BEGIN
+    V_INS_COUNT := 0;
+    V_UPD_COUNT := 0;
     FOR new IN (SELECT *
                 FROM im_research_project_cohort
                 WHERE is_delete = 'F') LOOP
@@ -1028,6 +1153,8 @@ AS
         SET
           etl_date = new.etl_date
         WHERE research_project_cohort_id = new.research_project_cohort_id;
+
+        V_UPD_COUNT := V_UPD_COUNT + SQL%ROWCOUNT;
 
         INSERT INTO research_project_cohort (
           research_project_id,
@@ -1045,7 +1172,9 @@ AS
               FROM research_project_cohort
               WHERE research_project_cohort_id = new.research_project_cohort_id
           );
-        EXCEPTION WHEN OTHERS THEN
+
+        V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;
+      EXCEPTION WHEN OTHERS THEN
         errmsg := SQLERRM;
         DBMS_OUTPUT.PUT_LINE(
             TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_research_project_cohort.dat line ' || new.line_number || '  '
@@ -1053,12 +1182,17 @@ AS
         CONTINUE;
       END;
     END LOOP;
+    SHOW_ETL_STATS(  V_UPD_COUNT, V_INS_COUNT, 'research_project_cohort' );
   END MERGE_RESEARCH_PROJECT_COHORT;
 
 
   PROCEDURE MERGE_RESEARCH_PROJECT_IRB
   IS
+    V_INS_COUNT PLS_INTEGER;
+    V_UPD_COUNT PLS_INTEGER;
   BEGIN
+    V_INS_COUNT := 0;
+    V_UPD_COUNT := 0;
     FOR new IN (SELECT *
                   FROM im_research_project_irb
                  WHERE is_delete = 'F') LOOP
@@ -1070,6 +1204,8 @@ AS
           research_project_irb_type = new.research_project_irb_type,
           etl_date = new.etl_date
         WHERE research_project_irb_id = new.research_project_irb_id;
+
+        V_UPD_COUNT := V_UPD_COUNT + SQL%ROWCOUNT;
 
         INSERT INTO research_project_irb (
           research_project_irb_id,
@@ -1091,26 +1227,31 @@ AS
               FROM research_project_irb
               WHERE research_project_irb_id = new.research_project_irb_id
           );
-        EXCEPTION WHEN OTHERS THEN
+
+        V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;
+      EXCEPTION WHEN OTHERS THEN
         errmsg := SQLERRM;
         DBMS_OUTPUT.PUT_LINE(
             TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_research_project_irb.dat line ' || new.line_number || '  ' ||
             errmsg);
         CONTINUE;
       END;
-
     END LOOP;
+    SHOW_ETL_STATS(  V_UPD_COUNT, V_INS_COUNT, 'research_project_irb' );
   END MERGE_RESEARCH_PROJECT_IRB;
 
 
   PROCEDURE MERGE_PRODUCT_ORDER_SAMPLE
   IS
+    V_INS_COUNT PLS_INTEGER;
+    V_UPD_COUNT PLS_INTEGER;
   BEGIN
+    V_INS_COUNT := 0;
+    V_UPD_COUNT := 0;
     FOR new IN (SELECT *
                   FROM im_product_order_sample
                  WHERE is_delete = 'F') LOOP
       BEGIN
-
         UPDATE product_order_sample
         SET
           product_order_id = new.product_order_id,
@@ -1119,6 +1260,8 @@ AS
           sample_position = new.sample_position,
           etl_date = new.etl_date
         WHERE product_order_sample_id = new.product_order_sample_id;
+
+        V_UPD_COUNT := V_UPD_COUNT + SQL%ROWCOUNT;
 
         INSERT INTO product_order_sample (
           product_order_sample_id,
@@ -1142,21 +1285,27 @@ AS
               FROM product_order_sample
               WHERE product_order_sample_id = new.product_order_sample_id
           );
-        EXCEPTION WHEN OTHERS THEN
+
+        V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;
+      EXCEPTION WHEN OTHERS THEN
         errmsg := SQLERRM;
         DBMS_OUTPUT.PUT_LINE(
             TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_product_order_sample.dat line ' || new.line_number || '  ' ||
             errmsg);
         CONTINUE;
       END;
-
     END LOOP;
+    SHOW_ETL_STATS(  V_UPD_COUNT, V_INS_COUNT, 'product_order_sample' );
   END MERGE_PRODUCT_ORDER_SAMPLE;
 
 
   PROCEDURE MERGE_EVENT_FACT
   IS
+    V_INS_COUNT PLS_INTEGER;
+    V_UPD_COUNT PLS_INTEGER;
   BEGIN
+    V_INS_COUNT := 0;
+    V_UPD_COUNT := 0;
     -- Only sets PK when it is null, so we can do an idempotent repeatable merge.
     UPDATE im_event_fact
     SET event_fact_id = event_fact_id_seq.nextval
@@ -1166,7 +1315,6 @@ AS
                   FROM im_event_fact
                  WHERE is_delete = 'F') LOOP
       BEGIN
-
         BEGIN
           -- Raises exception for an invalid batch_name if not a BSP or Activity workflow.
           SELECT 1 INTO v_tmp FROM DUAL
@@ -1180,9 +1328,7 @@ AS
           THEN RAISE INVALID_LAB_BATCH;
         END;
 
-
         -- No update is possible due to lack of common unique key
-
         INSERT INTO event_fact (
           event_fact_id,
           lab_event_id,
@@ -1220,28 +1366,33 @@ AS
               WHERE event_fact_id = new.event_fact_id
           );
 
-        EXCEPTION
+        V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;
 
+      EXCEPTION
         WHEN INVALID_LAB_BATCH THEN
-        DBMS_OUTPUT.PUT_LINE(
-            TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_event_fact.dat line ' || new.line_number || '  ' ||
-            'Event fact has invalid lab batch name: ' || NVL(new.batch_name, '(null)'));
-        CONTINUE;
+          DBMS_OUTPUT.PUT_LINE(
+              TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_event_fact.dat line ' || new.line_number || '  ' ||
+              'Event fact has invalid lab batch name: ' || NVL(new.batch_name, '(null)'));
+          CONTINUE;
 
         WHEN OTHERS THEN
-        errmsg := SQLERRM;
-        DBMS_OUTPUT.PUT_LINE(
-            TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_event_fact.dat line ' || new.line_number || '  ' || errmsg);
-        CONTINUE;
+          errmsg := SQLERRM;
+          DBMS_OUTPUT.PUT_LINE(
+              TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_event_fact.dat line ' || new.line_number || '  ' || errmsg);
+          CONTINUE;
       END;
-
     END LOOP;
+    SHOW_ETL_STATS(  V_UPD_COUNT, V_INS_COUNT, 'event_fact' );
   END MERGE_EVENT_FACT;
 
 
   PROCEDURE MERGE_ANCESTRY_FACT
   IS
+    V_INS_COUNT PLS_INTEGER;
+    V_UPD_COUNT PLS_INTEGER;
   BEGIN
+    V_INS_COUNT := 0;
+    V_UPD_COUNT := 0;
     FOR new IN (SELECT *
                   FROM im_library_ancestry_fact
                  WHERE is_delete = 'F') LOOP
@@ -1267,18 +1418,24 @@ AS
           new.child_library_creation,
           new.etl_date
         );
-        EXCEPTION WHEN OTHERS THEN
-          errmsg := SQLERRM;
-          DBMS_OUTPUT.PUT_LINE(
-              TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_library_ancestry_fact.dat line ' || new.line_number || '  ' || errmsg);
-          CONTINUE;
-        END;
+        V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;
+      EXCEPTION WHEN OTHERS THEN
+        errmsg := SQLERRM;
+        DBMS_OUTPUT.PUT_LINE(
+            TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_library_ancestry_fact.dat line ' || new.line_number || '  ' || errmsg);
+        CONTINUE;
+      END;
     END LOOP;
+    SHOW_ETL_STATS(  V_UPD_COUNT, V_INS_COUNT, 'library_ancestry_fact' );
   END MERGE_ANCESTRY_FACT;
 
   PROCEDURE MERGE_PRODUCT_ORDER_STATUS
   IS
+    V_INS_COUNT PLS_INTEGER;
+    V_UPD_COUNT PLS_INTEGER;
   BEGIN
+    V_INS_COUNT := 0;
+    V_UPD_COUNT := 0;
     FOR new IN (SELECT *
                   FROM im_product_order_status
                  WHERE is_delete = 'F') LOOP
@@ -1289,6 +1446,8 @@ AS
           etl_date = new.etl_date
         WHERE product_order_id = new.product_order_id
               AND status_date = new.status_date;
+
+        V_UPD_COUNT := V_UPD_COUNT + SQL%ROWCOUNT;
 
         INSERT INTO product_order_status (
           product_order_id,
@@ -1309,22 +1468,27 @@ AS
               WHERE product_order_id = new.product_order_id
                     AND status_date = new.status_date
           );
-        EXCEPTION WHEN OTHERS THEN
+
+        V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;
+      EXCEPTION WHEN OTHERS THEN
         errmsg := SQLERRM;
         DBMS_OUTPUT.PUT_LINE(
             TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_product_order_status.dat line ' || new.line_number || '  ' ||
             errmsg);
         CONTINUE;
       END;
-
     END LOOP;
-
+    SHOW_ETL_STATS(  V_UPD_COUNT, V_INS_COUNT, 'product_order_status' );
   END MERGE_PRODUCT_ORDER_STATUS;
 
 
   PROCEDURE MERGE_PDO_SAMPLE_STATUS
   IS
+    V_INS_COUNT PLS_INTEGER;
+    V_UPD_COUNT PLS_INTEGER;
   BEGIN
+    V_INS_COUNT := 0;
+    V_UPD_COUNT := 0;
     FOR new IN (SELECT *
                   FROM im_product_order_sample_stat
                  WHERE is_delete = 'F') LOOP
@@ -1335,6 +1499,8 @@ AS
           etl_date = new.etl_date
         WHERE product_order_sample_id = new.product_order_sample_id
               AND status_date = new.status_date;
+
+        V_UPD_COUNT := V_UPD_COUNT + SQL%ROWCOUNT;
 
         INSERT INTO product_order_sample_status (
           product_order_sample_id,
@@ -1355,22 +1521,27 @@ AS
               WHERE product_order_sample_id = new.product_order_sample_id
                     AND status_date = new.status_date
           );
-        EXCEPTION WHEN OTHERS THEN
+
+        V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;
+      EXCEPTION WHEN OTHERS THEN
         errmsg := SQLERRM;
         DBMS_OUTPUT.PUT_LINE(
             TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_product_order_sample_status.dat line ' || new.line_number ||
             '  ' || errmsg);
         CONTINUE;
       END;
-
     END LOOP;
-
+    SHOW_ETL_STATS(  V_UPD_COUNT, V_INS_COUNT, 'product_order_sample_status' );
   END MERGE_PDO_SAMPLE_STATUS;
 
 
   PROCEDURE MERGE_PDO_SAMPLE_RISK
   IS
+    V_INS_COUNT PLS_INTEGER;
+    V_UPD_COUNT PLS_INTEGER;
   BEGIN
+    V_INS_COUNT := 0;
+    V_UPD_COUNT := 0;
     FOR new IN (SELECT *
                   FROM im_product_order_sample_risk
                  WHERE is_delete = 'F') LOOP
@@ -1383,21 +1554,27 @@ AS
           risk_messages = new.risk_messages
         WHERE product_order_sample_id = new.product_order_sample_id;
 
-        EXCEPTION WHEN OTHERS THEN
+        V_UPD_COUNT := V_UPD_COUNT + SQL%ROWCOUNT;
+
+      EXCEPTION WHEN OTHERS THEN
         errmsg := SQLERRM;
         DBMS_OUTPUT.PUT_LINE(
             TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_product_order_sample_risk.dat line ' || new.line_number || '  '
             || errmsg);
         CONTINUE;
       END;
-
     END LOOP;
+    SHOW_ETL_STATS(  V_UPD_COUNT, V_INS_COUNT, 'product_order_sample' );
   END MERGE_PDO_SAMPLE_RISK;
 
 
   PROCEDURE MERGE_PDO_SAMPLE_BILL
   IS
+    V_INS_COUNT PLS_INTEGER;
+    V_UPD_COUNT PLS_INTEGER;
   BEGIN
+    V_INS_COUNT := 0;
+    V_UPD_COUNT := 0;
     FOR new IN (SELECT *
                   FROM im_product_order_sample_bill
                  WHERE is_delete = 'F') LOOP
@@ -1407,7 +1584,8 @@ AS
           is_billed = new.is_billed
         WHERE product_order_sample_id = new.product_order_sample_id;
 
-        EXCEPTION WHEN OTHERS THEN
+        V_UPD_COUNT := V_UPD_COUNT + SQL%ROWCOUNT;
+      EXCEPTION WHEN OTHERS THEN
         errmsg := SQLERRM;
         DBMS_OUTPUT.PUT_LINE(
             TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_product_order_sample_bill.dat line ' || new.line_number || '  '
@@ -1415,12 +1593,17 @@ AS
         CONTINUE;
       END;
     END LOOP;
+    SHOW_ETL_STATS(  V_UPD_COUNT, V_INS_COUNT, 'im_product_order_sample_bill' );
   END MERGE_PDO_SAMPLE_BILL;
 
 
   PROCEDURE MERGE_BILLING_SESSION
   IS
+    V_INS_COUNT PLS_INTEGER;
+    V_UPD_COUNT PLS_INTEGER;
   BEGIN
+    V_INS_COUNT := 0;
+    V_UPD_COUNT := 0;
     FOR new IN (SELECT *
                   FROM im_billing_session
                  WHERE is_delete = 'F') LOOP
@@ -1432,6 +1615,8 @@ AS
           billing_session_type = new.billing_session_type,
           etl_date = new.etl_date
         WHERE billing_session_id = new.billing_session_id;
+
+        V_UPD_COUNT := V_UPD_COUNT + SQL%ROWCOUNT;
 
         INSERT INTO billing_session (
           billing_session_id,
@@ -1451,7 +1636,9 @@ AS
               FROM billing_session
               WHERE billing_session_id = new.billing_session_id
           );
-        EXCEPTION WHEN OTHERS THEN
+
+        V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;
+      EXCEPTION WHEN OTHERS THEN
         errmsg := SQLERRM;
         DBMS_OUTPUT.PUT_LINE(
             TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_billing_session.dat line ' || new.line_number ||
@@ -1459,32 +1646,39 @@ AS
         CONTINUE;
       END;
     END LOOP;
-
+    SHOW_ETL_STATS(  V_UPD_COUNT, V_INS_COUNT, 'billing_session' );
   END MERGE_BILLING_SESSION;
 
 
   PROCEDURE MERGE_LEDGER_ENTRY
   IS
+    V_INS_COUNT PLS_INTEGER;
+    V_UPD_COUNT PLS_INTEGER;
   BEGIN
+    V_INS_COUNT := 0;
+    V_UPD_COUNT := 0;
     -- Loop for cross entity ETL.
     FOR new IN (SELECT *
                   FROM im_ledger_entry
                  WHERE is_delete = 'F') LOOP
       BEGIN
-
         UPDATE product_order_sample
         SET
           ledger_quote_id = new.quote_id
         WHERE product_order_sample_id = new.product_order_sample_id;
 
-        EXCEPTION WHEN OTHERS THEN
+        V_UPD_COUNT := V_UPD_COUNT + SQL%ROWCOUNT;
+
+      EXCEPTION WHEN OTHERS THEN
         errmsg := SQLERRM;
         DBMS_OUTPUT.PUT_LINE(
             TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_ledger_entry.dat line ' || new.line_number || '  ' || errmsg);
         CONTINUE;
       END;
-
     END LOOP;
+
+    SHOW_ETL_STATS(  V_UPD_COUNT, V_INS_COUNT, 'product_order_sample.ledger_quote_id' );
+    V_UPD_COUNT := 0;
 
     FOR new IN (SELECT *
                   FROM im_ledger_entry
@@ -1504,6 +1698,8 @@ AS
           etl_date = new.etl_date,
           quote_server_work_item = new.quote_server_work_item
         WHERE ledger_id = new.ledger_id;
+
+        V_UPD_COUNT := V_UPD_COUNT + SQL%ROWCOUNT;
 
         INSERT INTO ledger_entry (
           ledger_id,
@@ -1537,7 +1733,9 @@ AS
               FROM ledger_entry
               WHERE ledger_id = new.ledger_id
           );
-        EXCEPTION WHEN OTHERS THEN
+
+        V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;
+      EXCEPTION WHEN OTHERS THEN
         errmsg := SQLERRM;
         DBMS_OUTPUT.PUT_LINE(
             TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_ledger_entry.dat line ' || new.line_number ||
@@ -1545,13 +1743,15 @@ AS
         CONTINUE;
       END;
     END LOOP;
-
+    SHOW_ETL_STATS(  V_UPD_COUNT, V_INS_COUNT, 'ledger_entry' );
   END MERGE_LEDGER_ENTRY;
 
 
   PROCEDURE MERGE_SEQUENCING_SAMPLE_FACT
   IS
+    V_INS_COUNT PLS_INTEGER;
   BEGIN
+    V_INS_COUNT := 0;
     -- Only sets PK when it is null, so we can do an idempotent repeatable merge.
     UPDATE im_sequencing_sample_fact
     SET sequencing_sample_fact_id = sequencing_sample_id_seq.nextval
@@ -1618,30 +1818,28 @@ AS
               FROM sequencing_sample_fact
               WHERE sequencing_sample_fact_id = new.sequencing_sample_fact_id
           );
-        EXCEPTION
 
+        V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;
+      EXCEPTION
         WHEN PDO_SAMPLE_NOT_IN_EVENT_FACT THEN
-        DBMS_OUTPUT.PUT_LINE(
-            TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_sequencing_sample_fact.dat line ' || new.line_number || '  ' ||
-            'Sequencing Fact sample and product order not found in Event_Fact table');
-        CONTINUE;
-
+          DBMS_OUTPUT.PUT_LINE(
+              TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_sequencing_sample_fact.dat line ' || new.line_number || '  ' ||
+              'Sequencing Fact sample and product order not found in Event_Fact table');
+          CONTINUE;
         WHEN INVALID_LAB_BATCH THEN
-        DBMS_OUTPUT.PUT_LINE(
-            TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_sequencing_sample_fact.dat line ' || new.line_number || '  ' ||
-            'Sequencing Fact has invalid lab batch name: ' || NVL(new.batch_name, 'NONE'));
-        CONTINUE;
-
+          DBMS_OUTPUT.PUT_LINE(
+              TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_sequencing_sample_fact.dat line ' || new.line_number || '  ' ||
+              'Sequencing Fact has invalid lab batch name: ' || NVL(new.batch_name, 'NONE'));
+          CONTINUE;
         WHEN OTHERS THEN
-        errmsg := SQLERRM;
-        DBMS_OUTPUT.PUT_LINE(
-            TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_sequencing_sample_fact.dat line ' || new.line_number || '  ' ||
-            errmsg);
-        CONTINUE;
+          errmsg := SQLERRM;
+          DBMS_OUTPUT.PUT_LINE(
+              TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_sequencing_sample_fact.dat line ' || new.line_number || '  ' ||
+              errmsg);
+          CONTINUE;
       END;
-
     END LOOP;
-
+    SHOW_ETL_STATS(  0, V_INS_COUNT, 'sequencing_sample_fact' );
   END MERGE_SEQUENCING_SAMPLE_FACT;
 
 

@@ -277,63 +277,54 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
 
         private boolean canEtl;
         private List<EventAncestryEtlUtil.AncestryFactDto> ancestryFactDtos;
-        private Object[] data;
 
-        private static final int COL_EVENT_ID       = 0;
-        private static final int COL_WORKFLOW_ID    = 1;
-        private static final int COL_PROCESS_ID     = 2;
-        private static final int COL_PDO_ID         = 3;
-        private static final int COL_SAMPLE_ID      = 4;
-        private static final int COL_BATCH_NAME     = 5;
-        private static final int COL_LOCATION       = 6;
-        private static final int COL_VESSEL_ID      = 7;
-        private static final int COL_EVENT_DATE     = 8;
-        private static final int COL_PROGRAM_NAME   = 9;
-        private static final int COL_INDEX_NAME     = 10;
-        private static final int COL_LIBRARY_NAME   = 11;
-        private static final int COL_VESSEL_BARCODE = 12;
-        private static final int COL_WORKFLOW_NAME  = 13;
-        private static final int COL_PROCESS_NAME   = 14;
-        private static final int COL_PDO_NAME       = 15;
-        private static final int COL_STEP_NAME      = 16;
-        private static final int COL_EVENT_TYPE     = 17;
-        private static final int COL_BATCH_DATE     = 18;
+        private Long labEventId;
+        private LabEventType labEventType;
+        private String eventLocation;
+        private Date eventDate;
+        private String programName;
+        private String libraryName;
+        private String molecularIndexName;
+        private String batchName;
+        private Date workflowEffectiveDate;
+        private String workflowName;
+        private Long workflowId;
+        private String productWorkflowName;
+        private Long workflowProcessId;
+        private String workflowProcessName;
+        private String workflowStepName;
+        private Long productOrderId;
+        private String productOrderName;
+        private String sampleId;
+        private Long labVesselId;
+        private String barcode;
 
         EventFactDto(LabEvent labEvent, LabVessel labVessel, String molecularIndexName, String batchName,
                      Date workflowEffectiveDate,
                      String workflowName, MercurySample sample, ProductOrder productOrder,
                      WorkflowConfigDenorm wfDenorm, boolean canEtl) {
 
-            data = new Object[19];
-
-            // LabEvent never null
-            data[COL_EVENT_ID] = labEvent.getLabEventId();
-            data[COL_EVENT_TYPE] = labEvent.getLabEventType();
-            data[COL_LOCATION] = labEvent.getEventLocation();
-            data[COL_EVENT_DATE] = labEvent.getEventDate();
-            data[COL_PROGRAM_NAME] = format(labEvent.getProgramName());
-            data[COL_LIBRARY_NAME] =
-                    labEvent.getLabEventType().getLibraryType() == LabEventType.LibraryType.NONE_ASSIGNED ?
-                            null : labEvent.getLabEventType().getLibraryType().getDisplayName();
-
-            data[COL_INDEX_NAME] = molecularIndexName;
-            data[COL_BATCH_NAME] = batchName;
-
-            data[COL_BATCH_DATE] = workflowEffectiveDate;
-            data[COL_WORKFLOW_NAME] = workflowName;
-
-            // Remaining entities can be null - validate before access
-            data[COL_WORKFLOW_ID] = wfDenorm == null ? null : wfDenorm.getWorkflowId();
-            data[COL_WORKFLOW_NAME] = wfDenorm == null ? null : wfDenorm.getProductWorkflowName();
-            data[COL_PROCESS_ID] = wfDenorm == null ? null : wfDenorm.getProcessId();
-            data[COL_PROCESS_NAME] = wfDenorm == null ? null : wfDenorm.getWorkflowProcessName();
-            data[COL_STEP_NAME] = wfDenorm == null ? null : wfDenorm.getWorkflowStepName();
-            data[COL_PDO_ID] = productOrder == null ? null : productOrder.getProductOrderId();
-            data[COL_PDO_NAME] = productOrder == null ? null : productOrder.getBusinessKey();
-            data[COL_SAMPLE_ID] = sample == null ? null : sample.getSampleKey();
-
-            data[COL_VESSEL_ID] = labVessel == null ? null : labVessel.getLabVesselId();
-            data[COL_VESSEL_BARCODE] = labVessel == null ? null : labVessel.getLabel();
+            this.labEventId = labEvent.getLabEventId();
+            this.labEventType = labEvent.getLabEventType();
+            this.eventLocation = labEvent.getEventLocation();
+            this.eventDate = labEvent.getEventDate();
+            this.programName = format(labEvent.getProgramName());
+            this.libraryName = labEvent.getLabEventType().getLibraryType() == LabEventType.LibraryType.NONE_ASSIGNED ?
+                    null : labEvent.getLabEventType().getLibraryType().getDisplayName();
+            this.molecularIndexName = molecularIndexName;
+            this.batchName = batchName == null ? NONE : batchName;
+            this.workflowEffectiveDate = workflowEffectiveDate;
+            this.workflowName = workflowName;
+            this.workflowId = wfDenorm == null ? null : wfDenorm.getWorkflowId();
+            this.productWorkflowName = wfDenorm == null ? null : wfDenorm.getProductWorkflowName();
+            this.workflowProcessId = wfDenorm == null ? null : wfDenorm.getProcessId();
+            this.workflowProcessName = wfDenorm == null ? null : wfDenorm.getWorkflowProcessName();
+            this.workflowStepName = wfDenorm == null ? null : wfDenorm.getWorkflowStepName();
+            this.productOrderId = productOrder == null ? null : productOrder.getProductOrderId();
+            this.productOrderName = productOrder == null ? null : productOrder.getBusinessKey();
+            this.sampleId = sample == null ? null : sample.getSampleKey();
+            this.labVesselId = labVessel == null ? null : labVessel.getLabVesselId();
+            this.barcode = labVessel == null ? null : labVessel.getLabel();
 
             this.canEtl = canEtl;
         }
@@ -356,79 +347,79 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
         }
 
         public Long getEventId() {
-            return (Long) data[COL_EVENT_ID];
+            return labEventId;
         }
 
         public LabEventType getEventType() {
-            return (LabEventType) data[COL_EVENT_TYPE];
+            return labEventType;
         }
 
         public String getEventLocation() {
-            return (String) data[COL_LOCATION];
+            return eventLocation;
         }
 
         public Date getEventDate() {
-            return (Date) data[COL_EVENT_DATE];
+            return eventDate;
         }
 
         public String getEventProgram() {
-            return (String) data[COL_PROGRAM_NAME];
+            return programName;
         }
 
         public String getLibraryName() {
-            return (String) data[COL_LIBRARY_NAME];
+            return libraryName;
         }
 
         public String getMolecularIndex() {
-            return (String) data[COL_INDEX_NAME];
+            return molecularIndexName;
         }
 
         public String getBatchName() {
-            return (String) data[COL_BATCH_NAME];
+            return batchName;
         }
 
         public Date getBatchDate() {
-            return (Date) data[COL_BATCH_NAME];
+            return workflowEffectiveDate;
         }
 
         public String getWfName() {
-            return (String) data[COL_WORKFLOW_NAME];
+            return productWorkflowName == null?workflowName:productWorkflowName;
         }
 
         public Long getWfId() {
-            return (Long) data[COL_WORKFLOW_ID];
+            return workflowId;
         }
 
         public Long getWfProcessId() {
-            return (Long) data[COL_PROCESS_ID];
+            return workflowProcessId;
         }
 
         public String getWfProcessName() {
-            return (String) data[COL_PROCESS_NAME];
+            return workflowProcessName;
         }
 
         public String getWfStepName() {
-            return (String) data[COL_STEP_NAME];
+            return workflowStepName;
         }
 
         public Long getPdoId() {
-            return (Long) data[COL_PDO_ID];
+            return productOrderId;
         }
 
         public String getPdoName() {
-            return (String) data[COL_PDO_NAME];
+            return productOrderName;
         }
 
         public String getSampleId() {
-            return (String) data[COL_SAMPLE_ID];
+            return sampleId;
         }
 
         public Long getVesselId() {
-            return (Long) data[COL_VESSEL_ID];
+            return labVesselId;
         }
 
         public String getVesselBarcode() {
-            return (String) data[COL_VESSEL_BARCODE];
+            return barcode;
         }
 
         public void addAllAncestryDtos( List<EventAncestryEtlUtil.AncestryFactDto> ancestryFactDtos ) {
