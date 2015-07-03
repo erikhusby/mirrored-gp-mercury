@@ -1047,7 +1047,7 @@ public class LabVesselFixupTest extends Arquillian {
         Assert.assertTrue(CollectionUtils.isNotEmpty(plateIds));
         System.out.println("Found " + plateIds.size() + " plate ids");
 
-        final int BATCHSIZE = 400;
+        final int BATCHSIZE = 100;
         int count = 1;
         for (List<Long> plateIdSubset : Lists.partition(plateIds, BATCHSIZE)) {
             utx.begin();
