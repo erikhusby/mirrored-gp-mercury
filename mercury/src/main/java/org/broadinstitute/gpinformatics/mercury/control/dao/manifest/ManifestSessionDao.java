@@ -13,6 +13,7 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Expression;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 
@@ -70,5 +71,10 @@ public class ManifestSessionDao extends GenericDao {
         query.where(completedStatus, tubesRemainingToBeTransferred);
 
         return getEntityManager().createQuery(query).getResultList();
+    }
+
+    public List<ManifestSession> getSessionsForReceiptTicket(String receiptTicket) {
+
+        return findListByList(ManifestSession.class, ManifestSession_.receiptTicket, Collections.singleton(receiptTicket));
     }
 }

@@ -28,7 +28,9 @@ public enum ManifestHeader implements ColumnHeader {
     PATIENT_ID("Patient_ID", Metadata.Key.PATIENT_ID),
     COLLECTION_DATE("Collection_Date", Metadata.Key.BUICK_COLLECTION_DATE),
     VISIT("Visit", Metadata.Key.BUICK_VISIT),
-    TUMOR_OR_NORMAL("SAMPLE_TYPE", Metadata.Key.TUMOR_NORMAL);
+    TUMOR_OR_NORMAL("SAMPLE_TYPE", Metadata.Key.TUMOR_NORMAL),
+    MATERIAL_TYPE("Material Type", Metadata.Key.MATERIAL_TYPE);
+
     private final String columnName;
     private final Metadata.Key metadataKey;
 

@@ -123,6 +123,8 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         private Map<String, Object> extraFields = new HashMap<>();
 
         private Date dueDate;
+        private Date created;
+        private String reporter;
 
         private JiraSearchIssueData() {
         }
@@ -164,7 +166,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
     public JiraIssue getIssueInfo(String key, String... fields) throws IOException {
         String urlString = getBaseUrl() + "/issue/" + key;
 
-        StringBuilder fieldList = new StringBuilder("summary,description,duedate");
+        StringBuilder fieldList = new StringBuilder("summary,description,duedate,created,reporter");
 
         if (null != fields) {
             for (String currField : fields) {
@@ -182,6 +184,9 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         issueResult.setSummary(data.summary);
         issueResult.setDescription(data.description);
         issueResult.setDueDate(data.dueDate);
+        issueResult.setCreated(data.created);
+        issueResult.setReporter(data.reporter);
+
 
         if (null != fields) {
             for (String currField : fields) {
@@ -204,13 +209,29 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         parsedResults.summary = (String) fields.get("summary");
 
         String dueDateValue = (String) fields.get("duedate");
+        String createdDateValue = (String) fields.get("created");
+        Map<?, ?> reporterValues = (Map<?, ?>) fields.get("reporter");
         try {
             if (StringUtils.isNotBlank(dueDateValue)) {
-                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
                 parsedResults.dueDate = dateFormat.parse(dueDateValue);
             }
         } catch (ParseException pe) {
-            log.error("Unable to parse the Due Date for Jira Issue " + parsedResults.getKey());
+            log.error("Unable to parse the due date for Jira Issue " + parsedResults.getKey());
+        }
+
+        try {
+            if (StringUtils.isNotBlank(createdDateValue)) {
+                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+                parsedResults.created = dateFormat.parse(createdDateValue);
+            }
+
+        } catch (ParseException pe) {
+            log.error("Unable to parse the created date for Jira Issue " + parsedResults.getKey());
+        }
+
+        if (reporterValues != null && reporterValues.containsKey("name")) {
+            parsedResults.reporter = (String) reporterValues.get("name");
         }
 
         if (searchFields != null) {
@@ -429,6 +450,17 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
         return get(webResource, new GenericType<IssueFieldsResponse>() {
         });
+    }
+
+    @Override
+    public void deleteLink(String jiraIssueLinkId) throws
+            IOException {
+
+        String url = getBaseUrl() + "/issueLink/" + jiraIssueLinkId;
+        log.debug(url);
+        WebResource webResource = getJerseyClient().resource(url);
+
+        delete(webResource);
     }
 
     @Override

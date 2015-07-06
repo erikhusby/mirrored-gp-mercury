@@ -164,7 +164,7 @@
                 </c:if>
             </security:authorizeBlock>
 
-            <security:authorizeBlock roles="<%= roles(Developer) %>">
+            <security:authorizeBlock roles="<%= roles(PDM, LabManager, Developer) %>">
                 <div class="view-control-group control-group">
                     <label class="control-label label-form">Workflow</label>
                     <div class="controls">

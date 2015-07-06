@@ -223,6 +223,9 @@ public class BucketEntry {
 
     public void setLabBatch(LabBatch labBatch) {
         this.labBatch = labBatch;
+        if (labVessel != null) {
+            labVessel.clearCaches();
+        }
     }
 
     public BucketEntryType getEntryType() {

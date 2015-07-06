@@ -16,6 +16,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProjectTokenInput;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestSessionEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSessionDao;
@@ -36,12 +38,13 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
     public static final String ACTIONBEAN_URL_BINDING = "/sample/accessioning.action";
     public static final String SELECTED_SESSION_ID = "selectedSessionId";
     private static Log logger = LogFactory.getLog(ManifestAccessioningActionBean.class);
-
     public static final String START_SESSION_PAGE = "/sample/start_session.jsp";
+
     public static final String REVIEW_UPLOAD_PAGE = "/sample/review_manifest_upload.jsp";
     public static final String ACCESSION_SAMPLE_PAGE = "/sample/accession_sample.jsp";
     public static final String SCAN_SAMPLE_RESULTS_PAGE = "/sample/manifest_status_insert.jsp";
     public static final String PREVIEW_CLOSE_SESSION_PAGE = "/sample/preview_close_session.jsp";
+    private static final String ASSOCIATE_RECEIPT_PAGE = "/sample/associate_receipt.jsp";
 
     public static final String START_A_SESSION_ACTION = "startASession";
     public static final String UPLOAD_MANIFEST_ACTION = "uploadManifest";
@@ -54,6 +57,11 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
     public static final String PREVIEW_SESSION_CLOSE_ACTION = "previewSessionClose";
     public static final String CLOSE_SESSION_ACTION = "closeSession";
     public static final String BEGIN_ACCESSION_ACTION = "beginAccession";
+    public static final String FIND_RECEIPT_ACTION = "findReceipt";
+    public static final String ASSOCIATE_RECEIPT_ACTION = "associateReceipt";
+
+    public static final String UNABLE_TO_ASSOCIATE_RECEIPT_ERROR = "Unable to associate receipt with manifest Session";
+
 
     @Inject
     private ManifestSessionDao manifestSessionDao;
@@ -63,6 +71,9 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
 
     @Inject
     private UserBean userBean;
+
+    @Inject
+    private JiraService jiraService;
 
     @Inject
     private ProjectTokenInput projectTokenInput;
@@ -79,7 +90,6 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
     @Validate(required = true, on = SCAN_ACCESSION_SOURCE_ACTION, label = "Source sample is required for accessioning")
     private String accessionSource;
 
-//    @Validate(required = true, on = SCAN_ACCESSION_SOURCE_ACTION, label = "Source tube barcode is required for accessioning")
     private String accessionTube;
 
     private List<ManifestSession> openSessions;
@@ -88,6 +98,11 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
     private ManifestStatus statusValues;
     private String scanErrors;
     private String scanMessages;
+
+    private String receiptKey;
+
+    private String receiptSummary;
+    private String receiptDescription;
 
     public ManifestAccessioningActionBean() {
         super();
@@ -217,6 +232,11 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
     @HandlesEvent(CLOSE_SESSION_ACTION)
     public Resolution closeSession() {
 
+        if(!selectedSession.canSessionExcludeReceiptTicket()) {
+            addGlobalValidationError("Unable to submit this session without a record of receipt");
+            return new ForwardResolution(ACCESSION_SAMPLE_PAGE);
+        }
+
         try {
             manifestSessionEjb.closeSession(selectedSessionId);
             addMessage("The session {0} has successfully been marked as completed", selectedSession.getSessionName());
@@ -225,6 +245,42 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
             return getContext().getSourcePageResolution();
         }
         return new ForwardResolution(getClass(), LOAD_SESSION_ACTION);
+    }
+
+    @HandlesEvent(FIND_RECEIPT_ACTION)
+    public Resolution findReceipt() {
+
+        JiraIssue receiptInfo = null;
+        ForwardResolution forwardResolution = null;
+        forwardResolution = new ForwardResolution(ASSOCIATE_RECEIPT_PAGE)
+                .addParameter(SELECTED_SESSION_ID, selectedSession.getManifestSessionId());
+        try {
+            receiptInfo = jiraService.getIssueInfo(receiptKey);
+            receiptSummary = receiptInfo.getSummary();
+            forwardResolution
+                    .addParameter("receiptSummary", receiptInfo.getSummary())
+                    .addParameter("receiptDescription", receiptInfo.getDescription())
+                    .addParameter("receiptKey", receiptKey);
+        } catch (IOException e) {
+            addGlobalValidationError("Unable to access the specified record of receipt: " + receiptKey);
+            logger.error(e.getMessage());
+        }
+
+        return forwardResolution;
+    }
+
+    @HandlesEvent(ASSOCIATE_RECEIPT_ACTION)
+    public Resolution associateReceipt() {
+        try {
+            manifestSessionEjb.updateReceiptInfo(selectedSession.getManifestSessionId(), receiptKey);
+
+            addMessage("The accessioning session was successfully updated with the receipt record: " + receiptKey);
+        } catch (Exception e) {
+            logger.error(UNABLE_TO_ASSOCIATE_RECEIPT_ERROR, e);
+            addGlobalValidationError(UNABLE_TO_ASSOCIATE_RECEIPT_ERROR);
+        }
+
+        return new ForwardResolution(ACCESSION_SAMPLE_PAGE);
     }
 
     public Long getSelectedSessionId() {
@@ -297,5 +353,21 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
 
     public void setAccessionTube(String accessionTube) {
         this.accessionTube = accessionTube;
+    }
+
+    public String getReceiptKey() {
+        return receiptKey;
+    }
+
+    public void setReceiptKey(String receiptKey) {
+        this.receiptKey = receiptKey;
+    }
+
+    public String getReceiptDescription() {
+        return receiptDescription;
+    }
+
+    public String getReceiptSummary() {
+        return receiptSummary;
     }
 }

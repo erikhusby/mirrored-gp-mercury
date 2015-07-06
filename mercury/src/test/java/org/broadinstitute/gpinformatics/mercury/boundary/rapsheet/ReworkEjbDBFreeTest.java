@@ -4,9 +4,9 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderSampleTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
@@ -21,6 +21,7 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.util.Collection;
@@ -30,6 +31,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ReworkEjbDBFreeTest extends BaseEventTest {
@@ -109,6 +113,29 @@ public class ReworkEjbDBFreeTest extends BaseEventTest {
         Assert.assertTrue(((ReworkEjb.BucketCandidate) candidates.toArray()[0]).isValid());
         Assert.assertTrue(((ReworkEjb.BucketCandidate) candidates.toArray()[1]).isValid());
         Assert.assertTrue(((ReworkEjb.BucketCandidate) candidates.toArray()[2]).isValid());
+    }
+
+    @DataProvider(name = "productOrderStatusDataProvider")
+    public static Object[][] productOrderStatusDataProvider() {
+        return new Object[][]{
+                new Object[]{ProductOrder.OrderStatus.Abandoned, 2, 0},
+                new Object[]{ProductOrder.OrderStatus.Completed, 2, 2},
+                new Object[]{ProductOrder.OrderStatus.Draft, 2, 0},
+                new Object[]{ProductOrder.OrderStatus.Pending, 2, 0},
+                new Object[]{ProductOrder.OrderStatus.Submitted, 2, 2}
+        };
+    }
+
+    @Test(dataProvider = "productOrderStatusDataProvider")
+    public void testBucketProductOrderSampleBucketAbilityBasedOnStatus(ProductOrder.OrderStatus orderStatus,
+                                                                      int numberOfSamplesInProductOrder,
+                                                                      int expectedNumberOfSamplesInBucket) {
+        ProductOrder productOrder = ProductOrderTestFactory.buildExExProductOrder(numberOfSamplesInProductOrder);
+        productOrder.setOrderStatus(orderStatus);
+
+        Collection<ReworkEjb.BucketCandidate> candidates =
+                reworkEjb.collectBucketCandidatesForAMercuryVessel(labVessel, productOrder.getSamples());
+        assertThat(candidates.size(), is(expectedNumberOfSamplesInBucket));
     }
 
     @Test

@@ -6,13 +6,17 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 
@@ -43,6 +47,9 @@ public class ProductOrderSampleTestFactory {
                                                             MercurySample.MetadataSource metadataSource, boolean dbFree,
                                                             boolean createMercurySamples) {
         List<ProductOrderSample> productOrderSamples = new ArrayList<>(sampleArray.length);
+
+        int counter = 1;
+
         for (String sampleName : sampleArray) {
             ProductOrderSample productOrderSample;
             SampleData sampleData;
@@ -59,6 +66,10 @@ public class ProductOrderSampleTestFactory {
             }
             if (createMercurySamples) {
                 MercurySample mercurySample = new MercurySample(sampleName, metadataSource);
+                LabVessel testVessel = new BarcodedTube(sampleName+"Tube", BarcodedTube.BarcodedTubeType.MatrixTube075);
+                testVessel.setReceiptEvent(new BSPUserList.QADudeUser("LU", counter++),new Date(), 1L);
+                mercurySample.addLabVessel(testVessel);
+
                 productOrderSample.setMercurySample(mercurySample);
             }
             productOrderSample.setMetadataSource(metadataSource);
