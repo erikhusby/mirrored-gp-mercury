@@ -117,12 +117,12 @@ Move the mouse over the question marks to see details about each section.
                     <c:forEach items="${actionBean.configurableSearchDef.mapGroupSearchTerms}" var="entry">
                         <optgroup label="${entry.key}">
                             <c:forEach items="${entry.value}" var="searchTerm">
-                                <option id="${searchTerm.uiId}_opt" value="${searchTerm.name}"
+                                <option id="${searchTerm.uiId}_opt" value="${searchTerm.name}" ondblclick="addTerm()"
                                 <%-- Firefox select options allow this style class, Chrome quietly ignores --%>
                                 <c:if test="${not empty searchTerm.helpText}"> class="help-option"</c:if>>${searchTerm.name}</option>
                                 <c:if test="${searchTerm.addDependentTermsToSearchTermList}">
                                     <c:forEach items="${searchTerm.constrainedValues}" var="constrainedValue">
-                                        <option value="${constrainedValue.code}"
+                                        <option value="${constrainedValue.code}" ondblclick="addTerm()"
                                                 searchTerm="${searchTerm.name}">${constrainedValue.label}</option>
                                     </c:forEach>
                                 </c:if>
@@ -206,13 +206,12 @@ function addTerm() {
     var select = $j('#searchTermSelect')[0];
     var option = select.options[select.selectedIndex];
     var searchTerm = option.getAttribute('searchTerm');
-    var searchTermName;
+    var searchTermName = option.value;
     var parameters;
     if (searchTerm == null) {
-        searchTermName = option.value;
-        parameters = 'addTopLevelTerm&searchTermName=' + option.value + '&entityName=' + getEntityName();
+        parameters = 'addTopLevelTerm&searchTermName=' + searchTermName + '&entityName=' + getEntityName();
     } else {
-        parameters = 'addTopLevelTermWithValue&searchTermName=' + searchTerm + '&searchTermFirstValue=' + option.value
+        parameters = 'addTopLevelTermWithValue&searchTermName=' + searchTerm + '&searchTermFirstValue=' + searchTermName
                 + '&entityName=' + getEntityName();
     }
     new $j.ajax({
