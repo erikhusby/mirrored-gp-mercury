@@ -570,6 +570,7 @@ public class ReagentFixupTest extends Arquillian {
             put(939935L, 959960L);
             put(939937L, 959960L);
             put(939938L, 959960L);
+            put(939940L, 959960L);
             put(939943L, 959960L);
             put(939944L, 959960L);
             put(939948L, 959965L);
