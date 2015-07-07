@@ -1312,7 +1312,7 @@ function formatInput(item) {
                             </div>
                         </c:if>
                     </td>
-                    <td id="onRiskDetails-${sample.productOrderSampleId}" style="display:none;">${sample.riskString}"</td>
+                    <td id="onRiskDetails-${sample.productOrderSampleId}" style="display:none;">${sample.riskString}</td>
                     <td>${sample.deliveryStatus.displayName}</td>
                     <td id="completelyBilled-${sample.productOrderSampleId}" style="text-align: center"></td>
                     <td>${sample.sampleComment}</td>
