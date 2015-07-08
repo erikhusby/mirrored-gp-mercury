@@ -731,6 +731,18 @@ public class LabEventSearchDefinition {
         criteriaPath.setPropertyName("label");
         criteriaPaths.add(criteriaPath);
 
+        // Search by cherry pick transfer target lab vessel
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList( "cherryPickXfer", "targetVessel" ));
+        criteriaPath.setPropertyName("label");
+        criteriaPaths.add(criteriaPath);
+
+        // Search by cherry pick transfer source lab vessel
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList("cherryPickXfer", "sourceVessel"));
+        criteriaPath.setPropertyName("label");
+        criteriaPaths.add(criteriaPath);
+
         // Search by section transfer target lab vessel
         criteriaPath = new SearchTerm.CriteriaPath();
         criteriaPath.setCriteria(Arrays.asList( "sectXfer", "targetVessel" ));
