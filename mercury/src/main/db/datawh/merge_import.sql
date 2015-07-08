@@ -527,6 +527,7 @@ IS
     FOR new IN im_lab_metric_cur LOOP
     BEGIN
 
+      -- Very rarely will a lab measurement be updated
       UPDATE lab_metric
       SET
         sample_name = new.sample_name,
@@ -541,6 +542,12 @@ IS
         vessel_position = new.vessel_position,
         etl_date = new.etl_date
       WHERE lab_metric_id = new.lab_metric_id;
+
+      -- Keep latest measurement only!
+      DELETE FROM lab_metric
+       WHERE lab_vessel_id = new.lab_vessel_id
+         AND quant_type = new.quant_type
+         AND run_date < new.run_date;
 
       INSERT INTO lab_metric (
         lab_metric_id,
