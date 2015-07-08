@@ -722,11 +722,9 @@ public class TransferEntityGrapher implements TransferVisualizer {
 //    }
 
     /**
-     * The user can select one more ID types to be rendered into each vertex
+     * The user can select one more ID types to be rendered into each vertex.
      *
-     *
-     * @param labVessel
-     * @param sampleInstances   sample details
+     * @param labVessel         has IDs
      * @param alternativeIdList list of ID types specified by user
      *
      * @return list of Ids for the given receptacle
