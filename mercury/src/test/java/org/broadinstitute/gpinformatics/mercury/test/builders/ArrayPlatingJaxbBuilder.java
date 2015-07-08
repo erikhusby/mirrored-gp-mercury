@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Builds entity graph for Array Plating messages.
+ * Builds JAXB objects for Array Plating messages.
  */
 public class ArrayPlatingJaxbBuilder {
 
