@@ -543,42 +543,52 @@ IS
         etl_date = new.etl_date
       WHERE lab_metric_id = new.lab_metric_id;
 
+      V_TMP := SQL%ROWCOUNT;
+
       -- Keep latest measurement only!
       DELETE FROM lab_metric
        WHERE lab_vessel_id = new.lab_vessel_id
          AND quant_type = new.quant_type
          AND run_date < new.run_date;
 
-      INSERT INTO lab_metric (
-        lab_metric_id,
-        sample_name,
-        lab_vessel_id,
-        product_order_id,
-        batch_name,
-        quant_type,
-        quant_units,
-        quant_value,
-        run_name,
-        run_date,
-        vessel_position,
-        etl_date
-      )
-      SELECT
-        new.lab_metric_id,
-        new.sample_name,
-        new.lab_vessel_id,
-        new.product_order_id,
-        new.batch_name,
-        new.quant_type,
-        new.quant_units,
-        new.quant_value,
-        new.run_name,
-        new.run_date,
-        new.vessel_position,
-        new.etl_date
-      FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM lab_metric WHERE lab_metric_id = new.lab_metric_id);
+      IF V_TMP = 0 THEN
+        -- Ignore insert if measurement is older than any existing
+        INSERT INTO lab_metric (
+          lab_metric_id,
+          sample_name,
+          lab_vessel_id,
+          product_order_id,
+          batch_name,
+          quant_type,
+          quant_units,
+          quant_value,
+          run_name,
+          run_date,
+          vessel_position,
+          etl_date
+        )
+        SELECT new.lab_metric_id,
+               new.sample_name,
+               new.lab_vessel_id,
+               new.product_order_id,
+               new.batch_name,
+               new.quant_type,
+               new.quant_units,
+               new.quant_value,
+               new.run_name,
+               new.run_date,
+               new.vessel_position,
+               new.etl_date
+          FROM DUAL
+         WHERE NOT EXISTS (
+             SELECT 1
+               FROM lab_metric
+              WHERE lab_vessel_id = new.lab_vessel_id
+                AND quant_type = new.quant_type
+                AND run_date > new.run_date );
+      END IF;
 
-      EXCEPTION WHEN OTHERS THEN
+    EXCEPTION WHEN OTHERS THEN
       errmsg := SQLERRM;
       DBMS_OUTPUT.PUT_LINE(
           TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_lab_metric.dat line ' || new.line_number || '  ' || errmsg);
