@@ -96,19 +96,18 @@ public class LimsQueries {
                     SampleInfoType sampleInfoType = new SampleInfoType();
                     sampleInfoType.setSampleName(mercurySample.getSampleKey());
                     sampleInfoType.setLsid("not implemented yet");
-                    Set<MolecularIndexReagent> indexesForSampleInstance =
-                            stringLabVesselEntry.getValue().getIndexesForSampleInstance(sampleInstance);
-                    String indexSequence = "";
-                    for(MolecularIndexReagent molecularIndexReagent: indexesForSampleInstance) {
-                        MolecularIndexingScheme molecularIndexingScheme =
-                                molecularIndexReagent.getMolecularIndexingScheme();
+                    MolecularIndexingScheme molecularIndexingScheme =
+                            sampleInstance.getMolecularIndexingScheme();
+                    if(molecularIndexingScheme != null) {
                         SortedMap<MolecularIndexingScheme.IndexPosition, MolecularIndex> indexes =
                                 molecularIndexingScheme.getIndexes();
-                        for(Map.Entry<MolecularIndexingScheme.IndexPosition, MolecularIndex> entry : indexes.entrySet()) {
+                        String indexSequence = "";
+                        for (Map.Entry<MolecularIndexingScheme.IndexPosition, MolecularIndex> entry : indexes
+                                .entrySet()) {
                             indexSequence += entry.getValue().getSequence();
                         }
+                        sampleInfoType.setIndexSequence(indexSequence);
                     }
-                    sampleInfoType.setIndexSequence(indexSequence);
                     libraryDataType.getSampleDetails().add(sampleInfoType);
                 }
             }
