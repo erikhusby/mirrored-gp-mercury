@@ -72,6 +72,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
+import org.broadinstitute.gpinformatics.mercury.test.builders.ArrayPlatingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.CrspPicoEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
@@ -1591,6 +1592,32 @@ public class LabEventTest extends BaseEventTest {
         InfiniumEntityBuilder infiniumEntityBuilder = runInfiniumProcess(sourcePlate, "Infinium");
         Set<SampleInstanceV2> samples = infiniumEntityBuilder.getHybChip().getSampleInstancesV2();
         Assert.assertEquals(samples.size(), 24, "Wrong number of sample instances");
+    }
+
+    /**
+     * Build object graph for Array Plating messages
+     */
+    @Test(groups = {TestGroups.DATABASE_FREE})
+    public void testArrayPlating() {
+        expectedRouting = SystemRouter.System.MERCURY;
+        int numSamples = NUM_POSITIONS_IN_RACK - 2;
+        ProductOrder productOrder = ProductOrderTestFactory.buildArrayPlatingProductOrder(numSamples);
+        Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
+
+        LabBatch workflowBatch = new LabBatch("Array Plating Batch",
+                new HashSet<LabVessel>(mapBarcodeToTube.values()),
+                LabBatch.LabBatchType.WORKFLOW);
+        workflowBatch.setWorkflow(Workflow.NONE);
+        bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, "1");
+
+        TubeFormation daughterTubeFormation = daughterPlateTransfer(mapBarcodeToTube, workflowBatch);
+
+        Map<String, BarcodedTube> mapBarcodeToDaughterTube = new HashMap<>();
+        for (BarcodedTube barcodedTube : daughterTubeFormation.getContainerRole().getContainedVessels()) {
+            mapBarcodeToDaughterTube.put(barcodedTube.getLabel(), barcodedTube);
+        }
+
+        runArrayPlatingProcess(mapBarcodeToDaughterTube, "Infinium");
     }
 
     private void verifyEventSequence(List<String> labEventNames, String[] expectedEventNames) {
