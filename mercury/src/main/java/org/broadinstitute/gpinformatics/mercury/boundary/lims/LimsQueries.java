@@ -6,7 +6,11 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDa
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
@@ -29,6 +33,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
 
 /**
  * Mercury-based implementations of services provided by LimsQueryResource.
@@ -86,10 +91,24 @@ public class LimsQueries {
                 libraryDataType.setWasFound(false);
             } else {
                 libraryDataType.setWasFound(true);
-                for (SampleInstance sampleInstance : stringLabVesselEntry.getValue().getSampleInstances()) {
+                for (SampleInstanceV2 sampleInstance : stringLabVesselEntry.getValue().getSampleInstancesV2()) {
+                    MercurySample mercurySample = sampleInstance.getRootOrEarliestMercurySample();
                     SampleInfoType sampleInfoType = new SampleInfoType();
-                    sampleInfoType.setSampleName(sampleInstance.getStartingSample().getSampleKey());
+                    sampleInfoType.setSampleName(mercurySample.getSampleKey());
                     sampleInfoType.setLsid("not implemented yet");
+                    Set<MolecularIndexReagent> indexesForSampleInstance =
+                            stringLabVesselEntry.getValue().getIndexesForSampleInstance(sampleInstance);
+                    String indexSequence = "";
+                    for(MolecularIndexReagent molecularIndexReagent: indexesForSampleInstance) {
+                        MolecularIndexingScheme molecularIndexingScheme =
+                                molecularIndexReagent.getMolecularIndexingScheme();
+                        SortedMap<MolecularIndexingScheme.IndexPosition, MolecularIndex> indexes =
+                                molecularIndexingScheme.getIndexes();
+                        for(Map.Entry<MolecularIndexingScheme.IndexPosition, MolecularIndex> entry : indexes.entrySet()) {
+                            indexSequence += entry.getValue().getSequence();
+                        }
+                    }
+                    sampleInfoType.setIndexSequence(indexSequence);
                     libraryDataType.getSampleDetails().add(sampleInfoType);
                 }
             }
