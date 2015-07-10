@@ -250,4 +250,17 @@ public class MercurySampleFixupTest extends Arquillian {
         System.out.println("Updated weight for " + tubeTareData.size() + " tubes.");
 
     }
+
+    @Test(groups = TestGroups.FIXUP, enabled = false)
+    public void gplim3659UpdateMetadataSource() {
+        userBean.loginOSUser();
+
+        MercurySample sample = mercurySampleDao.findBySampleKey("SM-7QK9O");
+        MercurySample.MetadataSource oldMetadataSource = sample.getMetadataSource();
+        sample.setMetadataSource(MercurySample.MetadataSource.MERCURY);
+        mercurySampleDao.persist(new FixupCommentary("GPLIM-3659 update metadataSource of SM-7QK9O to MERCURY"));
+        System.out.println(
+                "Changed metadataSource of " + sample.getSampleKey() + " from " + oldMetadataSource + " to " + sample
+                        .getMetadataSource());
+    }
 }
