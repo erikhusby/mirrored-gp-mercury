@@ -82,11 +82,4 @@ public class ProductEjb {
         productDao.persist(product);
     }
 
-    private void populateTokenListFields(Product product, ProductTokenInput addOnTokenInput,
-                                         PriceItemTokenInput priceItemTokenInput) {
-        product.getAddOns().clear();
-        product.getAddOns().addAll(addOnTokenInput.getTokenObjects());
-
-        product.setPrimaryPriceItem(priceItemTokenInput.getItem());
-    }
 }
