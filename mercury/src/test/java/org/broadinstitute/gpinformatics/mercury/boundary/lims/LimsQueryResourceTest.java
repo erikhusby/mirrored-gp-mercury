@@ -97,6 +97,23 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
 
     @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
+    public void testFetchLibraryDetailsObjectByTubeBarcodeMercury(@ArquillianResource URL baseUrl) throws MalformedURLException {
+        WebResource webResource = makeWebResource(baseUrl, "fetchLibraryDetailsByTubeBarcode")
+                .queryParam("includeWorkRequestDetails", "true");
+        webResource = webResource.queryParam("q", "0177174735");
+
+        List<LibraryDataType> libraryDataTypes = webResource.queryParam("includeWorkRequestDetails", "true").
+                accept(APPLICATION_JSON_TYPE).get(new GenericType<List<LibraryDataType>>() {});
+        Assert.assertEquals(libraryDataTypes.size(), 1);
+        List<SampleInfoType> sampleDetails = libraryDataTypes.get(0).getSampleDetails();
+        Assert.assertEquals(sampleDetails.size(), 1);
+        SampleInfoType sampleInfoType = sampleDetails.get(0);
+        Assert.assertEquals(sampleInfoType.getSampleName(), "SM-7QK86");
+        Assert.assertEquals(sampleInfoType.getIndexSequence(), "AATTGGCCCCTATGCC");
+    }
+
+    @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
     public void testDoesLimsRecognizeAllTubes(@ArquillianResource URL baseUrl)
             throws Exception {
         WebResource resource = makeWebResource(baseUrl, "doesLimsRecognizeAllTubes");

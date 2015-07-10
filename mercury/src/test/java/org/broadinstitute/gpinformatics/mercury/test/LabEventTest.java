@@ -56,6 +56,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
@@ -71,11 +72,13 @@ import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
+import org.broadinstitute.gpinformatics.mercury.test.builders.ArrayPlatingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.CrspPicoEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.IceEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.InfiniumEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.PreFlightEntityBuilder;
@@ -1576,6 +1579,47 @@ public class LabEventTest extends BaseEventTest {
         fluidigmMessagesBuilder.buildObjectGraph();
     }
 
+    /**
+     * Build object graph for infinium messages
+     */
+    @Test(groups = {TestGroups.DATABASE_FREE})
+    public void testInfinium() {
+        expectedRouting = SystemRouter.System.MERCURY;
+        int numSamples = NUM_POSITIONS_IN_RACK - 2;
+        ProductOrder productOrder = ProductOrderTestFactory.buildInfiniumProductOrder(numSamples);
+        List<StaticPlate> sourcePlates = buildSamplePlates(productOrder, "AmpPlate");
+        StaticPlate sourcePlate = sourcePlates.get(0);
+        InfiniumEntityBuilder infiniumEntityBuilder = runInfiniumProcess(sourcePlate, "Infinium");
+        Set<SampleInstanceV2> samples = infiniumEntityBuilder.getHybChip().getSampleInstancesV2();
+        Assert.assertEquals(samples.size(), 24, "Wrong number of sample instances");
+    }
+
+    /**
+     * Build object graph for Array Plating messages
+     */
+    @Test(groups = {TestGroups.DATABASE_FREE})
+    public void testArrayPlating() {
+        expectedRouting = SystemRouter.System.MERCURY;
+        int numSamples = NUM_POSITIONS_IN_RACK - 2;
+        ProductOrder productOrder = ProductOrderTestFactory.buildArrayPlatingProductOrder(numSamples);
+        Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
+
+        LabBatch workflowBatch = new LabBatch("Array Plating Batch",
+                new HashSet<LabVessel>(mapBarcodeToTube.values()),
+                LabBatch.LabBatchType.WORKFLOW);
+        workflowBatch.setWorkflow(Workflow.NONE);
+        bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, "1");
+
+        TubeFormation daughterTubeFormation = daughterPlateTransfer(mapBarcodeToTube, workflowBatch);
+
+        Map<String, BarcodedTube> mapBarcodeToDaughterTube = new HashMap<>();
+        for (BarcodedTube barcodedTube : daughterTubeFormation.getContainerRole().getContainedVessels()) {
+            mapBarcodeToDaughterTube.put(barcodedTube.getLabel(), barcodedTube);
+        }
+
+        runArrayPlatingProcess(mapBarcodeToDaughterTube, "Infinium");
+    }
+
     private void verifyEventSequence(List<String> labEventNames, String[] expectedEventNames) {
         /*
         * First, make sure that all expected event names are present. Then, check for extra events. Finally, make sure
@@ -1822,5 +1866,26 @@ public class LabEventTest extends BaseEventTest {
         }
         baitTube.addReagent(new DesignedReagent(reagent));
         return baitTube;
+    }
+
+    public static List<StaticPlate> buildSamplePlates(ProductOrder productOrder, String platePrefix) {
+        List<StaticPlate> samplePlates = new ArrayList<>();
+        List<ProductOrderSample> samples = productOrder.getSamples();
+        for(int i = 0; i < productOrder.getSamples().size(); i++) {
+            StaticPlate samplePlate = new StaticPlate(platePrefix + (i / SBSSection.ALL96.getWells().size()),
+                    StaticPlate.PlateType.Eppendorf96);
+            for(VesselPosition vesselPosition: SBSSection.ALL96.getWells()) {
+                if(i >= samples.size())
+                    break;
+                PlateWell plateWell = new PlateWell(samplePlate, vesselPosition);
+                MercurySample mercurySample =
+                        new MercurySample(samples.get(i).getSampleKey(), MercurySample.MetadataSource.MERCURY);
+                plateWell.addSample(mercurySample);
+                samplePlate.getContainerRole().addContainedVessel(plateWell, vesselPosition);
+                i++;
+            }
+            samplePlates.add(samplePlate);
+        }
+        return samplePlates;
     }
 }

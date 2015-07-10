@@ -824,4 +824,26 @@ public class LabEventFixupTest extends Arquillian {
         labEventDao.flush();
     }
 
+
+    @Test(enabled = false)
+    public void fixupSupport876() {
+        try {
+            userBean.loginOSUser();
+            utx.begin();
+            long[] ids = {951437L, 949353L};
+            for (long id: ids) {
+                LabEvent labEvent = labEventDao.findById(LabEvent.class, id);
+                Assert.assertEquals(labEvent.getLabEventType(), LabEventType.PICO_MICROFLUOR_TRANSFER);
+                System.out.println("Deleting " + labEvent.getLabEventType() + " " + labEvent.getLabEventId());
+                labEvent.getReagents().clear();
+                labEventDao.remove(labEvent);
+            }
+            labEventDao.persist(new FixupCommentary("SUPPORT-876 delete incorrect events"));
+            labEventDao.flush();
+            utx.commit();
+        } catch (NotSupportedException | SystemException | HeuristicMixedException | HeuristicRollbackException |
+                RollbackException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }
