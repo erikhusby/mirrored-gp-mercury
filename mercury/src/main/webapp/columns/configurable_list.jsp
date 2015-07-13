@@ -1,6 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
-<%@ page import="org.broadinstitute.gpinformatics.infrastructure.search.PaginationDao" %>
+<%@ page import="org.broadinstitute.gpinformatics.infrastructure.search.PaginationUtil" %>
 <%@ page import="org.broadinstitute.gpinformatics.mercury.presentation.search.ConfigurableSearchActionBean" %>
 <% pageContext.setAttribute("CRLF", "\n"); %>
 <%-- This page displays a configurable list for a given entity --%>
@@ -67,7 +67,7 @@
 
 <%
     // Get the pagination object from the session and make it available to EL
-    PaginationDao.Pagination pagination = (PaginationDao.Pagination) request.getSession().getAttribute(
+    PaginationUtil.Pagination pagination = (PaginationUtil.Pagination) request.getSession().getAttribute(
             ConfigurableSearchActionBean.PAGINATION_PREFIX + pageContext.getAttribute("sessionKey"));
     pageContext.setAttribute("pagination", pagination);
 %>

@@ -6,7 +6,7 @@ import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDao;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
-import org.broadinstitute.gpinformatics.infrastructure.search.PaginationDao;
+import org.broadinstitute.gpinformatics.infrastructure.search.PaginationUtil;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
@@ -29,9 +29,6 @@ public class ConfigurableListFactory {
 
     @Inject
     private ConfigurableSearchDao configurableSearchDao;
-
-    @Inject
-    private PaginationDao paginationDao;
 
     /**
      * Create a ConfigurableList instance.
@@ -239,10 +236,10 @@ public class ConfigurableListFactory {
      */
     public static class FirstPageResults {
         private ConfigurableList.ResultList resultList;
-        private PaginationDao.Pagination pagination;
+        private PaginationUtil.Pagination pagination;
 
         public FirstPageResults(ConfigurableList.ResultList resultList,
-                PaginationDao.Pagination pagination) {
+                PaginationUtil.Pagination pagination) {
             this.resultList = resultList;
             this.pagination = pagination;
         }
@@ -251,7 +248,7 @@ public class ConfigurableListFactory {
             return resultList;
         }
 
-        public PaginationDao.Pagination getPagination() {
+        public PaginationUtil.Pagination getPagination() {
             return pagination;
         }
     }
@@ -335,12 +332,12 @@ public class ConfigurableListFactory {
         }
         columnTabulations.addAll(searchInstance.findTopLevelColumnTabulations());
 
-        PaginationDao.Pagination pagination = new PaginationDao.Pagination( configurableSearchDef.getPageSize() );
+        PaginationUtil.Pagination pagination = new PaginationUtil.Pagination( configurableSearchDef.getPageSize() );
 
         configurableSearchDao.startPagination(pagination, criteria, searchInstance, configurableSearchDef );
 
         pagination.setJoinFetchPaths(joinFetchPaths);
-        List<?> entityList = paginationDao.getPage(pagination, 0);
+        List<?> entityList = PaginationUtil.getPage(configurableSearchDao.getEntityManager(), pagination, 0);
 
         // Format the results into columns
         ConfigurableList configurableList = new ConfigurableList(columnTabulations,
@@ -372,9 +369,9 @@ public class ConfigurableListFactory {
      * @return list of results
      */
     public ConfigurableList.ResultList getSubsequentResultsPage(
-            SearchInstance searchInstance, int pageNumber, String entityName, PaginationDao.Pagination pagination) {
+            SearchInstance searchInstance, int pageNumber, String entityName, PaginationUtil.Pagination pagination) {
         // Get requested page of results
-        List<?> entityList = paginationDao.getPage(pagination, pageNumber);
+        List<?> entityList = PaginationUtil.getPage(configurableSearchDao.getEntityManager(), pagination, pageNumber);
 
         // Format the results into columns
         ConfigurableSearchDefinition configurableSearchDef = SearchDefinitionFactory.getForEntity(entityName);

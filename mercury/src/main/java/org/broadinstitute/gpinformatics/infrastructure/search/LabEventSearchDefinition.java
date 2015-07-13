@@ -534,9 +534,10 @@ public class LabEventSearchDefinition {
 
         searchTerm = new SearchTerm();
         searchTerm.setName("LCSET");
-        searchTerm.setHelpText("The LCSET term will only locate events associated with bucket entries (e.g. CollaboratorTransfer and PicoPlatingBucket). "
-            + "Traversal option(s) should be selected if chain of custody events are desired.<br>"
-            + "Note: Adding other terms may exclude initial event(s) from the chain of custody traversal(s).");
+        searchTerm.setHelpText(
+                "The LCSET term will only locate events associated with bucket entries (e.g. CollaboratorTransfer and PicoPlatingBucket). "
+                + "Traversal option(s) should be selected if chain of custody events are desired.<br>"
+                + "Note: Adding other terms may exclude initial event(s) from the chain of custody traversal(s).");
         searchTerm.setSearchValueConversionExpression(SearchDefinitionFactory.getLcsetInputConverter());
         criteriaPaths = new ArrayList<>();
         // Non-reworks
@@ -561,44 +562,6 @@ public class LabEventSearchDefinition {
                 for (LabBatch labBatch : labEvent.getComputedLcSets()) {
                     lcSetNames.add(labBatch.getBatchName());
                 }
-
-                // todo jmt improve getComputedLcSets so this logic is not necessary
-                if (lcSetNames.isEmpty()) {
-                    LabVessel labVessel = labEvent.getInPlaceLabVessel();
-                    if (labVessel != null) {
-                        if( labVessel.getContainerRole() != null ) {
-                            for( LabVessel containedVessel : labVessel.getContainerRole().getContainedVessels() ) {
-                                for( LabBatch batch : containedVessel.getLabBatches() ) {
-                                    if (batch.getLabBatchType() == LabBatch.LabBatchType.WORKFLOW) {
-                                        lcSetNames.add(batch.getBatchName());
-                                    }
-                                }
-                                if( lcSetNames.isEmpty()){
-                                    for( LabEvent xferEvent : containedVessel.getTransfersTo() ) {
-                                        for (LabBatch labBatch : xferEvent.getComputedLcSets()) {
-                                            lcSetNames.add(labBatch.getBatchName());
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        // In place vessel is not a container (could also be static plate)
-                        for (LabBatch batch : labVessel.getLabBatches()) {
-                            if (batch.getLabBatchType() == LabBatch.LabBatchType.WORKFLOW) {
-                                lcSetNames.add(batch.getBatchName());
-                            }
-                        }
-                        if( lcSetNames.isEmpty()){
-                            for( LabEvent xferEvent : labVessel.getTransfersTo() ) {
-                                for (LabBatch labBatch : xferEvent.getComputedLcSets()) {
-                                    lcSetNames.add(labBatch.getBatchName());
-                                }
-                            }
-                        }
-
-                    }
-                }
-
                 return lcSetNames;
             }
         });
@@ -606,28 +569,158 @@ public class LabEventSearchDefinition {
 
         searchTerm = new SearchTerm();
         searchTerm.setName("Mercury Sample ID");
-        searchTerm.setHelpText("This term searches for events that involve vessels with a sample barcode. Use traversal checkboxes to see other events in the chain of custody.");
+        searchTerm.setHelpText(
+                "This term searches for events that involve vessels with a sample barcode. Use traversal checkboxes to see other events in the chain of custody.");
         for( SearchTerm nestedTableTerm : nestedTableTerms ) {
             nestedTableTerm.addParentTermHandledByChild(searchTerm);
         }
         criteriaPaths = new ArrayList<>();
+
+        // Search by in place lab vessel mercury samples
+        // Need a nested criteria path to get a lab event list for a tube barcode
+        // (see criteria projection for reason)
+        SearchTerm.CriteriaPath inPlaceNestedCriteriaPath = new SearchTerm.CriteriaPath();
+        inPlaceNestedCriteriaPath.setCriteria(Arrays.asList("inPlaceLabEventSubQuery", "mercurySamples"));
+
         criteriaPath = new SearchTerm.CriteriaPath();
-        criteriaPath.setCriteria(Arrays.asList("mercurySample", "mercurySamples"));
+        criteriaPath.setCriteria(Arrays.asList("eventById", "inPlaceLabVesselId"));
+        criteriaPath.setNestedCriteriaPath(inPlaceNestedCriteriaPath);
         criteriaPath.setPropertyName("sampleKey");
         criteriaPaths.add(criteriaPath);
+
+        // Search by section transfer target lab vessel
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList("sectXfer", "targetVessel", "mercurySamples"));
+        criteriaPath.setPropertyName("sampleKey");
+        criteriaPaths.add(criteriaPath);
+
+        // Search by section transfer source lab vessel
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList("sectXfer", "sourceVessel", "mercurySamples"));
+        criteriaPath.setPropertyName("sampleKey");
+        criteriaPaths.add(criteriaPath);
+
+        // Search by cherry pick transfer target lab vessel
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList( "cherryPickXfer", "targetVessel", "mercurySamples" ));
+        criteriaPath.setPropertyName("sampleKey");
+        criteriaPaths.add(criteriaPath);
+
+        // Search by cherry pick transfer source lab vessel
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList("cherryPickXfer", "sourceVessel", "mercurySamples"));
+        criteriaPath.setPropertyName("sampleKey");
+        criteriaPaths.add(criteriaPath);
+
+        // Search by vessel to section transfer target lab vessel
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList( "vessSectXfer", "targetVessel", "mercurySamples" ));
+        criteriaPath.setPropertyName("sampleKey");
+        criteriaPaths.add(criteriaPath);
+
+        // Search by vessel to section transfer source lab vessel
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList( "vessSectXfer", "sourceVessel", "mercurySamples" ));
+        criteriaPath.setPropertyName("sampleKey");
+        criteriaPaths.add(criteriaPath);
+
+        // Search by vessel to vessel transfer target lab vessel
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList( "vessVessXfer", "targetVessel", "mercurySamples" ));
+        criteriaPath.setPropertyName("sampleKey");
+        criteriaPaths.add(criteriaPath);
+
+        // Search by vessel to vessel transfer source lab vessel
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList( "vessVessXfer", "sourceVessel", "mercurySamples" ));
+        criteriaPath.setPropertyName("sampleKey");
+        criteriaPaths.add(criteriaPath);
+
+        // **** Logic to find and use the container of a vessel (TubeFormation) in an event source/target ****
+        // Shared nested criteria path to get a vessel container list for a tube barcode
+        SearchTerm.CriteriaPath containerNestedCriteriaPath = new SearchTerm.CriteriaPath();
+        containerNestedCriteriaPath.setCriteria(Arrays.asList("vesselContainer", "mercurySamples"));
+
+        // Search by in place lab vessel container is double nested:
+        //       [event id by in place vessel] <-- [containers by lab vessel]
+        // Need a nested criteria path to get a lab event list for a tube barcode
+        // (see criteria projection for reason)
+        SearchTerm.CriteriaPath inPlaceNestedContainerCriteriaPath = new SearchTerm.CriteriaPath();
+        inPlaceNestedContainerCriteriaPath.setCriteria(Arrays.asList( "inPlaceLabEventSubQuery", "inPlaceLabEvents" ) );
+        inPlaceNestedContainerCriteriaPath.setNestedCriteriaPath(containerNestedCriteriaPath);
+
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList("eventById", "inPlaceLabVesselId" ));
+        criteriaPath.setNestedCriteriaPath(inPlaceNestedContainerCriteriaPath);
+        criteriaPath.setPropertyName("sampleKey");
+        criteriaPaths.add(criteriaPath);
+
+        // Search by cherry pick transfer target lab vessel container
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList( "cherryPickXfer", "targetVessel" ));
+        criteriaPath.setPropertyName("sampleKey");
+        criteriaPath.setNestedCriteriaPath(containerNestedCriteriaPath);
+        criteriaPaths.add(criteriaPath);
+
+        // Search by cherry pick transfer source lab vessel container
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList( "cherryPickXfer", "sourceVessel" ));
+        criteriaPath.setPropertyName("sampleKey");
+        criteriaPath.setNestedCriteriaPath(containerNestedCriteriaPath);
+        criteriaPaths.add(criteriaPath);
+
+        // Search by section transfer source lab vessel container
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList( "sectXfer", "sourceVessel" ));
+        criteriaPath.setPropertyName("sampleKey");
+        criteriaPath.setNestedCriteriaPath(containerNestedCriteriaPath);
+        criteriaPaths.add(criteriaPath);
+
+        // Search by section transfer target lab vessel container
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList( "sectXfer", "targetVessel" ));
+        criteriaPath.setPropertyName("sampleKey");
+        criteriaPath.setNestedCriteriaPath(containerNestedCriteriaPath);
+        criteriaPaths.add(criteriaPath);
+
+        // Search by vessel to section transfer target lab vessel container
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList( "vessSectXfer", "targetVessel" ));
+        criteriaPath.setPropertyName("sampleKey");
+        criteriaPath.setNestedCriteriaPath(containerNestedCriteriaPath);
+        criteriaPaths.add(criteriaPath);
+
+        // Search by vessel to section transfer source lab vessel container
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList( "vessSectXfer", "sourceVessel" ));
+        criteriaPath.setPropertyName("sampleKey");
+        criteriaPath.setNestedCriteriaPath(containerNestedCriteriaPath);
+        criteriaPaths.add(criteriaPath);
+
+        // Search by vessel to vessel transfer target lab vessel container
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList( "vessVessXfer", "targetVessel" ));
+        criteriaPath.setPropertyName("sampleKey");
+        criteriaPath.setNestedCriteriaPath(containerNestedCriteriaPath);
+        criteriaPaths.add(criteriaPath);
+
+        // Search by vessel to vessel transfer source lab vessel container
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList( "vessVessXfer", "sourceVessel" ));
+        criteriaPath.setPropertyName("sampleKey");
+        criteriaPath.setNestedCriteriaPath(containerNestedCriteriaPath);
+        criteriaPaths.add(criteriaPath);
+
         searchTerm.setCriteriaPaths(criteriaPaths);
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Set<String> evaluate(Object entity, SearchContext context) {
-
-                // Has to handle LabEvent from parent term and LabVessel from nested table
-                LabVessel labVessel = null;
-                LabEvent labEvent;
-
                 Set<String> results = new HashSet<>();
-
+                LabVessel labVessel = null;
+                // Has to handle LabEvent from parent term, LabVessel from nested table,
+                //  and sample data from nested table.
                 if( OrmUtil.proxySafeIsInstance( entity, LabEvent.class ) ) {
-                    labEvent = OrmUtil.proxySafeCast(entity, LabEvent.class);
+                    LabEvent labEvent = OrmUtil.proxySafeCast(entity, LabEvent.class);
                     labVessel = labEvent.getInPlaceLabVessel();
                     if (labVessel == null) {
                         for( LabVessel srcVessel : labEvent.getSourceLabVessels() ) {
@@ -647,8 +740,8 @@ public class LabEventSearchDefinition {
                     throw new RuntimeException("Unhandled display value type for 'Mercury Sample ID': "
                                                + OrmUtil.getProxyObjectClass(entity).getSimpleName());
                 }
-
-                if (labVessel != null) {
+                // Shared for event in place vessel and lab vessel entity logic
+                if( labVessel != null ) {
                     for( SampleInstanceV2 sample : labVessel.getSampleInstancesV2()) {
                         results.add(sample.getRootOrEarliestMercurySampleName());
                     }
