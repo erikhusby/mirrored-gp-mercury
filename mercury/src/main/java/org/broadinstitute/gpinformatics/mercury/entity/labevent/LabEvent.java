@@ -477,7 +477,7 @@ todo jmt adder methods
         return mapPositionToLcSets;
     }
 
-    Set<LabBatch> computeLcSets() {
+    private Set<LabBatch> computeLcSets() {
         if (computedLcSets == null) {
             computedLcSets = new HashSet<>();
 
@@ -485,28 +485,17 @@ todo jmt adder methods
                 // Event in-place vessel is mutually exclusive to any event transfers
                 if (inPlaceLabVessel.getContainerRole() != null) {
                     for (LabVessel containedVessel : inPlaceLabVessel.getContainerRole().getContainedVessels()) {
-                        for (LabBatch batch : containedVessel.getWorkflowLabBatches()) {
-                            computedLcSets.add(batch);
-                        }
-                        if (computedLcSets.isEmpty()) {
-                            for (LabEvent xferEvent : containedVessel.getTransfersTo()) {
-                                for (LabBatch labBatch : xferEvent.getComputedLcSets()) {
-                                    computedLcSets.add(labBatch);
-                                }
-                            }
-                        }
+                        computedLcSets.addAll(containedVessel.getWorkflowLabBatches());
                     }
                 } else {
                     // In place vessel is not a container
-                    for (LabBatch batch : inPlaceLabVessel.getWorkflowLabBatches()) {
-                        computedLcSets.add(batch);
-                    }
-                    if (computedLcSets.isEmpty()) {
-                        for (LabEvent xferEvent : inPlaceLabVessel.getTransfersTo()) {
-                            for (LabBatch labBatch : xferEvent.getComputedLcSets()) {
-                                computedLcSets.add(labBatch);
-                            }
-                        }
+                    computedLcSets.addAll( inPlaceLabVessel.getWorkflowLabBatches());
+
+                }
+                // Revert to transfers if no LCSET for vessel or container
+                if (computedLcSets.isEmpty()) {
+                    for (LabEvent xferEvent : inPlaceLabVessel.getTransfersTo()) {
+                        computedLcSets.addAll( xferEvent.getComputedLcSets() );
                     }
                 }
             } else {
@@ -546,26 +535,24 @@ todo jmt adder methods
                 computedLcSets.addAll(computeLcSetsForCherryPickTransfers());
                 computedLcSets.addAll(computeLcSetsForVesselToSectionTransfers());
 
-                if (computedLcSets.isEmpty()) {
     /*
-                    todo jmt revisit after we remove inference of LCSETs for controls.  The performance penalty is too high now.
-                    // Handle issue with orphan source vessels (e.g. bait)
-                    if (computedLcSets.isEmpty()) {
-                        for (LabVessel labVessel : getTargetLabVessels()) {
-                            for (LabEvent labEvent : labVessel.getTransfersTo()) {
-                                // Stop this from being called when traversing from same lab event
-                                if( !labEvent.equals( this ) ) {
-                                    computedLcSets.addAll(labEvent.getComputedLcSets());
-                                }
+                todo jmt revisit after we remove inference of LCSETs for controls.  The performance penalty is too high now.
+                // Handle issue with orphan source vessels (e.g. bait)
+                if (computedLcSets.isEmpty()) {
+                    for (LabVessel labVessel : getTargetLabVessels()) {
+                        for (LabEvent labEvent : labVessel.getTransfersTo()) {
+                            // Stop this from being called when traversing from same lab event
+                            if( !labEvent.equals( this ) ) {
+                                computedLcSets.addAll(labEvent.getComputedLcSets());
                             }
                         }
                     }
-    */
                 }
+    */
             }
-            if (LabVessel.DIAGNOSTICS) {
-                System.out.println("computedLcSets for " + labEventType.getName() + " " + computedLcSets);
-            }
+        }
+        if (LabVessel.DIAGNOSTICS) {
+            System.out.println("computedLcSets for " + labEventType.getName() + " " + computedLcSets);
         }
         return computedLcSets;
     }
