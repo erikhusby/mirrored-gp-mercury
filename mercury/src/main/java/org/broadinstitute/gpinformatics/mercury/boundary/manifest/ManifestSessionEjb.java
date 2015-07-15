@@ -378,6 +378,8 @@ public class ManifestSessionEjb {
         List<ManifestSession> otherReceiptSessions =
                 manifestSessionDao.getSessionsForReceiptTicket(session.getReceiptTicket());
 
+        otherReceiptSessions.remove(session);
+
         int disambiguator = sourceRecord.getSpreadsheetRowNumber();
 
         for(ManifestSession sessionToAdd : otherReceiptSessions) {
