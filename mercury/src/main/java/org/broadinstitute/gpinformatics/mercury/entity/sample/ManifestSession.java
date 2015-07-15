@@ -422,7 +422,8 @@ public class ManifestSession implements Updatable {
         for (ManifestRecord manifestRecord : nonQuarantinedRecords) {
             if (manifestRecord.getStatus() != ManifestRecord.Status.SCANNED) {
                 manifestMessages.add(ManifestRecord.ErrorStatus.MISSING_SAMPLE
-                        .formatMessage(Metadata.Key.SAMPLE_ID, manifestRecord.getSampleId()));
+                        .formatMessage((isFromSampleKit())? Metadata.Key.BROAD_SAMPLE_ID:Metadata.Key.SAMPLE_ID,
+                                manifestRecord.getSampleId()));
             }
         }
         int eligibleSize = eligibleRecordsBasedOnStatus(nonQuarantinedRecords, ManifestRecord.Status.UPLOAD_ACCEPTED);
