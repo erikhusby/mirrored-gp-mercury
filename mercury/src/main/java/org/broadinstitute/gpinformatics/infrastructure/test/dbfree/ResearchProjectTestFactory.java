@@ -19,8 +19,8 @@ import java.util.Set;
 import java.util.UUID;
 
 public class ResearchProjectTestFactory {
-
-    public static final long TEST_CREATOR = 10950;
+    // QA Dude
+    public static final Long TEST_CREATOR = 19224L;
 
     public static ResearchProject createTestResearchProject() {
         String uuid = UUID.randomUUID().toString();

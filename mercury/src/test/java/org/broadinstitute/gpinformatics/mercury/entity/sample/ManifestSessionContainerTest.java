@@ -4,10 +4,18 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceImpl;
+import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
+import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NextTransition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
@@ -27,6 +35,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.hamcrest.Matchers;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -39,8 +48,11 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -864,6 +876,34 @@ public class ManifestSessionContainerTest extends Arquillian {
         }
     }
 
+    private JiraIssue createReceiptTicket(JiraService jiraService) throws IOException {
+        String summary = "Sample Receipt " + System.currentTimeMillis();
+        String shipmentCondition = "Shipment Condition";
+        String materialTypeCounts = "Material Type Counts";
+        String storageLocation = "Storage Location";
+        String kitDeliveryMethod = "Kit Delivery Method";
+        String trackingNumber = "Tracking Number";
+
+        Map<String, CustomFieldDefinition> receiptFields =
+                jiraService.getCustomFields(shipmentCondition, materialTypeCounts, storageLocation, kitDeliveryMethod,
+                        trackingNumber);
+
+        Collection<CustomField> customFields = new ArrayList<>(receiptFields.size());
+        customFields.add(new CustomField(receiptFields.get(shipmentCondition), "A-OK"));
+        customFields.add(new CustomField(receiptFields.get(materialTypeCounts), "6 DNA"));
+        customFields.add(new CustomField(receiptFields.get(storageLocation), "LOC" + System.currentTimeMillis()));
+
+        customFields
+                .add(new CustomField(receiptFields.get(kitDeliveryMethod), new CustomField.ValueContainer("FedEx")));
+
+        customFields.add(new CustomField(receiptFields.get(trackingNumber),
+                String.format("%12d", System.currentTimeMillis())));
+
+        return jiraService.createIssue(CreateFields.ProjectType.RECEIPT_PROJECT, "QADude",
+                CreateFields.IssueType.RECEIPT,
+                summary, customFields);
+    }
+
     @Test(groups = TestGroups.STANDARD)
     public void testFindClosedSessionQuery() throws Exception {
 
@@ -1156,5 +1196,73 @@ public class ManifestSessionContainerTest extends Arquillian {
             assertThat(e.getMessage(), containsString("The target vessel has already been used for a tube transfer."));
         }
 
+    }
+
+    public void testSampleReceipt() throws IOException {
+        JiraService jiraService = new JiraServiceImpl(new JiraConfig(DEV));
+        BSPCohortList bspCohortList = Mockito.mock(BSPCohortList.class);
+        Mockito.when(bspCohortList.getCohortListString(Mockito.any(String[].class))).thenReturn("");
+
+        ResearchProjectEjb researchProjectEjb =
+                new ResearchProjectEjb(jiraService, userBean, bspUserList, bspCohortList, AppConfig.produce(
+                        DEV), researchProjectDao, null);
+
+        manifestSessionEjb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao,
+                labVesselDao, userBean, bspUserList, jiraService);
+        JiraIssue receiptIssue = createReceiptTicket(jiraService);
+        ResearchProject testResearchProject = ResearchProjectTestFactory.createTestResearchProject();
+        testResearchProject.setRegulatoryDesignation(ResearchProject.RegulatoryDesignation.GENERAL_CLIA_CAP);
+        researchProjectEjb.submitToJira(testResearchProject);
+        researchProjectDao.persist(testResearchProject);
+        researchProjectDao.flush();
+        researchProjectDao.clear();
+        String excelFilePath = "manifest-upload/duplicates/good-manifest-1.xlsx";
+        InputStream testStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(excelFilePath);
+
+        uploadedSession =
+                manifestSessionEjb
+                        .uploadManifest(testResearchProject.getBusinessKey(), testStream, excelFilePath, false);
+        manifestSessionEjb.acceptManifestUpload(uploadedSession.getManifestSessionId());
+
+        manifestSessionDao.flush();
+        manifestSessionDao.clear();
+
+        ManifestSession acceptedSession = manifestSessionDao.find(uploadedSession.getManifestSessionId());
+        String sourceSampleToTest = firstUploadedScannedSamples.iterator().next();
+        manifestSessionEjb.accessionScan(acceptedSession.getManifestSessionId(), sourceSampleToTest,
+                sourceSampleToTest);
+        manifestSessionDao.flush();
+        manifestSessionDao.clear();
+
+        ManifestSession reFetchedSessionOfScan = manifestSessionDao.find(acceptedSession.getManifestSessionId());
+
+        ManifestRecord sourceRecordToTest = reFetchedSessionOfScan.findRecordByKey(sourceSampleToTest,
+                Metadata.Key.SAMPLE_ID);
+
+        assertThat(sourceRecordToTest.getStatus(), is(ManifestRecord.Status.SCANNED));
+        assertThat(reFetchedSessionOfScan.hasErrors(), is(false));
+
+
+        manifestSessionEjb.updateReceiptInfo(acceptedSession.getManifestSessionId(), receiptIssue.getKey());
+        manifestSessionEjb.closeSession(acceptedSession.getManifestSessionId());
+        manifestSessionDao.flush();
+        manifestSessionDao.clear();
+
+        List<String> comments = extractComment(receiptIssue.getKey(), jiraService);
+        assertThat(comments.get(0), Matchers.containsString(sourceSampleToTest));
+    }
+
+    private List<String> extractComment(String issueKey, JiraService jiraService) throws IOException {
+        JiraIssue jiraIssue = jiraService.getIssueInfo(issueKey, "comment");
+        List<String> allComments=new ArrayList<>();
+        Map<String, List<Map<String, String>>> map= (HashMap) jiraIssue.getFieldValue("comment");
+        if (map.containsKey("comments")) {
+            for (Map<String, String> jiraComment : map.get("comments")) {
+                if (jiraComment.containsKey("body")){
+                    allComments.add(jiraComment.get("body"));
+                }
+            }
+        }
+        return allComments;
     }
 }
