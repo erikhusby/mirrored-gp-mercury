@@ -46,7 +46,7 @@ public class ProductEjb {
             boolean allLengthsMatch, String[] criteria,
             String[] operators, String[] values) {
 
-
+        populateTokenListFields(product, addOnTokenInput, priceItemTokenInput);
         // If all lengths match, just send it.
         if (allLengthsMatch) {
             product.updateRiskCriteria(criteria, operators, values);
@@ -82,4 +82,10 @@ public class ProductEjb {
         productDao.persist(product);
     }
 
+    private void populateTokenListFields(Product product, ProductTokenInput addOnTokenInput,
+                                         PriceItemTokenInput priceItemTokenInput) {
+        product.getAddOns().clear();
+        product.getAddOns().addAll(addOnTokenInput.getTokenObjects());
+        product.setPrimaryPriceItem(priceItemTokenInput.getItem());
+    }
 }
