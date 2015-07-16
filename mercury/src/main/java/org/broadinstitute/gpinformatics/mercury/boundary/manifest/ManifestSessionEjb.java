@@ -237,8 +237,7 @@ public class ManifestSessionEjb {
         if(manifestSession.isFromSampleKit()) {
             for (ManifestRecord record : manifestSession.getNonQuarantinedRecords()) {
                 if (record.getStatus() == ManifestRecord.Status.ACCESSIONED) {
-
-                    transferSample(manifestSessionId, record.getValueByKey(Metadata.Key.SAMPLE_ID),
+                    transferSample(manifestSessionId, record.getSampleId(),
                             record.getValueByKey(Metadata.Key.BROAD_SAMPLE_ID),
                             record.getValueByKey(Metadata.Key.BROAD_2D_BARCODE));
                 }
@@ -394,11 +393,7 @@ public class ManifestSessionEjb {
         Set<String> accessionedSamples = new HashSet<>();
         for (ManifestRecord record : session.getRecords()) {
             if (record.getStatus() == ManifestRecord.Status.ACCESSIONED) {
-                if (session.isFromSampleKit()) {
-                    accessionedSamples.add(record.getValueByKey(Metadata.Key.BROAD_SAMPLE_ID));
-                } else {
-                    accessionedSamples.add(record.getValueByKey(Metadata.Key.SAMPLE_ID));
-                }
+                accessionedSamples.add(record.getSampleId());
             }
         }
 
