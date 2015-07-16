@@ -457,7 +457,8 @@ public class ManifestRecord implements Updatable {
     }
 
     @Nullable public String getSampleId() {
-        Metadata sampleMetadata = getMetadataByKey(Metadata.Key.SAMPLE_ID);
+        Metadata sampleMetadata =
+                (manifestSession.isFromSampleKit())?getMetadataByKey(Metadata.Key.BROAD_SAMPLE_ID):getMetadataByKey(Metadata.Key.SAMPLE_ID);
         if (sampleMetadata != null) {
             return sampleMetadata.getValue();
         }
