@@ -235,7 +235,8 @@ public class ManifestSession implements Updatable {
      */
     private void validateInconsistentGenders(Collection<ManifestRecord> manifestRecords) {
 
-        Multimap<String, ManifestRecord> recordsByPatientId = buildMultimapByKey(manifestRecords);
+        Multimap<String, ManifestRecord> recordsByPatientId = buildMultimapByKey(
+                manifestRecords, Metadata.Key.PATIENT_ID);
 
         Iterable<Map.Entry<String, Collection<ManifestRecord>>> patientsWithInconsistentGenders =
                 filterForPatientsWithInconsistentGenders(recordsByPatientId);
@@ -289,7 +290,7 @@ public class ManifestSession implements Updatable {
     private void validateDuplicateCollaboratorSampleIDs(Collection<ManifestRecord> manifestRecords) {
 
         // Build a map of collaborator sample IDs to manifest records with those collaborator sample IDs.
-        Multimap<String, ManifestRecord> recordsBySampleId = buildMultimapByKey(manifestRecords);
+        Multimap<String, ManifestRecord> recordsBySampleId = buildMultimapBySampleId(manifestRecords);
 
         // Remove entries in this map which are not duplicates (i.e., leave only the duplicates).
         Iterable<Map.Entry<String, Collection<ManifestRecord>>> filteredDuplicateSamples =
@@ -332,12 +333,31 @@ public class ManifestSession implements Updatable {
      * Helper method to Build a MultiMap of manifest records by a given Metadata Key.
      *
      * @param allEligibleManifestRecords The set of manifest records to be divided up into a MultiMap
+     * @param key                        type of Metadata key who's value will be index into the newly created MultiMap
+     *
      * @return A MultiMap of manifest records indexed the corresponding value represented by key
      */
     private Multimap<String, ManifestRecord> buildMultimapByKey(
-            Collection<ManifestRecord> allEligibleManifestRecords) {
+            Collection<ManifestRecord> allEligibleManifestRecords, final Metadata.Key key) {
 
         return Multimaps.index(allEligibleManifestRecords,
+                new Function<ManifestRecord, String>() {
+                    @Override
+                    public String apply(ManifestRecord manifestRecord) {
+                        return manifestRecord.getValueByKey(key);
+                    }
+                });
+    }
+
+    /**
+     * Helper method to Build a MultiMap of manifest records by the sampleId.
+     *
+     * @param manifestRecords The set of manifest records to be divided up into a MultiMap
+     *
+     * @return A MultiMap of manifest records indexed by the corresponding sampleId value
+     */
+    private Multimap<String, ManifestRecord> buildMultimapBySampleId(Collection<ManifestRecord> manifestRecords) {
+        return Multimaps.index(manifestRecords,
                 new Function<ManifestRecord, String>() {
                     @Override
                     public String apply(ManifestRecord manifestRecord) {
