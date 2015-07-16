@@ -525,59 +525,74 @@ IS
 
 
     FOR new IN im_lab_metric_cur LOOP
-    BEGIN
+      BEGIN
 
-      UPDATE lab_metric
-      SET
-        sample_name = new.sample_name,
-        lab_vessel_id = new.lab_vessel_id,
-        product_order_id = new.product_order_id,
-        batch_name = new.batch_name,
-        quant_type = new.quant_type,
-        quant_units = new.quant_units,
-        quant_value = new.quant_value,
-        run_name = new.run_name,
-        run_date = new.run_date,
-        vessel_position = new.vessel_position,
-        etl_date = new.etl_date
-      WHERE lab_metric_id = new.lab_metric_id;
+        -- Very rarely will a lab measurement be updated
+        UPDATE lab_metric
+        SET
+          sample_name = new.sample_name,
+          lab_vessel_id = new.lab_vessel_id,
+          product_order_id = new.product_order_id,
+          batch_name = new.batch_name,
+          quant_type = new.quant_type,
+          quant_units = new.quant_units,
+          quant_value = new.quant_value,
+          run_name = new.run_name,
+          run_date = new.run_date,
+          vessel_position = new.vessel_position,
+          etl_date = new.etl_date
+        WHERE lab_metric_id = new.lab_metric_id;
 
-      INSERT INTO lab_metric (
-        lab_metric_id,
-        sample_name,
-        lab_vessel_id,
-        product_order_id,
-        batch_name,
-        quant_type,
-        quant_units,
-        quant_value,
-        run_name,
-        run_date,
-        vessel_position,
-        etl_date
-      )
-      SELECT
-        new.lab_metric_id,
-        new.sample_name,
-        new.lab_vessel_id,
-        new.product_order_id,
-        new.batch_name,
-        new.quant_type,
-        new.quant_units,
-        new.quant_value,
-        new.run_name,
-        new.run_date,
-        new.vessel_position,
-        new.etl_date
-      FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM lab_metric WHERE lab_metric_id = new.lab_metric_id);
+        V_TMP := SQL%ROWCOUNT;
 
+        -- Delete any older measurements, warehouse latest measurement only
+        DELETE FROM lab_metric
+         WHERE lab_vessel_id = new.lab_vessel_id
+           AND quant_type = new.quant_type
+           AND run_date < new.run_date;
+
+        IF V_TMP = 0 THEN
+          -- Ignore insert if measurement is older than any existing
+          INSERT INTO lab_metric (
+            lab_metric_id,
+            sample_name,
+            lab_vessel_id,
+            product_order_id,
+            batch_name,
+            quant_type,
+            quant_units,
+            quant_value,
+            run_name,
+            run_date,
+            vessel_position,
+            etl_date
+          )
+          SELECT new.lab_metric_id,
+                 new.sample_name,
+                 new.lab_vessel_id,
+                 new.product_order_id,
+                 new.batch_name,
+                 new.quant_type,
+                 new.quant_units,
+                 new.quant_value,
+                 new.run_name,
+                 new.run_date,
+                 new.vessel_position,
+                 new.etl_date
+            FROM DUAL
+           WHERE NOT EXISTS (
+               SELECT 1
+                 FROM lab_metric
+                WHERE lab_vessel_id = new.lab_vessel_id
+                  AND quant_type = new.quant_type
+                  AND run_date > new.run_date );
+        END IF;
       EXCEPTION WHEN OTHERS THEN
-      errmsg := SQLERRM;
-      DBMS_OUTPUT.PUT_LINE(
-          TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_lab_metric.dat line ' || new.line_number || '  ' || errmsg);
-      CONTINUE;
-    END;
-
+        errmsg := SQLERRM;
+        DBMS_OUTPUT.PUT_LINE(
+            TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_lab_metric.dat line ' || new.line_number || '  ' || errmsg);
+        CONTINUE;
+      END;
     END LOOP;
 
 
