@@ -585,7 +585,7 @@ IS
                  FROM lab_metric
                 WHERE lab_vessel_id = new.lab_vessel_id
                   AND quant_type = new.quant_type
-                  AND run_date >= new.run_date );
+                  AND run_date > new.run_date );
         END IF;
       EXCEPTION WHEN OTHERS THEN
         errmsg := SQLERRM;
