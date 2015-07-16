@@ -5,7 +5,6 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntryTest;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataSourceResolver;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
@@ -33,9 +32,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import java.util.EnumMap;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -190,22 +187,12 @@ public class ProductOrderSampleTest {
             order.setQuoteId(quoteId);
 
             product = order.getProduct();
-            MaterialType materialType = new MaterialType(BSP_MATERIAL_TYPE.getCategory(), BSP_MATERIAL_TYPE.getName());
             addOn = ProductTestFactory.createDummyProduct(Workflow.AGILENT_EXOME_EXPRESS, "partNumber");
-            addOn.addAllowableMaterialType(materialType);
             addOn.setPrimaryPriceItem(new PriceItem("A", "B", "C", "D"));
             product.addAddOn(addOn);
 
-            Map<BSPSampleSearchColumn, String> dataMap =
-                    new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
-                        put(BSPSampleSearchColumn.MATERIAL_TYPE, BSP_MATERIAL_TYPE.getFullName());
-                    }};
-            sample1 = new ProductOrderSample("Sample1", new BspSampleData(dataMap));
-
-            dataMap = new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
-                put(BSPSampleSearchColumn.MATERIAL_TYPE, "XXX:XXX");
-            }};
-            sample2 = new ProductOrderSample("Sample2", new BspSampleData(dataMap));
+            sample1 = new ProductOrderSample("Sample1");
+            sample2 = new ProductOrderSample("Sample2");
 
             List<ProductOrderSample> samples = new ArrayList<>();
             samples.add(sample1);
@@ -214,36 +201,13 @@ public class ProductOrderSampleTest {
         }
     }
 
-    @DataProvider(name = "getBillablePriceItems")
-    public static Object[][] makeGetBillablePriceItemsData() {
-        TestPDOData data = new TestPDOData("GSP-123");
-        Product product = data.product;
-        Product addOn = data.addOn;
-
-        List<PriceItem> expectedItems = new ArrayList<>();
-        expectedItems.add(product.getPrimaryPriceItem());
-        expectedItems.add(addOn.getPrimaryPriceItem());
-
-        return new Object[][]{
-                new Object[]{data.sample1, expectedItems},
-                new Object[]{data.sample2, Collections.singletonList(product.getPrimaryPriceItem())}
-        };
-    }
-
-    @Test(dataProvider = "getBillablePriceItems")
-    public void testGetBillablePriceItems(ProductOrderSample sample, List<PriceItem> priceItems) {
-        List<PriceItem> generatedItems = sample.getBillablePriceItems();
-        assertThat(generatedItems, contains(priceItems.toArray()));
-    }
-
     @DataProvider(name = "autoBillSample")
     public static Object[][] makeAutoBillSampleData() {
         TestPDOData data = new TestPDOData("GSP-123");
         Date completedDate = new Date();
-        Set<LedgerEntry> ledgers = new HashSet<>();
-        ledgers.add(new LedgerEntry(data.sample1, data.product.getPrimaryPriceItem(), completedDate, 1));
-        ledgers.add(new LedgerEntry(data.sample1, data.addOn.getPrimaryPriceItem(), completedDate, 1));
+        LedgerEntry ledgerEntry = new LedgerEntry(data.sample1, data.product.getPrimaryPriceItem(), completedDate, 1);
 
+        // Bill sample2.
         data.sample2.addLedgerItem(completedDate, data.product.getPrimaryPriceItem(), 1);
         LedgerEntry ledger = data.sample2.getLedgerItems().iterator().next();
         ledger.setBillingMessage(BillingSession.SUCCESS);
@@ -251,9 +215,9 @@ public class ProductOrderSampleTest {
 
         return new Object[][]{
                 // Create ledger items from a single sample.
-                new Object[]{data.sample1, completedDate, ledgers},
+                new Object[]{data.sample1, completedDate, Collections.singleton(ledgerEntry)},
                 // Update existing ledger items with "new" bill count.
-                new Object[]{data.sample1, completedDate, ledgers},
+                new Object[]{data.sample1, completedDate, Collections.singleton(ledgerEntry)},
                 // If sample is already billed, don't create any ledger items.
                 new Object[]{data.sample2, completedDate, Collections.emptySet()}
         };
@@ -262,7 +226,7 @@ public class ProductOrderSampleTest {
     @Test(dataProvider = "autoBillSample")
     public void testAutoBillSample(ProductOrderSample sample, Date completedDate, Set<LedgerEntry> ledgerEntries) {
         sample.autoBillSample(completedDate, 1);
-        assertThat(sample.getBillableLedgerItems(), is(equalTo(ledgerEntries)));
+        assertThat(sample.getBillableLedgerItems(), is(ledgerEntries));
     }
 
     @Test(expectedExceptions = IllegalStateException.class)

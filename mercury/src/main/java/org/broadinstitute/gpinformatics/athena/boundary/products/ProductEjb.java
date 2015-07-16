@@ -5,7 +5,6 @@ import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
-import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.MaterialTypeTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.PriceItemTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProductTokenInput;
 
@@ -34,11 +33,9 @@ public class ProductEjb {
 
     /**
      * Using the product here because I need all the edited fields for both save and edit.
-     *
-     * @param product The product with all updated date (it was found for edit).
+     *  @param product The product with all updated date (it was found for edit).
      * @param addOnTokenInput The add ons
      * @param priceItemTokenInput The price items
-     * @param materialTypeTokenInput The materials
      * @param allLengthsMatch Do the lengths match
      * @param criteria The risk criteria
      * @param operators The operators
@@ -46,11 +43,10 @@ public class ProductEjb {
      */
     public void saveProduct(
             Product product, ProductTokenInput addOnTokenInput, PriceItemTokenInput priceItemTokenInput,
-            MaterialTypeTokenInput materialTypeTokenInput, boolean allLengthsMatch, String[] criteria,
+            boolean allLengthsMatch, String[] criteria,
             String[] operators, String[] values) {
 
-        populateTokenListFields(product, addOnTokenInput, priceItemTokenInput, materialTypeTokenInput);
-
+        populateTokenListFields(product, addOnTokenInput, priceItemTokenInput);
         // If all lengths match, just send it.
         if (allLengthsMatch) {
             product.updateRiskCriteria(criteria, operators, values);
@@ -87,14 +83,9 @@ public class ProductEjb {
     }
 
     private void populateTokenListFields(Product product, ProductTokenInput addOnTokenInput,
-                                         PriceItemTokenInput priceItemTokenInput,
-                                         MaterialTypeTokenInput materialTypeTokenInput) {
+                                         PriceItemTokenInput priceItemTokenInput) {
         product.getAddOns().clear();
         product.getAddOns().addAll(addOnTokenInput.getTokenObjects());
-
         product.setPrimaryPriceItem(priceItemTokenInput.getItem());
-
-        product.getAllowableMaterialTypes().clear();
-        product.getAllowableMaterialTypes().addAll(materialTypeTokenInput.getMercuryTokenObjects());
     }
 }

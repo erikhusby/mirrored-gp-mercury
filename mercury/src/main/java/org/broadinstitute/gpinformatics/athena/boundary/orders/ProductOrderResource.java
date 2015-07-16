@@ -21,7 +21,6 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSa
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductOrderJiraUtil;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
-import org.broadinstitute.gpinformatics.athena.control.dao.samples.MaterialTypeDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.work.WorkCompleteMessageDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKit;
@@ -95,9 +94,6 @@ public class ProductOrderResource {
 
     @Inject
     private ProductOrderDao productOrderDao;
-
-    @Inject
-    private MaterialTypeDao materialTypeDao;
 
     @Inject
     private ProductOrderEjb productOrderEjb;
