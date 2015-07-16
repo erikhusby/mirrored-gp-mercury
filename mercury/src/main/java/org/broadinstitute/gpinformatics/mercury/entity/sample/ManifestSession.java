@@ -11,11 +11,9 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.Updatable;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.UpdatedEntityInterceptor;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
-import org.broadinstitute.gpinformatics.mercury.boundary.zims.CrspPipelineUtils;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.UpdateData;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -43,7 +41,6 @@ import javax.persistence.OneToMany;
 import javax.persistence.OrderColumn;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -238,8 +235,7 @@ public class ManifestSession implements Updatable {
      */
     private void validateInconsistentGenders(Collection<ManifestRecord> manifestRecords) {
 
-        Multimap<String, ManifestRecord> recordsByPatientId = buildMultimapByKey(
-                manifestRecords, Metadata.Key.PATIENT_ID);
+        Multimap<String, ManifestRecord> recordsByPatientId = buildMultimapByKey(manifestRecords);
 
         Iterable<Map.Entry<String, Collection<ManifestRecord>>> patientsWithInconsistentGenders =
                 filterForPatientsWithInconsistentGenders(recordsByPatientId);
@@ -293,8 +289,7 @@ public class ManifestSession implements Updatable {
     private void validateDuplicateCollaboratorSampleIDs(Collection<ManifestRecord> manifestRecords) {
 
         // Build a map of collaborator sample IDs to manifest records with those collaborator sample IDs.
-        Multimap<String, ManifestRecord> recordsBySampleId = buildMultimapByKey(
-                manifestRecords, Metadata.Key.SAMPLE_ID);
+        Multimap<String, ManifestRecord> recordsBySampleId = buildMultimapByKey(manifestRecords);
 
         // Remove entries in this map which are not duplicates (i.e., leave only the duplicates).
         Iterable<Map.Entry<String, Collection<ManifestRecord>>> filteredDuplicateSamples =
@@ -337,18 +332,16 @@ public class ManifestSession implements Updatable {
      * Helper method to Build a MultiMap of manifest records by a given Metadata Key.
      *
      * @param allEligibleManifestRecords The set of manifest records to be divided up into a MultiMap
-     * @param key                        type of Metadata key who's value will be index into the newly created MultiMap
-     *
      * @return A MultiMap of manifest records indexed the corresponding value represented by key
      */
     private Multimap<String, ManifestRecord> buildMultimapByKey(
-            Collection<ManifestRecord> allEligibleManifestRecords, final Metadata.Key key) {
+            Collection<ManifestRecord> allEligibleManifestRecords) {
 
         return Multimaps.index(allEligibleManifestRecords,
                 new Function<ManifestRecord, String>() {
                     @Override
                     public String apply(ManifestRecord manifestRecord) {
-                        return manifestRecord.getValueByKey(key);
+                        return manifestRecord.getSampleId();
                     }
                 });
     }
