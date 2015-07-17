@@ -178,6 +178,19 @@
                              columnNames="PRODUCT_ORDER_SAMPLE_ID, PRICE_ITEM_ID, BILLING_SESSION"/>
     </changeSet>
 
+    <changeSet author="dryan" id="GPLIM-3596-3">
+        <preConditions onFail="MARK_RAN">
+            <tableExists schemaName="ATHENA" tableName="PRODUCT_MATERIAL_TYPES"/>
+        </preConditions>
+        <dropTable schemaName="ATHENA" tableName="PRODUCT_MATERIAL_TYPES"/>
+    </changeSet>
+    <changeSet author="dryan" id="GPLIM-3596-4">
+        <preConditions onFail="MARK_RAN">
+            <tableExists schemaName="ATHENA" tableName="PRODUCT_MATERIAL_TYPES_AUD"/>
+        </preConditions>
+        <dropTable schemaName="ATHENA" tableName="PRODUCT_MATERIAL_TYPES_AUD"/>
+    </changeSet>
+
     <changeSet author="dryan" id="GPLIM-3596-1">
         <preConditions onFail="MARK_RAN">
             <tableExists schemaName="ATHENA" tableName="MATERIAL_TYPE"/>
