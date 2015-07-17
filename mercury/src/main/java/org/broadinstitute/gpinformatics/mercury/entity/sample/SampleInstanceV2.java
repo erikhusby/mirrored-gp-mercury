@@ -322,6 +322,10 @@ public class SampleInstanceV2 {
         return null;
     }
 
+    public MolecularIndexingScheme getMolecularIndexingScheme() {
+        return molecularIndexingScheme;
+    }
+
     public boolean isReagentOnly() {
         return mercurySamples.isEmpty() && !reagents.isEmpty();
     }

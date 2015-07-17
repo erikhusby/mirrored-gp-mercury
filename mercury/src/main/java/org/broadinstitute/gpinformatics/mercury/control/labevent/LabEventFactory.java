@@ -690,11 +690,6 @@ public class LabEventFactory implements Serializable {
                 }
             } else {
                 LabVessel labVessel = mapBarcodeToVessel.get(plateType.getBarcode());
-                for (PositionMapType positionMapType : positionMaps) {
-                    if (positionMapType.getBarcode().equals(plateType.getBarcode())) {
-                        throw new RuntimeException("Unexpected positionMap for plate " + plateType.getBarcode());
-                    }
-                }
                 if (labVessel == null) {
                     for (IlluminaFlowcell.FlowcellType flowcellType : IlluminaFlowcell.FlowcellType.values()) {
                         if (plateType.getPhysType().equals(flowcellType.getAutomationName())) {
@@ -1310,7 +1305,7 @@ public class LabEventFactory implements Serializable {
     }
 
     @DaoFree
-    private LabEvent buildReceptacleTransferEventDbFree(ReceptacleTransferEventType receptacleTransferEventType,
+    public LabEvent buildReceptacleTransferEventDbFree(ReceptacleTransferEventType receptacleTransferEventType,
             Map<String, LabVessel> mapBarcodeToVessel) {
         LabEvent labEvent = constructReferenceData(receptacleTransferEventType, labEventRefDataFetcher);
         LabVessel sourceLabVessel = mapBarcodeToVessel.get(receptacleTransferEventType.getSourceReceptacle().getBarcode());

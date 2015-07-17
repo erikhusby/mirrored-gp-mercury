@@ -12,7 +12,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -35,9 +37,11 @@ import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.GregorianCalendar;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -658,6 +662,48 @@ public class LabEventFixupTest extends Arquillian {
         }
     }
 
+    @Test(enabled = false)
+    public void fixupSupport815() {
+        userBean.loginOSUser();
+        // Flip source rack in ShearingTransfer (traversal code doesn't currently honor PlateTransferEventType.isFlipped)
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, 896861L);
+        Assert.assertEquals(labEvent.getLabEventType(), LabEventType.SHEARING_TRANSFER);
+        SectionTransfer sectionTransfer = labEvent.getSectionTransfers().iterator().next();
+        TubeFormation tubeFormation = (TubeFormation) sectionTransfer.getSourceVesselContainer().getEmbedder();
+        VesselPosition[] vesselPositions = tubeFormation.getVesselGeometry().getVesselPositions();
+        Map<VesselPosition, BarcodedTube> mapPositionToTube = new HashMap<>();
+        for (int i = 0; i < vesselPositions.length; i++) {
+            mapPositionToTube.put(vesselPositions[95 - i],
+                    tubeFormation.getContainerRole().getVesselAtPosition(vesselPositions[i]));
+        }
+        TubeFormation newTubeFormation = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
+        sectionTransfer.setSourceVesselContainer(newTubeFormation.getContainerRole());
+        labEventDao.persist(new FixupCommentary("SUPPORT-815 plate flip"));
+        labEventDao.flush();
+        // Verify 150605_SL-HAA_0467_AC6DNDANXX
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim3612() {
+        userBean.loginOSUser();
+        List<Long> labEventIds = Arrays.asList(926421L);
+        manualOverride(labEventIds, "LCSET-7421", "GPLIM-3612 fixup ShearingTransfer due to ambiguous LCSET.");
+    }
+
+    private void manualOverride(List<Long> labEventIds, String batchName, String reason) {
+        List<LabEvent> labEvents = labEventDao.findListByList(LabEvent.class, LabEvent_.labEventId, labEventIds);
+        Assert.assertEquals(labEvents.size(), labEventIds.size());
+        LabBatch labBatch = labBatchDao.findByName(batchName);
+        Assert.assertNotNull(labBatch);
+        for (LabEvent labEvent : labEvents) {
+            labEvent.setManualOverrideLcSet(labBatch);
+            System.out.println("Setting " + labEvent.getLabEventId() + " to " +
+                    labEvent.getManualOverrideLcSet().getBatchName());
+        }
+        labEventDao.persist(new FixupCommentary(reason));
+        labEventDao.flush();
+    }
+
     /** Delete Activity Begin and End event sent by a Bravo simulator. */
     @Test(enabled = false)
     public void fixupGplim3568() throws Exception {
@@ -778,4 +824,26 @@ public class LabEventFixupTest extends Arquillian {
         labEventDao.flush();
     }
 
+
+    @Test(enabled = false)
+    public void fixupSupport876() {
+        try {
+            userBean.loginOSUser();
+            utx.begin();
+            long[] ids = {951437L, 949353L};
+            for (long id: ids) {
+                LabEvent labEvent = labEventDao.findById(LabEvent.class, id);
+                Assert.assertEquals(labEvent.getLabEventType(), LabEventType.PICO_MICROFLUOR_TRANSFER);
+                System.out.println("Deleting " + labEvent.getLabEventType() + " " + labEvent.getLabEventId());
+                labEvent.getReagents().clear();
+                labEventDao.remove(labEvent);
+            }
+            labEventDao.persist(new FixupCommentary("SUPPORT-876 delete incorrect events"));
+            labEventDao.flush();
+            utx.commit();
+        } catch (NotSupportedException | SystemException | HeuristicMixedException | HeuristicRollbackException |
+                RollbackException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

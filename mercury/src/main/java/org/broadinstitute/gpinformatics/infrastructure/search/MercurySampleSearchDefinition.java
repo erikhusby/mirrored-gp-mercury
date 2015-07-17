@@ -6,8 +6,10 @@ import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
 import org.broadinstitute.gpinformatics.infrastructure.columns.SampleMetadataPlugin;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -69,11 +71,15 @@ public class MercurySampleSearchDefinition {
         searchTerm.setCriteriaPaths(criteriaPaths);
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public String evaluate(Object entity, SearchContext context) {
+            public List<String> evaluate(Object entity, SearchContext context) {
                 MercurySample sample = (MercurySample) entity;
                 Set<ProductOrderSample> productOrderSamples = sample.getProductOrderSamples();
                 if (!productOrderSamples.isEmpty()) {
-                    return productOrderSamples.iterator().next().getProductOrder().getJiraTicketKey();
+                    List<String> results = new ArrayList<>();
+                    for( ProductOrderSample productOrderSample : productOrderSamples ) {
+                        results.add( productOrderSample.getProductOrder().getJiraTicketKey() );
+                    }
+                    return results;
                 }
                 return null;
             }
@@ -102,8 +108,10 @@ public class MercurySampleSearchDefinition {
                 MercurySample sample = (MercurySample) entity;
                 Set<String> results = new HashSet<>();
                 for( LabVessel sampleVessel : sample.getLabVessel() ) {
-                    for( LabBatch batch : sampleVessel.getLabBatches() ) {
-                        results.add(batch.getBatchName());
+                    for (SampleInstanceV2 sampleInstanceV2 : sampleVessel.getSampleInstancesV2()) {
+                        for( LabBatch labBatch : sampleInstanceV2.getAllWorkflowBatches() ) {
+                            results.add(labBatch.getBatchName());
+                        }
                     }
                 }
                 return results;

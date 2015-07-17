@@ -12,20 +12,16 @@
             Denature Tube Details
         </div>
 
-        <div class="fourcolumn" style="margin-bottom:5px;">
+        <div class="threecolumn" style="margin-bottom:5px;">
             <ul>
                 <c:forEach items="${actionBean.denatureTube.nearestWorkflowLabBatches}" var="batch">
                     <li>
                         Batch: <stripes:link target="JIRA"
                                              href="${batch.jiraTicket.browserUrl}"
                                              class="external">${batch.batchName}</stripes:link>
+                        Workflow Name: ${batch.workflowName}
                     </li>
                 </c:forEach>
-            </ul>
-            <ul>
-                <li>
-                    Workflow Name: ${actionBean.workflowName}
-                </li>
             </ul>
             <ul>
 

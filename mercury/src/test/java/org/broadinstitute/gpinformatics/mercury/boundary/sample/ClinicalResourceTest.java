@@ -77,6 +77,8 @@ public class ClinicalResourceTest extends RestServiceContainerTest {
                 .accept(MediaType.APPLICATION_JSON_TYPE).entity(clinicalResourceBean)
                 .post(ClientResponse.class);
         assertThat(response.getStatus(), is(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()));
+        String errorMessage = response.getEntity(String.class);
+        assertThat(errorMessage, is(ClinicalResource.EMPTY_LIST_OF_SAMPLES_NOT_ALLOWED));
     }
 
     public void testCreateManifestWithSamples() throws Exception {

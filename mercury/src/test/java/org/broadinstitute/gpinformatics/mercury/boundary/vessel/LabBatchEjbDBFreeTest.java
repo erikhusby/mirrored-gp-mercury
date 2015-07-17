@@ -288,19 +288,4 @@ public class LabBatchEjbDBFreeTest {
                                          "\n";
         return descriptionPrefix;
     }
-
-    @Test
-    public void testPriorBatchCreation() throws Exception {
-
-        Assert.assertFalse(labBatchEJB.validatePriorBatch(mapBarcodeToTube.values()));
-
-        Set<LabVessel> workingVessels = new HashSet<>(mapBarcodeToTube.values());
-
-
-        LabBatch testBatch = new LabBatch("Test Batch for vessel Validation", workingVessels,
-                                          LabBatch.LabBatchType.WORKFLOW);
-
-        Assert.assertTrue(labBatchEJB.validatePriorBatch(mapBarcodeToTube.values()));
-
-    }
 }

@@ -210,4 +210,20 @@ public class SequencingRunFixupTest extends Arquillian {
         illuminaSequencingRunDao.flush();
     }
 
+    @Test(enabled = false)
+    public void gplim3627MoveCRSPRuns() {
+        userBean.loginOSUser();
+
+        String[] runNames = new String[]{"150612_SL-HDH_0666_AHTCLKADXX", "150612_SL-HDH_0667_BHTCKLADXX"};
+        for (String runName : runNames) {
+            IlluminaSequencingRun run = illuminaSequencingRunDao.findByRunName(runName);
+            String oldRunDirectory = run.getRunDirectory();
+            String newRunDirectory = oldRunDirectory.replace("/seq/illumina/", "/crsp/illumina2/");
+            run.setRunDirectory(newRunDirectory);
+            System.out.println(
+                    String.format("Updated run directory for '%s' from '%s' to '%s'", runName, oldRunDirectory,
+                            newRunDirectory));
+        }
+        illuminaSequencingRunDao.persist(new FixupCommentary("GPLIM-3627 correcting run directory for CRSP runs"));
+    }
 }
