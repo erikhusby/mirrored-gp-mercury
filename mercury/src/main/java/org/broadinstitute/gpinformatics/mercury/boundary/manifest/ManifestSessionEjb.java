@@ -233,18 +233,20 @@ public class ManifestSessionEjb {
     public void closeSession(long manifestSessionId) {
         ManifestSession manifestSession = findManifestSession(manifestSessionId);
         manifestSession.completeSession();
+        Set<String> accessionedSamples = new HashSet<>();
 
-        if(manifestSession.isFromSampleKit()) {
-            for (ManifestRecord record : manifestSession.getNonQuarantinedRecords()) {
-                if (record.getStatus() == ManifestRecord.Status.ACCESSIONED) {
-                    transferSample(manifestSessionId, record.getSampleId(),
-                            record.getValueByKey(Metadata.Key.BROAD_SAMPLE_ID),
-                            record.getValueByKey(Metadata.Key.BROAD_2D_BARCODE));
+        for (ManifestRecord record : manifestSession.getNonQuarantinedRecords()) {
+            if (record.getStatus() == ManifestRecord.Status.ACCESSIONED) {
+                if (manifestSession.isFromSampleKit()) {
+                    transferSample(manifestSessionId, record.getValueByKey(Metadata.Key.SAMPLE_ID),
+                            record.getSampleId(), record.getValueByKey(Metadata.Key.BROAD_2D_BARCODE));
                 }
+                accessionedSamples.add(record.getSampleId());
             }
         }
-        if(StringUtils.isNotBlank(manifestSession.getReceiptTicket())) {
-            transitionReceiptTicket(manifestSession);
+
+        if (StringUtils.isNotBlank(manifestSession.getReceiptTicket())) {
+            transitionReceiptTicket(manifestSession, accessionedSamples);
         }
     }
 
@@ -343,9 +345,9 @@ public class ManifestSessionEjb {
     private void addReceiptEvent(String sourceCollaboratorSample, MercurySample targetSample, LabVessel targetVessel,
                                  ManifestSession session) throws IOException {
 
-        ManifestRecord sourceRecord ;
+        ManifestRecord sourceRecord;
 
-        if(sourceCollaboratorSample != null) {
+        if (sourceCollaboratorSample != null) {
             sourceRecord = session.findRecordByKey(sourceCollaboratorSample, Metadata.Key.SAMPLE_ID);
         } else {
             sourceRecord = session.findRecordByKey(targetSample.getSampleKey(), Metadata.Key.BROAD_SAMPLE_ID);
@@ -381,22 +383,14 @@ public class ManifestSessionEjb {
 
         int disambiguator = sourceRecord.getSpreadsheetRowNumber();
 
-        for(ManifestSession sessionToAdd : otherReceiptSessions) {
+        for (ManifestSession sessionToAdd : otherReceiptSessions) {
             disambiguator += sessionToAdd.getRecords().size();
         }
 
         targetVessel.setReceiptEvent(bspUserByUsername, receiptInfo.getCreated(), disambiguator);
     }
 
-    private void transitionReceiptTicket(ManifestSession session) {
-
-        Set<String> accessionedSamples = new HashSet<>();
-        for (ManifestRecord record : session.getRecords()) {
-            if (record.getStatus() == ManifestRecord.Status.ACCESSIONED) {
-                accessionedSamples.add(record.getSampleId());
-            }
-        }
-
+    private void transitionReceiptTicket(ManifestSession session, Set<String> accessionedSamples) {
         String comment = String.format("Session %s associated with Research Project %s has been Accessioned.  "
                                        + "Source samples include: %s", session.getSessionName(),
                 session.getResearchProject().getBusinessKey(), StringUtils.join(accessionedSamples, ", "));
@@ -406,7 +400,7 @@ public class ManifestSessionEjb {
             receiptIssue.addComment(comment);
 
         } catch (IOException e) {
-            logger.error("Unable to transition receipt ticket "+session.getReceiptTicket() + " to Accessioned",e);
+            logger.error("Unable to transition receipt ticket " + session.getReceiptTicket() + " to Accessioned", e);
         }
     }
 
