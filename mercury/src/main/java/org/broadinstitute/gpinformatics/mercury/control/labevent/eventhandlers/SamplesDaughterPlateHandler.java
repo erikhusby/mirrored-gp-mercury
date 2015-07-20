@@ -33,22 +33,13 @@ import javax.ws.rs.core.Response;
 public class SamplesDaughterPlateHandler {
     public static final String BSP_TRANSFER_REST_URL = "plate/transfer";
     private static final Log logger = LogFactory.getLog(SamplesDaughterPlateHandler.class);
-    private ObjectFactory factory = new ObjectFactory();
 
     @Inject
     private BSPRestClient bspRestClient;
 
     public void postToBsp(StationEventType stationEvent, String bspRestUrl) {
 
-        // Creates a bettalims message to pass to BSP.
-        BettaLIMSMessage message = factory.createBettaLIMSMessage();
-        if (OrmUtil.proxySafeIsInstance(stationEvent, PlateTransferEventType.class)) {
-            PlateTransferEventType transferEvent = OrmUtil.proxySafeCast(stationEvent, PlateTransferEventType.class);
-            message.getPlateTransferEvent().add(transferEvent);
-        } else if (OrmUtil.proxySafeIsInstance(stationEvent, PlateCherryPickEvent.class)) {
-            PlateCherryPickEvent event = OrmUtil.proxySafeCast(stationEvent, PlateCherryPickEvent.class);
-            message.getPlateCherryPickEvent().add(event);
-        }
+        BettaLIMSMessage message = buildBettaLIMSMessage(stationEvent);
 
         // Posts message to BSP using the specified REST url.
         String urlString = bspRestClient.getUrl(bspRestUrl);
@@ -60,5 +51,21 @@ public class SamplesDaughterPlateHandler {
             throw new RuntimeException("POST to " + urlString + " returned: " + response.getEntity(String.class));
         }
 
+    }
+
+    /**
+     * Creates a BettaLIMS message to hold an event.
+     */
+    public static BettaLIMSMessage buildBettaLIMSMessage(StationEventType stationEvent) {
+        ObjectFactory factory = new ObjectFactory();
+        BettaLIMSMessage message = factory.createBettaLIMSMessage();
+        if (OrmUtil.proxySafeIsInstance(stationEvent, PlateTransferEventType.class)) {
+            PlateTransferEventType transferEvent = OrmUtil.proxySafeCast(stationEvent, PlateTransferEventType.class);
+            message.getPlateTransferEvent().add(transferEvent);
+        } else if (OrmUtil.proxySafeIsInstance(stationEvent, PlateCherryPickEvent.class)) {
+            PlateCherryPickEvent event = OrmUtil.proxySafeCast(stationEvent, PlateCherryPickEvent.class);
+            message.getPlateCherryPickEvent().add(event);
+        }
+        return message;
     }
 }

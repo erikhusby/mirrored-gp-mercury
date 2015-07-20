@@ -39,7 +39,7 @@ public class BspPlateTransferTest extends BaseEventTest {
     };
 
     private EventHandlerSelector testMe = new EventHandlerSelector(denatureToDilutionTubeHandler,
-            flowcellMessageHandler, samplesDaughterPlateHandler, flowcellLoadedHandler);
+            flowcellMessageHandler, samplesDaughterPlateHandler, flowcellLoadedHandler, null);
 
     private ExtractionsBloodJaxbBuilder builder = new ExtractionsBloodJaxbBuilder(getBettaLimsMessageTestFactory(),
             "sendToBspTest" + runDate.getTime(), Collections.singletonList("A12341234"), "barcode1",

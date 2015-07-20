@@ -5,8 +5,10 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMes
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReagentType;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -45,34 +47,45 @@ public class InfiniumJaxbBuilder {
         ampPlate = testPrefix + "AmplificationPlate";
         infiniumAmplificationJaxb =
                 bettaLimsMessageTestFactory.buildPlateToPlate("InfiniumAmplification", sourcePlate, ampPlate);
+        ReagentType reagentType = new ReagentType();
+        reagentType.setKitType("NaOH");
+        reagentType.setBarcode("1234");
+        infiniumAmplificationJaxb.getReagent().add(reagentType);
+        reagentType = new ReagentType();
+        reagentType.setKitType("MA1");
+        reagentType.setBarcode("1234");
+        infiniumAmplificationJaxb.getReagent().add(reagentType);
         bettaLimsMessageTestFactory.addMessage(messageList, infiniumAmplificationJaxb);
 
-        infiniumAmplificationReagentAdditionJaxb =
-                bettaLimsMessageTestFactory.buildPlateEvent("InfiniumAmplificationReagentAddition", ampPlate);
+        infiniumAmplificationReagentAdditionJaxb = bettaLimsMessageTestFactory.buildPlateEvent(
+                "InfiniumAmplificationReagentAddition", ampPlate, Arrays.asList(
+                        new BettaLimsMessageTestFactory.ReagentDto("MA2", "1234", null),
+                        new BettaLimsMessageTestFactory.ReagentDto("MSM", "1234", null)));
         bettaLimsMessageTestFactory.addMessage(messageList, infiniumAmplificationReagentAdditionJaxb);
 
-        infiniumFragmentationJaxb =
-                bettaLimsMessageTestFactory.buildPlateEvent("InfiniumFragmentation", ampPlate);
+        infiniumFragmentationJaxb = bettaLimsMessageTestFactory.buildPlateEvent("InfiniumFragmentation", ampPlate,
+                Collections.singletonList(new BettaLimsMessageTestFactory.ReagentDto("FMS", "1234", null)));
         bettaLimsMessageTestFactory.addMessage(messageList, infiniumFragmentationJaxb);
 
         infiniumPostFragmentationHybOvenLoadedJaxb =
                 bettaLimsMessageTestFactory.buildPlateEvent("InfiniumPostFragmentationHybOvenLoaded", ampPlate);
         bettaLimsMessageTestFactory.addMessage(messageList, infiniumPostFragmentationHybOvenLoadedJaxb);
 
-        infiniumPrecipitationJaxb =
-                bettaLimsMessageTestFactory.buildPlateEvent("InfiniumPrecipitation", ampPlate);
+        infiniumPrecipitationJaxb = bettaLimsMessageTestFactory.buildPlateEvent("InfiniumPrecipitation", ampPlate,
+                Collections.singletonList(new BettaLimsMessageTestFactory.ReagentDto("PM1", "1234", null)));
         bettaLimsMessageTestFactory.addMessage(messageList, infiniumPrecipitationJaxb);
 
         infiniumPostPrecipitationHeatBlockLoadedJaxb =
                 bettaLimsMessageTestFactory.buildPlateEvent("InfiniumPostPrecipitationHeatBlockLoaded", ampPlate);
         bettaLimsMessageTestFactory.addMessage(messageList, infiniumPostPrecipitationHeatBlockLoadedJaxb);
 
-        infiniumPrecipitationIsopropanolAdditionJaxb =
-                bettaLimsMessageTestFactory.buildPlateEvent("InfiniumPrecipitationIsopropanolAddition", ampPlate);
+        infiniumPrecipitationIsopropanolAdditionJaxb = bettaLimsMessageTestFactory.buildPlateEvent(
+                "InfiniumPrecipitationIsopropanolAddition", ampPlate, Collections.singletonList(
+                        new BettaLimsMessageTestFactory.ReagentDto("Isopropanol", "1234", null)));
         bettaLimsMessageTestFactory.addMessage(messageList, infiniumPrecipitationIsopropanolAdditionJaxb);
 
-        infiniumResuspensionJaxb =
-                bettaLimsMessageTestFactory.buildPlateEvent("InfiniumResuspension", ampPlate);
+        infiniumResuspensionJaxb = bettaLimsMessageTestFactory.buildPlateEvent("InfiniumResuspension", ampPlate,
+                Collections.singletonList(new BettaLimsMessageTestFactory.ReagentDto("RA1", "1234", null)));
         bettaLimsMessageTestFactory.addMessage(messageList, infiniumResuspensionJaxb);
 
         infiniumPostResuspensionHybOvenJaxb =
@@ -108,10 +121,20 @@ public class InfiniumJaxbBuilder {
         infiniumHybridizationJaxb.getSourcePlate().get(0).setPhysType("DeepWell96");
         bettaLimsMessageTestFactory.addMessage(messageList, infiniumHybridizationJaxb);
 
-        infiniumWashJaxb = bettaLimsMessageTestFactory.buildPlateEvent("InfiniumWash", hybridizationChip);
+        infiniumWashJaxb = bettaLimsMessageTestFactory.buildPlateEvent("InfiniumWash", hybridizationChip,
+                Collections.singletonList(new BettaLimsMessageTestFactory.ReagentDto("PB1", "1234", null)));
         bettaLimsMessageTestFactory.addMessage(messageList, infiniumWashJaxb);
 
-        infiniumXStainJaxb = bettaLimsMessageTestFactory.buildPlateEvent("InfiniumXStain", hybridizationChip);
+        infiniumXStainJaxb = bettaLimsMessageTestFactory.buildPlateEvent("InfiniumXStain", hybridizationChip,
+                Arrays.asList(
+                        new BettaLimsMessageTestFactory.ReagentDto("RA1", "1234", null),
+                        new BettaLimsMessageTestFactory.ReagentDto("LX1", "1234", null),
+                        new BettaLimsMessageTestFactory.ReagentDto("LX2", "1234", null),
+                        new BettaLimsMessageTestFactory.ReagentDto("XC3", "1234", null),
+                        new BettaLimsMessageTestFactory.ReagentDto("XC4", "1234", null),
+                        new BettaLimsMessageTestFactory.ReagentDto("SML", "1234", null),
+                        new BettaLimsMessageTestFactory.ReagentDto("ATM", "1234", null),
+                        new BettaLimsMessageTestFactory.ReagentDto("EML", "1234", null)));
         bettaLimsMessageTestFactory.addMessage(messageList, infiniumXStainJaxb);
 
         return this;
@@ -163,5 +186,9 @@ public class InfiniumJaxbBuilder {
 
     public PlateEventType getInfiniumXStainJaxb() {
         return infiniumXStainJaxb;
+    }
+
+    public List<BettaLIMSMessage> getMessageList() {
+        return messageList;
     }
 }
