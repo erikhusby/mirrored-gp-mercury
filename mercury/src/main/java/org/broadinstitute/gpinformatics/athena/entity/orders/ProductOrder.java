@@ -1321,11 +1321,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                     // This is a unique sample name, so do any counts that are only needed for unique names. Since
                     // BSP looks up samples by name, it would always get the same data, so only counting unique values.
                     if (sample.isInBspFormat()) {
-                        if (sample.bspMetaDataMissing()) {
-                            missingBspMetaDataCount++;
-                        } else {
-                            updateSampleCounts(participantSet, sample);
-                        }
+                        updateSampleCounts(participantSet, sample);
                     }
                 }
 
@@ -1380,6 +1376,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
          * @param sample         the sample to update the counts with
          */
         private void updateSampleCounts(Set<String> participantSet, ProductOrderSample sample) {
+            if (sample.bspMetaDataMissing()) {
+                missingBspMetaDataCount++;
+            }
+
             incrementSampleCountByMetadata(sample);
             SampleData sampleData = sample.getSampleData();
 
