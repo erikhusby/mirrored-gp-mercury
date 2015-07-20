@@ -64,14 +64,15 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 
 /**
  * This "test" is an example of how to fixup some data.  Each fix method includes the JIRA ticket ID.
  * Set @Test(enabled=false) after running once.
  */
 @Test(groups = TestGroups.FIXUP)
-public class ProductOrderFixupTest extends Arquillian {
+public class    ProductOrderFixupTest extends Arquillian {
 
     @Inject
     private ProductOrderDao productOrderDao;
@@ -342,6 +343,21 @@ public class ProductOrderFixupTest extends Arquillian {
         for (ProductOrder order : orders) {
             productOrderEjb.updateOrderStatus(order.getBusinessKey(), reporter);
         }
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim2913() throws ProductOrderEjb.NoSuchPDOException, IOException {
+        userBean.loginOSUser();
+        // Update PDO-2959 So its status matches that of the Jira PDO (Completed)
+        // un-complete PDOs but no PDOs in the database should be completed yet.
+        String pdoKey = "PDO-2959";
+
+        ProductOrder order = productOrderDao.findByBusinessKey(pdoKey);
+        assertThat(order.getOrderStatus(), is(ProductOrder.OrderStatus.Submitted));
+        order.updateOrderStatus();
+        assertThat(order.getOrderStatus(), is(ProductOrder.OrderStatus.Completed));
+
+        productOrderDao.persist(new FixupCommentary("See https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-2913"));
     }
 
     @Test(enabled = false)

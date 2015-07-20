@@ -64,17 +64,6 @@
                         }
                     );
 
-                    $j("#materialTypes").tokenInput(
-                        "${ctxpath}/products/product.action?materialTypesAutocomplete=&product=${actionBean.editProduct.businessKey}", {
-                            hintText: "Type a Material Type name",
-                            prePopulate: ${actionBean.ensureStringResult(actionBean.materialTypeTokenInput.completeData)},
-                            preventDuplicates: true,
-                            tokenDelimiter: "${actionBean.materialTypeTokenInput.separator}",
-                            resultsFormatter: formatInput,
-                            autoSelectFirstResult: true
-                        }
-                    );
-
                     $j("#availabilityDate").datepicker();
                     $j("#discontinuedDate").datepicker();
 
@@ -350,13 +339,6 @@
                     </stripes:label>
                     <div class="controls">
                         <stripes:text id="addOns" name="addOnTokenInput.listOfKeys"/>
-                    </div>
-                </div>
-
-                <div class="control-group">
-                    <stripes:label for="materialTypes" name="MaterialTypes" class="control-label"/>
-                 	<div class="controls">
-                       	<stripes:text id="materialTypes" name="materialTypeTokenInput.listOfKeys"/>
                     </div>
                 </div>
 

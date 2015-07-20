@@ -5,7 +5,6 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntryTest;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataSourceResolver;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
@@ -33,27 +32,43 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import java.util.EnumMap;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.nullValue;
-
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ProductOrderSampleTest {
 
-    public static ProductOrderSample createBilledSample(String name, LedgerEntry.PriceItemType priceItemType) {
+    private static ProductOrderSample createOrderedSample(String name) {
         ProductOrderSample sample = new ProductOrderSample(name);
-        LedgerEntry billedEntry = LedgerEntryTest.createBilledLedgerEntry(sample, priceItemType);
-        sample.getLedgerItems().add(billedEntry);
+        ProductOrder order = new ProductOrder();
+        Product product = new Product();
+        PriceItem primaryPriceItem = new PriceItem("primary", "", null, "primary");
+        product.setPrimaryPriceItem(primaryPriceItem);
+        order.setProduct(product);
+        order.addSample(sample);
+        return sample;
+    }
+
+    public static ProductOrderSample createBilledSample(String name, LedgerEntry.PriceItemType priceItemType) {
+        ProductOrderSample sample = createOrderedSample(name);
+
+        PriceItem billedPriceItem;
+        if (priceItemType == LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM) {
+            billedPriceItem = sample.getProductOrder().getProduct().getPrimaryPriceItem();
+        } else {
+            billedPriceItem = new PriceItem(priceItemType.name(), "", null, priceItemType.name());
+        }
+        sample.addLedgerItem(new Date(), billedPriceItem, 1);
+        LedgerEntry entry = sample.getLedgerItems().iterator().next();
+        entry.setPriceItemType(priceItemType);
+        entry.setBillingMessage(BillingSession.SUCCESS);
+
         return sample;
     }
 
@@ -61,8 +76,8 @@ public class ProductOrderSampleTest {
         return createBilledSample(name, LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM);
     }
 
-    public static ProductOrderSample createUnbilledSampleWithLedger(String name) {
-        ProductOrderSample sample = new ProductOrderSample(name);
+    private static ProductOrderSample createUnbilledSampleWithLedger(String name) {
+        ProductOrderSample sample = createOrderedSample(name);
         LedgerEntry billedEntry = LedgerEntryTest.createOneLedgerEntry(sample, "price item", 1, new Date());
         sample.getLedgerItems().add(billedEntry);
         return sample;
@@ -73,14 +88,86 @@ public class ProductOrderSampleTest {
         return new Object[][]{
                 {createBilledSample("ABC"), true},
                 {createBilledSample("ABC", LedgerEntry.PriceItemType.ADD_ON_PRICE_ITEM), false},
+                {createBilledSample("ABC", LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM), true},
                 {createUnbilledSampleWithLedger("ABC"), false},
-                {new ProductOrderSample("ABC"), false}
+                {createOrderedSample("ABC"), false}
         };
     }
 
     @Test(dataProvider = "testIsBilled")
     public void testIsBilled(ProductOrderSample sample, boolean isBilled) {
         Assert.assertEquals(sample.isCompletelyBilled(), isBilled);
+    }
+
+    /**
+     * Tests {@link ProductOrderSample#isCompletelyBilled()} with each possible {@link LedgerEntry.PriceItemType}. This
+     * test will fail if a PriceItemType is added without considering how it would affect the calculation for whether or
+     * not a sample has been billed.
+     *
+     * @param priceItemType    the price item type to create a ledger for before invoking isCompletelyBilled()
+     */
+    @Test(dataProvider = "getPriceItemTypes")
+    public void testIsCompletelyBilledHandlesAllPriceItemTypes(LedgerEntry.PriceItemType priceItemType) {
+        ProductOrderSample productOrderSample = createBilledSample("SM-123", priceItemType);
+
+        // No assert here, just making sure that an exception is not thrown if an unknown PriceItemType is encountered.
+        productOrderSample.isCompletelyBilled();
+    }
+
+    @DataProvider
+    public Object[][] getPriceItemTypes() {
+        Object[][] result = new Object[LedgerEntry.PriceItemType.values().length][];
+        int index = 0;
+        for (LedgerEntry.PriceItemType priceItemType : LedgerEntry.PriceItemType.values()) {
+            result[index++] = new Object[]{priceItemType};
+        }
+        return result;
+    }
+
+
+    /**
+     * {@link ProductOrderSample#isCompletelyBilled()} should return false when the sample has been billed but then
+     * credited, bringing the net quantity billed back to 0.
+     */
+    public void testIsBilledWithCredits() {
+        ProductOrderSample sample = createBilledSample("test");
+
+        // credit the price item already billed
+        PriceItem billedPriceItem = sample.getProductOrder().getProduct().getPrimaryPriceItem();
+        sample.addLedgerItem(new Date(), billedPriceItem, -1);
+        LedgerEntry entry = sample.getLedgerItems().iterator().next();
+        entry.setPriceItemType(LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM);
+        entry.setBillingMessage(BillingSession.SUCCESS);
+
+        Assert.assertFalse(sample.isCompletelyBilled());
+    }
+
+    /**
+     * {@link ProductOrderSample#isCompletelyBilled()} should accumulate quantity accidentally billed as an add-on for
+     * price items that have also been billed as a primary or replacement. The notion is that, if there has been a
+     * billing event for a price item as a primary or replacement, all quantity billed against that price item should
+     * be considered even if it was accidentally billed as an add-on.
+     *
+     * This makes primary/replacement billing more "sticky" than add-on billing in the sense that accidental billing as
+     * a primary or replacement will promote add-on billing of the same price item to be treated as primary. As of this
+     * change (July 2015), the only instances in production of price items being billed as both primary/replacement and
+     * add-on are due to a primary or replacement being incorrectly classified as an add-on. Therefore, the promotion of
+     * these add-ons is correct.
+     *
+     * Hopefully the product/add-on system will be cleaned up before the opposite case is encountered (if ever). If not,
+     * then probably either the new case needs a data fix-up or the old cases will need data fix-ups.
+     */
+    public void testIsBilledWithCreditsAndAddOn() {
+        ProductOrderSample sample = createBilledSample("test");
+
+        // credit the price item with an add-on ledger entry
+        PriceItem billedPriceItem = sample.getProductOrder().getProduct().getPrimaryPriceItem();
+        sample.addLedgerItem(new Date(), billedPriceItem, -1);
+        LedgerEntry entry = sample.getLedgerItems().iterator().next();
+        entry.setPriceItemType(LedgerEntry.PriceItemType.ADD_ON_PRICE_ITEM);
+        entry.setBillingMessage(BillingSession.SUCCESS);
+
+        Assert.assertFalse(sample.isCompletelyBilled());
     }
 
     static final org.broadinstitute.bsp.client.sample.MaterialType BSP_MATERIAL_TYPE =
@@ -98,22 +185,12 @@ public class ProductOrderSampleTest {
             order.setQuoteId(quoteId);
 
             product = order.getProduct();
-            MaterialType materialType = new MaterialType(BSP_MATERIAL_TYPE.getCategory(), BSP_MATERIAL_TYPE.getName());
             addOn = ProductTestFactory.createDummyProduct(Workflow.AGILENT_EXOME_EXPRESS, "partNumber");
-            addOn.addAllowableMaterialType(materialType);
             addOn.setPrimaryPriceItem(new PriceItem("A", "B", "C", "D"));
             product.addAddOn(addOn);
 
-            Map<BSPSampleSearchColumn, String> dataMap =
-                    new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
-                        put(BSPSampleSearchColumn.MATERIAL_TYPE, BSP_MATERIAL_TYPE.getFullName());
-                    }};
-            sample1 = new ProductOrderSample("Sample1", new BspSampleData(dataMap));
-
-            dataMap = new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
-                put(BSPSampleSearchColumn.MATERIAL_TYPE, "XXX:XXX");
-            }};
-            sample2 = new ProductOrderSample("Sample2", new BspSampleData(dataMap));
+            sample1 = new ProductOrderSample("Sample1");
+            sample2 = new ProductOrderSample("Sample2");
 
             List<ProductOrderSample> samples = new ArrayList<>();
             samples.add(sample1);
@@ -122,39 +199,13 @@ public class ProductOrderSampleTest {
         }
     }
 
-    @DataProvider(name = "getBillablePriceItems")
-    public static Object[][] makeGetBillablePriceItemsData() {
-        TestPDOData data = new TestPDOData("GSP-123");
-        Product product = data.product;
-        Product addOn = data.addOn;
-
-        List<PriceItem> expectedItems = new ArrayList<>();
-        expectedItems.add(product.getPrimaryPriceItem());
-        expectedItems.add(addOn.getPrimaryPriceItem());
-
-        return new Object[][]{
-                new Object[]{data.sample1, expectedItems},
-                new Object[]{data.sample2, Collections.singletonList(product.getPrimaryPriceItem())}
-        };
-    }
-
-    @Test(dataProvider = "getBillablePriceItems")
-    public void testGetBillablePriceItems(ProductOrderSample sample, List<PriceItem> priceItems) {
-        List<PriceItem> generatedItems = sample.getBillablePriceItems();
-        assertThat(generatedItems.size(), is(equalTo(priceItems.size())));
-
-        generatedItems.removeAll(priceItems);
-        assertThat(generatedItems, is(empty()));
-    }
-
     @DataProvider(name = "autoBillSample")
     public static Object[][] makeAutoBillSampleData() {
         TestPDOData data = new TestPDOData("GSP-123");
         Date completedDate = new Date();
-        Set<LedgerEntry> ledgers = new HashSet<>();
-        ledgers.add(new LedgerEntry(data.sample1, data.product.getPrimaryPriceItem(), completedDate, 1));
-        ledgers.add(new LedgerEntry(data.sample1, data.addOn.getPrimaryPriceItem(), completedDate, 1));
+        LedgerEntry ledgerEntry = new LedgerEntry(data.sample1, data.product.getPrimaryPriceItem(), completedDate, 1);
 
+        // Bill sample2.
         data.sample2.addLedgerItem(completedDate, data.product.getPrimaryPriceItem(), 1);
         LedgerEntry ledger = data.sample2.getLedgerItems().iterator().next();
         ledger.setBillingMessage(BillingSession.SUCCESS);
@@ -162,9 +213,9 @@ public class ProductOrderSampleTest {
 
         return new Object[][]{
                 // Create ledger items from a single sample.
-                new Object[]{data.sample1, completedDate, ledgers},
+                new Object[]{data.sample1, completedDate, Collections.singleton(ledgerEntry)},
                 // Update existing ledger items with "new" bill count.
-                new Object[]{data.sample1, completedDate, ledgers},
+                new Object[]{data.sample1, completedDate, Collections.singleton(ledgerEntry)},
                 // If sample is already billed, don't create any ledger items.
                 new Object[]{data.sample2, completedDate, Collections.emptySet()}
         };
@@ -173,7 +224,7 @@ public class ProductOrderSampleTest {
     @Test(dataProvider = "autoBillSample")
     public void testAutoBillSample(ProductOrderSample sample, Date completedDate, Set<LedgerEntry> ledgerEntries) {
         sample.autoBillSample(completedDate, 1);
-        assertThat(sample.getBillableLedgerItems(), is(equalTo(ledgerEntries)));
+        assertThat(sample.getBillableLedgerItems(), is(ledgerEntries));
     }
 
     @Test(expectedExceptions = IllegalStateException.class)
