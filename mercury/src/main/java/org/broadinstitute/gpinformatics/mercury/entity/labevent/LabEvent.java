@@ -484,9 +484,8 @@ todo jmt adder methods
             if (inPlaceLabVessel != null) {
                 // Event in-place vessel is mutually exclusive to any event transfers
                 if (inPlaceLabVessel.getContainerRole() != null) {
-                    for (LabVessel containedVessel : inPlaceLabVessel.getContainerRole().getContainedVessels()) {
-                        computedLcSets.addAll(containedVessel.getWorkflowLabBatches());
-                    }
+                    computedLcSets.addAll(inPlaceLabVessel.getContainerRole()
+                            .getNearestLabBatches(LabBatch.LabBatchType.WORKFLOW));
                 } else {
                     // In place vessel is not a container
                     computedLcSets.addAll( inPlaceLabVessel.getWorkflowLabBatches());
