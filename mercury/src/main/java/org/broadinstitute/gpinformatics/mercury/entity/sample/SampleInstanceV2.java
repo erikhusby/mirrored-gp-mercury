@@ -135,7 +135,7 @@ public class SampleInstanceV2 {
 
         allProductOrderSamples.addAll(other.allProductOrderSamples);
         allLabBatchStartingVessels.addAll(other.allLabBatchStartingVessels);
-        molecularIndexingScheme = other.getMolecularIndexingScheme();
+        molecularIndexingScheme = other.molecularIndexingScheme;
         initialLabVessel = other.initialLabVessel;
         firstPcrVessel = other.firstPcrVessel;
         depth = other.depth + 1;
@@ -345,10 +345,6 @@ public class SampleInstanceV2 {
         }
     }
 
-    public MolecularIndexingScheme getMolecularIndexingScheme() {
-        return molecularIndexingScheme;
-    }
-
     /**
      * Applies to a clone any new information in a LabVessel.
      */
@@ -478,9 +474,8 @@ public class SampleInstanceV2 {
 
         SampleInstanceV2 sampleInstanceV2 = (SampleInstanceV2) obj;
 
-        if (molecularIndexingScheme != null ? !molecularIndexingScheme.equals(
-                sampleInstanceV2.getMolecularIndexingScheme()) :
-                sampleInstanceV2.getMolecularIndexingScheme() != null) {
+        if (molecularIndexingScheme != null ? !molecularIndexingScheme.equals(sampleInstanceV2.molecularIndexingScheme) :
+                sampleInstanceV2.molecularIndexingScheme != null) {
             return false;
         }
         if (getEarliestMercurySampleName() != null ?

@@ -1,11 +1,14 @@
 package org.broadinstitute.gpinformatics.mercury.entity.labevent;
 
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselTypeGeometry;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselTypeGeometry;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Properties common to all events of a particular message type
@@ -326,8 +329,7 @@ public enum LabEventType {
     JUMP_INITIAL_SIZE_SELECTION("JumpInitialSizeSelection",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.SIZE_SELECTION, SendToBsp.FALSE,
-            VolumeConcUpdate.MERCURY_ONLY,
-            LibraryType.NONE_ASSIGNED),
+            VolumeConcUpdate.MERCURY_ONLY, LibraryType.NONE_ASSIGNED),
     JUMP_END_REPAIR_1("JumpEndRepair1",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.FALSE, SystemOfRecord.SQUID, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY,
@@ -1086,8 +1088,7 @@ public enum LabEventType {
 //    SHEARING_BUCKET_EXIT ("ShearingBucketExit", ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY),
     COLLABORATOR_TRANSFER("CollaboratorTransfer", ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE,
             SystemOfRecord.MERCURY, CreateSources.FALSE, PlasticToValidate.TARGET, PipelineTransformation.NONE,
-            SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY,
-            LibraryType.NONE_ASSIGNED),
+            SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY, LibraryType.NONE_ASSIGNED),
 
     // Activity - sent by decks for otherwise non-messaged protocols (technology development); used by Analytics to
     // track usage.
@@ -1119,7 +1120,7 @@ public enum LabEventType {
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY,
             MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.SpinColumn,
-            BarcodedTube.BarcodedTubeType.MatrixTube075, new String[]{},
+            BarcodedTube.BarcodedTubeType.MatrixTube075, new String[]{}, LabVessel.MaterialType.DNA,
             LibraryType.NONE_ASSIGNED),
 
     // Transfer cell suspension to microcentrifuge tube
@@ -1148,7 +1149,7 @@ public enum LabEventType {
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY,
             MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.SpinColumn,
-            BarcodedTube.BarcodedTubeType.MatrixTube075, new String[]{},
+            BarcodedTube.BarcodedTubeType.MatrixTube075, new String[]{}, LabVessel.MaterialType.DNA,
             LibraryType.NONE_ASSIGNED),
 
     // Transfer tissue in paraffin to micro centrifuge tube
@@ -1177,7 +1178,7 @@ public enum LabEventType {
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY,
             MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.SpinColumn,
-            BarcodedTube.BarcodedTubeType.MatrixTube075, new String[]{},
+            BarcodedTube.BarcodedTubeType.MatrixTube075, new String[]{}, LabVessel.MaterialType.DNA,
             LibraryType.NONE_ASSIGNED),
 
     // Transfer fresh frozen tissue to micro centrifuge tube
@@ -1199,7 +1200,7 @@ public enum LabEventType {
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY,
             MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.SpinColumn,
-            BarcodedTube.BarcodedTubeType.MatrixTube075, new String[]{},
+            BarcodedTube.BarcodedTubeType.MatrixTube075, new String[]{}, LabVessel.MaterialType.DNA,
             LibraryType.NONE_ASSIGNED),
 
     // Transfer saliva to conical tube
@@ -1221,9 +1222,57 @@ public enum LabEventType {
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY,
             MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.SpinColumn,
-            BarcodedTube.BarcodedTubeType.MatrixTube075, new String[]{},
+            BarcodedTube.BarcodedTubeType.MatrixTube075, new String[]{}, LabVessel.MaterialType.DNA,
             LibraryType.NONE_ASSIGNED),
-
+    //Infinium
+    INFINIUM_AMPLIFICATION("InfiniumAmplification",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    INFINIUM_AMPLIFICATION_REAGENT_ADDITION("InfiniumAmplificationReagentAddition",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    INFINIUM_FRAGMENTATION("InfiniumFragmentation",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    INFINIUM_POST_FRAGMENTATION_HYB_OVEN_LOADED("InfiniumPostFragmentationHybOvenLoaded",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    INFINIUM_PRECIPITATION("InfiniumPrecipitation",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    INFINIUM_POST_PRECIPITATION_HEAT_BLOCK_LOADED("InfiniumPostPrecipitationHeatBlockLoaded",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    INFINIUM_PRECIPITATION_ISOPROPANOL_ADDITION("InfiniumPrecipitationIsopropanolAddition",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    INFINIUM_RESUSPENSION("InfiniumResuspension",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    INFINIUM_POST_RESUSPENSION_HYB_OVEN("InfiniumPostResuspensionHybOven",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    INFINIUM_HYBRIDIZATION("InfiniumHybridization",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    INFINIUM_WASH("InfiniumWash",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    INFINIUM_XSTAIN("InfiniumXStain",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, SendToBsp.FALSE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED)
     ;
 
     private final String name;
@@ -1233,6 +1282,8 @@ public enum LabEventType {
     private final ExpectTargetsEmpty expectedEmptyTargets;
 
     private final CreateSources createSources;
+
+    private final LabVessel.MaterialType resultingMaterialType;
 
     public PipelineTransformation getPipelineTransformation() {
         return pipelineTransformation;
@@ -1422,19 +1473,11 @@ public enum LabEventType {
      * @param volumeConcUpdate       in which systems to update volume and concentration
      */
     LabEventType(String name, ExpectSourcesEmpty expectSourcesEmpty, ExpectTargetsEmpty expectTargetsEmpty,
-            SystemOfRecord systemOfRecord, CreateSources createSources, PlasticToValidate plasticToValidate,
-            PipelineTransformation pipelineTransformation, SendToBsp sendToBsp,
-            VolumeConcUpdate volumeConcUpdate, LibraryType libraryType) {
-        this.name = name;
-        this.expectedEmptySources = expectSourcesEmpty;
-        this.expectedEmptyTargets = expectTargetsEmpty;
-        this.systemOfRecord = systemOfRecord;
-        this.createSources = createSources;
-        this.plasticToValidate = plasticToValidate;
-        this.pipelineTransformation = pipelineTransformation;
-        this.sendToBsp = sendToBsp;
-        this.volumeConcUpdate = volumeConcUpdate;
-        this.libraryType = libraryType;
+                 SystemOfRecord systemOfRecord, CreateSources createSources, PlasticToValidate plasticToValidate,
+                 PipelineTransformation pipelineTransformation, SendToBsp sendToBsp,
+                 VolumeConcUpdate volumeConcUpdate, LibraryType libraryType) {
+        this(name, expectSourcesEmpty, expectTargetsEmpty, systemOfRecord, createSources, plasticToValidate,
+                pipelineTransformation, sendToBsp, volumeConcUpdate, null,null,null,null, libraryType);
     }
 
     LabEventType(String name, ExpectSourcesEmpty expectSourcesEmpty, ExpectTargetsEmpty expectTargetsEmpty,
@@ -1444,15 +1487,34 @@ public enum LabEventType {
                  VesselTypeGeometry sourceVesselTypeGeometry, VesselTypeGeometry targetVesselTypeGeometry,
                  String[] reagentNames, LibraryType libraryType) {
         this(name, expectSourcesEmpty, expectTargetsEmpty, systemOfRecord, createSources, plasticToValidate,
-                pipelineTransformation, sendToBsp, volumeConcUpdate, libraryType);
+                pipelineTransformation, sendToBsp, volumeConcUpdate, messageType, sourceVesselTypeGeometry,
+                targetVesselTypeGeometry, reagentNames, null, libraryType);
+    }
+
+    LabEventType(String name, ExpectSourcesEmpty expectSourcesEmpty, ExpectTargetsEmpty expectTargetsEmpty,
+                 SystemOfRecord systemOfRecord, CreateSources createSources, PlasticToValidate plasticToValidate,
+                 PipelineTransformation pipelineTransformation, SendToBsp sendToBsp,
+                 VolumeConcUpdate volumeConcUpdate, MessageType messageType,
+                 VesselTypeGeometry sourceVesselTypeGeometry, VesselTypeGeometry targetVesselTypeGeometry,
+                 String[] reagentNames, LabVessel.MaterialType resultingMaterialType, LibraryType libraryType) {
+        this.name = name;
+        this.expectedEmptySources = expectSourcesEmpty;
+        this.expectedEmptyTargets = expectTargetsEmpty;
+        this.systemOfRecord = systemOfRecord;
+        this.createSources = createSources;
+        this.plasticToValidate = plasticToValidate;
+        this.pipelineTransformation = pipelineTransformation;
+        this.sendToBsp = sendToBsp;
+        this.volumeConcUpdate = volumeConcUpdate;
         this.messageType = messageType;
         this.sourceVesselTypeGeometry = sourceVesselTypeGeometry;
         this.targetVesselTypeGeometry = targetVesselTypeGeometry;
         this.reagentNames = reagentNames;
+        this.resultingMaterialType = resultingMaterialType;
         this.libraryType = libraryType;
     }
 
-        public String getName() {
+    public String getName() {
         return name;
     }
 
@@ -1477,12 +1539,26 @@ public enum LabEventType {
         return mapNameToType.get(name);
     }
 
+    public static Set<LabEventType> getLabEventTypesForMaterialType(LabVessel.MaterialType materialType) {
+        Set<LabEventType> resultSet=new HashSet<>();
+        for (LabEventType labEventType : LabEventType.values()) {
+            if (labEventType.resultingMaterialType == materialType) {
+                resultSet.add(labEventType);
+            }
+        }
+        return resultSet;
+    }
+
     public boolean isSendToBsp() {
         return sendToBsp == SendToBsp.TRUE;
     }
 
     public VolumeConcUpdate getVolumeConcUpdate() {
         return volumeConcUpdate;
+    }
+
+    public LabVessel.MaterialType getResultingMaterialType() {
+        return resultingMaterialType;
     }
 
     public MessageType getMessageType() {
