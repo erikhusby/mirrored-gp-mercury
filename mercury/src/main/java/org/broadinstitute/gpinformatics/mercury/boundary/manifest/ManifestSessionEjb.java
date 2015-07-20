@@ -234,12 +234,13 @@ public class ManifestSessionEjb {
         ManifestSession manifestSession = findManifestSession(manifestSessionId);
         manifestSession.completeSession();
         Set<String> accessionedSamples = new HashSet<>();
+        long disambiguator = 1L;
 
         for (ManifestRecord record : manifestSession.getNonQuarantinedRecords()) {
             if (record.getStatus() == ManifestRecord.Status.ACCESSIONED) {
                 if (manifestSession.isFromSampleKit()) {
                     transferSample(manifestSessionId, record.getValueByKey(Metadata.Key.SAMPLE_ID),
-                            record.getSampleId(), record.getValueByKey(Metadata.Key.BROAD_2D_BARCODE));
+                            record.getSampleId(), record.getValueByKey(Metadata.Key.BROAD_2D_BARCODE), disambiguator++);
                 }
                 accessionedSamples.add(record.getSampleId());
             }
@@ -326,12 +327,28 @@ public class ManifestSessionEjb {
      */
     public void transferSample(long manifestSessionId, String sourceCollaboratorSample, String sampleKey,
                                String vesselLabel) {
+        transferSample(manifestSessionId, sourceCollaboratorSample, sampleKey, vesselLabel, 1L);
+    }
+
+    /**
+     * Encapsulates the logic necessary to informatically mark all relevant entities as having completed the tube
+     * transfer process.
+     *
+     * @param manifestSessionId        Database ID of the session which is affiliated with this transfer
+     * @param sourceCollaboratorSample sample identifier for a source clinical sample
+     * @param sampleKey                The sample Key for the target mercury sample for the tube transfer
+     * @param vesselLabel              The label of the lab vessel that should be associated with the given mercury sample
+     * @param disambiguator            LabEvent disambiguator to avoid unique constraint errors when called in a tight loop
+     */
+    public void transferSample(long manifestSessionId, String sourceCollaboratorSample, String sampleKey,
+                               String vesselLabel, long disambiguator) {
         ManifestSession session = findManifestSession(manifestSessionId);
         MercurySample targetSample = findAndValidateTargetSample(sampleKey);
 
         LabVessel targetVessel = findAndValidateTargetSampleAndVessel(sampleKey, vesselLabel);
 
-        session.performTransfer(sourceCollaboratorSample, targetSample, targetVessel, userBean.getBspUser());
+        session.performTransfer(sourceCollaboratorSample, targetSample, targetVessel, userBean.getBspUser(),
+                disambiguator);
 
         if (StringUtils.isNotBlank(session.getReceiptTicket())) {
             try {
