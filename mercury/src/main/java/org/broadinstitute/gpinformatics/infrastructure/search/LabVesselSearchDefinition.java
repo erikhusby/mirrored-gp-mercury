@@ -664,10 +664,7 @@ public class LabVesselSearchDefinition {
                 List<String> values = new ArrayList<String>();
                 LabVessel labVessel = (LabVessel) entity;
                 for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
-                    for( MercurySample sample : sampleInstanceV2.getRootMercurySamples() ) {
-                        values.add(sample.getSampleKey());
-                    }
-                    //values.add(sampleInstanceV2.getNearestMercurySampleName());
+                    values.add(sampleInstanceV2.getNearestMercurySampleName());
                 }
                 return values;
             }
