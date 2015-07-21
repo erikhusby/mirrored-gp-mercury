@@ -35,9 +35,7 @@ public class BspSampleSearchAddRowsListener implements ConfigurableList.AddRowsL
         List<String> sampleIDs = new ArrayList<>();
         for (Object entity : entityList) {
             LabVessel labVessel = (LabVessel) entity;
-            Collection<MercurySample> mercurySamples = labVessel.getMercurySamples();
-            if( !mercurySamples.isEmpty() ) {
-                MercurySample mercurySample = mercurySamples.iterator().next();
+            for( MercurySample mercurySample : labVessel.getMercurySamples() ) {
                 sampleIDs.add(mercurySample.getSampleKey());
             }
         }
