@@ -5,18 +5,12 @@
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.ManifestAccessioningActionBean"/>
 <c:set var="session" value="${actionBean.selectedSession}"/>
 
-
-<script type="text/javascript">
-    $j(document).ready(function () {
-    });
-
-</script>
-
 <stripes:form beanclass="${actionBean.class.name}">
     <stripes:hidden name="selectedSessionId" id="selectedSessionId"/>
     <div class="form-horizontal span6">
-        <c:if test="${actionBean.receiptKey != null}">
-            Is this the correct Receipt Ticket?
+        <c:choose>
+            <c:when test="${empty(actionBean.scanErrors)}">
+                Is this the correct Receipt Ticket?
 
             <div class="view-control-group control-group">
                 <stripes:label name="receiptLabel" id="receiptKeyLabel" for="receiptJiraKey"
@@ -34,17 +28,23 @@
                     <div class="form-value"> ${actionBean.receiptSummary} </div>
                 </div>
             </div>
-        </c:if>
+        </c:when>
+            <c:otherwise>
+                            <div class="alert alert-error">${actionBean.scanErrors}</div>
+                        </c:otherwise>
+                    </c:choose>
 
         <div class="actionButtons">
-            <c:if test="${actionBean.receiptKey != null}">
+            <c:if test="${actionBean.scanErrors == null}">
                 <stripes:submit name="<%= ManifestAccessioningActionBean.ASSOCIATE_RECEIPT_ACTION%>"
-                                value="Yes" class="btn" />
-                <stripes:hidden name="receiptKey" id="receiptKeyId" />
+                                value="Yes" class="dialog-button btn"/>
+                <stripes:hidden name="receiptKey" id="receiptKeyId"/>
             </c:if>
-            <stripes:link beanclass="${actionBean.class.name}">
-                Cancel...
-            </stripes:link>
+
+            <stripes:submit name="<%= ManifestAccessioningActionBean.LOAD_SESSION_ACTION%>"
+                            value="Cancel" class="dialog-button btn"/>
+            <stripes:hidden name="selectedSessionId" value="${actionBean.selectedSessionId}"/>
+
         </div>
     </div>
 </stripes:form>

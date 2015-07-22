@@ -81,7 +81,8 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
     private ManifestSession selectedSession;
 
     @Validate(required = true, on = {LOAD_SESSION_ACTION, ACCEPT_UPLOAD_ACTION,
-            EXIT_SESSION_ACTION, SCAN_ACCESSION_SOURCE_ACTION, PREVIEW_SESSION_CLOSE_ACTION, CLOSE_SESSION_ACTION})
+            EXIT_SESSION_ACTION, SCAN_ACCESSION_SOURCE_ACTION, PREVIEW_SESSION_CLOSE_ACTION,
+            CLOSE_SESSION_ACTION})
     private Long selectedSessionId;
 
     @Validate(required = true, on = UPLOAD_MANIFEST_ACTION)
@@ -103,10 +104,6 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
 
     private String receiptSummary;
     private String receiptDescription;
-
-    public ManifestAccessioningActionBean() {
-        super();
-    }
 
     @After(stages = LifecycleStage.BindingAndValidation, on = {"!" + START_A_SESSION_ACTION})
     public void init() {
@@ -249,24 +246,27 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
 
     @HandlesEvent(FIND_RECEIPT_ACTION)
     public Resolution findReceipt() {
+        ForwardResolution resolution = null;
 
         JiraIssue receiptInfo = null;
-        ForwardResolution forwardResolution = null;
-        forwardResolution = new ForwardResolution(ASSOCIATE_RECEIPT_PAGE)
-                .addParameter(SELECTED_SESSION_ID, selectedSession.getManifestSessionId());
         try {
             receiptInfo = jiraService.getIssueInfo(receiptKey);
             receiptSummary = receiptInfo.getSummary();
-            forwardResolution
+            resolution = new ForwardResolution(ASSOCIATE_RECEIPT_PAGE)
+                    .addParameter(SELECTED_SESSION_ID, selectedSession.getManifestSessionId())
                     .addParameter("receiptSummary", receiptInfo.getSummary())
                     .addParameter("receiptDescription", receiptInfo.getDescription())
                     .addParameter("receiptKey", receiptKey);
-        } catch (IOException e) {
-            addGlobalValidationError("Unable to access the specified record of receipt: " + receiptKey);
+        } catch (Exception e) {
             logger.error(e.getMessage());
+            String errorMessage = "Unable to access the specified record of receipt: " + receiptKey;
+            scanErrors = errorMessage;
+            addGlobalValidationError(errorMessage);
+            resolution = new ForwardResolution(ASSOCIATE_RECEIPT_PAGE)
+                    .addParameter(SELECTED_SESSION_ID, selectedSession.getManifestSessionId());
         }
 
-        return forwardResolution;
+        return resolution;
     }
 
     @HandlesEvent(ASSOCIATE_RECEIPT_ACTION)

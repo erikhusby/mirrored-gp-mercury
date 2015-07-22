@@ -49,7 +49,6 @@
                 $j('#findReceipt').click(function (event) {
                     event.preventDefault();
                     showAssociateReceiptDialog();
-                    $j("#associateReceiptDialog").dialog("open");
                 });
 
                 // Prevent posting the form for an enter key press in the accession source field.  Also
@@ -121,14 +120,14 @@
                 $j.ajax({
                     url: '${ctxpath}/sample/accessioning.action',
                     data: {
+                        '_sourcePage' : "${actionBean.class.name}",
                         '<%= ManifestAccessioningActionBean.FIND_RECEIPT_ACTION %>': '',
                         '<%= ManifestAccessioningActionBean.SELECTED_SESSION_ID %>': '${actionBean.selectedSessionId}',
                         'receiptKey': $j('#receiptKeyField').val()
                     },
                     datatype: 'html',
                     success: function (html) {
-                        var dialog = $j('#associateReceiptDialog');
-                        dialog.html(html);
+                        $j('#associateReceiptDialog').html(html).dialog("open")
                     }
                 });
             }
@@ -138,17 +137,18 @@
 
     <stripes:layout-component name="content">
 
-        <div id="previewSessionCloseDialog" title="Preview Manifest Session Close" style="width:600px; display:none;">
-        </div>
-
-        <div id="associateReceiptDialog" title="Find and Associate Receipt Ticket" style="width:600px; display:none">
-        </div>
-
-        <div id="scanResults" width="300px">
-            <jsp:include page="<%= ManifestAccessioningActionBean.SCAN_SAMPLE_RESULTS_PAGE%>"/>
-        </div>
         <stripes:form beanclass="${actionBean.class.name}" id="accessionSampleForm">
             <stripes:hidden name="selectedSessionId" id="selectedSessionId"/>
+            <div id="previewSessionCloseDialog" title="Preview Manifest Session Close" style="width:600px; display:none;">
+            </div>
+
+            <div id="associateReceiptDialog" title="Find and Associate Receipt Ticket" style="width:600px; display:none">
+            </div>
+
+            <div id="scanResults" width="300px">
+                <jsp:include page="<%= ManifestAccessioningActionBean.SCAN_SAMPLE_RESULTS_PAGE%>"/>
+            </div>
+
             <div class="form-horizontal span6">
                 <div class="control-group">
                     <label class="control-label" for="receiptKeyField">Receipt identifier</label>
@@ -193,4 +193,4 @@
 
         </stripes:form>
     </stripes:layout-component>
-</stripes:layout-render>    
+</stripes:layout-render>
