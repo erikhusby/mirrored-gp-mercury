@@ -6,7 +6,9 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
+import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.broadinstitute.gpinformatics.athena.entity.samples.SampleReceiptValidation;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
@@ -536,6 +538,36 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     }
 
     /**
+     * Given a sample, compute its billable price items based on its material type.  We assume that all add-ons
+     * in the sample's order's product that can accept the sample's material type are required, in addition to the
+     * product's primary price item.
+     *
+     * @return the list of required add-ons.
+     */
+    List<PriceItem> getBillablePriceItems() {
+        List<PriceItem> items = new ArrayList<>();
+        items.add(getProductOrder().getProduct().getPrimaryPriceItem());
+        org.broadinstitute.bsp.client.sample.MaterialType materialTypeObject =
+                getSampleData().getMaterialTypeObject();
+        Set<Product> productAddOns = productOrder.getProduct().getAddOns();
+        if (materialTypeObject != null && !productAddOns.isEmpty()) {
+            MaterialType sampleMaterialType =
+                    new MaterialType(materialTypeObject.getCategory(), materialTypeObject.getName());
+            for (Product addOn : productAddOns) {
+                for (MaterialType materialType : addOn.getAllowableMaterialTypes()) {
+                    if (materialType.equals(sampleMaterialType)) {
+                        items.add(addOn.getPrimaryPriceItem());
+                        // Skip to the next add-on.
+                        break;
+                    }
+                }
+            }
+        }
+
+        return items;
+    }
+
+    /**
      * Automatically generate the billing ledger items for this sample.  Once this is done, its price items will be
      * correctly billed when the next billing session is created.
      *
@@ -544,36 +576,39 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
      */
     public void autoBillSample(Date completedDate, double quantity) {
         Date now = new Date();
-        Map<PriceItem, LedgerQuantities> ledgerQuantitiesMap = getLedgerQuantities();
-        PriceItem priceItem = getProductOrder().getProduct().getPrimaryPriceItem();
 
-        LedgerQuantities quantities = ledgerQuantitiesMap.get(priceItem);
-        if (quantities == null) {
-            // No ledger item exists for this price item, create it using the current order's price item
-            addAutoLedgerItem(completedDate, priceItem, quantity, now);
-        } else {
-            // This price item already has a ledger entry.
-            // - If it's been billed, don't bill it again, but report this as an issue.
-            // - If it hasn't been billed check & see if the quantity is the same as the current.  If they differ,
-            // replace the existing quantity with the new quantity. When replacing, also set the timestamp so
-            // the PDM can be warned about downloading the spreadsheet AFTER this change.
-            if (quantities.getBilled() != 0) {
-                log.debug(MessageFormat.format(
-                        "Trying to update an already billed sample, PDO: {0}, sample: {1}, price item: {2}",
-                        productOrder.getJiraTicketKey(), sampleName, priceItem.getName()));
-            } else if (MathUtils.isSame(quantities.getUploaded(), quantity)) {
-                log.debug(MessageFormat.format(
-                        "Sample already has the same quantity to bill, PDO: {0}, sample: {1}, price item: {2}, quantity {3}",
-                        productOrder.getJiraTicketKey(), sampleName, priceItem.getName(), quantity));
+        List<PriceItem> itemsToBill = getBillablePriceItems();
+        Map<PriceItem, LedgerQuantities> ledgerQuantitiesMap = getLedgerQuantities();
+
+        for (PriceItem priceItem : itemsToBill) {
+            LedgerQuantities quantities = ledgerQuantitiesMap.get(priceItem);
+            if (quantities == null) {
+                // No ledger item exists for this price item, create it using the current order's price item
+                addAutoLedgerItem(completedDate, priceItem, quantity, now);
             } else {
-                /*
-                 * Why overwrite what a user likely manually uploaded? This seems wrong and/or dangerous.
-                 */
-                for (LedgerEntry item : getLedgerItems()) {
-                    if (item.getPriceItem().equals(priceItem)) {
-                        item.setQuantity(quantity);
-                        item.setAutoLedgerTimestamp(now);
-                        break;
+                // This price item already has a ledger entry.
+                // - If it's been billed, don't bill it again, but report this as an issue.
+                // - If it hasn't been billed check & see if the quantity is the same as the current.  If they differ,
+                // replace the existing quantity with the new quantity. When replacing, also set the timestamp so
+                // the PDM can be warned about downloading the spreadsheet AFTER this change.
+                if (quantities.getBilled() != 0) {
+                    log.debug(MessageFormat.format(
+                            "Trying to update an already billed sample, PDO: {0}, sample: {1}, price item: {2}",
+                            productOrder.getJiraTicketKey(), sampleName, priceItem.getName()));
+                } else if (MathUtils.isSame(quantities.getUploaded(), quantity)) {
+                    log.debug(MessageFormat.format(
+                            "Sample already has the same quantity to bill, PDO: {0}, sample: {1}, price item: {2}, quantity {3}",
+                            productOrder.getJiraTicketKey(), sampleName, priceItem.getName(), quantity));
+                } else {
+                    /*
+                     * Why overwrite what a user likely manually uploaded? This seems wrong and/or dangerous.
+                     */
+                    for (LedgerEntry item : getLedgerItems()) {
+                        if (item.getPriceItem().equals(priceItem)) {
+                            item.setQuantity(quantity);
+                            item.setAutoLedgerTimestamp(now);
+                            break;
+                        }
                     }
                 }
             }

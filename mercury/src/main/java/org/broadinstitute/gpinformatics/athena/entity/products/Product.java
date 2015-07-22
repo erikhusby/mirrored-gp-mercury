@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.entity.products;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
+import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.hibernate.envers.AuditJoinTable;
@@ -144,6 +145,14 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     @AuditJoinTable(name = "product_requirement_join_aud")
     private List<BillingRequirement> requirements;
 
+    // Allowable Material Types for the product.
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
+    @JoinTable(schema = "athena", name = "PRODUCT_MATERIAL_TYPES",
+            joinColumns=@JoinColumn(name="PRODUCT_ID"),
+            inverseJoinColumns=@JoinColumn(name="MATERIAL_TYPE_ID")
+    )
+    private Set<MaterialType> allowableMaterialTypes = new HashSet<>();
+
     // The onRisk criteria that are associated with the Product. When creating new, default to empty list.
     @OneToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
     @JoinColumn(name = "product", nullable = true)
@@ -262,6 +271,10 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         this.primaryPriceItem = primaryPriceItem;
     }
 
+    public Set<MaterialType> getAllowableMaterialTypes() {
+        return allowableMaterialTypes;
+    }
+
     public void setProductName(String productName) {
         this.productName = productName;
     }
@@ -316,6 +329,10 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
 
     public void setWorkflow(@Nonnull Workflow workflow) {
         workflowName = workflow.getWorkflowName();
+    }
+
+    public void addAllowableMaterialType(MaterialType materialType) {
+        allowableMaterialTypes.add(materialType);
     }
 
     public Set<Product> getAddOns() {
@@ -552,6 +569,17 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         return riskCriteria;
     }
 
+    public String[] getAllowableMaterialTypeNames() {
+        String[] names = new String[allowableMaterialTypes.size()];
+        int i = 0;
+
+        for (MaterialType materialType : allowableMaterialTypes) {
+            names[i++] = materialType.getFullName();
+        }
+
+        return names;
+    }
+
     public String[] getAddOnBusinessKeys() {
         String[] keys = new String[addOns.size()];
         int i = 0;
@@ -561,6 +589,14 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         }
 
         return keys;
+    }
+
+    public Long[] getPriceItemIds() {
+        if (primaryPriceItem == null) {
+            return new Long[0];
+        }
+
+        return new Long[] { primaryPriceItem.getPriceItemId() };
     }
 
     public void updateRiskCriteria(@Nonnull String[] criteria, @Nonnull String[] operators, @Nonnull String[] values) {
@@ -660,5 +696,4 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     public boolean isExomeExpress() {
         return productFamily.getName().equals(ProductFamily.ProductFamilyName.EXOME.getFamilyName()) && productName.startsWith(EXOME_EXPRESS);
     }
-
 }
