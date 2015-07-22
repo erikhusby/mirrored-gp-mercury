@@ -19,6 +19,7 @@ import org.broadinstitute.gpinformatics.mercury.BSPRestClient;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ObjectFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
@@ -65,6 +66,9 @@ public class SamplesDaughterPlateHandler {
         } else if (OrmUtil.proxySafeIsInstance(stationEvent, PlateCherryPickEvent.class)) {
             PlateCherryPickEvent event = OrmUtil.proxySafeCast(stationEvent, PlateCherryPickEvent.class);
             message.getPlateCherryPickEvent().add(event);
+        } else if (OrmUtil.proxySafeIsInstance(stationEvent, PlateEventType.class)) {
+            PlateEventType event = OrmUtil.proxySafeCast(stationEvent, PlateEventType.class);
+            message.getPlateEvent().add(event);
         }
         return message;
     }

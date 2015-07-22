@@ -56,4 +56,8 @@ public class ArrayPlatingJaxbBuilder {
     public PlateTransferEventType getArrayPlatingJaxb() {
         return arrayPlatingJaxb;
     }
+
+    public List<BettaLIMSMessage> getMessageList() {
+        return messageList;
+    }
 }
