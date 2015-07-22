@@ -624,9 +624,12 @@ public class LabEventSearchDefinition {
                 // Has to handle LabEvent from parent term and LabVessel from nested table
                 LabVessel labVessel = null;
                 LabEvent labEvent;
-
                 Set<String> results = new HashSet<>();
 
+                // Handle possible null (e.g. MercurySample from vessel position plugin)
+                if( entity == null ) {
+                    return results;
+                }
                 if( OrmUtil.proxySafeIsInstance( entity, LabEvent.class ) ) {
                     labEvent = OrmUtil.proxySafeCast(entity, LabEvent.class);
                     labVessel = labEvent.getInPlaceLabVessel();

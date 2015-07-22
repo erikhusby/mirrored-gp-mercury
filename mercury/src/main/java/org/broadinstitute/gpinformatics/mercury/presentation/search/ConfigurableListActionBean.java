@@ -162,8 +162,11 @@ public class ConfigurableListActionBean extends CoreActionBean {
      */
     private SearchContext buildSearchContext(){
         SearchContext evalContext = new SearchContext();
-        evalContext.setBspUserList( bspUserList );
-
+        evalContext.setBspUserList( bspUserList );// Get search instance
+        SearchInstance searchInstance = (SearchInstance) getContext().getRequest().getSession()
+                .getAttribute(ConfigurableSearchActionBean.SEARCH_INSTANCE_PREFIX + sessionKey);
+        evalContext.setSearchInstance(searchInstance);
+        evalContext.setColumnEntityType(ColumnEntity.getByName(entityName));
         return evalContext;
     }
 
