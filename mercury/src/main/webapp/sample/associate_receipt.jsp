@@ -8,34 +8,36 @@
 <stripes:form beanclass="${actionBean.class.name}">
     <stripes:hidden name="selectedSessionId" id="selectedSessionId"/>
     <div class="form-horizontal span6">
+        <c:set var="hasErrors" value="${actionBean.scanErrors!=null}"/>
         <c:choose>
-            <c:when test="${empty(actionBean.scanErrors)}">
+            <c:when test="${!hasErrors}">
                 Is this the correct Receipt Ticket?
 
-            <div class="view-control-group control-group">
-                <stripes:label name="receiptLabel" id="receiptKeyLabel" for="receiptJiraKey"
-                               class="control-label">Receipt Key </stripes:label>
-                <div class="controls">
-                    <div class="form-value">
-                        <a target="JIRA" href="${actionBean.jiraUrl(actionBean.receiptKey)}"
-                           class="external" target="JIRA" id="receiptJiraKey">${actionBean.receiptKey}</a>
+                <div class="view-control-group control-group">
+                    <stripes:label name="receiptLabel" id="receiptKeyLabel" for="receiptJiraKey"
+                                   class="control-label">Receipt Key </stripes:label>
+                    <div class="controls">
+                        <div class="form-value">
+                            <a target="JIRA" href="${actionBean.jiraUrl(actionBean.receiptKey)}"
+                               class="external" target="JIRA" id="receiptJiraKey">${actionBean.receiptKey}</a>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="view-control-group control-group">
-                <stripes:label name="shipmentIdentifier" id="receiptKeyLabel" class="control-label">Shipment Identifier </stripes:label>
-                <div class="controls">
-                    <div class="form-value"> ${actionBean.receiptSummary} </div>
+                <div class="view-control-group control-group">
+                    <stripes:label name="shipmentIdentifier" id="receiptKeyLabel"
+                                   class="control-label">Shipment Identifier </stripes:label>
+                    <div class="controls">
+                        <div class="form-value"> ${actionBean.receiptSummary} </div>
+                    </div>
                 </div>
-            </div>
-        </c:when>
+            </c:when>
             <c:otherwise>
-                            <div class="alert alert-error">${actionBean.scanErrors}</div>
-                        </c:otherwise>
-                    </c:choose>
+                <div class="alert alert-error">${actionBean.scanErrors}</div>
+            </c:otherwise>
+        </c:choose>
 
         <div class="actionButtons">
-            <c:if test="${actionBean.scanErrors == null}">
+            <c:if test="${!hasErrors}">
                 <stripes:submit name="<%= ManifestAccessioningActionBean.ASSOCIATE_RECEIPT_ACTION%>"
                                 value="Yes" class="dialog-button btn"/>
                 <stripes:hidden name="receiptKey" id="receiptKeyId"/>
