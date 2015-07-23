@@ -632,7 +632,7 @@ public class    ProductOrderFixupTest extends Arquillian {
         productOrderDao.flush();
     }
 
-    @Test(enabled = false)
+    @Test(enabled = true)
     public void fixupSupport859SwitchRegulatoryInfo() {
         userBean.loginOSUser();
 
@@ -662,6 +662,11 @@ public class    ProductOrderFixupTest extends Arquillian {
                         RegulatoryInfo.Type.valueOf(lineInfo[2]));
                 ProductOrder pdoToChange = productOrderDao.findByBusinessKey(orderToRegInfo.getProductOrderKey());
 
+                if(pdoToChange == null) {
+                    errors.add(orderToRegInfo.getProductOrderKey() + " was not found");
+                    continue;
+                }
+
                 RegulatoryInfo selectedRegulatoryInfo = null;
                 for (RegulatoryInfo candidate : pdoToChange.getResearchProject().getRegulatoryInfos()) {
                     if (candidate.getIdentifier().equals(orderToRegInfo.getRegulatoryInfoIdentifier()) &&
@@ -670,6 +675,12 @@ public class    ProductOrderFixupTest extends Arquillian {
                         break;
                     }
                 }
+
+                if(selectedRegulatoryInfo == null) {
+                    errors.add("ORSP candidate " + orderToRegInfo.getRegulatoryInfoIdentifier() +
+                               " was not found in any research project for " + orderToRegInfo.getProductOrderKey());
+                }
+
                 pdoToChange.setSkipRegulatoryReason(null);
                 pdoToChange.addRegulatoryInfo(selectedRegulatoryInfo);
             }
