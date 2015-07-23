@@ -541,6 +541,16 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                     // Null bucket entry is interpreted as either a pre-Mercury (BSP) event
                     //  or a control sample which ETL ignores.
                     LabBatch labBatch = si.getSingleBatch();
+
+                    // Pick the latest batch
+                    if( labBatch == null ) {
+                        List<LabBatch> multiBatches = si.getAllWorkflowBatches();
+                        if( !multiBatches.isEmpty() ) {
+                            Collections.sort(multiBatches, LabBatch.byDate);
+                            labBatch = si.getAllWorkflowBatches().get( multiBatches.size() - 1 );
+                        }
+                    }
+
                     BucketEntry bucketEntry = si.getSingleBucketEntry();
                     ProductOrder pdo = bucketEntry != null ? bucketEntry.getProductOrder() : null;
                     String molecularIndexingSchemeName =  si.getMolecularIndexingScheme() != null ?
@@ -558,8 +568,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                             labEvent.getLabEventType().getName(), workflowName, workflowEffectiveDate);
                     boolean canEtl = wfDenorm != null &&
                                      (labBatch != null && labBatch.getLabBatchType() == LabBatchType.WORKFLOW
-                                      || !wfDenorm.isBatchNeeded()) &&
-                                     (pdo != null || !wfDenorm.isProductOrderNeeded());
+                                      || !wfDenorm.isBatchNeeded());
                     if( !canEtl ) {
                         logger.debug("Skipping ETL on labEvent " + labEvent.getLabEventId() +
                                      ": batch not workflow, no PDO, or no worflow step for event" );
