@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.fixup;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.bsp.client.users.BspUser;
@@ -41,8 +42,10 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.ParameterExpression;
 import javax.persistence.criteria.Root;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
@@ -627,6 +630,60 @@ public class    ProductOrderFixupTest extends Arquillian {
         productOrder.setResearchProject(researchProject);
         productOrderDao.persist(new FixupCommentary("IPI-61545 Change PDO-6074 from RP-623 to RP-627"));
         productOrderDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void fixupSupport859SwitchRegulatoryInfo() {
+        userBean.loginOSUser();
+
+        findAndUpdateRegulatoryInfo("Support-859", "pdo_reginfo.support859.update");
+    }
+
+    private void findAndUpdateRegulatoryInfo(final String fixupTicket, String pdosToChangeVMOption) {
+
+        // The value of the property reflected in pdosToChangeVMOption must be a VM defined property
+        String property = System.getProperty(pdosToChangeVMOption);
+        if (property == null) {
+            Assert.fail("The filename for the pdo Regulatory info updates is not found");
+        }
+        File pdostoupdate = new File(property);
+        List<String> errors = null;
+
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(pdostoupdate));
+            errors = new ArrayList<>();
+            String line = null;
+
+            while ((line = reader.readLine()) != null) {
+                String[] lineInfo = line.split(",");
+
+                RegulatoryInfoSelection orderToRegInfo = null;
+                orderToRegInfo = new RegulatoryInfoSelection(lineInfo[0], lineInfo[1],
+                        RegulatoryInfo.Type.valueOf(lineInfo[2]));
+                ProductOrder pdoToChange = productOrderDao.findByBusinessKey(orderToRegInfo.getProductOrderKey());
+
+                RegulatoryInfo selectedRegulatoryInfo = null;
+                for (RegulatoryInfo candidate : pdoToChange.getResearchProject().getRegulatoryInfos()) {
+                    if (candidate.getIdentifier().equals(orderToRegInfo.getRegulatoryInfoIdentifier()) &&
+                        candidate.getType() == orderToRegInfo.getRegulatoryInfoType()) {
+                        selectedRegulatoryInfo = candidate;
+                        break;
+                    }
+                }
+                pdoToChange.setSkipRegulatoryReason(null);
+                pdoToChange.addRegulatoryInfo(selectedRegulatoryInfo);
+            }
+
+        } catch (IOException e) {
+            Assert.fail("Unable to read form the provided file " + property);
+        }
+
+        if(CollectionUtils.isNotEmpty(errors)) {
+            Assert.fail(StringUtils.join(errors, "\n"));
+        }
+
+        productOrderDao.persist(new FixupCommentary(
+                fixupTicket + ":  Updated PDOs which did not have the correct Regulatory Info associated with them."));
     }
 
     @Test(enabled = false)
