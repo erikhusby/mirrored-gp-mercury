@@ -632,7 +632,7 @@ public class    ProductOrderFixupTest extends Arquillian {
         productOrderDao.flush();
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void fixupSupport859SwitchRegulatoryInfo() {
         userBean.loginOSUser();
 
