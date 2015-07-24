@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.mercury.control.dao.sample;
 import com.google.common.base.Function;
 import com.google.common.collect.Maps;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata_;
@@ -29,6 +28,7 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Join;
 import javax.persistence.criteria.ParameterExpression;
 import javax.persistence.criteria.Root;
+import javax.persistence.criteria.SetJoin;
 import javax.persistence.criteria.Subquery;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -185,10 +185,15 @@ public class MercurySampleDao extends GenericDao {
                 .where(metadataJoin.get(Metadata_.key).in(metadataKeys));
 
         Root<MercurySample> sampleRoot = samplesWithoutMetadataKeysQuery.from(MercurySample.class);
+        SetJoin<MercurySample, LabVessel> sampleLabVesselSetJoin = sampleRoot.join(MercurySample_.labVessel);
+        SetJoin<LabVessel, LabEvent> joinLabVesselEvents = sampleLabVesselSetJoin.join(LabVessel_.inPlaceLabEvents);
+
         samplesWithoutMetadataKeysQuery.select(sampleRoot).distinct(true)
                 .where(sampleBuilder.equal(sampleRoot.get(MercurySample_.metadataSource), metadataSourceParameter),
                         sampleBuilder.in(sampleRoot.get(MercurySample_.sampleKey))
-                                .value(samplesWithoutMetadataKeysSubQuery).not());
+                                .value(samplesWithoutMetadataKeysSubQuery).not(), sampleBuilder
+                                .equal(joinLabVesselEvents.get(LabEvent_.labEventType),
+                                        LabEventType.COLLABORATOR_TRANSFER));
 
         TypedQuery<MercurySample> query = getEntityManager().createQuery(samplesWithoutMetadataKeysQuery);
         query.setParameter(metadataSourceParameter, metadataSource);
