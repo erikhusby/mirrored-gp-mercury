@@ -87,6 +87,10 @@ public class InfiniumEntityBuilder {
         labEventHandler.processEvent(hybEvent);
         hybChip = (StaticPlate) hybEvent.getTargetLabVessels().iterator().next();
 
+        LabEvent hybChamberLoadedEvent = labEventFactory.buildFromBettaLimsPlateEventDbFree(
+                infiniumJaxbBuilder.getInfiniumHybChamberLoadedJaxb(), hybChip);
+        labEventHandler.processEvent(hybChamberLoadedEvent);
+
         LabEvent washEvent = labEventFactory.buildFromBettaLimsPlateEventDbFree(
                 infiniumJaxbBuilder.getInfiniumWashJaxb(), hybChip);
         labEventHandler.processEvent(washEvent);
