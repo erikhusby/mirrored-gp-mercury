@@ -367,6 +367,23 @@ public class ManifestSession implements Updatable {
     }
 
     /**
+     * Helper method to Build a MultiMap of manifest records by the sampleId.
+     *
+     * @param manifestRecords The set of manifest records to be divided up into a MultiMap
+     *
+     * @return A MultiMap of manifest records indexed by the corresponding sampleId value
+     */
+    private Multimap<String, ManifestRecord> buildMultimapBySampleId(Collection<ManifestRecord> manifestRecords) {
+        return Multimaps.index(manifestRecords,
+                new Function<ManifestRecord, String>() {
+                    @Override
+                    public String apply(ManifestRecord manifestRecord) {
+                        return manifestRecord.getSampleId();
+                    }
+                });
+    }
+
+    /**
      * Filters out the list of records to return only the ones that do not have blocking errors such as
      * Duplicate_Sample_ID
      *
@@ -593,9 +610,10 @@ public class ManifestSession implements Updatable {
      * @param targetSample             Mercury Sample to which the transfer will be associated
      * @param targetVessel             Lab Vessel to which the transfer will be associated
      * @param user                     Represents the user attempting to make the transfer
+     * @param disambiguator            LabEvent disambiguator to avoid unique constraint errors when called in a tight loop
      */
     public void performTransfer(String sourceCollaboratorSample, MercurySample targetSample, LabVessel targetVessel,
-                                BspUser user) {
+                                BspUser user, long disambiguator) {
 
         ManifestRecord sourceRecord ;
 
@@ -612,7 +630,7 @@ public class ManifestSession implements Updatable {
 
         LabEvent collaboratorTransferEvent =
                 new LabEvent(LabEventType.COLLABORATOR_TRANSFER, new Date(), LabEvent.UI_EVENT_LOCATION,
-                        1L, user.getUserId(), LabEvent.UI_PROGRAM_NAME);
+                        disambiguator, user.getUserId(), LabEvent.UI_PROGRAM_NAME);
         targetVessel.addInPlaceEvent(collaboratorTransferEvent);
     }
 

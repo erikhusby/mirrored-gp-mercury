@@ -661,32 +661,7 @@ public enum VesselPosition {
     _3_12,
     _4_12,
     _5_12,
-    _6_12,
-
-    R01C01, //Infinium Chip Locations
-    R01C02,
-    R02C01,
-    R02C02,
-    R03C01,
-    R03C02,
-    R04C01,
-    R04C02,
-    R05C01,
-    R05C02,
-    R06C01,
-    R06C02,
-    R07C01,
-    R07C02,
-    R08C01,
-    R08C02,
-    R09C01,
-    R09C02,
-    R10C01,
-    R10C02,
-    R11C01,
-    R11C02,
-    R12C01,
-    R12C02;
+    _6_12;
 
     private static final Map<String, VesselPosition> MAP_NAME_TO_POSITION =
             new HashMap<>(VesselPosition.values().length);
