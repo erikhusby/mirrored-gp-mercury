@@ -41,7 +41,6 @@ import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInsta
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnector;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
-import org.broadinstitute.gpinformatics.mercury.boundary.zims.BSPLookupException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
@@ -258,10 +257,10 @@ public class ProductOrderEjb {
             } else {
                 editOrder.calculateRisk(samples);
             }
-        } catch (BSPLookupException ex) {
+        } catch (Exception ex) {
             String message = "Could not calculate risk.";
             log.error(message, ex);
-            throw new Exception(message, ex);
+            throw new InformaticsServiceException(message, ex);
         }
 
         // Set the create and modified information.
@@ -331,7 +330,7 @@ public class ProductOrderEjb {
                                    @Nonnull MessageReporter reporter) {
         ProductOrder order = productOrderDao.findByBusinessKey(productOrderKey);
         // Only add samples to the LIMS bucket if the order is ready for lab work.
-        if (order.readyForLab()) {
+        if (order.getOrderStatus().readyForLab()) {
             Collection<ProductOrderSample> samples = bucketEjb.addSamplesToBucket(order, newSamples);
             if (!samples.isEmpty()) {
                 reporter.addMessage("{0} samples have been added to the pico bucket.", samples.size());

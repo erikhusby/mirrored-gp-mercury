@@ -143,6 +143,11 @@ class AlwaysThrowsRuntimeExceptionsJiraStub implements JiraService {
     }
 
     @Override
+    public void deleteLink(String jiraIssueLinkId) throws IOException {
+
+    }
+
+    @Override
     public String getResolution(String jiraIssueKey) throws IOException {
         invocationCount++;
         throw new NotImplementedException();

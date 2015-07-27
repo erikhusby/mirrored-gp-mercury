@@ -684,6 +684,63 @@ public interface TransferTraverserCriteria {
     }
 
     /**
+     * Traverse LabVessels and LabEvents for events producing MaterialTypes
+     */
+    class LabEventsWithMaterialTypeTraverserCriteria implements TransferTraverserCriteria {
+        private final LabVessel.MaterialType materialType;
+        private LabVessel vesselForMaterialType = null;
+
+        public LabEventsWithMaterialTypeTraverserCriteria(LabVessel.MaterialType materialTypes) {
+            this.materialType = materialTypes;
+        }
+
+
+        @Override
+        public TraversalControl evaluateVesselPreOrder(Context context) {
+            LabVessel vessel = context.getLabVessel();
+            LabEvent event = context.getEvent();
+            if (event != null) {
+                evaluateEvent(vessel, event);
+            }
+            if (vessel != null) {
+                evaluateTransfers(context.getTraversalDirection(), vessel);
+            }
+
+            return TraversalControl.ContinueTraversing;
+        }
+
+        private void evaluateTransfers(TraversalDirection traversalDirection, LabVessel vessel) {
+            Set<LabEvent> transferEvents = null;
+            if (traversalDirection == TraversalDirection.Ancestors) {
+                transferEvents = vessel.getTransfersTo();
+            } else {
+                transferEvents = vessel.getTransfersFrom();
+            }
+            for (LabEvent labEvent : transferEvents) {
+                evaluateEvent(vessel, labEvent);
+            }
+        }
+
+        private void evaluateEvent(LabVessel vessel, LabEvent event) {
+            if (materialType == event.getLabEventType().getResultingMaterialType() && vesselForMaterialType == null) {
+                vesselForMaterialType = vessel;
+            }
+        }
+
+        @Override
+        public void evaluateVesselInOrder(Context context) {
+        }
+
+        @Override
+        public void evaluateVesselPostOrder(Context context) {
+        }
+
+        public LabVessel getVesselForMaterialType() {
+            return vesselForMaterialType;
+        }
+    }
+
+    /**
      * Capture chain of events following a lab vessel
      */
     public class LabEventDescendantCriteria implements TransferTraverserCriteria {

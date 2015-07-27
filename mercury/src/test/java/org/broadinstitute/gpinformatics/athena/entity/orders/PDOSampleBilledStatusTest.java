@@ -51,16 +51,16 @@ public class PDOSampleBilledStatusTest {
         // setup the billing session so its price item matches the primary price item
         setBilledPriceItem(primaryPriceItem, LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM);
         String message = MessageFormat
-                .format("Sample {0} should have its primary price item billed already.", pdoSample.getName());
-        assertThat(message,pdoSample.isCompletelyBilled());
+                .format("Sample \"{0}\" should have its primary price item billed already.", pdoSample.getName());
+        assertThat(message, pdoSample.isCompletelyBilled());
     }
 
     public void testNonPrimaryPriceItemIsBilled() {
         // setup the billing session so that its price item is *not* the primary price item
         setBilledPriceItem(notPrimaryPriceItem, LedgerEntry.PriceItemType.ADD_ON_PRICE_ITEM);
         String message = MessageFormat
-                .format("Sample {0} should have its primary price item billed already.", pdoSample.getName());
-        assertThat(message,!pdoSample.isCompletelyBilled());
+                .format("Sample \"{0}\" should not have its primary price item billed already.", pdoSample.getName());
+        assertThat(message, !pdoSample.isCompletelyBilled());
     }
 
 }

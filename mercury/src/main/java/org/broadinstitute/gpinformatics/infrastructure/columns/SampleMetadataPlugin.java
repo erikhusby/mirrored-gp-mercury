@@ -1,7 +1,10 @@
 package org.broadinstitute.gpinformatics.infrastructure.columns;
 
+import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
@@ -25,7 +28,7 @@ public class SampleMetadataPlugin implements ListPlugin {
      */
     @Override
     public List<ConfigurableList.Row> getData(List<?> entityList, ConfigurableList.HeaderGroup headerGroup
-            , @Nonnull Map<String, Object> context) {
+            , @Nonnull SearchContext context) {
         List<MercurySample> sampleList = (List<MercurySample>) entityList;
         List<ConfigurableList.Row> metricRows = new ArrayList<>();
 
@@ -40,6 +43,18 @@ public class SampleMetadataPlugin implements ListPlugin {
             Set<Metadata> metadata = sample.getMetadata();
             if( metadata != null && !metadata.isEmpty() ) {
                 MetadataPluginHelper.addMetadataToRowData( metadata, rowData );
+            } else {
+                for(LabVessel sampleVessel : sample.getLabVessel() ) {
+                    for( SampleInstanceV2 sampleInstance : sampleVessel.getSampleInstancesV2()){
+                        MercurySample rootSample = sampleInstance.getRootOrEarliestMercurySample();
+                        if( rootSample != null ) {
+                            metadata = rootSample.getMetadata();
+                            if( metadata != null && !metadata.isEmpty() ) {
+                                MetadataPluginHelper.addMetadataToRowData( metadata, rowData );
+                            }
+                        }
+                    }
+                }
             }
 
             ConfigurableList.Row row = MetadataPluginHelper.buildRow(sample.getMercurySampleId().toString(), rowData );
@@ -52,7 +67,7 @@ public class SampleMetadataPlugin implements ListPlugin {
 
     @Override
     public ConfigurableList.ResultList getNestedTableData(Object entity, ColumnTabulation columnTabulation,
-                                                          @Nonnull Map<String, Object> context) {
+                                                          @Nonnull SearchContext context) {
         throw new UnsupportedOperationException("Method getNestedTableData not implemented in "
                                                 + getClass().getSimpleName() );
     }

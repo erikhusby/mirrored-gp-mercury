@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
@@ -53,7 +54,6 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
     public static final String TST_REAGENT_KT = "tstReagentKT";
     public static final String MISEQ_TICKET_KEY = "FCT-1";
     public static final String FLOWCELL_2500_TICKET_KEY = "FCT-2";
-    private LabVessel denatureSource;
     private Date runDate;
     private QtpEntityBuilder qtpEntityBuilder;
     private BarcodedTube denatureTube;
@@ -66,7 +66,6 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         expectedRouting = SystemRouter.System.MERCURY;
 
         final ProductOrder productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
-        Long pdoId = 9202938094820L;
         runDate = new Date();
         Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
         LabBatch workflowBatch = new LabBatch("Exome Express Batch",
@@ -157,10 +156,9 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         getLabEventFactory().setLabVesselDao(mockLabVesselDao2);
 
 
-        PlateCherryPickEvent reagentToFlowcellJaxb =
-                getLabEventFactory()
-                        .getReagentToFlowcellEventDBFree(TST_REAGENT_KT, denatureToFlowcellFlowcellBarcode, "hrafal",
-                                                         "ZAN");
+        PlateCherryPickEvent reagentToFlowcellJaxb = getLabEventFactory().getReagentToFlowcellEventDBFree(
+                TST_REAGENT_KT, denatureToFlowcellFlowcellBarcode, "hrafal",
+                BettaLimsMessageTestFactory.MISEQ_SEQUENCING_STATION_MACHINE_NAME);
         LabEvent reagentToFlowcellEvent = getLabEventFactory().buildFromBettaLims(reagentToFlowcellJaxb);
         getLabEventFactory().getEventHandlerSelector()
                             .applyEventSpecificHandling(reagentToFlowcellEvent, reagentToFlowcellJaxb);
@@ -245,10 +243,9 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         getLabEventFactory().setLabVesselDao(mockLabVesselDao2);
 
 
-        PlateCherryPickEvent reagentToFlowcellJaxb =
-                getLabEventFactory()
-                        .getReagentToFlowcellEventDBFree(TST_REAGENT_KT, denatureToFlowcellFlowcellBarcode, "hrafal",
-                                                         "ZAN");
+        PlateCherryPickEvent reagentToFlowcellJaxb = getLabEventFactory().getReagentToFlowcellEventDBFree(
+                TST_REAGENT_KT, denatureToFlowcellFlowcellBarcode, "hrafal",
+                BettaLimsMessageTestFactory.MISEQ_SEQUENCING_STATION_MACHINE_NAME);
         LabEvent reagentToFlowcellEvent = getLabEventFactory().buildFromBettaLims(reagentToFlowcellJaxb);
         getLabEventFactory().getEventHandlerSelector()
                             .applyEventSpecificHandling(reagentToFlowcellEvent, reagentToFlowcellJaxb);
@@ -343,10 +340,9 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
 
         getLabEventFactory().setLabVesselDao(mockLabVesselDao2);
 
-        PlateCherryPickEvent reagentToFlowcellJaxb =
-                getLabEventFactory()
-                        .getReagentToFlowcellEventDBFree(TST_REAGENT_KT, denatureToFlowcellFlowcellBarcode, "hrafal",
-                                                         "ZAN");
+        PlateCherryPickEvent reagentToFlowcellJaxb = getLabEventFactory().getReagentToFlowcellEventDBFree(
+                TST_REAGENT_KT, denatureToFlowcellFlowcellBarcode, "hrafal",
+                BettaLimsMessageTestFactory.MISEQ_SEQUENCING_STATION_MACHINE_NAME);
         LabEvent reagentToFlowcellEvent = getLabEventFactory().buildFromBettaLims(reagentToFlowcellJaxb);
         getLabEventFactory().getEventHandlerSelector()
                             .applyEventSpecificHandling(reagentToFlowcellEvent, reagentToFlowcellJaxb);
@@ -435,10 +431,9 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
 
         getLabEventFactory().setLabVesselDao(mockLabVesselDao2);
 
-        PlateCherryPickEvent reagentToFlowcellJaxb =
-                getLabEventFactory()
-                        .getReagentToFlowcellEventDBFree(TST_REAGENT_KT, denatureToFlowcellFlowcellBarcode, "hrafal",
-                                                         "ZAN");
+        PlateCherryPickEvent reagentToFlowcellJaxb = getLabEventFactory().getReagentToFlowcellEventDBFree(
+                TST_REAGENT_KT, denatureToFlowcellFlowcellBarcode, "hrafal",
+                BettaLimsMessageTestFactory.MISEQ_SEQUENCING_STATION_MACHINE_NAME);
         LabEvent reagentToFlowcellEvent = getLabEventFactory().buildFromBettaLims(reagentToFlowcellJaxb);
         getLabEventFactory().getEventHandlerSelector()
                             .applyEventSpecificHandling(reagentToFlowcellEvent, reagentToFlowcellJaxb);
@@ -529,10 +524,9 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
 
         getLabEventFactory().setLabVesselDao(mockLabVesselDao2);
 
-        PlateCherryPickEvent reagentToFlowcellJaxb =
-                getLabEventFactory()
-                        .getReagentToFlowcellEventDBFree(TST_REAGENT_KT, denatureToFlowcellFlowcellBarcode, "hrafal",
-                                                         "ZAN");
+        PlateCherryPickEvent reagentToFlowcellJaxb = getLabEventFactory().getReagentToFlowcellEventDBFree(
+                TST_REAGENT_KT, denatureToFlowcellFlowcellBarcode, "hrafal",
+                BettaLimsMessageTestFactory.MISEQ_SEQUENCING_STATION_MACHINE_NAME);
         LabEvent reagentToFlowcellEvent = getLabEventFactory().buildFromBettaLims(reagentToFlowcellJaxb);
         getLabEventFactory().getEventHandlerSelector()
                             .applyEventSpecificHandling(reagentToFlowcellEvent, reagentToFlowcellJaxb);
@@ -626,10 +620,9 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
 
         getLabEventFactory().setLabVesselDao(mockLabVesselDao2);
 
-        PlateCherryPickEvent reagentToFlowcellJaxb =
-                getLabEventFactory()
-                        .getReagentToFlowcellEventDBFree(TST_REAGENT_KT, denatureToFlowcellFlowcellBarcode, "hrafal",
-                                                         "ZAN");
+        PlateCherryPickEvent reagentToFlowcellJaxb = getLabEventFactory() .getReagentToFlowcellEventDBFree(
+                TST_REAGENT_KT, denatureToFlowcellFlowcellBarcode, "hrafal",
+                BettaLimsMessageTestFactory.MISEQ_SEQUENCING_STATION_MACHINE_NAME);
         LabEvent reagentToFlowcellEvent = getLabEventFactory().buildFromBettaLims(reagentToFlowcellJaxb);
         getLabEventFactory().getEventHandlerSelector()
                             .applyEventSpecificHandling(reagentToFlowcellEvent, reagentToFlowcellJaxb);
@@ -672,11 +665,17 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
                                                      Mockito.eq(LabBatch.TicketFields.SEQUENCING_STATION.getName())))
                .thenReturn(mockJiraSource.getCustomFields(LabBatch.TicketFields.SUMMARY.getName(),
                                                           LabBatch.TicketFields.SEQUENCING_STATION.getName()));
+        Mockito.when(mockJiraService.getCustomFields(Mockito.eq(LabBatch.TicketFields.SEQUENCING_STATION.getName())))
+               .thenReturn(mockJiraSource.getCustomFields(LabBatch.TicketFields.SEQUENCING_STATION.getName()));
         AppConfig mockAppConfig = Mockito.mock(AppConfig.class);
 
         getLabEventFactory().getEventHandlerSelector().getFlowcellMessageHandler().setEmailSender(mockEmailSender);
         getLabEventFactory().getEventHandlerSelector().getFlowcellMessageHandler().setJiraService(mockJiraService);
         getLabEventFactory().getEventHandlerSelector().getFlowcellMessageHandler().setAppConfig(mockAppConfig);
+
+        getLabEventFactory().getEventHandlerSelector().getFlowcellLoadedHandler().setEmailSender(mockEmailSender);
+        getLabEventFactory().getEventHandlerSelector().getFlowcellLoadedHandler().setJiraService(mockJiraService);
+        getLabEventFactory().getEventHandlerSelector().getFlowcellLoadedHandler().setAppConfig(mockAppConfig);
 
         TubeFormationDao mockTubeFormationDao = Mockito.mock(TubeFormationDao.class);
         Mockito.when(mockTubeFormationDao.findByDigest(Mockito.anyString()))
@@ -708,10 +707,9 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
 
         getLabEventFactory().setLabVesselDao(mockLabVesselDao2);
 
-        PlateCherryPickEvent reagentToFlowcellJaxb =
-                getLabEventFactory()
-                        .getReagentToFlowcellEventDBFree(TST_REAGENT_KT, denatureToFlowcellFlowcellBarcode, "hrafal",
-                                                         "ZAN");
+        PlateCherryPickEvent reagentToFlowcellJaxb = getLabEventFactory() .getReagentToFlowcellEventDBFree(
+                TST_REAGENT_KT, denatureToFlowcellFlowcellBarcode, "hrafal",
+                BettaLimsMessageTestFactory.MISEQ_SEQUENCING_STATION_MACHINE_NAME);
         LabEvent reagentToFlowcellEvent = getLabEventFactory().buildFromBettaLims(reagentToFlowcellJaxb);
         getLabEventFactory().getEventHandlerSelector()
                             .applyEventSpecificHandling(reagentToFlowcellEvent, reagentToFlowcellJaxb);

@@ -235,7 +235,7 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
     public String getSummary() {
 
         StringBuilder summary = new StringBuilder();
-        if (clover.org.apache.commons.lang.StringUtils.isBlank(batch.getBatchName())) {
+        if (StringUtils.isBlank(batch.getBatchName())) {
 
             for (ResearchProject currProj : foundResearchProjectList.values()) {
                 summary.append(currProj.getTitle()).append("; ");

@@ -1,19 +1,14 @@
 package org.broadinstitute.gpinformatics.infrastructure.common;
 
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
-import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
 
 import javax.annotation.Nonnull;
 import javax.persistence.Transient;
-import java.util.Collections;
 
 /**
  * This abstraction describes a sample in both project management and LIMS in Mercury. Put code in here that will be
@@ -52,6 +47,10 @@ public abstract class AbstractSample {
         return isInBspFormat() && !hasBspSampleDataBeenInitialized;
     }
 
+    public boolean isHasBspSampleDataBeenInitialized() {
+        return hasBspSampleDataBeenInitialized;
+    }
+
     /**
      * @return true if sample is a loaded BSP sample but BSP didn't have any data for it.
      */
@@ -65,16 +64,14 @@ public abstract class AbstractSample {
     @Nonnull
     public SampleData getSampleData() {
         if (!hasBspSampleDataBeenInitialized) {
-
             SampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(SampleDataFetcher.class);
-            sampleData = sampleDataFetcher.fetchSampleData(getSampleKey());
+            SampleData sampleDataTemp = sampleDataFetcher.fetchSampleData(getSampleKey());
 
             // If there is no DTO, create one with no data populated.
-            if (sampleData == null) {
-                sampleData = makeSampleData();
+            if (sampleDataTemp == null) {
+                sampleDataTemp = makeSampleData();
             }
-
-            hasBspSampleDataBeenInitialized = true;
+            setSampleData(sampleDataTemp);
         }
 
         return sampleData;

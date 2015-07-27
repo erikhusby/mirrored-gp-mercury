@@ -400,7 +400,7 @@
                     </div>
                 </security:authorizeBlock>
 
-                <security:authorizeBlock roles="<%= roles(Developer) %>">
+                <security:authorizeBlock roles="<%= roles(PDM, Developer) %>">
                     <div class="control-group">
                         <stripes:label for="workflow" class="control-label">
                             Workflow

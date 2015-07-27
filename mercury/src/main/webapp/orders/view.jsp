@@ -65,6 +65,11 @@ $j(document).ready(function () {
 var bspDataCount = 0;
 
 function setupDialogs() {
+    function handleCancelEvent () {
+        $j(this).dialog("close");
+        $j("#dialogAction").attr("name", "");
+    }
+
     $j("#confirmDialog").dialog({
         modal: true,
         autoOpen: false,
@@ -80,9 +85,7 @@ function setupDialogs() {
             },
             {
                 text: "Cancel",
-                click: function () {
-                    $j(this).dialog("close");
-                }
+                click: handleCancelEvent
             }
         ]
     });
@@ -103,9 +106,7 @@ function setupDialogs() {
             },
             {
                 text: "Cancel",
-                click: function () {
-                    $j(this).dialog("close");
-                }
+                click: handleCancelEvent
             }
         ]
     });
@@ -128,9 +129,7 @@ function setupDialogs() {
             },
             {
                 text: "Cancel",
-                click: function () {
-                    $j(this).dialog("close");
-                }
+                click: handleCancelEvent
             }
         ]
     });
@@ -153,9 +152,7 @@ function setupDialogs() {
             },
             {
                 text: "Cancel",
-                click: function () {
-                    $j(this).dialog("close");
-                }
+                click: handleCancelEvent
             }
         ]
     });
@@ -178,9 +175,7 @@ function setupDialogs() {
             },
             {
                 text: "Cancel",
-                click: function () {
-                    $j(this).dialog("close");
-                }
+                click: handleCancelEvent
             }
         ]
     });
@@ -201,9 +196,7 @@ function setupDialogs() {
             },
             {
                 text: "Cancel",
-                click: function () {
-                    $j(this).dialog("close");
-                }
+                click: handleCancelEvent
             }
         ]
     });
@@ -226,9 +219,7 @@ function setupDialogs() {
             },
             {
                 text: "Cancel",
-                click: function () {
-                    $j(this).dialog("close");
-                }
+                click: handleCancelEvent
             }
         ]
     });
@@ -248,9 +239,7 @@ function setupDialogs() {
             },
             {
                 text: "Cancel",
-                click: function () {
-                    $j(this).dialog("close");
-                }
+                click: handleCancelEvent
             }
         ]
     });
@@ -1294,7 +1283,7 @@ function formatInput(item) {
                             ${sample.labEventSampleDTO.samplePackagedDate}
                     </td>
                     <td id="receipt-date-${sample.productOrderSampleId}">
-                            ${sample.labEventSampleDTO.sampleReceiptDate}
+                            ${sample.formattedReceiptDate}
                     </td>
 
                     <td id="sample-type-${sample.productOrderSampleId}"></td>
@@ -1323,7 +1312,7 @@ function formatInput(item) {
                             </div>
                         </c:if>
                     </td>
-                    <td id="onRiskDetails-${sample.productOrderSampleId}" style="display:none;">${sample.riskString}"</td>
+                    <td id="onRiskDetails-${sample.productOrderSampleId}" style="display:none;">${sample.riskString}</td>
                     <td>${sample.deliveryStatus.displayName}</td>
                     <td id="completelyBilled-${sample.productOrderSampleId}" style="text-align: center"></td>
                     <td>${sample.sampleComment}</td>
