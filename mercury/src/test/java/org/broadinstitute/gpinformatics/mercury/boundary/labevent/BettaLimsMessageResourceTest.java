@@ -30,6 +30,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
@@ -702,7 +703,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         }
 
         ProductOrder productOrder =
-                new ProductOrder(10950L, "Messaging Test " + testPrefix, productOrderSamples, "GSP-123",
+                new ProductOrder(ResearchProjectTestFactory.TEST_CREATOR, "Messaging Test " + testPrefix, productOrderSamples, "GSP-123",
                         product, researchProject);
         productOrder.prepareToSave(bspUserList.getByUsername("jowalsh"));
         productOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);

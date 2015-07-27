@@ -333,27 +333,6 @@ public class BettaLimsMessageTestFactory {
                 stationEvent.getOperation(), stationEvent.getStation()).getPlateCherryPickEvent();
     }
 
-    public PlateCherryPickEvent buildPlateToPlateCherryPick(String eventType, String sourcePlate,
-                                                            String destinationPlate, List<CherryPick> cherryPicks) {
-        PlateCherryPickEvent plateCherryPickEvent = new PlateCherryPickEvent();
-        setStationEventData(eventType, plateCherryPickEvent);
-
-        plateCherryPickEvent.getSourcePlate().add(buildRack(sourcePlate));
-        plateCherryPickEvent.getPlate().add(buildRack(destinationPlate));
-
-        for (CherryPick cherryPick : cherryPicks) {
-            CherryPickSourceType cherryPickSource = new CherryPickSourceType();
-            cherryPickSource.setBarcode(cherryPick.getSourceRackBarcode());
-            cherryPickSource.setWell(cherryPick.getSourceWell());
-            cherryPickSource.setDestinationBarcode(cherryPick.getDestinationRackBarcode());
-            cherryPickSource.setDestinationWell(cherryPick.getDestinationWell());
-            plateCherryPickEvent.getSource().add(cherryPickSource);
-        }
-
-        return plateCherryPickEvent;
-
-    }
-
     public PlateCherryPickEvent buildCherryPick(String eventType, List<String> sourceRackBarcodes,
                                                 List<List<String>> sourceTubeBarcodes, List<String> targetRackBarcodes,
                                                 List<List<String>> targetTubeBarcodes,
