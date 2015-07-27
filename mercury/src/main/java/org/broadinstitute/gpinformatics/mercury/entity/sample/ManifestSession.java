@@ -367,23 +367,6 @@ public class ManifestSession implements Updatable {
     }
 
     /**
-     * Helper method to Build a MultiMap of manifest records by the sampleId.
-     *
-     * @param manifestRecords The set of manifest records to be divided up into a MultiMap
-     *
-     * @return A MultiMap of manifest records indexed by the corresponding sampleId value
-     */
-    private Multimap<String, ManifestRecord> buildMultimapBySampleId(Collection<ManifestRecord> manifestRecords) {
-        return Multimaps.index(manifestRecords,
-                new Function<ManifestRecord, String>() {
-                    @Override
-                    public String apply(ManifestRecord manifestRecord) {
-                        return manifestRecord.getSampleId();
-                    }
-                });
-    }
-
-    /**
      * Filters out the list of records to return only the ones that do not have blocking errors such as
      * Duplicate_Sample_ID
      *
