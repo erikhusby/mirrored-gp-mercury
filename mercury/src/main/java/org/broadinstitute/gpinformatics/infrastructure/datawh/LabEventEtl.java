@@ -16,8 +16,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch.LabBatchType;
 
@@ -450,72 +448,56 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
 
     private List<EventFactDto> makeEventFacts(LabEvent entity) {
         List<EventFactDto> dtos = new ArrayList<>();
+        Set<SampleInstanceV2> sampleInstances;
 
-        // Hand off event DTOs to see if ancestry should be added
+        // Sanity check bail out
+        if (entity == null || entity.getLabEventType() == null) {
+            logger.debug("Skipping ETL on labEvent is null or has no event type" );
+            // Die here
+            return dtos;
+        }
+
+        // Hand off event DTOs to this utility to (optionally) build and add ancestry
         EventAncestryEtlUtil ancestryUtil = new EventAncestryEtlUtil();
 
-        if (entity != null && entity.getLabEventType() != null) {
-            String eventName = entity.getLabEventType().getName();
-            Date workflowEffectiveDate;
-            if( entity.getLabBatch() != null ) {
-                workflowEffectiveDate = entity.getLabBatch().getCreatedOn();
-            } else {
-                workflowEffectiveDate = entity.getEventDate();
-            }
+        Collection<LabVessel> vessels = entity.getTargetLabVessels();
+        if (vessels.isEmpty() && entity.getInPlaceLabVessel() != null) {
+            vessels.add(entity.getInPlaceLabVessel());
+        }
 
-            Collection<LabVessel> vessels = entity.getTargetLabVessels();
-            if (vessels.isEmpty() && entity.getInPlaceLabVessel() != null) {
-                vessels.add(entity.getInPlaceLabVessel());
-            }
-
-            if (vessels.isEmpty()) {
-                // Use of the full constructor which in this case has multiple nulls is intentional
-                // since exactly which fields are null is used as indicator in postEtlLogging, and this
-                // pattern is used in other fact table etl that are exposed in ExtractTransformResource.
-                WorkflowConfigDenorm wfDenorm = workflowConfigLookup.lookupWorkflowConfig(
-                        eventName, null, workflowEffectiveDate);
-                dtos.add(new EventFactDto(entity, null, null, null, null, null, null, null, wfDenorm, true));
-
-                logger.debug("Skipping ETL on labEvent " + entity.getLabEventId() +
-                             ": No event vessels" );
-            }
-            Set<SampleInstanceV2> sampleInstances;
+        if (vessels.isEmpty()) {
+            // Use of the full constructor which in this case has multiple nulls is intentional
+            // since exactly which fields are null is used as indicator in postEtlLogging, and this
+            // pattern is used in other fact table etl that are exposed in ExtractTransformResource.
+            WorkflowConfigDenorm wfDenorm = workflowConfigLookup.lookupWorkflowConfig(
+                    entity.getLabEventType().getName(), null, entity.getEventDate());
+            dtos.add(new EventFactDto(entity, null, null, "", null, null, null, null, wfDenorm, true));
+            logger.debug("Skipping ETL on labEvent " + entity.getLabEventId() + ": No event vessels" );
+        } else {
             for (LabVessel vessel : vessels) {
                 List<EventFactDto> dtosFromEvent;
-                if( vessel.getContainerRole() != null ) {
-                    if( !vessel.getContainerRole().getContainedVessels().isEmpty() ) {
-                        for (LabVessel containedVessel : vessel.getContainerRole().getContainedVessels()) {
-                            sampleInstances = containedVessel.getSampleInstancesV2();
-                            dtosFromEvent = createDtoFromEventVessel(entity, containedVessel, sampleInstances, workflowEffectiveDate);
-                            dtos.addAll(dtosFromEvent);
-                            ancestryUtil.generateAncestryData( dtosFromEvent, entity, containedVessel );
-                            dtosFromEvent.clear();
-                        }
-                    } else {
-                        VesselContainer container = vessel.getContainerRole();
-                        for( VesselPosition position : container.getEmbedder().getVesselGeometry().getVesselPositions() ) {
-                            sampleInstances = container.getSampleInstancesAtPositionV2(position);
-                            if( sampleInstances != null && !sampleInstances.isEmpty() ) {
-                                dtosFromEvent = createDtoFromEventVessel(entity, vessel, sampleInstances,
-                                        workflowEffectiveDate);
-                                dtos.addAll(dtosFromEvent);
-                                ancestryUtil.generateAncestryData( dtosFromEvent, entity, vessel );
-                                dtosFromEvent.clear();
-                            }
-                        }
+
+                // If a container and contains individual vessels, build a row for each
+                if (vessel.getContainerRole() != null && !vessel.getContainerRole().getContainedVessels().isEmpty() ) {
+                    for (LabVessel containedVessel : vessel.getContainerRole().getContainedVessels()) {
+                        sampleInstances = containedVessel.getSampleInstancesV2();
+                        dtosFromEvent = createDtoFromEventVessel(entity, containedVessel, sampleInstances);
+                        dtos.addAll(dtosFromEvent);
+                        ancestryUtil.generateAncestryData(dtosFromEvent, entity, containedVessel);
+                        dtosFromEvent.clear();
                     }
                 } else {
+                    // Otherwise, build a row for either the container (e.g. static plate) or vessel (e.g barcoded tube)
                     sampleInstances = vessel.getSampleInstancesV2();
-                    dtosFromEvent = createDtoFromEventVessel( entity, vessel, sampleInstances, workflowEffectiveDate );
+                    dtosFromEvent = createDtoFromEventVessel(entity, vessel, sampleInstances);
                     dtos.addAll(dtosFromEvent);
-                    ancestryUtil.generateAncestryData( dtosFromEvent, entity, vessel );
+                    ancestryUtil.generateAncestryData(dtosFromEvent, entity, vessel);
                     dtosFromEvent.clear();
                 }
             }
 
+            Collections.sort(dtos, EventFactDto.BY_SAMPLE_KEY);
         }
-
-        Collections.sort(dtos, EventFactDto.BY_SAMPLE_KEY);
 
         synchronized (loggingDtos) {
             loggingDtos.addAll(dtos);
@@ -529,36 +511,48 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
      * @param labEvent The base event entity
      * @param vessel An event target vessel, possibly from a container
      * @param sampleInstances Any sample instances associated with the vessel
-     * @param workflowEffectiveDate Used to determines which workflow version to apply
      * @return
      */
-    private List<EventFactDto> createDtoFromEventVessel( LabEvent labEvent, LabVessel vessel, Set<SampleInstanceV2> sampleInstances, Date workflowEffectiveDate ) {
+    private List<EventFactDto> createDtoFromEventVessel( LabEvent labEvent, LabVessel vessel, Set<SampleInstanceV2> sampleInstances ) {
         List<EventFactDto> dtos = new ArrayList<>();
+        Date workflowEffectiveDate;
+
         try {
             if (!sampleInstances.isEmpty()) {
                 for (SampleInstanceV2 si : sampleInstances) {
 
-                    // Null bucket entry is interpreted as either a pre-Mercury (BSP) event
-                    //  or a control sample which ETL ignores.
-                    LabBatch labBatch = si.getSingleBatch();
+                    ProductOrder pdo = null;
+                    LabBatch labBatch = null;
 
-                    // Pick the latest batch
-                    if( labBatch == null ) {
-                        List<LabBatch> multiBatches = si.getAllWorkflowBatches();
-                        if( !multiBatches.isEmpty() ) {
-                            Collections.sort(multiBatches, LabBatch.byDate);
-                            labBatch = si.getAllWorkflowBatches().get( multiBatches.size() - 1 );
+                    // Need to get to LabBatch --> ProductOrder
+                    BucketEntry bucketEntry = si.getSingleBucketEntry();
+
+                    // Null BucketEntry may mean multiple entries, try to use the LabEvent lcset logic
+                    if( bucketEntry == null ) {
+                        Set<LabBatch> labBatches = labEvent.getComputedLcSets();
+                        if( labBatches.size() == 1 ) {
+                            labBatch = labBatches.iterator().next();
+                            // Get any PDO, should be only 1 (should logic be added to get the newest?)
+                            pdo = labBatch.getBucketEntries().iterator().next().getProductOrder();
+                        } else {
+                            // Give up, without a single bucket entry or a single event batch, there's no way to
+                            //   reliably determine the batch/PDO
+                            logger.debug("ETL on labEvent " + labEvent.getLabEventId() +
+                                         ": batch not workflow, no PDO, or no workflow step for event" );
                         }
+                    } else {
+                        pdo = bucketEntry.getProductOrder();
+                        labBatch = bucketEntry.getLabBatch();
                     }
 
-                    BucketEntry bucketEntry = si.getSingleBucketEntry();
-                    ProductOrder pdo = bucketEntry != null ? bucketEntry.getProductOrder() : null;
                     String molecularIndexingSchemeName =  si.getMolecularIndexingScheme() != null ?
                             si.getMolecularIndexingScheme().getName() : null;
 
                     String batchName = labBatch != null ? labBatch.getBatchName() : NONE;
                     if( labBatch != null ){
                         workflowEffectiveDate = labBatch.getCreatedOn();
+                    } else {
+                        workflowEffectiveDate = labEvent.getEventDate();
                     }
                     String workflowName = labBatch != null ? labBatch.getWorkflowName() : null;
                     if (StringUtils.isBlank(workflowName) && pdo != null) {
@@ -568,7 +562,8 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                             labEvent.getLabEventType().getName(), workflowName, workflowEffectiveDate);
                     boolean canEtl = wfDenorm != null &&
                                      (labBatch != null && labBatch.getLabBatchType() == LabBatchType.WORKFLOW
-                                      || !wfDenorm.isBatchNeeded());
+                                      || !wfDenorm.isBatchNeeded()) &&
+                                     (pdo != null || !wfDenorm.isProductOrderNeeded());
                     if( !canEtl ) {
                         logger.debug("Skipping ETL on labEvent " + labEvent.getLabEventId() +
                                      ": batch not workflow, no PDO, or no worflow step for event" );

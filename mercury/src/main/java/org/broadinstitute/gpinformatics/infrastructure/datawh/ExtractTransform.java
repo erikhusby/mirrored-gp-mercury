@@ -444,7 +444,9 @@ public class ExtractTransform implements Serializable {
             return createInfoResponse("Invalid entity id range " + startId + " to " + endId, Response.Status.BAD_REQUEST);
         }
 
-        log.debug("Starting ETL backfill of " + entityClass.getName() + " having ids " + startId + " to " + endId);
+        String msg = null;
+        msg = "Starting ETL backfill of " + entityClass.getName() + " having ids " + startId + " to " + endId;
+        log.debug(msg);
         long backfillStartTime = System.currentTimeMillis();
 
         final long finalEndId = endId;
@@ -470,7 +472,6 @@ public class ExtractTransform implements Serializable {
                 }
             }
         });
-        String msg = null;
         if (!count.isEmpty() && !date.isEmpty()) {
             int recordCount = count.get(0);
             String etlDateStr = date.get(0);
@@ -478,10 +479,10 @@ public class ExtractTransform implements Serializable {
             if (recordCount > 0) {
                 writeIsReadyFile(etlDateStr);
             }
-            msg = "Created " + recordCount + " " +  " data records in " +
-                  (int) ((System.currentTimeMillis() - backfillStartTime) / MSEC_IN_SEC) + " seconds";
+            msg += "\nCreated " + recordCount + " " +  " data records in " +
+                  (int) ((System.currentTimeMillis() - backfillStartTime) / MSEC_IN_SEC) + " seconds\n";
         } else {
-            msg = "Backfill ETL created no data records";
+            msg += "\nBackfill ETL created no data records\n";
         }
         return createInfoResponse(msg, Response.Status.OK);
     }
