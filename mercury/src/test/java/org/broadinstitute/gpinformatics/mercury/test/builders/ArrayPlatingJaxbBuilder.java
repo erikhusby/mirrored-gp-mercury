@@ -41,7 +41,7 @@ public class ArrayPlatingJaxbBuilder {
         destinationPositionMap.setBarcode(arrayPlatingPlate);
         for(ReceptacleType receptacleType: sourcePositionMap.getReceptacle()) {
             ReceptacleType destinationReceptacle = new ReceptacleType();
-            destinationReceptacle.setReceptacleType("Well [200uL]");
+            destinationReceptacle.setReceptacleType("Well200");
             destinationReceptacle.setPosition(receptacleType.getPosition());
             destinationReceptacle.setVolume(BigDecimal.valueOf(8));
             destinationReceptacle.setConcentration(BigDecimal.valueOf(20));

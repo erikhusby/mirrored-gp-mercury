@@ -75,6 +75,13 @@ public class ManifestSessionDao extends GenericDao {
 
     public List<ManifestSession> getSessionsForReceiptTicket(String receiptTicket) {
 
-        return findListByList(ManifestSession.class, ManifestSession_.receiptTicket, Collections.singleton(receiptTicket));
+        return findListByList(ManifestSession.class, ManifestSession_.receiptTicket,
+                Collections.singleton(receiptTicket), new GenericDaoCallback<ManifestSession>() {
+                    @Override
+                    public void callback(CriteriaQuery<ManifestSession> criteriaQuery, Root<ManifestSession> root) {
+                        criteriaQuery.where(getCriteriaBuilder().equal(root.get(ManifestSession_.status),
+                                ManifestSession.SessionStatus.COMPLETED));
+                    }
+                });
     }
 }

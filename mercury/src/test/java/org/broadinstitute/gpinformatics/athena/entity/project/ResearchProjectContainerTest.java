@@ -30,7 +30,7 @@ public class ResearchProjectContainerTest extends Arquillian {
     public void testJiraSubmission() throws IOException {
 
         ResearchProject dummy = ResearchProjectTestFactory
-                .createDummyResearchProject(10950, "MyResearchProject", "To Study Stuff", ResearchProject.IRB_ENGAGED);
+                .createDummyResearchProject(ResearchProjectTestFactory.TEST_CREATOR, "MyResearchProject", "To Study Stuff", ResearchProject.IRB_ENGAGED);
 
         researchProjectEjb.submitToJira(dummy);
 

@@ -957,11 +957,13 @@ public class LabEventFactory implements Serializable {
         }
         List<String> barcodes = new ArrayList<>();
         barcodes.add(plateTransferEvent.getSourcePlate().getBarcode());
-        if (plateTransferEvent.getSourcePositionMap() != null) {
+        if (plateTransferEvent.getSourcePositionMap() != null &&
+            expectBarcodedReceptacleTypes(plateTransferEvent.getSourcePlate())) {
             extractBarcodes(barcodes, Collections.singletonList(plateTransferEvent.getSourcePositionMap()));
         }
         barcodes.add(plateTransferEvent.getPlate().getBarcode());
-        if (plateTransferEvent.getPositionMap() != null) {
+        if (plateTransferEvent.getPositionMap() != null &&
+            expectBarcodedReceptacleTypes(plateTransferEvent.getPlate())) {
             extractBarcodes(barcodes, Collections.singletonList(plateTransferEvent.getPositionMap()));
         }
         Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(barcodes);
@@ -1072,6 +1074,11 @@ public class LabEventFactory implements Serializable {
             rackType = RackOfTubes.RackType.Matrix96;
         }
         return rackType;
+    }
+
+    private boolean expectBarcodedReceptacleTypes(PlateType plate) {
+        return plate.getPhysType().equals(PHYS_TYPE_TUBE_RACK)
+               || RackOfTubes.RackType.getByName(plate.getPhysType()) != null;
     }
 
     /**
