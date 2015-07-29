@@ -243,7 +243,7 @@ public class MercurySample extends AbstractSample {
         if (metadataSource == MetadataSource.MERCURY) {
             this.metadata.addAll(metadata);
             Date receiptDate = getSampleData().getReceiptDate();
-            if (receiptDate != null) {
+            if (receiptDate == null) {
                 receiptDate = getReceivedDate();
             }
 
