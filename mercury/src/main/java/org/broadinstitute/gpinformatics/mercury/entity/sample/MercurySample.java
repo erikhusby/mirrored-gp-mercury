@@ -242,7 +242,12 @@ public class MercurySample extends AbstractSample {
     public void addMetadata(Set<Metadata> metadata) {
         if (metadataSource == MetadataSource.MERCURY) {
             this.metadata.addAll(metadata);
-            setSampleData(new MercurySampleData(sampleKey, this.metadata, getReceivedDate()));
+            Date receiptDate = getSampleData().getReceiptDate();
+            if (receiptDate != null) {
+                receiptDate = getReceivedDate();
+            }
+
+            setSampleData(new MercurySampleData(sampleKey, this.metadata, receiptDate));
         } else {
             throw new IllegalStateException(String.format(
                     "MercurySamples with metadata source of %s cannot have Mercury metadata", metadataSource));
@@ -262,10 +267,6 @@ public class MercurySample extends AbstractSample {
     }
 
     public Date getReceivedDate() {
-        Date receiptDate = getSampleData().getReceiptDate();
-        if (receiptDate != null) {
-            return receiptDate;
-        }
 
         for (LabVessel currentVessel : labVessel) {
             Map<LabEvent, Set<LabVessel>> vesselsForEvent =
