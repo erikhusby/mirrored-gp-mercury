@@ -32,10 +32,11 @@ public class ConfigurableListFactory {
 
     /**
      * Create a ConfigurableList instance.
+     * TODO jms 07/2015 not used, replace with ConfigurableList constructor as in other ConfigurableListActionBean methods
      *
      * @param entityList  Entities for which to display data
      * @param downloadColumnSetName Name of the column set to display
-     * @param entityName Name of the entity  TODO jms Use ColumnEntity
+     * @param entityName Name of the entity
      * @param entityId ID of the entity
      *
      * @return ConfigurableList instance
