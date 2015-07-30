@@ -165,10 +165,8 @@ public class SampleMetadataFixupTest extends Arquillian {
                                         @Nonnull String fixupComment) {
         userBean.loginOSUser();
         Map<String, Metadata.Key> fixUpErrors = new HashMap<>();
-        List<String> sampleIdsForVerification = new ArrayList<>(fixupItems.size());
         for (Map.Entry<MercurySample, MetaDataFixupItem> sampleFixupEntry : fixupItems.entrySet()) {
             MercurySample sample = sampleFixupEntry.getKey();
-            sampleIdsForVerification.add(sample.getSampleKey());
             MetaDataFixupItem fixupItem = sampleFixupEntry.getValue();
             fixUpErrors.putAll(fixupItem.validateOriginalValue(sample));
             sample.getMetadata().add(new Metadata(fixupItem.getMetadataKey(), fixupItem.getNewValue()));
@@ -179,15 +177,6 @@ public class SampleMetadataFixupTest extends Arquillian {
         assertThat(assertFailureReason, fixUpErrors, equalTo(Collections.EMPTY_MAP));
 
         mercurySampleDao.persist(new FixupCommentary(fixupComment));
-
-        // Validate new values
-        Map<String, MercurySample> updatedSamples = mercurySampleDao.findMapIdToMercurySample(sampleIdsForVerification);
-        for (MetaDataFixupItem fixupItem : fixupItems.values()) {
-            MercurySample mercurySample = updatedSamples.get(fixupItem.getSampleKey());
-            fixUpErrors.putAll(fixupItem.validateUpdatedValue(mercurySample));
-        }
-        assertFailureReason = String.format(validationErrorString, fixUpErrors);
-        assertThat(assertFailureReason, fixUpErrors, equalTo(Collections.EMPTY_MAP));
     }
 }
 
