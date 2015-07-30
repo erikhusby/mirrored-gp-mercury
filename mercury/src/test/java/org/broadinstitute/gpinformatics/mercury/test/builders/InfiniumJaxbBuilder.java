@@ -122,6 +122,7 @@ public class InfiniumJaxbBuilder {
         for (String hybridizationChip : hybridizationChips) {
             infiniumHybChamberLoadedJaxb =
                     bettaLimsMessageTestFactory.buildPlateEvent("InfiniumHybChamberLoaded", hybridizationChip);
+            infiniumHybChamberLoadedJaxb.setStation("Hyb Carrier #31");
             bettaLimsMessageTestFactory.addMessage(messageList, infiniumHybChamberLoadedJaxb);
         }
         for (String hybridizationChip : hybridizationChips) {
