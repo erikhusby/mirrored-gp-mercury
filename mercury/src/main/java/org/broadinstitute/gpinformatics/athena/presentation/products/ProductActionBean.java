@@ -146,6 +146,12 @@ public class ProductActionBean extends CoreActionBean {
         product = getContext().getRequest().getParameter(PRODUCT_PARAMETER);
         if (!StringUtils.isBlank(product)) {
             editProduct = productDao.findByBusinessKey(product);
+            QuotePriceItem quotePriceItem = priceListCache.findByKeyFields(
+                    editProduct.getPrimaryPriceItem().getPlatform(), editProduct.getPrimaryPriceItem().getCategory(),
+                    editProduct.getPrimaryPriceItem().getName());
+            if(quotePriceItem != null) {
+                editProduct.setPrice(quotePriceItem.getPrice());
+            }
         } else {
             // This must be a create, so construct a new top level product that has nothing else set
             editProduct = new Product(Product.TOP_LEVEL_PRODUCT);
