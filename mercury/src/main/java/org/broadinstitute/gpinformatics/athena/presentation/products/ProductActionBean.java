@@ -381,6 +381,14 @@ public class ProductActionBean extends CoreActionBean {
             productDownloadList = productDao.findProducts(ProductDao.Availability.CURRENT, TopLevelOnly.NO,
                     IncludePDMOnly.toIncludePDMOnly(userBean.isPDMUser()));
         }
+        for(Product product:productDownloadList) {
+            QuotePriceItem quotePriceItem = priceListCache.findByKeyFields(
+                    product.getPrimaryPriceItem().getPlatform(), product.getPrimaryPriceItem().getCategory(),
+                    product.getPrimaryPriceItem().getName());
+            if(quotePriceItem != null) {
+                product.setPrice(quotePriceItem.getPrice());
+            }
+        }
         return productDownloadList;
     }
 
