@@ -1,0 +1,17 @@
+{
+  "nodes": [
+    {
+      "name": "RACK1",
+      "children": ["TUBE1R1", "TUBE2R1"]
+    },
+    {
+      "name": "RACK2"
+    }
+  ],
+  "links": [
+    {
+      "source": 0,
+      "target": 1
+    }
+  ]
+}
