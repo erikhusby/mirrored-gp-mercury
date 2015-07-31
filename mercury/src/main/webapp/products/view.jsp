@@ -61,7 +61,7 @@
                 <label class="control-label label-form">Price</label>
                 <div class="controls">
                     <div class="form-value">
-                        <div class="form-value">$ ${actionBean.editProduct.price}</div>
+                        <div class="form-value">${actionBean.editProduct.price}</div>
                     </div>
                 </div>
             </div>
