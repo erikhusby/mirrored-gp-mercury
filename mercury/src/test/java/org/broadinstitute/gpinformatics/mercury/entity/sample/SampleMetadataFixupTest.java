@@ -12,7 +12,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
 import com.google.common.collect.ImmutableMap;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
@@ -36,6 +35,7 @@ import java.util.Map;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 
@@ -176,13 +176,8 @@ public class SampleMetadataFixupTest extends Arquillian {
             MetaDataFixupItem fixupItem = sampleFixupEntry.getValue();
             String errorString = null;
             String sampleMetadata = getSampleMetadataValue(fixupItem.getMetadataKey(), sample);
-            if (StringUtils.isNotBlank(sampleMetadata)) {
-                if (!fixupItem.validateOriginalValue(sample).isEmpty()) {
-                    errorString =
-                            String.format(originalValueDontMatchError, fixupItem.getMetadataKey(),
-                                    fixupItem.getOldValue(), sampleMetadata);
-                }
-            } else if (StringUtils.isNotBlank(fixupItem.getOldValue())) {
+            // Verify the sample does not have this metadata already.
+            if (sampleMetadata!=null) {
                 errorString =
                         String.format(originalValueDontMatchError, fixupItem.getMetadataKey(),
                                 fixupItem.getOldValue(), sampleMetadata);
@@ -190,7 +185,14 @@ public class SampleMetadataFixupTest extends Arquillian {
             // Check for errors and exit if there are any
             assertThat(errorString, nullValue());
 
+            // Verify the updated value is what we expect.
             sample.getMetadata().add(new Metadata(fixupItem.getMetadataKey(), fixupItem.getNewValue()));
+            fixupItem.validateUpdatedValue(sample);
+
+            sampleMetadata = getSampleMetadataValue(fixupItem.getMetadataKey(), sample);
+            assertThat(String.format("Updated value is not what was expected. Key: %s, Expected: %s, Found: %s",fixupItem.getMetadataKey(),
+                                            fixupItem.getNewValue(), sampleMetadata),
+                    fixupItem.validateUpdatedValue(sample), is(Collections.EMPTY_MAP));
         }
 
         mercurySampleDao.persist(new FixupCommentary(fixupComment));
