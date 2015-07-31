@@ -12,6 +12,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
 import com.google.common.collect.ImmutableMap;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
@@ -27,7 +28,6 @@ import org.testng.annotations.Test;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -36,6 +36,8 @@ import java.util.Map;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.nullValue;
 
 /**
  * Fixup test for repatienting
@@ -98,9 +100,11 @@ public class SampleMetadataFixupTest extends Arquillian {
         Map<MercurySample, MetaDataFixupItem> fixupItems = new HashMap<>();
         List<MercurySample> mercurySamples = mercurySampleDao
                 .findSamplesWithoutMetadata(MercurySample.MetadataSource.MERCURY, Metadata.Key.MATERIAL_TYPE);
+        assertThat("No samples found. Has this test already been run?", mercurySamples.size(), not(0));
+
         for (MercurySample mercurySample : mercurySamples) {
             MetaDataFixupItem fixupItem =
-                    new MetaDataFixupItem(mercurySample.getSampleKey(), Metadata.Key.MATERIAL_TYPE, "", "DNA ");
+                    new MetaDataFixupItem(mercurySample.getSampleKey(), Metadata.Key.MATERIAL_TYPE, "", "DNA");
             fixupItems.put(mercurySample, fixupItem);
         }
         String fixupComment = "see https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-3542";
@@ -164,19 +168,41 @@ public class SampleMetadataFixupTest extends Arquillian {
     private void addMetadataAndValidate(@Nonnull Map<MercurySample, MetaDataFixupItem> fixupItems,
                                         @Nonnull String fixupComment) {
         userBean.loginOSUser();
-        Map<String, Metadata.Key> fixUpErrors = new HashMap<>();
+        String originalValueDontMatchError =
+                "Original value of sample metadata is not what was expected. Key: %s, Expected: %s, Found: %s";
+
         for (Map.Entry<MercurySample, MetaDataFixupItem> sampleFixupEntry : fixupItems.entrySet()) {
             MercurySample sample = sampleFixupEntry.getKey();
             MetaDataFixupItem fixupItem = sampleFixupEntry.getValue();
-            fixUpErrors.putAll(fixupItem.validateOriginalValue(sample));
+            String errorString = null;
+            String sampleMetadata = getSampleMetadataValue(fixupItem.getMetadataKey(), sample);
+            if (StringUtils.isNotBlank(sampleMetadata)) {
+                if (!fixupItem.validateOriginalValue(sample).isEmpty()) {
+                    errorString =
+                            String.format(originalValueDontMatchError, fixupItem.getMetadataKey(),
+                                    fixupItem.getOldValue(), sampleMetadata);
+                }
+            } else if (StringUtils.isNotBlank(fixupItem.getOldValue())) {
+                errorString =
+                        String.format(originalValueDontMatchError, fixupItem.getMetadataKey(),
+                                fixupItem.getOldValue(), sampleMetadata);
+            }
+            // Check for errors and exit if there are any
+            assertThat(errorString, nullValue());
+
             sample.getMetadata().add(new Metadata(fixupItem.getMetadataKey(), fixupItem.getNewValue()));
         }
-        String validationErrorString =
-                "Updated values do not match expected values for some or all samples: %s. Please consult server log for more information.";
-        String assertFailureReason = String.format(validationErrorString, fixUpErrors);
-        assertThat(assertFailureReason, fixUpErrors, equalTo(Collections.EMPTY_MAP));
 
         mercurySampleDao.persist(new FixupCommentary(fixupComment));
+    }
+
+    private String getSampleMetadataValue(Metadata.Key metadataKey, MercurySample sample) {
+        for (Metadata sampleMetadata : sample.getMetadata()) {
+            if (sampleMetadata.getKey()==metadataKey){
+                return sampleMetadata.getValue();
+            }
+        }
+        return null;
     }
 }
 
