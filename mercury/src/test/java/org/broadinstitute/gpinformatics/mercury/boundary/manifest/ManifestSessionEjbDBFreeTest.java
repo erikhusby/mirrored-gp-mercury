@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NextTransition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
@@ -949,6 +950,9 @@ public class ManifestSessionEjbDBFreeTest {
 
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.SCANNED, 20, false);
 
+        String receiptKey = String.format("%s-%d", CreateFields.ProjectType.RECEIPT_PROJECT.getKeyPrefix(),
+                ARBITRARY_MANIFEST_SESSION_ID);
+        holder.ejb.updateReceiptInfo(ARBITRARY_MANIFEST_SESSION_ID, receiptKey);
         holder.ejb.closeSession(ARBITRARY_MANIFEST_SESSION_ID);
 
         assertThat(holder.manifestSession.getStatus(), is(ManifestSession.SessionStatus.COMPLETED));
