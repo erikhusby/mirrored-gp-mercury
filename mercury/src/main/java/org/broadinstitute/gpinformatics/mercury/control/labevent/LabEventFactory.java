@@ -1127,8 +1127,12 @@ public class LabEventFactory implements Serializable {
     // todo jmt make this database free?
     private void addReagents(LabEvent labEvent, List<ReagentType> reagentTypes) {
         for (ReagentType reagentType : reagentTypes) {
-            GenericReagent genericReagent = genericReagentDao.findByReagentNameLotExpiration(
-                    reagentType.getKitType(), reagentType.getBarcode(), reagentType.getExpiration());
+            GenericReagent genericReagent = null;
+            // This is null only in database free tests
+            if (genericReagentDao != null) {
+                genericReagent = genericReagentDao.findByReagentNameLotExpiration(
+                        reagentType.getKitType(), reagentType.getBarcode(), reagentType.getExpiration());
+            }
             if (genericReagent == null) {
                 genericReagent = new GenericReagent(reagentType.getKitType(), reagentType.getBarcode(),
                         reagentType.getExpiration());
