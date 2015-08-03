@@ -103,16 +103,16 @@
                 .call(d3cola.drag);
 
         nodeEnter.append("rect")
-                .attr({rx: 5, ry: 5});
+                .attr("width", function(d) { return d.w; })
+                .attr("height", function(d) { return d.h; });
 
         label = nodeEnter.append("text")
                 .attr("class", "label")
                 .text(function (d) {
                     return d.name;
                 })
-//                .call(d3cola.drag)
                 .each(function (d) {
-                    var b = this.getBBox();
+                    var b = this.parentNode.getBBox();
                     var extra = 2 * margin + 2 * pad;
                     d.width = b.width + extra;
                     d.height = b.height + extra;
