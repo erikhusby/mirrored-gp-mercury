@@ -29,39 +29,33 @@
         .label {
             fill: black;
             font-family: Verdana;
-            font-size: 25px;
+            font-size: 10px;
             text-anchor: middle;
             cursor: move;
         }
-    </style >
-</head >
+    </style>
+</head>
 <body>
 <script src="../../../../src/main/webapp/resources/scripts/d3.3.5.6.min.js"></script>
-<script src="http://marvl.infotech.monash.edu/webcola/cola.v3.min.js"></script>
-<!--
-<script src="../../../../src/main/webapp/resources/scripts/cola.v3.min.js"></script>
--->
 <script>
-    var d3cola = cola.d3adaptor().convergenceThreshold(0.1);
-
     var width = 960, height = 700;
 
-    var outer = d3.select("body").append("svg")
+    var svg = d3.select("body").append("svg")
             .attr({width: width, height: height, "pointer-events": "all"});
 
-    outer.append('rect')
+    svg.append('rect')
             .attr({class: 'background', width: "100%", height: "100%"})
             .call(d3.behavior.zoom().on("zoom", redraw));
 
-    var vis = outer
-            .append('g')
-            .attr('transform', 'translate(250,250) scale(0.3)');
+//    var vis = svg
+//            .append('g')
+//            .attr('transform', 'translate(250,250) scale(0.3)');
 
     function redraw() {
-        vis.attr("transform", "translate(" + d3.event.translate + ")" + " scale(" + d3.event.scale + ")");
+        svg.attr("transform", "translate(" + d3.event.translate + ")" + " scale(" + d3.event.scale + ")");
     }
 
-    outer.append('svg:defs').append('svg:marker')
+    svg.append('svg:defs').append('svg:marker')
             .attr({
                 id: 'end-arrow',
                 viewBox: '0 -5 10 10',
@@ -79,35 +73,40 @@
 
     d3.json("XfrVis.json", function (error, json) {
 
-            d3cola
-                .avoidOverlaps(true)
-                .convergenceThreshold(1e-3)
-                .flowLayout('y', 150)
-                .size([width, height])
-                .nodes(json.nodes)
-                .links(json.links)
-                .jaccardLinkLengths(150);
+        var force = d3.layout.force()
+                .gravity(.05)
+                .distance(100)
+                .charge(-350)
+                .size([width, height]);
 
-            var link = vis.selectAll(".link")
+        force.nodes(json.nodes)
+                .links(json.links)
+                .start();
+
+        var link = svg.selectAll(".link")
                 .data(json.links)
-                .enter().append("path")
+                .enter().append("line")
                 .attr("class", "link");
 
         var margin = 10, pad = 12;
-        var node = vis.selectAll(".node")
-                .data(json.nodes);
+        var node = svg.selectAll(".node")
+                .data(json.nodes)
+                .enter().append("g")
+                .attr("class", "node")
+                .call(force.drag);
 
-        var nodeEnter = node.enter().append("g")
-                .classed("node", true)
-                .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; })
-                .call(d3cola.drag);
+        node.append("rect")
+                .attr("width", function (d) {
+                    return d.w;
+                })
+                .attr("height", function (d) {
+                    return d.h;
+                });
 
-        nodeEnter.append("rect")
-                .attr("width", function(d) { return d.w; })
-                .attr("height", function(d) { return d.h; });
-
-        label = nodeEnter.append("text")
+        node.append("text")
                 .attr("class", "label")
+                .attr("dx", 12)
+                .attr("dy", ".35em")
                 .text(function (d) {
                     return d.name;
                 })
@@ -118,77 +117,30 @@
                     d.height = b.height + extra;
                 });
 
-        var lineFunction = d3.svg.line()
-                .x(function (d) {
-                    return d.x;
-                })
-                .y(function (d) {
-                    return d.y;
-                })
-                .interpolate("linear");
-
-        var routeEdges = function () {
-            d3cola.prepareEdgeRouting();
-            link.attr("d", function (d) {
-                return lineFunction(d3cola.routeEdge(d
-                        // show visibility graph
-                        //, function (g) {
-                        //    if (d.source.id === 10 && d.target.id === 11) {
-                        //    g.E.forEach(function (e) {
-                        //        vis.append("line").attr("x1", e.source.p.x).attr("y1", e.source.p.y)
-                        //            .attr("x2", e.target.p.x).attr("y2", e.target.p.y)
-                        //            .attr("stroke", "green");
-                        //    });
-                        //    }
-                        //}
-                ));
+        force.on("tick", function (e) {
+            var k = 6 * e.alpha;
+            json.links.forEach(function (d, i) {
+                d.source.y -= k;
+                d.target.y += k;
             });
-            if (isIE()) {
-                link.each(function (d) {
-                    this.parentNode.insertBefore(this, this)
-                });
-            }
-        };
-
-        d3cola.start(50, 100, 200).on("tick", function () {
-            node.each(function (d) { d.innerBounds = d.bounds.inflate(-margin); })
-                    .attr("x", function (d) {
-                        return d.innerBounds.x;
+            link
+                    .attr("x1", function (d) {
+                        return d.source.x;
                     })
-                    .attr("y", function (d) {
-                        return d.innerBounds.y;
+                    .attr("y1", function (d) {
+                        return d.source.y;
                     })
-                    .attr("width", function (d) {
-                        return d.innerBounds.width();
+                    .attr("x2", function (d) {
+                        return d.target.x;
                     })
-                    .attr("height", function (d) {
-                        return d.innerBounds.height();
+                    .attr("y2", function (d) {
+                        return d.target.y;
                     });
 
-            link.attr("d", function (d) {
-                cola.vpsc.makeEdgeBetween(d, d.source.innerBounds, d.target.innerBounds, 5);
-                var lineData = [{x: d.sourceIntersection.x, y: d.sourceIntersection.y}, {
-                    x: d.arrowStart.x,
-                    y: d.arrowStart.y
-                }];
-                return lineFunction(lineData);
+            node.attr("transform", function (d) {
+                return "translate(" + d.x + "," + d.y + ")";
             });
-            if (isIE()) {
-                link.each(function (d) {
-                    this.parentNode.insertBefore(this, this)
-                });
-            }
-
-            label
-                    .attr("x", function (d) {
-                        return d.x
-                    })
-                    .attr("y", function (d) {
-                        return d.y + (margin + pad) / 2
-                    });
-
-        }).on("end", routeEdges);
-
+        });
     });
     function isIE() {
         return ((navigator.appName == 'Microsoft Internet Explorer') || ((navigator.appName == 'Netscape') &&
