@@ -31,15 +31,12 @@ import org.mockito.Mockito;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.endsWith;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.times;
@@ -151,8 +148,7 @@ public class SampleLedgerExporterTest {
          */
         InOrder headerOrder = inOrder(mockWriter);
         for (BillingTrackerHeader header : BillingTrackerHeader.values()) {
-            headerOrder.verify(mockWriter)
-                    .writeHeaderCell(header.getText(), header == BillingTrackerHeader.TABLEAU_LINK);
+            headerOrder.verify(mockWriter).writeHeaderCell(header.getText());
         }
         headerOrder.verify(mockWriter)
                 .writeCell(eq(BillingTrackerHeader.getHistoricalPriceItemNameHeader(historicalPriceItem)),
@@ -161,7 +157,7 @@ public class SampleLedgerExporterTest {
                 .writeCell(eq(BillingTrackerHeader.getPriceItemNameHeader(priceItem)), any(CellStyle.class));
         headerOrder.verify(mockWriter).writeCell(eq(BillingTrackerHeader.getPriceItemPartNumberHeader(product)),
                 any(CellStyle.class));
-        headerOrder.verify(mockWriter).writeCell(eq("Comments"), any(CellStyle.class));
+        headerOrder.verify(mockWriter).writeCell(eq("Billing Errors"), any(CellStyle.class));
 
         /*
          * Verify that the data cells are all written out in the correct order, which corresponds to the order of the
@@ -179,21 +175,10 @@ public class SampleLedgerExporterTest {
         String pdoKey = productOrder.getJiraTicketKey();
         dataOrder.verify(mockWriter).writeCellLink(pdoKey,
                 ProductOrderActionBean.getProductOrderLink(productOrder, appConfig));
-        dataOrder.verify(mockWriter).writeCell(productOrder.getName());
-        dataOrder.verify(mockWriter).writeCell(user.getFullName());
         dataOrder.verify(mockWriter).writeCell(productOrder.getLaneCount());
         dataOrder.verify(mockWriter).writeCell(eq(productOrderSample.getLatestAutoLedgerTimestamp()),
                 any(CellStyle.class));
         dataOrder.verify(mockWriter).writeCell(eq(productOrderSample.getWorkCompleteDate()), any(CellStyle.class));
-        // TODO: test aggregation metrics
-        dataOrder.verify(mockWriter).writeCell((BigInteger) null);
-        dataOrder.verify(mockWriter).writeCell((BigInteger) null);
-        dataOrder.verify(mockWriter).writeCell((BigInteger) null);
-        dataOrder.verify(mockWriter).writeCell(any(Double.class), any(CellStyle.class));
-        dataOrder.verify(mockWriter).writeCell(any(Double.class), any(CellStyle.class));
-        dataOrder.verify(mockWriter).writeCell(eq(productOrderSample.getSampleData().getSampleType()));
-        // Tableau link
-        dataOrder.verify(mockWriter).writeCellLink(anyString(), anyString());
         dataOrder.verify(mockWriter).writeCell(productOrder.getQuoteId());
         dataOrder.verify(mockWriter).writeCell(1);
         dataOrder.verify(mockWriter).writeHistoricalBilledAmount(1.0);

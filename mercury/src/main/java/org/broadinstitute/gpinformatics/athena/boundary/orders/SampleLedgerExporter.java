@@ -22,12 +22,10 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.tableau.TableauConfig;
-import org.broadinstitute.gpinformatics.mercury.presentation.TableauRedirectActionBean;
 
 import java.awt.Color;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -174,7 +172,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
             List<ProductOrder> productOrders = orderMap.get(currentProduct);
             for (BillingTrackerHeader header : BillingTrackerHeader.values()) {
                 if (header.shouldShow(currentProduct)) {
-                    getWriter().writeHeaderCell(header.getText(), header == BillingTrackerHeader.TABLEAU_LINK);
+                    getWriter().writeHeaderCell(header.getText());
                 }
             }
 
@@ -313,9 +311,6 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
         // collaborator sample ID, looks like this is properly initialized.
         writer.writeCell(sampleData != null ? sampleData.getCollaboratorsSampleName() : "");
 
-        // Material type.
-        writer.writeCell(sampleData != null ? sampleData.getMaterialType() : "");
-
         // Risk Information.
         String riskString = sample.getRiskString();
         if (StringUtils.isBlank(riskString)) {
@@ -334,12 +329,6 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
         writer.writeCellLink(productOrder.getJiraTicketKey(),
                 ProductOrderActionBean.getProductOrderLink(productOrder, appConfig));
 
-        // Product Order Name (actually this concept is called 'Title' in PDO world).
-        writer.writeCell(productOrder.getTitle());
-
-        // Project Manager - need to turn this into a user name.
-        writer.writeCell(sampleLedgerRow.getProjectManagerName());
-
         // Lane Count
         if (BillingTrackerHeader.LANE_COUNT.shouldShow(product)) {
             writer.writeCell(productOrder.getLaneCount());
@@ -350,47 +339,6 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
 
         // Work complete date is the date of any ledger items that are ready to be billed.
         writer.writeCell(sample.getWorkCompleteDate(), getDateStyle());
-
-        // Picard metrics
-        BigInteger pfReads = null;
-        BigInteger pfAlignedGb = null;
-        BigInteger pfReadsAlignedInPairs = null;
-        Double percentCoverageAt20x = null;
-        Double percentCoverageAt100x = null;
-        WorkCompleteMessage workCompleteMessage = workCompleteMessageBySample.get(sample.getSampleKey());
-        if (workCompleteMessage != null) {
-            pfReads = workCompleteMessage.getPfReads();
-            pfAlignedGb = workCompleteMessage.getAlignedGb();
-            pfReadsAlignedInPairs = workCompleteMessage.getPfReadsAlignedInPairs();
-            percentCoverageAt20x = workCompleteMessage.getPercentCoverageAt20X();
-            percentCoverageAt100x = workCompleteMessage.getPercentCoverageAt100X();
-        }
-
-        // PF Reads
-        writer.writeCell(pfReads);
-
-        // PF Aligned GB
-        writer.writeCell(pfAlignedGb);
-
-        // PF Reads Aligned in Pairs
-        writer.writeCell(pfReadsAlignedInPairs);
-
-        // % coverage at 20x
-        if (BillingTrackerHeader.PERCENT_COVERAGE_AT_20X.shouldShow(product)) {
-            writer.writeCell(percentCoverageAt20x, getPercentageStyle());
-        }
-
-        // % coverage at 100x
-        if (BillingTrackerHeader.TARGET_BASES_100X_PERCENT.shouldShow(product)) {
-            writer.writeCell(percentCoverageAt100x, getPercentageStyle());
-        }
-
-        writer.writeCell(sampleData != null ? sampleData.getSampleType() : "");
-
-        // Tableau link
-        String pdoKey = productOrder.getJiraTicketKey();
-        writer.writeCellLink(TableauRedirectActionBean.getPdoSequencingSampleDashboardUrl(pdoKey, tableauConfig),
-                TableauRedirectActionBean.getPdoSequencingSamplesDashboardRedirectUrl(pdoKey, appConfig));
 
         // Quote ID.
         writer.writeCell(productOrder.getQuoteId());
@@ -416,17 +364,6 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
                 writeCountsForPriceItems(billCounts, item);
             }
         }
-
-        // Write the comments.
-        String theComment = "";
-        if (!StringUtils.isBlank(productOrder.getComments())) {
-            theComment += productOrder.getComments();
-        }
-
-        if (!StringUtils.isBlank(sample.getSampleComment())) {
-            theComment += "--" + sample.getSampleComment();
-        }
-        writer.writeCell(theComment);
 
         // Any messages for items that are not billed yet.
         String billingError = sample.getUnbilledLedgerItemMessages();
@@ -492,8 +429,6 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
             }
         }
 
-        getWriter().writeCell("Comments", getFixedHeaderStyle());
-        getWriter().setColumnWidth(COMMENTS_WIDTH);
         getWriter().writeCell("Billing Errors", getFixedHeaderStyle());
         getWriter().setColumnWidth(ERRORS_WIDTH);
     }
