@@ -1,7 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
-import com.google.common.collect.Lists;
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
@@ -19,8 +17,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
-import org.hibernate.SQLQuery;
-import org.hibernate.type.LongType;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -28,8 +24,6 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import javax.persistence.Query;
-import javax.transaction.UserTransaction;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -68,10 +62,6 @@ public class LabVesselFixupTest extends Arquillian {
 
     @Inject
     private UserBean userBean;
-
-    @SuppressWarnings("CdiInjectionPointsInspection")
-    @Inject
-    private UserTransaction utx;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -1034,41 +1024,5 @@ public class LabVesselFixupTest extends Arquillian {
         barcodedTube.setVolume(newVolume);
         barcodedTubeDao.persist(new FixupCommentary("GPLIM-3525 manually set volume for tube missing initial tare"));
         barcodedTubeDao.flush();
-    }
-
-    @Test(enabled = false)
-    public void gplim3631RemoveInvalidIndexPlates() throws Exception {
-        userBean.loginOSUser();
-
-        Query query = staticPlateDao.getEntityManager().createNativeQuery(
-                "select lab_vessel_id from lab_vessel where dtype = 'StaticPlate' and label like 'LOOKUP%'");
-        query.unwrap(SQLQuery.class).addScalar("lab_vessel_id", LongType.INSTANCE);
-        List<Long> plateIds = query.getResultList();
-        Assert.assertTrue(CollectionUtils.isNotEmpty(plateIds));
-        System.out.println("Found " + plateIds.size() + " plate ids");
-
-        final int BATCHSIZE = 100;
-        int count = 1;
-        for (List<Long> plateIdSubset : Lists.partition(plateIds, BATCHSIZE)) {
-            utx.begin();
-            List<StaticPlate> plates = staticPlateDao.findListByList(StaticPlate.class, StaticPlate_.labVesselId,
-                    plateIdSubset);
-            Assert.assertEquals(plates.size(), plateIdSubset.size());
-
-            for (StaticPlate plate : plates) {
-                for (PlateWell well : plate.getContainerRole().getContainedVessels()) {
-                    staticPlateDao.remove(well);
-                }
-                staticPlateDao.remove(plate);
-            }
-
-            String msg = "GPLIM-3631 iteration " + count + " deletes " + plates.size() +
-                         " unused index plates having invalid barcodes.";
-            barcodedTubeDao.persist(new FixupCommentary(msg));
-            barcodedTubeDao.flush();
-            utx.commit();
-            System.out.println(msg);
-            ++count;
-        }
     }
 }

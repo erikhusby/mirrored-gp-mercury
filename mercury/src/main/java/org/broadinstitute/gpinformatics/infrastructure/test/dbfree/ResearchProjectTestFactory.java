@@ -20,7 +20,8 @@ import java.util.UUID;
 
 public class ResearchProjectTestFactory {
 
-    public static final long TEST_CREATOR = 10950;
+    // bspuser, fname: Bsp, lname; User
+    public static final long TEST_CREATOR = 10833L;
 
     public static ResearchProject createTestResearchProject() {
         String uuid = UUID.randomUUID().toString();

@@ -443,7 +443,7 @@ public enum VesselGeometry {
             new String[] {"C01"},
             new String[] {"R01","R02","R03","R04","R05","R06","R07","R08"},
             new VesselPosition[]{VesselPosition.R01C01, VesselPosition.R02C01,VesselPosition.R03C01,
-                    VesselPosition.R04C01, VesselPosition.R04C01, VesselPosition.R05C01, VesselPosition.R06C01,
+                    VesselPosition.R04C01, VesselPosition.R05C01, VesselPosition.R06C01,
                     VesselPosition.R07C01,VesselPosition.R08C01});
 
 
