@@ -166,7 +166,6 @@ public class SampleLedgerExporterTest {
         InOrder dataOrder = inOrder(mockWriter);
         dataOrder.verify(mockWriter).writeCell(productOrderSample.getName());
         dataOrder.verify(mockWriter).writeCell(productOrderSample.getSampleData().getCollaboratorsSampleName());
-        dataOrder.verify(mockWriter).writeCell(productOrderSample.getSampleData().getMaterialType());
         dataOrder.verify(mockWriter).writeCell(
                 eq(productOrderSample.getRiskItems().iterator().next().getInformation()),
                 any(CellStyle.class));
@@ -198,10 +197,5 @@ public class SampleLedgerExporterTest {
          * Verify that the right number of rows were written.
          */
         verify(mockWriter, times(3)).nextRow();
-
-        /*
-         * Verify that the WorkCompleteMessageDao isn't called excessively (default for verify() is times(1)).
-         */
-        verify(mockWorkCompleteMessageDao).findByPDO("PDO-123");
     }
 }
