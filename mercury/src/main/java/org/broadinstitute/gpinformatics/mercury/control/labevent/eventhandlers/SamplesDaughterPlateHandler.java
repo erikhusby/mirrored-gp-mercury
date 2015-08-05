@@ -38,9 +38,7 @@ public class SamplesDaughterPlateHandler {
     @Inject
     private BSPRestClient bspRestClient;
 
-    public void postToBsp(StationEventType stationEvent, String bspRestUrl) {
-
-        BettaLIMSMessage message = buildBettaLIMSMessage(stationEvent);
+    public void postToBsp(BettaLIMSMessage message, String bspRestUrl) {
 
         // Posts message to BSP using the specified REST url.
         String urlString = bspRestClient.getUrl(bspRestUrl);
@@ -54,22 +52,4 @@ public class SamplesDaughterPlateHandler {
 
     }
 
-    /**
-     * Creates a BettaLIMS message to hold an event.
-     */
-    public static BettaLIMSMessage buildBettaLIMSMessage(StationEventType stationEvent) {
-        ObjectFactory factory = new ObjectFactory();
-        BettaLIMSMessage message = factory.createBettaLIMSMessage();
-        if (OrmUtil.proxySafeIsInstance(stationEvent, PlateTransferEventType.class)) {
-            PlateTransferEventType transferEvent = OrmUtil.proxySafeCast(stationEvent, PlateTransferEventType.class);
-            message.getPlateTransferEvent().add(transferEvent);
-        } else if (OrmUtil.proxySafeIsInstance(stationEvent, PlateCherryPickEvent.class)) {
-            PlateCherryPickEvent event = OrmUtil.proxySafeCast(stationEvent, PlateCherryPickEvent.class);
-            message.getPlateCherryPickEvent().add(event);
-        } else if (OrmUtil.proxySafeIsInstance(stationEvent, PlateEventType.class)) {
-            PlateEventType event = OrmUtil.proxySafeCast(stationEvent, PlateEventType.class);
-            message.getPlateEvent().add(event);
-        }
-        return message;
-    }
 }
