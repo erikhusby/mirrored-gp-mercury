@@ -1,9 +1,11 @@
 package org.broadinstitute.gpinformatics.infrastructure.jira.issue;
 
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
+
 import java.io.Serializable;
 import java.util.Map;
 
-
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Author implements Serializable {
 
     private String self;
