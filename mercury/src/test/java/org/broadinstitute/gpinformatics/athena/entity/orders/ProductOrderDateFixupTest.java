@@ -26,7 +26,6 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import java.text.ParseException;
-import java.util.Calendar;
 import java.util.Date;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
@@ -54,17 +53,16 @@ public class ProductOrderDateFixupTest extends Arquillian {
     public void fixupGplim3690() throws ParseException {
         userBean.loginOSUser();
 
-        String orderKey = "PDO-6924";
+        String orderKey = "PDO-6790";
         ProductOrder order = productOrderDao.findByBusinessKey(orderKey);
 
-
         if (order != null) {
-            Date originalCreateDate = order.getCreatedDate();
-            Date earlierDate = DateUtils.addToDate(originalCreateDate, Calendar.YEAR, -1);
+            Date originalPlacedDate = order.getPlacedDate();
+            Date earlierDate = DateUtils.parseDate("02/18/2015");
 
-            assertThat(earlierDate, lessThan(originalCreateDate));
+            assertThat(earlierDate, lessThan(originalPlacedDate));
 
-            order.setCreatedDate(earlierDate);
+            order.setPlacedDate(earlierDate);
             productOrderDao.persist(
                     new FixupCommentary("See https://gpinfojira.broadinstitute.org:8443/jira/browse/GPLIM-3690"));
         } else {

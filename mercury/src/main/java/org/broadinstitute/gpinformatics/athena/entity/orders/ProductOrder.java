@@ -682,11 +682,6 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return createdDate;
     }
 
-    // This needs to be set to package public for use in ProductOrderDateFixupTest fixup test
-    void setCreatedDate(Date createdDate) {
-        this.createdDate = createdDate;
-    }
-
     public Long getCreatedBy() {
         return createdBy;
     }
