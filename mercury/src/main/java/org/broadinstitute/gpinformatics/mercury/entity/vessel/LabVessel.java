@@ -220,16 +220,32 @@ public abstract class LabVessel implements Serializable {
     }
 
     public boolean isDNA() {
-        boolean hasMaterialConvertedToDNA = hasMaterialConvertedTo(MaterialType.DNA);
-        if (!hasMaterialConvertedToDNA) {
-            for (SampleInstanceV2 si : getSampleInstancesV2()) {
-                if (si.getRootOrEarliestMercurySample().getSampleData().getMaterialType()
-                        .startsWith(MaterialType.DNA.name())) {
-                    return true;
+        return isMaterialType(MaterialType.DNA);
+    }
+
+    public boolean isMaterialType(MaterialType materialType) {
+        boolean hasMaterialConvertedToMaterialType = hasMaterialConvertedTo(materialType);
+        if (!hasMaterialConvertedToMaterialType) {
+            for (String sampleMaterialType : getMaterialTypes()) {
+                if (StringUtils.isNotBlank(sampleMaterialType)) {
+                    if (materialType.matches(sampleMaterialType)) {
+                        return true;
+                    }
                 }
             }
         }
-        return hasMaterialConvertedToDNA;
+        return hasMaterialConvertedToMaterialType;
+    }
+
+    private List<String> getMaterialTypes() {
+        List<String> materialTypes = new ArrayList<>();
+        for (SampleInstanceV2 si : getSampleInstancesV2()) {
+            String materialType = si.getRootOrEarliestMercurySample().getSampleData().getMaterialType();
+            if (StringUtils.isNotBlank(materialType)) {
+                materialTypes.add(materialType);
+            }
+        }
+        return materialTypes;
     }
 
     private boolean hasMaterialConvertedTo(MaterialType materialType) {
@@ -606,14 +622,25 @@ public abstract class LabVessel implements Serializable {
         CELL_SUSPENSION("Cell Suspension"),
         DNA("DNA"),
         FFPE("FFPE"),
-        FRESH_BLOOD("Fresh Blood"),
-        FRESH_FROZEN_BLOOD("Fresh Frozen Blood"),
+        FRESH_BLOOD("Fresh Blood", "^(?!frozen)(?=.*blood).*"),
+        FRESH_FROZEN_BLOOD("Fresh Frozen Blood", "^(?=frozen)(?=.*blood).*"),
         RNA("RNA");
 
         private final String displayName;
+        private final String matchPattern;
 
         MaterialType(String displayName) {
             this.displayName = displayName;
+            this.matchPattern = String.format("%s.*", getDisplayName().toLowerCase());
+        }
+
+        MaterialType(String displayName, String matchPattern) {
+            this.displayName = displayName;
+            this.matchPattern = matchPattern;
+        }
+
+        public boolean matches(String value) {
+            return value.toLowerCase().matches(matchPattern);
         }
 
         @Override

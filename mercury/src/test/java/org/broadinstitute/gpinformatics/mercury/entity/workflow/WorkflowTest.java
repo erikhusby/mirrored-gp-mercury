@@ -328,15 +328,15 @@ public class WorkflowTest {
 
          return new Object[][]{
                  {true,  Arrays.asList(trueEvaluatorName, trueEvaluatorName)},
-                 {false, Arrays.asList(trueEvaluatorName, falseEvaluatorName)},
+                 {true, Arrays.asList(trueEvaluatorName, falseEvaluatorName)},
                  {false, Arrays.asList(falseEvaluatorName, falseEvaluatorName)},
-                 {false, Arrays.asList(falseEvaluatorName, trueEvaluatorName)},
+                 {true, Arrays.asList(falseEvaluatorName, trueEvaluatorName)},
          };
 
     }
 
      @Test(dataProvider = "bucketEntryEvaluators")
-     public void testBucketEntryEvaluatorAndingWorks(boolean expectedResult, List<String> classNames) {
+     public void testBucketEntryEvaluatorOrringWorks(boolean expectedResult, List<String> classNames) {
          BarcodedTube barcodedTube = new BarcodedTube("00002345");
          barcodedTube.addSample(
                  new MercurySample("SM-2345", Collections.singleton(new Metadata(Metadata.Key.MATERIAL_TYPE, ""))));

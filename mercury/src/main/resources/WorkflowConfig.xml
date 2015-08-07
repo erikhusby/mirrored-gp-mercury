@@ -937,6 +937,9 @@
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
+                <bucketEntryEvaluators>org.broadinstitute.gpinformatics.mercury.entity.workflow.FreshFrozenBloodBucketEntryEvaluator</bucketEntryEvaluators>
+                <bucketEntryEvaluators>org.broadinstitute.gpinformatics.mercury.entity.workflow.FreshBloodBucketEntryEvaluator</bucketEntryEvaluators>
+                <bucketEntryEvaluators>org.broadinstitute.gpinformatics.mercury.entity.workflow.FfpeBucketEntryEvaluator</bucketEntryEvaluators>
                 <batchJiraProjectType></batchJiraProjectType>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -1147,7 +1150,7 @@
         <productWorkflowDefVersions>
             <version>3.0</version>
             <effectiveDate>2012-09-30T22:04:23.932-04:00</effectiveDate>
-            <!--<workflowProcessDefs>Extraction</workflowProcessDefs>-->
+            <workflowProcessDefs>Extraction</workflowProcessDefs>
             <workflowProcessDefs>Pico/Plating</workflowProcessDefs>
             <workflowProcessDefs>Exome Express Shearing</workflowProcessDefs>
             <workflowProcessDefs>Library Construction</workflowProcessDefs>
@@ -1166,7 +1169,7 @@
         <productWorkflowDefVersions>
             <version>3.0</version>
             <effectiveDate>2013-07-25T00:00:00.000-04:00</effectiveDate>
-            <!--<workflowProcessDefs>Extraction</workflowProcessDefs>-->
+            <workflowProcessDefs>Extraction</workflowProcessDefs>
             <workflowProcessDefs>Pico/Plating</workflowProcessDefs>
             <workflowProcessDefs>Exome Express Shearing</workflowProcessDefs>
             <workflowProcessDefs>Library Construction</workflowProcessDefs>
@@ -1198,6 +1201,7 @@
         <productWorkflowDefVersions>
             <version>4.0</version>
             <effectiveDate>2014-03-04T00:00:00.000-04:00</effectiveDate>
+            <workflowProcessDefs>Extraction</workflowProcessDefs>
             <workflowProcessDefs>Pico/Plating</workflowProcessDefs>
             <workflowProcessDefs>Exome Express Shearing</workflowProcessDefs>
             <workflowProcessDefs>Library Construction</workflowProcessDefs>

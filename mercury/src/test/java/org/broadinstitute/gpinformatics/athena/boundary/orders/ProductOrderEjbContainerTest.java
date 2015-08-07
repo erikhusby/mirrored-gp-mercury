@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
 
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
@@ -23,6 +24,9 @@ public class ProductOrderEjbContainerTest extends Arquillian {
 
     @Inject
     ProductOrderEjb pdoEjb;
+
+    @Inject
+    ProductOrderSampleDao productOrderSampleDao;
 
     @Inject
     ProductOrderDao pdoDao;

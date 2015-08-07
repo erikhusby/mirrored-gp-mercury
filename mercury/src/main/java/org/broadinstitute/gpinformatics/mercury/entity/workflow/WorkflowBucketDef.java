@@ -57,7 +57,7 @@ public class WorkflowBucketDef extends WorkflowStepDef {
 
     /**
      * Test if the vessel is eligible for bucketing. When bucket is being evaluated BucketEntryEvaluators defined in
-     * the configuration are and-ed together. If no BucketEntryEvaluators are defined it will by default allow the
+     * the configuration are or-ed. If no BucketEntryEvaluators are defined it will by default allow the
      * labVessel to be bucketed.
      *
      * @return true if the vessel can go into the bucket, false otherwise
@@ -71,8 +71,8 @@ public class WorkflowBucketDef extends WorkflowStepDef {
                     BucketEntryEvaluator bucketEntryInstance =
                             (BucketEntryEvaluator) bucketEntryEvaluatorConstructor.newInstance();
                     boolean meetsCriteria = bucketEntryInstance.invoke(labVessel);
-                    if (!meetsCriteria) {
-                        return false;
+                    if (meetsCriteria) {
+                        return true;
                     }
                 } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException |
                         InstantiationException | IllegalAccessException e) {
@@ -80,6 +80,7 @@ public class WorkflowBucketDef extends WorkflowStepDef {
                             String.format("error invoking BucketEntryEvaluator %s", bucketEntryEvaluator), e);
                 }
             }
+            return false;
         }
         return true;
     }
