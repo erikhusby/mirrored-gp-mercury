@@ -9,9 +9,10 @@
  * use, misuse, or functionality.
  */
 
-package org.broadinstitute.gpinformatics.athena.entity.orders;
+package org.broadinstitute.gpinformatics.athena.entity.fixup;
 
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
