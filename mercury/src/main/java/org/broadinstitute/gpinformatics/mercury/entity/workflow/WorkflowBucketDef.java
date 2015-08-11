@@ -66,7 +66,7 @@ public class WorkflowBucketDef extends WorkflowStepDef {
         if (CollectionUtils.isNotEmpty(bucketEntryEvaluators)) {
             for (String bucketEntryEvaluator : bucketEntryEvaluators) {
                 try {
-                    Class<?> bucketEntryEvaluatorClass = Class.forName(bucketEntryEvaluator);
+                    Class<?> bucketEntryEvaluatorClass = Class.forName(bucketEntryEvaluator.trim());
                     Constructor<?> bucketEntryEvaluatorConstructor = bucketEntryEvaluatorClass.getDeclaredConstructor();
                     BucketEntryEvaluator bucketEntryInstance =
                             (BucketEntryEvaluator) bucketEntryEvaluatorConstructor.newInstance();

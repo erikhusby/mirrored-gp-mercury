@@ -207,8 +207,11 @@ public class BucketEjbDbFreeTest {
 
             replay(mocks);
 
-            Map<String, Collection<ProductOrderSample>> addedSamples = bucketEjb.addSamplesToBucket(pdo);
-            Assert.assertEqualsNoOrder(addedSamples.values().toArray(), expectedSamples.toArray());
+            Collection<ProductOrderSample> addedSamples = new HashSet<>();
+            for (Collection<ProductOrderSample> productOrderSamples : bucketEjb.addSamplesToBucket(pdo).values()) {
+                addedSamples.addAll(productOrderSamples);
+            }
+            Assert.assertEqualsNoOrder(addedSamples.toArray(), expectedSamples.toArray());
 
             verify(mocks);
         }
