@@ -106,6 +106,9 @@ public abstract class AbstractBatchJiraFieldFactory {
         case FCT:
             builder = new FCTJiraFieldFactory(batch);
             break;
+        case EXTRACTION:
+            builder = new ExtractionJiraFieldFactory(batch, productOrderDao);
+            break;
         case WORKFLOW:
         default:
             builder = new LCSetJiraFieldFactory(batch, productOrderDao);

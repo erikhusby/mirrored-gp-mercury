@@ -88,7 +88,8 @@ public class CreateFields extends UpdateFields {
         FCT_PROJECT("Flowcell Tracking", "FCT", "CFCT"),
         PRODUCT_ORDERING("Product Ordering", "PDO", "CPDO"),
         RESEARCH_PROJECTS("Research Projects", "RP", "CRP"),
-        RECEIPT_PROJECT("Sample Receipt Tracking", "RCT");
+        RECEIPT_PROJECT("Sample Receipt Tracking", "RCT"),
+        EXTRACTION_PROJECT("Extractions", "XTR");
 
         private final String projectName;
         private final String keyPrefix;

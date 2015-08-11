@@ -128,6 +128,10 @@ public class LabBatch {
          */
         FCT,
         /**
+         * Extraction Batch (XTR)
+         */
+        EXTRACTION,
+        /**
          * MISEQ FCT Batch
          */
         MISEQ
@@ -438,6 +442,7 @@ public class LabBatch {
 
         NUMBER_OF_CONTROLS("Number of Controls", true),
         NUMBER_OF_SAMPLES("Number of Samples", true),
+        SAMPLE_IDS("Sample IDs", true),
 
         // DO not set this value.  Leave at its default (for now).
         LIBRARY_QC_SEQUENCING_REQUIRED("Library QC Sequencing Required?", true),
@@ -450,7 +455,8 @@ public class LabBatch {
 
         LIMS_ACTIVITY_STREAM("LIMS Activity Stream", true),
         SUMMARY("Summary", false),
-        SEQUENCING_STATION("Sequencing Station", true);
+        SEQUENCING_STATION("Sequencing Station", true),
+        MATERIAL_TYPE("BATCH_TYPE", true);
 
 
         private final String fieldName;

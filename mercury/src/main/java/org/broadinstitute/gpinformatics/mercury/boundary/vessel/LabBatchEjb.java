@@ -448,8 +448,10 @@ public class LabBatchEjb {
 
         Set<CustomField> customFields = new HashSet<>();
         Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
-        customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.GSSR_IDS,
-                                         LCSetJiraFieldFactory.buildSamplesListString(batch, reworkFromBucket)));
+        if (batch.getLabBatchType()!= LabBatch.LabBatchType.EXTRACTION) {
+            customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.GSSR_IDS,
+                                             LCSetJiraFieldFactory.buildSamplesListString(batch, reworkFromBucket)));
+        }
 
         int sampleCount = batch.getStartingBatchLabVessels().size();
         customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.NUMBER_OF_SAMPLES,
