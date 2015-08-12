@@ -26,6 +26,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.AbstractBatchJiraFieldFactory;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LCSetJiraFieldFactory;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
@@ -34,6 +35,11 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -78,6 +84,9 @@ public class LabBatchEjb {
     private SampleDataFetcher sampleDataFetcher;
 
     private ControlDao controlDao;
+
+    private WorkflowLoader workflowLoader;
+
 
     /**
      * Alternate create lab batch method to allow a user to define the vessels for use by their barcode.
@@ -254,11 +263,15 @@ public class LabBatchEjb {
                     }
                 });
         Set<LabVessel> vessels = new HashSet<>();
+
+        List<String> bucketDefNames = new ArrayList<>();
+
         for (BucketEntry bucketEntry : bucketEntries) {
             vessels.add(bucketEntry.getLabVessel());
             String tubeBarcode = bucketEntry.getLabVessel().getLabel();
             tubeBarcodeCounts.put(tubeBarcode, tubeBarcodeCounts.get(tubeBarcode) + 1);
             pdoKeys.add(bucketEntry.getProductOrder().getBusinessKey());
+            bucketDefNames.add(bucketEntry.getBucket().getBucketDefinitionName());
         }
 
         Set<LabVessel> reworkVessels = new HashSet<>();
@@ -290,7 +303,21 @@ public class LabBatchEjb {
         allBucketEntries.addAll(reworkBucketEntries);
         bucketEjb.moveFromBucketToBatch(allBucketEntries, batch);
 
-        CreateFields.IssueType issueType = CreateFields.IssueType.MAP_WORKFLOW_TO_ISSUE_TYPE.get(workflowName);
+        WorkflowConfig workflowConfig = workflowLoader.load();
+        WorkflowBucketDef bucketDef = null;
+
+        for (Workflow workflow : Workflow.SUPPORTED_WORKFLOWS) {
+            ProductWorkflowDef workflowDef = workflowConfig.getWorkflowByName(workflow.getWorkflowName());
+            ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
+            for (WorkflowBucketDef bucket : workflowVersion.getCreationBuckets()) {
+                String bucketName = bucket.getName();
+                if (bucketName.equals(bucketDefNames.iterator().next())) {
+                    bucketDef = bucket;
+                }
+            }
+        }
+
+        CreateFields.IssueType issueType = CreateFields.IssueType.valueOf(bucketDef.getBatchJiraIssueType());
 
         batchToJira(username, null, batch, issueType);
 
@@ -610,5 +637,10 @@ public class LabBatchEjb {
     @Inject
     public void setControlDao(ControlDao controlDao) {
         this.controlDao = controlDao;
+    }
+
+    @Inject
+    public void setWorkflowLoader(WorkflowLoader workflowLoader) {
+        this.workflowLoader = workflowLoader;
     }
 }

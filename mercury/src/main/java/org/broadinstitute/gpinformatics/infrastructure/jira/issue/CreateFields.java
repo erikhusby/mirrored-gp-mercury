@@ -130,7 +130,8 @@ public class CreateFields extends UpdateFields {
         FLOWCELL("Flowcell"),
         MISEQ("MiSeq"),
         SAMPLE_INITIATION("Sample Initiation"),
-        RECEIPT("Receipt");
+        RECEIPT("Receipt"),
+        ALLPREP("AllPrep");
 
         private final String jiraName;
 

@@ -108,6 +108,7 @@ public class BucketViewActionBean extends CoreActionBean {
     private final List<BucketEntry> reworkEntries = new ArrayList<>();
     private final List<BucketEntry> collectiveEntries = new ArrayList<>();
     private final Map<String, List<ProductWorkflowDef>> mapBucketToWorkflowDefs = new HashMap<>();
+    private final Map<String, WorkflowBucketDef> mapBucketToBucketDef = new HashMap<>();
 
     private List<BucketEntry> selectedEntries = new ArrayList<>();
     private String selectedPdo;
@@ -137,6 +138,7 @@ public class BucketViewActionBean extends CoreActionBean {
                 if (buckets.add(bucketName)) {
                     bucketWorkflows = new ArrayList<>();
                     mapBucketToWorkflowDefs.put(bucketName, bucketWorkflows);
+                    mapBucketToBucketDef.put(bucketName, bucket);
                 } else {
                     bucketWorkflows = mapBucketToWorkflowDefs.get(bucketName);
                 }
@@ -320,7 +322,7 @@ public class BucketViewActionBean extends CoreActionBean {
         separateEntriesByType();
         try {
             batch = labBatchEjb
-                    .createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
+                    .createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.valueOf(mapBucketToBucketDef.get(selectedBucket).getWorkflowType()),
                                                        selectedWorkflowDef.getName(), bucketEntryIds, reworkEntryIds,
                                                        summary.trim(),
                                                        description, dueDate, important,

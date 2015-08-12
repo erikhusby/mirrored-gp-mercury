@@ -199,21 +199,20 @@ public class ExtractionJiraFieldFactory extends AbstractBatchJiraFieldFactory {
                     .getImportant()));
         }
 
-        String batchMaterialType = null;
-        for (LabVessel labVessel : batch.getNonReworkStartingLabVessels()) {
-            for (LabVessel.MaterialType materialType : LabVessel.MaterialType.values()) {
-                if (labVessel.isMaterialType(materialType)) {
-                    batchMaterialType = materialType.getDisplayName();
-                }
-                if (batchMaterialType!=null){
-                    break;
-            }
-        }
-    }
+//        String batchMaterialType = null;
+//        for (LabVessel labVessel : batch.getNonReworkStartingLabVessels()) {
+//            for (LabVessel.MaterialType materialType : LabVessel.MaterialType.values()) {
+//                if (labVessel.isMaterialType(materialType)) {
+//                    batchMaterialType = materialType.getDisplayName();
+//                }
+//                if (batchMaterialType != null) {
+//                    break;
+//                }
+//            }
+//        }
 
-
-        customFields
-                .add(new CustomField(submissionFields, LabBatch.TicketFields.MATERIAL_TYPE, batchMaterialType));
+//        customFields
+//                .add(new CustomField(submissionFields, LabBatch.TicketFields.MATERIAL_TYPE, batchMaterialType));
 
 
 
