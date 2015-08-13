@@ -174,27 +174,33 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
              * possible for that test to pass even with this check. Note that this may also make code coverage waver
              * ever so slightly based on whether or not this expression evaluates to true for a particular test run.
              */
-            // Record the VesselPosition at hop count zero as the query position.  The position at which we find the
+            // Record the VesselPosition at hop count one as the query position.  The position at which we find the
             // upstream tube (or empty slot in the rack) may be different, but the "sample containment" flag should
             // be set for the query vessel position.
+
+            LabVessel contextVessel;
+            VesselContainer contextVesselContainer;
+
             if (context.getHopCount() == 0) {
-                queryVesselPosition = context.getVesselPosition();
+                queryVesselPosition = context.getStartingVesselPosition();
+                contextVessel = context.getStartingLabVessel();
+                contextVesselContainer = context.getStartingVesselContainer();
                 if (!result.containsKey(queryVesselPosition)) {
                     result.put(queryVesselPosition, false);
                 }
+            } else {
+                // Ancestry traversal only, use source values
+                contextVessel = context.getVesselEvent().getSourceLabVessel();
+                contextVesselContainer = context.getVesselEvent().getSourceVesselContainer();
             }
-
-            if (context.getLabVessel() != null && context.getVesselContainer() != null) {
-                if (OrmUtil.proxySafeIsInstance(context.getVesselContainer().getEmbedder(), TubeFormation.class)) {
-                    result.put(queryVesselPosition, true);
-                    return TraversalControl.StopTraversing;
+            if( contextVessel != null && contextVesselContainer != null ) {
+                if (OrmUtil.proxySafeIsInstance(contextVesselContainer.getEmbedder(), TubeFormation.class)) {
+                        result.put(context.getVesselEvent().getSourcePosition(), true);
+                        return TraversalControl.StopTraversing;
                 }
             }
             return TraversalControl.ContinueTraversing;
         }
-
-        @Override
-        public void evaluateVesselInOrder(Context context) {}
 
         @Override
         public void evaluateVesselPostOrder(Context context) {}

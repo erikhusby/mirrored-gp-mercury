@@ -163,22 +163,20 @@ public class LabEventTest extends BaseEventTest {
 
         @Override
         public TraversalControl evaluateVesselPreOrder(Context context) {
-            if (context.getEvent() != null) {
-                labEventNamesByHopCount.get(context.getHopCount()).add(context.getEvent());
+            if( context.getHopCount() > 0 ) {
+                // Traversal starting vessel has no event
+                LabEvent contextEvent = context.getVesselEvent().getLabEvent();
+                labEventNamesByHopCount.get(context.getHopCount()).add(contextEvent);
 
-                if (!getVisitedLabEvents().add(context.getEvent())) {
+                if (!getVisitedLabEvents().add(contextEvent)) {
                     return TraversalControl.StopTraversing;
                 }
                 if (context.getHopCount() > hopCount) {
                     hopCount = context.getHopCount();
-                    labEventNames.add(makeLabEventName(context.getEvent()));
+                    labEventNames.add(makeLabEventName(contextEvent));
                 }
             }
             return TraversalControl.ContinueTraversing;
-        }
-
-        @Override
-        public void evaluateVesselInOrder(Context context) {
         }
 
         @Override
@@ -203,9 +201,15 @@ public class LabEventTest extends BaseEventTest {
 
         public List<String> getAllEventNamesPerHop() {
             List<String> result = new ArrayList<>();
+            String previousEvenName = "";
+            String thisEventName;
             for (SortedSet<LabEvent> labEvents : labEventNamesByHopCount.values()) {
                 for (LabEvent event : labEvents) {
-                    result.add(makeLabEventName(event));
+                    thisEventName = makeLabEventName(event);
+                    //if(!thisEventName.equals(previousEvenName)){
+                        result.add(thisEventName);
+                    //}
+                    previousEvenName = thisEventName;
                 }
             }
             return result;

@@ -54,17 +54,20 @@ public class LabBatchDbTest extends ContainerTest {
 
         @Override
         public TraversalControl evaluateVesselPreOrder(Context context) {
-            if (context.getEvent() != null) {
-                if (!visitedLabEvents.add(context.getEvent())) {
+            if ( context.getHopCount() > 0 ) {
+                // Used for descendants only
+                LabVessel.VesselEvent contextVesselEvent = context.getVesselEvent();
+                LabEvent contextEvent = contextVesselEvent.getLabEvent();
+                if (!visitedLabEvents.add(contextEvent)) {
                     return TraversalControl.StopTraversing;
                 }
                 if (context.getHopCount() > hopCount) {
                     hopCount = context.getHopCount();
-                    labEventsList.add(context.getEvent());
+                    labEventsList.add(contextEvent);
 
                     // handle incoming branch transfers e.g. IndexedAdapterLigation, BaitAddition
                     // todo jmt recurse for BaitSetup
-                    for (LabVessel targetLabVessel : context.getEvent().getTargetLabVessels()) {
+                    for (LabVessel targetLabVessel : contextEvent.getTargetLabVessels()) {
                         for (Object o : targetLabVessel.getContainerRole().getSectionTransfersTo()) {
                             SectionTransfer sectionTransfer = (SectionTransfer) o;
                             if (visitedLabEvents.add(sectionTransfer.getLabEvent())) {
@@ -74,12 +77,13 @@ public class LabBatchDbTest extends ContainerTest {
                     }
 
                     List<LabEvent> inPlaceLabEvents = new ArrayList<>();
-                    if (context.getLabVessel() == null) {
-                        for (LabVessel sourceLabVessel : context.getEvent().getSourceLabVessels()) {
+                    LabVessel contextVessel = contextVesselEvent.getSourceLabVessel();
+                    if (contextVessel == null) {
+                        for (LabVessel sourceLabVessel : contextEvent.getSourceLabVessels()) {
                             inPlaceLabEvents.addAll(sourceLabVessel.getInPlaceEventsWithContainers());
                         }
                     } else {
-                        inPlaceLabEvents.addAll(context.getLabVessel().getInPlaceEventsWithContainers());
+                        inPlaceLabEvents.addAll(contextVessel.getInPlaceEventsWithContainers());
                     }
                     Collections.sort(inPlaceLabEvents, new Comparator<LabEvent>() {
                         @Override
@@ -95,10 +99,6 @@ public class LabBatchDbTest extends ContainerTest {
                 }
             }
             return TraversalControl.ContinueTraversing;
-        }
-
-        @Override
-        public void evaluateVesselInOrder(Context context) {
         }
 
         @Override

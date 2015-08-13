@@ -636,33 +636,52 @@ public abstract class LabVessel implements Serializable {
                     }
                 };
 
-        private final LabVessel labVessel;
-        private final VesselContainer<?> vesselContainer;
-        private final VesselPosition position;
+        private final LabVessel sourceLabVessel;
+        private final LabVessel targetLabVessel;
+        private final VesselContainer<?> sourceVesselContainer;
+        private final VesselContainer<?> targetVesselContainer;
+        private final VesselPosition sourcePosition;
+        private final VesselPosition targetPosition;
         private final LabEvent labEvent;
 
-        public VesselEvent(LabVessel labVessel, VesselContainer<?> vesselContainer, VesselPosition position,
-                           LabEvent labEvent) {
-            this.labVessel = labVessel;
-            this.vesselContainer = vesselContainer;
-            this.position = position;
+        public VesselEvent(LabVessel sourceLabVessel, VesselContainer<?> sourceVesselContainer, VesselPosition sourcePosition,
+                           LabEvent labEvent,
+                           LabVessel targetLabVessel, VesselContainer<?> targetVesselContainer, VesselPosition targetPosition) {
+            this.sourceLabVessel = sourceLabVessel;
+            this.sourceVesselContainer = sourceVesselContainer;
+            this.sourcePosition = sourcePosition;
+            this.targetLabVessel = targetLabVessel;
+            this.targetVesselContainer = targetVesselContainer;
+            this.targetPosition = targetPosition;
             this.labEvent = labEvent;
         }
 
-        public LabVessel getLabVessel() {
-            return labVessel;
+        public LabVessel getSourceLabVessel() {
+            return sourceLabVessel;
+        }
+
+        public LabVessel getTargetLabVessel() {
+            return targetLabVessel;
         }
 
         public LabEvent getLabEvent() {
             return labEvent;
         }
 
-        public VesselPosition getPosition() {
-            return position;
+        public VesselPosition getSourcePosition() {
+            return sourcePosition;
         }
 
-        public VesselContainer<?> getVesselContainer() {
-            return vesselContainer;
+        public VesselPosition getTargetPosition() {
+            return targetPosition;
+        }
+
+        public VesselContainer<?> getSourceVesselContainer() {
+            return sourceVesselContainer;
+        }
+
+        public VesselContainer<?> getTargetVesselContainer() {
+            return targetVesselContainer;
         }
     }
 
@@ -921,9 +940,9 @@ public abstract class LabVessel implements Serializable {
         if (continueTraversing) {
             List<VesselEvent> vesselEvents = getAncestors();
             for (VesselEvent vesselEvent : vesselEvents) {
-                LabVessel labVessel = vesselEvent.getLabVessel();
+                LabVessel labVessel = vesselEvent.getSourceLabVessel();
                 if (labVessel == null) {
-                    traversalResults.add(vesselEvent.getVesselContainer().traverseAncestors(vesselEvent.getPosition(),
+                    traversalResults.add(vesselEvent.getSourceVesselContainer().traverseAncestors(vesselEvent.getSourcePosition(),
                             sampleType, labBatchType));
                 } else {
                     traversalResults.add(labVessel.traverseAncestors(sampleType, labBatchType));
@@ -1006,15 +1025,16 @@ public abstract class LabVessel implements Serializable {
     }
 
     /**
-     * Get the immediate ancestor vessels to this vessel, in the transfer graph
+     * Get the immediate ancestor vessels (source) and a reference to this vessel (target) in the transfer path
      *
-     * @return ancestors and events
+     * @return A list of ancestor vessel events
      */
     List<VesselEvent> getAncestors() {
         List<VesselEvent> vesselEvents = new ArrayList<>();
         for (VesselToVesselTransfer vesselToVesselTransfer : vesselToVesselTransfersThisAsTarget) {
-            vesselEvents.add(new VesselEvent(vesselToVesselTransfer.getSourceVessel(), null, null,
-                    vesselToVesselTransfer.getLabEvent()));
+            VesselEvent vesselEvent = new VesselEvent(vesselToVesselTransfer.getSourceVessel(), null, null, vesselToVesselTransfer.getLabEvent(),
+                    this, null, null);
+            vesselEvents.add(vesselEvent);
         }
         for (LabVessel container : containers) {
             vesselEvents.addAll(container.getContainerRole().getAncestors(this));
@@ -1024,20 +1044,20 @@ public abstract class LabVessel implements Serializable {
     }
 
     /**
-     * Get the immediate descendant vessels to this vessel, in the transfer graph
+     * Get the immediate descendant vessels (target) and a reference to this vessel (source) in the transfer path
      *
-     * @return descendant and events
+     * @return A list of descendant vessel events
      */
     protected List<VesselEvent> getDescendants() {
         List<VesselEvent> vesselEvents = new ArrayList<>();
         for (VesselToVesselTransfer vesselToVesselTransfer : vesselToVesselTransfersThisAsSource) {
-            vesselEvents.add(new VesselEvent(vesselToVesselTransfer.getTargetVessel(), null, null,
-                    vesselToVesselTransfer.getLabEvent()));
+            VesselEvent vesselEvent = new VesselEvent(this, null, null, vesselToVesselTransfer.getLabEvent(), vesselToVesselTransfer.getTargetVessel(), null, null );
+            vesselEvents.add(vesselEvent);
         }
         for (VesselToSectionTransfer vesselToSectionTransfer : vesselToSectionTransfersThisAsSource) {
-            vesselEvents
-                    .add(new VesselEvent(vesselToSectionTransfer.getTargetVesselContainer().getEmbedder(), null, null,
-                            vesselToSectionTransfer.getLabEvent()));
+            VesselEvent vesselEvent = new VesselEvent(this, null, null, vesselToSectionTransfer.getLabEvent(),
+                    vesselToSectionTransfer.getTargetVesselContainer().getEmbedder(), null, null);
+            vesselEvents.add(vesselEvent);
         }
         for (LabVessel container : containers) {
             vesselEvents.addAll(container.getContainerRole().getDescendants(this));
@@ -1216,46 +1236,84 @@ public abstract class LabVessel implements Serializable {
     }
 
     /**
-     * Visits nodes in the transfer graph, and applies criteria.
+     * Initial call on vessel to begin to traverse nodes in the transfer graph and apply criteria.
      *
      * @param transferTraverserCriteria object that accumulates results of traversal
      * @param traversalDirection        ancestors or descendants
      */
     public void evaluateCriteria(TransferTraverserCriteria transferTraverserCriteria,
                                  TransferTraverserCriteria.TraversalDirection traversalDirection) {
-        evaluateCriteria(transferTraverserCriteria, traversalDirection, null, 0);
-    }
-
-    void evaluateCriteria(TransferTraverserCriteria transferTraverserCriteria,
-                          TransferTraverserCriteria.TraversalDirection traversalDirection, LabEvent labEvent,
-                          int hopCount) {
-        TransferTraverserCriteria.Context context =
-                new TransferTraverserCriteria.Context(this, labEvent, hopCount, traversalDirection);
-        transferTraverserCriteria.evaluateVesselPreOrder(context);
-        if (traversalDirection == TransferTraverserCriteria.TraversalDirection.Ancestors) {
-            for (VesselEvent vesselEvent : getAncestors()) {
-                evaluateVesselEvent(transferTraverserCriteria, traversalDirection, hopCount, vesselEvent);
-            }
-        } else if (traversalDirection == TransferTraverserCriteria.TraversalDirection.Descendants) {
-            traverseDescendants(transferTraverserCriteria, traversalDirection, hopCount);
-        } else {
-            throw new RuntimeException("Unknown direction " + traversalDirection.name());
+        TransferTraverserCriteria.Context context = TransferTraverserCriteria.Context.buildStartingContext(this, null, null, traversalDirection);
+        // Process is allowed to die on starting node...
+        if( transferTraverserCriteria.evaluateVesselPreOrder(context) == TransferTraverserCriteria.TraversalControl.ContinueTraversing ) {
+            evaluateCriteria(transferTraverserCriteria, traversalDirection, 1);
         }
         transferTraverserCriteria.evaluateVesselPostOrder(context);
+    }
+
+    /**
+     * Call during a traversal to visit nodes in the transfer graph and apply criteria.
+     *
+     * @param transferTraverserCriteria object that accumulates results of traversal
+     * @param traversalDirection        ancestors or descendants
+     */
+    void evaluateCriteria(TransferTraverserCriteria transferTraverserCriteria,
+                          TransferTraverserCriteria.TraversalDirection traversalDirection,
+                          int hopCount) {
+        TransferTraverserCriteria.Context context;
+        List<VesselEvent> traversalNodes;
+        boolean continueTraversing = true;
+
+        if (traversalDirection == TransferTraverserCriteria.TraversalDirection.Ancestors) {
+            traversalNodes = getAncestors();
+        } else {
+            traversalNodes = getDescendants();
+        }
+
+        for( VesselEvent vesselEvent : traversalNodes ) {
+            context = TransferTraverserCriteria.Context.buildTraversalNodeContext(vesselEvent, hopCount, traversalDirection);
+            if( transferTraverserCriteria.evaluateVesselPreOrder(context) == TransferTraverserCriteria.TraversalControl.ContinueTraversing ) {
+                evaluateVesselEvent(transferTraverserCriteria,
+                        traversalDirection,
+                        hopCount,
+                        vesselEvent);
+            } else {
+                continueTraversing = false;
+            }
+
+            transferTraverserCriteria.evaluateVesselPostOrder(context);
+
+            if( !continueTraversing) {
+                break;
+            }
+        }
     }
 
     private static void evaluateVesselEvent(TransferTraverserCriteria transferTraverserCriteria,
                                             TransferTraverserCriteria.TraversalDirection traversalDirection,
                                             int hopCount,
                                             VesselEvent vesselEvent) {
-        LabVessel labVessel = vesselEvent.getLabVessel();
-        if (labVessel == null) {
-            vesselEvent.getVesselContainer().evaluateCriteria(vesselEvent.getPosition(),
-                    transferTraverserCriteria, traversalDirection,
-                    vesselEvent.getLabEvent(), hopCount + 1);
+        LabVessel labVessel;
+        if( traversalDirection == TransferTraverserCriteria.TraversalDirection.Ancestors ) {
+            labVessel = vesselEvent.getSourceLabVessel();
+            if (labVessel == null) {
+                vesselEvent.getSourceVesselContainer().evaluateCriteria(vesselEvent.getSourcePosition(),
+                        transferTraverserCriteria, traversalDirection,
+                        hopCount + 1);
+            } else {
+                labVessel.evaluateCriteria(transferTraverserCriteria, traversalDirection,
+                        hopCount + 1);
+            }
         } else {
-            labVessel.evaluateCriteria(transferTraverserCriteria, traversalDirection, vesselEvent.getLabEvent(),
-                    hopCount + 1);
+            labVessel = vesselEvent.getTargetLabVessel();
+            if (labVessel == null) {
+                vesselEvent.getTargetVesselContainer().evaluateCriteria(vesselEvent.getTargetPosition(),
+                        transferTraverserCriteria, traversalDirection,
+                        hopCount + 1);
+            } else {
+                labVessel.evaluateCriteria(transferTraverserCriteria, traversalDirection,
+                        hopCount + 1);
+            }
         }
     }
 
