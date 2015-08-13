@@ -337,7 +337,7 @@ public class VesselContainer<T extends LabVessel> {
         boolean continueTraversing = true;
 
         for (SectionTransfer sectionTransfer : sectionTransfersTo) {
-            if (continueTraversing && sectionTransfer.getTargetVesselContainer().equals(this)) {
+            if (sectionTransfer.getTargetVesselContainer().equals(this)) {
                 VesselContainer<?> sourceVesselContainer = sectionTransfer.getSourceVesselContainer();
                 // todo jmt replace indexOf with map lookup
                 int targetWellIndex = sectionTransfer.getTargetSection().getWells().indexOf(position);
@@ -366,7 +366,7 @@ public class VesselContainer<T extends LabVessel> {
         }
         for (CherryPickTransfer cherryPickTransfer : cherryPickTransfersTo) {
             // todo jmt optimize this
-            if (continueTraversing && cherryPickTransfer.getTargetPosition() == position && cherryPickTransfer.getTargetVesselContainer()
+            if (cherryPickTransfer.getTargetPosition() == position && cherryPickTransfer.getTargetVesselContainer()
                     .equals(this)) {
                 VesselContainer<?> sourceVesselContainer = cherryPickTransfer.getSourceVesselContainer();
                 VesselPosition sourcePosition = cherryPickTransfer.getSourcePosition();
@@ -389,7 +389,7 @@ public class VesselContainer<T extends LabVessel> {
             return;
         }
         for (VesselToSectionTransfer vesselToSectionTransfer : vesselToSectionTransfersTo) {
-            if (continueTraversing && vesselToSectionTransfer.getTargetVesselContainer().equals(this)) {
+            if (vesselToSectionTransfer.getTargetVesselContainer().equals(this)) {
                 int targetWellIndex = vesselToSectionTransfer.getTargetSection().getWells().indexOf(position);
                 if (targetWellIndex < 0) {
                     // the position parameter isn't in the section, so skip the transfer
@@ -404,8 +404,6 @@ public class VesselContainer<T extends LabVessel> {
                 if( transferTraverserCriteria.evaluateVesselPreOrder(context) == TransferTraverserCriteria.TraversalControl.ContinueTraversing ) {
                     vesselToSectionTransfer.getSourceVessel()
                             .evaluateCriteria(transferTraverserCriteria, traversalDirection, hopCount + 1);
-                } else {
-                    continueTraversing = false;
                 }
                 transferTraverserCriteria.evaluateVesselPostOrder(context);
             }
@@ -420,7 +418,7 @@ public class VesselContainer<T extends LabVessel> {
         boolean continueTraversing = true;
 
         for (SectionTransfer sectionTransfer : sectionTransfersFrom) {
-            if (continueTraversing && sectionTransfer.getSourceVesselContainer().equals(this)) {
+            if (sectionTransfer.getSourceVesselContainer().equals(this)) {
                 VesselContainer<?> targetVesselContainer = sectionTransfer.getTargetVesselContainer();
                 // todo jmt replace indexOf with map lookup
                 int sourceWellIndex = sectionTransfer.getSourceSection().getWells().indexOf(sourcePosition);
@@ -451,7 +449,7 @@ public class VesselContainer<T extends LabVessel> {
         }
         for (CherryPickTransfer cherryPickTransfer : cherryPickTransfersFrom) {
             // todo jmt optimize this
-            if (continueTraversing && cherryPickTransfer.getSourcePosition() == sourcePosition && cherryPickTransfer.getSourceVesselContainer()
+            if (cherryPickTransfer.getSourcePosition() == sourcePosition && cherryPickTransfer.getSourceVesselContainer()
                     .equals(this)) {
                 VesselContainer<?> targetVesselContainer = cherryPickTransfer.getTargetVesselContainer();
                 VesselPosition targetPosition = cherryPickTransfer.getTargetPosition();
