@@ -68,4 +68,8 @@ public enum BSPSampleSearchColumn {
         BSPSampleSearchColumn.PICO_RUN_DATE,
         BSPSampleSearchColumn.RECEIPT_DATE
     };
+
+    public static final BSPSampleSearchColumn[] BILLING_TRACKER_COLUMNS = {
+            COLLABORATOR_SAMPLE_ID
+    };
 }

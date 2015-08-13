@@ -15,6 +15,7 @@ import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
@@ -323,6 +324,14 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
      * @see SampleDataFetcher
      */
     public static void loadSampleData(List<ProductOrderSample> samples) {
+        loadSampleData(samples, BSPSampleSearchColumn.PDO_SEARCH_COLUMNS);
+    }
+
+    /**
+     * Load SampleData for all the supplied ProductOrderSamples.
+     * @see SampleDataFetcher
+     */
+    public static void loadSampleData(List<ProductOrderSample> samples, BSPSampleSearchColumn... bspSampleSearchColumns) {
 
         // Create a subset of the samples so we only call BSP for BSP samples that aren't already cached.
         Set<String> sampleNames = new HashSet<>(samples.size());
@@ -342,7 +351,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         Map<String, SampleData> sampleDataMap = Collections.emptyMap();
 
         try {
-            sampleDataMap = sampleDataFetcher.fetchSampleDataForProductOrderSample(samples);
+            sampleDataMap = sampleDataFetcher.fetchSampleDataForProductOrderSamples(samples, bspSampleSearchColumns);
         } catch (BSPLookupException ignored) {
             // not a bsp sample?
         }
@@ -761,6 +770,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
      */
     public void loadSampleData() {
         loadSampleData(samples);
+    }
+
+    public void loadSampleDataForBillingTracker() {
+        loadSampleData(samples, BSPSampleSearchColumn.BILLING_TRACKER_COLUMNS);
     }
 
     // Return the sample counts object to allow call chaining.
