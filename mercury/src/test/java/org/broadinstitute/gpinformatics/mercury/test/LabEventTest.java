@@ -201,15 +201,9 @@ public class LabEventTest extends BaseEventTest {
 
         public List<String> getAllEventNamesPerHop() {
             List<String> result = new ArrayList<>();
-            String previousEvenName = "";
-            String thisEventName;
             for (SortedSet<LabEvent> labEvents : labEventNamesByHopCount.values()) {
                 for (LabEvent event : labEvents) {
-                    thisEventName = makeLabEventName(event);
-                    //if(!thisEventName.equals(previousEvenName)){
-                        result.add(thisEventName);
-                    //}
-                    previousEvenName = thisEventName;
+                    result.add(makeLabEventName(event));
                 }
             }
             return result;

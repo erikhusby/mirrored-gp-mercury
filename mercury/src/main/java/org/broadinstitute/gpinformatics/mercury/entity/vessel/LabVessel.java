@@ -1288,7 +1288,7 @@ public abstract class LabVessel implements Serializable {
             if (labVessel == null) {
                 vesselEvent.getSourceVesselContainer().evaluateCriteria(vesselEvent.getSourcePosition(),
                         transferTraverserCriteria, traversalDirection,
-                        hopCount + 1);
+                        hopCount);
             } else {
                 labVessel.evaluateCriteria(transferTraverserCriteria, traversalDirection,
                         hopCount + 1);
@@ -1298,7 +1298,7 @@ public abstract class LabVessel implements Serializable {
             if (labVessel == null) {
                 vesselEvent.getTargetVesselContainer().evaluateCriteria(vesselEvent.getTargetPosition(),
                         transferTraverserCriteria, traversalDirection,
-                        hopCount + 1);
+                        hopCount);
             } else {
                 labVessel.evaluateCriteria(transferTraverserCriteria, traversalDirection,
                         hopCount + 1);

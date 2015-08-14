@@ -352,17 +352,14 @@ public class VesselContainer<T extends LabVessel> {
                         sourcePosition, sectionTransfer.getLabEvent(), targetVessel, this, position );
                 context = TransferTraverserCriteria.Context.buildTraversalNodeContext(
                         vesselEvent, hopCount + 1, traversalDirection);
-                if( transferTraverserCriteria.evaluateVesselPreOrder(context) == TransferTraverserCriteria.TraversalControl.ContinueTraversing ) {
+                if( !(transferTraverserCriteria.evaluateVesselPreOrder(context) == TransferTraverserCriteria.TraversalControl.ContinueTraversing)  || !continueTraversing ) {
+                    continueTraversing = false;
+                } else {
                     sourceVesselContainer.evaluateCriteria(sourcePosition, transferTraverserCriteria, traversalDirection,
                             hopCount + 1);
-                } else {
-                    continueTraversing = false;
                 }
                 transferTraverserCriteria.evaluateVesselPostOrder(context);
             }
-        }
-        if( !continueTraversing ) {
-            return;
         }
         for (CherryPickTransfer cherryPickTransfer : cherryPickTransfersTo) {
             // todo jmt optimize this
@@ -376,17 +373,14 @@ public class VesselContainer<T extends LabVessel> {
                         sourcePosition, cherryPickTransfer.getLabEvent(), targetVessel, this, position );
                 context = TransferTraverserCriteria.Context.buildTraversalNodeContext(
                         vesselEvent, hopCount + 1, traversalDirection);
-                if( transferTraverserCriteria.evaluateVesselPreOrder(context) == TransferTraverserCriteria.TraversalControl.ContinueTraversing ) {
+                if( !(transferTraverserCriteria.evaluateVesselPreOrder(context) == TransferTraverserCriteria.TraversalControl.ContinueTraversing)  || !continueTraversing ) {
+                    continueTraversing = false;
+                } else {
                     sourceVesselContainer.evaluateCriteria(sourcePosition, transferTraverserCriteria, traversalDirection,
                             hopCount + 1);
-                } else {
-                    continueTraversing = false;
                 }
                 transferTraverserCriteria.evaluateVesselPostOrder(context);
             }
-        }
-        if( !continueTraversing ) {
-            return;
         }
         for (VesselToSectionTransfer vesselToSectionTransfer : vesselToSectionTransfersTo) {
             if (vesselToSectionTransfer.getTargetVesselContainer().equals(this)) {
@@ -401,7 +395,9 @@ public class VesselContainer<T extends LabVessel> {
                         null, vesselToSectionTransfer.getLabEvent(), targetVessel, this, position );
                 context = TransferTraverserCriteria.Context.buildTraversalNodeContext(
                         vesselEvent, hopCount + 1, traversalDirection);
-                if( transferTraverserCriteria.evaluateVesselPreOrder(context) == TransferTraverserCriteria.TraversalControl.ContinueTraversing ) {
+                if( !(transferTraverserCriteria.evaluateVesselPreOrder(context) == TransferTraverserCriteria.TraversalControl.ContinueTraversing)  || !continueTraversing ) {
+                    continueTraversing = false;
+                } else {
                     vesselToSectionTransfer.getSourceVessel()
                             .evaluateCriteria(transferTraverserCriteria, traversalDirection, hopCount + 1);
                 }
@@ -435,17 +431,14 @@ public class VesselContainer<T extends LabVessel> {
                         targetVessel, targetVesselContainer, targetPosition );
                 context = TransferTraverserCriteria.Context.buildTraversalNodeContext(
                         vesselEvent, hopCount + 1, traversalDirection);
-                if( transferTraverserCriteria.evaluateVesselPreOrder(context) == TransferTraverserCriteria.TraversalControl.ContinueTraversing ) {
+                if( !(transferTraverserCriteria.evaluateVesselPreOrder(context) == TransferTraverserCriteria.TraversalControl.ContinueTraversing)  || !continueTraversing ) {
+                    continueTraversing = false;
+                } else {
                     targetVesselContainer.evaluateCriteria(targetPosition, transferTraverserCriteria, traversalDirection,
                             hopCount + 1);
-                } else {
-                    continueTraversing = false;
                 }
                 transferTraverserCriteria.evaluateVesselPostOrder(context);
             }
-        }
-        if( !continueTraversing ) {
-            return;
         }
         for (CherryPickTransfer cherryPickTransfer : cherryPickTransfersFrom) {
             // todo jmt optimize this
@@ -459,17 +452,14 @@ public class VesselContainer<T extends LabVessel> {
                         targetVessel, targetVesselContainer, targetPosition );
                 context = TransferTraverserCriteria.Context.buildTraversalNodeContext(
                         vesselEvent, hopCount + 1, traversalDirection);
-                if( transferTraverserCriteria.evaluateVesselPreOrder(context) == TransferTraverserCriteria.TraversalControl.ContinueTraversing ) {
+                if( !(transferTraverserCriteria.evaluateVesselPreOrder(context) == TransferTraverserCriteria.TraversalControl.ContinueTraversing)  || !continueTraversing ) {
+                    continueTraversing = false;
+                } else {
                     targetVesselContainer.evaluateCriteria(targetPosition, transferTraverserCriteria, traversalDirection,
                             hopCount + 1);
-                } else {
-                    continueTraversing = false;
                 }
                 transferTraverserCriteria.evaluateVesselPostOrder(context);
             }
-        }
-        if( !continueTraversing ) {
-            return;
         }
         // handle VesselToVesselTransfers and un-racked VesselToSectionTransfers
         sourceVessel = getVesselAtPosition(sourcePosition);
