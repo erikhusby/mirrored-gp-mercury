@@ -1244,10 +1244,8 @@ public abstract class LabVessel implements Serializable {
     public void evaluateCriteria(TransferTraverserCriteria transferTraverserCriteria,
                                  TransferTraverserCriteria.TraversalDirection traversalDirection) {
         TransferTraverserCriteria.Context context = TransferTraverserCriteria.Context.buildStartingContext(this, null, null, traversalDirection);
-        // Process is allowed to die on starting node...
-        if( transferTraverserCriteria.evaluateVesselPreOrder(context) == TransferTraverserCriteria.TraversalControl.ContinueTraversing ) {
-            evaluateCriteria(transferTraverserCriteria, traversalDirection, 1);
-        }
+        transferTraverserCriteria.evaluateVesselPreOrder(context);
+        evaluateCriteria(transferTraverserCriteria, traversalDirection, 1);
         transferTraverserCriteria.evaluateVesselPostOrder(context);
     }
 
@@ -1262,7 +1260,6 @@ public abstract class LabVessel implements Serializable {
                           int hopCount) {
         TransferTraverserCriteria.Context context;
         List<VesselEvent> traversalNodes;
-        boolean continueTraversing = true;
 
         if (traversalDirection == TransferTraverserCriteria.TraversalDirection.Ancestors) {
             traversalNodes = getAncestors();
@@ -1272,20 +1269,12 @@ public abstract class LabVessel implements Serializable {
 
         for( VesselEvent vesselEvent : traversalNodes ) {
             context = TransferTraverserCriteria.Context.buildTraversalNodeContext(vesselEvent, hopCount, traversalDirection);
-            if( transferTraverserCriteria.evaluateVesselPreOrder(context) == TransferTraverserCriteria.TraversalControl.ContinueTraversing ) {
-                evaluateVesselEvent(transferTraverserCriteria,
+            transferTraverserCriteria.evaluateVesselPreOrder(context);
+            evaluateVesselEvent(transferTraverserCriteria,
                         traversalDirection,
                         hopCount,
                         vesselEvent);
-            } else {
-                continueTraversing = false;
-            }
-
             transferTraverserCriteria.evaluateVesselPostOrder(context);
-
-            if( !continueTraversing) {
-                break;
-            }
         }
     }
 
