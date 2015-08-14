@@ -97,6 +97,11 @@ public class MercurySampleData implements SampleData {
     }
 
     @Override
+    public Double getDv200() {
+        return null;
+    }
+
+    @Override
     public double getVolume() {
         return 0;
     }
