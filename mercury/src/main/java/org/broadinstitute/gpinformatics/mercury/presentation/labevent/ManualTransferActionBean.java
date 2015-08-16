@@ -39,6 +39,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -259,6 +260,21 @@ public class ManualTransferActionBean extends CoreActionBean {
                 addGlobalValidationError("Reagent expiration is required");
             }
         }
+        // Remove empty elements
+        if (stationEvent instanceof PlateTransferEventType) {
+            PlateTransferEventType plateTransferEventType = (PlateTransferEventType) stationEvent;
+            PositionMapType sourcePositionMap = plateTransferEventType.getSourcePositionMap();
+            if (sourcePositionMap != null) {
+                Iterator<ReceptacleType> iterator = sourcePositionMap.getReceptacle().iterator();
+                while (iterator.hasNext()) {
+                    ReceptacleType next = iterator.next();
+                    if (next.getBarcode() == null || next.getBarcode().isEmpty()) {
+                        iterator.remove();
+                    }
+                }
+                sourcePositionMap.setBarcode(plateTransferEventType.getSourcePlate().getBarcode());
+            }
+        }
 
         if (getContext().getValidationErrors().isEmpty()) {
             try {
@@ -291,5 +307,9 @@ public class ManualTransferActionBean extends CoreActionBean {
             }
         }
         return manualLabEventTypes;
+    }
+
+    public LabEventType getLabEventType() {
+        return labEventType;
     }
 }
