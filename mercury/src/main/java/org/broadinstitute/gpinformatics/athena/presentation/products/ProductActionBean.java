@@ -146,6 +146,7 @@ public class ProductActionBean extends CoreActionBean {
         product = getContext().getRequest().getParameter(PRODUCT_PARAMETER);
         if (!StringUtils.isBlank(product)) {
             editProduct = productDao.findByBusinessKey(product);
+            updateProductPrice(editProduct);
         } else {
             // This must be a create, so construct a new top level product that has nothing else set
             editProduct = new Product(Product.TOP_LEVEL_PRODUCT);
@@ -375,7 +376,24 @@ public class ProductActionBean extends CoreActionBean {
             productDownloadList = productDao.findProducts(ProductDao.Availability.CURRENT, TopLevelOnly.NO,
                     IncludePDMOnly.toIncludePDMOnly(userBean.isPDMUser()));
         }
+        for(Product product:productDownloadList) {
+            updateProductPrice(product);
+        }
         return productDownloadList;
+    }
+
+    private void updateProductPrice(Product product) {
+
+        String price = "Materials";
+        if(!product.getPrimaryPriceItem().getName().contains("Materials")) {
+            QuotePriceItem quotePriceItem = priceListCache.findByKeyFields(
+                    product.getPrimaryPriceItem().getPlatform(), product.getPrimaryPriceItem().getCategory(),
+                    product.getPrimaryPriceItem().getName());
+            if (quotePriceItem != null) {
+                price = "$" + String.format("%.2f",Float.valueOf(quotePriceItem.getPrice()));
+            }
+        }
+        product.setPrice(price);
     }
 
     public Product getEditProduct() {

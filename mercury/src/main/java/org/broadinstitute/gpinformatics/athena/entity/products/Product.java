@@ -150,6 +150,9 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     @AuditJoinTable(name = "product_risk_criteria_join_aud")
     private List<RiskCriterion> riskCriteria = new ArrayList<>();
 
+    @Transient
+    private String price;
+
     /**
      * Default no-arg constructor, also used when creating a new Product.
      */
@@ -378,6 +381,14 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         }
 
         return requirements.get(0);
+    }
+
+    public String getPrice() {
+        return price;
+    }
+
+    public void setPrice(String price) {
+        this.price = price;
     }
 
     public boolean isAvailable() {
