@@ -55,7 +55,8 @@ public class ManualTransferActionBean extends CoreActionBean {
     public static final String FETCH_EXISTING_ACTION = "fetchExisting";
 
     private BettaLIMSMessage bettaLIMSMessage;
-    private StationEventType stationEvent;
+    private int numEvents = 1;
+    private List<StationEventType> stationEvents = new ArrayList<>();
     private LabEventType labEventType;
 
     @Inject
@@ -70,48 +71,67 @@ public class ManualTransferActionBean extends CoreActionBean {
         return new ForwardResolution(MANUAL_TRANSFER_PAGE);
     }
 
+    // todo jmt allow multiple events per message.  Specified by: user; batch size; event type.
+    // Allow geometry to lay out plate or tube event barcodes on page (not transfers, they have to have their own geometry).
+    // Populate metadata
+    // This is all short term, until can generalize TubeFormation to support plates.
+
     @Before(stages = LifecycleStage.BindingAndValidation)
     public void init() {
-        String eventType = getContext().getRequest().getParameter("stationEvent.eventType");
+        String eventType = getContext().getRequest().getParameter("stationEvents[0].eventType");
         if (eventType != null) {
             labEventType = LabEventType.valueOf(eventType);
             // todo jmt move this to the enum?
             bettaLIMSMessage = new BettaLIMSMessage();
             switch (labEventType.getMessageType()) {
                 case PLATE_EVENT:
-                    PlateEventType plateEventType = new PlateEventType();
-                    stationEvent = plateEventType;
-                    bettaLIMSMessage.getPlateEvent().add(plateEventType);
+                    for (int i = 0; i < numEvents; i++) {
+                        PlateEventType plateEventType = new PlateEventType();
+                        stationEvents.add(plateEventType);
+                        bettaLIMSMessage.getPlateEvent().add(plateEventType);
+                    }
                     break;
                 case PLATE_TRANSFER_EVENT:
-                    PlateTransferEventType plateTransferEventType = new PlateTransferEventType();
-                    stationEvent = plateTransferEventType;
-                    bettaLIMSMessage.getPlateTransferEvent().add(plateTransferEventType);
+                    for (int i = 0; i < numEvents; i++) {
+                        PlateTransferEventType plateTransferEventType = new PlateTransferEventType();
+                        stationEvents.add(plateTransferEventType);
+                        bettaLIMSMessage.getPlateTransferEvent().add(plateTransferEventType);
+                    }
                     break;
                 case STATION_SETUP_EVENT:
-                    StationSetupEvent stationSetupEvent = new StationSetupEvent();
-                    stationEvent = stationSetupEvent;
-                    bettaLIMSMessage.setStationSetupEvent(stationSetupEvent);
+                    for (int i = 0; i < numEvents; i++) {
+                        StationSetupEvent stationSetupEvent = new StationSetupEvent();
+                        stationEvents.add(stationSetupEvent);
+                        bettaLIMSMessage.setStationSetupEvent(stationSetupEvent);
+                    }
                     break;
                 case PLATE_CHERRY_PICK_EVENT:
-                    PlateCherryPickEvent plateCherryPickEvent = new PlateCherryPickEvent();
-                    stationEvent = plateCherryPickEvent;
-                    bettaLIMSMessage.getPlateCherryPickEvent().add(plateCherryPickEvent);
+                    for (int i = 0; i < numEvents; i++) {
+                        PlateCherryPickEvent plateCherryPickEvent = new PlateCherryPickEvent();
+                        stationEvents.add(plateCherryPickEvent);
+                        bettaLIMSMessage.getPlateCherryPickEvent().add(plateCherryPickEvent);
+                    }
                     break;
                 case RECEPTACLE_PLATE_TRANSFER_EVENT:
-                    ReceptaclePlateTransferEvent receptaclePlateTransferEvent = new ReceptaclePlateTransferEvent();
-                    stationEvent = receptaclePlateTransferEvent;
-                    bettaLIMSMessage.getReceptaclePlateTransferEvent().add(receptaclePlateTransferEvent);
+                    for (int i = 0; i < numEvents; i++) {
+                        ReceptaclePlateTransferEvent receptaclePlateTransferEvent = new ReceptaclePlateTransferEvent();
+                        stationEvents.add(receptaclePlateTransferEvent);
+                        bettaLIMSMessage.getReceptaclePlateTransferEvent().add(receptaclePlateTransferEvent);
+                    }
                     break;
                 case RECEPTACLE_EVENT:
-                    ReceptacleEventType receptacleEventType = new ReceptacleEventType();
-                    stationEvent = receptacleEventType;
-                    bettaLIMSMessage.getReceptacleEvent().add(receptacleEventType);
+                    for (int i = 0; i < numEvents; i++) {
+                        ReceptacleEventType receptacleEventType = new ReceptacleEventType();
+                        stationEvents.add(receptacleEventType);
+                        bettaLIMSMessage.getReceptacleEvent().add(receptacleEventType);
+                    }
                     break;
                 case RECEPTACLE_TRANSFER_EVENT:
-                    ReceptacleTransferEventType receptacleTransferEventType = new ReceptacleTransferEventType();
-                    stationEvent = receptacleTransferEventType;
-                    bettaLIMSMessage.getReceptacleTransferEvent().add(receptacleTransferEventType);
+                    for (int i = 0; i < numEvents; i++) {
+                        ReceptacleTransferEventType receptacleTransferEventType = new ReceptacleTransferEventType();
+                        stationEvents.add(receptacleTransferEventType);
+                        bettaLIMSMessage.getReceptacleTransferEvent().add(receptacleTransferEventType);
+                    }
                     break;
                 default:
                     throw new RuntimeException("Unknown labEventType " + labEventType.getMessageType());
@@ -124,65 +144,79 @@ public class ManualTransferActionBean extends CoreActionBean {
         for (String reagentName : labEventType.getReagentNames()) {
             ReagentType reagentType = new ReagentType();
             reagentType.setKitType(reagentName);
-            stationEvent.getReagent().add(reagentType);
+            stationEvents.get(0).getReagent().add(reagentType);
         }
 
         switch (labEventType.getMessageType()) {
             case PLATE_EVENT: {
-                PlateEventType plateEventType = (PlateEventType) stationEvent;
-                PlateType destinationPlateType = new PlateType();
-                VesselTypeGeometry targetVesselTypeGeometry = labEventType.getTargetVesselTypeGeometry();
-                destinationPlateType.setPhysType(targetVesselTypeGeometry.getDisplayName());
-                plateEventType.setPlate(destinationPlateType);
-                if (targetVesselTypeGeometry instanceof RackOfTubes.RackType) {
-                    plateEventType.setPositionMap(new PositionMapType());
+                for (StationEventType stationEvent : stationEvents) {
+                    PlateEventType plateEventType = (PlateEventType) stationEvent;
+                    PlateType destinationPlateType = new PlateType();
+                    VesselTypeGeometry targetVesselTypeGeometry = labEventType.getTargetVesselTypeGeometry();
+                    destinationPlateType.setPhysType(targetVesselTypeGeometry.getDisplayName());
+                    plateEventType.setPlate(destinationPlateType);
+                    if (targetVesselTypeGeometry instanceof RackOfTubes.RackType) {
+                        plateEventType.setPositionMap(new PositionMapType());
+                    }
                 }
                 break;
             }
             case PLATE_TRANSFER_EVENT: {
-                PlateTransferEventType plateTransferEventType = (PlateTransferEventType) stationEvent;
-                PlateType sourcePlate = new PlateType();
-                VesselTypeGeometry sourceVesselTypeGeometry = labEventType.getSourceVesselTypeGeometry();
-                sourcePlate.setPhysType(sourceVesselTypeGeometry.getDisplayName());
-                plateTransferEventType.setSourcePlate(sourcePlate);
-                if (sourceVesselTypeGeometry instanceof RackOfTubes.RackType) {
-                    plateTransferEventType.setSourcePositionMap(new PositionMapType());
-                }
+                for (StationEventType stationEvent : stationEvents) {
+                    PlateTransferEventType plateTransferEventType = (PlateTransferEventType) stationEvent;
+                    PlateType sourcePlate = new PlateType();
+                    VesselTypeGeometry sourceVesselTypeGeometry = labEventType.getSourceVesselTypeGeometry();
+                    sourcePlate.setPhysType(sourceVesselTypeGeometry.getDisplayName());
+                    plateTransferEventType.setSourcePlate(sourcePlate);
+                    if (sourceVesselTypeGeometry instanceof RackOfTubes.RackType) {
+                        plateTransferEventType.setSourcePositionMap(new PositionMapType());
+                    }
 
-                PlateType destinationPlateType = new PlateType();
-                VesselTypeGeometry targetVesselTypeGeometry = labEventType.getTargetVesselTypeGeometry();
-                destinationPlateType.setPhysType(targetVesselTypeGeometry.getDisplayName());
-                plateTransferEventType.setPlate(destinationPlateType);
-                if (targetVesselTypeGeometry instanceof RackOfTubes.RackType) {
-                    plateTransferEventType.setPositionMap(new PositionMapType());
+                    PlateType destinationPlateType = new PlateType();
+                    VesselTypeGeometry targetVesselTypeGeometry = labEventType.getTargetVesselTypeGeometry();
+                    destinationPlateType.setPhysType(targetVesselTypeGeometry.getDisplayName());
+                    plateTransferEventType.setPlate(destinationPlateType);
+                    if (targetVesselTypeGeometry instanceof RackOfTubes.RackType) {
+                        plateTransferEventType.setPositionMap(new PositionMapType());
+                    }
                 }
                 break;
             }
             case STATION_SETUP_EVENT: {
-                StationSetupEvent stationEventType = (StationSetupEvent) stationEvent;
+                for (StationEventType stationEvent : stationEvents) {
+                    StationSetupEvent stationEventType = (StationSetupEvent) stationEvent;
+                }
                 break;
             }
             case PLATE_CHERRY_PICK_EVENT: {
-                PlateCherryPickEvent plateCherryPickEvent = (PlateCherryPickEvent) stationEvent;
+                for (StationEventType stationEvent : stationEvents) {
+                    PlateCherryPickEvent plateCherryPickEvent = (PlateCherryPickEvent) stationEvent;
+                }
                 break;
             }
             case RECEPTACLE_PLATE_TRANSFER_EVENT: {
-                ReceptaclePlateTransferEvent receptaclePlateTransferEvent = (ReceptaclePlateTransferEvent) stationEvent;
+                for (StationEventType stationEvent : stationEvents) {
+                    ReceptaclePlateTransferEvent receptaclePlateTransferEvent = (ReceptaclePlateTransferEvent) stationEvent;
+                }
                 break;
             }
             case RECEPTACLE_EVENT: {
-                ReceptacleEventType receptacleEventType = (ReceptacleEventType) stationEvent;
+                for (StationEventType stationEvent : stationEvents) {
+                    ReceptacleEventType receptacleEventType = (ReceptacleEventType) stationEvent;
+                }
                 break;
             }
             case RECEPTACLE_TRANSFER_EVENT: {
-                ReceptacleTransferEventType receptacleTransferEventType = (ReceptacleTransferEventType) stationEvent;
-                ReceptacleType sourceReceptacle = new ReceptacleType();
-                sourceReceptacle.setReceptacleType(labEventType.getSourceVesselTypeGeometry().getDisplayName());
-                receptacleTransferEventType.setSourceReceptacle(sourceReceptacle);
+                for (StationEventType stationEvent : stationEvents) {
+                    ReceptacleTransferEventType receptacleTransferEventType = (ReceptacleTransferEventType) stationEvent;
+                    ReceptacleType sourceReceptacle = new ReceptacleType();
+                    sourceReceptacle.setReceptacleType(labEventType.getSourceVesselTypeGeometry().getDisplayName());
+                    receptacleTransferEventType.setSourceReceptacle(sourceReceptacle);
 
-                ReceptacleType destinationReceptacle = new ReceptacleType();
-                destinationReceptacle.setReceptacleType(labEventType.getTargetVesselTypeGeometry().getDisplayName());
-                receptacleTransferEventType.setReceptacle(destinationReceptacle);
+                    ReceptacleType destinationReceptacle = new ReceptacleType();
+                    destinationReceptacle.setReceptacleType(labEventType.getTargetVesselTypeGeometry().getDisplayName());
+                    receptacleTransferEventType.setReceptacle(destinationReceptacle);
+                }
                 break;
             }
             default:
@@ -197,10 +231,6 @@ public class ManualTransferActionBean extends CoreActionBean {
      */
     @HandlesEvent(FETCH_EXISTING_ACTION)
     public Resolution fetchExisting() {
-        // fetch by barcode
-        // Should this be AJAX?  If multiple barcodes, hard to populate multiple areas of the page.
-        // If not AJAX, switch on message type, fetch LabVessels, copy values into JAXB DTOs.
-        // Add messages about existing or not, and whether expected.
         switch (labEventType.getMessageType()) {
             case PLATE_EVENT:
                 break;
@@ -215,9 +245,11 @@ public class ManualTransferActionBean extends CoreActionBean {
             case RECEPTACLE_EVENT:
                 break;
             case RECEPTACLE_TRANSFER_EVENT:
-                ReceptacleTransferEventType receptacleTransferEventType = (ReceptacleTransferEventType) stationEvent;
-                loadReceptacleFromDb(receptacleTransferEventType.getSourceReceptacle(), true);
-                loadReceptacleFromDb(receptacleTransferEventType.getReceptacle(), false);
+                for (StationEventType stationEvent : stationEvents) {
+                    ReceptacleTransferEventType receptacleTransferEventType = (ReceptacleTransferEventType) stationEvent;
+                    loadReceptacleFromDb(receptacleTransferEventType.getSourceReceptacle(), true);
+                    loadReceptacleFromDb(receptacleTransferEventType.getReceptacle(), false);
+                }
                 break;
         }
         return new ForwardResolution(MANUAL_TRANSFER_PAGE);
@@ -255,15 +287,8 @@ public class ManualTransferActionBean extends CoreActionBean {
     @HandlesEvent(TRANSFER_ACTION)
     public Resolution transfer() {
         // todo jmt handle unique constraint violation, increment disambiguator?
-        bettaLIMSMessage.setMode(LabEventFactory.MODE_MERCURY);
-        stationEvent.setEventType(labEventType.getName());
-        stationEvent.setOperator(getUserBean().getLoginUserName());
-        stationEvent.setProgram(LabEvent.UI_PROGRAM_NAME);
-        stationEvent.setStation(LabEvent.UI_EVENT_LOCATION);
-        stationEvent.setDisambiguator(1L);
-        stationEvent.setStart(new Date());
 
-        for (ReagentType reagentType : stationEvent.getReagent()) {
+        for (ReagentType reagentType : stationEvents.get(0).getReagent()) {
             if (StringUtils.isBlank(reagentType.getKitType())) {
                 addGlobalValidationError("Reagent type is required");
             }
@@ -275,17 +300,33 @@ public class ManualTransferActionBean extends CoreActionBean {
             }
         }
 
-        // Remove empty elements
-        if (stationEvent instanceof PlateTransferEventType) {
-            PlateTransferEventType plateTransferEventType = (PlateTransferEventType) stationEvent;
-            cleanupPositionMap(plateTransferEventType.getSourcePositionMap(), plateTransferEventType.getSourcePlate(),
-                    labEventType.getSourceVesselTypeGeometry());
-            cleanupPositionMap(plateTransferEventType.getPositionMap(), plateTransferEventType.getPlate(),
-                    labEventType.getTargetVesselTypeGeometry());
-        } else if (stationEvent instanceof PlateEventType) {
-            PlateEventType plateEventType = (PlateEventType) stationEvent;
-            cleanupPositionMap(plateEventType.getPositionMap(), plateEventType.getPlate(),
-                    labEventType.getTargetVesselTypeGeometry());
+        bettaLIMSMessage.setMode(LabEventFactory.MODE_MERCURY);
+        int eventIndex = 0;
+        for (StationEventType stationEvent : stationEvents) {
+            stationEvent.setEventType(labEventType.getName());
+            stationEvent.setOperator(getUserBean().getLoginUserName());
+            stationEvent.setProgram(LabEvent.UI_PROGRAM_NAME);
+            stationEvent.setStation(LabEvent.UI_EVENT_LOCATION);
+            stationEvent.setDisambiguator(1L);
+            stationEvent.setStart(new Date());
+
+            // Remove empty elements
+            if (stationEvent instanceof PlateTransferEventType) {
+                PlateTransferEventType plateTransferEventType = (PlateTransferEventType) stationEvent;
+                cleanupPositionMap(plateTransferEventType.getSourcePositionMap(), plateTransferEventType.getSourcePlate(),
+                        labEventType.getSourceVesselTypeGeometry());
+                cleanupPositionMap(plateTransferEventType.getPositionMap(), plateTransferEventType.getPlate(),
+                        labEventType.getTargetVesselTypeGeometry());
+            } else if (stationEvent instanceof PlateEventType) {
+                PlateEventType plateEventType = (PlateEventType) stationEvent;
+                cleanupPositionMap(plateEventType.getPositionMap(), plateEventType.getPlate(),
+                        labEventType.getTargetVesselTypeGeometry());
+            }
+
+            if (eventIndex > 1 ) {
+                stationEvent.getReagent().addAll(stationEvents.get(0).getReagent());
+            }
+            eventIndex++;
         }
 
         if (getContext().getValidationErrors().isEmpty()) {
@@ -323,12 +364,12 @@ public class ManualTransferActionBean extends CoreActionBean {
     }
 
 
-    public StationEventType getStationEvent() {
-        return stationEvent;
+    public List<StationEventType> getStationEvents() {
+        return stationEvents;
     }
 
-    public void setStationEvent(StationEventType stationEvent) {
-        this.stationEvent = stationEvent;
+    public void setStationEvents(List<StationEventType> stationEvents) {
+        this.stationEvents = stationEvents;
     }
 
     public List<LabEventType> getManualEventTypes() {

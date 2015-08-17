@@ -1000,7 +1000,7 @@ public enum LabEventType {
     INFINIUM_XSTAIN("InfiniumXStain",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.GAP, VolumeConcUpdate.MERCURY_ONLY,
-            MessageType.PLATE_EVENT, null, RackOfTubes.RackType.TeFlow24,
+            MessageType.PLATE_EVENT, null, StaticPlate.PlateType.InfiniumChip24,
             new String[]{"RA1", "LX1", "LX2", "XC3", "XC4", "SML", "ATM", "EML"});
 
 
