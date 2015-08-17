@@ -55,7 +55,6 @@ public class ProductPdfFactory {
     public static final String PART_NUMBER = "Part Number";
     public static final String PRODUCT_FAMILY = "Product Family";
     public static final String AVAILABILITY = "Availability";
-    public static final String PRICE = "Price";
 
     public static final String BULLET = "\u2022";
     public static final String ASTERISK = "[\\*]";
@@ -105,7 +104,6 @@ public class ProductPdfFactory {
             document.add(
                     new Paragraph(AVAILABILITY + ": " + dateFormat.format(product.getAvailabilityDate()),
                             regularFont()));
-            document.add(new Paragraph(PRICE + ": " + product.getPrice(), regularFont()));
             addParagraphWithHeader(document, DESCRIPTION, product.getDescription());
             addParagraphWithHeader(document, DELIVERABLES, product.getDeliverables());
             addParagraphWithHeader(document, INPUT_REQUIREMENTS, product.getInputRequirements());

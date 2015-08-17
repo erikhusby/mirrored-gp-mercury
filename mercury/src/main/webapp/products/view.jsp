@@ -58,15 +58,6 @@
             </div>
 
             <div class="view-control-group control-group">
-                <label class="control-label label-form">Price</label>
-                <div class="controls">
-                    <div class="form-value">
-                        <div class="form-value">${actionBean.editProduct.price}</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="view-control-group control-group">
                 <label class="control-label label-form">Description</label>
                 <div class="controls">
                     <div class="form-value" style="white-space: pre-wrap;">${actionBean.editProduct.description}</div>
