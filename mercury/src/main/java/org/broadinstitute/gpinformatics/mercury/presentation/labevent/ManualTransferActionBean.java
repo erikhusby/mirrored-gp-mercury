@@ -128,10 +128,18 @@ public class ManualTransferActionBean extends CoreActionBean {
         }
 
         switch (labEventType.getMessageType()) {
-            case PLATE_EVENT:
+            case PLATE_EVENT: {
                 PlateEventType plateEventType = (PlateEventType) stationEvent;
+                PlateType destinationPlateType = new PlateType();
+                VesselTypeGeometry targetVesselTypeGeometry = labEventType.getTargetVesselTypeGeometry();
+                destinationPlateType.setPhysType(targetVesselTypeGeometry.getDisplayName());
+                plateEventType.setPlate(destinationPlateType);
+                if (targetVesselTypeGeometry instanceof RackOfTubes.RackType) {
+                    plateEventType.setPositionMap(new PositionMapType());
+                }
                 break;
-            case PLATE_TRANSFER_EVENT:
+            }
+            case PLATE_TRANSFER_EVENT: {
                 PlateTransferEventType plateTransferEventType = (PlateTransferEventType) stationEvent;
                 PlateType sourcePlate = new PlateType();
                 VesselTypeGeometry sourceVesselTypeGeometry = labEventType.getSourceVesselTypeGeometry();
@@ -149,19 +157,24 @@ public class ManualTransferActionBean extends CoreActionBean {
                     plateTransferEventType.setPositionMap(new PositionMapType());
                 }
                 break;
-            case STATION_SETUP_EVENT:
+            }
+            case STATION_SETUP_EVENT: {
                 StationSetupEvent stationEventType = (StationSetupEvent) stationEvent;
                 break;
-            case PLATE_CHERRY_PICK_EVENT:
+            }
+            case PLATE_CHERRY_PICK_EVENT: {
                 PlateCherryPickEvent plateCherryPickEvent = (PlateCherryPickEvent) stationEvent;
                 break;
-            case RECEPTACLE_PLATE_TRANSFER_EVENT:
+            }
+            case RECEPTACLE_PLATE_TRANSFER_EVENT: {
                 ReceptaclePlateTransferEvent receptaclePlateTransferEvent = (ReceptaclePlateTransferEvent) stationEvent;
                 break;
-            case RECEPTACLE_EVENT:
+            }
+            case RECEPTACLE_EVENT: {
                 ReceptacleEventType receptacleEventType = (ReceptacleEventType) stationEvent;
                 break;
-            case RECEPTACLE_TRANSFER_EVENT:
+            }
+            case RECEPTACLE_TRANSFER_EVENT: {
                 ReceptacleTransferEventType receptacleTransferEventType = (ReceptacleTransferEventType) stationEvent;
                 ReceptacleType sourceReceptacle = new ReceptacleType();
                 sourceReceptacle.setReceptacleType(labEventType.getSourceVesselTypeGeometry().getDisplayName());
@@ -171,6 +184,7 @@ public class ManualTransferActionBean extends CoreActionBean {
                 destinationReceptacle.setReceptacleType(labEventType.getTargetVesselTypeGeometry().getDisplayName());
                 receptacleTransferEventType.setReceptacle(destinationReceptacle);
                 break;
+            }
             default:
                 throw new RuntimeException("Unknown labEventType " + labEventType.getMessageType());
         }
@@ -260,20 +274,18 @@ public class ManualTransferActionBean extends CoreActionBean {
                 addGlobalValidationError("Reagent expiration is required");
             }
         }
+
         // Remove empty elements
         if (stationEvent instanceof PlateTransferEventType) {
             PlateTransferEventType plateTransferEventType = (PlateTransferEventType) stationEvent;
-            PositionMapType sourcePositionMap = plateTransferEventType.getSourcePositionMap();
-            if (sourcePositionMap != null) {
-                Iterator<ReceptacleType> iterator = sourcePositionMap.getReceptacle().iterator();
-                while (iterator.hasNext()) {
-                    ReceptacleType next = iterator.next();
-                    if (next.getBarcode() == null || next.getBarcode().isEmpty()) {
-                        iterator.remove();
-                    }
-                }
-                sourcePositionMap.setBarcode(plateTransferEventType.getSourcePlate().getBarcode());
-            }
+            cleanupPositionMap(plateTransferEventType.getSourcePositionMap(), plateTransferEventType.getSourcePlate(),
+                    labEventType.getSourceVesselTypeGeometry());
+            cleanupPositionMap(plateTransferEventType.getPositionMap(), plateTransferEventType.getPlate(),
+                    labEventType.getTargetVesselTypeGeometry());
+        } else if (stationEvent instanceof PlateEventType) {
+            PlateEventType plateEventType = (PlateEventType) stationEvent;
+            cleanupPositionMap(plateEventType.getPositionMap(), plateEventType.getPlate(),
+                    labEventType.getTargetVesselTypeGeometry());
         }
 
         if (getContext().getValidationErrors().isEmpty()) {
@@ -288,6 +300,26 @@ public class ManualTransferActionBean extends CoreActionBean {
             }
         }
         return new ForwardResolution(MANUAL_TRANSFER_PAGE);
+    }
+
+    private void cleanupPositionMap(PositionMapType sourcePositionMap, PlateType plate, VesselTypeGeometry vesselTypeGeometry) {
+        if (sourcePositionMap != null) {
+            Iterator<ReceptacleType> iterator = sourcePositionMap.getReceptacle().iterator();
+            while (iterator.hasNext()) {
+                ReceptacleType next = iterator.next();
+                if (next.getBarcode() == null || next.getBarcode().isEmpty()) {
+                    iterator.remove();
+                }
+            }
+            String barcode;
+            if (vesselTypeGeometry.isBarcoded()) {
+                barcode = plate.getBarcode();
+            } else {
+                barcode = String.valueOf(System.currentTimeMillis());
+                plate.setBarcode(barcode);
+            }
+            sourcePositionMap.setBarcode(barcode);
+        }
     }
 
 

@@ -460,7 +460,20 @@ public enum VesselGeometry {
             new String[] {"R01","R02","R03","R04","R05","R06","R07","R08"},
             new VesselPosition[]{VesselPosition.R01C01, VesselPosition.R02C01,VesselPosition.R03C01,
                     VesselPosition.R04C01, VesselPosition.R05C01, VesselPosition.R06C01,
-                    VesselPosition.R07C01,VesselPosition.R08C01});
+                    VesselPosition.R07C01,VesselPosition.R08C01}),
+
+        TEFLOW3x8("TeFlow 3 x 8",
+                new String[]{"", "", ""},
+                new String[]{"", "", "", "", "", "", "", ""},
+                new VesselPosition[]{VesselPosition._1, VesselPosition._9, VesselPosition._17,
+                        VesselPosition._2, VesselPosition._10, VesselPosition._18,
+                        VesselPosition._3, VesselPosition._11, VesselPosition._19,
+                        VesselPosition._4, VesselPosition._12, VesselPosition._20,
+                        VesselPosition._5, VesselPosition._13, VesselPosition._21,
+                        VesselPosition._6, VesselPosition._14, VesselPosition._22,
+                        VesselPosition._7, VesselPosition._15, VesselPosition._23,
+                        VesselPosition._8, VesselPosition._16, VesselPosition._24,
+                });
 
 
 

@@ -49,27 +49,77 @@
                 </c:forEach>
 
                 <c:choose>
-                    <c:when test="${actionBean.stationEvent.class.simpleName == 'PlateTransferEventType'}">
+                    <c:when test="${actionBean.stationEvent.class.simpleName == 'PlateTransferEventType' or actionBean.stationEvent.class.simpleName == 'PlateEventType'}">
                         <c:set var="plateTransfer" value="${actionBean.stationEvent}"/>
                         <%--@elvariable id="plateTransfer" type="org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType"--%>
-                        <h4>Plate Transfer</h4>
-                        <h5>Source</h5>
+                        <c:if test="${actionBean.stationEvent.class.simpleName == 'PlateTransferEventType'}">
+                            <h4>Plate Transfer</h4>
+                            <h5>Source</h5>
 
+                            <div class="control-group">
+                            <label>Type </label>${plateTransfer.sourcePlate.physType}
+                            <stripes:hidden name="stationEvent.sourcePlate.physType"
+                                    value="${plateTransfer.sourcePlate.physType}"/>
+                            <stripes:label for="srcPltBcd">Barcode</stripes:label>
+                            <stripes:text id="srcPltBcd" name="stationEvent.sourcePlate.barcode"
+                                    value="${plateTransfer.sourcePlate.barcode}"/>
+                            <stripes:label for="sourceSection">Section</stripes:label>
+                            <stripes:select name="stationEvent.sourcePlate.section" id="sourceSection">
+                                <stripes:options-enumeration
+                                        enum="org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection"
+                                        label="sectionName"/>
+                            </stripes:select>
+                            <c:if test="${not empty plateTransfer.sourcePositionMap}">
+                                <c:set var="geometry" value="${actionBean.labEventType.sourceVesselTypeGeometry.vesselGeometry}"/>
+                                <%--@elvariable id="geometry" type="org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry"--%>
+                                <table>
+                                    <c:forEach items="${geometry.rowNames}" var="rowName" varStatus="rowStatus">
+                                        <c:if test="${rowStatus.first}">
+                                            <tr>
+                                                <td></td>
+                                                <c:forEach items="${geometry.columnNames}" var="columnName" varStatus="columnStatus">
+                                                    <td>${columnName}</td>
+                                                </c:forEach>
+                                            </tr>
+                                        </c:if>
+                                        <tr>
+                                            <td>${rowName}</td>
+                                            <c:forEach items="${geometry.columnNames}" var="columnName" varStatus="columnStatus">
+                                                <c:set var="receptacleIndex" value="${rowStatus.index * geometry.columnCount + columnStatus.index}"/>
+                                                <td>
+                                                    <stripes:text name="stationEvent.sourcePositionMap.receptacle[${receptacleIndex}].barcode"
+                                                            size="12" style="width: 90px;"/>
+                                                    <stripes:hidden name="stationEvent.sourcePositionMap.receptacle[${receptacleIndex}].position"
+                                                            value="${geometry.vesselPositions[receptacleIndex]}"/>
+                                                </td>
+                                            </c:forEach>
+                                        </tr>
+                                    </c:forEach>
+                                </table>
+                            </c:if>
+                            </div>
+
+                            <h5>Destination</h5>
+                        </c:if>
                         <div class="control-group">
-                        <label>Type </label>${plateTransfer.sourcePlate.physType}
-                        <stripes:hidden name="stationEvent.sourcePlate.physType"
-                                value="${plateTransfer.sourcePlate.physType}"/>
-                        <stripes:label for="srcPltBcd">Barcode</stripes:label>
-                        <stripes:text id="srcPltBcd" name="stationEvent.sourcePlate.barcode"
-                                value="${plateTransfer.sourcePlate.barcode}"/>
-                        <stripes:label for="sourceSection">Section</stripes:label>
-                        <stripes:select name="stationEvent.sourcePlate.section" id="sourceSection">
-                            <stripes:options-enumeration
-                                    enum="org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection"
-                                    label="sectionName"/>
-                        </stripes:select>
-                        <c:if test="${not empty plateTransfer.sourcePositionMap}">
-                            <c:set var="geometry" value="${actionBean.labEventType.sourceVesselTypeGeometry.vesselGeometry}"/>
+                        <label>Type </label>${plateTransfer.plate.physType}
+                        <stripes:hidden name="stationEvent.plate.physType" value="${plateTransfer.plate.physType}"/>
+                        <c:if test="${actionBean.labEventType.targetVesselTypeGeometry.barcoded}">
+                            <stripes:label for="dstPltBcd">Barcode</stripes:label>
+                            <stripes:text id="dstPltBcd" name="stationEvent.plate.barcode"
+                                    value="${plateTransfer.plate.barcode}"/>
+                        </c:if>
+                        <c:if test="${actionBean.stationEvent.class.simpleName == 'PlateTransferEventType'}">
+                            <stripes:label for="destSection">Section</stripes:label>
+                            <stripes:select name="stationEvent.plate.section" id="destSection">
+                                <stripes:options-enumeration
+                                        enum="org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection"
+                                        label="sectionName"/>
+                            </stripes:select>
+                        </c:if>
+                        <c:if test="${not empty plateTransfer.positionMap}">
+                            <%--todo jmt reduce copy / paste--%>
+                            <c:set var="geometry" value="${actionBean.labEventType.targetVesselTypeGeometry.vesselGeometry}"/>
                             <%--@elvariable id="geometry" type="org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry"--%>
                             <table>
                                 <c:forEach items="${geometry.rowNames}" var="rowName" varStatus="rowStatus">
@@ -85,42 +135,17 @@
                                         <td>${rowName}</td>
                                         <c:forEach items="${geometry.columnNames}" var="columnName" varStatus="columnStatus">
                                             <c:set var="receptacleIndex" value="${rowStatus.index * geometry.columnCount + columnStatus.index}"/>
-                                            <td>
-                                                <stripes:text name="stationEvent.sourcePositionMap.receptacle[${receptacleIndex}].barcode"
+                                            <td align="right">
+                                                <c:if test="${empty rowName}">${geometry.vesselPositions[receptacleIndex]}</c:if>
+                                                <stripes:text name="stationEvent.positionMap.receptacle[${receptacleIndex}].barcode"
                                                         size="12" style="width: 90px;"/>
-                                                <stripes:hidden name="stationEvent.sourcePositionMap.receptacle[${receptacleIndex}].position"
+                                                <stripes:hidden name="stationEvent.positionMap.receptacle[${receptacleIndex}].position"
                                                         value="${geometry.vesselPositions[receptacleIndex]}"/>
                                             </td>
                                         </c:forEach>
                                     </tr>
                                 </c:forEach>
                             </table>
-                        </c:if>
-                        </div>
-
-                        <h5>Destination</h5>
-
-                        <div class="control-group">
-                        <label>Type </label>${plateTransfer.plate.physType}
-                        <stripes:hidden name="stationEvent.plate.physType" value="${plateTransfer.plate.physType}"/>
-                        <stripes:label for="dstPltBcd">Barcode</stripes:label>
-                        <stripes:text id="dstPltBcd" name="stationEvent.plate.barcode"
-                                value="${plateTransfer.plate.barcode}"/>
-
-                        <stripes:label for="destSection">Section</stripes:label>
-                        <stripes:select name="stationEvent.plate.section" id="destSection">
-                            <stripes:options-enumeration
-                                    enum="org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection"
-                                    label="sectionName"/>
-                        </stripes:select>
-                        <c:if test="${not empty plateTransfer.positionMap}">
-                            <c:forEach items="${plateTransfer.positionMap.receptacle}" var="receptacle"
-                                    varStatus="loop">
-                                <%--@elvariable id="receptacle" type="org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType"--%>
-                                <stripes:text
-                                        name="stationEvent.positionMap.receptacle[${loop.index}].barcode"
-                                        value="${receptacle.barcode}"/>
-                            </c:forEach>
                         </c:if>
                         </div>
                     </c:when>

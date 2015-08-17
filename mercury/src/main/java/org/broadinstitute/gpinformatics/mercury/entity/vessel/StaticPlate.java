@@ -113,6 +113,12 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
         public VesselGeometry getVesselGeometry() {
             return vesselGeometry;
         }
+
+        @Override
+        public boolean isBarcoded() {
+            return true;
+        }
+
     }
 
 
