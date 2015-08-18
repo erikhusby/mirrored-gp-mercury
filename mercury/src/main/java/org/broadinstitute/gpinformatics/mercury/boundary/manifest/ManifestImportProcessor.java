@@ -16,7 +16,10 @@ import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
+import org.broadinstitute.gpinformatics.mercury.boundary.sample.ClinicalResource;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.jvnet.inflector.Noun;
 
 import java.io.IOException;
@@ -93,10 +96,24 @@ public class ManifestImportProcessor extends TableProcessor {
      */
     @Override
     public void processRowDetails(Map<String, String> dataRow, int dataRowIndex) {
+
+        validateRow(dataRow, dataRowIndex);
+
         ManifestRecord manifestRecord = new ManifestRecord(ManifestHeader.toMetadata(dataRow));
         // The dataRowIndex is 1-based, but the manifest index is 0-based.
         manifestRecord.setManifestRecordIndex(dataRowIndex - 1);
         manifestRecords.add(manifestRecord);
+    }
+
+    private void validateRow(Map<String, String> dataRow, int dataRowIndex) {
+
+        for(Map.Entry<String, String> rowEntry: dataRow.entrySet()) {
+            if(Metadata.Key.valueOf(rowEntry.getKey()) == Metadata.Key.MATERIAL_TYPE &&
+               LabVessel.MaterialType.fromDisplayName(rowEntry.getValue()) == null) {
+                addDataMessage(ClinicalResource.UNRECOGNIZED_MATERIAL_TYPE + rowEntry.getValue(), dataRowIndex);
+            }
+        }
+
     }
 
     /**

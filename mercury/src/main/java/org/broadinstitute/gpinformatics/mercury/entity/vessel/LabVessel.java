@@ -644,6 +644,17 @@ public abstract class LabVessel implements Serializable {
             return value.toLowerCase().matches(matchPattern);
         }
 
+        public static MaterialType fromDisplayName(String displayName) {
+
+            MaterialType foundType = null;
+            for (MaterialType materialType : values()) {
+                if(materialType.matches(displayName)) {
+                    foundType = materialType;
+                }
+            }
+            return foundType;
+        }
+
         @Override
         public String getDisplayName() {
             return displayName;
