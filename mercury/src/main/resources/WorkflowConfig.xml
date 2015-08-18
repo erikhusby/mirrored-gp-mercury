@@ -1213,7 +1213,6 @@
         <productWorkflowDefVersions>
             <version>4.0</version>
             <effectiveDate>2014-10-19T21:03:24.085-04:00</effectiveDate>
-            <workflowProcessDefs>Clinical Whole Blood Extraction</workflowProcessDefs>
             <workflowProcessDefs>CRSP Pico/Plating</workflowProcessDefs>
             <workflowProcessDefs>Exome Express Shearing</workflowProcessDefs>
             <workflowProcessDefs>Library Construction</workflowProcessDefs>
@@ -1269,11 +1268,11 @@
         </productWorkflowDefVersions>
     </productWorkflowDefs>
     <productWorkflowDefs>
-        <name>Clinical Whole Blood Extraction</name>
+        <name>AllPrep Extraction</name>
         <productWorkflowDefVersions>
             <version>02</version>
             <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
-            <workflowProcessDefs>Clinical Whole Blood Extraction</workflowProcessDefs>
+            <workflowProcessDefs>AllPrep Extraction</workflowProcessDefs>
         </productWorkflowDefVersions>
     </productWorkflowDefs>
 
