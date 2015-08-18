@@ -54,7 +54,6 @@ public class ManualTransferActionBean extends CoreActionBean {
     public static final String TRANSFER_ACTION = "transfer";
     public static final String FETCH_EXISTING_ACTION = "fetchExisting";
 
-    private int numEvents = 1;
     private List<StationEventType> stationEvents = new ArrayList<>();
     private LabEventType labEventType;
 
@@ -83,43 +82,43 @@ public class ManualTransferActionBean extends CoreActionBean {
             // todo jmt move this to the enum?
             switch (labEventType.getMessageType()) {
                 case PLATE_EVENT:
-                    for (int i = 0; i < numEvents; i++) {
+                    for (int i = 0; i < labEventType.getNumEvents(); i++) {
                         PlateEventType plateEventType = new PlateEventType();
                         stationEvents.add(plateEventType);
                     }
                     break;
                 case PLATE_TRANSFER_EVENT:
-                    for (int i = 0; i < numEvents; i++) {
+                    for (int i = 0; i < labEventType.getNumEvents(); i++) {
                         PlateTransferEventType plateTransferEventType = new PlateTransferEventType();
                         stationEvents.add(plateTransferEventType);
                     }
                     break;
                 case STATION_SETUP_EVENT:
-                    for (int i = 0; i < numEvents; i++) {
+                    for (int i = 0; i < labEventType.getNumEvents(); i++) {
                         StationSetupEvent stationSetupEvent = new StationSetupEvent();
                         stationEvents.add(stationSetupEvent);
                     }
                     break;
                 case PLATE_CHERRY_PICK_EVENT:
-                    for (int i = 0; i < numEvents; i++) {
+                    for (int i = 0; i < labEventType.getNumEvents(); i++) {
                         PlateCherryPickEvent plateCherryPickEvent = new PlateCherryPickEvent();
                         stationEvents.add(plateCherryPickEvent);
                     }
                     break;
                 case RECEPTACLE_PLATE_TRANSFER_EVENT:
-                    for (int i = 0; i < numEvents; i++) {
+                    for (int i = 0; i < labEventType.getNumEvents(); i++) {
                         ReceptaclePlateTransferEvent receptaclePlateTransferEvent = new ReceptaclePlateTransferEvent();
                         stationEvents.add(receptaclePlateTransferEvent);
                     }
                     break;
                 case RECEPTACLE_EVENT:
-                    for (int i = 0; i < numEvents; i++) {
+                    for (int i = 0; i < labEventType.getNumEvents(); i++) {
                         ReceptacleEventType receptacleEventType = new ReceptacleEventType();
                         stationEvents.add(receptacleEventType);
                     }
                     break;
                 case RECEPTACLE_TRANSFER_EVENT:
-                    for (int i = 0; i < numEvents; i++) {
+                    for (int i = 0; i < labEventType.getNumEvents(); i++) {
                         ReceptacleTransferEventType receptacleTransferEventType = new ReceptacleTransferEventType();
                         stationEvents.add(receptacleTransferEventType);
                     }
@@ -308,7 +307,7 @@ public class ManualTransferActionBean extends CoreActionBean {
             } else if (stationEvent instanceof PlateEventType) {
                 PlateEventType plateEventType = (PlateEventType) stationEvent;
                 // Remove events for which the user did not enter a barcode
-                if (numEvents > 1 && plateEventType.getPositionMap() == null &&
+                if (labEventType.getNumEvents() > 1 && plateEventType.getPositionMap() == null &&
                         (plateEventType.getPlate() == null || plateEventType.getPlate().getBarcode() == null)) {
                     iterator.remove();
                     continue;

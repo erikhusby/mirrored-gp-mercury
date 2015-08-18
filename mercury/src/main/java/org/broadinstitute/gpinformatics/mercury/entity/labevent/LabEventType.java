@@ -1001,7 +1001,7 @@ public enum LabEventType {
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.GAP, VolumeConcUpdate.MERCURY_ONLY,
             MessageType.PLATE_EVENT, null, StaticPlate.PlateType.InfiniumChip24,
-            new String[]{"RA1", "LX1", "LX2", "XC3", "XC4", "SML", "ATM", "EML"});
+            new String[]{"RA1", "LX1", "LX2", "XC3", "XC4", "SML", "ATM", "EML"}, 24);
 
 
     private final String name;
@@ -1146,12 +1146,20 @@ public enum LabEventType {
         RECEPTACLE_TRANSFER_EVENT
     }
 
+    /** For Manual Transfers, determines layout of page. */
     private MessageType messageType;
 
+    /** For Manual Transfers, determines layout of page. */
     private VesselTypeGeometry sourceVesselTypeGeometry;
+
+    /** For Manual Transfers, determines layout of page. */
     private VesselTypeGeometry targetVesselTypeGeometry;
 
+    /** For Manual Transfers, prompts user for reagents. */
     private String[] reagentNames;
+
+    /** For Manual Transfers, allows multiple events to share one set of reagents. */
+    private int numEvents = 1;
 
     /**
      * One attempt at trying to make a very generic
@@ -1184,6 +1192,18 @@ public enum LabEventType {
         this(name, expectSourcesEmpty, expectTargetsEmpty, systemOfRecord, createSources, plasticToValidate,
                 pipelineTransformation, forwardMessage, volumeConcUpdate, messageType, sourceVesselTypeGeometry,
                 targetVesselTypeGeometry, reagentNames, null);
+    }
+
+    LabEventType(String name, ExpectSourcesEmpty expectSourcesEmpty, ExpectTargetsEmpty expectTargetsEmpty,
+                 SystemOfRecord systemOfRecord, CreateSources createSources, PlasticToValidate plasticToValidate,
+                 PipelineTransformation pipelineTransformation, ForwardMessage forwardMessage,
+                 VolumeConcUpdate volumeConcUpdate, MessageType messageType,
+                 VesselTypeGeometry sourceVesselTypeGeometry, VesselTypeGeometry targetVesselTypeGeometry,
+                 String[] reagentNames, int numEvents) {
+        this(name, expectSourcesEmpty, expectTargetsEmpty, systemOfRecord, createSources, plasticToValidate,
+                pipelineTransformation, forwardMessage, volumeConcUpdate, messageType, sourceVesselTypeGeometry,
+                targetVesselTypeGeometry, reagentNames, null);
+        this.numEvents = numEvents;
     }
 
     LabEventType(String name, ExpectSourcesEmpty expectSourcesEmpty, ExpectTargetsEmpty expectTargetsEmpty,
@@ -1269,5 +1289,9 @@ public enum LabEventType {
 
     public String[] getReagentNames() {
         return reagentNames;
+    }
+
+    public int getNumEvents() {
+        return numEvents;
     }
 }
