@@ -38,7 +38,7 @@ public class WorkflowMatcherTest {
 
         GregorianCalendar gregorianCalendar = new GregorianCalendar();
 
-        LabEvent bucketExtractions = new LabEvent(LabEventType.CLINICAL_WHOLE_BLOOD_EXTRACTION_BUCKET, gregorianCalendar.getTime(), LabEvent.UI_EVENT_LOCATION,
+        LabEvent bucketExtractions = new LabEvent(LabEventType.ALLPREP_EXTRACTION_BUCKET, gregorianCalendar.getTime(), LabEvent.UI_EVENT_LOCATION,
                 1L, 101L, LabEvent.UI_PROGRAM_NAME);
 //        bucketExtractions.setWorkflowQualifier("??");
         bucketExtractions.setLabBatch(labBatch);
@@ -90,7 +90,7 @@ public class WorkflowMatcherTest {
 
         Assert.assertEquals(workflowEvents.get(0).getLabEvents().size(), 1);
         LabEvent labEvent0 = workflowEvents.get(0).getLabEvents().get(0);
-        Assert.assertEquals(labEvent0.getLabEventType(), LabEventType.CLINICAL_WHOLE_BLOOD_EXTRACTION_BUCKET);
+        Assert.assertEquals(labEvent0.getLabEventType(), LabEventType.ALLPREP_EXTRACTION_BUCKET);
 //        Assert.assertEquals(labEvent0.getWorkflowQualifier(), "Reagents");
 
         Assert.assertEquals(workflowEvents.get(1).getLabEvents().size(), 1);

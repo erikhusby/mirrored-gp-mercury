@@ -856,7 +856,7 @@ public enum LabEventType {
 //                PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY),
 //    TISSUE_EXTRACTION("TissueExtraction",ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
 //                PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY),
-    CLINICAL_WHOLE_BLOOD_EXTRACTION_BUCKET("ClinicalWholeBloodExtractionBucket", ExpectSourcesEmpty.TRUE,
+    ALLPREP_EXTRACTION_BUCKET("AllPrepExtractionBucket", ExpectSourcesEmpty.TRUE,
             ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE, PlasticToValidate.SOURCE,
             PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY),
 

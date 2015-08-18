@@ -939,21 +939,18 @@
         </workflowProcessDefVersions>
     </workflowProcessDefs>
     <workflowProcessDefs>
-        <name>Clinical Whole Blood Extraction</name>
+        <name>AllPrep Extraction</name>
         <workflowProcessDefVersions>
             <version>02</version>
             <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
             <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
-                <name>Clinical Whole Blood Extraction Bucket</name>
-                <labEventTypes>CLINICAL_WHOLE_BLOOD_EXTRACTION_BUCKET</labEventTypes>
+                <name>AllPrep Extraction Bucket</name>
+                <labEventTypes>ALLPREP_EXTRACTION_BUCKET</labEventTypes>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
                 <bucketEntryEvaluators>
-                    org.broadinstitute.gpinformatics.mercury.entity.workflow.FreshBloodBucketEntryEvaluator
-                </bucketEntryEvaluators>
-                <bucketEntryEvaluators>
-                    org.broadinstitute.gpinformatics.mercury.entity.workflow.FreshFrozenBloodBucketEntryEvaluator
+                    org.broadinstitute.gpinformatics.mercury.entity.workflow.AllPrepBucketEntryEvaluator
                 </bucketEntryEvaluators>
                 <batchJiraProjectType>XTR</batchJiraProjectType>
                 <batchJiraIssueType>ALLPREP</batchJiraIssueType>
