@@ -103,6 +103,11 @@
                                 <h5>Destination</h5>
                             </c:if>
                             <div class="control-group">
+                            <c:if test="${fn:length(actionBean.stationEvents) > 1}">
+                                ${stationEventStatus.index + 1}
+                                <stripes:hidden name="stationEvents[${stationEventStatus.index}].metadata[0].name" value="MessageNum"/>
+                                <stripes:hidden name="stationEvents[${stationEventStatus.index}].metadata[0].value" value="${stationEventStatus.index + 1}"/>
+                            </c:if>
                             <label>Type </label>${plateTransfer.plate.physType}
                             <stripes:hidden name="stationEvents[${stationEventStatus.index}].plate.physType" value="${plateTransfer.plate.physType}"/>
                             <c:if test="${actionBean.labEventType.targetVesselTypeGeometry.barcoded}">
