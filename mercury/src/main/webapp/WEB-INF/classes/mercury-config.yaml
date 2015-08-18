@@ -138,7 +138,21 @@ quote:
       password: ml1m5qu0t3
       url:      http://quoteprod:8080
 
-
+salesforce:
+    DEV:
+      login:    scott.g.matthews@gmail.com
+      password: sc0ttf0rc3d3v
+      baseUrl:      https://na31.salesforce.com
+      clientId: 3MVG98SW_UPr.JFgFE69FSDcTOyuF.wlLdEtkn0ELhytXWAkqHnF3cSb0GDDJK9dW9JDpmyb.1Z8IMdjfFFI8
+      secret:   8537207086560180036
+      redirectUrl:  https://localhost:8443/Mercury/oauth/callback
+    PROD:
+      login:    scottmat@broadinstitute.org
+      password: sc0ttf0rc3d3v
+      baseUrl:      https://www.salesforce.com
+      clientId: 3MVG98SW_UPr.JFgFE69FSDcTOyuF.wlLdEtkn0ELhytXWAkqHnF3cSb0GDDJK9dW9JDpmyb.1Z8IMdjfFFI8
+      secret:   8537207086560180036
+      redirectUrl:  https://mercury.broadinstitute.org:8443/Mercury/oauth/callback
 squid:
 
     DEV:
