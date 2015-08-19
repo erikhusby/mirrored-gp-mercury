@@ -655,81 +655,66 @@ public interface TransferTraverserCriteria {
 
             if( context.getHopCount() == 0 ) {
                 contextVessel = context.getStartingLabVessel();
-                contextEvent = null;
+                if( contextVessel == null ) {
+                    contextVessel = context.getStartingVesselContainer().getEmbedder();
+                }
+                // No event on starting vesssel, but may have in place event(s)
+                for (LabEvent inPlaceEvent : contextVessel.getInPlaceLabEvents()) {
+                    evaluateEvent(contextVessel, inPlaceEvent);
+                }
             } else {
                 LabVessel.VesselEvent contextVesselEvent = context.getVesselEvent();
-                contextEvent = contextVesselEvent.getLabEvent();
-                if (context.getTraversalDirection() == TraversalDirection.Ancestors) {
-                    contextVessel = contextVesselEvent.getSourceLabVessel();
-                } else {
-                    contextVessel = contextVesselEvent.getTargetLabVessel();
-                }
+                evaluteVesselEvent(contextVesselEvent, context.getTraversalDirection());
             }
 
-            if( contextEvent != null && contextVessel != null ) {
-                evaluteEvent(contextVessel, contextEvent);
-            }
-
-            if (contextVessel != null) {
-                //check all in place events and descendant in place events
-                for (LabEvent inPlaceEvent : contextVessel.getInPlaceLabEvents()) {
-                    evaluteEvent(contextVessel, inPlaceEvent);
-                }
-
-                Collection<LabVessel> traversalVessels;
-                if( context.getTraversalDirection() == TraversalDirection.Ancestors ) {
-                    traversalVessels = contextVessel.getAncestorVessels();
-                } else {
-                    traversalVessels = contextVessel.getDescendantVessels();
-                }
-                for (LabVessel traversalVessel : traversalVessels) {
-                    Set<LabEvent> inPlaceEvents = traversalVessel.getInPlaceLabEvents();
-                    for (LabEvent inPlaceEvent : inPlaceEvents) {
-                        evaluteEvent(contextVessel, inPlaceEvent);
-                    }
-                }
-            }
             return TraversalControl.ContinueTraversing;
         }
 
-        private void evaluteEvent(LabVessel vessel, LabEvent event) {
-            if (types.contains(event.getLabEventType())) {
-                // If this is in place just add the vessel
-                if (event.getInPlaceLabVessel() != null) {
-                    Set<LabVessel> vessels = vesselsForLabEventType.get(event);
-                    if (vessels == null) {
-                        vessels = new HashSet<>();
-                    }
-                    vessels.add(event.getInPlaceLabVessel());
-                    vesselsForLabEventType.put(event, vessels);
-                }
-                // Otherwise check the target or source vessels
-                Set<LabVessel> labXferVessels;
-                if( useTargetVessels ) {
-                    labXferVessels = event.getTargetLabVessels();
-                } else {
-                    labXferVessels = event.getSourceLabVessels();
-                }
+        private void evaluteVesselEvent(LabVessel.VesselEvent contextVesselEvent, TraversalDirection traversalDirection){
+            LabEvent contextEvent = contextVesselEvent.getLabEvent();
 
-                for ( LabVessel targetVessel : labXferVessels ) {
-                    Set<LabVessel> vessels = vesselsForLabEventType.get(event);
-                    if (vessels == null) {
-                        vessels = new HashSet<>();
-                    }
-                    if (vessel == null) {
-                        vessels.add(targetVessel);
-                        vesselsForLabEventType.put(event, vessels);
-                    } else {
-                        vessels.add(vessel);
-                        //if we are a container and we contain the vessel then add it
-                        if (targetVessel.getContainerRole() != null
-                            && targetVessel.getContainerRole().getContainedVessels().contains(vessel)) {
-                            vesselsForLabEventType.put(event, vessels);
-                        } else if (targetVessel.equals(vessel)) {
-                            vesselsForLabEventType.put(event, vessels);
-                        }
-                    }
+            LabVessel sourceVessel = contextVesselEvent.getSourceLabVessel();
+            if( sourceVessel == null ) {
+                sourceVessel = contextVesselEvent.getSourceVesselContainer().getEmbedder();
+            }
+
+            LabVessel targetVessel = contextVesselEvent.getTargetLabVessel();
+            if( targetVessel == null ) {
+                targetVessel = contextVesselEvent.getTargetVesselContainer().getEmbedder();
+            }
+
+            if( traversalDirection == TraversalDirection.Ancestors ) {
+                for (LabEvent inPlaceEvent : sourceVessel.getInPlaceLabEvents()) {
+                    evaluateEvent(sourceVessel, inPlaceEvent);
                 }
+                if( useTargetVessels ) {
+                    // Some ancestry logic wants the event target vessel
+                    evaluateEvent(targetVessel, contextEvent);
+                } else {
+                    // Ancestor by default uses source vessel
+                    evaluateEvent(sourceVessel, contextEvent);
+                }
+            } else {
+                for (LabEvent inPlaceEvent : targetVessel.getInPlaceLabEvents()) {
+                    evaluateEvent(targetVessel, inPlaceEvent);
+                }
+                evaluateEvent(targetVessel, contextEvent);
+            }
+        }
+
+        private void addVesselForType(LabVessel vessel, LabEvent event){
+            LabEvent castEvent = OrmUtil.proxySafeCast(event, LabEvent.class);
+            Set<LabVessel> vessels = vesselsForLabEventType.get(castEvent);
+            if (vessels == null) {
+                vessels = new HashSet<>();
+                vesselsForLabEventType.put(castEvent, vessels);
+            }
+            vessels.add(vessel);
+        }
+
+        private void evaluateEvent(LabVessel vessel, LabEvent event) {
+            if (types.contains(event.getLabEventType())) {
+                addVesselForType(vessel, event);
             }
         }
 

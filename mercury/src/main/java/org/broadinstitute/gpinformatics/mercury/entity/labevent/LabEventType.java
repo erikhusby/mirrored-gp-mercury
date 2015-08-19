@@ -229,11 +229,11 @@ public enum LabEventType {
     NORMALIZATION_TRANSFER("NormalizationTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            LibraryType.NONE_ASSIGNED),
+            LibraryType.POOLED_NORMALIZED),
     DENATURE_TRANSFER("DenatureTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            LibraryType.NONE_ASSIGNED),
+            LibraryType.NORMALIZED_DENATURED),
     STRIP_TUBE_B_TRANSFER("StripTubeBTransfer",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.FALSE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
@@ -1434,7 +1434,9 @@ public enum LabEventType {
         HYBRID_SELECTION_ICE_ENRICHED_CATCH("Enriched Catch"),
         QTP_ECO_POOL("ECO Pool"),
         MISEQ_FLOWCELL("MiSeq Flowcell"),
-        NONE_ASSIGNED("");
+        NONE_ASSIGNED(""),
+        POOLED_NORMALIZED("Pooled Normalized"),
+        NORMALIZED_DENATURED("Normalized / Denatured");
 
         private LibraryType( String displayName ){
             this.displayName = displayName;

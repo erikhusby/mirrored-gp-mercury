@@ -180,21 +180,30 @@ CREATE TABLE workflow_process (
   etl_date        DATE          NOT NULL
 );
 
-CREATE TABLE event_fact (
-  event_fact_id    NUMERIC(28) NOT NULL PRIMARY KEY,
-  lab_event_id     NUMERIC(19) NOT NULL,
-  workflow_id      NUMERIC(19),
-  process_id       NUMERIC(19),
-  product_order_id NUMERIC(19),
-  sample_name      VARCHAR(40),
-  batch_name       VARCHAR(40),
-  station_name     VARCHAR2(255),
-  lab_vessel_id    NUMERIC(19),
-  event_date       DATE        NOT NULL,
-  program_name     VARCHAR2(255),
-  molecular_indexing_scheme   VARCHAR2(255),
-  etl_date         DATE        NOT NULL
-);
+CREATE TABLE MERCURYDW.EVENT_FACT(
+  EVENT_FACT_ID NUMBER(28) NOT NULL,
+  LAB_EVENT_ID NUMBER(19) NOT NULL,
+  WORKFLOW_ID NUMBER(19),
+  PROCESS_ID NUMBER(19),
+  PRODUCT_ORDER_ID NUMBER(19),
+  SAMPLE_NAME VARCHAR2(40),
+  BATCH_NAME VARCHAR2(40),
+  STATION_NAME VARCHAR2(255),
+  LAB_VESSEL_ID NUMBER(19),
+  POSITION VARCHAR2(32),
+  EVENT_DATE DATE NOT NULL,
+  PROGRAM_NAME VARCHAR2(255),
+  MOLECULAR_INDEXING_SCHEME VARCHAR2(255),
+  ETL_DATE DATE NOT NULL,
+  PRIMARY KEY (EVENT_FACT_ID),
+  CONSTRAINT FK_EVENT_LAB_VESSEL FOREIGN KEY (LAB_VESSEL_ID)
+  REFERENCES MERCURYDW.LAB_VESSEL (LAB_VESSEL_ID) ON DELETE CASCADE ENABLE,
+  CONSTRAINT FK_EVENT_PDO FOREIGN KEY (PRODUCT_ORDER_ID)
+  REFERENCES MERCURYDW.PRODUCT_ORDER (PRODUCT_ORDER_ID) ON DELETE CASCADE ENABLE,
+  CONSTRAINT FK_EVENT_WORKFLOW FOREIGN KEY (WORKFLOW_ID)
+  REFERENCES MERCURYDW.WORKFLOW (WORKFLOW_ID) ON DELETE CASCADE ENABLE,
+  CONSTRAINT FK_EVENT_PROCESS FOREIGN KEY (PROCESS_ID)
+  REFERENCES MERCURYDW.WORKFLOW_PROCESS (PROCESS_ID) ON DELETE CASCADE ENABLE );
 
 CREATE TABLE library_ancestry_fact
 (
@@ -475,23 +484,23 @@ CREATE TABLE im_workflow_process (
   event_name      VARCHAR2(255)
 );
 
-CREATE TABLE im_event_fact (
-  line_number      NUMERIC(9) NOT NULL,
-  etl_date         DATE       NOT NULL,
-  is_delete        CHAR(1)    NOT NULL,
-  lab_event_id     NUMERIC(19),
-  workflow_id      NUMERIC(19),
-  process_id       NUMERIC(19),
-  product_order_id NUMERIC(19),
-  sample_name      VARCHAR(40),
-  batch_name       VARCHAR(40),
-  station_name     VARCHAR2(255),
-  lab_vessel_id    NUMERIC(19),
-  program_name     VARCHAR2(255),
-  event_date       DATE,
-  event_fact_id    NUMERIC(28), --this gets populated by merge_import.sql
-  molecular_indexing_scheme   VARCHAR2(255)
-);
+CREATE TABLE MERCURYDW.IM_EVENT_FACT (
+  LINE_NUMBER NUMBER(9) NOT NULL,
+  ETL_DATE DATE NOT NULL,
+  IS_DELETE CHAR NOT NULL,
+  LAB_EVENT_ID NUMBER(19),
+  WORKFLOW_ID NUMBER(19),
+  PROCESS_ID NUMBER(19),
+  PRODUCT_ORDER_ID NUMBER(19),
+  SAMPLE_NAME VARCHAR2(40),
+  BATCH_NAME VARCHAR2(40),
+  STATION_NAME VARCHAR2(255),
+  LAB_VESSEL_ID NUMBER(19),
+  POSITION VARCHAR2(32),
+  PROGRAM_NAME VARCHAR2(255),
+  MOLECULAR_INDEXING_SCHEME VARCHAR2(255),
+  EVENT_DATE DATE,
+  EVENT_FACT_ID NUMBER(28) ); --this gets populated by merge_import.sql
 
 CREATE TABLE im_library_ancestry_fact
 (
@@ -645,18 +654,6 @@ REFERENCES product_order (product_order_id) ON DELETE CASCADE;
 ALTER TABLE product ADD CONSTRAINT fk_product_price_item_id FOREIGN KEY (primary_price_item_id)
 REFERENCES price_item (price_item_id) ON DELETE CASCADE;
 
-ALTER TABLE event_fact ADD CONSTRAINT fk_event_lab_vessel FOREIGN KEY (lab_vessel_id)
-REFERENCES lab_vessel (lab_vessel_id) ON DELETE CASCADE;
-
-ALTER TABLE event_fact ADD CONSTRAINT fk_event_pdo FOREIGN KEY (product_order_id)
-REFERENCES product_order (product_order_id) ON DELETE CASCADE;
-
-ALTER TABLE event_fact ADD CONSTRAINT fk_event_workflow FOREIGN KEY (workflow_id)
-REFERENCES workflow (workflow_id) ON DELETE CASCADE;
-
-ALTER TABLE event_fact ADD CONSTRAINT fk_event_process FOREIGN KEY (process_id)
-REFERENCES workflow_process (process_id) ON DELETE CASCADE;
-
 ALTER TABLE sequencing_sample_fact ADD CONSTRAINT fk_seq_sample_seqrun_id FOREIGN KEY (sequencing_run_id)
 REFERENCES sequencing_run (sequencing_run_id) ON DELETE CASCADE;
 
@@ -699,6 +696,7 @@ CREATE INDEX pdo_add_on_idx2 ON product_order_add_on (product_id);
 CREATE INDEX event_fact_idx1 ON event_fact (event_date);
 CREATE INDEX event_fact_idx2 ON event_fact (product_order_id, sample_name);
 CREATE INDEX event_fact_idx3 ON event_fact (lab_event_id);
+CREATE INDEX IDX_EVENT_VESSEL ON EVENT_FACT( LAB_VESSEL_ID );
 CREATE INDEX idx_ancestry_fact_hierarchy on library_ancestry_fact (child_library_id, ancestor_library_id );
 CREATE INDEX idx_ancestry_fact_reverse on library_ancestry_fact (ancestor_library_id, child_library_id );
 CREATE INDEX ix_parent_project ON research_project (parent_research_project_id);
@@ -710,7 +708,6 @@ CREATE INDEX lab_metric_idx1 ON lab_metric (product_order_id, sample_name, batch
 CREATE INDEX pdo_regulatory_info_idx1 ON pdo_regulatory_infos (regulatory_infos);
 -- Warehouse ancestry query performance
 CREATE UNIQUE INDEX IDX_VESSEL_LABEL ON LAB_VESSEL(LABEL);
-CREATE INDEX IDX_EVENT_VESSEL ON EVENT_FACT( LAB_VESSEL_ID );
 -- Ancestry ETL delete performance
 CREATE INDEX IDX_ANCESTRY_CHILD_EVENT ON LIBRARY_ANCESTRY_FACT( CHILD_EVENT_ID );
 

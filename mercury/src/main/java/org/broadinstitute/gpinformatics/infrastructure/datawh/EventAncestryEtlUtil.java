@@ -125,11 +125,23 @@ public class EventAncestryEtlUtil {
             for( LabVessel ancestorLabVessel : ancestorEventVesselMap.get(ancestorLabEvent) ) {
                 if( ancestorLabVessel.getContainerRole() != null ) {
                     VesselContainer containerVessel = ancestorLabVessel.getContainerRole();
-                    // Use embedder positions
-                    VesselGeometry geometry = containerVessel.getEmbedder().getVesselGeometry();
-                    for (VesselPosition vesselPosition : geometry.getVesselPositions()) {
-                        LabVessel containedVessel = containerVessel.getVesselAtPosition(vesselPosition);
-                        if( containedVessel != null ) {
+                    if( containerVessel.hasAnonymousVessels() ) {
+                        // Use container vessel
+                        ancestryFactDtos.add(new AncestryFactDto(
+                                ancestorLabEvent.getLabEventId(),
+                                containerVessel.getEmbedder(),
+                                ancestorLabEvent.getLabEventType().getLibraryType().getDisplayName(),
+                                ancestorLabEvent.getEventDate(),
+                                labEvent.getLabEventId(),
+                                labVessel,
+                                labEvent.getLabEventType().getLibraryType().getDisplayName(),
+                                labEvent.getEventDate()));
+                    } else {
+                        // Use vessels at positions
+                        VesselGeometry geometry = containerVessel.getEmbedder().getVesselGeometry();
+                        for (VesselPosition vesselPosition : geometry.getVesselPositions()) {
+                            LabVessel containedVessel = containerVessel.getVesselAtPosition(vesselPosition);
+                            if( containedVessel != null ) {
                             ancestryFactDtos.add(new AncestryFactDto(
                                     ancestorLabEvent.getLabEventId(),
                                     containedVessel,
@@ -139,10 +151,11 @@ public class EventAncestryEtlUtil {
                                     labVessel,
                                     labEvent.getLabEventType().getLibraryType().getDisplayName(),
                                     labEvent.getEventDate()));
+                            }
                         }
                     }
                 } else {
-                    // Vessel is not a container...
+                    // Vessel is not a container, use vessel
                     ancestryFactDtos.add(new AncestryFactDto(
                             ancestorLabEvent.getLabEventId(),
                             ancestorLabVessel,

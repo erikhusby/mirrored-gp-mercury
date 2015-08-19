@@ -134,7 +134,7 @@ public class ExtractTransformResource {
     public String analyzeEvent(@PathParam("labEventId") long labEventId) {
         Long id = null;
         String type = null;
-        int columnCount = 9;
+        int columnCount = 10;
 
         Collection<EventFactDto> dtos = extractTransform.analyzeEvent(labEventId);
 
@@ -143,7 +143,7 @@ public class ExtractTransformResource {
         for (EventFactDto dto : dtos) {
             if (!StringUtils.isBlank(dto.getMolecularIndex())) {
                 showMolecularBarcodes = true;
-                columnCount = 10;
+                columnCount = 11;
             }
             id = dto.getEventId();
             type = dto.getEventType().toString();
@@ -158,6 +158,7 @@ public class ExtractTransformResource {
         sb.append(showMolecularBarcodes ?
                 formatHeaderRow("canEtl",
                         "labVessel",
+                        "vesselPosition",
                         "molecularIndex",
                         "batchName",
                         "workflowName",
@@ -168,6 +169,7 @@ public class ExtractTransformResource {
                         "step") :
                 formatHeaderRow("canEtl",
                         "labVessel",
+                        "vesselPosition",
                         "batchName",
                         "workflowName",
                         "sample",
@@ -182,6 +184,7 @@ public class ExtractTransformResource {
             sb.append(showMolecularBarcodes ?
                     formatRow(String.valueOf(dto.canEtl()),
                             dto.getVesselBarcode() == null ? "null": dto.getVesselBarcode(),
+                            dto.getVesselPosition(),
                             dto.getMolecularIndex() == null ? "null": dto.getMolecularIndex(),
                             dto.getBatchName() == null ? "null": dto.getBatchName(),
                             dto.getWfName() == null ? "null": dto.getWfName(),
@@ -192,6 +195,7 @@ public class ExtractTransformResource {
                             dto.getWfStepName() == null ? "null": dto.getWfStepName() ) :
                     formatRow(String.valueOf(dto.canEtl()),
                             dto.getVesselBarcode() == null ? "null": dto.getVesselBarcode(),
+                            dto.getVesselPosition(),
                             dto.getBatchName() == null ? "null": dto.getBatchName(),
                             dto.getWfName() == null ? "null": dto.getWfName(),
                             dto.getSampleId() == null ? "null": dto.getSampleId(),
