@@ -65,12 +65,13 @@ public abstract class AbstractSample {
     public SampleData getSampleData() {
         if (!hasBspSampleDataBeenInitialized) {
             SampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(SampleDataFetcher.class);
-            setSampleData(sampleDataFetcher.fetchSampleData(getSampleKey()));
+            SampleData sampleDataTemp = sampleDataFetcher.fetchSampleData(getSampleKey());
 
             // If there is no DTO, create one with no data populated.
-            if (sampleData == null) {
-                setSampleData(makeSampleData());
+            if (sampleDataTemp == null) {
+                sampleDataTemp = makeSampleData();
             }
+            setSampleData(sampleDataTemp);
         }
 
         return sampleData;

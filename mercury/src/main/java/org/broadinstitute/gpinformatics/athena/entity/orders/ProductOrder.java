@@ -15,6 +15,7 @@ import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
@@ -323,6 +324,14 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
      * @see SampleDataFetcher
      */
     public static void loadSampleData(List<ProductOrderSample> samples) {
+        loadSampleData(samples, BSPSampleSearchColumn.PDO_SEARCH_COLUMNS);
+    }
+
+    /**
+     * Load SampleData for all the supplied ProductOrderSamples.
+     * @see SampleDataFetcher
+     */
+    public static void loadSampleData(List<ProductOrderSample> samples, BSPSampleSearchColumn... bspSampleSearchColumns) {
 
         // Create a subset of the samples so we only call BSP for BSP samples that aren't already cached.
         Set<String> sampleNames = new HashSet<>(samples.size());
@@ -342,7 +351,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         Map<String, SampleData> sampleDataMap = Collections.emptyMap();
 
         try {
-            sampleDataMap = sampleDataFetcher.fetchSampleDataForProductOrderSample(samples);
+            sampleDataMap = sampleDataFetcher.fetchSampleDataForProductOrderSamples(samples, bspSampleSearchColumns);
         } catch (BSPLookupException ignored) {
             // not a bsp sample?
         }
@@ -761,6 +770,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
      */
     public void loadSampleData() {
         loadSampleData(samples);
+    }
+
+    public void loadSampleDataForBillingTracker() {
+        loadSampleData(samples, BSPSampleSearchColumn.BILLING_TRACKER_COLUMNS);
     }
 
     // Return the sample counts object to allow call chaining.
@@ -1199,17 +1212,22 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
         /** @return true if an order can be abandoned from this state. */
         public boolean canAbandon() {
-            return this == Pending || this == Submitted;
+            return EnumSet.of(Pending, Submitted).contains(this);
         }
 
         /** @return true if an order can be placed from this state. */
         public boolean canPlace() {
-            return this == Draft || this == Pending;
+            return EnumSet.of(Draft, Pending).contains(this);
+        }
+
+        /** @return true if an order is ready for the lab to begin work on it. */
+        public boolean readyForLab() {
+            return !EnumSet.of(Draft, Pending, Abandoned).contains(this);
         }
 
         /** @return true if an order can be billed from this state. */
         public boolean canBill() {
-            return this == Submitted || this == Abandoned || this == Completed;
+            return EnumSet.of(Submitted, Abandoned, Completed).contains(this);
         }
     }
 
@@ -1316,11 +1334,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                     // This is a unique sample name, so do any counts that are only needed for unique names. Since
                     // BSP looks up samples by name, it would always get the same data, so only counting unique values.
                     if (sample.isInBspFormat()) {
-                        if (sample.bspMetaDataMissing()) {
-                            missingBspMetaDataCount++;
-                        } else {
-                            updateSampleCounts(participantSet, sample);
-                        }
+                        updateSampleCounts(participantSet, sample);
                     }
                 }
 
@@ -1375,6 +1389,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
          * @param sample         the sample to update the counts with
          */
         private void updateSampleCounts(Set<String> participantSet, ProductOrderSample sample) {
+            if (sample.bspMetaDataMissing()) {
+                missingBspMetaDataCount++;
+            }
+
             incrementSampleCountByMetadata(sample);
             SampleData sampleData = sample.getSampleData();
 
@@ -1623,18 +1641,6 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     public int getSampleCount() {
         return sampleCount;
-    }
-
-    /**
-     * Is the current PDO ready for lab work? A PDO is ready if all of its samples are received (or abandoned) and
-     * the PM has placed the order.
-     *
-     * @return true if this PDO contains samples that are ready for lab work
-     */
-    public boolean readyForLab() {
-        // Abandoned and Completed PDOs are considered "ready" because they can transition back to the
-        // Submitted state.
-        return orderStatus != OrderStatus.Draft && orderStatus != OrderStatus.Pending;
     }
 
     public Collection<String> getPrintFriendlyRegulatoryInfo() {

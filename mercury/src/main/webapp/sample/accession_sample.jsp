@@ -39,6 +39,18 @@
                     $j('#previewSessionCloseDialog').dialog("open");
                 });
 
+                $j("#associateReceiptDialog").dialog({
+                    modal: true,
+                    autoOpen: false,
+                    width: 600,
+                    position: {my: "center top", at: "center top", of: window}
+                });
+
+                $j('#findReceipt').click(function (event) {
+                    event.preventDefault();
+                    showAssociateReceiptDialog();
+                });
+
                 // Prevent posting the form for an enter key press in the accession source field.  Also
                 // blur out of the accession source field so an enter key press essentially behaves the
                 // same as a blurring tab.
@@ -101,21 +113,52 @@
                     }
                 });
             }
+
+            function showAssociateReceiptDialog() {
+                $j('#associateReceiptDialog').html('');
+
+                $j.ajax({
+                    url: '${ctxpath}/sample/accessioning.action',
+                    data: {
+                        '_sourcePage' : "${actionBean.class.name}",
+                        '<%= ManifestAccessioningActionBean.FIND_RECEIPT_ACTION %>': '',
+                        '<%= ManifestAccessioningActionBean.SELECTED_SESSION_ID %>': '${actionBean.selectedSessionId}',
+                        'receiptKey': $j('#receiptKeyField').val()
+                    },
+                    datatype: 'html',
+                    success: function (html) {
+                        $j('#associateReceiptDialog').html(html).dialog("open")
+                    }
+                });
+            }
         </script>
 
     </stripes:layout-component>
 
     <stripes:layout-component name="content">
 
-        <div id="previewSessionCloseDialog" title="Preview Manifest Session Close" style="width:600px; display:none;">
-        </div>
-
-        <div id="scanResults" width="300px">
-            <jsp:include page="<%= ManifestAccessioningActionBean.SCAN_SAMPLE_RESULTS_PAGE%>"/>
-        </div>
         <stripes:form beanclass="${actionBean.class.name}" id="accessionSampleForm">
             <stripes:hidden name="selectedSessionId" id="selectedSessionId"/>
+            <div id="previewSessionCloseDialog" title="Preview Manifest Session Close" style="width:600px; display:none;">
+            </div>
+
+            <div id="associateReceiptDialog" title="Find and Associate Receipt Ticket" style="width:600px; display:none">
+            </div>
+
+            <div id="scanResults" width="300px">
+                <jsp:include page="<%= ManifestAccessioningActionBean.SCAN_SAMPLE_RESULTS_PAGE%>"/>
+            </div>
+
             <div class="form-horizontal span6">
+                <div class="control-group">
+                    <label class="control-label" for="receiptKeyField">Receipt identifier</label>
+                    <div class="controls">
+                        <stripes:text name="selectedSession.receiptTicket" id="receiptKeyField"/>
+                        <stripes:submit id="findReceipt"
+                                        name="<%= ManifestAccessioningActionBean.FIND_RECEIPT_ACTION %>"
+                                        value="Update receipt" class="btn"/>
+                    </div>
+                </div>
                 <div class="control-group">
                     <label class="control-label" for="accessionSourceText">Scan or input specimen number *</label>
                     <div class="controls">
@@ -150,4 +193,4 @@
 
         </stripes:form>
     </stripes:layout-component>
-</stripes:layout-render>    
+</stripes:layout-render>

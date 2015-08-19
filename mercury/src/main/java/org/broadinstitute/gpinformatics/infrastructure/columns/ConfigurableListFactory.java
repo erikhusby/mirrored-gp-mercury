@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDao;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.search.PaginationDao;
+import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchTerm;
@@ -34,10 +35,11 @@ public class ConfigurableListFactory {
 
     /**
      * Create a ConfigurableList instance.
+     * TODO jms 07/2015 not used, replace with ConfigurableList constructor as in other ConfigurableListActionBean methods
      *
      * @param entityList  Entities for which to display data
      * @param downloadColumnSetName Name of the column set to display
-     * @param entityName Name of the entity  TODO jms Use ColumnEntity
+     * @param entityName Name of the entity
      * @param entityId ID of the entity
      *
      * @return ConfigurableList instance
@@ -46,7 +48,7 @@ public class ConfigurableListFactory {
             @Nonnull String downloadColumnSetName,
             @Nonnull String entityName,
             @Nonnull ColumnEntity entityId,
-            @Nonnull Map<String, Object> evalContext) {
+            @Nonnull SearchContext evalContext) {
 
         List<ColumnTabulation> columnTabulations = buildColumnSetTabulations(downloadColumnSetName, entityName);
         ConfigurableList configurableList = new ConfigurableList(columnTabulations, 0, "ASC", entityId);

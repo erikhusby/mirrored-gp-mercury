@@ -39,6 +39,7 @@ import java.util.Map;
 public class BettaLimsMessageTestFactory {
     public static final int NUMBER_OF_RACK_COLUMNS = 12;
     public static final String HISEQ_SEQUENCING_STATION_MACHINE_NAME = "SL-HBU";
+    public static final String MISEQ_SEQUENCING_STATION_MACHINE_NAME = "SL-MAA";
 
     private long time = System.currentTimeMillis();
     /**
@@ -330,6 +331,29 @@ public class BettaLimsMessageTestFactory {
 
         return transferBean.denatureToReagentKitTransfer(rackOfTubes.getLabel(), denatureBarcodeMap, reagentKitBarcode,
                 stationEvent.getOperation(), stationEvent.getStation()).getPlateCherryPickEvent();
+    }
+
+    public PlateCherryPickEvent buildPlateToPlateCherryPick(String eventType, String sourcePlate,
+                                                            List<String> destinationPlates, List<CherryPick> cherryPicks) {
+        PlateCherryPickEvent plateCherryPickEvent = new PlateCherryPickEvent();
+        setStationEventData(eventType, plateCherryPickEvent);
+
+        plateCherryPickEvent.getSourcePlate().add(buildRack(sourcePlate));
+        for (String destinationPlate : destinationPlates) {
+            plateCherryPickEvent.getPlate().add(buildRack(destinationPlate));
+        }
+
+        for (CherryPick cherryPick : cherryPicks) {
+            CherryPickSourceType cherryPickSource = new CherryPickSourceType();
+            cherryPickSource.setBarcode(cherryPick.getSourceRackBarcode());
+            cherryPickSource.setWell(cherryPick.getSourceWell());
+            cherryPickSource.setDestinationBarcode(cherryPick.getDestinationRackBarcode());
+            cherryPickSource.setDestinationWell(cherryPick.getDestinationWell());
+            plateCherryPickEvent.getSource().add(cherryPickSource);
+        }
+
+        return plateCherryPickEvent;
+
     }
 
     public PlateCherryPickEvent buildCherryPick(String eventType, List<String> sourceRackBarcodes,

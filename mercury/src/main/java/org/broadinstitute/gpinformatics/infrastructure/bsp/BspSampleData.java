@@ -9,7 +9,6 @@ import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtili
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 
 import javax.annotation.Nonnull;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -63,6 +62,7 @@ public class BspSampleData implements SampleData {
     public static final String SUPPORTS_NUMBER_OF_LANES = "supportsNumberOfLanes";
     public static final String JSON_RIN_KEY = "rin";
     public static final String JSON_RQS_KEY = "rqs";
+    public static final String JSON_DV200_KEY = "dv200";
     public static final String SAMPLE_TYPE = "sampleType";
 
     private final Map<BSPSampleSearchColumn, String> columnToValue;
@@ -264,6 +264,11 @@ public class BspSampleData implements SampleData {
     }
 
     @Override
+    public Double getDv200() {
+        return getDoubleOrNull(BSPSampleSearchColumn.DV200);
+    }
+
+    @Override
     public double getVolume() {
         return getDouble(BSPSampleSearchColumn.VOLUME);
     }
@@ -376,7 +381,7 @@ public class BspSampleData implements SampleData {
     }
 
     @Override
-    public Date getReceiptDate() throws ParseException {
+    public Date getReceiptDate() {
         return getDate(BSPSampleSearchColumn.RECEIPT_DATE);
     }
 

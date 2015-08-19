@@ -1,10 +1,22 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.sample;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Maps;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata_;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent_;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord_;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession_;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample_;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel_;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
@@ -16,6 +28,7 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Join;
 import javax.persistence.criteria.ParameterExpression;
 import javax.persistence.criteria.Root;
+import javax.persistence.criteria.SetJoin;
 import javax.persistence.criteria.Subquery;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -172,15 +185,99 @@ public class MercurySampleDao extends GenericDao {
                 .where(metadataJoin.get(Metadata_.key).in(metadataKeys));
 
         Root<MercurySample> sampleRoot = samplesWithoutMetadataKeysQuery.from(MercurySample.class);
+        SetJoin<MercurySample, LabVessel> sampleLabVesselSetJoin = sampleRoot.join(MercurySample_.labVessel);
+        SetJoin<LabVessel, LabEvent> joinLabVesselEvents = sampleLabVesselSetJoin.join(LabVessel_.inPlaceLabEvents);
+
         samplesWithoutMetadataKeysQuery.select(sampleRoot).distinct(true)
                 .where(sampleBuilder.equal(sampleRoot.get(MercurySample_.metadataSource), metadataSourceParameter),
                         sampleBuilder.in(sampleRoot.get(MercurySample_.sampleKey))
-                                .value(samplesWithoutMetadataKeysSubQuery).not());
+                                .value(samplesWithoutMetadataKeysSubQuery).not(), sampleBuilder
+                                .equal(joinLabVesselEvents.get(LabEvent_.labEventType),
+                                        LabEventType.COLLABORATOR_TRANSFER));
 
         TypedQuery<MercurySample> query = getEntityManager().createQuery(samplesWithoutMetadataKeysQuery);
         query.setParameter(metadataSourceParameter, metadataSource);
         return query.getResultList();
 
 
+    }
+
+    public Map<String, MercurySample> findNonReceivedCrspSamples() {
+            /*
+            select distinct samp.SAMPLE_KEY, tube.LABEL, meta.KEY, meta.VALUE, evt.EVENT_DATE,
+            evt.LAB_EVENT_TYPE
+            from mercury_sample samp
+            join MERCURY_SAMPLE_METADATA sampmeta on sampmeta.MERCURY_SAMPLE = samp.MERCURY_SAMPLE_ID
+            join metadata meta on meta.METADATA_ID = sampmeta.METADATA
+            join LAB_VESSEL_MERCURY_SAMPLES tubesamp on tubesamp.MERCURY_SAMPLES = samp.MERCURY_SAMPLE_ID
+            join lab_vessel tube on tube.LAB_VESSEL_ID = tubesamp.LAB_VESSEL
+            join lab_event evt on evt.IN_PLACE_LAB_VESSEL = tube.LAB_VESSEL_ID
+            and evt.LAB_EVENT_TYPE = 'COLLABORATOR_TRANSFER'
+            and meta.METADATA_ID in
+                (
+                select metasub.METADATA_ID from metadata metasub
+                   join MANIFEST_RECORD_METADATA recmeta on recmeta.METADATA_ID = metasub.METADATA_ID
+                   join manifest_record rec on rec.MANIFEST_RECORD_ID = recmeta.MANIFEST_RECORD_ID
+                   join manifest_session sess on sess.MANIFEST_SESSION_ID = rec.MANIFEST_SESSION_ID
+                   join athena.research_project rp on rp.RESEARCH_PROJECT_ID = sess.RESEARCH_PROJECT_ID
+                   where rp.JIRA_TICKET_KEY not in ('RP-876', 'RP-917', 'RP-805')
+                )
+
+            and samp.MERCURY_SAMPLE_ID not in
+                (select samp.MERCURY_SAMPLE_ID from mercury_sample samp
+                   join LAB_VESSEL_MERCURY_SAMPLES tubesamp on tubesamp.MERCURY_SAMPLES = samp.MERCURY_SAMPLE_ID
+                   join lab_vessel tube on tube.LAB_VESSEL_ID = tubesamp.LAB_VESSEL
+                   join lab_event evt1 on evt1.IN_PLACE_LAB_VESSEL = tube.LAB_VESSEL_ID
+                   where samp.METADATA_SOURCE = 'MERCURY'
+                   and evt1.LAB_EVENT_TYPE = 'SAMPLE_RECEIPT')
+            */
+        CriteriaBuilder builder = getEntityManager().getCriteriaBuilder();
+
+        CriteriaQuery<MercurySample> nonReceivedSampleQuery = builder.createQuery(MercurySample.class);
+
+        Root<MercurySample> nonReceivedRoot = nonReceivedSampleQuery.from(MercurySample.class);
+        Join<MercurySample,Metadata> metadataJoin = nonReceivedRoot.join(MercurySample_.metadata);
+        Join<LabVessel, LabEvent> vesselJoin =
+                nonReceivedRoot.join(MercurySample_.labVessel).join(LabVessel_.inPlaceLabEvents);
+
+
+
+        // Build sub query for metadata that is derived from sessions which are not associated with Research
+        // Projects that were used for: Controls or Dev Validation samples
+        Subquery<Long> validMetadataSubQuery = nonReceivedSampleQuery.subquery(Long.class);
+        Root<ManifestSession> includedSessionsRoot = validMetadataSubQuery.from(ManifestSession.class);
+        Join<ManifestRecord, Metadata> recToMetadataJoin =
+                includedSessionsRoot.join(ManifestSession_.records).join(ManifestRecord_.metadata);
+        Join<ManifestSession, ResearchProject> researchProjectJoin =
+                includedSessionsRoot.join(ManifestSession_.researchProject);
+
+        validMetadataSubQuery.select(recToMetadataJoin.get(Metadata_.id)).distinct(true);
+
+
+        // Build sub query to for all CRSP samples That HAVE been received.  This will be filtered out of the main
+        // Query
+        Subquery<String> receivedSampleQuery = nonReceivedSampleQuery.subquery(String.class);
+        Root<MercurySample> receivedSamplesRoot = receivedSampleQuery.from(MercurySample.class);
+        Join<LabVessel, LabEvent> receivedVesselJoin =
+                receivedSamplesRoot.join(MercurySample_.labVessel).join(LabVessel_.inPlaceLabEvents);
+
+        receivedSampleQuery.select(receivedSamplesRoot.get(MercurySample_.sampleKey)).distinct(true)
+                .where(builder.equal(receivedSamplesRoot.get(MercurySample_.metadataSource),
+                                MercurySample.MetadataSource.MERCURY),
+                        builder.equal(receivedVesselJoin.get(LabEvent_.labEventType), LabEventType.SAMPLE_RECEIPT));
+
+        // Put it all together in the big query shown in the comments above
+        nonReceivedSampleQuery.select(nonReceivedRoot).distinct(true)
+                .where(builder.equal(vesselJoin.get(LabEvent_.labEventType),LabEventType.COLLABORATOR_TRANSFER),
+                        builder.in(metadataJoin.get(Metadata_.id)).value(validMetadataSubQuery),
+                        builder.in(nonReceivedRoot.get(MercurySample_.sampleKey)).value(receivedSampleQuery).not());
+
+        TypedQuery<MercurySample> query = getEntityManager().createQuery(nonReceivedSampleQuery);
+        return Maps.uniqueIndex(query.getResultList(), new Function<MercurySample, String>() {
+            @Override
+            public String apply(MercurySample mercurySample) {
+                return mercurySample.getSampleKey();
+            }
+        });
     }
 }

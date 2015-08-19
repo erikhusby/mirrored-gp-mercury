@@ -427,7 +427,25 @@ public enum VesselGeometry {
                     VesselPosition._5_9, VesselPosition._5_10, VesselPosition._5_11, VesselPosition._5_12,
                     VesselPosition._6_1, VesselPosition._6_2, VesselPosition._6_3, VesselPosition._6_4,
                     VesselPosition._6_5, VesselPosition._6_6, VesselPosition._6_7, VesselPosition._6_8,
-                    VesselPosition._6_9, VesselPosition._6_10, VesselPosition._6_11, VesselPosition._6_12});
+                    VesselPosition._6_9, VesselPosition._6_10, VesselPosition._6_11, VesselPosition._6_12}),
+
+    INFINIUM_24_CHIP("2 x 12",
+            new String[] {"C01","C02"},
+            new String[] {"R01","R02","R03","R04","R05","R06","R07","R08","R09","R10","R11","R12"},
+            new VesselPosition[]{VesselPosition.R01C01, VesselPosition.R01C02, VesselPosition.R02C01, VesselPosition.R02C02,VesselPosition.R03C01, VesselPosition.R03C02, VesselPosition.R04C01, VesselPosition.R04C02, VesselPosition.R05C01, VesselPosition.R05C02, VesselPosition.R06C01, VesselPosition.R06C02, VesselPosition.R07C01, VesselPosition.R07C02,VesselPosition.R08C01, VesselPosition.R08C02, VesselPosition.R09C01, VesselPosition.R09C02, VesselPosition.R10C01, VesselPosition.R10C02, VesselPosition.R11C01, VesselPosition.R11C02,VesselPosition.R12C01, VesselPosition.R12C02}),
+
+    INFINIUM_12_CHIP("2 x 6",
+            new String[] {"C01","C02"},
+            new String[] {"R01","R02","R03","R04","R05","R06"},
+            new VesselPosition[]{VesselPosition.R01C01, VesselPosition.R01C02, VesselPosition.R02C01, VesselPosition.R02C02,VesselPosition.R03C01, VesselPosition.R03C02, VesselPosition.R04C01, VesselPosition.R04C02, VesselPosition.R05C01, VesselPosition.R05C02, VesselPosition.R06C01, VesselPosition.R06C02}),
+
+    INFINIUM_8_CHIP("1 x 8",
+            new String[] {"C01"},
+            new String[] {"R01","R02","R03","R04","R05","R06","R07","R08"},
+            new VesselPosition[]{VesselPosition.R01C01, VesselPosition.R02C01,VesselPosition.R03C01,
+                    VesselPosition.R04C01, VesselPosition.R05C01, VesselPosition.R06C01,
+                    VesselPosition.R07C01,VesselPosition.R08C01});
+
 
 
     private final String name;

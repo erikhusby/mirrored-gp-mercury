@@ -45,6 +45,7 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventRefDataFetcher;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.DenatureToDilutionTubeHandler;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.EventHandlerSelector;
+import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.FlowcellLoadedHandler;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.FlowcellMessageHandler;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.SamplesDaughterPlateHandler;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
@@ -67,11 +68,13 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowD
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.presentation.transfervis.TransferVisualizerClient;
 import org.broadinstitute.gpinformatics.mercury.presentation.transfervis.TransferVisualizerFrame;
+import org.broadinstitute.gpinformatics.mercury.test.builders.ArrayPlatingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.IceEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.IceJaxbBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.InfiniumEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.MiSeqReagentKitEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityBuilder;
@@ -195,16 +198,21 @@ public class BaseEventTest {
         labEventFactory = new LabEventFactory(testUserList, bspSetVolumeConcentration);
         labEventFactory.setLabEventRefDataFetcher(labEventRefDataFetcher);
 
-        final FlowcellMessageHandler flowcellMessageHandler =
-                new FlowcellMessageHandler();
-        flowcellMessageHandler.setJiraService(JiraServiceProducer.stubInstance());
-        flowcellMessageHandler.setEmailSender(new EmailSender());
-        flowcellMessageHandler.setAppConfig(new AppConfig(
-                Deployment.DEV));
+        AppConfig appConfig = new AppConfig(Deployment.DEV);
+        EmailSender emailSender = new EmailSender();
 
-        EventHandlerSelector eventHandlerSelector =
-                new EventHandlerSelector(new DenatureToDilutionTubeHandler(),
-                                         flowcellMessageHandler, new SamplesDaughterPlateHandler());
+        FlowcellMessageHandler flowcellMessageHandler = new FlowcellMessageHandler();
+        flowcellMessageHandler.setJiraService(JiraServiceProducer.stubInstance());
+        flowcellMessageHandler.setEmailSender(emailSender);
+        flowcellMessageHandler.setAppConfig(appConfig);
+
+        FlowcellLoadedHandler flowcellLoadedHandler = new FlowcellLoadedHandler();
+        flowcellLoadedHandler.setJiraService(JiraServiceProducer.stubInstance());
+        flowcellLoadedHandler.setEmailSender(emailSender);
+        flowcellLoadedHandler.setAppConfig(appConfig);
+
+        EventHandlerSelector eventHandlerSelector = new EventHandlerSelector(new DenatureToDilutionTubeHandler(),
+                flowcellMessageHandler, new SamplesDaughterPlateHandler(), flowcellLoadedHandler, null);
         labEventFactory.setEventHandlerSelector(eventHandlerSelector);
 
         bucketEjb = new BucketEjb(labEventFactory, jiraService, null, null, null, null,
@@ -543,6 +551,17 @@ public class BaseEventTest {
                                             List<String> pondRegTubeBarcodes) {
         return new SageEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
                                      pondRegRackBarcode, pondRegRack, pondRegTubeBarcodes).invoke();
+    }
+
+    public InfiniumEntityBuilder runInfiniumProcess(StaticPlate sourcePlate, String barcodeSuffix) {
+        return new InfiniumEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
+                sourcePlate, barcodeSuffix).invoke();
+    }
+
+    public ArrayPlatingEntityBuilder runArrayPlatingProcess( Map<String, BarcodedTube> mapBarcodeToTube,
+                                                             String barcodeSuffix) {
+        return new ArrayPlatingEntityBuilder(mapBarcodeToTube, bettaLimsMessageTestFactory,
+                labEventFactory, getLabEventHandler(), barcodeSuffix).invoke();
     }
 
     /**

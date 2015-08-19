@@ -2,10 +2,16 @@ package org.broadinstitute.gpinformatics.mercury.boundary.manifest;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.sample.ClinicalSampleFactory;
@@ -29,8 +35,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @RequestScoped
 @Stateful
@@ -51,6 +60,7 @@ public class ManifestSessionEjb {
     public static final String MERCURY_SAMPLE_KEY = "Mercury sample key";
     static final String RESEARCH_PROJECT_NOT_FOUND_FORMAT = "Research Project '%s' not found: ";
     static final String SAMPLE_IDS_ARE_NOT_FOUND_MESSAGE = "Sample ids are not found: ";
+    static final String RECEIPT_NOT_FOUND = "Unable to find receipt information: ";
 
     private ManifestSessionDao manifestSessionDao;
 
@@ -62,6 +72,12 @@ public class ManifestSessionEjb {
 
     private UserBean userBean;
 
+    private BSPUserList bspUserList;
+
+    private JiraService jiraService;
+
+    private static Log logger = LogFactory.getLog(ManifestSessionEjb.class);
+
     /**
      * For CDI.
      */
@@ -71,12 +87,15 @@ public class ManifestSessionEjb {
 
     @Inject
     public ManifestSessionEjb(ManifestSessionDao manifestSessionDao, ResearchProjectDao researchProjectDao,
-                              MercurySampleDao mercurySampleDao, LabVesselDao labVesselDao, UserBean userBean) {
+                              MercurySampleDao mercurySampleDao, LabVesselDao labVesselDao, UserBean userBean,
+                              BSPUserList bspUserList, JiraService jiraService) {
         this.manifestSessionDao = manifestSessionDao;
         this.researchProjectDao = researchProjectDao;
         this.mercurySampleDao = mercurySampleDao;
         this.labVesselDao = labVesselDao;
         this.userBean = userBean;
+        this.bspUserList = bspUserList;
+        this.jiraService = jiraService;
     }
 
     /**
@@ -214,16 +233,21 @@ public class ManifestSessionEjb {
     public void closeSession(long manifestSessionId) {
         ManifestSession manifestSession = findManifestSession(manifestSessionId);
         manifestSession.completeSession();
+        Set<String> accessionedSamples = new HashSet<>();
+        long disambiguator = 1L;
 
-        if(manifestSession.isFromSampleKit()) {
-            for (ManifestRecord record : manifestSession.getNonQuarantinedRecords()) {
-                if (record.getStatus() == ManifestRecord.Status.ACCESSIONED) {
-
+        for (ManifestRecord record : manifestSession.getNonQuarantinedRecords()) {
+            if (record.getStatus() == ManifestRecord.Status.ACCESSIONED) {
+                if (manifestSession.isFromSampleKit()) {
                     transferSample(manifestSessionId, record.getValueByKey(Metadata.Key.SAMPLE_ID),
-                            record.getValueByKey(Metadata.Key.BROAD_SAMPLE_ID),
-                            record.getValueByKey(Metadata.Key.BROAD_2D_BARCODE));
+                            record.getSampleId(), record.getValueByKey(Metadata.Key.BROAD_2D_BARCODE), disambiguator++);
                 }
+                accessionedSamples.add(record.getSampleId());
             }
+        }
+
+        if (StringUtils.isNotBlank(manifestSession.getReceiptTicket())) {
+            transitionReceiptTicket(manifestSession, accessionedSamples);
         }
     }
 
@@ -303,11 +327,98 @@ public class ManifestSessionEjb {
      */
     public void transferSample(long manifestSessionId, String sourceCollaboratorSample, String sampleKey,
                                String vesselLabel) {
+        transferSample(manifestSessionId, sourceCollaboratorSample, sampleKey, vesselLabel, 1L);
+    }
+
+    /**
+     * Encapsulates the logic necessary to informatically mark all relevant entities as having completed the tube
+     * transfer process.
+     *
+     * @param manifestSessionId        Database ID of the session which is affiliated with this transfer
+     * @param sourceCollaboratorSample sample identifier for a source clinical sample
+     * @param sampleKey                The sample Key for the target mercury sample for the tube transfer
+     * @param vesselLabel              The label of the lab vessel that should be associated with the given mercury sample
+     * @param disambiguator            LabEvent disambiguator to avoid unique constraint errors when called in a tight loop
+     */
+    public void transferSample(long manifestSessionId, String sourceCollaboratorSample, String sampleKey,
+                               String vesselLabel, long disambiguator) {
         ManifestSession session = findManifestSession(manifestSessionId);
         MercurySample targetSample = findAndValidateTargetSample(sampleKey);
 
         LabVessel targetVessel = findAndValidateTargetSampleAndVessel(sampleKey, vesselLabel);
-        session.performTransfer(sourceCollaboratorSample, targetSample, targetVessel, userBean.getBspUser());
+
+        session.performTransfer(sourceCollaboratorSample, targetSample, targetVessel, userBean.getBspUser(),
+                disambiguator);
+
+        if (StringUtils.isNotBlank(session.getReceiptTicket())) {
+            try {
+                addReceiptEvent(sourceCollaboratorSample, targetSample, targetVessel, session);
+            } catch (IOException e) {
+                logger.error("Unable to access JIRA receipt information for " + session.getReceiptTicket());
+            }
+        }
+    }
+
+    private void addReceiptEvent(String sourceCollaboratorSample, MercurySample targetSample, LabVessel targetVessel,
+                                 ManifestSession session) throws IOException {
+
+        ManifestRecord sourceRecord;
+
+        if (sourceCollaboratorSample != null) {
+            sourceRecord = session.findRecordByKey(sourceCollaboratorSample, Metadata.Key.SAMPLE_ID);
+        } else {
+            sourceRecord = session.findRecordByKey(targetSample.getSampleKey(), Metadata.Key.BROAD_SAMPLE_ID);
+        }
+
+        JiraIssue receiptInfo = null;
+        try {
+            receiptInfo = jiraService.getIssueInfo(session.getReceiptTicket());
+        } catch (IOException e) {
+            throw new TubeTransferException(RECEIPT_NOT_FOUND + session.getReceiptTicket());
+        }
+        BspUser bspUserByUsername = null;
+        try {
+            bspUserByUsername = bspUserList.getByUsername(receiptInfo.getReporter());
+        } catch (IOException e) {
+            logger.error("Unable to access JIRA receipt information for " + session.getReceiptTicket());
+
+        } finally {
+            if (bspUserByUsername == null) {
+                bspUserByUsername = userBean.getBspUser();
+                logger.error("The user that created the receipt ticket " + session.getReceiptTicket() +
+                             " is not a Mercury user");
+            }
+        }
+
+        targetSample.addMetadata(
+                Collections.singleton(new Metadata(Metadata.Key.RECEIPT_RECORD, session.getReceiptTicket())));
+
+        List<ManifestSession> otherReceiptSessions =
+                manifestSessionDao.getSessionsForReceiptTicket(session.getReceiptTicket());
+
+        otherReceiptSessions.remove(session);
+
+        int disambiguator = sourceRecord.getSpreadsheetRowNumber();
+
+        for (ManifestSession sessionToAdd : otherReceiptSessions) {
+            disambiguator += sessionToAdd.getRecords().size();
+        }
+
+        targetVessel.setReceiptEvent(bspUserByUsername, receiptInfo.getCreated(), disambiguator);
+    }
+
+    private void transitionReceiptTicket(ManifestSession session, Set<String> accessionedSamples) {
+        String comment = String.format("Session %s associated with Research Project %s has been Accessioned.  "
+                                       + "Source samples include: %s", session.getSessionName(),
+                session.getResearchProject().getBusinessKey(), StringUtils.join(accessionedSamples, ", "));
+        try {
+            JiraIssue receiptIssue = new JiraIssue(session.getReceiptTicket(), jiraService);
+            receiptIssue.postTransition(JiraTransition.ACCESSIONED.getStateName(), comment);
+            receiptIssue.addComment(comment);
+
+        } catch (IOException e) {
+            logger.error("Unable to transition receipt ticket " + session.getReceiptTicket() + " to Accessioned", e);
+        }
     }
 
     /**
@@ -325,16 +436,16 @@ public class ManifestSessionEjb {
         if (researchProject == null) {
             throw new IllegalArgumentException(String.format(RESEARCH_PROJECT_NOT_FOUND_FORMAT, researchProjectKey));
         }
+        ManifestSession manifestSession;
         try {
             validateSamplesAreAvailableForAccessioning(samples);
             Collection<ManifestRecord> manifestRecords = ClinicalSampleFactory.toManifestRecords(samples);
-            ManifestSession manifestSession =
-                    new ManifestSession(researchProject, sessionName, userBean.getBspUser(), fromSampleKit,
-                            manifestRecords);
-            return manifestSession;
+            manifestSession = new ManifestSession(researchProject, sessionName, userBean.getBspUser(), fromSampleKit,
+                    manifestRecords);
         } catch (RuntimeException e) {
             throw new InformaticsServiceException(e);
         }
+        return manifestSession;
     }
 
     /**
@@ -374,6 +485,39 @@ public class ManifestSessionEjb {
                                     ManifestSessionEjb.VESSEL_USED_FOR_PREVIOUS_TRANSFER));
                 }
             }
+        }
+    }
+
+    public void updateReceiptInfo(Long manifestSessionId, String receiptKey) throws IOException {
+        ManifestSession session = manifestSessionDao.find(manifestSessionId);
+
+        String oldReceiptKey = session.getReceiptTicket();
+
+        session.setReceiptTicket(receiptKey);
+        String sourceBusinessKey = session.getResearchProject().getBusinessKey();
+
+        JiraIssue researchProjectIssue = new JiraIssue(sourceBusinessKey, jiraService);
+        researchProjectIssue.updateIssueLink(receiptKey, oldReceiptKey);
+    }
+
+
+    /**
+     * JIRA Transition states used by Receipt.
+     */
+    public enum JiraTransition {
+        RECEIVED("Create"),
+        ACCESSIONED("Accessioned");
+        /**
+         * The text that represents this transition state in JIRA.
+         */
+        private final String stateName;
+
+        JiraTransition(String stateName) {
+            this.stateName = stateName;
+        }
+
+        public String getStateName() {
+            return stateName;
         }
     }
 }

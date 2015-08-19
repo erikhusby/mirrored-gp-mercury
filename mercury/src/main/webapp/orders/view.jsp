@@ -3,6 +3,7 @@
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
 <%@ page import="org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance" %>
+<%@ page import="org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -280,6 +281,7 @@ function showSamples(sampleData) {
         $j('#concentration-' + sampleId).text(sampleData[x].concentration);
         $j('#rin-' + sampleId).text(sampleData[x].rin);
         $j('#rqs-' + sampleId).text(sampleData[x].rqs);
+        $j('#dv200-' + sampleId).text(sampleData[x].dv200);
         $j('#total-' + sampleId).text(sampleData[x].total);
         $j('#picoDate-' + sampleId).text(sampleData[x].picoDate);
         $j('#picoDate-' + sampleId).attr("title", sampleData[x].picoDate);
@@ -318,6 +320,7 @@ function showSamples(sampleData) {
                 <c:if test="${actionBean.supportsRin}">
                 {"bSortable": true, "sType": "numeric"},        // RIN
                 {"bSortable": true, "sType": "numeric"},        // RQS
+                {"bSortable": true, "sType": "numeric"},        // DV200
                 </c:if>
 
                 <c:if test="${actionBean.supportsPico}">
@@ -742,15 +745,26 @@ function formatInput(item) {
                 <security:authorizeBlock roles="<%= roles(Developer, PDM, BillingManager) %>">
                     <stripes:param name="selectedProductOrderBusinessKeys" value="${actionBean.editOrder.businessKey}"/>
                     <stripes:submit name="downloadBillingTracker" value="Download Billing Tracker" class="btn"
-                                    style="margin-right:5px;"/>
+                                    style="margin-right:30px;"/>
                 </security:authorizeBlock>
 
                 <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
-                    <stripes:link
-                            beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.UploadTrackerActionBean"
-                            event="view">
-                        Upload Billing Tracker
-                    </stripes:link>
+                    <c:choose>
+                        <c:when test="${actionBean.productOrderListEntry.billing}">
+                            <span class="disabled-link" title="Upload not allowed while billing is in progress">Upload Billing Tracker</span>
+                        </c:when>
+                        <c:otherwise>
+                            <stripes:link
+                                    beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.UploadTrackerActionBean"
+                                    event="view" >
+                                Upload Billing Tracker
+                            </stripes:link>
+                        </c:otherwise>
+                    </c:choose>
+                    <c:if test="${actionBean.productOrderListEntry.billing}">
+                        &#160;
+                        Upload not allowed while billing is in progress
+                    </c:if>
                 </security:authorizeBlock>
 
             </c:if>
@@ -981,7 +995,7 @@ function formatInput(item) {
 
 
 <div class="view-control-group control-group">
-    <label class="control-label label-form">Can Bill</label>
+    <label class="control-label label-form">Can Bill / Ledger Status</label>
 
     <div class="controls">
         <div class="form-value">
@@ -1005,6 +1019,24 @@ function formatInput(item) {
                 <c:otherwise>
                     No
                 </c:otherwise>
+            </c:choose>
+            &nbsp;
+            <c:choose>
+                <c:when test="${actionBean.productOrderListEntry.readyForReview}">
+                        <span class="badge badge-warning">
+                            <%=ProductOrderListEntry.LedgerStatus.READY_FOR_REVIEW.getDisplayName()%>
+                        </span>
+                </c:when>
+                <c:when test="${actionBean.productOrderListEntry.billing}">
+                        <span class="badge badge-info">
+                            <%=ProductOrderListEntry.LedgerStatus.BILLING_STARTED.getDisplayName()%>
+                        </span>
+                </c:when>
+                <c:when test="${actionBean.productOrderListEntry.readyForBilling}">
+                        <span class="badge badge-success">
+                            <%=ProductOrderListEntry.LedgerStatus.READY_TO_BILL.getDisplayName()%>
+                        </span>
+                </c:when>
             </c:choose>
         </div>
     </div>
@@ -1203,6 +1235,7 @@ function formatInput(item) {
                 <c:if test="${actionBean.supportsRin}">
                     <th width="40">RIN</th>
                     <th width="40">RQS</th>
+                    <th width="40">DV200</th>
                 </c:if>
 
                 <c:if test="${actionBean.supportsPico}">
@@ -1253,7 +1286,7 @@ function formatInput(item) {
                             ${sample.labEventSampleDTO.samplePackagedDate}
                     </td>
                     <td id="receipt-date-${sample.productOrderSampleId}">
-                            ${sample.labEventSampleDTO.sampleReceiptDate}
+                            ${sample.formattedReceiptDate}
                     </td>
 
                     <td id="sample-type-${sample.productOrderSampleId}"></td>
@@ -1263,6 +1296,7 @@ function formatInput(item) {
                     <c:if test="${actionBean.supportsRin}">
                         <td id="rin-${sample.productOrderSampleId}"></td>
                         <td id="rqs-${sample.productOrderSampleId}"></td>
+                        <td id="dv200-${sample.productOrderSampleId}"></td>
                     </c:if>
 
                     <c:if test="${actionBean.supportsPico}">
@@ -1282,7 +1316,7 @@ function formatInput(item) {
                             </div>
                         </c:if>
                     </td>
-                    <td id="onRiskDetails-${sample.productOrderSampleId}" style="display:none;">${sample.riskString}"</td>
+                    <td id="onRiskDetails-${sample.productOrderSampleId}" style="display:none;">${sample.riskString}</td>
                     <td>${sample.deliveryStatus.displayName}</td>
                     <td id="completelyBilled-${sample.productOrderSampleId}" style="text-align: center"></td>
                     <td>${sample.sampleComment}</td>

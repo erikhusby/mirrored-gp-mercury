@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.DenatureToDilutionTubeHandler;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.EventHandlerSelector;
+import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.FlowcellLoadedHandler;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.FlowcellMessageHandler;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.SamplesDaughterPlateHandler;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -27,7 +28,9 @@ public class BspPlateTransferTest extends BaseEventTest {
             EasyMock.createMock(DenatureToDilutionTubeHandler.class);
     private FlowcellMessageHandler flowcellMessageHandler =
             EasyMock.createMock(FlowcellMessageHandler.class);
-    private Object[] mocks = new Object[] {denatureToDilutionTubeHandler, flowcellMessageHandler};
+    private FlowcellLoadedHandler flowcellLoadedHandler =
+            EasyMock.createMock(FlowcellLoadedHandler.class);
+    private Object[] mocks = {denatureToDilutionTubeHandler, flowcellMessageHandler, flowcellLoadedHandler};
 
     private SamplesDaughterPlateHandler samplesDaughterPlateHandler = new SamplesDaughterPlateHandler() {
         public void postToBsp(StationEventType stationEvent, String bspRestUrl) {
@@ -36,7 +39,7 @@ public class BspPlateTransferTest extends BaseEventTest {
     };
 
     private EventHandlerSelector testMe = new EventHandlerSelector(denatureToDilutionTubeHandler,
-            flowcellMessageHandler, samplesDaughterPlateHandler);
+            flowcellMessageHandler, samplesDaughterPlateHandler, flowcellLoadedHandler, null);
 
     private ExtractionsBloodJaxbBuilder builder = new ExtractionsBloodJaxbBuilder(getBettaLimsMessageTestFactory(),
             "sendToBspTest" + runDate.getTime(), Collections.singletonList("A12341234"), "barcode1",

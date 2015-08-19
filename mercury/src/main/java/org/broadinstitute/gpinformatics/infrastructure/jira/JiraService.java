@@ -185,6 +185,9 @@ public interface JiraService extends Serializable {
     IssueFieldsResponse getIssueFields(String jiraIssueKey, Collection<CustomFieldDefinition> customFieldDefinitions)
             throws IOException;
 
+    void deleteLink(String jiraIssueLinkId) throws
+            IOException;
+
     String getResolution(String jiraIssueKey) throws IOException;
 
     /**

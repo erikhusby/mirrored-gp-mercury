@@ -52,7 +52,7 @@ public class ReagentSearchDefinition {
         searchTerm.setCriteriaPaths(criteriaPaths);
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public String evaluate(Object entity, Map<String, Object> context) {
+            public String evaluate(Object entity, SearchContext context) {
                 Reagent reagent = (Reagent) entity;
                 return reagent.getName();
             }
@@ -70,7 +70,7 @@ public class ReagentSearchDefinition {
         searchTerm.setCriteriaPaths(criteriaPaths);
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public String evaluate(Object entity, Map<String, Object> context) {
+            public String evaluate(Object entity, SearchContext context) {
                 Reagent reagent = (Reagent) entity;
                 return reagent.getLot();
             }
@@ -89,7 +89,7 @@ public class ReagentSearchDefinition {
         searchTerm.setCriteriaPaths(criteriaPaths);
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public Date evaluate(Object entity, Map<String, Object> context) {
+            public Date evaluate(Object entity, SearchContext context) {
                 Reagent reagent = (Reagent) entity;
                 return reagent.getExpiration();
             }
@@ -104,7 +104,7 @@ public class ReagentSearchDefinition {
 
         // This is an exclusive search term using programmatic logic to populate the entity list
         SearchTerm searchTerm = new SearchTerm();
-        searchTerm.setName("LCSET Events");
+        searchTerm.setName("LCSET");
         searchTerm.setIsExcludedFromResultColumns(Boolean.TRUE);
         searchTerm.setAlternateSearchDefinition(buildLcsetAlternateSearchDef());
         searchTerm.setSearchValueConversionExpression(SearchDefinitionFactory.getLcsetInputConverter());
@@ -132,7 +132,7 @@ public class ReagentSearchDefinition {
         List<SearchTerm> searchTerms = new ArrayList<>();
 
         SearchTerm searchTerm = new SearchTerm();
-        searchTerm.setName("LCSET Events");
+        searchTerm.setName("LCSET");
         List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
         SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
         criteriaPath.setCriteria(Arrays.asList(/* LabEvent*/ "inPlaceLabEvents", /* LabVessel */

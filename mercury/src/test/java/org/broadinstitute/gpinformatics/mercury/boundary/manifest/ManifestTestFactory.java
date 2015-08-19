@@ -8,7 +8,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
@@ -65,13 +67,23 @@ public class ManifestTestFactory {
                 key != Metadata.Key.BROAD_2D_BARCODE)
                 && (!excludeKeys.contains(key))
                     ) {
-                String value;
+                Metadata metadata = null;
                 if (initialData != null && initialData.containsKey(key)) {
-                    value = initialData.get(key);
+                    metadata = new Metadata(key, initialData.get(key));
                 } else {
-                    value = key.name() + "_" + recordNumber;
+                    switch (key.getDataType()) {
+                    case STRING:
+                        metadata = new Metadata(key, key.name() + "_" + recordNumber);
+                        break;
+                    case NUMBER:
+                        metadata = new Metadata(key, new BigDecimal(recordNumber));
+                        break;
+                    case DATE:
+                        metadata = new Metadata(key, new Date());
+                        break;
+                    }
                 }
-                Metadata metadata = new Metadata(key, value);
+
                 manifestRecord.getMetadata().add(metadata);
             }
         }
@@ -84,6 +96,7 @@ public class ManifestTestFactory {
         ManifestRecord record = buildManifestRecord(20, initialData, excludeKeys);
         record.setStatus(status);
         session.addRecord(record);
+
 
         if (errorStatus != null) {
             session.addManifestEvent(new ManifestEvent(errorStatus,

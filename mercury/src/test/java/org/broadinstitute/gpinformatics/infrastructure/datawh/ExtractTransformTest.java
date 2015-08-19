@@ -125,6 +125,7 @@ public class ExtractTransformTest extends Arquillian {
         final long startSec = System.currentTimeMillis() / MSEC_IN_SEC;
         final long startMSec = startSec * MSEC_IN_SEC;
         final String startEtl = ExtractTransform.formatTimestamp(new Date(startMSec));
+        final String distantEnd = ExtractTransform.formatTimestamp(new Date(startMSec + 600000));
         Assert.assertNotNull(utx);
         utx.begin();
         labVesselDao.persist(labVessel);
@@ -135,7 +136,7 @@ public class ExtractTransformTest extends Arquillian {
         final long entityId = labVessel.getLabVesselId();
 
         // Wait since incremental etl won't pick up entities in the current second.
-        Thread.sleep(MSEC_IN_SEC);
+        Thread.sleep((ExtractTransform.TRANSACTION_COMPLETION_GUARDBAND + 1) * MSEC_IN_SEC);
 
         ExtractTransform.writeLastEtlRun(startSec);
         // Runs incremental etl from last_etl_run (i.e. startSec) to now.
@@ -152,7 +153,7 @@ public class ExtractTransformTest extends Arquillian {
         // Runs an incremental etl that starts after the entity was created.
         // Entity create should not be in the etl file, if any was created.
         String endEtl = ExtractTransform.formatTimestamp(new Date(endEtlMSec));
-        extractTransform.incrementalEtl(endEtl, "0");
+        extractTransform.incrementalEtl(endEtl, distantEnd);
         Assert.assertFalse(searchEtlFile(datafileDir, datFileEnding, "F", entityId));
         EtlTestUtilities.deleteEtlFiles(datafileDir);
 
@@ -175,7 +176,7 @@ public class ExtractTransformTest extends Arquillian {
         Thread.sleep(MSEC_IN_SEC);
 
         // Incremental etl should pick up the delete and not the earlier create.
-        recordCount = extractTransform.incrementalEtl(startEtl, "0");
+        recordCount = extractTransform.incrementalEtl(startEtl, distantEnd);
         Assert.assertTrue(recordCount > 0);
         Assert.assertFalse(searchEtlFile(datafileDir, datFileEnding, "F", entityId));
         Assert.assertTrue(searchEtlFile(datafileDir, datFileEnding, "T", entityId));

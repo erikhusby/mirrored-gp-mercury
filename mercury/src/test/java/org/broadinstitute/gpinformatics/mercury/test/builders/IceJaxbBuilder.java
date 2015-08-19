@@ -50,6 +50,7 @@ public class IceJaxbBuilder {
     private String catchCleanupPlateBarcode;
     private String catchEnrichRackBarcode;
     private List<String> catchEnrichTubeBarcodes = new ArrayList<>();
+    private List<String> catchEnrichSparseTubeBarcodes = new ArrayList<>();
     private String catchPico1Barcode;
     private String catchPico2Barcode;
     private PlateCherryPickEvent icePoolingTransfer;
@@ -91,7 +92,6 @@ public class IceJaxbBuilder {
         // IcePoolingTransfer
         List<BettaLimsMessageTestFactory.CherryPick> poolCherryPicks = new ArrayList<>();
         poolRackBarcode = testPrefix + "IcePool";
-        List<String> catchEnrichSparseTubeBarcodes = new ArrayList<>();
         switch (plexType) {
         case PLEX12:
             // todo jmt this doesn't work for multiple LCSETs
@@ -371,6 +371,10 @@ public class IceJaxbBuilder {
 
     public List<String> getCatchEnrichTubeBarcodes() {
         return catchEnrichTubeBarcodes;
+    }
+
+    public List<String> getCatchEnrichSparseTubeBarcodes() {
+        return catchEnrichSparseTubeBarcodes;
     }
 
     public String getCatchPico1Barcode() {

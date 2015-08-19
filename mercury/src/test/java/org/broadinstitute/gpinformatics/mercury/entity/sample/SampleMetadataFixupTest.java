@@ -12,7 +12,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
 import com.google.common.collect.ImmutableMap;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
@@ -28,7 +27,6 @@ import org.testng.annotations.Test;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -37,6 +35,9 @@ import java.util.Map;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.nullValue;
 
 /**
  * Fixup test for repatienting
@@ -96,12 +97,15 @@ public class SampleMetadataFixupTest extends Arquillian {
 
     @Test(enabled = false)
     public void fixupGPLIM_3542_BackFill_Buick_Samples() {
-        Map<String, MetaDataFixupItem> fixupItems = new HashMap<>();
+        Map<MercurySample, MetaDataFixupItem> fixupItems = new HashMap<>();
         List<MercurySample> mercurySamples = mercurySampleDao
                 .findSamplesWithoutMetadata(MercurySample.MetadataSource.MERCURY, Metadata.Key.MATERIAL_TYPE);
+        assertThat("No samples found. Has this test already been run?", mercurySamples.size(), not(0));
+
         for (MercurySample mercurySample : mercurySamples) {
-            fixupItems.putAll(MetaDataFixupItem
-                    .mapOf(mercurySample.getSampleKey(), Metadata.Key.MATERIAL_TYPE, "", "DNA"));
+            MetaDataFixupItem fixupItem =
+                    new MetaDataFixupItem(mercurySample.getSampleKey(), Metadata.Key.MATERIAL_TYPE, "", "DNA");
+            fixupItems.put(mercurySample, fixupItem);
         }
         String fixupComment = "see https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-3542";
         addMetadataAndValidate(fixupItems, fixupComment);
@@ -161,36 +165,46 @@ public class SampleMetadataFixupTest extends Arquillian {
     /**
      * Perform actual fixup and validate.
      */
-    private void addMetadataAndValidate(@Nonnull Map<String, MetaDataFixupItem> fixupItems,
+    private void addMetadataAndValidate(@Nonnull Map<MercurySample, MetaDataFixupItem> fixupItems,
                                         @Nonnull String fixupComment) {
         userBean.loginOSUser();
-        Map<String, Metadata.Key> fixUpErrors = new HashMap<>();
-        Map<String, MercurySample> samplesById = mercurySampleDao.findMapIdToMercurySample(fixupItems.keySet());
-        for (MetaDataFixupItem fixupItem : fixupItems.values()) {
-            MercurySample mercurySample = samplesById.get(fixupItem.getSampleKey());
-            if (StringUtils.isBlank(fixupItem.getOldValue())) {
-                mercurySample.addMetadata(
-                        Collections.singleton(new Metadata(fixupItem.getMetadataKey(), fixupItem.getNewValue())));
+        String originalValueDontMatchError =
+                "Original value of sample metadata is not what was expected. Key: %s, Expected: %s, Found: %s";
+
+        for (Map.Entry<MercurySample, MetaDataFixupItem> sampleFixupEntry : fixupItems.entrySet()) {
+            MercurySample sample = sampleFixupEntry.getKey();
+            MetaDataFixupItem fixupItem = sampleFixupEntry.getValue();
+            String errorString = null;
+            String sampleMetadata = getSampleMetadataValue(fixupItem.getMetadataKey(), sample);
+            // Verify the sample does not have this metadata already.
+            if (sampleMetadata!=null) {
+                errorString =
+                        String.format(originalValueDontMatchError, fixupItem.getMetadataKey(),
+                                fixupItem.getOldValue(), sampleMetadata);
+            }
+            // Check for errors and exit if there are any
+            assertThat(errorString, nullValue());
+
+            // Verify the updated value is what we expect.
+            sample.getMetadata().add(new Metadata(fixupItem.getMetadataKey(), fixupItem.getNewValue()));
+            fixupItem.validateUpdatedValue(sample);
+
+            sampleMetadata = getSampleMetadataValue(fixupItem.getMetadataKey(), sample);
+            assertThat(String.format("Updated value is not what was expected. Key: %s, Expected: %s, Found: %s",fixupItem.getMetadataKey(),
+                                            fixupItem.getNewValue(), sampleMetadata),
+                    fixupItem.validateUpdatedValue(sample), is(Collections.EMPTY_MAP));
+        }
+
+        mercurySampleDao.persist(new FixupCommentary(fixupComment));
+    }
+
+    private String getSampleMetadataValue(Metadata.Key metadataKey, MercurySample sample) {
+        for (Metadata sampleMetadata : sample.getMetadata()) {
+            if (sampleMetadata.getKey()==metadataKey){
+                return sampleMetadata.getValue();
             }
         }
-        String assertFailureReason =
-                String.format("Error updating some or all samples: %s. Please consult server log for more information.",
-                        fixUpErrors);
-        assertThat(assertFailureReason, fixUpErrors, equalTo(Collections.EMPTY_MAP));
-        mercurySampleDao.persist(new FixupCommentary(fixupComment));
-        mercurySampleDao.flush();
-
-        samplesById = mercurySampleDao.findMapIdToMercurySample(fixupItems.keySet());
-        for (MetaDataFixupItem fixupItem : fixupItems.values()) {
-            MercurySample mercurySample = samplesById.get(fixupItem.getSampleKey());
-            fixUpErrors.putAll(fixupItem.validateUpdatedValue(mercurySample));
-        }
-        assertFailureReason =
-                String.format(
-                        "Updated values do not match expected values for some or all samples: %s. Please consult server log for more information.",
-                        fixUpErrors);
-        assertThat(assertFailureReason, fixUpErrors, equalTo(Collections.EMPTY_MAP));
-
+        return null;
     }
 }
 

@@ -164,7 +164,7 @@
                 </c:if>
             </security:authorizeBlock>
 
-            <security:authorizeBlock roles="<%= roles(Developer) %>">
+            <security:authorizeBlock roles="<%= roles(PDM, LabManager, Developer) %>">
                 <div class="view-control-group control-group">
                     <label class="control-label label-form">Workflow</label>
                     <div class="controls">
@@ -269,26 +269,5 @@
                 </c:forEach>
             </tbody>
         </table>
-
-        <div class="tableBar">
-            <h4 style="display:inline">Material Types</h4>
-        </div>
-        <table id="allowedMaterialTypes" class="table table-striped table-bordered">
-            <thead>
-                <tr>
-                    <th>Category</th>
-                    <th>Name</th>
-                </tr>
-            </thead>
-            <tbody>
-                <c:forEach items="${actionBean.editProduct.allowableMaterialTypes}" var="allowableMaterialType">
-                    <tr>
-                        <td>${allowableMaterialType.category}</td>
-                        <td>${allowableMaterialType.name}</td>
-                    </tr>
-                </c:forEach>
-            </tbody>
-        </table>
-
     </stripes:layout-component>
 </stripes:layout-render>

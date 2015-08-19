@@ -330,7 +330,7 @@ public class ProductOrderEjb {
                                    @Nonnull MessageReporter reporter) {
         ProductOrder order = productOrderDao.findByBusinessKey(productOrderKey);
         // Only add samples to the LIMS bucket if the order is ready for lab work.
-        if (order.readyForLab()) {
+        if (order.getOrderStatus().readyForLab()) {
             Collection<ProductOrderSample> samples = bucketEjb.addSamplesToBucket(order, newSamples);
             if (!samples.isEmpty()) {
                 reporter.addMessage("{0} samples have been added to the pico bucket.", samples.size());

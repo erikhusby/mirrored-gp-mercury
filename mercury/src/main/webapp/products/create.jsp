@@ -64,17 +64,6 @@
                         }
                     );
 
-                    $j("#materialTypes").tokenInput(
-                        "${ctxpath}/products/product.action?materialTypesAutocomplete=&product=${actionBean.editProduct.businessKey}", {
-                            hintText: "Type a Material Type name",
-                            prePopulate: ${actionBean.ensureStringResult(actionBean.materialTypeTokenInput.completeData)},
-                            preventDuplicates: true,
-                            tokenDelimiter: "${actionBean.materialTypeTokenInput.separator}",
-                            resultsFormatter: formatInput,
-                            autoSelectFirstResult: true
-                        }
-                    );
-
                     $j("#availabilityDate").datepicker();
                     $j("#discontinuedDate").datepicker();
 
@@ -354,13 +343,6 @@
                 </div>
 
                 <div class="control-group">
-                    <stripes:label for="materialTypes" name="MaterialTypes" class="control-label"/>
-                 	<div class="controls">
-                       	<stripes:text id="materialTypes" name="materialTypeTokenInput.listOfKeys"/>
-                    </div>
-                </div>
-
-                <div class="control-group">
                     <stripes:label for="riskCriterion" name="RiskCriteria" class="control-label"/>
                     <div id="riskCriterion" class="controls" style="margin-top: 5px;">
                         A sample is on risk if:
@@ -400,7 +382,7 @@
                     </div>
                 </security:authorizeBlock>
 
-                <security:authorizeBlock roles="<%= roles(Developer) %>">
+                <security:authorizeBlock roles="<%= roles(PDM, Developer) %>">
                     <div class="control-group">
                         <stripes:label for="workflow" class="control-label">
                             Workflow
