@@ -650,6 +650,7 @@ public abstract class LabVessel implements Serializable {
             for (MaterialType materialType : values()) {
                 if(materialType.matches(displayName)) {
                     foundType = materialType;
+                    break;
                 }
             }
             return foundType;
