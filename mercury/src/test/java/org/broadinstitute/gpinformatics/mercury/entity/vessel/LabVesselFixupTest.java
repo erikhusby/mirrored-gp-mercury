@@ -1038,7 +1038,8 @@ public class LabVesselFixupTest extends Arquillian {
         Assert.assertNotNull(rackToDisassociate);
         Assert.assertNotNull(tubeFormation);
         Assert.assertTrue(tubeFormation.getRacksOfTubes().contains(rackToDisassociate));
-
+        System.out.println("Removing tube formation " + tubeFormation.getLabel() + " id " +
+                           tubeFormation.getLabVesselId() + " from rack " + rackToDisassociate.getLabel());
         tubeFormation.getRacksOfTubes().remove(rackToDisassociate);
         labVesselDao.persist(new FixupCommentary("SUPPORT-1011 fixup incorrect rack contents due to label swap"));
         labVesselDao.flush();
