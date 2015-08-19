@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import org.broadinstitute.bsp.client.rackscan.zaith.Rack;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
@@ -1024,5 +1025,23 @@ public class LabVesselFixupTest extends Arquillian {
         barcodedTube.setVolume(newVolume);
         barcodedTubeDao.persist(new FixupCommentary("GPLIM-3525 manually set volume for tube missing initial tare"));
         barcodedTubeDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void fixupSupport1011_2() {
+        userBean.loginOSUser();
+
+        // Rack CO-15323029 has two tube formations. Keep the one that is lab_vessel_id 2197589
+        // and remove the one that is lab_vessel_id 2212665.
+        RackOfTubes rackToDisassociate = (RackOfTubes) labVesselDao.findByIdentifier("CO-15323029");
+        TubeFormation tubeFormation = labVesselDao.findById(TubeFormation.class, 2212665L);
+
+        Assert.assertNotNull(rackToDisassociate);
+        Assert.assertNotNull(tubeFormation);
+        Assert.assertTrue(tubeFormation.getRacksOfTubes().contains(rackToDisassociate));
+
+        tubeFormation.getRacksOfTubes().remove(rackToDisassociate);
+        labVesselDao.persist(new FixupCommentary("SUPPORT-1011 fixup incorrect rack contents due to label swap"));
+        labVesselDao.flush();
     }
 }
