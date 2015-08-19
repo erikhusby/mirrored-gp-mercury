@@ -493,12 +493,13 @@ public class ZimsIlluminaRunFactoryTest {
                 }},
                 mapBarcodeToSourceTube, null, new HashMap<String, StripTube>(), new HashMap<String, RackOfTubes>());
 
-        flowcell = new IlluminaFlowcell(IlluminaFlowcell.FlowcellType.HiSeqFlowcell, "Flowcell1");
         // Flowcell transfer
         PlateTransferEventType flowcellTransferEvent = bettaLimsMessageFactory.buildStripTubeToFlowcell(
                 LabEventType.FLOWCELL_TRANSFER.getName(), "testStripTube", "Flowcell1");
         StripTube stripTube = (StripTube) getOnly(stripTubeBTransfer.getTargetLabVessels());
-        labEventFactory.buildFromBettaLimsPlateToPlateDbFree(flowcellTransferEvent, stripTube, flowcell);
+        LabEvent flowcellTransfer =
+                labEventFactory.buildFromBettaLimsPlateToPlateDbFree(flowcellTransferEvent, stripTube, null);
+        flowcell = (IlluminaFlowcell) getOnly(flowcellTransfer.getTargetLabVessels());
     }
 
     private <T> T getOnly(Collection<T> items) {
