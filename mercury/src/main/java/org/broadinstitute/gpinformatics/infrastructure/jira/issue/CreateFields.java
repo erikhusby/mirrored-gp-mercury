@@ -118,6 +118,20 @@ public class CreateFields extends UpdateFields {
         public String getKeyPrefix() {
             return keyPrefix;
         }
+
+        public static ProjectType fromKeyPrefix(String keyPrefix) {
+
+            ProjectType foundValue = null;
+
+            for (ProjectType projectType : values()) {
+                if (projectType.getKeyPrefix().equals(keyPrefix)) {
+                    foundValue = projectType;
+                    break;
+                }
+            }
+
+            return foundValue;
+        }
     }
 
     @JsonSerialize(using = NameableTypeJsonSerializer.class)

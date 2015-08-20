@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
+import com.sun.javaws.exceptions.InvalidArgumentException;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
@@ -85,9 +86,15 @@ public abstract class AbstractBatchJiraFieldFactory {
                                                             ProductOrderDao productOrderDao) {
         AbstractBatchJiraFieldFactory builder;
 
+        if (projectType == null) {
+            return getInstance(batch, productOrderDao);
+        }
         switch (projectType) {
         case FCT_PROJECT:
             builder = new FCTJiraFieldFactory(batch);
+            break;
+        case EXTRACTION_PROJECT:
+            builder = new ExtractionJiraFieldFactory(batch, productOrderDao);
             break;
         case LCSET_PROJECT:
         default:
@@ -98,6 +105,13 @@ public abstract class AbstractBatchJiraFieldFactory {
         return builder;
     }
 
+    /**
+     * This method does not seem to serve a purpose anymore.
+     * @param batch
+     * @param productOrderDao
+     * @return
+     */
+    @Deprecated
     public static AbstractBatchJiraFieldFactory getInstance(LabBatch batch,
                                                             ProductOrderDao productOrderDao) {
         AbstractBatchJiraFieldFactory builder;
@@ -106,13 +120,9 @@ public abstract class AbstractBatchJiraFieldFactory {
         case FCT:
             builder = new FCTJiraFieldFactory(batch);
             break;
-        case EXTRACTION:
-            builder = new ExtractionJiraFieldFactory(batch, productOrderDao);
-            break;
-        case WORKFLOW:
         default:
-            builder = new LCSetJiraFieldFactory(batch, productOrderDao);
-            break;
+            throw new IllegalArgumentException("Not enough information was passed to determine the type of Jira ticket"
+                                           + " that should be populated");
         }
         return builder;
     }

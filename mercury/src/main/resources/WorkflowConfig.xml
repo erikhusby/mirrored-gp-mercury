@@ -61,8 +61,7 @@
                 <bucketEntryEvaluators>org.broadinstitute.gpinformatics.mercury.entity.workflow.DnaBucketEntryEvaluator</bucketEntryEvaluators>
                 <batchJiraProjectType>LCSET</batchJiraProjectType>
                 <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
-                <workflowType>WORKFLOW</workflowType>
-            </workflowStepDefs>
+                </workflowStepDefs>
             <workflowStepDefs>
                 <name>Pico/Plating QC</name>
                 <labEventTypes>PICO_PLATING_QC</labEventTypes>
@@ -120,8 +119,7 @@
                 <bucketEntryEvaluators>org.broadinstitute.gpinformatics.mercury.entity.workflow.DnaBucketEntryEvaluator</bucketEntryEvaluators>
                 <batchJiraProjectType>LCSET</batchJiraProjectType>
                 <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
-                <workflowType>WORKFLOW</workflowType>
-            </workflowStepDefs>
+                </workflowStepDefs>
             <workflowStepDefs>
                 <name>Volume Addition</name>
                 <labEventTypes>VOLUME_ADDITION</labEventTypes>
@@ -238,8 +236,7 @@
                 </jiraTransition>
                 <batchJiraProjectType>LCSET</batchJiraProjectType>
                 <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
-                <workflowType>WORKFLOW</workflowType>
-            </workflowStepDefs>
+                </workflowStepDefs>
             <workflowStepDefs>
                 <name>Shearing Transfer</name>
                 <labEventTypes>SHEARING_TRANSFER</labEventTypes>
@@ -410,8 +407,7 @@
                 <reEntryPoint>false</reEntryPoint>
                 <batchJiraProjectType>LCSET</batchJiraProjectType>
                 <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
-                <workflowType>WORKFLOW</workflowType>
-            </workflowStepDefs>
+                </workflowStepDefs>
             <workflowStepDefs>
                 <name>Hybridization</name>
                 <labEventTypes>HYBRIDIZATION</labEventTypes>
@@ -543,8 +539,7 @@
                 <reEntryPoint>false</reEntryPoint>
                 <batchJiraProjectType>LCSET</batchJiraProjectType>
                 <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
-                <workflowType>WORKFLOW</workflowType>
-            </workflowStepDefs>
+                </workflowStepDefs>
             <workflowStepDefs>
                 <name>IcePoolingTransfer</name>
                 <labEventTypes>ICE_POOLING_TRANSFER</labEventTypes>
@@ -749,8 +744,7 @@
                 <reEntryPoint>false</reEntryPoint>
                 <batchJiraProjectType>LCSET</batchJiraProjectType>
                 <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
-                <workflowType>WORKFLOW</workflowType>
-            </workflowStepDefs>
+                </workflowStepDefs>
             <workflowStepDefs>
                 <name>Pooling Transfer</name>
                 <labEventTypes>POOLING_TRANSFER</labEventTypes>
@@ -954,8 +948,7 @@
                 </bucketEntryEvaluators>
                 <batchJiraProjectType>XTR</batchJiraProjectType>
                 <batchJiraIssueType>ALLPREP</batchJiraIssueType>
-                <workflowType>EXTRACTION</workflowType>
-            </workflowStepDefs>
+                </workflowStepDefs>
             <workflowStepDefs>
                 <name>Prep Reagents</name>
                 <labEventTypes>PREP</labEventTypes>

@@ -121,7 +121,6 @@ public class WorkflowStepDef implements Serializable {
     /** Instructions to the users. */
     private String instructions;
     /** Lab Batch Workflow type to assist with auto batch selection **/
-    private String workflowType;
     private String batchJiraIssueType;
 
     private transient WorkflowProcessDef processDef;
@@ -215,10 +214,6 @@ public class WorkflowStepDef implements Serializable {
 
     public String getInstructions() {
         return instructions;
-    }
-
-    public String getWorkflowType() {
-        return workflowType;
     }
 
     public String getBatchJiraIssueType() {

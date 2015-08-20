@@ -366,8 +366,34 @@ public class LabBatchEjb {
     public void batchToJira(String reporter, @Nullable String jiraTicket, LabBatch newBatch,
                             @Nonnull CreateFields.IssueType issueType) {
         try {
+            CreateFields.ProjectType projectType = null;
+            if(newBatch.getLabBatchType() == LabBatch.LabBatchType.WORKFLOW) {
+                Set<String> bucketDefNames = new HashSet<>();
+
+                Set<LabVessel> labVessels = new HashSet<>();
+                for (BucketEntry bucketEntry : newBatch.getBucketEntries()) {
+                    bucketDefNames.add(bucketEntry.getBucket().getBucketDefinitionName());
+                }
+
+                WorkflowConfig workflowConfig = workflowLoader.load();
+                WorkflowBucketDef bucketDef = null;
+
+                for (Workflow workflow : Workflow.SUPPORTED_WORKFLOWS) {
+                    ProductWorkflowDef workflowDef = workflowConfig.getWorkflowByName(workflow.getWorkflowName());
+                    ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
+                    for (WorkflowBucketDef bucket : workflowVersion.getCreationBuckets()) {
+                        String bucketName = bucket.getName();
+                        if (bucketName.equals(bucketDefNames.iterator().next())) {
+                            bucketDef = bucket;
+                        }
+                    }
+                }
+
+                projectType =
+                        CreateFields.ProjectType.fromKeyPrefix(bucketDef.getBatchJiraProjectType());
+            }
             AbstractBatchJiraFieldFactory fieldBuilder = AbstractBatchJiraFieldFactory
-                    .getInstance(newBatch, productOrderDao);
+                    .getInstance(projectType, newBatch, productOrderDao);
 
             if (StringUtils.isBlank(newBatch.getBatchDescription())) {
                 newBatch.setBatchDescription(fieldBuilder.generateDescription());
@@ -448,9 +474,12 @@ public class LabBatchEjb {
         LabBatch batch = labBatchDao.findByBusinessKey(businessKey);
         Set<String> pdoKeys = new HashSet<>();
 
+        Set<String> bucketDefNames = new HashSet<>();
+
         List<BucketEntry> bucketEntries = bucketEntryDao.findByIds(bucketEntryIds);
         Set<LabVessel> labVessels = new HashSet<>();
         for (BucketEntry bucketEntry : bucketEntries) {
+            bucketDefNames.add(bucketEntry.getBucket().getBucketDefinitionName());
             labVessels.add(bucketEntry.getLabVessel());
             pdoKeys.add(bucketEntry.getProductOrder().getBusinessKey());
             bucketEntry.getBucket().removeEntry(bucketEntry);
@@ -475,7 +504,28 @@ public class LabBatchEjb {
 
         Set<CustomField> customFields = new HashSet<>();
         Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
-        if (batch.getLabBatchType()!= LabBatch.LabBatchType.EXTRACTION) {
+
+        CreateFields.ProjectType projectType = null;
+        if(batch.getLabBatchType() == LabBatch.LabBatchType.WORKFLOW) {
+            WorkflowConfig workflowConfig = workflowLoader.load();
+            WorkflowBucketDef bucketDef = null;
+
+            for (Workflow workflow : Workflow.SUPPORTED_WORKFLOWS) {
+                ProductWorkflowDef workflowDef = workflowConfig.getWorkflowByName(workflow.getWorkflowName());
+                ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
+                for (WorkflowBucketDef bucket : workflowVersion.getCreationBuckets()) {
+                    String bucketName = bucket.getName();
+                    if (bucketName.equals(bucketDefNames.iterator().next())) {
+                        bucketDef = bucket;
+                    }
+                }
+            }
+
+            projectType =
+                    CreateFields.ProjectType.fromKeyPrefix(bucketDef.getBatchJiraProjectType());
+        }
+
+        if (projectType == CreateFields.ProjectType.EXTRACTION_PROJECT) {
             customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.GSSR_IDS,
                                              LCSetJiraFieldFactory.buildSamplesListString(batch, reworkFromBucket)));
         }
@@ -485,7 +535,7 @@ public class LabBatchEjb {
                                          sampleCount));
 
         AbstractBatchJiraFieldFactory fieldBuilder = AbstractBatchJiraFieldFactory
-                .getInstance(batch, productOrderDao);
+                .getInstance(projectType,batch, productOrderDao);
 
         if (StringUtils.isBlank(batch.getBatchDescription())) {
             batch.setBatchDescription(fieldBuilder.generateDescription());

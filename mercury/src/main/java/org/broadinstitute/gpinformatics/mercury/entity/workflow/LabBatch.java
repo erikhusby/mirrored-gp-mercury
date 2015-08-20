@@ -128,10 +128,6 @@ public class LabBatch {
          */
         FCT,
         /**
-         * Extraction Batch (XTR)
-         */
-        EXTRACTION,
-        /**
          * MISEQ FCT Batch
          */
         MISEQ
