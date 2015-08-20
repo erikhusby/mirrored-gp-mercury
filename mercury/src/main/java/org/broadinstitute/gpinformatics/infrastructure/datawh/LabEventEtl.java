@@ -483,8 +483,8 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
             dtos.add(new EventFactDto(entity, null, null, null, "", null, null, null, null, wfDenorm, true));
             logger.debug("Skipping ETL on labEvent " + entity.getLabEventId() + ": No event vessels" );
         } else {
+            List<EventFactDto> eventVesselDtos = new ArrayList<>();
             for (LabVessel vessel : vessels) {
-                List<EventFactDto> dtosFromEvent;
                 VesselContainer<? extends LabVessel> vesselContainer = vessel.getContainerRole();
 
                 if ( vesselContainer != null && !vesselContainer.hasAnonymousVessels() ) {
@@ -492,36 +492,26 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                     for (LabVessel containedVessel : vesselContainer.getContainedVessels()) {
                         VesselPosition position = vesselContainer.getPositionOfVessel(containedVessel);
                         sampleInstances = containedVessel.getSampleInstancesV2();
-                        dtosFromEvent = createDtoFromEventVessel(entity, containedVessel, position, sampleInstances);
-                        ancestryUtil.generateAncestryData(dtosFromEvent, entity, containedVessel);
-                        dtos.addAll(dtosFromEvent);
-                        dtosFromEvent.clear();
+                        eventVesselDtos.addAll(
+                                createDtoFromEventVessel(entity, containedVessel, position, sampleInstances));
                     }
                 } else if (vesselContainer != null ) {
                     // The container contains locations only (plate wells, lanes), build a row for each
                     for( VesselPosition targetPosition : vesselContainer.getPositions() ) {
-                        List<LabVessel.VesselEvent> vesselEvents = vesselContainer.getAncestors(targetPosition);
-                        for( LabVessel.VesselEvent vesselEvent : vesselEvents ) {
-                            sampleInstances =
-                                    vesselContainer.getSampleInstancesAtPositionV2(vesselEvent.getTargetPosition());
-                            dtosFromEvent =
-                                    createDtoFromEventVessel(entity, vesselContainer.getEmbedder(), targetPosition,
-                                            sampleInstances);
-                            ancestryUtil.generateAncestryData(dtosFromEvent, entity, vesselContainer.getEmbedder());
-                            dtos.addAll(dtosFromEvent);
-                            dtosFromEvent.clear();
-                        }
+                        sampleInstances = vesselContainer.getSampleInstancesAtPositionV2(targetPosition);
+                        eventVesselDtos.addAll(
+                                createDtoFromEventVessel(entity, vesselContainer.getEmbedder(), targetPosition,
+                                        sampleInstances));
                     }
                 } else {
                     // Build a row for the vessel (e.g barcoded tube)
                     sampleInstances = vessel.getSampleInstancesV2();
-                    dtosFromEvent = createDtoFromEventVessel(entity, vessel, null, sampleInstances);
-                    ancestryUtil.generateAncestryData(dtosFromEvent, entity, vessel);
-                    dtos.addAll(dtosFromEvent);
-                    dtosFromEvent.clear();
+                    eventVesselDtos.addAll(createDtoFromEventVessel(entity, vessel, null, sampleInstances));
                 }
+                ancestryUtil.generateAncestryData(eventVesselDtos, entity, vessel);
+                dtos.addAll(eventVesselDtos);
+                eventVesselDtos.clear();
             }
-
             Collections.sort(dtos, EventFactDto.BY_SAMPLE_KEY);
         }
 
@@ -562,11 +552,6 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                             labBatch = labBatches.iterator().next();
                             // Get any PDO, should be only 1 (should logic be added to get the newest?)
                             pdo = labBatch.getBucketEntries().iterator().next().getProductOrder();
-                        } else {
-                            // Give up, without a single bucket entry or a single event batch, there's no way to
-                            //   reliably determine the batch/PDO
-                            logger.debug("ETL on labEvent " + labEvent.getLabEventId() +
-                                         ": batch not workflow, no PDO, or no workflow step for event" );
                         }
                     } else {
                         pdo = bucketEntry.getProductOrder();
@@ -593,8 +578,10 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                                       || !wfDenorm.isBatchNeeded()) &&
                                      (pdo != null || !wfDenorm.isProductOrderNeeded());
                     if( !canEtl ) {
-                        logger.debug("Skipping ETL on labEvent " + labEvent.getLabEventId() +
-                                     ": batch not workflow, no PDO, or no worflow step for event" );
+                        logger.debug("Skipping ETL on labEvent: " + labEvent.getLabEventId() +
+                                     ", vessel: " + vessel.getLabel() +
+                                     (targetPosition == null?"":", position: " + targetPosition ) +
+                                     " - Batch not workflow, no PDO, or no workflow step for event" );
                     }
 
                     MercurySample sample = si.getRootOrEarliestMercurySample();
@@ -609,8 +596,10 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                         dtos.add( new EventFactDto(labEvent, vessel, targetPosition,
                                 MolecularIndexReagent.getIndexesString(vessel.getIndexesForSampleInstance(si)).trim(),
                                 null, null, null, null, pdo, null, false) );
-                        logger.debug("Skipping ETL on labEvent " + labEvent.getLabEventId() +
-                                     " on vessel " + vessel.getLabel() + ": RootOrEarliestMercurySample is null" );
+                        logger.debug("Skipping ETL on labEvent: " + labEvent.getLabEventId() +
+                                     ", vessel: " + vessel.getLabel() +
+                                     (targetPosition == null?"":", position: " + targetPosition ) +
+                                     " - RootOrEarliestMercurySample is null" );
                     }
                 }
             } else {
@@ -618,8 +607,10 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                 // since exactly which fields are null is used as indicator in postEtlLogging, and this
                 // pattern is used in other fact table etl that are exposed in ExtractTransformResource.
                 dtos.add( new EventFactDto(labEvent, vessel, null, null, null, null, null, null, null, null, false) );
-                logger.debug("Skipping ETL on labEvent " + labEvent.getLabEventId() +
-                             " on vessel " + vessel.getLabel() + ": No SampleInstanceV2 instances" );
+                logger.debug("Skipping ETL on labEvent: " + labEvent.getLabEventId() +
+                             ", vessel: " + vessel.getLabel() +
+                             (targetPosition == null?"":", position: " + targetPosition ) +
+                             " - No SampleInstanceV2 instances" );
             }
         } catch (RuntimeException e) {
             logger.debug("Skipping ETL on labEvent " + labEvent.getLabEventId() +
