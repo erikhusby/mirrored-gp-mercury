@@ -948,7 +948,7 @@
                 </bucketEntryEvaluators>
                 <batchJiraProjectType>XTR</batchJiraProjectType>
                 <batchJiraIssueType>ALLPREP</batchJiraIssueType>
-                </workflowStepDefs>
+            </workflowStepDefs>
             <workflowStepDefs>
                 <name>Prep Reagents</name>
                 <labEventTypes>PREP</labEventTypes>
@@ -1261,7 +1261,7 @@
         </productWorkflowDefVersions>
     </productWorkflowDefs>
     <productWorkflowDefs>
-        <name>AllPrep Extraction</name>
+        <name>Clinical Whole Blood Extraction</name>
         <productWorkflowDefVersions>
             <version>02</version>
             <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>

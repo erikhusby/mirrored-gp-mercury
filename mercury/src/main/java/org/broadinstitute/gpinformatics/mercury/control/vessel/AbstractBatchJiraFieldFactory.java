@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
-import com.sun.javaws.exceptions.InvalidArgumentException;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;

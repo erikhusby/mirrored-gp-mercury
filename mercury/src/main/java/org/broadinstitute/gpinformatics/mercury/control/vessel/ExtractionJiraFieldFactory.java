@@ -173,17 +173,7 @@ public class ExtractionJiraFieldFactory extends AbstractBatchJiraFieldFactory {
                 .add(new CustomField(submissionFields, LabBatch.TicketFields.DESCRIPTION, batch.getBatchDescription()));
         customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.SUMMARY, batch.getBatchName()));
 
-//        customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.PROGRESS_STATUS,
-//                new CustomField.ValueContainer(PROGRESS_STATUS)));
-//
-//        customFields.add(new CustomField(
-//                submissionFields.get(LabBatch.TicketFields.LIBRARY_QC_SEQUENCING_REQUIRED.getName()),
-//                new CustomField.SelectOption(LIB_QC_SEQ_REQUIRED_DEFAULT)));
-
         int sampleCount = batch.getStartingBatchLabVessels().size();
-
-//        customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.GSSR_IDS,
-//                buildSamplesListString(batch, null)));
 
         customFields.add(new CustomField(
                 submissionFields.get(LabBatch.TicketFields.NUMBER_OF_SAMPLES.getName()), sampleCount));
@@ -198,40 +188,6 @@ public class ExtractionJiraFieldFactory extends AbstractBatchJiraFieldFactory {
             customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.IMPORTANT, batch
                     .getImportant()));
         }
-
-//        String batchMaterialType = null;
-//        for (LabVessel labVessel : batch.getNonReworkStartingLabVessels()) {
-//            for (LabVessel.MaterialType materialType : LabVessel.MaterialType.values()) {
-//                if (labVessel.isMaterialType(materialType)) {
-//                    batchMaterialType = materialType.getDisplayName();
-//                }
-//                if (batchMaterialType != null) {
-//                    break;
-//                }
-//            }
-//        }
-
-//        customFields
-//                .add(new CustomField(submissionFields, LabBatch.TicketFields.MATERIAL_TYPE, batchMaterialType));
-
-
-
-//        if (!workflowDefs.isEmpty()) {
-//            StringBuilder builtProtocol = new StringBuilder();
-//            for (ProductWorkflowDef currWorkflowDef : new HashSet<>(workflowDefs.values())) {
-//
-//                if (StringUtils.isNotBlank(builtProtocol)) {
-//                    builtProtocol.append(", ");
-//                }
-//                builtProtocol.append(currWorkflowDef.getName());
-//                builtProtocol.append(":");
-//                builtProtocol.append(currWorkflowDef.getEffectiveVersion(batch.getCreatedOn()).getVersion());
-//            }
-//            customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.PROTOCOL,
-//                    builtProtocol.toString()));
-//        } else {
-//            customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.PROTOCOL, "N/A"));
-//        }
 
         return customFields;
 
