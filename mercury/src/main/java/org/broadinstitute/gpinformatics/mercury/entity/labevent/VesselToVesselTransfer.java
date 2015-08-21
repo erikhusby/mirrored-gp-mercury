@@ -29,9 +29,7 @@ public class VesselToVesselTransfer extends VesselTransfer {
 
     public VesselToVesselTransfer(LabVessel sourceVessel, LabVessel targetVessel, LabEvent labEvent) {
         this.sourceVessel = sourceVessel;
-        sourceVessel.getVesselToVesselTransfersThisAsSource().add(this);
         this.targetVessel = targetVessel;
-        sourceVessel.getVesselToVesselTransfersThisAsTarget().add(this);
         this.labEvent = labEvent;
         this.sourceVessel.getVesselToVesselTransfersThisAsSource().add(this);
         this.targetVessel.getVesselToVesselTransfersThisAsTarget().add(this);
