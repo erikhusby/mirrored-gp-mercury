@@ -1303,7 +1303,7 @@ public class LabEventFactory implements Serializable {
         if (labVessel == null) {
             throw new RuntimeException("Source tube not found for " + receptacleEventType.getReceptacle().getBarcode());
         }
-        labEvent.setInPlaceLabVessel(labVessel);
+        labVessel.addInPlaceEvent(labEvent);
         return labEvent;
     }
 
@@ -1366,6 +1366,7 @@ public class LabEventFactory implements Serializable {
         }
         LabEvent genericLabEvent = new LabEvent(labEventType, stationEventType.getStart(),
                 stationEventType.getStation(), disambiguator, operator, stationEventType.getProgram());
+        genericLabEvent.setWorkflowQualifier(stationEventType.getWorkflowQualifier());
         if (stationEventType.getBatchId() != null) {
             LabBatch labBatch = labEventRefDataFetcher.getLabBatch(stationEventType.getBatchId());
             if (labBatch == null) {
