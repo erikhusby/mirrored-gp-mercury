@@ -260,14 +260,6 @@ public abstract class LabVessel implements Serializable {
         this.label = label;
     }
 
-    public Set<VesselToVesselTransfer> getVesselToVesselTransfersThisAsSource() {
-        return vesselToVesselTransfersThisAsSource;
-    }
-
-    public Set<VesselToVesselTransfer> getVesselToVesselTransfersThisAsTarget() {
-        return vesselToVesselTransfersThisAsTarget;
-    }
-
     public Set<VesselToSectionTransfer> getVesselToSectionTransfersThisAsSource() {
         return vesselToSectionTransfersThisAsSource;
     }
