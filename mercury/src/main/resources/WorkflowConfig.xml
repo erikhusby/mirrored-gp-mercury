@@ -1142,6 +1142,83 @@
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>AllPrep Extraction</name>
+        <workflowProcessDefVersions>
+            <version>01</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowStepDefs>
+                <name>Prep Reagents</name>
+                <labEventTypes>PREP</labEventTypes>
+                <workflowQualifier>Reagents</workflowQualifier>
+                <instructions>Before starting, confirm all reagents have been prepared:
+                    RLT+ w/B-ME Buffer RPE, Buffer AW1, and Buffer AW2 w/EtOH
+                </instructions>
+            </workflowStepDefs>
+            <!--
+            scan all parent source SM-IDs
+            Pellet in existing tube and wash w/PBS (x2)?
+            Re-suspend in PBS (3mL)
+            -->
+            transfer to 2mL Cryovial (half the volume, 1.5mL)
+            <!--
+            Centrifuge (5 min @ 300g )
+            add buffer RLT+ w/B-ME
+            aspirate supernatant
+            -->
+            Transfer lysate directly into a QIAshredder spin column placed in a 2 ml collection tube
+            <!--
+            centrifuge for 2 min at maximum speed
+            -->
+            Transfer the homogenized lysate to an AllPrep DNA spin column placed in a 2 ml collection tube (supplied)
+            <!--
+            Centrifuge for 30 s at ≥8000 x g (≥10,000 rpm)
+            Place AllPrep DNA spin column in a new 2 ml collection tube (supplied), and set aside. Store at room temperature (15–25ºC) or at 4ºC for later DNA purification.
+
+            Add 70% ethanol to the flowthrough
+            -->
+            transfer half to RNA spin column
+            <!--
+            centrifuge for 15 s at ≥8000 x g
+            -->
+            transfer half to RNA spin column
+            <!--
+            centrifuge for 15 s at ≥8000 x g
+            Add Buffer RW1 to the RNA spin column
+            centrifuge for 15 s at ≥8000 x g
+            discard flowthrough
+            add Buffer RPE to the RNA spin column
+            centrifuge for 15 s at ≥8000
+            discard flowthrough
+            add Buffer RPE to the RNA spin column
+            centrifuge for 2 min at ≥8000
+            discard flowthrough
+            place RNA spin column in new 2 ml collection tube (supplied)
+            centrifuge for 2 minutes at full speed to dry membrane
+            Move RNA spin column to a new 1.5 ml collection tube
+            Add water directly to the spin column membrane
+            centrifuge for 1 min at ≥8000g to elute
+            -->
+            Transfer RNA to microcentrifuge tube
+            Transfer from microcentrifuge tube to 2D matrix tube
+
+            <!--
+            Add AW1 to DNA spin column
+            centrifuge for 15 s at ≥8000 x g
+            discard flowthrough
+            add 500 μl Buffer AW2 to the DNA spin column
+            centrifuge for 2 min at full speed
+            discard
+            Move DNA spin column in a new 1.5 ml microcentrifuge tube
+            Add Buffer EB to the spin column
+            Incubate at RT 1min
+            centrifuge for 1 min at ≥8000 x g
+            elute
+            -->
+            Transfer DNA to microcentrifuge tube
+            Transfer from microcentrifuge tube to 2D matrix tube
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
     <productWorkflowDefs>
         <name>Agilent Exome Express</name>
         <productWorkflowDefVersions>
