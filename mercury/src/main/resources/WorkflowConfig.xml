@@ -1160,28 +1160,55 @@
             Pellet in existing tube and wash w/PBS (x2)?
             Re-suspend in PBS (3mL)
             -->
-            transfer to 2mL Cryovial (half the volume, 1.5mL)
+            <workflowStepDefs>
+                <name>Transfer Cells to Cryovial</name>
+                <labEventTypes>ALLPREP_CELLS_TO_CRYOVIAL</labEventTypes>
+                <instructions>Transfer to 2mL Cryovial (half the volume, 1.5mL)
+                </instructions>
+            </workflowStepDefs>
             <!--
             Centrifuge (5 min @ 300g )
             add buffer RLT+ w/B-ME
             aspirate supernatant
             -->
-            Transfer lysate directly into a QIAshredder spin column placed in a 2 ml collection tube
+            <workflowStepDefs>
+                <name>Transfer to QIAshredder</name>
+                <labEventTypes>ALLPREP_CRYOVIAL_TO_QIASHREDDER</labEventTypes>
+                <instructions>Transfer lysate directly into a QIAshredder spin column placed in a 2 ml collection tube.
+                </instructions>
+            </workflowStepDefs>
             <!--
             centrifuge for 2 min at maximum speed
             -->
-            Transfer the homogenized lysate to an AllPrep DNA spin column placed in a 2 ml collection tube (supplied)
+            <workflowStepDefs>
+                <name>Transfer to DNA Spin Column</name>
+                <labEventTypes>ALLPREP_LYSATE_TO_DNA_SPIN</labEventTypes>
+                <instructions>Transfer the homogenized lysate to an AllPrep DNA spin column placed in a 2 ml collection tube (supplied).
+                </instructions>
+            </workflowStepDefs>
+
             <!--
             Centrifuge for 30 s at ≥8000 x g (≥10,000 rpm)
             Place AllPrep DNA spin column in a new 2 ml collection tube (supplied), and set aside. Store at room temperature (15–25ºC) or at 4ºC for later DNA purification.
 
             Add 70% ethanol to the flowthrough
             -->
-            transfer half to RNA spin column
+            <workflowStepDefs>
+                <name>Transfer to RNA Spin Column</name>
+                <labEventTypes>ALLPREP_FLOWTHROUGH_TO_RNA_SPIN</labEventTypes>
+                <instructions>Transfer half to RNA spin column.
+                </instructions>
+            </workflowStepDefs>
+
             <!--
             centrifuge for 15 s at ≥8000 x g
             -->
-            transfer half to RNA spin column
+            <workflowStepDefs>
+                <name>Transfer to RNA Spin Column</name>
+                <labEventTypes>ALLPREP_FLOWTHROUGH_TO_RNA_SPIN</labEventTypes>
+                <instructions>Transfer half to RNA spin column.
+                </instructions>
+            </workflowStepDefs>
             <!--
             centrifuge for 15 s at ≥8000 x g
             Add Buffer RW1 to the RNA spin column
@@ -1199,8 +1226,18 @@
             Add water directly to the spin column membrane
             centrifuge for 1 min at ≥8000g to elute
             -->
-            Transfer RNA to microcentrifuge tube
-            Transfer from microcentrifuge tube to 2D matrix tube
+            <workflowStepDefs>
+                <name>Transfer RNA To Microcentrifuge</name>
+                <labEventTypes>ALLPREP_RNA_TO_MICRO</labEventTypes>
+                <instructions>Transfer RNA to microcentrifuge tube.
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Transfer RNA To Matrix</name>
+                <labEventTypes>ALLPREP_RNA_MICRO_TO_MATRIX</labEventTypes>
+                <instructions>Transfer from microcentrifuge tube to 2D matrix tube
+                </instructions>
+            </workflowStepDefs>
 
             <!--
             Add AW1 to DNA spin column
@@ -1215,8 +1252,13 @@
             centrifuge for 1 min at ≥8000 x g
             elute
             -->
-            Transfer DNA to microcentrifuge tube
-            Transfer from microcentrifuge tube to 2D matrix tube
+            <workflowStepDefs>
+                <name>Transfer DNA To Microcentrifuge</name>
+                <labEventTypes>ALLPREP_DNA_TO_MICRO</labEventTypes>
+                <instructions>Transfer from microcentrifuge tube to 2D matrix tube
+                </instructions>
+            </workflowStepDefs>
+
         </workflowProcessDefVersions>
     </workflowProcessDefs>
     <productWorkflowDefs>
