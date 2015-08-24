@@ -86,7 +86,7 @@ public abstract class AbstractBatchJiraFieldFactory {
         AbstractBatchJiraFieldFactory builder;
 
         if (projectType == null) {
-            return getInstance(batch, productOrderDao);
+            return getInstance(batch);
         }
         switch (projectType) {
         case FCT_PROJECT:
@@ -106,13 +106,11 @@ public abstract class AbstractBatchJiraFieldFactory {
 
     /**
      * This method does not seem to serve a purpose anymore.
-     * @param batch
-     * @param productOrderDao
-     * @return
+     * @param batch an instance of a {@link org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch} entity
+     *              and is the primary source of the data from which the custom submission fields will be generated
+     * @return The instance of the JIRA field factory for the given project type
      */
-    @Deprecated
-    public static AbstractBatchJiraFieldFactory getInstance(LabBatch batch,
-                                                            ProductOrderDao productOrderDao) {
+    private static AbstractBatchJiraFieldFactory getInstance(LabBatch batch) {
         AbstractBatchJiraFieldFactory builder;
         switch (batch.getLabBatchType()) {
         case MISEQ:

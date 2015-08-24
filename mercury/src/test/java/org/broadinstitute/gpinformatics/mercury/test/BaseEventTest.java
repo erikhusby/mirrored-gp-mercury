@@ -191,9 +191,7 @@ public class BaseEventTest {
             }
         });
         labBatchEJB.setProductOrderDao(mockProductOrderDao);
-
         labBatchEJB.setWorkflowLoader(new WorkflowLoader());
-
 
         BSPUserList testUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
         BSPSetVolumeConcentration bspSetVolumeConcentration = BSPSetVolumeConcentrationProducer.stubInstance();
@@ -331,7 +329,6 @@ public class BaseEventTest {
         }
 
         labBatchEJB.createLabBatch(workflowBatch, "scottmat", CreateFields.IssueType.EXOME_EXPRESS);
-
         JiraServiceStub.setCreatedIssueSuffix(defaultLcsetSuffix);
 
         drainBucket(workingBucket);

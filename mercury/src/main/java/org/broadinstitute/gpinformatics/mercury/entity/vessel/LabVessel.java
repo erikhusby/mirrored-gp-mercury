@@ -66,6 +66,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.regex.Pattern;
 
 /**
  * This entity represents a piece of plastic or glass that holds sample, reagent or (if it embeds a
@@ -622,26 +623,26 @@ public abstract class LabVessel implements Serializable {
         CELL_SUSPENSION("Cell Suspension"),
         DNA("DNA"),
         FFPE("FFPE"),
-        FRESH_BLOOD("Fresh Blood", "^(?!frozen)(?=.*blood).*"),
-        FRESH_FROZEN_BLOOD("Fresh Frozen Blood", "^(?=frozen)(?=.*blood).*"),
+        FRESH_BLOOD("Fresh Blood", "(?!.*frozen)(?!.*buffy)(?=.*blood).*"),
+        FRESH_FROZEN_BLOOD("Fresh Frozen Blood", "^(?=.*frozen)(?=.*blood).*"),
+        FRESH_FROZEN_TISSUE("Fresh Frozen Tissue", "^(?=.*frozen)(?=.*tissue).*"),
         RNA("RNA"),
-        BUFFY_COAT("Buffy Coat");
+        BUFFY_COAT("Buffy Coat","^(?=.*buffy)(?=.*coat).*");
 
         private final String displayName;
-        private final String matchPattern;
+        private final Pattern matchPattern;
 
         MaterialType(String displayName) {
-            this.displayName = displayName;
-            this.matchPattern = String.format("%s.*", getDisplayName().toLowerCase());
+            this(displayName, String.format(".*%s.*", displayName.toLowerCase().replaceAll("\\s", ".*")));
         }
 
         MaterialType(String displayName, String matchPattern) {
             this.displayName = displayName;
-            this.matchPattern = matchPattern;
+            this.matchPattern = Pattern.compile(matchPattern);
         }
 
         public boolean matches(String value) {
-            return value.toLowerCase().matches(matchPattern);
+            return matchPattern.matcher(value.toLowerCase()).matches();
         }
 
         public static MaterialType fromDisplayName(String displayName) {

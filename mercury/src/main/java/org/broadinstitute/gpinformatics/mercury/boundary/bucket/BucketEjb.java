@@ -363,15 +363,6 @@ public class BucketEjb {
         WorkflowConfig workflowConfig = workflowLoader.load();
         ProductWorkflowDefVersion workflowDefVersion =
                 workflowConfig.getWorkflow(order.getProduct().getWorkflow()).getEffectiveVersion();
-//        WorkflowBucketDef initialBucketDef = workflowDefVersion.getInitialBucket();
-
-//        Bucket initialBucket = null;
-//        if (initialBucketDef != null) {
-//            initialBucket = findOrCreateBucket(initialBucketDef.getName());
-//        }
-//        if (initialBucket == null) {
-//            return Collections.emptyList();
-//        }
 
         String username = null;
         Long bspUserId = order.getCreatedBy();
@@ -423,12 +414,7 @@ public class BucketEjb {
                 add(validVessels, BucketEntry.BucketEntryType.PDO_ENTRY, username, LabEvent.UI_EVENT_LOCATION,
                         LabEvent.UI_PROGRAM_NAME, order);
 
-//        if (initialBucket.getBucketId() == null) {
-//            bucketDao.persist(initialBucket);
-//        }
-
         Map<String, Collection<ProductOrderSample>> samplesAdded = new HashMap<>();
-//        Map<String, Collection<ProductOrderSample>> samplesAdded = new HashMap<>();
         for (BucketEntry bucketEntry : addedBucketEntries) {
             for (MercurySample sample : bucketEntry.getLabVessel().getMercurySamples()) {
                 String sampleKey = sample.getSampleKey();
@@ -449,17 +435,6 @@ public class BucketEjb {
     private Map<WorkflowBucketDef, Collection<LabVessel>> applyBucketCriteria(Collection<LabVessel> vessels,
                                                                               ProductWorkflowDefVersion productWorkflowDefVersion) {
         return productWorkflowDefVersion.getInitialBucket(vessels);
-
-//        for (LabVessel vessel : vessels) {
-//            if (bucketDef.meetsBucketCriteria(vessel)) {
-//                Collection<LabVessel> labVessels = bucketVessels.get(bucketDef);
-//                if (labVessels == null) {
-//                    labVessels = new ArrayList<>();
-//                }
-//                labVessels.add(vessel);
-//                bucketVessels.put(bucketDef, labVessels);
-//            }
-//        }
     }
 
     /**

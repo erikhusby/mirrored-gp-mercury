@@ -26,7 +26,6 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
@@ -773,11 +772,6 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         bucketEjb.addSamplesToBucket(productOrder);
 
         String batchName = "LCSET-MsgTest-" + testPrefix;
-//        LabBatch labBatch = new LabBatch(batchName, starters, LabBatch.LabBatchType.WORKFLOW);
-//        labBatch.setValidationBatch(true);
-//        labBatch.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
-//        labBatch.setJiraTicket(new JiraTicket(JiraServiceProducer.stubInstance(), batchName));
-
         List<Long> bucketIds = new ArrayList<>();
         for (LabVessel starter : starters) {
             bucketIds.add(starter.getBucketEntries().iterator().next().getBucketEntryId());
@@ -963,10 +957,6 @@ public class BettaLimsMessageResourceTest extends Arquillian {
                 LabEvent.UI_PROGRAM_NAME, LabEventType.ICE_BUCKET, crspProductOrder);
 
         String batchName = "LCSET-Rework-" + crspTestPrefix;
-//        LabBatch labBatch = new LabBatch(batchName, crspPonds, LabBatch.LabBatchType.WORKFLOW);
-//        labBatch.setWorkflow(Workflow.ICE_CRSP);
-//        labBatch.setJiraTicket(new JiraTicket(JiraServiceProducer.stubInstance(), batchName));
-
         List<Long> reworkBucketEntryIds = new ArrayList<>();
 
         for (LabVessel crspPond : crspPonds) {

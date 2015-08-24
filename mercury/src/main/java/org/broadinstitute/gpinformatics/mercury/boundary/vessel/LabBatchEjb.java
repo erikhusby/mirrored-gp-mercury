@@ -254,7 +254,6 @@ public class LabBatchEjb {
             if(newBatch.getLabBatchType() == LabBatch.LabBatchType.WORKFLOW) {
                 Set<String> bucketDefNames = new HashSet<>();
 
-                Set<LabVessel> labVessels = new HashSet<>();
                 for (BucketEntry bucketEntry : newBatch.getBucketEntries()) {
                     bucketDefNames.add(bucketEntry.getBucket().getBucketDefinitionName());
                 }

@@ -13,8 +13,6 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderT
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
-import org.broadinstitute.gpinformatics.mercury.control.vessel.ExtractionJiraFieldFactory;
-import org.broadinstitute.gpinformatics.mercury.control.vessel.LCSetJiraFieldFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -26,22 +24,18 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDe
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
-import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 @Test(groups = TestGroups.STUBBY)
 public class LabBatchEJBTest extends ContainerTest {
@@ -75,7 +69,6 @@ public class LabBatchEJBTest extends ContainerTest {
     private ArrayList<String> pdoNames;
     private String scottmat;
     private Bucket bucket;
-
 
     @BeforeMethod(groups = TestGroups.STUBBY)
     public void setUp() throws Exception {
@@ -115,6 +108,7 @@ public class LabBatchEJBTest extends ContainerTest {
         scottmat = "scottmat";
     }
 
+    @Override
     @AfterMethod(groups = TestGroups.STUBBY)
     public void tearDown() throws Exception {
         if (utx == null) {
@@ -159,7 +153,6 @@ public class LabBatchEJBTest extends ContainerTest {
 
     @Test
     public void testCreateLabBatchWithValues() throws Exception {
-
         putTubesInBucket();
 
         String batchName = "Test lab Batch Name";
@@ -258,7 +251,7 @@ public class LabBatchEJBTest extends ContainerTest {
 
         LabBatch savedBatch = labBatchEJB.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
                 Workflow.CLINICAL_EXTRACTION.getWorkflowName(), bucketIds, Collections.<Long>emptyList(),
-                "LabBatchEJBTest.testCreateLabBatchAndRemoveFromBucket", "", new Date(),"", scottmat);
+                "LabBatchEJBTest.testCreateLabBatchAndRemoveFromBucket", "", new Date(), "", scottmat);
 
         //link the JIRA tickets for the batch created to the pdo batches.
         for (String pdoKey : LabVessel.extractPdoKeyList(starters)) {
@@ -296,7 +289,7 @@ public class LabBatchEJBTest extends ContainerTest {
 
         LabBatch savedBatch = labBatchEJB.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
                 Workflow.ICE_EXOME_EXPRESS.getWorkflowName(), bucketIds, Collections.<Long>emptyList(),
-                expectedTicketId,"", new Date(), "", scottmat);
+                expectedTicketId, "", new Date(), "", scottmat);
         labBatchDao.flush();
         labBatchDao.clear();
         bucket = bucketDao.findByName(BUCKET_NAME);

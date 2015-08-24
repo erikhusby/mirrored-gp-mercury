@@ -40,6 +40,7 @@ public class WorkflowMatcherTest {
 
         LabEvent bucketExtractions = new LabEvent(LabEventType.ALLPREP_EXTRACTION_BUCKET, gregorianCalendar.getTime(), LabEvent.UI_EVENT_LOCATION,
                 1L, 101L, LabEvent.UI_PROGRAM_NAME);
+                //todo: set workflowQualifier, if applicable
 //        bucketExtractions.setWorkflowQualifier("??");
         bucketExtractions.setLabBatch(labBatch);
         gregorianCalendar.add(Calendar.SECOND, 1);

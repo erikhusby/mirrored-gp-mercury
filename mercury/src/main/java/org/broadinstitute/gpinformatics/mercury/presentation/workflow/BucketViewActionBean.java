@@ -321,8 +321,6 @@ public class BucketViewActionBean extends CoreActionBean {
     public Resolution createBatch() {
         separateEntriesByType();
         try {
-//            LabBatch.LabBatchType labBatchType =
-//                    LabBatch.LabBatchType.valueOf(mapBucketToBucketDef.get(selectedBucket).getWorkflowType());
             batch = labBatchEjb
                     .createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
                                                        selectedWorkflowDef.getName(), bucketEntryIds, reworkEntryIds,
