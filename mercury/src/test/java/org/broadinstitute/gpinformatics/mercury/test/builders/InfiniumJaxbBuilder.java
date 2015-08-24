@@ -151,6 +151,7 @@ public class InfiniumJaxbBuilder {
             bettaLimsMessageTestFactory.addMessage(messageList, infiniumWash);
         }
         for (String hybridizationChip : hybridizationChips) {
+            // todo jmt should events for all chips be in the same message?
             PlateEventType infiniumXStain = bettaLimsMessageTestFactory.buildPlateEvent("InfiniumXStain", hybridizationChip,
                     Arrays.asList(
                             new BettaLimsMessageTestFactory.ReagentDto("RA1", "1234-RA1", null),

@@ -61,11 +61,13 @@
                                 <label>Type </label>${plateTransfer.sourcePlate.physType}
                                 <stripes:hidden name="stationEvents[${stationEventStatus.index}].sourcePlate.physType"
                                         value="${plateTransfer.sourcePlate.physType}"/>
-                                <stripes:label for="srcPltBcd">Barcode</stripes:label>
-                                <stripes:text id="srcPltBcd" name="stationEvents[${stationEventStatus.index}].sourcePlate.barcode"
+                                <stripes:label for="srcPltBcd${stationEventStatus.index}">Barcode</stripes:label>
+                                <stripes:text id="srcPltBcd${stationEventStatus.index}"
+                                        name="stationEvents[${stationEventStatus.index}].sourcePlate.barcode"
                                         value="${plateTransfer.sourcePlate.barcode}"/>
                                 <stripes:label for="sourceSection">Section</stripes:label>
-                                <stripes:select name="stationEvents[${stationEventStatus.index}].sourcePlate.section" id="sourceSection">
+                                <stripes:select name="stationEvents[${stationEventStatus.index}].sourcePlate.section"
+                                        id="sourceSection${stationEventStatus.index}">
                                     <stripes:options-enumeration
                                             enum="org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection"
                                             label="sectionName"/>
@@ -111,13 +113,15 @@
                             <label>Type </label>${plateTransfer.plate.physType}
                             <stripes:hidden name="stationEvents[${stationEventStatus.index}].plate.physType" value="${plateTransfer.plate.physType}"/>
                             <c:if test="${actionBean.labEventType.targetVesselTypeGeometry.barcoded}">
-                                <stripes:label for="dstPltBcd">Barcode</stripes:label>
-                                <stripes:text id="dstPltBcd" name="stationEvents[${stationEventStatus.index}].plate.barcode"
+                                <stripes:label for="dstPltBcd${stationEventStatus.index}">Barcode</stripes:label>
+                                <stripes:text id="dstPltBcd${stationEventStatus.index}"
+                                        name="stationEvents[${stationEventStatus.index}].plate.barcode"
                                         value="${plateTransfer.plate.barcode}"/>
                             </c:if>
                             <c:if test="${stationEvent.class.simpleName == 'PlateTransferEventType'}">
                                 <stripes:label for="destSection">Section</stripes:label>
-                                <stripes:select name="stationEvents[${stationEventStatus.index}].plate.section" id="destSection">
+                                <stripes:select name="stationEvents[${stationEventStatus.index}].plate.section"
+                                        id="destSection${stationEventStatus.index}">
                                     <stripes:options-enumeration
                                             enum="org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection"
                                             label="sectionName"/>
@@ -166,13 +170,15 @@
                             ${receptacleTransfer.sourceReceptacle.receptacleType}
                             <stripes:hidden name="stationEvents[${stationEventStatus.index}].sourceReceptacle.receptacleType"
                                     value="${receptacleTransfer.sourceReceptacle.receptacleType}"/>
-                            <stripes:label for="srcRcpBcd">Barcode</stripes:label>
-                            <stripes:text id="srcRcpBcd" name="stationEvents[${stationEventStatus.index}].sourceReceptacle.barcode"
+                            <stripes:label for="srcRcpBcd${stationEventStatus.index}">Barcode</stripes:label>
+                            <stripes:text id="srcRcpBcd${stationEventStatus.index}"
+                                    name="stationEvents[${stationEventStatus.index}].sourceReceptacle.barcode"
                                     value="${receptacleTransfer.sourceReceptacle.barcode}"/>
                             <!-- Can't use stripes:text because the value in the request takes precedence over the value
                             set in the action bean. -->
-                            <label for="srcRcpVol">Volume</label>
-                            <input type="text" id="srcRcpVol" name="stationEvents[${stationEventStatus.index}].sourceReceptacle.volume"
+                            <label for="srcRcpVol${stationEventStatus.index}">Volume</label>
+                            <input type="text" id="srcRcpVol${stationEventStatus.index}"
+                                    name="stationEvents[${stationEventStatus.index}].sourceReceptacle.volume"
                                     value="${receptacleTransfer.sourceReceptacle.volume}"/> ul
                             </div>
                             <div class="control-group">
@@ -181,11 +187,13 @@
                             ${receptacleTransfer.receptacle.receptacleType}
                             <stripes:hidden name="stationEvents[${stationEventStatus.index}].receptacle.receptacleType"
                                     value="${receptacleTransfer.receptacle.receptacleType}"/>
-                            <stripes:label for="destRcpBcd">Barcode</stripes:label>
-                            <stripes:text id="destRcpBcd" name="stationEvents[${stationEventStatus.index}].receptacle.barcode"
+                            <stripes:label for="destRcpBcd${stationEventStatus.index}">Barcode</stripes:label>
+                            <stripes:text id="destRcpBcd${stationEventStatus.index}"
+                                    name="stationEvents[${stationEventStatus.index}].receptacle.barcode"
                                     value="${receptacleTransfer.receptacle.barcode}"/>
-                            <label for="destRcpVol">Volume</label>
-                            <input type="text" id="destRcpVol" name="stationEvents[${stationEventStatus.index}].receptacle.volume"
+                            <label for="destRcpVol${stationEventStatus.index}">Volume</label>
+                            <input type="text" id="destRcpVol${stationEventStatus.index}"
+                                    name="stationEvents[${stationEventStatus.index}].receptacle.volume"
                                     value="${receptacleTransfer.receptacle.volume}"/> ul
                             </div>
                         </c:when>
