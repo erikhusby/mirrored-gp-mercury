@@ -18,6 +18,7 @@ public enum Workflow {
     WHOLE_GENOME("Whole Genome"),
     ICE("ICE"),
     ICE_CRSP("ICE CRSP"),
+    TRU_SEQ_STRAND_SPECIFIC_CRSP("TruSeq Strand Specific CRSP"),
     /** Use this to indicate that no workflow is associated. */
     NONE(null, false);
 

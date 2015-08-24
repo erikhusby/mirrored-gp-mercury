@@ -74,6 +74,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ArrayPlatingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.CrspPicoEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.CrspRiboPlatingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
@@ -86,6 +87,7 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.ProductionFlowcell
 import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.SageEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ShearingEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.TruSeqStrandSpecificEntityBuilder;
 import org.easymock.EasyMock;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
@@ -1517,6 +1519,30 @@ public class LabEventTest extends BaseEventTest {
         runTransferVisualizer(mapBarcodeToTube.values().iterator().next());
     }
 
+    @Test(groups = TestGroups.DATABASE_FREE)
+    public void testCrspRibo() {
+        expectedRouting = SystemRouter.System.MERCURY;
+
+        // Use Standard Exome product, to verify that workflow is taken from LCSet, not Product
+        int numSamples = NUM_POSITIONS_IN_RACK - 2;
+        ProductOrder productOrder = ProductOrderTestFactory.buildIceProductOrder(numSamples);
+        Date runDate = new Date();
+        // todo jmt create bucket, then batch, rather than rack then batch then bucket
+        Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
+        LabBatch workflowBatch = new LabBatch("Exome Express Batch",
+                new HashSet<LabVessel>(mapBarcodeToTube.values()),
+                LabBatch.LabBatchType.WORKFLOW);
+        workflowBatch.setCreatedOn(new Date());
+        workflowBatch.setWorkflow(Workflow.TRU_SEQ_STRAND_SPECIFIC_CRSP);
+
+        bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, "1");
+
+        CrspRiboPlatingEntityBuilder crspPicoEntityBuilder = new CrspRiboPlatingEntityBuilder(getBettaLimsMessageTestFactory(),
+                getLabEventFactory(), getLabEventHandler(), mapBarcodeToTube, "", "CRSP").invoke();
+
+        runTransferVisualizer(mapBarcodeToTube.values().iterator().next());
+    }
+
     /**
      * Build object graph for Fluidigm messages
      */
@@ -1618,6 +1644,48 @@ public class LabEventTest extends BaseEventTest {
         }
 
         runArrayPlatingProcess(mapBarcodeToDaughterTube, "Infinium");
+    }
+
+    /**
+     * Build object graph for TruSeq SS messages, verify chain of events.
+     */
+    @Test(groups = {TestGroups.DATABASE_FREE})
+    public void testTruSeqStrandSpecific() {
+        expectedRouting = SystemRouter.System.MERCURY;
+        int numSamples = NUM_POSITIONS_IN_RACK - 2;
+        ProductOrder productOrder = ProductOrderTestFactory.buildTruSeqStrandSpecificProductOrder(numSamples);
+        productOrder.getResearchProject().setJiraTicketKey("RP-123");
+        Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
+
+        LabBatch workflowBatch = new LabBatch("TruSeq Strand Specific Batch",
+                new HashSet<LabVessel>(mapBarcodeToTube.values()),
+                LabBatch.LabBatchType.WORKFLOW);
+        workflowBatch.setWorkflow(Workflow.TRU_SEQ_STRAND_SPECIFIC_CRSP);
+        bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, "1");
+
+        TubeFormation daughterTubeFormation = daughterPlateTransfer(mapBarcodeToTube, workflowBatch);
+
+        Map<String, BarcodedTube> mapBarcodeToDaughterTube = new HashMap<>();
+        for (BarcodedTube barcodedTube : daughterTubeFormation.getContainerRole().getContainedVessels()) {
+            mapBarcodeToDaughterTube.put(barcodedTube.getLabel(), barcodedTube);
+        }
+
+        Date runDate = new Date();
+        String lcsetSuffix = "1";
+
+        PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToDaughterTube,
+                String.valueOf(runDate.getTime()), lcsetSuffix, true);
+
+        TruSeqStrandSpecificEntityBuilder truSeqStrandSpecificEntityBuilder =
+                runTruSeqStrandSpecificProcess(picoPlatingEntityBuilder.getNormBarcodeToTubeMap(),
+                        picoPlatingEntityBuilder.getNormTubeFormation(),
+                        picoPlatingEntityBuilder.getNormalizationBarcode(),
+                        "TruSeqStrandSpecific");
+
+        QtpEntityBuilder qtpEntityBuilder = runQtpProcess(truSeqStrandSpecificEntityBuilder.getEnrichmentCleanupRack(),
+                truSeqStrandSpecificEntityBuilder.getEnrichmentCleanupBarcodes(),
+                truSeqStrandSpecificEntityBuilder.getMapBarcodeToEnrichmentCleanupTubes(),
+                "1");
     }
 
     private void verifyEventSequence(List<String> labEventNames, String[] expectedEventNames) {

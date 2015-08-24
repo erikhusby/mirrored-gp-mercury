@@ -83,6 +83,7 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.ProductionFlowcell
 import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.SageEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ShearingEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.TruSeqStrandSpecificEntityBuilder;
 import org.easymock.EasyMock;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -562,6 +563,26 @@ public class BaseEventTest {
                                                              String barcodeSuffix) {
         return new ArrayPlatingEntityBuilder(mapBarcodeToTube, bettaLimsMessageTestFactory,
                 labEventFactory, getLabEventHandler(), barcodeSuffix).invoke();
+    }
+
+    /**
+     * This method runs the entities through the TruSeqStrandSpecific process.
+     *
+     * @param mapBarcodeToTube A map of barcodes to tubes that will be run the starting point of the TruSeq SS process.
+     * @param tubeFormation    The tube formation that represents the entities coming out of pico/plating.
+     * @param rackBarcode      The rack barcode of the tube formation.
+     * @param barcodeSuffix    Uniquifies the generated vessel barcodes. NOT date if test quickly invokes twice.
+     *
+     * @return Returns the entity builder that contains the entities after this process has been invoked.
+     */
+    public TruSeqStrandSpecificEntityBuilder runTruSeqStrandSpecificProcess(Map<String, BarcodedTube> mapBarcodeToTube,
+                                                    TubeFormation tubeFormation,
+                                                    String rackBarcode,
+                                                    String barcodeSuffix) {
+
+        return new TruSeqStrandSpecificEntityBuilder(mapBarcodeToTube, tubeFormation,
+                bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
+                rackBarcode, barcodeSuffix).invoke();
     }
 
     /**
