@@ -271,8 +271,10 @@ public class ManualTransferActionBean extends CoreActionBean {
             case RECEPTACLE_PLATE_TRANSFER_EVENT:
                 break;
             case RECEPTACLE_EVENT:
-                ReceptacleEventType receptacleEventType = (ReceptacleEventType) stationEvent;
-                loadReceptacleFromDb(receptacleEventType.getReceptacle(), true);
+                for (StationEventType stationEvent : stationEvents) {
+                    ReceptacleEventType receptacleEventType = (ReceptacleEventType) stationEvent;
+                    loadReceptacleFromDb(receptacleEventType.getReceptacle(), true);
+                }
                 break;
             case RECEPTACLE_TRANSFER_EVENT:
                 for (StationEventType stationEvent : stationEvents) {

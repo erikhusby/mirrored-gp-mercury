@@ -93,7 +93,7 @@ public class InfiniumEntityBuilder {
         }
 
         int i = 0;
-        for (PlateEventType plateEventType : infiniumJaxbBuilder.getInfiniumPostHybridizationHybOvenLoadedJaxb()) {
+        for (PlateEventType plateEventType : infiniumJaxbBuilder.getInfiniumPostHybridizationHybOvenLoadedJaxbs()) {
             LabEvent hybridizationHybOvenLoadedEvent = labEventFactory.buildFromBettaLimsPlateEventDbFree(plateEventType,
                     hybChips.get(i));
             labEventHandler.processEvent(hybridizationHybOvenLoadedEvent);
