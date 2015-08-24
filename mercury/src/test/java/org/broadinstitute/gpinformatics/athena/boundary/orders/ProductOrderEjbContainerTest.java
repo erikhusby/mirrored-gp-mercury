@@ -40,7 +40,7 @@ public class ProductOrderEjbContainerTest extends Arquillian {
 
     @Test(groups = TestGroups.ALTERNATIVES)
     public void testNullQuotePropagatesToJira() throws Exception {
-        String pdoName = "PDO-310";
+        String pdoName = "PDO-311";
         ProductOrder pdo = pdoDao.findByBusinessKey(pdoName);
         pdo.setQuoteId("CASH");
         pdo.setSkipQuoteReason("Because of GPLIM-2462");
@@ -59,7 +59,7 @@ public class ProductOrderEjbContainerTest extends Arquillian {
 
     @Test(groups = TestGroups.ALTERNATIVES)
     public void testSummaryFieldPropagatesToJira() throws Exception {
-        String pdoName = "PDO-310";
+        String pdoName = "PDO-311";
         ProductOrder pdo = pdoDao.findByBusinessKey(pdoName);
         String newTitle = "And now for something different " + System.currentTimeMillis();
         pdo.setTitle(newTitle);

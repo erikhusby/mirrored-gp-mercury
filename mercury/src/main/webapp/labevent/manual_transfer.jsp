@@ -30,6 +30,12 @@
 
         <stripes:form beanclass="${actionBean.class.name}" id="transferForm">
             <c:if test="${not empty actionBean.stationEvents}">
+                ${empty actionBean.workflowStepDef ? '' : actionBean.workflowStepDef.instructions}
+                <stripes:hidden name="workflowProcessName" value="${actionBean.workflowProcessName}"/>
+                <stripes:hidden name="workflowStepName" value="${actionBean.workflowStepName}"/>
+                <stripes:hidden name="workflowEffectiveDate" value="${actionBean.workflowEffectiveDate}"/>
+                <stripes:hidden name="batchName" value="${actionBean.batchName}"/>
+
                 <h5>Reagents</h5>
                 Expiration date format is mm/dd/yyyy.
                 <c:forEach items="${actionBean.stationEvents[0].reagent}" var="reagent" varStatus="loop">
@@ -91,7 +97,7 @@
                                                     <c:set var="receptacleIndex" value="${rowStatus.index * geometry.columnCount + columnStatus.index}"/>
                                                     <td>
                                                         <stripes:text name="stationEvents[${stationEventStatus.index}].sourcePositionMap.receptacle[${receptacleIndex}].barcode"
-                                                                size="12" style="width: 90px;"/>
+                                                                size="12" style="width: 90px;" class="clearable"/>
                                                         <stripes:hidden name="stationEvents[${stationEventStatus.index}].sourcePositionMap.receptacle[${receptacleIndex}].position"
                                                                 value="${geometry.vesselPositions[receptacleIndex]}"/>
                                                     </td>
@@ -116,7 +122,7 @@
                                 <stripes:label for="dstPltBcd${stationEventStatus.index}">Barcode</stripes:label>
                                 <stripes:text id="dstPltBcd${stationEventStatus.index}"
                                         name="stationEvents[${stationEventStatus.index}].plate.barcode"
-                                        value="${plateTransfer.plate.barcode}"/>
+                                        value="${plateTransfer.plate.barcode}" class="clearable"/>
                             </c:if>
                             <c:if test="${stationEvent.class.simpleName == 'PlateTransferEventType'}">
                                 <stripes:label for="destSection">Section</stripes:label>
@@ -148,7 +154,7 @@
                                                 <td align="right">
                                                     <c:if test="${empty rowName}">${geometry.vesselPositions[receptacleIndex]}</c:if>
                                                     <stripes:text name="stationEvents[${stationEventStatus.index}].positionMap.receptacle[${receptacleIndex}].barcode"
-                                                            size="12" style="width: 90px;"/>
+                                                            size="12" style="width: 90px;" class="clearable"/>
                                                     <stripes:hidden name="stationEvents[${stationEventStatus.index}].positionMap.receptacle[${receptacleIndex}].position"
                                                             value="${geometry.vesselPositions[receptacleIndex]}"/>
                                                 </td>
@@ -197,12 +203,38 @@
                                     value="${receptacleTransfer.receptacle.volume}"/> ul
                             </div>
                         </c:when>
+                        <c:when test="${actionBean.stationEvent.class.simpleName == 'ReceptacleEventType'}">
+                            <c:set var="receptacleEvent" value="${actionBean.stationEvent}"/>
+                            <%--@elvariable id="receptacleEvent" type="org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEventType"--%>
+                            <h4>Tube Event</h4>
+                            <div class="control-group">
+                                <label>Type</label>
+                                    ${receptacleEvent.receptacle.receptacleType}
+                                <stripes:hidden name="stationEvents[${stationEventStatus.index}].receptacle.receptacleType"
+                                        value="${receptacleEvent.receptacle.receptacleType}"/>
+                                <stripes:label for="destRcpBcd${stationEventStatus.index}">
+                                    ${fn:containsIgnoreCase(receptacleEvent.receptacle.receptacleType, "matrix") ? '2D ' : ''}Barcode
+                                </stripes:label>
+                                <stripes:text id="destRcpBcd${stationEventStatus.index}" name="stationEvents[${stationEventStatus.index}].receptacle.barcode" class="clearable"
+                                        value="${receptacleEvent.receptacle.barcode}"/>
+                                <label for="destRcpVol${stationEventStatus.index}">Volume</label>
+                                <input type="text" id="destRcpVol${stationEventStatus.index}" name="stationEvents[${stationEventStatus.index}].receptacle.volume" class="clearable"
+                                        value="${receptacleEvent.receptacle.volume}"/> ul
+                            </div>
+                        </c:when>
                     </c:choose>
                 </c:forEach>
                 <stripes:submit name="fetchExisting" value="Fetch Existing" class="btn"/>
                 <stripes:submit name="transfer" value="Transfer" class="btn btn-primary"/>
+                <input type="button" onclick="$('.clearable').each(function (){$(this).val('');});" value="Clear non-reagent fields">
             </c:if>
         </stripes:form>
+        <c:if test="${not empty actionBean.batchName}">
+            <stripes:link beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.BatchWorkflowActionBean">
+                <stripes:param name="batchName" value="${actionBean.batchName}"/>
+                Return to Batch Workflow page
+            </stripes:link>
+        </c:if>
 
     </stripes:layout-component>
 </stripes:layout-render>

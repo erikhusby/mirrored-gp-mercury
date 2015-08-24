@@ -81,7 +81,7 @@ public class LabBatch {
     private JiraTicket jiraTicket;
 
     // todo jmt get Hibernate to sort this
-    @OneToMany(mappedBy = "labBatch")
+    @OneToMany(mappedBy = "labBatch", cascade = CascadeType.PERSIST)
     private Set<LabEvent> labEvents = new LinkedHashSet<>();
 
     /**

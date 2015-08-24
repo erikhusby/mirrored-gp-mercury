@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
 
 /**
@@ -12,13 +11,10 @@ public enum BillingTrackerHeader implements ColumnHeader {
 
     SAMPLE_ID("Sample ID", ColumnHeader.REQUIRED_HEADER),
     COLLABORATOR_SAMPLE_ID("Collaborator Sample ID", ColumnHeader.OPTIONAL_HEADER),
-    MATERIAL_TYPE("Material Type", ColumnHeader.OPTIONAL_HEADER),
     ON_RISK("On Risk", ColumnHeader.OPTIONAL_HEADER),
     STATUS("Status", ColumnHeader.OPTIONAL_HEADER),
     PRODUCT_NAME("Product Name", ColumnHeader.OPTIONAL_HEADER),
     ORDER_ID("Product Order ID", ColumnHeader.REQUIRED_HEADER),
-    PRODUCT_ORDER_NAME("Product Order Name", ColumnHeader.OPTIONAL_HEADER),
-    PROJECT_MANAGER("Project Manager", ColumnHeader.OPTIONAL_HEADER),
     LANE_COUNT("Lane Count", ColumnHeader.OPTIONAL_HEADER) {
         @Override
         public boolean shouldShow(Product product) {
@@ -27,23 +23,6 @@ public enum BillingTrackerHeader implements ColumnHeader {
     },
     AUTO_LEDGER_TIMESTAMP("Auto Ledger Timestamp", ColumnHeader.OPTIONAL_HEADER, IsDate.YES),
     WORK_COMPLETE_DATE("Date Completed", ColumnHeader.REQUIRED_HEADER, ColumnHeader.OPTIONAL_VALUE, IsDate.YES),
-    PF_READS("PF Reads", ColumnHeader.OPTIONAL_HEADER),
-    PF_ALIGNED_GB("PF Aligned GB", ColumnHeader.OPTIONAL_HEADER),
-    PF_READS_ALIGNED_IN_PAIRS("PF Reads Aligned in Pairs", ColumnHeader.OPTIONAL_HEADER),
-    PERCENT_COVERAGE_AT_20X("% Coverage at 20X", ColumnHeader.OPTIONAL_HEADER) {
-        @Override
-        public boolean shouldShow(Product product) {
-            return product.isSameProductFamily(ProductFamily.ProductFamilyName.EXOME);
-        }
-    },
-    TARGET_BASES_100X_PERCENT("Target Bases 100x %", ColumnHeader.OPTIONAL_HEADER) {
-        @Override
-        public boolean shouldShow(Product product) {
-            return product.isSameProductFamily(ProductFamily.ProductFamilyName.EXOME);
-        }
-    },
-    SAMPLE_TYPE("Sample Type", ColumnHeader.OPTIONAL_HEADER),
-    TABLEAU_LINK("Tableau", ColumnHeader.OPTIONAL_HEADER),
     QUOTE_ID("Quote ID", ColumnHeader.REQUIRED_HEADER, ColumnHeader.OPTIONAL_VALUE),
     SORT_COLUMN("Sort Column", ColumnHeader.REQUIRED_HEADER);
 

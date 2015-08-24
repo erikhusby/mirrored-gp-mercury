@@ -225,6 +225,12 @@ public class RiskCriterion implements Serializable {
             public String getValue(ProductOrderSample sample) {
                 return getStringValueOfOrNull(sample.getSampleData().getRqs());
             }
+        }),
+        DV200("DV200", Operator.OperatorType.NUMERIC, new ValueProvider() {
+            @Override
+            public String getValue(ProductOrderSample sample) {
+                return getStringValueOfOrNull(sample.getSampleData().getDv200());
+            }
         });
 
         private static String getStringValueOfOrNull(Double value) {

@@ -33,6 +33,7 @@ public class InfiniumJaxbBuilder {
     private PlateEventType infiniumResuspensionJaxb;
     private PlateEventType infiniumPostResuspensionHybOvenJaxb;
     private List<PlateCherryPickEvent> infiniumHybridizationJaxbs = new ArrayList<>();
+    private List<PlateEventType> infiniumPostHybridizationHybOvenLoadedJaxbs = new ArrayList<>();
     private List<PlateEventType> infiniumHybChamberLoadedJaxbs = new ArrayList<>();
     private List<PlateEventType> infiniumWashJaxbs = new ArrayList<>();
     private List<PlateEventType> infiniumXStainJaxbs = new ArrayList<>();
@@ -143,6 +144,13 @@ public class InfiniumJaxbBuilder {
         }
         messageList.add(bettaLIMSMessage);
 
+        for(String hybridizationChip: hybridizationChips) {
+            PlateEventType infiniumPostHybridizationHybOvenLoadedJaxb =
+                    bettaLimsMessageTestFactory.buildPlateEvent("InfiniumPostHybridizationHybOvenLoaded", hybridizationChip);
+            infiniumPostHybridizationHybOvenLoadedJaxb.setStation("Hyb Oven #1");
+            infiniumPostHybridizationHybOvenLoadedJaxbs.add(infiniumPostHybridizationHybOvenLoadedJaxb);
+            bettaLimsMessageTestFactory.addMessage(messageList, infiniumPostHybridizationHybOvenLoadedJaxb);
+        }
 
         for (String hybridizationChip : hybridizationChips) {
             PlateEventType infiniumWash = bettaLimsMessageTestFactory.buildPlateEvent("InfiniumWash", hybridizationChip,
@@ -207,6 +215,10 @@ public class InfiniumJaxbBuilder {
 
     public List<PlateCherryPickEvent> getInfiniumHybridizationJaxbs() {
         return infiniumHybridizationJaxbs;
+    }
+
+    public List<PlateEventType> getInfiniumPostHybridizationHybOvenLoadedJaxbs() {
+        return infiniumPostHybridizationHybOvenLoadedJaxbs;
     }
 
     public List<PlateEventType> getInfiniumHybChamberLoadedJaxbs() {
