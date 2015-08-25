@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.labevent;
 
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselTypeGeometry;
 
@@ -963,8 +964,18 @@ public enum LabEventType {
     // ALLPREP_FLOWTHROUGH_TO_RNA_SPIN
     // ALLPREP_RNA_TO_MICRO
     // ALLPREP_RNA_MICRO_TO_MATRIX
+    ALLPREP_RNA_MICRO_TO_MATRIX("AllprepRnaMicroToMatrix",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.FALSE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            MessageType.PLATE_TRANSFER_EVENT, RackOfTubes.RackType.FlipperRackRow24,
+            RackOfTubes.RackType.Matrix96, new String[]{}, LabVessel.MaterialType.DNA),
     // ALLPREP_DNA_TO_MICRO
     // ALLPREP_DNA_MICRO_TO_MATRIX
+    ALLPREP_DNA_MICRO_TO_MATRIX("AllprepDnaMicroToMatrix",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.FALSE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            MessageType.PLATE_TRANSFER_EVENT, RackOfTubes.RackType.FlipperRackRow24,
+            RackOfTubes.RackType.Matrix96, new String[]{}, LabVessel.MaterialType.DNA),
 
     //Infinium
     INFINIUM_AMPLIFICATION("InfiniumAmplification",
