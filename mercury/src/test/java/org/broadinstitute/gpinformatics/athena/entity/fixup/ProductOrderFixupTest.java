@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.fixup;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.bsp.client.users.BspUser;
@@ -41,8 +42,10 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.ParameterExpression;
 import javax.persistence.criteria.Root;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
@@ -64,14 +67,15 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 
 /**
  * This "test" is an example of how to fixup some data.  Each fix method includes the JIRA ticket ID.
  * Set @Test(enabled=false) after running once.
  */
 @Test(groups = TestGroups.FIXUP)
-public class ProductOrderFixupTest extends Arquillian {
+public class    ProductOrderFixupTest extends Arquillian {
 
     @Inject
     private ProductOrderDao productOrderDao;
@@ -345,6 +349,21 @@ public class ProductOrderFixupTest extends Arquillian {
     }
 
     @Test(enabled = false)
+    public void fixupGplim2913() throws ProductOrderEjb.NoSuchPDOException, IOException {
+        userBean.loginOSUser();
+        // Update PDO-2959 So its status matches that of the Jira PDO (Completed)
+        // un-complete PDOs but no PDOs in the database should be completed yet.
+        String pdoKey = "PDO-2959";
+
+        ProductOrder order = productOrderDao.findByBusinessKey(pdoKey);
+        assertThat(order.getOrderStatus(), is(ProductOrder.OrderStatus.Submitted));
+        order.updateOrderStatus();
+        assertThat(order.getOrderStatus(), is(ProductOrder.OrderStatus.Completed));
+
+        productOrderDao.persist(new FixupCommentary("See https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-2913"));
+    }
+
+    @Test(enabled = false)
     public void fixupUnplacedPDO() throws ParseException {
         // Fix a case where a PDO was completed but then got changed to Draft. Using the stored values in the audit
         // table to determine the correct values for the PDO. GPLIM-1617.
@@ -611,6 +630,71 @@ public class ProductOrderFixupTest extends Arquillian {
         productOrder.setResearchProject(researchProject);
         productOrderDao.persist(new FixupCommentary("IPI-61545 Change PDO-6074 from RP-623 to RP-627"));
         productOrderDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void fixupSupport859SwitchRegulatoryInfo() {
+        userBean.loginOSUser();
+
+        findAndUpdateRegulatoryInfo("Support-859", "pdo_reginfo.support859.update");
+    }
+
+    private void findAndUpdateRegulatoryInfo(final String fixupTicket, String pdosToChangeVMOption) {
+
+        // The value of the property reflected in pdosToChangeVMOption must be a VM defined property
+        String property = System.getProperty(pdosToChangeVMOption);
+        if (property == null) {
+            Assert.fail("The filename for the pdo Regulatory info updates is not found");
+        }
+        File pdostoupdate = new File(property);
+        List<String> errors = null;
+
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(pdostoupdate));
+            errors = new ArrayList<>();
+            String line = null;
+
+            while ((line = reader.readLine()) != null) {
+                String[] lineInfo = line.split(",");
+
+                RegulatoryInfoSelection orderToRegInfo = null;
+                orderToRegInfo = new RegulatoryInfoSelection(lineInfo[0], lineInfo[1],
+                        RegulatoryInfo.Type.valueOf(lineInfo[2]));
+                ProductOrder pdoToChange = productOrderDao.findByBusinessKey(orderToRegInfo.getProductOrderKey());
+
+                if(pdoToChange == null) {
+                    errors.add(orderToRegInfo.getProductOrderKey() + " was not found");
+                    continue;
+                }
+
+                RegulatoryInfo selectedRegulatoryInfo = null;
+                for (RegulatoryInfo candidate : pdoToChange.getResearchProject().getRegulatoryInfos()) {
+                    if (candidate.getIdentifier().equals(orderToRegInfo.getRegulatoryInfoIdentifier()) &&
+                        candidate.getType() == orderToRegInfo.getRegulatoryInfoType()) {
+                        selectedRegulatoryInfo = candidate;
+                        break;
+                    }
+                }
+
+                if(selectedRegulatoryInfo == null) {
+                    errors.add("ORSP candidate " + orderToRegInfo.getRegulatoryInfoIdentifier() +
+                               " was not found in any research project for " + orderToRegInfo.getProductOrderKey());
+                }
+
+                pdoToChange.setSkipRegulatoryReason(null);
+                pdoToChange.addRegulatoryInfo(selectedRegulatoryInfo);
+            }
+
+        } catch (IOException e) {
+            Assert.fail("Unable to read form the provided file " + property);
+        }
+
+        if(CollectionUtils.isNotEmpty(errors)) {
+            Assert.fail(StringUtils.join(errors, "\n"));
+        }
+
+        productOrderDao.persist(new FixupCommentary(
+                fixupTicket + ":  Updated PDOs which did not have the correct Regulatory Info associated with them."));
     }
 
     @Test(enabled = false)

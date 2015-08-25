@@ -690,11 +690,6 @@ public class LabEventFactory implements Serializable {
                 }
             } else {
                 LabVessel labVessel = mapBarcodeToVessel.get(plateType.getBarcode());
-                for (PositionMapType positionMapType : positionMaps) {
-                    if (positionMapType.getBarcode().equals(plateType.getBarcode())) {
-                        throw new RuntimeException("Unexpected positionMap for plate " + plateType.getBarcode());
-                    }
-                }
                 if (labVessel == null) {
                     for (IlluminaFlowcell.FlowcellType flowcellType : IlluminaFlowcell.FlowcellType.values()) {
                         if (plateType.getPhysType().equals(flowcellType.getAutomationName())) {
@@ -962,11 +957,13 @@ public class LabEventFactory implements Serializable {
         }
         List<String> barcodes = new ArrayList<>();
         barcodes.add(plateTransferEvent.getSourcePlate().getBarcode());
-        if (plateTransferEvent.getSourcePositionMap() != null) {
+        if (plateTransferEvent.getSourcePositionMap() != null &&
+            expectBarcodedReceptacleTypes(plateTransferEvent.getSourcePlate())) {
             extractBarcodes(barcodes, Collections.singletonList(plateTransferEvent.getSourcePositionMap()));
         }
         barcodes.add(plateTransferEvent.getPlate().getBarcode());
-        if (plateTransferEvent.getPositionMap() != null) {
+        if (plateTransferEvent.getPositionMap() != null &&
+            expectBarcodedReceptacleTypes(plateTransferEvent.getPlate())) {
             extractBarcodes(barcodes, Collections.singletonList(plateTransferEvent.getPositionMap()));
         }
         Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(barcodes);
@@ -1079,6 +1076,11 @@ public class LabEventFactory implements Serializable {
         return rackType;
     }
 
+    private boolean expectBarcodedReceptacleTypes(PlateType plate) {
+        return plate.getPhysType().equals(PHYS_TYPE_TUBE_RACK)
+               || RackOfTubes.RackType.getByName(plate.getPhysType()) != null;
+    }
+
     /**
      * Set volume, concentration, receptacleWeight etc.
      * @param mapBarcodeToTubes map from tube barcode to tube
@@ -1125,8 +1127,12 @@ public class LabEventFactory implements Serializable {
     // todo jmt make this database free?
     private void addReagents(LabEvent labEvent, List<ReagentType> reagentTypes) {
         for (ReagentType reagentType : reagentTypes) {
-            GenericReagent genericReagent = genericReagentDao.findByReagentNameLotExpiration(
-                    reagentType.getKitType(), reagentType.getBarcode(), reagentType.getExpiration());
+            GenericReagent genericReagent = null;
+            // This is null only in database free tests
+            if (genericReagentDao != null) {
+                genericReagent = genericReagentDao.findByReagentNameLotExpiration(
+                        reagentType.getKitType(), reagentType.getBarcode(), reagentType.getExpiration());
+            }
             if (genericReagent == null) {
                 genericReagent = new GenericReagent(reagentType.getKitType(), reagentType.getBarcode(),
                         reagentType.getExpiration());

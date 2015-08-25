@@ -85,7 +85,7 @@ public class JiraServiceTest {
                 "Athena Test Case:  Test description setting"));
 
         JiraIssue jiraIssue =
-                service.createIssue(productOrdering, "hrafal", productOrder,
+                service.createIssue(productOrdering, "bspuser", productOrder,
                         "Athena Test case:::  Test new Summary Addition", customFieldList);
 
         Assert.assertNotNull(jiraIssue.getKey());

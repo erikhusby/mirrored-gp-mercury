@@ -58,6 +58,7 @@ public class ProductOrderSampleJsonFactory {
         item.put(BspSampleData.CONCENTRATION, sampleData.getConcentration());
         item.put(BspSampleData.JSON_RIN_KEY, sampleData.getRawRin());
         item.put(BspSampleData.JSON_RQS_KEY, sampleData.getRqs());
+        item.put(BspSampleData.JSON_DV200_KEY, sampleData.getDv200());
         item.put(BspSampleData.PICO_DATE, formatPicoRunDate(sampleData.getPicoRunDate(), "No Pico"));
         item.put(BspSampleData.TOTAL, sampleData.getTotal());
         item.put(BspSampleData.HAS_SAMPLE_KIT_UPLOAD_RACKSCAN_MISMATCH,

@@ -57,6 +57,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -1389,7 +1390,23 @@ public abstract class LabVessel implements Serializable {
      * @return A map of lab vessels keyed off the event they were present at filtered by type.
      */
     public Map<LabEvent, Set<LabVessel>> findVesselsForLabEventType(LabEventType type, boolean useTargetVessels) {
-        return findVesselsForLabEventTypes(Collections.singletonList(type), useTargetVessels);
+        return findVesselsForLabEventType(type, useTargetVessels,
+                EnumSet.allOf(TransferTraverserCriteria.TraversalDirection.class));
+    }
+
+    /**
+     * This method iterates over all of the ancestor and descendant vessels, adding them to a map of vessel -> event
+     * when the event matches the type given.
+     *
+     * @param type The type of event to filter the ancestors and descendants by.
+     * @param useTargetVessels True if the vessels returned are event targets (vs. sources).
+     * @param traversalDirections Direction(s) to traverse when searching for events
+     *
+     * @return A map of lab vessels keyed off the event they were present at filtered by type.
+     */
+    public Map<LabEvent, Set<LabVessel>> findVesselsForLabEventType(LabEventType type, boolean useTargetVessels,
+                                                                    EnumSet<TransferTraverserCriteria.TraversalDirection> traversalDirections) {
+        return findVesselsForLabEventTypes(Collections.singletonList(type), useTargetVessels, traversalDirections);
     }
 
     /**
@@ -1402,13 +1419,33 @@ public abstract class LabVessel implements Serializable {
      * @return A map of lab vessels keyed off the event they were present at filterd by types.
      */
     public Map<LabEvent, Set<LabVessel>> findVesselsForLabEventTypes(List<LabEventType> types, boolean useTargetVessels) {
+        return findVesselsForLabEventTypes(types, useTargetVessels,
+                EnumSet.allOf(TransferTraverserCriteria.TraversalDirection.class));
+    }
+
+    /**
+     * This method iterates over all of the ancestor and descendant vessels, adding them to a map of vessel -> event
+     * when the event matches the type given.
+     *
+     * @param types A list of types of event to filter the ancestors and descendants by.
+     * @param useTargetVessels True if the vessels returned are event targets (vs. sources).
+     * @param traversalDirections Direction(s) to traverse when searching for events
+     *
+     * @return A map of lab vessels keyed off the event they were present at filterd by types.
+     */
+    public Map<LabEvent, Set<LabVessel>> findVesselsForLabEventTypes(List<LabEventType> types, boolean useTargetVessels,
+                                                                     EnumSet<TransferTraverserCriteria.TraversalDirection> traversalDirections) {
         if (getContainerRole() != null) {
             return getContainerRole().getVesselsForLabEventTypes(types);
         }
         TransferTraverserCriteria.VesselForEventTypeCriteria vesselForEventTypeCriteria =
                 new TransferTraverserCriteria.VesselForEventTypeCriteria(types, useTargetVessels);
-        evaluateCriteria(vesselForEventTypeCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
-        evaluateCriteria(vesselForEventTypeCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
+        if (traversalDirections.contains(TransferTraverserCriteria.TraversalDirection.Ancestors)) {
+            evaluateCriteria(vesselForEventTypeCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
+        }
+        if (traversalDirections.contains(TransferTraverserCriteria.TraversalDirection.Descendants)) {
+            evaluateCriteria(vesselForEventTypeCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
+        }
         return vesselForEventTypeCriteria.getVesselsForLabEventType();
     }
 

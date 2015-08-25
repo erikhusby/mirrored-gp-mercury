@@ -15,7 +15,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
@@ -28,7 +28,6 @@ import javax.ejb.Remote;
 import javax.ejb.Stateful;
 import javax.inject.Inject;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -247,7 +246,7 @@ public class TransferEntityGrapher implements TransferVisualizer {
     @Override
     public Map<String, List<String>> getIdsForTube(String tubeBarcode) {
         BarcodedTube receptacle = barcodedTubeDao.findByBarcode(tubeBarcode);
-        return getAlternativeIds(receptacle, receptacle.getSampleInstances(), Arrays.asList(AlternativeId.values()));
+        return getAlternativeIds(receptacle, Arrays.asList(AlternativeId.values()));
     }
 
     /**
@@ -468,8 +467,7 @@ public class TransferEntityGrapher implements TransferVisualizer {
                     LabVessel receptacle = vesselContainer.getVesselAtPosition(vesselPosition);
                     String barcode = receptacle == null ? vesselPosition.name() : receptacle.getLabel();
                     Vertex tubeVertex = new Vertex(barcode + "|" + label, IdType.TUBE_IN_RACK_ID_TYPE.toString(),
-                            barcode, rackVertex, getAlternativeIds(receptacle, receptacle == null ?
-                            Collections.<SampleInstance>emptySet() : receptacle.getSampleInstances(), alternativeIds));
+                            barcode, rackVertex, getAlternativeIds(receptacle, alternativeIds));
 //                    addLibraryTypeToDetails(receptacle, tubeVertex);
                     // need way to get from geometry to VesselPositions and vice versa
                     VesselGeometry.RowColumn rowColumn = vesselGeometry.getRowColumnForVesselPosition(vesselPosition);
@@ -545,7 +543,7 @@ public class TransferEntityGrapher implements TransferVisualizer {
             if (vertex == null) {
                 newVertex = true;
                 vertex = new Vertex(receptacle.getLabel(), IdType.RECEPTACLE_ID_TYPE.toString(),
-                        buildReceptacleLabel(), getAlternativeIds(receptacle, receptacle.getSampleInstances(), alternativeIds));
+                        buildReceptacleLabel(), getAlternativeIds(receptacle, alternativeIds));
                 graph.getMapIdToVertex().put(vertex.getId(), vertex);
                 vertex.setHasMoreEdges(true);
             }
@@ -724,28 +722,30 @@ public class TransferEntityGrapher implements TransferVisualizer {
 //    }
 
     /**
-     * The user can select one more ID types to be rendered into each vertex
+     * The user can select one more ID types to be rendered into each vertex.
      *
-     *
-     * @param labVessel
-     * @param sampleInstances   sample details
+     * @param labVessel         has IDs
      * @param alternativeIdList list of ID types specified by user
      *
      * @return list of Ids for the given receptacle
      */
     private Map<String, List<String>> getAlternativeIds(
-            LabVessel labVessel, Set<SampleInstance> sampleInstances, List<AlternativeId> alternativeIdList) {
+            LabVessel labVessel, List<AlternativeId> alternativeIdList) {
         Map<String, List<String>> alternativeIdValues = new HashMap<>();
-        for (SampleInstance sampleInstance : sampleInstances) {
+        if (labVessel == null || alternativeIdList.isEmpty()) {
+            return alternativeIdValues;
+        }
+        Set<SampleInstanceV2> sampleInstances =  labVessel.getSampleInstancesV2();
+        for (SampleInstanceV2 sampleInstance : sampleInstances) {
             if (alternativeIdList.contains(AlternativeId.SAMPLE_ID)) {
-                MercurySample startingSample = sampleInstance.getStartingSample();
+                MercurySample startingSample = sampleInstance.getRootOrEarliestMercurySample();
                 if (startingSample != null) {
                     Vertex.addAlternativeId(alternativeIdValues, AlternativeId.SAMPLE_ID.getDisplayName(),
                             startingSample.getSampleKey());
                 }
             }
             if (alternativeIdList.contains(AlternativeId.LCSET)) {
-                LabBatch labBatch = sampleInstance.getLabBatch();
+                LabBatch labBatch = sampleInstance.getSingleBatch();
                 if (labBatch != null) {
                     Vertex.addAlternativeId(alternativeIdValues, AlternativeId.LCSET.getDisplayName(),
                             labBatch.getBatchName());

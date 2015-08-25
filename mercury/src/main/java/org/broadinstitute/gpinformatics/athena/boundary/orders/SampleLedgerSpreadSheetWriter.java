@@ -19,6 +19,15 @@ public class SampleLedgerSpreadSheetWriter extends AbstractSpreadsheetExporter.S
      * Writes a header cell with styling appropriate for the billing tracker.
      *
      * @param headerText    the text for the header
+     */
+    void writeHeaderCell(String headerText) {
+        writeHeaderCell(headerText, false);
+    }
+
+    /**
+     * Writes a header cell with styling appropriate for the billing tracker.
+     *
+     * @param headerText    the text for the header
      * @param vertical      true to have the header text rotated 90 degrees counter-clockwise
      */
     void writeHeaderCell(String headerText, boolean vertical) {

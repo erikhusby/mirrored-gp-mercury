@@ -734,7 +734,7 @@ public class LabEventFixupTest extends Arquillian {
                 dilutionToFlowcell.getVesselToSectionTransfers().iterator().next();
         Assert.assertEquals(vesselToSectionTransfer.getSourceVessel().getLabel(), "0177366427");
         System.out.print("Changing " + dilutionToFlowcell.getLabEventId() + " from " +
-                vesselToSectionTransfer.getSourceVessel().getLabel() + " to ");
+                         vesselToSectionTransfer.getSourceVessel().getLabel() + " to ");
         vesselToSectionTransfer.setSourceVessel(barcodedTubeDao.findByBarcode("0177366410"));
         System.out.println(vesselToSectionTransfer.getSourceVessel().getLabel());
         labEventDao.persist(new FixupCommentary("SWAP-150 change source of dilution to flowcell transfer"));
@@ -758,7 +758,7 @@ public class LabEventFixupTest extends Arquillian {
         VesselToVesselTransfer vesselToVesselTransfer = labEvent.getVesselToVesselTransfers().iterator().next();
         Assert.assertEquals(vesselToVesselTransfer.getTargetVessel().getLabel(), oldTargetBarcode);
         System.out.print("In " + labEvent.getLabEventId() + " changing " +
-                vesselToVesselTransfer.getTargetVessel().getLabel() + " to ");
+                         vesselToVesselTransfer.getTargetVessel().getLabel() + " to ");
         vesselToVesselTransfer.setTargetVessel(barcodedTubeDao.findByBarcode(newTargetBarcode));
         System.out.println(vesselToVesselTransfer.getTargetVessel().getLabel());
     }
@@ -824,4 +824,50 @@ public class LabEventFixupTest extends Arquillian {
         labEventDao.flush();
     }
 
+
+    @Test(enabled = false)
+    public void fixupSupport876() {
+        try {
+            userBean.loginOSUser();
+            utx.begin();
+            long[] ids = {951437L, 949353L};
+            for (long id: ids) {
+                LabEvent labEvent = labEventDao.findById(LabEvent.class, id);
+                Assert.assertEquals(labEvent.getLabEventType(), LabEventType.PICO_MICROFLUOR_TRANSFER);
+                System.out.println("Deleting " + labEvent.getLabEventType() + " " + labEvent.getLabEventId());
+                labEvent.getReagents().clear();
+                labEventDao.remove(labEvent);
+            }
+            labEventDao.persist(new FixupCommentary("SUPPORT-876 delete incorrect events"));
+            labEventDao.flush();
+            utx.commit();
+        } catch (NotSupportedException | SystemException | HeuristicMixedException | HeuristicRollbackException |
+                RollbackException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test(enabled = false)
+    public void fixupSupport1011() {
+        try {
+            userBean.loginOSUser();
+            utx.begin();
+            long[] ids = {988769L, 988770L, 988771L, 989205L, 989206L};
+            for (long id: ids) {
+                LabEvent labEvent = labEventDao.findById(LabEvent.class, id);
+                System.out.println("Deleting " + labEvent.getLabEventType() + " " + labEvent.getLabEventId());
+                labEvent.getReagents().clear();
+                labEvent.getSectionTransfers().clear();
+                labEvent.getVesselToSectionTransfers().clear();
+                labEventDao.remove(labEvent);
+            }
+            labEventDao.persist(new FixupCommentary("SUPPORT-1011 delete incorrect events due to label swap"));
+            labEventDao.flush();
+            utx.commit();
+        } catch (NotSupportedException | SystemException | HeuristicMixedException | HeuristicRollbackException |
+                RollbackException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
 }

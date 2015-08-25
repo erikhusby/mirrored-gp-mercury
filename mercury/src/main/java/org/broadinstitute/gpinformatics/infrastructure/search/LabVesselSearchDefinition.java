@@ -272,17 +272,19 @@ public class LabVesselSearchDefinition {
         searchTerm.setName(name);
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public String evaluate(Object entity, SearchContext context) {
+            public List<String> evaluate(Object entity, SearchContext context) {
                 LabVessel labVessel = (LabVessel) entity;
+                List<String> results = null;
                 Collection<MercurySample> mercurySamples = labVessel.getMercurySamples();
                 if (!mercurySamples.isEmpty()) {
-                    MercurySample mercurySample = mercurySamples.iterator().next();
                     BspSampleSearchAddRowsListener bspColumns =
                             (BspSampleSearchAddRowsListener) context.getRowsListener(BspSampleSearchAddRowsListener.class.getSimpleName());
-                    return bspColumns.getColumn(mercurySample.getSampleKey(), bspSampleSearchColumn);
-                } else {
-                    return "";
+                    results = new ArrayList<>();
+                    for( MercurySample mercurySample : mercurySamples) {
+                        results.add(bspColumns.getColumn(mercurySample.getSampleKey(), bspSampleSearchColumn));
+                    }
                 }
+                return results;
             }
         });
         searchTerm.setAddRowsListenerHelper(new SearchTerm.Evaluator<Object>() {
@@ -931,11 +933,11 @@ public class LabVesselSearchDefinition {
         }
 
         @Override
-        public TransferTraverserCriteria.TraversalControl evaluateVesselPreOrder(
-                TransferTraverserCriteria.Context context ) {
+        public TraversalControl evaluateVesselPreOrder(
+                Context context ) {
 
-            TransferTraverserCriteria.TraversalControl outcome
-                    = TransferTraverserCriteria.TraversalControl.ContinueTraversing;
+            TraversalControl outcome
+                    = TraversalControl.ContinueTraversing;
 
             LabEvent labEvent = context.getEvent();
 
@@ -964,7 +966,7 @@ public class LabVesselSearchDefinition {
                 }
 
                 if( stopTraverseAtFirstFind ) {
-                    outcome = TransferTraverserCriteria.TraversalControl.StopTraversing;
+                    outcome = TraversalControl.StopTraversing;
                 }
             }
 
@@ -972,11 +974,11 @@ public class LabVesselSearchDefinition {
         }
 
         @Override
-        public void evaluateVesselInOrder(TransferTraverserCriteria.Context context) {
+        public void evaluateVesselInOrder(Context context) {
         }
 
         @Override
-        public void evaluateVesselPostOrder(TransferTraverserCriteria.Context context) {
+        public void evaluateVesselPostOrder(Context context) {
         }
     }
 

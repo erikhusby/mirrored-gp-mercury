@@ -623,9 +623,12 @@ public class LabEventSearchDefinition {
                 // Has to handle LabEvent from parent term and LabVessel from nested table
                 LabVessel labVessel = null;
                 LabEvent labEvent;
-
                 Set<String> results = new HashSet<>();
 
+                // Handle possible null (e.g. MercurySample from vessel position plugin)
+                if( entity == null ) {
+                    return results;
+                }
                 if( OrmUtil.proxySafeIsInstance( entity, LabEvent.class ) ) {
                     labEvent = OrmUtil.proxySafeCast(entity, LabEvent.class);
                     labVessel = labEvent.getInPlaceLabVessel();
@@ -728,6 +731,18 @@ public class LabEventSearchDefinition {
         criteriaPath = new SearchTerm.CriteriaPath();
         criteriaPath.setCriteria(Arrays.asList("eventById", "inPlaceLabVesselId" ));
         criteriaPath.setNestedCriteriaPath(inPlaceNestedCriteriaPath);
+        criteriaPath.setPropertyName("label");
+        criteriaPaths.add(criteriaPath);
+
+        // Search by cherry pick transfer target lab vessel
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList( "cherryPickXfer", "targetVessel" ));
+        criteriaPath.setPropertyName("label");
+        criteriaPaths.add(criteriaPath);
+
+        // Search by cherry pick transfer source lab vessel
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList("cherryPickXfer", "sourceVessel"));
         criteriaPath.setPropertyName("label");
         criteriaPaths.add(criteriaPath);
 
