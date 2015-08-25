@@ -13,7 +13,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -35,14 +34,15 @@ import java.util.Set;
 public class EventAncestryEtlUtil {
 
     public EventAncestryEtlUtil() {
+        WorkflowLoader workflowLoader = new WorkflowLoader();
+        wfconfig = workflowLoader.load();
     }
+
+    // Costly and unnecessary to load this more than once per instance
+    private WorkflowConfig wfconfig = null;
 
     // Avoid the repeated overhead of parsing workflow for the same event if it is not flagged for ancestry
     Set<Long> ignoreAncestryForEventList = new HashSet();
-
-    // Avoid gathering ancestry for other rows for the same vessel.
-    //    A vessel (e.g. pool) is duplicated for multiple samples
-    Set<Long> ignoreForDuplicateVesselList = new HashSet();
 
     /**
      * Examines the event hierarchy for events flagged for ancestry ETL and appends ancestors to event facts.
@@ -53,16 +53,16 @@ public class EventAncestryEtlUtil {
      */
     public void generateAncestryData( List<LabEventEtl.EventFactDto> eventFacts, LabEvent labEvent, LabVessel labVessel ){
 
-        WorkflowLoader workflowLoader = new WorkflowLoader();
-        WorkflowConfig wfconfig = workflowLoader.load();
-
         Long previousEventId = -1L;
         List<WorkflowStepDef> workflowStepList = null;
 
+        // Skip duplicate entries for same vessel (e.g. static plate)
+        Set<LabVessel> vesselsToSkip = new HashSet<>();
+
         for( LabEventEtl.EventFactDto eventFact : eventFacts ) {
 
-            // Don't bother with non-etl events
-            if( !eventFact.canEtl() || labVessel == null ) {
+            // Don't bother with non-etl events or duplicate event fact vessel rows (static plate, flowcell, strip tube)
+            if( !eventFact.canEtl() || labVessel == null || vesselsToSkip.contains(labVessel) ) {
                 continue;
             }
 
@@ -73,16 +73,16 @@ public class EventAncestryEtlUtil {
             // Data is fully denormalized on Event-Vessel-Sample.
             // Don't re-analyze the same event if ancestry flag is false
             // Don't keep re-analyzing same vessel in same event
-            if( ignoreAncestryForEventList.contains(eventFact.getEventId())
-                    || ignoreForDuplicateVesselList.contains(eventFact.getVesselId() ) ) {
+            if( ignoreAncestryForEventList.contains(eventFact.getEventId() ) ) {
                 continue;
             }
 
-            // No need to keep rebuilding workflow for the same event ...
+            // No need to keep re-parsing workflow for the same event ...
             if( !eventFact.getEventId().equals(previousEventId)) {
                 workflowStepList = getWorkflowStepsUpToEvent(eventFact, wfconfig);
-                ignoreForDuplicateVesselList.clear();
                 previousEventId = eventFact.getEventId();
+                // Clear out vessels to skip upon hitting new event
+                vesselsToSkip.clear();
             }
 
             // Ignore events for which ancestry etl on current event is not flagged
@@ -97,8 +97,7 @@ public class EventAncestryEtlUtil {
             ancestorEventTypesToFind.addAll(findAllAncestorEtlEventTypes(workflowStepList));
             // Build the ancestry dtos
             eventFact.addAllAncestryDtos(buildAncestryFacts(labEvent, labVessel, ancestorEventTypesToFind));
-            // Don't repeat for same event-vessel with denormalized samples
-            ignoreForDuplicateVesselList.add( eventFact.getVesselId() );
+            vesselsToSkip.add(labVessel);
         }
     }
 

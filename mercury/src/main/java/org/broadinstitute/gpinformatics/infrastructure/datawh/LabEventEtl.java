@@ -47,6 +47,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
     public static final String NONE = "NONE";
     public static final String MULTIPLE = "MULTIPLE";
     public final String ancestorFileName = "library_ancestry_fact";
+    private EventAncestryEtlUtil eventAncestryEtlUtil;
 
     public LabEventEtl() {
     }
@@ -146,6 +147,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
         // Creates the wrapped Writer to the sqlLoader data file.
         DataFile eventDataFile = new DataFile(dataFilename(etlDateStr, baseFilename));
         DataFile ancestryDataFile = new DataFile(dataFilename(etlDateStr, ancestorFileName));
+        this.eventAncestryEtlUtil = new EventAncestryEtlUtil();
 
         try {
             // Deletion records only contain the entityId field.
@@ -466,9 +468,6 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
             return dtos;
         }
 
-        // Hand off event DTOs to this utility to (optionally) build and add ancestry
-        EventAncestryEtlUtil ancestryUtil = new EventAncestryEtlUtil();
-
         Collection<LabVessel> vessels = entity.getTargetLabVessels();
         if (vessels.isEmpty() && entity.getInPlaceLabVessel() != null) {
             vessels.add(entity.getInPlaceLabVessel());
@@ -492,26 +491,28 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                     for (LabVessel containedVessel : vesselContainer.getContainedVessels()) {
                         VesselPosition position = vesselContainer.getPositionOfVessel(containedVessel);
                         sampleInstances = containedVessel.getSampleInstancesV2();
-                        eventVesselDtos.addAll(
-                                createDtoFromEventVessel(entity, containedVessel, position, sampleInstances));
+                        List<EventFactDto> vesselDTOs = createDtoFromEventVessel(entity, containedVessel, position, sampleInstances);
+                        eventAncestryEtlUtil.generateAncestryData(vesselDTOs, entity, containedVessel);
+                        eventVesselDtos.addAll(vesselDTOs);
                     }
                 } else if (vesselContainer != null ) {
                     // The container contains locations only (plate wells, lanes), build a row for each
                     for( VesselPosition targetPosition : vesselContainer.getPositions() ) {
                         sampleInstances = vesselContainer.getSampleInstancesAtPositionV2(targetPosition);
-                        eventVesselDtos.addAll(
-                                createDtoFromEventVessel(entity, vesselContainer.getEmbedder(), targetPosition,
-                                        sampleInstances));
+                        List<EventFactDto> vesselDTOs = createDtoFromEventVessel(entity, vesselContainer.getEmbedder(),
+                                targetPosition, sampleInstances);
+                        eventAncestryEtlUtil.generateAncestryData(vesselDTOs, entity, vesselContainer.getEmbedder());
+                        eventVesselDtos.addAll(vesselDTOs );
                     }
                 } else {
                     // Build a row for the vessel (e.g barcoded tube)
                     sampleInstances = vessel.getSampleInstancesV2();
-                    eventVesselDtos.addAll(createDtoFromEventVessel(entity, vessel, null, sampleInstances));
+                    List<EventFactDto> vesselDTOs = createDtoFromEventVessel(entity, vessel, null, sampleInstances);
+                    eventAncestryEtlUtil.generateAncestryData(vesselDTOs, entity, vessel);
+                    eventVesselDtos.addAll(vesselDTOs);
                 }
-                ancestryUtil.generateAncestryData(eventVesselDtos, entity, vessel);
-                dtos.addAll(eventVesselDtos);
-                eventVesselDtos.clear();
             }
+            dtos.addAll(eventVesselDtos);
             Collections.sort(dtos, EventFactDto.BY_SAMPLE_KEY);
         }
 
