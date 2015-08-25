@@ -27,12 +27,15 @@ public class MaterialTypeMatcherTest {
         return new Object[][]{
                 // Variations in this groups ought to match
                 new Object[]{LabVessel.MaterialType.BUFFY_COAT, "Buffy Coat", true},
+                new Object[]{LabVessel.MaterialType.BUFFY_COAT, "Buffy   Coat", true},
+                new Object[]{LabVessel.MaterialType.BUFFY_COAT, "Buffy\tCoat", true},
                 new Object[]{LabVessel.MaterialType.BUFFY_COAT, "Whole Blood:Buffy Coat", true},
 
                 new Object[]{LabVessel.MaterialType.CELL_SUSPENSION, "Cell Suspension", true},
 
                 new Object[]{LabVessel.MaterialType.DNA, "DNA", true},
                 new Object[]{LabVessel.MaterialType.DNA, "DNA:DNA Genomic", true},
+                new Object[]{LabVessel.MaterialType.DNA, "DNA: DNA Genomic", true},
                 new Object[]{LabVessel.MaterialType.DNA, "DNA:DNA Somatic", true},
 
                 new Object[]{LabVessel.MaterialType.FFPE, "FFPE", true},
@@ -50,6 +53,7 @@ public class MaterialTypeMatcherTest {
 
                 // Variations in this groups should not match
                 new Object[]{LabVessel.MaterialType.BUFFY_COAT, "Whole Blood", false},
+                new Object[]{LabVessel.MaterialType.BUFFY_COAT, "Buffy Vampire Coat", false},
 
                 new Object[]{LabVessel.MaterialType.FRESH_BLOOD, "Whole Blood:Buffy Coat", false},
 

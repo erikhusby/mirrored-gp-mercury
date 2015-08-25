@@ -305,22 +305,9 @@ public class ProductWorkflowDefVersion implements Serializable {
      */
     public Map<WorkflowBucketDef, Collection<LabVessel>> getInitialBucket(Collection<LabVessel> labVessels) {
         Map<WorkflowBucketDef, Collection<LabVessel>> vesselBuckets = new HashMap<>();
-        Set<LabVessel> vesselsInBucket = new HashSet<>();
         for (WorkflowProcessDef workflowProcessDef : workflowProcessDefs) {
             for (WorkflowBucketDef bucketDef : workflowProcessDef.getEffectiveVersion().getBuckets()) {
-                for (LabVessel vessel : labVessels) {
-                    if (!vesselsInBucket.contains(vessel)) {
-                        if (bucketDef.meetsBucketCriteria(vessel)) {
-                            Collection<LabVessel> vessels = vesselBuckets.get(bucketDef);
-                            if (vessels == null) {
-                                vessels = new ArrayList<>();
-                            }
-                            vessels.add(vessel);
-                            vesselBuckets.put(bucketDef, vessels);
-                            vesselsInBucket.add(vessel);
-                        }
-                    }
-                }
+                vesselBuckets.put(bucketDef, bucketDef.meetsBucketCriteria(labVessels));
             }
         }
         return vesselBuckets;

@@ -627,13 +627,13 @@ public abstract class LabVessel implements Serializable {
         FRESH_FROZEN_BLOOD("Fresh Frozen Blood", "^(?=.*frozen)(?=.*blood).*"),
         FRESH_FROZEN_TISSUE("Fresh Frozen Tissue", "^(?=.*frozen)(?=.*tissue).*"),
         RNA("RNA"),
-        BUFFY_COAT("Buffy Coat","^(?=.*buffy)(?=.*coat).*");
+        BUFFY_COAT("Buffy Coat");
 
         private final String displayName;
         private final Pattern matchPattern;
 
         MaterialType(String displayName) {
-            this(displayName, String.format(".*%s.*", displayName.toLowerCase().replaceAll("\\s", ".*")));
+            this(displayName, String.format("(.*:\\s?)?%s.*", displayName.toLowerCase().replaceAll("\\s", "\\\\s+")));
         }
 
         MaterialType(String displayName, String matchPattern) {

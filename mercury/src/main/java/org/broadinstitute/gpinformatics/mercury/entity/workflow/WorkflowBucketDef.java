@@ -11,7 +11,11 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Where samples are placed for batching, typically the first step in a process
@@ -56,6 +60,39 @@ public class WorkflowBucketDef extends WorkflowStepDef {
     }
 
     /**
+     * Find the vessels eligible for this bucket. When bucket is being evaluated BucketEntryEvaluators defined in
+     * the configuration are or-ed. If no BucketEntryEvaluators are defined it will by default allow the
+     * labVessel to be bucketed.
+     *
+     * @return true if the vessel can go into the bucket, false otherwise
+     */
+    public Collection<LabVessel> meetsBucketCriteria(Collection<LabVessel> labVessels) {
+        if (!CollectionUtils.isNotEmpty(bucketEntryEvaluators)) {
+            // If no bucketEntryEvaluators are configured, then, by default, the labVessels meet bucket criteria.
+            return labVessels;
+        }
+        Set<LabVessel> vesselsForBucket = new HashSet<>();
+        for (String bucketEntryEvaluator : bucketEntryEvaluators) {
+            try {
+                Class<?> bucketEntryEvaluatorClass = Class.forName(bucketEntryEvaluator.trim());
+                Constructor<?> bucketEntryEvaluatorConstructor = bucketEntryEvaluatorClass.getDeclaredConstructor();
+                BucketEntryEvaluator bucketEntryInstance =
+                        (BucketEntryEvaluator) bucketEntryEvaluatorConstructor.newInstance();
+                for (LabVessel labVessel : labVessels) {
+                    if (bucketEntryInstance.invoke(labVessel)) {
+                        vesselsForBucket.add(labVessel);
+                    }
+                }
+            } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException |
+                    InstantiationException | IllegalAccessException e) {
+                throw new RuntimeException(
+                        String.format("error invoking BucketEntryEvaluator %s", bucketEntryEvaluator), e);
+            }
+        }
+        return vesselsForBucket;
+    }
+
+    /**
      * Test if the vessel is eligible for bucketing. When bucket is being evaluated BucketEntryEvaluators defined in
      * the configuration are or-ed. If no BucketEntryEvaluators are defined it will by default allow the
      * labVessel to be bucketed.
@@ -63,26 +100,7 @@ public class WorkflowBucketDef extends WorkflowStepDef {
      * @return true if the vessel can go into the bucket, false otherwise
      */
     public boolean meetsBucketCriteria(LabVessel labVessel) {
-        if (CollectionUtils.isNotEmpty(bucketEntryEvaluators)) {
-            for (String bucketEntryEvaluator : bucketEntryEvaluators) {
-                try {
-                    Class<?> bucketEntryEvaluatorClass = Class.forName(bucketEntryEvaluator.trim());
-                    Constructor<?> bucketEntryEvaluatorConstructor = bucketEntryEvaluatorClass.getDeclaredConstructor();
-                    BucketEntryEvaluator bucketEntryInstance =
-                            (BucketEntryEvaluator) bucketEntryEvaluatorConstructor.newInstance();
-                    boolean meetsCriteria = bucketEntryInstance.invoke(labVessel);
-                    if (meetsCriteria) {
-                        return true;
-                    }
-                } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException |
-                        InstantiationException | IllegalAccessException e) {
-                    throw new RuntimeException(
-                            String.format("error invoking BucketEntryEvaluator %s", bucketEntryEvaluator), e);
-                }
-            }
-            return false;
-        }
-        return true;
+        return !meetsBucketCriteria(Collections.singleton(labVessel)).isEmpty();
     }
 
     /**
