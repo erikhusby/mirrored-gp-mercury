@@ -99,6 +99,17 @@ public class BucketEjb {
         this.mercurySampleDao = mercurySampleDao;
     }
 
+    /**
+     * Adds a pre-defined collection of {@link LabVessel} mapped to their destination {@link WorkflowBucketDef}s
+     * to the correct bucket using the specified pdoBusinessKey.
+     *
+     * @param bucketVessels    A Collection of {@link LabVessel} mapped to their destination {@link WorkflowBucketDef}.
+     * @param entryType        the type of bucket entry to add
+     * @param operator         Represents the user that initiated adding the vessels to the bucket
+     * @param labEventLocation Machine location from which operator initiated this action
+     * @param programName      Name of the program that initiated this action
+     * @param pdo              Product order for all vessels
+     */
     public Collection<BucketEntry> add(Map<WorkflowBucketDef, Collection<LabVessel>> bucketVessels,
                                        BucketEntry.BucketEntryType entryType, @Nonnull String operator,
                                        @Nonnull String labEventLocation, @Nonnull String programName,
