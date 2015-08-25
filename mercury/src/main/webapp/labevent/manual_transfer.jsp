@@ -17,6 +17,11 @@
                 display: inline;
                 font-weight: bold;
             }
+            input[type="text"].smalltext {
+                width: 70px;
+                font-size: 12px;
+                padding: 2px 2px;
+            }
         </style>
     </stripes:layout-component>
 
@@ -82,6 +87,7 @@
                                 <stripes:label for="sourceSection">Section</stripes:label>
                                 <stripes:select name="stationEvents[${stationEventStatus.index}].sourcePlate.section"
                                         id="sourceSection${stationEventStatus.index}">
+                                    <%--todo jmt geometry-specific sections--%>
                                     <stripes:options-enumeration
                                             enum="org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection"
                                             label="sectionName"/>
@@ -105,7 +111,7 @@
                                                     <c:set var="receptacleIndex" value="${rowStatus.index * geometry.columnCount + columnStatus.index}"/>
                                                     <td>
                                                         <stripes:text name="stationEvents[${stationEventStatus.index}].sourcePositionMap.receptacle[${receptacleIndex}].barcode"
-                                                                size="12" style="width: 90px;" class="clearable"/>
+                                                                size="12" class="clearable, smalltext"/>
                                                         <stripes:hidden name="stationEvents[${stationEventStatus.index}].sourcePositionMap.receptacle[${receptacleIndex}].position"
                                                                 value="${geometry.vesselPositions[receptacleIndex]}"/>
                                                     </td>
@@ -162,7 +168,7 @@
                                                 <td align="right">
                                                     <c:if test="${empty rowName}">${geometry.vesselPositions[receptacleIndex]}</c:if>
                                                     <stripes:text name="stationEvents[${stationEventStatus.index}].positionMap.receptacle[${receptacleIndex}].barcode"
-                                                            size="12" style="width: 90px;" class="clearable"/>
+                                                            size="12" class="clearable, smalltext"/>
                                                     <stripes:hidden name="stationEvents[${stationEventStatus.index}].positionMap.receptacle[${receptacleIndex}].position"
                                                             value="${geometry.vesselPositions[receptacleIndex]}"/>
                                                 </td>
