@@ -1004,7 +1004,8 @@ public enum LabEventType {
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.GAP, VolumeConcUpdate.MERCURY_ONLY,
             MessageType.PLATE_EVENT, null, StaticPlate.PlateType.InfiniumChip24,
-            new String[]{"RA1", "LX1", "LX2", "XC3", "XC4", "SML", "ATM", "EML"}, 24),
+            new String[]{"RA1", "LX1", "LX2", "XC3", "XC4", "SML", "ATM", "EML"}, 24,
+            new String[]{"Rose", "Lily", "Scrappy", "Scooby", "Shaggy"}),
 
     // Generic events that are qualified by workflow
     // todo jmt need different versions for PLATE_EVENT and RECEPTACLE_EVENT?
@@ -1196,6 +1197,9 @@ public enum LabEventType {
     /** For Manual Transfers, allows multiple events to share one set of reagents. */
     private int numEvents = 1;
 
+    /** For Manual Transfers (deck transfers that aren't messaged), prompts user with a list of machines. */
+    private String[] machineNames = new String[]{};
+
     /**
      * One attempt at trying to make a very generic
      * {@link LabEvent} to handle lots of different
@@ -1234,11 +1238,12 @@ public enum LabEventType {
                  PipelineTransformation pipelineTransformation, ForwardMessage forwardMessage,
                  VolumeConcUpdate volumeConcUpdate, MessageType messageType,
                  VesselTypeGeometry sourceVesselTypeGeometry, VesselTypeGeometry targetVesselTypeGeometry,
-                 String[] reagentNames, int numEvents) {
+                 String[] reagentNames, int numEvents, String[] machineNames) {
         this(name, expectSourcesEmpty, expectTargetsEmpty, systemOfRecord, createSources, plasticToValidate,
                 pipelineTransformation, forwardMessage, volumeConcUpdate, messageType, sourceVesselTypeGeometry,
                 targetVesselTypeGeometry, reagentNames, null);
         this.numEvents = numEvents;
+        this.machineNames = machineNames;
     }
 
     LabEventType(String name, ExpectSourcesEmpty expectSourcesEmpty, ExpectTargetsEmpty expectTargetsEmpty,
@@ -1328,5 +1333,9 @@ public enum LabEventType {
 
     public int getNumEvents() {
         return numEvents;
+    }
+
+    public String[] getMachineNames() {
+        return machineNames;
     }
 }

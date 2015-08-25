@@ -36,6 +36,13 @@
                 <stripes:hidden name="workflowEffectiveDate" value="${actionBean.workflowEffectiveDate}"/>
                 <stripes:hidden name="batchName" value="${actionBean.batchName}"/>
 
+                <c:if test="${not empty actionBean.labEventType.machineNames}">
+                    <stripes:label for="station">Machine </stripes:label>
+                    <stripes:select name="stationEvents[0].station" id="station">
+                        <stripes:options-collection collection="${actionBean.labEventType.machineNames}"/>
+                    </stripes:select>
+                </c:if>
+
                 <h5>Reagents</h5>
                 Expiration date format is mm/dd/yyyy.
                 <c:forEach items="${actionBean.stationEvents[0].reagent}" var="reagent" varStatus="loop">
@@ -54,7 +61,8 @@
                 </c:forEach>
 
                 <c:forEach items="${actionBean.stationEvents}" var="stationEvent" varStatus="stationEventStatus">
-                    <stripes:hidden name="stationEvents[${stationEventStatus.index}].eventType" value="${actionBean.stationEvents[stationEventStatus.index].eventType}"/>
+                    <stripes:hidden name="stationEvents[${stationEventStatus.index}].eventType"
+                            value="${actionBean.stationEvents[stationEventStatus.index].eventType}"/>
                     <c:choose>
                         <c:when test="${stationEvent.class.simpleName == 'PlateTransferEventType' or stationEvent.class.simpleName == 'PlateEventType'}">
                             <c:set var="plateTransfer" value="${stationEvent}"/>
@@ -87,7 +95,7 @@
                                                 <tr>
                                                     <td></td>
                                                     <c:forEach items="${geometry.columnNames}" var="columnName" varStatus="columnStatus">
-                                                        <td>${columnName}</td>
+                                                        <td><c:out value="${columnName}"/></td>
                                                     </c:forEach>
                                                 </tr>
                                             </c:if>
@@ -203,8 +211,8 @@
                                     value="${receptacleTransfer.receptacle.volume}"/> ul
                             </div>
                         </c:when>
-                        <c:when test="${actionBean.stationEvent.class.simpleName == 'ReceptacleEventType'}">
-                            <c:set var="receptacleEvent" value="${actionBean.stationEvent}"/>
+                        <c:when test="${stationEvent.class.simpleName == 'ReceptacleEventType'}">
+                            <c:set var="receptacleEvent" value="${stationEvent}"/>
                             <%--@elvariable id="receptacleEvent" type="org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEventType"--%>
                             <h4>Tube Event</h4>
                             <div class="control-group">
@@ -215,10 +223,12 @@
                                 <stripes:label for="destRcpBcd${stationEventStatus.index}">
                                     ${fn:containsIgnoreCase(receptacleEvent.receptacle.receptacleType, "matrix") ? '2D ' : ''}Barcode
                                 </stripes:label>
-                                <stripes:text id="destRcpBcd${stationEventStatus.index}" name="stationEvents[${stationEventStatus.index}].receptacle.barcode" class="clearable"
+                                <stripes:text id="destRcpBcd${stationEventStatus.index}"
+                                        name="stationEvents[${stationEventStatus.index}].receptacle.barcode" class="clearable"
                                         value="${receptacleEvent.receptacle.barcode}"/>
                                 <label for="destRcpVol${stationEventStatus.index}">Volume</label>
-                                <input type="text" id="destRcpVol${stationEventStatus.index}" name="stationEvents[${stationEventStatus.index}].receptacle.volume" class="clearable"
+                                <input type="text" id="destRcpVol${stationEventStatus.index}"
+                                        name="stationEvents[${stationEventStatus.index}].receptacle.volume" class="clearable"
                                         value="${receptacleEvent.receptacle.volume}"/> ul
                             </div>
                         </c:when>

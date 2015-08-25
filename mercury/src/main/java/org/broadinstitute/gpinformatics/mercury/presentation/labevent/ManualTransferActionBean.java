@@ -46,6 +46,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * A Stripes Action Bean to record manual transfers.
@@ -261,8 +262,17 @@ public class ManualTransferActionBean extends CoreActionBean {
     public Resolution fetchExisting() {
         switch (labEventType.getMessageType()) {
             case PLATE_EVENT:
+                for (StationEventType stationEvent : stationEvents) {
+                    PlateEventType plateEventType = (PlateEventType) stationEvent;
+                    loadPlateFromDb(plateEventType.getPlate(), plateEventType.getPositionMap(), true);
+                }
                 break;
             case PLATE_TRANSFER_EVENT:
+                for (StationEventType stationEvent : stationEvents) {
+                    PlateTransferEventType plateTransferEventType = (PlateTransferEventType) stationEvent;
+                    loadPlateFromDb(plateTransferEventType.getSourcePlate(), plateTransferEventType.getSourcePositionMap(), true);
+                    loadPlateFromDb(plateTransferEventType.getPlate(), plateTransferEventType.getPositionMap(), false);
+                }
                 break;
             case STATION_SETUP_EVENT:
                 break;
@@ -316,6 +326,38 @@ public class ManualTransferActionBean extends CoreActionBean {
         }
     }
 
+    private void loadPlateFromDb(PlateType plateType, PositionMapType positionMapType, boolean required) {
+        if (plateType != null) {
+            String barcode = plateType.getBarcode();
+            if (!StringUtils.isBlank(barcode)) {
+                LabVessel labVessel = labVesselDao.findByIdentifier(barcode);
+                if (labVessel == null) {
+                    if (required) {
+                        addGlobalValidationError("{2} is not in the database", barcode);
+                    } else {
+                        addMessage("{0} is not in the database", barcode);
+                    }
+                } else {
+                    addMessage("{0} is in the database", barcode);
+                }
+            }
+        }
+        if (positionMapType != null) {
+            List<String> barcodes = new ArrayList<>();
+            for (ReceptacleType receptacleType : positionMapType.getReceptacle()) {
+                barcodes.add(receptacleType.getBarcode());
+            }
+            Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(barcodes);
+            for (Map.Entry<String, LabVessel> stringLabVesselEntry : mapBarcodeToVessel.entrySet()) {
+                if (stringLabVesselEntry.getValue() == null) {
+                    addMessage("{0} is not in the database", stringLabVesselEntry.getKey());
+                } else {
+                    addMessage("{0} is in the database", stringLabVesselEntry.getKey());
+                }
+            }
+        }
+    }
+
     @HandlesEvent(TRANSFER_ACTION)
     public Resolution transfer() {
         // todo jmt handle unique constraint violation, increment disambiguator?
@@ -335,8 +377,12 @@ public class ManualTransferActionBean extends CoreActionBean {
 
         BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
         bettaLIMSMessage.setMode(LabEventFactory.MODE_MERCURY);
+        Date start = new Date();
         int eventIndex = 0;
         Iterator<StationEventType> iterator = stationEvents.iterator();
+        if (stationEvents.get(0).getStation() == null) {
+            stationEvents.get(0).setStation(LabEvent.UI_EVENT_LOCATION);
+        }
         while (iterator.hasNext()) {
             StationEventType stationEvent = iterator.next();
             stationEvent.setEventType(labEventType.getName());
@@ -345,9 +391,8 @@ public class ManualTransferActionBean extends CoreActionBean {
             }
             stationEvent.setOperator(getUserBean().getLoginUserName());
             stationEvent.setProgram(LabEvent.UI_PROGRAM_NAME);
-            stationEvent.setStation(LabEvent.UI_EVENT_LOCATION);
             stationEvent.setDisambiguator((long) (eventIndex + 1));
-            stationEvent.setStart(new Date());
+            stationEvent.setStart(start);
 
             // Remove empty elements
             if (stationEvent instanceof PlateTransferEventType) {
@@ -384,6 +429,7 @@ public class ManualTransferActionBean extends CoreActionBean {
 
             if (eventIndex > 0) {
                 stationEvent.getReagent().addAll(stationEvents.get(0).getReagent());
+                stationEvent.setStation(stationEvents.get(0).getStation());
             }
             eventIndex++;
         }
