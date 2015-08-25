@@ -56,6 +56,7 @@ public class RackOfTubes extends LabVessel {
         SlideBox_1x10("SlideBox_1x10", VesselGeometry.G1x10_NUM),
         SlideBox_1x25("SlideBox_1x25", VesselGeometry.G1x25_NUM),
         SlideBox_2x50("SlideBox_2x50", VesselGeometry.G2x50_NUM),
+        TeFlow24("TeFlow24", VesselGeometry.TEFLOW3x8, false),
         ThreeInch9x9box("ThreeInch9x9box", VesselGeometry.G9x9_NUM),
         ThreeInch_FTA_Box("ThreeInch_FTA_Box", VesselGeometry.G1x100_NUM),
         TissueCassetteBox("TissueCassetteBox", VesselGeometry.G2x50_NUM),
@@ -68,10 +69,16 @@ public class RackOfTubes extends LabVessel {
                 new HashMap<>(RackType.values().length);
         private final String         displayName;
         private final VesselGeometry vesselGeometry;
+        private boolean barcoded = true;
 
         RackType(String displayName, VesselGeometry vesselGeometry) {
             this.displayName = displayName;
             this.vesselGeometry = vesselGeometry;
+        }
+
+        RackType(String displayName, VesselGeometry vesselGeometry, boolean barcoded) {
+            this(displayName, vesselGeometry);
+            this.barcoded = barcoded;
         }
 
         static {
@@ -92,6 +99,11 @@ public class RackOfTubes extends LabVessel {
         @Override
         public VesselGeometry getVesselGeometry() {
             return vesselGeometry;
+        }
+
+        @Override
+        public boolean isBarcoded() {
+            return barcoded;
         }
     }
 

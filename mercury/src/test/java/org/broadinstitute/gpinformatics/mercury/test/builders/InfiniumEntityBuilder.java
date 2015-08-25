@@ -1,13 +1,17 @@
 package org.broadinstitute.gpinformatics.mercury.test.builders;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -22,7 +26,7 @@ public class InfiniumEntityBuilder {
     private InfiniumJaxbBuilder infiniumJaxbBuilder;
     private LabEvent amplifcationEvent;
     private StaticPlate amplificationPlate;
-    private StaticPlate hybChip;
+    private List<StaticPlate> hybChips = new ArrayList<>();
 
     public InfiniumEntityBuilder(
             BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
@@ -82,27 +86,46 @@ public class InfiniumEntityBuilder {
 
         mapBarcodeToVessel.clear();
         mapBarcodeToVessel.put(amplificationPlate.getLabel(), amplificationPlate);
-        LabEvent hybEvent = labEventFactory.buildFromBettaLims(
-                infiniumJaxbBuilder.getInfiniumHybridizationJaxb(), mapBarcodeToVessel);
-        labEventHandler.processEvent(hybEvent);
-        hybChip = (StaticPlate) hybEvent.getTargetLabVessels().iterator().next();
+        for (PlateCherryPickEvent plateCherryPickEvent : infiniumJaxbBuilder.getInfiniumHybridizationJaxbs()) {
+            LabEvent hybEvent = labEventFactory.buildFromBettaLims(plateCherryPickEvent, mapBarcodeToVessel);
+            labEventHandler.processEvent(hybEvent);
+            hybChips.add((StaticPlate) hybEvent.getTargetLabVessels().iterator().next());
+        }
 
-        LabEvent hybChamberLoadedEvent = labEventFactory.buildFromBettaLimsPlateEventDbFree(
-                infiniumJaxbBuilder.getInfiniumHybChamberLoadedJaxb(), hybChip);
-        labEventHandler.processEvent(hybChamberLoadedEvent);
+        int i = 0;
+        for (PlateEventType plateEventType : infiniumJaxbBuilder.getInfiniumPostHybridizationHybOvenLoadedJaxbs()) {
+            LabEvent hybridizationHybOvenLoadedEvent = labEventFactory.buildFromBettaLimsPlateEventDbFree(plateEventType,
+                    hybChips.get(i));
+            labEventHandler.processEvent(hybridizationHybOvenLoadedEvent);
+            i++;
+        }
 
-        LabEvent washEvent = labEventFactory.buildFromBettaLimsPlateEventDbFree(
-                infiniumJaxbBuilder.getInfiniumWashJaxb(), hybChip);
-        labEventHandler.processEvent(washEvent);
+        i = 0;
+        for (PlateEventType plateEventType : infiniumJaxbBuilder.getInfiniumHybChamberLoadedJaxbs()) {
+            LabEvent hybChamberLoadedEvent = labEventFactory.buildFromBettaLimsPlateEventDbFree(plateEventType,
+                    hybChips.get(i));
+            labEventHandler.processEvent(hybChamberLoadedEvent);
+            i++;
+        }
 
-        LabEvent xstainEvent = labEventFactory.buildFromBettaLimsPlateEventDbFree(
-                infiniumJaxbBuilder.getInfiniumXStainJaxb(), hybChip);
-        labEventHandler.processEvent(xstainEvent);
+        i = 0;
+        for (PlateEventType plateEventType : infiniumJaxbBuilder.getInfiniumWashJaxbs()) {
+            LabEvent washEvent = labEventFactory.buildFromBettaLimsPlateEventDbFree(plateEventType, hybChips.get(i));
+            labEventHandler.processEvent(washEvent);
+            i++;
+        }
+
+        i = 0;
+        for (PlateEventType plateEventType : infiniumJaxbBuilder.getInfiniumXStainJaxbs()) {
+            LabEvent xstainEvent = labEventFactory.buildFromBettaLimsPlateEventDbFree(plateEventType, hybChips.get(i));
+            labEventHandler.processEvent(xstainEvent);
+            i++;
+        }
 
         return this;
     }
 
-    public StaticPlate getHybChip() {
-        return hybChip;
+    public List<StaticPlate> getHybChips() {
+        return hybChips;
     }
 }
