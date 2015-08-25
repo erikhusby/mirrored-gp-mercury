@@ -1005,7 +1005,7 @@ public enum LabEventType {
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.GAP, VolumeConcUpdate.MERCURY_ONLY,
             MessageType.PLATE_EVENT, null, StaticPlate.PlateType.InfiniumChip24,
             new String[]{"RA1", "LX1", "LX2", "XC3", "XC4", "SML", "ATM", "EML"}, 24,
-            new String[]{"Rose", "Lily", "Scrappy", "Scooby", "Shaggy"}),
+            new String[]{"Rose", "Lily", "Scrappy"}),
 
     // Generic events that are qualified by workflow
     // todo jmt need different versions for PLATE_EVENT and RECEPTACLE_EVENT?
