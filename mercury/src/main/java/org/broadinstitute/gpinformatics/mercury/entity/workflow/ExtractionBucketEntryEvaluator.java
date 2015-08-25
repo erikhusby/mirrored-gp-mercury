@@ -14,7 +14,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 /**
- * A BucketEntryEvaluator which allows bucketing if the labVessel has DNA in it.
+ * An abstract BucketEntryEvaluator which tests if the labVessel is the materialType returned by getMaterialType().
  */
 public abstract class ExtractionBucketEntryEvaluator implements BucketEntryEvaluator {
     @Override
