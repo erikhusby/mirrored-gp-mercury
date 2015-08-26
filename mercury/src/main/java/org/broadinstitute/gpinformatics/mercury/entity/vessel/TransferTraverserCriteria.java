@@ -689,6 +689,7 @@ public interface TransferTraverserCriteria {
     class LabEventsWithMaterialTypeTraverserCriteria implements TransferTraverserCriteria {
         private final LabVessel.MaterialType materialType;
         private LabVessel vesselForMaterialType = null;
+        private int hopCount=0;
 
         public LabEventsWithMaterialTypeTraverserCriteria(LabVessel.MaterialType materialTypes) {
             this.materialType = materialTypes;
@@ -697,6 +698,9 @@ public interface TransferTraverserCriteria {
 
         @Override
         public TraversalControl evaluateVesselPreOrder(Context context) {
+            if (vesselForMaterialType != null) {
+                return TraversalControl.StopTraversing;
+            }
             LabVessel vessel = context.getLabVessel();
             LabEvent event = context.getEvent();
             if (event != null) {
@@ -705,7 +709,7 @@ public interface TransferTraverserCriteria {
             if (vessel != null) {
                 evaluateTransfers(context.getTraversalDirection(), vessel);
             }
-
+            hopCount++;
             return TraversalControl.ContinueTraversing;
         }
 
@@ -737,6 +741,10 @@ public interface TransferTraverserCriteria {
 
         public LabVessel getVesselForMaterialType() {
             return vesselForMaterialType;
+        }
+
+        int getHopCount() {
+            return hopCount;
         }
     }
 

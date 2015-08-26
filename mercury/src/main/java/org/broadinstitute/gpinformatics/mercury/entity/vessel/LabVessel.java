@@ -251,10 +251,17 @@ public abstract class LabVessel implements Serializable {
 
     private boolean hasMaterialConvertedTo(MaterialType materialType) {
         TransferTraverserCriteria.LabEventsWithMaterialTypeTraverserCriteria materialTypeTraverserCriteria =
-                new TransferTraverserCriteria.LabEventsWithMaterialTypeTraverserCriteria(materialType);
-        evaluateCriteria(materialTypeTraverserCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
+                evaluateMaterialTypeTraverserCriteria(materialType);
 
         return materialTypeTraverserCriteria.getVesselForMaterialType() != null;
+    }
+
+    TransferTraverserCriteria.LabEventsWithMaterialTypeTraverserCriteria evaluateMaterialTypeTraverserCriteria(
+            MaterialType materialType) {
+        TransferTraverserCriteria.LabEventsWithMaterialTypeTraverserCriteria materialTypeTraverserCriteria =
+                new TransferTraverserCriteria.LabEventsWithMaterialTypeTraverserCriteria(materialType);
+        evaluateCriteria(materialTypeTraverserCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
+        return materialTypeTraverserCriteria;
     }
 
     /**
