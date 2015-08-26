@@ -17,6 +17,14 @@
                 display: inline;
                 font-weight: bold;
             }
+            input[type='text'].barcode {
+                width: 100px;
+                font-size: 12px;
+            }
+            input[type='text'].date {
+                width: 70px;
+                font-size: 12px;
+            }
         </style>
     </stripes:layout-component>
 
@@ -29,12 +37,13 @@
         </stripes:form>
 
         <stripes:form beanclass="${actionBean.class.name}" id="transferForm">
+            <%-- Can't use stripes:text because the value in the request takes precedence over the value set in the action bean. --%>
             <c:if test="${not empty actionBean.stationEvents}">
                 ${empty actionBean.workflowStepDef ? '' : actionBean.workflowStepDef.instructions}
-                <stripes:hidden name="workflowProcessName" value="${actionBean.workflowProcessName}"/>
-                <stripes:hidden name="workflowStepName" value="${actionBean.workflowStepName}"/>
-                <stripes:hidden name="workflowEffectiveDate" value="${actionBean.workflowEffectiveDate}"/>
-                <stripes:hidden name="batchName" value="${actionBean.batchName}"/>
+                <input type="hidden" name="workflowProcessName" value="${actionBean.workflowProcessName}"/>
+                <input type="hidden" name="workflowStepName" value="${actionBean.workflowStepName}"/>
+                <input type="hidden" name="workflowEffectiveDate" value="${actionBean.workflowEffectiveDate}"/>
+                <input type="hidden" name="batchName" value="${actionBean.batchName}"/>
 
                 <c:if test="${not empty actionBean.labEventType.machineNames}">
                     <stripes:label for="station">Machine </stripes:label>
@@ -43,25 +52,42 @@
                     </stripes:select>
                 </c:if>
 
-                <h5>Reagents</h5>
-                Expiration date format is mm/dd/yyyy.
-                <c:forEach items="${actionBean.stationEvents[0].reagent}" var="reagent" varStatus="loop">
-                    <%--@elvariable id="reagent" type="org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReagentType"--%>
-                    <div class="control-group">
-                    <stripes:label for="rgtType${loop.index}">Type </stripes:label>
-                    <stripes:text id="rgtType${loop.index}" name="stationEvents[0].reagent[${loop.index}].kitType"
-                            value="${reagent.kitType}"/>
-                    <stripes:label for="rgtBcd${loop.index}">Barcode </stripes:label>
-                    <stripes:text id="rgtBcd${loop.index}" name="stationEvents[0].reagent[${loop.index}].barcode"
-                            value="${reagent.barcode}" size="10"/>
-                    <stripes:label for="rgtExp${loop.index}">Expiration </stripes:label>
-                    <stripes:text id="rgtExp${loop.index}" name="stationEvents[0].reagent[${loop.index}].expiration"
-                            value="${reagent.expiration}" size="12"/>
+                <c:if test="${not empty actionBean.labEventType.reagentNames}">
+                    <h5>Reagents</h5>
+                    Expiration date format is mm/dd/yyyy.
+                    <c:set var="prevReagentType" value=""/>
+                    <c:forEach items="${actionBean.stationEvents[0].reagent}" var="reagent" varStatus="loop">
+                        <%--@elvariable id="reagent" type="org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReagentType"--%>
+                        <c:if test="${reagent.kitType != prevReagentType && !loop.first}">
+                            </div>
+                        </c:if>
+                        <c:choose>
+                            <c:when test="${reagent.kitType != prevReagentType}">
+                                <div class="control-group">
+                                <label for="rgtType${loop.index}">Type </label>
+                                <input type="text" id="rgtType${loop.index}" name="stationEvents[0].reagent[${loop.index}].kitType"
+                                        value="${reagent.kitType}" class="barcode"/>
+                            </c:when>
+                            <c:otherwise>
+                                <input type="hidden" name="stationEvents[0].reagent[${loop.index}].kitType"
+                                        value="${reagent.kitType}"/>
+                            </c:otherwise>
+                        </c:choose>
+                            <label for="rgtBcd${loop.index}">Barcode </label>
+                            <input type="text" id="rgtBcd${loop.index}" name="stationEvents[0].reagent[${loop.index}].barcode"
+                                    value="${reagent.barcode}" class="barcode"/>
+                            <c:if test="${actionBean.labEventType.expirationDateIncluded}">
+                                <label for="rgtExp${loop.index}">Expiration </label>
+                                <input type="text" id="rgtExp${loop.index}" name="stationEvents[0].reagent[${loop.index}].expiration"
+                                        value="${reagent.expiration}" class="date"/>
+                            </c:if>
+                        <c:set var="prevReagentType" value="${reagent.kitType}"/>
+                    </c:forEach>
                     </div>
-                </c:forEach>
+                </c:if>
 
                 <c:forEach items="${actionBean.stationEvents}" var="stationEvent" varStatus="stationEventStatus">
-                    <stripes:hidden name="stationEvents[${stationEventStatus.index}].eventType"
+                    <input type="hidden" name="stationEvents[${stationEventStatus.index}].eventType"
                             value="${actionBean.stationEvents[stationEventStatus.index].eventType}"/>
                     <c:choose>
                         <c:when test="${stationEvent.class.simpleName == 'PlateTransferEventType' or stationEvent.class.simpleName == 'PlateEventType'}">
@@ -73,13 +99,13 @@
 
                                 <div class="control-group">
                                 <label>Type </label>${plateTransfer.sourcePlate.physType}
-                                <stripes:hidden name="stationEvents[${stationEventStatus.index}].sourcePlate.physType"
+                                <input type="hidden" name="stationEvents[${stationEventStatus.index}].sourcePlate.physType"
                                         value="${plateTransfer.sourcePlate.physType}"/>
-                                <stripes:label for="srcPltBcd${stationEventStatus.index}">Barcode</stripes:label>
-                                <stripes:text id="srcPltBcd${stationEventStatus.index}"
+                                <label for="srcPltBcd${stationEventStatus.index}">Barcode</label>
+                                <input type="text" id="srcPltBcd${stationEventStatus.index}"
                                         name="stationEvents[${stationEventStatus.index}].sourcePlate.barcode"
-                                        value="${plateTransfer.sourcePlate.barcode}"/>
-                                <stripes:label for="sourceSection">Section</stripes:label>
+                                        value="${plateTransfer.sourcePlate.barcode}" class="barcode"/>
+                                <label for="sourceSection">Section</label>
                                 <stripes:select name="stationEvents[${stationEventStatus.index}].sourcePlate.section"
                                         id="sourceSection${stationEventStatus.index}">
                                     <stripes:options-enumeration
@@ -104,9 +130,9 @@
                                                 <c:forEach items="${geometry.columnNames}" var="columnName" varStatus="columnStatus">
                                                     <c:set var="receptacleIndex" value="${rowStatus.index * geometry.columnCount + columnStatus.index}"/>
                                                     <td>
-                                                        <stripes:text name="stationEvents[${stationEventStatus.index}].sourcePositionMap.receptacle[${receptacleIndex}].barcode"
-                                                                size="12" style="width: 90px;" class="clearable"/>
-                                                        <stripes:hidden name="stationEvents[${stationEventStatus.index}].sourcePositionMap.receptacle[${receptacleIndex}].position"
+                                                        <input type="text" name="stationEvents[${stationEventStatus.index}].sourcePositionMap.receptacle[${receptacleIndex}].barcode"
+                                                                class="clearable, barcode"/>
+                                                        <input type="hidden" name="stationEvents[${stationEventStatus.index}].sourcePositionMap.receptacle[${receptacleIndex}].position"
                                                                 value="${geometry.vesselPositions[receptacleIndex]}"/>
                                                     </td>
                                                 </c:forEach>
@@ -121,16 +147,16 @@
                             <div class="control-group">
                             <c:if test="${fn:length(actionBean.stationEvents) > 1}">
                                 ${stationEventStatus.index + 1}
-                                <stripes:hidden name="stationEvents[${stationEventStatus.index}].metadata[0].name" value="MessageNum"/>
-                                <stripes:hidden name="stationEvents[${stationEventStatus.index}].metadata[0].value" value="${stationEventStatus.index + 1}"/>
+                                <input type="hidden" name="stationEvents[${stationEventStatus.index}].metadata[0].name" value="MessageNum"/>
+                                <input type="hidden" name="stationEvents[${stationEventStatus.index}].metadata[0].value" value="${stationEventStatus.index + 1}"/>
                             </c:if>
                             <label>Type </label>${plateTransfer.plate.physType}
-                            <stripes:hidden name="stationEvents[${stationEventStatus.index}].plate.physType" value="${plateTransfer.plate.physType}"/>
+                            <input type="hidden" name="stationEvents[${stationEventStatus.index}].plate.physType" value="${plateTransfer.plate.physType}"/>
                             <c:if test="${actionBean.labEventType.targetVesselTypeGeometry.barcoded}">
-                                <stripes:label for="dstPltBcd${stationEventStatus.index}">Barcode</stripes:label>
-                                <stripes:text id="dstPltBcd${stationEventStatus.index}"
+                                <label for="dstPltBcd${stationEventStatus.index}">Barcode</label>
+                                <input type="text" id="dstPltBcd${stationEventStatus.index}"
                                         name="stationEvents[${stationEventStatus.index}].plate.barcode"
-                                        value="${plateTransfer.plate.barcode}" class="clearable"/>
+                                        value="${plateTransfer.plate.barcode}" class="clearable, barcode"/>
                             </c:if>
                             <c:if test="${stationEvent.class.simpleName == 'PlateTransferEventType'}">
                                 <stripes:label for="destSection">Section</stripes:label>
@@ -161,9 +187,9 @@
                                                 <c:set var="receptacleIndex" value="${rowStatus.index * geometry.columnCount + columnStatus.index}"/>
                                                 <td align="right">
                                                     <c:if test="${empty rowName}">${geometry.vesselPositions[receptacleIndex]}</c:if>
-                                                    <stripes:text name="stationEvents[${stationEventStatus.index}].positionMap.receptacle[${receptacleIndex}].barcode"
-                                                            size="12" style="width: 90px;" class="clearable"/>
-                                                    <stripes:hidden name="stationEvents[${stationEventStatus.index}].positionMap.receptacle[${receptacleIndex}].position"
+                                                    <input type="text" name="stationEvents[${stationEventStatus.index}].positionMap.receptacle[${receptacleIndex}].barcode"
+                                                            class="clearable, barcode"/>
+                                                    <input type="hidden" name="stationEvents[${stationEventStatus.index}].positionMap.receptacle[${receptacleIndex}].position"
                                                             value="${geometry.vesselPositions[receptacleIndex]}"/>
                                                 </td>
                                             </c:forEach>
@@ -182,33 +208,31 @@
                             <h5>Source</h5>
                             <label>Type</label>
                             ${receptacleTransfer.sourceReceptacle.receptacleType}
-                            <stripes:hidden name="stationEvents[${stationEventStatus.index}].sourceReceptacle.receptacleType"
+                            <input type="hidden" name="stationEvents[${stationEventStatus.index}].sourceReceptacle.receptacleType"
                                     value="${receptacleTransfer.sourceReceptacle.receptacleType}"/>
-                            <stripes:label for="srcRcpBcd${stationEventStatus.index}">Barcode</stripes:label>
-                            <stripes:text id="srcRcpBcd${stationEventStatus.index}"
+                            <label for="srcRcpBcd${stationEventStatus.index}">Barcode</label>
+                            <input type="text" id="srcRcpBcd${stationEventStatus.index}"
                                     name="stationEvents[${stationEventStatus.index}].sourceReceptacle.barcode"
-                                    value="${receptacleTransfer.sourceReceptacle.barcode}"/>
-                            <!-- Can't use stripes:text because the value in the request takes precedence over the value
-                            set in the action bean. -->
+                                    value="${receptacleTransfer.sourceReceptacle.barcode}" class="clearable, barcode"/>
                             <label for="srcRcpVol${stationEventStatus.index}">Volume</label>
                             <input type="text" id="srcRcpVol${stationEventStatus.index}"
                                     name="stationEvents[${stationEventStatus.index}].sourceReceptacle.volume"
-                                    value="${receptacleTransfer.sourceReceptacle.volume}"/> ul
+                                    value="${receptacleTransfer.sourceReceptacle.volume}" class="clearable, barcode"/> ul
                             </div>
                             <div class="control-group">
                             <h5>Destination</h5>
                             <label>Type</label>
                             ${receptacleTransfer.receptacle.receptacleType}
-                            <stripes:hidden name="stationEvents[${stationEventStatus.index}].receptacle.receptacleType"
+                            <input type="hidden" name="stationEvents[${stationEventStatus.index}].receptacle.receptacleType"
                                     value="${receptacleTransfer.receptacle.receptacleType}"/>
-                            <stripes:label for="destRcpBcd${stationEventStatus.index}">Barcode</stripes:label>
-                            <stripes:text id="destRcpBcd${stationEventStatus.index}"
+                            <label for="destRcpBcd${stationEventStatus.index}">Barcode</label>
+                            <input type="text" id="destRcpBcd${stationEventStatus.index}"
                                     name="stationEvents[${stationEventStatus.index}].receptacle.barcode"
-                                    value="${receptacleTransfer.receptacle.barcode}"/>
+                                    value="${receptacleTransfer.receptacle.barcode}" class="clearable, barcode"/>
                             <label for="destRcpVol${stationEventStatus.index}">Volume</label>
                             <input type="text" id="destRcpVol${stationEventStatus.index}"
                                     name="stationEvents[${stationEventStatus.index}].receptacle.volume"
-                                    value="${receptacleTransfer.receptacle.volume}"/> ul
+                                    value="${receptacleTransfer.receptacle.volume}" class="clearable, barcode"/> ul
                             </div>
                         </c:when>
                         <c:when test="${stationEvent.class.simpleName == 'ReceptacleEventType'}">
@@ -218,18 +242,18 @@
                             <div class="control-group">
                                 <label>Type</label>
                                     ${receptacleEvent.receptacle.receptacleType}
-                                <stripes:hidden name="stationEvents[${stationEventStatus.index}].receptacle.receptacleType"
+                                <input type="hidden" name="stationEvents[${stationEventStatus.index}].receptacle.receptacleType"
                                         value="${receptacleEvent.receptacle.receptacleType}"/>
-                                <stripes:label for="destRcpBcd${stationEventStatus.index}">
+                                <label for="destRcpBcd${stationEventStatus.index}">
                                     ${fn:containsIgnoreCase(receptacleEvent.receptacle.receptacleType, "matrix") ? '2D ' : ''}Barcode
-                                </stripes:label>
-                                <stripes:text id="destRcpBcd${stationEventStatus.index}"
-                                        name="stationEvents[${stationEventStatus.index}].receptacle.barcode" class="clearable"
-                                        value="${receptacleEvent.receptacle.barcode}"/>
+                                </label>
+                                <input type="text" id="destRcpBcd${stationEventStatus.index}"
+                                        name="stationEvents[${stationEventStatus.index}].receptacle.barcode"
+                                        value="${receptacleEvent.receptacle.barcode}" class="clearable, barcode"/>
                                 <label for="destRcpVol${stationEventStatus.index}">Volume</label>
                                 <input type="text" id="destRcpVol${stationEventStatus.index}"
-                                        name="stationEvents[${stationEventStatus.index}].receptacle.volume" class="clearable"
-                                        value="${receptacleEvent.receptacle.volume}"/> ul
+                                        name="stationEvents[${stationEventStatus.index}].receptacle.volume"
+                                        value="${receptacleEvent.receptacle.volume}" class="clearable, barcode"/> ul
                             </div>
                         </c:when>
                     </c:choose>

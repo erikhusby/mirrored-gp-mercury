@@ -113,7 +113,7 @@ public class InfiniumJaxbBuilder {
         }
 
         // 24 chip type
-        // todo jmt 4 separate InfiniumHybridization, each followed by InfiniumHybChamberLoaded
+        // 4 separate InfiniumHybridization, each followed by InfiniumHybChamberLoaded
         List<BettaLimsMessageTestFactory.CherryPick> cherryPicks = new ArrayList<>();
         bettaLIMSMessage = new BettaLIMSMessage();
         for (int i = 0; i < 96; i++) {
@@ -159,7 +159,7 @@ public class InfiniumJaxbBuilder {
             bettaLimsMessageTestFactory.addMessage(messageList, infiniumWash);
         }
         for (String hybridizationChip : hybridizationChips) {
-            // todo jmt should events for all chips be in the same message?
+            // XStain is actually done through the Manual Transfer Page, but is included here for completeness.
             PlateEventType infiniumXStain = bettaLimsMessageTestFactory.buildPlateEvent("InfiniumXStain", hybridizationChip,
                     Arrays.asList(
                             new BettaLimsMessageTestFactory.ReagentDto("RA1", "1234-RA1", null),

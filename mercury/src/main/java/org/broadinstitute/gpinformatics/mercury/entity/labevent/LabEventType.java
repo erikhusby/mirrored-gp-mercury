@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselTypeGeometry;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -1004,8 +1005,8 @@ public enum LabEventType {
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.GAP, VolumeConcUpdate.MERCURY_ONLY,
             MessageType.PLATE_EVENT, null, StaticPlate.PlateType.InfiniumChip24,
-            new String[]{"RA1", "LX1", "LX2", "XC3", "XC4", "SML", "ATM", "EML"}, 24,
-            new String[]{"Rose", "Lily", "Scrappy"}),
+            new String[]{"RA1", "LX1", "LX2", "XC3", "XC4", "SML", "ATM", "EML"},
+            new int[]{1, 6, 6, 1, 1, 6, 6, 6}, false, 24, new String[]{"Rose", "Lily", "Scrappy"}),
 
     // Generic events that are qualified by workflow
     // todo jmt need different versions for PLATE_EVENT and RECEPTACLE_EVENT?
@@ -1194,6 +1195,15 @@ public enum LabEventType {
     /** For Manual Transfers, prompts user for reagents. */
     private String[] reagentNames;
 
+    /** How many reagent fields for each entry in reagentNames. */
+    private int[] reagentFieldCounts;
+
+    /** Map from entries in reagentNames to corresponding entiry in reagentFieldCounts. */
+    private Map<String, Integer> mapReagentNameToCount;
+
+    /** Whether to include reagent expiration date fields. */
+    private boolean expirationDateIncluded = true;
+
     /** For Manual Transfers, allows multiple events to share one set of reagents. */
     private int numEvents = 1;
 
@@ -1234,14 +1244,17 @@ public enum LabEventType {
     }
 
     LabEventType(String name, ExpectSourcesEmpty expectSourcesEmpty, ExpectTargetsEmpty expectTargetsEmpty,
-                 SystemOfRecord systemOfRecord, CreateSources createSources, PlasticToValidate plasticToValidate,
-                 PipelineTransformation pipelineTransformation, ForwardMessage forwardMessage,
-                 VolumeConcUpdate volumeConcUpdate, MessageType messageType,
-                 VesselTypeGeometry sourceVesselTypeGeometry, VesselTypeGeometry targetVesselTypeGeometry,
-                 String[] reagentNames, int numEvents, String[] machineNames) {
+            SystemOfRecord systemOfRecord, CreateSources createSources, PlasticToValidate plasticToValidate,
+            PipelineTransformation pipelineTransformation, ForwardMessage forwardMessage,
+            VolumeConcUpdate volumeConcUpdate, MessageType messageType,
+            VesselTypeGeometry sourceVesselTypeGeometry, VesselTypeGeometry targetVesselTypeGeometry,
+            String[] reagentNames, int[] reagentFieldCounts,  boolean expirationDateIncluded,  int numEvents,
+            String[] machineNames) {
         this(name, expectSourcesEmpty, expectTargetsEmpty, systemOfRecord, createSources, plasticToValidate,
                 pipelineTransformation, forwardMessage, volumeConcUpdate, messageType, sourceVesselTypeGeometry,
                 targetVesselTypeGeometry, reagentNames, null);
+        this.reagentFieldCounts = reagentFieldCounts;
+        this.expirationDateIncluded = expirationDateIncluded;
         this.numEvents = numEvents;
         this.machineNames = machineNames;
     }
@@ -1337,5 +1350,27 @@ public enum LabEventType {
 
     public String[] getMachineNames() {
         return machineNames;
+    }
+
+    public int[] getReagentFieldCounts() {
+        if (reagentFieldCounts == null) {
+            reagentFieldCounts = new int[reagentNames.length];
+            Arrays.fill(reagentFieldCounts, 1);
+        }
+        return reagentFieldCounts;
+    }
+
+    public Map<String, Integer> getMapReagentNameToCount() {
+        if (mapReagentNameToCount == null) {
+            mapReagentNameToCount = new HashMap<>();
+            for (int i = 0; i < reagentNames.length; i++) {
+                mapReagentNameToCount.put(reagentNames[i], getReagentFieldCounts()[i]);
+            }
+        }
+        return mapReagentNameToCount;
+    }
+
+    public boolean isExpirationDateIncluded() {
+        return expirationDateIncluded;
     }
 }

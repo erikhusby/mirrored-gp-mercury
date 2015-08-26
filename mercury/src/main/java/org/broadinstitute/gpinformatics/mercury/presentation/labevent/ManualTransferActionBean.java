@@ -155,15 +155,23 @@ public class ManualTransferActionBean extends CoreActionBean {
     public Resolution chooseLabEventType() {
         loadWorkflowStepDef();
         List<String> reagentNames;
+        int[] reagentFieldCounts;
         if (workflowStepDef != null) {
             reagentNames = workflowStepDef.getReagentTypes();
+            reagentFieldCounts = new int[reagentNames.size()];
+            Arrays.fill(reagentFieldCounts, 1);
         } else {
             reagentNames = Arrays.asList(labEventType.getReagentNames());
+            reagentFieldCounts = labEventType.getReagentFieldCounts();
         }
+        int reagentIndex = 0;
         for (String reagentName : reagentNames) {
-            ReagentType reagentType = new ReagentType();
-            reagentType.setKitType(reagentName);
-            stationEvents.get(0).getReagent().add(reagentType);
+            for (int fieldIndex = 0; fieldIndex < reagentFieldCounts[reagentIndex]; fieldIndex++) {
+                ReagentType reagentType = new ReagentType();
+                reagentType.setKitType(reagentName);
+                stationEvents.get(0).getReagent().add(reagentType);
+            }
+            reagentIndex++;
         }
 
         switch (labEventType.getMessageType()) {
@@ -367,71 +375,87 @@ public class ManualTransferActionBean extends CoreActionBean {
             if (StringUtils.isBlank(reagentType.getKitType())) {
                 addGlobalValidationError("Reagent type is required");
             }
-            if (StringUtils.isBlank(reagentType.getBarcode())) {
-                addGlobalValidationError("Reagent barcode is required");
-            }
-            if (reagentType.getExpiration() == null) {
-                addGlobalValidationError("Reagent expiration is required");
-            }
-        }
-
-        BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
-        bettaLIMSMessage.setMode(LabEventFactory.MODE_MERCURY);
-        Date start = new Date();
-        int eventIndex = 0;
-        Iterator<StationEventType> iterator = stationEvents.iterator();
-        if (stationEvents.get(0).getStation() == null) {
-            stationEvents.get(0).setStation(LabEvent.UI_EVENT_LOCATION);
-        }
-        while (iterator.hasNext()) {
-            StationEventType stationEvent = iterator.next();
-            stationEvent.setEventType(labEventType.getName());
-            if (workflowStepDef != null) {
-                stationEvent.setWorkflowQualifier(workflowStepDef.getWorkflowQualifier());
-            }
-            stationEvent.setOperator(getUserBean().getLoginUserName());
-            stationEvent.setProgram(LabEvent.UI_PROGRAM_NAME);
-            stationEvent.setDisambiguator((long) (eventIndex + 1));
-            stationEvent.setStart(start);
-
-            // Remove empty elements
-            if (stationEvent instanceof PlateTransferEventType) {
-                PlateTransferEventType plateTransferEventType = (PlateTransferEventType) stationEvent;
-                cleanupPositionMap(plateTransferEventType.getSourcePositionMap(), plateTransferEventType.getSourcePlate(),
-                        labEventType.getSourceVesselTypeGeometry());
-                cleanupPositionMap(plateTransferEventType.getPositionMap(), plateTransferEventType.getPlate(),
-                        labEventType.getTargetVesselTypeGeometry());
-                bettaLIMSMessage.getPlateTransferEvent().add(plateTransferEventType);
-            } else if (stationEvent instanceof PlateEventType) {
-                PlateEventType plateEventType = (PlateEventType) stationEvent;
-                // Remove events for which the user did not enter a barcode
-                if (labEventType.getNumEvents() > 1 && plateEventType.getPositionMap() == null &&
-                        (plateEventType.getPlate() == null || plateEventType.getPlate().getBarcode() == null)) {
-                    iterator.remove();
-                    continue;
+            if (labEventType.getMapReagentNameToCount().get(reagentType.getKitType()) == 1) {
+                if (StringUtils.isBlank(reagentType.getBarcode())) {
+                    addGlobalValidationError("Reagent barcode is required");
                 }
-                cleanupPositionMap(plateEventType.getPositionMap(), plateEventType.getPlate(),
-                        labEventType.getTargetVesselTypeGeometry());
-                bettaLIMSMessage.getPlateEvent().add(plateEventType);
-            } else if (stationEvent instanceof StationSetupEvent) {
-                bettaLIMSMessage.setStationSetupEvent((StationSetupEvent) stationEvent);
-            } else if (stationEvent instanceof PlateCherryPickEvent) {
-                bettaLIMSMessage.getPlateCherryPickEvent().add((PlateCherryPickEvent) stationEvent);
-            } else if (stationEvent instanceof ReceptaclePlateTransferEvent) {
-                bettaLIMSMessage.getReceptaclePlateTransferEvent().add((ReceptaclePlateTransferEvent) stationEvent);
-            } else if (stationEvent instanceof ReceptacleTransferEventType) {
-                bettaLIMSMessage.getReceptacleTransferEvent().add((ReceptacleTransferEventType) stationEvent);
-            } else if (stationEvent instanceof ReceptacleEventType) {
-                bettaLIMSMessage.getReceptacleEvent().add((ReceptacleEventType) stationEvent);
-            } else {
-                throw new RuntimeException("Unknown StationEvent subclass " + stationEvent.getClass());
+                if (labEventType.isExpirationDateIncluded() && reagentType.getExpiration() == null) {
+                    addGlobalValidationError("Reagent expiration is required");
+                }
+            }
+        }
+
+        BettaLIMSMessage bettaLIMSMessage = null;
+        if (getContext().getValidationErrors().isEmpty()) {
+            // remove unused reagents
+            Iterator<ReagentType> reagentIterator = stationEvents.get(0).getReagent().iterator();
+            while (reagentIterator.hasNext()) {
+                ReagentType reagentType = reagentIterator.next();
+                if (StringUtils.isBlank(reagentType.getBarcode()) &&
+                        labEventType.getMapReagentNameToCount().get(reagentType.getKitType()) > 1) {
+                    reagentIterator.remove();
+                }
             }
 
-            if (eventIndex > 0) {
-                stationEvent.getReagent().addAll(stationEvents.get(0).getReagent());
-                stationEvent.setStation(stationEvents.get(0).getStation());
+            bettaLIMSMessage = new BettaLIMSMessage();
+            bettaLIMSMessage.setMode(LabEventFactory.MODE_MERCURY);
+            Date start = new Date();
+            if (stationEvents.get(0).getStation() == null) {
+                stationEvents.get(0).setStation(LabEvent.UI_EVENT_LOCATION);
             }
-            eventIndex++;
+
+            Iterator<StationEventType> iterator = stationEvents.iterator();
+            int eventIndex = 0;
+            while (iterator.hasNext()) {
+                StationEventType stationEvent = iterator.next();
+                stationEvent.setEventType(labEventType.getName());
+                if (workflowStepDef != null) {
+                    stationEvent.setWorkflowQualifier(workflowStepDef.getWorkflowQualifier());
+                }
+                stationEvent.setOperator(getUserBean().getLoginUserName());
+                stationEvent.setProgram(LabEvent.UI_PROGRAM_NAME);
+                stationEvent.setDisambiguator((long) (eventIndex + 1));
+                stationEvent.setStart(start);
+
+                // Remove empty elements
+                if (stationEvent instanceof PlateTransferEventType) {
+                    PlateTransferEventType plateTransferEventType = (PlateTransferEventType) stationEvent;
+                    cleanupPositionMap(plateTransferEventType.getSourcePositionMap(), plateTransferEventType.getSourcePlate(),
+                            labEventType.getSourceVesselTypeGeometry());
+                    cleanupPositionMap(plateTransferEventType.getPositionMap(), plateTransferEventType.getPlate(),
+                            labEventType.getTargetVesselTypeGeometry());
+                    bettaLIMSMessage.getPlateTransferEvent().add(plateTransferEventType);
+                } else if (stationEvent instanceof PlateEventType) {
+                    PlateEventType plateEventType = (PlateEventType) stationEvent;
+                    // Remove events for which the user did not enter a barcode
+                    if (labEventType.getNumEvents() > 1 && plateEventType.getPositionMap() == null &&
+                            (plateEventType.getPlate() == null || plateEventType.getPlate().getBarcode() == null)) {
+                        iterator.remove();
+                        continue;
+                    }
+                    cleanupPositionMap(plateEventType.getPositionMap(), plateEventType.getPlate(),
+                            labEventType.getTargetVesselTypeGeometry());
+                    bettaLIMSMessage.getPlateEvent().add(plateEventType);
+                } else if (stationEvent instanceof StationSetupEvent) {
+                    bettaLIMSMessage.setStationSetupEvent((StationSetupEvent) stationEvent);
+                } else if (stationEvent instanceof PlateCherryPickEvent) {
+                    bettaLIMSMessage.getPlateCherryPickEvent().add((PlateCherryPickEvent) stationEvent);
+                } else if (stationEvent instanceof ReceptaclePlateTransferEvent) {
+                    bettaLIMSMessage.getReceptaclePlateTransferEvent().add((ReceptaclePlateTransferEvent) stationEvent);
+                } else if (stationEvent instanceof ReceptacleTransferEventType) {
+                    bettaLIMSMessage.getReceptacleTransferEvent().add((ReceptacleTransferEventType) stationEvent);
+                } else if (stationEvent instanceof ReceptacleEventType) {
+                    bettaLIMSMessage.getReceptacleEvent().add((ReceptacleEventType) stationEvent);
+                } else {
+                    throw new RuntimeException("Unknown StationEvent subclass " + stationEvent.getClass());
+                }
+
+                if (eventIndex > 0) {
+                    stationEvent.getReagent().addAll(stationEvents.get(0).getReagent());
+                    stationEvent.setStation(stationEvents.get(0).getStation());
+                }
+                eventIndex++;
+            }
         }
 
         if (getContext().getValidationErrors().isEmpty()) {
