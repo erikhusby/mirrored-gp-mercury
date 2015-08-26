@@ -102,51 +102,52 @@ public class ManualTransferActionBean extends CoreActionBean {
         if (eventType != null) {
             labEventType = LabEventType.valueOf(eventType);
             // todo jmt move this to the enum?
-            switch (labEventType.getMessageType()) {
+            switch (labEventType.getManualTransferDetails().getMessageType()) {
                 case PLATE_EVENT:
-                    for (int i = 0; i < labEventType.getNumEvents(); i++) {
+                    for (int i = 0; i < labEventType.getManualTransferDetails().getNumEvents(); i++) {
                         PlateEventType plateEventType = new PlateEventType();
                         stationEvents.add(plateEventType);
                     }
                     break;
                 case PLATE_TRANSFER_EVENT:
-                    for (int i = 0; i < labEventType.getNumEvents(); i++) {
+                    for (int i = 0; i < labEventType.getManualTransferDetails().getNumEvents(); i++) {
                         PlateTransferEventType plateTransferEventType = new PlateTransferEventType();
                         stationEvents.add(plateTransferEventType);
                     }
                     break;
                 case STATION_SETUP_EVENT:
-                    for (int i = 0; i < labEventType.getNumEvents(); i++) {
+                    for (int i = 0; i < labEventType.getManualTransferDetails().getNumEvents(); i++) {
                         StationSetupEvent stationSetupEvent = new StationSetupEvent();
                         stationEvents.add(stationSetupEvent);
                     }
                     break;
                 case PLATE_CHERRY_PICK_EVENT:
-                    for (int i = 0; i < labEventType.getNumEvents(); i++) {
+                    for (int i = 0; i < labEventType.getManualTransferDetails().getNumEvents(); i++) {
                         PlateCherryPickEvent plateCherryPickEvent = new PlateCherryPickEvent();
                         stationEvents.add(plateCherryPickEvent);
                     }
                     break;
                 case RECEPTACLE_PLATE_TRANSFER_EVENT:
-                    for (int i = 0; i < labEventType.getNumEvents(); i++) {
+                    for (int i = 0; i < labEventType.getManualTransferDetails().getNumEvents(); i++) {
                         ReceptaclePlateTransferEvent receptaclePlateTransferEvent = new ReceptaclePlateTransferEvent();
                         stationEvents.add(receptaclePlateTransferEvent);
                     }
                     break;
                 case RECEPTACLE_EVENT:
-                    for (int i = 0; i < labEventType.getNumEvents(); i++) {
+                    for (int i = 0; i < labEventType.getManualTransferDetails().getNumEvents(); i++) {
                         ReceptacleEventType receptacleEventType = new ReceptacleEventType();
                         stationEvents.add(receptacleEventType);
                     }
                     break;
                 case RECEPTACLE_TRANSFER_EVENT:
-                    for (int i = 0; i < labEventType.getNumEvents(); i++) {
+                    for (int i = 0; i < labEventType.getManualTransferDetails().getNumEvents(); i++) {
                         ReceptacleTransferEventType receptacleTransferEventType = new ReceptacleTransferEventType();
                         stationEvents.add(receptacleTransferEventType);
                     }
                     break;
                 default:
-                    throw new RuntimeException("Unknown labEventType " + labEventType.getMessageType());
+                    throw new RuntimeException("Unknown labEventType " +
+                            labEventType.getManualTransferDetails().getMessageType());
             }
         }
     }
@@ -158,7 +159,7 @@ public class ManualTransferActionBean extends CoreActionBean {
         if (workflowStepDef != null) {
             reagentNames = workflowStepDef.getReagentTypes();
         } else {
-            reagentNames = Arrays.asList(labEventType.getReagentNames());
+            reagentNames = Arrays.asList(labEventType.getManualTransferDetails().getReagentNames());
         }
         for (String reagentName : reagentNames) {
             ReagentType reagentType = new ReagentType();
@@ -166,12 +167,13 @@ public class ManualTransferActionBean extends CoreActionBean {
             stationEvents.get(0).getReagent().add(reagentType);
         }
 
-        switch (labEventType.getMessageType()) {
+        switch (labEventType.getManualTransferDetails().getMessageType()) {
             case PLATE_EVENT:
                 for (StationEventType stationEvent : stationEvents) {
                     PlateEventType plateEventType = (PlateEventType) stationEvent;
                     PlateType destinationPlateType = new PlateType();
-                    VesselTypeGeometry targetVesselTypeGeometry = labEventType.getTargetVesselTypeGeometry();
+                    VesselTypeGeometry targetVesselTypeGeometry =
+                            labEventType.getManualTransferDetails().getTargetVesselTypeGeometry();
                     destinationPlateType.setPhysType(targetVesselTypeGeometry.getDisplayName());
                     plateEventType.setPlate(destinationPlateType);
                     if (targetVesselTypeGeometry instanceof RackOfTubes.RackType) {
@@ -183,7 +185,8 @@ public class ManualTransferActionBean extends CoreActionBean {
                 for (StationEventType stationEvent : stationEvents) {
                     PlateTransferEventType plateTransferEventType = (PlateTransferEventType) stationEvent;
                     PlateType sourcePlate = new PlateType();
-                    VesselTypeGeometry sourceVesselTypeGeometry = labEventType.getSourceVesselTypeGeometry();
+                    VesselTypeGeometry sourceVesselTypeGeometry =
+                            labEventType.getManualTransferDetails().getSourceVesselTypeGeometry();
                     sourcePlate.setPhysType(sourceVesselTypeGeometry.getDisplayName());
                     plateTransferEventType.setSourcePlate(sourcePlate);
                     if (sourceVesselTypeGeometry instanceof RackOfTubes.RackType) {
@@ -191,7 +194,8 @@ public class ManualTransferActionBean extends CoreActionBean {
                     }
 
                     PlateType destinationPlateType = new PlateType();
-                    VesselTypeGeometry targetVesselTypeGeometry = labEventType.getTargetVesselTypeGeometry();
+                    VesselTypeGeometry targetVesselTypeGeometry =
+                            labEventType.getManualTransferDetails().getTargetVesselTypeGeometry();
                     destinationPlateType.setPhysType(targetVesselTypeGeometry.getDisplayName());
                     plateTransferEventType.setPlate(destinationPlateType);
                     if (targetVesselTypeGeometry instanceof RackOfTubes.RackType) {
@@ -219,7 +223,7 @@ public class ManualTransferActionBean extends CoreActionBean {
                     ReceptacleEventType receptacleEventType = (ReceptacleEventType) stationEvent;
                     ReceptacleType receptacleType = new ReceptacleType();
                     receptacleType.setReceptacleType(workflowStepDef ==  null ?
-                            labEventType.getTargetVesselTypeGeometry().getDisplayName() :
+                            labEventType.getManualTransferDetails().getTargetVesselTypeGeometry().getDisplayName() :
                             workflowStepDef.getTargetBarcodedTubeType().getDisplayName());
                     receptacleEventType.setReceptacle(receptacleType);
                 }
@@ -228,16 +232,19 @@ public class ManualTransferActionBean extends CoreActionBean {
                 for (StationEventType stationEvent : stationEvents) {
                     ReceptacleTransferEventType receptacleTransferEventType = (ReceptacleTransferEventType) stationEvent;
                     ReceptacleType sourceReceptacle = new ReceptacleType();
-                    sourceReceptacle.setReceptacleType(labEventType.getSourceVesselTypeGeometry().getDisplayName());
+                    sourceReceptacle.setReceptacleType(
+                            labEventType.getManualTransferDetails().getSourceVesselTypeGeometry().getDisplayName());
                     receptacleTransferEventType.setSourceReceptacle(sourceReceptacle);
 
                     ReceptacleType destinationReceptacle = new ReceptacleType();
-                    destinationReceptacle.setReceptacleType(labEventType.getTargetVesselTypeGeometry().getDisplayName());
+                    destinationReceptacle.setReceptacleType(
+                            labEventType.getManualTransferDetails().getTargetVesselTypeGeometry().getDisplayName());
                     receptacleTransferEventType.setReceptacle(destinationReceptacle);
                 }
                 break;
             default:
-                throw new RuntimeException("Unknown labEventType " + labEventType.getMessageType());
+                throw new RuntimeException("Unknown labEventType " +
+                        labEventType.getManualTransferDetails().getMessageType());
         }
         return new ForwardResolution(MANUAL_TRANSFER_PAGE);
     }
@@ -260,7 +267,7 @@ public class ManualTransferActionBean extends CoreActionBean {
      */
     @HandlesEvent(FETCH_EXISTING_ACTION)
     public Resolution fetchExisting() {
-        switch (labEventType.getMessageType()) {
+        switch (labEventType.getManualTransferDetails().getMessageType()) {
             case PLATE_EVENT:
                 for (StationEventType stationEvent : stationEvents) {
                     PlateEventType plateEventType = (PlateEventType) stationEvent;
@@ -378,11 +385,11 @@ public class ManualTransferActionBean extends CoreActionBean {
         BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
         bettaLIMSMessage.setMode(LabEventFactory.MODE_MERCURY);
         Date start = new Date();
-        int eventIndex = 0;
         Iterator<StationEventType> iterator = stationEvents.iterator();
         if (stationEvents.get(0).getStation() == null) {
             stationEvents.get(0).setStation(LabEvent.UI_EVENT_LOCATION);
         }
+        int eventIndex = 0;
         while (iterator.hasNext()) {
             StationEventType stationEvent = iterator.next();
             stationEvent.setEventType(labEventType.getName());
@@ -398,20 +405,20 @@ public class ManualTransferActionBean extends CoreActionBean {
             if (stationEvent instanceof PlateTransferEventType) {
                 PlateTransferEventType plateTransferEventType = (PlateTransferEventType) stationEvent;
                 cleanupPositionMap(plateTransferEventType.getSourcePositionMap(), plateTransferEventType.getSourcePlate(),
-                        labEventType.getSourceVesselTypeGeometry());
+                        labEventType.getManualTransferDetails().getSourceVesselTypeGeometry());
                 cleanupPositionMap(plateTransferEventType.getPositionMap(), plateTransferEventType.getPlate(),
-                        labEventType.getTargetVesselTypeGeometry());
+                        labEventType.getManualTransferDetails().getTargetVesselTypeGeometry());
                 bettaLIMSMessage.getPlateTransferEvent().add(plateTransferEventType);
             } else if (stationEvent instanceof PlateEventType) {
                 PlateEventType plateEventType = (PlateEventType) stationEvent;
                 // Remove events for which the user did not enter a barcode
-                if (labEventType.getNumEvents() > 1 && plateEventType.getPositionMap() == null &&
+                if (labEventType.getManualTransferDetails().getNumEvents() > 1 && plateEventType.getPositionMap() == null &&
                         (plateEventType.getPlate() == null || plateEventType.getPlate().getBarcode() == null)) {
                     iterator.remove();
                     continue;
                 }
                 cleanupPositionMap(plateEventType.getPositionMap(), plateEventType.getPlate(),
-                        labEventType.getTargetVesselTypeGeometry());
+                        labEventType.getManualTransferDetails().getTargetVesselTypeGeometry());
                 bettaLIMSMessage.getPlateEvent().add(plateEventType);
             } else if (stationEvent instanceof StationSetupEvent) {
                 bettaLIMSMessage.setStationSetupEvent((StationSetupEvent) stationEvent);
@@ -481,7 +488,7 @@ public class ManualTransferActionBean extends CoreActionBean {
     public List<LabEventType> getManualEventTypes() {
         List<LabEventType> manualLabEventTypes = new ArrayList<>();
         for (LabEventType eventType : LabEventType.values()) {
-            if (eventType.getMessageType() != null) {
+            if (eventType.getManualTransferDetails() != null) {
                 manualLabEventTypes.add(eventType);
             }
         }

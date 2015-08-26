@@ -183,14 +183,14 @@ public class LabVesselTest {
 
 
         ReceptacleType sourceReceptacle = BettaLimsObjectFactory.createReceptacleType(sourceVessel.getLabel(),
-                labEventType.getSourceVesselTypeGeometry().getDisplayName(), "",
+                labEventType.getManualTransferDetails().getSourceVesselTypeGeometry().getDisplayName(), "",
                 sampleMaterialType.getDisplayName(), null, null, null,
                 Collections.<ReagentType>emptyList(),
                 Collections.<MetadataType>emptyList());
         receptacleTransferEventType.setSourceReceptacle(sourceReceptacle);
 
         ReceptacleType destinationReceptacle = BettaLimsObjectFactory.createReceptacleType(destinationVessel.getLabel(),
-                labEventType.getTargetVesselTypeGeometry().getDisplayName(), "",
+                labEventType.getManualTransferDetails().getTargetVesselTypeGeometry().getDisplayName(), "",
                 null, null, null, null,
                 Collections.<ReagentType>emptyList(),
                 Collections.<MetadataType>emptyList());

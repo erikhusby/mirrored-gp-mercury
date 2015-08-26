@@ -3,9 +3,11 @@ package org.broadinstitute.gpinformatics.mercury.entity.labevent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselTypeGeometry;
 
+import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -34,16 +36,16 @@ public enum LabEventType {
     SHEARING_TRANSFER("ShearingTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            MessageType.PLATE_TRANSFER_EVENT, RackOfTubes.RackType.Matrix96, StaticPlate.PlateType.Eppendorf96,
-            new String[]{"CrimpCapLot"}),
+            new ManualTransferDetails(MessageType.PLATE_TRANSFER_EVENT, RackOfTubes.RackType.Matrix96,
+                    StaticPlate.PlateType.Eppendorf96, new String[]{"CrimpCapLot"}, 1, null)),
     COVARIS_LOADED("CovarisLoaded",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY),
     POST_SHEARING_TRANSFER_CLEANUP("PostShearingTransferCleanup",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            MessageType.PLATE_TRANSFER_EVENT, StaticPlate.PlateType.Eppendorf96, StaticPlate.PlateType.Eppendorf96,
-            new String[]{"SPRI", "70% Ethanol", "EB"}),
+            new ManualTransferDetails(MessageType.PLATE_TRANSFER_EVENT, StaticPlate.PlateType.Eppendorf96,
+                    StaticPlate.PlateType.Eppendorf96, new String[]{"SPRI", "70% Ethanol", "EB"}, 1, null)),
     SHEARING_QC("ShearingQC",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY),
@@ -857,108 +859,119 @@ public enum LabEventType {
     EXTRACT_BLOOD_TO_MICRO("ExtractBloodToMicro",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.VacutainerBloodTube3,
-            BarcodedTube.BarcodedTubeType.EppendoffFliptop15, new String[]{"Proteinase K", "Buffer AL", "100% Ethanol"}),
+            new ManualTransferDetails(MessageType.RECEPTACLE_TRANSFER_EVENT,
+                    BarcodedTube.BarcodedTubeType.VacutainerBloodTube3,
+                    BarcodedTube.BarcodedTubeType.EppendoffFliptop15,
+                    new String[]{"Proteinase K", "Buffer AL", "100% Ethanol"}, 1, null)),
     // Transfer blood to spin column
     EXTRACT_BLOOD_MICRO_TO_SPIN("ExtractBloodMicroToSpin",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.EppendoffFliptop15,
-            BarcodedTube.BarcodedTubeType.SpinColumn, new String[]{"Buffer AW1", "Buffer AW2", "Buffer AE"}),
+            new ManualTransferDetails(MessageType.RECEPTACLE_TRANSFER_EVENT,
+                    BarcodedTube.BarcodedTubeType.EppendoffFliptop15, BarcodedTube.BarcodedTubeType.SpinColumn,
+                    new String[]{"Buffer AW1", "Buffer AW2", "Buffer AE"}, 1, null)),
     // Transfer blood to matrix tube
     EXTRACT_BLOOD_SPIN_TO_MATRIX("ExtractBloodSpinToMatrix",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.SpinColumn,
-            BarcodedTube.BarcodedTubeType.MatrixTube075, new String[]{}, LabVessel.MaterialType.DNA),
+            new ManualTransferDetails(MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.SpinColumn,
+                    BarcodedTube.BarcodedTubeType.MatrixTube075, new String[]{}, 1, null), LabVessel.MaterialType.DNA),
 
     // Transfer cell suspension to microcentrifuge tube
     EXTRACT_CELL_SUSP_TO_MICRO("ExtractCellSuspToMicro",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.Cryovial05,
-            BarcodedTube.BarcodedTubeType.EppendoffFliptop15, new String[]{"Proteinase K", "Buffer AL", "100% Ethanol"}),
+            new ManualTransferDetails(MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.Cryovial05,
+                    BarcodedTube.BarcodedTubeType.EppendoffFliptop15,
+                    new String[]{"Proteinase K", "Buffer AL", "100% Ethanol"}, 1, null)),
     // Transfer cell suspension to spin column
     EXTRACT_CELL_SUSP_MICRO_TO_SPIN("ExtractCellSuspMicroToSpin",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.EppendoffFliptop15,
-            BarcodedTube.BarcodedTubeType.SpinColumn, new String[]{"Buffer AW1", "Buffer AW2", "Buffer AE"}),
+            new ManualTransferDetails(MessageType.RECEPTACLE_TRANSFER_EVENT,
+                    BarcodedTube.BarcodedTubeType.EppendoffFliptop15, BarcodedTube.BarcodedTubeType.SpinColumn,
+                    new String[]{"Buffer AW1", "Buffer AW2", "Buffer AE"}, 1, null)),
     // Optional Transfer cell suspension to micro centrifuge tube
     EXTRACT_CELL_SUSP_SPIN_TO_MICRO("ExtractCellSuspSpinToMicro",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.SpinColumn,
-            BarcodedTube.BarcodedTubeType.EppendoffFliptop15, new String[]{"SPRI", "70% Ethanol", "TE"}),
+            new ManualTransferDetails(MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.SpinColumn,
+                    BarcodedTube.BarcodedTubeType.EppendoffFliptop15, new String[]{"SPRI", "70% Ethanol", "TE"}, 1, null)),
     // Transfer cell suspension to matrix tube
     EXTRACT_CELL_SUSP_TO_MATRIX("ExtractCellSuspToMatrix",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.SpinColumn,
-            BarcodedTube.BarcodedTubeType.MatrixTube075, new String[]{}, LabVessel.MaterialType.DNA),
+            new ManualTransferDetails(MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.SpinColumn,
+            BarcodedTube.BarcodedTubeType.MatrixTube075, new String[]{}, 1, null), LabVessel.MaterialType.DNA),
 
     // Transfer tissue in paraffin to micro centrifuge tube
     EXTRACT_FFPE_TO_MICRO1("ExtractFfpeToMicro1",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.Slide,
-            BarcodedTube.BarcodedTubeType.EppendoffFliptop15, new String[]{"Deparaffinization Solution", "Buffer ATL", "Proteinase K"}),
+            new ManualTransferDetails(MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.Slide,
+                    BarcodedTube.BarcodedTubeType.EppendoffFliptop15,
+                    new String[]{"Deparaffinization Solution", "Buffer ATL", "Proteinase K"}, 1, null)),
     // Transfer tissue in paraffin to micro centrifuge tube to micro centrifuge tube
     EXTRACT_FFPE_MICRO1_TO_MICRO2("ExtractFfpeMicro1ToMicro2",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.EppendoffFliptop15,
-            BarcodedTube.BarcodedTubeType.EppendoffFliptop15, new String[]{"RNase A", "Buffer AL", "100% Ethanol"}),
+            new ManualTransferDetails(MessageType.RECEPTACLE_TRANSFER_EVENT,
+                    BarcodedTube.BarcodedTubeType.EppendoffFliptop15, BarcodedTube.BarcodedTubeType.EppendoffFliptop15,
+                    new String[]{"RNase A", "Buffer AL", "100% Ethanol"}, 1, null)),
     // Transfer tissue in paraffin to spin column
     EXTRACT_FFPE_MICRO2_TO_SPIN("ExtractFfpeMicro2ToSpin",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.EppendoffFliptop15,
-            BarcodedTube.BarcodedTubeType.SpinColumn, new String[]{"Buffer AW1", "Buffer AW2", "Buffer ATE"}),
+            new ManualTransferDetails(MessageType.RECEPTACLE_TRANSFER_EVENT,
+                    BarcodedTube.BarcodedTubeType.EppendoffFliptop15, BarcodedTube.BarcodedTubeType.SpinColumn,
+                    new String[]{"Buffer AW1", "Buffer AW2", "Buffer ATE"}, 1, null)),
     // Transfer tissue in paraffin to matrix tube
     EXTRACT_FFPE_SPIN_TO_MATRIX("ExtractFfpeSpinToMatrix",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.SpinColumn,
-            BarcodedTube.BarcodedTubeType.MatrixTube075, new String[]{}, LabVessel.MaterialType.DNA),
+            new ManualTransferDetails(MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.SpinColumn,
+                    BarcodedTube.BarcodedTubeType.MatrixTube075, new String[]{}, 1, null), LabVessel.MaterialType.DNA),
 
     // Transfer fresh frozen tissue to micro centrifuge tube
     EXTRACT_FRESH_TISSUE_TO_MICRO("ExtractFreshTissueToMicro",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.TissueCassette,
-            BarcodedTube.BarcodedTubeType.EppendoffFliptop15, new String[]{"Buffer ATL", "Proteinase K", "RNase", "Buffer AL", "Ethanol"}),
+            new ManualTransferDetails(MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.TissueCassette,
+                    BarcodedTube.BarcodedTubeType.EppendoffFliptop15,
+                    new String[]{"Buffer ATL", "Proteinase K", "RNase", "Buffer AL", "Ethanol"}, 1, null)),
     // Transfer fresh frozen tissue to spin column
     EXTRACT_FRESH_TISSUE_MICRO_TO_SPIN("ExtractFreshTissueMicroToSpin",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.EppendoffFliptop15,
-            BarcodedTube.BarcodedTubeType.SpinColumn, new String[]{"Buffer AW1", "Buffer AW2", "Buffer AE"}),
+            new ManualTransferDetails(MessageType.RECEPTACLE_TRANSFER_EVENT,
+                    BarcodedTube.BarcodedTubeType.EppendoffFliptop15, BarcodedTube.BarcodedTubeType.SpinColumn,
+                    new String[]{"Buffer AW1", "Buffer AW2", "Buffer AE"}, 1, null)),
     // Transfer fresh frozen tissue to matrix tube
     EXTRACT_FRESH_TISSUE_SPIN_TO_MATRIX("ExtractFreshTissueSpinToMatrix",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.SpinColumn,
-            BarcodedTube.BarcodedTubeType.MatrixTube075, new String[]{}, LabVessel.MaterialType.DNA),
+            new ManualTransferDetails(MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.SpinColumn,
+                    BarcodedTube.BarcodedTubeType.MatrixTube075, new String[]{}, 1, null), LabVessel.MaterialType.DNA),
 
     // Transfer saliva to conical tube
     EXTRACT_SALIVA_TO_CONICAL("ExtractSalivaToConical",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.OrageneTube,
-            BarcodedTube.BarcodedTubeType.Conical50, new String[]{"PBS", "Proteinase K", "Buffer AL", "100% Ethanol"}),
+            new ManualTransferDetails(MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.OrageneTube,
+                    BarcodedTube.BarcodedTubeType.Conical50,
+                    new String[]{"PBS", "Proteinase K", "Buffer AL", "100% Ethanol"}, 1, null)),
     // Transfer saliva to spin column
     EXTRACT_SALIVA_CONICAL_TO_SPIN("ExtractSalivaConicalToSpin",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.Conical50,
-            BarcodedTube.BarcodedTubeType.SpinColumn, new String[]{"Buffer AW1", "Buffer AW2", "Buffer AE"}),
+            new ManualTransferDetails(MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.Conical50,
+                    BarcodedTube.BarcodedTubeType.SpinColumn, new String[]{"Buffer AW1", "Buffer AW2", "Buffer AE"}, 1, null)),
     // Transfer saliva to matrix tube
     EXTRACT_SALIVA_SPIN_TO_MATRIX("ExtractSalivaSpinToMatrix",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.SpinColumn,
-            BarcodedTube.BarcodedTubeType.MatrixTube075, new String[]{}, LabVessel.MaterialType.DNA),
+            new ManualTransferDetails(MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.SpinColumn,
+                    BarcodedTube.BarcodedTubeType.MatrixTube075, new String[]{}, 1, null), LabVessel.MaterialType.DNA),
 
     // ALLPREP_CELLS_TO_CRYOVIAL
     // ALLPREP_CRYOVIAL_TO_QIASHREDDER
@@ -969,15 +982,16 @@ public enum LabEventType {
     ALLPREP_RNA_MICRO_TO_MATRIX("AllprepRnaMicroToMatrix",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.FALSE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            MessageType.PLATE_TRANSFER_EVENT, RackOfTubes.RackType.FlipperRackRow24,
-            RackOfTubes.RackType.Matrix96, new String[]{}, LabVessel.MaterialType.DNA),
+            new ManualTransferDetails(MessageType.PLATE_TRANSFER_EVENT, RackOfTubes.RackType.FlipperRackRow24,
+                    SBSSection.ROWOF24, RackOfTubes.RackType.Matrix96, SBSSection.P96_ROWS1_2,
+                    new String[]{}, 1, null), LabVessel.MaterialType.DNA),
     // ALLPREP_DNA_TO_MICRO
     // ALLPREP_DNA_MICRO_TO_MATRIX
     ALLPREP_DNA_MICRO_TO_MATRIX("AllprepDnaMicroToMatrix",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.FALSE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            MessageType.PLATE_TRANSFER_EVENT, RackOfTubes.RackType.FlipperRackRow24,
-            RackOfTubes.RackType.Matrix96, new String[]{}, LabVessel.MaterialType.DNA),
+            new ManualTransferDetails(MessageType.PLATE_TRANSFER_EVENT, RackOfTubes.RackType.FlipperRackRow24,
+                    RackOfTubes.RackType.Matrix96, new String[]{}, 1, null), LabVessel.MaterialType.DNA),
 
     //Infinium
     INFINIUM_AMPLIFICATION("InfiniumAmplification",
@@ -1022,9 +1036,9 @@ public enum LabEventType {
     INFINIUM_XSTAIN("InfiniumXStain",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.GAP, VolumeConcUpdate.MERCURY_ONLY,
-            MessageType.PLATE_EVENT, null, StaticPlate.PlateType.InfiniumChip24,
-            new String[]{"RA1", "LX1", "LX2", "XC3", "XC4", "SML", "ATM", "EML"}, 24,
-            new String[]{"Rose", "Lily", "Scrappy", "Scooby", "Shaggy"}),
+            new ManualTransferDetails(MessageType.PLATE_EVENT, null, StaticPlate.PlateType.InfiniumChip24,
+                    new String[]{"RA1", "LX1", "LX2", "XC3", "XC4", "SML", "ATM", "EML"}, 24,
+                    new String[]{"Rose", "Lily", "Scrappy", "Scooby", "Shaggy"})),
 
     // Generic events that are qualified by workflow
     // todo jmt need different versions for PLATE_EVENT and RECEPTACLE_EVENT?
@@ -1043,7 +1057,7 @@ public enum LabEventType {
     ADD_REAGENT("AddReagent",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            MessageType.RECEPTACLE_EVENT, null, null, null),
+            new ManualTransferDetails(MessageType.RECEPTACLE_EVENT, null, null, null, 1, null)),
     PREP("Prep",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY),
@@ -1201,23 +1215,85 @@ public enum LabEventType {
         RECEPTACLE_TRANSFER_EVENT
     }
 
-    /** For Manual Transfers, determines layout of page. */
-    private MessageType messageType;
+    public static class ManualTransferDetails {
+        /** Determines layout of page and type of message built. */
+        private MessageType messageType;
 
-    /** For Manual Transfers, determines layout of page. */
-    private VesselTypeGeometry sourceVesselTypeGeometry;
+        /** Determines layout of page for source vessel. */
+        private VesselTypeGeometry sourceVesselTypeGeometry;
 
-    /** For Manual Transfers, determines layout of page. */
-    private VesselTypeGeometry targetVesselTypeGeometry;
+        /** The set of positions in the source geometry from which to transfer */
+        private SBSSection sourceSection;
 
-    /** For Manual Transfers, prompts user for reagents. */
-    private String[] reagentNames;
+        /** Determines layout of page for destination vessel. */
+        private VesselTypeGeometry targetVesselTypeGeometry;
 
-    /** For Manual Transfers, allows multiple events to share one set of reagents. */
-    private int numEvents = 1;
+        /** The set of positions in the target geometry from which to transfer */
+        private SBSSection targetSection;
 
-    /** For Manual Transfers (deck transfers that aren't messaged), prompts user with a list of machines. */
-    private String[] machineNames = new String[]{};
+        /** Prompts user for reagents. */
+        private String[] reagentNames;
+
+        /** Allows multiple events to share one set of reagents. */
+        private int numEvents = 1;
+
+        /** Prompts user with a list of machines. */
+        private String[] machineNames = {};
+
+        public ManualTransferDetails(MessageType messageType, VesselTypeGeometry sourceVesselTypeGeometry,
+                VesselTypeGeometry targetVesselTypeGeometry, String[] reagentNames, int numEvents,
+                String[] machineNames) {
+            this(messageType, sourceVesselTypeGeometry, null, targetVesselTypeGeometry, null, reagentNames, numEvents,
+                    machineNames);
+        }
+
+        public ManualTransferDetails(MessageType messageType, VesselTypeGeometry sourceVesselTypeGeometry,
+                SBSSection sourceSection, VesselTypeGeometry targetVesselTypeGeometry, SBSSection targetSection,
+                String[] reagentNames, int numEvents, String[] machineNames) {
+            this.messageType = messageType;
+            this.sourceVesselTypeGeometry = sourceVesselTypeGeometry;
+            this.sourceSection = sourceSection;
+            this.targetVesselTypeGeometry = targetVesselTypeGeometry;
+            this.targetSection = targetSection;
+            this.reagentNames = reagentNames;
+            this.numEvents = numEvents;
+            this.machineNames = machineNames;
+        }
+
+        public MessageType getMessageType() {
+            return messageType;
+        }
+
+        public VesselTypeGeometry getSourceVesselTypeGeometry() {
+            return sourceVesselTypeGeometry;
+        }
+
+        public SBSSection getSourceSection() {
+            return sourceSection;
+        }
+
+        public VesselTypeGeometry getTargetVesselTypeGeometry() {
+            return targetVesselTypeGeometry;
+        }
+
+        public SBSSection getTargetSection() {
+            return targetSection;
+        }
+
+        public String[] getReagentNames() {
+            return reagentNames;
+        }
+
+        public int getNumEvents() {
+            return numEvents;
+        }
+
+        public String[] getMachineNames() {
+            return machineNames;
+        }
+    }
+
+    private ManualTransferDetails manualTransferDetails;
 
     /**
      * One attempt at trying to make a very generic
@@ -1238,39 +1314,22 @@ public enum LabEventType {
             PipelineTransformation pipelineTransformation, ForwardMessage forwardMessage,
             VolumeConcUpdate volumeConcUpdate) {
         this(name, expectSourcesEmpty, expectTargetsEmpty, systemOfRecord, createSources, plasticToValidate,
-                pipelineTransformation, forwardMessage, volumeConcUpdate, null,null,null,null);
+                pipelineTransformation, forwardMessage, volumeConcUpdate, null, null);
     }
 
     LabEventType(String name, ExpectSourcesEmpty expectSourcesEmpty, ExpectTargetsEmpty expectTargetsEmpty,
                  SystemOfRecord systemOfRecord, CreateSources createSources, PlasticToValidate plasticToValidate,
                  PipelineTransformation pipelineTransformation, ForwardMessage forwardMessage,
-                 VolumeConcUpdate volumeConcUpdate, MessageType messageType,
-                 VesselTypeGeometry sourceVesselTypeGeometry, VesselTypeGeometry targetVesselTypeGeometry,
-                 String[] reagentNames) {
+                 VolumeConcUpdate volumeConcUpdate, ManualTransferDetails manualTransferDetails) {
         this(name, expectSourcesEmpty, expectTargetsEmpty, systemOfRecord, createSources, plasticToValidate,
-                pipelineTransformation, forwardMessage, volumeConcUpdate, messageType, sourceVesselTypeGeometry,
-                targetVesselTypeGeometry, reagentNames, null);
+                pipelineTransformation, forwardMessage, volumeConcUpdate, manualTransferDetails, null);
     }
 
     LabEventType(String name, ExpectSourcesEmpty expectSourcesEmpty, ExpectTargetsEmpty expectTargetsEmpty,
-                 SystemOfRecord systemOfRecord, CreateSources createSources, PlasticToValidate plasticToValidate,
-                 PipelineTransformation pipelineTransformation, ForwardMessage forwardMessage,
-                 VolumeConcUpdate volumeConcUpdate, MessageType messageType,
-                 VesselTypeGeometry sourceVesselTypeGeometry, VesselTypeGeometry targetVesselTypeGeometry,
-                 String[] reagentNames, int numEvents, String[] machineNames) {
-        this(name, expectSourcesEmpty, expectTargetsEmpty, systemOfRecord, createSources, plasticToValidate,
-                pipelineTransformation, forwardMessage, volumeConcUpdate, messageType, sourceVesselTypeGeometry,
-                targetVesselTypeGeometry, reagentNames, null);
-        this.numEvents = numEvents;
-        this.machineNames = machineNames;
-    }
-
-    LabEventType(String name, ExpectSourcesEmpty expectSourcesEmpty, ExpectTargetsEmpty expectTargetsEmpty,
-                 SystemOfRecord systemOfRecord, CreateSources createSources, PlasticToValidate plasticToValidate,
-                 PipelineTransformation pipelineTransformation, ForwardMessage forwardMessage,
-                 VolumeConcUpdate volumeConcUpdate, MessageType messageType,
-                 VesselTypeGeometry sourceVesselTypeGeometry, VesselTypeGeometry targetVesselTypeGeometry,
-                 String[] reagentNames, LabVessel.MaterialType resultingMaterialType) {
+            SystemOfRecord systemOfRecord, CreateSources createSources, PlasticToValidate plasticToValidate,
+            PipelineTransformation pipelineTransformation, ForwardMessage forwardMessage,
+            VolumeConcUpdate volumeConcUpdate, ManualTransferDetails manualTransferDetails,
+            LabVessel.MaterialType resultingMaterialType) {
         this.name = name;
         this.expectedEmptySources = expectSourcesEmpty;
         this.expectedEmptyTargets = expectTargetsEmpty;
@@ -1280,10 +1339,7 @@ public enum LabEventType {
         this.pipelineTransformation = pipelineTransformation;
         this.forwardMessage = forwardMessage;
         this.volumeConcUpdate = volumeConcUpdate;
-        this.messageType = messageType;
-        this.sourceVesselTypeGeometry = sourceVesselTypeGeometry;
-        this.targetVesselTypeGeometry = targetVesselTypeGeometry;
-        this.reagentNames = reagentNames;
+        this.manualTransferDetails = manualTransferDetails;
         this.resultingMaterialType = resultingMaterialType;
     }
 
@@ -1334,27 +1390,8 @@ public enum LabEventType {
         return resultingMaterialType;
     }
 
-    public MessageType getMessageType() {
-        return messageType;
-    }
-
-    public VesselTypeGeometry getSourceVesselTypeGeometry() {
-        return sourceVesselTypeGeometry;
-    }
-
-    public VesselTypeGeometry getTargetVesselTypeGeometry() {
-        return targetVesselTypeGeometry;
-    }
-
-    public String[] getReagentNames() {
-        return reagentNames;
-    }
-
-    public int getNumEvents() {
-        return numEvents;
-    }
-
-    public String[] getMachineNames() {
-        return machineNames;
+    @Nullable
+    public ManualTransferDetails getManualTransferDetails() {
+        return manualTransferDetails;
     }
 }
