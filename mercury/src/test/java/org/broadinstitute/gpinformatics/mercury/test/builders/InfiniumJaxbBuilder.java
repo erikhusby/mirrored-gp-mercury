@@ -158,10 +158,12 @@ public class InfiniumJaxbBuilder {
             infiniumWashJaxbs.add(infiniumWash);
             bettaLimsMessageTestFactory.addMessage(messageList, infiniumWash);
         }
+
+        bettaLIMSMessage = new BettaLIMSMessage();
         for (String hybridizationChip : hybridizationChips) {
-            // XStain is actually done through the Manual Transfer Page, but is included here for completeness.
-            PlateEventType infiniumXStain = bettaLimsMessageTestFactory.buildPlateEvent("InfiniumXStain", hybridizationChip,
-                    Arrays.asList(
+            // XStain is actually done through the Manual Transfer Page.  It is included here to drive GPUI.
+            PlateEventType infiniumXStain = bettaLimsMessageTestFactory.buildPlateEvent("InfiniumXStain",
+                    hybridizationChip, Arrays.asList(
                             new BettaLimsMessageTestFactory.ReagentDto("RA1", "1234-RA1", null),
                             new BettaLimsMessageTestFactory.ReagentDto("LX1", "1234-LX1", null),
                             new BettaLimsMessageTestFactory.ReagentDto("LX2", "1234-LX2", null),
@@ -171,8 +173,10 @@ public class InfiniumJaxbBuilder {
                             new BettaLimsMessageTestFactory.ReagentDto("ATM", "1234-ATM", null),
                             new BettaLimsMessageTestFactory.ReagentDto("EML", "1234-EML", null)));
             infiniumXStainJaxbs.add(infiniumXStain);
-            bettaLimsMessageTestFactory.addMessage(messageList, infiniumXStain);
+            bettaLIMSMessage.getPlateEvent().add(infiniumXStain);
+            bettaLimsMessageTestFactory.advanceTime();
         }
+        messageList.add(bettaLIMSMessage);
 
         return this;
     }
