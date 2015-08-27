@@ -3,9 +3,11 @@ package org.broadinstitute.gpinformatics.infrastructure.datawh;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabMetricRunDao;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricRun;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric_;
@@ -20,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Stateful
@@ -67,18 +70,34 @@ public class LabMetricEtl extends GenericEntityEtl<LabMetric, LabMetric> {
                 LabVessel labVessel = entity.getLabVessel();
                 LabMetricRun run = entity.getLabMetricRun();
 
-                Set<SampleInstance> sampleInstances =
-                        labVessel.getSampleInstances(LabVessel.SampleType.ROOT_SAMPLE, LabBatch.LabBatchType.WORKFLOW);
+                Set<SampleInstanceV2> sampleInstances = labVessel.getSampleInstancesV2();
 
                 if (!sampleInstances.isEmpty()) {
-                    for (SampleInstance si : sampleInstances) {
-                        MercurySample sample = si.getStartingSample();
+                    for (SampleInstanceV2 si : sampleInstances) {
+                        MercurySample sample = si.getRootOrEarliestMercurySample();
                         if (sample != null) {
-                            String pdoKey = si.getProductOrderKey();
-                            ProductOrder pdo = (pdoKey != null) ? pdoDao.findByBusinessKey(pdoKey) : null;
+                            Set<ProductOrderSample> pdoSamples = sample.getProductOrderSamples();
+                            ProductOrder pdo = (pdoSamples.size() == 1) ? pdoSamples.iterator().next().getProductOrder() : null;
 
-                            LabBatch labBatch = si.getLabBatch();
-                            String batchName = labBatch != null ? labBatch.getBatchName() : LabEventEtl.NONE;
+                            String batchName;
+                            LabBatch labBatch = si.getSingleBatch();
+                            if( labBatch != null ) {
+                                batchName = labBatch.getBatchName();
+                            } else {
+                                // If a single batch can't be inferred, show them all
+                                List<LabBatch> labBatches = si.getAllWorkflowBatches();
+                                if( labBatches.size() == 0 ) {
+                                    batchName = LabEventEtl.NONE;
+                                } else {
+                                    batchName = LabEventEtl.MULTIPLE;
+                                    // Don't show multiples
+                                    //StringBuilder batchNames = new StringBuilder();
+                                    //for( LabBatch labBatchIter : labBatches ){
+                                    //    batchNames.append(labBatchIter.getBatchName() ).append(", ");
+                                    //}
+                                    //batchName = batchNames.substring(0, batchNames.length() - 2 );
+                                }
+                            }
 
                             records.add(genericRecord(etlDateStr, isDelete,
                                     entity.getLabMetricId(),
