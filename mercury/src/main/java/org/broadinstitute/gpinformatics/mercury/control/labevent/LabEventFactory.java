@@ -36,6 +36,8 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StripTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormationDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.EventHandlerSelector;
+import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.GapHandler;
+import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.SamplesDaughterPlateHandler;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
@@ -165,6 +167,12 @@ public class LabEventFactory implements Serializable {
 
     @Inject
     private EventHandlerSelector eventHandlerSelector;
+
+    @Inject
+    private SamplesDaughterPlateHandler samplesDaughterPlateHandler;
+
+    @Inject
+    private GapHandler gapHandler;
 
     private BSPSetVolumeConcentration bspSetVolumeConcentration;
 
@@ -431,6 +439,23 @@ public class LabEventFactory implements Serializable {
             labEvents.add(labEvent);
             if (isUpdateVolConcInBsp(labEvent)) {
                 updateReceptacles.add(receptacleTransferEventType.getReceptacle());
+            }
+        }
+
+        if (!labEvents.isEmpty()) {
+            LabEventType.ForwardMessage forwardMessage = labEvents.get(0).getLabEventType().getForwardMessage();
+            switch (forwardMessage) {
+                case BSP:
+                    samplesDaughterPlateHandler.postToBsp(bettaLIMSMessage,
+                            SamplesDaughterPlateHandler.BSP_TRANSFER_REST_URL);
+                    break;
+                case GAP:
+                    gapHandler.postToGap(bettaLIMSMessage);
+                    break;
+                case NONE:
+                    break;
+                default:
+                    throw new RuntimeException("Unexpected forwardMessage " + forwardMessage.name());
             }
         }
 

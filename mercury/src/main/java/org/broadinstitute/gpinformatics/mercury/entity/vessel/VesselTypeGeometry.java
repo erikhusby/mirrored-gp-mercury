@@ -8,4 +8,6 @@ public interface VesselTypeGeometry {
     String getDisplayName();
 
     VesselGeometry getVesselGeometry();
+
+    boolean isBarcoded();
 }
