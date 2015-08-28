@@ -1653,7 +1653,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     // todo jmt move this to a preference
-    private static Map<String, String> mapProductPartToGenoChip = new HashMap<>();
+    private static final Map<String, String> mapProductPartToGenoChip = new HashMap<>();
     static {
         mapProductPartToGenoChip.put("P-WG-0022", "HumanOmni2.5-8v1_A");
         mapProductPartToGenoChip.put("P-WG-0023", "HumanOmniExpressExome-8v1_B");
@@ -1662,7 +1662,6 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         mapProductPartToGenoChip.put("P-WG-0029", "HumanExome-12v1-2_A");
         mapProductPartToGenoChip.put("P-WG-0031", "HumanCoreExome-24v1-0_A");
         mapProductPartToGenoChip.put("P-WG-0036", "PsychChip_15048346_B");
-        mapProductPartToGenoChip.put("", "DBS_Wave_Psych");
         mapProductPartToGenoChip.put("P-WG-0053", "Broad_GWAS_supplemental_15061359_A1");
     }
 
