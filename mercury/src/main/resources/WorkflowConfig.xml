@@ -10,7 +10,9 @@
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
-                <entryMaterialType>GENOMIC_DNA</entryMaterialType>
+                <bucketEntryEvaluators>
+                    org.broadinstitute.gpinformatics.mercury.entity.workflow.DnaBucketEntryEvaluator
+                </bucketEntryEvaluators>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Preflight Cleanup</name>
@@ -58,7 +60,9 @@
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
-                <bucketEntryEvaluators>org.broadinstitute.gpinformatics.mercury.entity.workflow.DnaBucketEntryEvaluator</bucketEntryEvaluators>
+                <bucketEntryEvaluators>
+                    org.broadinstitute.gpinformatics.mercury.entity.workflow.DnaBucketEntryEvaluator
+                </bucketEntryEvaluators>
                 <batchJiraProjectType>LCSET</batchJiraProjectType>
                 <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
                 </workflowStepDefs>
@@ -234,6 +238,9 @@
                 <jiraTransition>
                     <project>LCSET</project>
                 </jiraTransition>
+                <bucketEntryEvaluators>
+                    org.broadinstitute.gpinformatics.mercury.entity.workflow.DnaBucketEntryEvaluator
+                </bucketEntryEvaluators>
                 <batchJiraProjectType>LCSET</batchJiraProjectType>
                 <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
                 </workflowStepDefs>
@@ -405,6 +412,9 @@
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
+                <bucketEntryEvaluators>
+                    org.broadinstitute.gpinformatics.mercury.entity.workflow.DnaBucketEntryEvaluator
+                </bucketEntryEvaluators>
                 <batchJiraProjectType>LCSET</batchJiraProjectType>
                 <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
                 </workflowStepDefs>
@@ -537,6 +547,9 @@
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
+                <bucketEntryEvaluators>
+                    org.broadinstitute.gpinformatics.mercury.entity.workflow.DnaBucketEntryEvaluator
+                </bucketEntryEvaluators>
                 <batchJiraProjectType>LCSET</batchJiraProjectType>
                 <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
                 </workflowStepDefs>
@@ -742,6 +755,9 @@
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
+                <bucketEntryEvaluators>
+                    org.broadinstitute.gpinformatics.mercury.entity.workflow.DnaBucketEntryEvaluator
+                </bucketEntryEvaluators>
                 <batchJiraProjectType>LCSET</batchJiraProjectType>
                 <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
                 </workflowStepDefs>
