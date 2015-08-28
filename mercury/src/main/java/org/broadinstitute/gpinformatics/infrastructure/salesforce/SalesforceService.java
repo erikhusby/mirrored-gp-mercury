@@ -10,4 +10,5 @@ import java.io.Serializable;
  * TODO scottmat fill in javadoc!!!
  */
 public interface SalesforceService extends Serializable {
+    void pushProducts();
 }

@@ -140,16 +140,16 @@ quote:
 
 salesforce:
     DEV:
-      login:    scott.g.matthews@gmail.com
-      password: sc0ttf0rc3d3v
-      baseUrl:      https://na31.salesforce.com
-      clientId: 3MVG98SW_UPr.JFgFE69FSDcTOyuF.wlLdEtkn0ELhytXWAkqHnF3cSb0GDDJK9dW9JDpmyb.1Z8IMdjfFFI8
-      secret:   8537207086560180036
+      login:    mercury.developers@broadinstitute.org
+      password: 5c0ttf0rc3d3vUZjtnrHnUg8HAopU2F49tHun
+      baseUrl:  https://login.salesforce.com
+      clientId: 3MVG9KI2HHAq33RzYsHHWZ.m7lBa5W3IEyDoOiSz3LGUT2jM1ZNhAPvmfkGfLWQYD2vTtoOxaQQosu1BH66OX
+      secret:   5102529266898206475
       redirectUrl:  https://localhost:8443/Mercury/oauth/callback
     PROD:
       login:    scottmat@broadinstitute.org
-      password: sc0ttf0rc3d3v
-      baseUrl:      https://www.salesforce.com
+      password: 5c0ttf0rc3d3v
+      baseUrl:  https://login.salesforce.com
       clientId: 3MVG98SW_UPr.JFgFE69FSDcTOyuF.wlLdEtkn0ELhytXWAkqHnF3cSb0GDDJK9dW9JDpmyb.1Z8IMdjfFFI8
       secret:   8537207086560180036
       redirectUrl:  https://mercury.broadinstitute.org:8443/Mercury/oauth/callback
@@ -291,6 +291,7 @@ mercury:
       collaborate: DEV
       bass: PROD
       submission: DEV
+      salesforce: DEV
 
 
     AUTO_BUILD:
@@ -310,6 +311,7 @@ mercury:
       collaborate: DEV
       bass: PROD
       submission: DEV
+      salesforce: DEV
 
     TEST:
 
@@ -328,6 +330,7 @@ mercury:
       collaborate: DEV
       bass:     PROD
       submission: DEV
+      salesforce: DEV
 
     QA:
       app:      QA
@@ -345,6 +348,7 @@ mercury:
       collaborate: RC
       bass:     PROD
       submission: DEV
+      salesforce: DEV
 
     RC:
 
@@ -363,6 +367,7 @@ mercury:
       collaborate: RC
       bass:     PROD
       submission: DEV
+      salesforce: DEV
 
 
     PROD:
@@ -382,4 +387,5 @@ mercury:
       collaborate: PROD
       bass:     PROD
       submission: PROD
+      salesforce: PROD
 
