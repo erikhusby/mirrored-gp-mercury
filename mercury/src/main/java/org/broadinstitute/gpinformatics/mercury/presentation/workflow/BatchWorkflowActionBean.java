@@ -10,11 +10,13 @@ import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowMatcher;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
+import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.util.Date;
 import java.util.List;
@@ -27,6 +29,7 @@ public class BatchWorkflowActionBean extends CoreActionBean {
 
     private static final String VIEW_PAGE = "/workflow/batch_workflow.jsp";
     public static final String BATCH_EVENT_ACTION = "batchEvent";
+    public static final String BATCH_REAGENT_ACTION = "batchReagent";
 
     /** URL parameter. */
     private String batchName;
@@ -41,7 +44,15 @@ public class BatchWorkflowActionBean extends CoreActionBean {
     private LabEventType labEventType;
 
     /** Posted in form. */
-    private String workflowQualifer;
+    private String workflowQualifier;
+
+    // todo jmt support multiple reagents.
+    /** Posted in form. */
+    private String reagentName;
+    /** Posted in form. */
+    private String reagentLot;
+    /** Posted in form. */
+    private Date reagentExpiration;
 
     @Inject
     private LabBatchDao labBatchDao;
@@ -58,29 +69,47 @@ public class BatchWorkflowActionBean extends CoreActionBean {
     public Resolution view() {
         if (batchName != null) {
             labBatch = labBatchDao.findByName(batchName);
-            ProductWorkflowDef workflowDef = workflowLoader.load().getWorkflowByName(labBatch.getWorkflowName());
-            effectiveWorkflowDef = workflowDef.getEffectiveVersion(labBatch.getCreatedOn());
-            // Set relationship between steps and process
-            effectiveWorkflowDef.buildLabEventGraph();
-            workflowEvents = workflowMatcher.match(effectiveWorkflowDef, labBatch);
+            fetchWorkflow();
         }
         return new ForwardResolution(VIEW_PAGE);
+    }
+
+    private void fetchWorkflow() {
+        ProductWorkflowDef workflowDef = workflowLoader.load().getWorkflowByName(labBatch.getWorkflowName());
+        effectiveWorkflowDef = workflowDef.getEffectiveVersion(labBatch.getCreatedOn());
+        // Set relationship between steps and process
+        effectiveWorkflowDef.buildLabEventGraph();
+        workflowEvents = workflowMatcher.match(effectiveWorkflowDef, labBatch);
     }
 
     @HandlesEvent(BATCH_EVENT_ACTION)
     public Resolution batchEvent() {
         labBatch = labBatchDao.findByName(batchName);
-
-        LabEvent labEvent = new LabEvent(labEventType, new Date(), LabEvent.UI_EVENT_LOCATION,
-                1L, getUserBean().getBspUser().getUserId(), LabEvent.UI_PROGRAM_NAME);
-        labEvent.setWorkflowQualifier(workflowQualifer);
-        labEvent.setLabBatch(labBatch);
+        buildLabEvent();
         labBatchDao.flush();
 
-        ProductWorkflowDef workflowDef = workflowLoader.load().getWorkflowByName(labBatch.getWorkflowName());
-        effectiveWorkflowDef =  workflowDef.getEffectiveVersion(labBatch.getCreatedOn());
-        workflowEvents = workflowMatcher.match(effectiveWorkflowDef, labBatch);
+        fetchWorkflow();
         return new ForwardResolution(VIEW_PAGE);
+    }
+
+    @HandlesEvent(BATCH_REAGENT_ACTION)
+    public Resolution batchReagent() {
+        labBatch = labBatchDao.findByName(batchName);
+        LabEvent labEvent = buildLabEvent();
+        labEvent.addReagent(new GenericReagent(reagentName, reagentLot, reagentExpiration));
+        labBatchDao.flush();
+
+        fetchWorkflow();
+        return new ForwardResolution(VIEW_PAGE);
+    }
+
+    @Nonnull
+    private LabEvent buildLabEvent() {
+        LabEvent labEvent = new LabEvent(labEventType, new Date(), LabEvent.UI_EVENT_LOCATION,
+                1L, getUserBean().getBspUser().getUserId(), LabEvent.UI_PROGRAM_NAME);
+        labEvent.setWorkflowQualifier(workflowQualifier);
+        labEvent.setLabBatch(labBatch);
+        return labEvent;
     }
 
     public void setBatchName(String batchName) {
@@ -107,11 +136,15 @@ public class BatchWorkflowActionBean extends CoreActionBean {
         return BATCH_EVENT_ACTION;
     }
 
+    public String getBatchReagentAction() {
+        return BATCH_REAGENT_ACTION;
+    }
+
     public void setLabEventType(LabEventType labEventType) {
         this.labEventType = labEventType;
     }
 
-    public void setWorkflowQualifer(String workflowQualifer) {
-        this.workflowQualifer = workflowQualifer;
+    public void setWorkflowQualifier(String workflowQualifier) {
+        this.workflowQualifier = workflowQualifier;
     }
 }

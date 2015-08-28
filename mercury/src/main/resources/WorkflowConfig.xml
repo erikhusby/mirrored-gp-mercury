@@ -1173,8 +1173,15 @@
                 <instructions>Centrifuge (5 min @ 300g)
                 </instructions>
             </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Add RLT+ w/B-ME</name>
+                <labEventTypes>ADD_REAGENT</labEventTypes>
+                <workflowQualifier>RLT</workflowQualifier>
+                <reagentTypes>RLT+ w/B-ME</reagentTypes>
+                <instructions>Add buffer RLT+ w/B-ME
+                </instructions>
+            </workflowStepDefs>
             <!--
-            add buffer RLT+ w/B-ME
             aspirate supernatant
             -->
             <workflowStepDefs>
@@ -1211,9 +1218,14 @@
                     Store at room temperature (15–25ºC) or at 4ºC for later DNA purification.
                 </instructions>
             </workflowStepDefs>
-            <!--
-            Add 70% ethanol to the flowthrough
-            -->
+            <workflowStepDefs>
+                <name>Add 70% ethanol</name>
+                <labEventTypes>ADD_REAGENT</labEventTypes>
+                <workflowQualifier>ETHANOL</workflowQualifier>
+                <reagentTypes>Ethanol</reagentTypes>
+                <instructions>Add 70% ethanol to the flowthrough
+                </instructions>
+            </workflowStepDefs>
             <workflowStepDefs>
                 <name>Transfer to RNA Spin Column</name>
                 <labEventTypes>ALLPREP_FLOWTHROUGH_TO_RNA_SPIN</labEventTypes>
@@ -1240,9 +1252,14 @@
                 <instructions>centrifuge for 15 s at ≥8000 x g
                 </instructions>
             </workflowStepDefs>
-            <!--
-            Add Buffer RW1 to the RNA spin column
-            -->
+            <workflowStepDefs>
+                <name>Add RW1</name>
+                <labEventTypes>ADD_REAGENT</labEventTypes>
+                <workflowQualifier>RW1</workflowQualifier>
+                <reagentTypes>RW1</reagentTypes>
+                <instructions>Add Buffer RW1 to the RNA spin column
+                </instructions>
+            </workflowStepDefs>
             <workflowStepDefs>
                 <name>Centrifuge RNA Spin Column RW1</name>
                 <labEventTypes>CENTRIFUGE</labEventTypes>
@@ -1257,9 +1274,14 @@
                 <instructions>Place the column in a clean 2ml collection tube and discard the tube with the filtrate.
                 </instructions>
             </workflowStepDefs>
-            <!--
-            add Buffer RPE to the RNA spin column
-            -->
+            <workflowStepDefs>
+                <name>Add RPE</name>
+                <labEventTypes>ADD_REAGENT</labEventTypes>
+                <workflowQualifier>RPE1</workflowQualifier>
+                <reagentTypes>RPE</reagentTypes>
+                <instructions>Add Buffer RPE to the RNA spin column
+                </instructions>
+            </workflowStepDefs>
             <workflowStepDefs>
                 <name>Centrifuge RNA Spin Column RPE 1</name>
                 <labEventTypes>CENTRIFUGE</labEventTypes>
@@ -1274,9 +1296,14 @@
                 <instructions>Place the column in a clean 2ml collection tube and discard the tube with the filtrate.
                 </instructions>
             </workflowStepDefs>
-            <!--
-            add Buffer RPE to the RNA spin column
-            -->
+            <workflowStepDefs>
+                <name>Add RPE</name>
+                <labEventTypes>ADD_REAGENT</labEventTypes>
+                <workflowQualifier>RPE2</workflowQualifier>
+                <reagentTypes>RPE</reagentTypes>
+                <instructions>Add Buffer RPE to the RNA spin column
+                </instructions>
+            </workflowStepDefs>
             <workflowStepDefs>
                 <name>Centrifuge RNA Spin Column RPE 2</name>
                 <labEventTypes>CENTRIFUGE</labEventTypes>
@@ -1305,9 +1332,14 @@
                 <instructions>Move RNA spin column to a new 1.5 ml collection tube
                 </instructions>
             </workflowStepDefs>
-            <!--
-            Add water directly to the spin column membrane
-            -->
+            <workflowStepDefs>
+                <name>Add Water</name>
+                <labEventTypes>ADD_REAGENT</labEventTypes>
+                <workflowQualifier>Water</workflowQualifier>
+                <reagentTypes>Water</reagentTypes>
+                <instructions>Add water directly to the spin column membrane
+                </instructions>
+            </workflowStepDefs>
             <workflowStepDefs>
                 <name>Centrifuge RNA Spin Column Water</name>
                 <labEventTypes>CENTRIFUGE</labEventTypes>
@@ -1327,9 +1359,14 @@
                 <instructions>Transfer from microcentrifuge tube to 2D matrix tube
                 </instructions>
             </workflowStepDefs>
-            <!--
-            Add AW1 to DNA spin column
-            -->
+            <workflowStepDefs>
+                <name>Add AW1</name>
+                <labEventTypes>ADD_REAGENT</labEventTypes>
+                <workflowQualifier>AW1</workflowQualifier>
+                <reagentTypes>AW1</reagentTypes>
+                <instructions>Add AW1 to DNA spin column
+                </instructions>
+            </workflowStepDefs>
             <workflowStepDefs>
                 <name>Centrifuge DNA Spin Column AW1</name>
                 <labEventTypes>CENTRIFUGE</labEventTypes>
@@ -1344,9 +1381,14 @@
                 <instructions>Move DNA spin column to a new 1.5 ml collection tube and discard flowthrough
                 </instructions>
             </workflowStepDefs>
-            <!--
-            add 500 μl Buffer AW2 to the DNA spin column
-            -->
+            <workflowStepDefs>
+                <name>Add AW2</name>
+                <labEventTypes>ADD_REAGENT</labEventTypes>
+                <workflowQualifier>AW2</workflowQualifier>
+                <reagentTypes>AW2</reagentTypes>
+                <instructions>Add 500 μl Buffer AW2 to the DNA spin column
+                </instructions>
+            </workflowStepDefs>
             <workflowStepDefs>
                 <name>Centrifuge DNA Spin Column AW2</name>
                 <labEventTypes>CENTRIFUGE</labEventTypes>
@@ -1361,9 +1403,14 @@
                 <instructions>Move DNA spin column to a new 1.5 ml collection tube and discard flowthrough
                 </instructions>
             </workflowStepDefs>
-            <!--
-            Add Buffer EB to the spin column
-            -->
+            <workflowStepDefs>
+                <name>Add EB</name>
+                <labEventTypes>ADD_REAGENT</labEventTypes>
+                <workflowQualifier>EB</workflowQualifier>
+                <reagentTypes>EB</reagentTypes>
+                <instructions>Add Buffer EB to the spin column
+                </instructions>
+            </workflowStepDefs>
             <workflowStepDefs>
                 <name>Incubate</name>
                 <labEventTypes>INCUBATE</labEventTypes>
@@ -1393,7 +1440,6 @@
                 <instructions>Transfer from microcentrifuge tube to 2D matrix tube
                 </instructions>
             </workflowStepDefs>
-
         </workflowProcessDefVersions>
     </workflowProcessDefs>
     <productWorkflowDefs>
