@@ -933,21 +933,24 @@
         </workflowProcessDefVersions>
     </workflowProcessDefs>
     <workflowProcessDefs>
-        <name>AllPrep Extraction</name>
+        <name>Clinical Whole Blood Extraction</name>
         <workflowProcessDefVersions>
             <version>02</version>
             <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
             <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
-                <name>AllPrep Extraction Bucket</name>
-                <labEventTypes>ALLPREP_EXTRACTION_BUCKET</labEventTypes>
+                <name>Clinical Whole Blood Bucket</name>
+                <labEventTypes>CLINICAL_WHOLE_BLOOD_EXTRACTION_BUCKET</labEventTypes>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
                 <bucketEntryEvaluators>
-                    org.broadinstitute.gpinformatics.mercury.entity.workflow.AllPrepBucketEntryEvaluator
+                    org.broadinstitute.gpinformatics.mercury.entity.workflow.FreshBloodBucketEntryEvaluator
+                </bucketEntryEvaluators>
+                <bucketEntryEvaluators>
+                    org.broadinstitute.gpinformatics.mercury.entity.workflow.FreshFrozenBloodBucketEntryEvaluator
                 </bucketEntryEvaluators>
                 <batchJiraProjectType>XTR</batchJiraProjectType>
-                <batchJiraIssueType>ALLPREP</batchJiraIssueType>
+                <batchJiraIssueType>DNA_EXTRACTION</batchJiraIssueType>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Prep Reagents</name>
@@ -1131,7 +1134,25 @@
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>
-    <productWorkflowDefs>
+    <workflowProcessDefs>
+        <name>AllPrep Extraction</name>
+        <workflowProcessDefVersions>
+            <version>02</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
+                <name>AllPrep Extraction Bucket</name>
+                <labEventTypes>ALLPREP_EXTRACTION_BUCKET</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <bucketEntryEvaluators>
+                    org.broadinstitute.gpinformatics.mercury.entity.workflow.AllPrepBucketEntryEvaluator
+                </bucketEntryEvaluators>
+                <batchJiraProjectType>XTR</batchJiraProjectType>
+                <batchJiraIssueType>ALLPREP</batchJiraIssueType>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>    <productWorkflowDefs>
         <name>Agilent Exome Express</name>
         <productWorkflowDefVersions>
             <version>3.0</version>
@@ -1206,6 +1227,7 @@
         <productWorkflowDefVersions>
             <version>4.0</version>
             <effectiveDate>2014-10-19T21:03:24.085-04:00</effectiveDate>
+            <workflowProcessDefs>Clinical Whole Blood Extraction</workflowProcessDefs>
             <workflowProcessDefs>CRSP Pico/Plating</workflowProcessDefs>
             <workflowProcessDefs>Exome Express Shearing</workflowProcessDefs>
             <workflowProcessDefs>Library Construction</workflowProcessDefs>
@@ -1262,6 +1284,15 @@
     </productWorkflowDefs>
     <productWorkflowDefs>
         <name>Clinical Whole Blood Extraction</name>
+        <productWorkflowDefVersions>
+            <version>02</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowProcessDefs>Clinical Whole Blood Extraction</workflowProcessDefs>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+
+    <productWorkflowDefs>
+        <name>AllPrep Extraction</name>
         <productWorkflowDefVersions>
             <version>02</version>
             <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
