@@ -69,6 +69,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.presentation.transfervis.TransferVisualizerClient;
 import org.broadinstitute.gpinformatics.mercury.presentation.transfervis.TransferVisualizerFrame;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ArrayPlatingEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.CrspRiboPlatingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
@@ -563,6 +564,14 @@ public class BaseEventTest {
                                                              String barcodeSuffix) {
         return new ArrayPlatingEntityBuilder(mapBarcodeToTube, bettaLimsMessageTestFactory,
                 labEventFactory, getLabEventHandler(), barcodeSuffix).invoke();
+    }
+
+    public CrspRiboPlatingEntityBuilder runRiboPlatingProcess(BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
+                                                       LabEventFactory labEventFactory, LabEventHandler labEventHandler,
+                                                       Map<String, BarcodedTube> mapBarcodeToTube, String rackBarcode,
+                                                       String prefix) {
+        return new CrspRiboPlatingEntityBuilder(bettaLimsMessageTestFactory,
+                labEventFactory, labEventHandler, mapBarcodeToTube, rackBarcode, prefix).invoke();
     }
 
     /**

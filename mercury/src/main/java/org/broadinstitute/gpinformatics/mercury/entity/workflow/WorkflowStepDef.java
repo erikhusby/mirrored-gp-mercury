@@ -21,7 +21,8 @@ public class WorkflowStepDef implements Serializable {
         PICO,
         ECO_QPCR,
         FINAL_LIBRARY_SIZE,
-        AGILENT
+        AGILENT,
+        RIBO
     }
 
     enum OutputCategory {

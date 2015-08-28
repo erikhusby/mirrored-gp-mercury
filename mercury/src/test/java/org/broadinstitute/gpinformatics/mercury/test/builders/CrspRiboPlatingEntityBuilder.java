@@ -6,16 +6,19 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import org.testng.Assert;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Builds entity graph for Ribo Plating Pico events
@@ -26,58 +29,95 @@ public class CrspRiboPlatingEntityBuilder {
     private final LabEventFactory labEventFactory;
     private final LabEventHandler labEventHandler;
     private final Map<String, BarcodedTube> mapBarcodeToTube;
-    private final TubeFormation inputRack;
     private final String rackBarcode;
     private final String testPrefix;
-    private LabEvent riboDilutionTransferEventEntity;
-    private StaticPlate riboDilutionPlate;
     private LabEvent riboMicrofluorEntity;
     private StaticPlate riboMicrofluorPlate;
-    private LabEvent initialNormalizationEntity;
-    private TubeFormation polyAAliquotRack;
+    private LabEvent polyAAliquotSpikeEvent;
+    private LabEvent polyATSAliquot;
+    private Map<String,BarcodedTube> polyAAliquotBarcodedTubeMap;
+    private String polyAAliquotRackBarcode;
+    private TubeFormation polyAAliquotTubeFormation;
 
     public CrspRiboPlatingEntityBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
                                         LabEventFactory labEventFactory,
                                         LabEventHandler labEventHandler, Map<String, BarcodedTube> mapBarcodeToTube,
-                                        TubeFormation inputRack,
                                         String rackBarcode, String testPrefix) {
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
         this.labEventFactory = labEventFactory;
         this.labEventHandler = labEventHandler;
         this.mapBarcodeToTube = mapBarcodeToTube;
-        this.inputRack = inputRack;
         this.rackBarcode = rackBarcode;
         this.testPrefix = testPrefix;
+    }
+
+    public LabEvent getPolyATSAliquot() {
+        return polyATSAliquot;
+    }
+
+    public Map<String, BarcodedTube> getPolyAAliquotBarcodedTubeMap() {
+        return polyAAliquotBarcodedTubeMap;
+    }
+
+    public String getPolyAAliquotRackBarcode() {
+        return polyAAliquotRackBarcode;
+    }
+
+    public TubeFormation getPolyAAliquotTubeFormation() {
+        return polyAAliquotTubeFormation;
     }
 
     public CrspRiboPlatingEntityBuilder invoke() {
         CrspRiboPlatingJaxbBuilder crspRiboPlatingJaxbBuilder = new CrspRiboPlatingJaxbBuilder(rackBarcode,
                 new ArrayList<>(mapBarcodeToTube.keySet()), testPrefix, bettaLimsMessageTestFactory).invoke();
 
-        // RiboDilutionTransfer
-        LabEventTest.validateWorkflow(LabEventType.RIBO_DILUTION_TRANSFER.getName(), mapBarcodeToTube.values());
-        Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
-        mapBarcodeToVessel.put(inputRack.getLabel(), inputRack);
-        for (BarcodedTube barcodedTube : inputRack.getContainerRole().getContainedVessels()) {
-            mapBarcodeToVessel.put(barcodedTube.getLabel(), barcodedTube);
+        //Bucket
+        LabEventTest.validateWorkflow(LabEventType.TRU_SEQ_STRAND_SPECIFIC_BUCKET.getName(), mapBarcodeToTube.values());
+        LabEvent riboPlatingBucket = labEventFactory.buildFromBettaLimsRackEventDbFree(
+                crspRiboPlatingJaxbBuilder.getTruSeqStrandSpecificBucket(), null, mapBarcodeToTube, null);
+        labEventHandler.processEvent(riboPlatingBucket);
+
+        //PolyATSAliquot
+        LabEventTest.validateWorkflow(LabEventType.POLY_A_TS_ALIQUOT.getName(), mapBarcodeToTube.values());
+        Map<String, LabVessel> mapBarcodeToVessel = new LinkedHashMap<>();
+        mapBarcodeToVessel.putAll(mapBarcodeToTube);
+        polyATSAliquot = labEventFactory.buildFromBettaLims(
+                crspRiboPlatingJaxbBuilder.getPolyATSAliquot(), mapBarcodeToVessel);
+
+        polyAAliquotRackBarcode = crspRiboPlatingJaxbBuilder.getPolyAAliquotRackBarcode();
+        polyAAliquotTubeFormation = (TubeFormation) polyATSAliquot.getTargetLabVessels().iterator().next();
+        polyAAliquotBarcodedTubeMap =
+                new LinkedHashMap<>(polyAAliquotTubeFormation.getContainerRole().getContainedVessels().size());
+
+        for (VesselPosition vesselPosition : polyAAliquotTubeFormation.getVesselGeometry().getVesselPositions()) {
+            BarcodedTube vesselAtPosition =
+                    polyAAliquotTubeFormation.getContainerRole().getVesselAtPosition(vesselPosition);
+            if (vesselAtPosition != null) {
+                polyAAliquotBarcodedTubeMap.put(vesselAtPosition.getLabel(), vesselAtPosition);
+            }
         }
 
-        riboDilutionTransferEventEntity = labEventFactory.buildFromBettaLims(
-                crspRiboPlatingJaxbBuilder.getRiboDilutionEventJaxb(), mapBarcodeToVessel);
-        labEventHandler.processEvent(riboDilutionTransferEventEntity);
-
-        // asserts
-        riboDilutionPlate = (StaticPlate) riboDilutionTransferEventEntity.getTargetLabVessels().iterator().next();
-        Assert.assertEquals(riboDilutionPlate.getSampleInstances().size(), mapBarcodeToTube.size(),
-                "Wrong number of sample instances");
-
         //RiboMicrofluorTransfer
-        LabEventTest.validateWorkflow(LabEventType.RIBO_MICROFLUOR_TRANSFER.getName(), riboDilutionPlate);
+        TubeFormation polyAAliquotTS =
+                (TubeFormation) polyATSAliquot.getTargetLabVessels().iterator().next();
+        LabEventTest.validateWorkflow(LabEventType.RIBO_MICROFLUOR_TRANSFER.getName(), polyAAliquotTS);
         mapBarcodeToVessel.clear();
-        mapBarcodeToVessel.put(riboDilutionPlate.getLabel(), riboDilutionPlate);
+        for (BarcodedTube barcodedTube : polyAAliquotTS.getContainerRole().getContainedVessels()) {
+            mapBarcodeToVessel.put(barcodedTube.getLabel(), barcodedTube);
+        }
+        for (ReceptacleType receptacleType : crspRiboPlatingJaxbBuilder.getRiboMicrofluorEventJaxb().getSourcePositionMap()
+                .getReceptacle()) {
+            BarcodedTube barcodedTube = mapBarcodeToTube.get(receptacleType.getBarcode());
+            if (barcodedTube != null) {
+                mapBarcodeToVessel.put(receptacleType.getBarcode(), barcodedTube);
+            }
+        }
+
         riboMicrofluorEntity = labEventFactory.buildFromBettaLims(
                 crspRiboPlatingJaxbBuilder.getRiboMicrofluorEventJaxb(), mapBarcodeToVessel);
         labEventHandler.processEvent(riboMicrofluorEntity);
+
+        // asserts
         riboMicrofluorPlate = (StaticPlate) riboMicrofluorEntity.getTargetLabVessels().iterator().next();
         Assert.assertEquals(riboMicrofluorPlate.getSampleInstancesV2().size(), mapBarcodeToTube.size(),
                 "Wrong number of sample instances");
@@ -88,27 +128,11 @@ public class CrspRiboPlatingEntityBuilder {
                 crspRiboPlatingJaxbBuilder.getRiboBufferAdditionJaxb(), riboMicrofluorPlate);
         labEventHandler.processEvent(riboBufferAdditionEvent);
 
-        //InitialNormalization
-        LabEventTest.validateWorkflow(LabEventType.INITIAL_NORMALIZATION.getName(), mapBarcodeToTube.values());
-        initialNormalizationEntity = labEventFactory.buildFromBettaLimsRackEventDbFree(
-                crspRiboPlatingJaxbBuilder.getInitialNormalizationJaxb(), inputRack, mapBarcodeToTube, null);
-        labEventHandler.processEvent(initialNormalizationEntity);
-
-        //PolyATSAliquot
-        LabEventTest.validateWorkflow(LabEventType.POLY_A_TS_ALIQUOT.getName(), mapBarcodeToTube.values());
-        mapBarcodeToVessel.clear();
-        for (ReceptacleType receptacleType :
-                crspRiboPlatingJaxbBuilder.getPolyATSAliquot().getSourcePositionMap().getReceptacle()) {
-            mapBarcodeToVessel.put(receptacleType.getBarcode(), mapBarcodeToTube.get(receptacleType.getBarcode()));
-        }
-
-        LabEvent polyATSAliquot = labEventFactory.buildFromBettaLims(crspRiboPlatingJaxbBuilder.getPolyATSAliquot(),
-                mapBarcodeToVessel);
-        labEventHandler.processEvent(polyATSAliquot);
-        polyAAliquotRack = (TubeFormation) polyATSAliquot.getTargetLabVessels().iterator().next();
-
-        Assert.assertEquals(polyAAliquotRack.getSampleInstancesV2().size(), mapBarcodeToTube.size(),
-                "Wrong number of sample instances");
+        //PolyATSAliquotSpike
+        LabEventTest.validateWorkflow(LabEventType.POLY_A_TS_ALIQUOT_SPIKE.getName(), polyAAliquotTS);
+        polyAAliquotSpikeEvent = labEventFactory.buildFromBettaLimsRackEventDbFree(
+                crspRiboPlatingJaxbBuilder.getPolyASpikeJaxb(), polyAAliquotTS, mapBarcodeToTube, null);
+        labEventHandler.processEvent(polyAAliquotSpikeEvent);
 
         return this;
     }

@@ -189,8 +189,8 @@
             <version>1.0</version>
             <effectiveDate>2012-09-30T21:03:24.085-04:00</effectiveDate>
             <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
-                <name>Ribo/Plating Bucket</name>
-                <labEventTypes>RIBO_PLATING_BUCKET</labEventTypes>
+                <name>Tru Seq Strand Specific Bucket</name>
+                <labEventTypes>TRU_SEQ_STRAND_SPECIFIC_BUCKET</labEventTypes>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -198,60 +198,31 @@
                 <batchJiraProjectType>LCSET</batchJiraProjectType>
             </workflowStepDefs>
             <workflowStepDefs>
-                <name>Initial Pico</name>
-                <labEventTypes>PICO_TRANSFER</labEventTypes>
-                <labEventTypes>PICO_BUFFER_ADDITION</labEventTypes>
-                <optional>false</optional>
-                <entryPoint>false</entryPoint>
-                <reEntryPoint>false</reEntryPoint>
-                <quantType>PICO</quantType>
-                <numberOfRepeats>2</numberOfRepeats>
-                <deadEndBranch>true</deadEndBranch>
-            </workflowStepDefs>
-            <workflowStepDefs>
-                <name>Fingerprinting Aliquot</name>
-                <labEventTypes>FINGERPRINTING_ALIQUOT</labEventTypes>
-                <optional>true</optional>
-                <entryPoint>false</entryPoint>
-                <reEntryPoint>false</reEntryPoint>
-            </workflowStepDefs>
-            <workflowStepDefs>
-                <name>Fingerprinting Pico</name>
-                <labEventTypes>PICO_TRANSFER</labEventTypes>
-                <labEventTypes>PICO_BUFFER_ADDITION</labEventTypes>
-                <optional>true</optional>
-                <entryPoint>false</entryPoint>
-                <reEntryPoint>false</reEntryPoint>
-                <quantType>PICO</quantType>
-                <numberOfRepeats>2</numberOfRepeats>
-                <deadEndBranch>true</deadEndBranch>
-            </workflowStepDefs>
-            <workflowStepDefs>
-                <name>Fingerprinting Plate Setup</name>
-                <labEventTypes>FINGERPRINTING_PLATE_SETUP</labEventTypes>
+                <name>Poly A TS Aliquot</name>
+                <labEventTypes>POLY_A_TS_ALIQUOT</labEventTypes>
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
                 <numberOfRepeats>1</numberOfRepeats>
             </workflowStepDefs>
             <workflowStepDefs>
-                <name>Shearing Aliquot</name>
-                <labEventTypes>SHEARING_ALIQUOT</labEventTypes>
-                <optional>false</optional>
-                <entryPoint>false</entryPoint>
-                <reEntryPoint>false</reEntryPoint>
-                <numberOfRepeats>1</numberOfRepeats>
-            </workflowStepDefs>
-            <workflowStepDefs>
-                <name>Shearing Pico</name>
-                <labEventTypes>PICO_TRANSFER</labEventTypes>
-                <labEventTypes>PICO_BUFFER_ADDITION</labEventTypes>
+                <name>Ribo Microfluor and Buffer addition</name>
+                <labEventTypes>RIBO_MICROFLUOR_TRANSFER</labEventTypes>
+                <labEventTypes>RIBO_BUFFER_ADDITION</labEventTypes>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
-                <quantType>PICO</quantType>
+                <quantType>RIBO</quantType>
                 <numberOfRepeats>2</numberOfRepeats>
                 <deadEndBranch>true</deadEndBranch>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Poly A TS Aliquot Norm/Spike</name>
+                <labEventTypes>POLY_A_TS_ALIQUOT_SPIKE</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <numberOfRepeats>1</numberOfRepeats>
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>

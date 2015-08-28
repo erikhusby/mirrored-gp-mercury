@@ -117,7 +117,7 @@ public class TruSeqStrandSpecificEntityBuilder {
 
         // asserts
         polyAPlate = (StaticPlate) polyATransferEventEntity.getTargetLabVessels().iterator().next();
-        Assert.assertEquals(polyAPlate.getSampleInstances().size(), mapBarcodeToTube.size(),
+        Assert.assertEquals(polyAPlate.getSampleInstancesV2().size(), mapBarcodeToTube.size(),
                 "Wrong number of sample instances");
 
         // PolyASelectionTS
@@ -128,7 +128,7 @@ public class TruSeqStrandSpecificEntityBuilder {
                 truSeqStrandSpecificJaxbBuilder.getPostASelectionEventJaxb(), mapBarcodeToVessel);
         labEventHandler.processEvent(polyASelectionEntity);
         polyASelectionPlate = (StaticPlate) polyASelectionEntity.getTargetLabVessels().iterator().next();
-        Assert.assertEquals(polyASelectionPlate.getSampleInstances().size(), mapBarcodeToTube.size(),
+        Assert.assertEquals(polyASelectionPlate.getSampleInstancesV2().size(), mapBarcodeToTube.size(),
                 "Wrong number of sample instances");
 
         //FirstStrandTS
@@ -151,23 +151,6 @@ public class TruSeqStrandSpecificEntityBuilder {
                 truSeqStrandSpecificJaxbBuilder.getSecondStrandCleanupEventJaxb(), mapBarcodeToVessel);
         labEventHandler.processEvent(secondStrandCleanupEntity);
         secondStrandCleanupPlate = (StaticPlate) secondStrandCleanupEntity.getTargetLabVessels().iterator().next();
-
-        //TODO There is no end repair
-        /*
-        //EndRepairTS
-        LabEventTest.validateWorkflow("EndRepairTS", secondStrandCleanupPlate);
-        LabEvent endRepairTSEvent = labEventFactory.buildFromBettaLimsPlateEventDbFree(
-                truSeqStrandSpecificJaxbBuilder.getEndRepairTSEventJaxb(), secondStrandCleanupPlate);
-        labEventHandler.processEvent(endRepairTSEvent);
-
-        //EndRepairCleanupTS
-        LabEventTest.validateWorkflow("EndRepairCleanupTS", secondStrandCleanupPlate);
-        mapBarcodeToVessel.clear();
-        mapBarcodeToVessel.put(secondStrandCleanupPlate.getLabel(), secondStrandCleanupPlate);
-        LabEvent endRepairTSCleanupEntity = labEventFactory.buildFromBettaLims(
-                truSeqStrandSpecificJaxbBuilder.getEndRepairCleanupTSEventJaxb(), mapBarcodeToVessel);
-        labEventHandler.processEvent(endRepairTSCleanupEntity);
-        endRepairTSCleanupPlate = (StaticPlate) secondStrandCleanupEntity.getTargetLabVessels().iterator().next();*/
 
         //ABaseTS
         LabEventTest.validateWorkflow("ABaseTS", secondStrandCleanupPlate);
@@ -227,7 +210,7 @@ public class TruSeqStrandSpecificEntityBuilder {
         }
 
         // asserts
-        Assert.assertEquals(enrichmentCleanupRack.getSampleInstances().size(),
+        Assert.assertEquals(enrichmentCleanupRack.getSampleInstancesV2().size(),
                 polyAPlate.getSampleInstances().size(), "Wrong number of sample instances");
         Set<SampleInstance> sampleInstancesInPondRegWell =
                 enrichmentCleanupRack.getContainerRole().getSampleInstancesAtPosition(VesselPosition.A01);

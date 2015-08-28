@@ -75,10 +75,6 @@ public class TruSeqStrandSpecificJaxbBuilder {
         return secondStrandCleanupPlate;
     }
 
-    public String getEndRepairCleanupTSleanupPlate() {
-        return endRepairCleanupTSleanupPlate;
-    }
-
     public String getAdapterLigationCleanupPlate() {
         return adapterLigationCleanupPlate;
     }
@@ -101,14 +97,6 @@ public class TruSeqStrandSpecificJaxbBuilder {
 
     public PlateTransferEventType getSecondStrandCleanupEventJaxb() {
         return secondStrandCleanupEventJaxb;
-    }
-
-    public PlateEventType getEndRepairTSEventJaxb() {
-        return endRepairTSEventJaxb;
-    }
-
-    public PlateTransferEventType getEndRepairCleanupTSEventJaxb() {
-        return endRepairCleanupTSEventJaxb;
     }
 
     public PlateEventType getAbaseTSEventJaxb() {
@@ -191,7 +179,7 @@ public class TruSeqStrandSpecificJaxbBuilder {
 
         secondStrandCleanupPlate = "SecondStrandCleanupPlate" + testPrefix;
         secondStrandCleanupEventJaxb = bettaLimsMessageTestFactory.buildPlateToPlate(
-                "SecondStrandCleanupTS", polyAPlateBarcode, secondStrandCleanupPlate);
+                "SecondStrandCleanupTS", polyASelectionPlate, secondStrandCleanupPlate);
         bettaLimsMessageTestFactory.addMessage(messageList, secondStrandCleanupEventJaxb);
 
         abaseTSEventJaxb = bettaLimsMessageTestFactory.buildPlateEvent("ABaseTS", secondStrandCleanupPlate);
@@ -203,7 +191,7 @@ public class TruSeqStrandSpecificJaxbBuilder {
 
         indexedAdapterLigationTSJaxb = bettaLimsMessageTestFactory.buildPlateToPlate("IndexedAdapterLigationTS",
                 indexPlateBarcode,
-                endRepairCleanupTSleanupPlate);
+                secondStrandCleanupPlate);
         bettaLimsMessageTestFactory.addMessage(messageList, indexedAdapterLigationTSJaxb);
 
         adapterLigationTSThermoCyclerJaxb =
@@ -212,7 +200,7 @@ public class TruSeqStrandSpecificJaxbBuilder {
 
         adapterLigationCleanupPlate = "AdapterLigationTSCleanupPlate" + testPrefix;
         adapterLigationCleanupTSJaxb = bettaLimsMessageTestFactory.buildPlateToPlate("AdapterLigationCleanupTS",
-                endRepairCleanupTSleanupPlate,
+                secondStrandCleanupPlate,
                 adapterLigationCleanupPlate);
         bettaLimsMessageTestFactory.addMessage(messageList, adapterLigationCleanupTSJaxb);
 
@@ -228,7 +216,7 @@ public class TruSeqStrandSpecificJaxbBuilder {
         for (int rackPosition = 1; rackPosition <= numSamples; rackPosition++) {
             enrichmentcleanupTubeBarcodes.add("TruSeqReg" + testPrefix + rackPosition);
         }
-        enrichmentCleanupTSJaxb = bettaLimsMessageTestFactory.buildPlateToRack("PondRegistration", adapterLigationCleanupPlate,
+        enrichmentCleanupTSJaxb = bettaLimsMessageTestFactory.buildPlateToRack("EnrichmentCleanupTS", adapterLigationCleanupPlate,
                 enrichmentCleanupRackBarcode, enrichmentcleanupTubeBarcodes);
 
         pondPico1Barcode = "771" + testPrefix;
