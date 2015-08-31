@@ -53,9 +53,15 @@
                 }).fnSetFilteringDelay(300);
 
                 setupDialogs();
-
                 statusChange();
+                $j("input.shiftCheckbox, input.checkAll").on('click', updateAbandonButtonVisibility);
             });
+
+            function updateAbandonButtonVisibility() {
+                var disableButton =
+                        $j(".shiftCheckbox:checked").closest("tr").children("td:contains('Completed')").size() > 0;
+                $j("input[name='abandonOrders']").prop('disabled', disableButton);
+            }
 
             function statusChange() {
                 if ($j(".selectedStatuses[value='Draft']").attr('checked')
