@@ -55,6 +55,7 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
         ALL_SSF_PRICE_ITEMS("/quotes/rest/price_list/10/true"),
         ALL_CRSP_PRICE_ITEMS("/quotes/rest/price_list/50/true"),
         ALL_GP_EXTERNAL_PRICE_ITEMS("/quotes/rest/price_list/60/true"),
+        ALL_GENOMICS_CP_PRICE_ITEMS("/quotes/rest/price_list/90/true"),
         ALL_FUNDINGS("/quotes/rest/sql_report/41"),
         REGISTER_WORK("/quotes/ws/portals/private/createworkitem"),
         ALL_QUOTES("/quotes/ws/portals/private/getquotes?with_funding=true"),
@@ -179,6 +180,7 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
         PriceList allPriceItems = getPriceItemsByList(Endpoint.ALL_SSF_PRICE_ITEMS);
         allPriceItems.getQuotePriceItems().addAll(getPriceItemsByList(Endpoint.ALL_CRSP_PRICE_ITEMS).getQuotePriceItems());
         allPriceItems.getQuotePriceItems().addAll(getPriceItemsByList(Endpoint.ALL_GP_EXTERNAL_PRICE_ITEMS).getQuotePriceItems());
+        allPriceItems.getQuotePriceItems().addAll(getPriceItemsByList(Endpoint.ALL_GENOMICS_CP_PRICE_ITEMS).getQuotePriceItems());
         return allPriceItems;
     }
 
