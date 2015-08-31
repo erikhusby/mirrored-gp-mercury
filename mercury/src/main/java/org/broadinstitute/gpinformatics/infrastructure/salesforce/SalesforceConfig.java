@@ -16,6 +16,7 @@ import java.io.Serializable;
 @ConfigKey("salesforce")
 public class SalesforceConfig extends AbstractConfig implements LoginAndPassword, Serializable {
 
+    public static final String SALESFORCE_API_VERSION = "v25.0";
     private String login;
 
     private String password;
@@ -84,7 +85,7 @@ public class SalesforceConfig extends AbstractConfig implements LoginAndPassword
     }
 
     public String getApiUrl(String apiUrl) {
-        return apiUrl + "/services/data/v25.0";
+        return apiUrl + "/services/data/" + SALESFORCE_API_VERSION;
     }
 
     public String getLoginUrl() {
@@ -92,4 +93,6 @@ public class SalesforceConfig extends AbstractConfig implements LoginAndPassword
     }
 
     public static SalesforceConfig produce(Deployment deployment) { return produce(SalesforceConfig.class, deployment);}
+
+    public String getObjectUri(String objectName) { return "/services/data/" +SALESFORCE_API_VERSION + "/sobjects/"+objectName;}
 }

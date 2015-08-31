@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -78,12 +79,27 @@ public class SalesforceServiceImpl extends AbstractJerseyClientService implement
                 .header("Authorization","Bearer "+accessToken)
                 .header("X-PrettyPrint", "1").get(ClientResponse.class);
 
+        JSONObject foundProductBase =  null;
         try {
             String entity = queryResponse.getEntity(String.class);
             JSONObject queryJson = new JSONObject(entity);
-            queryJson.toString();
+            JSONArray records = queryJson.getJSONArray("records");
+            for(int index = 0; index<records.length();index++) {
+                JSONObject productRecord = records.getJSONObject(index);
+                if(testProduct.getPartNumber().equals(productRecord.getString("ProductCode"))) {
+                    foundProductBase = productRecord;
+                    break;
+                }
+            }
         } catch (JSONException e) {
             e.printStackTrace();
+        }
+        if(foundProductBase != null) {
+            try {
+                String recordId = foundProductBase.getJSONObject("attributes").getString("url");
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
         }
     }
 }
