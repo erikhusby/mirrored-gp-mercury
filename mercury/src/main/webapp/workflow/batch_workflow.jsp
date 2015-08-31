@@ -61,15 +61,15 @@
                                                     <div class="control-group">
                                                         <label for="rgtType${loop.index}">Type </label>
                                                         <input type="text" id="rgtType${loop.index}"
-                                                                name="reagentName[${loop.index}]" value="${reagentType}">
+                                                                name="reagentNames[${loop.index}]" value="${reagentType}">
 
                                                         <label for="rgtBcd${loop.index}">Barcode </label>
                                                         <input type="text" id="rgtBcd${loop.index}"
-                                                                name="reagentLot[${loop.index}]">
+                                                                name="reagentLots[${loop.index}]">
 
                                                         <label for="rgtExp${loop.index}">Expiration </label>
                                                         <input type="text" id="rgtExp${loop.index}"
-                                                                name="reagentExpiration[${loop.index}]">
+                                                                name="reagentExpirations[${loop.index}]">
                                                     </div>
                                                 </c:forEach>
                                                 <stripes:submit name="${actionBean.batchReagentAction}" value="Add"/>
