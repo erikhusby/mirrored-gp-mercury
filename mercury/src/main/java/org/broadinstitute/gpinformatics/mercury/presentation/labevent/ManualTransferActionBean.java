@@ -163,8 +163,8 @@ public class ManualTransferActionBean extends CoreActionBean {
             reagentFieldCounts = new int[reagentNames.size()];
             Arrays.fill(reagentFieldCounts, 1);
         } else {
-            reagentNames = Arrays.asList(labEventType.getReagentNames());
-            reagentFieldCounts = labEventType.getReagentFieldCounts();
+            reagentNames = Arrays.asList(labEventType.getManualTransferDetails().getReagentNames());
+            reagentFieldCounts = labEventType.getManualTransferDetails().getReagentFieldCounts();
         }
         int reagentIndex = 0;
         for (String reagentName : reagentNames) {
@@ -385,11 +385,12 @@ public class ManualTransferActionBean extends CoreActionBean {
             if (StringUtils.isBlank(reagentType.getKitType())) {
                 addGlobalValidationError("Reagent type is required");
             }
-            if (labEventType.getMapReagentNameToCount().get(reagentType.getKitType()) == 1) {
+            if (labEventType.getManualTransferDetails().getMapReagentNameToCount().get(reagentType.getKitType()) == 1) {
                 if (StringUtils.isBlank(reagentType.getBarcode())) {
                     addGlobalValidationError("Reagent barcode is required");
                 }
-                if (labEventType.isExpirationDateIncluded() && reagentType.getExpiration() == null) {
+                if (labEventType.getManualTransferDetails().isExpirationDateIncluded() &&
+                        reagentType.getExpiration() == null) {
                     addGlobalValidationError("Reagent expiration is required");
                 }
             }
@@ -402,59 +403,18 @@ public class ManualTransferActionBean extends CoreActionBean {
             while (reagentIterator.hasNext()) {
                 ReagentType reagentType = reagentIterator.next();
                 if (StringUtils.isBlank(reagentType.getBarcode()) &&
-                        labEventType.getMapReagentNameToCount().get(reagentType.getKitType()) > 1) {
+                        labEventType.getManualTransferDetails().getMapReagentNameToCount().get(reagentType.getKitType()) > 1) {
                     reagentIterator.remove();
                 }
             }
-        BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
-        bettaLIMSMessage.setMode(LabEventFactory.MODE_MERCURY);
-        Date start = new Date();
-        Iterator<StationEventType> iterator = stationEvents.iterator();
-        if (stationEvents.get(0).getStation() == null) {
-            stationEvents.get(0).setStation(LabEvent.UI_EVENT_LOCATION);
-        }
-        int eventIndex = 0;
-        while (iterator.hasNext()) {
-            StationEventType stationEvent = iterator.next();
-            stationEvent.setEventType(labEventType.getName());
-            if (workflowStepDef != null) {
-                stationEvent.setWorkflowQualifier(workflowStepDef.getWorkflowQualifier());
-            }
-
-            // Remove empty elements
-            if (stationEvent instanceof PlateTransferEventType) {
-                PlateTransferEventType plateTransferEventType = (PlateTransferEventType) stationEvent;
-                cleanupPositionMap(plateTransferEventType.getSourcePositionMap(), plateTransferEventType.getSourcePlate(),
-                        labEventType.getManualTransferDetails().getSourceVesselTypeGeometry());
-                cleanupPositionMap(plateTransferEventType.getPositionMap(), plateTransferEventType.getPlate(),
-                        labEventType.getManualTransferDetails().getTargetVesselTypeGeometry());
-                bettaLIMSMessage.getPlateTransferEvent().add(plateTransferEventType);
-            } else if (stationEvent instanceof PlateEventType) {
-                PlateEventType plateEventType = (PlateEventType) stationEvent;
-                // Remove events for which the user did not enter a barcode
-                if (labEventType.getManualTransferDetails().getNumEvents() > 1 && plateEventType.getPositionMap() == null &&
-                        (plateEventType.getPlate() == null || plateEventType.getPlate().getBarcode() == null)) {
-                    iterator.remove();
-                    continue;
-                }
-                cleanupPositionMap(plateEventType.getPositionMap(), plateEventType.getPlate(),
-                        labEventType.getManualTransferDetails().getTargetVesselTypeGeometry());
-                bettaLIMSMessage.getPlateEvent().add(plateEventType);
-            } else if (stationEvent instanceof StationSetupEvent) {
-                bettaLIMSMessage.setStationSetupEvent((StationSetupEvent) stationEvent);
-            } else if (stationEvent instanceof PlateCherryPickEvent) {
-                bettaLIMSMessage.getPlateCherryPickEvent().add((PlateCherryPickEvent) stationEvent);
-            } else if (stationEvent instanceof ReceptaclePlateTransferEvent) {
-                bettaLIMSMessage.getReceptaclePlateTransferEvent().add((ReceptaclePlateTransferEvent) stationEvent);
-            } else if (stationEvent instanceof ReceptacleTransferEventType) {
-                bettaLIMSMessage.getReceptacleTransferEvent().add((ReceptacleTransferEventType) stationEvent);
-            } else if (stationEvent instanceof ReceptacleEventType) {
-                bettaLIMSMessage.getReceptacleEvent().add((ReceptacleEventType) stationEvent);
-            } else {
-                throw new RuntimeException("Unknown StationEvent subclass " + stationEvent.getClass());
-            }
-
+            bettaLIMSMessage = new BettaLIMSMessage();
+            bettaLIMSMessage.setMode(LabEventFactory.MODE_MERCURY);
+            Date start = new Date();
             Iterator<StationEventType> iterator = stationEvents.iterator();
+            if (stationEvents.get(0).getStation() == null) {
+                stationEvents.get(0).setStation(LabEvent.UI_EVENT_LOCATION);
+            }
+
             int eventIndex = 0;
             while (iterator.hasNext()) {
                 StationEventType stationEvent = iterator.next();
@@ -471,20 +431,20 @@ public class ManualTransferActionBean extends CoreActionBean {
                 if (stationEvent instanceof PlateTransferEventType) {
                     PlateTransferEventType plateTransferEventType = (PlateTransferEventType) stationEvent;
                     cleanupPositionMap(plateTransferEventType.getSourcePositionMap(), plateTransferEventType.getSourcePlate(),
-                            labEventType.getSourceVesselTypeGeometry());
+                            labEventType.getManualTransferDetails().getSourceVesselTypeGeometry());
                     cleanupPositionMap(plateTransferEventType.getPositionMap(), plateTransferEventType.getPlate(),
-                            labEventType.getTargetVesselTypeGeometry());
+                            labEventType.getManualTransferDetails().getTargetVesselTypeGeometry());
                     bettaLIMSMessage.getPlateTransferEvent().add(plateTransferEventType);
                 } else if (stationEvent instanceof PlateEventType) {
                     PlateEventType plateEventType = (PlateEventType) stationEvent;
                     // Remove events for which the user did not enter a barcode
-                    if (labEventType.getNumEvents() > 1 && plateEventType.getPositionMap() == null &&
+                    if (labEventType.getManualTransferDetails().getNumEvents() > 1 && plateEventType.getPositionMap() == null &&
                             (plateEventType.getPlate() == null || plateEventType.getPlate().getBarcode() == null)) {
                         iterator.remove();
                         continue;
                     }
                     cleanupPositionMap(plateEventType.getPositionMap(), plateEventType.getPlate(),
-                            labEventType.getTargetVesselTypeGeometry());
+                            labEventType.getManualTransferDetails().getTargetVesselTypeGeometry());
                     bettaLIMSMessage.getPlateEvent().add(plateEventType);
                 } else if (stationEvent instanceof StationSetupEvent) {
                     bettaLIMSMessage.setStationSetupEvent((StationSetupEvent) stationEvent);
