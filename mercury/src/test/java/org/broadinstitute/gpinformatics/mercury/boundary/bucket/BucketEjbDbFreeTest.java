@@ -74,7 +74,7 @@ public class BucketEjbDbFreeTest {
     private Bucket bucket;
     private String pdoCreator;
     private final Map<String, BspSampleData> bspSampleDataMap = new HashMap<>();
-    private final Collection<ProductOrderSample> expectedSamples = new ArrayList<>();
+    private final Collection<ProductOrderSample> expectedSamples = new HashSet<>();
     private final List<LabVessel> labVessels = new ArrayList<>();
 
     private BucketEjb bucketEjb;
@@ -146,12 +146,11 @@ public class BucketEjbDbFreeTest {
                 break;
 
             case 2:
-                // Received root but non-genomic material, should be accepted.
+                // Received root but non-genomic material, should NOT be accepted.
                 bspData.put(BSPSampleSearchColumn.MATERIAL_TYPE, "Tissue:Blood");
                 bspData.put(BSPSampleSearchColumn.SAMPLE_ID, pdoSample.getName());
                 bspData.put(BSPSampleSearchColumn.ROOT_SAMPLE, pdoSample.getName());
                 bspData.put(BSPSampleSearchColumn.RECEIPT_DATE, "04/22/2013");
-                expectedSamples.add(pdoSample);
                 break;
 
             case 3:
@@ -208,8 +207,11 @@ public class BucketEjbDbFreeTest {
             replay(mocks);
 
             Collection<ProductOrderSample> addedSamples = new HashSet<>();
-            for (Collection<ProductOrderSample> productOrderSamples : bucketEjb.addSamplesToBucket(pdo).values()) {
-                addedSamples.addAll(productOrderSamples);
+            Map<String, Collection<ProductOrderSample>> samplesByBucket = bucketEjb.addSamplesToBucket(pdo);
+            for (Map.Entry<String,Collection<ProductOrderSample>> productOrderSamples : samplesByBucket.entrySet()) {
+                if(productOrderSamples.getKey().contains("Pico") && productOrderSamples.getKey().contains("Bucket")) {
+                    addedSamples.addAll(productOrderSamples.getValue());
+                }
             }
             Assert.assertEqualsNoOrder(addedSamples.toArray(), expectedSamples.toArray());
 
