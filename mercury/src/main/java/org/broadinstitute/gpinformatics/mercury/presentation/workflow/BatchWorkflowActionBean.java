@@ -5,6 +5,7 @@ import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowMatcher;
@@ -14,7 +15,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.labevent.ManualTransferActionBean;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
@@ -34,11 +37,14 @@ public class BatchWorkflowActionBean extends CoreActionBean {
     /** URL parameter. */
     private String batchName;
 
-    /** Fetched from database. */
-    private LabBatch labBatch;
+    /** Posted in form. */
+    private String workflowProcessName;
 
-    /** Fetched from labBatch. */
-    private ProductWorkflowDefVersion effectiveWorkflowDef;
+    /** Posted in form. */
+    private String workflowStepName;
+
+    /** Posted in form. */
+    private Date workflowEffectiveDate;
 
     /** Posted in form. */
     private LabEventType labEventType;
@@ -46,13 +52,21 @@ public class BatchWorkflowActionBean extends CoreActionBean {
     /** Posted in form. */
     private String workflowQualifier;
 
-    // todo jmt support multiple reagents.
     /** Posted in form. */
-    private String reagentName;
+    private List<String> reagentNames;
+
     /** Posted in form. */
-    private String reagentLot;
+    private List<String> reagentLots;
+
     /** Posted in form. */
-    private Date reagentExpiration;
+    private List<Date> reagentExpirations;
+
+    /** Fetched from database. */
+    private LabBatch labBatch;
+
+    /** Fetched from labBatch. */
+    private ProductWorkflowDefVersion effectiveWorkflowDef;
+
 
     @Inject
     private LabBatchDao labBatchDao;
@@ -95,9 +109,27 @@ public class BatchWorkflowActionBean extends CoreActionBean {
     @HandlesEvent(BATCH_REAGENT_ACTION)
     public Resolution batchReagent() {
         labBatch = labBatchDao.findByName(batchName);
+        WorkflowStepDef workflowStepDef = ManualTransferActionBean.loadWorkflowStepDef(workflowEffectiveDate,
+                workflowLoader, workflowProcessName, workflowStepName);
+        if (reagentNames.size() != workflowStepDef.getReagentTypes().size() ||
+                !reagentNames.containsAll(workflowStepDef.getReagentTypes())) {
+            addGlobalValidationError("Mismatch in reagent names between form and workflow");
+        }
+
         LabEvent labEvent = buildLabEvent();
-        labEvent.addReagent(new GenericReagent(reagentName, reagentLot, reagentExpiration));
-        labBatchDao.flush();
+        for (int i = 0; i < reagentNames.size(); i++) {
+            if (StringUtils.isEmpty(reagentLots.get(i))) {
+                addGlobalValidationError("Barcode is required for " + reagentNames.get(i));
+            }
+            if (reagentExpirations.get(i) == null) {
+                addGlobalValidationError("Expiration date is required for " + reagentNames.get(i));
+            }
+            labEvent.addReagent(new GenericReagent(reagentNames.get(i), reagentLots.get(i), reagentExpirations.get(i)));
+        }
+
+        if (getValidationErrors().isEmpty()) {
+            labBatchDao.flush();
+        }
 
         fetchWorkflow();
         return new ForwardResolution(VIEW_PAGE);
@@ -132,6 +164,30 @@ public class BatchWorkflowActionBean extends CoreActionBean {
         return batchName;
     }
 
+    public String getWorkflowProcessName() {
+        return workflowProcessName;
+    }
+
+    public void setWorkflowProcessName(String workflowProcessName) {
+        this.workflowProcessName = workflowProcessName;
+    }
+
+    public String getWorkflowStepName() {
+        return workflowStepName;
+    }
+
+    public void setWorkflowStepName(String workflowStepName) {
+        this.workflowStepName = workflowStepName;
+    }
+
+    public Date getWorkflowEffectiveDate() {
+        return workflowEffectiveDate;
+    }
+
+    public void setWorkflowEffectiveDate(Date workflowEffectiveDate) {
+        this.workflowEffectiveDate = workflowEffectiveDate;
+    }
+
     public String getBatchEventAction() {
         return BATCH_EVENT_ACTION;
     }
@@ -146,5 +202,29 @@ public class BatchWorkflowActionBean extends CoreActionBean {
 
     public void setWorkflowQualifier(String workflowQualifier) {
         this.workflowQualifier = workflowQualifier;
+    }
+
+    public List<String> getReagentNames() {
+        return reagentNames;
+    }
+
+    public void setReagentNames(List<String> reagentNames) {
+        this.reagentNames = reagentNames;
+    }
+
+    public List<String> getReagentLots() {
+        return reagentLots;
+    }
+
+    public void setReagentLots(List<String> reagentLots) {
+        this.reagentLots = reagentLots;
+    }
+
+    public List<Date> getReagentExpirations() {
+        return reagentExpirations;
+    }
+
+    public void setReagentExpirations(List<Date> reagentExpirations) {
+        this.reagentExpirations = reagentExpirations;
     }
 }

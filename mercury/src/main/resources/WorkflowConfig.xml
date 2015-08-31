@@ -1157,9 +1157,23 @@
             </workflowStepDefs>
             <!--
             scan all parent source SM-IDs
-            Pellet in existing tube and wash w/PBS (x2)?
-            Re-suspend in PBS (3mL)
             -->
+            <workflowStepDefs>
+                <name>Wash PBS</name>
+                <labEventTypes>ADD_REAGENT</labEventTypes>
+                <workflowQualifier>PBS</workflowQualifier>
+                <reagentTypes>PBS</reagentTypes>
+                <instructions>Pellet in existing tube and wash w/PBS (x2)?
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Re-suspend</name>
+                <labEventTypes>ADD_REAGENT</labEventTypes>
+                <workflowQualifier>RESUSPEND</workflowQualifier>
+                <reagentTypes>PBS</reagentTypes>
+                <instructions>Re-suspend in PBS (3mL)
+                </instructions>
+            </workflowStepDefs>
             <workflowStepDefs>
                 <name>Transfer Cells to Cryovial</name>
                 <labEventTypes>ALLPREP_CELLS_TO_CRYOVIAL</labEventTypes>

@@ -154,7 +154,8 @@ public class ManualTransferActionBean extends CoreActionBean {
 
     @HandlesEvent(CHOOSE_EVENT_TYPE_ACTION)
     public Resolution chooseLabEventType() {
-        loadWorkflowStepDef();
+        workflowStepDef = loadWorkflowStepDef(workflowEffectiveDate, workflowLoader, workflowProcessName,
+                workflowStepName);
         List<String> reagentNames;
         if (workflowStepDef != null) {
             reagentNames = workflowStepDef.getReagentTypes();
@@ -250,8 +251,9 @@ public class ManualTransferActionBean extends CoreActionBean {
     }
 
     @Nullable
-    private WorkflowStepDef loadWorkflowStepDef() {
-        workflowStepDef = null;
+    public static WorkflowStepDef loadWorkflowStepDef(Date workflowEffectiveDate, WorkflowLoader workflowLoader,
+            String workflowProcessName, String workflowStepName) {
+        WorkflowStepDef workflowStepDef = null;
         if (workflowProcessName != null) {
             WorkflowConfig workflowConfig = workflowLoader.load();
             workflowStepDef = workflowConfig.getStep(workflowProcessName, workflowStepName,
@@ -368,7 +370,8 @@ public class ManualTransferActionBean extends CoreActionBean {
     @HandlesEvent(TRANSFER_ACTION)
     public Resolution transfer() {
         // todo jmt handle unique constraint violation, increment disambiguator?
-        loadWorkflowStepDef();
+        workflowStepDef = loadWorkflowStepDef(workflowEffectiveDate, workflowLoader, workflowProcessName,
+                workflowStepName);
 
         for (ReagentType reagentType : stationEvents.get(0).getReagent()) {
             if (StringUtils.isBlank(reagentType.getKitType())) {

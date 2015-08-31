@@ -50,6 +50,9 @@
                                 <c:otherwise>
                                     <stripes:form beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.BatchWorkflowActionBean">
                                         <input type="hidden" name="batchName" value="${actionBean.batchName}"/>
+                                        <input type="hidden" name="workflowProcessName" value="${workflowEvent.workflowStepDef.processDef.name}"/>
+                                        <input type="hidden" name="workflowStepName" value="${workflowEvent.workflowStepDef.name}"/>
+                                        <input type="hidden" name="workflowEffectiveDate" value="${actionBean.labBatch.createdOn}"/>
                                         <input type="hidden" name="labEventType" value="${labEventType}"/>
                                         <input type="hidden" name="workflowQualifier" value="${workflowEvent.workflowStepDef.workflowQualifier}"/>
                                         <c:choose>
@@ -57,13 +60,16 @@
                                                 <c:forEach items="${workflowEvent.workflowStepDef.reagentTypes}" var="reagentType" varStatus="loop">
                                                     <div class="control-group">
                                                         <label for="rgtType${loop.index}">Type </label>
-                                                        <input type="text" id="rgtType${loop.index}" name="reagentName" value="${reagentType}">
+                                                        <input type="text" id="rgtType${loop.index}"
+                                                                name="reagentName[${loop.index}]" value="${reagentType}">
 
                                                         <label for="rgtBcd${loop.index}">Barcode </label>
-                                                        <input type="text" id="rgtBcd${loop.index}" name="reagentLot">
+                                                        <input type="text" id="rgtBcd${loop.index}"
+                                                                name="reagentLot[${loop.index}]">
 
                                                         <label for="rgtExp${loop.index}">Expiration </label>
-                                                        <input type="text" id="rgtExp${loop.index}" name="reagentExpiration">
+                                                        <input type="text" id="rgtExp${loop.index}"
+                                                                name="reagentExpiration[${loop.index}]">
                                                     </div>
                                                 </c:forEach>
                                                 <stripes:submit name="${actionBean.batchReagentAction}" value="Add"/>
