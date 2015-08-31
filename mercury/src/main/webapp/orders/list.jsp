@@ -58,11 +58,11 @@
             });
 
             function updateAbandonButtonVisibility() {
-                var disableButton =
-                        $j(".shiftCheckbox:checked").closest("tr").children("td:contains('Completed')").size() > 0;
+                var disableButton = $j(".shiftCheckbox:checked").closest("tr")
+                                .children("td:contains('Completed'), td:contains('Abandoned'), td:contains('Draft')")
+                                .size() > 0;
                 $j("input[name='abandonOrders']").prop('disabled', disableButton);
             }
-
             function statusChange() {
                 if ($j(".selectedStatuses[value='Draft']").attr('checked')
                         || $j(".selectedStatuses[value='Pending']").attr('checked')) {
