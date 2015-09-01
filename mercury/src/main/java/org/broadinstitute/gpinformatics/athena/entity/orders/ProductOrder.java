@@ -1166,6 +1166,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         Abandoned,
         Completed;
 
+        public static final EnumSet<OrderStatus> canAbandonStatuses = EnumSet.of(Pending, Submitted);
         /** CSS Class to use when displaying this status in HTML. */
         private final String cssClass;
 
@@ -1212,7 +1213,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
         /** @return true if an order can be abandoned from this state. */
         public boolean canAbandon() {
-            return EnumSet.of(Pending, Submitted).contains(this);
+            return canAbandonStatuses.contains(this);
         }
 
         /** @return true if an order can be placed from this state. */

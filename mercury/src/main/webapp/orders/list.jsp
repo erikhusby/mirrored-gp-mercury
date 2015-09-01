@@ -54,15 +54,25 @@
 
                 setupDialogs();
                 statusChange();
-                $j("input.shiftCheckbox, input.checkAll").on('click', updateAbandonButtonVisibility);
+
+                var cantAbandonOrderStatuses=buildCantAbandonOrderStatusesXpath();
+                $j("input.shiftCheckbox, input.checkAll").on('click', function(){
+                    var disableButton = $j(".shiftCheckbox:checked").closest("tr").children(cantAbandonOrderStatuses).size() > 0;
+                    $j("input[name='abandonOrders']").prop('disabled', disableButton);
+                });
             });
 
-            function updateAbandonButtonVisibility() {
-                var disableButton = $j(".shiftCheckbox:checked").closest("tr")
-                                .children("td:contains('Completed'), td:contains('Abandoned'), td:contains('Draft')")
-                                .size() > 0;
-                $j("input[name='abandonOrders']").prop('disabled', disableButton);
+            function buildCantAbandonOrderStatusesXpath() {
+                var disallowStatuses = [];
+                disallowStatuses = [<c:forEach
+                items="${actionBean.getOrderStatusNamesWhichCantBeAbandoned()}" var="item">"${item}", </c:forEach>]
+                return disallowStatuses.map(
+                        function (value) {
+                            return "td:contains(\"" + value + "\")";
+                        }
+                ).join(", ");
             }
+
             function statusChange() {
                 if ($j(".selectedStatuses[value='Draft']").attr('checked')
                         || $j(".selectedStatuses[value='Pending']").attr('checked')) {
