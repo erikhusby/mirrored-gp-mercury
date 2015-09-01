@@ -126,6 +126,14 @@ public class SampleMetadataFixupTest extends Arquillian {
                 .mapOf(mercurySample74P3U.getSampleKey(), Metadata.Key.TUMOR_NORMAL, "Normal", "Tumor"), fixupComment743U);
     }
 
+    @Test(enabled = false)
+    public void crsp163Fixup() {
+        MercurySample mercurySample = mercurySampleDao.findBySampleKey("SM-74P3Q");
+        updateMetadataAndValidate(MetaDataFixupItem
+                .mapOf(mercurySample.getSampleKey(), Metadata.Key.PATIENT_ID, "HCC-1143_100% N1", "HCC-1143_100% N"),
+                "CRSP-163 repatienting of validation sample (pre-sequencing)");
+    }
+
     /**
      * Perform actual fixup and validate.
      */
