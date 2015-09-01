@@ -5,7 +5,8 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMes
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -25,6 +26,7 @@ public class ExtractionsBloodJaxbBuilder {
     private PlateCherryPickEvent bloodCryovialTransfer;
     private PlateTransferEventType extractionsBloodDeepwellToChemagen;
     private PlateTransferEventType extractionsBloodChemagenToFinalRack;
+    private StationEventType finalRackStoreEvent;
     private String finalRackBarcode;
     private List<String> bloodFinalTubeBarcodes;
     private String preChemagenDeepwellBarcode;
@@ -87,6 +89,11 @@ public class ExtractionsBloodJaxbBuilder {
                 finalRackBarcode, bloodFinalTubeBarcodes);
         extractionsBloodChemagenToFinalRack.getSourcePlate().setPhysType(DEEPWELL96);
         bettaLimsMessageTestFactory.addMessage(messageList, extractionsBloodChemagenToFinalRack);
+
+        finalRackStoreEvent =
+                bettaLimsMessageTestFactory.buildRackEvent(LabEventType.STORE.getName(), finalRackBarcode,
+                        bloodFinalTubeBarcodes);
+        bettaLimsMessageTestFactory.addMessage(messageList, finalRackStoreEvent);
 
         return this;
     }
