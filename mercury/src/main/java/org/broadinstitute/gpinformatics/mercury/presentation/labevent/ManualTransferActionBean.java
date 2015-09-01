@@ -100,7 +100,7 @@ public class ManualTransferActionBean extends CoreActionBean {
     public void init() {
         String eventType = getContext().getRequest().getParameter("stationEvents[0].eventType");
         if (eventType != null) {
-            labEventType = LabEventType.valueOf(eventType);
+            labEventType = LabEventType.getByName(eventType);
             // todo jmt move this to the enum?
             switch (labEventType.getMessageType()) {
                 case PLATE_EVENT:

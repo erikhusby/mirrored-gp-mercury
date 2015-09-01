@@ -31,7 +31,7 @@
     <stripes:layout-component name="content">
         <stripes:form beanclass="${actionBean.class.name}" id="eventForm">
             <stripes:select name="stationEvents[0].eventType" id="eventType">
-                <stripes:options-collection collection="${actionBean.manualEventTypes}" label="name"/>
+                <stripes:options-collection collection="${actionBean.manualEventTypes}" label="name" value="name"/>
             </stripes:select>
             <stripes:submit name="chooseEventType" value="Choose Event Type" class="btn btn-primary"/>
         </stripes:form>
