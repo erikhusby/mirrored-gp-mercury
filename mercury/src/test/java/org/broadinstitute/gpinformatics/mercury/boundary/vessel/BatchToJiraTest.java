@@ -116,7 +116,7 @@ public class BatchToJiraTest extends Arquillian {
         LabBatch batch = new LabBatch("Test batch 2", startingVessels, LabBatch.LabBatchType.WORKFLOW);
 
 
-        batchEjb.batchToJira("andrew", null, batch, CreateFields.IssueType.EXOME_EXPRESS);
+        batchEjb.batchToJira("andrew", null, batch, CreateFields.IssueType.EXOME_EXPRESS, null);
 
         JiraIssue ticket = jiraService.getIssue(batch.getJiraTicket().getTicketId());
 
@@ -128,7 +128,7 @@ public class BatchToJiraTest extends Arquillian {
         // now try it with SM-02 as a rework
         // FIXME find a different way to do this.  This method, addReworkToBatch, is not a production used method.
         reworkEjb.addReworkToBatch(batch, tube2Label, "scottmat");
-        batchEjb.batchToJira("andrew", null, batch, CreateFields.IssueType.EXOME_EXPRESS);
+        batchEjb.batchToJira("andrew", null, batch, CreateFields.IssueType.EXOME_EXPRESS, null);
 
         ticket = jiraService.getIssue(batch.getJiraTicket().getTicketId());
         gssrIdsText = getGssrFieldFromJiraTicket(ticket);

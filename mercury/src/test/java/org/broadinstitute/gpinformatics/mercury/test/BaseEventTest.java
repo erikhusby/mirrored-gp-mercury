@@ -329,7 +329,8 @@ public class BaseEventTest {
             }
         }
 
-        labBatchEJB.createLabBatch(workflowBatch, "scottmat", CreateFields.IssueType.EXOME_EXPRESS);
+        labBatchEJB.createLabBatch(workflowBatch, "scottmat", CreateFields.IssueType.EXOME_EXPRESS,
+                CreateFields.ProjectType.LCSET_PROJECT);
         JiraServiceStub.setCreatedIssueSuffix(defaultLcsetSuffix);
 
         drainBucket(workingBucket);

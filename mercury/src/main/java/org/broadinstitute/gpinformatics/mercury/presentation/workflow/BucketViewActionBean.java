@@ -302,7 +302,7 @@ public class BucketViewActionBean extends CoreActionBean {
             if (!selectedLcset.startsWith("LCSET-")) {
                 selectedLcset = "LCSET-" + selectedLcset;
             }
-            labBatchEjb.addToLabBatch(selectedLcset, bucketEntryIds, reworkEntryIds);
+            labBatchEjb.addToLabBatch(selectedLcset, bucketEntryIds, reworkEntryIds, selectedBucket);
         } catch (IOException e) {
             addGlobalValidationError("IOException contacting JIRA service." + e.getMessage());
             return new RedirectResolution(VIEW_PAGE);
@@ -326,7 +326,7 @@ public class BucketViewActionBean extends CoreActionBean {
                                                        selectedWorkflowDef.getName(), bucketEntryIds, reworkEntryIds,
                                                        summary.trim(),
                                                        description, dueDate, important,
-                                                       userBean.getBspUser().getUsername());
+                                                       userBean.getBspUser().getUsername(), selectedBucket);
         } catch (ValidationException e) {
             addGlobalValidationError(e.getMessage());
             return view();

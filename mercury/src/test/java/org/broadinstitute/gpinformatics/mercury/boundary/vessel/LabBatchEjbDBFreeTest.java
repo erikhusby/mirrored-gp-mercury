@@ -151,7 +151,8 @@ public class LabBatchEjbDBFreeTest {
             }
         }
 
-        LabBatch testBatch = labBatchEJB.createLabBatch(batchObject, "scottmat", CreateFields.IssueType.EXOME_EXPRESS);
+        LabBatch testBatch = labBatchEJB.createLabBatch(batchObject, "scottmat", CreateFields.IssueType.EXOME_EXPRESS,
+                CreateFields.ProjectType.LCSET_PROJECT);
 
         Assert.assertNotNull(testBatch);
         Assert.assertNotNull(testBatch.getJiraTicket());
@@ -202,7 +203,8 @@ public class LabBatchEjbDBFreeTest {
             }
         }
 
-        labBatchEJB.batchToJira("scottmat",null, testBatch, CreateFields.IssueType.EXOME_EXPRESS);
+        labBatchEJB.batchToJira("scottmat",null, testBatch, CreateFields.IssueType.EXOME_EXPRESS,
+                CreateFields.ProjectType.LCSET_PROJECT);
         EasyMock.verify(mockJira);
 
         Assert.assertNotNull(testBatch);
@@ -231,7 +233,8 @@ public class LabBatchEjbDBFreeTest {
             }
         }
 
-        LabBatch testBatch = labBatchEJB.createLabBatch(batchObject, scottmat, CreateFields.IssueType.EXOME_EXPRESS);
+        LabBatch testBatch = labBatchEJB.createLabBatch(batchObject, scottmat, CreateFields.IssueType.EXOME_EXPRESS,
+                CreateFields.ProjectType.LCSET_PROJECT);
 
         Assert.assertNotNull(testBatch);
         Assert.assertNotNull(testBatch.getJiraTicket());
@@ -264,7 +267,8 @@ public class LabBatchEjbDBFreeTest {
             }
         }
 
-        LabBatch testBatch = labBatchEJB.createLabBatch(batchInput, scottmat, CreateFields.IssueType.EXOME_EXPRESS);
+        LabBatch testBatch = labBatchEJB.createLabBatch(batchInput, scottmat, CreateFields.IssueType.EXOME_EXPRESS,
+                CreateFields.ProjectType.LCSET_PROJECT);
 
         Assert.assertNotNull(testBatch);
         Assert.assertNotNull(testBatch.getJiraTicket());

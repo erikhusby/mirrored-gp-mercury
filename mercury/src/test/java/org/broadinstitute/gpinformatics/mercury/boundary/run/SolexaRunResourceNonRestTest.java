@@ -546,13 +546,15 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
 
         String batchName = "LCSET-MsgTest-" + testPrefix;
         List<Long> bucketIds = new ArrayList<>();
+        String bucketName = null;
         for (LabVessel starter : starters) {
+            bucketName = starter.getBucketEntries().iterator().next().getBucket().getBucketDefinitionName();
             bucketIds.add(starter.getBucketEntries().iterator().next().getBucketEntryId());
         }
 
         LabBatch labBatch = labBatchEjb.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
                 Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName(), bucketIds, Collections.<Long>emptyList(), batchName,
-                "", new Date(), "", "jowalsh");
+                "", new Date(), "", "jowalsh", bucketName );
         labBatch.setValidationBatch(true);
     }
 }

@@ -134,7 +134,8 @@ public class LabBatchEJBTest extends ContainerTest {
             }
         }
 
-        labBatchEJB.createLabBatch(testBatch, scottmat, CreateFields.IssueType.EXOME_EXPRESS);
+        labBatchEJB.createLabBatch(testBatch, scottmat, CreateFields.IssueType.EXOME_EXPRESS,
+                CreateFields.ProjectType.LCSET_PROJECT);
 
         final String batchName = testBatch.getBatchName();
 
@@ -182,7 +183,8 @@ public class LabBatchEJBTest extends ContainerTest {
             }
         }
 
-        labBatchEJB.createLabBatch(batchInput, scottmat, CreateFields.IssueType.EXOME_EXPRESS);
+        labBatchEJB.createLabBatch(batchInput, scottmat, CreateFields.IssueType.EXOME_EXPRESS,
+                CreateFields.ProjectType.LCSET_PROJECT);
 
         batchName = batchInput.getBatchName();
 
@@ -206,13 +208,17 @@ public class LabBatchEJBTest extends ContainerTest {
         HashSet<LabVessel> starters = new HashSet<LabVessel>(mapBarcodeToTube.values());
 
         List<Long> bucketIds = new ArrayList<>();
+        String bucketName = null;
         for (LabVessel starter : starters) {
-            bucketIds.add(starter.getBucketEntries().iterator().next().getBucketEntryId());
+
+            BucketEntry next = starter.getBucketEntries().iterator().next();
+            bucketName = next.getBucket().getBucketDefinitionName();
+            bucketIds.add(next.getBucketEntryId());
         }
 
         LabBatch savedBatch = labBatchEJB.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
                 Workflow.ICE_EXOME_EXPRESS.getWorkflowName(), bucketIds, Collections.<Long>emptyList(),
-                "LabBatchEJBTest.testCreateLabBatchAndRemoveFromBucket", "", new Date(), "", scottmat);
+                "LabBatchEJBTest.testCreateLabBatchAndRemoveFromBucket", "", new Date(), "", scottmat, bucketName );
 
         //link the JIRA tickets for the batch created to the pdo batches.
         for (String pdoKey : LabVessel.extractPdoKeyList(starters)) {
@@ -242,16 +248,17 @@ public class LabBatchEJBTest extends ContainerTest {
         HashSet<LabVessel> starters = new HashSet<LabVessel>(mapBarcodeToTube.values());
 
         List<Long> bucketIds = new ArrayList<>();
+        String bucketName = null;
         for (LabVessel starter : starters) {
             for (BucketEntry bucketEntry : starter.getBucketEntries()) {
-
+                bucketName = bucketEntry.getBucket().getBucketDefinitionName();
                 bucketIds.add(bucketEntry.getBucketEntryId());
             }
         }
 
         LabBatch savedBatch = labBatchEJB.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
                 Workflow.CLINICAL_EXTRACTION.getWorkflowName(), bucketIds, Collections.<Long>emptyList(),
-                "LabBatchEJBTest.testCreateLabBatchAndRemoveFromBucket", "", new Date(), "", scottmat);
+                "LabBatchEJBTest.testCreateLabBatchAndRemoveFromBucket", "", new Date(), "", scottmat, bucketName);
 
         //link the JIRA tickets for the batch created to the pdo batches.
         for (String pdoKey : LabVessel.extractPdoKeyList(starters)) {
@@ -282,14 +289,17 @@ public class LabBatchEJBTest extends ContainerTest {
                 CreateFields.ProjectType.LCSET_PROJECT.getKeyPrefix() + JiraServiceStub.getCreatedIssueSuffix();
 
         List<Long> bucketIds = new ArrayList<>();
-
+        String selectedBucket = null;
         for(LabVessel vessel:mapBarcodeToTube.values()) {
-            bucketIds.add(vessel.getBucketEntries().iterator().next().getBucketEntryId());
+
+            BucketEntry next = vessel.getBucketEntries().iterator().next();
+            selectedBucket = next.getBucket().getBucketDefinitionName();
+            bucketIds.add(next.getBucketEntryId());
         }
 
         LabBatch savedBatch = labBatchEJB.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
                 Workflow.ICE_EXOME_EXPRESS.getWorkflowName(), bucketIds, Collections.<Long>emptyList(),
-                expectedTicketId, "", new Date(), "", scottmat);
+                expectedTicketId, "", new Date(), "", scottmat, selectedBucket);
         labBatchDao.flush();
         labBatchDao.clear();
         bucket = bucketDao.findByName(BUCKET_NAME);
@@ -297,7 +307,7 @@ public class LabBatchEJBTest extends ContainerTest {
         Assert.assertEquals(savedBatch.getBatchName(), expectedTicketId);
         savedBatch = labBatchDao.findById(LabBatch.class, savedBatch.getLabBatchId());
 
-        Assert.assertEquals(savedBatch.getJiraTicket().getTicketName(),expectedTicketId);
+        Assert.assertEquals(savedBatch.getJiraTicket().getTicketName(), expectedTicketId);
         Assert.assertEquals(6, savedBatch.getStartingBatchLabVessels().size());
         for (BarcodedTube tube : mapBarcodeToTube.values()) {
             Assert.assertTrue(bucket.findEntry(tube) == null);
@@ -313,15 +323,17 @@ public class LabBatchEJBTest extends ContainerTest {
 
         List<Long> bucketIds = new ArrayList<>();
 
+        String selectedBucket = null;
         for(LabVessel vessel:mapBarcodeToTube.values()) {
             for (BucketEntry bucketEntry : vessel.getBucketEntries()) {
+                selectedBucket = bucketEntry.getBucket().getBucketDefinitionName();
                 bucketIds.add(bucketEntry.getBucketEntryId());
             }
         }
 
         LabBatch savedBatch = labBatchEJB.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
                 Workflow.CLINICAL_EXTRACTION.getWorkflowName(), bucketIds, Collections.<Long>emptyList(),
-                expectedTicketId,"", new Date(), "", scottmat);
+                expectedTicketId,"", new Date(), "", scottmat, selectedBucket);
         labBatchDao.flush();
         labBatchDao.clear();
         bucket = bucketDao.findByName("AllPrep Extraction Bucket");

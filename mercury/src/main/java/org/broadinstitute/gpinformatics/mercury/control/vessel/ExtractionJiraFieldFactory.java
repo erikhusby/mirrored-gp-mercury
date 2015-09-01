@@ -11,6 +11,7 @@
 
 package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -34,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.annotation.Nonnull;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -113,56 +115,6 @@ public class ExtractionJiraFieldFactory extends AbstractBatchJiraFieldFactory {
 
     }
 
-    /**
-     * Returns the unique list of sample names referenced by the given collection of vessels.
-     */
-    private static Set<String> getUniqueSampleNames(Collection<LabVessel> labVessels) {
-        Set<String> sampleNames = new HashSet<>();
-        for (LabVessel labVessel : labVessels) {
-            Collection<String> sampleNamesForVessel = labVessel.getSampleNames();
-            if (sampleNamesForVessel.size() > 1) {
-                throw new RuntimeException("Cannot build samples list for " + labVessel.getLabel()
-                                           + " because we're expecting only a single sample within the vessel.");
-            }
-            sampleNames.addAll(labVessel.getSampleNames());
-        }
-        return sampleNames;
-    }
-
-    /**
-     * Takes the initial samples and the rework samples
-     * from the batch and builds a string to display
-     * on the batch ticket
-     *
-     * @param labBatch contains samples
-     *
-     * @return sample list
-     */
-    public static String buildSamplesListString(LabBatch labBatch, @Nullable Bucket bucket) {
-        StringBuilder samplesText = new StringBuilder();
-        Set<String> newSamples = new HashSet<>();
-        Set<String> reworkSamples = new HashSet<>();
-        newSamples.addAll(getUniqueSampleNames(labBatch.getNonReworkStartingLabVessels()));
-        reworkSamples.addAll(getUniqueSampleNames(labBatch.getReworks()));
-
-        samplesText.append(StringUtils.join(newSamples, "\n"));
-        samplesText.append("\n");
-
-        if (!reworkSamples.isEmpty()) {
-            samplesText.append("\n");
-            for (String reworkSample : reworkSamples) {
-                if (bucket == null) {
-                    samplesText.append(reworkSample).append(" (rework)\n");
-                } else {
-                    samplesText.append(reworkSample).append(" (rework from ").append(bucket.getBucketDefinitionName())
-                            .append(
-                                    ")\n");
-                }
-            }
-        }
-        return samplesText.toString();
-    }
-
     @Override
     public Collection<CustomField> getCustomFields(Map<String, CustomFieldDefinition> submissionFields) {
 
@@ -187,6 +139,12 @@ public class ExtractionJiraFieldFactory extends AbstractBatchJiraFieldFactory {
         if (batch.getImportant() != null) {
             customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.IMPORTANT, batch
                     .getImportant()));
+        }
+
+        if (CollectionUtils.isNotEmpty(batch.getStartingBatchLabVessels())) {
+            customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.SAMPLE_IDS,
+                    buildSamplesListString(batch, null)));
+
         }
 
         return customFields;

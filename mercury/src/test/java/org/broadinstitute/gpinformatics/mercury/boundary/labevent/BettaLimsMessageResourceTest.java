@@ -123,6 +123,8 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 @Test(groups = TestGroups.ALTERNATIVES)
 public class BettaLimsMessageResourceTest extends Arquillian {
 
+    public static final String PICO_PLATING_BUCKET = "Pico/Plating Bucket";
+    public static final String ICE_BUCKET = "ICE Bucket";
     @Inject
     private BettaLimsMessageResource bettaLimsMessageResource;
 
@@ -292,7 +294,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         reworkEjb.addAndValidateCandidates(
                 Collections.singleton(
                         new ReworkEjb.BucketCandidate(barcodeTubeEntry.getValue().getLabel(), productOrder1)),
-                ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue(), "Test", "jowalsh", "Pico/Plating Bucket");
+                ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue(), "Test", "jowalsh", PICO_PLATING_BUCKET);
         mapBarcodeToTube2.put(barcodeTubeEntry.getKey(), barcodeTubeEntry.getValue());
         reworks.add(barcodeTubeEntry.getValue());
 
@@ -300,7 +302,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         reworkEjb.addAndValidateCandidates(
                 Collections.singleton(
                         new ReworkEjb.BucketCandidate(barcodeTubeEntry.getValue().getLabel(), productOrder1)),
-                ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue(), "Test", "jowalsh", "Pico/Plating Bucket");
+                ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue(), "Test", "jowalsh", PICO_PLATING_BUCKET);
         mapBarcodeToTube2.put(barcodeTubeEntry.getKey(), barcodeTubeEntry.getValue());
         reworks.add(barcodeTubeEntry.getValue());
 
@@ -326,7 +328,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
 
         labBatchEjb.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
                 Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName(), bucketIds, reworkBucketIds, batchName, "", new Date(),
-                "", "jowalsh");
+                "", "jowalsh", PICO_PLATING_BUCKET);
         // message
         hybridSelectionJaxbBuilder = sendMessagesUptoCatch(testPrefix, mapBarcodeToTube2, bettaLimsMessageFactory,
                 Workflow.AGILENT_EXOME_EXPRESS, bettaLimsMessageResource,
@@ -773,14 +775,18 @@ public class BettaLimsMessageResourceTest extends Arquillian {
 
         String batchName = "LCSET-MsgTest-" + testPrefix;
         List<Long> bucketIds = new ArrayList<>();
+        String bucketName = null;
+
         for (LabVessel starter : starters) {
-            bucketIds.add(starter.getBucketEntries().iterator().next().getBucketEntryId());
+            BucketEntry next = starter.getBucketEntries().iterator().next();
+            bucketName = next.getBucket().getBucketDefinitionName();
+            bucketIds.add(next.getBucketEntryId());
         }
 
 
         labBatchEjb.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
                 Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName(), bucketIds, Collections.<Long>emptyList(), batchName,
-                "", new Date(), "", "jowalsh");
+                "", new Date(), "", "jowalsh", bucketName);
 
     }
 
@@ -952,7 +958,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
                 iterator().next().getProductOrder();
         Map<String, BarcodedTube> mapBarcodeToCrspPond = barcodedTubeDao.findByBarcodes(tubeBarcodes);
         HashSet<LabVessel> crspPonds = new HashSet<LabVessel>(mapBarcodeToCrspPond.values());
-        bucketEjb.add(crspPonds, bucketDao.findByName("ICE Bucket"),
+        bucketEjb.add(crspPonds, bucketDao.findByName(ICE_BUCKET),
                 BucketEntry.BucketEntryType.REWORK_ENTRY, "thompson", LabEvent.UI_EVENT_LOCATION,
                 LabEvent.UI_PROGRAM_NAME, LabEventType.ICE_BUCKET, crspProductOrder);
 
@@ -966,7 +972,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
 
         LabBatch labBatch = labBatchEjb.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
                 Workflow.ICE_CRSP.getWorkflowName(), Collections.<Long>emptyList(), reworkBucketEntryIds, batchName,
-                "", new Date(), "", "thompson");
+                "", new Date(), "", "thompson", ICE_BUCKET);
 
 
         return labBatch;

@@ -25,7 +25,6 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.AbstractBatchJiraFieldFactory;
-import org.broadinstitute.gpinformatics.mercury.control.vessel.LCSetJiraFieldFactory;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -103,11 +102,16 @@ public class LabBatchEjb {
      */
     public LabBatch createLabBatch(@Nonnull LabBatch batchObject, String reporter,
                                    @Nonnull CreateFields.IssueType issueType) {
+        return createLabBatch(batchObject, reporter, issueType,null);
+    }
+
+    public LabBatch createLabBatch(LabBatch batchObject, String reporter, CreateFields.IssueType issueType,
+                                    CreateFields.ProjectType projectType) {
         if (StringUtils.isBlank(batchObject.getBatchName())) {
             throw new InformaticsServiceException("The name for the batch object cannot be null");
         }
 
-        batchToJira(reporter, null, batchObject, issueType);
+        batchToJira(reporter, null, batchObject, issueType, projectType);
         labBatchDao.persist(batchObject);
         return batchObject;
     }
@@ -152,6 +156,7 @@ public class LabBatchEjb {
      * @param important            the important notes for the batch (for JIRA)
      * @param username             the user creating the batch (for JIRA)
      *
+     * @param bucketName
      * @return The lab batch that was created.
      */
     public LabBatch createLabBatchAndRemoveFromBucket(@Nonnull LabBatch.LabBatchType labBatchType,
@@ -159,7 +164,7 @@ public class LabBatchEjb {
                                                       @Nonnull List<Long> reworkBucketEntryIds,
                                                       @Nonnull String batchName, @Nonnull String description,
                                                       @Nonnull Date dueDate, @Nonnull String important,
-                                                      @Nonnull String username) throws ValidationException {
+                                                      @Nonnull String username, String bucketName) throws ValidationException {
         List<BucketEntry> bucketEntries = bucketEntryDao.findByIds(bucketEntryIds);
         List<BucketEntry> reworkBucketEntries = bucketEntryDao.findByIds(reworkBucketEntryIds);
         Set<String> pdoKeys = new HashSet<>();
@@ -212,23 +217,11 @@ public class LabBatchEjb {
         allBucketEntries.addAll(reworkBucketEntries);
         bucketEjb.moveFromBucketToBatch(allBucketEntries, batch);
 
-        WorkflowConfig workflowConfig = workflowLoader.load();
-        WorkflowBucketDef bucketDef = null;
-
-        for (Workflow workflow : Workflow.SUPPORTED_WORKFLOWS) {
-            ProductWorkflowDef workflowDef = workflowConfig.getWorkflowByName(workflow.getWorkflowName());
-            ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
-            for (WorkflowBucketDef bucket : workflowVersion.getCreationBuckets()) {
-                String bucketName = bucket.getName();
-                if (bucketName.equals(bucketDefNames.iterator().next())) {
-                    bucketDef = bucket;
-                }
-            }
-        }
+        WorkflowBucketDef bucketDef = getWorkflowBucketDef(bucketName);
 
         CreateFields.IssueType issueType = CreateFields.IssueType.valueOf(bucketDef.getBatchJiraIssueType());
 
-        batchToJira(username, null, batch, issueType);
+        batchToJira(username, null, batch, issueType, CreateFields.ProjectType.valueOf(bucketDef.getBatchJiraProjectType()));
 
         //link the JIRA tickets for the batch created to the pdo batches.
         for (String pdoKey : pdoKeys) {
@@ -236,6 +229,22 @@ public class LabBatchEjb {
         }
 
         return batch;
+    }
+
+    private WorkflowBucketDef getWorkflowBucketDef(String bucketName) {
+        WorkflowConfig workflowConfig = workflowLoader.load();
+        WorkflowBucketDef bucketDef = null;
+
+        for (Workflow workflow : Workflow.SUPPORTED_WORKFLOWS) {
+            ProductWorkflowDef workflowDef = workflowConfig.getWorkflowByName(workflow.getWorkflowName());
+            ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
+            for (WorkflowBucketDef bucket : workflowVersion.getCreationBuckets()) {
+                if (bucketName.equals(bucket.getName())) {
+                    bucketDef = bucket;
+                }
+            }
+        }
+        return bucketDef;
     }
 
     /**
@@ -246,20 +255,12 @@ public class LabBatchEjb {
      * @param jiraTicket Optional parameter that represents an existing Jira Ticket that refers to this batch
      * @param newBatch   The source of the Batch information that will assist in populating the Jira Ticket
      * @param issueType  The type of issue to create in JIRA for this lab batch
+     * @param projectType
      */
     public void batchToJira(String reporter, @Nullable String jiraTicket, LabBatch newBatch,
-                            @Nonnull CreateFields.IssueType issueType) {
+                            @Nonnull CreateFields.IssueType issueType, CreateFields.ProjectType projectType) {
         try {
-            CreateFields.ProjectType projectType = null;
-            if(newBatch.getLabBatchType() == LabBatch.LabBatchType.WORKFLOW) {
-                Set<String> bucketDefNames = new HashSet<>();
 
-                for (BucketEntry bucketEntry : newBatch.getBucketEntries()) {
-                    bucketDefNames.add(bucketEntry.getBucket().getBucketDefinitionName());
-                }
-
-                projectType = getProjectType(bucketDefNames);
-            }
             AbstractBatchJiraFieldFactory fieldBuilder = AbstractBatchJiraFieldFactory
                     .getInstance(projectType, newBatch, productOrderDao);
 
@@ -287,35 +288,6 @@ public class LabBatchEjb {
             logger.error("Error attempting to create a lab batch in JIRA", ioe);
             throw new InformaticsServiceException("Error attempting to create a lab batch in JIRA", ioe);
         }
-    }
-
-    private CreateFields.ProjectType getProjectType(Set<String> bucketDefNames) {
-        CreateFields.ProjectType projectType = null;
-
-        if(bucketDefNames.size() >1 ) {
-            throw new IllegalArgumentException("Attempting to create/update a batch with a source from more than "
-                                               + "one Bucket is not allowed at this time");
-        }
-
-        if(!bucketDefNames.isEmpty()) {
-            WorkflowConfig workflowConfig = workflowLoader.load();
-            WorkflowBucketDef bucketDef = null;
-
-            for (Workflow workflow : Workflow.SUPPORTED_WORKFLOWS) {
-                ProductWorkflowDef workflowDef = workflowConfig.getWorkflowByName(workflow.getWorkflowName());
-                ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
-                for (WorkflowBucketDef bucket : workflowVersion.getCreationBuckets()) {
-                    String bucketName = bucket.getName();
-                    if (bucketName.equals(bucketDefNames.iterator().next())) {
-                        bucketDef = bucket;
-                    }
-                }
-            }
-
-            projectType =
-                    CreateFields.ProjectType.fromKeyPrefix(bucketDef.getBatchJiraProjectType());
-        }
-        return projectType;
     }
 
     /**
@@ -364,9 +336,11 @@ public class LabBatchEjb {
      * @param bucketEntryIds the bucket entries whose vessel are being added to the batch
      * @param reworkEntries  the rework bucket entries whose vessels are being added to the batch
      *
+     * @param bucketName
      * @throws IOException This exception is thrown when the JIRA service can not be contacted.
      */
-    public void addToLabBatch(String businessKey, List<Long> bucketEntryIds, List<Long> reworkEntries)
+    public void addToLabBatch(String businessKey, List<Long> bucketEntryIds, List<Long> reworkEntries,
+                              String bucketName)
             throws IOException {
         LabBatch batch = labBatchDao.findByBusinessKey(businessKey);
         Set<String> pdoKeys = new HashSet<>();
@@ -404,12 +378,14 @@ public class LabBatchEjb {
 
         CreateFields.ProjectType projectType = null;
         if(batch.getLabBatchType() == LabBatch.LabBatchType.WORKFLOW) {
-            projectType = getProjectType(bucketDefNames);
+            WorkflowBucketDef bucketDef = getWorkflowBucketDef(bucketName);
+            projectType = CreateFields.ProjectType.valueOf(bucketDef.getBatchJiraProjectType());
         }
 
         if (projectType == CreateFields.ProjectType.EXTRACTION_PROJECT) {
             customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.GSSR_IDS,
-                                             LCSetJiraFieldFactory.buildSamplesListString(batch, reworkFromBucket)));
+                                             AbstractBatchJiraFieldFactory
+                                                     .buildSamplesListString(batch, reworkFromBucket)));
         }
 
         int sampleCount = batch.getStartingBatchLabVessels().size();
@@ -417,7 +393,7 @@ public class LabBatchEjb {
                                          sampleCount));
 
         AbstractBatchJiraFieldFactory fieldBuilder = AbstractBatchJiraFieldFactory
-                .getInstance(projectType,batch, productOrderDao);
+                .getInstance(projectType, batch, productOrderDao);
 
         if (StringUtils.isBlank(batch.getBatchDescription())) {
             batch.setBatchDescription(fieldBuilder.generateDescription());
