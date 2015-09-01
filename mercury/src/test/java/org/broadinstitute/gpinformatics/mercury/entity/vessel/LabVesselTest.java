@@ -40,7 +40,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 @SuppressWarnings("FeatureEnvy")
 @Test(groups = TestGroups.DATABASE_FREE)
 public class LabVesselTest {
-    public void testMultipleTransfersClosestHopReturns() {
+    public void testGetLatestMaterialTypeForVessel() {
         BSPUserList testUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
         BSPSetVolumeConcentration bspSetVolumeConcentration = BSPSetVolumeConcentrationProducer.stubInstance();
         LabEventFactory labEventFactory = new LabEventFactory(testUserList, bspSetVolumeConcentration);
@@ -65,14 +65,10 @@ public class LabVesselTest {
             sourceVessel=destinationVessel;
         }
 
-        // The most recent event to create DNA was the final event of the transfer.
-        TransferTraverserCriteria.LabEventsWithMaterialTypeTraverserCriteria
-                traverserCriteria = destinationVessel.evaluateMaterialTypeTraverserCriteria(LabVessel.MaterialType.DNA);
-        assertThat(traverserCriteria.getHopCount(), is(1));
-
-        // The initial sample was Blood, so we should have to traverse the whole way back to the beginning.
-        traverserCriteria = destinationVessel.evaluateMaterialTypeTraverserCriteria(LabVessel.MaterialType.FRESH_BLOOD);
-        assertThat(traverserCriteria.getHopCount(), is(4));
+        TransferTraverserCriteria.NearestMaterialTypeTraverserCriteria traverserCriteria =
+                destinationVessel.evaluateMaterialTypeTraverserCriteria();
+        assertThat(traverserCriteria.getMaterialType(), is(LabVessel.MaterialType.DNA));
+        assertThat(destinationVessel.isDNA(), is(true));
     }
 
     public void testFindVesselsForLabEventTypes() {

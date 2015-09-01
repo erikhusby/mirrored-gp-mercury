@@ -249,17 +249,32 @@ public abstract class LabVessel implements Serializable {
         return materialTypes;
     }
 
+    /**
+     * Find the current MaterialType of this LabVesel.
+     * @param materialType materialType to test
+     * @return true if the event history indicates the latest MaterialType matches input
+     */
     private boolean hasMaterialConvertedTo(MaterialType materialType) {
-        TransferTraverserCriteria.LabEventsWithMaterialTypeTraverserCriteria materialTypeTraverserCriteria =
-                evaluateMaterialTypeTraverserCriteria(materialType);
-
-        return materialTypeTraverserCriteria.getVesselForMaterialType() != null;
+        return materialType == getLatestMaterialTypeFromEventHistory();
     }
 
-    TransferTraverserCriteria.LabEventsWithMaterialTypeTraverserCriteria evaluateMaterialTypeTraverserCriteria(
-            MaterialType materialType) {
-        TransferTraverserCriteria.LabEventsWithMaterialTypeTraverserCriteria materialTypeTraverserCriteria =
-                new TransferTraverserCriteria.LabEventsWithMaterialTypeTraverserCriteria(materialType);
+    /**
+     * Traverse the event history of this LabVessel to find the current MaterialType.
+     * @return the current MaterialType
+     */
+    public MaterialType getLatestMaterialTypeFromEventHistory() {
+        TransferTraverserCriteria.NearestMaterialTypeTraverserCriteria materialTypeTraverserCriteria =
+                evaluateMaterialTypeTraverserCriteria();
+
+        return materialTypeTraverserCriteria.getMaterialType();
+    }
+
+    /**
+     * Traverser which scans the event history of this LabVessel to find the current MaterialType.
+     */
+    TransferTraverserCriteria.NearestMaterialTypeTraverserCriteria evaluateMaterialTypeTraverserCriteria() {
+        TransferTraverserCriteria.NearestMaterialTypeTraverserCriteria materialTypeTraverserCriteria =
+                new TransferTraverserCriteria.NearestMaterialTypeTraverserCriteria();
         evaluateCriteria(materialTypeTraverserCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
         return materialTypeTraverserCriteria;
     }
