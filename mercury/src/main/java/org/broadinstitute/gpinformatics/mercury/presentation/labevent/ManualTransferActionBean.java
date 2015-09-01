@@ -91,56 +91,55 @@ public class ManualTransferActionBean extends CoreActionBean {
         return new ForwardResolution(MANUAL_TRANSFER_PAGE);
     }
 
-    // todo jmt allow multiple events per message.  Specified by: user; batch size; event type.
-    // Allow geometry to lay out plate or tube event barcodes on page (not transfers, they have to have their own geometry).
-    // Populate metadata
-    // This is all short term, until can generalize TubeFormation to support plates.
-
     @Before(stages = LifecycleStage.BindingAndValidation)
     public void init() {
         String eventType = getContext().getRequest().getParameter("stationEvents[0].eventType");
         if (eventType != null) {
             labEventType = LabEventType.valueOf(eventType);
-            // todo jmt move this to the enum?
+            int numEvents = labEventType.getManualTransferDetails().getNumEvents();
+            if (labEventType.getManualTransferDetails().getSecondaryEvent() != null) {
+                numEvents++;
+            }
+            // todo jmt add secondary events to num
             switch (labEventType.getManualTransferDetails().getMessageType()) {
                 case PLATE_EVENT:
-                    for (int i = 0; i < labEventType.getManualTransferDetails().getNumEvents(); i++) {
+                    for (int i = 0; i < numEvents; i++) {
                         PlateEventType plateEventType = new PlateEventType();
                         stationEvents.add(plateEventType);
                     }
                     break;
                 case PLATE_TRANSFER_EVENT:
-                    for (int i = 0; i < labEventType.getManualTransferDetails().getNumEvents(); i++) {
+                    for (int i = 0; i < numEvents; i++) {
                         PlateTransferEventType plateTransferEventType = new PlateTransferEventType();
                         stationEvents.add(plateTransferEventType);
                     }
                     break;
                 case STATION_SETUP_EVENT:
-                    for (int i = 0; i < labEventType.getManualTransferDetails().getNumEvents(); i++) {
+                    for (int i = 0; i < numEvents; i++) {
                         StationSetupEvent stationSetupEvent = new StationSetupEvent();
                         stationEvents.add(stationSetupEvent);
                     }
                     break;
                 case PLATE_CHERRY_PICK_EVENT:
-                    for (int i = 0; i < labEventType.getManualTransferDetails().getNumEvents(); i++) {
+                    for (int i = 0; i < numEvents; i++) {
                         PlateCherryPickEvent plateCherryPickEvent = new PlateCherryPickEvent();
                         stationEvents.add(plateCherryPickEvent);
                     }
                     break;
                 case RECEPTACLE_PLATE_TRANSFER_EVENT:
-                    for (int i = 0; i < labEventType.getManualTransferDetails().getNumEvents(); i++) {
+                    for (int i = 0; i < numEvents; i++) {
                         ReceptaclePlateTransferEvent receptaclePlateTransferEvent = new ReceptaclePlateTransferEvent();
                         stationEvents.add(receptaclePlateTransferEvent);
                     }
                     break;
                 case RECEPTACLE_EVENT:
-                    for (int i = 0; i < labEventType.getManualTransferDetails().getNumEvents(); i++) {
+                    for (int i = 0; i < numEvents; i++) {
                         ReceptacleEventType receptacleEventType = new ReceptacleEventType();
                         stationEvents.add(receptacleEventType);
                     }
                     break;
                 case RECEPTACLE_TRANSFER_EVENT:
-                    for (int i = 0; i < labEventType.getManualTransferDetails().getNumEvents(); i++) {
+                    for (int i = 0; i < numEvents; i++) {
                         ReceptacleTransferEventType receptacleTransferEventType = new ReceptacleTransferEventType();
                         stationEvents.add(receptacleTransferEventType);
                     }
@@ -418,6 +417,7 @@ public class ManualTransferActionBean extends CoreActionBean {
             int eventIndex = 0;
             while (iterator.hasNext()) {
                 StationEventType stationEvent = iterator.next();
+                // todo jmt set secondary, or set in init, then let JSP hidden field POST it
                 stationEvent.setEventType(labEventType.getName());
                 if (workflowStepDef != null) {
                     stationEvent.setWorkflowQualifier(workflowStepDef.getWorkflowQualifier());

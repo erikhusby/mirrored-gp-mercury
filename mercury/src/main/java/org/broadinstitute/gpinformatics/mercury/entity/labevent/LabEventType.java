@@ -1285,6 +1285,9 @@ public enum LabEventType {
         /** Prompts user with a list of machines. */
         private String[] machineNames = {};
 
+        /** Allows a transfer from one source to two destinations */
+        private LabEventType secondaryEvent;
+
         public ManualTransferDetails(Builder builder) {
             messageType = builder.messageType;
             sourceVesselTypeGeometry = builder.sourceVesselTypeGeometry;
@@ -1410,6 +1413,10 @@ public enum LabEventType {
 
         public boolean isExpirationDateIncluded() {
             return expirationDateIncluded;
+        }
+
+        public LabEventType getSecondaryEvent() {
+            return secondaryEvent;
         }
     }
 

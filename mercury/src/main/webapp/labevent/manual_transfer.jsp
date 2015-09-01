@@ -99,6 +99,7 @@
                             <c:set var="plateTransfer" value="${stationEvent}"/>
                             <%--@elvariable id="plateTransfer" type="org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType"--%>
                             <c:if test="${stationEvent.class.simpleName == 'PlateTransferEventType'}">
+                                <%-- todo jmt Avoid rendering source for secondary event(s) --%>
                                 <h4>Plate Transfer</h4>
                                 <h5>Source</h5>
 
@@ -212,7 +213,7 @@
                                                 <td align="right">
                                                     <c:if test="${empty rowName}">${geometry.vesselPositions[receptacleIndex]}</c:if>
                                                     <input type="text" name="stationEvents[${stationEventStatus.index}].positionMap.receptacle[${receptacleIndex}].barcode"
-                                                            class="clearable, barcode"/>
+                                                            class="clearable, smalltext"/>
                                                     <input type="hidden" name="stationEvents[${stationEventStatus.index}].positionMap.receptacle[${receptacleIndex}].position"
                                                             value="${geometry.vesselPositions[receptacleIndex]}"/>
                                                 </td>
