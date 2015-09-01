@@ -292,6 +292,11 @@ public class LabBatchEjb {
     private CreateFields.ProjectType getProjectType(Set<String> bucketDefNames) {
         CreateFields.ProjectType projectType = null;
 
+        if(bucketDefNames.size() >1 ) {
+            throw new IllegalArgumentException("Attempting to create/update a batch with a source from more than "
+                                               + "one Bucket is not allowed at this time");
+        }
+
         if(!bucketDefNames.isEmpty()) {
             WorkflowConfig workflowConfig = workflowLoader.load();
             WorkflowBucketDef bucketDef = null;
