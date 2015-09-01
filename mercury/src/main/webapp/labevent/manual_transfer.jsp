@@ -57,7 +57,7 @@
                     </stripes:select>
                 </c:if>
 
-                <c:if test="${not empty actionBean.labEventType.reagentNames}">
+                <c:if test="${not empty actionBean.labEventType.manualTransferDetails.reagentNames}">
                     <h5>Reagents</h5>
                     Expiration date format is mm/dd/yyyy.
                     <c:set var="prevReagentType" value=""/>
@@ -81,7 +81,7 @@
                             <label for="rgtBcd${loop.index}">Barcode </label>
                             <input type="text" id="rgtBcd${loop.index}" name="stationEvents[0].reagent[${loop.index}].barcode"
                                     value="${reagent.barcode}" class="barcode"/>
-                            <c:if test="${actionBean.labEventType.expirationDateIncluded}">
+                            <c:if test="${actionBean.labEventType.manualTransferDetails.expirationDateIncluded}">
                                 <label for="rgtExp${loop.index}">Expiration </label>
                                 <input type="text" id="rgtExp${loop.index}" name="stationEvents[0].reagent[${loop.index}].expiration"
                                         value="${reagent.expiration}" class="date"/>
@@ -167,7 +167,7 @@
                             </c:if>
                             <label>Type </label>${plateTransfer.plate.physType}
                             <input type="hidden" name="stationEvents[${stationEventStatus.index}].plate.physType" value="${plateTransfer.plate.physType}"/>
-                            <c:if test="${actionBean.labEventType.targetVesselTypeGeometry.barcoded}">
+                            <c:if test="${actionBean.labEventType.manualTransferDetails.targetVesselTypeGeometry.barcoded}">
                                 <label for="dstPltBcd${stationEventStatus.index}">Barcode</label>
                                 <input type="text" id="dstPltBcd${stationEventStatus.index}"
                                         name="stationEvents[${stationEventStatus.index}].plate.barcode"
