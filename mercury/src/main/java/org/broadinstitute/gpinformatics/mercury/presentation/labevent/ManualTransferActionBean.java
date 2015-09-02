@@ -100,7 +100,6 @@ public class ManualTransferActionBean extends CoreActionBean {
             if (labEventType.getManualTransferDetails().getSecondaryEvent() != null) {
                 numEvents++;
             }
-            // todo jmt add secondary events to num
             switch (labEventType.getManualTransferDetails().getMessageType()) {
                 case PLATE_EVENT:
                     for (int i = 0; i < numEvents; i++) {
@@ -175,6 +174,7 @@ public class ManualTransferActionBean extends CoreActionBean {
             reagentIndex++;
         }
 
+        // todo jmt set event type
         switch (labEventType.getManualTransferDetails().getMessageType()) {
             case PLATE_EVENT:
                 for (StationEventType stationEvent : stationEvents) {
@@ -418,7 +418,7 @@ public class ManualTransferActionBean extends CoreActionBean {
             while (iterator.hasNext()) {
                 StationEventType stationEvent = iterator.next();
                 // todo jmt set secondary, or set in init, then let JSP hidden field POST it
-                stationEvent.setEventType(labEventType.getName());
+//                stationEvent.setEventType(labEventType.getName());
                 if (workflowStepDef != null) {
                     stationEvent.setWorkflowQualifier(workflowStepDef.getWorkflowQualifier());
                 }
