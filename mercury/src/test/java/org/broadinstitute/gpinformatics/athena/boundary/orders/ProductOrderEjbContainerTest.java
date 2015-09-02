@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
 
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
-import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
@@ -24,9 +23,6 @@ public class ProductOrderEjbContainerTest extends Arquillian {
 
     @Inject
     ProductOrderEjb pdoEjb;
-
-    @Inject
-    ProductOrderSampleDao productOrderSampleDao;
 
     @Inject
     ProductOrderDao pdoDao;
@@ -71,7 +67,7 @@ public class ProductOrderEjbContainerTest extends Arquillian {
         pdoEjb.updateJiraIssue(pdo);
         String titleFromJira = getSummaryFieldFromJiraTicket(pdo);
 
-        Assert.assertEquals(titleFromJira,newTitle,"jira summary field is not synchronized with pdo title.");
+        Assert.assertEquals(titleFromJira, newTitle, "jira summary field is not synchronized with pdo title.");
     }
 
 
@@ -84,6 +80,6 @@ public class ProductOrderEjbContainerTest extends Arquillian {
     }
 
     private String getSummaryFieldFromJiraTicket(ProductOrder pdo) throws IOException {
-        return (String)jiraService.getIssue(pdo.getBusinessKey()).getField(ProductOrder.JiraField.SUMMARY.getName());
+        return (String) jiraService.getIssue(pdo.getBusinessKey()).getField(ProductOrder.JiraField.SUMMARY.getName());
     }
 }

@@ -1168,7 +1168,8 @@
                 <batchJiraIssueType>ALLPREP</batchJiraIssueType>
             </workflowStepDefs>
         </workflowProcessDefVersions>
-    </workflowProcessDefs>    <productWorkflowDefs>
+    </workflowProcessDefs>
+    <productWorkflowDefs>
         <name>Agilent Exome Express</name>
         <productWorkflowDefVersions>
             <version>3.0</version>
