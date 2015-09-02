@@ -313,14 +313,7 @@
                                 <fmt:formatDate value="${order.placedDate}" pattern="${actionBean.datePattern}"/>
                             </td>
                             <td align="center">
-                                <div class="barFull" title="${actionBean.progressFetcher.getPercentInProgress(order.businessKey)}% In Progress">
-                                    <span class="barAbandon"
-                                          title="${actionBean.progressFetcher.getPercentAbandoned(order.businessKey)}% Abandoned"
-                                          style="width: ${actionBean.progressFetcher.getPercentAbandoned(order.businessKey)}%"> </span>
-                                    <span class="barComplete"
-                                          title="${actionBean.progressFetcher.getPercentCompleted(order.businessKey)}% Completed"
-                                          style="width: ${actionBean.progressFetcher.getPercentCompleted(order.businessKey)}%"> </span>
-                                </div>
+                                <stripes:layout-render name="/orders/sample_progress_bar.jsp" status="${actionBean.progressFetcher.getStatus(order.businessKey)}"/>
                             </td>
                             <td>${actionBean.progressFetcher.getNumberOfSamples(order.businessKey)}</td>
                             <td>
