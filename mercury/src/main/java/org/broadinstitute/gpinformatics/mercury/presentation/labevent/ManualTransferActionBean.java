@@ -95,7 +95,7 @@ public class ManualTransferActionBean extends CoreActionBean {
     public void init() {
         String eventType = getContext().getRequest().getParameter("stationEvents[0].eventType");
         if (eventType != null) {
-            labEventType = LabEventType.valueOf(eventType);
+            labEventType = LabEventType.getByName(eventType);
             int numEvents = labEventType.getManualTransferDetails().getNumEvents();
             if (labEventType.getManualTransferDetails().getSecondaryEvent() != null) {
                 numEvents++;

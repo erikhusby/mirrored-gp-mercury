@@ -36,7 +36,7 @@
     <stripes:layout-component name="content">
         <stripes:form beanclass="${actionBean.class.name}" id="eventForm">
             <stripes:select name="stationEvents[0].eventType" id="eventType">
-                <stripes:options-collection collection="${actionBean.manualEventTypes}" label="name"/>
+                <stripes:options-collection collection="${actionBean.manualEventTypes}" label="name" value="name"/>
             </stripes:select>
             <stripes:submit name="chooseEventType" value="Choose Event Type" class="btn btn-primary"/>
         </stripes:form>
@@ -153,8 +153,21 @@
                                                         </td>
                                                     </c:forEach>
                                                 </tr>
-                                            </c:forEach>
-                                        </table>
+                                            </c:if>
+                                            <tr>
+                                                <td>${rowName}</td>
+                                                <c:forEach items="${geometry.columnNames}" var="columnName" varStatus="columnStatus">
+                                                    <c:set var="receptacleIndex" value="${rowStatus.index * geometry.columnCount + columnStatus.index}"/>
+                                                    <td>
+                                                        <input type="text" name="stationEvents[${stationEventStatus.index}].sourcePositionMap.receptacle[${receptacleIndex}].barcode"
+                                                                class="clearable barcode"/>
+                                                        <input type="hidden" name="stationEvents[${stationEventStatus.index}].sourcePositionMap.receptacle[${receptacleIndex}].position"
+                                                                value="${geometry.vesselPositions[receptacleIndex]}"/>
+                                                    </td>
+                                                </c:forEach>
+                                            </tr>
+                                        </c:forEach>
+                                    </table>
                                     </c:if>
                                     </div>
                                 </c:if>
@@ -173,7 +186,7 @@
                                 <label for="dstPltBcd${stationEventStatus.index}">Barcode</label>
                                 <input type="text" id="dstPltBcd${stationEventStatus.index}"
                                         name="stationEvents[${stationEventStatus.index}].plate.barcode"
-                                        value="${plateTransfer.plate.barcode}" class="clearable, barcode"/>
+                                        value="${plateTransfer.plate.barcode}" class="clearable barcode"/>
                             </c:if>
                             <c:if test="${stationEvent.class.simpleName == 'PlateTransferEventType'}">
                                 <stripes:label for="destSection">Section</stripes:label>
@@ -214,7 +227,7 @@
                                                 <td align="right">
                                                     <c:if test="${empty rowName}">${geometry.vesselPositions[receptacleIndex]}</c:if>
                                                     <input type="text" name="stationEvents[${stationEventStatus.index}].positionMap.receptacle[${receptacleIndex}].barcode"
-                                                            class="clearable, smalltext"/>
+                                                            class="clearable smalltext"/>
                                                     <input type="hidden" name="stationEvents[${stationEventStatus.index}].positionMap.receptacle[${receptacleIndex}].position"
                                                             value="${geometry.vesselPositions[receptacleIndex]}"/>
                                                 </td>
@@ -239,11 +252,11 @@
                             <label for="srcRcpBcd${stationEventStatus.index}">Barcode</label>
                             <input type="text" id="srcRcpBcd${stationEventStatus.index}"
                                     name="stationEvents[${stationEventStatus.index}].sourceReceptacle.barcode"
-                                    value="${receptacleTransfer.sourceReceptacle.barcode}" class="clearable, barcode"/>
+                                    value="${receptacleTransfer.sourceReceptacle.barcode}" class="clearable barcode"/>
                             <label for="srcRcpVol${stationEventStatus.index}">Volume</label>
                             <input type="text" id="srcRcpVol${stationEventStatus.index}"
                                     name="stationEvents[${stationEventStatus.index}].sourceReceptacle.volume"
-                                    value="${receptacleTransfer.sourceReceptacle.volume}" class="clearable, barcode"/> ul
+                                    value="${receptacleTransfer.sourceReceptacle.volume}" class="clearable barcode"/> ul
                             </div>
                             <div class="control-group">
                             <h5>Destination</h5>
@@ -254,11 +267,11 @@
                             <label for="destRcpBcd${stationEventStatus.index}">Barcode</label>
                             <input type="text" id="destRcpBcd${stationEventStatus.index}"
                                     name="stationEvents[${stationEventStatus.index}].receptacle.barcode"
-                                    value="${receptacleTransfer.receptacle.barcode}" class="clearable, barcode"/>
+                                    value="${receptacleTransfer.receptacle.barcode}" class="clearable barcode"/>
                             <label for="destRcpVol${stationEventStatus.index}">Volume</label>
                             <input type="text" id="destRcpVol${stationEventStatus.index}"
                                     name="stationEvents[${stationEventStatus.index}].receptacle.volume"
-                                    value="${receptacleTransfer.receptacle.volume}" class="clearable, barcode"/> ul
+                                    value="${receptacleTransfer.receptacle.volume}" class="clearable barcode"/> ul
                             </div>
                         </c:when>
                         <c:when test="${stationEvent.class.simpleName == 'ReceptacleEventType'}">
@@ -275,11 +288,11 @@
                                 </label>
                                 <input type="text" id="destRcpBcd${stationEventStatus.index}"
                                         name="stationEvents[${stationEventStatus.index}].receptacle.barcode"
-                                        value="${receptacleEvent.receptacle.barcode}" class="clearable, barcode"/>
+                                        value="${receptacleEvent.receptacle.barcode}" class="clearable barcode"/>
                                 <label for="destRcpVol${stationEventStatus.index}">Volume</label>
                                 <input type="text" id="destRcpVol${stationEventStatus.index}"
                                         name="stationEvents[${stationEventStatus.index}].receptacle.volume"
-                                        value="${receptacleEvent.receptacle.volume}" class="clearable, barcode"/> ul
+                                        value="${receptacleEvent.receptacle.volume}" class="clearable barcode"/> ul
                             </div>
                         </c:when>
                     </c:choose>
