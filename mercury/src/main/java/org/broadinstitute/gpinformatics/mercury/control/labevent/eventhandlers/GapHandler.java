@@ -18,9 +18,7 @@ public class GapHandler {
     @Inject
     private GAPRestClient gapRestClient;
 
-    public void postToGap(StationEventType stationEvent) {
-        BettaLIMSMessage message = SamplesDaughterPlateHandler.buildBettaLIMSMessage(stationEvent);
-
+    public void postToGap(BettaLIMSMessage message) {
         // Posts message to BSP using the specified REST url.
         String urlString = gapRestClient.getUrl("bettalims");
         WebResource webResource = gapRestClient.getWebResource(urlString);

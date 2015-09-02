@@ -561,4 +561,31 @@ public class ReagentFixupTest extends Arquillian {
         genericReagentDao.persist(new FixupCommentary("GPLIM-3588 change reagent used on Ice Capture 2 event."));
         genericReagentDao.flush();
     }
+
+    @Test(enabled = false)
+    public void fixupGplim3712() {
+        userBean.loginOSUser();
+        Reagent undesired = genericReagentDao.findByReagentNameLotExpiration("HS buffer",
+                "91Q33120101689868301", null);
+        Assert.assertNotNull(undesired);
+
+        Reagent desired = genericReagentDao.findByReagentNameLotExpiration(undesired.getName(),
+                "RG-8252", null);
+        Assert.assertNotNull(desired);
+
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, 998742L);
+        System.out.println("Replacing reagent " + undesired.getReagentId() + " with " + desired.getReagentId() +
+                " for event " + labEvent.getLabEventId());
+        Assert.assertTrue(labEvent.getReagents().remove(undesired));
+        labEvent.addReagent(desired);
+
+        labEvent = labEventDao.findById(LabEvent.class, 998747L);
+        System.out.println("Replacing reagent " + undesired.getReagentId() + " with " + desired.getReagentId() +
+                " for event " + labEvent.getLabEventId());
+        Assert.assertTrue(labEvent.getReagents().remove(undesired));
+        labEvent.addReagent(desired);
+
+        genericReagentDao.persist(new FixupCommentary("GPLIM-3712 change reagent used on PicoBufferAddition event."));
+        genericReagentDao.flush();
+    }
 }

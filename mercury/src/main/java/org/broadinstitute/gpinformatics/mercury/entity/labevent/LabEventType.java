@@ -2,9 +2,11 @@ package org.broadinstitute.gpinformatics.mercury.entity.labevent;
 
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselTypeGeometry;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -32,7 +34,9 @@ public enum LabEventType {
     // Shearing
     SHEARING_TRANSFER("ShearingTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY),
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            MessageType.PLATE_TRANSFER_EVENT, RackOfTubes.RackType.Matrix96, StaticPlate.PlateType.Eppendorf96,
+            new String[]{"CrimpCapLot"}),
     COVARIS_LOADED("CovarisLoaded",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY),
@@ -988,6 +992,9 @@ public enum LabEventType {
     INFINIUM_HYBRIDIZATION("InfiniumHybridization",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.GAP, VolumeConcUpdate.MERCURY_ONLY),
+    INFINIUM_POST_HYBRIDIZATION_HYB_OVEN_LOADED("InfiniumPostHybridizationHybOvenLoaded",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.GAP, VolumeConcUpdate.MERCURY_ONLY),
     INFINIUM_HYB_CHAMBER_LOADED("InfiniumHybChamberLoaded",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.GAP, VolumeConcUpdate.MERCURY_ONLY),
@@ -996,7 +1003,42 @@ public enum LabEventType {
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.GAP, VolumeConcUpdate.MERCURY_ONLY),
     INFINIUM_XSTAIN("InfiniumXStain",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.GAP, VolumeConcUpdate.MERCURY_ONLY);
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.GAP, VolumeConcUpdate.MERCURY_ONLY,
+            MessageType.PLATE_EVENT, null, StaticPlate.PlateType.InfiniumChip24,
+            new String[]{"RA1", "LX1", "LX2", "XC3", "XC4", "SML", "ATM", "EML"},
+            new int[]{1, 6, 6, 1, 1, 6, 6, 6}, false, 24, new String[]{"Rose", "Lily", "Scrappy"}),
+
+    // Generic events that are qualified by workflow
+    // todo jmt need different versions for PLATE_EVENT and RECEPTACLE_EVENT?
+    CENTRIFUGE("Centrifuge",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY),
+    INCUBATE("Incubate",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY),
+    MIX("Mix",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY),
+    WASH("Wash",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY),
+    ADD_REAGENT("AddReagent",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            MessageType.RECEPTACLE_EVENT, null, null, null),
+    PREP("Prep",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY),
+    DISCARD("Discard",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY),
+    MOVE("Move",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY),
+    STORE("Store",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY),
+    ;
 
 
     private final String name;
@@ -1141,12 +1183,32 @@ public enum LabEventType {
         RECEPTACLE_TRANSFER_EVENT
     }
 
+    /** For Manual Transfers, determines layout of page. */
     private MessageType messageType;
 
+    /** For Manual Transfers, determines layout of page. */
     private VesselTypeGeometry sourceVesselTypeGeometry;
+
+    /** For Manual Transfers, determines layout of page. */
     private VesselTypeGeometry targetVesselTypeGeometry;
 
+    /** For Manual Transfers, prompts user for reagents. */
     private String[] reagentNames;
+
+    /** How many reagent fields for each entry in reagentNames. */
+    private int[] reagentFieldCounts;
+
+    /** Map from entries in reagentNames to corresponding entiry in reagentFieldCounts. */
+    private Map<String, Integer> mapReagentNameToCount;
+
+    /** Whether to include reagent expiration date fields. */
+    private boolean expirationDateIncluded = true;
+
+    /** For Manual Transfers, allows multiple events to share one set of reagents. */
+    private int numEvents = 1;
+
+    /** For Manual Transfers (deck transfers that aren't messaged), prompts user with a list of machines. */
+    private String[] machineNames = new String[]{};
 
     /**
      * One attempt at trying to make a very generic
@@ -1179,6 +1241,22 @@ public enum LabEventType {
         this(name, expectSourcesEmpty, expectTargetsEmpty, systemOfRecord, createSources, plasticToValidate,
                 pipelineTransformation, forwardMessage, volumeConcUpdate, messageType, sourceVesselTypeGeometry,
                 targetVesselTypeGeometry, reagentNames, null);
+    }
+
+    LabEventType(String name, ExpectSourcesEmpty expectSourcesEmpty, ExpectTargetsEmpty expectTargetsEmpty,
+            SystemOfRecord systemOfRecord, CreateSources createSources, PlasticToValidate plasticToValidate,
+            PipelineTransformation pipelineTransformation, ForwardMessage forwardMessage,
+            VolumeConcUpdate volumeConcUpdate, MessageType messageType,
+            VesselTypeGeometry sourceVesselTypeGeometry, VesselTypeGeometry targetVesselTypeGeometry,
+            String[] reagentNames, int[] reagentFieldCounts,  boolean expirationDateIncluded,  int numEvents,
+            String[] machineNames) {
+        this(name, expectSourcesEmpty, expectTargetsEmpty, systemOfRecord, createSources, plasticToValidate,
+                pipelineTransformation, forwardMessage, volumeConcUpdate, messageType, sourceVesselTypeGeometry,
+                targetVesselTypeGeometry, reagentNames, null);
+        this.reagentFieldCounts = reagentFieldCounts;
+        this.expirationDateIncluded = expirationDateIncluded;
+        this.numEvents = numEvents;
+        this.machineNames = machineNames;
     }
 
     LabEventType(String name, ExpectSourcesEmpty expectSourcesEmpty, ExpectTargetsEmpty expectTargetsEmpty,
@@ -1264,5 +1342,35 @@ public enum LabEventType {
 
     public String[] getReagentNames() {
         return reagentNames;
+    }
+
+    public int getNumEvents() {
+        return numEvents;
+    }
+
+    public String[] getMachineNames() {
+        return machineNames;
+    }
+
+    public int[] getReagentFieldCounts() {
+        if (reagentFieldCounts == null) {
+            reagentFieldCounts = new int[reagentNames.length];
+            Arrays.fill(reagentFieldCounts, 1);
+        }
+        return reagentFieldCounts;
+    }
+
+    public Map<String, Integer> getMapReagentNameToCount() {
+        if (mapReagentNameToCount == null) {
+            mapReagentNameToCount = new HashMap<>();
+            for (int i = 0; i < reagentNames.length; i++) {
+                mapReagentNameToCount.put(reagentNames[i], getReagentFieldCounts()[i]);
+            }
+        }
+        return mapReagentNameToCount;
+    }
+
+    public boolean isExpirationDateIncluded() {
+        return expirationDateIncluded;
     }
 }
