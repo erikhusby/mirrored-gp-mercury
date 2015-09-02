@@ -994,18 +994,19 @@ public enum LabEventType {
             new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT, RackOfTubes.RackType.FlipperRackRow24,
                     RackOfTubes.RackType.FlipperRackRow24).sourceSection(SBSSection.ROWOF24).
                     targetSection(SBSSection.ROWOF24).build()),
-    ALLPREP_LYSATE_TO_DNA_SPIN("AllPrepLysateToDnaSpin",
-            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.FALSE, SystemOfRecord.MERCURY, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT, RackOfTubes.RackType.FlipperRackRow24,
-                    RackOfTubes.RackType.FlipperRackRow24).sourceSection(SBSSection.ROWOF24).
-                    targetSection(SBSSection.ROWOF24).build()),
+    // this is out of order, to avoid illegal forward reference
     ALLPREP_FLOWTHROUGH_TO_RNA_SPIN("AllPrepFlowthroughToRnaSpin",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.FALSE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT, RackOfTubes.RackType.FlipperRackRow24,
                     RackOfTubes.RackType.FlipperRackRow24).sourceSection(SBSSection.ROWOF24).
                     targetSection(SBSSection.ROWOF24).build()),
+    ALLPREP_LYSATE_TO_DNA_SPIN("AllPrepLysateToDnaSpin",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.FALSE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT, RackOfTubes.RackType.FlipperRackRow24,
+                    RackOfTubes.RackType.FlipperRackRow24).sourceSection(SBSSection.ROWOF24).
+                    targetSection(SBSSection.ROWOF24).secondaryEvent(ALLPREP_FLOWTHROUGH_TO_RNA_SPIN).build()),
     ALLPREP_RNA_TO_MICRO("AllPrepRnaToMicro",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.FALSE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
@@ -1229,7 +1230,7 @@ public enum LabEventType {
     public enum ForwardMessage {
         BSP,
         GAP,
-        NONE;
+        NONE
     }
 
     private final PipelineTransformation pipelineTransformation;
@@ -1288,6 +1289,7 @@ public enum LabEventType {
         /** Allows a transfer from one source to two destinations */
         private LabEventType secondaryEvent;
 
+        @SuppressWarnings("AccessingNonPublicFieldOfAnotherObject")
         public ManualTransferDetails(Builder builder) {
             messageType = builder.messageType;
             sourceVesselTypeGeometry = builder.sourceVesselTypeGeometry;
@@ -1299,6 +1301,7 @@ public enum LabEventType {
             numEvents = builder.numEvents;
             reagentNames = builder.reagentNames;
             machineNames = builder.machineNames;
+            secondaryEvent = builder.secondaryEvent;
         }
 
         public static class Builder {
@@ -1309,10 +1312,11 @@ public enum LabEventType {
             private SBSSection sourceSection;
             private SBSSection targetSection;
             private String[] reagentNames = {};
-            private int[] reagentFieldCounts = {};
+            private int[] reagentFieldCounts;
             private boolean expirationDateIncluded = true;
             private int numEvents = 1;
             private String[] machineNames = {};
+            private LabEventType secondaryEvent;
 
             public Builder(MessageType messageType, VesselTypeGeometry sourceVesselTypeGeometry,
                     VesselTypeGeometry targetVesselTypeGeometry) {
@@ -1356,10 +1360,14 @@ public enum LabEventType {
                 return this;
             }
 
+            public Builder secondaryEvent(LabEventType secondaryEvent) {
+                this.secondaryEvent = secondaryEvent;
+                return this;
+            }
+
             public ManualTransferDetails build() {
                 return new ManualTransferDetails(this);
             }
-
         }
 
         public MessageType getMessageType() {
@@ -1393,6 +1401,7 @@ public enum LabEventType {
         public String[] getMachineNames() {
             return machineNames;
         }
+
         public int[] getReagentFieldCounts() {
             if (reagentFieldCounts == null) {
                 reagentFieldCounts = new int[reagentNames.length];
