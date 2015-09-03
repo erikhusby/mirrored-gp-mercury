@@ -147,27 +147,14 @@
                                                         <c:set var="receptacleIndex" value="${rowStatus.index * geometry.columnCount + columnStatus.index}"/>
                                                         <td>
                                                             <input type="text" name="stationEvents[${stationEventStatus.index}].sourcePositionMap.receptacle[${receptacleIndex}].barcode"
-                                                                    class="clearable, smalltext"/>
+                                                                    class="clearable smalltext"/>
                                                             <input type="hidden" name="stationEvents[${stationEventStatus.index}].sourcePositionMap.receptacle[${receptacleIndex}].position"
                                                                     value="${geometry.vesselPositions[receptacleIndex]}"/>
                                                         </td>
                                                     </c:forEach>
                                                 </tr>
-                                            </c:if>
-                                            <tr>
-                                                <td>${rowName}</td>
-                                                <c:forEach items="${geometry.columnNames}" var="columnName" varStatus="columnStatus">
-                                                    <c:set var="receptacleIndex" value="${rowStatus.index * geometry.columnCount + columnStatus.index}"/>
-                                                    <td>
-                                                        <input type="text" name="stationEvents[${stationEventStatus.index}].sourcePositionMap.receptacle[${receptacleIndex}].barcode"
-                                                                class="clearable barcode"/>
-                                                        <input type="hidden" name="stationEvents[${stationEventStatus.index}].sourcePositionMap.receptacle[${receptacleIndex}].position"
-                                                                value="${geometry.vesselPositions[receptacleIndex]}"/>
-                                                    </td>
-                                                </c:forEach>
-                                            </tr>
-                                        </c:forEach>
-                                    </table>
+                                            </c:forEach>
+                                        </table>
                                     </c:if>
                                     </div>
                                 </c:if>
@@ -237,7 +224,8 @@
                                 </table>
                             </c:if>
                             </div>
-                        </c:when>
+                        </c:when> <%-- end PlateTransferEventType or PlateEventType--%>
+
                         <c:when test="${stationEvent.class.simpleName == 'ReceptacleTransferEventType'}">
                             <c:set var="receptacleTransfer" value="${stationEvent}"/>
                             <%--@elvariable id="receptacleTransfer" type="org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleTransferEventType"--%>
@@ -273,7 +261,8 @@
                                     name="stationEvents[${stationEventStatus.index}].receptacle.volume"
                                     value="${receptacleTransfer.receptacle.volume}" class="clearable barcode"/> ul
                             </div>
-                        </c:when>
+                        </c:when> <%-- end ReceptacleTransferEventType --%>
+
                         <c:when test="${stationEvent.class.simpleName == 'ReceptacleEventType'}">
                             <c:set var="receptacleEvent" value="${stationEvent}"/>
                             <%--@elvariable id="receptacleEvent" type="org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEventType"--%>
@@ -294,7 +283,7 @@
                                         name="stationEvents[${stationEventStatus.index}].receptacle.volume"
                                         value="${receptacleEvent.receptacle.volume}" class="clearable barcode"/> ul
                             </div>
-                        </c:when>
+                        </c:when> <%-- end ReceptacleEventType --%>
                     </c:choose>
                 </c:forEach>
                 <stripes:submit name="fetchExisting" value="Fetch Existing" class="btn"/>
