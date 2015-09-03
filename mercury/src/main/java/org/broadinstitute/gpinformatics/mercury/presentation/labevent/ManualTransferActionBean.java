@@ -76,6 +76,8 @@ public class ManualTransferActionBean extends CoreActionBean {
     /** Set in the init method, from a POSTed parameter. */
     private LabEventType labEventType;
 
+    private int anonymousRackDisambiguator = 1;
+
     @Inject
     private BettaLimsMessageResource bettaLimsMessageResource;
 
@@ -478,7 +480,8 @@ public class ManualTransferActionBean extends CoreActionBean {
             if (vesselTypeGeometry.isBarcoded()) {
                 barcode = plate.getBarcode();
             } else {
-                barcode = String.valueOf(System.currentTimeMillis());
+                barcode = String.valueOf(System.currentTimeMillis()) + anonymousRackDisambiguator;
+                anonymousRackDisambiguator++;
                 plate.setBarcode(barcode);
             }
             positionMapType.setBarcode(barcode);

@@ -39,7 +39,7 @@
                                 <c:when test="${not empty labEventType.manualTransferDetails.messageType}">
                                     <stripes:link beanclass="org.broadinstitute.gpinformatics.mercury.presentation.labevent.ManualTransferActionBean"
                                             event="chooseEventType">
-                                        <stripes:param name="stationEvents[0].eventType" value="${labEventType.name()}"/>
+                                        <stripes:param name="stationEvents[0].eventType" value="${labEventType.name}"/>
                                         <stripes:param name="workflowProcessName" value="${workflowEvent.workflowStepDef.processDef.name}"/>
                                         <stripes:param name="workflowStepName" value="${workflowEvent.workflowStepDef.name}"/>
                                         <stripes:param name="workflowEffectiveDate" value="${actionBean.labBatch.createdOn}"/>
