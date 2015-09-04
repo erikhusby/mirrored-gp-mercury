@@ -85,11 +85,19 @@ public class SalesforceConfig extends AbstractConfig implements LoginAndPassword
     }
 
     public String getApiUrl(String apiUrl) {
-        return apiUrl + "/services/data/" + SALESFORCE_API_VERSION;
+        return apiUrl + getApiUri();
+    }
+
+    public String getApiUri() {
+        return "/services/data/" + SALESFORCE_API_VERSION;
     }
 
     public String getLoginUrl() {
-        return getBaseUrl() + "/services/oauth2/token";
+        return getBaseUrl() + getLoginUri();
+    }
+
+    private String getLoginUri() {
+        return "/services/oauth2/token";
     }
 
     public static SalesforceConfig produce(Deployment deployment) { return produce(SalesforceConfig.class, deployment);}

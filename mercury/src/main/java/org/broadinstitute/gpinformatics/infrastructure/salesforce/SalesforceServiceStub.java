@@ -11,7 +11,7 @@ import javax.enterprise.inject.Alternative;
 @Alternative
 public class SalesforceServiceStub implements SalesforceService {
     @Override
-    public void pushProducts() {
+    public void pushProduct(String exomeExpressV2PartNumber) {
 
     }
 }

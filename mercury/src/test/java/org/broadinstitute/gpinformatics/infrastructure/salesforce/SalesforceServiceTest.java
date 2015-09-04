@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.salesforce;
 
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -10,7 +10,9 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.AUTO_BUILD;
+import java.io.IOException;
+import java.net.URISyntaxException;
+
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
 /**
@@ -30,7 +32,8 @@ public class SalesforceServiceTest extends Arquillian{
     }
 
     @Test(groups = TestGroups.STANDARD)
-    public void testPushProducts() {
-        salesforceService.pushProducts();
+    public void testPushProducts() throws URISyntaxException, IOException {
+//        salesforceService.pushProduct(Product.EXOME_EXPRESS_V2_PART_NUMBER);
+        salesforceService.pushProduct(Product.SAMPLE_INITIATION_PART_NUMBER);
     }
 }
