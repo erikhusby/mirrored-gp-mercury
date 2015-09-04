@@ -10,6 +10,7 @@ import net.sourceforge.stripes.controller.LifecycleStage;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.bsp.client.rackscan.ScannerException;
 import org.broadinstitute.gpinformatics.infrastructure.ObjectMarshaller;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
@@ -37,7 +38,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselTypeGeometry
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
-import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.vessel.RackScanActionBean;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -51,14 +52,17 @@ import java.util.Map;
 /**
  * A Stripes Action Bean to record manual transfers.
  */
-@UrlBinding("/labevent/manualtransfer.action")
-public class ManualTransferActionBean extends CoreActionBean {
+@UrlBinding(ManualTransferActionBean.ACTION_BEAN_URL)
+public class ManualTransferActionBean extends RackScanActionBean {
     private static final Log log = LogFactory.getLog(ManualTransferActionBean.class);
 
     public static final String MANUAL_TRANSFER_PAGE = "/labevent/manual_transfer.jsp";
     public static final String CHOOSE_EVENT_TYPE_ACTION = "chooseEventType";
     public static final String TRANSFER_ACTION = "transfer";
     public static final String FETCH_EXISTING_ACTION = "fetchExisting";
+    public static final String ACTION_BEAN_URL = "/labevent/manualtransfer.action";
+    public static final String PAGE_TITLE = "Manual Transfers";
+    public static final String RACK_SCAN_EVENT = "rackScan";
 
     /** Parameter from batch workflow page. */
     private String workflowProcessName;
@@ -247,6 +251,12 @@ public class ManualTransferActionBean extends CoreActionBean {
             workflowStepDef.getReagentTypes();
         }
         return workflowStepDef;
+    }
+
+    @HandlesEvent(RACK_SCAN_EVENT)
+    public Resolution rackScan() throws ScannerException {
+        scan();
+        return new ForwardResolution(MANUAL_TRANSFER_PAGE);
     }
 
     /**
@@ -545,5 +555,15 @@ public class ManualTransferActionBean extends CoreActionBean {
 
     public WorkflowStepDef getWorkflowStepDef() {
         return workflowStepDef;
+    }
+
+    @Override
+    public String getRackScanPageUrl() {
+        return ACTION_BEAN_URL;
+    }
+
+    @Override
+    public String getPageTitle() {
+        return PAGE_TITLE;
     }
 }

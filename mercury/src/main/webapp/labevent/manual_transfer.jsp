@@ -1,3 +1,4 @@
+<%@ page import="org.broadinstitute.gpinformatics.mercury.presentation.labevent.ManualTransferActionBean" %>
 <%--
   This page allows the user to record a manual transfer, i.e. a transfer not done on a liquid handling deck with
   messaging.
@@ -12,6 +13,7 @@
 <stripes:layout-render name="/layout.jsp" pageTitle="Manual Transfer" sectionTitle="Manual Transfer">
 
     <stripes:layout-component name="extraHead">
+        <%@ include file="/vessel/rack_scanner_list_with_sim_part1.jsp" %>
         <style type="text/css">
             label {
                 display: inline;
@@ -94,6 +96,11 @@
                 <c:forEach items="${actionBean.stationEvents}" var="stationEvent" varStatus="stationEventStatus">
                     <input type="hidden" name="stationEvents[${stationEventStatus.index}].eventType"
                             value="${actionBean.stationEvents[stationEventStatus.index].eventType}"/>
+                    <c:if test="${fn:length(actionBean.stationEvents) > 1}">
+                        ${stationEventStatus.index + 1}
+                        <input type="hidden" name="stationEvents[${stationEventStatus.index}].metadata[0].name" value="MessageNum"/>
+                        <input type="hidden" name="stationEvents[${stationEventStatus.index}].metadata[0].value" value="${stationEventStatus.index + 1}"/>
+                    </c:if>
                     <c:choose>
                         <c:when test="${stationEvent.class.simpleName == 'PlateTransferEventType' or stationEvent.class.simpleName == 'PlateEventType'}">
                             <c:set var="plateTransfer" value="${stationEvent}"/>
@@ -162,11 +169,6 @@
                                 <h5>Destination</h5>
                             </c:if>
                             <div class="control-group">
-                            <c:if test="${fn:length(actionBean.stationEvents) > 1}">
-                                ${stationEventStatus.index + 1}
-                                <input type="hidden" name="stationEvents[${stationEventStatus.index}].metadata[0].name" value="MessageNum"/>
-                                <input type="hidden" name="stationEvents[${stationEventStatus.index}].metadata[0].value" value="${stationEventStatus.index + 1}"/>
-                            </c:if>
                             <label>Type </label>${plateTransfer.plate.physType}
                             <input type="hidden" name="stationEvents[${stationEventStatus.index}].plate.physType" value="${plateTransfer.plate.physType}"/>
                             <c:if test="${actionBean.labEventType.manualTransferDetails.targetVesselTypeGeometry.barcoded}">
@@ -197,6 +199,12 @@
                                 <%--todo jmt reduce copy / paste--%>
                                 <c:set var="geometry" value="${actionBean.labEventType.manualTransferDetails.targetVesselTypeGeometry.vesselGeometry}"/>
                                 <%--@elvariable id="geometry" type="org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry"--%>
+                                <!-- Adds the dropdowns for lab and scanner, and possibly a file chooser. -->
+                                <stripes:layout-render name="/vessel/rack_scanner_list_with_sim_part2.jsp" bean="${actionBean}"/>
+                                <div class="controls">
+                                    <stripes:submit value="Scan" id="scanBtn" class="btn btn-primary"
+                                            name="<%= ManualTransferActionBean.RACK_SCAN_EVENT %>"/>
+                                </div>
                                 <table>
                                     <c:forEach items="${geometry.rowNames}" var="rowName" varStatus="rowStatus">
                                         <c:if test="${rowStatus.first}">
