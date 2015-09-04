@@ -1315,27 +1315,16 @@ AS
                   FROM im_event_fact
                  WHERE is_delete = 'F') LOOP
       BEGIN
-        BEGIN
-          -- Raises exception for an invalid batch_name if not a BSP or Activity workflow.
-          SELECT 1 INTO v_tmp FROM DUAL
-          WHERE NVL(new.batch_name, 'NONE') NOT IN ('NONE', 'MULTIPLE')
-                OR EXISTS (SELECT 1 FROM workflow w
-          WHERE w.workflow_name in ('BSP', 'Activity') AND new.workflow_id = w.workflow_id)
-                OR EXISTS (SELECT 1 FROM workflow_process p
-          WHERE p.event_name = 'PicoPlatingBucket' AND new.process_id = p.process_id);
-
-          EXCEPTION WHEN NO_DATA_FOUND
-          THEN RAISE INVALID_LAB_BATCH;
-        END;
-
         -- No update is possible due to lack of common unique key
         INSERT INTO event_fact (
           event_fact_id,
           lab_event_id,
           workflow_id,
           process_id,
+          lab_event_type,
           product_order_id,
           sample_name,
+          entry_sample_name,
           batch_name,
           station_name,
           lab_vessel_id,
@@ -1350,8 +1339,10 @@ AS
             new.lab_event_id,
             new.workflow_id,
             new.process_id,
+            new.lab_event_type,
             new.product_order_id,
             new.sample_name,
+            new.entry_sample_name,
             new.batch_name,
             new.station_name,
             new.lab_vessel_id,
@@ -1371,12 +1362,6 @@ AS
         V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;
 
       EXCEPTION
-        WHEN INVALID_LAB_BATCH THEN
-          DBMS_OUTPUT.PUT_LINE(
-              TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_event_fact.dat line ' || new.line_number || '  ' ||
-              'Event fact has invalid lab batch name: ' || NVL(new.batch_name, '(null)'));
-          CONTINUE;
-
         WHEN OTHERS THEN
           errmsg := SQLERRM;
           DBMS_OUTPUT.PUT_LINE(

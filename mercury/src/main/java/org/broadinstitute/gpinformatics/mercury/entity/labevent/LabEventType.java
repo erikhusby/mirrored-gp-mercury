@@ -261,7 +261,7 @@ public enum LabEventType {
     DILUTION_TO_FLOWCELL_TRANSFER("DilutionToFlowcellTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            LibraryType.NONE_ASSIGNED),
+            LibraryType.HISEQ_FLOWCELL),
 
     // for MiSeq
     DENATURE_TO_REAGENT_KIT_TRANSFER("MiseqReagentKitLoading",
@@ -1436,7 +1436,8 @@ public enum LabEventType {
         MISEQ_FLOWCELL("MiSeq Flowcell"),
         NONE_ASSIGNED(""),
         POOLED_NORMALIZED("Pooled Normalized"),
-        NORMALIZED_DENATURED("Normalized / Denatured");
+        NORMALIZED_DENATURED("Normalized/Denatured"),
+        HISEQ_FLOWCELL("HiSeq Flowcell");
 
         private LibraryType( String displayName ){
             this.displayName = displayName;

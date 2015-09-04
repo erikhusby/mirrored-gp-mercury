@@ -12,8 +12,10 @@ CREATE TABLE MERCURYDW.IM_EVENT_FACT (
   LAB_EVENT_ID NUMBER(19),
   WORKFLOW_ID NUMBER(19),
   PROCESS_ID NUMBER(19),
+  LAB_EVENT_TYPE VARCHAR2(64),
   PRODUCT_ORDER_ID NUMBER(19),
   SAMPLE_NAME VARCHAR2(40),
+  ENTRY_SAMPLE_NAME VARCHAR2(40),
   BATCH_NAME VARCHAR2(40),
   STATION_NAME VARCHAR2(255),
   LAB_VESSEL_ID NUMBER(19),
@@ -37,8 +39,10 @@ CREATE TABLE MERCURYDW.EVENT_FACT(
   LAB_EVENT_ID NUMBER(19) NOT NULL,
   WORKFLOW_ID NUMBER(19),
   PROCESS_ID NUMBER(19),
+  LAB_EVENT_TYPE VARCHAR2(64),
   PRODUCT_ORDER_ID NUMBER(19),
   SAMPLE_NAME VARCHAR2(40),
+  ENTRY_SAMPLE_NAME VARCHAR2(40),
   BATCH_NAME VARCHAR2(40),
   STATION_NAME VARCHAR2(255),
   LAB_VESSEL_ID NUMBER(19),
@@ -91,8 +95,8 @@ CREATE TABLE library_ancestry_fact
   etl_date                  DATE NOT NULL
 );
 
-CREATE INDEX idx_ancestry_fact_hierarchy on library_ancestry_fact (child_library_id, ancestor_library_id );
-CREATE INDEX idx_ancestry_fact_reverse on library_ancestry_fact (ancestor_library_id, child_library_id );
+CREATE UNIQUE INDEX PK_ANCESTRY_FACT on library_ancestry_fact (child_library_id, ancestor_library_id, child_event_id, ancestor_event_id );
+CREATE INDEX IDX_ANCESTOR_ANCESTRY_HIERARCHY on library_ancestry_fact (ancestor_library_id, child_library_id );
 CREATE UNIQUE INDEX IDX_VESSEL_LABEL ON LAB_VESSEL( LABEL ) COMPUTE STATISTICS;
 
 -- Warehouse query performance
