@@ -869,7 +869,7 @@ public enum SBSSection {
             VesselPosition.G01,
             VesselPosition.H01)),
     // The first two rows of a 96 well plate
-    P96_ROWS1_2("P96_ROWS1_2", Arrays.asList(
+    P96_ROWSAB("P96_ROWSAB", Arrays.asList(
             VesselPosition.A01,
             VesselPosition.A02,
             VesselPosition.A03,

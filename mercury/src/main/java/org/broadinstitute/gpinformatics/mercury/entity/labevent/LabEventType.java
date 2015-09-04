@@ -1018,7 +1018,7 @@ public enum LabEventType {
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT, RackOfTubes.RackType.FlipperRackRow24,
                     RackOfTubes.RackType.Matrix96).sourceSection(SBSSection.ROWOF24).
-                    targetSection(SBSSection.P96_ROWS1_2).build(), LabVessel.MaterialType.RNA),
+                    targetSection(SBSSection.P96_ROWSAB).build(), LabVessel.MaterialType.RNA),
     ALLPREP_DNA_TO_MICRO("AllPrepDnaToMicro",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.FALSE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
@@ -1029,7 +1029,8 @@ public enum LabEventType {
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.FALSE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT, RackOfTubes.RackType.FlipperRackRow24,
-                    RackOfTubes.RackType.Matrix96).build(), LabVessel.MaterialType.DNA),
+                    RackOfTubes.RackType.Matrix96).sourceSection(SBSSection.ROWOF24).
+                    targetSection(SBSSection.P96_ROWSAB).build(), LabVessel.MaterialType.DNA),
 
     //Infinium
     INFINIUM_AMPLIFICATION("InfiniumAmplification",
