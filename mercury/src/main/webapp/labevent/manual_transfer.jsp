@@ -51,6 +51,10 @@
                 <input type="hidden" name="workflowStepName" value="${actionBean.workflowStepName}"/>
                 <input type="hidden" name="workflowEffectiveDate" value="${actionBean.workflowEffectiveDate}"/>
                 <input type="hidden" name="batchName" value="${actionBean.batchName}"/>
+                <%-- Set by transfer_plate.jsp --%>
+                <input type="hidden" name="scanIndex" value="">
+                <%-- Set by transfer_plate.jsp --%>
+                <input type="hidden" name="scanSource" value="">
 
                 <c:if test="${not empty actionBean.labEventType.manualTransferDetails.machineNames}">
                     <stripes:label for="station">Machine </stripes:label>
@@ -110,128 +114,28 @@
                                     <h4>Plate Transfer</h4>
                                     <h5>Source</h5>
 
-                                    <div class="control-group">
-                                    <label>Type </label>${plateTransfer.sourcePlate.physType}
-                                    <input type="hidden" name="stationEvents[${stationEventStatus.index}].sourcePlate.physType"
-                                            value="${plateTransfer.sourcePlate.physType}"/>
-                                    <label for="srcPltBcd${stationEventStatus.index}">Barcode</label>
-                                    <input type="text" id="srcPltBcd${stationEventStatus.index}"
-                                            name="stationEvents[${stationEventStatus.index}].sourcePlate.barcode"
-                                            value="${plateTransfer.sourcePlate.barcode}" class="barcode"/>
-                                    <stripes:label for="sourceSection${stationEventStatus.index}">Section</stripes:label>
-                                        <c:choose>
-                                            <c:when test="${not empty actionBean.labEventType.manualTransferDetails.sourceSection}">
-                                                ${actionBean.labEventType.manualTransferDetails.sourceSection.sectionName}
-                                                <stripes:hidden name="stationEvents[${stationEventStatus.index}].sourcePlate.section"
-                                                        value="${actionBean.labEventType.manualTransferDetails.sourceSection.sectionName}"/>
-                                            </c:when>
-                                            <c:otherwise>
-                                                <stripes:select name="stationEvents[${stationEventStatus.index}].sourcePlate.section"
-                                                        id="sourceSection${stationEventStatus.index}">
-                                                    <%--todo jmt geometry-specific sections--%>
-                                                    <stripes:options-enumeration
-                                                            enum="org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection"
-                                                            label="sectionName"/>
-                                                </stripes:select>
-                                            </c:otherwise>
-                                        </c:choose>
-                                    <c:if test="${not empty plateTransfer.sourcePositionMap}">
-                                        <c:set var="geometry" value="${actionBean.labEventType.manualTransferDetails.sourceVesselTypeGeometry.vesselGeometry}"/>
-                                        <%--@elvariable id="geometry" type="org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry"--%>
-                                        <table>
-                                            <c:forEach items="${geometry.rowNames}" var="rowName" varStatus="rowStatus">
-                                                <c:if test="${rowStatus.first}">
-                                                    <tr>
-                                                        <td></td>
-                                                        <c:forEach items="${geometry.columnNames}" var="columnName" varStatus="columnStatus">
-                                                            <td><c:out value="${columnName}"/></td>
-                                                        </c:forEach>
-                                                    </tr>
-                                                </c:if>
-                                                <tr>
-                                                    <td>${rowName}</td>
-                                                    <c:forEach items="${geometry.columnNames}" var="columnName" varStatus="columnStatus">
-                                                        <c:set var="receptacleIndex" value="${rowStatus.index * geometry.columnCount + columnStatus.index}"/>
-                                                        <td>
-                                                            <input type="text" name="stationEvents[${stationEventStatus.index}].sourcePositionMap.receptacle[${receptacleIndex}].barcode"
-                                                                    class="clearable smalltext"/>
-                                                            <input type="hidden" name="stationEvents[${stationEventStatus.index}].sourcePositionMap.receptacle[${receptacleIndex}].position"
-                                                                    value="${geometry.vesselPositions[receptacleIndex]}"/>
-                                                        </td>
-                                                    </c:forEach>
-                                                </tr>
-                                            </c:forEach>
-                                        </table>
-                                    </c:if>
-                                    </div>
+                                    <c:set var="stationEvent" value="${stationEvent}" scope="request"/>
+                                    <c:set var="plate" value="${plateTransfer.sourcePlate}" scope="request"/>
+                                    <c:set var="positionMap" value="${plateTransfer.sourcePositionMap}" scope="request"/>
+                                    <c:set var="stationEventIndex" value="${stationEventStatus.index}" scope="request"/>
+                                    <c:set var="vesselTypeGeometry" value="${actionBean.labEventType.manualTransferDetails.sourceVesselTypeGeometry}" scope="request"/>
+                                    <c:set var="section" value="${actionBean.labEventType.manualTransferDetails.sourceSection}" scope="request"/>
+                                    <c:set var="source" value="${true}" scope="request"/>
+                                    <jsp:include page="transfer_plate.jsp"/>
+
                                 </c:if>
 
                                 <h5>Destination</h5>
                             </c:if>
-                            <div class="control-group">
-                            <label>Type </label>${plateTransfer.plate.physType}
-                            <input type="hidden" name="stationEvents[${stationEventStatus.index}].plate.physType" value="${plateTransfer.plate.physType}"/>
-                            <c:if test="${actionBean.labEventType.manualTransferDetails.targetVesselTypeGeometry.barcoded}">
-                                <label for="dstPltBcd${stationEventStatus.index}">Barcode</label>
-                                <input type="text" id="dstPltBcd${stationEventStatus.index}"
-                                        name="stationEvents[${stationEventStatus.index}].plate.barcode"
-                                        value="${plateTransfer.plate.barcode}" class="clearable barcode"/>
-                            </c:if>
-                            <c:if test="${stationEvent.class.simpleName == 'PlateTransferEventType'}">
-                                <stripes:label for="destSection">Section</stripes:label>
-                                <c:choose>
-                                    <c:when test="${not empty actionBean.labEventType.manualTransferDetails.targetSection}">
-                                        ${actionBean.labEventType.manualTransferDetails.targetSection.sectionName}
-                                        <stripes:hidden name="stationEvents[${stationEventStatus.index}].plate.section"
-                                                value="${actionBean.labEventType.manualTransferDetails.targetSection.sectionName}"/>
-                                    </c:when>
-                                    <c:otherwise>
-                                        <stripes:select name="stationEvents[${stationEventStatus.index}].plate.section"
-                                                id="destSection${stationEventStatus.index}">
-                                            <stripes:options-enumeration
-                                                    enum="org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection"
-                                                    label="sectionName"/>
-                                        </stripes:select>
-                                    </c:otherwise>
-                                </c:choose>
-                            </c:if>
-                            <c:if test="${not empty plateTransfer.positionMap}">
-                                <%--todo jmt reduce copy / paste--%>
-                                <c:set var="geometry" value="${actionBean.labEventType.manualTransferDetails.targetVesselTypeGeometry.vesselGeometry}"/>
-                                <%--@elvariable id="geometry" type="org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry"--%>
-                                <!-- Adds the dropdowns for lab and scanner, and possibly a file chooser. -->
-                                <stripes:layout-render name="/vessel/rack_scanner_list_with_sim_part2.jsp" bean="${actionBean}"/>
-                                <div class="controls">
-                                    <stripes:submit value="Scan" id="scanBtn" class="btn btn-primary"
-                                            name="<%= ManualTransferActionBean.RACK_SCAN_EVENT %>"/>
-                                </div>
-                                <table>
-                                    <c:forEach items="${geometry.rowNames}" var="rowName" varStatus="rowStatus">
-                                        <c:if test="${rowStatus.first}">
-                                            <tr>
-                                                <td></td>
-                                                <c:forEach items="${geometry.columnNames}" var="columnName" varStatus="columnStatus">
-                                                    <td>${columnName}</td>
-                                                </c:forEach>
-                                            </tr>
-                                        </c:if>
-                                        <tr>
-                                            <td>${rowName}</td>
-                                            <c:forEach items="${geometry.columnNames}" var="columnName" varStatus="columnStatus">
-                                                <c:set var="receptacleIndex" value="${rowStatus.index * geometry.columnCount + columnStatus.index}"/>
-                                                <td align="right">
-                                                    <c:if test="${empty rowName}">${geometry.vesselPositions[receptacleIndex]}</c:if>
-                                                    <input type="text" name="stationEvents[${stationEventStatus.index}].positionMap.receptacle[${receptacleIndex}].barcode"
-                                                            class="clearable smalltext"/>
-                                                    <input type="hidden" name="stationEvents[${stationEventStatus.index}].positionMap.receptacle[${receptacleIndex}].position"
-                                                            value="${geometry.vesselPositions[receptacleIndex]}"/>
-                                                </td>
-                                            </c:forEach>
-                                        </tr>
-                                    </c:forEach>
-                                </table>
-                            </c:if>
-                            </div>
+                            <c:set var="stationEvent" value="${stationEvent}" scope="request"/>
+                            <c:set var="plate" value="${plateTransfer.plate}" scope="request"/>
+                            <c:set var="positionMap" value="${plateTransfer.positionMap}" scope="request"/>
+                            <c:set var="stationEventIndex" value="${stationEventStatus.index}" scope="request"/>
+                            <c:set var="vesselTypeGeometry" value="${actionBean.labEventType.manualTransferDetails.targetVesselTypeGeometry}" scope="request"/>
+                            <c:set var="section" value="${actionBean.labEventType.manualTransferDetails.targetSection}" scope="request"/>
+                            <c:set var="source" value="${false}" scope="request"/>
+                            <jsp:include page="transfer_plate.jsp"/>
+
                         </c:when> <%-- end PlateTransferEventType or PlateEventType--%>
 
                         <c:when test="${stationEvent.class.simpleName == 'ReceptacleTransferEventType'}">

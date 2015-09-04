@@ -79,6 +79,8 @@ public class ManualTransferActionBean extends RackScanActionBean {
     private List<StationEventType> stationEvents = new ArrayList<>();
     /** Set in the init method, from a POSTed parameter. */
     private LabEventType labEventType;
+    private Integer scanIndex;
+    private Boolean scanSource;
 
     private int anonymousRackDisambiguator = 1;
 
@@ -256,6 +258,19 @@ public class ManualTransferActionBean extends RackScanActionBean {
     @HandlesEvent(RACK_SCAN_EVENT)
     public Resolution rackScan() throws ScannerException {
         scan();
+        StationEventType stationEventType = stationEvents.get(scanIndex);
+        PositionMapType positionMapType = scanSource ? ((PlateTransferEventType) stationEventType).getSourcePositionMap() :
+                ((PlateEventType) stationEventType).getPositionMap();
+        for (Map.Entry<String, String> positionBarcodeEntry : rackScan.entrySet()) {
+            ReceptacleType receptacleAtPosition = findReceptacleAtPosition(positionMapType, positionBarcodeEntry.getKey());
+            if (receptacleAtPosition == null) {
+                receptacleAtPosition = new ReceptacleType();
+                positionMapType.getReceptacle().add(receptacleAtPosition);
+            }
+            receptacleAtPosition.setPosition(positionBarcodeEntry.getKey());
+            receptacleAtPosition.setBarcode(positionBarcodeEntry.getValue());
+        }
+
         return new ForwardResolution(MANUAL_TRANSFER_PAGE);
     }
 
@@ -498,6 +513,17 @@ public class ManualTransferActionBean extends RackScanActionBean {
         }
     }
 
+    public ReceptacleType findReceptacleAtPosition(PositionMapType positionMapType, String position) {
+        // todo jmt create map in advance to improve performance?
+        ReceptacleType receptacleTypeReturn = null;
+        for (ReceptacleType receptacleType : positionMapType.getReceptacle()) {
+            if (receptacleType.getPosition().equals(position)) {
+                receptacleTypeReturn = receptacleType;
+                break;
+            }
+        }
+        return receptacleTypeReturn;
+    }
 
     public List<StationEventType> getStationEvents() {
         return stationEvents;
@@ -565,5 +591,13 @@ public class ManualTransferActionBean extends RackScanActionBean {
     @Override
     public String getPageTitle() {
         return PAGE_TITLE;
+    }
+
+    public void setScanIndex(Integer scanIndex) {
+        this.scanIndex = scanIndex;
+    }
+
+    public void setScanSource(Boolean scanSource) {
+        this.scanSource = scanSource;
     }
 }
