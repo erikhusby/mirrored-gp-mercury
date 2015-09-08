@@ -27,6 +27,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEvent
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationSetupEvent;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResource;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
@@ -36,6 +37,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselTypeGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 import org.broadinstitute.gpinformatics.mercury.presentation.vessel.RackScanActionBean;
@@ -77,10 +79,12 @@ public class ManualTransferActionBean extends RackScanActionBean {
 
     /** POSTed from the form. */
     private List<StationEventType> stationEvents = new ArrayList<>();
+    /** POSTed from the form, for rack scan. */
+    private Integer scanIndex;
+    /** POSTed from the form, for rack scan. */
+    private Boolean scanSource;
     /** Set in the init method, from a POSTed parameter. */
     private LabEventType labEventType;
-    private Integer scanIndex;
-    private Boolean scanSource;
 
     private int anonymousRackDisambiguator = 1;
 
@@ -92,6 +96,9 @@ public class ManualTransferActionBean extends RackScanActionBean {
 
     @Inject
     private WorkflowLoader workflowLoader;
+
+    @Inject
+    private LabBatchDao labBatchDao;
 
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
@@ -280,18 +287,25 @@ public class ManualTransferActionBean extends RackScanActionBean {
      */
     @HandlesEvent(FETCH_EXISTING_ACTION)
     public Resolution fetchExisting() {
+        LabBatch labBatch = null;
+        if (batchName != null) {
+            labBatch = labBatchDao.findByName(batchName);
+        }
         switch (labEventType.getManualTransferDetails().getMessageType()) {
             case PLATE_EVENT:
                 for (StationEventType stationEvent : stationEvents) {
                     PlateEventType plateEventType = (PlateEventType) stationEvent;
-                    loadPlateFromDb(plateEventType.getPlate(), plateEventType.getPositionMap(), true);
+                    loadPlateFromDb(plateEventType.getPlate(), plateEventType.getPositionMap(), true, labBatch);
                 }
                 break;
             case PLATE_TRANSFER_EVENT:
                 for (StationEventType stationEvent : stationEvents) {
                     PlateTransferEventType plateTransferEventType = (PlateTransferEventType) stationEvent;
-                    loadPlateFromDb(plateTransferEventType.getSourcePlate(), plateTransferEventType.getSourcePositionMap(), true);
-                    loadPlateFromDb(plateTransferEventType.getPlate(), plateTransferEventType.getPositionMap(), false);
+                    loadPlateFromDb(plateTransferEventType.getSourcePlate(), plateTransferEventType.getSourcePositionMap(),
+                            true, labBatch);
+                    // todo jmt take required, empty from workflow
+                    loadPlateFromDb(plateTransferEventType.getPlate(), plateTransferEventType.getPositionMap(), false,
+                            labBatch);
                 }
                 break;
             case STATION_SETUP_EVENT:
@@ -310,6 +324,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
                 for (StationEventType stationEvent : stationEvents) {
                     ReceptacleTransferEventType receptacleTransferEventType = (ReceptacleTransferEventType) stationEvent;
                     loadReceptacleFromDb(receptacleTransferEventType.getSourceReceptacle(), true);
+                    // todo jmt take required, empty from workflow
                     loadReceptacleFromDb(receptacleTransferEventType.getReceptacle(), false);
                 }
                 break;
@@ -346,7 +361,8 @@ public class ManualTransferActionBean extends RackScanActionBean {
         }
     }
 
-    private void loadPlateFromDb(PlateType plateType, PositionMapType positionMapType, boolean required) {
+    private void loadPlateFromDb(PlateType plateType, PositionMapType positionMapType, boolean required,
+            LabBatch labBatch) {
         if (plateType != null) {
             String barcode = plateType.getBarcode();
             if (!StringUtils.isBlank(barcode)) {
@@ -365,14 +381,21 @@ public class ManualTransferActionBean extends RackScanActionBean {
         if (positionMapType != null) {
             List<String> barcodes = new ArrayList<>();
             for (ReceptacleType receptacleType : positionMapType.getReceptacle()) {
-                barcodes.add(receptacleType.getBarcode());
+                if (!StringUtils.isBlank(receptacleType.getBarcode())) {
+                    barcodes.add(receptacleType.getBarcode());
+                }
             }
             Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(barcodes);
             for (Map.Entry<String, LabVessel> stringLabVesselEntry : mapBarcodeToVessel.entrySet()) {
-                if (stringLabVesselEntry.getValue() == null) {
-                    addMessage("{0} is not in the database", stringLabVesselEntry.getKey());
+                LabVessel labVessel = stringLabVesselEntry.getValue();
+                String barcode = stringLabVesselEntry.getKey();
+                if (labVessel == null) {
+                    addMessage("{0} is not in the database", barcode);
                 } else {
-                    addMessage("{0} is in the database", stringLabVesselEntry.getKey());
+                    addMessage("{0} is in the database", barcode);
+                    if (!labVessel.getWorkflowLabBatches().contains(labBatch)) {
+                        addMessage("{0} is not in batch {1}", barcode, labBatch.getBatchName());
+                    }
                 }
             }
         }
