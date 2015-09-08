@@ -194,7 +194,7 @@
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
-                <bucketEntryEvaluators>org.broadinstitute.gpinformatics.mercury.entity.workflow.DnaBucketEntryEvaluator</bucketEntryEvaluators>
+                <bucketEntryEvaluators>org.broadinstitute.gpinformatics.mercury.entity.workflow.RnaBucketEntryEvaluator</bucketEntryEvaluators>
                 <batchJiraProjectType>LCSET</batchJiraProjectType>
             </workflowStepDefs>
             <workflowStepDefs>

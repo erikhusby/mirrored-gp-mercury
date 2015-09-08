@@ -231,6 +231,19 @@ public abstract class LabVessel implements Serializable {
         return hasMaterialConvertedToDNA;
     }
 
+    public boolean isMaterialType(MaterialType materialType) {
+        boolean hasMaterialConvertedToDNA = hasMaterialConvertedTo(materialType);
+        if (!hasMaterialConvertedToDNA) {
+            for (SampleInstanceV2 si : getSampleInstancesV2()) {
+                if (si.getRootOrEarliestMercurySample().getSampleData().getMaterialType()
+                        .startsWith(materialType.name())) {
+                    return true;
+                }
+            }
+        }
+        return hasMaterialConvertedToDNA;
+    }
+
     private boolean hasMaterialConvertedTo(MaterialType materialType) {
         TransferTraverserCriteria.LabEventsWithMaterialTypeTraverserCriteria materialTypeTraverserCriteria =
                 new TransferTraverserCriteria.LabEventsWithMaterialTypeTraverserCriteria(materialType);
