@@ -1449,6 +1449,24 @@
             <routingRule>SQUID</routingRule>
         </productWorkflowDefVersions>
     </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>TruSeq Strand Specific CRSP</name>
+        <productWorkflowDefVersions>
+            <version>1.0</version>
+            <effectiveDate>2015-08-13T10:03:24.085-04:00</effectiveDate>
+            <workflowProcessDefs>CRSP Ribo/Plating</workflowProcessDefs>
+            <workflowProcessDefs>TruSeq Strand Specific</workflowProcessDefs>
+            <workflowProcessDefs>QTP</workflowProcessDefs>
+            <workflowProcessDefs>HiSEQ</workflowProcessDefs>
+            <sequencingConfigDefs>Resequencing-Pool-Default</sequencingConfigDefs>
+            <sequencingConfigDefs>Amplicon-Pool-Default</sequencingConfigDefs>
+            <sequencingConfigDefs>Resequencing-Pool-Amplicon</sequencingConfigDefs>
+            <sequencingConfigDefs>Amplicon-Pool-Amplicon</sequencingConfigDefs>
+            <sequencingConfigDefs>Resequencing-Production</sequencingConfigDefs>
+            <routingRule>MERCURY</routingRule>
+            <inValidation>false</inValidation>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
 
     <sequencingConfigDefs>
         <name>Resequencing-Pool-Default</name>
