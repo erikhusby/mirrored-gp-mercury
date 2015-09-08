@@ -27,6 +27,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationSetup
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResource;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
@@ -34,12 +35,18 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselTypeGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * A Stripes Action Bean to record manual transfers.
@@ -53,8 +60,20 @@ public class ManualTransferActionBean extends CoreActionBean {
     public static final String TRANSFER_ACTION = "transfer";
     public static final String FETCH_EXISTING_ACTION = "fetchExisting";
 
-    private BettaLIMSMessage bettaLIMSMessage;
-    private StationEventType stationEvent;
+    /** Parameter from batch workflow page. */
+    private String workflowProcessName;
+    /** Parameter from batch workflow page. */
+    private String workflowStepName;
+    /** Parameter from batch workflow page. */
+    private Date workflowEffectiveDate;
+    /** Parameter from batch workflow page. */
+    private String batchName;
+    /** Loaded based on parameters. */
+    private WorkflowStepDef workflowStepDef;
+
+    /** POSTed from the form. */
+    private List<StationEventType> stationEvents = new ArrayList<>();
+    /** Set in the init method, from a POSTed parameter. */
     private LabEventType labEventType;
 
     @Inject
@@ -63,54 +82,68 @@ public class ManualTransferActionBean extends CoreActionBean {
     @Inject
     private LabVesselDao labVesselDao;
 
+    @Inject
+    private WorkflowLoader workflowLoader;
+
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
     public Resolution view() {
         return new ForwardResolution(MANUAL_TRANSFER_PAGE);
     }
 
+    // todo jmt allow multiple events per message.  Specified by: user; batch size; event type.
+    // Allow geometry to lay out plate or tube event barcodes on page (not transfers, they have to have their own geometry).
+    // Populate metadata
+    // This is all short term, until can generalize TubeFormation to support plates.
+
     @Before(stages = LifecycleStage.BindingAndValidation)
     public void init() {
-        String eventType = getContext().getRequest().getParameter("stationEvent.eventType");
+        String eventType = getContext().getRequest().getParameter("stationEvents[0].eventType");
         if (eventType != null) {
-            labEventType = LabEventType.valueOf(eventType);
+            labEventType = LabEventType.getByName(eventType);
             // todo jmt move this to the enum?
-            bettaLIMSMessage = new BettaLIMSMessage();
             switch (labEventType.getMessageType()) {
                 case PLATE_EVENT:
-                    PlateEventType plateEventType = new PlateEventType();
-                    stationEvent = plateEventType;
-                    bettaLIMSMessage.getPlateEvent().add(plateEventType);
+                    for (int i = 0; i < labEventType.getNumEvents(); i++) {
+                        PlateEventType plateEventType = new PlateEventType();
+                        stationEvents.add(plateEventType);
+                    }
                     break;
                 case PLATE_TRANSFER_EVENT:
-                    PlateTransferEventType plateTransferEventType = new PlateTransferEventType();
-                    stationEvent = plateTransferEventType;
-                    bettaLIMSMessage.getPlateTransferEvent().add(plateTransferEventType);
+                    for (int i = 0; i < labEventType.getNumEvents(); i++) {
+                        PlateTransferEventType plateTransferEventType = new PlateTransferEventType();
+                        stationEvents.add(plateTransferEventType);
+                    }
                     break;
                 case STATION_SETUP_EVENT:
-                    StationSetupEvent stationSetupEvent = new StationSetupEvent();
-                    stationEvent = stationSetupEvent;
-                    bettaLIMSMessage.setStationSetupEvent(stationSetupEvent);
+                    for (int i = 0; i < labEventType.getNumEvents(); i++) {
+                        StationSetupEvent stationSetupEvent = new StationSetupEvent();
+                        stationEvents.add(stationSetupEvent);
+                    }
                     break;
                 case PLATE_CHERRY_PICK_EVENT:
-                    PlateCherryPickEvent plateCherryPickEvent = new PlateCherryPickEvent();
-                    stationEvent = plateCherryPickEvent;
-                    bettaLIMSMessage.getPlateCherryPickEvent().add(plateCherryPickEvent);
+                    for (int i = 0; i < labEventType.getNumEvents(); i++) {
+                        PlateCherryPickEvent plateCherryPickEvent = new PlateCherryPickEvent();
+                        stationEvents.add(plateCherryPickEvent);
+                    }
                     break;
                 case RECEPTACLE_PLATE_TRANSFER_EVENT:
-                    ReceptaclePlateTransferEvent receptaclePlateTransferEvent = new ReceptaclePlateTransferEvent();
-                    stationEvent = receptaclePlateTransferEvent;
-                    bettaLIMSMessage.getReceptaclePlateTransferEvent().add(receptaclePlateTransferEvent);
+                    for (int i = 0; i < labEventType.getNumEvents(); i++) {
+                        ReceptaclePlateTransferEvent receptaclePlateTransferEvent = new ReceptaclePlateTransferEvent();
+                        stationEvents.add(receptaclePlateTransferEvent);
+                    }
                     break;
                 case RECEPTACLE_EVENT:
-                    ReceptacleEventType receptacleEventType = new ReceptacleEventType();
-                    stationEvent = receptacleEventType;
-                    bettaLIMSMessage.getReceptacleEvent().add(receptacleEventType);
+                    for (int i = 0; i < labEventType.getNumEvents(); i++) {
+                        ReceptacleEventType receptacleEventType = new ReceptacleEventType();
+                        stationEvents.add(receptacleEventType);
+                    }
                     break;
                 case RECEPTACLE_TRANSFER_EVENT:
-                    ReceptacleTransferEventType receptacleTransferEventType = new ReceptacleTransferEventType();
-                    stationEvent = receptacleTransferEventType;
-                    bettaLIMSMessage.getReceptacleTransferEvent().add(receptacleTransferEventType);
+                    for (int i = 0; i < labEventType.getNumEvents(); i++) {
+                        ReceptacleTransferEventType receptacleTransferEventType = new ReceptacleTransferEventType();
+                        stationEvents.add(receptacleTransferEventType);
+                    }
                     break;
                 default:
                     throw new RuntimeException("Unknown labEventType " + labEventType.getMessageType());
@@ -120,60 +153,113 @@ public class ManualTransferActionBean extends CoreActionBean {
 
     @HandlesEvent(CHOOSE_EVENT_TYPE_ACTION)
     public Resolution chooseLabEventType() {
-        for (String reagentName : labEventType.getReagentNames()) {
-            ReagentType reagentType = new ReagentType();
-            reagentType.setKitType(reagentName);
-            stationEvent.getReagent().add(reagentType);
+        loadWorkflowStepDef();
+        List<String> reagentNames;
+        int[] reagentFieldCounts;
+        if (workflowStepDef != null) {
+            reagentNames = workflowStepDef.getReagentTypes();
+            reagentFieldCounts = new int[reagentNames.size()];
+            Arrays.fill(reagentFieldCounts, 1);
+        } else {
+            reagentNames = Arrays.asList(labEventType.getReagentNames());
+            reagentFieldCounts = labEventType.getReagentFieldCounts();
+        }
+        int reagentIndex = 0;
+        for (String reagentName : reagentNames) {
+            for (int fieldIndex = 0; fieldIndex < reagentFieldCounts[reagentIndex]; fieldIndex++) {
+                ReagentType reagentType = new ReagentType();
+                reagentType.setKitType(reagentName);
+                stationEvents.get(0).getReagent().add(reagentType);
+            }
+            reagentIndex++;
         }
 
         switch (labEventType.getMessageType()) {
             case PLATE_EVENT:
-                PlateEventType plateEventType = (PlateEventType) stationEvent;
+                for (StationEventType stationEvent : stationEvents) {
+                    PlateEventType plateEventType = (PlateEventType) stationEvent;
+                    PlateType destinationPlateType = new PlateType();
+                    VesselTypeGeometry targetVesselTypeGeometry = labEventType.getTargetVesselTypeGeometry();
+                    destinationPlateType.setPhysType(targetVesselTypeGeometry.getDisplayName());
+                    plateEventType.setPlate(destinationPlateType);
+                    if (targetVesselTypeGeometry instanceof RackOfTubes.RackType) {
+                        plateEventType.setPositionMap(new PositionMapType());
+                    }
+                }
                 break;
             case PLATE_TRANSFER_EVENT:
-                PlateTransferEventType plateTransferEventType = (PlateTransferEventType) stationEvent;
-                PlateType sourcePlate = new PlateType();
-                VesselTypeGeometry sourceVesselTypeGeometry = labEventType.getSourceVesselTypeGeometry();
-                sourcePlate.setPhysType(sourceVesselTypeGeometry.getDisplayName());
-                plateTransferEventType.setSourcePlate(sourcePlate);
-                if (sourceVesselTypeGeometry instanceof RackOfTubes.RackType) {
-                    plateTransferEventType.setSourcePositionMap(new PositionMapType());
-                }
+                for (StationEventType stationEvent : stationEvents) {
+                    PlateTransferEventType plateTransferEventType = (PlateTransferEventType) stationEvent;
+                    PlateType sourcePlate = new PlateType();
+                    VesselTypeGeometry sourceVesselTypeGeometry = labEventType.getSourceVesselTypeGeometry();
+                    sourcePlate.setPhysType(sourceVesselTypeGeometry.getDisplayName());
+                    plateTransferEventType.setSourcePlate(sourcePlate);
+                    if (sourceVesselTypeGeometry instanceof RackOfTubes.RackType) {
+                        plateTransferEventType.setSourcePositionMap(new PositionMapType());
+                    }
 
-                PlateType destinationPlateType = new PlateType();
-                VesselTypeGeometry targetVesselTypeGeometry = labEventType.getTargetVesselTypeGeometry();
-                destinationPlateType.setPhysType(targetVesselTypeGeometry.getDisplayName());
-                plateTransferEventType.setPlate(destinationPlateType);
-                if (targetVesselTypeGeometry instanceof RackOfTubes.RackType) {
-                    plateTransferEventType.setPositionMap(new PositionMapType());
+                    PlateType destinationPlateType = new PlateType();
+                    VesselTypeGeometry targetVesselTypeGeometry = labEventType.getTargetVesselTypeGeometry();
+                    destinationPlateType.setPhysType(targetVesselTypeGeometry.getDisplayName());
+                    plateTransferEventType.setPlate(destinationPlateType);
+                    if (targetVesselTypeGeometry instanceof RackOfTubes.RackType) {
+                        plateTransferEventType.setPositionMap(new PositionMapType());
+                    }
                 }
                 break;
             case STATION_SETUP_EVENT:
-                StationSetupEvent stationEventType = (StationSetupEvent) stationEvent;
+                for (StationEventType stationEvent : stationEvents) {
+                    StationSetupEvent stationEventType = (StationSetupEvent) stationEvent;
+                }
                 break;
             case PLATE_CHERRY_PICK_EVENT:
-                PlateCherryPickEvent plateCherryPickEvent = (PlateCherryPickEvent) stationEvent;
+                for (StationEventType stationEvent : stationEvents) {
+                    PlateCherryPickEvent plateCherryPickEvent = (PlateCherryPickEvent) stationEvent;
+                }
                 break;
             case RECEPTACLE_PLATE_TRANSFER_EVENT:
-                ReceptaclePlateTransferEvent receptaclePlateTransferEvent = (ReceptaclePlateTransferEvent) stationEvent;
+                for (StationEventType stationEvent : stationEvents) {
+                    ReceptaclePlateTransferEvent receptaclePlateTransferEvent = (ReceptaclePlateTransferEvent) stationEvent;
+                }
                 break;
             case RECEPTACLE_EVENT:
-                ReceptacleEventType receptacleEventType = (ReceptacleEventType) stationEvent;
+                for (StationEventType stationEvent : stationEvents) {
+                    ReceptacleEventType receptacleEventType = (ReceptacleEventType) stationEvent;
+                    ReceptacleType receptacleType = new ReceptacleType();
+                    receptacleType.setReceptacleType(workflowStepDef ==  null ?
+                            labEventType.getTargetVesselTypeGeometry().getDisplayName() :
+                            workflowStepDef.getTargetBarcodedTubeType().getDisplayName());
+                    receptacleEventType.setReceptacle(receptacleType);
+                }
                 break;
             case RECEPTACLE_TRANSFER_EVENT:
-                ReceptacleTransferEventType receptacleTransferEventType = (ReceptacleTransferEventType) stationEvent;
-                ReceptacleType sourceReceptacle = new ReceptacleType();
-                sourceReceptacle.setReceptacleType(labEventType.getSourceVesselTypeGeometry().getDisplayName());
-                receptacleTransferEventType.setSourceReceptacle(sourceReceptacle);
+                for (StationEventType stationEvent : stationEvents) {
+                    ReceptacleTransferEventType receptacleTransferEventType = (ReceptacleTransferEventType) stationEvent;
+                    ReceptacleType sourceReceptacle = new ReceptacleType();
+                    sourceReceptacle.setReceptacleType(labEventType.getSourceVesselTypeGeometry().getDisplayName());
+                    receptacleTransferEventType.setSourceReceptacle(sourceReceptacle);
 
-                ReceptacleType destinationReceptacle = new ReceptacleType();
-                destinationReceptacle.setReceptacleType(labEventType.getTargetVesselTypeGeometry().getDisplayName());
-                receptacleTransferEventType.setReceptacle(destinationReceptacle);
+                    ReceptacleType destinationReceptacle = new ReceptacleType();
+                    destinationReceptacle.setReceptacleType(labEventType.getTargetVesselTypeGeometry().getDisplayName());
+                    receptacleTransferEventType.setReceptacle(destinationReceptacle);
+                }
                 break;
             default:
                 throw new RuntimeException("Unknown labEventType " + labEventType.getMessageType());
         }
         return new ForwardResolution(MANUAL_TRANSFER_PAGE);
+    }
+
+    @Nullable
+    private WorkflowStepDef loadWorkflowStepDef() {
+        workflowStepDef = null;
+        if (workflowProcessName != null) {
+            WorkflowConfig workflowConfig = workflowLoader.load();
+            workflowStepDef = workflowConfig.getStep(workflowProcessName, workflowStepName,
+                    workflowEffectiveDate);
+            workflowStepDef.getReagentTypes();
+        }
+        return workflowStepDef;
     }
 
     /**
@@ -182,14 +268,19 @@ public class ManualTransferActionBean extends CoreActionBean {
      */
     @HandlesEvent(FETCH_EXISTING_ACTION)
     public Resolution fetchExisting() {
-        // fetch by barcode
-        // Should this be AJAX?  If multiple barcodes, hard to populate multiple areas of the page.
-        // If not AJAX, switch on message type, fetch LabVessels, copy values into JAXB DTOs.
-        // Add messages about existing or not, and whether expected.
         switch (labEventType.getMessageType()) {
             case PLATE_EVENT:
+                for (StationEventType stationEvent : stationEvents) {
+                    PlateEventType plateEventType = (PlateEventType) stationEvent;
+                    loadPlateFromDb(plateEventType.getPlate(), plateEventType.getPositionMap(), true);
+                }
                 break;
             case PLATE_TRANSFER_EVENT:
+                for (StationEventType stationEvent : stationEvents) {
+                    PlateTransferEventType plateTransferEventType = (PlateTransferEventType) stationEvent;
+                    loadPlateFromDb(plateTransferEventType.getSourcePlate(), plateTransferEventType.getSourcePositionMap(), true);
+                    loadPlateFromDb(plateTransferEventType.getPlate(), plateTransferEventType.getPositionMap(), false);
+                }
                 break;
             case STATION_SETUP_EVENT:
                 break;
@@ -198,23 +289,29 @@ public class ManualTransferActionBean extends CoreActionBean {
             case RECEPTACLE_PLATE_TRANSFER_EVENT:
                 break;
             case RECEPTACLE_EVENT:
+                for (StationEventType stationEvent : stationEvents) {
+                    ReceptacleEventType receptacleEventType = (ReceptacleEventType) stationEvent;
+                    loadReceptacleFromDb(receptacleEventType.getReceptacle(), true);
+                }
                 break;
             case RECEPTACLE_TRANSFER_EVENT:
-                ReceptacleTransferEventType receptacleTransferEventType = (ReceptacleTransferEventType) stationEvent;
-                loadReceptacleFromDb(receptacleTransferEventType.getSourceReceptacle(), true);
-                loadReceptacleFromDb(receptacleTransferEventType.getReceptacle(), false);
+                for (StationEventType stationEvent : stationEvents) {
+                    ReceptacleTransferEventType receptacleTransferEventType = (ReceptacleTransferEventType) stationEvent;
+                    loadReceptacleFromDb(receptacleTransferEventType.getSourceReceptacle(), true);
+                    loadReceptacleFromDb(receptacleTransferEventType.getReceptacle(), false);
+                }
                 break;
         }
         return new ForwardResolution(MANUAL_TRANSFER_PAGE);
     }
 
-    private void loadReceptacleFromDb(ReceptacleType receptacleType, boolean source) {
+    private void loadReceptacleFromDb(ReceptacleType receptacleType, boolean required) {
         if (receptacleType != null) {
             String barcode = receptacleType.getBarcode();
             if (!StringUtils.isBlank(barcode)) {
                 LabVessel labVessel = labVesselDao.findByIdentifier(barcode);
                 if (labVessel == null) {
-                    if (source) {
+                    if (required) {
                         addGlobalValidationError("{2} is not in the database", barcode);
                     } else {
                         addMessage("{0} is not in the database", barcode);
@@ -237,26 +334,127 @@ public class ManualTransferActionBean extends CoreActionBean {
         }
     }
 
+    private void loadPlateFromDb(PlateType plateType, PositionMapType positionMapType, boolean required) {
+        if (plateType != null) {
+            String barcode = plateType.getBarcode();
+            if (!StringUtils.isBlank(barcode)) {
+                LabVessel labVessel = labVesselDao.findByIdentifier(barcode);
+                if (labVessel == null) {
+                    if (required) {
+                        addGlobalValidationError("{2} is not in the database", barcode);
+                    } else {
+                        addMessage("{0} is not in the database", barcode);
+                    }
+                } else {
+                    addMessage("{0} is in the database", barcode);
+                }
+            }
+        }
+        if (positionMapType != null) {
+            List<String> barcodes = new ArrayList<>();
+            for (ReceptacleType receptacleType : positionMapType.getReceptacle()) {
+                barcodes.add(receptacleType.getBarcode());
+            }
+            Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(barcodes);
+            for (Map.Entry<String, LabVessel> stringLabVesselEntry : mapBarcodeToVessel.entrySet()) {
+                if (stringLabVesselEntry.getValue() == null) {
+                    addMessage("{0} is not in the database", stringLabVesselEntry.getKey());
+                } else {
+                    addMessage("{0} is in the database", stringLabVesselEntry.getKey());
+                }
+            }
+        }
+    }
+
     @HandlesEvent(TRANSFER_ACTION)
     public Resolution transfer() {
         // todo jmt handle unique constraint violation, increment disambiguator?
-        bettaLIMSMessage.setMode(LabEventFactory.MODE_MERCURY);
-        stationEvent.setEventType(labEventType.getName());
-        stationEvent.setOperator(getUserBean().getLoginUserName());
-        stationEvent.setProgram(LabEvent.UI_PROGRAM_NAME);
-        stationEvent.setStation(LabEvent.UI_EVENT_LOCATION);
-        stationEvent.setDisambiguator(1L);
-        stationEvent.setStart(new Date());
+        loadWorkflowStepDef();
 
-        for (ReagentType reagentType : stationEvent.getReagent()) {
+        for (ReagentType reagentType : stationEvents.get(0).getReagent()) {
             if (StringUtils.isBlank(reagentType.getKitType())) {
                 addGlobalValidationError("Reagent type is required");
             }
-            if (StringUtils.isBlank(reagentType.getBarcode())) {
-                addGlobalValidationError("Reagent barcode is required");
+            if (labEventType.getMapReagentNameToCount().get(reagentType.getKitType()) == 1) {
+                if (StringUtils.isBlank(reagentType.getBarcode())) {
+                    addGlobalValidationError("Reagent barcode is required");
+                }
+                if (labEventType.isExpirationDateIncluded() && reagentType.getExpiration() == null) {
+                    addGlobalValidationError("Reagent expiration is required");
+                }
             }
-            if (reagentType.getExpiration() == null) {
-                addGlobalValidationError("Reagent expiration is required");
+        }
+
+        BettaLIMSMessage bettaLIMSMessage = null;
+        if (getContext().getValidationErrors().isEmpty()) {
+            // remove unused reagents
+            Iterator<ReagentType> reagentIterator = stationEvents.get(0).getReagent().iterator();
+            while (reagentIterator.hasNext()) {
+                ReagentType reagentType = reagentIterator.next();
+                if (StringUtils.isBlank(reagentType.getBarcode()) &&
+                        labEventType.getMapReagentNameToCount().get(reagentType.getKitType()) > 1) {
+                    reagentIterator.remove();
+                }
+            }
+
+            bettaLIMSMessage = new BettaLIMSMessage();
+            bettaLIMSMessage.setMode(LabEventFactory.MODE_MERCURY);
+            Date start = new Date();
+            if (stationEvents.get(0).getStation() == null) {
+                stationEvents.get(0).setStation(LabEvent.UI_EVENT_LOCATION);
+            }
+
+            Iterator<StationEventType> iterator = stationEvents.iterator();
+            int eventIndex = 0;
+            while (iterator.hasNext()) {
+                StationEventType stationEvent = iterator.next();
+                stationEvent.setEventType(labEventType.getName());
+                if (workflowStepDef != null) {
+                    stationEvent.setWorkflowQualifier(workflowStepDef.getWorkflowQualifier());
+                }
+                stationEvent.setOperator(getUserBean().getLoginUserName());
+                stationEvent.setProgram(LabEvent.UI_PROGRAM_NAME);
+                stationEvent.setDisambiguator((long) (eventIndex + 1));
+                stationEvent.setStart(start);
+
+                // Remove empty elements
+                if (stationEvent instanceof PlateTransferEventType) {
+                    PlateTransferEventType plateTransferEventType = (PlateTransferEventType) stationEvent;
+                    cleanupPositionMap(plateTransferEventType.getSourcePositionMap(), plateTransferEventType.getSourcePlate(),
+                            labEventType.getSourceVesselTypeGeometry());
+                    cleanupPositionMap(plateTransferEventType.getPositionMap(), plateTransferEventType.getPlate(),
+                            labEventType.getTargetVesselTypeGeometry());
+                    bettaLIMSMessage.getPlateTransferEvent().add(plateTransferEventType);
+                } else if (stationEvent instanceof PlateEventType) {
+                    PlateEventType plateEventType = (PlateEventType) stationEvent;
+                    // Remove events for which the user did not enter a barcode
+                    if (labEventType.getNumEvents() > 1 && plateEventType.getPositionMap() == null &&
+                            (plateEventType.getPlate() == null || plateEventType.getPlate().getBarcode() == null)) {
+                        iterator.remove();
+                        continue;
+                    }
+                    cleanupPositionMap(plateEventType.getPositionMap(), plateEventType.getPlate(),
+                            labEventType.getTargetVesselTypeGeometry());
+                    bettaLIMSMessage.getPlateEvent().add(plateEventType);
+                } else if (stationEvent instanceof StationSetupEvent) {
+                    bettaLIMSMessage.setStationSetupEvent((StationSetupEvent) stationEvent);
+                } else if (stationEvent instanceof PlateCherryPickEvent) {
+                    bettaLIMSMessage.getPlateCherryPickEvent().add((PlateCherryPickEvent) stationEvent);
+                } else if (stationEvent instanceof ReceptaclePlateTransferEvent) {
+                    bettaLIMSMessage.getReceptaclePlateTransferEvent().add((ReceptaclePlateTransferEvent) stationEvent);
+                } else if (stationEvent instanceof ReceptacleTransferEventType) {
+                    bettaLIMSMessage.getReceptacleTransferEvent().add((ReceptacleTransferEventType) stationEvent);
+                } else if (stationEvent instanceof ReceptacleEventType) {
+                    bettaLIMSMessage.getReceptacleEvent().add((ReceptacleEventType) stationEvent);
+                } else {
+                    throw new RuntimeException("Unknown StationEvent subclass " + stationEvent.getClass());
+                }
+
+                if (eventIndex > 0) {
+                    stationEvent.getReagent().addAll(stationEvents.get(0).getReagent());
+                    stationEvent.setStation(stationEvents.get(0).getStation());
+                }
+                eventIndex++;
             }
         }
 
@@ -274,13 +472,34 @@ public class ManualTransferActionBean extends CoreActionBean {
         return new ForwardResolution(MANUAL_TRANSFER_PAGE);
     }
 
-
-    public StationEventType getStationEvent() {
-        return stationEvent;
+    private void cleanupPositionMap(PositionMapType positionMapType, PlateType plate,
+            VesselTypeGeometry vesselTypeGeometry) {
+        if (positionMapType != null) {
+            Iterator<ReceptacleType> iterator = positionMapType.getReceptacle().iterator();
+            while (iterator.hasNext()) {
+                ReceptacleType next = iterator.next();
+                if (next.getBarcode() == null || next.getBarcode().isEmpty()) {
+                    iterator.remove();
+                }
+            }
+            String barcode;
+            if (vesselTypeGeometry.isBarcoded()) {
+                barcode = plate.getBarcode();
+            } else {
+                barcode = String.valueOf(System.currentTimeMillis());
+                plate.setBarcode(barcode);
+            }
+            positionMapType.setBarcode(barcode);
+        }
     }
 
-    public void setStationEvent(StationEventType stationEvent) {
-        this.stationEvent = stationEvent;
+
+    public List<StationEventType> getStationEvents() {
+        return stationEvents;
+    }
+
+    public void setStationEvents(List<StationEventType> stationEvents) {
+        this.stationEvents = stationEvents;
     }
 
     public List<LabEventType> getManualEventTypes() {
@@ -291,5 +510,45 @@ public class ManualTransferActionBean extends CoreActionBean {
             }
         }
         return manualLabEventTypes;
+    }
+
+    public LabEventType getLabEventType() {
+        return labEventType;
+    }
+
+    public String getWorkflowProcessName() {
+        return workflowProcessName;
+    }
+
+    public void setWorkflowProcessName(String workflowProcessName) {
+        this.workflowProcessName = workflowProcessName;
+    }
+
+    public String getWorkflowStepName() {
+        return workflowStepName;
+    }
+
+    public void setWorkflowStepName(String workflowStepName) {
+        this.workflowStepName = workflowStepName;
+    }
+
+    public Date getWorkflowEffectiveDate() {
+        return workflowEffectiveDate;
+    }
+
+    public void setWorkflowEffectiveDate(Date workflowEffectiveDate) {
+        this.workflowEffectiveDate = workflowEffectiveDate;
+    }
+
+    public String getBatchName() {
+        return batchName;
+    }
+
+    public void setBatchName(String batchName) {
+        this.batchName = batchName;
+    }
+
+    public WorkflowStepDef getWorkflowStepDef() {
+        return workflowStepDef;
     }
 }

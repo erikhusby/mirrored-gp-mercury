@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.sample;
 
+import com.sun.jersey.api.client.UniformInterfaceException;
 import net.sourceforge.stripes.action.After;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.FileBean;
@@ -17,6 +18,7 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProjectTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestSessionEjb;
@@ -31,6 +33,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 @SuppressWarnings("unused")
 @UrlBinding(ManifestAccessioningActionBean.ACTIONBEAN_URL_BINDING)
@@ -81,7 +84,8 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
     private ManifestSession selectedSession;
 
     @Validate(required = true, on = {LOAD_SESSION_ACTION, ACCEPT_UPLOAD_ACTION,
-            EXIT_SESSION_ACTION, SCAN_ACCESSION_SOURCE_ACTION, PREVIEW_SESSION_CLOSE_ACTION, CLOSE_SESSION_ACTION})
+            EXIT_SESSION_ACTION, SCAN_ACCESSION_SOURCE_ACTION, PREVIEW_SESSION_CLOSE_ACTION,
+            CLOSE_SESSION_ACTION})
     private Long selectedSessionId;
 
     @Validate(required = true, on = UPLOAD_MANIFEST_ACTION)
@@ -103,10 +107,6 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
 
     private String receiptSummary;
     private String receiptDescription;
-
-    public ManifestAccessioningActionBean() {
-        super();
-    }
 
     @After(stages = LifecycleStage.BindingAndValidation, on = {"!" + START_A_SESSION_ACTION})
     public void init() {
@@ -249,24 +249,34 @@ public class ManifestAccessioningActionBean extends CoreActionBean {
 
     @HandlesEvent(FIND_RECEIPT_ACTION)
     public Resolution findReceipt() {
+        ForwardResolution resolution = new ForwardResolution(ASSOCIATE_RECEIPT_PAGE)
+                            .addParameter(SELECTED_SESSION_ID, selectedSession.getManifestSessionId());
 
-        JiraIssue receiptInfo = null;
-        ForwardResolution forwardResolution = null;
-        forwardResolution = new ForwardResolution(ASSOCIATE_RECEIPT_PAGE)
-                .addParameter(SELECTED_SESSION_ID, selectedSession.getManifestSessionId());
         try {
-            receiptInfo = jiraService.getIssueInfo(receiptKey);
-            receiptSummary = receiptInfo.getSummary();
-            forwardResolution
-                    .addParameter("receiptSummary", receiptInfo.getSummary())
-                    .addParameter("receiptDescription", receiptInfo.getDescription())
-                    .addParameter("receiptKey", receiptKey);
-        } catch (IOException e) {
-            addGlobalValidationError("Unable to access the specified record of receipt: " + receiptKey);
-            logger.error(e.getMessage());
+            String projectKeyFieldName = "project";
+            JiraIssue receiptInfo = jiraService.getIssueInfo(receiptKey, projectKeyFieldName);
+            String projectKey = ((Map<String, String>) receiptInfo.getFieldValue(projectKeyFieldName)).get("key");
+            if (!projectKey.equals(CreateFields.ProjectType.RECEIPT_PROJECT.getKeyPrefix())) {
+                scanErrors = String.format("Receipt Identifier must be a %s project.",
+                        CreateFields.ProjectType.RECEIPT_PROJECT.getProjectName());
+            } else {
+                receiptSummary = receiptInfo.getSummary();
+                resolution = new ForwardResolution(ASSOCIATE_RECEIPT_PAGE)
+                        .addParameter(SELECTED_SESSION_ID, selectedSession.getManifestSessionId())
+                        .addParameter("receiptSummary", receiptInfo.getSummary())
+                        .addParameter("receiptDescription", receiptInfo.getDescription())
+                        .addParameter("receiptKey", receiptKey);
+            }
+        } catch (UniformInterfaceException e) {
+            scanErrors = String.format("Unable to access the specified record of receipt: %s", receiptKey);
+        } catch (RuntimeException e) {
+            scanErrors = e.getMessage();
+        } catch (Exception e) {
+            scanErrors = e.getMessage();
+            logger.error(scanErrors);
         }
 
-        return forwardResolution;
+        return resolution;
     }
 
     @HandlesEvent(ASSOCIATE_RECEIPT_ACTION)

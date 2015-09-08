@@ -101,6 +101,7 @@ public class BarcodedTube extends LabVessel {
             return automationName;
         }
 
+        @Override
         public String getDisplayName() {
             return displayName;
         }
@@ -108,6 +109,11 @@ public class BarcodedTube extends LabVessel {
         @Override
         public VesselGeometry getVesselGeometry() {
             return VesselGeometry.TUBE;
+        }
+
+        @Override
+        public boolean isBarcoded() {
+            return true;
         }
 
         private static final Map<String, BarcodedTubeType> MAP_NAME_TO_TYPE =

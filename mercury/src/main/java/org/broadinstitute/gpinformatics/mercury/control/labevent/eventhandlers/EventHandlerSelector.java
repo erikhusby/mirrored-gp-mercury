@@ -16,20 +16,16 @@ import javax.inject.Inject;
  */
 public class EventHandlerSelector {
 
-    DenatureToDilutionTubeHandler denatureToDilutionTubeHandler;
-
+    private DenatureToDilutionTubeHandler denatureToDilutionTubeHandler;
     private FlowcellMessageHandler flowcellMessageHandler;
-    private SamplesDaughterPlateHandler samplesDaughterPlateHandler;
     private FlowcellLoadedHandler flowcellLoadedHandler;
-
 
     @Inject
     public EventHandlerSelector(DenatureToDilutionTubeHandler denatureToDilutionTubeHandler,
-            FlowcellMessageHandler flowcellMessageHandler, SamplesDaughterPlateHandler samplesDaughterPlateHandler,
+            FlowcellMessageHandler flowcellMessageHandler,
             FlowcellLoadedHandler flowcellLoadedHandler) {
         this.denatureToDilutionTubeHandler = denatureToDilutionTubeHandler;
         this.flowcellMessageHandler = flowcellMessageHandler;
-        this.samplesDaughterPlateHandler = samplesDaughterPlateHandler;
         this.flowcellLoadedHandler = flowcellLoadedHandler;
     }
 
@@ -65,11 +61,6 @@ public class EventHandlerSelector {
         case FLOWCELL_LOADED:
             flowcellLoadedHandler.handleEvent(targetEvent, stationEvent);
             break;
-        }
-
-        // For automated plate transfers in BSP, post the message to BSP PlateTransferResource.
-        if (targetEvent.getLabEventType().isSendToBsp()) {
-            samplesDaughterPlateHandler.postToBsp(stationEvent, SamplesDaughterPlateHandler.BSP_TRANSFER_REST_URL);
         }
     }
 

@@ -204,6 +204,8 @@ public class LabEvent {
     @ManyToOne
     private LabBatch manualOverrideLcSet;
 
+    private String workflowQualifier;
+
     private static Set<LabEventType> eventTypesThatCanFollowBucket = new HashSet<>();
 
     /**
@@ -452,6 +454,14 @@ todo jmt adder methods
 
     public void setManualOverrideLcSet(LabBatch manualOverrideLcSet) {
         this.manualOverrideLcSet = manualOverrideLcSet;
+    }
+
+    public String getWorkflowQualifier() {
+        return workflowQualifier;
+    }
+
+    public void setWorkflowQualifier(String workflowQualifier) {
+        this.workflowQualifier = workflowQualifier;
     }
 
     /**

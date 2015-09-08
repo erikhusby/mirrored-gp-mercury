@@ -15,6 +15,7 @@ import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
@@ -323,6 +324,14 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
      * @see SampleDataFetcher
      */
     public static void loadSampleData(List<ProductOrderSample> samples) {
+        loadSampleData(samples, BSPSampleSearchColumn.PDO_SEARCH_COLUMNS);
+    }
+
+    /**
+     * Load SampleData for all the supplied ProductOrderSamples.
+     * @see SampleDataFetcher
+     */
+    public static void loadSampleData(List<ProductOrderSample> samples, BSPSampleSearchColumn... bspSampleSearchColumns) {
 
         // Create a subset of the samples so we only call BSP for BSP samples that aren't already cached.
         Set<String> sampleNames = new HashSet<>(samples.size());
@@ -342,7 +351,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         Map<String, SampleData> sampleDataMap = Collections.emptyMap();
 
         try {
-            sampleDataMap = sampleDataFetcher.fetchSampleDataForProductOrderSample(samples);
+            sampleDataMap = sampleDataFetcher.fetchSampleDataForProductOrderSamples(samples, bspSampleSearchColumns);
         } catch (BSPLookupException ignored) {
             // not a bsp sample?
         }
@@ -763,6 +772,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         loadSampleData(samples);
     }
 
+    public void loadSampleDataForBillingTracker() {
+        loadSampleData(samples, BSPSampleSearchColumn.BILLING_TRACKER_COLUMNS);
+    }
+
     // Return the sample counts object to allow call chaining.
     private SampleCounts updateSampleCounts() {
         sampleCounts.generateCounts();
@@ -1153,6 +1166,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         Abandoned,
         Completed;
 
+        public static final EnumSet<OrderStatus> canAbandonStatuses = EnumSet.of(Pending, Submitted);
         /** CSS Class to use when displaying this status in HTML. */
         private final String cssClass;
 
@@ -1199,7 +1213,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
         /** @return true if an order can be abandoned from this state. */
         public boolean canAbandon() {
-            return EnumSet.of(Pending, Submitted).contains(this);
+            return canAbandonStatuses.contains(this);
         }
 
         /** @return true if an order can be placed from this state. */
@@ -1321,11 +1335,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                     // This is a unique sample name, so do any counts that are only needed for unique names. Since
                     // BSP looks up samples by name, it would always get the same data, so only counting unique values.
                     if (sample.isInBspFormat()) {
-                        if (sample.bspMetaDataMissing()) {
-                            missingBspMetaDataCount++;
-                        } else {
-                            updateSampleCounts(participantSet, sample);
-                        }
+                        updateSampleCounts(participantSet, sample);
                     }
                 }
 
@@ -1380,6 +1390,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
          * @param sample         the sample to update the counts with
          */
         private void updateSampleCounts(Set<String> participantSet, ProductOrderSample sample) {
+            if (sample.bspMetaDataMissing()) {
+                missingBspMetaDataCount++;
+            }
+
             incrementSampleCountByMetadata(sample);
             SampleData sampleData = sample.getSampleData();
 
@@ -1638,4 +1652,26 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         }
         return regInfo;
     }
+
+    // todo jmt move this to a preference
+    private static final Map<String, String> mapProductPartToGenoChip = new HashMap<>();
+    static {
+        mapProductPartToGenoChip.put("P-WG-0022", "HumanOmni2.5-8v1_A");
+        mapProductPartToGenoChip.put("P-WG-0023", "HumanOmniExpressExome-8v1_B");
+        mapProductPartToGenoChip.put("P-WG-0025", "HumanExome-12v1-2_A");
+        mapProductPartToGenoChip.put("P-WG-0028", "HumanOmniExpress-24v1-1_A");
+        mapProductPartToGenoChip.put("P-WG-0029", "HumanExome-12v1-2_A");
+        mapProductPartToGenoChip.put("P-WG-0031", "HumanCoreExome-24v1-0_A");
+        mapProductPartToGenoChip.put("P-WG-0036", "PsychChip_15048346_B");
+        mapProductPartToGenoChip.put("P-WG-0053", "Broad_GWAS_supplemental_15061359_A1");
+    }
+
+    public String getGenoChipType() {
+        String genoChipType = mapProductPartToGenoChip.get(getProduct().getPartNumber());
+        if (getProduct().getPartNumber().equals("P-WG-0036") && getTitle().contains("Danish")) {
+            genoChipType = "DBS_Wave_Psych";
+        }
+        return genoChipType;
+    }
+
 }

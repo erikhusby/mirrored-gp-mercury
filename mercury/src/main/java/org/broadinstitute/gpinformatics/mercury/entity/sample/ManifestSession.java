@@ -593,9 +593,10 @@ public class ManifestSession implements Updatable {
      * @param targetSample             Mercury Sample to which the transfer will be associated
      * @param targetVessel             Lab Vessel to which the transfer will be associated
      * @param user                     Represents the user attempting to make the transfer
+     * @param disambiguator            LabEvent disambiguator to avoid unique constraint errors when called in a tight loop
      */
     public void performTransfer(String sourceCollaboratorSample, MercurySample targetSample, LabVessel targetVessel,
-                                BspUser user) {
+                                BspUser user, long disambiguator) {
 
         ManifestRecord sourceRecord ;
 
@@ -612,7 +613,7 @@ public class ManifestSession implements Updatable {
 
         LabEvent collaboratorTransferEvent =
                 new LabEvent(LabEventType.COLLABORATOR_TRANSFER, new Date(), LabEvent.UI_EVENT_LOCATION,
-                        1L, user.getUserId(), LabEvent.UI_PROGRAM_NAME);
+                        disambiguator, user.getUserId(), LabEvent.UI_PROGRAM_NAME);
         targetVessel.addInPlaceEvent(collaboratorTransferEvent);
     }
 

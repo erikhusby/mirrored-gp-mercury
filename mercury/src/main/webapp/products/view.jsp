@@ -269,26 +269,5 @@
                 </c:forEach>
             </tbody>
         </table>
-
-        <div class="tableBar">
-            <h4 style="display:inline">Material Types</h4>
-        </div>
-        <table id="allowedMaterialTypes" class="table table-striped table-bordered">
-            <thead>
-                <tr>
-                    <th>Category</th>
-                    <th>Name</th>
-                </tr>
-            </thead>
-            <tbody>
-                <c:forEach items="${actionBean.editProduct.allowableMaterialTypes}" var="allowableMaterialType">
-                    <tr>
-                        <td>${allowableMaterialType.category}</td>
-                        <td>${allowableMaterialType.name}</td>
-                    </tr>
-                </c:forEach>
-            </tbody>
-        </table>
-
     </stripes:layout-component>
 </stripes:layout-render>

@@ -566,14 +566,29 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
                         "Sample already has the same quantity to bill, PDO: {0}, sample: {1}, price item: {2}, quantity {3}",
                         productOrder.getJiraTicketKey(), sampleName, priceItem.getName(), quantity));
             } else {
-                /*
-                 * Why overwrite what a user likely manually uploaded? This seems wrong and/or dangerous.
-                 */
-                for (LedgerEntry item : getLedgerItems()) {
-                    if (item.getPriceItem().equals(priceItem)) {
-                        item.setQuantity(quantity);
-                        item.setAutoLedgerTimestamp(now);
-                        break;
+                // This price item already has a ledger entry.
+                // - If it's been billed, don't bill it again, but report this as an issue.
+                // - If it hasn't been billed check & see if the quantity is the same as the current.  If they differ,
+                // replace the existing quantity with the new quantity. When replacing, also set the timestamp so
+                // the PDM can be warned about downloading the spreadsheet AFTER this change.
+                if (quantities.getBilled() != 0) {
+                    log.debug(MessageFormat.format(
+                            "Trying to update an already billed sample, PDO: {0}, sample: {1}, price item: {2}",
+                            productOrder.getJiraTicketKey(), sampleName, priceItem.getName()));
+                } else if (MathUtils.isSame(quantities.getUploaded(), quantity)) {
+                    log.debug(MessageFormat.format(
+                            "Sample already has the same quantity to bill, PDO: {0}, sample: {1}, price item: {2}, quantity {3}",
+                            productOrder.getJiraTicketKey(), sampleName, priceItem.getName(), quantity));
+                } else {
+                    /*
+                     * Why overwrite what a user likely manually uploaded? This seems wrong and/or dangerous.
+                     */
+                    for (LedgerEntry item : getLedgerItems()) {
+                        if (item.getPriceItem().equals(priceItem)) {
+                            item.setQuantity(quantity);
+                            item.setAutoLedgerTimestamp(now);
+                            break;
+                        }
                     }
                 }
             }

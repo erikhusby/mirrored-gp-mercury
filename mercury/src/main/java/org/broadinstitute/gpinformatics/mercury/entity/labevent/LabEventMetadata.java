@@ -26,7 +26,9 @@ public class LabEventMetadata {
 
     public enum LabEventMetadataType {
         DilutionFactor("DilutionFactor"),
-        Volume("Volume");  // volume is used for plate transfer because bettalims message doesn't permit well volumes.
+        Volume("Volume"),  // volume is used for plate transfer because bettalims message doesn't permit well volumes.
+        TaskId("TaskID"),  // Use in arrays plating to pass BSP task ID from deck, to allow auto-export from BSP to GAP.
+        MessageNum("MessageNum"); // Temporary solution to allow 24 Infinium chips on one Manual Transfer page for XStain.
 
         private static final Map<String, LabEventMetadataType> MAP_NAME_TO_METADATA_TYPE =
                 new HashMap<>(LabEventMetadataType.values().length);
@@ -38,7 +40,7 @@ public class LabEventMetadata {
 
         static {
             for (LabEventMetadataType metadataType : LabEventMetadataType.values()) {
-                MAP_NAME_TO_METADATA_TYPE.put(metadataType.name(), metadataType);
+                MAP_NAME_TO_METADATA_TYPE.put(metadataType.getDisplayName(), metadataType);
             }
         }
 

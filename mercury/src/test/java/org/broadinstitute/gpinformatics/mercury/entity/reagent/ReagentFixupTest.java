@@ -563,35 +563,29 @@ public class ReagentFixupTest extends Arquillian {
     }
 
     @Test(enabled = false)
-    public void fixupGplim3629() {
+    public void fixupGplim3712() {
         userBean.loginOSUser();
-        // Changes the reagent used on labEvents that were determined from sql queries (see ticket).
-        Map<Long, Long> eventIdToUndesiredReagentIds = new HashMap<Long, Long>() {{
-            put(939935L, 959960L);
-            put(939937L, 959960L);
-            put(939938L, 959960L);
-            put(939940L, 959960L);
-            put(939943L, 959960L);
-            put(939944L, 959960L);
-            put(939948L, 959965L);
-        }};
-        Long desiredReagentId = 954982L;
+        Reagent undesired = genericReagentDao.findByReagentNameLotExpiration("HS buffer",
+                "91Q33120101689868301", null);
+        Assert.assertNotNull(undesired);
 
-        Reagent desired = genericReagentDao.findById(Reagent.class, desiredReagentId);
-        Assert.assertNotNull(desired, "reagent " + desiredReagentId);
-        for (Map.Entry<Long, Long> entry : eventIdToUndesiredReagentIds.entrySet()) {
-            LabEvent labEvent = labEventDao.findById(LabEvent.class, entry.getKey());
-            Assert.assertNotNull(labEvent, "event " + entry.getKey());
-            Reagent undesired = genericReagentDao.findById(Reagent.class, entry.getValue());
-            Assert.assertNotNull(undesired, "reagent " + entry.getValue());
-            // Removes undesired reagent and add desired reagent.
-            Assert.assertTrue(labEvent.getReagents().remove(undesired),
-                    "event " + entry.getKey() + " reagent " + entry.getValue());
-            labEvent.addReagent(desired);
-        }
+        Reagent desired = genericReagentDao.findByReagentNameLotExpiration(undesired.getName(),
+                "RG-8252", null);
+        Assert.assertNotNull(desired);
 
-        genericReagentDao.persist(new FixupCommentary("GPLIM-3629 change reagent used with flowcell events."));
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, 998742L);
+        System.out.println("Replacing reagent " + undesired.getReagentId() + " with " + desired.getReagentId() +
+                " for event " + labEvent.getLabEventId());
+        Assert.assertTrue(labEvent.getReagents().remove(undesired));
+        labEvent.addReagent(desired);
+
+        labEvent = labEventDao.findById(LabEvent.class, 998747L);
+        System.out.println("Replacing reagent " + undesired.getReagentId() + " with " + desired.getReagentId() +
+                " for event " + labEvent.getLabEventId());
+        Assert.assertTrue(labEvent.getReagents().remove(undesired));
+        labEvent.addReagent(desired);
+
+        genericReagentDao.persist(new FixupCommentary("GPLIM-3712 change reagent used on PicoBufferAddition event."));
         genericReagentDao.flush();
     }
-
 }

@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -88,7 +89,11 @@ public class WorkflowStepDef implements Serializable {
 
     private String name;
     private List<LabEventType> labEventTypes = new ArrayList<>();
-    /** Whether this step is optional, e.g. normalization is otional if the concentration is fine as is */
+    /** Specific reagent types for the generic ADD_REAGENT event. */
+    private List<String> reagentTypes = new ArrayList<>();
+    /** Specific vessel type for the generic ADD_REAGENT event.  JAXB doesn't allow use of VesselTypeGeometry here. */
+    private BarcodedTube.BarcodedTubeType targetBarcodedTubeType;
+    /** Whether this step is optional, e.g. normalization is optional if the concentration is fine as is */
     private boolean optional;
     /** decision, perhaps expressed in MVEL */
     private String checkpointExpression;
@@ -111,6 +116,10 @@ public class WorkflowStepDef implements Serializable {
     /** Determines whether the current workflow step is on a path that does not lead towards the ned of the current
      * process */
     private boolean deadEndBranch = false;
+    /** Qualifies generic events like CENTRIFUGE, which might occur multiple times in one process. */
+    private String workflowQualifier;
+    /** Instructions to the users. */
+    private String instructions;
 
     private transient WorkflowProcessDef processDef;
 
@@ -143,6 +152,14 @@ public class WorkflowStepDef implements Serializable {
 
     public List<LabEventType> getLabEventTypes() {
         return labEventTypes;
+    }
+
+    public List<String> getReagentTypes() {
+        return reagentTypes;
+    }
+
+    public BarcodedTube.BarcodedTubeType getTargetBarcodedTubeType() {
+        return targetBarcodedTubeType;
     }
 
     public boolean isOptional() {
@@ -187,5 +204,13 @@ public class WorkflowStepDef implements Serializable {
 
     public boolean isDeadEndBranch() {
         return deadEndBranch;
+    }
+
+    public String getWorkflowQualifier() {
+        return workflowQualifier;
+    }
+
+    public String getInstructions() {
+        return instructions;
     }
 }
