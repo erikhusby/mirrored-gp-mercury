@@ -33,6 +33,26 @@
                 font-size: 12px;
             }
         </style>
+
+        <script src="${ctxpath}/resources/scripts/jquery.validate-1.14.0.min.js"></script>
+        <script type="text/javascript">
+            $j(document).ready(function () {
+                $j.validator.addMethod("unique", function(value, element) {
+                    var parentForm = $j(element).closest('form');
+                    var timeRepeated = 0;
+                    if (value != '') {
+                        $j(parentForm.find(':text')).each(function () {
+                            if ($j(this).val() === value) {
+                                timeRepeated++;
+                            }
+                        });
+                    }
+                    return timeRepeated === 1 || timeRepeated === 0;
+                }, "* Duplicate");
+                $j.validator.classRuleSettings.unique = { unique: true };
+                $j("#transferForm").validate();
+            });
+        </script>
     </stripes:layout-component>
 
     <stripes:layout-component name="content">
@@ -159,19 +179,19 @@
                                     value="${receptacleTransfer.sourceReceptacle.volume}" class="clearable barcode"/> ul
                             </div>
                             <div class="control-group">
-                            <h5>Destination</h5>
-                            <label>Type</label>
-                            ${receptacleTransfer.receptacle.receptacleType}
-                            <input type="hidden" name="stationEvents[${stationEventStatus.index}].receptacle.receptacleType"
-                                    value="${receptacleTransfer.receptacle.receptacleType}"/>
-                            <label for="destRcpBcd${stationEventStatus.index}">Barcode</label>
-                            <input type="text" id="destRcpBcd${stationEventStatus.index}"
-                                    name="stationEvents[${stationEventStatus.index}].receptacle.barcode"
-                                    value="${receptacleTransfer.receptacle.barcode}" class="clearable barcode"/>
-                            <label for="destRcpVol${stationEventStatus.index}">Volume</label>
-                            <input type="text" id="destRcpVol${stationEventStatus.index}"
-                                    name="stationEvents[${stationEventStatus.index}].receptacle.volume"
-                                    value="${receptacleTransfer.receptacle.volume}" class="clearable barcode"/> ul
+                                <h5>Destination</h5>
+                                <label>Type</label>
+                                ${receptacleTransfer.receptacle.receptacleType}
+                                <input type="hidden" name="stationEvents[${stationEventStatus.index}].receptacle.receptacleType"
+                                        value="${receptacleTransfer.receptacle.receptacleType}"/>
+                                <label for="destRcpBcd${stationEventStatus.index}">Barcode</label>
+                                <input type="text" id="destRcpBcd${stationEventStatus.index}"
+                                        name="stationEvents[${stationEventStatus.index}].receptacle.barcode"
+                                        value="${receptacleTransfer.receptacle.barcode}" class="clearable barcode"/>
+                                <label for="destRcpVol${stationEventStatus.index}">Volume</label>
+                                <input type="text" id="destRcpVol${stationEventStatus.index}"
+                                        name="stationEvents[${stationEventStatus.index}].receptacle.volume"
+                                        value="${receptacleTransfer.receptacle.volume}" class="clearable barcode"/> ul
                             </div>
                         </c:when> <%-- end ReceptacleTransferEventType --%>
 
@@ -180,6 +200,7 @@
                             <%--@elvariable id="receptacleEvent" type="org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEventType"--%>
                             <h4>Tube Event</h4>
                             <div class="control-group">
+                                <%-- todo jmt reduce copy / paste --%>
                                 <label>Type</label>
                                     ${receptacleEvent.receptacle.receptacleType}
                                 <input type="hidden" name="stationEvents[${stationEventStatus.index}].receptacle.receptacleType"

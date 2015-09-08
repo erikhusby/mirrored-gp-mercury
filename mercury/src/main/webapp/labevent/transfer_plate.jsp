@@ -74,7 +74,7 @@ plate / rack.
                             <input type="text"
                                     name="stationEvents[${stationEventIndex}].${source ? 'sourcePositionMap' : 'positionMap'}.receptacle[${receptacleIndex}].barcode"
                                     value="${actionBean.findReceptacleAtPosition(positionMap, geometry.vesselPositions[receptacleIndex]).barcode}"
-                                    class="clearable smalltext"/>
+                                    class="clearable smalltext unique"/>
                             <input type="hidden"
                                     name="stationEvents[${stationEventIndex}].${source ? 'sourcePositionMap' : 'positionMap'}.receptacle[${receptacleIndex}].position"
                                     value="${geometry.vesselPositions[receptacleIndex]}"/>
