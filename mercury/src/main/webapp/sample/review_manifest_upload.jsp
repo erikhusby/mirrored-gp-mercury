@@ -66,7 +66,6 @@
                 <th width="50px">${tumorNormalKey.displayName}</th>
                 <th width="50px">${materialTypeKey.displayName}</th>
                 <th width="100px">${collectionDateKey.displayName}</th>
-                i9nt
                 <th width="100px">${visitKey.displayName}</th>
             </tr>
             </thead>
