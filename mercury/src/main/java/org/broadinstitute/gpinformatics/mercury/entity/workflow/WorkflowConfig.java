@@ -172,4 +172,19 @@ public class WorkflowConfig implements PreferenceDefinitionValue {
             return workflowConfig.unmarshal(xml);
         }
     }
+
+    public WorkflowStepDef getStep(String workflowProcessName, String workflowStepName, Date workflowEffectiveDate) {
+        for (WorkflowProcessDef workflowProcessDef : workflowProcessDefs) {
+            if (workflowProcessDef.getName().equals(workflowProcessName)) {
+                WorkflowProcessDefVersion effectiveVersion = workflowProcessDef.getEffectiveVersion(
+                        workflowEffectiveDate);
+                for (WorkflowStepDef workflowStepDef : effectiveVersion.getWorkflowStepDefs()) {
+                    if (workflowStepDef.getName().equals(workflowStepName)) {
+                        return workflowStepDef;
+                    }
+                }
+            }
+        }
+        return null;
+    }
 }

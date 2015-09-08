@@ -969,6 +969,193 @@
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>Clinical Whole Blood Extraction</name>
+        <workflowProcessDefVersions>
+            <version>02</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowStepDefs>
+                <name>Prep Reagents</name>
+                <labEventTypes>PREP</labEventTypes>
+                <workflowQualifier>Reagents</workflowQualifier>
+                <instructions>Before starting, confirm all reagents have been prepared:
+                    Buffer AL incubated at 56C to dissolve precipitate, if needed
+                    100% Ethanol added to Buffer AW1
+                    100% Ethanol added to Buffer AW2
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Prep workspace</name>
+                <labEventTypes>PREP</labEventTypes>
+                <workflowQualifier>Disinfect</workflowQualifier>
+                <instructions>Disinfect lab space and sample rack.
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Incubate Samples</name>
+                <labEventTypes>INCUBATE</labEventTypes>
+                <workflowQualifier>Samples</workflowQualifier>
+                <instructions>Collect samples for extraction from +4°C fridge or freezer.
+                    If samples are frozen, incubate at 37°C for 10 minutes. Remove from incubator and place on ice.
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Transfer to microcentrifuge tube</name>
+                <labEventTypes>EXTRACT_BLOOD_TO_MICRO</labEventTypes>
+                <reagentTypes>Proteinase K</reagentTypes>
+                <reagentTypes>Buffer AL</reagentTypes>
+                <instructions>Label one microcentrifuge tube for each sample. Pipet 20ul of proteinase K into the tube.
+                    Add 200ul of blood to each microcentrifuge tube.
+                    Add 200ul of Buffer AL to each microcentrifuge tube.
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Mix AL</name>
+                <labEventTypes>MIX</labEventTypes>
+                <workflowQualifier>AL</workflowQualifier>
+                <instructions>Mix by pulse vortexing for 15 seconds.
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Incubate AL</name>
+                <labEventTypes>INCUBATE</labEventTypes>
+                <workflowQualifier>AL</workflowQualifier>
+                <instructions>Incubate at 56°C for 10 minutes.
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Centrifuge AL</name>
+                <labEventTypes>CENTRIFUGE</labEventTypes>
+                <workflowQualifier>AL</workflowQualifier>
+                <instructions>Briefly centrifuge the tube to remove drops from the lid.
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Add Ethanol</name>
+                <labEventTypes>ADD_REAGENT</labEventTypes>
+                <workflowQualifier>Ethanol</workflowQualifier>
+                <reagentTypes>100% Ethanol</reagentTypes>
+                <targetBarcodedTubeType>EppendoffFliptop15</targetBarcodedTubeType>
+                <instructions>Add 200ul of 100% ethanol to the sample.
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Mix Ethanol</name>
+                <labEventTypes>MIX</labEventTypes>
+                <workflowQualifier>Ethanol</workflowQualifier>
+                <instructions>Mix by pulse vortexing for 15 seconds.
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Transfer to spin column</name>
+                <labEventTypes>EXTRACT_BLOOD_MICRO_TO_SPIN</labEventTypes>
+                <instructions>Apply the mixture to the QIAamp Mini spin column in a 2ml collection tube
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Centrifuge Ethanol</name>
+                <labEventTypes>CENTRIFUGE</labEventTypes>
+                <workflowQualifier>Ethanol</workflowQualifier>
+                <instructions>Spin at 6000 x g for 1 minute.
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Move Column After Ethanol</name>
+                <labEventTypes>MOVE</labEventTypes>
+                <workflowQualifier>Ethanol</workflowQualifier>
+                <instructions>Place the column in a clean 2ml collection tube and discard the tube with the filtrate.
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Add AW1</name>
+                <labEventTypes>ADD_REAGENT</labEventTypes>
+                <workflowQualifier>AW1</workflowQualifier>
+                <reagentTypes>Buffer AW1</reagentTypes>
+                <targetBarcodedTubeType>SpinColumn</targetBarcodedTubeType>
+                <instructions>Add 500ul Buffer AW1 to the column.
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Centrifuge AW1</name>
+                <labEventTypes>CENTRIFUGE</labEventTypes>
+                <workflowQualifier>AW1</workflowQualifier>
+                <instructions>Spin at 6,000 x g for 1 minute.
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Move Column After AW1</name>
+                <labEventTypes>MOVE</labEventTypes>
+                <workflowQualifier>AW1</workflowQualifier>
+                <instructions>Place the column in a clean 2ml collection tube and discard the tube with the filtrate.
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Add AW2</name>
+                <labEventTypes>ADD_REAGENT</labEventTypes>
+                <workflowQualifier>AW2</workflowQualifier>
+                <reagentTypes>Buffer AW2</reagentTypes>
+                <targetBarcodedTubeType>SpinColumn</targetBarcodedTubeType>
+                <instructions>Add 500ul Buffer AW2 to the column.
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Centrifuge AW2</name>
+                <labEventTypes>CENTRIFUGE</labEventTypes>
+                <workflowQualifier>AW2</workflowQualifier>
+                <instructions>Spin at full speed (20,000 x g) for 3 minutes.
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Move Column After AW2</name>
+                <labEventTypes>MOVE</labEventTypes>
+                <workflowQualifier>AW2</workflowQualifier>
+                <instructions>Place the column in a clean 2ml collection tube and discard the tube with the filtrate.
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Second Centrifuge After AW2</name>
+                <labEventTypes>CENTRIFUGE</labEventTypes>
+                <workflowQualifier>AW2_2</workflowQualifier>
+                <instructions>Spin at full speed for 1 minute.
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Second Move Column After AW2</name>
+                <labEventTypes>MOVE</labEventTypes>
+                <workflowQualifier>AW2_2</workflowQualifier>
+                <instructions>Place the column in a clean 1.5ml microcentrifuge tube and discard the tube with the filtrate.
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Add AE</name>
+                <labEventTypes>ADD_REAGENT</labEventTypes>
+                <workflowQualifier>AE</workflowQualifier>
+                <reagentTypes>Buffer AE</reagentTypes>
+                <targetBarcodedTubeType>SpinColumn</targetBarcodedTubeType>
+                <instructions>Add 200ul Buffer AE to the column and incubate at room temperature for 1 minute.
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Centrifuge AE</name>
+                <labEventTypes>CENTRIFUGE</labEventTypes>
+                <workflowQualifier>AE</workflowQualifier>
+                <instructions>Spin at 6,000 x g for 1 minute.
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Transfer to matrix</name>
+                <labEventTypes>EXTRACT_BLOOD_SPIN_TO_MATRIX</labEventTypes>
+                <instructions>Transfer the eluate to a labeled 0.5ml barcoded 2D matrix tube.
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Store</name>
+                <labEventTypes>STORE</labEventTypes>
+                <instructions>If necessary, store at +4°C until ready to proceed to Plating.
+                </instructions>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
     <productWorkflowDefs>
         <name>Agilent Exome Express</name>
         <productWorkflowDefVersions>
@@ -1098,6 +1285,14 @@
             <sequencingConfigDefs>Amplicon-Pool-Amplicon</sequencingConfigDefs>
             <sequencingConfigDefs>Resequencing-Production</sequencingConfigDefs>
             <routingRule>SQUID</routingRule>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>Clinical Whole Blood Extraction</name>
+        <productWorkflowDefVersions>
+            <version>02</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowProcessDefs>Clinical Whole Blood Extraction</workflowProcessDefs>
         </productWorkflowDefVersions>
     </productWorkflowDefs>
 

@@ -15,6 +15,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.RapSheet;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Index;
@@ -38,6 +39,7 @@ import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -267,8 +269,9 @@ public class MercurySample extends AbstractSample {
     public Date getReceivedDate() {
 
         for(LabVessel currentVessel:labVessel) {
-            Map<LabEvent,Set<LabVessel>> vesselsForEvent =
-                    currentVessel.findVesselsForLabEventType(LabEventType.SAMPLE_RECEIPT,true);
+            Map<LabEvent, Set<LabVessel>> vesselsForEvent = currentVessel
+                    .findVesselsForLabEventType(LabEventType.SAMPLE_RECEIPT, true,
+                            EnumSet.of(TransferTraverserCriteria.TraversalDirection.Ancestors));
             if (!vesselsForEvent.isEmpty()) {
                 return vesselsForEvent.keySet().iterator().next().getEventDate();
             }

@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
@@ -31,6 +32,7 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.mockito.Matchers.anyVararg;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
@@ -231,17 +233,17 @@ public class SampleDataFetcherTest {
         configureBspFetcher(sampleId, (BspSampleData) presetSampleToSampleDataMap.get(sampleId));
 
         Map<String, SampleData> sampleDataBySampleId;
-        if(sample instanceof String) {
+        if (sample instanceof String) {
             sampleDataBySampleId = sampleDataFetcher.fetchSampleData(Collections.singleton((String) sample));
         } else {
-            sampleDataBySampleId = sampleDataFetcher.fetchSampleDataForProductOrderSample(
-                    Collections.singleton((ProductOrderSample) sample));
+            sampleDataBySampleId = sampleDataFetcher.fetchSampleDataForProductOrderSamples(
+                    Collections.singleton((ProductOrderSample) sample), BSPSampleSearchColumn.PDO_SEARCH_COLUMNS);
         }
 
         verify(mockMercurySampleDao).findMapIdToMercurySample(Collections.singleton(sampleId));
 
         assertThat(sampleDataBySampleId.size(), equalTo(1));
-        assertThat(sampleDataBySampleId.get(sampleId), equalTo((SampleData) presetSampleToSampleDataMap.get(sampleId)));
+        assertThat(sampleDataBySampleId.get(sampleId), equalTo(presetSampleToSampleDataMap.get(sampleId)));
     }
 
     @DataProvider(name = "clinicalSampleFetchProvider")
@@ -270,8 +272,8 @@ public class SampleDataFetcherTest {
         if(sample instanceof String) {
             sampleData = sampleDataFetcher.fetchSampleData(Collections.singleton((String)sample));
         } else {
-            sampleData = sampleDataFetcher.fetchSampleDataForProductOrderSample(
-                    Collections.singleton((ProductOrderSample) sample));
+            sampleData = sampleDataFetcher.fetchSampleDataForProductOrderSamples(
+                    Collections.singleton((ProductOrderSample) sample), BSPSampleSearchColumn.PDO_SEARCH_COLUMNS);
         }
 
         assertThat(sampleData.size(), equalTo(1));
@@ -335,12 +337,13 @@ public class SampleDataFetcherTest {
         // @formatter:on
         when(mockBspSampleDataFetcher
                 .fetchSampleData(argThat(containsInAnyOrder(BSP_ONLY_SAMPLE_ID,
-                        BSP_SAMPLE_ID))))
+                        BSP_SAMPLE_ID)), (BSPSampleSearchColumn[]) anyVararg()))
                 .thenReturn(ImmutableMap.of(BSP_ONLY_SAMPLE_ID, bspOnlySampleData, BSP_SAMPLE_ID, bspSampleData));
         configureMercurySampleDao(clinicalMercurySample);
         configureMercuryFetcher(clinicalMercurySample, clinicalSampleData);
 
-        Map<String, SampleData> sampleData = sampleDataFetcher.fetchSampleDataForProductOrderSample(samples);
+        Map<String, SampleData> sampleData = sampleDataFetcher
+                .fetchSampleDataForProductOrderSamples(samples, BSPSampleSearchColumn.PDO_SEARCH_COLUMNS);
 
         assertThat(sampleData.size(), equalTo(3));
         assertThat(sampleData.get(BSP_ONLY_SAMPLE_ID), equalTo((SampleData) bspOnlySampleData));
@@ -489,6 +492,9 @@ public class SampleDataFetcherTest {
 
     private void configureBspFetcher(String sampleId, BspSampleData sampleData) {
         when(mockBspSampleDataFetcher.fetchSampleData(argThat(contains(sampleId))))
+                .thenReturn(ImmutableMap.of(sampleId, sampleData));
+        when(mockBspSampleDataFetcher.fetchSampleData(argThat(contains(sampleId)),
+                (BSPSampleSearchColumn[]) anyVararg()))
                 .thenReturn(ImmutableMap.of(sampleId, sampleData));
     }
 

@@ -18,20 +18,15 @@ public class EventHandlerSelector {
 
     private DenatureToDilutionTubeHandler denatureToDilutionTubeHandler;
     private FlowcellMessageHandler flowcellMessageHandler;
-    private SamplesDaughterPlateHandler samplesDaughterPlateHandler;
     private FlowcellLoadedHandler flowcellLoadedHandler;
-    private GapHandler gapHandler;
-
 
     @Inject
     public EventHandlerSelector(DenatureToDilutionTubeHandler denatureToDilutionTubeHandler,
-            FlowcellMessageHandler flowcellMessageHandler, SamplesDaughterPlateHandler samplesDaughterPlateHandler,
-            FlowcellLoadedHandler flowcellLoadedHandler, GapHandler gapHandler) {
+            FlowcellMessageHandler flowcellMessageHandler,
+            FlowcellLoadedHandler flowcellLoadedHandler) {
         this.denatureToDilutionTubeHandler = denatureToDilutionTubeHandler;
         this.flowcellMessageHandler = flowcellMessageHandler;
-        this.samplesDaughterPlateHandler = samplesDaughterPlateHandler;
         this.flowcellLoadedHandler = flowcellLoadedHandler;
-        this.gapHandler = gapHandler;
     }
 
     /**
@@ -66,13 +61,6 @@ public class EventHandlerSelector {
         case FLOWCELL_LOADED:
             flowcellLoadedHandler.handleEvent(targetEvent, stationEvent);
             break;
-        }
-
-        // For automated plate transfers in BSP, post the message to BSP PlateTransferResource.
-        if (targetEvent.getLabEventType().getForwardMessage() == LabEventType.ForwardMessage.BSP) {
-            samplesDaughterPlateHandler.postToBsp(stationEvent, SamplesDaughterPlateHandler.BSP_TRANSFER_REST_URL);
-        } else if (targetEvent.getLabEventType().getForwardMessage() == LabEventType.ForwardMessage.GAP) {
-            gapHandler.postToGap(stationEvent);
         }
     }
 

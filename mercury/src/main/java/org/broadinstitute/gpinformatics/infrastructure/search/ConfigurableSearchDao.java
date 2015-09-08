@@ -266,7 +266,7 @@ public class ConfigurableSearchDao extends GenericDao {
      * @param searchInstance search options
      * @param configurableSearchDef search configuration
      */
-    public void startPagination(PaginationDao.Pagination pagination, Criteria criteria, SearchInstance searchInstance,
+    public void startPagination(PaginationUtil.Pagination pagination, Criteria criteria, SearchInstance searchInstance,
                                 ConfigurableSearchDefinition configurableSearchDef ) {
 
         // Existence of an exclusive term being the only one present will have been validated
@@ -277,10 +277,6 @@ public class ConfigurableSearchDao extends GenericDao {
         } else {
             pagination.setResultEntity(configurableSearchDef.getResultEntity());
         }
-
-        // TODO set join fetch paths? would require access to column defs
-        // todo jmt shouldn't be newing DAO
-        PaginationDao paginationDao = new PaginationDao();
 
         // Determine if we need to expand the core entity list via a user selectable traversal option
         Map<String,Boolean> traversalEvaluatorValues = searchInstance.getTraversalEvaluatorValues();
@@ -294,10 +290,10 @@ public class ConfigurableSearchDao extends GenericDao {
 
         if( !traversalRequired && !isAlternateSearchDefinition ) {
             // Overwhelming majority of searches fetch only ID values for pagination
-            paginationDao.startPagination( criteria, pagination, false );
+            PaginationUtil.startPagination(criteria, pagination, false);
         } else {
             // Fetch the core entities before the traversal
-            paginationDao.startPagination( criteria, pagination, true );
+            PaginationUtil.startPagination(criteria, pagination, true);
 
             TraversalEvaluator evaluator = null;
             Set<Object> idList = null;

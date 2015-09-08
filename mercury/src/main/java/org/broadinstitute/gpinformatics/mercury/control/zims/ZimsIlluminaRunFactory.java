@@ -13,6 +13,7 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
@@ -175,8 +176,15 @@ public class ZimsIlluminaRunFactory {
                         productOrderKeys.add(productOrderKey);
                     }
                     // todo jmt root may be null
-                    String pdoSampleName = laneSampleInstance.getMercuryRootSampleName();
-                    String sampleId = pdoSampleName;
+                    String pdoSampleName;
+                    ProductOrderSample productOrderSample = laneSampleInstance.getSingleProductOrderSample();
+                    if (productOrderSample != null) {
+                        pdoSampleName = productOrderSample.getSampleKey();
+                    } else {
+                        // Controls won't have a ProductOrderSample, so use root sample ID.
+                        pdoSampleName = laneSampleInstance.getMercuryRootSampleName();
+                    }
+                    String sampleId = laneSampleInstance.getMercuryRootSampleName();
                     LabBatchStartingVessel importLbsv = laneSampleInstance.getSingleBatchVessel(LabBatch.LabBatchType.SAMPLES_IMPORT);
                     if (importLbsv != null) {
                         Collection<MercurySample> mercurySamples = importLbsv.getLabVessel().getMercurySamples();
