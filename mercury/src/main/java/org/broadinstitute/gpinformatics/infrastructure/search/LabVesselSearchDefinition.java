@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.columns.BspSampleSearchAddRowsListener;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
@@ -343,11 +344,17 @@ public class LabVesselSearchDefinition {
         searchTerm.setDbSortPath("bucketEntries.productOrder.jiraTicketKey");
         searchTerm.setSearchValueConversionExpression(SearchDefinitionFactory.getPdoInputConverter());
         List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
+
         SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
-        //new CriteriaProjection("bucketEntries", "labVesselId", "labVessel", BucketEntry.class));
         criteriaPath.setCriteria(Arrays.asList("bucketEntries", "productOrder"));
         criteriaPath.setPropertyName("jiraTicketKey");
         criteriaPaths.add(criteriaPath);
+
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList("mercurySample", "mercurySamples", "productOrderSamples", "productOrder" ));
+        criteriaPath.setPropertyName("jiraTicketKey");
+        criteriaPaths.add(criteriaPath);
+
         searchTerm.setCriteriaPaths(criteriaPaths);
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
@@ -356,6 +363,11 @@ public class LabVesselSearchDefinition {
                 LabVessel labVessel = (LabVessel) entity;
                 for (BucketEntry bucketEntry : labVessel.getBucketEntries()) {
                     results.add(bucketEntry.getProductOrder().getJiraTicketKey());
+                }
+                for (MercurySample mercurySample : labVessel.getMercurySamples() ) {
+                    for (ProductOrderSample productOrderSample : mercurySample.getProductOrderSamples() ) {
+                        results.add(productOrderSample.getProductOrder().getJiraTicketKey());
+                    }
                 }
                 return results;
             }

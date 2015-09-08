@@ -214,7 +214,7 @@ public class BaseEventTest {
         flowcellLoadedHandler.setAppConfig(appConfig);
 
         EventHandlerSelector eventHandlerSelector = new EventHandlerSelector(new DenatureToDilutionTubeHandler(),
-                flowcellMessageHandler, new SamplesDaughterPlateHandler(), flowcellLoadedHandler, null);
+                flowcellMessageHandler, flowcellLoadedHandler);
         labEventFactory.setEventHandlerSelector(eventHandlerSelector);
 
         bucketEjb = new BucketEjb(labEventFactory, jiraService, null, null, null, null,

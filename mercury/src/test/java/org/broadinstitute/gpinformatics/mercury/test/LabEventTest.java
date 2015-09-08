@@ -1615,7 +1615,7 @@ public class LabEventTest extends BaseEventTest {
         List<StaticPlate> sourcePlates = buildSamplePlates(productOrder, "AmpPlate");
         StaticPlate sourcePlate = sourcePlates.get(0);
         InfiniumEntityBuilder infiniumEntityBuilder = runInfiniumProcess(sourcePlate, "Infinium");
-        Set<SampleInstanceV2> samples = infiniumEntityBuilder.getHybChip().getSampleInstancesV2();
+        Set<SampleInstanceV2> samples = infiniumEntityBuilder.getHybChips().get(0).getSampleInstancesV2();
         Assert.assertEquals(samples.size(), 24, "Wrong number of sample instances");
     }
 
