@@ -5,6 +5,7 @@ import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -20,6 +21,7 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.LaxRedirectStrategy;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.util.EntityUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
@@ -35,6 +37,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -66,71 +69,52 @@ public class SalesforceServiceImpl extends AbstractJerseyClientService implement
     @Override
     public void pushProduct(String exomeExpressV2PartNumber) throws URISyntaxException, IOException {
 
-//        MultivaluedMap<String, String> params = new MultivaluedMapImpl();
-        List<NameValuePair> params = new ArrayList<>();
-
-        params.add(new BasicNameValuePair("grant_type", "password"));
-        params.add(new BasicNameValuePair("client_id", salesforceConfig.getClientId()));
-        params.add(new BasicNameValuePair("client_secret", salesforceConfig.getSecret()));
-        params.add(new BasicNameValuePair("username", salesforceConfig.getLogin()));
-        params.add(new BasicNameValuePair("password", salesforceConfig.getPassword()));
-
-        Product testProduct = productDao.findByBusinessKey(exomeExpressV2PartNumber);
-
         HttpClient salesforceClient =
                 HttpClientBuilder.create()
                         .setRedirectStrategy(new LaxRedirectStrategy())
 //                        .setDefaultHeaders(new BasicHeader())
                         .build();
 
-        // Login and obtain an access token
-        URI loginUri = new URIBuilder()
-                .setScheme("https")
-                .setHost(StringUtils.substringAfter(salesforceConfig.getBaseUrl(), "https://"))
-                .addParameters(params).build() ;
+        MultivaluedMap<String, String> params = new MultivaluedMapImpl();
 
+        params.add("grant_type", "password");
+        params.add("client_id", salesforceConfig.getClientId());
+        params.add("client_secret", salesforceConfig.getSecret());
+        params.add("username", salesforceConfig.getLogin());
+        params.add("password", salesforceConfig.getPassword());
 
-        HttpPost loginPost = new HttpPost(loginUri);
+        Product testProduct = productDao.findByBusinessKey(exomeExpressV2PartNumber);
 
-//        WebResource loginResource = getJerseyClient().resource(salesforceConfig.getLoginUrl()).queryParams(params);
+        WebResource loginResource = getJerseyClient().resource(salesforceConfig.getLoginUrl()).queryParams(params);
 
-//        ClientResponse loginResponse = loginResource.type(MediaType.APPLICATION_JSON_TYPE)
-//                .accept(MediaType.APPLICATION_JSON)
-//                .post(ClientResponse.class);
-//
-
-        HttpResponse loginExecute = salesforceClient.execute(loginPost);
+        ClientResponse loginResponse = loginResource.type(MediaType.APPLICATION_JSON_TYPE)
+                .accept(MediaType.APPLICATION_JSON)
+                .post(ClientResponse.class);
 
         String accessToken = null;
         String instanceUrl = null;
         try {
-            String entity = loginExecute.getEntity().toString();
-            JSONObject jsonObject = new JSONObject(entity);
+            JSONObject jsonObject = new JSONObject(loginResponse.getEntity(String.class));
             jsonObject.toString();
             accessToken = jsonObject.getString("access_token");
 
-            //format is 'https://[instance].salesforce.com/'
             instanceUrl = jsonObject.getString("instance_url");
         } catch (JSONException e) {
             e.printStackTrace();
         }
 
+        WebResource queryResource = getJerseyClient().resource(salesforceConfig.getApiUrl(instanceUrl)+"/query")
+                .queryParam("q","SELECT name, productCode from product2");
 
-        //Find the product if it exists
-        URI queryUri = new URIBuilder()
-                .setScheme("https")
-                .setHost(StringUtils.substringAfter(instanceUrl, "https://"))
-                .setPath(salesforceConfig.getApiUri()+"/query")
-                .setCustomQuery("SELECT name, productCode from product2").build();
+        ClientResponse queryResponse = queryResource
+                .type(MediaType.APPLICATION_JSON_TYPE)
+                .accept(MediaType.APPLICATION_JSON)
+                .header("Authorization","Bearer "+accessToken)
+                .header("X-PrettyPrint", "1").get(ClientResponse.class);
 
-        HttpGet queryRequest = new HttpGet(queryUri);
-        queryRequest.setHeader("Authorization","Bearer "+accessToken);
-        queryRequest.setHeader("X-PrettyPrint", "1");
-
-        HttpResponse queryExecute = salesforceClient.execute(queryRequest);
         JSONObject foundProductBase =  null;
         try {
-            String entity = queryExecute.getEntity().toString();
+            String entity = queryResponse.getEntity(String.class);
             JSONObject queryJson = new JSONObject(entity);
             JSONArray records = queryJson.getJSONArray("records");
             for(int index = 0; index<records.length();index++) {
@@ -143,9 +127,17 @@ public class SalesforceServiceImpl extends AbstractJerseyClientService implement
         } catch (JSONException e) {
             e.printStackTrace();
         }
+        if(foundProductBase != null) {
+            try {
+                String recordId = foundProductBase.getJSONObject("attributes").getString("url");
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
 
-
-        // Update/create the Product Info
+        /*
+         * Update/create the Product Info
+         */
         JSONObject productInfo = new JSONObject();
         try {
             productInfo.put("Name", testProduct.getProductName());
@@ -159,7 +151,7 @@ public class SalesforceServiceImpl extends AbstractJerseyClientService implement
         URIBuilder productUpdateUriBuilder = new URIBuilder()
                 .setScheme("https")
                 //TODO: Correct this to separate the host from the scheme in the config
-                .setHost(StringUtils.substringAfter(salesforceConfig.getBaseUrl(), "https://"));
+                .setHost(StringUtils.substringAfter(instanceUrl, "https://"));
         HttpUriRequest httpRequest = null;
 
         if(foundProductBase != null) {
@@ -192,6 +184,18 @@ public class SalesforceServiceImpl extends AbstractJerseyClientService implement
                     "Product update did not succeed: " + productUpdateHttpResponse.getStatusLine().getReasonPhrase(),
                     Response.Status.fromStatusCode(productUpdateHttpResponse.getStatusLine().getStatusCode()));
         }
+
+        /*
+         * Find and create/update related PriceBookEntries
+         */
+        WebResource priceListQuery = getJerseyClient().resource(salesforceConfig.getApiUrl(instanceUrl)+"/query")
+                .queryParam("q","select id, Product2.id, product2.name, ProductCode, Pricebook2.name, pricebook2.id "
+                                + "from PricebookEntry where "
+                                + "Product2.ProductCode = '"+testProduct.getPartNumber()+"' "
+                                + "and Pricebook2.isStandard = true");
+
+
+
 
     }
 }
