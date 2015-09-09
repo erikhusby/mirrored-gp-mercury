@@ -37,6 +37,9 @@ public class BatchWorkflowActionBean extends CoreActionBean {
     /** URL parameter. */
     private String batchName;
 
+    /** Parameter on return from manual transfer page. */
+    private String anchorName;
+
     /** Posted in form. */
     private String workflowProcessName;
 
@@ -226,5 +229,13 @@ public class BatchWorkflowActionBean extends CoreActionBean {
 
     public void setReagentExpirations(List<Date> reagentExpirations) {
         this.reagentExpirations = reagentExpirations;
+    }
+
+    public String getAnchorName() {
+        return anchorName;
+    }
+
+    public void setAnchorName(String anchorName) {
+        this.anchorName = anchorName;
     }
 }

@@ -74,6 +74,8 @@ public class ManualTransferActionBean extends RackScanActionBean {
     private Date workflowEffectiveDate;
     /** Parameter from batch workflow page. */
     private String batchName;
+    /** Parameter from batch workflow page, allows return to same link. */
+    private String anchorName;
     /** Loaded based on parameters. */
     private WorkflowStepDef workflowStepDef;
 
@@ -622,5 +624,13 @@ public class ManualTransferActionBean extends RackScanActionBean {
 
     public void setScanSource(Boolean scanSource) {
         this.scanSource = scanSource;
+    }
+
+    public String getAnchorName() {
+        return anchorName;
+    }
+
+    public void setAnchorName(String anchorName) {
+        this.anchorName = anchorName;
     }
 }

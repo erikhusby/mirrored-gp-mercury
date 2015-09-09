@@ -15,6 +15,13 @@
                 padding: 2px 2px;
             }
         </style>
+        <c:if test="${not empty actionBean.anchorName}">
+            <script type="text/javascript">
+                $j(document).ready(function () {
+                    $j('#anchor${actionBean.anchorName}')[0].scrollIntoView();
+                });
+            </script>
+        </c:if>
     </stripes:layout-component>
     <stripes:layout-component name="content">
         <stripes:form beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.BatchWorkflowActionBean">
@@ -32,9 +39,10 @@
                 <th>Workflow Step</th>
                 <th>Events</th>
             </tr>
-            <c:forEach items="${actionBean.workflowEvents}" var="workflowEvent">
+            <c:forEach items="${actionBean.workflowEvents}" var="workflowEvent" varStatus="workflowEventStatus">
                 <tr>
                     <td>
+                        <a name="${workflowEventStatus.index}" id="anchor${workflowEventStatus.index}"></a>
                         <div>
                             <b>${workflowEvent.workflowStepDef.name}</b>
                         </div>
@@ -51,6 +59,7 @@
                                         <stripes:param name="workflowStepName" value="${workflowEvent.workflowStepDef.name}"/>
                                         <stripes:param name="workflowEffectiveDate" value="${actionBean.labBatch.createdOn}"/>
                                         <stripes:param name="batchName" value="${actionBean.labBatch.batchName}"/>
+                                        <stripes:param name="anchorName" value="${workflowEventStatus.index}"/>
                                         Manual Transfer
                                     </stripes:link>
                                 </c:when>

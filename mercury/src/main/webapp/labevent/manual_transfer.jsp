@@ -227,6 +227,7 @@
         <c:if test="${not empty actionBean.batchName}">
             <stripes:link beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.BatchWorkflowActionBean">
                 <stripes:param name="batchName" value="${actionBean.batchName}"/>
+                <stripes:param name="anchorName" value="${actionBean.anchorName}"/>
                 Return to Batch Workflow page
             </stripes:link>
         </c:if>
