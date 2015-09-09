@@ -1191,7 +1191,7 @@
     <workflowProcessDefs>
         <name>Extract to DNA and RNA</name>
         <workflowProcessDefVersions>
-            <version>1.0</version>
+            <version>02</version>
             <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
             <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
                 <name>Extract to DNA and RNA Bucket</name>
@@ -1340,9 +1340,17 @@
         </productWorkflowDefVersions>
     </productWorkflowDefs>
     <productWorkflowDefs>
+        <name>Clinical Whole Blood Extraction</name>
+        <productWorkflowDefVersions>
+            <version>02</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowProcessDefs>Clinical Whole Blood Extraction</workflowProcessDefs>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
         <name>Extract to DNA and RNA</name>
         <productWorkflowDefVersions>
-            <version>1.0</version>
+            <version>02</version>
             <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
             <workflowProcessDefs>Extract to DNA and RNA Bucket</workflowProcessDefs>
         </productWorkflowDefVersions>
