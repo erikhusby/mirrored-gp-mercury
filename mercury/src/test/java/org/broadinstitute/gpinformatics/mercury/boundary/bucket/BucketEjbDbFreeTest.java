@@ -206,13 +206,8 @@ public class BucketEjbDbFreeTest {
 
             replay(mocks);
 
-            Collection<ProductOrderSample> addedSamples = new HashSet<>();
             Map<String, Collection<ProductOrderSample>> samplesByBucket = bucketEjb.addSamplesToBucket(pdo);
-            for (Map.Entry<String,Collection<ProductOrderSample>> productOrderSamples : samplesByBucket.entrySet()) {
-                if(productOrderSamples.getKey().contains("Pico") && productOrderSamples.getKey().contains("Bucket")) {
-                    addedSamples.addAll(productOrderSamples.getValue());
-                }
-            }
+            Collection<ProductOrderSample> addedSamples = samplesByBucket.get("Pico/Plating Bucket");
             Assert.assertEqualsNoOrder(addedSamples.toArray(), expectedSamples.toArray());
 
             verify(mocks);
