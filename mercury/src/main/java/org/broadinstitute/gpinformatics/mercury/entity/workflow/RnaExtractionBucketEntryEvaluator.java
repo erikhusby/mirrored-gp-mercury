@@ -13,9 +13,19 @@ package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
-public class FreshBloodBucketEntryEvaluator implements BucketEntryEvaluator {
+import java.util.Collection;
+import java.util.EnumSet;
+
+public class RnaExtractionBucketEntryEvaluator extends ExtractionBucketEntryEvaluator {
     @Override
-    public boolean invoke(LabVessel labVessel) {
-        return labVessel.isMaterialType(LabVessel.MaterialType.FRESH_BLOOD);
+    protected Workflow getWorkflow() {
+        return Workflow.RNA_EXTRACTION;
+    }
+
+    @Override
+    protected Collection<LabVessel.MaterialType> getMaterialTypes() {
+        return EnumSet.of(LabVessel.MaterialType.CELL_SUSPENSION, LabVessel.MaterialType.FRESH_FROZEN_TISSUE,
+                LabVessel.MaterialType.FFPE);
+
     }
 }

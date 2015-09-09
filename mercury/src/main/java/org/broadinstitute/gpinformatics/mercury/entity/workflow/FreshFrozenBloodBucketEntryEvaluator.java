@@ -13,9 +13,10 @@ package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
-public class FreshFrozenBloodBucketEntryEvaluator extends ExtractionBucketEntryEvaluator {
+public class FreshFrozenBloodBucketEntryEvaluator implements BucketEntryEvaluator {
+
     @Override
-    protected LabVessel.MaterialType getMaterialType() {
-        return LabVessel.MaterialType.FRESH_FROZEN_BLOOD;
+    public boolean invoke(LabVessel labVessel) {
+        return labVessel.isMaterialType(LabVessel.MaterialType.FRESH_FROZEN_BLOOD);
     }
 }

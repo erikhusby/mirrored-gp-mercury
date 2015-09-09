@@ -649,7 +649,9 @@ public abstract class LabVessel implements Serializable {
         FRESH_FROZEN_BLOOD("Fresh Frozen Blood", "^(?=.*frozen)(?=.*blood).*"),
         FRESH_FROZEN_TISSUE("Fresh Frozen Tissue", "^(?=.*frozen)(?=.*tissue).*"),
         RNA("RNA"),
-        BUFFY_COAT("Buffy Coat");
+        BUFFY_COAT("Buffy Coat"),
+        SALIVA("Saliva"),
+        STOOL("Stool");
 
         private final String displayName;
         private final Pattern matchPattern;

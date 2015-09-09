@@ -11,7 +11,12 @@
 
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+
+import java.util.Collection;
 
 /**
  * An abstract BucketEntryEvaluator which tests if the labVessel is the materialType returned by getMaterialType().
@@ -19,8 +24,27 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 public abstract class ExtractionBucketEntryEvaluator implements BucketEntryEvaluator {
     @Override
     public boolean invoke(LabVessel labVessel) {
-        return labVessel.isMaterialType(getMaterialType());
+        return getMaterialTypes().contains(labVessel.getLatestMaterialTypeFromEventHistory()) &&
+               productAndAddOnsHaveWorkflow(labVessel);
     }
 
-    protected abstract LabVessel.MaterialType getMaterialType();
+    private boolean productAndAddOnsHaveWorkflow(LabVessel labVessel) {
+        for (SampleInstanceV2 sampleInstance : labVessel.getSampleInstancesV2()) {
+            ProductOrder productOrder = sampleInstance.getSingleProductOrderSample().getProductOrder();
+            if (productOrder.getProduct().getWorkflow() == getWorkflow()) {
+                for (ProductOrderAddOn productOrderAddOn : productOrder.getAddOns()) {
+                    Workflow addOnWorkflow = productOrderAddOn.getAddOn().getWorkflow();
+                    if (addOnWorkflow!=Workflow.NONE) {
+                        if (addOnWorkflow == getWorkflow()) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    protected abstract Workflow getWorkflow();
+    protected abstract Collection<LabVessel.MaterialType> getMaterialTypes();
 }
