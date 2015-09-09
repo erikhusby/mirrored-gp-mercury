@@ -10,7 +10,9 @@
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
-                <entryMaterialType>GENOMIC_DNA</entryMaterialType>
+                <bucketEntryEvaluators>
+                    org.broadinstitute.gpinformatics.mercury.entity.workflow.DnaBucketEntryEvaluator
+                </bucketEntryEvaluators>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Preflight Cleanup</name>
@@ -58,9 +60,12 @@
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
-                <bucketEntryEvaluators>org.broadinstitute.gpinformatics.mercury.entity.workflow.DnaBucketEntryEvaluator</bucketEntryEvaluators>
+                <bucketEntryEvaluators>
+                    org.broadinstitute.gpinformatics.mercury.entity.workflow.DnaBucketEntryEvaluator
+                </bucketEntryEvaluators>
                 <batchJiraProjectType>LCSET</batchJiraProjectType>
-            </workflowStepDefs>
+                <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
+                </workflowStepDefs>
             <workflowStepDefs>
                 <name>Pico/Plating QC</name>
                 <labEventTypes>PICO_PLATING_QC</labEventTypes>
@@ -117,7 +122,8 @@
                 <reEntryPoint>false</reEntryPoint>
                 <bucketEntryEvaluators>org.broadinstitute.gpinformatics.mercury.entity.workflow.DnaBucketEntryEvaluator</bucketEntryEvaluators>
                 <batchJiraProjectType>LCSET</batchJiraProjectType>
-            </workflowStepDefs>
+                <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
+                </workflowStepDefs>
             <workflowStepDefs>
                 <name>Volume Addition</name>
                 <labEventTypes>VOLUME_ADDITION</labEventTypes>
@@ -232,8 +238,12 @@
                 <jiraTransition>
                     <project>LCSET</project>
                 </jiraTransition>
+                <bucketEntryEvaluators>
+                    org.broadinstitute.gpinformatics.mercury.entity.workflow.DnaBucketEntryEvaluator
+                </bucketEntryEvaluators>
                 <batchJiraProjectType>LCSET</batchJiraProjectType>
-            </workflowStepDefs>
+                <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
+                </workflowStepDefs>
             <workflowStepDefs>
                 <name>Shearing Transfer</name>
                 <labEventTypes>SHEARING_TRANSFER</labEventTypes>
@@ -402,8 +412,12 @@
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
+                <bucketEntryEvaluators>
+                    org.broadinstitute.gpinformatics.mercury.entity.workflow.DnaBucketEntryEvaluator
+                </bucketEntryEvaluators>
                 <batchJiraProjectType>LCSET</batchJiraProjectType>
-            </workflowStepDefs>
+                <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
+                </workflowStepDefs>
             <workflowStepDefs>
                 <name>Hybridization</name>
                 <labEventTypes>HYBRIDIZATION</labEventTypes>
@@ -533,8 +547,12 @@
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
+                <bucketEntryEvaluators>
+                    org.broadinstitute.gpinformatics.mercury.entity.workflow.DnaBucketEntryEvaluator
+                </bucketEntryEvaluators>
                 <batchJiraProjectType>LCSET</batchJiraProjectType>
-            </workflowStepDefs>
+                <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
+                </workflowStepDefs>
             <workflowStepDefs>
                 <name>IcePoolingTransfer</name>
                 <labEventTypes>ICE_POOLING_TRANSFER</labEventTypes>
@@ -737,8 +755,12 @@
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
+                <bucketEntryEvaluators>
+                    org.broadinstitute.gpinformatics.mercury.entity.workflow.DnaBucketEntryEvaluator
+                </bucketEntryEvaluators>
                 <batchJiraProjectType>LCSET</batchJiraProjectType>
-            </workflowStepDefs>
+                <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
+                </workflowStepDefs>
             <workflowStepDefs>
                 <name>Pooling Transfer</name>
                 <labEventTypes>POOLING_TRANSFER</labEventTypes>
@@ -927,39 +949,25 @@
         </workflowProcessDefVersions>
     </workflowProcessDefs>
     <workflowProcessDefs>
-        <name>Extraction</name>
-        <workflowProcessDefVersions>
-            <version>1.0</version>
-            <effectiveDate>2012-09-30T21:03:24.085-04:00</effectiveDate>
-            <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
-                <name>Extraction Bucket</name>
-                <labEventTypes>EXTRACTION_BUCKET</labEventTypes>
-                <optional>true</optional>
-                <entryPoint>false</entryPoint>
-                <reEntryPoint>false</reEntryPoint>
-                <batchJiraProjectType></batchJiraProjectType>
-            </workflowStepDefs>
-            <workflowStepDefs>
-                <name>Whole Blood</name>
-                <labEventTypes>WHOLE_BLOOD_EXTRACTION</labEventTypes>
-                <optional>true</optional>
-                <entryPoint>false</entryPoint>
-                <reEntryPoint>false</reEntryPoint>
-            </workflowStepDefs>
-            <workflowStepDefs>
-                <name>Tissue</name>
-                <labEventTypes>TISSUE_EXTRACTION</labEventTypes>
-                <optional>true</optional>
-                <entryPoint>false</entryPoint>
-                <reEntryPoint>false</reEntryPoint>
-            </workflowStepDefs>
-        </workflowProcessDefVersions>
-    </workflowProcessDefs>
-    <workflowProcessDefs>
         <name>Clinical Whole Blood Extraction</name>
         <workflowProcessDefVersions>
             <version>02</version>
             <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
+                <name>Clinical Whole Blood Bucket</name>
+                <labEventTypes>CLINICAL_WHOLE_BLOOD_EXTRACTION_BUCKET</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <bucketEntryEvaluators>
+                    org.broadinstitute.gpinformatics.mercury.entity.workflow.FreshBloodBucketEntryEvaluator
+                </bucketEntryEvaluators>
+                <bucketEntryEvaluators>
+                    org.broadinstitute.gpinformatics.mercury.entity.workflow.FreshFrozenBloodBucketEntryEvaluator
+                </bucketEntryEvaluators>
+                <batchJiraProjectType>XTR</batchJiraProjectType>
+                <batchJiraIssueType>DNA_EXTRACTION</batchJiraIssueType>
+            </workflowStepDefs>
             <workflowStepDefs>
                 <name>Prep Reagents</name>
                 <labEventTypes>PREP</labEventTypes>
@@ -1142,12 +1150,30 @@
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>AllPrep Extraction</name>
+        <workflowProcessDefVersions>
+            <version>02</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
+                <name>AllPrep Extraction Bucket</name>
+                <labEventTypes>ALLPREP_EXTRACTION_BUCKET</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <bucketEntryEvaluators>
+                    org.broadinstitute.gpinformatics.mercury.entity.workflow.AllPrepBucketEntryEvaluator
+                </bucketEntryEvaluators>
+                <batchJiraProjectType>XTR</batchJiraProjectType>
+                <batchJiraIssueType>ALLPREP</batchJiraIssueType>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
     <productWorkflowDefs>
         <name>Agilent Exome Express</name>
         <productWorkflowDefVersions>
             <version>3.0</version>
             <effectiveDate>2012-09-30T22:04:23.932-04:00</effectiveDate>
-            <!--<workflowProcessDefs>Extraction</workflowProcessDefs>-->
             <workflowProcessDefs>Pico/Plating</workflowProcessDefs>
             <workflowProcessDefs>Exome Express Shearing</workflowProcessDefs>
             <workflowProcessDefs>Library Construction</workflowProcessDefs>
@@ -1166,7 +1192,6 @@
         <productWorkflowDefVersions>
             <version>3.0</version>
             <effectiveDate>2013-07-25T00:00:00.000-04:00</effectiveDate>
-            <!--<workflowProcessDefs>Extraction</workflowProcessDefs>-->
             <workflowProcessDefs>Pico/Plating</workflowProcessDefs>
             <workflowProcessDefs>Exome Express Shearing</workflowProcessDefs>
             <workflowProcessDefs>Library Construction</workflowProcessDefs>
@@ -1279,6 +1304,15 @@
             <version>02</version>
             <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
             <workflowProcessDefs>Clinical Whole Blood Extraction</workflowProcessDefs>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+
+    <productWorkflowDefs>
+        <name>AllPrep Extraction</name>
+        <productWorkflowDefVersions>
+            <version>02</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowProcessDefs>AllPrep Extraction</workflowProcessDefs>
         </productWorkflowDefVersions>
     </productWorkflowDefs>
 

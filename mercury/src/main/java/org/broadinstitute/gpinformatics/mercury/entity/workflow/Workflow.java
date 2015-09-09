@@ -18,6 +18,8 @@ public enum Workflow {
     WHOLE_GENOME("Whole Genome"),
     ICE("ICE"),
     ICE_CRSP("ICE CRSP"),
+    CLINICAL_EXTRACTION("Clinical Whole Blood Extraction"),
+    ALLPREP_EXTRACTION("AllPrep Extraction"),
     /** Use this to indicate that no workflow is associated. */
     NONE(null, false);
 
@@ -47,7 +49,7 @@ public enum Workflow {
      * Workflow processes that Mercury supports.
      */
     public static final EnumSet<Workflow> SUPPORTED_WORKFLOWS =
-            EnumSet.of(AGILENT_EXOME_EXPRESS, ICE_EXOME_EXPRESS, ICE_CRSP);
+            EnumSet.of(AGILENT_EXOME_EXPRESS, ICE_EXOME_EXPRESS, ICE_CRSP, CLINICAL_EXTRACTION);
 
     public boolean isWorkflowSupportedByMercury() {
         return SUPPORTED_WORKFLOWS.contains(this);

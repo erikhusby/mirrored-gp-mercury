@@ -133,6 +133,29 @@ public class ClinicalResourceTest extends RestServiceContainerTest {
         }
     }
 
+    public void testCreateManifestWithSamplesWithUnrecognizedMaterialType() throws Exception {
+        String sampleId = "SM-1";
+
+        MercurySample sampleForTest = mercurySampleDao.findBySampleKey(sampleId);
+        if (sampleForTest == null) {
+            sampleForTest = new MercurySample(sampleId, MercurySample.MetadataSource.MERCURY);
+            mercurySampleDao.persist(sampleForTest);
+        } else {
+            assertThat(sampleForTest.getMetadataSource(), equalTo(MercurySample.MetadataSource.MERCURY));
+        }
+
+        ClinicalResourceBean clinicalResourceBean = ClinicalSampleTestFactory
+                .createClinicalResourceBean(QA_DUDE_PM, MANIFEST_NAME, EXISTING_RESEARCH_PROJECT_KEY, Boolean.TRUE,
+                        ImmutableMap.of(Metadata.Key.BROAD_SAMPLE_ID, sampleId, Metadata.Key.MATERIAL_TYPE, "Fresh DNA"));
+
+        try {
+            clinicalResource.createManifestWithSamples(clinicalResourceBean);
+            Assert.fail();
+        } catch (IllegalArgumentException e) {
+            assertThat(e.getLocalizedMessage(), startsWith(ClinicalResource.UNRECOGNIZED_MATERIAL_TYPE));
+        }
+    }
+
     public void testCreateManifestWithSamplesHavingEmptyMetadataValues() throws Exception {
         String sampleId = "";
         ClinicalResourceBean clinicalResourceBean =
