@@ -32,7 +32,8 @@ public enum LabEventType {
             LibraryType.NONE_ASSIGNED),
     PREFLIGHT_POST_NORM_PICO_SETUP("PreflightPostNormPicoSetup",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY),
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
 
     // Shearing
     SHEARING_TRANSFER("ShearingTransfer",
@@ -1282,7 +1283,50 @@ public enum LabEventType {
     INFINIUM_XSTAIN("InfiniumXStain",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.GAP, VolumeConcUpdate.MERCURY_ONLY,
-            LibraryType.NONE_ASSIGNED);
+            MessageType.PLATE_EVENT, null, StaticPlate.PlateType.InfiniumChip24,
+            new String[]{"RA1", "LX1", "LX2", "XC3", "XC4", "SML", "ATM", "EML"},
+            new int[]{1, 6, 6, 1, 1, 6, 6, 6}, false, 24, new String[]{"Rose", "Lily", "Scrappy"} ),
+
+    // Generic events that are qualified by workflow
+    // todo jmt need different versions for PLATE_EVENT and RECEPTACLE_EVENT?
+    CENTRIFUGE("Centrifuge",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    INCUBATE("Incubate",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    MIX("Mix",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    WASH("Wash",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    ADD_REAGENT("AddReagent",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            MessageType.RECEPTACLE_EVENT, null, null, null,
+            LibraryType.NONE_ASSIGNED),
+    PREP("Prep",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    DISCARD("Discard",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    MOVE("Move",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    STORE("Store",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    ;
 
 
     private final String name;
@@ -1534,6 +1578,7 @@ public enum LabEventType {
         this.expirationDateIncluded = expirationDateIncluded;
         this.numEvents = numEvents;
         this.machineNames = machineNames;
+        this.libraryType = LibraryType.NONE_ASSIGNED;
     }
 
     LabEventType(String name, ExpectSourcesEmpty expectSourcesEmpty, ExpectTargetsEmpty expectTargetsEmpty,
