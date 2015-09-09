@@ -49,7 +49,7 @@ public enum Workflow {
      * Workflow processes that Mercury supports.
      */
     public static final EnumSet<Workflow> SUPPORTED_WORKFLOWS =
-            EnumSet.of(AGILENT_EXOME_EXPRESS, ICE_EXOME_EXPRESS, ICE_CRSP, CLINICAL_EXTRACTION);
+            EnumSet.of(AGILENT_EXOME_EXPRESS, ICE_EXOME_EXPRESS, ICE_CRSP, CLINICAL_EXTRACTION, ALLPREP_EXTRACTION);
 
     public boolean isWorkflowSupportedByMercury() {
         return SUPPORTED_WORKFLOWS.contains(this);
