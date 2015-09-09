@@ -17,9 +17,16 @@
         </style>
     </stripes:layout-component>
     <stripes:layout-component name="content">
-        <h3>${actionBean.labBatch.batchName}</h3>
-        ${actionBean.effectiveWorkflowDef.productWorkflowDef.name}, version ${actionBean.effectiveWorkflowDef.version},
-        ${actionBean.effectiveWorkflowDef.effectiveDate}
+        <stripes:form beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.BatchWorkflowActionBean">
+            <label for="batchName">Batch Name</label>
+            <input type="text" id="batchName" name="batchName">
+            <input type="submit" name="view" value="Find">
+        </stripes:form>
+
+        <c:if test="${not empty actionBean.labBatch}"><h3>${actionBean.labBatch.batchName}</h3>
+            ${actionBean.effectiveWorkflowDef.productWorkflowDef.name}, version ${actionBean.effectiveWorkflowDef.version},
+            ${actionBean.effectiveWorkflowDef.effectiveDate}
+        </c:if>
         <table class="table simple">
             <tr>
                 <th>Workflow Step</th>
