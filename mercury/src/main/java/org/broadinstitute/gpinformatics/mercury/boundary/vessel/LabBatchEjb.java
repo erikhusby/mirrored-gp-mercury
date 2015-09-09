@@ -221,7 +221,7 @@ public class LabBatchEjb {
 
         CreateFields.IssueType issueType = CreateFields.IssueType.valueOf(bucketDef.getBatchJiraIssueType());
 
-        batchToJira(username, null, batch, issueType, CreateFields.ProjectType.valueOf(bucketDef.getBatchJiraProjectType()));
+        batchToJira(username, null, batch, issueType, CreateFields.ProjectType.fromKeyPrefix(bucketDef.getBatchJiraProjectType()));
 
         //link the JIRA tickets for the batch created to the pdo batches.
         for (String pdoKey : pdoKeys) {
@@ -379,7 +379,7 @@ public class LabBatchEjb {
         CreateFields.ProjectType projectType = null;
         if(batch.getLabBatchType() == LabBatch.LabBatchType.WORKFLOW) {
             WorkflowBucketDef bucketDef = getWorkflowBucketDef(bucketName);
-            projectType = CreateFields.ProjectType.valueOf(bucketDef.getBatchJiraProjectType());
+            projectType = CreateFields.ProjectType.fromKeyPrefix(bucketDef.getBatchJiraProjectType());
         }
 
         if (projectType == CreateFields.ProjectType.EXTRACTION_PROJECT) {
