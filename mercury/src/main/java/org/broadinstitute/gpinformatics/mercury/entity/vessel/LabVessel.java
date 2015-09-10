@@ -999,11 +999,15 @@ public abstract class LabVessel implements Serializable {
         return traversalResults;
     }
 
-    void traverseDescendants(TransferTraverserCriteria criteria, TransferTraverserCriteria.TraversalDirection direction,
-                             int hopCount) {
+    void traverseDescendants(TransferTraverserCriteria criteria, int hopCount) {
         for (VesselEvent vesselEvent : getDescendants()) {
-            evaluateVesselEvent(criteria, direction, hopCount, vesselEvent);
+            evaluateVesselEvent(criteria, TransferTraverserCriteria.TraversalDirection.Descendants, hopCount, vesselEvent);
         }
+
+        if( getContainerRole() != null && getContainerRole().getMapPositionToVessel().isEmpty() ) {
+            getContainerRole().applyCriteriaToAllPositions(criteria, TransferTraverserCriteria.TraversalDirection.Descendants);
+        }
+
     }
 
     /**
@@ -1238,7 +1242,7 @@ public abstract class LabVessel implements Serializable {
                 evaluateVesselEvent(transferTraverserCriteria, traversalDirection, hopCount, vesselEvent);
             }
         } else if (traversalDirection == TransferTraverserCriteria.TraversalDirection.Descendants) {
-            traverseDescendants(transferTraverserCriteria, traversalDirection, hopCount);
+            traverseDescendants(transferTraverserCriteria, hopCount);
         } else {
             throw new RuntimeException("Unknown direction " + traversalDirection.name());
         }
