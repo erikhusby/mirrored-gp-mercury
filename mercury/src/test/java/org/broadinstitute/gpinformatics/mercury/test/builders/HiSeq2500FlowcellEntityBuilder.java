@@ -221,9 +221,7 @@ public class HiSeq2500FlowcellEntityBuilder {
             reagentsSize = 3;
         }
 
-        // Some reagents missing in V2 sample instances cached somewhere back in transfers, use legacy
-        Assert.assertEquals(illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(VesselPosition.LANE1)
-                .iterator().next().getReagents().size(), reagentsSize, "Wrong number of reagents");
+        Assert.assertEquals(sampleInstance.getReagents().size(), reagentsSize, "Wrong number of reagents");
 
         Set<SampleInstanceV2> lane2SampleInstances =
                 illuminaFlowcell.getContainerRole().getSampleInstancesAtPositionV2(VesselPosition.LANE2);
@@ -236,9 +234,7 @@ public class HiSeq2500FlowcellEntityBuilder {
         Assert.assertEquals(lane2SampleInstances.size(), denatureTube.getSampleInstancesV2().size(),
                 "Wrong number of samples in flowcell lane");
 
-        // Some reagents missing in V2 sample instances cached somewhere back in transfers, use legacy
-        Assert.assertEquals(illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(VesselPosition.LANE2)
-                .iterator().next().getReagents().size(), reagentsSize, "Wrong number of reagents");
+        Assert.assertEquals(sampleInstance.getReagents().size(), reagentsSize, "Wrong number of reagents");
 
         LabEventTest.validateWorkflow("FlowcellLoaded", illuminaFlowcell);
 
