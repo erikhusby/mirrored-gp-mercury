@@ -1212,6 +1212,139 @@
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>TruSeq Strand Specific</name>
+        <workflowProcessDefVersions>
+            <version>1.0</version>
+            <effectiveDate>2015-08-13T10:03:24.085-04:00</effectiveDate>
+            <workflowStepDefs>
+                <name>PolyATransfer</name>
+                <labEventTypes>POLY_A_TRANSFER</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>PolyASelectionTS</name>
+                <labEventTypes>POLY_A_SELECTION_TS</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>PolyABindingTSThermoCyclerLoaded</name>
+                <labEventTypes>POLY_A_BINDING_THERMO_CYCLER_LOADED</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>MRNAElutionTSThermoCyclerLoaded</name>
+                <labEventTypes>MRNA_ELUTION_TS_THERMO_CYCLER_LOADED</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>FragmentationTSThermoCyclerLoaded</name>
+                <labEventTypes>FRAGMENTATION_TS_THERMO_CYCLER_LOADED</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>FirstStrandTS</name>
+                <labEventTypes>FIRST_STRAND_TS</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>FirstStrandTSThermoCyclerLoaded</name>
+                <labEventTypes>FIRST_STRAND_TS_THERMO_CYCLER_LOADED</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SecondStrandTS</name>
+                <labEventTypes>SECOND_STRAND_TS</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SecondStrandTSThermoCyclerLoaded</name>
+                <labEventTypes>SECOND_STRAND_TS_THERMO_CYCLER_LOADED</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>SecondStrandCleanupTS</name>
+                <labEventTypes>SECOND_STRAND_CLEANUP_TS</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>ABaseTS</name>
+                <labEventTypes>A_BASE_TS</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>ABaseTSThermoCyclerLoaded</name>
+                <labEventTypes>A_BASE_TS_THERMO_CYCLER_LOADED</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>IndexedAdapterLigationTS</name>
+                <labEventTypes>INDEXED_ADAPTER_LIGATION_TS</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>AdapterLigationTSThermoCyclerLoaded</name>
+                <labEventTypes>ADAPTER_LIGATION_TS_THERMO_CYCLER_LOADED</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>AdapterLigationCleanupTS</name>
+                <labEventTypes>ADAPTER_LIGATION_CLEANUP_TS</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>EnrichmentTS</name>
+                <labEventTypes>ENRICHMENT_TS</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>EnrichmentTSThermoCyclerLoaded</name>
+                <labEventTypes>ENRICHMENT_TS_THERMO_CYCLER_LOADED</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>EnrichmentCleanupTS</name>
+                <labEventTypes>ENRICHMENT_CLEANUP_TS</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
     <productWorkflowDefs>
         <name>Agilent Exome Express</name>
         <productWorkflowDefVersions>
@@ -1356,6 +1489,25 @@
             <version>02</version>
             <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
             <workflowProcessDefs>AllPrep Extraction</workflowProcessDefs>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+
+    <productWorkflowDefs>
+        <name>TruSeq Strand Specific CRSP</name>
+        <productWorkflowDefVersions>
+            <version>1.0</version>
+            <effectiveDate>2015-08-13T10:03:24.085-04:00</effectiveDate>
+            <workflowProcessDefs>CRSP Ribo/Plating</workflowProcessDefs>
+            <workflowProcessDefs>TruSeq Strand Specific</workflowProcessDefs>
+            <workflowProcessDefs>QTP</workflowProcessDefs>
+            <workflowProcessDefs>HiSEQ</workflowProcessDefs>
+            <sequencingConfigDefs>Resequencing-Pool-Default</sequencingConfigDefs>
+            <sequencingConfigDefs>Amplicon-Pool-Default</sequencingConfigDefs>
+            <sequencingConfigDefs>Resequencing-Pool-Amplicon</sequencingConfigDefs>
+            <sequencingConfigDefs>Amplicon-Pool-Amplicon</sequencingConfigDefs>
+            <sequencingConfigDefs>Resequencing-Production</sequencingConfigDefs>
+            <routingRule>MERCURY</routingRule>
+            <inValidation>false</inValidation>
         </productWorkflowDefVersions>
     </productWorkflowDefs>
 
