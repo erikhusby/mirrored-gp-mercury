@@ -1146,7 +1146,7 @@ public class LabEventTest extends BaseEventTest {
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
                 runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), lcsetSuffix + "ADXX", FCT_TICKET,
                         ProductionFlowcellPath.DILUTION_TO_FLOWCELL, null,
-                        Workflow.AGILENT_EXOME_EXPRESS);
+                        Workflow.ICE_EXOME_EXPRESS);
 
         runTransferVisualizer(mapBarcodeToTube.values().iterator().next());
 
