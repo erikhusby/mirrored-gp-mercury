@@ -895,6 +895,20 @@ public enum LabEventType {
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY),
 
+    //    EXTRACTION_BUCKET("ExtractionBucket",ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+//                PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY),
+//    WHOLE_BLOOD_EXTRACTION("WholeBloodExtraction",ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+//                PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY),
+//    TISSUE_EXTRACTION("TissueExtraction",ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+//                PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY),
+    CLINICAL_WHOLE_BLOOD_EXTRACTION_BUCKET("ClinicalWholeBloodExtractionBucket", ExpectSourcesEmpty.TRUE,
+            ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE, PlasticToValidate.SOURCE,
+            PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY),
+
+    ALLPREP_EXTRACTION_BUCKET("AllPrepExtractionBucket", ExpectSourcesEmpty.TRUE,
+            ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE, PlasticToValidate.SOURCE,
+            PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY),
+
     // Transfer blood to micro centrifuge tube
     EXTRACT_BLOOD_TO_MICRO("ExtractBloodToMicro",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,

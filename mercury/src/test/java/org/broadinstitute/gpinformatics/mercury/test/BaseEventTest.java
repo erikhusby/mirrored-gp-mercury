@@ -54,6 +54,7 @@ import org.broadinstitute.gpinformatics.mercury.control.zims.ZimsIlluminaRunFact
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
@@ -193,7 +194,7 @@ public class BaseEventTest {
             }
         });
         labBatchEJB.setProductOrderDao(mockProductOrderDao);
-
+        labBatchEJB.setWorkflowLoader(new WorkflowLoader());
 
         BSPUserList testUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
         BSPSetVolumeConcentration bspSetVolumeConcentration = BSPSetVolumeConcentrationProducer.stubInstance();
@@ -324,7 +325,14 @@ public class BaseEventTest {
         });
         labBatchEJB.setProductOrderDao(mockProductOrderDao);
 
-        labBatchEJB.createLabBatch(workflowBatch, "scottmat", CreateFields.IssueType.EXOME_EXPRESS);
+        for (BarcodedTube barcodedTube : mapBarcodeToTube.values()) {
+            for (BucketEntry bucketEntry : barcodedTube.getBucketEntries()) {
+                workflowBatch.addBucketEntry(bucketEntry);
+            }
+        }
+
+        labBatchEJB.createLabBatch(workflowBatch, "scottmat", CreateFields.IssueType.EXOME_EXPRESS,
+                CreateFields.ProjectType.LCSET_PROJECT);
         JiraServiceStub.setCreatedIssueSuffix(defaultLcsetSuffix);
 
         drainBucket(workingBucket);

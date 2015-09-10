@@ -30,6 +30,7 @@
                         {"bSortable": true}, // Patient ID
                         {"bSortable": true}, // Gender
                         {"bSortable": true}, // Tumor/Normal
+                        {"bSortable": true}, // material type
                         {"bSortable": true, "sType": "date"}, // collection Date
                         {"bSortable": true} // Visit
                     ]
@@ -39,26 +40,35 @@
     </stripes:layout-component>
 
     <stripes:layout-component name="content">
+        <%--@elvariable id="sampleIdKey" type="Key"--%>
+        <%--@elvariable id="patientIdKey" type="Key"--%>
+        <%--@elvariable id="genderKey" type="Key"--%>
+        <%--@elvariable id="tumorNormalKey" type="Key"--%>
+        <%--@elvariable id="materialTypeKey" type="Key"--%>
+        <%--@elvariable id="collectionDateKey" type="Key"--%>
+        <%--@elvariable id="visitKey" type="Key"--%>
+        <c:set var="sampleIdKey" value="<%= Key.SAMPLE_ID %>"/>
+        <c:set var="patientIdKey" value="<%= Key.PATIENT_ID %>"/>
+        <c:set var="genderKey" value="<%= Key.GENDER%>"/>
+        <c:set var="tumorNormalKey" value="<%= Key.TUMOR_NORMAL%>"/>
+        <c:set var="materialTypeKey" value="<%= Key.MATERIAL_TYPE%>"/>
+        <c:set var="collectionDateKey" value="<%= Key.BUICK_COLLECTION_DATE%>"/>
+        <c:set var="visitKey" value="<%= Key.BUICK_VISIT%>"/>
 
         <table id="sampleList" class="table simple">
             <thead>
             <tr>
                 <th width="20px">Has Error?</th>
                 <th Width="50px">Manifest Row Number</th>
-                <th width="120px">Sample ID</th>
-                <th width="75px">Patient ID</th>
-                <th width="50px">Gender</th>
-                <th width="50px">Tumor/Normal</th>
-                <th width="100px">Collection Date</th>
-                <th width="100px">Visit</th>
+                <th width="120px">${sampleIdKey.displayName}</th>
+                <th width="75px">${patientIdKey.displayName}</th>
+                <th width="50px">${genderKey.displayName}</th>
+                <th width="50px">${tumorNormalKey.displayName}</th>
+                <th width="50px">${materialTypeKey.displayName}</th>
+                <th width="100px">${collectionDateKey.displayName}</th>
+                <th width="100px">${visitKey.displayName}</th>
             </tr>
             </thead>
-            <c:set var="sampleIdKey" value="<%= Key.SAMPLE_ID %>"/>
-            <c:set var="patientIdKey" value="<%= Key.PATIENT_ID %>"/>
-            <c:set var="genderKey" value="<%= Key.GENDER%>"/>
-            <c:set var="tumorNormalKey" value="<%= Key.TUMOR_NORMAL%>"/>
-            <c:set var="collectionDateKey" value="<%= Key.BUICK_COLLECTION_DATE%>"/>
-            <c:set var="visitKey" value="<%= Key.BUICK_VISIT%>"/>
 
             <tbody>
             <c:forEach items="${session.records}" var="record">
@@ -82,6 +92,9 @@
                     </td>
                     <td>
                             ${record.getValueByKey(tumorNormalKey)}
+                    </td>
+                    <td>
+                            ${record.getValueByKey(materialTypeKey)}
                     </td>
                     <td>
                             ${record.getValueByKey(collectionDateKey)}
