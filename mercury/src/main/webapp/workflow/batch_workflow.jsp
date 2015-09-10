@@ -71,6 +71,7 @@
                                         <input type="hidden" name="workflowEffectiveDate" value="${actionBean.labBatch.createdOn}"/>
                                         <input type="hidden" name="labEventType" value="${labEventType}"/>
                                         <input type="hidden" name="workflowQualifier" value="${workflowEvent.workflowStepDef.workflowQualifier}"/>
+                                        <stripes:param name="anchorName" value="${workflowEventStatus.index}"/>
                                         <c:choose>
                                             <c:when test="${labEventType eq 'ADD_REAGENT'}">
                                                 <c:forEach items="${workflowEvent.workflowStepDef.reagentTypes}" var="reagentType" varStatus="loop">
