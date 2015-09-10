@@ -9,14 +9,17 @@
  * use, misuse, or functionality.
  */
 
-package org.broadinstitute.gpinformatics.mercury.entity.workflow;
+package org.broadinstitute.gpinformatics.mercury.entity.workflow.bucketevaluator;
 
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
-public class FreshFrozenBloodBucketEntryEvaluator implements BucketEntryEvaluator {
-
+/**
+ * A BucketEntryEvaluator which allows bucketing if the labVessel has DNA in it.
+ */
+public class DnaBucketEntryEvaluator implements BucketEntryEvaluator {
     @Override
-    public boolean invoke(LabVessel labVessel) {
-        return labVessel.isMaterialType(LabVessel.MaterialType.FRESH_FROZEN_BLOOD);
+    public boolean invoke(LabVessel labVessel, ProductOrder productOrder) {
+        return labVessel.isDNA();
     }
 }

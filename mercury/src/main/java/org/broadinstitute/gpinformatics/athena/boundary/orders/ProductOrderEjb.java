@@ -903,9 +903,10 @@ public class ProductOrderEjb {
      * if necessary.
      *
      * @param jiraTicketKey the PDO key
-     * @param samples       the samples to add
+     * @param samples       the samples to add. this argument must not be changed to Collection, or
+     *                      ImmutableListMultiMap does not work correctly.
      */
-    public void addSamples(@Nonnull String jiraTicketKey, @Nonnull Collection<ProductOrderSample> samples,
+    public void addSamples(@Nonnull String jiraTicketKey, @Nonnull List<ProductOrderSample> samples,
                            @Nonnull MessageReporter reporter) throws NoSuchPDOException, IOException {
         ProductOrder order = findProductOrder(jiraTicketKey);
         order.addSamples(samples);
@@ -920,10 +921,9 @@ public class ProductOrderEjb {
 
         Map<String, MercurySample> mercurySampleMap = mercurySampleDao.findMapIdToMercurySample(samplesBySampleId.keySet());
 
-        for (Map.Entry<String, ProductOrderSample> productOrderSampleEntry : samplesBySampleId.entries()) {
-            if (productOrderSampleEntry.getValue().getMercurySample() == null) {
-                productOrderSampleEntry.getValue()
-                        .setMercurySample(mercurySampleMap.get(productOrderSampleEntry.getKey()));
+        for (Map.Entry<String, ProductOrderSample> sampleMapEntry : samplesBySampleId.entries()) {
+            if (sampleMapEntry.getValue().getMercurySample() == null) {
+                mercurySampleMap.get(sampleMapEntry.getKey()).addProductOrderSample(sampleMapEntry.getValue());
             }
         }
 

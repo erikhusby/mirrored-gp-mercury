@@ -9,21 +9,22 @@
  * use, misuse, or functionality.
  */
 
-package org.broadinstitute.gpinformatics.mercury.entity.workflow;
+package org.broadinstitute.gpinformatics.mercury.entity.workflow.bucketevaluator;
 
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 
 import java.util.Collection;
 import java.util.EnumSet;
 
 public class RnaExtractionBucketEntryEvaluator extends ExtractionBucketEntryEvaluator {
     @Override
-    protected Workflow getWorkflow() {
-        return Workflow.RNA_EXTRACTION;
+    protected Collection<Workflow> supportedWorkflows() {
+        return EnumSet.of(Workflow.RNA_EXTRACTION);
     }
 
     @Override
-    protected Collection<LabVessel.MaterialType> getMaterialTypes() {
+    protected Collection<LabVessel.MaterialType> supportedMaterialTypes() {
         return EnumSet.of(LabVessel.MaterialType.CELL_SUSPENSION, LabVessel.MaterialType.FRESH_FROZEN_TISSUE,
                 LabVessel.MaterialType.FFPE);
 

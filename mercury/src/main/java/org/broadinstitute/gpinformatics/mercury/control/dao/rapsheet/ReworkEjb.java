@@ -454,7 +454,7 @@ public class ReworkEjb {
             throw new ValidationException(error);
         }
 
-        if (!bucketDef.meetsBucketCriteria(candidateVessel)) {
+        if (!bucketDef.meetsBucketCriteria(candidateVessel, productOrder)) {
             validationMessages.add("You have submitted a vessel to the bucket that contains at least one sample that " +
                                    "is not DNA");
         }

@@ -4,6 +4,7 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
@@ -303,12 +304,13 @@ public class ProductWorkflowDefVersion implements Serializable {
      *
      * @return a mapping of the initial buckets to the LabVessels which will go in them.
      */
-    public Map<WorkflowBucketDef, Collection<LabVessel>> getInitialBucket(Collection<LabVessel> labVessels) {
+    public Map<WorkflowBucketDef, Collection<LabVessel>> getInitialBucket(Collection<LabVessel> labVessels,
+                                                                          ProductOrder productOrder) {
         Map<WorkflowBucketDef, Collection<LabVessel>> vesselBuckets = new HashMap<>();
         Collection<LabVessel> vesselsAvailableForBucket=new HashSet<>(labVessels);
         for (WorkflowProcessDef workflowProcessDef : workflowProcessDefs) {
             for (WorkflowBucketDef bucketDef : workflowProcessDef.getEffectiveVersion().getBuckets()) {
-                Collection<LabVessel> vesselsForBucket = bucketDef.meetsBucketCriteria(vesselsAvailableForBucket);
+                Collection<LabVessel> vesselsForBucket = bucketDef.meetsBucketCriteria(vesselsAvailableForBucket, productOrder);
                 vesselBuckets.put(bucketDef, vesselsForBucket);
                 vesselsAvailableForBucket.removeAll(vesselsForBucket);
             }

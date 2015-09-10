@@ -9,16 +9,19 @@
  * use, misuse, or functionality.
  */
 
-package org.broadinstitute.gpinformatics.mercury.entity.workflow;
+package org.broadinstitute.gpinformatics.mercury.entity.workflow.bucketevaluator;
 
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 
 /**
  * Interface for defining a BucketEntryEvaluator. BucketEntryEvaluators are called in
- * WorkflowBucketDef#meetsBucketCriteria(LabVessel) to determin if a Labvessel is eligable for bucketing
+ * WorkflowBucketDe#meetsBucketCriteria(LabVessel, ProductOrder) to determine if a LabVessel in ProductOrder
+ * is eligible for bucketing
  *
- * @see WorkflowBucketDef#meetsBucketCriteria(LabVessel)
+ * @see WorkflowBucketDef#meetsBucketCriteria(LabVessel, ProductOrder)
  */
 public interface BucketEntryEvaluator {
-    boolean invoke(LabVessel labVessel);
+    boolean invoke(LabVessel labVessel, ProductOrder productOrder);
 }

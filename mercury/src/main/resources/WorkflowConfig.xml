@@ -11,7 +11,7 @@
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
                 <bucketEntryEvaluators>
-                    org.broadinstitute.gpinformatics.mercury.entity.workflow.DnaBucketEntryEvaluator
+                    org.broadinstitute.gpinformatics.mercury.entity.workflow.bucketevaluator.DnaBucketEntryEvaluator
                 </bucketEntryEvaluators>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -61,7 +61,7 @@
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
                 <bucketEntryEvaluators>
-                    org.broadinstitute.gpinformatics.mercury.entity.workflow.DnaBucketEntryEvaluator
+                    org.broadinstitute.gpinformatics.mercury.entity.workflow.bucketevaluator.DnaBucketEntryEvaluator
                 </bucketEntryEvaluators>
                 <batchJiraProjectType>LCSET</batchJiraProjectType>
                 <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
@@ -120,7 +120,7 @@
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
-                <bucketEntryEvaluators>org.broadinstitute.gpinformatics.mercury.entity.workflow.DnaBucketEntryEvaluator</bucketEntryEvaluators>
+                <bucketEntryEvaluators>org.broadinstitute.gpinformatics.mercury.entity.workflow.bucketevaluator.DnaBucketEntryEvaluator</bucketEntryEvaluators>
                 <batchJiraProjectType>LCSET</batchJiraProjectType>
                 <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
                 </workflowStepDefs>
@@ -239,7 +239,7 @@
                     <project>LCSET</project>
                 </jiraTransition>
                 <bucketEntryEvaluators>
-                    org.broadinstitute.gpinformatics.mercury.entity.workflow.DnaBucketEntryEvaluator
+                    org.broadinstitute.gpinformatics.mercury.entity.workflow.bucketevaluator.DnaBucketEntryEvaluator
                 </bucketEntryEvaluators>
                 <batchJiraProjectType>LCSET</batchJiraProjectType>
                 <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
@@ -413,7 +413,7 @@
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
                 <bucketEntryEvaluators>
-                    org.broadinstitute.gpinformatics.mercury.entity.workflow.DnaBucketEntryEvaluator
+                    org.broadinstitute.gpinformatics.mercury.entity.workflow.bucketevaluator.DnaBucketEntryEvaluator
                 </bucketEntryEvaluators>
                 <batchJiraProjectType>LCSET</batchJiraProjectType>
                 <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
@@ -548,7 +548,7 @@
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
                 <bucketEntryEvaluators>
-                    org.broadinstitute.gpinformatics.mercury.entity.workflow.DnaBucketEntryEvaluator
+                    org.broadinstitute.gpinformatics.mercury.entity.workflow.bucketevaluator.DnaBucketEntryEvaluator
                 </bucketEntryEvaluators>
                 <batchJiraProjectType>LCSET</batchJiraProjectType>
                 <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
@@ -756,7 +756,7 @@
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
                 <bucketEntryEvaluators>
-                    org.broadinstitute.gpinformatics.mercury.entity.workflow.DnaBucketEntryEvaluator
+                    org.broadinstitute.gpinformatics.mercury.entity.workflow.bucketevaluator.DnaBucketEntryEvaluator
                 </bucketEntryEvaluators>
                 <batchJiraProjectType>LCSET</batchJiraProjectType>
                 <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
@@ -960,12 +960,12 @@
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
                 <bucketEntryEvaluators>
-                    org.broadinstitute.gpinformatics.mercury.entity.workflow.FreshBloodBucketEntryEvaluator
+                    org.broadinstitute.gpinformatics.mercury.entity.workflow.bucketevaluator.FreshBloodBucketEntryEvaluator
                 </bucketEntryEvaluators>
                 <bucketEntryEvaluators>
-                    org.broadinstitute.gpinformatics.mercury.entity.workflow.FreshFrozenBloodBucketEntryEvaluator
+                    org.broadinstitute.gpinformatics.mercury.entity.workflow.bucketevaluator.FreshFrozenBloodBucketEntryEvaluator
                 </bucketEntryEvaluators>
-                <batchJiraProjectType>XTR</batchJiraProjectType>
+                <batchJiraProjectType>EXTRACTION_PROJECT</batchJiraProjectType>
                 <batchJiraIssueType>DNA_EXTRACTION</batchJiraIssueType>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -1162,9 +1162,9 @@
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
                 <bucketEntryEvaluators>
-                    org.broadinstitute.gpinformatics.mercury.entity.workflow.DnaExtractionBucketEntryEvaluator
+                    org.broadinstitute.gpinformatics.mercury.entity.workflow.bucketevaluator.DnaExtractionBucketEntryEvaluator
                 </bucketEntryEvaluators>
-                <batchJiraProjectType>XTR</batchJiraProjectType>
+                <batchJiraProjectType>EXTRACTION_PROJECT</batchJiraProjectType>
                 <batchJiraIssueType>RNA_EXTRACTION</batchJiraIssueType>
             </workflowStepDefs>
         </workflowProcessDefVersions>
@@ -1181,9 +1181,9 @@
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
                 <bucketEntryEvaluators>
-                    org.broadinstitute.gpinformatics.mercury.entity.workflow.RnaExtractionBucketEntryEvaluator
+                    org.broadinstitute.gpinformatics.mercury.entity.workflow.bucketevaluator.RnaExtractionBucketEntryEvaluator
                 </bucketEntryEvaluators>
-                <batchJiraProjectType>XTR</batchJiraProjectType>
+                <batchJiraProjectType>EXTRACTION_PROJECT</batchJiraProjectType>
                 <batchJiraIssueType>RNA_EXTRACTION</batchJiraIssueType>
             </workflowStepDefs>
         </workflowProcessDefVersions>
@@ -1200,9 +1200,9 @@
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
                 <bucketEntryEvaluators>
-                    org.broadinstitute.gpinformatics.mercury.entity.workflow.AllPrepBucketEntryEvaluator
+                    org.broadinstitute.gpinformatics.mercury.entity.workflow.bucketevaluator.DnaAndRnaExtractionBucketEntryEvaluator
                 </bucketEntryEvaluators>
-                <batchJiraProjectType>XTR</batchJiraProjectType>
+                <batchJiraProjectType>EXTRACTION_PROJECT</batchJiraProjectType>
                 <batchJiraIssueType>ALLPREP</batchJiraIssueType>
             </workflowStepDefs>
         </workflowProcessDefVersions>

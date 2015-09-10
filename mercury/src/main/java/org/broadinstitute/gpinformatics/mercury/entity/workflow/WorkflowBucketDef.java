@@ -3,8 +3,10 @@ package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.bucketevaluator.BucketEntryEvaluator;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -66,7 +68,7 @@ public class WorkflowBucketDef extends WorkflowStepDef {
      *
      * @return true if the vessel can go into the bucket, false otherwise
      */
-    public Collection<LabVessel> meetsBucketCriteria(Collection<LabVessel> labVessels) {
+    public Collection<LabVessel> meetsBucketCriteria(Collection<LabVessel> labVessels, ProductOrder productOrder) {
         if (!CollectionUtils.isNotEmpty(bucketEntryEvaluators)) {
             // If no bucketEntryEvaluators are configured, then, by default, the labVessels meet bucket criteria.
             return labVessels;
@@ -79,7 +81,7 @@ public class WorkflowBucketDef extends WorkflowStepDef {
                 BucketEntryEvaluator bucketEntryInstance =
                         (BucketEntryEvaluator) bucketEntryEvaluatorConstructor.newInstance();
                 for (LabVessel labVessel : labVessels) {
-                    if (bucketEntryInstance.invoke(labVessel)) {
+                    if (bucketEntryInstance.invoke(labVessel, productOrder)) {
                         vesselsForBucket.add(labVessel);
                     }
                 }
@@ -99,8 +101,8 @@ public class WorkflowBucketDef extends WorkflowStepDef {
      *
      * @return true if the vessel can go into the bucket, false otherwise
      */
-    public boolean meetsBucketCriteria(LabVessel labVessel) {
-        return !meetsBucketCriteria(Collections.singleton(labVessel)).isEmpty();
+    public boolean meetsBucketCriteria(LabVessel labVessel, ProductOrder productOrder) {
+        return !meetsBucketCriteria(Collections.singleton(labVessel), productOrder).isEmpty();
     }
 
     /**

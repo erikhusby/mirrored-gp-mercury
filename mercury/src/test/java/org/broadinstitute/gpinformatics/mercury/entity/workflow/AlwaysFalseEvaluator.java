@@ -11,11 +11,13 @@
 
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.bucketevaluator.BucketEntryEvaluator;
 
 public class AlwaysFalseEvaluator implements BucketEntryEvaluator {
     @Override
-    public boolean invoke(LabVessel labVessel) {
+    public boolean invoke(LabVessel labVessel, ProductOrder productOrder) {
         return false;
     }
 }

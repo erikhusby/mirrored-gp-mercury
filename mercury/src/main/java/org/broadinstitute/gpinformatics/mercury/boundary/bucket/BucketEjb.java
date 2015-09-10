@@ -371,10 +371,6 @@ public class BucketEjb {
             return Collections.emptyMap();
         }
 
-        WorkflowConfig workflowConfig = workflowLoader.load();
-        ProductWorkflowDefVersion workflowDefVersion =
-                workflowConfig.getWorkflow(order.getProduct().getWorkflow()).getEffectiveVersion();
-
         String username = null;
         Long bspUserId = order.getCreatedBy();
         if (bspUserId != null) {
@@ -415,11 +411,12 @@ public class BucketEjb {
 
         for (ProductOrderSample productOrderSample : nameToSampleMap.values()) {
             if(productOrderSample.getMercurySample() == null) {
-                productOrderSample.setMercurySample(existingSamples.get(productOrderSample.getSampleKey()));
+                MercurySample mercurySample = existingSamples.get(productOrderSample.getSampleKey());
+                mercurySample.addProductOrderSample(productOrderSample);
             }
         }
 
-        Map<WorkflowBucketDef, Collection<LabVessel>> validVessels = applyBucketCriteria(vessels, workflowDefVersion);
+        Map<WorkflowBucketDef, Collection<LabVessel>> validVessels = applyBucketCriteria(vessels, order);
 
         Collection<BucketEntry> addedBucketEntries =
                 add(validVessels, BucketEntry.BucketEntryType.PDO_ENTRY, username, LabEvent.UI_EVENT_LOCATION,
@@ -444,8 +441,12 @@ public class BucketEjb {
 
 
     private Map<WorkflowBucketDef, Collection<LabVessel>> applyBucketCriteria(Collection<LabVessel> vessels,
-                                                                              ProductWorkflowDefVersion productWorkflowDefVersion) {
-        return productWorkflowDefVersion.getInitialBucket(vessels);
+                                                                              ProductOrder productOrder) {
+        WorkflowConfig workflowConfig = workflowLoader.load();
+        ProductWorkflowDefVersion workflowDefVersion =
+                workflowConfig.getWorkflow(productOrder.getProduct().getWorkflow()).getEffectiveVersion();
+
+        return workflowDefVersion.getInitialBucket(vessels, productOrder);
     }
 
     /**
