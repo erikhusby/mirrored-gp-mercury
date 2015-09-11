@@ -33,7 +33,7 @@ public class SalesforceServiceTest extends Arquillian{
 
     @Test(groups = TestGroups.STANDARD)
     public void testPushProducts() throws URISyntaxException, IOException {
-//        salesforceService.pushProduct(Product.EXOME_EXPRESS_V2_PART_NUMBER);
-        salesforceService.pushProduct(Product.SAMPLE_INITIATION_PART_NUMBER);
+        salesforceService.pushProduct(Product.EXOME_EXPRESS_V2_PART_NUMBER);
+//        salesforceService.pushProduct(Product.SAMPLE_INITIATION_PART_NUMBER);
     }
 }
