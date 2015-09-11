@@ -1445,7 +1445,7 @@
             <workflowStepDefs>
                 <name>Transfer DNA To Microcentrifuge</name>
                 <labEventTypes>ALLPREP_DNA_TO_MICRO</labEventTypes>
-                <instructions>Transfer from microcentrifuge tube to 2D matrix tube
+                <instructions>Transfer DNA to microcentrifuge tube
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
