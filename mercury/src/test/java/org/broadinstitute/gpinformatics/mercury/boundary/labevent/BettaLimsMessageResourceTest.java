@@ -965,15 +965,15 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         String batchName = "LCSET-Rework-" + crspTestPrefix;
         List<Long> reworkBucketEntryIds = new ArrayList<>();
 
+        // Have to flush to assign bucketEntryId
+        bucketDao.flush();
         for (LabVessel crspPond : crspPonds) {
             reworkBucketEntryIds.add(crspPond.getBucketEntries().iterator().next().getBucketEntryId());
         }
 
-
         LabBatch labBatch = labBatchEjb.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
                 Workflow.ICE_CRSP.getWorkflowName(), Collections.<Long>emptyList(), reworkBucketEntryIds, batchName,
                 "", new Date(), "", "thompson", ICE_BUCKET);
-
 
         return labBatch;
     }
