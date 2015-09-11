@@ -25,6 +25,10 @@ import org.apache.http.util.EntityUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuotesCache;
+import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
@@ -51,6 +55,9 @@ public class SalesforceServiceImpl extends AbstractJerseyClientService implement
 
     @Inject
     private ProductDao productDao;
+
+    @Inject
+    private PriceListCache priceListCache;
 
     public SalesforceServiceImpl() {
     }
@@ -87,6 +94,9 @@ public class SalesforceServiceImpl extends AbstractJerseyClientService implement
 
         WebResource loginResource = getJerseyClient().resource(salesforceConfig.getLoginUrl()).queryParams(params);
 
+        /*
+         * 1
+         */
         ClientResponse loginResponse = loginResource.type(MediaType.APPLICATION_JSON_TYPE)
                 .accept(MediaType.APPLICATION_JSON)
                 .post(ClientResponse.class);
@@ -100,12 +110,15 @@ public class SalesforceServiceImpl extends AbstractJerseyClientService implement
 
             instanceUrl = jsonObject.getString("instance_url");
         } catch (JSONException e) {
-            e.printStackTrace();
+            throw new InformaticsServiceException("Unable to create JSON object from Login response");
         }
 
         WebResource queryResource = getJerseyClient().resource(salesforceConfig.getApiUrl(instanceUrl)+"/query")
-                .queryParam("q","SELECT name, productCode from product2");
+                .queryParam("q","SELECT id, name, productCode from product2");
 
+        /*
+         * 2
+         */
         ClientResponse queryResponse = queryResource
                 .type(MediaType.APPLICATION_JSON_TYPE)
                 .accept(MediaType.APPLICATION_JSON)
@@ -125,13 +138,17 @@ public class SalesforceServiceImpl extends AbstractJerseyClientService implement
                 }
             }
         } catch (JSONException e) {
-            e.printStackTrace();
+            throw new InformaticsServiceException("Unable to create JSON Object from product query");
         }
+        String recordId = null;
+        String recordIdPath = null;
         if(foundProductBase != null) {
             try {
-                String recordId = foundProductBase.getJSONObject("attributes").getString("url");
+                recordIdPath = foundProductBase.getJSONObject("attributes").getString("url");
+                recordId = foundProductBase.getString("Id");
             } catch (JSONException e) {
-                e.printStackTrace();
+                throw new InformaticsServiceException("Unable to create JSON Object for a URL attribute of an product"
+                                                      + " JSON object");
             }
         }
 
@@ -145,7 +162,7 @@ public class SalesforceServiceImpl extends AbstractJerseyClientService implement
             productInfo.put("Description", testProduct.getDescription());
             productInfo.put("IsActive", testProduct.isAvailable());
         } catch (JSONException e) {
-            e.printStackTrace();
+            throw new InformaticsServiceException("Unable to create JSON Object to create/update a product");
         }
 
         URIBuilder productUpdateUriBuilder = new URIBuilder()
@@ -156,13 +173,7 @@ public class SalesforceServiceImpl extends AbstractJerseyClientService implement
 
         if(foundProductBase != null) {
 
-            String recordId = null;
-            try {
-                recordId = foundProductBase.getJSONObject("attributes").getString("url");
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-            productUpdateUriBuilder.setPath(recordId);
+            productUpdateUriBuilder.setPath(recordIdPath);
             httpRequest = new HttpPatch(productUpdateUriBuilder.build());
 
             ((HttpPatch)httpRequest).setEntity(new StringEntity(productInfo.toString(), ContentType.APPLICATION_JSON));
@@ -176,6 +187,9 @@ public class SalesforceServiceImpl extends AbstractJerseyClientService implement
         httpRequest.setHeader("Authorization", "Bearer " + accessToken);
         httpRequest.setHeader("X-PrettyPrint", "1");
 
+        /*
+         * 3
+         */
         HttpResponse productUpdateHttpResponse = salesforceClient.execute(httpRequest);
 
         if (Response.Status.fromStatusCode(productUpdateHttpResponse.getStatusLine().getStatusCode()).getFamily()
@@ -194,8 +208,136 @@ public class SalesforceServiceImpl extends AbstractJerseyClientService implement
                                 + "Product2.ProductCode = '"+testProduct.getPartNumber()+"' "
                                 + "and Pricebook2.isStandard = true");
 
+        /*
+         * 4
+         */
+        ClientResponse priceListQueryResponse = priceListQuery
+                .type(MediaType.APPLICATION_JSON_TYPE)
+                .accept(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer " + accessToken)
+                .header("X-PrettyPrint", "1").get(ClientResponse.class);
+
+        String priceBookId = null;
+        String priceBookEntryId = null;
+        String productId = null;
+        JSONObject priceBookEntryUpdate = new JSONObject();
+        JSONObject foundPriceBookEntry = null;
+        String priceBookEntryPath = null;
+        try {
+            priceBookEntryUpdate.put("UnitPrice",getProductPrice(testProduct));
+            priceBookEntryUpdate.put("isActive", true);
 
 
+            String entity = priceListQueryResponse.getEntity(String.class);
+            JSONObject queryJson = new JSONObject(entity);
+            JSONArray records = queryJson.getJSONArray("records");
+            if(records != null && records.length() >0) {
+                JSONObject priceBookEntry = records.getJSONObject(0);
+                foundPriceBookEntry = priceBookEntry;
+                priceBookId = priceBookEntry.getJSONObject("Pricebook2").getString("id");
+                productId = recordId;
 
+                priceBookEntryPath = priceBookEntry.getJSONObject("attributes").getString("url");
+
+                priceBookEntryId = priceBookEntry.getString("Id");
+
+                priceBookEntryUpdate.put("Id", priceBookEntryId);
+            } else {
+                WebResource standardPriceBookQuery = getJerseyClient().resource(salesforceConfig.getApiUrl(instanceUrl)+"/query")
+                        .queryParam("q", "select id from pricebook2 where isStandard = true");
+
+                /*
+                 * 5
+                 */
+                ClientResponse priceBookQueryResponse = standardPriceBookQuery.type(MediaType.APPLICATION_JSON_TYPE)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + accessToken)
+                        .header("X-PrettyPrint", "1").get(ClientResponse.class);
+
+                String bookEntity = priceBookQueryResponse.getEntity(String.class);
+                JSONObject bookQueryJson = new JSONObject(bookEntity);
+                JSONArray bookRecords = bookQueryJson.getJSONArray("records");
+
+                if (bookRecords == null ||  bookRecords.length() == 0) {
+                    throw new InformaticsServiceException("Query for priceBook did not return a standard pricebook");
+                }
+                priceBookId = bookRecords.getJSONObject(0).getString("Id");
+
+                if(recordId != null) {
+                    productId = recordId;
+                } else {
+                    WebResource queryProductResource = getJerseyClient().resource(salesforceConfig.getApiUrl(instanceUrl)+"/query")
+                            .queryParam("q","SELECT id from product2 where productCode = '"+testProduct.getPartNumber()+"'");
+        /*
+         * 6
+         */
+                    ClientResponse queryProductResponse = queryProductResource
+                            .type(MediaType.APPLICATION_JSON_TYPE)
+                            .accept(MediaType.APPLICATION_JSON)
+                            .header("Authorization","Bearer "+accessToken)
+                            .header("X-PrettyPrint", "1").get(ClientResponse.class);
+
+                    String productEntity = queryProductResponse.getEntity(String.class);
+                    JSONObject productFoundJSON = new JSONObject(productEntity);
+                    JSONArray productRecords = productFoundJSON.getJSONArray("records");
+                    if(productRecords == null || productRecords.length() == 0) {
+                        throw new InformaticsServiceException("Unable to find prodcut " + testProduct.getPartNumber() +
+                                                              " in SalesForce");
+                    }
+                    productId = productRecords.getJSONObject(0).getString("Id");
+                }
+            }
+
+            priceBookEntryUpdate.put("Pricebook2Id", priceBookId);
+            priceBookEntryUpdate.put("Product2Id", productId);
+
+        } catch (JSONException e) {
+            throw new InformaticsServiceException("Unable to create JSON Object for the records related to "
+                                                  + "priceListEntry");
+        }
+
+
+        URIBuilder priceBookEntryUpdateUriBuilder = new URIBuilder()
+                .setScheme("https")
+                        //TODO: Correct this to separate the host from the scheme in the config
+                .setHost(StringUtils.substringAfter(instanceUrl, "https://"));
+        HttpUriRequest httpPriceBookEntryRequest = null;
+
+        if(foundPriceBookEntry != null) {
+            priceBookEntryUpdateUriBuilder.setPath(priceBookEntryPath);
+            httpPriceBookEntryRequest = new HttpPatch(priceBookEntryUpdateUriBuilder.build());
+
+            ((HttpPatch)httpPriceBookEntryRequest).setEntity(new StringEntity(priceBookEntryUpdate.toString(), ContentType.APPLICATION_JSON));
+        } else {
+            priceBookEntryUpdateUriBuilder.setPath(salesforceConfig.getApiUri()+"/sobjects/PricebookEntry");
+            httpPriceBookEntryRequest = new HttpPost(priceBookEntryUpdateUriBuilder.build());
+            ((HttpPost)httpPriceBookEntryRequest).setEntity(new StringEntity(priceBookEntryUpdate.toString(), ContentType.APPLICATION_JSON));
+        }
+
+        httpPriceBookEntryRequest.setHeader("Authorization", "Bearer " + accessToken);
+        httpPriceBookEntryRequest.setHeader("X-PrettyPrint", "1");
+
+
+        HttpResponse priceBookEntryUpdateHttpResponse = salesforceClient.execute(httpPriceBookEntryRequest);
+
+        if (Response.Status.fromStatusCode(priceBookEntryUpdateHttpResponse.getStatusLine().getStatusCode()).getFamily()
+            != Response.Status.Family.SUCCESSFUL) {
+            throw new ResourceException(
+                    "Price Book Entry update did not succeed: " + priceBookEntryUpdateHttpResponse.getStatusLine().getReasonPhrase(),
+                    Response.Status.fromStatusCode(priceBookEntryUpdateHttpResponse.getStatusLine().getStatusCode()));
+        }
     }
+
+    private String getProductPrice(Product product) {
+
+        String price = "0.00";
+        QuotePriceItem quotePriceItem = priceListCache.findByKeyFields(
+                product.getPrimaryPriceItem().getPlatform(), product.getPrimaryPriceItem().getCategory(),
+                product.getPrimaryPriceItem().getName());
+        if (quotePriceItem != null) {
+            price = "$" + String.format("%.2f", Float.valueOf(quotePriceItem.getPrice()));
+        }
+        return price;
+    }
+
 }
