@@ -235,7 +235,7 @@ public class SalesforceServiceImpl extends AbstractJerseyClientService implement
                 }
             } else {
                 WebResource standardPriceBookQuery = getJerseyClient().resource(salesforceConfig.getApiUrl(instanceUrl)+"/query")
-                        .queryParam("q", "select id from pricebook2"
+                        .queryParam("q", "select id, name, isStandard from pricebook2 order by isStandard desc"
 //                                         + " where isStandard = true"
                         );
                 log.info(standardPriceBookQuery.toString());
@@ -290,9 +290,17 @@ public class SalesforceServiceImpl extends AbstractJerseyClientService implement
 
             for(int updateEntryIndex = 0; updateEntryIndex<priceBookEntryUpdates.length();updateEntryIndex++) {
                 priceBookEntryUpdates.getJSONObject(updateEntryIndex).put("UnitPrice", getProductPrice(testProduct));
+
+                //
+                // set isActive it it is NOT standard book
+                //
                 priceBookEntryUpdates.getJSONObject(updateEntryIndex).put("isActive", true);
 
                 priceBookEntryUpdates.getJSONObject(updateEntryIndex).put("Product2Id", productId);
+
+                //
+                // add a 'Use standard' Flag if not standard book
+                //
 
                 URIBuilder priceBookEntryUpdateUriBuilder = new URIBuilder()
                         .setScheme("https")
