@@ -10,9 +10,9 @@
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
-                <bucketEntryEvaluators>
-                    org.broadinstitute.gpinformatics.mercury.entity.workflow.bucketevaluator.DnaBucketEntryEvaluator
-                </bucketEntryEvaluators>
+                <bucketEntryEvaluator>
+                    <materialTypes>DNA</materialTypes>
+                </bucketEntryEvaluator>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Preflight Cleanup</name>
@@ -60,9 +60,9 @@
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
-                <bucketEntryEvaluators>
-                    org.broadinstitute.gpinformatics.mercury.entity.workflow.bucketevaluator.DnaBucketEntryEvaluator
-                </bucketEntryEvaluators>
+                <bucketEntryEvaluator>
+                    <materialTypes>DNA</materialTypes>
+                </bucketEntryEvaluator>
                 <batchJiraProjectType>LCSET</batchJiraProjectType>
                 <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
                 </workflowStepDefs>
@@ -120,7 +120,9 @@
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
-                <bucketEntryEvaluators>org.broadinstitute.gpinformatics.mercury.entity.workflow.bucketevaluator.DnaBucketEntryEvaluator</bucketEntryEvaluators>
+                <bucketEntryEvaluator>
+                    <materialTypes>DNA</materialTypes>
+                </bucketEntryEvaluator>
                 <batchJiraProjectType>LCSET</batchJiraProjectType>
                 <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
                 </workflowStepDefs>
@@ -238,9 +240,9 @@
                 <jiraTransition>
                     <project>LCSET</project>
                 </jiraTransition>
-                <bucketEntryEvaluators>
-                    org.broadinstitute.gpinformatics.mercury.entity.workflow.bucketevaluator.DnaBucketEntryEvaluator
-                </bucketEntryEvaluators>
+                <bucketEntryEvaluator>
+                    <materialTypes>DNA</materialTypes>
+                </bucketEntryEvaluator>
                 <batchJiraProjectType>LCSET</batchJiraProjectType>
                 <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
                 </workflowStepDefs>
@@ -412,9 +414,9 @@
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
-                <bucketEntryEvaluators>
-                    org.broadinstitute.gpinformatics.mercury.entity.workflow.bucketevaluator.DnaBucketEntryEvaluator
-                </bucketEntryEvaluators>
+                <bucketEntryEvaluator>
+                    <materialTypes>DNA</materialTypes>
+                </bucketEntryEvaluator>
                 <batchJiraProjectType>LCSET</batchJiraProjectType>
                 <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
                 </workflowStepDefs>
@@ -547,9 +549,9 @@
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
-                <bucketEntryEvaluators>
-                    org.broadinstitute.gpinformatics.mercury.entity.workflow.bucketevaluator.DnaBucketEntryEvaluator
-                </bucketEntryEvaluators>
+                <bucketEntryEvaluator>
+                    <materialTypes>DNA</materialTypes>
+                </bucketEntryEvaluator>
                 <batchJiraProjectType>LCSET</batchJiraProjectType>
                 <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
                 </workflowStepDefs>
@@ -755,9 +757,9 @@
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
-                <bucketEntryEvaluators>
-                    org.broadinstitute.gpinformatics.mercury.entity.workflow.bucketevaluator.DnaBucketEntryEvaluator
-                </bucketEntryEvaluators>
+                <bucketEntryEvaluator>
+                    <materialTypes>DNA</materialTypes>
+                </bucketEntryEvaluator>
                 <batchJiraProjectType>LCSET</batchJiraProjectType>
                 <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
                 </workflowStepDefs>
@@ -959,12 +961,10 @@
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
-                <bucketEntryEvaluators>
-                    org.broadinstitute.gpinformatics.mercury.entity.workflow.bucketevaluator.FreshBloodBucketEntryEvaluator
-                </bucketEntryEvaluators>
-                <bucketEntryEvaluators>
-                    org.broadinstitute.gpinformatics.mercury.entity.workflow.bucketevaluator.FreshFrozenBloodBucketEntryEvaluator
-                </bucketEntryEvaluators>
+                <bucketEntryEvaluator>
+                    <materialTypes>LabVessel.MaterialType.FRESH_BLOOD</materialTypes>
+                    <materialTypes>LabVessel.MaterialType.FRESH_FROZEN_BLOOD</materialTypes>
+                </bucketEntryEvaluator>
                 <batchJiraProjectType>EXTRACTION_PROJECT</batchJiraProjectType>
                 <batchJiraIssueType>DNA_EXTRACTION</batchJiraIssueType>
             </workflowStepDefs>
@@ -1161,9 +1161,9 @@
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
-                <bucketEntryEvaluators>
-                    org.broadinstitute.gpinformatics.mercury.entity.workflow.bucketevaluator.DnaExtractionBucketEntryEvaluator
-                </bucketEntryEvaluators>
+                <bucketEntryEvaluator>
+                    <materialTypes>DNA</materialTypes>
+                </bucketEntryEvaluator>
                 <batchJiraProjectType>EXTRACTION_PROJECT</batchJiraProjectType>
                 <batchJiraIssueType>RNA_EXTRACTION</batchJiraIssueType>
             </workflowStepDefs>
@@ -1180,28 +1180,133 @@
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
-                <bucketEntryEvaluators>
-                    org.broadinstitute.gpinformatics.mercury.entity.workflow.bucketevaluator.RnaExtractionBucketEntryEvaluator
-                </bucketEntryEvaluators>
+                <bucketEntryEvaluator>
+                    <materialTypes>RNA</materialTypes>
+                </bucketEntryEvaluator>
                 <batchJiraProjectType>EXTRACTION_PROJECT</batchJiraProjectType>
                 <batchJiraIssueType>RNA_EXTRACTION</batchJiraIssueType>
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>
+
     <workflowProcessDefs>
-        <name>Extract to DNA and RNA</name>
+        <name>DNA and RNA from Cell Pellets</name>
         <workflowProcessDefVersions>
             <version>02</version>
             <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
             <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
-                <name>Extract to DNA and RNA Bucket</name>
-                <labEventTypes>DNA_AND_RNA_EXTRACTION_BUCKET</labEventTypes>
+                <name>DNA and RNA from Cell Pellets Bucket</name>
+                <labEventTypes>DNA_RNA_EXTRACTION_CELL_PELLETS_BUCKET</labEventTypes>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
-                <bucketEntryEvaluators>
-                    org.broadinstitute.gpinformatics.mercury.entity.workflow.bucketevaluator.DnaAndRnaExtractionBucketEntryEvaluator
-                </bucketEntryEvaluators>
+                <bucketEntryEvaluator>
+                    <materialTypes>CELLS_PELLET_FROZEN</materialTypes>
+                    <materialTypes>CELLS_CELL_LINE_VIABLE</materialTypes>
+                    <materialTypes>CELLS_PELLET_FROZEN_IN_X_MEDIA</materialTypes>
+                    <workflows>DNA_RNA_EXTRACTION_CELL_PELLETS</workflows>
+                </bucketEntryEvaluator>
+                <batchJiraProjectType>EXTRACTION_PROJECT</batchJiraProjectType>
+                <batchJiraIssueType>ALLPREP</batchJiraIssueType>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>DNA and RNA for Frozen Tissue - AllPrep</name>
+        <workflowProcessDefVersions>
+            <version>02</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
+                <name>DNA and RNA for Frozen Tissue - AllPrep Bucket</name>
+                <labEventTypes>DNA_RNA_EXTRACTION_FROZEN_TISSUE_BUCKET</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <bucketEntryEvaluator>
+                    <materialTypes>TISSUE_FRESH_FROZEN</materialTypes>
+                    <materialTypes>TISSUE_OCT_EMBEDDED</materialTypes>
+                    <workflows>DNA_RNA_EXTRACTION_FROZEN_TISSUE</workflows>
+                </bucketEntryEvaluator>
+                <batchJiraProjectType>EXTRACTION_PROJECT</batchJiraProjectType>
+                <batchJiraIssueType>ALLPREP</batchJiraIssueType>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>DNA and RNA for FFPE - AllPrep (sections)</name>
+        <workflowProcessDefVersions>
+            <version>02</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
+                <name>DNA and RNA for FFPE - AllPrep (sections) Bucket</name>
+                <labEventTypes>DNA_RNA_EXTRACTION_FFPE_SECTIONS_BUCKET</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <bucketEntryEvaluator>
+                    <materialTypes>FFPE_TISSUE_SECTION</materialTypes>
+                    <workflows>DNA_RNA_EXTRACTION_FFPE_SECTIONS</workflows>
+                </bucketEntryEvaluator>
+                <batchJiraProjectType>EXTRACTION_PROJECT</batchJiraProjectType>
+                <batchJiraIssueType>ALLPREP</batchJiraIssueType>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>DNA and RNA for FFPE - AllPrep (scrolls)</name>
+        <workflowProcessDefVersions>
+            <version>02</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
+                <name>DNA and RNA for FFPE - AllPrep (scrolls) Bucket</name>
+                <labEventTypes>DNA_RNA_EXTRACTION_FFPE_SCROLLS_BUCKET</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <bucketEntryEvaluator>
+                    <workflows>DNA_RNA_EXTRACTION_FFPE_SCROLLS</workflows>
+                    <materialTypes>FFPE_SCROLL</materialTypes>
+                </bucketEntryEvaluator>
+                <batchJiraProjectType>EXTRACTION_PROJECT</batchJiraProjectType>
+                <batchJiraIssueType>ALLPREP</batchJiraIssueType>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>DNA and RNA for FFPE - AllPrep (blocks)</name>
+        <workflowProcessDefVersions>
+            <version>02</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
+                <name>DNA and RNA for FFPE - AllPrep (blocks) Bucket</name>
+                <labEventTypes>DNA_RNA_EXTRACTION_FFPE_BLOCKS_BUCKET</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <bucketEntryEvaluator>
+                    <workflows>DNA_RNA_EXTRACTION_FFPE_BLOCKS_BUCKET</workflows>
+                    <materialTypes>FFPE_BLOCK</materialTypes>
+                </bucketEntryEvaluator>
+                <batchJiraProjectType>EXTRACTION_PROJECT</batchJiraProjectType>
+                <batchJiraIssueType>ALLPREP</batchJiraIssueType>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>DNA and RNA for Stool - Chemagen</name>
+        <workflowProcessDefVersions>
+            <version>02</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
+                <name>DNA and RNA for Stool - Chemagen Bucket</name>
+                <labEventTypes>DNA_RNA_EXTRACTION_STOOL_BUCKET</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <bucketEntryEvaluator>
+                    <workflows>DNA_RNA_EXTRACTION_STOOL</workflows>
+                    <materialTypes>STOOL</materialTypes>
+                </bucketEntryEvaluator>
                 <batchJiraProjectType>EXTRACTION_PROJECT</batchJiraProjectType>
                 <batchJiraIssueType>ALLPREP</batchJiraIssueType>
             </workflowStepDefs>
@@ -1282,9 +1387,6 @@
         <productWorkflowDefVersions>
             <version>4.0</version>
             <effectiveDate>2014-10-19T21:03:24.085-04:00</effectiveDate>
-            <workflowProcessDefs>Extract to DNA</workflowProcessDefs>
-            <workflowProcessDefs>Extract to RNA</workflowProcessDefs>
-            <workflowProcessDefs>Extract to DNA and RNA</workflowProcessDefs>
             <workflowProcessDefs>CRSP Pico/Plating</workflowProcessDefs>
             <workflowProcessDefs>Exome Express Shearing</workflowProcessDefs>
             <workflowProcessDefs>Library Construction</workflowProcessDefs>
@@ -1347,20 +1449,70 @@
             <workflowProcessDefs>Clinical Whole Blood Extraction</workflowProcessDefs>
         </productWorkflowDefVersions>
     </productWorkflowDefs>
+
     <productWorkflowDefs>
-        <name>Extract to DNA and RNA</name>
+        <name>DNA and RNA from Cell Pellets</name>
         <productWorkflowDefVersions>
             <version>02</version>
             <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
-            <workflowProcessDefs>Extract to DNA and RNA Bucket</workflowProcessDefs>
+            <workflowProcessDefs>DNA and RNA from Cell Pellets</workflowProcessDefs>
         </productWorkflowDefVersions>
     </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>DNA and RNA for Frozen Tissue - AllPrep</name>
+        <productWorkflowDefVersions>
+            <version>02</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowProcessDefs>DNA and RNA for Frozen Tissue - AllPrep</workflowProcessDefs>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>DNA and RNA from Cell Pellets</name>
+        <productWorkflowDefVersions>
+            <version>02</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowProcessDefs>DNA and RNA from Cell Pellets</workflowProcessDefs>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>DNA and RNA for FFPE - AllPrep (sections)</name>
+        <productWorkflowDefVersions>
+            <version>02</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowProcessDefs>DNA and RNA for FFPE - AllPrep (sections)</workflowProcessDefs>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>DNA and RNA for FFPE - AllPrep (scrolls)</name>
+        <productWorkflowDefVersions>
+            <version>02</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowProcessDefs>DNA and RNA for FFPE - AllPrep (scrolls)</workflowProcessDefs>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>DNA and RNA for FFPE - AllPrep (blocks)</name>
+        <productWorkflowDefVersions>
+            <version>02</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowProcessDefs>DNA and RNA for FFPE - AllPrep (blocks)</workflowProcessDefs>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>DNA and RNA for Stool - Chemagen</name>
+        <productWorkflowDefVersions>
+            <version>02</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowProcessDefs>DNA and RNA for Stool - Chemagen</workflowProcessDefs>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+
     <productWorkflowDefs>
         <name>Extract to DNA</name>
         <productWorkflowDefVersions>
             <version>1.0</version>
             <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
-            <workflowProcessDefs>Extract to DNA Bucket</workflowProcessDefs>
+            <workflowProcessDefs>Extract to DNA</workflowProcessDefs>
         </productWorkflowDefVersions>
     </productWorkflowDefs>
     <productWorkflowDefs>
@@ -1368,7 +1520,7 @@
         <productWorkflowDefVersions>
             <version>1.0</version>
             <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
-            <workflowProcessDefs>Extract to RNA Bucket</workflowProcessDefs>
+            <workflowProcessDefs>Extract to RNA</workflowProcessDefs>
         </productWorkflowDefVersions>
     </productWorkflowDefs>
     <sequencingConfigDefs>

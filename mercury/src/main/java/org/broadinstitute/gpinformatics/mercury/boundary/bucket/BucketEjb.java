@@ -10,6 +10,7 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
@@ -443,10 +444,18 @@ public class BucketEjb {
     private Map<WorkflowBucketDef, Collection<LabVessel>> applyBucketCriteria(Collection<LabVessel> vessels,
                                                                               ProductOrder productOrder) {
         WorkflowConfig workflowConfig = workflowLoader.load();
-        ProductWorkflowDefVersion workflowDefVersion =
-                workflowConfig.getWorkflow(productOrder.getProduct().getWorkflow()).getEffectiveVersion();
+        List<Product> bucketProducts = new ArrayList<>();
+        bucketProducts.add(productOrder.getProduct());
+        bucketProducts.addAll(productOrder.getProduct().getAddOnsWithWorkflow());
 
-        return workflowDefVersion.getInitialBucket(vessels, productOrder);
+        Map<WorkflowBucketDef, Collection<LabVessel>> bucketedVesselMap = new HashMap<>();
+        for (Product product : bucketProducts) {
+            ProductWorkflowDefVersion workflowDefVersion =
+                    workflowConfig.getWorkflow(product.getWorkflow()).getEffectiveVersion();
+            bucketedVesselMap.putAll(workflowDefVersion.getInitialBucket(vessels, productOrder));
+        }
+
+        return bucketedVesselMap;
     }
 
     /**

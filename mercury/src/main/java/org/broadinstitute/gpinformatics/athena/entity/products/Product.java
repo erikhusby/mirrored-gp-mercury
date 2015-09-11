@@ -28,6 +28,7 @@ import javax.persistence.UniqueConstraint;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
@@ -661,4 +662,13 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         return productFamily.getName().equals(ProductFamily.ProductFamilyName.EXOME.getFamilyName()) && productName.startsWith(EXOME_EXPRESS);
     }
 
+    public Collection<Product> getAddOnsWithWorkflow() {
+        Set<Product> products = new HashSet<>();
+        for (Product product : getAddOns()) {
+            if (product.getWorkflow() != Workflow.NONE) {
+                products.add(product);
+            }
+        }
+        return products;
+    }
 }

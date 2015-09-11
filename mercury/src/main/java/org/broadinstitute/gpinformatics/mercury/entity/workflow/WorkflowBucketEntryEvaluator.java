@@ -9,31 +9,31 @@
  * use, misuse, or functionality.
  */
 
-package org.broadinstitute.gpinformatics.mercury.entity.workflow.bucketevaluator;
+package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 
-import java.util.Collection;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import java.io.Serializable;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
- * An abstract BucketEntryEvaluator which tests if the labVessel matches a materialType returned by getMaterialTypes()
- * and if a ProductOrder's add-on workflow supports extractions.
+ * A step in a process
  */
-public abstract class ExtractionBucketEntryEvaluator implements BucketEntryEvaluator {
-    @Override
-    public boolean invoke(LabVessel labVessel, ProductOrder productOrder) {
-        return materialTypeMatches(labVessel) && productAddOnsHaveWorkflow(productOrder);
-    }
-
-    protected abstract Collection<Workflow> supportedWorkflows();
-
-    protected abstract Collection<LabVessel.MaterialType> supportedMaterialTypes();
+@XmlAccessorType(XmlAccessType.FIELD)
+public class WorkflowBucketEntryEvaluator implements Serializable {
+    Set<Workflow> workflows = new HashSet<>();
+    Set<LabVessel.MaterialType> materialTypes = new HashSet<>();
 
     private boolean materialTypeMatches(LabVessel labVessel) {
-        for (LabVessel.MaterialType materialType : supportedMaterialTypes()) {
+        if (materialTypes.isEmpty()){
+            return true;
+        }
+        for (LabVessel.MaterialType materialType : materialTypes) {
             if (labVessel.isMaterialType(materialType)) {
                 return true;
             }
@@ -42,10 +42,13 @@ public abstract class ExtractionBucketEntryEvaluator implements BucketEntryEvalu
     }
 
     private boolean productAddOnsHaveWorkflow(ProductOrder productOrder) {
+        if (workflows.isEmpty()){
+            return true;
+        }
         for (ProductOrderAddOn productOrderAddOn : productOrder.getAddOns()) {
             Workflow addOnWorkflow = productOrderAddOn.getAddOn().getWorkflow();
             if (addOnWorkflow != Workflow.NONE) {
-                if (supportedWorkflows().contains(addOnWorkflow)) {
+                if (workflows.contains(addOnWorkflow)) {
                     return true;
                 }
             }
@@ -53,4 +56,7 @@ public abstract class ExtractionBucketEntryEvaluator implements BucketEntryEvalu
         return false;
     }
 
+    public boolean invoke(LabVessel labVessel, ProductOrder productOrder) {
+        return productAddOnsHaveWorkflow(productOrder) && materialTypeMatches(labVessel);
+    }
 }

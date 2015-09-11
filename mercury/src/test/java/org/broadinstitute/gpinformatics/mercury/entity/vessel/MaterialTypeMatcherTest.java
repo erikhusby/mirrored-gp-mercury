@@ -38,8 +38,8 @@ public class MaterialTypeMatcherTest {
                 new Object[]{LabVessel.MaterialType.DNA, "DNA: DNA Genomic", true},
                 new Object[]{LabVessel.MaterialType.DNA, "DNA:DNA Somatic", true},
 
-                new Object[]{LabVessel.MaterialType.FFPE, "FFPE", true},
-                new Object[]{LabVessel.MaterialType.FFPE, "Tissue: FFPE", true},
+                new Object[]{LabVessel.MaterialType.FFPE_TISSUE_SECTION, "FFPE_TISSUE_SECTION", true},
+                new Object[]{LabVessel.MaterialType.FFPE_TISSUE_SECTION, "Tissue: FFPE_TISSUE_SECTION", true},
 
                 new Object[]{LabVessel.MaterialType.FRESH_BLOOD, "Whole Blood: Whole Blood Fresh", true},
                 new Object[]{LabVessel.MaterialType.FRESH_BLOOD, "Fresh Blood", true},
