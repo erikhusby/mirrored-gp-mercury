@@ -20,6 +20,7 @@ public enum Workflow {
     ICE_CRSP("ICE CRSP"),
     CLINICAL_EXTRACTION("Clinical Whole Blood Extraction"),
     ALLPREP_EXTRACTION("AllPrep Extraction"),
+    TRU_SEQ_STRAND_SPECIFIC_CRSP("TruSeq Strand Specific CRSP"),
     /** Use this to indicate that no workflow is associated. */
     NONE(null, false);
 

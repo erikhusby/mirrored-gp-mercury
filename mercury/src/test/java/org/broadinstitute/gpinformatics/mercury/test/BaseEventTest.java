@@ -70,6 +70,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.presentation.transfervis.TransferVisualizerClient;
 import org.broadinstitute.gpinformatics.mercury.presentation.transfervis.TransferVisualizerFrame;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ArrayPlatingEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.CrspRiboPlatingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
@@ -84,6 +85,7 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.ProductionFlowcell
 import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.SageEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ShearingEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.TruSeqStrandSpecificEntityBuilder;
 import org.easymock.EasyMock;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -570,6 +572,34 @@ public class BaseEventTest {
                                                              String barcodeSuffix) {
         return new ArrayPlatingEntityBuilder(mapBarcodeToTube, bettaLimsMessageTestFactory,
                 labEventFactory, getLabEventHandler(), barcodeSuffix).invoke();
+    }
+
+    public CrspRiboPlatingEntityBuilder runRiboPlatingProcess(BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
+                                                       LabEventFactory labEventFactory, LabEventHandler labEventHandler,
+                                                       Map<String, BarcodedTube> mapBarcodeToTube, String rackBarcode,
+                                                       String prefix) {
+        return new CrspRiboPlatingEntityBuilder(bettaLimsMessageTestFactory,
+                labEventFactory, labEventHandler, mapBarcodeToTube, rackBarcode, prefix).invoke();
+    }
+
+    /**
+     * This method runs the entities through the TruSeqStrandSpecific process.
+     *
+     * @param mapBarcodeToTube A map of barcodes to tubes that will be run the starting point of the TruSeq SS process.
+     * @param tubeFormation    The tube formation that represents the entities coming out of pico/plating.
+     * @param rackBarcode      The rack barcode of the tube formation.
+     * @param barcodeSuffix    Uniquifies the generated vessel barcodes. NOT date if test quickly invokes twice.
+     *
+     * @return Returns the entity builder that contains the entities after this process has been invoked.
+     */
+    public TruSeqStrandSpecificEntityBuilder runTruSeqStrandSpecificProcess(Map<String, BarcodedTube> mapBarcodeToTube,
+                                                    TubeFormation tubeFormation,
+                                                    String rackBarcode,
+                                                    String barcodeSuffix) {
+
+        return new TruSeqStrandSpecificEntityBuilder(mapBarcodeToTube, tubeFormation,
+                bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
+                rackBarcode, barcodeSuffix).invoke();
     }
 
     /**

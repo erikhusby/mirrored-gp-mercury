@@ -73,6 +73,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
 import org.broadinstitute.gpinformatics.mercury.test.builders.CrspPicoEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.CrspRiboPlatingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
@@ -85,6 +86,7 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.ProductionFlowcell
 import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.SageEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ShearingEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.TruSeqStrandSpecificEntityBuilder;
 import org.easymock.EasyMock;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
@@ -1516,6 +1518,30 @@ public class LabEventTest extends BaseEventTest {
         runTransferVisualizer(mapBarcodeToTube.values().iterator().next());
     }
 
+    @Test(groups = TestGroups.DATABASE_FREE)
+    public void testCrspRibo() {
+        expectedRouting = SystemRouter.System.MERCURY;
+
+        // Use Standard Exome product, to verify that workflow is taken from LCSet, not Product
+        int numSamples = NUM_POSITIONS_IN_RACK - 2;
+        ProductOrder productOrder = ProductOrderTestFactory.buildTruSeqStrandSpecificProductOrder(numSamples);
+        Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
+        LabBatch workflowBatch = new LabBatch("Ribogreen Batch",
+                new HashSet<LabVessel>(mapBarcodeToTube.values()),
+                LabBatch.LabBatchType.WORKFLOW);
+        workflowBatch.setCreatedOn(new Date());
+        workflowBatch.setWorkflow(Workflow.TRU_SEQ_STRAND_SPECIFIC_CRSP);
+
+        bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, "1");
+
+        CrspRiboPlatingEntityBuilder crspRiboPlatingBuilder = new CrspRiboPlatingEntityBuilder(getBettaLimsMessageTestFactory(),
+                getLabEventFactory(), getLabEventHandler(), mapBarcodeToTube, "Ribo", "").invoke();
+
+        TubeFormation polyAAliquotTF = (TubeFormation) crspRiboPlatingBuilder.getPolyATSAliquot().
+                getTargetLabVessels().iterator().next();
+        Assert.assertEquals(polyAAliquotTF.getContainerRole().getSampleInstancesV2().size(), numSamples);
+    }
+
     /**
      * Build object graph for Fluidigm messages
      */
@@ -1617,6 +1643,74 @@ public class LabEventTest extends BaseEventTest {
         }
 
         runArrayPlatingProcess(mapBarcodeToDaughterTube, "Infinium");
+    }
+
+    /**
+     * Build object graph for TruSeq SS messages, verify chain of events.
+     */
+    @Test(groups = {TestGroups.DATABASE_FREE})
+    public void testTruSeqStrandSpecific() {
+        expectedRouting = SystemRouter.System.MERCURY;
+        int numSamples = NUM_POSITIONS_IN_RACK - 2;
+        ProductOrder productOrder = ProductOrderTestFactory.buildTruSeqStrandSpecificProductOrder(numSamples);
+        productOrder.getResearchProject().setJiraTicketKey("RP-123");
+        Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
+
+        LabBatch workflowBatch = new LabBatch("TruSeq Strand Specific Batch",
+                new HashSet<LabVessel>(mapBarcodeToTube.values()),
+                LabBatch.LabBatchType.WORKFLOW);
+        workflowBatch.setWorkflow(Workflow.TRU_SEQ_STRAND_SPECIFIC_CRSP);
+        bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, "1");
+
+        CrspRiboPlatingEntityBuilder crspRiboPlatingBuilder = runRiboPlatingProcess(getBettaLimsMessageTestFactory(),
+                getLabEventFactory(), getLabEventHandler(), mapBarcodeToTube, "Ribo", "");
+
+        TruSeqStrandSpecificEntityBuilder truSeqStrandSpecificEntityBuilder =
+                runTruSeqStrandSpecificProcess(crspRiboPlatingBuilder.getPolyAAliquotBarcodedTubeMap(),
+                        crspRiboPlatingBuilder.getPolyAAliquotTubeFormation(),
+                        crspRiboPlatingBuilder.getPolyAAliquotRackBarcode(),
+                        "TruSeqStrandSpecific");
+
+        QtpEntityBuilder qtpEntityBuilder = runQtpProcess(truSeqStrandSpecificEntityBuilder.getEnrichmentCleanupRack(),
+                truSeqStrandSpecificEntityBuilder.getEnrichmentCleanupBarcodes(),
+                truSeqStrandSpecificEntityBuilder.getMapBarcodeToEnrichmentCleanupTubes(),
+                "1");
+
+        LabVessel denatureSource =
+                qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
+        LabBatch fctBatch = new LabBatch(FCT_TICKET, Collections.singleton(denatureSource), LabBatch.LabBatchType.FCT);
+        HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
+                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1", FCT_TICKET,
+                        ProductionFlowcellPath.STRIPTUBE_TO_FLOWCELL, "Squid Designation",
+                        Workflow.TRU_SEQ_STRAND_SPECIFIC_CRSP);
+
+        IlluminaFlowcell illuminaFlowcell = hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell();
+        Set<SampleInstance> lane1SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(
+                VesselPosition.LANE1);
+        Assert.assertEquals(lane1SampleInstances.iterator().next().getReagents().size(), 1,
+                "Wrong number of reagents");
+
+
+        ListTransfersFromStart transferTraverserCriteria = new ListTransfersFromStart();
+        BarcodedTube startingTube = crspRiboPlatingBuilder.getPolyAAliquotBarcodedTubeMap().entrySet().iterator().next().getValue();
+
+        startingTube.evaluateCriteria(transferTraverserCriteria,
+                TransferTraverserCriteria.TraversalDirection.Descendants);
+        List<String> labEventNames = transferTraverserCriteria.getAllEventNamesPerHop();
+        String[] expectedEventNames = {
+                "PolyATransfer",
+                "PolyASelectionTS",
+                "SecondStrandCleanupTS",
+                "AdapterLigationCleanupTS",
+                "EnrichmentCleanupTS",
+                "PoolingTransfer",
+                "EcoTransfer",
+                "NormalizationTransfer",
+                "DenatureTransfer",
+                "StripTubeBTransfer",
+                "FlowcellTransfer",
+        };
+        verifyEventSequence(labEventNames, expectedEventNames);
     }
 
     private void verifyEventSequence(List<String> labEventNames, String[] expectedEventNames) {
