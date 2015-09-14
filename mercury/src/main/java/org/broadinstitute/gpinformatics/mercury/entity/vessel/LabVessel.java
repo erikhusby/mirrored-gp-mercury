@@ -238,7 +238,7 @@ public abstract class LabVessel implements Serializable {
         return hasMaterialConvertedToMaterialType;
     }
 
-    private List<String> getMaterialTypes() {
+    public List<String> getMaterialTypes() {
         List<String> materialTypes = new ArrayList<>();
         for (SampleInstanceV2 si : getSampleInstancesV2()) {
             String materialType = si.getRootOrEarliestMercurySample().getSampleData().getMaterialType();

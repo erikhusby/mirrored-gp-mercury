@@ -362,6 +362,7 @@
                 </th>
                 <th width="60">Vessel Name</th>
                 <th width="50">Sample Name</th>
+                <th>Material Type</th>
                 <th>PDO</th>
                 <th width="300">PDO Name</th>
                 <th width="200">PDO Owner</th>
@@ -394,6 +395,12 @@
                                     ${mercurySample.sampleKey}
                             </a>
 
+                            <c:if test="${!stat.last}">&nbsp;</c:if>
+                        </c:forEach>
+                    </td>
+                    <td class="ellipsis">
+                        <c:forEach items="${entry.labVessel.materialTypes}" var="materialType" varStatus="stat">
+                            ${materialType}
                             <c:if test="${!stat.last}">&nbsp;</c:if>
                         </c:forEach>
                     </td>

@@ -278,6 +278,7 @@ function showSamples(sampleData) {
         $j('#collab-patient-' + sampleId).text(sampleData[x].collaboratorParticipantId);
         $j('#volume-' + sampleId).text(sampleData[x].volume);
         $j('#sample-type-' + sampleId).text(sampleData[x].sampleType);
+        $j('#material-type-' + sampleId).text(sampleData[x].materialType);
         $j('#concentration-' + sampleId).text(sampleData[x].concentration);
         $j('#rin-' + sampleId).text(sampleData[x].rin);
         $j('#rqs-' + sampleId).text(sampleData[x].rqs);
@@ -315,6 +316,7 @@ function showSamples(sampleData) {
                 {"bSortable": true, "sType": "numeric"},        // Received Date
                 {"bSortable": true},                            // Collaborator Participant ID
                 {"bSortable": true, "sType": "numeric"},        // Sample Type
+                {"bSortable": true, "sType": "numeric"},        // Material Type
                 {"bSortable": true, "sType": "numeric"},        // Concentration
 
                 <c:if test="${actionBean.supportsRin}">
@@ -1290,6 +1292,7 @@ function formatInput(item) {
                     </td>
 
                     <td id="sample-type-${sample.productOrderSampleId}"></td>
+                    <td id="material-type-${sample.productOrderSampleId}"></td>
                     <td id="volume-${sample.productOrderSampleId}"></td>
                     <td id="concentration-${sample.productOrderSampleId}"></td>
 

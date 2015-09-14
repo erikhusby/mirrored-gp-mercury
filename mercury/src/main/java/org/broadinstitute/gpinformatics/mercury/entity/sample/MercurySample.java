@@ -113,6 +113,15 @@ public class MercurySample extends AbstractSample {
 
     }
 
+    public String getMaterialType() {
+        for (Metadata sampleMetadata : getMetadata()) {
+            if (sampleMetadata.getKey() == Metadata.Key.MATERIAL_TYPE) {
+                return sampleMetadata.getStringValue();
+            }
+        }
+        return "";
+    }
+
     public enum AccessioningCheckResult {
         CAN_BE_ACCESSIONED, TUBE_NOT_ASSOCIATED, TUBE_ACCESSIONED_PREVIOUSLY
     }
