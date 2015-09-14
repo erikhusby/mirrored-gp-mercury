@@ -29,6 +29,14 @@ public class WorkflowBucketEntryEvaluator implements Serializable {
     Set<Workflow> workflows = new HashSet<>();
     Set<LabVessel.MaterialType> materialTypes = new HashSet<>();
 
+    public WorkflowBucketEntryEvaluator() {
+    }
+
+    WorkflowBucketEntryEvaluator(Set<Workflow> workflows, Set<LabVessel.MaterialType> materialTypes) {
+        this.workflows = workflows;
+        this.materialTypes = materialTypes;
+    }
+
     private boolean materialTypeMatches(LabVessel labVessel) {
         if (materialTypes.isEmpty()){
             return true;

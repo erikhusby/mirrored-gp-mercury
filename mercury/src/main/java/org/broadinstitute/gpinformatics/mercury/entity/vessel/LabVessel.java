@@ -663,7 +663,7 @@ public abstract class LabVessel implements Serializable {
         private final Pattern matchPattern;
 
         MaterialType(String displayName) {
-            this(displayName, String.format("(.*:\\s?)?%s.*", displayName.toLowerCase().replaceAll("\\s", "\\\\s+")));
+            this(displayName, String.format("(.*:\\s?)?%s.*", displayName.toLowerCase().replaceAll("\\s", "[\\\\s|_]+")));
         }
 
         MaterialType(String displayName, String matchPattern) {

@@ -72,7 +72,8 @@ public class WorkflowBucketDef extends WorkflowStepDef {
      * @return true if the vessel can go into the bucket, false otherwise
      */
     public boolean meetsBucketCriteria(LabVessel labVessel, ProductOrder productOrder) {
-        return !meetsBucketCriteria(Collections.singleton(labVessel), productOrder).isEmpty();
+        Collection<LabVessel> labVessels = meetsBucketCriteria(Collections.singleton(labVessel), productOrder);
+        return !labVessels.isEmpty();
     }
 
     /**
@@ -86,5 +87,14 @@ public class WorkflowBucketDef extends WorkflowStepDef {
         } else {
             return null;
         }
+    }
+
+    void setBucketEntryEvaluator(
+            WorkflowBucketEntryEvaluator bucketEntryEvaluator) {
+        this.bucketEntryEvaluator = bucketEntryEvaluator;
+    }
+
+    WorkflowBucketEntryEvaluator getBucketEntryEvaluator() {
+        return bucketEntryEvaluator;
     }
 }
