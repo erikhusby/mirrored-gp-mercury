@@ -222,7 +222,6 @@ public class SalesforceServiceImpl extends AbstractJerseyClientService implement
             if(records != null && records.length() >0) {
                 for(int entryIndex = 0; entryIndex < records.length(); entryIndex++) {
                     JSONObject priceBookEntry = records.getJSONObject(entryIndex);
-                    String priceBookId  = priceBookEntry.getJSONObject("Pricebook2").getString("Id");
                     productId = recordId;
 
                     String priceBookEntryId = priceBookEntry.getString("Id");
@@ -230,13 +229,11 @@ public class SalesforceServiceImpl extends AbstractJerseyClientService implement
 
                     JSONObject entryToUpdate = new JSONObject();
                     entryToUpdate.put("Id", priceBookEntryId);
-                    entryToUpdate.put("Pricebook2Id", priceBookId);
                     priceBookEntryUpdates.put(entryToUpdate);
                 }
             } else {
                 WebResource standardPriceBookQuery = getJerseyClient().resource(salesforceConfig.getApiUrl(instanceUrl)+"/query")
                         .queryParam("q", "select id, name, isStandard from pricebook2 order by isStandard desc"
-//                                         + " where isStandard = true"
                         );
                 log.info(standardPriceBookQuery.toString());
                 /*
@@ -257,7 +254,7 @@ public class SalesforceServiceImpl extends AbstractJerseyClientService implement
                 for(int bookRecordIndex = 0;bookRecordIndex<bookRecords.length();bookRecordIndex++) {
 
                     JSONObject entryToUpdate = new JSONObject();
-                    entryToUpdate.put("Pricebook2Id", bookRecords.getJSONObject(0).getString("Id"));
+                    entryToUpdate.put("Pricebook2Id", bookRecords.getJSONObject(bookRecordIndex).getString("Id"));
                     priceBookEntryUpdates.put(entryToUpdate);
                 }
 
@@ -289,18 +286,22 @@ public class SalesforceServiceImpl extends AbstractJerseyClientService implement
 
 
             for(int updateEntryIndex = 0; updateEntryIndex<priceBookEntryUpdates.length();updateEntryIndex++) {
-                priceBookEntryUpdates.getJSONObject(updateEntryIndex).put("UnitPrice", getProductPrice(testProduct));
+                if (updateEntryIndex == 0) {
 
-                //
-                // set isActive it it is NOT standard book
-                //
-                priceBookEntryUpdates.getJSONObject(updateEntryIndex).put("isActive", true);
+                    priceBookEntryUpdates.getJSONObject(updateEntryIndex)
+                            .put("UnitPrice", getProductPrice(testProduct));
+                }
 
-                priceBookEntryUpdates.getJSONObject(updateEntryIndex).put("Product2Id", productId);
+                if(!priceBookEntryUpdates.getJSONObject(updateEntryIndex).has("Id")) {
+                    priceBookEntryUpdates.getJSONObject(updateEntryIndex).put("isActive", true);
 
-                //
-                // add a 'Use standard' Flag if not standard book
-                //
+                    if (!priceBookEntryUpdates.getJSONObject(updateEntryIndex).has("Product2Id")) {
+                        priceBookEntryUpdates.getJSONObject(updateEntryIndex).put("Product2Id", productId);
+                    }
+                    if (updateEntryIndex != 0) {
+                        priceBookEntryUpdates.getJSONObject(updateEntryIndex).put("UseStandardPrice", true);
+                    }
+                }
 
                 URIBuilder priceBookEntryUpdateUriBuilder = new URIBuilder()
                         .setScheme("https")
