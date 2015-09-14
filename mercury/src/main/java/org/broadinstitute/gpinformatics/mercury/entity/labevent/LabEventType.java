@@ -982,6 +982,11 @@ public enum LabEventType {
             LabVessel.MaterialType.DNA),
 
     // AllPrep
+    ALLPREP_INITIAL("AllPrepInitialScan",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.FALSE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            new ManualTransferDetails.Builder(MessageType.PLATE_EVENT, null, RackOfTubes.RackType.FlipperRackRow24).
+                    targetSection(SBSSection.ROWOF24).build()),
     ALLPREP_CELLS_TO_CRYOVIAL("AllPrepCellsToCryovial",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.FALSE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
@@ -995,7 +1000,7 @@ public enum LabEventType {
                     RackOfTubes.RackType.FlipperRackRow24).sourceSection(SBSSection.ROWOF24).
                     targetSection(SBSSection.ROWOF24).build()),
     // this is out of order, to avoid illegal forward reference
-    ALLPREP_FLOWTHROUGH_TO_RNA_SPIN("AllPrepFlowthroughToRnaSpin",
+    ALLPREP_DNA_SPIN_TO_FLOWTHROUGH("AllPrepDnaSpinToFlowthrough",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.FALSE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT, RackOfTubes.RackType.FlipperRackRow24,
@@ -1006,7 +1011,19 @@ public enum LabEventType {
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT, RackOfTubes.RackType.FlipperRackRow24,
                     RackOfTubes.RackType.FlipperRackRow24).sourceSection(SBSSection.ROWOF24).
-                    targetSection(SBSSection.ROWOF24).secondaryEvent(ALLPREP_FLOWTHROUGH_TO_RNA_SPIN).build()),
+                    targetSection(SBSSection.ROWOF24).secondaryEvent(ALLPREP_DNA_SPIN_TO_FLOWTHROUGH).build()),
+    ALLPREP_FLOWTHROUGH_TO_RNA_SPIN1("AllPrepFlowthroughToRnaSpin1",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.FALSE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT, RackOfTubes.RackType.FlipperRackRow24,
+                    RackOfTubes.RackType.FlipperRackRow24).sourceSection(SBSSection.ROWOF24).
+                    targetSection(SBSSection.ROWOF24).build()),
+    ALLPREP_FLOWTHROUGH_TO_RNA_SPIN2("AllPrepFlowthroughToRnaSpin2",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.FALSE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT, RackOfTubes.RackType.FlipperRackRow24,
+                    RackOfTubes.RackType.FlipperRackRow24).sourceSection(SBSSection.ROWOF24).
+                    targetSection(SBSSection.ROWOF24).repeatedEvent(ALLPREP_FLOWTHROUGH_TO_RNA_SPIN1).build()),
     ALLPREP_RNA_TO_MICRO("AllPrepRnaToMicro",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.FALSE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
@@ -1290,6 +1307,9 @@ public enum LabEventType {
         /** Allows a transfer from one source to two destinations */
         private LabEventType secondaryEvent;
 
+        /** Supports verification that two transfers have same source and destination. */
+        private LabEventType repeatedEvent;
+
         @SuppressWarnings("AccessingNonPublicFieldOfAnotherObject")
         public ManualTransferDetails(Builder builder) {
             messageType = builder.messageType;
@@ -1303,6 +1323,7 @@ public enum LabEventType {
             reagentNames = builder.reagentNames;
             machineNames = builder.machineNames;
             secondaryEvent = builder.secondaryEvent;
+            repeatedEvent = builder.repeatedEvent;
         }
 
         public static class Builder {
@@ -1318,6 +1339,7 @@ public enum LabEventType {
             private int numEvents = 1;
             private String[] machineNames = {};
             private LabEventType secondaryEvent;
+            private LabEventType repeatedEvent;
 
             public Builder(MessageType messageType, VesselTypeGeometry sourceVesselTypeGeometry,
                     VesselTypeGeometry targetVesselTypeGeometry) {
@@ -1363,6 +1385,11 @@ public enum LabEventType {
 
             public Builder secondaryEvent(LabEventType secondaryEvent) {
                 this.secondaryEvent = secondaryEvent;
+                return this;
+            }
+
+            public Builder repeatedEvent(LabEventType repeatedEvent) {
+                this.repeatedEvent = repeatedEvent;
                 return this;
             }
 
@@ -1427,6 +1454,10 @@ public enum LabEventType {
 
         public LabEventType getSecondaryEvent() {
             return secondaryEvent;
+        }
+
+        public LabEventType getRepeatedEvent() {
+            return repeatedEvent;
         }
     }
 

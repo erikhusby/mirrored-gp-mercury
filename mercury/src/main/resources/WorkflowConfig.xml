@@ -1148,6 +1148,12 @@
             <version>01</version>
             <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
             <workflowStepDefs>
+                <name>Initial Scan</name>
+                <labEventTypes>ALLPREP_INITIAL</labEventTypes>
+                <instructions>Scan all parent source SM-IDs to cross check against samples in XTR ticket
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
                 <name>Prep Reagents</name>
                 <labEventTypes>PREP</labEventTypes>
                 <workflowQualifier>Reagents</workflowQualifier>
@@ -1242,7 +1248,7 @@
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Transfer to RNA Spin Column</name>
-                <labEventTypes>ALLPREP_FLOWTHROUGH_TO_RNA_SPIN</labEventTypes>
+                <labEventTypes>ALLPREP_FLOWTHROUGH_TO_RNA_SPIN1</labEventTypes>
                 <instructions>Transfer half to RNA spin column.
                 </instructions>
             </workflowStepDefs>
@@ -1255,7 +1261,7 @@
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Transfer to RNA Spin Column</name>
-                <labEventTypes>ALLPREP_FLOWTHROUGH_TO_RNA_SPIN</labEventTypes>
+                <labEventTypes>ALLPREP_FLOWTHROUGH_TO_RNA_SPIN2</labEventTypes>
                 <instructions>Transfer half to RNA spin column.
                 </instructions>
             </workflowStepDefs>
