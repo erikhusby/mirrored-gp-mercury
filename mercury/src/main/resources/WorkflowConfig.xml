@@ -1161,9 +1161,6 @@
                     RLT+ w/B-ME Buffer RPE, Buffer AW1, and Buffer AW2 w/EtOH
                 </instructions>
             </workflowStepDefs>
-            <!--
-            scan all parent source SM-IDs
-            -->
             <workflowStepDefs>
                 <name>Wash PBS</name>
                 <labEventTypes>ADD_REAGENT</labEventTypes>
@@ -1228,6 +1225,12 @@
                 <labEventTypes>CENTRIFUGE</labEventTypes>
                 <workflowQualifier>DNA_SPIN</workflowQualifier>
                 <instructions>Centrifuge for 30 s at ≥8000 x g (≥10,000 rpm)
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>DNA Spin Column Flowthrough RNA</name>
+                <labEventTypes>ALLPREP_DNA_SPIN_TO_FLOWTHROUGH</labEventTypes>
+                <instructions>Scan DNA spin column and its tube, to associate RNA flowthrough with tube
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
