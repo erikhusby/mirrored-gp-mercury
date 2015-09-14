@@ -999,19 +999,18 @@ public enum LabEventType {
             new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT, RackOfTubes.RackType.FlipperRackRow24,
                     RackOfTubes.RackType.FlipperRackRow24).sourceSection(SBSSection.ROWOF24).
                     targetSection(SBSSection.ROWOF24).build()),
-    // this is out of order, to avoid illegal forward reference
+    ALLPREP_LYSATE_TO_DNA_SPIN("AllPrepLysateToDnaSpin",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.FALSE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT, RackOfTubes.RackType.FlipperRackRow24,
+                    RackOfTubes.RackType.FlipperRackRow24).sourceSection(SBSSection.ROWOF24).
+                    targetSection(SBSSection.ROWOF24).build()),
     ALLPREP_DNA_SPIN_TO_FLOWTHROUGH("AllPrepDnaSpinToFlowthrough",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.FALSE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT, RackOfTubes.RackType.FlipperRackRow24,
                     RackOfTubes.RackType.FlipperRackRow24).sourceSection(SBSSection.ROWOF24).
                     targetSection(SBSSection.ROWOF24).build()),
-    ALLPREP_LYSATE_TO_DNA_SPIN("AllPrepLysateToDnaSpin",
-            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.FALSE, SystemOfRecord.MERCURY, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT, RackOfTubes.RackType.FlipperRackRow24,
-                    RackOfTubes.RackType.FlipperRackRow24).sourceSection(SBSSection.ROWOF24).
-                    targetSection(SBSSection.ROWOF24).secondaryEvent(ALLPREP_DNA_SPIN_TO_FLOWTHROUGH).build()),
     ALLPREP_FLOWTHROUGH_TO_RNA_SPIN1("AllPrepFlowthroughToRnaSpin1",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.FALSE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
