@@ -352,11 +352,12 @@ public class ManualTransferActionBean extends RackScanActionBean {
      * repeats.
      * @param plateTransferEventType    second event
      * @param mapBarcodeToVessel        database entities
-     * @param repeatedEvent             event type
+     * @param repeatedEvent             first event type
      */
     private void validateRepeatedEvent(PlateTransferEventType plateTransferEventType,
             Map<String, LabVessel> mapBarcodeToVessel, LabEventType repeatedEvent) {
         Map<String, String> mapSourceBarcodeToTargetBarcode = new HashMap<>();
+
         // For each vessel in source section, map to destination
         SBSSection sourceSection = SBSSection.getBySectionName(plateTransferEventType.getSourcePlate().getSection());
         SBSSection targetSection = SBSSection.getBySectionName(plateTransferEventType.getPlate().getSection());
@@ -375,6 +376,8 @@ public class ManualTransferActionBean extends RackScanActionBean {
         }
 
         // Compare source and destination barcodes in this transfer to previous transfer
+        int matches = 0;
+        int errors = 0;
         Set<LabEvent> labEvents = new HashSet<>();
         for (LabVessel labVessel : mapBarcodeToVessel.values()) {
             for (LabEvent labEvent : labVessel.getTransfersFrom()) {
@@ -391,16 +394,22 @@ public class ManualTransferActionBean extends RackScanActionBean {
                                 sectionTransfer.getTargetSection().getWells().get(i));
                         String targetBarcode = mapSourceBarcodeToTargetBarcode.get(sourceVessel.getLabel());
                         if (targetBarcode == null) {
-                            addGlobalValidationError("{2} not found in previous message", targetBarcode);
+                            addGlobalValidationError("{2} not found in previous message", sourceVessel.getLabel());
+                            errors++;
                         } else {
-                            if (!targetBarcode.equals(targetVessel.getLabel())) {
+                            if (targetBarcode.equals(targetVessel.getLabel())) {
+                                matches++;
+                            } else {
                                 addGlobalValidationError("Expected {2}, but found {3}", targetBarcode,
                                         targetVessel.getLabel());
+                                errors++;
                             }
                         }
                     }
-                    sectionTransfer.getSourceVesselContainer();
                 }
+            }
+            if (matches > 0 && errors == 0) {
+                addMessage("Transfer matches previous");
             }
         }
     }
