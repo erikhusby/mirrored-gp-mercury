@@ -292,4 +292,13 @@
             <column name="workflow_qualifier" type="varchar2(255)"/>
         </addColumn>
     </changeSet>
+    
+    <changeSet id="GPLIM-3707-1" author="thompson">
+        <addColumn schemaName="mercury" tableName="lab_event_reagents">
+            <column name="volume" type="number(10,2)"/>
+        </addColumn>
+        <addColumn schemaName="mercury" tableName="lab_event_reagents_aud">
+            <column name="volume" type="number(10,2)"/>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>
