@@ -1,19 +1,21 @@
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
+<%--
+  - Snippet for showing a progress bar of sample status for a PDO.
+  -
+  - @param status      a ProductOrderCompletionStatus object for the PDO
+  - @param extraStyle  any extra styles to add to the main container div, e.g. "view"
+  --%>
+
 <%--@elvariable id="status" type="org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderCompletionStatus"--%>
-<%--@elvariable id="size" type="org.broadinstitute.gpinformatics.athena.presentation.orders.SampleProgressBar.Size"--%>
 
 <stripes:layout-definition>
-    <jsp:useBean id="progressBar" class="org.broadinstitute.gpinformatics.athena.presentation.orders.SampleProgressBar" scope="page">
-        <jsp:setProperty name="progressBar" property="status" value="${status}"/>
-    </jsp:useBean>
-
-    <div class="barFull ${size == 'LARGE' ? 'view' : ''}" title="${progressBar.formatPercentageString(progressBar.status.percentInProgress)}% In Progress">
+    <div class="barFull ${extraStyle}" title="${status.percentInProgressDisplay}% In Progress">
         <span class="barAbandon"
-              title="${progressBar.formatPercentageString(progressBar.status.percentAbandoned)}% Abandoned"
-              style="width: ${progressBar.getPercentForProgressBarWidth(progressBar.status.percentAbandoned)}%"> </span>
+              title="${status.percentAbandonedDisplay}% Abandoned"
+              style="width: ${status.percentAbandoned * 100}%"> </span>
         <span class="barComplete"
-              title="${progressBar.formatPercentageString(progressBar.status.percentCompleted)}% Completed"
-              style="width: ${progressBar.getPercentForProgressBarWidth(progressBar.status.percentCompleted)}%"> </span>
+              title="${status.percentCompletedDisplay}% Completed"
+              style="width: ${status.percentCompleted * 100}%"> </span>
     </div>
 </stripes:layout-definition>

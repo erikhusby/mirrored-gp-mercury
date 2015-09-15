@@ -1047,7 +1047,7 @@ function formatInput(item) {
 
     <div class="controls">
         <div class="form-value">
-                <stripes:layout-render name="/orders/sample_progress_bar.jsp" status="${actionBean.progressFetcher.getStatus(actionBean.editOrder.businessKey)}" size="LARGE"/>
+                <stripes:layout-render name="/orders/sample_progress_bar.jsp" status="${actionBean.progressFetcher.getStatus(actionBean.editOrder.businessKey)}" extraStyle="view"/>
                 ${actionBean.progressString}
         </div>
     </div>

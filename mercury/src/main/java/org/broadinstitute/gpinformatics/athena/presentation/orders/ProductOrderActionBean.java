@@ -1993,15 +1993,15 @@ public class ProductOrderActionBean extends CoreActionBean {
             ProductOrderCompletionStatus status = progressFetcher.getStatus(editOrder.getBusinessKey());
             List<String> progressPieces = new ArrayList<>();
             if (status.getPercentAbandoned() > 0) {
-                progressPieces
-                        .add(formatProgress(status.getNumberAbandoned(), status.getPercentAbandoned(), "Abandoned"));
+                progressPieces.add(formatProgress(status.getNumberAbandoned(), status.getPercentAbandonedDisplay(),
+                        "Abandoned"));
             }
             if (status.getPercentCompleted() > 0) {
-                progressPieces
-                        .add(formatProgress(status.getNumberCompleted(), status.getPercentCompleted(), "Completed"));
+                progressPieces.add(formatProgress(status.getNumberCompleted(), status.getPercentCompletedDisplay(),
+                        "Completed"));
             }
             if (status.getPercentInProgress() > 0) {
-                progressPieces.add(formatProgress(status.getNumberInProgress(), status.getPercentInProgress(),
+                progressPieces.add(formatProgress(status.getNumberInProgress(), status.getPercentInProgressDisplay(),
                         "In Progress"));
             }
 
@@ -2014,8 +2014,8 @@ public class ProductOrderActionBean extends CoreActionBean {
      *
      * @return Formatted progress string for display.
      */
-    private String formatProgress(int number, double percentage, String identifier) {
-        return String.format("%d %s (%s%%)", number, identifier, SampleProgressBar.formatPercentageString(percentage));
+    private String formatProgress(int number, String percentageDisplay, String identifier) {
+        return String.format("%d %s (%s%%)", number, identifier, percentageDisplay);
     }
 
     public Map<String, Date> getProductOrderSampleReceiptDates() {
