@@ -965,7 +965,7 @@
                     <materialTypes>LabVessel.MaterialType.FRESH_BLOOD</materialTypes>
                     <materialTypes>LabVessel.MaterialType.FRESH_FROZEN_BLOOD</materialTypes>
                 </bucketEntryEvaluator>
-                <batchJiraProjectType>EXTRACTION_PROJECT</batchJiraProjectType>
+                <batchJiraProjectType>XTR</batchJiraProjectType>
                 <batchJiraIssueType>DNA_EXTRACTION</batchJiraIssueType>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -1164,7 +1164,7 @@
                 <bucketEntryEvaluator>
                     <materialTypes>DNA</materialTypes>
                 </bucketEntryEvaluator>
-                <batchJiraProjectType>EXTRACTION_PROJECT</batchJiraProjectType>
+                <batchJiraProjectType>XTR</batchJiraProjectType>
                 <batchJiraIssueType>RNA_EXTRACTION</batchJiraIssueType>
             </workflowStepDefs>
         </workflowProcessDefVersions>
@@ -1183,7 +1183,7 @@
                 <bucketEntryEvaluator>
                     <materialTypes>RNA</materialTypes>
                 </bucketEntryEvaluator>
-                <batchJiraProjectType>EXTRACTION_PROJECT</batchJiraProjectType>
+                <batchJiraProjectType>XTR</batchJiraProjectType>
                 <batchJiraIssueType>RNA_EXTRACTION</batchJiraIssueType>
             </workflowStepDefs>
         </workflowProcessDefVersions>
@@ -1196,7 +1196,7 @@
             <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
             <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
                 <name>Extract to DNA and RNA Bucket</name>
-                <labEventTypes>DNA_RNA_EXTRACTION_CELL_PELLETS_BUCKET</labEventTypes>
+                <labEventTypes>DNA_AND_RNA_EXTRACTION_BUCKET</labEventTypes>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1206,7 +1206,7 @@
                     <materialTypes>CELLS_PELLET_FROZEN_IN_X_MEDIA</materialTypes>
                     <workflows>DNA_RNA_EXTRACTION_CELL_PELLETS</workflows>
                 </bucketEntryEvaluator>
-                <batchJiraProjectType>EXTRACTION_PROJECT</batchJiraProjectType>
+                <batchJiraProjectType>XTR</batchJiraProjectType>
                 <batchJiraIssueType>ALLPREP</batchJiraIssueType>
             </workflowStepDefs>
         </workflowProcessDefVersions>
@@ -1218,7 +1218,7 @@
             <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
             <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
                 <name>Extract to DNA and RNA Bucket</name>
-                <labEventTypes>DNA_RNA_EXTRACTION_FROZEN_TISSUE_BUCKET</labEventTypes>
+                <labEventTypes>DNA_AND_RNA_EXTRACTION_BUCKET</labEventTypes>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1227,7 +1227,7 @@
                     <materialTypes>TISSUE_OCT_EMBEDDED</materialTypes>
                     <workflows>DNA_RNA_EXTRACTION_FROZEN_TISSUE</workflows>
                 </bucketEntryEvaluator>
-                <batchJiraProjectType>EXTRACTION_PROJECT</batchJiraProjectType>
+                <batchJiraProjectType>XTR</batchJiraProjectType>
                 <batchJiraIssueType>ALLPREP</batchJiraIssueType>
             </workflowStepDefs>
         </workflowProcessDefVersions>
@@ -1239,7 +1239,7 @@
             <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
             <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
                 <name>Extract to DNA and RNA Bucket</name>
-                <labEventTypes>DNA_RNA_EXTRACTION_FFPE_SECTIONS_BUCKET</labEventTypes>
+                <labEventTypes>DNA_AND_RNA_EXTRACTION_BUCKET</labEventTypes>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1247,7 +1247,7 @@
                     <materialTypes>FFPE_TISSUE_SECTION</materialTypes>
                     <workflows>DNA_RNA_EXTRACTION_FFPE_SECTIONS</workflows>
                 </bucketEntryEvaluator>
-                <batchJiraProjectType>EXTRACTION_PROJECT</batchJiraProjectType>
+                <batchJiraProjectType>XTR</batchJiraProjectType>
                 <batchJiraIssueType>ALLPREP</batchJiraIssueType>
             </workflowStepDefs>
         </workflowProcessDefVersions>
@@ -1259,7 +1259,7 @@
             <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
             <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
                 <name>Extract to DNA and RNA Bucket</name>
-                <labEventTypes>DNA_RNA_EXTRACTION_FFPE_SCROLLS_BUCKET</labEventTypes>
+                <labEventTypes>DNA_AND_RNA_EXTRACTION_BUCKET</labEventTypes>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1267,7 +1267,7 @@
                     <workflows>DNA_RNA_EXTRACTION_FFPE_SCROLLS</workflows>
                     <materialTypes>FFPE_SCROLL</materialTypes>
                 </bucketEntryEvaluator>
-                <batchJiraProjectType>EXTRACTION_PROJECT</batchJiraProjectType>
+                <batchJiraProjectType>XTR</batchJiraProjectType>
                 <batchJiraIssueType>ALLPREP</batchJiraIssueType>
             </workflowStepDefs>
         </workflowProcessDefVersions>
@@ -1279,7 +1279,7 @@
             <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
             <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
                 <name>Extract to DNA and RNA Bucket</name>
-                <labEventTypes>DNA_RNA_EXTRACTION_FFPE_BLOCKS_BUCKET</labEventTypes>
+                <labEventTypes>DNA_AND_RNA_EXTRACTION_BUCKET</labEventTypes>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1287,7 +1287,7 @@
                     <workflows>DNA_RNA_EXTRACTION_FFPE_BLOCKS_BUCKET</workflows>
                     <materialTypes>FFPE_BLOCK</materialTypes>
                 </bucketEntryEvaluator>
-                <batchJiraProjectType>EXTRACTION_PROJECT</batchJiraProjectType>
+                <batchJiraProjectType>XTR</batchJiraProjectType>
                 <batchJiraIssueType>ALLPREP</batchJiraIssueType>
             </workflowStepDefs>
         </workflowProcessDefVersions>
@@ -1299,7 +1299,7 @@
             <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
             <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
                 <name>Extract to DNA and RNA Bucket</name>
-                <labEventTypes>DNA_RNA_EXTRACTION_STOOL_BUCKET</labEventTypes>
+                <labEventTypes>DNA_AND_RNA_EXTRACTION_BUCKET</labEventTypes>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1307,7 +1307,7 @@
                     <workflows>DNA_RNA_EXTRACTION_STOOL</workflows>
                     <materialTypes>STOOL</materialTypes>
                 </bucketEntryEvaluator>
-                <batchJiraProjectType>EXTRACTION_PROJECT</batchJiraProjectType>
+                <batchJiraProjectType>XTR</batchJiraProjectType>
                 <batchJiraIssueType>ALLPREP</batchJiraIssueType>
             </workflowStepDefs>
         </workflowProcessDefVersions>
