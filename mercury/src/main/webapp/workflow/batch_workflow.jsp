@@ -87,6 +87,10 @@
                                                         <label for="rgtExp${loop.index}">Expiration </label>
                                                         <input type="text" id="rgtExp${loop.index}"
                                                                 name="reagentExpirations[${loop.index}]">
+
+                                                        <label for="rgtVol${loop.index}">Volume </label>
+                                                        <input type="text" id="rgtVol${loop.index}"
+                                                                name="reagentVolumes[${loop.index}]">
                                                     </div>
                                                 </c:forEach>
                                                 <stripes:submit name="${actionBean.batchReagentAction}" value="Add"/>

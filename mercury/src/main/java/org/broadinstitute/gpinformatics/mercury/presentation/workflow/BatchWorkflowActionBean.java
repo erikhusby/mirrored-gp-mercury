@@ -21,6 +21,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.labevent.ManualTran
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 
@@ -63,6 +64,9 @@ public class BatchWorkflowActionBean extends CoreActionBean {
 
     /** Posted in form. */
     private List<Date> reagentExpirations;
+
+    /** Posted in form. */
+    private List<BigDecimal> reagentVolumes;
 
     /** Fetched from database. */
     private LabBatch labBatch;
@@ -127,7 +131,9 @@ public class BatchWorkflowActionBean extends CoreActionBean {
             if (reagentExpirations.get(i) == null) {
                 addGlobalValidationError("Expiration date is required for " + reagentNames.get(i));
             }
-            labEvent.addReagent(new GenericReagent(reagentNames.get(i), reagentLots.get(i), reagentExpirations.get(i)));
+            labEvent.addReagentVolume(
+                    new GenericReagent(reagentNames.get(i), reagentLots.get(i), reagentExpirations.get(i)),
+                    reagentVolumes.get(i));
         }
 
         if (getValidationErrors().isEmpty()) {
@@ -229,6 +235,14 @@ public class BatchWorkflowActionBean extends CoreActionBean {
 
     public void setReagentExpirations(List<Date> reagentExpirations) {
         this.reagentExpirations = reagentExpirations;
+    }
+
+    public List<BigDecimal> getReagentVolumes() {
+        return reagentVolumes;
+    }
+
+    public void setReagentVolumes(List<BigDecimal> reagentVolumes) {
+        this.reagentVolumes = reagentVolumes;
     }
 
     public String getAnchorName() {
