@@ -114,6 +114,9 @@ public class ManualTransferActionBean extends RackScanActionBean {
         return new ForwardResolution(MANUAL_TRANSFER_PAGE);
     }
 
+    /**
+     * Create StationEvent subclasses, so Stripes can bind form fields to correct structure.
+     */
     @Before(stages = LifecycleStage.BindingAndValidation)
     public void init() {
         String eventType = getContext().getRequest().getParameter("stationEvents[0].eventType");

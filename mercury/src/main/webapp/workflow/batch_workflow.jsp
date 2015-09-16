@@ -90,7 +90,7 @@
 
                                                         <label for="rgtVol${loop.index}">Volume </label>
                                                         <input type="text" id="rgtVol${loop.index}"
-                                                                name="reagentVolumes[${loop.index}]">
+                                                                name="reagentVolumes[${loop.index}]"> ul
                                                     </div>
                                                 </c:forEach>
                                                 <stripes:submit name="${actionBean.batchReagentAction}" value="Add"/>

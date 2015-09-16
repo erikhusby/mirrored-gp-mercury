@@ -34,6 +34,10 @@ public class LabEventReagent {
 
     private BigDecimal volume;
 
+    /** For JPA. */
+    protected LabEventReagent() {
+    }
+
     public LabEventReagent(LabEvent labEvent, Reagent reagent) {
         this.labEvent = labEvent;
         this.reagent = reagent;
@@ -50,10 +54,6 @@ public class LabEventReagent {
 
     public Reagent getReagent() {
         return reagent;
-    }
-
-    /** For JPA. */
-    protected LabEventReagent() {
     }
 
     public BigDecimal getVolume() {

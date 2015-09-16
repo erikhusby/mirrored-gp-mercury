@@ -1341,7 +1341,6 @@ public enum SBSSection {
             VesselPosition.P23,
             VesselPosition.P24)),
     // A row in two 12 x 8 Flipper racks
-    // todo jmt better name?
     ROWOF24("ROWOF24",Arrays.asList(
             VesselPosition.A01,
             VesselPosition.A02,
