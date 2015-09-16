@@ -1284,7 +1284,7 @@
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
                 <bucketEntryEvaluator>
-                    <workflows>DNA_RNA_EXTRACTION_FFPE_BLOCKS_BUCKET</workflows>
+                    <workflows>DNA_RNA_EXTRACTION_FFPE_BLOCKS</workflows>
                     <materialTypes>FFPE_BLOCK</materialTypes>
                 </bucketEntryEvaluator>
                 <batchJiraProjectType>XTR</batchJiraProjectType>
@@ -1447,15 +1447,6 @@
             <version>02</version>
             <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
             <workflowProcessDefs>Clinical Whole Blood Extraction</workflowProcessDefs>
-        </productWorkflowDefVersions>
-    </productWorkflowDefs>
-
-    <productWorkflowDefs>
-        <name>DNA and RNA from Cell Pellets</name>
-        <productWorkflowDefVersions>
-            <version>02</version>
-            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
-            <workflowProcessDefs>DNA and RNA from Cell Pellets</workflowProcessDefs>
         </productWorkflowDefVersions>
     </productWorkflowDefs>
     <productWorkflowDefs>
