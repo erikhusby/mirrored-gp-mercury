@@ -23,7 +23,7 @@
                     beforeLoad: function(event, ui) {
                         if (ui.panel.children('form').length == 0) {
                             if (ui.panel.children('p.loading').length == 0) {
-                                $j('<p>').addClass('loading').append('Loading...').appendTo(ui.panel);
+                                $j('<p>').addClass('loading').append('Please wait. Gathering data from Mercury, Bass, and Picard. This may take a few minutes.').appendTo(ui.panel);
                             }
                         } else {
                             event.preventDefault();

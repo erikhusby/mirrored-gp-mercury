@@ -1,6 +1,8 @@
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
+<%--@elvariable id="userBean" type="org.broadinstitute.gpinformatics.mercury.presentation.UserBean"--%>
+
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean"/>
 <head>
@@ -179,9 +181,17 @@
         </c:forEach>
         </tbody>
     </table>
-    <div class="span1">
-        <stripes:submit name="<%=ResearchProjectActionBean.POST_SUBMISSIONS_ACTION%>" value="Post Selected Submissions"
-                        class="btn btn-primary" id="postSubmissionBtn"/>
+    <div class="span8">
+        <c:choose>
+            <c:when test="${actionBean.submissionAllowed}">
+                <stripes:submit name="<%=ResearchProjectActionBean.POST_SUBMISSIONS_ACTION%>" value="Post Selected Submissions"
+                                class="btn btn-primary" id="postSubmissionBtn"/>
+            </c:when>
+            <c:otherwise>
+                You do not have permissions to submit data for this project.
+            </c:otherwise>
+        </c:choose>
+
     </div>
 
     <%--<button>Submit these files</button>--%>
