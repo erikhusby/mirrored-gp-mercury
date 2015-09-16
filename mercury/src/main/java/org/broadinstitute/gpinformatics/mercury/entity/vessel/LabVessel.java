@@ -1003,11 +1003,6 @@ public abstract class LabVessel implements Serializable {
         for (VesselEvent vesselEvent : getDescendants()) {
             evaluateVesselEvent(criteria, TransferTraverserCriteria.TraversalDirection.Descendants, hopCount, vesselEvent);
         }
-
-        if( getContainerRole() != null && getContainerRole().getMapPositionToVessel().isEmpty() ) {
-            getContainerRole().applyCriteriaToAllPositions(criteria, TransferTraverserCriteria.TraversalDirection.Descendants);
-        }
-
     }
 
     /**
@@ -1236,7 +1231,9 @@ public abstract class LabVessel implements Serializable {
                           int hopCount) {
         TransferTraverserCriteria.Context context =
                 new TransferTraverserCriteria.Context(this, labEvent, hopCount, traversalDirection);
-        transferTraverserCriteria.evaluateVesselPreOrder(context);
+        if( transferTraverserCriteria.evaluateVesselPreOrder(context) == TransferTraverserCriteria.TraversalControl.StopTraversing ) {
+            return;
+        }
         if (traversalDirection == TransferTraverserCriteria.TraversalDirection.Ancestors) {
             for (VesselEvent vesselEvent : getAncestors()) {
                 evaluateVesselEvent(transferTraverserCriteria, traversalDirection, hopCount, vesselEvent);
