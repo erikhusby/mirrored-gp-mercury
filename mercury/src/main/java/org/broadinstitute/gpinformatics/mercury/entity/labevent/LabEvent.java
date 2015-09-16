@@ -377,7 +377,7 @@ public class LabEvent {
         for (LabEventReagent labEventReagent : labEventReagents) {
             reagents.add(labEventReagent.getReagent());
         }
-        return reagents;
+        return Collections.unmodifiableCollection(reagents);
     }
 
     public Set<LabEventReagent> getLabEventReagents() {
