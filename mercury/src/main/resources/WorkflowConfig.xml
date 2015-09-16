@@ -1195,7 +1195,7 @@
             <version>02</version>
             <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
             <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
-                <name>DNA and RNA from Cell Pellets Bucket</name>
+                <name>Extract to DNA and RNA Bucket</name>
                 <labEventTypes>DNA_RNA_EXTRACTION_CELL_PELLETS_BUCKET</labEventTypes>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
@@ -1217,7 +1217,7 @@
             <version>02</version>
             <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
             <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
-                <name>DNA and RNA for Frozen Tissue - AllPrep Bucket</name>
+                <name>Extract to DNA and RNA Bucket</name>
                 <labEventTypes>DNA_RNA_EXTRACTION_FROZEN_TISSUE_BUCKET</labEventTypes>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
@@ -1238,7 +1238,7 @@
             <version>02</version>
             <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
             <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
-                <name>DNA and RNA for FFPE - AllPrep (sections) Bucket</name>
+                <name>Extract to DNA and RNA Bucket</name>
                 <labEventTypes>DNA_RNA_EXTRACTION_FFPE_SECTIONS_BUCKET</labEventTypes>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
@@ -1258,7 +1258,7 @@
             <version>02</version>
             <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
             <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
-                <name>DNA and RNA for FFPE - AllPrep (scrolls) Bucket</name>
+                <name>Extract to DNA and RNA Bucket</name>
                 <labEventTypes>DNA_RNA_EXTRACTION_FFPE_SCROLLS_BUCKET</labEventTypes>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
@@ -1278,7 +1278,7 @@
             <version>02</version>
             <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
             <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
-                <name>DNA and RNA for FFPE - AllPrep (blocks) Bucket</name>
+                <name>Extract to DNA and RNA Bucket</name>
                 <labEventTypes>DNA_RNA_EXTRACTION_FFPE_BLOCKS_BUCKET</labEventTypes>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
@@ -1298,7 +1298,7 @@
             <version>02</version>
             <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
             <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
-                <name>DNA and RNA for Stool - Chemagen Bucket</name>
+                <name>Extract to DNA and RNA Bucket</name>
                 <labEventTypes>DNA_RNA_EXTRACTION_STOOL_BUCKET</labEventTypes>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>

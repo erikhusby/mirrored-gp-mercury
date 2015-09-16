@@ -9,7 +9,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.hibernate.envers.Audited;
 
-import com.google.common.base.Preconditions;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.persistence.CascadeType;
@@ -99,6 +98,8 @@ public class BucketEntry {
     @Enumerated(EnumType.STRING)
     private Status status = Status.Active;
 
+    @Column(name = "WORKFLOW_NAME")
+    private String workflowName;
     /*
         TODO SGM:  Implement this as a separate join table to have the ranking associated directly with the Product
         order, and not duplicated across bucket entries
@@ -226,6 +227,14 @@ public class BucketEntry {
         if (labVessel != null) {
             labVessel.clearCaches();
         }
+    }
+
+    public String getWorkflowName() {
+        return workflowName;
+    }
+
+    public void setWorkflowName(String workflowName) {
+        this.workflowName = workflowName;
     }
 
     public BucketEntryType getEntryType() {

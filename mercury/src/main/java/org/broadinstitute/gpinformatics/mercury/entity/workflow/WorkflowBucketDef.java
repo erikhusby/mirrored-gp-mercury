@@ -89,12 +89,11 @@ public class WorkflowBucketDef extends WorkflowStepDef {
         }
     }
 
-    void setBucketEntryEvaluator(
-            WorkflowBucketEntryEvaluator bucketEntryEvaluator) {
+    void setBucketEntryEvaluator(WorkflowBucketEntryEvaluator bucketEntryEvaluator) {
         this.bucketEntryEvaluator = bucketEntryEvaluator;
     }
 
-    WorkflowBucketEntryEvaluator getBucketEntryEvaluator() {
+    public WorkflowBucketEntryEvaluator getBucketEntryEvaluator() {
         return bucketEntryEvaluator;
     }
 }

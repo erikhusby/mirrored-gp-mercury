@@ -366,7 +366,7 @@ public class LabBatchEJBTest extends ContainerTest {
         stubTestPDO .setResearchProject(researchProjectDao.findByTitle("ADHD"));
         for (LabVessel vessel : mapBarcodeToTube.values()) {
             bucket.addEntry(stubTestPDO, vessel,
-                            org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry.BucketEntryType.PDO_ENTRY);
+                            org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry.BucketEntryType.PDO_ENTRY, null);
         }
 
         bucketDao.persist(bucket);

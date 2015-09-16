@@ -116,10 +116,13 @@ public class Bucket {
      * @param vessel          Lab Vessel to enter into the bucket.
      * @param entryType
      *
+     * @param workflowName
      * @return an instance of a Bucket entry which represents the lab vessel and the product order for that entry
      */
-    public BucketEntry addEntry(ProductOrder productOrder, LabVessel vessel, BucketEntry.BucketEntryType entryType) {
+    public BucketEntry addEntry(ProductOrder productOrder, LabVessel vessel, BucketEntry.BucketEntryType entryType,
+                                String workflowName) {
         BucketEntry newEntry = new BucketEntry(vessel, productOrder, this, entryType);
+        newEntry.setWorkflowName(workflowName);
         newEntry.setProductOrderRanking(getBucketEntries().size() + 1);
         bucketEntries.add(newEntry);
         vessel.addBucketEntry(newEntry);

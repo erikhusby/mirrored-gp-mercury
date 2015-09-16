@@ -348,9 +348,8 @@ public class WorkflowTest {
         productOrder.getSamples().iterator().next().setMercurySample(mercurySample);
         productOrder.updateAddOnProducts(Collections.singletonList(addOn));
 
-        String bucketName = Workflow.DNA_RNA_EXTRACTION_FROZEN_TISSUE.getWorkflowName() + " Bucket";
         ProductWorkflowDef workflow = new WorkflowLoader().load().getWorkflow(Workflow.DNA_RNA_EXTRACTION_FROZEN_TISSUE);
-        WorkflowBucketDef workflowBucketDef = workflow.getEffectiveVersion().findBucketDefByName(bucketName);
+        WorkflowBucketDef workflowBucketDef = workflow.getEffectiveVersion().findBucketDefByName("Extract to DNA and RNA Bucket");
         boolean meetsBucketCriteria = workflowBucketDef.meetsBucketCriteria(barcodedTube, productOrder);
 
         assertThat(meetsBucketCriteria, is(false));
@@ -371,9 +370,8 @@ public class WorkflowTest {
         productOrder.updateAddOnProducts(Collections.singletonList(addOn));
 
         ProductWorkflowDef workflow = new WorkflowLoader().load().getWorkflow(Workflow.DNA_RNA_EXTRACTION_FROZEN_TISSUE);
-        String bucketName = Workflow.DNA_RNA_EXTRACTION_FROZEN_TISSUE.getWorkflowName() + " Bucket";
 
-        WorkflowBucketDef workflowBucketDef = workflow.getEffectiveVersion().findBucketDefByName(bucketName);
+        WorkflowBucketDef workflowBucketDef = workflow.getEffectiveVersion().findBucketDefByName("Extract to DNA and RNA Bucket");
         boolean meetsBucketCriteria = workflowBucketDef.meetsBucketCriteria(barcodedTube, productOrder);
 
         assertThat(meetsBucketCriteria, is(false));
@@ -394,7 +392,7 @@ public class WorkflowTest {
         ProductWorkflowDef workflow = new WorkflowLoader().load().getWorkflow(Workflow.DNA_RNA_EXTRACTION_FROZEN_TISSUE);
 
         WorkflowBucketDef workflowBucketDef = workflow.getEffectiveVersion()
-                .findBucketDefByName(Workflow.DNA_RNA_EXTRACTION_FROZEN_TISSUE.getWorkflowName() + " Bucket");
+                .findBucketDefByName("Extract to DNA and RNA Bucket");
         boolean meetsBucketCriteria = workflowBucketDef.meetsBucketCriteria(barcodedTube, productOrder);
 
         assertThat(meetsBucketCriteria, is(false));
@@ -479,7 +477,7 @@ public class WorkflowTest {
                                                 boolean meetsBucketCriteriaExpected) {
         LabVessel labVessel = createLabVesselWithSample(labEventType, sampleMaterialType, metadataSource, doTransfer);
 
-        WorkflowBucketDef workflowBucketDef = new WorkflowBucketDef();
+        WorkflowBucketDef workflowBucketDef = new WorkflowBucketDef(Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName());
         workflowBucketDef.setBucketEntryEvaluator(new WorkflowBucketEntryEvaluator(Collections.<Workflow>emptySet(),
                 Collections.singleton(LabVessel.MaterialType.DNA)));
 

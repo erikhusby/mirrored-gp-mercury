@@ -44,21 +44,21 @@ public class BucketDBFreeTest {
         BarcodedTube tube1 = new BarcodedTube(barcode1);
         BarcodedTube tube2 = new BarcodedTube(barcode2);
 
-        BucketEntry testEntry1 = bucket.addEntry(pdo1, tube1, BucketEntry.BucketEntryType.PDO_ENTRY);
+        BucketEntry testEntry1 = bucket.addEntry(pdo1, tube1, BucketEntry.BucketEntryType.PDO_ENTRY, null);
         Assert.assertNotNull(testEntry1.getBucket());
         Assert.assertEquals(bucket, testEntry1.getBucket());
 
-        BucketEntry testEntry2 = bucket.addEntry(pdo1, tube2, BucketEntry.BucketEntryType.PDO_ENTRY);
+        BucketEntry testEntry2 = bucket.addEntry(pdo1, tube2, BucketEntry.BucketEntryType.PDO_ENTRY, null);
         Assert.assertNotNull(testEntry2.getBucket());
         Assert.assertEquals(bucket, testEntry2.getBucket());
 
         BucketEntry testEntry3 = bucket.addEntry(pdo2, new BarcodedTube(barcode3),
-                BucketEntry.BucketEntryType.PDO_ENTRY);
+                BucketEntry.BucketEntryType.PDO_ENTRY, null);
         Assert.assertNotNull(testEntry3.getBucket());
         Assert.assertEquals(bucket, testEntry3.getBucket());
 
         BucketEntry testEntry4 = bucket.addEntry(pdo3, new BarcodedTube(barcode4),
-                BucketEntry.BucketEntryType.PDO_ENTRY);
+                BucketEntry.BucketEntryType.PDO_ENTRY, null);
         Assert.assertNotNull(testEntry4.getBucket());
         Assert.assertEquals(bucket, testEntry4.getBucket());
 

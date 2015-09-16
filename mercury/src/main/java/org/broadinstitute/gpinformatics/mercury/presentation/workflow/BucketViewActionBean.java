@@ -16,7 +16,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
@@ -233,12 +232,9 @@ public class BucketViewActionBean extends CoreActionBean {
                 // Filters out entries whose product workflow or add-on's workflow doesn't match the selected workflow.
                 for (Iterator<BucketEntry> iter = collectiveEntries.iterator(); iter.hasNext(); ) {
                     BucketEntry entry = iter.next();
-                    Set<String> validWorkflowNames = new HashSet<>();
-                    validWorkflowNames.add(entry.getProductOrder().getProduct().getWorkflow().getWorkflowName());
-                    for (Product product : entry.getProductOrder().getProduct().getAddOnsWithWorkflow()) {
-                        validWorkflowNames.add(product.getWorkflow().getWorkflowName());
-                    }
-                    if (!validWorkflowNames.contains(selectedWorkflowDef.getName())){
+                    String workflowName = findWorkflowName(entry);
+                    if (!selectedWorkflowDef.getName().equals(workflowName)) {
+
                         iter.remove();
                         bucketEntries.remove(entry);
                         reworkEntries.remove(entry);
@@ -249,6 +245,13 @@ public class BucketViewActionBean extends CoreActionBean {
             }
         }
         return view();
+    }
+
+    private String findWorkflowName(BucketEntry entry) {
+        if (StringUtils.isNotBlank(entry.getWorkflowName())) {
+            return entry.getWorkflowName();
+        }
+        return entry.getProductOrder().getProduct().getWorkflow().getWorkflowName();
     }
 
     public Set<String> getSampleNames(LabVessel vessel) {

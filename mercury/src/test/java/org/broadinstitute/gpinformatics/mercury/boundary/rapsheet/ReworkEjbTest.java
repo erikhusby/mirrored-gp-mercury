@@ -615,7 +615,7 @@ public class ReworkEjbTest extends Arquillian {
 
             bucketDao.findByName(bucketName);
             BucketEntry newEntry = pBucket.addEntry(exExProductOrder1, barcodedTubeDao.findByBarcode(barcode),
-                                                    BucketEntry.BucketEntryType.PDO_ENTRY);
+                                                    BucketEntry.BucketEntryType.PDO_ENTRY, null);
             newEntry.setStatus(BucketEntry.Status.Archived);
             bucketDao.persist(pBucket);
 
@@ -636,7 +636,7 @@ public class ReworkEjbTest extends Arquillian {
         for (String barcode : mapBarcodeToTube.keySet()) {
             bucketDao.findByName(bucketName);
             BucketEntry newEntry = pBucket.addEntry(draftProductOrder, barcodedTubeDao.findByBarcode(barcode),
-                                                    BucketEntry.BucketEntryType.PDO_ENTRY);
+                                                    BucketEntry.BucketEntryType.PDO_ENTRY, null);
             newEntry.setStatus(BucketEntry.Status.Archived);
             bucketDao.persist(pBucket);
             Assert.assertEquals(reworkEjb.findBucketCandidates(barcode).size(), 0);
@@ -650,7 +650,7 @@ public class ReworkEjbTest extends Arquillian {
         for (String barcode : mapBarcodeToTube.keySet()) {
             bucketDao.findByName(bucketName);
             BucketEntry newEntry = pBucket.addEntry(exExProductOrder1, barcodedTubeDao.findByBarcode(barcode),
-                                                    BucketEntry.BucketEntryType.PDO_ENTRY);
+                                                    BucketEntry.BucketEntryType.PDO_ENTRY, null);
             newEntry.setStatus(BucketEntry.Status.Archived);
             bucketDao.persist(pBucket);
         }
@@ -691,7 +691,7 @@ public class ReworkEjbTest extends Arquillian {
 
             bucketDao.findByName(bucketName);
             BucketEntry newEntry = pBucket.addEntry(exExProductOrder1, barcodedTubeDao.findByBarcode(barcode),
-                                                    BucketEntry.BucketEntryType.PDO_ENTRY);
+                                                    BucketEntry.BucketEntryType.PDO_ENTRY, null);
             newEntry.setStatus(BucketEntry.Status.Archived);
             bucketDao.persist(pBucket);
 
@@ -718,7 +718,7 @@ public class ReworkEjbTest extends Arquillian {
 
             bucketDao.findByName(bucketName);
             BucketEntry newEntry = pBucket.addEntry(exExProductOrder1, barcodedTubeDao.findByBarcode(barcode),
-                                                    BucketEntry.BucketEntryType.PDO_ENTRY);
+                                                    BucketEntry.BucketEntryType.PDO_ENTRY, null);
             newEntry.setStatus(BucketEntry.Status.Archived);
             bucketDao.persist(pBucket);
 
@@ -771,7 +771,7 @@ public class ReworkEjbTest extends Arquillian {
 
             bucketDao.findByName(bucketName);
             BucketEntry newEntry = pBucket.addEntry(exExProductOrder1, barcodedTubeDao.findByBarcode(
-                    currEntry.getKey()), BucketEntry.BucketEntryType.PDO_ENTRY);
+                    currEntry.getKey()), BucketEntry.BucketEntryType.PDO_ENTRY, null);
             newEntry.setStatus(BucketEntry.Status.Archived);
             bucketDao.persist(pBucket);
         }
@@ -787,7 +787,7 @@ public class ReworkEjbTest extends Arquillian {
 
             bucketDao.findByName(bucketName);
             BucketEntry newEntry = pBucket.addEntry(exExProductOrder1, barcodedTubeDao.findByBarcode(barcode),
-                                                    BucketEntry.BucketEntryType.PDO_ENTRY);
+                                                    BucketEntry.BucketEntryType.PDO_ENTRY, null);
             newEntry.setStatus(BucketEntry.Status.Archived);
             bucketDao.persist(pBucket);
 
@@ -818,7 +818,7 @@ public class ReworkEjbTest extends Arquillian {
         for (String barcode : mapBarcodeToTube.keySet()) {
             bucketDao.findByName(bucketName);
             BucketEntry newEntry = pBucket.addEntry(nonExExProductOrder, barcodedTubeDao.findByBarcode(barcode),
-                                                    BucketEntry.BucketEntryType.PDO_ENTRY);
+                                                    BucketEntry.BucketEntryType.PDO_ENTRY, null);
             newEntry.setStatus(BucketEntry.Status.Archived);
             bucketDao.persist(pBucket);
 
@@ -843,7 +843,7 @@ public class ReworkEjbTest extends Arquillian {
 
             bucketDao.findByName(bucketName);
             BucketEntry newEntry = pBucket.addEntry(nonExExProductOrder, barcodedTubeDao.findByBarcode(
-                    currEntry.getKey()), BucketEntry.BucketEntryType.PDO_ENTRY);
+                    currEntry.getKey()), BucketEntry.BucketEntryType.PDO_ENTRY, null);
             newEntry.setStatus(BucketEntry.Status.Archived);
             bucketDao.persist(pBucket);
         }
@@ -858,7 +858,7 @@ public class ReworkEjbTest extends Arquillian {
         for (String barcode : hybridSelectionJaxbBuilder.getNormCatchBarcodes()) {
             bucketDao.findByName(bucketName);
             BucketEntry newEntry = pBucket.addEntry(nonExExProductOrder, barcodedTubeDao.findByBarcode(barcode),
-                                                    BucketEntry.BucketEntryType.PDO_ENTRY);
+                                                    BucketEntry.BucketEntryType.PDO_ENTRY, null);
             newEntry.setStatus(BucketEntry.Status.Archived);
             bucketDao.persist(pBucket);
 
@@ -942,7 +942,7 @@ public class ReworkEjbTest extends Arquillian {
 
             bucketDao.findByName(bucketName);
             BucketEntry newEntry = pBucket.addEntry(exExProductOrder1, barcodedTubeDao.findByBarcode(
-                    currEntry.getKey()), BucketEntry.BucketEntryType.PDO_ENTRY);
+                    currEntry.getKey()), BucketEntry.BucketEntryType.PDO_ENTRY, null);
             newEntry.setStatus(BucketEntry.Status.Archived);
             bucketDao.persist(pBucket);
 
@@ -982,7 +982,7 @@ public class ReworkEjbTest extends Arquillian {
 
                 bucketDao.findByName(bucketName);
                 bucketCleanupItems.add(pBucket.addEntry(exExProductOrder1, barcodedTubeDao.findByBarcode(
-                        currEntry.getKey()), BucketEntry.BucketEntryType.PDO_ENTRY));
+                        currEntry.getKey()), BucketEntry.BucketEntryType.PDO_ENTRY, null));
 
                 bucketDao.persist(pBucket);
             }
@@ -1146,7 +1146,7 @@ public class ReworkEjbTest extends Arquillian {
 
             bucketDao.findByName(bucketName);
             BucketEntry newEntry = pBucket.addEntry(exExProductOrder2, barcodedTubeDao.findByBarcode(
-                    currEntry.getKey()), BucketEntry.BucketEntryType.PDO_ENTRY);
+                    currEntry.getKey()), BucketEntry.BucketEntryType.PDO_ENTRY, null);
             newEntry.setStatus(BucketEntry.Status.Archived);
             bucketDao.persist(pBucket);
         }
@@ -1213,7 +1213,7 @@ public class ReworkEjbTest extends Arquillian {
 
             bucketDao.findByName(bucketName);
             bucketCleanupItems.add(pBucket.addEntry(exExProductOrder2, barcodedTubeDao.findByBarcode(
-                    currEntry.getKey()), BucketEntry.BucketEntryType.PDO_ENTRY));
+                    currEntry.getKey()), BucketEntry.BucketEntryType.PDO_ENTRY, null));
             bucketDao.persist(pBucket);
         }
 
@@ -1326,7 +1326,7 @@ public class ReworkEjbTest extends Arquillian {
 
             bucketDao.findByName(bucketName);
             BucketEntry newEntry = pBucket.addEntry(duplicatePO, barcodedTubeDao.findByBarcode(tubes.getKey()),
-                                                    BucketEntry.BucketEntryType.PDO_ENTRY);
+                                                    BucketEntry.BucketEntryType.PDO_ENTRY, null);
             newEntry.setStatus(BucketEntry.Status.Archived);
             bucketDao.persist(pBucket);
 
@@ -1389,9 +1389,9 @@ public class ReworkEjbTest extends Arquillian {
         for (Map.Entry<String, BarcodedTube> currEntry : mapBarcodeToTube.entrySet()) {
             List<BucketEntry> bucketEntries = new ArrayList<>();
             bucketEntries.add(pBucket.addEntry(exExProductOrder1, barcodedTubeDao.findByBarcode(currEntry.getKey()),
-                                               BucketEntry.BucketEntryType.PDO_ENTRY));
+                                               BucketEntry.BucketEntryType.PDO_ENTRY, null));
             bucketEntries.add(pBucket.addEntry(exExProductOrder2, barcodedTubeDao.findByBarcode(currEntry.getKey()),
-                                               BucketEntry.BucketEntryType.PDO_ENTRY));
+                                               BucketEntry.BucketEntryType.PDO_ENTRY, null));
             bucketDao.persist(pBucket);
             for (BucketEntry bucketEntry : bucketEntries) {
                 bucketEntryIds.add(bucketEntry.getBucketEntryId());

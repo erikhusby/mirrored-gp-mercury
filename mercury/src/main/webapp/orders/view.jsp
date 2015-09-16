@@ -1231,6 +1231,7 @@ function formatInput(item) {
                 <th width="40">Shipped Date</th>
                 <th width="40">Received Date</th>
                 <th width="40">Sample Type</th>
+                <th width="40">Material Type</th>
                 <th width="40">Volume</th>
                 <th width="40">Concentration</th>
 

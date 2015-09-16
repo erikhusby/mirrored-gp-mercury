@@ -118,12 +118,18 @@ public class BucketEjb {
         List<BucketEntry> bucketEntries = new ArrayList<>();
 
         for (Map.Entry<WorkflowBucketDef, Collection<LabVessel>> bucketVesselsEntry : bucketVessels.entrySet()) {
-            WorkflowBucketDef bucketDef = bucketVesselsEntry.getKey();
-            Bucket bucket = findOrCreateBucket(bucketDef.getName());
-
-            Collection<BucketEntry> entriesForBucket = add(bucketVesselsEntry.getValue(), bucket, entryType, operator,
-                    labEventLocation, programName, bucketDef.getBucketEventType(), pdo);
-            bucketEntries.addAll(entriesForBucket);
+            if (!bucketVesselsEntry.getValue().isEmpty()) {
+                WorkflowBucketDef bucketDef = bucketVesselsEntry.getKey();
+                Bucket bucket = findOrCreateBucket(bucketDef.getName());
+                String processDef=null;
+                if (bucketDef.getProcessDefVersion() != null) {
+                    processDef = bucketDef.getProcessDefVersion().getWorkflowProcessDef().getName();
+                }
+                Collection<BucketEntry> entriesForBucket =
+                        add(bucketVesselsEntry.getValue(), bucket, entryType, operator,
+                                labEventLocation, programName, bucketDef.getBucketEventType(), pdo, processDef);
+                bucketEntries.addAll(entriesForBucket);
+            }
         }
         return bucketEntries;
     }
@@ -145,10 +151,18 @@ public class BucketEjb {
                                        @Nonnull String labEventLocation,
                                        @Nonnull String programName, LabEventType eventType,
                                        @Nonnull ProductOrder pdo) {
+        return add(entriesToAdd, bucket, entryType, operator, labEventLocation, programName, eventType, pdo, null);
+    }
+
+    public Collection<BucketEntry> add(@Nonnull Collection<LabVessel> entriesToAdd, @Nonnull Bucket bucket,
+                                       BucketEntry.BucketEntryType entryType, @Nonnull String operator,
+                                       @Nonnull String labEventLocation,
+                                       @Nonnull String programName, LabEventType eventType,
+                                       @Nonnull ProductOrder pdo, String workflowName) {
 
         List<BucketEntry> listOfNewEntries = new ArrayList<>(entriesToAdd.size());
         for (LabVessel currVessel : entriesToAdd) {
-            listOfNewEntries.add(bucket.addEntry(pdo, currVessel, entryType));
+            listOfNewEntries.add(bucket.addEntry(pdo, currVessel, entryType, workflowName));
         }
 
         Set<LabEvent> eventList = new HashSet<>();
@@ -328,6 +342,7 @@ public class BucketEjb {
         if (bucket == null) {
             bucket = new Bucket(bucketName);
             bucketDao.persist(bucket);
+            bucketDao.flush();
             logger.debug("Created new bucket " + bucketName);
         }
         return bucket;
