@@ -11,6 +11,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.rackscan.ScannerException;
+import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.ObjectMarshaller;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
@@ -304,26 +305,35 @@ public class ManualTransferActionBean extends RackScanActionBean {
         if (batchName != null) {
             labBatch = labBatchDao.findByName(batchName);
         }
+        MessageCollection messageCollection = new MessageCollection();
+        validateBarcodes(labBatch, messageCollection);
+        addMessages(messageCollection);
+        return new ForwardResolution(MANUAL_TRANSFER_PAGE);
+    }
+
+    private void validateBarcodes(LabBatch labBatch, MessageCollection messageCollection) {
         assert labEventType.getManualTransferDetails() != null;
         switch (labEventType.getManualTransferDetails().getMessageType()) {
             case PLATE_EVENT:
                 for (StationEventType stationEvent : stationEvents) {
                     PlateEventType plateEventType = (PlateEventType) stationEvent;
-                    loadPlateFromDb(plateEventType.getPlate(), plateEventType.getPositionMap(), true, labBatch);
+                    loadPlateFromDb(plateEventType.getPlate(), plateEventType.getPositionMap(), true, labBatch,
+                            messageCollection);
                 }
                 break;
             case PLATE_TRANSFER_EVENT:
                 for (StationEventType stationEvent : stationEvents) {
                     PlateTransferEventType plateTransferEventType = (PlateTransferEventType) stationEvent;
                     Map<String, LabVessel> mapBarcodeToVessel = loadPlateFromDb(plateTransferEventType.getSourcePlate(),
-                            plateTransferEventType.getSourcePositionMap(), true, labBatch);
+                            plateTransferEventType.getSourcePositionMap(), true, labBatch, messageCollection);
                     LabEventType repeatedEvent = labEventType.getManualTransferDetails().getRepeatedEvent();
                     if (repeatedEvent != null) {
-                        validateRepeatedEvent(plateTransferEventType, mapBarcodeToVessel, repeatedEvent);
+                        validateRepeatedEvent(plateTransferEventType, mapBarcodeToVessel, repeatedEvent,
+                                messageCollection);
                     }
                     // todo jmt take required, empty from workflow
                     loadPlateFromDb(plateTransferEventType.getPlate(), plateTransferEventType.getPositionMap(), false,
-                            labBatch);
+                            labBatch, messageCollection);
                 }
                 break;
             case STATION_SETUP_EVENT:
@@ -335,19 +345,18 @@ public class ManualTransferActionBean extends RackScanActionBean {
             case RECEPTACLE_EVENT:
                 for (StationEventType stationEvent : stationEvents) {
                     ReceptacleEventType receptacleEventType = (ReceptacleEventType) stationEvent;
-                    loadReceptacleFromDb(receptacleEventType.getReceptacle(), true);
+                    loadReceptacleFromDb(receptacleEventType.getReceptacle(), true, messageCollection);
                 }
                 break;
             case RECEPTACLE_TRANSFER_EVENT:
                 for (StationEventType stationEvent : stationEvents) {
                     ReceptacleTransferEventType receptacleTransferEventType = (ReceptacleTransferEventType) stationEvent;
-                    loadReceptacleFromDb(receptacleTransferEventType.getSourceReceptacle(), true);
+                    loadReceptacleFromDb(receptacleTransferEventType.getSourceReceptacle(), true, messageCollection);
                     // todo jmt take required, empty from workflow
-                    loadReceptacleFromDb(receptacleTransferEventType.getReceptacle(), false);
+                    loadReceptacleFromDb(receptacleTransferEventType.getReceptacle(), false, messageCollection);
                 }
                 break;
         }
-        return new ForwardResolution(MANUAL_TRANSFER_PAGE);
     }
 
     /**
@@ -356,9 +365,11 @@ public class ManualTransferActionBean extends RackScanActionBean {
      * @param plateTransferEventType    second event
      * @param mapBarcodeToVessel        database entities
      * @param repeatedEvent             first event type
+     * @param messageCollection         output, errors and infos
      */
-    private void validateRepeatedEvent(PlateTransferEventType plateTransferEventType,
-            Map<String, LabVessel> mapBarcodeToVessel, LabEventType repeatedEvent) {
+    private static void validateRepeatedEvent(PlateTransferEventType plateTransferEventType,
+            Map<String, LabVessel> mapBarcodeToVessel, LabEventType repeatedEvent,
+            MessageCollection messageCollection) {
         Map<String, String> mapSourceBarcodeToTargetBarcode = new HashMap<>();
 
         // For each vessel in source section, map to destination
@@ -397,13 +408,13 @@ public class ManualTransferActionBean extends RackScanActionBean {
                                 sectionTransfer.getTargetSection().getWells().get(i));
                         String targetBarcode = mapSourceBarcodeToTargetBarcode.get(sourceVessel.getLabel());
                         if (targetBarcode == null) {
-                            addGlobalValidationError("{2} not found in previous message", sourceVessel.getLabel());
+                            messageCollection.addError(sourceVessel.getLabel() + " not found in previous message");
                             errors++;
                         } else {
                             if (targetBarcode.equals(targetVessel.getLabel())) {
                                 matches++;
                             } else {
-                                addGlobalValidationError("Expected {2}, but found {3}", targetBarcode,
+                                messageCollection.addError("Expected " + targetBarcode + ", but found " +
                                         targetVessel.getLabel());
                                 errors++;
                             }
@@ -412,21 +423,22 @@ public class ManualTransferActionBean extends RackScanActionBean {
                 }
             }
             if (matches > 0 && errors == 0) {
-                addMessage("Transfer matches previous");
+                messageCollection.addInfo("Transfer matches previous");
             }
         }
     }
 
-    private void loadReceptacleFromDb(ReceptacleType receptacleType, boolean required) {
+    private void loadReceptacleFromDb(ReceptacleType receptacleType, boolean required,
+            MessageCollection messageCollection) {
         if (receptacleType != null) {
             String barcode = receptacleType.getBarcode();
             if (!StringUtils.isBlank(barcode)) {
                 LabVessel labVessel = labVesselDao.findByIdentifier(barcode);
                 if (labVessel == null) {
                     if (required) {
-                        addGlobalValidationError("{2} is not in the database", barcode);
+                        messageCollection.addError(barcode + " is not in the database");
                     } else {
-                        addMessage("{0} is not in the database", barcode);
+                        messageCollection.addInfo(barcode + " is not in the database");
                     }
                 } else {
                     if (OrmUtil.proxySafeIsInstance(labVessel, BarcodedTube.class)) {
@@ -437,9 +449,9 @@ public class ManualTransferActionBean extends RackScanActionBean {
                         }
                         receptacleType.setConcentration(barcodedTube.getConcentration());
                         receptacleType.setReceptacleWeight(barcodedTube.getReceptacleWeight());
-                        addMessage("{0} is in the database", barcode);
+                        messageCollection.addInfo(barcode + " is in the database");
                     } else {
-                        addGlobalValidationError(barcode + " is not a tube");
+                        messageCollection.addError(barcode + " is not a tube");
                     }
                 }
             }
@@ -447,7 +459,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
     }
 
     private Map<String, LabVessel> loadPlateFromDb(PlateType plateType, PositionMapType positionMapType,
-            boolean required, LabBatch labBatch) {
+            boolean required, LabBatch labBatch, MessageCollection messageCollection) {
         Map<String, LabVessel> returnMapBarcodeToVessel = new HashMap<>();
         if (plateType != null) {
             String barcode = plateType.getBarcode();
@@ -455,12 +467,12 @@ public class ManualTransferActionBean extends RackScanActionBean {
                 LabVessel labVessel = labVesselDao.findByIdentifier(barcode);
                 if (labVessel == null) {
                     if (required) {
-                        addGlobalValidationError("{2} is not in the database", barcode);
+                        messageCollection.addError(barcode + " is not in the database");
                     } else {
-                        addMessage("{0} is not in the database", barcode);
+                        messageCollection.addInfo(barcode + " is not in the database");
                     }
                 } else {
-                    addMessage("{0} is in the database", barcode);
+                    messageCollection.addInfo(barcode + " is in the database");
                     returnMapBarcodeToVessel.put(labVessel.getLabel(), labVessel);
                 }
             }
@@ -477,11 +489,15 @@ public class ManualTransferActionBean extends RackScanActionBean {
                 LabVessel labVessel = stringLabVesselEntry.getValue();
                 String barcode = stringLabVesselEntry.getKey();
                 if (labVessel == null) {
-                    addMessage("{0} is not in the database", barcode);
+                    if (required) {
+                        messageCollection.addError(barcode + " is not in the database");
+                    } else {
+                        messageCollection.addInfo(barcode + " is not in the database");
+                    }
                 } else {
-                    addMessage("{0} is in the database", barcode);
+                    messageCollection.addInfo(barcode + " is in the database");
                     if (!labVessel.getNearestWorkflowLabBatches().contains(labBatch)) {
-                        addMessage("{0} is not in batch {1}", barcode, labBatch.getBatchName());
+                        messageCollection.addInfo(barcode + " is not in batch " + labBatch.getBatchName());
                     }
                 }
             }
@@ -492,7 +508,16 @@ public class ManualTransferActionBean extends RackScanActionBean {
 
     @HandlesEvent(TRANSFER_ACTION)
     public Resolution transfer() {
-        // todo jmt handle unique constraint violation, increment disambiguator?
+        MessageCollection messageCollection = new MessageCollection();
+        LabBatch labBatch = null;
+        if (batchName != null) {
+            labBatch = labBatchDao.findByName(batchName);
+        }
+        validateBarcodes(labBatch, messageCollection);
+        // If there are only infos, ignore them
+        if (!messageCollection.getErrors().isEmpty()) {
+            addMessages(messageCollection);
+        }
         workflowStepDef = loadWorkflowStepDef(workflowEffectiveDate, workflowLoader, workflowProcessName,
                 workflowStepName);
 
