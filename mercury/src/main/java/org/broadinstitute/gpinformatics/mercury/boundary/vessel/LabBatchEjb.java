@@ -383,7 +383,7 @@ public class LabBatchEjb {
         }
 
         if (projectType == CreateFields.ProjectType.EXTRACTION_PROJECT) {
-            customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.GSSR_IDS,
+            customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.SAMPLE_IDS,
                                              AbstractBatchJiraFieldFactory
                                                      .buildSamplesListString(batch, reworkFromBucket)));
         }

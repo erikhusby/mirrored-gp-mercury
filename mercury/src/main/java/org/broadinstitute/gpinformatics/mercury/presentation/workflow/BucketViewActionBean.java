@@ -270,23 +270,20 @@ public class BucketViewActionBean extends CoreActionBean {
         loadReworkVessels();
         if (batch == null) {
             addValidationError("selectedLcset", String.format("Could not find %s.", selectedLcset));
-            return new ForwardResolution(VIEW_PAGE);
+            return viewBucket();
         }
         // Cannot mix workfows in an LCSET.
         Set<String> batchWorkflows = getWorkflowNames();
         if (!batchWorkflows.contains(selectedWorkflowDef.getName())) {
             addValidationError("incompatibleWorkflows",
-                               "The selected workflow (" + selectedWorkflowDef.getName() +
-                               ") is different than LCSET's workflow (" + StringUtils.join(batchWorkflows, ", ") + ")");
-            return new ForwardResolution(VIEW_PAGE);
+                    "The selected workflow (" + selectedWorkflowDef.getName() +
+                    ") is different than the Batch's workflow (" + StringUtils.join(batchWorkflows, ", ") + ")");
+            return viewBucket();
         }
         return new ForwardResolution(CONFIRMATION_PAGE);
     }
 
     private void loadReworkVessels() {
-        if (!selectedLcset.startsWith("LCSET-")) {
-            selectedLcset = "LCSET-" + selectedLcset;
-        }
         batch = labBatchDao.findByBusinessKey(selectedLcset);
         separateEntriesByType();
     }
@@ -294,13 +291,23 @@ public class BucketViewActionBean extends CoreActionBean {
     // Returns the workflow name for entries in the batch.
     private Set<String> getWorkflowNames() {
         Set<String> pdoKeys = new HashSet<>();
+        Set<String> workflowNames = new HashSet<>();
+        // Workflow names in the bucketEntry is a new feature with the addition of Extractions, which look at
+        // the add-on's product's workflow. (continued)
         for (BucketEntry entry : batch.getBucketEntries()) {
             pdoKeys.add(entry.getProductOrder().getBusinessKey());
+            if (entry.getWorkflowName() != null) {
+                workflowNames.add(entry.getWorkflowName());
+            }
         }
-        Collection<ProductOrder> pdos = productOrderDao.findListByBusinessKeys(pdoKeys);
-        Set<String> workflowNames = new HashSet<>();
-        for (ProductOrder pdo : pdos) {
-            workflowNames.add(pdo.getProduct().getWorkflow().getWorkflowName());
+        // Therefore, if workflowNames is populated we know we are dealing with a post-extraction workflow.
+        // If workflowNames is empty we get the workflowName from the product itself. This is all
+        // in liu of back populating bucketEntry.workflowName.
+        if (workflowNames.isEmpty()) {
+            Collection<ProductOrder> pdos = productOrderDao.findListByBusinessKeys(pdoKeys);
+            for (ProductOrder pdo : pdos) {
+                workflowNames.add(pdo.getProduct().getWorkflow().getWorkflowName());
+            }
         }
         return workflowNames;
     }
@@ -309,9 +316,6 @@ public class BucketViewActionBean extends CoreActionBean {
     public Resolution reworkConfirmed() {
         separateEntriesByType();
         try {
-            if (!selectedLcset.startsWith("LCSET-")) {
-                selectedLcset = "LCSET-" + selectedLcset;
-            }
             labBatchEjb.addToLabBatch(selectedLcset, bucketEntryIds, reworkEntryIds, selectedBucket);
         } catch (IOException e) {
             addGlobalValidationError("IOException contacting JIRA service." + e.getMessage());
@@ -319,7 +323,7 @@ public class BucketViewActionBean extends CoreActionBean {
         }
         addMessage(String.format("Successfully added %d sample(s) and %d rework(s) to %s at the '%s'.",
                                  bucketEntryIds.size(), reworkEntryIds.size(), selectedLcset, selectedBucket));
-        return new RedirectResolution(BucketViewActionBean.class, VIEW_ACTION);
+        return viewBucket();
     }
 
     /**
