@@ -98,6 +98,7 @@ public class BucketViewActionBean extends CoreActionBean {
     private String selectedBucket;
     @Validate(required = true, on = {CREATE_BATCH_ACTION, "viewBucket"})
     private ProductWorkflowDef selectedWorkflowDef;
+    private Bucket bucket;
 
     private String jiraTicketId;
 
@@ -205,43 +206,44 @@ public class BucketViewActionBean extends CoreActionBean {
             possibleWorkflows = mapBucketToWorkflowDefs.get(selectedBucket);
             if (possibleWorkflows.size() == 1) {
                 setSelectedWorkflowDef(possibleWorkflows.get(0));
-                return viewBucket();
             }
-
+            return viewBucket();
         }
         return view();
     }
 
     @HandlesEvent("viewBucket")
     public Resolution viewBucket() {
-        if (selectedBucket != null && selectedWorkflowDef != null) {
-            possibleWorkflows = mapBucketToWorkflowDefs.get(selectedBucket);
+        if (selectedBucket != null) {
+            bucket = bucketDao.findByName(selectedBucket);
+            if (selectedBucket != null && selectedWorkflowDef != null) {
+                possibleWorkflows = mapBucketToWorkflowDefs.get(selectedBucket);
 
-            // Gets the bucket entries that are in the selected bucket.
-            Bucket bucket = bucketDao.findByName(selectedBucket);
-            if (bucket != null) {
-                bucketEntries.clear();
-                reworkEntries.clear();
-                collectiveEntries.clear();
+                // Gets the bucket entries that are in the selected bucket.
+                if (bucket != null) {
+                    bucketEntries.clear();
+                    reworkEntries.clear();
+                    collectiveEntries.clear();
 
-                bucketEntries.addAll(bucket.getBucketEntries());
-                reworkEntries.addAll(bucket.getReworkEntries());
-                collectiveEntries.addAll(bucketEntries);
-                collectiveEntries.addAll(reworkEntries);
+                    bucketEntries.addAll(bucket.getBucketEntries());
+                    reworkEntries.addAll(bucket.getReworkEntries());
+                    collectiveEntries.addAll(bucketEntries);
+                    collectiveEntries.addAll(reworkEntries);
 
-                // Filters out entries whose product workflow or add-on's workflow doesn't match the selected workflow.
-                for (Iterator<BucketEntry> iter = collectiveEntries.iterator(); iter.hasNext(); ) {
-                    BucketEntry entry = iter.next();
-                    String workflowName = findWorkflowName(entry);
-                    if (!selectedWorkflowDef.getName().equals(workflowName)) {
+                    // Filters out entries whose product workflow or add-on's workflow doesn't match the selected workflow.
+                    for (Iterator<BucketEntry> iter = collectiveEntries.iterator(); iter.hasNext(); ) {
+                        BucketEntry entry = iter.next();
+                        String workflowName = findWorkflowName(entry);
+                        if (!selectedWorkflowDef.getName().equals(workflowName)) {
 
-                        iter.remove();
-                        bucketEntries.remove(entry);
-                        reworkEntries.remove(entry);
+                            iter.remove();
+                            bucketEntries.remove(entry);
+                            reworkEntries.remove(entry);
+                        }
                     }
+                    // Doesn't show JIRA details if there are no bucket entries.
+                    jiraEnabled = !collectiveEntries.isEmpty();
                 }
-                // Doesn't show JIRA details if there are no bucket entries.
-                jiraEnabled = !collectiveEntries.isEmpty();
             }
         }
         return view();
@@ -537,4 +539,10 @@ public class BucketViewActionBean extends CoreActionBean {
         return list;
     }
 
+    public int totalBucketEntries() {
+        if (bucket != null) {
+            return bucket.getBucketEntries().size() + bucket.getReworkEntries().size();
+        }
+        return 0;
+    }
 }

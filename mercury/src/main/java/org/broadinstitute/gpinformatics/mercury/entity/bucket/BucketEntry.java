@@ -288,10 +288,11 @@ public class BucketEntry {
 
     @Override
     public String toString() {
-        return String.format("Bucket: %s, %s, Vessel %s, Batch %s",
+        return String.format("Bucket: %s, %s, Vessel %s, Batch %s, Workflow: %s",
                 bucket != null ? bucket.getBucketDefinitionName() : "(no bucket)",
                 productOrder != null?productOrder.getBusinessKey():"(no product order)",
                 labVessel != null ? labVessel.getLabel() : "(no vessel)",
+                workflowName != null ? workflowName : "(no workflow)",
                 labBatch != null ? labBatch.getBatchName() : "(not batched)");
     }
 
