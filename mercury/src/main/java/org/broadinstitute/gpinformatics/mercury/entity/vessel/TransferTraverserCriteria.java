@@ -728,21 +728,22 @@ public interface TransferTraverserCriteria {
     }
 
     /**
-     * Traverse LabVessels and LabEvents for events producing MaterialTypes
+     * Traverse LabVessels and LabEvents to find current MaterialType
      */
-    class LabEventsWithMaterialTypeTraverserCriteria implements TransferTraverserCriteria {
-        private final LabVessel.MaterialType materialType;
-        private LabVessel vesselForMaterialType = null;
+    class NearestMaterialTypeTraverserCriteria implements TransferTraverserCriteria {
+        private LabVessel.MaterialType materialType=null;
 
-        public LabEventsWithMaterialTypeTraverserCriteria(LabVessel.MaterialType materialTypes) {
-            this.materialType = materialTypes;
+        public NearestMaterialTypeTraverserCriteria() {
         }
-
 
         @Override
         public TraversalControl evaluateVesselPreOrder(Context context) {
             LabVessel contextVessel;
             LabEvent contextEvent;
+
+            if (materialType != null) {
+                return TraversalControl.StopTraversing;
+            }
 
             if( context.getHopCount() == 0 ) {
                 contextVessel = context.getStartingLabVessel();
@@ -763,7 +764,6 @@ public interface TransferTraverserCriteria {
             if (contextVessel != null && contextEvent != null) {
                 evaluateEvent(contextVessel, contextEvent);
             }
-
             return TraversalControl.ContinueTraversing;
         }
 
@@ -780,8 +780,9 @@ public interface TransferTraverserCriteria {
         }
 
         private void evaluateEvent(LabVessel vessel, LabEvent event) {
-            if (materialType == event.getLabEventType().getResultingMaterialType() && vesselForMaterialType == null) {
-                vesselForMaterialType = vessel;
+            LabVessel.MaterialType resultingMaterialType = event.getLabEventType().getResultingMaterialType();
+            if (resultingMaterialType != null) {
+                materialType=resultingMaterialType;
             }
         }
 
@@ -789,8 +790,8 @@ public interface TransferTraverserCriteria {
         public void evaluateVesselPostOrder(Context context) {
         }
 
-        public LabVessel getVesselForMaterialType() {
-            return vesselForMaterialType;
+        public LabVessel.MaterialType getMaterialType() {
+            return materialType;
         }
     }
 

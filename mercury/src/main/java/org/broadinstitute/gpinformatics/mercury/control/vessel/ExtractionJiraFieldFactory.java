@@ -1,5 +1,17 @@
+/*
+ * The Broad Institute
+ * SOFTWARE COPYRIGHT NOTICE AGREEMENT
+ * This software and its documentation are copyright 2015 by the
+ * Broad Institute/Massachusetts Institute of Technology. All rights are reserved.
+ *
+ * This software is supplied without any warranty or guaranteed support
+ * whatsoever. Neither the Broad Institute nor MIT can be responsible for its
+ * use, misuse, or functionality.
+ */
+
 package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -11,24 +23,29 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
+import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.Nonnull;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 /**
- * Concrete factory implementation specific to creating the custom and required fields for creating an LCSET ticket.
+ * Concrete factory implementation specific to creating the custom and required fields for creating an XTR ticket.
  */
-public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
+public class ExtractionJiraFieldFactory extends AbstractBatchJiraFieldFactory {
 
     public static final String LIB_QC_SEQ_REQUIRED_DEFAULT = "None";
     public static final String POOLING_STATUS = "Pool w/o Positive Control";
@@ -37,13 +54,14 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
     public static final String LIB_QC_SEQ_REQUIRED_NO = "No";
     public static final String LIB_QC_SEQ_REQUIRED_HISEQ = "Yes - HiSeq";
     public static final String LIB_QC_SEQ_REQUIRED_MISEQ = "Yes - MiSeq";
-
+    public static final List<String> ISSUE_TYPES =
+            Arrays.asList("AllPrep", "DNA Extraction", "RNA Extraction", "Extraction (Other)");
 
     private final Map<String, ResearchProject> foundResearchProjectList = new HashMap<>();
     private Map<String, Set<LabVessel>> pdoToVesselMap = new HashMap<>();
     private final Map<String, ProductWorkflowDef> workflowDefs = new HashMap<>();
 
-    private static final Log log = LogFactory.getLog(LCSetJiraFieldFactory.class);
+    private static final Log log = LogFactory.getLog(ExtractionJiraFieldFactory.class);
 
 
     /**
@@ -53,8 +71,8 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
      * @param batch               instance of the Lab Batch entity for which a new LCSetT Ticket is to be created
      * @param productOrderDao
      */
-    public LCSetJiraFieldFactory(@Nonnull LabBatch batch, @Nonnull ProductOrderDao productOrderDao) {
-        super(batch, CreateFields.ProjectType.LCSET_PROJECT);
+    public ExtractionJiraFieldFactory(@Nonnull LabBatch batch, @Nonnull ProductOrderDao productOrderDao) {
+        super(batch, CreateFields.ProjectType.EXTRACTION_PROJECT);
 
         WorkflowLoader wfLoader = new WorkflowLoader();
         WorkflowConfig wfConfig = wfLoader.load();
@@ -101,25 +119,13 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
     public Collection<CustomField> getCustomFields(Map<String, CustomFieldDefinition> submissionFields) {
 
         //TODO SGM: Modify Field settings to Append instead of Overwriting.  This would cover associating an Existing Ticket
-
         Set<CustomField> customFields = new HashSet<>();
 
-        customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.DESCRIPTION,
-                batch.getBatchDescription()));
-
-        customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.WORK_REQUEST_IDS, "N/A"));
-
-        customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.PROGRESS_STATUS,
-                new CustomField.ValueContainer(PROGRESS_STATUS)));
-
-        customFields.add(new CustomField(
-                submissionFields.get(LabBatch.TicketFields.LIBRARY_QC_SEQUENCING_REQUIRED.getName()),
-                new CustomField.SelectOption(LIB_QC_SEQ_REQUIRED_DEFAULT)));
+        customFields
+                .add(new CustomField(submissionFields, LabBatch.TicketFields.DESCRIPTION, batch.getBatchDescription()));
+        customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.SUMMARY, batch.getBatchName()));
 
         int sampleCount = batch.getStartingBatchLabVessels().size();
-
-        customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.GSSR_IDS,
-                buildSamplesListString(batch, null)));
 
         customFields.add(new CustomField(
                 submissionFields.get(LabBatch.TicketFields.NUMBER_OF_SAMPLES.getName()), sampleCount));
@@ -135,21 +141,10 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
                     .getImportant()));
         }
 
-        if (!workflowDefs.isEmpty()) {
-            StringBuilder builtProtocol = new StringBuilder();
-            for (ProductWorkflowDef currWorkflowDef : new HashSet<>(workflowDefs.values())) {
+        if (CollectionUtils.isNotEmpty(batch.getStartingBatchLabVessels())) {
+            customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.SAMPLE_IDS,
+                    buildSamplesListString(batch, null)));
 
-                if (StringUtils.isNotBlank(builtProtocol)) {
-                    builtProtocol.append(", ");
-                }
-                builtProtocol.append(currWorkflowDef.getName());
-                builtProtocol.append(":");
-                builtProtocol.append(currWorkflowDef.getEffectiveVersion(batch.getCreatedOn()).getVersion());
-            }
-            customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.PROTOCOL,
-                    builtProtocol.toString()));
-        } else {
-            customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.PROTOCOL, "N/A"));
         }
 
         return customFields;

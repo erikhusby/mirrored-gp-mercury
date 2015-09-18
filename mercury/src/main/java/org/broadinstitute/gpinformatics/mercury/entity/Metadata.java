@@ -300,5 +300,18 @@ public class Metadata {
             }
             return null;
         }
+
+        public static Key fromDisplayName(String displayName) {
+
+            Key foundKey = null;
+
+            for (Key key : values()) {
+                if (key.getDisplayName().equals(displayName)) {
+                    foundKey = key;
+                    break;
+                }
+            }
+            return foundKey;
+        }
     }
 }

@@ -108,6 +108,7 @@ public class BucketViewActionBean extends CoreActionBean {
     private final List<BucketEntry> reworkEntries = new ArrayList<>();
     private final List<BucketEntry> collectiveEntries = new ArrayList<>();
     private final Map<String, List<ProductWorkflowDef>> mapBucketToWorkflowDefs = new HashMap<>();
+    private final Map<String, WorkflowBucketDef> mapBucketToBucketDef = new HashMap<>();
 
     private List<BucketEntry> selectedEntries = new ArrayList<>();
     private String selectedPdo;
@@ -137,6 +138,7 @@ public class BucketViewActionBean extends CoreActionBean {
                 if (buckets.add(bucketName)) {
                     bucketWorkflows = new ArrayList<>();
                     mapBucketToWorkflowDefs.put(bucketName, bucketWorkflows);
+                    mapBucketToBucketDef.put(bucketName, bucket);
                 } else {
                     bucketWorkflows = mapBucketToWorkflowDefs.get(bucketName);
                 }
@@ -300,7 +302,7 @@ public class BucketViewActionBean extends CoreActionBean {
             if (!selectedLcset.startsWith("LCSET-")) {
                 selectedLcset = "LCSET-" + selectedLcset;
             }
-            labBatchEjb.addToLabBatch(selectedLcset, bucketEntryIds, reworkEntryIds);
+            labBatchEjb.addToLabBatch(selectedLcset, bucketEntryIds, reworkEntryIds, selectedBucket);
         } catch (IOException e) {
             addGlobalValidationError("IOException contacting JIRA service." + e.getMessage());
             return new RedirectResolution(VIEW_PAGE);
@@ -324,7 +326,7 @@ public class BucketViewActionBean extends CoreActionBean {
                                                        selectedWorkflowDef.getName(), bucketEntryIds, reworkEntryIds,
                                                        summary.trim(),
                                                        description, dueDate, important,
-                                                       userBean.getBspUser().getUsername());
+                                                       userBean.getBspUser().getUsername(), selectedBucket);
         } catch (ValidationException e) {
             addGlobalValidationError(e.getMessage());
             return view();
