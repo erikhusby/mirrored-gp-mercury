@@ -123,10 +123,15 @@ public class ManualTransferActionBean extends RackScanActionBean {
         String eventType = getContext().getRequest().getParameter("stationEvents[0].eventType");
         if (eventType != null) {
             labEventType = LabEventType.getByName(eventType);
-            workflowStepDef = loadWorkflowStepDef(new Date(getContext().getRequest().getParameter("workflowEffectiveDate")),
-                    workflowLoader, getContext().getRequest().getParameter("workflowProcessName"),
-                    getContext().getRequest().getParameter("workflowStepName"));
-            if (workflowStepDef != null) {
+            String workflowEffectiveDateLocal = getContext().getRequest().getParameter("workflowEffectiveDate");
+            if (!StringUtils.isEmpty(workflowEffectiveDateLocal)) {
+                workflowStepDef = loadWorkflowStepDef(new Date(workflowEffectiveDateLocal),
+                        workflowLoader, getContext().getRequest().getParameter("workflowProcessName"),
+                        getContext().getRequest().getParameter("workflowStepName"));
+            }
+            if (workflowStepDef == null) {
+                manualTransferDetails = labEventType.getManualTransferDetails();
+            } else {
                 manualTransferDetails = workflowStepDef.getManualTransferDetails();
                 if (manualTransferDetails == null) {
                     manualTransferDetails = labEventType.getManualTransferDetails();
