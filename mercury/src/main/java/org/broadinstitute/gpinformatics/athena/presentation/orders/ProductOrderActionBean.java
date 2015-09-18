@@ -84,6 +84,8 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NoJiraTransitionException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 import org.broadinstitute.gpinformatics.infrastructure.security.Role;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
@@ -102,6 +104,7 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.io.StringReader;
 import java.text.MessageFormat;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -191,9 +194,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     private PreferenceEjb preferenceEjb;
 
     @Inject
-    private ProductOrderUtil productOrderUtil;
-
-    @Inject
     private ProductOrderSampleDao sampleDao;
 
     @Inject
@@ -244,6 +244,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @Inject
     private SampleDataSourceResolver sampleDataSourceResolver;
+
+    @Inject
+    private QuoteService quoteService;
 
     private List<ProductOrderListEntry> displayedProductOrderListEntries;
 
@@ -913,8 +916,10 @@ public class ProductOrderActionBean extends CoreActionBean {
         try {
             item.put("key", quoteIdentifier);
             if (quoteIdentifier != null) {
-                String fundsRemaining = productOrderUtil.getFundsRemaining(quoteIdentifier);
-                item.put("fundsRemaining", fundsRemaining);
+                Quote quote = quoteService.getQuoteByAlphaId(quoteIdentifier);
+                double fundsRemaining = Double.parseDouble(quote.getQuoteFunding().getFundsRemaining());
+                item.put("fundsRemaining", NumberFormat.getCurrencyInstance().format(fundsRemaining));
+                item.put("status", quote.getApprovalStatus().getValue());
             }
 
         } catch (Exception ex) {
