@@ -84,6 +84,7 @@ public abstract class AbstractJsonJerseyClientService extends AbstractJerseyClie
      */
     protected void put(WebResource webResource, Object requestPojo) throws IOException {
         String request = writeValue(requestPojo);
+        log.info("URL: " + webResource.getURI());
         log.trace("PUT request: " + request);
         try {
             setJsonMimeTypes(webResource).put(request);

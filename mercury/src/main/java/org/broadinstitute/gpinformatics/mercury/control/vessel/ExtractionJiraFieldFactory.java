@@ -23,19 +23,17 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
-import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
-import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.Nonnull;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -144,11 +142,23 @@ public class ExtractionJiraFieldFactory extends AbstractBatchJiraFieldFactory {
         if (CollectionUtils.isNotEmpty(batch.getStartingBatchLabVessels())) {
             customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.SAMPLE_IDS,
                     buildSamplesListString(batch, null)));
+        }
 
+        WorkflowConfig workflowConfig = new WorkflowLoader().load();
+        for (BucketEntry bucketEntry : batch.getBucketEntries()) {
+//            bucketEntry.getProductOrder().getResearchProject()
+            ProductWorkflowDef workflowByName = workflowConfig.getWorkflowByName(bucketEntry.getWorkflowName());
+            for (WorkflowBucketDef bucketDef : workflowByName.getEffectiveVersion().getCreationBuckets()) {
+                for (LabVessel.MaterialType materialType : bucketDef.getBucketEntryEvaluator().getMaterialTypes()) {
+                    if (bucketEntry.getLabVessel().isMaterialType(materialType)) {
+                        customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.EXTRACTION_BATCH_TYPE,
+                                new Object[]{new CustomField.ValueContainer(materialType.getDisplayName())}));
+                    }
+                }
+            }
         }
 
         return customFields;
-
     }
 
     @Override

@@ -67,4 +67,8 @@ public class WorkflowBucketEntryEvaluator implements Serializable {
     public boolean invoke(LabVessel labVessel, ProductOrder productOrder) {
         return productAddOnsHaveWorkflow(productOrder) && materialTypeMatches(labVessel);
     }
+
+    public Set<LabVessel.MaterialType> getMaterialTypes() {
+        return materialTypes;
+    }
 }

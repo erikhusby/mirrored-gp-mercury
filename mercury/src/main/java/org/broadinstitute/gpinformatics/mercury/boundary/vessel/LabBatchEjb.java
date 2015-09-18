@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraCustomFieldsUtil;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
@@ -270,7 +271,7 @@ public class LabBatchEjb {
                 newBatch.setBatchDescription(
                         fieldBuilder.generateDescription() + "\n\n" + newBatch.getBatchDescription());
             }
-
+            JiraCustomFieldsUtil.getAllowedFields(jiraService, fieldBuilder.getProjectType(), issueType);
             if (jiraTicket == null) {
                 Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
                 if (issueType == null) {

@@ -313,7 +313,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
     @Override
     public void addWatcher(String key, String watcherId) throws IOException {
         WebResource webResource = getJerseyClient().resource(getBaseUrl() + "/issue/" + key + "/watchers");
-        post(webResource, watcherId);
+        post(webResource, String.format("\"%s\"", watcherId));
     }
 
     @Override
@@ -325,10 +325,10 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
         String jsonResponse = getJerseyClient().resource(urlString)
                 .queryParam("projectKeys", project.getProjectType().getKeyPrefix())
-                .queryParam("issuetypeNames", issueType.getJiraName())
+                .queryParam("issuetypeName", issueType.getJiraName())
                 .queryParam("expand", "projects.issuetypes.fields")
                 .get(String.class);
-
+        log.info(jsonResponse);
         return CustomFieldJsonParser.parseRequiredFields(jsonResponse);
     }
 
@@ -427,7 +427,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
                 }
             }
             return false;
-        } catch (IOException e) {
+        } catch (Exception e) {
             return false;
         }
     }
