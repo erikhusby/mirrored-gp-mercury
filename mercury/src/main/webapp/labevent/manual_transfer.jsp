@@ -71,19 +71,20 @@
                 <input type="hidden" name="workflowStepName" value="${actionBean.workflowStepName}"/>
                 <input type="hidden" name="workflowEffectiveDate" value="${actionBean.workflowEffectiveDate}"/>
                 <input type="hidden" name="batchName" value="${actionBean.batchName}"/>
+                <input type="hidden" name="anchorName" value="${actionBean.anchorName}"/>
                 <%-- Set by transfer_plate.jsp --%>
                 <input type="hidden" name="scanIndex" value="">
                 <%-- Set by transfer_plate.jsp --%>
                 <input type="hidden" name="scanSource" value="">
 
-                <c:if test="${not empty actionBean.labEventType.manualTransferDetails.machineNames}">
+                <c:if test="${not empty actionBean.manualTransferDetails.machineNames}">
                     <stripes:label for="station">Machine </stripes:label>
                     <stripes:select name="stationEvents[0].station" id="station">
-                        <stripes:options-collection collection="${actionBean.labEventType.manualTransferDetails.machineNames}"/>
+                        <stripes:options-collection collection="${actionBean.manualTransferDetails.machineNames}"/>
                     </stripes:select>
                 </c:if>
 
-                <c:if test="${not empty actionBean.labEventType.manualTransferDetails.reagentNames}">
+                <c:if test="${not empty actionBean.manualTransferDetails.reagentNames}">
                     <h5>Reagents</h5>
                     Expiration date format is mm/dd/yyyy.
                     <c:set var="prevReagentType" value=""/>
@@ -107,7 +108,7 @@
                             <label for="rgtBcd${loop.index}">Barcode </label>
                             <input type="text" id="rgtBcd${loop.index}" name="stationEvents[0].reagent[${loop.index}].barcode"
                                     value="${reagent.barcode}" class="barcode"/>
-                            <c:if test="${actionBean.labEventType.manualTransferDetails.expirationDateIncluded}">
+                            <c:if test="${actionBean.manualTransferDetails.expirationDateIncluded}">
                                 <label for="rgtExp${loop.index}">Expiration </label>
                                 <input type="text" id="rgtExp${loop.index}" name="stationEvents[0].reagent[${loop.index}].expiration"
                                         value="${reagent.expiration}" class="date"/>
@@ -130,7 +131,7 @@
                             <c:set var="plateTransfer" value="${stationEvent}"/>
                             <%--@elvariable id="plateTransfer" type="org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType"--%>
                             <c:if test="${stationEvent.class.simpleName == 'PlateTransferEventType'}">
-                                <c:if test="${empty actionBean.labEventType.manualTransferDetails.secondaryEvent or not stationEventStatus.last}">
+                                <c:if test="${empty actionBean.manualTransferDetails.secondaryEvent or not stationEventStatus.last}">
                                     <h4>Plate Transfer</h4>
                                     <h5>Source</h5>
 
@@ -138,8 +139,8 @@
                                     <c:set var="plate" value="${plateTransfer.sourcePlate}" scope="request"/>
                                     <c:set var="positionMap" value="${plateTransfer.sourcePositionMap}" scope="request"/>
                                     <c:set var="stationEventIndex" value="${stationEventStatus.index}" scope="request"/>
-                                    <c:set var="vesselTypeGeometry" value="${actionBean.labEventType.manualTransferDetails.sourceVesselTypeGeometry}" scope="request"/>
-                                    <c:set var="section" value="${actionBean.labEventType.manualTransferDetails.sourceSection}" scope="request"/>
+                                    <c:set var="vesselTypeGeometry" value="${actionBean.manualTransferDetails.sourceVesselTypeGeometry}" scope="request"/>
+                                    <c:set var="section" value="${actionBean.manualTransferDetails.sourceSection}" scope="request"/>
                                     <c:set var="source" value="${true}" scope="request"/>
                                     <jsp:include page="transfer_plate.jsp"/>
 
@@ -151,8 +152,8 @@
                             <c:set var="plate" value="${plateTransfer.plate}" scope="request"/>
                             <c:set var="positionMap" value="${plateTransfer.positionMap}" scope="request"/>
                             <c:set var="stationEventIndex" value="${stationEventStatus.index}" scope="request"/>
-                            <c:set var="vesselTypeGeometry" value="${actionBean.labEventType.manualTransferDetails.targetVesselTypeGeometry}" scope="request"/>
-                            <c:set var="section" value="${actionBean.labEventType.manualTransferDetails.targetSection}" scope="request"/>
+                            <c:set var="vesselTypeGeometry" value="${actionBean.manualTransferDetails.targetVesselTypeGeometry}" scope="request"/>
+                            <c:set var="section" value="${actionBean.manualTransferDetails.targetSection}" scope="request"/>
                             <c:set var="source" value="${false}" scope="request"/>
                             <jsp:include page="transfer_plate.jsp"/>
 

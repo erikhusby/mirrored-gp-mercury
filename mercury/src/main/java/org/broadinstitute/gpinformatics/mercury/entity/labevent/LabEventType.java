@@ -8,6 +8,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselTypeGeometry;
 
 import javax.annotation.Nullable;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlTransient;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -981,73 +984,6 @@ public enum LabEventType {
                     BarcodedTube.BarcodedTubeType.SpinColumn, BarcodedTube.BarcodedTubeType.MatrixTube075).build(),
             LabVessel.MaterialType.DNA),
 
-    // AllPrep
-    ALLPREP_INITIAL("AllPrepInitialScan",
-            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.FALSE, SystemOfRecord.MERCURY, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            new ManualTransferDetails.Builder(MessageType.PLATE_EVENT, null, RackOfTubes.RackType.FlipperRackRow24).
-                    targetSection(SBSSection.ROWOF24).build()),
-    ALLPREP_CELLS_TO_CRYOVIAL("AllPrepCellsToCryovial",
-            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.FALSE, SystemOfRecord.MERCURY, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT, RackOfTubes.RackType.FlipperRackRow24,
-                    RackOfTubes.RackType.FlipperRackRow24).sourceSection(SBSSection.ROWOF24).
-                    targetSection(SBSSection.ROWOF24).build()),
-    ALLPREP_CRYOVIAL_TO_QIASHREDDER("AllPrepCryovialToQIAshredder",
-            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.FALSE, SystemOfRecord.MERCURY, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT, RackOfTubes.RackType.FlipperRackRow24,
-                    RackOfTubes.RackType.FlipperRackRow24).sourceSection(SBSSection.ROWOF24).
-                    targetSection(SBSSection.ROWOF24).build()),
-    ALLPREP_LYSATE_TO_DNA_SPIN("AllPrepLysateToDnaSpin",
-            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.FALSE, SystemOfRecord.MERCURY, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT, RackOfTubes.RackType.FlipperRackRow24,
-                    RackOfTubes.RackType.FlipperRackRow24).sourceSection(SBSSection.ROWOF24).
-                    targetSection(SBSSection.ROWOF24).build()),
-    ALLPREP_DNA_SPIN_TO_FLOWTHROUGH("AllPrepDnaSpinToFlowthrough",
-            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.FALSE, SystemOfRecord.MERCURY, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT, RackOfTubes.RackType.FlipperRackRow24,
-                    RackOfTubes.RackType.FlipperRackRow24).sourceSection(SBSSection.ROWOF24).
-                    targetSection(SBSSection.ROWOF24).build()),
-    ALLPREP_FLOWTHROUGH_TO_RNA_SPIN1("AllPrepFlowthroughToRnaSpin1",
-            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.FALSE, SystemOfRecord.MERCURY, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT, RackOfTubes.RackType.FlipperRackRow24,
-                    RackOfTubes.RackType.FlipperRackRow24).sourceSection(SBSSection.ROWOF24).
-                    targetSection(SBSSection.ROWOF24).build()),
-    ALLPREP_FLOWTHROUGH_TO_RNA_SPIN2("AllPrepFlowthroughToRnaSpin2",
-            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.FALSE, SystemOfRecord.MERCURY, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT, RackOfTubes.RackType.FlipperRackRow24,
-                    RackOfTubes.RackType.FlipperRackRow24).sourceSection(SBSSection.ROWOF24).
-                    targetSection(SBSSection.ROWOF24).repeatedEvent(ALLPREP_FLOWTHROUGH_TO_RNA_SPIN1).build()),
-    ALLPREP_RNA_TO_MICRO("AllPrepRnaToMicro",
-            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.FALSE, SystemOfRecord.MERCURY, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT, RackOfTubes.RackType.FlipperRackRow24,
-                    RackOfTubes.RackType.FlipperRackRow24).sourceSection(SBSSection.ROWOF24).
-                    targetSection(SBSSection.ROWOF24).build()),
-    ALLPREP_RNA_MICRO_TO_MATRIX("AllPrepRnaMicroToMatrix",
-            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.FALSE, SystemOfRecord.MERCURY, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT, RackOfTubes.RackType.FlipperRackRow24,
-                    RackOfTubes.RackType.Matrix96).sourceSection(SBSSection.ROWOF24).
-                    targetSection(SBSSection.P96_ROWSAB).build(), LabVessel.MaterialType.RNA),
-    ALLPREP_DNA_TO_MICRO("AllPrepDnaToMicro",
-            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.FALSE, SystemOfRecord.MERCURY, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT, RackOfTubes.RackType.FlipperRackRow24,
-                    RackOfTubes.RackType.FlipperRackRow24).sourceSection(SBSSection.ROWOF24).
-                    targetSection(SBSSection.ROWOF24).build()),
-    ALLPREP_DNA_MICRO_TO_MATRIX("AllPrepDnaMicroToMatrix",
-            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.FALSE, SystemOfRecord.MERCURY, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT, RackOfTubes.RackType.FlipperRackRow24,
-                    RackOfTubes.RackType.Matrix96).sourceSection(SBSSection.ROWOF24).
-                    targetSection(SBSSection.P96_ROWSAB).build(), LabVessel.MaterialType.DNA),
-
     //Infinium
     INFINIUM_AMPLIFICATION("InfiniumAmplification",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
@@ -1124,6 +1060,20 @@ public enum LabEventType {
     STORE("Store",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY),
+    IN_PLACE("In-Place",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY),
+    TRANSFER("Transfer",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY),
+    EXTRACT_TO_DNA("ExtractToDna",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            null, LabVessel.MaterialType.DNA),
+    EXTRACT_TO_RNA("ExtractToRna",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            null, LabVessel.MaterialType.RNA)
     ;
 
 
@@ -1269,18 +1219,27 @@ public enum LabEventType {
         RECEPTACLE_TRANSFER_EVENT
     }
 
+    @XmlAccessorType(XmlAccessType.FIELD)
     public static class ManualTransferDetails {
         /** Determines layout of page and type of message built. */
         private MessageType messageType;
 
         /** Determines layout of page for source vessel. */
+        @XmlTransient
         private VesselTypeGeometry sourceVesselTypeGeometry;
+
+        /** Used by JAXB, because it doesn't support interfaces. */
+        private String sourceVesselTypeGeometryString;
 
         /** The set of positions in the source geometry from which to transfer */
         private SBSSection sourceSection;
 
         /** Determines layout of page for destination vessel. */
+        @XmlTransient
         private VesselTypeGeometry targetVesselTypeGeometry;
+
+        /** Used by JAXB, because it doesn't support interfaces. */
+        private String targetVesselTypeGeometryString;
 
         /** The set of positions in the target geometry from which to transfer */
         private SBSSection targetSection;
@@ -1309,6 +1268,13 @@ public enum LabEventType {
         /** Supports verification that two transfers have same source and destination. */
         private LabEventType repeatedEvent;
 
+        /** Supports verification that two transfers have same source and destination. */
+        private String repeatedWorkflowQualifier;
+
+        /** For JAXB */
+        public ManualTransferDetails() {
+        }
+
         @SuppressWarnings("AccessingNonPublicFieldOfAnotherObject")
         public ManualTransferDetails(Builder builder) {
             messageType = builder.messageType;
@@ -1323,6 +1289,7 @@ public enum LabEventType {
             machineNames = builder.machineNames;
             secondaryEvent = builder.secondaryEvent;
             repeatedEvent = builder.repeatedEvent;
+            repeatedWorkflowQualifier = builder.repeatedWorkflowQualifier;
         }
 
         public static class Builder {
@@ -1339,6 +1306,7 @@ public enum LabEventType {
             private String[] machineNames = {};
             private LabEventType secondaryEvent;
             private LabEventType repeatedEvent;
+            private String repeatedWorkflowQualifier;
 
             public Builder(MessageType messageType, VesselTypeGeometry sourceVesselTypeGeometry,
                     VesselTypeGeometry targetVesselTypeGeometry) {
@@ -1392,6 +1360,11 @@ public enum LabEventType {
                 return this;
             }
 
+            public Builder repeatedWorkflowQualifier(String repeatedWorkflowQualifier) {
+                this.repeatedWorkflowQualifier = repeatedWorkflowQualifier;
+                return this;
+            }
+
             public ManualTransferDetails build() {
                 return new ManualTransferDetails(this);
             }
@@ -1402,7 +1375,29 @@ public enum LabEventType {
         }
 
         public VesselTypeGeometry getSourceVesselTypeGeometry() {
+            if (sourceVesselTypeGeometry == null && sourceVesselTypeGeometryString != null) {
+                sourceVesselTypeGeometry = convertGeometryString(sourceVesselTypeGeometryString);
+            }
             return sourceVesselTypeGeometry;
+        }
+
+        private VesselTypeGeometry convertGeometryString(String sourceVesselTypeGeometryString) {
+            String[] strings = sourceVesselTypeGeometryString.split("\\.");
+            VesselTypeGeometry vesselTypeGeometry;
+            switch (strings[0]) {
+                case "RackType":
+                    vesselTypeGeometry = RackOfTubes.RackType.getByName(strings[1]);
+                    break;
+                case "PlateType":
+                    vesselTypeGeometry = StaticPlate.PlateType.getByAutomationName(strings[1]);
+                    break;
+                case "BarcodedTubeType":
+                    vesselTypeGeometry = BarcodedTube.BarcodedTubeType.getByAutomationName(strings[1]);
+                    break;
+                default:
+                    throw new RuntimeException("Unknown type " + strings[0]);
+            }
+            return vesselTypeGeometry;
         }
 
         public SBSSection getSourceSection() {
@@ -1410,6 +1405,9 @@ public enum LabEventType {
         }
 
         public VesselTypeGeometry getTargetVesselTypeGeometry() {
+            if (targetVesselTypeGeometry == null && targetVesselTypeGeometryString != null) {
+                targetVesselTypeGeometry = convertGeometryString(targetVesselTypeGeometryString);
+            }
             return targetVesselTypeGeometry;
         }
 
@@ -1457,6 +1455,10 @@ public enum LabEventType {
 
         public LabEventType getRepeatedEvent() {
             return repeatedEvent;
+        }
+
+        public String getRepeatedWorkflowQualifier() {
+            return repeatedWorkflowQualifier;
         }
     }
 

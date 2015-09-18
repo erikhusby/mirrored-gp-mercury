@@ -120,6 +120,8 @@ public class WorkflowStepDef implements Serializable {
     private String workflowQualifier;
     /** Instructions to the users. */
     private String instructions;
+    /** Configuration for the Manual Transfers page. */
+    private LabEventType.ManualTransferDetails manualTransferDetails;
 
     private transient WorkflowProcessDef processDef;
 
@@ -212,5 +214,9 @@ public class WorkflowStepDef implements Serializable {
 
     public String getInstructions() {
         return instructions;
+    }
+
+    public LabEventType.ManualTransferDetails getManualTransferDetails() {
+        return manualTransferDetails;
     }
 }

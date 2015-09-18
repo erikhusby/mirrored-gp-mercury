@@ -51,7 +51,7 @@
                         </div>
                         <c:forEach items="${workflowEvent.workflowStepDef.labEventTypes}" var="labEventType">
                             <c:choose>
-                                <c:when test="${not empty labEventType.manualTransferDetails.messageType}">
+                                <c:when test="${not empty labEventType.manualTransferDetails.messageType or not empty workflowEvent.workflowStepDef.manualTransferDetails}">
                                     <stripes:link beanclass="org.broadinstitute.gpinformatics.mercury.presentation.labevent.ManualTransferActionBean"
                                             event="chooseEventType">
                                         <stripes:param name="stationEvents[0].eventType" value="${labEventType.name}"/>

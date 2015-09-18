@@ -1149,9 +1149,15 @@
             <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
             <workflowStepDefs>
                 <name>Initial Scan</name>
-                <labEventTypes>ALLPREP_INITIAL</labEventTypes>
+                <labEventTypes>IN_PLACE</labEventTypes>
+                <workflowQualifier>ALL_PREP_INITIAL_SCAN</workflowQualifier>
                 <instructions>Scan all parent source SM-IDs to cross check against samples in XTR ticket
                 </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_EVENT</messageType>
+                    <targetVesselTypeGeometryString>RackType.FlipperRackRow24</targetVesselTypeGeometryString>
+                    <targetSection>ROWOF24</targetSection>
+                </manualTransferDetails>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Prep Reagents</name>
@@ -1179,9 +1185,17 @@
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Transfer Cells to Cryovial</name>
-                <labEventTypes>ALLPREP_CELLS_TO_CRYOVIAL</labEventTypes>
+                <labEventTypes>TRANSFER</labEventTypes>
+                <workflowQualifier>ALLPREP_CELLS_TO_CRYOVIAL</workflowQualifier>
                 <instructions>Transfer to 2mL Cryovial (half the volume, 1.5mL)
                 </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>RackType.FlipperRackRow24</sourceVesselTypeGeometryString>
+                    <sourceSection>ROWOF24</sourceSection>
+                    <targetVesselTypeGeometryString>RackType.FlipperRackRow24</targetVesselTypeGeometryString>
+                    <targetSection>ROWOF24</targetSection>
+                </manualTransferDetails>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Centrifuge Cryovial</name>
@@ -1203,9 +1217,17 @@
             -->
             <workflowStepDefs>
                 <name>Transfer to QIAshredder</name>
-                <labEventTypes>ALLPREP_CRYOVIAL_TO_QIASHREDDER</labEventTypes>
+                <labEventTypes>TRANSFER</labEventTypes>
+                <workflowQualifier>ALLPREP_CRYOVIAL_TO_QIASHREDDER</workflowQualifier>
                 <instructions>Transfer lysate directly into a QIAshredder spin column placed in a 2 ml collection tube.
                 </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>RackType.FlipperRackRow24</sourceVesselTypeGeometryString>
+                    <sourceSection>ROWOF24</sourceSection>
+                    <targetVesselTypeGeometryString>RackType.FlipperRackRow24</targetVesselTypeGeometryString>
+                    <targetSection>ROWOF24</targetSection>
+                </manualTransferDetails>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Centrifuge QIAshredder</name>
@@ -1216,9 +1238,17 @@
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Transfer to DNA Spin Column</name>
-                <labEventTypes>ALLPREP_LYSATE_TO_DNA_SPIN</labEventTypes>
+                <labEventTypes>TRANSFER</labEventTypes>
+                <workflowQualifier>ALLPREP_LYSATE_TO_DNA_SPIN</workflowQualifier>
                 <instructions>Transfer the homogenized lysate to an AllPrep DNA spin column placed in a 2 ml collection tube (supplied).
                 </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>RackType.FlipperRackRow24</sourceVesselTypeGeometryString>
+                    <sourceSection>ROWOF24</sourceSection>
+                    <targetVesselTypeGeometryString>RackType.FlipperRackRow24</targetVesselTypeGeometryString>
+                    <targetSection>ROWOF24</targetSection>
+                </manualTransferDetails>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Centrifuge DNA Spin Column</name>
@@ -1229,9 +1259,17 @@
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>DNA Spin Column Flowthrough RNA</name>
-                <labEventTypes>ALLPREP_DNA_SPIN_TO_FLOWTHROUGH</labEventTypes>
+                <labEventTypes>TRANSFER</labEventTypes>
+                <workflowQualifier>ALLPREP_DNA_SPIN_TO_FLOWTHROUGH</workflowQualifier>
                 <instructions>Scan DNA spin column and its tube, to associate RNA flowthrough with tube
                 </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>RackType.FlipperRackRow24</sourceVesselTypeGeometryString>
+                    <sourceSection>ROWOF24</sourceSection>
+                    <targetVesselTypeGeometryString>RackType.FlipperRackRow24</targetVesselTypeGeometryString>
+                    <targetSection>ROWOF24</targetSection>
+                </manualTransferDetails>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Move DNA Column</name>
@@ -1250,10 +1288,18 @@
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
-                <name>Transfer to RNA Spin Column</name>
-                <labEventTypes>ALLPREP_FLOWTHROUGH_TO_RNA_SPIN1</labEventTypes>
+                <name>Transfer to RNA Spin Column 1</name>
+                <labEventTypes>TRANSFER</labEventTypes>
+                <workflowQualifier>ALLPREP_FLOWTHROUGH_TO_RNA_SPIN1</workflowQualifier>
                 <instructions>Transfer half to RNA spin column.
                 </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>RackType.FlipperRackRow24</sourceVesselTypeGeometryString>
+                    <sourceSection>ROWOF24</sourceSection>
+                    <targetVesselTypeGeometryString>RackType.FlipperRackRow24</targetVesselTypeGeometryString>
+                    <targetSection>ROWOF24</targetSection>
+                </manualTransferDetails>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Centrifuge RNA Spin Column</name>
@@ -1263,10 +1309,20 @@
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
-                <name>Transfer to RNA Spin Column</name>
-                <labEventTypes>ALLPREP_FLOWTHROUGH_TO_RNA_SPIN2</labEventTypes>
+                <name>Transfer to RNA Spin Column 2</name>
+                <labEventTypes>TRANSFER</labEventTypes>
+                <workflowQualifier>ALLPREP_FLOWTHROUGH_TO_RNA_SPIN2</workflowQualifier>
                 <instructions>Transfer half to RNA spin column.
                 </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>RackType.FlipperRackRow24</sourceVesselTypeGeometryString>
+                    <sourceSection>ROWOF24</sourceSection>
+                    <targetVesselTypeGeometryString>RackType.FlipperRackRow24</targetVesselTypeGeometryString>
+                    <targetSection>ROWOF24</targetSection>
+                    <repeatedEvent>TRANSFER</repeatedEvent>
+                    <repeatedWorkflowQualifier>ALLPREP_FLOWTHROUGH_TO_RNA_SPIN1</repeatedWorkflowQualifier>
+                </manualTransferDetails>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Centrifuge RNA Spin Column</name>
@@ -1298,7 +1354,7 @@
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
-                <name>Add RPE</name>
+                <name>Add RPE 1</name>
                 <labEventTypes>ADD_REAGENT</labEventTypes>
                 <workflowQualifier>RPE1</workflowQualifier>
                 <reagentTypes>RPE</reagentTypes>
@@ -1320,7 +1376,7 @@
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
-                <name>Add RPE</name>
+                <name>Add RPE 2</name>
                 <labEventTypes>ADD_REAGENT</labEventTypes>
                 <workflowQualifier>RPE2</workflowQualifier>
                 <reagentTypes>RPE</reagentTypes>
@@ -1372,15 +1428,31 @@
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Transfer RNA To Microcentrifuge</name>
-                <labEventTypes>ALLPREP_RNA_TO_MICRO</labEventTypes>
+                <labEventTypes>TRANSFER</labEventTypes>
+                <workflowQualifier>ALLPREP_RNA_TO_MICRO</workflowQualifier>
                 <instructions>Transfer RNA to microcentrifuge tube.
                 </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>RackType.FlipperRackRow24</sourceVesselTypeGeometryString>
+                    <sourceSection>ROWOF24</sourceSection>
+                    <targetVesselTypeGeometryString>RackType.FlipperRackRow24</targetVesselTypeGeometryString>
+                    <targetSection>ROWOF24</targetSection>
+                </manualTransferDetails>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Transfer RNA To Matrix</name>
-                <labEventTypes>ALLPREP_RNA_MICRO_TO_MATRIX</labEventTypes>
+                <labEventTypes>EXTRACT_TO_RNA</labEventTypes>
+                <workflowQualifier>ALLPREP_RNA_MICRO_TO_MATRIX</workflowQualifier>
                 <instructions>Transfer from microcentrifuge tube to 2D matrix tube
                 </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>RackType.FlipperRackRow24</sourceVesselTypeGeometryString>
+                    <sourceSection>ROWOF24</sourceSection>
+                    <targetVesselTypeGeometryString>RackType.Matrix96</targetVesselTypeGeometryString>
+                    <targetSection>P96_ROWSAB</targetSection>
+                </manualTransferDetails>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Add AW1</name>
@@ -1453,15 +1525,31 @@
             -->
             <workflowStepDefs>
                 <name>Transfer DNA To Microcentrifuge</name>
-                <labEventTypes>ALLPREP_DNA_TO_MICRO</labEventTypes>
+                <labEventTypes>TRANSFER</labEventTypes>
+                <workflowQualifier>ALLPREP_DNA_TO_MICRO</workflowQualifier>
                 <instructions>Transfer DNA to microcentrifuge tube
                 </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>RackType.FlipperRackRow24</sourceVesselTypeGeometryString>
+                    <sourceSection>ROWOF24</sourceSection>
+                    <targetVesselTypeGeometryString>RackType.FlipperRackRow24</targetVesselTypeGeometryString>
+                    <targetSection>ROWOF24</targetSection>
+                </manualTransferDetails>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Transfer DNA Microcentrifuge to Matrix</name>
-                <labEventTypes>ALLPREP_DNA_MICRO_TO_MATRIX</labEventTypes>
+                <labEventTypes>EXTRACT_TO_DNA</labEventTypes>
+                <workflowQualifier>ALLPREP_DNA_MICRO_TO_MATRIX</workflowQualifier>
                 <instructions>Transfer from microcentrifuge tube to 2D matrix tube
                 </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>RackType.FlipperRackRow24</sourceVesselTypeGeometryString>
+                    <sourceSection>ROWOF24</sourceSection>
+                    <targetVesselTypeGeometryString>RackType.Matrix96</targetVesselTypeGeometryString>
+                    <targetSection>P96_ROWSAB</targetSection>
+                </manualTransferDetails>
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>
