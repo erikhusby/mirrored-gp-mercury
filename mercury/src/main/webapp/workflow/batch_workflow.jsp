@@ -15,13 +15,18 @@
                 padding: 2px 2px;
             }
         </style>
-        <c:if test="${not empty actionBean.anchorName}">
-            <script type="text/javascript">
+        <script type="text/javascript">
+            <c:if test="${not empty actionBean.anchorName}">
+                // We're returning from the manual transfer page, so scroll to the link that took us there
                 $j(document).ready(function () {
                     $j('#anchor${actionBean.anchorName}')[0].scrollIntoView();
                 });
-            </script>
-        </c:if>
+            </c:if>
+            // Some scanners send carriage return, we don't want this to submit the form
+            $j(document).on("keypress", ":input:not(textarea)", function(event) {
+                return event.keyCode != 13;
+            });
+        </script>
     </stripes:layout-component>
     <stripes:layout-component name="content">
         <stripes:form beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.BatchWorkflowActionBean">

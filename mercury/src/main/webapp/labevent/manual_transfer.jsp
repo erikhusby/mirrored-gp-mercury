@@ -52,6 +52,11 @@
                 $j.validator.classRuleSettings.unique = { unique: true };
                 $j("#transferForm").validate();
             });
+
+            // Some scanners send carriage return, we don't want this to submit the form
+            $j(document).on("keypress", ":input:not(textarea)", function(event) {
+                return event.keyCode != 13;
+            });
         </script>
     </stripes:layout-component>
 
