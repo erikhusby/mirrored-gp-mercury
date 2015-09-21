@@ -66,6 +66,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.regex.Pattern;
 
 /**
  * This entity represents a piece of plastic or glass that holds sample, reagent or (if it embeds a
@@ -220,24 +221,62 @@ public abstract class LabVessel implements Serializable {
     }
 
     public boolean isDNA() {
-        boolean hasMaterialConvertedToDNA = hasMaterialConvertedTo(MaterialType.DNA);
-        if (!hasMaterialConvertedToDNA) {
-            for (SampleInstanceV2 si : getSampleInstancesV2()) {
-                if (si.getRootOrEarliestMercurySample().getSampleData().getMaterialType()
-                        .startsWith(MaterialType.DNA.name())) {
-                    return true;
+        return isMaterialType(MaterialType.DNA);
+    }
+
+    public boolean isMaterialType(MaterialType materialType) {
+        boolean hasMaterialConvertedToMaterialType = hasMaterialConvertedTo(materialType);
+        if (!hasMaterialConvertedToMaterialType) {
+            for (String sampleMaterialType : getMaterialTypes()) {
+                if (StringUtils.isNotBlank(sampleMaterialType)) {
+                    if (materialType.matches(sampleMaterialType)) {
+                        return true;
+                    }
                 }
             }
         }
-        return hasMaterialConvertedToDNA;
+        return hasMaterialConvertedToMaterialType;
     }
 
-    private boolean hasMaterialConvertedTo(MaterialType materialType) {
-        TransferTraverserCriteria.LabEventsWithMaterialTypeTraverserCriteria materialTypeTraverserCriteria =
-                new TransferTraverserCriteria.LabEventsWithMaterialTypeTraverserCriteria(materialType);
-        evaluateCriteria(materialTypeTraverserCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
+    private List<String> getMaterialTypes() {
+        List<String> materialTypes = new ArrayList<>();
+        for (SampleInstanceV2 si : getSampleInstancesV2()) {
+            String materialType = si.getRootOrEarliestMercurySample().getSampleData().getMaterialType();
+            if (StringUtils.isNotBlank(materialType)) {
+                materialTypes.add(materialType);
+            }
+        }
+        return materialTypes;
+    }
 
-        return materialTypeTraverserCriteria.getVesselForMaterialType() != null;
+    /**
+     * Find the current MaterialType of this LabVesel.
+     * @param materialType materialType to test
+     * @return true if the event history indicates the latest MaterialType matches input
+     */
+    private boolean hasMaterialConvertedTo(MaterialType materialType) {
+        return materialType == getLatestMaterialTypeFromEventHistory();
+    }
+
+    /**
+     * Traverse the event history of this LabVessel to find the current MaterialType.
+     * @return the current MaterialType
+     */
+    public MaterialType getLatestMaterialTypeFromEventHistory() {
+        TransferTraverserCriteria.NearestMaterialTypeTraverserCriteria materialTypeTraverserCriteria =
+                evaluateMaterialTypeTraverserCriteria();
+
+        return materialTypeTraverserCriteria.getMaterialType();
+    }
+
+    /**
+     * Traverser which scans the event history of this LabVessel to find the current MaterialType.
+     */
+    TransferTraverserCriteria.NearestMaterialTypeTraverserCriteria evaluateMaterialTypeTraverserCriteria() {
+        TransferTraverserCriteria.NearestMaterialTypeTraverserCriteria materialTypeTraverserCriteria =
+                new TransferTraverserCriteria.NearestMaterialTypeTraverserCriteria();
+        evaluateCriteria(materialTypeTraverserCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
+        return materialTypeTraverserCriteria;
     }
 
     /**
@@ -606,14 +645,38 @@ public abstract class LabVessel implements Serializable {
         CELL_SUSPENSION("Cell Suspension"),
         DNA("DNA"),
         FFPE("FFPE"),
-        FRESH_BLOOD("Fresh Blood"),
-        FRESH_FROZEN_BLOOD("Fresh Frozen Blood"),
-        RNA("RNA");
+        FRESH_BLOOD("Fresh Blood", "(?!.*frozen)(?!.*buffy)(?=.*blood).*"),
+        FRESH_FROZEN_BLOOD("Fresh Frozen Blood", "^(?=.*frozen)(?=.*blood).*"),
+        FRESH_FROZEN_TISSUE("Fresh Frozen Tissue", "^(?=.*frozen)(?=.*tissue).*"),
+        RNA("RNA"),
+        BUFFY_COAT("Buffy Coat");
 
         private final String displayName;
+        private final Pattern matchPattern;
 
         MaterialType(String displayName) {
+            this(displayName, String.format("(.*:\\s?)?%s.*", displayName.toLowerCase().replaceAll("\\s", "\\\\s+")));
+        }
+
+        MaterialType(String displayName, String matchPattern) {
             this.displayName = displayName;
+            this.matchPattern = Pattern.compile(matchPattern);
+        }
+
+        public boolean matches(String value) {
+            return matchPattern.matcher(value.toLowerCase()).matches();
+        }
+
+        public static MaterialType fromDisplayName(String displayName) {
+
+            MaterialType foundType = null;
+            for (MaterialType materialType : values()) {
+                if(materialType.matches(displayName)) {
+                    foundType = materialType;
+                    break;
+                }
+            }
+            return foundType;
         }
 
         @Override

@@ -111,6 +111,15 @@ public class LabMetric implements Comparable<LabMetric> {
                 return LabMetricDecision.Decision.FAIL;
             }
         }),
+        PLATING_RIBO("Plating Ribo", true, Category.CONCENTRATION, new Decider() {
+            @Override
+            public LabMetricDecision.Decision makeDecision(LabVessel labVessel, LabMetric labMetric) {
+                if (labMetric.getValue().compareTo(new BigDecimal("3")) == 1) {
+                    return LabMetricDecision.Decision.PASS;
+                }
+                return LabMetricDecision.Decision.FAIL;
+            }
+        }),
         POND_PICO("Pond Pico", true, Category.CONCENTRATION, new Decider() {
             @Override
             public LabMetricDecision.Decision makeDecision(LabVessel labVessel, LabMetric labMetric) {
