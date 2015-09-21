@@ -340,7 +340,7 @@ public class BucketViewActionBean extends CoreActionBean {
                                                        selectedWorkflowDef.getName(), bucketEntryIds, reworkEntryIds,
                                                        summary.trim(),
                                                        description, dueDate, important,
-                                                       userBean.getBspUser().getUsername(), selectedBucket);
+                                                       userBean.getBspUser().getUsername(), selectedBucket, this);
         } catch (ValidationException e) {
             addGlobalValidationError(e.getMessage());
             return view();

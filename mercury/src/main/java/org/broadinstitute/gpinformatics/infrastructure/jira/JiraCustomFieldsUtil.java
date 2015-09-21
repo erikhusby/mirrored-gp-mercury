@@ -91,25 +91,7 @@ public class JiraCustomFieldsUtil {
         Map<String, CustomFieldDefinition> allCustomFields =
                 jiraService.getRequiredFields(new CreateFields.Project(projectType), issueType);
 
-        Map<String, CustomFieldDefinition> requiredCustomFieldDefinitions = new HashMap<>();
-
-        for (String requiredFieldName : REQUIRED_FIELD_NAMES) {
-            boolean foundIt = false;
-            for (CustomFieldDefinition customFieldDefinition : allCustomFields.values()) {
-                if (requiredFieldName.equals(customFieldDefinition.getName())) {
-                    foundIt = true;
-                    requiredCustomFieldDefinitions.put(requiredFieldName, customFieldDefinition);
-                    break;
-                }
-            }
-            if (!foundIt) {
-                throw new RuntimeException("Could not find required field '" +
-                                           requiredFieldName + "' from jira service " +
-                                           jiraService.getClass().getCanonicalName());
-            }
-        }
-
-        return requiredCustomFieldDefinitions;
+        return allCustomFields;
     }
 
 }

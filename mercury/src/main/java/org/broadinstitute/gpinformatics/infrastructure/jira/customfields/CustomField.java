@@ -25,10 +25,6 @@ public class CustomField {
 
         private String value;
 
-        public ValueContainer(Map<String, Object> allowedValue) {
-            this.value = (String) allowedValue.get("value");
-        }
-
         public String getValue() {
             return value;
         }

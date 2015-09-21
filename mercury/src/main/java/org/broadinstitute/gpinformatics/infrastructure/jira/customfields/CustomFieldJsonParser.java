@@ -32,9 +32,8 @@ public class CustomFieldJsonParser {
     /**
      * Parses the custom fields from the given json response.
      */
-    public static Map<String, CustomFieldDefinition> parseRequiredFields(String jsonResponse)
-            throws IOException {
-        final Map<String, CustomFieldDefinition> customFields = new HashMap<String, CustomFieldDefinition>();
+    public static Map<String, CustomFieldDefinition> parseRequiredFields(String jsonResponse) throws IOException {
+        final Map<String, CustomFieldDefinition> customFields = new HashMap<>();
         final Map root = new ObjectMapper().readValue(jsonResponse, Map.class);
         final List projects = (List) root.get(PROJECTS);
         final List issueTypes = (List) ((Map) projects.iterator().next()).get(ISSUETYPES);
@@ -47,13 +46,14 @@ public class CustomFieldJsonParser {
             Map fieldProperties = field.getValue();
             String fieldName = (String) fieldProperties.get(NAME);
             Boolean required = (Boolean) fieldProperties.get(REQUIRED);
-//            ((LinkedHashMap)((ArrayList)fieldProperties.get("allowedValues")).get(0)).get("value")
-            ArrayList<Map> values = (ArrayList<Map>) fieldProperties.get(ALLOWED_VALUES);
+            List<Map<String, String>> values = (ArrayList<Map<String, String>>) fieldProperties.get(ALLOWED_VALUES);
 
             Collection<CustomField.ValueContainer> allowedValues = new ArrayList<>();
             if (values!=null) {
-                for (Map<String, Object> allowedValue : values) {
-                    allowedValues.add(new CustomField.ValueContainer(allowedValue));
+                for (Map<String, String> allowedValue : values) {
+                    if (allowedValue.containsKey("value")) {
+                        allowedValues.add(new CustomField.ValueContainer(allowedValue.get("value")));
+                    }
                 }
             }
             if (StringUtils.isNotBlank(fieldName)) {
