@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
@@ -86,6 +87,8 @@ public class LabBatchEjb {
     private SampleDataFetcher sampleDataFetcher;
 
     private ControlDao controlDao;
+
+    private BSPUserList bspUserList;
 
     private WorkflowLoader workflowLoader;
 
@@ -357,6 +360,7 @@ public class LabBatchEjb {
                 }
 
                 ListIterator<CustomField> jiraBatchFieldsIterator = batchJiraTicketFields.listIterator();
+                Set<String> messages = new HashSet<>();
                 while (jiraBatchFieldsIterator.hasNext()) {
                     CustomField batchJiraTicketField = jiraBatchFieldsIterator.next();
                     CustomFieldDefinition batchJiraTicketFieldFieldDefinition =
@@ -365,11 +369,15 @@ public class LabBatchEjb {
                             batchJiraTicketFieldFieldDefinition.getAllowedValues();
 
                     if (!allowedValues.isEmpty() && !allowedValues.contains(batchJiraTicketField.getValue())) {
-                        messageReporter.addMessage(
-                                "Unknown value for field ''{0}''. This will not prevent the batch being created but you will need to update {0} manually.",
-                                batchJiraTicketFieldFieldDefinition.getName());
+                        String fieldName = batchJiraTicketFieldFieldDefinition.getName();
+                        messages.add(String.format(
+                                "Unknown value for field '%s'. This will not prevent the batch being created but you will need to update %s manually.",
+                                fieldName, fieldName));
                         jiraBatchFieldsIterator.remove();
                     }
+                }
+                for (String message : messages) {
+                    messageReporter.addMessage(message);
                 }
 
                 JiraIssue jiraIssue = jiraService
@@ -377,6 +385,12 @@ public class LabBatchEjb {
                                 batchJiraTicketFields);
 
                 JiraTicket ticket = new JiraTicket(jiraService, jiraIssue.getKey());
+
+                // Add Product managers as watchers
+                for (BucketEntry bucketEntry : newBatch.getBucketEntries()) {
+                    ticket.addWatcher(bspUserList.getById(bucketEntry.getProductOrder().getCreatedBy()).getUsername());
+                    ticket.addWatcher(bspUserList.getById(bucketEntry.getProductOrder().getModifiedBy()).getUsername());
+                }
 
                 newBatch.setJiraTicket(ticket);
             }
@@ -646,5 +660,10 @@ public class LabBatchEjb {
     @Inject
     public void setWorkflowLoader(WorkflowLoader workflowLoader) {
         this.workflowLoader = workflowLoader;
+    }
+
+    @Inject
+    public void setBspUserList(BSPUserList bspUserList) {
+        this.bspUserList = bspUserList;
     }
 }

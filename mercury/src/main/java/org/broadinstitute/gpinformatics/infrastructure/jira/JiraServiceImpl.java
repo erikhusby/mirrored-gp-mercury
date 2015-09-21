@@ -313,7 +313,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
     @Override
     public void addWatcher(String key, String watcherId) throws IOException {
         WebResource webResource = getJerseyClient().resource(getBaseUrl() + "/issue/" + key + "/watchers");
-        post(webResource, String.format("\"%s\"", watcherId));
+        post(webResource, String.format("%s", watcherId));
     }
 
     @Override
