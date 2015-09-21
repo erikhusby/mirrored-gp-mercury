@@ -123,6 +123,9 @@ public class WorkflowMatcher {
                     TransferTraverserCriteria.TraversalDirection.Descendants);
         }
         for (LabEvent labEvent : labEventDescendantCriteria.getAllEvents()) {
+            if (labEvent.getEventDate().before(labBatch.getCreatedOn())) {
+                continue;
+            }
             LabEventKey labEventKey = new LabEventKey(labEvent);
             List<LabEvent> labEvents = mapTypeToEvent.get(labEventKey);
             if (labEvents == null) {
