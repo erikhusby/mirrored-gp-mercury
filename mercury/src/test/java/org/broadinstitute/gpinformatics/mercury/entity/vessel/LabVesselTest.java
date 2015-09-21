@@ -219,8 +219,11 @@ public class LabVesselTest {
         if (sampleMaterialType!=null) {
             materialTypeString = sampleMaterialType.getDisplayName();
         }
+        String sourceReceptacleType = labEventType.getManualTransferDetails() == null ?
+                BarcodedTube.BarcodedTubeType.MatrixTube.getDisplayName() :
+                labEventType.getManualTransferDetails().getSourceVesselTypeGeometry().getDisplayName();
         ReceptacleType sourceReceptacle = BettaLimsObjectFactory.createReceptacleType(sourceVessel.getLabel(),
-                labEventType.getManualTransferDetails().getSourceVesselTypeGeometry().getDisplayName(), "",
+                sourceReceptacleType, "",
                 materialTypeString, null, null, null,
                 Collections.<ReagentType>emptyList(),
                 Collections.<MetadataType>emptyList());
@@ -230,9 +233,12 @@ public class LabVesselTest {
         if (labEventType.getResultingMaterialType() != null) {
             resultingMaterialTypeString = labEventType.getResultingMaterialType().getDisplayName();
         }
+        String targetReceptacleType = labEventType.getManualTransferDetails() == null ?
+                BarcodedTube.BarcodedTubeType.MatrixTube.getDisplayName() :
+                labEventType.getManualTransferDetails().getTargetVesselTypeGeometry().getDisplayName();
         ReceptacleType destinationReceptacle = BettaLimsObjectFactory.createReceptacleType(destinationVessel.getLabel(),
-                labEventType.getManualTransferDetails().getTargetVesselTypeGeometry().getDisplayName(), "",
-                resultingMaterialTypeString, null, null, null, null,
+                targetReceptacleType, "",
+                resultingMaterialTypeString, null, null, null,
                 Collections.<ReagentType>emptyList(),
                 Collections.<MetadataType>emptyList());
         receptacleTransferEventType.setReceptacle(destinationReceptacle);
