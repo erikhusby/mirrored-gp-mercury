@@ -207,7 +207,7 @@ CREATE TABLE MERCURYDW.EVENT_FACT(
   CONSTRAINT FK_EVENT_PROCESS FOREIGN KEY (PROCESS_ID)
   REFERENCES MERCURYDW.WORKFLOW_PROCESS (PROCESS_ID) ON DELETE CASCADE ENABLE );
 
-CREATE TABLE library_ancestry_fact
+CREATE TABLE library_ancestry
 (
   ancestor_event_id         NUMBER(19) NOT NULL,
   ancestor_library_id       NUMBER(19) NOT NULL,
@@ -506,7 +506,7 @@ CREATE TABLE MERCURYDW.IM_EVENT_FACT (
   EVENT_DATE DATE,
   EVENT_FACT_ID NUMBER(28) ); --this gets populated by merge_import.sql
 
-CREATE TABLE im_library_ancestry_fact
+CREATE TABLE im_library_ancestry
 (
   line_number               NUMERIC(9) NOT NULL,
   etl_date                  DATE NOT NULL,
@@ -701,8 +701,8 @@ CREATE INDEX event_fact_idx1 ON event_fact (event_date);
 CREATE INDEX event_fact_idx2 ON event_fact (product_order_id, sample_name);
 CREATE INDEX event_fact_idx3 ON event_fact (lab_event_id);
 CREATE INDEX IDX_EVENT_VESSEL ON EVENT_FACT( LAB_VESSEL_ID );
-CREATE INDEX idx_ancestry_fact_hierarchy on library_ancestry_fact (child_library_id, ancestor_library_id );
-CREATE INDEX idx_ancestry_fact_reverse on library_ancestry_fact (ancestor_library_id, child_library_id );
+CREATE UNIQUE INDEX PK_ANCESTRY on library_ancestry (child_library_id, ancestor_library_id, child_event_id, ancestor_event_id );
+CREATE INDEX idx_ancestry_reverse on library_ancestry (ancestor_library_id, child_library_id );
 CREATE INDEX ix_parent_project ON research_project (parent_research_project_id);
 CREATE INDEX ix_root_project ON research_project (root_research_project_id);
 CREATE UNIQUE INDEX seq_sample_fact_idx1 ON sequencing_sample_fact (flowcell_barcode, lane, molecular_indexing_scheme);
@@ -713,5 +713,5 @@ CREATE INDEX pdo_regulatory_info_idx1 ON pdo_regulatory_infos (regulatory_infos)
 -- Warehouse ancestry query performance
 CREATE UNIQUE INDEX IDX_VESSEL_LABEL ON LAB_VESSEL(LABEL);
 -- Ancestry ETL delete performance
-CREATE INDEX IDX_ANCESTRY_CHILD_EVENT ON LIBRARY_ANCESTRY_FACT( CHILD_EVENT_ID );
+CREATE INDEX IDX_ANCESTRY_CHILD_EVENT ON LIBRARY_ANCESTRY( CHILD_EVENT_ID );
 

@@ -76,11 +76,11 @@ AS
   BEGIN
 
     -- For event fact table, a re-export of audited entity ids should replace existing ones.
-    DELETE FROM LIBRARY_ANCESTRY_FACT
+    DELETE FROM LIBRARY_ANCESTRY
      WHERE CHILD_EVENT_ID IN (
        SELECT DISTINCT LAB_EVENT_ID
          FROM IM_EVENT_FACT );
-    DBMS_OUTPUT.PUT_LINE( 'Deleted ' || SQL%ROWCOUNT || ' LIBRARY_ANCESTRY_FACT child rows' );
+    DBMS_OUTPUT.PUT_LINE( 'Deleted ' || SQL%ROWCOUNT || ' library_ancestry child rows' );
 
     DELETE FROM event_fact
     WHERE lab_event_id IN (SELECT
@@ -1373,7 +1373,7 @@ AS
   END MERGE_EVENT_FACT;
 
 
-  PROCEDURE MERGE_ANCESTRY_FACT
+  PROCEDURE MERGE_ANCESTRY
   IS
     V_INS_COUNT PLS_INTEGER;
     V_UPD_COUNT PLS_INTEGER;
@@ -1381,10 +1381,10 @@ AS
     V_INS_COUNT := 0;
     V_UPD_COUNT := 0;
     FOR new IN (SELECT *
-                  FROM im_library_ancestry_fact
+                  FROM im_library_ancestry
                  WHERE is_delete = 'F') LOOP
       BEGIN
-        INSERT INTO library_ancestry_fact (
+        INSERT INTO library_ancestry (
           ancestor_event_id,
           ancestor_library_id,
           ancestor_library_type,
@@ -1409,12 +1409,12 @@ AS
       EXCEPTION WHEN OTHERS THEN
         errmsg := SQLERRM;
         DBMS_OUTPUT.PUT_LINE(
-            TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_library_ancestry_fact.dat line ' || new.line_number || '  ' || errmsg);
+            TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_library_ancestry.dat line ' || new.line_number || '  ' || errmsg);
         CONTINUE;
       END;
     END LOOP;
-    SHOW_ETL_STATS(  V_UPD_COUNT, V_INS_COUNT, 'library_ancestry_fact' );
-  END MERGE_ANCESTRY_FACT;
+    SHOW_ETL_STATS(  V_UPD_COUNT, V_INS_COUNT, 'library_ancestry' );
+  END MERGE_ANCESTRY;
 
   PROCEDURE MERGE_PRODUCT_ORDER_STATUS
   IS
@@ -1861,7 +1861,7 @@ AS
     MERGE_PRODUCT_ORDER_SAMPLE();
     MERGE_PDO_SAMPLE_STATUS();
     MERGE_EVENT_FACT();
-    MERGE_ANCESTRY_FACT();
+    MERGE_ANCESTRY();
 
     -- Level 3 (depends on level 2 tables)
     MERGE_PDO_SAMPLE_RISK();

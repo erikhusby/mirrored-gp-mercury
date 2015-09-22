@@ -44,7 +44,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
     private SequencingSampleFactEtl sequencingSampleFactEtl;
     public static final String NONE = "NONE";
     public static final String MULTIPLE = "MULTIPLE";
-    public final String ancestorFileName = "library_ancestry_fact";
+    public final String ancestorFileName = "library_ancestry";
     private EventAncestryEtlUtil eventAncestryEtlUtil;
 
     public LabEventEtl() {
@@ -105,8 +105,8 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                         )
                     );
 
-                    if( fact.getAncestryFactDtos() != null ) {
-                        for (EventAncestryEtlUtil.AncestryFactDto ancestryDto : fact.getAncestryFactDtos()) {
+                    if( fact.getAncestryDtos() != null ) {
+                        for (EventAncestryEtlUtil.AncestryFactDto ancestryDto : fact.getAncestryDtos()) {
                             eventFactRecords.add(genericRecord(etlDateStr, isDelete,
                                     format( ancestryDto.getAncestorEventId()),
                                     format( ancestryDto.getAncestorVesselId()),
@@ -445,7 +445,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
             this.ancestryFactDtos.addAll(ancestryFactDtos);
         }
 
-        public List<EventAncestryEtlUtil.AncestryFactDto> getAncestryFactDtos(){
+        public List<EventAncestryEtlUtil.AncestryFactDto> getAncestryDtos(){
             return ancestryFactDtos;
         }
 

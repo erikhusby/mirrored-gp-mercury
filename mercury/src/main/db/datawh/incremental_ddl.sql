@@ -67,7 +67,7 @@ CREATE INDEX MERCURYDW.EVENT_FACT_IDX3 ON MERCURYDW.EVENT_FACT (LAB_EVENT_ID);
 CREATE INDEX MERCURYDW.IDX_EVENT_VESSEL ON MERCURYDW.EVENT_FACT (LAB_VESSEL_ID);
 
 
-CREATE TABLE im_library_ancestry_fact
+CREATE TABLE im_library_ancestry
 (
   line_number               NUMERIC(9) NOT NULL,
   etl_date                  DATE NOT NULL,
@@ -82,7 +82,7 @@ CREATE TABLE im_library_ancestry_fact
   child_library_creation    DATE NOT NULL
 );
 
-CREATE TABLE library_ancestry_fact
+CREATE TABLE library_ancestry
 (
   ancestor_event_id         NUMBER(19) NOT NULL,
   ancestor_library_id       NUMBER(19) NOT NULL,
@@ -95,11 +95,11 @@ CREATE TABLE library_ancestry_fact
   etl_date                  DATE NOT NULL
 );
 
-CREATE UNIQUE INDEX PK_ANCESTRY_FACT on library_ancestry_fact (child_library_id, ancestor_library_id, child_event_id, ancestor_event_id );
-CREATE INDEX IDX_ANCESTOR_ANCESTRY_HIERARCHY on library_ancestry_fact (ancestor_library_id, child_library_id );
+CREATE UNIQUE INDEX PK_ANCESTRY on library_ancestry (child_library_id, ancestor_library_id, child_event_id, ancestor_event_id );
+CREATE INDEX idx_ancestry_reverse on library_ancestry (ancestor_library_id, child_library_id );
 CREATE UNIQUE INDEX IDX_VESSEL_LABEL ON LAB_VESSEL( LABEL ) COMPUTE STATISTICS;
 
 -- Warehouse query performance
 -- ETL delete performance
-CREATE INDEX IDX_ANCESTRY_CHILD_EVENT ON LIBRARY_ANCESTRY_FACT( CHILD_EVENT_ID );
+CREATE INDEX IDX_ANCESTRY_CHILD_EVENT ON LIBRARY_ANCESTRY( CHILD_EVENT_ID );
 DROP PROCEDURE MERGE_IMPORT;

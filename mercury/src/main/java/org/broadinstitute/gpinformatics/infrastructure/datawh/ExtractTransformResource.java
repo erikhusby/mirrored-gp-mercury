@@ -204,7 +204,7 @@ public class ExtractTransformResource {
                             dto.getWfProcessName() == null ? "null": dto.getWfProcessName(),
                             dto.getWfStepName() == null ? "null": dto.getWfStepName() )
             );
-            buildAncestryTable(sb, columnCount, dto.getAncestryFactDtos());
+            buildAncestryTable(sb, columnCount, dto.getAncestryDtos());
         }
 
         sb.append("</table></body></html>");

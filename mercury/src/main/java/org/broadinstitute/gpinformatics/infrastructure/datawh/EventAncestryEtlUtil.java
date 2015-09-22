@@ -66,6 +66,11 @@ public class EventAncestryEtlUtil {
                 continue;
             }
 
+            // Can't do anything with a bad workflow
+            if( eventFact.getWfName() == null || eventFact.getWfName().isEmpty() ) {
+                continue;
+            }
+
             if( WorkflowConfigLookup.isSynthetic(eventFact.getWfName() ) ) {
                 continue;
             }
