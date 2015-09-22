@@ -430,7 +430,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
                 }
             }
             return false;
-        } catch (Exception e) {
+        } catch (IOException e) {
             return false;
         }
     }
