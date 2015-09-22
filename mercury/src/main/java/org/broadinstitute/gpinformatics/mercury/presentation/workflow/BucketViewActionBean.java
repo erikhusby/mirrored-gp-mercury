@@ -150,6 +150,9 @@ public class BucketViewActionBean extends CoreActionBean {
 
     @DefaultHandler
     public Resolution view() {
+        if (StringUtils.isNotBlank(selectedBucket)) {
+            possibleWorkflows = mapBucketToWorkflowDefs.get(selectedBucket);
+        }
         return new ForwardResolution(VIEW_PAGE);
     }
 
@@ -316,7 +319,7 @@ public class BucketViewActionBean extends CoreActionBean {
     public Resolution reworkConfirmed() {
         separateEntriesByType();
         try {
-            labBatchEjb.addToLabBatch(selectedLcset, bucketEntryIds, reworkEntryIds, selectedBucket);
+            labBatchEjb.addToLabBatch(selectedLcset, bucketEntryIds, reworkEntryIds, selectedBucket, this);
         } catch (IOException e) {
             addGlobalValidationError("IOException contacting JIRA service." + e.getMessage());
             return new RedirectResolution(VIEW_PAGE);
