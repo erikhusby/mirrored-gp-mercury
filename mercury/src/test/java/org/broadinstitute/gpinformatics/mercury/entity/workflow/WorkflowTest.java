@@ -22,6 +22,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVesselTest;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.testng.Assert;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.DataProvider;
@@ -242,7 +243,7 @@ public class WorkflowTest {
             }
         }
     }
-    private MercurySample createNewMercurySample(final String sampleId, final LabVessel.MaterialType materialType,
+    private MercurySample createNewMercurySample(final String sampleId, final MaterialType materialType,
                                                  MercurySample.MetadataSource metadataSource) {
         return createNewMercurySample(sampleId, materialType.getDisplayName(), metadataSource);
     }
@@ -289,7 +290,7 @@ public class WorkflowTest {
     @Test
     public void testExtractionBucketWithExtractionAddOn() {
         BarcodedTube barcodedTube = new BarcodedTube("00001234");
-        MercurySample mercurySample = createNewMercurySample("SM-1234", LabVessel.MaterialType.TISSUE_FRESH_FROZEN,
+        MercurySample mercurySample = createNewMercurySample("SM-1234", MaterialType.TISSUE_FRESH_FROZEN_TISSUE,
                 MercurySample.MetadataSource.MERCURY);
         barcodedTube.addSample(mercurySample);
 
@@ -314,7 +315,7 @@ public class WorkflowTest {
     @Test
     public void testExtractionBucketWithExtractionNoAddOn() {
         BarcodedTube barcodedTube = new BarcodedTube("00001234");
-        MercurySample mercurySample = createNewMercurySample("SM-1234", LabVessel.MaterialType.TISSUE_FRESH_FROZEN,
+        MercurySample mercurySample = createNewMercurySample("SM-1234", MaterialType.TISSUE_FRESH_FROZEN_TISSUE,
                 MercurySample.MetadataSource.MERCURY);
         barcodedTube.addSample(mercurySample);
 
@@ -337,7 +338,7 @@ public class WorkflowTest {
     @Test
     public void testExtractionBucketWithWrongMaterialTypeButHasExtractionAddOn() {
         BarcodedTube barcodedTube = new BarcodedTube("00001234");
-        MercurySample mercurySample = createNewMercurySample("SM-1234", LabVessel.MaterialType.DNA,
+        MercurySample mercurySample = createNewMercurySample("SM-1234", MaterialType.DNA,
                 MercurySample.MetadataSource.MERCURY);
         barcodedTube.addSample(mercurySample);
 
@@ -358,7 +359,7 @@ public class WorkflowTest {
     @Test
     public void testExtractionBucketWithWrongMaterialTypeAndWrongExtractionAddOn() {
         BarcodedTube barcodedTube = new BarcodedTube("00001234");
-        MercurySample mercurySample = createNewMercurySample("SM-1234", LabVessel.MaterialType.DNA,
+        MercurySample mercurySample = createNewMercurySample("SM-1234", MaterialType.DNA,
                 MercurySample.MetadataSource.MERCURY);
         barcodedTube.addSample(mercurySample);
 
@@ -380,7 +381,7 @@ public class WorkflowTest {
     @Test
     public void testExtractionBucketWithWrongMaterialTypeAndNoExtractionAddOn() {
         BarcodedTube barcodedTube = new BarcodedTube("00001234");
-        MercurySample mercurySample = createNewMercurySample("SM-1234", LabVessel.MaterialType.DNA,
+        MercurySample mercurySample = createNewMercurySample("SM-1234", MaterialType.DNA,
                 MercurySample.MetadataSource.MERCURY);
         barcodedTube.addSample(mercurySample);
 
@@ -409,7 +410,7 @@ public class WorkflowTest {
         for (WorkflowBucketDef workflowBucketDef : exomeExpressWorkflow.getEffectiveVersion().getBuckets()) {
             if (workflowBucketDef.getName().equals("Pico/Plating Bucket")) {
                 assertThat(workflowBucketDef.getBucketEntryEvaluator().materialTypes,
-                        hasItems(LabVessel.MaterialType.DNA));
+                        hasItems(MaterialType.DNA));
                 assertThat(workflowBucketDef.getBucketEntryEvaluator().workflows, is(Collections.<Workflow>emptySet()));
                 assertThat(workflowBucketDef.meetsBucketCriteria(barcodedTube, null), is(false));
             }
@@ -427,7 +428,7 @@ public class WorkflowTest {
         for (WorkflowBucketDef workflowBucketDef : exomeExpressWorkflow.getEffectiveVersion().getBuckets()) {
             if (workflowBucketDef.getName().equals("Pico/Plating Bucket")) {
                 assertThat(workflowBucketDef.getBucketEntryEvaluator().materialTypes,
-                        hasItems(LabVessel.MaterialType.DNA));
+                        hasItems(MaterialType.DNA));
                 assertThat(workflowBucketDef.getBucketEntryEvaluator().workflows, is(Collections.<Workflow>emptySet()));
                 assertThat(workflowBucketDef.meetsBucketCriteria(barcodedTube, null), is(true));
             }
@@ -448,30 +449,30 @@ public class WorkflowTest {
         Set<Object[]> result= new HashSet<>();
 
         EnumSet<LabEventType> dnaLabEventTypes = EnumSet.copyOf(
-                LabEventType.getLabEventTypesForMaterialType(LabVessel.MaterialType.DNA));
+                LabEventType.getLabEventTypesForMaterialType(MaterialType.DNA));
         EnumSet<LabEventType> nonDnaLabEventTypes = EnumSet.complementOf(dnaLabEventTypes);
 
         // the value of metadataSource should not affect the test result
         for (MercurySample.MetadataSource metadataSource : MercurySample.MetadataSource.values()) {
             for (LabEventType labEventType : dnaLabEventTypes) {
                 // All these lab events should allow the sample into the pico/plating bucket, regardless of MaterialType
-                result.add(new Object[]{labEventType, LabVessel.MaterialType.DNA, metadataSource, true, true});
+                result.add(new Object[]{labEventType, MaterialType.DNA, metadataSource, true, true});
                 // Blood should pass here because there has been an extraction.
-                result.add(new Object[]{labEventType, LabVessel.MaterialType.FFPE_TISSUE_SECTION, metadataSource, true, true});
+                result.add(new Object[]{labEventType, MaterialType.TISSUE_FFPE_TISSUE_SECTION, metadataSource, true, true});
             }
 
             for (LabEventType labEventType : nonDnaLabEventTypes) {
                 // DNA should always pass because DNA is a valid materialType for the pico/plating bucket
-                result.add(new Object[]{labEventType, LabVessel.MaterialType.DNA, metadataSource, false, true});
+                result.add(new Object[]{labEventType, MaterialType.DNA, metadataSource, false, true});
                 // BLOOD will never pass because DNA is a valid materialType for the pico/plating bucket
-                result.add(new Object[]{labEventType, LabVessel.MaterialType.FFPE_TISSUE_SECTION, metadataSource, false, false});
+                result.add(new Object[]{labEventType, MaterialType.TISSUE_FFPE_TISSUE_SECTION, metadataSource, false, false});
             }
         }
         return result.iterator();
     }
 
     @Test(dataProvider = "bucketScenariosDataProvider")
-    public void testBucketEntryForManyScenarios(LabEventType labEventType, LabVessel.MaterialType sampleMaterialType,
+    public void testBucketEntryForManyScenarios(LabEventType labEventType, MaterialType sampleMaterialType,
                                                 MercurySample.MetadataSource metadataSource,
                                                 boolean doTransfer,
                                                 boolean meetsBucketCriteriaExpected) {
@@ -479,14 +480,14 @@ public class WorkflowTest {
 
         WorkflowBucketDef workflowBucketDef = new WorkflowBucketDef(Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName());
         workflowBucketDef.setBucketEntryEvaluator(new WorkflowBucketEntryEvaluator(Collections.<Workflow>emptySet(),
-                Collections.singleton(LabVessel.MaterialType.DNA)));
+                Collections.singleton(MaterialType.DNA)));
 
         boolean actualBucketCriteria = workflowBucketDef.meetsBucketCriteria(labVessel, null);
         assertThat(actualBucketCriteria, is(meetsBucketCriteriaExpected));
     }
 
     private LabVessel createLabVesselWithSample(LabEventType labEventType,
-                                                LabVessel.MaterialType sampleMaterialType,
+                                                MaterialType sampleMaterialType,
                                                 MercurySample.MetadataSource metadataSource,
                                                 boolean doTransfer) {
         BarcodedTube sourceVessel = new BarcodedTube("A_SOURCE_VESSEL", BarcodedTube.BarcodedTubeType.MatrixTube075);

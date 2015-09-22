@@ -26,6 +26,7 @@ import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
@@ -151,7 +152,7 @@ public class ExtractionJiraFieldFactory extends AbstractBatchJiraFieldFactory {
         for (BucketEntry bucketEntry : bucketEntries) {
             ProductWorkflowDef workflowByName = workflowConfig.getWorkflowByName(bucketEntry.getWorkflowName());
             for (WorkflowBucketDef bucketDef : workflowByName.getEffectiveVersion().getCreationBuckets()) {
-                for (LabVessel.MaterialType materialType : bucketDef.getBucketEntryEvaluator().getMaterialTypes()) {
+                for (MaterialType materialType : bucketDef.getBucketEntryEvaluator().getMaterialTypes()) {
                     if (bucketEntry.getLabVessel().isMaterialType(materialType)) {
                         CustomField materialTypeField = new CustomField(submissionFields, LabBatch.TicketFields.EXTRACTION_BATCH_TYPE,
                                 new Object[]{new CustomField.ValueContainer(materialType.getDisplayName())});

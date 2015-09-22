@@ -687,7 +687,7 @@ public interface TransferTraverserCriteria {
      * Traverse LabVessels and LabEvents to find current MaterialType
      */
     class NearestMaterialTypeTraverserCriteria implements TransferTraverserCriteria {
-        private LabVessel.MaterialType materialType=null;
+        private MaterialType materialType=null;
 
         public NearestMaterialTypeTraverserCriteria() {
         }
@@ -721,7 +721,7 @@ public interface TransferTraverserCriteria {
         }
 
         private void evaluateEvent(LabVessel vessel, LabEvent event) {
-            LabVessel.MaterialType resultingMaterialType = event.getLabEventType().getResultingMaterialType();
+            MaterialType resultingMaterialType = event.getLabEventType().getResultingMaterialType();
             if (resultingMaterialType != null) {
                 materialType=resultingMaterialType;
             }
@@ -735,7 +735,7 @@ public interface TransferTraverserCriteria {
         public void evaluateVesselPostOrder(Context context) {
         }
 
-        public LabVessel.MaterialType getMaterialType() {
+        public MaterialType getMaterialType() {
             return materialType;
         }
     }

@@ -12,6 +12,8 @@
                 <reEntryPoint>false</reEntryPoint>
                 <bucketEntryEvaluator>
                     <materialTypes>DNA</materialTypes>
+                    <materialTypes>DNA_DNA_GENOMIC</materialTypes>
+                    <materialTypes>DNA_DNA_SOMATIC</materialTypes>
                 </bucketEntryEvaluator>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -62,6 +64,8 @@
                 <reEntryPoint>false</reEntryPoint>
                 <bucketEntryEvaluator>
                     <materialTypes>DNA</materialTypes>
+                    <materialTypes>DNA_DNA_GENOMIC</materialTypes>
+                    <materialTypes>DNA_DNA_SOMATIC</materialTypes>
                 </bucketEntryEvaluator>
                 <batchJiraProjectType>LCSET</batchJiraProjectType>
                 <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
@@ -122,6 +126,8 @@
                 <reEntryPoint>false</reEntryPoint>
                 <bucketEntryEvaluator>
                     <materialTypes>DNA</materialTypes>
+                    <materialTypes>DNA_DNA_GENOMIC</materialTypes>
+                    <materialTypes>DNA_DNA_SOMATIC</materialTypes>
                 </bucketEntryEvaluator>
                 <batchJiraProjectType>LCSET</batchJiraProjectType>
                 <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
@@ -242,6 +248,8 @@
                 </jiraTransition>
                 <bucketEntryEvaluator>
                     <materialTypes>DNA</materialTypes>
+                    <materialTypes>DNA_DNA_GENOMIC</materialTypes>
+                    <materialTypes>DNA_DNA_SOMATIC</materialTypes>
                 </bucketEntryEvaluator>
                 <batchJiraProjectType>LCSET</batchJiraProjectType>
                 <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
@@ -416,6 +424,8 @@
                 <reEntryPoint>false</reEntryPoint>
                 <bucketEntryEvaluator>
                     <materialTypes>DNA</materialTypes>
+                    <materialTypes>DNA_DNA_GENOMIC</materialTypes>
+                    <materialTypes>DNA_DNA_SOMATIC</materialTypes>
                 </bucketEntryEvaluator>
                 <batchJiraProjectType>LCSET</batchJiraProjectType>
                 <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
@@ -551,6 +561,8 @@
                 <reEntryPoint>false</reEntryPoint>
                 <bucketEntryEvaluator>
                     <materialTypes>DNA</materialTypes>
+                    <materialTypes>DNA_DNA_GENOMIC</materialTypes>
+                    <materialTypes>DNA_DNA_SOMATIC</materialTypes>
                 </bucketEntryEvaluator>
                 <batchJiraProjectType>LCSET</batchJiraProjectType>
                 <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
@@ -759,6 +771,8 @@
                 <reEntryPoint>false</reEntryPoint>
                 <bucketEntryEvaluator>
                     <materialTypes>DNA</materialTypes>
+                    <materialTypes>DNA_DNA_GENOMIC</materialTypes>
+                    <materialTypes>DNA_DNA_SOMATIC</materialTypes>
                 </bucketEntryEvaluator>
                 <batchJiraProjectType>LCSET</batchJiraProjectType>
                 <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
@@ -962,8 +976,10 @@
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
                 <bucketEntryEvaluator>
-                    <materialTypes>LabVessel.MaterialType.FRESH_BLOOD</materialTypes>
-                    <materialTypes>LabVessel.MaterialType.FRESH_FROZEN_BLOOD</materialTypes>
+                    <materialTypes>FRESH_BLOOD</materialTypes>
+                    <materialTypes>FRESH_FROZEN_BLOOD</materialTypes>
+                    <materialTypes>WHOLE_BLOOD_WHOLE_BLOOD_FRESH</materialTypes>
+                    <materialTypes>WHOLE_BLOOD_WHOLE_BLOOD_FROZEN</materialTypes>
                 </bucketEntryEvaluator>
                 <batchJiraProjectType>XTR</batchJiraProjectType>
                 <batchJiraIssueType>DNA_EXTRACTION</batchJiraIssueType>
@@ -1163,6 +1179,8 @@
                 <reEntryPoint>false</reEntryPoint>
                 <bucketEntryEvaluator>
                     <materialTypes>DNA</materialTypes>
+                    <materialTypes>DNA_DNA_GENOMIC</materialTypes>
+                    <materialTypes>DNA_DNA_SOMATIC</materialTypes>
                 </bucketEntryEvaluator>
                 <batchJiraProjectType>XTR</batchJiraProjectType>
                 <batchJiraIssueType>RNA_EXTRACTION</batchJiraIssueType>
@@ -1223,8 +1241,8 @@
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
                 <bucketEntryEvaluator>
-                    <materialTypes>TISSUE_FRESH_FROZEN</materialTypes>
-                    <materialTypes>TISSUE_OCT_EMBEDDED</materialTypes>
+                    <materialTypes>TISSUE_FRESH_FROZEN_TISSUE</materialTypes>
+                    <materialTypes>TISSUE_OCT_EMBEDDED_TISSUE</materialTypes>
                     <workflows>DNA_RNA_EXTRACTION_FROZEN_TISSUE</workflows>
                 </bucketEntryEvaluator>
                 <batchJiraProjectType>XTR</batchJiraProjectType>
@@ -1244,7 +1262,7 @@
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
                 <bucketEntryEvaluator>
-                    <materialTypes>FFPE_TISSUE_SECTION</materialTypes>
+                    <materialTypes>TISSUE_FFPE_TISSUE_SECTION</materialTypes>
                     <workflows>DNA_RNA_EXTRACTION_FFPE_SECTIONS</workflows>
                 </bucketEntryEvaluator>
                 <batchJiraProjectType>XTR</batchJiraProjectType>
@@ -1413,8 +1431,8 @@
                 <reEntryPoint>false</reEntryPoint>
                 <bucketEntryEvaluator>
                     <workflows>DNA_EXTRACTION_FROZEN_TISSUE</workflows>
-                    <materialTypes>TISSUE_FRESH_FROZEN</materialTypes>
-                    <materialTypes>TISSUE_OCT_EMBEDDED</materialTypes>
+                    <materialTypes>TISSUE_FRESH_FROZEN_TISSUE</materialTypes>
+                    <materialTypes>TISSUE_OCT_EMBEDDED_TISSUE</materialTypes>
                 </bucketEntryEvaluator>
                 <batchJiraProjectType>XTR</batchJiraProjectType>
                 <batchJiraIssueType>DNA</batchJiraIssueType>
@@ -1433,8 +1451,8 @@
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
                 <bucketEntryEvaluator>
-                    <workflows>DNA_EXTRACTION_FFPE_TISSUE_SECTION</workflows>
-                    <materialTypes>FFPE_TISSUE_SECTION</materialTypes>
+                    <workflows>DNA_EXTRACTION_TISSUE_FFPE_TISSUE_SECTION</workflows>
+                    <materialTypes>TISSUE_FFPE_TISSUE_SECTION</materialTypes>
                 </bucketEntryEvaluator>
                 <batchJiraProjectType>XTR</batchJiraProjectType>
                 <batchJiraIssueType>DNA</batchJiraIssueType>
@@ -1554,8 +1572,8 @@
                 <reEntryPoint>false</reEntryPoint>
                 <bucketEntryEvaluator>
                     <workflows>RNA_EXTRACTION_FROZEN_TISSUE</workflows>
-                    <materialTypes>TISSUE_FRESH_FROZEN</materialTypes>
-                    <materialTypes>TISSUE_OCT_EMBEDDED</materialTypes>
+                    <materialTypes>TISSUE_FRESH_FROZEN_TISSUE</materialTypes>
+                    <materialTypes>TISSUE_OCT_EMBEDDED_TISSUE</materialTypes>
                 </bucketEntryEvaluator>
                 <batchJiraProjectType>XTR</batchJiraProjectType>
                 <batchJiraIssueType>RNA</batchJiraIssueType>
@@ -1574,8 +1592,8 @@
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
                 <bucketEntryEvaluator>
-                    <workflows>RNA_EXTRACTION_FFPE_TISSUE_SECTION</workflows>
-                    <materialTypes>FFPE_TISSUE_SECTION</materialTypes>
+                    <workflows>RNA_EXTRACTION_TISSUE_FFPE_TISSUE_SECTION</workflows>
+                    <materialTypes>TISSUE_FFPE_TISSUE_SECTION</materialTypes>
                 </bucketEntryEvaluator>
                 <batchJiraProjectType>XTR</batchJiraProjectType>
                 <batchJiraIssueType>RNA</batchJiraIssueType>

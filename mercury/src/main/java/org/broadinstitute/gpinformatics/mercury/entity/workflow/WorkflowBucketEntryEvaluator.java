@@ -14,6 +14,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -27,12 +28,12 @@ import java.util.Set;
 @XmlAccessorType(XmlAccessType.FIELD)
 public class WorkflowBucketEntryEvaluator implements Serializable {
     Set<Workflow> workflows = new HashSet<>();
-    Set<LabVessel.MaterialType> materialTypes = new HashSet<>();
+    Set<MaterialType> materialTypes = new HashSet<>();
 
     public WorkflowBucketEntryEvaluator() {
     }
 
-    WorkflowBucketEntryEvaluator(Set<Workflow> workflows, Set<LabVessel.MaterialType> materialTypes) {
+    WorkflowBucketEntryEvaluator(Set<Workflow> workflows, Set<MaterialType> materialTypes) {
         this.workflows = workflows;
         this.materialTypes = materialTypes;
     }
@@ -41,7 +42,7 @@ public class WorkflowBucketEntryEvaluator implements Serializable {
         if (materialTypes.isEmpty()){
             return true;
         }
-        for (LabVessel.MaterialType materialType : materialTypes) {
+        for (MaterialType materialType : materialTypes) {
             if (labVessel.isMaterialType(materialType)) {
                 return true;
             }
@@ -68,7 +69,7 @@ public class WorkflowBucketEntryEvaluator implements Serializable {
         return productAddOnsHaveWorkflow(productOrder) && materialTypeMatches(labVessel);
     }
 
-    public Set<LabVessel.MaterialType> getMaterialTypes() {
+    public Set<MaterialType> getMaterialTypes() {
         return materialTypes;
     }
 }

@@ -9,7 +9,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
@@ -66,7 +65,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import java.util.regex.Pattern;
 
 /**
  * This entity represents a piece of plastic or glass that holds sample, reagent or (if it embeds a
@@ -229,7 +227,7 @@ public abstract class LabVessel implements Serializable {
         if (!hasMaterialConvertedToMaterialType) {
             for (String sampleMaterialType : getMaterialTypes()) {
                 if (StringUtils.isNotBlank(sampleMaterialType)) {
-                    if (materialType.matches(sampleMaterialType)) {
+                    if (materialType.getDisplayName().equals(sampleMaterialType)) {
                         return true;
                     }
                 }
@@ -638,64 +636,6 @@ public abstract class LabVessel implements Serializable {
 
         public String getName() {
             return name;
-        }
-    }
-
-    public enum MaterialType implements Displayable {
-        CELL_SUSPENSION("Cell Suspension"),
-        CELLS_PELLET_FROZEN("Cells: Pellet Frozen"),
-        CELLS_CELL_LINE_VIABLE("Cells:Cell Line, Viable"),
-        CELLS_PELLET_FROZEN_IN_X_MEDIA("Cells: Pellet Frozen in X media"),
-        DNA("DNA"),
-        FFPE_TISSUE_SECTION("FFPE Tissue Section"),
-        FFPE_SCROLL("FFPE Scroll"),
-        FFPE_BLOCK("FFPE Block"),
-        FRESH_BLOOD("Fresh Blood", "(?!.*frozen)(?!.*buffy)(?=.*blood).*"),
-        FRESH_FROZEN_BLOOD("Fresh Frozen Blood", "^(?=.*frozen)(?=.*blood).*"),
-        TISSUE_FRESH_FROZEN("Tissue: Fresh Frozen"),
-        TISSUE_OCT_EMBEDDED("Tissue: OCT Embedded"),
-        WHOLE_BLOOD_FRESH("Whole Blood: Fresh"),
-        WHOLE_BLOOD_FROZEN("Whole Blood: Frozen"),
-        WHOLE_BLOOD_PBMC("Whole Blood: PBMC"),
-        WHOLE_BLOOD_BUFFY_COAT("Whole Blood: Buffy Coat"),
-        WHOLE_BLOOD_BLOOD_SPOT("Whole Blood: Blood Spot"),
-        BODILY_FLUID_SALIVA("Bodily Fluid: Saliva"),
-        RNA("RNA"),
-        BUFFY_COAT("Buffy Coat"),
-        SALIVA("Saliva"),
-        STOOL("Stool");
-
-        private final String displayName;
-        private final Pattern matchPattern;
-
-        MaterialType(String displayName) {
-            this(displayName, String.format("(.*:\\s?)?%s.*", displayName.toLowerCase().replaceAll("\\s", "[\\\\s|_]+")));
-        }
-
-        MaterialType(String displayName, String matchPattern) {
-            this.displayName = displayName;
-            this.matchPattern = Pattern.compile(matchPattern);
-        }
-
-        public boolean matches(String value) {
-            return matchPattern.matcher(value.toLowerCase()).matches();
-        }
-
-        public static MaterialType fromDisplayName(String displayName) {
-
-            MaterialType foundType = null;
-            for (MaterialType materialType : values()) {
-                if(materialType.matches(displayName)) {
-                    foundType = materialType;
-                    break;
-                }
-            }
-            return foundType;
-        }
-
-        @Override
-        public String getDisplayName() {
-            return displayName;
         }
     }
 
