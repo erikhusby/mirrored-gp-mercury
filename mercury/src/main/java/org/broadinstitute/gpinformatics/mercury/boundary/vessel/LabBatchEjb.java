@@ -10,7 +10,6 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
@@ -87,8 +86,6 @@ public class LabBatchEjb {
     private SampleDataFetcher sampleDataFetcher;
 
     private ControlDao controlDao;
-
-    private BSPUserList bspUserList;
 
     private WorkflowLoader workflowLoader;
 
@@ -386,12 +383,6 @@ public class LabBatchEjb {
 
                 JiraTicket ticket = new JiraTicket(jiraService, jiraIssue.getKey());
 
-                // Add Product managers as watchers
-                for (BucketEntry bucketEntry : newBatch.getBucketEntries()) {
-                    ticket.addWatcher(bspUserList.getById(bucketEntry.getProductOrder().getCreatedBy()).getUsername());
-                    ticket.addWatcher(bspUserList.getById(bucketEntry.getProductOrder().getModifiedBy()).getUsername());
-                }
-
                 newBatch.setJiraTicket(ticket);
             }
         } catch (IOException ioe) {
@@ -662,8 +653,4 @@ public class LabBatchEjb {
         this.workflowLoader = workflowLoader;
     }
 
-    @Inject
-    public void setBspUserList(BSPUserList bspUserList) {
-        this.bspUserList = bspUserList;
-    }
 }

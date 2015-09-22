@@ -349,7 +349,7 @@ public class WorkflowTest {
         productOrder.updateAddOnProducts(Collections.singletonList(addOn));
 
         ProductWorkflowDef workflow = new WorkflowLoader().load().getWorkflow(Workflow.DNA_RNA_EXTRACTION_FROZEN_TISSUE);
-        WorkflowBucketDef workflowBucketDef = workflow.getEffectiveVersion().findBucketDefByName("Extract to DNA and RNA Bucket");
+        WorkflowBucketDef workflowBucketDef = workflow.getEffectiveVersion().findBucketDefByName("Extract to DNA and RNA");
         boolean meetsBucketCriteria = workflowBucketDef.meetsBucketCriteria(barcodedTube, productOrder);
 
         assertThat(meetsBucketCriteria, is(false));
@@ -371,7 +371,7 @@ public class WorkflowTest {
 
         ProductWorkflowDef workflow = new WorkflowLoader().load().getWorkflow(Workflow.DNA_RNA_EXTRACTION_FROZEN_TISSUE);
 
-        WorkflowBucketDef workflowBucketDef = workflow.getEffectiveVersion().findBucketDefByName("Extract to DNA and RNA Bucket");
+        WorkflowBucketDef workflowBucketDef = workflow.getEffectiveVersion().findBucketDefByName("Extract to DNA and RNA");
         boolean meetsBucketCriteria = workflowBucketDef.meetsBucketCriteria(barcodedTube, productOrder);
 
         assertThat(meetsBucketCriteria, is(false));
@@ -392,7 +392,7 @@ public class WorkflowTest {
         ProductWorkflowDef workflow = new WorkflowLoader().load().getWorkflow(Workflow.DNA_RNA_EXTRACTION_FROZEN_TISSUE);
 
         WorkflowBucketDef workflowBucketDef = workflow.getEffectiveVersion()
-                .findBucketDefByName("Extract to DNA and RNA Bucket");
+                .findBucketDefByName("Extract to DNA and RNA");
         boolean meetsBucketCriteria = workflowBucketDef.meetsBucketCriteria(barcodedTube, productOrder);
 
         assertThat(meetsBucketCriteria, is(false));
