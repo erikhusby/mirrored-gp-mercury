@@ -109,13 +109,6 @@ public class InfiniumEntityBuilder {
         }
 
         i = 0;
-        for (PlateEventType plateEventType : infiniumJaxbBuilder.getInfiniumWashJaxbs()) {
-            LabEvent washEvent = labEventFactory.buildFromBettaLimsPlateEventDbFree(plateEventType, hybChips.get(i));
-            labEventHandler.processEvent(washEvent);
-            i++;
-        }
-
-        i = 0;
         for (PlateEventType plateEventType : infiniumJaxbBuilder.getInfiniumXStainJaxbs()) {
             LabEvent xstainEvent = labEventFactory.buildFromBettaLimsPlateEventDbFree(plateEventType, hybChips.get(i));
             labEventHandler.processEvent(xstainEvent);
