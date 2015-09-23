@@ -156,7 +156,7 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
         return parents;
     }
 
-    public static class HasRackContentByWellCriteria implements TransferTraverserCriteria {
+    public static class HasRackContentByWellCriteria extends TransferTraverserCriteria {
 
         private Map<VesselPosition, Boolean> result = new HashMap<>();
 

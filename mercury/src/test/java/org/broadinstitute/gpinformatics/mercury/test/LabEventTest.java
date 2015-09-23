@@ -144,7 +144,7 @@ public class LabEventTest extends BaseEventTest {
     /**
      * Used in test verification, accumulates the events in a chain of transfers
      */
-    public static class ListTransfersFromStart implements TransferTraverserCriteria {
+    public static class ListTransfersFromStart extends TransferTraverserCriteria {
         private int hopCount = -1;
         private final List<String> labEventNames = new ArrayList<>();
 

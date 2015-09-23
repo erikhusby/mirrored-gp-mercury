@@ -24,14 +24,14 @@ import java.util.TreeSet;
 /**
  * Implemented by classes that accumulate information from a traversal of transfer history
  */
-public interface TransferTraverserCriteria {
+public abstract class TransferTraverserCriteria {
 
-    enum TraversalControl {
+    public enum TraversalControl {
         ContinueTraversing,
         StopTraversing
     }
 
-    enum TraversalDirection {
+    public enum TraversalDirection {
         Ancestors,
         Descendants
     }
@@ -43,7 +43,7 @@ public interface TransferTraverserCriteria {
      * <li>The target lab event/vessel in the traversal path</li>
      * <li>The direction of traversal</li></ul>
      */
-    class Context {
+    public static class Context {
 
         /**
          * The lab vessel, position, container from which the traversal started.
@@ -71,48 +71,6 @@ public interface TransferTraverserCriteria {
         private TransferTraverserCriteria.TraversalDirection traversalDirection;
 
         private Context(){}
-
-        /**
-         * Creates a context for traversal starting vessel.
-         *
-         * @param startingLabVessel  the lab vessel at the start of any traversal
-         * @param startingVesselPosition  the lab vessel container position at the start of any traversal
-         * @param startingVesselContainer  the lab vessel container
-         * @param traversalDirection the direction of traversal
-         */
-        public static Context buildStartingContext(LabVessel startingLabVessel,
-                                                   VesselPosition startingVesselPosition,
-                                                   VesselContainer startingVesselContainer,
-                                                   @Nonnull TraversalDirection traversalDirection) {
-            Context context = new Context();
-            context.startingLabVessel = startingLabVessel;
-            context.startingVesselPosition = startingVesselPosition;
-            context.startingVesselContainer = startingVesselContainer;
-            context.vesselEvent = null;
-            context.hopCount = 0;
-            context.traversalDirection = traversalDirection;
-            return context;
-        }
-
-        /**
-         * Creates a context for a node in a traversal.
-         *
-         * @param vesselEvent  event transfer in the process flow directly from this vessel/container
-         * @param hopCount           the traversal depth
-         * @param traversalDirection the direction of traversal
-         */
-        public static Context buildTraversalNodeContext(LabVessel.VesselEvent vesselEvent,
-                                                        int hopCount,
-                                                        @Nonnull TraversalDirection traversalDirection) {
-            Context context = new Context();
-            context.startingLabVessel = null;
-            context.startingVesselPosition = null;
-            context.startingVesselContainer = null;
-            context.vesselEvent = vesselEvent;
-            context.hopCount = hopCount;
-            context.traversalDirection = traversalDirection;
-            return context;
-        }
 
         public LabVessel getStartingLabVessel() {
             return startingLabVessel;
@@ -142,26 +100,111 @@ public interface TransferTraverserCriteria {
     }
 
     /**
+     * Keeps track of vessels and container/positions which have already been visited in the traversal tree.
+     * Prevents repeatedly traversing entire tree from same vessel (e.g. 96 times for each pool)
+     */
+    private final Set<LabVessel> traversedVessels = new HashSet<>();
+    private final Set<VesselAndPosition> traversedVesselsAndPositions = new HashSet<>();
+
+    /**
+     * Tracks vessels which have already been visited in the traversal tree.
+     * @param vessel Vessel being traversed via LabVessel.evaluateCriteria call
+     * @return True if vessel has been traversed
+     */
+    protected boolean hasVesselBeenTraversed( LabVessel vessel ) {
+        return !traversedVessels.add(vessel);
+    }
+
+    /**
+     * There are cases (e.g. LabVessel.findVesselsForLabEventTypes) which share the same criteria
+     *   in ancestry and descendant traversals.  Prevent skipping of starting vessel when switching directions.
+     */
+    protected void resetAllTraversed(){
+        traversedVessels.clear();
+        traversedVesselsAndPositions.clear();
+    }
+
+    /**
+     * Tracks positions in container vessels which have already been visited in the traversal tree.
+     * @param vessel Container vessel being traversed via VesselContainer.evaluateCriteria call
+     * @param position Position in the container vessel
+     * @return true if position in container has been traversed ( or there is no vessel at position )
+     */
+    protected boolean hasVesselPositionBeenTraversed( VesselContainer vessel, VesselPosition position ) {
+        if( vessel == null || position == null ) {
+            return true;
+        }
+
+        VesselAndPosition vesselAndPosition = new VesselAndPosition(vessel.getEmbedder(), position );
+        return !traversedVesselsAndPositions.add(vesselAndPosition);
+    }
+
+    /**
+     * Creates a context for traversal starting vessel.
+     *
+     * @param startingLabVessel  the lab vessel at the start of any traversal
+     * @param startingVesselPosition  the lab vessel container position at the start of any traversal
+     * @param startingVesselContainer  the lab vessel container
+     * @param traversalDirection the direction of traversal
+     */
+    public static TransferTraverserCriteria.Context buildStartingContext(LabVessel startingLabVessel,
+                                               VesselPosition startingVesselPosition,
+                                               VesselContainer startingVesselContainer,
+                                               @Nonnull TraversalDirection traversalDirection) {
+        Context context = new Context();
+        context.startingLabVessel = startingLabVessel;
+        context.startingVesselPosition = startingVesselPosition;
+        context.startingVesselContainer = startingVesselContainer;
+        context.vesselEvent = null;
+        context.hopCount = 0;
+        context.traversalDirection = traversalDirection;
+        return context;
+    }
+
+    /**
+     * Creates a context for a node in a traversal.
+     *
+     * @param vesselEvent  event transfer in the process flow directly from this vessel/container
+     * @param hopCount           the traversal depth
+     * @param traversalDirection the direction of traversal
+     */
+    public static Context buildTraversalNodeContext(LabVessel.VesselEvent vesselEvent,
+                                                    int hopCount,
+                                                    @Nonnull TraversalDirection traversalDirection) {
+        Context context = new Context();
+        context.startingLabVessel = null;
+        context.startingVesselPosition = null;
+        context.startingVesselContainer = null;
+        context.vesselEvent = vesselEvent;
+        context.hopCount = hopCount;
+        context.traversalDirection = traversalDirection;
+        return context;
+    }
+
+
+
+
+    /**
      * Callback method called before processing the next level of vessels in the traversal.
      *
      * @param context
      *
      * @return
      */
-    TraversalControl evaluateVesselPreOrder(Context context);
+    public abstract TraversalControl evaluateVesselPreOrder(Context context);
 
     /**
      * Callback method called after processing the next level of vessels in the traversal.
      *
      * @param context
      */
-    void evaluateVesselPostOrder(Context context);
+    public abstract void evaluateVesselPostOrder(Context context);
 
     /**
      * Searches for nearest Lab Batch <br />
      * Despite class name, all lab batches are located, method getNearestLabBatches returns the nearest.
      */
-    class NearestLabBatchFinder implements TransferTraverserCriteria {
+    public static class NearestLabBatchFinder extends TransferTraverserCriteria {
 
         public enum AssociationType {
             GENERAL_LAB_VESSEL,
@@ -288,7 +331,7 @@ public interface TransferTraverserCriteria {
      * Searches for nearest metric of specified type <br />
      * Despite class name, all metrics are located, method getNearestMetrics returns the nearest.
      */
-    class NearestLabMetricOfTypeCriteria implements TransferTraverserCriteria {
+    public static class NearestLabMetricOfTypeCriteria extends TransferTraverserCriteria {
         private LabMetric.MetricType metricType;
         private Map<Integer, List<LabMetric>> labMetricsAtHop = new HashMap<>();
 
@@ -346,7 +389,7 @@ public interface TransferTraverserCriteria {
         }
     }
 
-    class NearestProductOrderCriteria implements TransferTraverserCriteria {
+    public static class NearestProductOrderCriteria extends TransferTraverserCriteria {
 
         private final Map<Integer, Collection<String>> productOrdersAtHopCount =
                 new HashMap<>();
@@ -406,7 +449,7 @@ public interface TransferTraverserCriteria {
         }
     }
 
-    class LabVesselDescendantCriteria implements TransferTraverserCriteria {
+    public static class LabVesselDescendantCriteria extends TransferTraverserCriteria {
         private final Map<Integer, List<LabVessel>> labVesselAtHopCount = new TreeMap<>();
 
         @Override
@@ -452,7 +495,7 @@ public interface TransferTraverserCriteria {
         }
     }
 
-    class LabVesselAncestorCriteria implements TransferTraverserCriteria {
+    public static class LabVesselAncestorCriteria extends TransferTraverserCriteria {
         private final Map<Integer, List<LabVessel>> labVesselAtHopCount = new TreeMap<>();
 
         @Override
@@ -505,7 +548,7 @@ public interface TransferTraverserCriteria {
      * be saved for access, but also an object that relates the tube to its position at its found location will be
      * returned.
      */
-    class NearestTubeAncestorsCriteria implements TransferTraverserCriteria {
+    public static class NearestTubeAncestorsCriteria extends TransferTraverserCriteria {
 
         private final Set<LabVessel> tubes = new HashSet<>();
         private final Set<VesselAndPosition> vesselAndPositions = new LinkedHashSet<>();
@@ -560,7 +603,7 @@ public interface TransferTraverserCriteria {
      * of the tubes position in the container that it is found, and sometimes creating the VesselAndPosition object
      * breaks so this is being used in its place.
      */
-    class NearestTubeAncestorCriteria implements TransferTraverserCriteria {
+    public static class NearestTubeAncestorCriteria extends TransferTraverserCriteria {
 
         private LabVessel tube;
 
@@ -597,7 +640,7 @@ public interface TransferTraverserCriteria {
 
     }
 
-    class VesselTypeDescendantCriteria<T extends LabVessel> implements TransferTraverserCriteria {
+    public static class VesselTypeDescendantCriteria<T extends LabVessel> extends TransferTraverserCriteria {
         private Collection<T> descendantsOfVesselType = new HashSet<>();
         private final Class<T> typeParameterClass;
 
@@ -634,7 +677,7 @@ public interface TransferTraverserCriteria {
         }
     }
 
-    class VesselForEventTypeCriteria implements TransferTraverserCriteria {
+    public static class VesselForEventTypeCriteria extends TransferTraverserCriteria {
         private List<LabEventType> types;
         private boolean useTargetVessels = true;
         private Map<LabEvent, Set<LabVessel>> vesselsForLabEventType = new HashMap<>();
@@ -730,7 +773,7 @@ public interface TransferTraverserCriteria {
     /**
      * Traverse LabVessels and LabEvents to find current MaterialType
      */
-    class NearestMaterialTypeTraverserCriteria implements TransferTraverserCriteria {
+    public static class NearestMaterialTypeTraverserCriteria extends TransferTraverserCriteria {
         private LabVessel.MaterialType materialType=null;
 
         public NearestMaterialTypeTraverserCriteria() {
@@ -798,7 +841,7 @@ public interface TransferTraverserCriteria {
     /**
      * Capture chain of events following a lab vessel
      */
-    class LabEventDescendantCriteria implements TransferTraverserCriteria {
+    public static class LabEventDescendantCriteria extends TransferTraverserCriteria {
 
         private final Set<LabEvent> labEvents = new TreeSet<LabEvent>( LabEvent.BY_EVENT_DATE_LOC );
 

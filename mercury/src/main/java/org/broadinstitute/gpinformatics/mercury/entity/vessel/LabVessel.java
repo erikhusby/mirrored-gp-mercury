@@ -1083,6 +1083,12 @@ public abstract class LabVessel implements Serializable {
 
     void traverseDescendants(TransferTraverserCriteria criteria, TransferTraverserCriteria.TraversalDirection direction,
                              int hopCount) {
+
+        // No need to traverse the same vessel multiple times
+        if( criteria.hasVesselBeenTraversed(this) ) {
+            return;
+        }
+
         for (VesselEvent vesselEvent : getDescendants()) {
             evaluateVesselEvent(criteria, direction, hopCount, vesselEvent);
         }
@@ -1307,7 +1313,7 @@ public abstract class LabVessel implements Serializable {
      */
     public void evaluateCriteria(TransferTraverserCriteria transferTraverserCriteria,
                                  TransferTraverserCriteria.TraversalDirection traversalDirection) {
-        TransferTraverserCriteria.Context context = TransferTraverserCriteria.Context.buildStartingContext(this, null, null, traversalDirection);
+        TransferTraverserCriteria.Context context = TransferTraverserCriteria.buildStartingContext(this, null, null, traversalDirection);
         transferTraverserCriteria.evaluateVesselPreOrder(context);
         evaluateCriteria(transferTraverserCriteria, traversalDirection, 1);
         transferTraverserCriteria.evaluateVesselPostOrder(context);
@@ -1325,6 +1331,11 @@ public abstract class LabVessel implements Serializable {
         TransferTraverserCriteria.Context context;
         List<VesselEvent> traversalNodes;
 
+        // No need to traverse the same vessel multiple times
+        if( transferTraverserCriteria.hasVesselBeenTraversed(this) ) {
+            return;
+        }
+
         if (traversalDirection == TransferTraverserCriteria.TraversalDirection.Ancestors) {
             traversalNodes = getAncestors();
         } else {
@@ -1332,7 +1343,7 @@ public abstract class LabVessel implements Serializable {
         }
 
         for( VesselEvent vesselEvent : traversalNodes ) {
-            context = TransferTraverserCriteria.Context.buildTraversalNodeContext(vesselEvent, hopCount, traversalDirection);
+            context = TransferTraverserCriteria.buildTraversalNodeContext(vesselEvent, hopCount, traversalDirection);
             transferTraverserCriteria.evaluateVesselPreOrder(context);
             evaluateVesselEvent(transferTraverserCriteria,
                         traversalDirection,
@@ -1568,6 +1579,8 @@ public abstract class LabVessel implements Serializable {
         TransferTraverserCriteria.VesselForEventTypeCriteria vesselForEventTypeCriteria =
                 new TransferTraverserCriteria.VesselForEventTypeCriteria(types, useTargetVessels);
         for (TransferTraverserCriteria.TraversalDirection traversalDirection : traversalDirections) {
+            // Do not skip starting vessel when switching directions
+            vesselForEventTypeCriteria.resetAllTraversed();
             evaluateCriteria(vesselForEventTypeCriteria, traversalDirection);
         }
         return vesselForEventTypeCriteria.getVesselsForLabEventType();

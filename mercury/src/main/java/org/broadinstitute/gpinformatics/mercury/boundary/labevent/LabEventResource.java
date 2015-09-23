@@ -275,7 +275,7 @@ public class LabEventResource {
     }
 
     // todo jmt make this work for sample starters
-    static class StarterCriteria implements TransferTraverserCriteria {
+    static class StarterCriteria extends TransferTraverserCriteria {
         private LabVessel starter;
 
         @Override

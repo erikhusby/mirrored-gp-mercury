@@ -279,13 +279,18 @@ public class VesselContainer<T extends LabVessel> {
     public void evaluateCriteria(VesselPosition position, TransferTraverserCriteria transferTraverserCriteria,
                                  TransferTraverserCriteria.TraversalDirection traversalDirection,
                                  int hopCount) {
+
+        if( transferTraverserCriteria.hasVesselPositionBeenTraversed(this, position)) {
+            return;
+        }
+
         TransferTraverserCriteria.Context context = null;
         T vesselAtPosition = getVesselAtPosition(position);
         boolean continueTraversing = true;
 
         // Have to evaluate traversal starting vessel/position without an event
         if (hopCount == 0) {
-            context = TransferTraverserCriteria.Context.buildStartingContext(
+            context = TransferTraverserCriteria.buildStartingContext(
                     vesselAtPosition, position, this, traversalDirection );
             if (transferTraverserCriteria.evaluateVesselPreOrder(context) ==
                     TransferTraverserCriteria.TraversalControl.StopTraversing ) {
@@ -350,7 +355,7 @@ public class VesselContainer<T extends LabVessel> {
                 LabVessel.VesselEvent vesselEvent = new LabVessel.VesselEvent(
                         sourceVesselContainer.getVesselAtPosition(sourcePosition), sourceVesselContainer,
                         sourcePosition, sectionTransfer.getLabEvent(), targetVessel, this, position );
-                context = TransferTraverserCriteria.Context.buildTraversalNodeContext(
+                context = TransferTraverserCriteria.buildTraversalNodeContext(
                         vesselEvent, hopCount + 1, traversalDirection);
                 if( !(transferTraverserCriteria.evaluateVesselPreOrder(context) == TransferTraverserCriteria.TraversalControl.ContinueTraversing)  || !continueTraversing ) {
                     continueTraversing = false;
@@ -371,7 +376,7 @@ public class VesselContainer<T extends LabVessel> {
                 LabVessel.VesselEvent vesselEvent = new LabVessel.VesselEvent(
                         sourceVesselContainer.getVesselAtPosition(sourcePosition), sourceVesselContainer,
                         sourcePosition, cherryPickTransfer.getLabEvent(), targetVessel, this, position );
-                context = TransferTraverserCriteria.Context.buildTraversalNodeContext(
+                context = TransferTraverserCriteria.buildTraversalNodeContext(
                         vesselEvent, hopCount + 1, traversalDirection);
                 if( !(transferTraverserCriteria.evaluateVesselPreOrder(context) == TransferTraverserCriteria.TraversalControl.ContinueTraversing)  || !continueTraversing ) {
                     continueTraversing = false;
@@ -393,7 +398,7 @@ public class VesselContainer<T extends LabVessel> {
                 LabVessel.VesselEvent vesselEvent = new LabVessel.VesselEvent(
                         vesselToSectionTransfer.getSourceVessel(), null,
                         null, vesselToSectionTransfer.getLabEvent(), targetVessel, this, position );
-                context = TransferTraverserCriteria.Context.buildTraversalNodeContext(
+                context = TransferTraverserCriteria.buildTraversalNodeContext(
                         vesselEvent, hopCount + 1, traversalDirection);
                 if( !(transferTraverserCriteria.evaluateVesselPreOrder(context) == TransferTraverserCriteria.TraversalControl.ContinueTraversing)  || !continueTraversing ) {
                     continueTraversing = false;
@@ -429,7 +434,7 @@ public class VesselContainer<T extends LabVessel> {
                 LabVessel.VesselEvent vesselEvent = new LabVessel.VesselEvent(
                         sourceVessel, this, sourcePosition, sectionTransfer.getLabEvent(),
                         targetVessel, targetVesselContainer, targetPosition );
-                context = TransferTraverserCriteria.Context.buildTraversalNodeContext(
+                context = TransferTraverserCriteria.buildTraversalNodeContext(
                         vesselEvent, hopCount + 1, traversalDirection);
                 if( !(transferTraverserCriteria.evaluateVesselPreOrder(context) == TransferTraverserCriteria.TraversalControl.ContinueTraversing)  || !continueTraversing ) {
                     continueTraversing = false;
@@ -450,7 +455,7 @@ public class VesselContainer<T extends LabVessel> {
                 LabVessel.VesselEvent vesselEvent = new LabVessel.VesselEvent(
                         sourceVessel, this, sourcePosition, cherryPickTransfer.getLabEvent(),
                         targetVessel, targetVesselContainer, targetPosition );
-                context = TransferTraverserCriteria.Context.buildTraversalNodeContext(
+                context = TransferTraverserCriteria.buildTraversalNodeContext(
                         vesselEvent, hopCount + 1, traversalDirection);
                 if( !(transferTraverserCriteria.evaluateVesselPreOrder(context) == TransferTraverserCriteria.TraversalControl.ContinueTraversing)  || !continueTraversing ) {
                     continueTraversing = false;

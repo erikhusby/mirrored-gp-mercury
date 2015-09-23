@@ -39,7 +39,7 @@ public class LabBatchDbTest extends ContainerTest {
     /**
      * Used in test verification, accumulates the events in a chain of transfers
      */
-    public static class AccumulateLabEvents implements TransferTraverserCriteria {
+    public static class AccumulateLabEvents extends TransferTraverserCriteria {
         private int hopCount = -1;
         private final List<LabEvent> labEventsList = new ArrayList<>();
         /**
