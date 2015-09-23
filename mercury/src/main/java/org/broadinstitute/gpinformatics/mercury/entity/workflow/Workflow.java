@@ -72,7 +72,7 @@ public enum Workflow {
      */
     public static final EnumSet<Workflow> SUPPORTED_WORKFLOWS =
             EnumSet.of(AGILENT_EXOME_EXPRESS, ICE_EXOME_EXPRESS, ICE_CRSP,
-                    CLINICAL_EXTRACTION, ALLPREP_EXTRACTION,
+                    CLINICAL_EXTRACTION,
                     DNA_RNA_EXTRACTION_FROZEN_TISSUE,
                     DNA_RNA_EXTRACTION_CELL_PELLETS,
                     DNA_RNA_EXTRACTION_FFPE_SECTIONS,
