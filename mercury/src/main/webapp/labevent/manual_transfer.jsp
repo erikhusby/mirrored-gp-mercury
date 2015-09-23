@@ -1,3 +1,4 @@
+<%@ page import="org.broadinstitute.gpinformatics.mercury.presentation.labevent.ManualTransferActionBean" %>
 <%--
   This page allows the user to record a manual transfer, i.e. a transfer not done on a liquid handling deck with
   messaging.
@@ -12,10 +13,16 @@
 <stripes:layout-render name="/layout.jsp" pageTitle="Manual Transfer" sectionTitle="Manual Transfer">
 
     <stripes:layout-component name="extraHead">
+        <%@ include file="/vessel/rack_scanner_list_with_sim_part1.jsp" %>
         <style type="text/css">
             label {
                 display: inline;
                 font-weight: bold;
+            }
+            input[type="text"].smalltext {
+                width: 70px;
+                font-size: 12px;
+                padding: 2px 2px;
             }
             input[type='text'].barcode {
                 width: 100px;
@@ -26,6 +33,31 @@
                 font-size: 12px;
             }
         </style>
+
+        <script src="${ctxpath}/resources/scripts/jquery.validate-1.14.0.min.js"></script>
+        <script type="text/javascript">
+            $j(document).ready(function () {
+                $j.validator.addMethod("unique", function(value, element) {
+                    var parentForm = $j(element).closest('form');
+                    var timeRepeated = 0;
+                    if (value != '') {
+                        $j(parentForm.find(':text')).each(function () {
+                            if ($j(this).val() === value) {
+                                timeRepeated++;
+                            }
+                        });
+                    }
+                    return timeRepeated === 1 || timeRepeated === 0;
+                }, "* Duplicate");
+                $j.validator.classRuleSettings.unique = { unique: true };
+                $j("#transferForm").validate();
+            });
+
+            // Some scanners send carriage return, we don't want this to submit the form
+            $j(document).on("keypress", ":input:not(textarea)", function(event) {
+                return event.keyCode != 13;
+            });
+        </script>
     </stripes:layout-component>
 
     <stripes:layout-component name="content">
@@ -44,15 +76,20 @@
                 <input type="hidden" name="workflowStepName" value="${actionBean.workflowStepName}"/>
                 <input type="hidden" name="workflowEffectiveDate" value="${actionBean.workflowEffectiveDate}"/>
                 <input type="hidden" name="batchName" value="${actionBean.batchName}"/>
+                <input type="hidden" name="anchorName" value="${actionBean.anchorName}"/>
+                <%-- Set by transfer_plate.jsp --%>
+                <input type="hidden" name="scanIndex" value="">
+                <%-- Set by transfer_plate.jsp --%>
+                <input type="hidden" name="scanSource" value="">
 
-                <c:if test="${not empty actionBean.labEventType.machineNames}">
+                <c:if test="${not empty actionBean.manualTransferDetails.machineNames}">
                     <stripes:label for="station">Machine </stripes:label>
                     <stripes:select name="stationEvents[0].station" id="station">
-                        <stripes:options-collection collection="${actionBean.labEventType.machineNames}"/>
+                        <stripes:options-collection collection="${actionBean.manualTransferDetails.machineNames}"/>
                     </stripes:select>
                 </c:if>
 
-                <c:if test="${not empty actionBean.labEventType.reagentNames}">
+                <c:if test="${not empty actionBean.manualTransferDetails.reagentNames}">
                     <h5>Reagents</h5>
                     Expiration date format is mm/dd/yyyy.
                     <c:set var="prevReagentType" value=""/>
@@ -76,7 +113,7 @@
                             <label for="rgtBcd${loop.index}">Barcode </label>
                             <input type="text" id="rgtBcd${loop.index}" name="stationEvents[0].reagent[${loop.index}].barcode"
                                     value="${reagent.barcode}" class="barcode"/>
-                            <c:if test="${actionBean.labEventType.expirationDateIncluded}">
+                            <c:if test="${actionBean.manualTransferDetails.expirationDateIncluded}">
                                 <label for="rgtExp${loop.index}">Expiration </label>
                                 <input type="text" id="rgtExp${loop.index}" name="stationEvents[0].reagent[${loop.index}].expiration"
                                         value="${reagent.expiration}" class="date"/>
@@ -89,116 +126,44 @@
                 <c:forEach items="${actionBean.stationEvents}" var="stationEvent" varStatus="stationEventStatus">
                     <input type="hidden" name="stationEvents[${stationEventStatus.index}].eventType"
                             value="${actionBean.stationEvents[stationEventStatus.index].eventType}"/>
+                    <c:if test="${fn:length(actionBean.stationEvents) > 1}">
+                        ${stationEventStatus.index + 1}
+                        <input type="hidden" name="stationEvents[${stationEventStatus.index}].metadata[0].name" value="MessageNum"/>
+                        <input type="hidden" name="stationEvents[${stationEventStatus.index}].metadata[0].value" value="${stationEventStatus.index + 1}"/>
+                    </c:if>
                     <c:choose>
                         <c:when test="${stationEvent.class.simpleName == 'PlateTransferEventType' or stationEvent.class.simpleName == 'PlateEventType'}">
                             <c:set var="plateTransfer" value="${stationEvent}"/>
                             <%--@elvariable id="plateTransfer" type="org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType"--%>
                             <c:if test="${stationEvent.class.simpleName == 'PlateTransferEventType'}">
-                                <h4>Plate Transfer</h4>
-                                <h5>Source</h5>
+                                <c:if test="${empty actionBean.manualTransferDetails.secondaryEvent or not stationEventStatus.last}">
+                                    <h4>Plate Transfer</h4>
+                                    <h5>Source</h5>
 
-                                <div class="control-group">
-                                <label>Type </label>${plateTransfer.sourcePlate.physType}
-                                <input type="hidden" name="stationEvents[${stationEventStatus.index}].sourcePlate.physType"
-                                        value="${plateTransfer.sourcePlate.physType}"/>
-                                <label for="srcPltBcd${stationEventStatus.index}">Barcode</label>
-                                <input type="text" id="srcPltBcd${stationEventStatus.index}"
-                                        name="stationEvents[${stationEventStatus.index}].sourcePlate.barcode"
-                                        value="${plateTransfer.sourcePlate.barcode}" class="barcode"/>
-                                <label for="sourceSection">Section</label>
-                                <stripes:select name="stationEvents[${stationEventStatus.index}].sourcePlate.section"
-                                        id="sourceSection${stationEventStatus.index}">
-                                    <stripes:options-enumeration
-                                            enum="org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection"
-                                            label="sectionName"/>
-                                </stripes:select>
-                                <c:if test="${not empty plateTransfer.sourcePositionMap}">
-                                    <c:set var="geometry" value="${actionBean.labEventType.sourceVesselTypeGeometry.vesselGeometry}"/>
-                                    <%--@elvariable id="geometry" type="org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry"--%>
-                                    <table>
-                                        <c:forEach items="${geometry.rowNames}" var="rowName" varStatus="rowStatus">
-                                            <c:if test="${rowStatus.first}">
-                                                <tr>
-                                                    <td></td>
-                                                    <c:forEach items="${geometry.columnNames}" var="columnName" varStatus="columnStatus">
-                                                        <td><c:out value="${columnName}"/></td>
-                                                    </c:forEach>
-                                                </tr>
-                                            </c:if>
-                                            <tr>
-                                                <td>${rowName}</td>
-                                                <c:forEach items="${geometry.columnNames}" var="columnName" varStatus="columnStatus">
-                                                    <c:set var="receptacleIndex" value="${rowStatus.index * geometry.columnCount + columnStatus.index}"/>
-                                                    <td>
-                                                        <input type="text" name="stationEvents[${stationEventStatus.index}].sourcePositionMap.receptacle[${receptacleIndex}].barcode"
-                                                                class="clearable barcode"/>
-                                                        <input type="hidden" name="stationEvents[${stationEventStatus.index}].sourcePositionMap.receptacle[${receptacleIndex}].position"
-                                                                value="${geometry.vesselPositions[receptacleIndex]}"/>
-                                                    </td>
-                                                </c:forEach>
-                                            </tr>
-                                        </c:forEach>
-                                    </table>
+                                    <c:set var="stationEvent" value="${stationEvent}" scope="request"/>
+                                    <c:set var="plate" value="${plateTransfer.sourcePlate}" scope="request"/>
+                                    <c:set var="positionMap" value="${plateTransfer.sourcePositionMap}" scope="request"/>
+                                    <c:set var="stationEventIndex" value="${stationEventStatus.index}" scope="request"/>
+                                    <c:set var="vesselTypeGeometry" value="${actionBean.manualTransferDetails.sourceVesselTypeGeometry}" scope="request"/>
+                                    <c:set var="section" value="${actionBean.manualTransferDetails.sourceSection}" scope="request"/>
+                                    <c:set var="source" value="${true}" scope="request"/>
+                                    <jsp:include page="transfer_plate.jsp"/>
+
                                 </c:if>
-                                </div>
 
                                 <h5>Destination</h5>
                             </c:if>
-                            <div class="control-group">
-                            <c:if test="${fn:length(actionBean.stationEvents) > 1}">
-                                ${stationEventStatus.index + 1}
-                                <input type="hidden" name="stationEvents[${stationEventStatus.index}].metadata[0].name" value="MessageNum"/>
-                                <input type="hidden" name="stationEvents[${stationEventStatus.index}].metadata[0].value" value="${stationEventStatus.index + 1}"/>
-                            </c:if>
-                            <label>Type </label>${plateTransfer.plate.physType}
-                            <input type="hidden" name="stationEvents[${stationEventStatus.index}].plate.physType" value="${plateTransfer.plate.physType}"/>
-                            <c:if test="${actionBean.labEventType.targetVesselTypeGeometry.barcoded}">
-                                <label for="dstPltBcd${stationEventStatus.index}">Barcode</label>
-                                <input type="text" id="dstPltBcd${stationEventStatus.index}"
-                                        name="stationEvents[${stationEventStatus.index}].plate.barcode"
-                                        value="${plateTransfer.plate.barcode}" class="clearable barcode"/>
-                            </c:if>
-                            <c:if test="${stationEvent.class.simpleName == 'PlateTransferEventType'}">
-                                <stripes:label for="destSection">Section</stripes:label>
-                                <stripes:select name="stationEvents[${stationEventStatus.index}].plate.section"
-                                        id="destSection${stationEventStatus.index}">
-                                    <stripes:options-enumeration
-                                            enum="org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection"
-                                            label="sectionName"/>
-                                </stripes:select>
-                            </c:if>
-                            <c:if test="${not empty plateTransfer.positionMap}">
-                                <%--todo jmt reduce copy / paste--%>
-                                <c:set var="geometry" value="${actionBean.labEventType.targetVesselTypeGeometry.vesselGeometry}"/>
-                                <%--@elvariable id="geometry" type="org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry"--%>
-                                <table>
-                                    <c:forEach items="${geometry.rowNames}" var="rowName" varStatus="rowStatus">
-                                        <c:if test="${rowStatus.first}">
-                                            <tr>
-                                                <td></td>
-                                                <c:forEach items="${geometry.columnNames}" var="columnName" varStatus="columnStatus">
-                                                    <td>${columnName}</td>
-                                                </c:forEach>
-                                            </tr>
-                                        </c:if>
-                                        <tr>
-                                            <td>${rowName}</td>
-                                            <c:forEach items="${geometry.columnNames}" var="columnName" varStatus="columnStatus">
-                                                <c:set var="receptacleIndex" value="${rowStatus.index * geometry.columnCount + columnStatus.index}"/>
-                                                <td align="right">
-                                                    <c:if test="${empty rowName}">${geometry.vesselPositions[receptacleIndex]}</c:if>
-                                                    <input type="text" name="stationEvents[${stationEventStatus.index}].positionMap.receptacle[${receptacleIndex}].barcode"
-                                                            class="clearable barcode"/>
-                                                    <input type="hidden" name="stationEvents[${stationEventStatus.index}].positionMap.receptacle[${receptacleIndex}].position"
-                                                            value="${geometry.vesselPositions[receptacleIndex]}"/>
-                                                </td>
-                                            </c:forEach>
-                                        </tr>
-                                    </c:forEach>
-                                </table>
-                            </c:if>
-                            </div>
-                        </c:when>
+                            <c:set var="stationEvent" value="${stationEvent}" scope="request"/>
+                            <c:set var="plate" value="${plateTransfer.plate}" scope="request"/>
+                            <c:set var="positionMap" value="${plateTransfer.positionMap}" scope="request"/>
+                            <c:set var="stationEventIndex" value="${stationEventStatus.index}" scope="request"/>
+                            <c:set var="vesselTypeGeometry" value="${actionBean.manualTransferDetails.targetVesselTypeGeometry}" scope="request"/>
+                            <c:set var="section" value="${actionBean.manualTransferDetails.targetSection}" scope="request"/>
+                            <c:set var="source" value="${false}" scope="request"/>
+                            <jsp:include page="transfer_plate.jsp"/>
+
+                        </c:when> <%-- end PlateTransferEventType or PlateEventType--%>
+
                         <c:when test="${stationEvent.class.simpleName == 'ReceptacleTransferEventType'}">
                             <c:set var="receptacleTransfer" value="${stationEvent}"/>
                             <%--@elvariable id="receptacleTransfer" type="org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleTransferEventType"--%>
@@ -220,26 +185,28 @@
                                     value="${receptacleTransfer.sourceReceptacle.volume}" class="clearable barcode"/> ul
                             </div>
                             <div class="control-group">
-                            <h5>Destination</h5>
-                            <label>Type</label>
-                            ${receptacleTransfer.receptacle.receptacleType}
-                            <input type="hidden" name="stationEvents[${stationEventStatus.index}].receptacle.receptacleType"
-                                    value="${receptacleTransfer.receptacle.receptacleType}"/>
-                            <label for="destRcpBcd${stationEventStatus.index}">Barcode</label>
-                            <input type="text" id="destRcpBcd${stationEventStatus.index}"
-                                    name="stationEvents[${stationEventStatus.index}].receptacle.barcode"
-                                    value="${receptacleTransfer.receptacle.barcode}" class="clearable barcode"/>
-                            <label for="destRcpVol${stationEventStatus.index}">Volume</label>
-                            <input type="text" id="destRcpVol${stationEventStatus.index}"
-                                    name="stationEvents[${stationEventStatus.index}].receptacle.volume"
-                                    value="${receptacleTransfer.receptacle.volume}" class="clearable barcode"/> ul
+                                <h5>Destination</h5>
+                                <label>Type</label>
+                                ${receptacleTransfer.receptacle.receptacleType}
+                                <input type="hidden" name="stationEvents[${stationEventStatus.index}].receptacle.receptacleType"
+                                        value="${receptacleTransfer.receptacle.receptacleType}"/>
+                                <label for="destRcpBcd${stationEventStatus.index}">Barcode</label>
+                                <input type="text" id="destRcpBcd${stationEventStatus.index}"
+                                        name="stationEvents[${stationEventStatus.index}].receptacle.barcode"
+                                        value="${receptacleTransfer.receptacle.barcode}" class="clearable barcode"/>
+                                <label for="destRcpVol${stationEventStatus.index}">Volume</label>
+                                <input type="text" id="destRcpVol${stationEventStatus.index}"
+                                        name="stationEvents[${stationEventStatus.index}].receptacle.volume"
+                                        value="${receptacleTransfer.receptacle.volume}" class="clearable barcode"/> ul
                             </div>
-                        </c:when>
+                        </c:when> <%-- end ReceptacleTransferEventType --%>
+
                         <c:when test="${stationEvent.class.simpleName == 'ReceptacleEventType'}">
                             <c:set var="receptacleEvent" value="${stationEvent}"/>
                             <%--@elvariable id="receptacleEvent" type="org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEventType"--%>
                             <h4>Tube Event</h4>
                             <div class="control-group">
+                                <%-- todo jmt reduce copy / paste --%>
                                 <label>Type</label>
                                     ${receptacleEvent.receptacle.receptacleType}
                                 <input type="hidden" name="stationEvents[${stationEventStatus.index}].receptacle.receptacleType"
@@ -255,10 +222,10 @@
                                         name="stationEvents[${stationEventStatus.index}].receptacle.volume"
                                         value="${receptacleEvent.receptacle.volume}" class="clearable barcode"/> ul
                             </div>
-                        </c:when>
+                        </c:when> <%-- end ReceptacleEventType --%>
                     </c:choose>
                 </c:forEach>
-                <stripes:submit name="fetchExisting" value="Fetch Existing" class="btn"/>
+                <stripes:submit name="fetchExisting" value="Validate Barcodes" class="btn"/>
                 <stripes:submit name="transfer" value="Transfer" class="btn btn-primary"/>
                 <input type="button" onclick="$('.clearable').each(function (){$(this).val('');});" value="Clear non-reagent fields">
             </c:if>
@@ -266,6 +233,7 @@
         <c:if test="${not empty actionBean.batchName}">
             <stripes:link beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.BatchWorkflowActionBean">
                 <stripes:param name="batchName" value="${actionBean.batchName}"/>
+                <stripes:param name="anchorName" value="${actionBean.anchorName}"/>
                 Return to Batch Workflow page
             </stripes:link>
         </c:if>

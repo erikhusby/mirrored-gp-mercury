@@ -40,6 +40,8 @@ public enum Workflow {
     RNA_EXTRACTION_CELL_PELLETS("RNA Extraction from Cell Pellets"),
     RNA_EXTRACTION_FFPE_SCROLLS("RNA Extraction from FFPE Tissue (scrolls)"),
     RNA_EXTRACTION_FFPE_CORES("RNA Extraction from FFPE Tissue (cores)"),
+    ALLPREP_EXTRACTION("AllPrep Extraction"),
+    TRU_SEQ_STRAND_SPECIFIC_CRSP("TruSeq Strand Specific CRSP"),
     /** Use this to indicate that no workflow is associated. */
     NONE(null, false);
 
@@ -70,6 +72,7 @@ public enum Workflow {
      */
     public static final EnumSet<Workflow> SUPPORTED_WORKFLOWS =
             EnumSet.of(AGILENT_EXOME_EXPRESS, ICE_EXOME_EXPRESS, ICE_CRSP,
+                    CLINICAL_EXTRACTION, ALLPREP_EXTRACTION,
                     DNA_RNA_EXTRACTION_FROZEN_TISSUE,
                     DNA_RNA_EXTRACTION_CELL_PELLETS,
                     DNA_RNA_EXTRACTION_FFPE_SECTIONS,

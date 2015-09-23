@@ -1,11 +1,15 @@
 package org.broadinstitute.gpinformatics.mercury.entity.reagent;
 
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventReagent;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nullable;
 import javax.persistence.*;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Some chemistry bits applied to a Sample to help transform it into a sequenceable state.
@@ -55,6 +59,7 @@ public abstract class Reagent {
     @Id
     @SequenceGenerator(name = "SEQ_REAGENT", schema = "mercury", sequenceName = "SEQ_REAGENT")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_REAGENT")
+    @Column(name = "REAGENT_ID", nullable = true)
     private Long reagentId;
 
     @Column(name = "REAGENT_NAME", nullable = true)
@@ -65,6 +70,10 @@ public abstract class Reagent {
 
     @Column(name = "EXPIRATION", nullable = true)
     private Date expiration;
+
+    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "reagent")
+    @BatchSize(size = 100)
+    private Set<LabEventReagent> labEventReagents = new HashSet<>();
 
     protected Reagent(@Nullable String reagentName, @Nullable String lot, @Nullable Date expiration) {
         this.name = reagentName;
