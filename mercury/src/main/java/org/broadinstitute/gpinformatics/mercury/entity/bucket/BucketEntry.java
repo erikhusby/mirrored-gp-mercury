@@ -98,6 +98,10 @@ public class BucketEntry {
     @Enumerated(EnumType.STRING)
     private Status status = Status.Active;
 
+    /**
+     * WorkflowName is persisted because the only other way to find the workflow is to iterate through the bucket
+     * vessels, testing all workflows with the bucketEntryEvaluator.
+     */
     @Column(name = "WORKFLOW_NAME")
     private String workflowName;
     /*

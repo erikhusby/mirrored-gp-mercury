@@ -26,7 +26,7 @@ public enum MaterialType implements Displayable {
     FRESH_FROZEN_TISSUE("Fresh Frozen Tissue"),
     FRESH_FROZEN_BLOOD("Fresh Frozen Blood"),
 
-    // These materialTypes
+    // These materialTypes match those in BSP
     BACTERIAL_CULTURE_GLYCEROL_FROZEN("Bacterial Culture:Glycerol Frozen"),
     BODILY_FLUID_ASCITES("Bodily Fluid:Ascites"),
     BODILY_FLUID_PLEURAL_EFFUSION("Bodily Fluid:Pleural Effusion"),
