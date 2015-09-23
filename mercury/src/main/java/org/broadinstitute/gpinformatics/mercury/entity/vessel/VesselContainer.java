@@ -469,7 +469,7 @@ public class VesselContainer<T extends LabVessel> {
         // handle VesselToVesselTransfers and un-racked VesselToSectionTransfers
         sourceVessel = getVesselAtPosition(sourcePosition);
         if (continueTraversing && sourceVessel != null) {
-            sourceVessel.traverseDescendants(transferTraverserCriteria, traversalDirection, hopCount + 1);
+            sourceVessel.evaluateCriteria(transferTraverserCriteria, traversalDirection, hopCount + 1);
         }
     }
 

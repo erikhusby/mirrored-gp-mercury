@@ -1081,19 +1081,6 @@ public abstract class LabVessel implements Serializable {
         return traversalResults;
     }
 
-    void traverseDescendants(TransferTraverserCriteria criteria, TransferTraverserCriteria.TraversalDirection direction,
-                             int hopCount) {
-
-        // No need to traverse the same vessel multiple times
-        if( criteria.hasVesselBeenTraversed(this) ) {
-            return;
-        }
-
-        for (VesselEvent vesselEvent : getDescendants()) {
-            evaluateVesselEvent(criteria, direction, hopCount, vesselEvent);
-        }
-    }
-
     /**
      * Get the immediate ancestor vessels (source) and a reference to this vessel (target) in the transfer path
      *
