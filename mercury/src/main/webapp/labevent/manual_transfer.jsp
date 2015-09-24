@@ -98,26 +98,20 @@
                         <c:if test="${reagent.kitType != prevReagentType && !loop.first}">
                             </div>
                         </c:if>
-                        <c:choose>
-                            <c:when test="${reagent.kitType != prevReagentType}">
-                                <div class="control-group">
-                                <label for="rgtType${loop.index}">Type </label>
-                                <input type="text" id="rgtType${loop.index}" name="stationEvents[0].reagent[${loop.index}].kitType"
-                                        value="${reagent.kitType}" class="barcode"/>
-                            </c:when>
-                            <c:otherwise>
-                                <input type="hidden" name="stationEvents[0].reagent[${loop.index}].kitType"
-                                        value="${reagent.kitType}"/>
-                            </c:otherwise>
-                        </c:choose>
-                            <label for="rgtBcd${loop.index}">Barcode </label>
-                            <input type="text" id="rgtBcd${loop.index}" name="stationEvents[0].reagent[${loop.index}].barcode"
-                                    value="${reagent.barcode}" class="barcode"/>
-                            <c:if test="${actionBean.manualTransferDetails.expirationDateIncluded}">
-                                <label for="rgtExp${loop.index}">Expiration </label>
-                                <input type="text" id="rgtExp${loop.index}" name="stationEvents[0].reagent[${loop.index}].expiration"
-                                        value="${reagent.expiration}" class="date"/>
-                            </c:if>
+                        <c:if test="${reagent.kitType != prevReagentType}">
+                            <div class="control-group">
+                            <label for="rgtType${loop.index}">Type </label>${reagent.kitType}
+                        </c:if>
+                        <input type="hidden" name="stationEvents[0].reagent[${loop.index}].kitType"
+                                value="${reagent.kitType}"/>
+                        <label for="rgtBcd${loop.index}">Barcode </label>
+                        <input type="text" id="rgtBcd${loop.index}" name="stationEvents[0].reagent[${loop.index}].barcode"
+                                value="${reagent.barcode}" class="barcode"/>
+                        <c:if test="${actionBean.manualTransferDetails.expirationDateIncluded}">
+                            <label for="rgtExp${loop.index}">Expiration </label>
+                            <input type="text" id="rgtExp${loop.index}" name="stationEvents[0].reagent[${loop.index}].expiration"
+                                    value="${reagent.expiration}" class="date"/>
+                        </c:if>
                         <c:set var="prevReagentType" value="${reagent.kitType}"/>
                     </c:forEach>
                     </div>
