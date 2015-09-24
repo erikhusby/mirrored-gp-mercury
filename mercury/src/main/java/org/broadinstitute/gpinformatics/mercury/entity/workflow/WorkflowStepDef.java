@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 
-import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import java.io.Serializable;
@@ -221,14 +220,4 @@ public class WorkflowStepDef implements Serializable {
         return batchJiraIssueType;
     }
 
-/**
-     * Called by JAXB, sets relationship to parent.
-     *
-     * @param unmarshaller JAXB
-     * @param parent       enclosing XML element
-     */
-    @SuppressWarnings("UnusedDeclaration")
-    void afterUnmarshal(Unmarshaller unmarshaller, Object parent) {
-        processDefVersion = (WorkflowProcessDefVersion) parent;
-    }
 }
