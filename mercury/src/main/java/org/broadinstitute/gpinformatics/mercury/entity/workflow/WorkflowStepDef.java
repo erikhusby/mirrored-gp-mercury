@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 
-import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import java.io.Serializable;
@@ -223,7 +222,7 @@ public class WorkflowStepDef implements Serializable {
     public String getBatchJiraIssueType() {
         return batchJiraIssueType;
     }
-    
+
     public LabEventType.ManualTransferDetails getManualTransferDetails() {
         return manualTransferDetails;
     }
