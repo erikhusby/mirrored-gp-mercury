@@ -223,18 +223,7 @@ public class WorkflowStepDef implements Serializable {
     public String getBatchJiraIssueType() {
         return batchJiraIssueType;
     }
-
-/**
-     * Called by JAXB, sets relationship to parent.
-     *
-     * @param unmarshaller JAXB
-     * @param parent       enclosing XML element
-     */
-    @SuppressWarnings("UnusedDeclaration")
-    void afterUnmarshal(Unmarshaller unmarshaller, Object parent) {
-        processDefVersion = (WorkflowProcessDefVersion) parent;
-    }
-
+    
     public LabEventType.ManualTransferDetails getManualTransferDetails() {
         return manualTransferDetails;
     }
