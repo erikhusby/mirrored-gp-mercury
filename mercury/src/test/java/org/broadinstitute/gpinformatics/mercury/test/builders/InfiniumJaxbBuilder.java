@@ -163,7 +163,8 @@ public class InfiniumJaxbBuilder {
                             new BettaLimsMessageTestFactory.ReagentDto("XC4", "1234-XC4", null),
                             new BettaLimsMessageTestFactory.ReagentDto("SML", "1234-SML", null),
                             new BettaLimsMessageTestFactory.ReagentDto("ATM", "1234-ATM", null),
-                            new BettaLimsMessageTestFactory.ReagentDto("EML", "1234-EML", null)));
+                            new BettaLimsMessageTestFactory.ReagentDto("EML", "1234-EML", null),
+                            new BettaLimsMessageTestFactory.ReagentDto("PB1", "1234-PB1", null)));
             infiniumXStainJaxbs.add(infiniumXStain);
             bettaLIMSMessage.getPlateEvent().add(infiniumXStain);
             bettaLimsMessageTestFactory.advanceTime();
