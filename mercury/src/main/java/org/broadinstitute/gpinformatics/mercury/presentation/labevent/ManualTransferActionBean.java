@@ -401,7 +401,12 @@ public class ManualTransferActionBean extends RackScanActionBean {
         // Compare source and destination barcodes in this transfer to previous transfer
         int matches = 0;
         int errors = 0;
-        for (LabVessel currentLabVessel : mapBarcodeToVessel.values()) {
+        for (String sourceBarcode : mapSourceBarcodeToTargetBarcode.keySet()) {
+            LabVessel currentLabVessel = mapBarcodeToVessel.get(sourceBarcode);
+            if (currentLabVessel == null) {
+                // We expect loadPlateFromDb to have added an error for a missing source
+                continue;
+            }
             boolean found = false;
             for (LabEvent labEvent : currentLabVessel.getTransfersFrom()) {
                 if (labEvent.getLabEventType() == repeatedEvent &&
@@ -430,7 +435,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
                 errors++;
             }
         }
-        if (matches > 0 && errors == 0) {
+        if (matches == mapSourceBarcodeToTargetBarcode.size() && errors == 0) {
             messageCollection.addInfo("Transfer matches previous");
         }
     }
