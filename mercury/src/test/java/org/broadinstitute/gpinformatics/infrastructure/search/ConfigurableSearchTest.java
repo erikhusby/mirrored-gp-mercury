@@ -25,6 +25,7 @@ import javax.inject.Inject;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -338,5 +339,23 @@ public class ConfigurableSearchTest extends Arquillian {
 
         // Delete instance
         searchInstanceEjb.deleteSearch(new MessageCollection(), PreferenceType.GLOBAL_MERCURY_SAMPLE_SEARCH_INSTANCES, newSearchName, mapTypeToPreference);
+    }
+
+    @Test
+    public void testEventMaterialType() {
+        SearchInstance searchInstance = new SearchInstance();
+        String entity = "LabVessel";
+        ConfigurableSearchDefinition configurableSearchDef = SearchDefinitionFactory.getForEntity(entity);
+
+        SearchInstance.SearchValue searchValue = searchInstance.addTopLevelTerm("PDO", configurableSearchDef);
+        searchValue.setOperator(SearchInstance.Operator.EQUALS);
+        searchValue.setValues(Collections.singletonList("PDO-7013"));
+
+        searchInstance.getPredefinedViewColumns().add("Barcode");
+        searchInstance.getPredefinedViewColumns().add("DNA Extracted Barcode");
+
+        ConfigurableListFactory.FirstPageResults firstPageResults = configurableListFactory.getFirstResultsPage(
+                searchInstance, configurableSearchDef, null, 1, null, "ASC", entity);
+        Assert.assertEquals(firstPageResults.getResultList().getResultRows().size(), 4);
     }
 }
