@@ -401,35 +401,41 @@ public class ManualTransferActionBean extends RackScanActionBean {
         // Compare source and destination barcodes in this transfer to previous transfer
         int matches = 0;
         int errors = 0;
-        for (LabVessel labVessel : mapBarcodeToVessel.values()) {
+        for (String sourceBarcode : mapSourceBarcodeToTargetBarcode.keySet()) {
+            LabVessel currentLabVessel = mapBarcodeToVessel.get(sourceBarcode);
+            if (currentLabVessel == null) {
+                // We expect loadPlateFromDb to have added an error for a missing source
+                continue;
+            }
             boolean found = false;
-            for (LabEvent labEvent : labVessel.getTransfersFrom()) {
+            for (LabEvent labEvent : currentLabVessel.getTransfersFrom()) {
                 if (labEvent.getLabEventType() == repeatedEvent &&
                         (repeatedWorkflowQualifier == null ||
                                 labEvent.getWorkflowQualifier().equals(repeatedWorkflowQualifier))) {
                     found = true;
                     SectionTransfer sectionTransfer = labEvent.getSectionTransfers().iterator().next();
-                    VesselPosition sourceVesselPos = sectionTransfer.getSourceVesselContainer().getPositionOfVessel(labVessel);
+                    VesselPosition sourceVesselPos = sectionTransfer.getSourceVesselContainer().getPositionOfVessel(
+                            currentLabVessel);
                     int sourceIndex = sectionTransfer.getSourceSection().getWells().indexOf(sourceVesselPos);
-                    LabVessel targetVessel = sectionTransfer.getTargetVesselContainer().getVesselAtPosition(
+                    LabVessel previousTargetVessel = sectionTransfer.getTargetVesselContainer().getVesselAtPosition(
                             sectionTransfer.getTargetSection().getWells().get(sourceIndex));
-                    String targetBarcode = mapSourceBarcodeToTargetBarcode.get(labVessel.getLabel());
-                    assert targetVessel != null;
-                    if (targetVessel.getLabel().equals(targetBarcode)) {
+                    String currentTargetBarcode = mapSourceBarcodeToTargetBarcode.get(currentLabVessel.getLabel());
+                    assert previousTargetVessel != null;
+                    if (previousTargetVessel.getLabel().equals(currentTargetBarcode)) {
                         matches++;
                     } else {
-                        messageCollection.addError("Expected " + targetBarcode + ", but found " +
-                                targetVessel.getLabel());
+                        messageCollection.addError("Expected " + previousTargetVessel.getLabel() + ", but found " +
+                                currentTargetBarcode);
                         errors++;
                     }
                 }
             }
             if (!found) {
-                messageCollection.addError(labVessel.getLabel() + " not found in previous message");
+                messageCollection.addError(currentLabVessel.getLabel() + " not found in previous message");
                 errors++;
             }
         }
-        if (matches > 0 && errors == 0) {
+        if (matches == mapSourceBarcodeToTargetBarcode.size() && errors == 0) {
             messageCollection.addInfo("Transfer matches previous");
         }
     }

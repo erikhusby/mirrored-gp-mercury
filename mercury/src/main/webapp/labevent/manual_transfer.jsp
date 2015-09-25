@@ -61,12 +61,14 @@
     </stripes:layout-component>
 
     <stripes:layout-component name="content">
-        <stripes:form beanclass="${actionBean.class.name}" id="eventForm">
-            <stripes:select name="stationEvents[0].eventType" id="eventType">
-                <stripes:options-collection collection="${actionBean.manualEventTypes}" label="name" value="name"/>
-            </stripes:select>
-            <stripes:submit name="chooseEventType" value="Choose Event Type" class="btn btn-primary"/>
-        </stripes:form>
+        <c:if test="${empty actionBean.workflowStepDef}">
+            <stripes:form beanclass="${actionBean.class.name}" id="eventForm">
+                <stripes:select name="stationEvents[0].eventType" id="eventType">
+                    <stripes:options-collection collection="${actionBean.manualEventTypes}" label="name" value="name"/>
+                </stripes:select>
+                <stripes:submit name="chooseEventType" value="Choose Event Type" class="btn btn-primary"/>
+            </stripes:form>
+        </c:if>
 
         <stripes:form beanclass="${actionBean.class.name}" id="transferForm">
             <%-- Can't use stripes:text because the value in the request takes precedence over the value set in the action bean. --%>
