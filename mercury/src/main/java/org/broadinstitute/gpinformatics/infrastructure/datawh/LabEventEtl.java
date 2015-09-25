@@ -487,6 +487,11 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
         List<EventFactDto> dtos = new ArrayList<>();
         Set<SampleInstanceV2> sampleInstances;
 
+        // Supports testing of just this method in a DBFree test
+        if( eventAncestryEtlUtil == null ) {
+            eventAncestryEtlUtil = new EventAncestryEtlUtil();
+        }
+
         // Sanity check bail out
         if (entity == null || entity.getLabEventType() == null) {
             logger.debug("Skipping ETL on labEvent is null or has no event type" );
@@ -636,7 +641,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                     } else {
                         // Reject for lack of mercury sample
                         EventFactDto rejectedDto = new EventFactDto(labEvent, vessel, targetPosition,
-                                MolecularIndexReagent.getIndexesString(vessel.getIndexesForSampleInstance(si)).trim(),
+                                molecularIndexingSchemeName,
                                 null, null, null, null, null, pdo, null, false);
                         rejectedDto.setRejectReason("Skipping ETL on labEvent: " + labEvent.getLabEventId() +
                                                     ", vessel: " + vessel.getLabel() +

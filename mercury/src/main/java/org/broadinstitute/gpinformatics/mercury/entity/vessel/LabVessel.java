@@ -1551,6 +1551,8 @@ public abstract class LabVessel implements Serializable {
         if (traversalDirections.contains(TransferTraverserCriteria.TraversalDirection.Ancestors)) {
             evaluateCriteria(vesselForEventTypeCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
         }
+        // Otherwise skips starting vessel because it's already been traversed
+        vesselForEventTypeCriteria.resetAllTraversed();
         if (traversalDirections.contains(TransferTraverserCriteria.TraversalDirection.Descendants)) {
             evaluateCriteria(vesselForEventTypeCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
         }
