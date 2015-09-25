@@ -40,6 +40,7 @@ public class UploadQuantsActionBean extends CoreActionBean {
 
     public enum QuantFormat {
         VARIOSKAN("Varioskan"),
+        CALIPER("Caliper"),
         GENERIC("Generic");
 
         private String displayName;
@@ -95,6 +96,8 @@ public class UploadQuantsActionBean extends CoreActionBean {
         switch (quantFormat) {
         case VARIOSKAN:
             break;
+        case CALIPER:
+            break;
         case GENERIC:
             quantEJB.storeQuants(labMetrics);
             break;
@@ -113,7 +116,7 @@ public class UploadQuantsActionBean extends CoreActionBean {
         try {
             quantStream = quantSpreadsheet.getInputStream();
             switch (quantFormat) {
-            case VARIOSKAN:
+            case VARIOSKAN: {
                 MessageCollection messageCollection = new MessageCollection();
                 Pair<LabMetricRun, String> pair = vesselEjb.createVarioskanRun(quantStream, getQuantType(),
                         userBean.getBspUser().getUserId(), messageCollection, acceptRePico);
@@ -123,6 +126,18 @@ public class UploadQuantsActionBean extends CoreActionBean {
                 }
                 addMessages(messageCollection);
                 break;
+            }
+            case CALIPER: {
+                MessageCollection messageCollection = new MessageCollection();
+                Pair<LabMetricRun, String> pair = vesselEjb.createRNACaliperRun(quantStream, getQuantType(),
+                        userBean.getBspUser().getUserId(), messageCollection, acceptRePico);
+                if (pair != null) {
+                    labMetricRun = pair.getLeft();
+                    tubeFormationLabel = pair.getRight();
+                }
+                addMessages(messageCollection);
+                break;
+            }
             case GENERIC:
                 labMetrics = quantEJB.validateQuantsDontExist(quantStream, quantType);
                 break;

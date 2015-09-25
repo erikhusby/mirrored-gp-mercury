@@ -28,6 +28,8 @@ public class LabMetricDecision {
     public enum Decision {
         PASS(false),
         RUN_FAILED(false),
+        LOWER_MARKER_OUT_OF_RANGE(true), //TODO perhaps a well fail?
+        DV200_OUT_OF_RANGE(true),
         FAIL(true),
         RISK(true);
 

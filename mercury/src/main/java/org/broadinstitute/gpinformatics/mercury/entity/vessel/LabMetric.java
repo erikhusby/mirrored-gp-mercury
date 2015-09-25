@@ -47,7 +47,8 @@ public class LabMetric implements Comparable<LabMetric> {
         KBp("KBp"),
         MBp("KBp"),
         GBp("GBp"),
-        Bp("Bp");
+        Bp("Bp"),
+        RQS("Rqs"); //TODO not really a unit, but more of a score
 
         private String displayName;
         private static final Map<String, LabUnit> mapNameToUnit = new HashMap<>();
@@ -139,7 +140,8 @@ public class LabMetric implements Comparable<LabMetric> {
             }
         }),
         FINAL_LIBRARY_SIZE("Final Library Size", false, Category.DNA_LENGTH, null),
-        ECO_QPCR("ECO QPCR", true, Category.CONCENTRATION, null);
+        ECO_QPCR("ECO QPCR", true, Category.CONCENTRATION, null),
+        INITIAL_RNA_CALIPER("Initial RNA Caliper", true, Category.QUALITY, null);
 
         private String displayName;
         private boolean uploadEnabled;
@@ -197,7 +199,8 @@ public class LabMetric implements Comparable<LabMetric> {
          */
         public enum Category {
             CONCENTRATION,
-            DNA_LENGTH
+            DNA_LENGTH,
+            QUALITY
         }
     }
 
