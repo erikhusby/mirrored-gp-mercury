@@ -352,10 +352,17 @@ public class ConfigurableSearchTest extends Arquillian {
         searchValue.setValues(Collections.singletonList("PDO-7013"));
 
         searchInstance.getPredefinedViewColumns().add("Barcode");
-        searchInstance.getPredefinedViewColumns().add("DNA Extracted Barcode");
+        searchInstance.getPredefinedViewColumns().add("DNA Extracted Tube Barcode");
 
         ConfigurableListFactory.FirstPageResults firstPageResults = configurableListFactory.getFirstResultsPage(
                 searchInstance, configurableSearchDef, null, 1, null, "ASC", entity);
-        Assert.assertEquals(firstPageResults.getResultList().getResultRows().size(), 4);
+        List<ConfigurableList.ResultRow> resultRows = firstPageResults.getResultList().getResultRows();
+        Assert.assertEquals(resultRows.size(), 4);
+        Assert.assertEquals(resultRows.get(0).getRenderableCells().get(0), "0175568179");
+        Assert.assertEquals(resultRows.get(1).getRenderableCells().get(0), "0175568200");
+        Assert.assertEquals(resultRows.get(2).getRenderableCells().get(0), "SM-A19ZM");
+        Assert.assertEquals(resultRows.get(2).getRenderableCells().get(1), "0175568200");
+        Assert.assertEquals(resultRows.get(3).getRenderableCells().get(0), "SM-A19Z9");
+        Assert.assertEquals(resultRows.get(3).getRenderableCells().get(1), "E000000293 0175568179");
     }
 }
