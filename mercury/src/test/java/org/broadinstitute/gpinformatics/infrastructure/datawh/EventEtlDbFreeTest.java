@@ -6,7 +6,6 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
-import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
@@ -259,7 +258,7 @@ public class EventEtlDbFreeTest {
         EasyMock.verify(mocks);
 
         Assert.assertEquals(records.size(), 1);
-        verifyRecord(records.iterator().next(), LabEventType.PICO_PLATING_BUCKET.toString(), LabEventEtl.NONE);
+        verifyRecord(records.iterator().next(), LabEventType.PICO_PLATING_BUCKET.getName(), LabEventEtl.NONE);
     }
 
     public void testPicoPlating() throws Exception {
@@ -307,7 +306,7 @@ public class EventEtlDbFreeTest {
 
         Collection<String> records = tst.dataRecords(etlDateStr, false, entityId);
         Assert.assertEquals(records.size(), 1);
-        verifyRecord(records.iterator().next(),LabEventType.PICO_PLATING_BUCKET.toString() );
+        verifyRecord(records.iterator().next(),LabEventType.PICO_PLATING_BUCKET.getName() );
 
         EasyMock.verify(mocks);
     }
@@ -501,7 +500,7 @@ public class EventEtlDbFreeTest {
 
         Collection<String> records = tst.dataRecords(etlDateStr, false, entityId);
         Assert.assertEquals(records.size(), 1);
-        verifyRecord(records.iterator().next(), LabEventType.PICO_PLATING_BUCKET.toString() );
+        verifyRecord(records.iterator().next(), LabEventType.PICO_PLATING_BUCKET.getName() );
 
         EasyMock.verify(mocks);
     }

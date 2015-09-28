@@ -88,7 +88,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                             format( fact.getEventId() ),
                             format( fact.getWfId() ),
                             format( fact.getWfProcessId() ),
-                            format( fact.getEventType().toString() ),
+                            format( fact.getEventType().getName() ),
                             format( fact.getPdoId() ),
                             format( fact.getPdoSampleId() ),
                             format( fact.getLcsetSampleId() ),
