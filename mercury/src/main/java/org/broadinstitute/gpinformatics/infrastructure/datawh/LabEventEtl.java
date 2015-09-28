@@ -582,13 +582,18 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
 
                     // Get latest PDO and the sample which matches it (the PDO and sample must match)
                     for( ProductOrderSample pdoSample : si.getAllProductOrderSamples() ) {
+                        // Get a valid PDO
+                        pdo = pdoSample.getProductOrder();
                         if( pdoSample.getMercurySample() != null ) {
-                            pdo = pdoSample.getProductOrder();
+                            // And associate a sample with it if available
                             pdoSampleID = pdoSample.getMercurySample().getSampleKey();
+                            // getAllProductOrderSamples() sorts by closest first
+                            break;
                         }
                     }
 
                     // Get the latest batch this sample participated in
+                    // todo jms should we make sure batch was created before event? (helps with reworks on older events)
                     long latestBatchTs = 0L;
                     for( LabBatch batch : si.getAllWorkflowBatches() ) {
                         if( batch.getCreatedOn().getTime() > latestBatchTs ) {
