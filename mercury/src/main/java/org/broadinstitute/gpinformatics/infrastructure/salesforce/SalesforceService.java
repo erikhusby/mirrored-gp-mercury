@@ -12,5 +12,7 @@ import java.net.URISyntaxException;
  * TODO scottmat fill in javadoc!!!
  */
 public interface SalesforceService extends Serializable {
+    void pushProducts() throws URISyntaxException, IOException;
+
     void pushProduct(String exomeExpressV2PartNumber) throws URISyntaxException, IOException;
 }
