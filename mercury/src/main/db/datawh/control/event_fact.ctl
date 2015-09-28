@@ -13,7 +13,7 @@ TRAILING NULLCOLS
  lab_event_type,
  product_order_id,
  sample_name,
- entry_sample_name,
+ lcset_sample_name,
  batch_name,
  station_name,
  lab_vessel_id,

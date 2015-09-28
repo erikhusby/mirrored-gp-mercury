@@ -3,17 +3,15 @@ package org.broadinstitute.gpinformatics.infrastructure.datawh;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
-import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent_;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
 import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRun;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
@@ -92,8 +90,8 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                             format( fact.getWfProcessId() ),
                             format( fact.getEventType().toString() ),
                             format( fact.getPdoId() ),
-                            format( fact.getSampleId() ),
-                            format( fact.getPlatedSampleId() ),
+                            format( fact.getPdoSampleId() ),
+                            format( fact.getLcsetSampleId() ),
                             format( fact.getBatchName() ),
                             format( fact.getEventLocation() ),
                             format( fact.getVesselId() ),
@@ -298,8 +296,8 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
         private String workflowStepName;
         private Long productOrderId;
         private String productOrderName;
-        private String sampleId;
-        String platedSampleID;
+        private String pdoSampleId;
+        private String lcsetSampleID;
         private Long labVesselId;
         private String barcode;
         private VesselPosition vesselPosition;
@@ -307,7 +305,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
 
         EventFactDto(LabEvent labEvent, LabVessel labVessel, VesselPosition vesselPosition, String molecularIndexName, String batchName,
                      Date workflowEffectiveDate,
-                     String workflowName, MercurySample sample, String platedSampleID,
+                     String workflowName, String pdoSampleId, String lcsetSampleID,
                      ProductOrder productOrder, WorkflowConfigDenorm wfDenorm, boolean canEtl) {
 
             this.labEventId = labEvent.getLabEventId();
@@ -328,8 +326,8 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
             this.workflowStepName = wfDenorm == null ? null : wfDenorm.getWorkflowStepName();
             this.productOrderId = productOrder == null ? null : productOrder.getProductOrderId();
             this.productOrderName = productOrder == null ? null : productOrder.getBusinessKey();
-            this.sampleId = sample == null ? null : sample.getSampleKey();
-            this.platedSampleID = platedSampleID;
+            this.pdoSampleId = pdoSampleId;
+            this.lcsetSampleID = lcsetSampleID;
             this.labVesselId = labVessel == null ? null : labVessel.getLabVesselId();
             this.barcode = labVessel == null ? null : labVessel.getLabel();
             this.vesselPosition = vesselPosition;
@@ -342,10 +340,10 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
             private final static String NULLS_LAST = "zzzzzzzzzz";
             @Override
             public int compare(EventFactDto lhs, EventFactDto rhs) {
-                String s1 = lhs.getSampleId() == null || lhs.getSampleId().isEmpty() ?
-                            NULLS_LAST : lhs.getSampleId();
-                String s2 = rhs.getSampleId() == null || rhs.getSampleId().isEmpty() ?
-                        NULLS_LAST : rhs.getSampleId();
+                String s1 = lhs.getLcsetSampleId() == null || lhs.getLcsetSampleId().isEmpty() ?
+                            NULLS_LAST : lhs.getLcsetSampleId();
+                String s2 = rhs.getLcsetSampleId() == null || rhs.getLcsetSampleId().isEmpty() ?
+                        NULLS_LAST : rhs.getLcsetSampleId();
                 return s1.compareTo(s2);
             }
         };
@@ -418,12 +416,12 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
             return productOrderName;
         }
 
-        public String getSampleId() {
-            return sampleId;
+        public String getPdoSampleId() {
+            return pdoSampleId;
         }
 
-        public String getPlatedSampleId() {
-            return platedSampleID;
+        public String getLcsetSampleId() {
+            return lcsetSampleID;
         }
 
         public Long getVesselId() {
@@ -578,42 +576,24 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                     ProductOrder pdo = null;
                     LabBatch labBatch = null;
                     String batchName = NONE;
+                    String pdoSampleID = null;
 
-                    // Need to get to LabBatch --> ProductOrder
-                    BucketEntry bucketEntry = si.getSingleBucketEntry();
+                    String lcsetSampleID = si.getNearestMercurySampleName();
 
-                    // Null BucketEntry may mean multiple entries, try to use the LabEvent lcset logic
-                    if( bucketEntry == null ) {
-                        Set<LabBatch> labBatches = labEvent.getComputedLcSets();
-                        if( labBatches.size() == 1 ) {
-                            labBatch = labBatches.iterator().next();
-                            batchName = labBatch.getBatchName();
-                            workflowEffectiveDate = labBatch.getCreatedOn();
-                            // Get newest PDO, should be only 1
-                            long ts = 0;
-                            for( BucketEntry thisbucketEntry : labBatch.getBucketEntries() ) {
-                                if( thisbucketEntry.getProductOrder().getCreatedDate().getTime() >= ts ) {
-                                    pdo = thisbucketEntry.getProductOrder();
-                                    ts = thisbucketEntry.getProductOrder().getCreatedDate().getTime();
-                                }
-                            }
-                        } else if( labBatches.size() > 1 ) {
-                            batchName = MULTIPLE;
-                            long ts = 0;
-                            // Get creation date of latest batch
-                            for( LabBatch thisBatch : labBatches ) {
-                                if( thisBatch.getCreatedOn().getTime() >= ts &&
-                                        thisBatch.getLabBatchType() == LabBatch.LabBatchType.WORKFLOW ) {
-                                    labBatch = thisBatch;
-                                    workflowEffectiveDate = labBatch.getCreatedOn();
-                                    ts = thisBatch.getCreatedOn().getTime();
-                                }
-                            }
+                    // Get latest PDO and the sample which matches it (the PDO and sample must match)
+                    for( ProductOrderSample pdoSample : si.getAllProductOrderSamples() ) {
+                        if( pdoSample.getMercurySample() != null ) {
+                            pdo = pdoSample.getProductOrder();
+                            pdoSampleID = pdoSample.getMercurySample().getSampleKey();
                         }
-                    } else {
-                        pdo = bucketEntry.getProductOrder();
-                        labBatch = bucketEntry.getLabBatch();
-                        if( labBatch != null ){
+                    }
+
+                    // Get the latest batch this sample participated in
+                    long latestBatchTs = 0L;
+                    for( LabBatch batch : si.getAllWorkflowBatches() ) {
+                        if( batch.getCreatedOn().getTime() > latestBatchTs ) {
+                            latestBatchTs = batch.getCreatedOn().getTime();
+                            labBatch = batch;
                             batchName = labBatch.getBatchName();
                             workflowEffectiveDate = labBatch.getCreatedOn();
                         }
@@ -629,15 +609,12 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                     WorkflowConfigDenorm wfDenorm = workflowConfigLookup.lookupWorkflowConfig(
                             labEvent.getLabEventType().getName(), workflowName, workflowEffectiveDate);
 
-                    MercurySample sample = si.getRootOrEarliestMercurySample();
-                    // Best effort to obtain the analytics request for the
-                    //       "BSP exported/plated samples and CLIA samples that are processed"
-                    String platedSampleID = si.getNearestMercurySampleName();
-                    if (sample != null) {
+
+                    if (lcsetSampleID != null) {
                         // Obtained a useable event DTO!
                         dtos.add( new EventFactDto(labEvent, vessel, targetPosition, molecularIndexingSchemeName,
                                 batchName, workflowEffectiveDate, workflowName,
-                                sample, platedSampleID, pdo, wfDenorm, true) );
+                                pdoSampleID, lcsetSampleID, pdo, wfDenorm, true) );
                     } else {
                         // Reject for lack of mercury sample
                         EventFactDto rejectedDto = new EventFactDto(labEvent, vessel, targetPosition,
