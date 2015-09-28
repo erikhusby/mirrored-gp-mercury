@@ -18,6 +18,7 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlIDREF;
 import java.io.Serializable;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -304,18 +305,17 @@ public class ProductWorkflowDefVersion implements Serializable {
      *
      * @return a mapping of the initial buckets to the LabVessels which will go in them.
      */
-    public Map<WorkflowBucketDef, Collection<LabVessel>> getInitialBucket(Collection<LabVessel> labVessels,
-                                                                          ProductOrder productOrder) {
-        Map<WorkflowBucketDef, Collection<LabVessel>> vesselBuckets = new HashMap<>();
-        Collection<LabVessel> vesselsAvailableForBucket=new HashSet<>(labVessels);
+    public AbstractMap.SimpleEntry<WorkflowBucketDef, Workflow> getInitialBucket(LabVessel labVessel,
+                                                                                 ProductOrder productOrder) {
         for (WorkflowProcessDef workflowProcessDef : workflowProcessDefs) {
             for (WorkflowBucketDef bucketDef : workflowProcessDef.getEffectiveVersion().getBuckets()) {
-                Collection<LabVessel> vesselsForBucket = bucketDef.meetsBucketCriteria(vesselsAvailableForBucket, productOrder);
-                vesselBuckets.put(bucketDef, vesselsForBucket);
-                vesselsAvailableForBucket.removeAll(vesselsForBucket);
+                if (bucketDef.meetsBucketCriteria(labVessel, productOrder)) {
+                    return new AbstractMap.SimpleEntry<>(bucketDef,
+                            bucketDef.getBucketEntryEvaluator().getMatchingWorkflow(productOrder));
+                }
             }
         }
-        return vesselBuckets;
+        return null;
     }
 
     /**

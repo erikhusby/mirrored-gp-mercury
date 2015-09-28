@@ -116,28 +116,25 @@ public class ProductOrderTestFactory {
     }
 
     public static ProductOrder buildExExProductOrder(int maxSamples) {
-        return createDummyProductOrder(maxSamples, "PD0-1EE", Workflow.AGILENT_EXOME_EXPRESS, 101, "Test RP",
+        return buildProductOrder(maxSamples, Workflow.AGILENT_EXOME_EXPRESS);
+    }
+
+    public static ProductOrder buildProductOrder(int maxSamples, Workflow workflow) {
+        return createDummyProductOrder(maxSamples, "PD0-1EE", workflow, 101, "Test RP",
                 rpSynopsis,
-                ResearchProject.IRB_ENGAGED, "P-EXEXTest-1232", SAMPLE_SUFFIX, "ExExQuoteId");
+                ResearchProject.IRB_ENGAGED, "P-" + workflow.name() + "-1232", SAMPLE_SUFFIX, "ExExQuoteId");
     }
 
     public static ProductOrder buildIceProductOrder(int maxSamples) {
-        return createDummyProductOrder(maxSamples, "PD0-1IC", Workflow.ICE, 101, "Test RP",
-                rpSynopsis,
-                ResearchProject.IRB_ENGAGED, "P-ICEtest-1232", SAMPLE_SUFFIX, "ExExQuoteId");
+        return buildProductOrder(maxSamples, Workflow.ICE);
     }
 
     public static ProductOrder buildHybridSelectionProductOrder(int maxSamples, String sampleSuffix) {
-        return createDummyProductOrder(maxSamples, "PD0-1HS",
-                Workflow.HYBRID_SELECTION, 101,
-                "Test RP", rpSynopsis,
-                ResearchProject.IRB_ENGAGED, "P-HSEL-9293", sampleSuffix, "ExExQuoteId");
+        return buildProductOrder(maxSamples, Workflow.HYBRID_SELECTION);
     }
 
     public static ProductOrder buildWholeGenomeProductOrder(int maxSamples) {
-        return createDummyProductOrder(maxSamples, JIRA_KEY, Workflow.WHOLE_GENOME,
-                301, "Test RP", rpSynopsis,
-                ResearchProject.IRB_ENGAGED, "P-WGS-9294", SAMPLE_SUFFIX, "ExExQuoteId");
+        return buildProductOrder(maxSamples, Workflow.WHOLE_GENOME);
     }
 
     public static ProductOrder buildSampleInitiationProductOrder(int maxSamples) {

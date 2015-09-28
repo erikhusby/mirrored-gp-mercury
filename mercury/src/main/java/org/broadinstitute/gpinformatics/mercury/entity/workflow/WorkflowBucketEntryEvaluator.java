@@ -50,26 +50,42 @@ public class WorkflowBucketEntryEvaluator implements Serializable {
         return false;
     }
 
-    private boolean productAddOnsHaveWorkflow(ProductOrder productOrder) {
-        if (workflows.isEmpty()){
-            return true;
-        }
-        for (ProductOrderAddOn productOrderAddOn : productOrder.getAddOns()) {
-            Workflow addOnWorkflow = productOrderAddOn.getAddOn().getWorkflow();
-            if (addOnWorkflow != Workflow.NONE) {
-                if (workflows.contains(addOnWorkflow)) {
-                    return true;
-                }
-            }
-        }
-        return false;
+    private boolean productOrAddOnsHaveWorkflow(ProductOrder productOrder) {
+        return workflows.isEmpty() || getMatchingWorkflow(productOrder) != Workflow.NONE;
     }
 
+    public Workflow getMatchingWorkflow(ProductOrder productOrder) {
+        if (workflows.isEmpty()) {
+            return productOrder.getProduct().getWorkflow();
+        }
+        for (ProductOrderAddOn productOrderAddOn : productOrder.getAddOns()) {
+            Workflow matchingWorkflow = getMatchingWorkflow(productOrderAddOn.getAddOn().getWorkflow());
+            if (matchingWorkflow != Workflow.NONE) {
+                return matchingWorkflow;
+            }
+        }
+        return getMatchingWorkflow(productOrder.getProduct().getWorkflow());
+    }
+
+    private Workflow getMatchingWorkflow(Workflow workflow) {
+        for (Workflow testWorkflow : workflows) {
+            if (testWorkflow == workflow) {
+                return workflow;
+            }
+        }
+        return Workflow.NONE;
+    }
+
+
     public boolean invoke(LabVessel labVessel, ProductOrder productOrder) {
-        return productAddOnsHaveWorkflow(productOrder) && materialTypeMatches(labVessel);
+        return productOrAddOnsHaveWorkflow(productOrder) && materialTypeMatches(labVessel);
     }
 
     public Set<MaterialType> getMaterialTypes() {
         return materialTypes;
+    }
+
+    public Set<Workflow> getWorkflows() {
+        return workflows;
     }
 }

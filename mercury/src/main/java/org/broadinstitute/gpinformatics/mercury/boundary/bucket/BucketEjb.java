@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.bucket;
 
 import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -10,7 +11,6 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
@@ -41,6 +41,7 @@ import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.io.IOException;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -103,31 +104,36 @@ public class BucketEjb {
     /**
      * Adds a pre-defined collection of {@link LabVessel} mapped to their destination {@link WorkflowBucketDef}s
      * to the correct bucket using the specified pdoBusinessKey.
-     *
-     * @param bucketVessels    A Collection of {@link LabVessel} mapped to their destination {@link WorkflowBucketDef}.
+     * @param vesselMap       A Collection of {@link LabVessel} mapped to their destination {@link WorkflowBucketDef}
+     *                         and {@link Workflow}.
      * @param entryType        the type of bucket entry to add
      * @param operator         Represents the user that initiated adding the vessels to the bucket
      * @param labEventLocation Machine location from which operator initiated this action
      * @param programName      Name of the program that initiated this action
      * @param pdo              Product order for all vessels
      */
-    public Collection<BucketEntry> add(Map<WorkflowBucketDef, Collection<LabVessel>> bucketVessels,
-                                       BucketEntry.BucketEntryType entryType, @Nonnull String operator,
-                                       @Nonnull String labEventLocation, @Nonnull String programName,
-                                       @Nonnull ProductOrder pdo) {
-        List<BucketEntry> bucketEntries = new ArrayList<>();
+    public Map<AbstractMap.SimpleEntry<WorkflowBucketDef, Workflow>, Collection<BucketEntry>> add(
+            Map<AbstractMap.SimpleEntry<WorkflowBucketDef, Workflow>, Collection<LabVessel>> vesselMap,
+            BucketEntry.BucketEntryType entryType, @Nonnull String operator,
+            @Nonnull String labEventLocation, @Nonnull String programName,
+            @Nonnull ProductOrder pdo) {
+        Multimap<AbstractMap.SimpleEntry<WorkflowBucketDef, Workflow>, BucketEntry> bucketEntries = HashMultimap.create();
 
-        for (Map.Entry<WorkflowBucketDef, Collection<LabVessel>> bucketVesselsEntry : bucketVessels.entrySet()) {
-            if (!bucketVesselsEntry.getValue().isEmpty()) {
-                WorkflowBucketDef bucketDef = bucketVesselsEntry.getKey();
-                Bucket bucket = findOrCreateBucket(bucketDef.getName());
+        for (Map.Entry<AbstractMap.SimpleEntry<WorkflowBucketDef, Workflow>, Collection<LabVessel>> bucketVesselsEntry :
+                vesselMap.entrySet()) {
+
+            Collection<LabVessel> bucketVessels = bucketVesselsEntry.getValue();
+            if (!bucketVessels.isEmpty()) {
+                WorkflowBucketDef bucketDef = bucketVesselsEntry.getKey().getKey();
+                Workflow workflow = bucketVesselsEntry.getKey().getValue();
+                Bucket bucket = findOrCreateBucket(bucketVesselsEntry.getKey().getKey().getName());
                 Collection<BucketEntry> entriesForBucket =
-                        add(bucketVesselsEntry.getValue(), bucket, entryType, operator,
-                                labEventLocation, programName, bucketDef.getBucketEventType(), pdo);
-                bucketEntries.addAll(entriesForBucket);
+                        add(bucketVessels, bucket, entryType, operator, labEventLocation, programName,
+                                bucketDef.getBucketEventType(), pdo, workflow);
+                bucketEntries.putAll(bucketVesselsEntry.getKey(), entriesForBucket);
             }
         }
-        return bucketEntries;
+        return bucketEntries.asMap();
     }
 
     /**
@@ -147,10 +153,30 @@ public class BucketEjb {
                                        @Nonnull String labEventLocation,
                                        @Nonnull String programName, LabEventType eventType,
                                        @Nonnull ProductOrder pdo) {
+        return add(entriesToAdd, bucket, entryType, operator, labEventLocation, programName, eventType, pdo,
+                pdo.getProduct().getWorkflow());
+    }
+    /**
+     * Adds a pre-defined collection of {@link LabVessel}s to the given bucket using the specified pdoBusinessKey.
+     *
+     * @param entriesToAdd     Collection of LabVessels to be added to a bucket
+     * @param bucket           the bucket that will receive the vessels (as bucket entries)
+     * @param entryType        the type of bucket entry to add
+     * @param operator         Represents the user that initiated adding the vessels to the bucket
+     * @param labEventLocation Machine location from which operator initiated this action
+     * @param programName      Name of the program that initiated this action
+     * @param eventType        Type of the Lab Event that initiated this bucket add request
+     * @param pdo              Product order for all vessels
+     */
+    public Collection<BucketEntry> add(@Nonnull Collection<LabVessel> entriesToAdd, @Nonnull Bucket bucket,
+                                       BucketEntry.BucketEntryType entryType, @Nonnull String operator,
+                                       @Nonnull String labEventLocation,
+                                       @Nonnull String programName, LabEventType eventType,
+                                       @Nonnull ProductOrder pdo, Workflow workflow) {
         List<BucketEntry> listOfNewEntries = new ArrayList<>(entriesToAdd.size());
         for (LabVessel currVessel : entriesToAdd) {
             listOfNewEntries.add(
-                    bucket.addEntry(pdo, currVessel, entryType, pdo.getProduct().getWorkflow().getWorkflowName()));
+                    bucket.addEntry(pdo, currVessel, entryType, workflow.getWorkflowName()));
         }
 
         //TODO SGM: Pass in Latest Batch?
@@ -416,45 +442,60 @@ public class BucketEjb {
             }
         }
 
-        Map<WorkflowBucketDef, Collection<LabVessel>> validVessels = applyBucketCriteria(vessels, order);
-
-        Collection<BucketEntry> addedBucketEntries =
-                add(validVessels, BucketEntry.BucketEntryType.PDO_ENTRY, username, LabEvent.UI_EVENT_LOCATION,
-                        LabEvent.UI_PROGRAM_NAME, order);
+        Map<WorkflowBucketDef, Collection<BucketEntry>> newBucketEntries = applyBucketCriteria(vessels, order, username);
 
         Map<String, Collection<ProductOrderSample>> samplesAdded = new HashMap<>();
-        for (BucketEntry bucketEntry : addedBucketEntries) {
-            for (MercurySample sample : bucketEntry.getLabVessel().getMercurySamples()) {
-                String sampleKey = sample.getSampleKey();
-                String bucketName = bucketEntry.getBucket().getBucketDefinitionName();
-                Collection<ProductOrderSample> productOrderSampleSet = samplesAdded.get(bucketName);
-                if (productOrderSampleSet==null) {
-                    productOrderSampleSet = new HashSet<>();
+        for (Map.Entry<WorkflowBucketDef, Collection<BucketEntry>> bucketEntrySet : newBucketEntries.entrySet()) {
+            for (BucketEntry bucketEntry : bucketEntrySet.getValue()) {
+                for (MercurySample sample : bucketEntry.getLabVessel().getMercurySamples()) {
+                    String sampleKey = sample.getSampleKey();
+                    String bucketName = bucketEntry.getBucket().getBucketDefinitionName();
+                    Collection<ProductOrderSample> productOrderSampleSet = samplesAdded.get(bucketName);
+                    if (productOrderSampleSet == null) {
+                        productOrderSampleSet = new HashSet<>();
+                    }
+                    productOrderSampleSet.addAll(nameToSampleMap.get(sampleKey));
+                    samplesAdded.put(bucketName, productOrderSampleSet);
                 }
-                productOrderSampleSet.addAll(nameToSampleMap.get(sampleKey));
-                samplesAdded.put(bucketName, productOrderSampleSet);
             }
         }
-
         return samplesAdded;
     }
 
 
-    private Map<WorkflowBucketDef, Collection<LabVessel>> applyBucketCriteria(Collection<LabVessel> vessels,
-                                                                              ProductOrder productOrder) {
+    private Map<WorkflowBucketDef, Collection<BucketEntry>> applyBucketCriteria(List<LabVessel> vessels,
+                                                                                      ProductOrder productOrder,
+                                                                                      String username) {
+        Multimap<WorkflowBucketDef, BucketEntry> bucketEntries = HashMultimap.create();
+        // evaluate the buckets using these products first with add-ons then with the product itself
+
         WorkflowConfig workflowConfig = workflowLoader.load();
-        List<Product> bucketProducts = new ArrayList<>();
-        bucketProducts.add(productOrder.getProduct());
-        bucketProducts.addAll(productOrder.getProduct().getAddOnsWithWorkflow());
+        for (Workflow workflow : productOrder.getProduct().getProductWorkflows()) {
+            Multimap<AbstractMap.SimpleEntry<WorkflowBucketDef, Workflow>, LabVessel> bucketedVesselMap =
+                    HashMultimap.create();
 
-        Map<WorkflowBucketDef, Collection<LabVessel>> bucketedVesselMap = new HashMap<>();
-        for (Product product : bucketProducts) {
-            ProductWorkflowDefVersion workflowDefVersion =
-                    workflowConfig.getWorkflow(product.getWorkflow()).getEffectiveVersion();
-            bucketedVesselMap.putAll(workflowDefVersion.getInitialBucket(vessels, productOrder));
+            ProductWorkflowDefVersion workflowDefVersion = workflowConfig.getWorkflow(workflow).getEffectiveVersion();
+
+            for (LabVessel vessel : vessels) {
+                AbstractMap.SimpleEntry<WorkflowBucketDef, Workflow>
+                        initialBucket = workflowDefVersion.getInitialBucket(vessel, productOrder);
+                if (initialBucket != null) {
+                    if (!bucketedVesselMap.values().contains(vessel)) {
+                        bucketedVesselMap.put(initialBucket, vessel);
+                    }
+                }
+            }
+
+            Map<AbstractMap.SimpleEntry<WorkflowBucketDef, Workflow>, Collection<BucketEntry>> newBucketEntries =
+                    add(bucketedVesselMap.asMap(), BucketEntry.BucketEntryType.PDO_ENTRY, username,
+                            LabEvent.UI_EVENT_LOCATION,
+                            LabEvent.UI_PROGRAM_NAME, productOrder);
+            for (Map.Entry<AbstractMap.SimpleEntry<WorkflowBucketDef, Workflow>, Collection<BucketEntry>> entrySet : newBucketEntries
+                    .entrySet()) {
+                bucketEntries.putAll(entrySet.getKey().getKey(), entrySet.getValue());
+            }
         }
-
-        return bucketedVesselMap;
+        return bucketEntries.asMap();
     }
 
     /**

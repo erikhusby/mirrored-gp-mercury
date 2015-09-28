@@ -381,7 +381,7 @@ public class LabBatchEjb {
             if (!allowedValues.isEmpty() && !allowedValues.contains(batchJiraTicketField.getValue())) {
                 String fieldName = batchJiraTicketFieldFieldDefinition.getName();
                 messages.add(String.format(
-                        "Unknown value for field '%s'. This will not prevent the batch being created but you will need to update %s manually.",
+                        "Unknown value for field '%s'. This will not prevent the batch being created but you will need to update '%s' manually.",
                         fieldName, fieldName));
                 jiraBatchFieldsIterator.remove();
             }
@@ -490,7 +490,6 @@ public class LabBatchEjb {
             batch.setBatchDescription(fieldBuilder.generateDescription());
         }
 
-//        CreateFields.IssueType issuetype = jiraIssue.getFieldValue("issuetype");
         Map<String, CustomFieldDefinition> requiredFields =
                 jiraService.getRequiredFields(new CreateFields.Project(projectType), jiraIssue.getIssueType());
         Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();

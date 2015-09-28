@@ -8,10 +8,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Where samples are placed for batching, typically the first step in a process
@@ -41,29 +37,6 @@ public class WorkflowBucketDef extends WorkflowStepDef {
         this.autoDrainDays = autoDrainDays;
     }
 
-
-    /**
-     * Find the vessels eligible for this bucket. When bucket is being evaluated BucketEntryEvaluators defined in
-     * the configuration are or-ed. If no BucketEntryEvaluators are defined it will by default allow the
-     * labVessel to be bucketed.
-     *
-     * @return true if the vessel can go into the bucket, false otherwise
-     */
-    public Collection<LabVessel> meetsBucketCriteria(Collection<LabVessel> labVessels, ProductOrder productOrder) {
-        if (bucketEntryEvaluator == null) {
-            // If no bucketEntryEvaluators are configured, then, by default, the labVessels meet bucket criteria.
-            return labVessels;
-        }
-        Set<LabVessel> vesselsForBucket = new HashSet<>();
-
-        for (LabVessel labVessel : labVessels) {
-            if (bucketEntryEvaluator.invoke(labVessel, productOrder)) {
-                vesselsForBucket.add(labVessel);
-            }
-        }
-        return vesselsForBucket;
-    }
-
     /**
      * Test if the vessel is eligible for bucketing. When bucket is being evaluated BucketEntryEvaluators defined in
      * the configuration are or-ed. If no BucketEntryEvaluators are defined it will by default allow the
@@ -72,8 +45,20 @@ public class WorkflowBucketDef extends WorkflowStepDef {
      * @return true if the vessel can go into the bucket, false otherwise
      */
     public boolean meetsBucketCriteria(LabVessel labVessel, ProductOrder productOrder) {
-        Collection<LabVessel> labVessels = meetsBucketCriteria(Collections.singleton(labVessel), productOrder);
-        return !labVessels.isEmpty();
+        if (bucketEntryEvaluator == null) {
+            // If no bucketEntryEvaluators are configured, then, by default, the labVessels meet bucket criteria.
+            return true;
+        }
+
+        return bucketEntryEvaluator.invoke(labVessel, productOrder);
+    }
+
+    public String getWorkflowForProduct(ProductOrder productOrder) {
+        Workflow workflow = getBucketEntryEvaluator().getMatchingWorkflow(productOrder);
+        if (workflow == Workflow.NONE) {
+            workflow = productOrder.getProduct().getWorkflow();
+        }
+        return workflow.getWorkflowName();
     }
 
     /**
