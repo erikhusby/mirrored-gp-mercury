@@ -1049,14 +1049,7 @@ function formatInput(item) {
 
     <div class="controls">
         <div class="form-value">
-            <div class="barFull view" title="${actionBean.percentInProgress}% In Progress">
-                                    <span class="barAbandon"
-                                          title="${actionBean.percentAbandoned}% Abandoned"
-                                          style="width: ${actionBean.percentAbandoned}%"> </span>
-                                    <span class="barComplete"
-                                          title="${actionBean.percentCompleted}% Completed"
-                                          style="width: ${actionBean.percentCompleted}%"> </span>
-            </div>
+                <stripes:layout-render name="/orders/sample_progress_bar.jsp" status="${actionBean.progressFetcher.getStatus(actionBean.editOrder.businessKey)}" extraStyle="view"/>
                 ${actionBean.progressString}
         </div>
     </div>
