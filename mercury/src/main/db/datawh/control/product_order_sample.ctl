@@ -11,5 +11,9 @@ TRAILING NULLCOLS
  product_order_id,
  sample_name,
  delivery_status,
- sample_position
+ sample_position,
+ participant_id,
+ sample_type,
+ sample_receipt DATE "YYYYMMDDHH24MISS",
+ original_sample_type
 )

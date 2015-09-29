@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.datawh;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 
 import javax.ejb.Stateful;
 import javax.inject.Inject;
@@ -10,10 +11,20 @@ import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 @Stateful
 public class ProductOrderSampleEtl extends GenericEntityAndStatusEtl<ProductOrderSample, ProductOrderSample> {
     private String samplePositionJoinTable;
+
+    private static Map<String,Metadata.Key> etlMetadataKeyMap = new HashMap<>();
+    static {
+        etlMetadataKeyMap.put("PARTICIPANT_ID", Metadata.Key.PATIENT_ID );
+        etlMetadataKeyMap.put("SAMPLE_TYPE", Metadata.Key.MATERIAL_TYPE );
+        etlMetadataKeyMap.put("ORIGINAL_SAMPLE_TYPE", Metadata.Key.ORIGINAL_MATERIAL_TYPE );
+    }
 
     public ProductOrderSampleEtl() {
     }
@@ -67,13 +78,39 @@ public class ProductOrderSampleEtl extends GenericEntityAndStatusEtl<ProductOrde
 
     @Override
     String dataRecord(String etlDateStr, boolean isDelete, ProductOrderSample entity) {
+
+        Map<String,String> etlMetadata = getMetadata( entity );
+
         return genericRecord(etlDateStr, isDelete,
                 entity.getProductOrderSampleId(),
                 format(entity.getProductOrder() != null ? entity.getProductOrder().getProductOrderId() : null),
                 format(entity.getName()),
                 format(entity.getDeliveryStatus().name()),
-                format(entity.getSamplePosition())
+                format(entity.getSamplePosition()),
+                format(etlMetadata.get("PARTICIPANT_ID")),
+                format(etlMetadata.get("SAMPLE_TYPE")),
+                format(entity.getReceiptDate()),
+                format(etlMetadata.get("ORIGINAL_SAMPLE_TYPE"))
         );
+    }
+
+    Map<String,String> getMetadata( ProductOrderSample entity ) {
+        Map<String,String> etlMetadata = new HashMap<>();
+        if( entity.getMercurySample() == null ) {
+            return etlMetadata;
+        } else {
+            Set<Metadata> metadataSet = entity.getMercurySample().getMetadata();
+            for( Map.Entry<String,Metadata.Key> mapEntry : etlMetadataKeyMap.entrySet() ) {
+                for( Metadata metadata : metadataSet ) {
+                    if( mapEntry.getValue() == metadata.getKey() ) {
+                        etlMetadata.put(mapEntry.getKey(), metadata.getValue());
+                        break;
+                    }
+                }
+            }
+            return etlMetadata;
+        }
+
     }
 
 }
