@@ -43,6 +43,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketEntryEvaluator;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
 import javax.annotation.Nonnull;
@@ -455,8 +456,17 @@ public class ReworkEjb {
         }
 
         if (!bucketDef.meetsBucketCriteria(candidateVessel, productOrder)) {
-            validationMessages.add("You have submitted a vessel to the bucket that contains at least one sample that " +
-                                   "is not DNA");
+            String missingRequirements="";
+            WorkflowBucketEntryEvaluator bucketEvaluator = bucketDef.getBucketEntryEvaluator();
+            if (!bucketEvaluator.getMaterialTypes().isEmpty()) {
+                missingRequirements = String.format("Material Types: %s ", bucketEvaluator.getMaterialTypes());
+            }
+            if (!bucketEvaluator.getWorkflows().isEmpty()) {
+                missingRequirements += String.format("Workflows: %s ", bucketEvaluator.getWorkflows());
+            }
+            validationMessages.add(String
+                    .format("You have submitted a vessel to the bucket that contains at least one sample that doesn't meet the requirements of the bucket: %s",
+                            missingRequirements));
         }
 
         return validationMessages;

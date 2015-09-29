@@ -1228,7 +1228,7 @@
                     <materialTypes>DNA_DNA_SOMATIC</materialTypes>
                 </bucketEntryEvaluator>
                 <batchJiraProjectType>XTR</batchJiraProjectType>
-                <batchJiraIssueType>RNA_EXTRACTION</batchJiraIssueType>
+                <batchJiraIssueType>DNA_EXTRACTION</batchJiraIssueType>
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>
@@ -1394,7 +1394,7 @@
                     <materialTypes>WHOLE_BLOOD_BUFFY_COAT</materialTypes>
                 </bucketEntryEvaluator>
                 <batchJiraProjectType>XTR</batchJiraProjectType>
-                <batchJiraIssueType>DNA</batchJiraIssueType>
+                <batchJiraIssueType>DNA_EXTRACTION</batchJiraIssueType>
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>
@@ -1417,7 +1417,7 @@
                     <materialTypes>WHOLE_BLOOD_BUFFY_COAT</materialTypes>
                 </bucketEntryEvaluator>
                 <batchJiraProjectType>XTR</batchJiraProjectType>
-                <batchJiraIssueType>DNA</batchJiraIssueType>
+                <batchJiraIssueType>DNA_EXTRACTION</batchJiraIssueType>
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>
@@ -1437,7 +1437,7 @@
                     <materialTypes>BODILY_FLUID_SALIVA</materialTypes>
                 </bucketEntryEvaluator>
                 <batchJiraProjectType>XTR</batchJiraProjectType>
-                <batchJiraIssueType>DNA</batchJiraIssueType>
+                <batchJiraIssueType>DNA_EXTRACTION</batchJiraIssueType>
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>
@@ -1459,7 +1459,7 @@
                     <materialTypes>CELLS_PELLET_FROZEN_IN_X_MEDIA</materialTypes>
                 </bucketEntryEvaluator>
                 <batchJiraProjectType>XTR</batchJiraProjectType>
-                <batchJiraIssueType>DNA</batchJiraIssueType>
+                <batchJiraIssueType>DNA_EXTRACTION</batchJiraIssueType>
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>
@@ -1480,7 +1480,7 @@
                     <materialTypes>TISSUE_OCT_EMBEDDED_TISSUE</materialTypes>
                 </bucketEntryEvaluator>
                 <batchJiraProjectType>XTR</batchJiraProjectType>
-                <batchJiraIssueType>DNA</batchJiraIssueType>
+                <batchJiraIssueType>DNA_EXTRACTION</batchJiraIssueType>
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>
@@ -1500,7 +1500,7 @@
                     <materialTypes>TISSUE_FFPE_TISSUE_SECTION</materialTypes>
                 </bucketEntryEvaluator>
                 <batchJiraProjectType>XTR</batchJiraProjectType>
-                <batchJiraIssueType>DNA</batchJiraIssueType>
+                <batchJiraIssueType>DNA_EXTRACTION</batchJiraIssueType>
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>
@@ -1520,7 +1520,7 @@
                     <materialTypes>FFPE_SCROLL</materialTypes>
                 </bucketEntryEvaluator>
                 <batchJiraProjectType>XTR</batchJiraProjectType>
-                <batchJiraIssueType>DNA</batchJiraIssueType>
+                <batchJiraIssueType>DNA_EXTRACTION</batchJiraIssueType>
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>
@@ -1540,7 +1540,7 @@
                     <materialTypes>FFPE_BLOCK</materialTypes>
                 </bucketEntryEvaluator>
                 <batchJiraProjectType>XTR</batchJiraProjectType>
-                <batchJiraIssueType>DNA</batchJiraIssueType>
+                <batchJiraIssueType>DNA_EXTRACTION</batchJiraIssueType>
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>
@@ -1560,7 +1560,7 @@
                     <materialTypes>WHOLE_BLOOD_BLOOD_SPOT</materialTypes>
                 </bucketEntryEvaluator>
                 <batchJiraProjectType>XTR</batchJiraProjectType>
-                <batchJiraIssueType>DNA</batchJiraIssueType>
+                <batchJiraIssueType>DNA_EXTRACTION</batchJiraIssueType>
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>
@@ -1580,7 +1580,7 @@
                     <materialTypes>WHOLE_BLOOD_BUFFY_COAT</materialTypes>
                 </bucketEntryEvaluator>
                 <batchJiraProjectType>XTR</batchJiraProjectType>
-                <batchJiraIssueType>DNA</batchJiraIssueType>
+                <batchJiraIssueType>DNA_EXTRACTION</batchJiraIssueType>
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>
@@ -1600,7 +1600,7 @@
                     <materialTypes>CELLS_PELLET_FROZEN</materialTypes>
                 </bucketEntryEvaluator>
                 <batchJiraProjectType>XTR</batchJiraProjectType>
-                <batchJiraIssueType>RNA</batchJiraIssueType>
+                <batchJiraIssueType>RNA_EXTRACTION</batchJiraIssueType>
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>
@@ -1621,7 +1621,7 @@
                     <materialTypes>TISSUE_OCT_EMBEDDED_TISSUE</materialTypes>
                 </bucketEntryEvaluator>
                 <batchJiraProjectType>XTR</batchJiraProjectType>
-                <batchJiraIssueType>RNA</batchJiraIssueType>
+                <batchJiraIssueType>RNA_EXTRACTION</batchJiraIssueType>
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>
@@ -1641,7 +1641,7 @@
                     <materialTypes>TISSUE_FFPE_TISSUE_SECTION</materialTypes>
                 </bucketEntryEvaluator>
                 <batchJiraProjectType>XTR</batchJiraProjectType>
-                <batchJiraIssueType>RNA</batchJiraIssueType>
+                <batchJiraIssueType>RNA_EXTRACTION</batchJiraIssueType>
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>
@@ -1661,7 +1661,7 @@
                     <materialTypes>FFPE_SCROLL</materialTypes>
                 </bucketEntryEvaluator>
                 <batchJiraProjectType>XTR</batchJiraProjectType>
-                <batchJiraIssueType>RNA</batchJiraIssueType>
+                <batchJiraIssueType>RNA_EXTRACTION</batchJiraIssueType>
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>
@@ -1681,7 +1681,7 @@
                     <materialTypes>FFPE_BLOCK</materialTypes>
                 </bucketEntryEvaluator>
                 <batchJiraProjectType>XTR</batchJiraProjectType>
-                <batchJiraIssueType>RNA</batchJiraIssueType>
+                <batchJiraIssueType>RNA_EXTRACTION</batchJiraIssueType>
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>

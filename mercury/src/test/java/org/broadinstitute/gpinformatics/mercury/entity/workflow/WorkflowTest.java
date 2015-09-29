@@ -45,8 +45,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasItems;
 
 
@@ -298,6 +300,7 @@ public class WorkflowTest {
         ProductOrder productOrder = ProductOrderTestFactory
                 .createDummyProductOrder(1, "PDO-EDDIE_MONEY", Workflow.ICE_CRSP, 1, "JOURNEY", "TOM-SAWYER", true,
                         "ZZ-TOP", "AH_HA", "JOAN-JET");
+        productOrder.getProduct().addAddOn(addOn);
         productOrder.getSamples().iterator().next().setMercurySample(mercurySample);
         productOrder.updateAddOnProducts(Collections.singletonList(addOn));
 
@@ -319,9 +322,11 @@ public class WorkflowTest {
                 MercurySample.MetadataSource.MERCURY);
         barcodedTube.addSample(mercurySample);
 
+        Product addOn = ProductTestFactory.createDummyProduct(Workflow.DNA_RNA_EXTRACTION_FROZEN_TISSUE, "ZZ-TOP");
         ProductOrder productOrder = ProductOrderTestFactory
-                .createDummyProductOrder(1, "PDO-EDDIE_MONEY", Workflow.ICE_CRSP, 1, "JOURNEY", "TOM-SAWYER", true,
-                        "ZZ-TOP", "AH_HA", "JOAN-JET");
+                .createDummyProductOrder(1, "PDO-EDDIE_MONEY", Workflow.ICE_CRSP, 1, "JOURNEY", "TOM-SAWYER",
+                        true, "ZZ-TOP", "AH_HA", "JOAN-JET");
+        productOrder.getProduct().addAddOn(addOn);
         productOrder.getSamples().iterator().next().setMercurySample(mercurySample);
 
         ProductWorkflowDef workflow = new WorkflowLoader().load().getWorkflow(Workflow.DNA_RNA_EXTRACTION_FROZEN_TISSUE);
@@ -344,8 +349,9 @@ public class WorkflowTest {
 
         Product addOn = ProductTestFactory.createDummyProduct(Workflow.DNA_RNA_EXTRACTION_FROZEN_TISSUE, "ZZ-TOP");
         ProductOrder productOrder = ProductOrderTestFactory
-                .createDummyProductOrder(1, "PDO-EDDIE_MONEY", Workflow.ICE_CRSP, 1, "JOURNEY", "TOM-SAWYER", true,
-                        "ZZ-TOP", "AH_HA", "JOAN-JET");
+                .createDummyProductOrder(1, "PDO-EDDIE_MONEY", Workflow.ICE_CRSP, 1, "JOURNEY", "TOM-SAWYER",
+                        true, "ZZ-TOP", "AH_HA", "JOAN-JET");
+        productOrder.getProduct().addAddOn(addOn);
         productOrder.getSamples().iterator().next().setMercurySample(mercurySample);
         productOrder.updateAddOnProducts(Collections.singletonList(addOn));
 
@@ -505,5 +511,55 @@ public class WorkflowTest {
             return sourceVessel;
         }
     }
+
+    public void testFindParentWorkflow() {
+        List<String> expectedValues = new ArrayList<>(Workflow.values().length);
+        List<String> actualValues = new ArrayList<>(Workflow.values().length);
+        WorkflowConfig workflowConfig = new WorkflowLoader().load();
+
+        for (Workflow workflow : EnumSet.complementOf(EnumSet.of(Workflow.NONE))) {
+            ProductOrder productOrder = ProductOrderTestFactory.buildProductOrder(1, workflow);
+            ProductWorkflowDef workflowDef = workflowConfig.getWorkflow(workflow);
+            ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
+            for (WorkflowBucketDef bucket : workflowVersion.getCreationBuckets()) {
+                expectedValues.add(workflowDef.getName());
+                actualValues.add(bucket.getWorkflowForProduct(productOrder));
+            }
+        }
+        assertThat(actualValues.size(), equalTo(expectedValues.size()));
+        assertThat(actualValues, contains(expectedValues.toArray()));
+    }
+
+    public void testFindParentWorkflowAddonsWithWorkflow() {
+        List<String> expectedValues = new ArrayList<>(Workflow.values().length);
+        List<String> actualValues = new ArrayList<>(Workflow.values().length);
+
+        ProductOrder productOrder = ProductOrderTestFactory.buildProductOrder(1, Workflow.ICE_CRSP);
+        WorkflowConfig workflowConfig = new WorkflowLoader().load();
+
+        for (Workflow workflow : EnumSet.complementOf(EnumSet.of(Workflow.NONE))) {
+            Product addOn = ProductTestFactory.createDummyProduct(workflow, "P-" + workflow.name() + "-1");
+            productOrder.getProduct().getAddOns().clear();
+            productOrder.getProduct().addAddOn(addOn);
+            productOrder.updateAddOnProducts(Collections.singletonList(addOn));
+
+            ProductWorkflowDef workflowDef = workflowConfig.getWorkflow(workflow);
+            for (WorkflowBucketDef workflowBucketDef : workflowDef.getEffectiveVersion().getBuckets()) {
+                WorkflowBucketEntryEvaluator bucketEntryEvaluator =
+                                            new WorkflowBucketEntryEvaluator(Collections.singleton(workflow), Collections.<MaterialType>emptySet());
+                workflowBucketDef.setBucketEntryEvaluator(bucketEntryEvaluator);
+            }
+
+            ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
+            for (WorkflowBucketDef bucket : workflowVersion.getCreationBuckets()) {
+                expectedValues.add(workflow.getWorkflowName());
+                actualValues.add(bucket.getWorkflowForProduct(productOrder));
+            }
+        }
+        assertThat(actualValues.size(), equalTo(expectedValues.size()));
+        assertThat(actualValues, contains(expectedValues.toArray()));
+    }
+
+
 }
 

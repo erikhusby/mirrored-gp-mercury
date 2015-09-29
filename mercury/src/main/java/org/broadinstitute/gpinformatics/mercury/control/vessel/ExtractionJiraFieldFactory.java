@@ -154,10 +154,11 @@ public class ExtractionJiraFieldFactory extends AbstractBatchJiraFieldFactory {
             for (WorkflowBucketDef bucketDef : workflowByName.getEffectiveVersion().getCreationBuckets()) {
                 for (MaterialType materialType : bucketDef.getBucketEntryEvaluator().getMaterialTypes()) {
                     if (bucketEntry.getLabVessel().isMaterialType(materialType)) {
-                        CustomField materialTypeField = new CustomField(submissionFields, LabBatch.TicketFields.EXTRACTION_BATCH_TYPE,
-                                new Object[]{new CustomField.ValueContainer(materialType.getDisplayName())});
+                        CustomField materialTypeField =
+                                new CustomField(submissionFields, LabBatch.TicketFields.EXTRACTION_BATCH_TYPE,
+                                        new Object[]{new CustomField.ValueContainer(materialType.getDisplayName())});
                         customFields.add(materialTypeField);
-                        foundMaterialType=true;
+                        foundMaterialType = true;
                     }
                 }
                 if (foundMaterialType) {
