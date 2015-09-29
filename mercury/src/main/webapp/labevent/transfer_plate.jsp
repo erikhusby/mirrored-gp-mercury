@@ -71,7 +71,7 @@ plate / rack.
                                 value="${rowStatus.index * geometry.columnCount + columnStatus.index}"/>
                         <td align="right">
                             <c:if test="${empty rowName}">${geometry.vesselPositions[receptacleIndex]}</c:if>
-                            <input type="text"
+                            <input type="text" id="${source ? 'src' : 'dest'}RcpBcd${stationEventIndex}_${receptacleIndex}"
                                     name="stationEvents[${stationEventIndex}].${source ? 'sourcePositionMap' : 'positionMap'}.receptacle[${receptacleIndex}].barcode"
                                     value="${actionBean.findReceptacleAtPosition(positionMap, geometry.vesselPositions[receptacleIndex]).barcode}"
                                     class="clearable smalltext unique"/>
