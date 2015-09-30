@@ -113,7 +113,7 @@ public class ProductOrderSampleEtlDbFreeTest {
         expect(obj.getMercurySample()).andReturn(mercurySample).times(2);
 
         participantId = "PARTICIPANT-1";
-        sampleType = "Bag-O-Blood";
+        sampleType = "Tumor";
         receiptDate = new Date();
         // origSampleType deliberately left blank and no Metadata created for it
 
@@ -121,7 +121,7 @@ public class ProductOrderSampleEtlDbFreeTest {
         expect(metaParticipant.getValue()).andReturn(participantId).anyTimes();
         expect(metaUseless1.getKey()).andReturn(Metadata.Key.BROAD_2D_BARCODE).anyTimes();
         expect(metaUseless1.getValue()).andReturn("metaUseless1").anyTimes();
-        expect(metaSampleType.getKey()).andReturn(Metadata.Key.MATERIAL_TYPE).anyTimes();
+        expect(metaSampleType.getKey()).andReturn(Metadata.Key.TUMOR_NORMAL).anyTimes();
         expect(metaSampleType.getValue()).andReturn(sampleType).anyTimes();
         expect(metaUseless2.getKey()).andReturn(Metadata.Key.BUICK_COLLECTION_DATE).anyTimes();
         expect(metaUseless2.getValue()).andReturn("metaUseless2").anyTimes();

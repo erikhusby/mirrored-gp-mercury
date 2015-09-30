@@ -20,19 +20,6 @@ import java.util.Set;
 public class ProductOrderSampleEtl extends GenericEntityAndStatusEtl<ProductOrderSample, ProductOrderSample> {
     private String samplePositionJoinTable;
 
-    // Keys to metadata values
-    private static String PARTICIPANT_ID_KEY = "PARTICIPANT_ID";
-    private static String SAMPLE_TYPE_KEY = "SAMPLE_TYPE";
-    private static String RECEIPT_DATE_KEY = "RECEIPT_DATE";
-    private static String ORIGINAL_SAMPLE_TYPE_KEY = "ORIGINAL_SAMPLE_TYPE";
-
-    private static Map<String,Metadata.Key> etlMetadataKeyMap = new HashMap<>();
-    static {
-        etlMetadataKeyMap.put(PARTICIPANT_ID_KEY, Metadata.Key.PATIENT_ID );
-        etlMetadataKeyMap.put(SAMPLE_TYPE_KEY, Metadata.Key.MATERIAL_TYPE );
-        etlMetadataKeyMap.put(ORIGINAL_SAMPLE_TYPE_KEY, Metadata.Key.ORIGINAL_MATERIAL_TYPE );
-    }
-
     public ProductOrderSampleEtl() {
     }
 
@@ -86,7 +73,7 @@ public class ProductOrderSampleEtl extends GenericEntityAndStatusEtl<ProductOrde
     @Override
     String dataRecord(String etlDateStr, boolean isDelete, ProductOrderSample entity) {
 
-        Map<String, String> etlMetadata = getMetadata(entity );
+        SampleEtlData etlMetadata = getMetadata(entity );
 
         return genericRecord(etlDateStr, isDelete,
                 entity.getProductOrderSampleId(),
@@ -94,35 +81,80 @@ public class ProductOrderSampleEtl extends GenericEntityAndStatusEtl<ProductOrde
                 format(entity.getName()),
                 format(entity.getDeliveryStatus().name()),
                 format(entity.getSamplePosition()),
-                format(etlMetadata.get(PARTICIPANT_ID_KEY)),
-                format(etlMetadata.get(SAMPLE_TYPE_KEY)),
-                format(etlMetadata.get(RECEIPT_DATE_KEY)),
-                format(etlMetadata.get(ORIGINAL_SAMPLE_TYPE_KEY))
+                format(etlMetadata.getParticipantId()),
+                format(etlMetadata.getSampleType()),
+                format(etlMetadata.getReceiptDate()),
+                format(etlMetadata.getOriginalSampleType())
         );
     }
 
-    Map<String,String> getMetadata( ProductOrderSample entity ) {
-        Map<String,String> etlMetadata = new HashMap<>();
+    private SampleEtlData getMetadata( ProductOrderSample entity ) {
+        SampleEtlData etlMetadata = new SampleEtlData();
         if( entity.getMercurySample() == null ) {
             return etlMetadata;
         } else {
             MercurySample mercurySample = entity.getMercurySample();
             Set<Metadata> metadataSet = mercurySample.getMetadata();
-            for( Map.Entry<String,Metadata.Key> mapEntry : etlMetadataKeyMap.entrySet() ) {
-                for( Metadata metadata : metadataSet ) {
-                    if( mapEntry.getValue() == metadata.getKey() ) {
-                        etlMetadata.put(mapEntry.getKey(), metadata.getValue());
-                        break;
-                    }
-                }
-            }
-            // Tack on mercury sample reciept date (PDO sample calls BSP!)
-            Date receiptDate = mercurySample.getReceivedDate();
-            if( receiptDate != null ) {
-                etlMetadata.put(RECEIPT_DATE_KEY, format(receiptDate));
-            }
-
+            etlMetadata.setParticipantId(getMetadataValue(metadataSet, Metadata.Key.PATIENT_ID));
+            etlMetadata.setSampleType(getMetadataValue(metadataSet, Metadata.Key.TUMOR_NORMAL));
+            etlMetadata.setOriginalSampleType(getMetadataValue(metadataSet, Metadata.Key.ORIGINAL_MATERIAL_TYPE));
+            // Use mercury sample reciept date (PDO sample calls BSP!)
+            etlMetadata.setReceiptDate(mercurySample.getReceivedDate());
             return etlMetadata;
+        }
+
+    }
+
+    private String getMetadataValue( Set<Metadata> metadataSet, Metadata.Key key ) {
+        String value = null;
+        for( Metadata metadata : metadataSet ) {
+            if( metadata.getKey() == key ) {
+                value = metadata.getValue();
+                break;
+            }
+        }
+        return value;
+    }
+
+    private class SampleEtlData {
+
+        private String participantId;
+        private String sampleType;
+        private Date receiptDate;
+        private String originalSampleType;
+
+        public SampleEtlData(){ }
+
+        public void setParticipantId(String participantId){
+            this.participantId = participantId;
+        }
+
+        public String getParticipantId(){
+            return participantId;
+        }
+
+        public void setSampleType(String sampleType) {
+            this.sampleType = sampleType;
+        }
+
+        public String getSampleType() {
+            return sampleType;
+        }
+
+        public void setReceiptDate(Date receiptDate){
+            this.receiptDate = receiptDate;
+        }
+
+        public Date getReceiptDate(){
+            return receiptDate;
+        }
+
+        public void setOriginalSampleType(String originalSampleType){
+            this.originalSampleType = originalSampleType;
+        }
+
+        public String getOriginalSampleType(){
+            return originalSampleType;
         }
 
     }
