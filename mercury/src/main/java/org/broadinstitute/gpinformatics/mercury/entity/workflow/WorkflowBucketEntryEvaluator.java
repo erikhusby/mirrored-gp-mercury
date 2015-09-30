@@ -42,12 +42,7 @@ public class WorkflowBucketEntryEvaluator implements Serializable {
         if (materialTypes.isEmpty()){
             return true;
         }
-        for (MaterialType materialType : materialTypes) {
-            if (labVessel.isMaterialType(materialType)) {
-                return true;
-            }
-        }
-        return false;
+        return materialTypes.contains(labVessel.getLatestMaterialType());
     }
 
     private boolean productOrAddOnsHaveWorkflow(ProductOrder productOrder) {
@@ -87,5 +82,24 @@ public class WorkflowBucketEntryEvaluator implements Serializable {
 
     public Set<Workflow> getWorkflows() {
         return workflows;
+    }
+
+    protected String findMissingRequirements(ProductOrder productOrder, MaterialType latestMaterialType) {
+        Set<MaterialType> missingMaterialTypes=getMaterialTypes();
+        missingMaterialTypes.remove(latestMaterialType);
+        Set<Workflow> missingWorkflows=getWorkflows();
+        missingWorkflows.removeAll(productOrder.getProduct().getProductWorkflows());
+
+        String missingRequirements = "";
+        if (!missingMaterialTypes.isEmpty()) {
+            missingRequirements =
+                    String.format("Material Type: '%s' is not one of %s", latestMaterialType, missingMaterialTypes);
+        }
+        if (!missingWorkflows.isEmpty()) {
+            missingRequirements +=
+                    String.format("Workflows '%s' are not one of %s ", productOrder.getProduct().getProductWorkflows(),
+                            missingWorkflows);
+        }
+        return missingRequirements;
     }
 }

@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationWithRollbackException;
@@ -43,7 +44,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketEntryEvaluator;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
 import javax.annotation.Nonnull;
@@ -366,8 +366,7 @@ public class ReworkEjb {
         Collection<String> validationMessages = new ArrayList<>();
         for (BucketCandidate bucketCandidate : bucketCandidates) {
             try {
-                validationMessages.addAll(addAndValidateBucketCandidate(bucketCandidate, reason, bucket, comment,
-                        userName));
+                addAndValidateBucketCandidate(bucketCandidate, reason, bucket, comment, userName);
             } catch (ValidationException e) {
                 throw new ValidationWithRollbackException(e);
             }
@@ -389,41 +388,38 @@ public class ReworkEjb {
      * @throws ValidationException Thrown in the case that some checked state of the Lab Vessel will not allow the
      *                             method to continue
      */
-    private Collection<String> addAndValidateBucketCandidate(
+    private void addAndValidateBucketCandidate(
             @Nonnull BucketCandidate bucketCandidate,
             @Nonnull ReworkReason reworkReason,
             @Nonnull Bucket bucket,
             @Nonnull String comment,
             @Nonnull String userName)
             throws ValidationException {
-
-        Workflow workflow = bucketCandidate.getProductOrder().getProduct().getWorkflow();
-        WorkflowBucketDef bucketDef = findWorkflowBucketDef(workflow, bucket.getBucketDefinitionName());
+        WorkflowBucketDef bucketDef = findWorkflowBucketDef(bucketCandidate.getProductOrder().getProduct(), bucket.getBucketDefinitionName());
         LabEventType reworkFromStep = bucketDef.getBucketEventType();
 
         LabVessel reworkVessel =
                 getLabVessel(bucketCandidate.getTubeBarcode(), bucketCandidate.getSampleKey(), userName);
 
-        Collection<String> validationMessages =
-                validateBucketItem(reworkVessel, ProductWorkflowDefVersion.findBucketDef(workflow, reworkFromStep),
-                        bucketCandidate.getProductOrder(), bucketCandidate.getSampleKey(),
-                        bucketCandidate.isReworkItem());
+        validateBucketItem(reworkVessel, bucketDef, bucketCandidate.getProductOrder(), bucketCandidate.getSampleKey(),
+                bucketCandidate.isReworkItem());
 
         addCandidate(reworkVessel, bucketCandidate.getProductOrder(), reworkReason, reworkFromStep,
                 bucket, comment, userName, bucketCandidate.isReworkItem());
-
-        return validationMessages;
     }
 
-    private WorkflowBucketDef findWorkflowBucketDef(@Nonnull Workflow workflow, String bucketName) {
+    private WorkflowBucketDef findWorkflowBucketDef(@Nonnull Product workflow, String bucketName) {
         WorkflowConfig workflowConfig = workflowLoader.load();
-        ProductWorkflowDefVersion workflowDefVersion = workflowConfig.getWorkflow(workflow)
-                                                                     .getEffectiveVersion();
-        WorkflowBucketDef bucketDef = workflowDefVersion.findBucketDefByName(bucketName);
-        if (bucketDef == null) {
-            throw new RuntimeException("Could not find bucket definition for: " + bucketName);
+        WorkflowBucketDef bucketDef=null;
+        for (Workflow productWorkflow : workflow.getProductWorkflows()) {
+            ProductWorkflowDefVersion workflowDefVersion = workflowConfig.getWorkflow(productWorkflow)
+                    .getEffectiveVersion();
+            bucketDef = workflowDefVersion.findBucketDefByName(bucketName);
+            if (bucketDef != null) {
+                return bucketDef;
+            }
         }
-        return bucketDef;
+        throw new RuntimeException("Could not find bucket definition for: " + bucketName);
     }
 
     /**
@@ -438,14 +434,11 @@ public class ReworkEjb {
      *
      * @return Collection of validation messages
      */
-    public Collection<String> validateBucketItem(@Nonnull LabVessel candidateVessel,
+    public void validateBucketItem(@Nonnull LabVessel candidateVessel,
                                                  @Nonnull WorkflowBucketDef bucketDef,
                                                  @Nonnull ProductOrder productOrder, @Nonnull String sampleKey,
                                                  boolean reworkItem)
             throws ValidationException {
-
-        List<String> validationMessages = new ArrayList<>();
-
         if (candidateVessel.checkCurrentBucketStatus(productOrder, bucketDef.getName(), BucketEntry.Status.Active)) {
             String error =
                     String.format("Tube %s with sample %s in product order %s already exists in the %s bucket.",
@@ -456,20 +449,12 @@ public class ReworkEjb {
         }
 
         if (!bucketDef.meetsBucketCriteria(candidateVessel, productOrder)) {
-            String missingRequirements="";
-            WorkflowBucketEntryEvaluator bucketEvaluator = bucketDef.getBucketEntryEvaluator();
-            if (!bucketEvaluator.getMaterialTypes().isEmpty()) {
-                missingRequirements = String.format("Material Types: %s ", bucketEvaluator.getMaterialTypes());
-            }
-            if (!bucketEvaluator.getWorkflows().isEmpty()) {
-                missingRequirements += String.format("Workflows: %s ", bucketEvaluator.getWorkflows());
-            }
-            validationMessages.add(String
-                    .format("You have submitted a vessel to the bucket that contains at least one sample that doesn't meet the requirements of the bucket: %s",
+            String missingRequirements = bucketDef.findMissingRequirements(productOrder, candidateVessel.getLatestMaterialType());
+            throw new ValidationException(
+                    String.format(
+                            "You have submitted a vessel to the bucket that contains at least one sample that doesn't meet the requirements of the bucket: %s",
                             missingRequirements));
         }
-
-        return validationMessages;
     }
 
     // TODO: Only called from BatchToJiraTest. Can that be modified to use a method that is used by application code?

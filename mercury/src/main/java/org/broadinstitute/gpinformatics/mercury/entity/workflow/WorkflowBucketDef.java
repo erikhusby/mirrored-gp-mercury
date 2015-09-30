@@ -5,6 +5,7 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -80,5 +81,9 @@ public class WorkflowBucketDef extends WorkflowStepDef {
 
     public WorkflowBucketEntryEvaluator getBucketEntryEvaluator() {
         return bucketEntryEvaluator;
+    }
+
+    public String findMissingRequirements(ProductOrder productOrder, MaterialType latestMaterialType) {
+        return bucketEntryEvaluator.findMissingRequirements(productOrder, latestMaterialType);
     }
 }

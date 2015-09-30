@@ -663,9 +663,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
 
     public List<Workflow> getProductWorkflows() {
         List<Workflow> workflows = new ArrayList<>();
-        if (getAddOns().isEmpty()) {
-            workflows.add(getWorkflow());
-        }
+
         for (Product product : getAddOns()) {
             if (product.getWorkflow() != Workflow.NONE) {
                 workflows.add(product.getWorkflow());
@@ -674,4 +672,5 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         workflows.add(getWorkflow());
         return workflows;
     }
+
 }
