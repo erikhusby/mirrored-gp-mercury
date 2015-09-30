@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSa
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 
 import javax.ejb.Stateful;
 import javax.inject.Inject;
@@ -19,11 +20,17 @@ import java.util.Set;
 public class ProductOrderSampleEtl extends GenericEntityAndStatusEtl<ProductOrderSample, ProductOrderSample> {
     private String samplePositionJoinTable;
 
+    // Keys to metadata values
+    private static String PARTICIPANT_ID_KEY = "PARTICIPANT_ID";
+    private static String SAMPLE_TYPE_KEY = "SAMPLE_TYPE";
+    private static String RECEIPT_DATE_KEY = "RECEIPT_DATE";
+    private static String ORIGINAL_SAMPLE_TYPE_KEY = "ORIGINAL_SAMPLE_TYPE";
+
     private static Map<String,Metadata.Key> etlMetadataKeyMap = new HashMap<>();
     static {
-        etlMetadataKeyMap.put("PARTICIPANT_ID", Metadata.Key.PATIENT_ID );
-        etlMetadataKeyMap.put("SAMPLE_TYPE", Metadata.Key.MATERIAL_TYPE );
-        etlMetadataKeyMap.put("ORIGINAL_SAMPLE_TYPE", Metadata.Key.ORIGINAL_MATERIAL_TYPE );
+        etlMetadataKeyMap.put(PARTICIPANT_ID_KEY, Metadata.Key.PATIENT_ID );
+        etlMetadataKeyMap.put(SAMPLE_TYPE_KEY, Metadata.Key.MATERIAL_TYPE );
+        etlMetadataKeyMap.put(ORIGINAL_SAMPLE_TYPE_KEY, Metadata.Key.ORIGINAL_MATERIAL_TYPE );
     }
 
     public ProductOrderSampleEtl() {
@@ -79,7 +86,7 @@ public class ProductOrderSampleEtl extends GenericEntityAndStatusEtl<ProductOrde
     @Override
     String dataRecord(String etlDateStr, boolean isDelete, ProductOrderSample entity) {
 
-        Map<String,String> etlMetadata = getMetadata( entity );
+        Map<String, String> etlMetadata = getMetadata(entity );
 
         return genericRecord(etlDateStr, isDelete,
                 entity.getProductOrderSampleId(),
@@ -87,10 +94,10 @@ public class ProductOrderSampleEtl extends GenericEntityAndStatusEtl<ProductOrde
                 format(entity.getName()),
                 format(entity.getDeliveryStatus().name()),
                 format(entity.getSamplePosition()),
-                format(etlMetadata.get("PARTICIPANT_ID")),
-                format(etlMetadata.get("SAMPLE_TYPE")),
-                format(entity.getReceiptDate()),
-                format(etlMetadata.get("ORIGINAL_SAMPLE_TYPE"))
+                format(etlMetadata.get(PARTICIPANT_ID_KEY)),
+                format(etlMetadata.get(SAMPLE_TYPE_KEY)),
+                format(etlMetadata.get(RECEIPT_DATE_KEY)),
+                format(etlMetadata.get(ORIGINAL_SAMPLE_TYPE_KEY))
         );
     }
 
@@ -99,7 +106,8 @@ public class ProductOrderSampleEtl extends GenericEntityAndStatusEtl<ProductOrde
         if( entity.getMercurySample() == null ) {
             return etlMetadata;
         } else {
-            Set<Metadata> metadataSet = entity.getMercurySample().getMetadata();
+            MercurySample mercurySample = entity.getMercurySample();
+            Set<Metadata> metadataSet = mercurySample.getMetadata();
             for( Map.Entry<String,Metadata.Key> mapEntry : etlMetadataKeyMap.entrySet() ) {
                 for( Metadata metadata : metadataSet ) {
                     if( mapEntry.getValue() == metadata.getKey() ) {
@@ -108,6 +116,12 @@ public class ProductOrderSampleEtl extends GenericEntityAndStatusEtl<ProductOrde
                     }
                 }
             }
+            // Tack on mercury sample reciept date (PDO sample calls BSP!)
+            Date receiptDate = mercurySample.getReceivedDate();
+            if( receiptDate != null ) {
+                etlMetadata.put(RECEIPT_DATE_KEY, format(receiptDate));
+            }
+
             return etlMetadata;
         }
 

@@ -58,7 +58,7 @@ public class ProductOrderSampleEtlDbFreeTest {
         tst.setAuditReaderDao(auditReader);
         participantId = null;
         sampleType = null;
-        receiptDate = new Date();
+        receiptDate = null;
         origSampleType = null;
     }
 
@@ -91,7 +91,6 @@ public class ProductOrderSampleEtlDbFreeTest {
         expect(obj.getName()).andReturn(sampleName);
         expect(obj.getDeliveryStatus()).andReturn(deliveryStatus);
         expect(obj.getSamplePosition()).andReturn(position);
-        expect(obj.getReceiptDate()).andReturn(receiptDate);
         expect(obj.getMercurySample()).andReturn(null);
 
         replay(mocks);
@@ -111,7 +110,6 @@ public class ProductOrderSampleEtlDbFreeTest {
         expect(obj.getName()).andReturn(sampleName);
         expect(obj.getDeliveryStatus()).andReturn(deliveryStatus);
         expect(obj.getSamplePosition()).andReturn(position);
-        expect(obj.getReceiptDate()).andReturn(receiptDate);
         expect(obj.getMercurySample()).andReturn(mercurySample).times(2);
 
         participantId = "PARTICIPANT-1";
@@ -135,6 +133,7 @@ public class ProductOrderSampleEtlDbFreeTest {
         metadataSet.add(metaUseless2);
 
         expect(mercurySample.getMetadata()).andReturn(metadataSet);
+        expect(mercurySample.getReceivedDate()).andReturn(receiptDate);
 
         replay(mocks);
 
