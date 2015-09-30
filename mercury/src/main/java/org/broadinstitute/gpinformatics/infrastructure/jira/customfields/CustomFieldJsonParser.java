@@ -52,7 +52,8 @@ public class CustomFieldJsonParser {
             if (values!=null) {
                 for (Map<String, String> allowedValue : values) {
                     if (allowedValue.containsKey("value")) {
-                        allowedValues.add(new CustomField.ValueContainer(allowedValue.get("value")));
+                        String value = allowedValue.get("value");
+                            allowedValues.add(new CustomField.ValueContainer(value));
                     }
                 }
             }

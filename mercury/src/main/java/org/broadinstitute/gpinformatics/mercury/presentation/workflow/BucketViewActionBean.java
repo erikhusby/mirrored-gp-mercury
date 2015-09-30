@@ -277,13 +277,13 @@ public class BucketViewActionBean extends CoreActionBean {
         }
         // Cannot mix workfows in an LCSET.
         Set<String> batchWorkflows = getWorkflowNames();
-        if (!batchWorkflows.contains(selectedWorkflowDef.getName())) {
-            addValidationError("incompatibleWorkflows",
-                    "The selected workflow (" + selectedWorkflowDef.getName() +
-                    ") is different than the Batch's workflow (" + StringUtils.join(batchWorkflows, ", ") + ")");
-            return viewBucket();
+        if (batchWorkflows.contains(selectedWorkflowDef.getName()) || batchWorkflows.isEmpty()) {
+            return new ForwardResolution(CONFIRMATION_PAGE);
         }
-        return new ForwardResolution(CONFIRMATION_PAGE);
+        addValidationError("incompatibleWorkflows",
+                "The selected workflow (" + selectedWorkflowDef.getName() +
+                ") is different than the Batch's workflow (" + StringUtils.join(batchWorkflows, ", ") + ")");
+        return viewBucket();
     }
 
     private void loadReworkVessels() {

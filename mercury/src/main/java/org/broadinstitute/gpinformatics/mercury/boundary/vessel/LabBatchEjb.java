@@ -349,10 +349,7 @@ public class LabBatchEjb {
                 Map<String, CustomFieldDefinition> requiredFields =
                         jiraService.getRequiredFields(new CreateFields.Project(projectType), issueType);
 
-                Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
-                submissionFields.putAll(requiredFields);
-
-                List<CustomField> batchJiraTicketFields = new ArrayList<>(fieldBuilder.getCustomFields(submissionFields));
+                List<CustomField> batchJiraTicketFields = new ArrayList<>(fieldBuilder.getCustomFields(requiredFields));
                 verifyAllowedValues(batchJiraTicketFields, messageReporter);
 
                 JiraIssue jiraIssue = jiraService
@@ -375,15 +372,33 @@ public class LabBatchEjb {
         Set<String> messages = new HashSet<>();
         while (jiraBatchFieldsIterator.hasNext()) {
             CustomField batchJiraTicketField = jiraBatchFieldsIterator.next();
+            if (StringUtils.isBlank(batchJiraTicketField.getValue().toString())) {
+                jiraBatchFieldsIterator.remove();
+                break;
+            }
             CustomFieldDefinition batchJiraTicketFieldFieldDefinition = batchJiraTicketField.getFieldDefinition();
             Collection<CustomField.ValueContainer> allowedValues = batchJiraTicketFieldFieldDefinition.getAllowedValues();
-
-            if (!allowedValues.isEmpty() && !allowedValues.contains(batchJiraTicketField.getValue())) {
-                String fieldName = batchJiraTicketFieldFieldDefinition.getName();
-                messages.add(String.format(
-                        "Unknown value for field '%s'. This will not prevent the batch being created but you will need to update '%s' manually.",
-                        fieldName, fieldName));
-                jiraBatchFieldsIterator.remove();
+             batchJiraTicketField.getFieldDefinition().getName();
+            List<CustomField.ValueContainer> valueContainerValues = new ArrayList<>();
+            if (batchJiraTicketField.getValue() instanceof Object[]) {
+                for (Object objectValue : ((Object[]) batchJiraTicketField.getValue())) {
+                    if (objectValue instanceof CustomField.ValueContainer){
+                        valueContainerValues.add((CustomField.ValueContainer) objectValue);
+                    }
+                }
+            }
+            if (batchJiraTicketField.getValue() instanceof CustomField.ValueContainer) {
+                valueContainerValues.add((CustomField.ValueContainer) batchJiraTicketField.getValue());
+            }
+            for (CustomField.ValueContainer valueContainer : valueContainerValues) {
+                if (!allowedValues.isEmpty() && StringUtils.isNotBlank(valueContainer.getValue()) && !allowedValues
+                        .contains(valueContainer)) {
+                    String fieldName = batchJiraTicketFieldFieldDefinition.getName();
+                    messages.add(String.format(
+                            "Unknown value '%s' for field '%s'. This will not prevent the batch being created but you will need to update it manually.",
+                            valueContainer.getValue(), fieldName));
+                    jiraBatchFieldsIterator.remove();
+                }
             }
         }
         for (String message : messages) {
@@ -446,16 +461,18 @@ public class LabBatchEjb {
             throws IOException {
         LabBatch batch = labBatchDao.findByBusinessKey(businessKey);
         Set<String> pdoKeys = new HashSet<>();
-
+        StringBuilder commentString = new StringBuilder();
         Set<String> bucketDefNames = new HashSet<>();
-
         List<BucketEntry> bucketEntries = bucketEntryDao.findByIds(bucketEntryIds);
         Set<LabVessel> labVessels = new HashSet<>();
+
         for (BucketEntry bucketEntry : bucketEntries) {
             bucketDefNames.add(bucketEntry.getBucket().getBucketDefinitionName());
             labVessels.add(bucketEntry.getLabVessel());
             pdoKeys.add(bucketEntry.getProductOrder().getBusinessKey());
             bucketEntry.getBucket().removeEntry(bucketEntry);
+            commentString.append(String.format("Added vessel *%s* with material type *%s* to *%s*.\n", bucketEntry.getLabVessel().getLabel(),
+                    bucketEntry.getLabVessel().getLatestMaterialType().getDisplayName(), bucketName));
         }
 
         batch.addLabVessels(labVessels);
@@ -465,22 +482,30 @@ public class LabBatchEjb {
         Set<LabVessel> reworkVessels = new HashSet<>();
         Bucket reworkFromBucket = null;
 
+        if (!reworkBucketEntries.isEmpty()) {
+            commentString.append("\n\n");
+        }
         for (BucketEntry entry : reworkBucketEntries) {
             reworkVessels.add(entry.getLabVessel());
             pdoKeys.add(entry.getProductOrder().getBusinessKey());
             entry.getBucket().removeEntry(entry);
             reworkFromBucket = entry.getBucket();
+            commentString.append(String.format("Added rework for vessel %s with material type %s to %s.\n",
+                    entry.getLabVessel().getLabel(), entry.getLabVessel().getLatestMaterialType().getDisplayName(),
+                    bucketName));
+
         }
 
         batch.addReworks(reworkVessels);
         bucketEjb.moveFromBucketToBatch(reworkBucketEntries, batch);
 
-        JiraIssue jiraIssue = jiraService.getIssueInfo(batch.getJiraTicket().getTicketName());
-
         CreateFields.ProjectType projectType = null;
+        CreateFields.IssueType issueType=null;
+
         if(batch.getLabBatchType() == LabBatch.LabBatchType.WORKFLOW) {
             WorkflowBucketDef bucketDef = getWorkflowBucketDef(bucketName);
             projectType = CreateFields.ProjectType.fromKeyPrefix(bucketDef.getBatchJiraProjectType());
+            issueType= CreateFields.IssueType.valueOf(bucketDef.getBatchJiraIssueType());
         }
 
         AbstractBatchJiraFieldFactory fieldBuilder = AbstractBatchJiraFieldFactory
@@ -491,15 +516,16 @@ public class LabBatchEjb {
         }
 
         Map<String, CustomFieldDefinition> requiredFields =
-                jiraService.getRequiredFields(new CreateFields.Project(projectType), jiraIssue.getIssueType());
+                jiraService.getRequiredFields(new CreateFields.Project(projectType), issueType);
         Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
         submissionFields.putAll(requiredFields);
 
         List<CustomField> batchJiraTicketFields = new ArrayList<>(fieldBuilder.getCustomFields(submissionFields));
 
         verifyAllowedValues(batchJiraTicketFields, messageReporter);
-
-        jiraService.updateIssue(batch.getJiraTicket().getTicketName(), batchJiraTicketFields);
+        JiraIssue jiraIssue = jiraService.getIssue(batch.getJiraTicket().getTicketName());
+        jiraIssue.addComment(commentString.toString());
+        jiraIssue.updateIssue(batchJiraTicketFields);
 
         //link the JIRA tickets for the batch created to the pdo batches.
         for (String pdoKey : pdoKeys) {
