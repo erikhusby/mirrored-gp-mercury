@@ -35,7 +35,6 @@ public class InfiniumJaxbBuilder {
     private List<PlateCherryPickEvent> infiniumHybridizationJaxbs = new ArrayList<>();
     private List<PlateEventType> infiniumPostHybridizationHybOvenLoadedJaxbs = new ArrayList<>();
     private List<PlateEventType> infiniumHybChamberLoadedJaxbs = new ArrayList<>();
-    private List<PlateEventType> infiniumWashJaxbs = new ArrayList<>();
     private List<PlateEventType> infiniumXStainJaxbs = new ArrayList<>();
 
     public InfiniumJaxbBuilder(
@@ -152,13 +151,6 @@ public class InfiniumJaxbBuilder {
             bettaLimsMessageTestFactory.addMessage(messageList, infiniumPostHybridizationHybOvenLoadedJaxb);
         }
 
-        for (String hybridizationChip : hybridizationChips) {
-            PlateEventType infiniumWash = bettaLimsMessageTestFactory.buildPlateEvent("InfiniumWash", hybridizationChip,
-                    Collections.singletonList(new BettaLimsMessageTestFactory.ReagentDto("PB1", "1234-PB1", null)));
-            infiniumWashJaxbs.add(infiniumWash);
-            bettaLimsMessageTestFactory.addMessage(messageList, infiniumWash);
-        }
-
         bettaLIMSMessage = new BettaLIMSMessage();
         for (String hybridizationChip : hybridizationChips) {
             // XStain is actually done through the Manual Transfer Page.  It is included here to drive GPUI.
@@ -227,10 +219,6 @@ public class InfiniumJaxbBuilder {
 
     public List<PlateEventType> getInfiniumHybChamberLoadedJaxbs() {
         return infiniumHybChamberLoadedJaxbs;
-    }
-
-    public List<PlateEventType> getInfiniumWashJaxbs() {
-        return infiniumWashJaxbs;
     }
 
     public List<PlateEventType> getInfiniumXStainJaxbs() {
