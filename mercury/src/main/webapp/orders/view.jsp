@@ -372,7 +372,7 @@ function getHighlightClass() {
 }
 
 function updateFundsRemaining() {
-    var quoteIdentifier = $j("#quote").val();
+    var quoteIdentifier = '${actionBean.editOrder.quoteId}';
     if ($j.trim(quoteIdentifier)) {
         $j.ajax({
             url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier=${actionBean.editOrder.quoteId}",
@@ -386,7 +386,7 @@ function updateFundsRemaining() {
 
 function updateFunds(data) {
     if (data.fundsRemaining) {
-        $j("#fundsRemaining").text('Funds Remaining: ' + data.fundsRemaining);
+        $j("#fundsRemaining").text('Status: ' + data.status + ' - Funds Remaining: ' + data.fundsRemaining);
     } else {
         $j("#fundsRemaining").text('Error: ' + data.error);
     }
