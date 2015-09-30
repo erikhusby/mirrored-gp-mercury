@@ -283,6 +283,9 @@ public class ProductWorkflowDefVersion implements Serializable {
         if (labEventNodes.size() > 1) {
             throw new RuntimeException("More than one lab event for " + eventTypeName);
         }
+        if (labEventNodes.isEmpty()){
+            return null;
+        }
         return labEventNodes.iterator().next();
     }
 
