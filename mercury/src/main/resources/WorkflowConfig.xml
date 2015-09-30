@@ -611,6 +611,7 @@
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
+                <ancestryEtlFlag>true</ancestryEtlFlag>
             </workflowStepDefs>
             <!-- next two are alternatives -->
             <workflowStepDefs>
@@ -820,6 +821,7 @@
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
+                <ancestryEtlFlag>true</ancestryEtlFlag>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>EcoTransfer</name>
@@ -875,7 +877,6 @@
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
-                <ancestryEtlFlag>true</ancestryEtlFlag>
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>
@@ -990,7 +991,6 @@
                     <project>FCT</project>
                     <statusTransition>Flowcell Registered</statusTransition>
                 </jiraTransition>
-                <ancestryEtlFlag>true</ancestryEtlFlag>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Flowcell Loaded</name>

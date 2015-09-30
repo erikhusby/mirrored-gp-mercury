@@ -574,61 +574,66 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                 for (SampleInstanceV2 si : sampleInstances) {
 
                     ProductOrder pdo = null;
-                    LabBatch labBatch = null;
+                    LabBatch labBatch;
                     String batchName = NONE;
                     String pdoSampleID = null;
+                    String workflowName = null;
+                    String molecularIndexingSchemeName;
 
                     String lcsetSampleID = si.getNearestMercurySampleName();
 
-                    // Get latest PDO and the sample which matches it (the PDO and sample must match)
-                    for( ProductOrderSample pdoSample : si.getAllProductOrderSamples() ) {
-                        // Get a valid PDO
-                        pdo = pdoSample.getProductOrder();
-                        if( pdoSample.getMercurySample() != null ) {
-                            // And associate a sample with it if available
-                            pdoSampleID = pdoSample.getMercurySample().getSampleKey();
-                            // getAllProductOrderSamples() sorts by closest first
-                            break;
-                        }
-                    }
-
-                    // Get the latest batch this sample participated in
-                    // todo jms should we make sure batch was created before event? (helps with reworks on older events)
-                    long latestBatchTs = 0L;
-                    for( LabBatch batch : si.getAllWorkflowBatches() ) {
-                        if( batch.getCreatedOn().getTime() > latestBatchTs ) {
-                            latestBatchTs = batch.getCreatedOn().getTime();
-                            labBatch = batch;
-                            batchName = labBatch.getBatchName();
-                            workflowEffectiveDate = labBatch.getCreatedOn();
-                        }
-                    }
-
-                    String molecularIndexingSchemeName =  si.getMolecularIndexingScheme() != null ?
+                    if (lcsetSampleID != null) {
+                        // Obtained a useable event DTO, dive into additional logic
+                        molecularIndexingSchemeName =  si.getMolecularIndexingScheme() != null ?
                             si.getMolecularIndexingScheme().getName() : null;
 
-                    String workflowName = labBatch != null ? labBatch.getWorkflowName() : null;
-                    if (StringUtils.isBlank(workflowName) && pdo != null) {
-                        workflowName = pdo.getProduct().getWorkflow().getWorkflowName();
-                    }
-                    WorkflowConfigDenorm wfDenorm = workflowConfigLookup.lookupWorkflowConfig(
-                            labEvent.getLabEventType().getName(), workflowName, workflowEffectiveDate);
+                        // Get latest PDO and the sample which matches it (the PDO and sample must match)
+                        for( ProductOrderSample pdoSample : si.getAllProductOrderSamples() ) {
+                            // Get a valid PDO
+                            pdo = pdoSample.getProductOrder();
+                            if( pdoSample.getMercurySample() != null ) {
+                                // And associate a sample with it if available
+                                pdoSampleID = pdoSample.getMercurySample().getSampleKey();
+                                // getAllProductOrderSamples() sorts by closest first so we're done at first hit
+                                break;
+                            }
+                        }
 
+                        labBatch = si.getSingleBatch();
+                        if( labBatch == null ) {
+                            // Get the latest batch this sample participated in
+                            long latestBatchTs = 0L;
+                            for (LabBatch batch : si.getAllWorkflowBatches()) {
+                                if (batch.getCreatedOn().getTime() > latestBatchTs) {
+                                    latestBatchTs = batch.getCreatedOn().getTime();
+                                    labBatch = batch;
+                                }
+                            }
+                        }
 
-                    if (lcsetSampleID != null) {
-                        // Obtained a useable event DTO!
+                        if( labBatch != null ) {
+                            batchName = labBatch.getBatchName();
+                            workflowEffectiveDate = labBatch.getCreatedOn();
+                            workflowName = labBatch.getWorkflowName();
+                        }
+
+                        if (StringUtils.isBlank(workflowName) && pdo != null) {
+                            workflowName = pdo.getProduct().getWorkflow().getWorkflowName();
+                        }
+                        WorkflowConfigDenorm wfDenorm = workflowConfigLookup.lookupWorkflowConfig(
+                                labEvent.getLabEventType().getName(), workflowName, workflowEffectiveDate);
+
                         dtos.add( new EventFactDto(labEvent, vessel, targetPosition, molecularIndexingSchemeName,
                                 batchName, workflowEffectiveDate, workflowName,
                                 pdoSampleID, lcsetSampleID, pdo, wfDenorm, true) );
                     } else {
-                        // Reject for lack of mercury sample
+                        // Reject for lack of nearest mercury sample
                         EventFactDto rejectedDto = new EventFactDto(labEvent, vessel, targetPosition,
-                                molecularIndexingSchemeName,
-                                null, null, null, null, null, pdo, null, false);
+                                null, null, null, null, null, null, pdo, null, false);
                         rejectedDto.setRejectReason("Skipping ETL on labEvent: " + labEvent.getLabEventId() +
                                                     ", vessel: " + vessel.getLabel() +
                                                     (targetPosition == null ? "" : ", position: " + targetPosition) +
-                                                    " - RootOrEarliestMercurySample is null");
+                                                    " - NearestMercurySample is null");
                         dtos.add(rejectedDto);
                         loggingDtos.add(rejectedDto);
                     }
