@@ -46,6 +46,7 @@ public class CustomFieldDefinition {
         return isRequired;
     }
 
+    @JsonIgnore
     public Collection<CustomField.ValueContainer> getAllowedValues() {
         return allowedValues;
     }
