@@ -236,6 +236,19 @@ public abstract class LabVessel implements Serializable {
         return hasMaterialConvertedToMaterialType;
     }
 
+    /**
+     * Find the latest material type by first searching the event history then falling back on the sample's metadata.
+     * @return
+     */
+    public MaterialType getLatestMaterialType() {
+        MaterialType latestMaterialType = getLatestMaterialTypeFromEventHistory();
+        if (latestMaterialType == null) {
+            latestMaterialType = MaterialType.fromDisplayName(getMaterialTypes().iterator().next());
+        }
+        return latestMaterialType;
+    }
+
+
     public List<String> getMaterialTypes() {
         List<String> materialTypes = new ArrayList<>();
         for (SampleInstanceV2 si : getSampleInstancesV2()) {

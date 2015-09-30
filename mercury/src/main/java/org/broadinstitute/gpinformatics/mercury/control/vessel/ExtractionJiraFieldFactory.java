@@ -31,6 +31,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
+import org.jvnet.inflector.Noun;
 
 import javax.annotation.Nonnull;
 import java.util.Arrays;
@@ -172,23 +173,25 @@ public class ExtractionJiraFieldFactory extends AbstractBatchJiraFieldFactory {
 
     @Override
     public String generateDescription() {
-
         StringBuilder ticketDescription = new StringBuilder();
-
         for (Map.Entry<String, Set<LabVessel>> pdoKey : pdoToVesselMap.entrySet()) {
-
             int sampleCount = 0;
-
+            Set<String> materialTypes = new HashSet<>();
             for (LabVessel currVessel : pdoKey.getValue()) {
                 sampleCount += currVessel.getSampleInstanceCount(LabVessel.SampleType.PREFER_PDO, null);
+                MaterialType latestMaterialType = currVessel.getLatestMaterialType();
+                if (latestMaterialType != null) {
+                    materialTypes.add(latestMaterialType.getDisplayName());
+                }
             }
-
-            ticketDescription.append(sampleCount).append(" samples ");
+            String projectName = "";
             if (foundResearchProjectList.containsKey(pdoKey.getKey())) {
-                ticketDescription.append("from ").append(foundResearchProjectList.get(pdoKey.getKey()).getTitle())
-                        .append(" ");
+                projectName = foundResearchProjectList.get(pdoKey.getKey()).getTitle();
             }
-            ticketDescription.append(pdoKey.getKey()).append("\n");
+            String vesselDescription = String.format("%d %s with material type %s from %s %s", sampleCount,
+                    Noun.pluralOf("sample", sampleCount), materialTypes, projectName, pdoKey.getKey());
+
+            ticketDescription.append(vesselDescription).append("\n");
         }
         return ticketDescription.toString();
     }

@@ -166,7 +166,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
     public JiraIssue getIssueInfo(String key, String... fields) throws IOException {
         String urlString = getBaseUrl() + "/issue/" + key;
 
-        StringBuilder fieldList = new StringBuilder("summary,description,duedate,created,reporter,issuetype");
+        StringBuilder fieldList = new StringBuilder("summary,description,duedate,created,reporter");
 
         if (null != fields) {
             for (String currField : fields) {
@@ -186,7 +186,6 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         issueResult.setDueDate(data.dueDate);
         issueResult.setCreated(data.created);
         issueResult.setReporter(data.reporter);
-        issueResult.setIssueType(data.issueType);
 
         if (null != fields) {
             for (String currField : fields) {
@@ -207,9 +206,6 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
         parsedResults.description = (String) fields.get("description");
         parsedResults.summary = (String) fields.get("summary");
-
-        Map<?, ?> issueType = (Map<?, ?>) fields.get("issuetype");
-        parsedResults.issueType = CreateFields.IssueType.fromJiraName((String) issueType.get("name"));
 
         String dueDateValue = (String) fields.get("duedate");
         String createdDateValue = (String) fields.get("created");

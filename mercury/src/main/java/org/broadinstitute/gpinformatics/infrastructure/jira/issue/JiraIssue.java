@@ -19,14 +19,12 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 public class JiraIssue implements Serializable {
 
     private final String key;
 
     private String summary;
     private String description;
-    private CreateFields.IssueType issueType;
 
     private final Map<String, Object> extraFields = new HashMap<>();
 
@@ -107,14 +105,6 @@ public class JiraIssue implements Serializable {
         this.reporter = reporter;
     }
 
-    public CreateFields.IssueType getIssueType() {
-        return issueType;
-    }
-
-    public void setIssueType(CreateFields.IssueType issueType) {
-        this.issueType = issueType;
-    }
-
     public Object getFieldValue(@Nonnull String fieldName) throws IOException{
 
         Object foundValue;
@@ -129,7 +119,6 @@ public class JiraIssue implements Serializable {
     private void copyFromJiraIssue(String fieldName) throws IOException {
         JiraIssue tempIssue = jiraService.getIssueInfo(key, fieldName);
         extraFields.put(fieldName,tempIssue.getFieldValue(fieldName));
-        issueType = tempIssue.getIssueType();
         summary = tempIssue.getSummary();
         description = tempIssue.getDescription();
         dueDate = tempIssue.getDueDate();

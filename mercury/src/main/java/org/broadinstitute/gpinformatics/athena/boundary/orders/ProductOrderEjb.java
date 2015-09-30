@@ -334,8 +334,10 @@ public class ProductOrderEjb {
             Map<String, Collection<ProductOrderSample>> samples = bucketEjb.addSamplesToBucket(order, newSamples);
             if (!samples.isEmpty()) {
                 for (Map.Entry<String, Collection<ProductOrderSample>> bucketSampleEntry : samples.entrySet()) {
+                    String bucketName = bucketSampleEntry.getKey();
+                    bucketName = bucketName.toLowerCase().endsWith("bucket") ? bucketName : bucketName + " Bucket";
                     reporter.addMessage("{0} samples have been added to the {1}.",
-                            bucketSampleEntry.getValue().size(), bucketSampleEntry.getKey());
+                            bucketSampleEntry.getValue().size(), bucketName);
                 }
             }
         }
