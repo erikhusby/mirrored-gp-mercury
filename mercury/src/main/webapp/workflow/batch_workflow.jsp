@@ -45,7 +45,7 @@
                 <th>Events</th>
             </tr>
             <c:forEach items="${actionBean.workflowEvents}" var="workflowEvent" varStatus="workflowEventStatus">
-                <tr>
+                <tr style="${workflowEvent.skipped ? "background-color:#FFFF99" : (empty workflowEvent.labEvents ? "" : "background-color:LightGray")}">
                     <td>
                         <a name="${workflowEventStatus.index}" id="anchor${workflowEventStatus.index}"></a>
                         <div>
