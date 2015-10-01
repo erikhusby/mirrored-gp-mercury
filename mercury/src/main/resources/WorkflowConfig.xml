@@ -1516,6 +1516,7 @@
                     <sourceSection>ROWOF24</sourceSection>
                     <targetVesselTypeGeometryString>RackType.Matrix96</targetVesselTypeGeometryString>
                     <targetSection>P96_ROWSAB</targetSection>
+                    <targetExpectedToExist>true</targetExpectedToExist>
                 </manualTransferDetails>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -1613,6 +1614,7 @@
                     <sourceSection>ROWOF24</sourceSection>
                     <targetVesselTypeGeometryString>RackType.Matrix96</targetVesselTypeGeometryString>
                     <targetSection>P96_ROWSAB</targetSection>
+                    <targetExpectedToExist>true</targetExpectedToExist>
                 </manualTransferDetails>
             </workflowStepDefs>
         </workflowProcessDefVersions>

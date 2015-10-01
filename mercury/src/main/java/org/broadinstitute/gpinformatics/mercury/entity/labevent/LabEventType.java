@@ -1293,9 +1293,12 @@ public enum LabEventType {
         /** Used by JAXB, because it doesn't support interfaces. */
         private String targetVesselTypeGeometryString;
 
-        /** The set of positions in the target geometry from which to transfer */
+        /** The set of positions in the target geometry from which to transfer. */
         private SBSSection targetSection;
-        
+
+        /** If true, display error message when target does not exist.  */
+        private boolean targetExpectedToExist = false;
+
         /** How many reagent fields for each entry in reagentNames. */
         private int[] reagentFieldCounts;
     
@@ -1346,6 +1349,7 @@ public enum LabEventType {
             repeatedEvent = builder.repeatedEvent;
             repeatedWorkflowQualifier = builder.repeatedWorkflowQualifier;
             buttonValue = builder.buttonValue;
+            targetExpectedToExist = builder.targetExpectedToExist;
         }
 
         public static class Builder {
@@ -1364,6 +1368,7 @@ public enum LabEventType {
             private LabEventType repeatedEvent;
             private String repeatedWorkflowQualifier;
             private String buttonValue = "Transfer";
+            private boolean targetExpectedToExist = false;
 
             public Builder(MessageType messageType, VesselTypeGeometry sourceVesselTypeGeometry,
                     VesselTypeGeometry targetVesselTypeGeometry) {
@@ -1427,6 +1432,11 @@ public enum LabEventType {
                 return this;
             }
 
+            public Builder targetExpectedToExist(boolean targetExpectedToExist) {
+                this.targetExpectedToExist = targetExpectedToExist;
+                return this;
+            }
+
             public ManualTransferDetails build() {
                 return new ManualTransferDetails(this);
             }
@@ -1475,6 +1485,10 @@ public enum LabEventType {
 
         public SBSSection getTargetSection() {
             return targetSection;
+        }
+
+        public boolean isTargetExpectedToExist() {
+            return targetExpectedToExist;
         }
 
         public String[] getReagentNames() {
