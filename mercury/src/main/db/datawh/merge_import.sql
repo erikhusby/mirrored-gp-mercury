@@ -1258,6 +1258,10 @@ AS
           sample_name = new.sample_name,
           delivery_status = new.delivery_status,
           sample_position = new.sample_position,
+          PARTICIPANT_ID = new.PARTICIPANT_ID,
+          SAMPLE_TYPE = new.SAMPLE_TYPE,
+          SAMPLE_RECEIPT = new.SAMPLE_RECEIPT,
+          ORIGINAL_SAMPLE_TYPE = new.ORIGINAL_SAMPLE_TYPE,
           etl_date = new.etl_date
         WHERE product_order_sample_id = new.product_order_sample_id;
 
@@ -1269,6 +1273,10 @@ AS
           sample_name,
           delivery_status,
           sample_position,
+          PARTICIPANT_ID,
+          SAMPLE_TYPE,
+          SAMPLE_RECEIPT,
+          ORIGINAL_SAMPLE_TYPE,
           etl_date
         )
           SELECT
@@ -1277,6 +1285,10 @@ AS
             new.sample_name,
             new.delivery_status,
             new.sample_position,
+            new.PARTICIPANT_ID,
+            new.SAMPLE_TYPE,
+            new.SAMPLE_RECEIPT,
+            new.ORIGINAL_SAMPLE_TYPE,
             new.etl_date
           FROM DUAL
           WHERE NOT EXISTS(
