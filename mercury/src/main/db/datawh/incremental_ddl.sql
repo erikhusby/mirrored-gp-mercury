@@ -1,7 +1,6 @@
 -------------------------------------------------------
 -- https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-3557
 -- Create Ancestry ETL
--------------------------------------------------------
 
 DROP TABLE IM_EVENT_FACT;
 
@@ -108,3 +107,24 @@ CREATE UNIQUE INDEX IDX_VESSEL_LABEL ON LAB_VESSEL( LABEL ) COMPUTE STATISTICS;
 -- ETL delete performance
 CREATE INDEX IDX_ANCESTRY_CHILD_EVENT ON LIBRARY_ANCESTRY( CHILD_EVENT_ID );
 DROP PROCEDURE MERGE_IMPORT;
+
+
+
+-- https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-3763
+-- Add metadata to PRODUCT_ORDER_SAMPLE
+-------------------------------------------------------
+ALTER TABLE IM_PRODUCT_ORDER_SAMPLE
+ADD (
+  PARTICIPANT_ID VARCHAR2(255) NULL,
+  SAMPLE_TYPE VARCHAR2(255) NULL,
+  SAMPLE_RECEIPT DATE NULL,
+  ORIGINAL_SAMPLE_TYPE VARCHAR2(255) NULL );
+
+-- Append to end of table
+-- todo jms - restructure table to insert new columns in more logical order?
+ALTER TABLE PRODUCT_ORDER_SAMPLE
+ADD (
+  PARTICIPANT_ID VARCHAR2(255) NULL,
+  SAMPLE_TYPE VARCHAR2(255) NULL,
+  SAMPLE_RECEIPT DATE NULL,
+  ORIGINAL_SAMPLE_TYPE VARCHAR2(255) NULL );
