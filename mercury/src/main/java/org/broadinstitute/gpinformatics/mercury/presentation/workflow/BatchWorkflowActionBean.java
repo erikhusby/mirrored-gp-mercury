@@ -91,7 +91,11 @@ public class BatchWorkflowActionBean extends CoreActionBean {
     public Resolution view() {
         if (batchName != null) {
             labBatch = labBatchDao.findByName(batchName);
-            fetchWorkflow();
+            if (labBatch == null) {
+                addGlobalValidationError(batchName + " not found.");
+            } else {
+                fetchWorkflow();
+            }
         }
         return new ForwardResolution(VIEW_PAGE);
     }
