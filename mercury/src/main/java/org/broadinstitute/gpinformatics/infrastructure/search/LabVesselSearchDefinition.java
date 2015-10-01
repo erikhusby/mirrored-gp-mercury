@@ -439,13 +439,13 @@ public class LabVesselSearchDefinition {
             }
 
             @Override
-            public Object evaluate(Object entity, SearchContext context) {
+            public List<String> evaluate(Object entity, SearchContext context) {
                 LabVessel labVessel = (LabVessel) entity;
 
                 MaterialTypeEventCriteria criteria = new MaterialTypeEventCriteria(materialType);
                 labVessel.evaluateCriteria(criteria, TransferTraverserCriteria.TraversalDirection.Descendants);
 
-                Set<String> barcodes = new HashSet<>();
+                List<String> barcodes = new ArrayList<>();
                 for (LabVessel vessel : criteria.getLabVessels()) {
                     barcodes.add(vessel.getLabel());
                 }
