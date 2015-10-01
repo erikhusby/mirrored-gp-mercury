@@ -1276,9 +1276,13 @@
                 <instructions>Add buffer RLT+ w/B-ME
                 </instructions>
             </workflowStepDefs>
-            <!--
-            aspirate supernatant
-            -->
+            <workflowStepDefs>
+                <name>Aspirate Supernatant</name>
+                <labEventTypes>DISCARD</labEventTypes>
+                <workflowQualifier>SUPERNATANT</workflowQualifier>
+                <instructions>Aspirate supernatant
+                </instructions>
+            </workflowStepDefs>
             <workflowStepDefs>
                 <name>Transfer to QIAshredder</name>
                 <labEventTypes>TRANSFER</labEventTypes>
@@ -1347,7 +1351,7 @@
                 <name>Add 70% ethanol</name>
                 <labEventTypes>ADD_REAGENT</labEventTypes>
                 <workflowQualifier>ETHANOL</workflowQualifier>
-                <reagentTypes>Ethanol</reagentTypes>
+                <reagentTypes>Ethanol70</reagentTypes>
                 <instructions>Add 70% ethanol to the flowthrough
                 </instructions>
             </workflowStepDefs>
