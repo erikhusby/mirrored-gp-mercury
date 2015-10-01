@@ -81,8 +81,8 @@
                                             <c:when test="${labEventType eq 'ADD_REAGENT'}">
                                                 <c:forEach items="${workflowEvent.workflowStepDef.reagentTypes}" var="reagentType" varStatus="loop">
                                                     <div class="control-group">
-                                                        <label for="rgtType${loop.index}">Type </label>
-                                                        <input type="text" id="rgtType${loop.index}"
+                                                        <label for="rgtType${loop.index}">Type </label>${reagentType}
+                                                        <input type="hidden" id="rgtType${loop.index}"
                                                                 name="reagentNames[${loop.index}]" value="${reagentType}">
 
                                                         <label for="rgtBcd${loop.index}">Barcode </label>
