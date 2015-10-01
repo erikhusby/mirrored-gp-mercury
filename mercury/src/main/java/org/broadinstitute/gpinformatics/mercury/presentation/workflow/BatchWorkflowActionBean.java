@@ -7,6 +7,7 @@ import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.GenericReagentDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowMatcher;
@@ -80,6 +81,9 @@ public class BatchWorkflowActionBean extends CoreActionBean {
     private LabBatchDao labBatchDao;
 
     @Inject
+    private GenericReagentDao genericReagentDao;
+
+    @Inject
     private WorkflowLoader workflowLoader;
 
     @Inject
@@ -138,9 +142,13 @@ public class BatchWorkflowActionBean extends CoreActionBean {
                 addGlobalValidationError("Expiration date is required for " + reagentNames.get(i));
             }
             if (getValidationErrors().isEmpty()) {
-                labEvent.addReagentVolume(
-                        new GenericReagent(reagentNames.get(i), reagentLots.get(i), reagentExpirations.get(i)),
-                        reagentVolumes.get(i));
+                GenericReagent genericReagent = genericReagentDao.findByReagentNameLotExpiration(reagentNames.get(i),
+                        reagentLots.get(i), reagentExpirations.get(i));
+                if (genericReagent == null) {
+                    genericReagent = new GenericReagent(reagentNames.get(i), reagentLots.get(i),
+                            reagentExpirations.get(i));
+                }
+                labEvent.addReagentVolume(genericReagent, reagentVolumes.get(i));
             }
         }
 
