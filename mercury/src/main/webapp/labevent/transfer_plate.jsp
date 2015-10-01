@@ -53,6 +53,7 @@ plate / rack.
                         onclick="this.form['scanIndex'].value='${stationEventIndex}';this.form['scanSource'].value='${source}';"
                         name="<%= ManualTransferActionBean.RACK_SCAN_EVENT %>"/>
             </div>
+            Or hand scan 2D barcodes.
         </c:if>
         <table>
             <c:forEach items="${geometry.rowNames}" var="rowName" varStatus="rowStatus">
