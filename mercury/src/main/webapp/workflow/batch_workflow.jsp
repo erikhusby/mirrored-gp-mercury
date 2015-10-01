@@ -89,7 +89,7 @@
                                                         <input type="text" id="rgtBcd${loop.index}"
                                                                 name="reagentLots[${loop.index}]">
 
-                                                        <label for="rgtExp${loop.index}">Expiration </label>
+                                                        <label for="rgtExp${loop.index}">Expiration mm/dd/yyyy</label>
                                                         <input type="text" id="rgtExp${loop.index}"
                                                                 name="reagentExpirations[${loop.index}]">
 
