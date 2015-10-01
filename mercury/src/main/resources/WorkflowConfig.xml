@@ -1220,6 +1220,7 @@
                     <messageType>PLATE_EVENT</messageType>
                     <targetVesselTypeGeometryString>RackType.FlipperRackRow24</targetVesselTypeGeometryString>
                     <targetSection>ROWOF24</targetSection>
+                    <buttonValue>Cross Check</buttonValue>
                 </manualTransferDetails>
             </workflowStepDefs>
             <workflowStepDefs>

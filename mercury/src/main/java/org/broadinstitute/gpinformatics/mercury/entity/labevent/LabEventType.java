@@ -1323,6 +1323,9 @@ public enum LabEventType {
         /** Supports verification that two transfers have same source and destination. */
         private String repeatedWorkflowQualifier;
 
+        /** What to display in the button that sends the message. */
+        private String buttonValue = "Transfer";
+
         /** For JAXB */
         public ManualTransferDetails() {
         }
@@ -1342,6 +1345,7 @@ public enum LabEventType {
             secondaryEvent = builder.secondaryEvent;
             repeatedEvent = builder.repeatedEvent;
             repeatedWorkflowQualifier = builder.repeatedWorkflowQualifier;
+            buttonValue = builder.buttonValue;
         }
 
         public static class Builder {
@@ -1359,6 +1363,7 @@ public enum LabEventType {
             private LabEventType secondaryEvent;
             private LabEventType repeatedEvent;
             private String repeatedWorkflowQualifier;
+            private String buttonValue = "Transfer";
 
             public Builder(MessageType messageType, VesselTypeGeometry sourceVesselTypeGeometry,
                     VesselTypeGeometry targetVesselTypeGeometry) {
@@ -1414,6 +1419,11 @@ public enum LabEventType {
 
             public Builder repeatedWorkflowQualifier(String repeatedWorkflowQualifier) {
                 this.repeatedWorkflowQualifier = repeatedWorkflowQualifier;
+                return this;
+            }
+
+            public Builder buttonValue(String buttonValue) {
+                this.buttonValue = buttonValue;
                 return this;
             }
 
@@ -1511,6 +1521,10 @@ public enum LabEventType {
 
         public String getRepeatedWorkflowQualifier() {
             return repeatedWorkflowQualifier;
+        }
+
+        public String getButtonValue() {
+            return buttonValue;
         }
     }
 
