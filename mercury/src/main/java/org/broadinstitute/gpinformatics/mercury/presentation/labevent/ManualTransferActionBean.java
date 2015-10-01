@@ -497,6 +497,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
                 }
             }
             Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(barcodes);
+            int foundVesselCount = 0;
             for (Map.Entry<String, LabVessel> stringLabVesselEntry : mapBarcodeToVessel.entrySet()) {
                 LabVessel labVessel = stringLabVesselEntry.getValue();
                 String barcode = stringLabVesselEntry.getKey();
@@ -507,11 +508,16 @@ public class ManualTransferActionBean extends RackScanActionBean {
                         messageCollection.addInfo(barcode + " is not in the database");
                     }
                 } else {
+                    foundVesselCount++;
                     messageCollection.addInfo(barcode + " is in the database");
                     if (!labVessel.getNearestWorkflowLabBatches().contains(labBatch)) {
                         messageCollection.addInfo(barcode + " is not in batch " + labBatch.getBatchName());
                     }
                 }
+            }
+            if (required && foundVesselCount != labBatch.getLabBatchStartingVessels().size()) {
+                messageCollection.addWarning("Batch has " + labBatch.getLabBatchStartingVessels().size() +
+                        " vessels, but " + foundVesselCount + " were scanned.");
             }
             returnMapBarcodeToVessel.putAll(mapBarcodeToVessel);
         }
