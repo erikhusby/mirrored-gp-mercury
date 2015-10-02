@@ -88,7 +88,8 @@ public class CreateFields extends UpdateFields {
         FCT_PROJECT("Flowcell Tracking", "FCT", "CFCT"),
         PRODUCT_ORDERING("Product Ordering", "PDO", "CPDO"),
         RESEARCH_PROJECTS("Research Projects", "RP", "CRP"),
-        RECEIPT_PROJECT("Sample Receipt Tracking", "RCT");
+        RECEIPT_PROJECT("Sample Receipt Tracking", "RCT"),
+        EXTRACTION_PROJECT("Extractions", "XTR");
 
         private final String projectName;
         private final String keyPrefix;
@@ -117,6 +118,20 @@ public class CreateFields extends UpdateFields {
         public String getKeyPrefix() {
             return keyPrefix;
         }
+
+        public static ProjectType fromKeyPrefix(String keyPrefix) {
+
+            ProjectType foundValue = null;
+
+            for (ProjectType projectType : values()) {
+                if (projectType.getKeyPrefix().equals(keyPrefix)) {
+                    foundValue = projectType;
+                    break;
+                }
+            }
+
+            return foundValue;
+        }
     }
 
     @JsonSerialize(using = NameableTypeJsonSerializer.class)
@@ -129,7 +144,11 @@ public class CreateFields extends UpdateFields {
         FLOWCELL("Flowcell"),
         MISEQ("MiSeq"),
         SAMPLE_INITIATION("Sample Initiation"),
-        RECEIPT("Receipt");
+        RECEIPT("Receipt"),
+        ALLPREP("AllPrep"),
+        DNA_EXTRACTION("DNA Extraction"),
+        EXTRACTION_OTHER("Extraction (Other)"),
+        RNA_EXTRACTION("RNA Extraction");
 
         private final String jiraName;
 

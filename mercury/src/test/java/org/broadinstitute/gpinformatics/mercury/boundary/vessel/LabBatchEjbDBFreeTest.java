@@ -9,12 +9,16 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderT
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.easymock.EasyMock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
@@ -72,6 +76,8 @@ public class LabBatchEjbDBFreeTest {
         ProductOrder testOrder = ProductOrderTestFactory.createDummyProductOrder();
         testOrder.setJiraTicketKey(STUB_TEST_PDO_KEY);
 
+        Bucket bucket = new Bucket(new WorkflowBucketDef(LabBatchEJBTest.BUCKET_NAME));
+
         // starting rack
         int sampleIndex = 1;
         for (String sampleName : vesselSampleList) {
@@ -79,7 +85,7 @@ public class LabBatchEjbDBFreeTest {
             String bspStock = sampleName;
             BarcodedTube bspAliquot = new BarcodedTube(barcode);
             bspAliquot.addSample(new MercurySample(bspStock, MercurySample.MetadataSource.BSP));
-            bspAliquot.addBucketEntry(new BucketEntry(bspAliquot, testOrder, BucketEntry.BucketEntryType.PDO_ENTRY));
+            bucket.addEntry(testOrder, bspAliquot,BucketEntry.BucketEntryType.PDO_ENTRY);
             mapBarcodeToTube.put(barcode, bspAliquot);
             sampleIndex++;
         }
@@ -118,6 +124,8 @@ public class LabBatchEjbDBFreeTest {
 
         labBatchEJB.setProductOrderDao(productOrderDao);
 
+        labBatchEJB.setWorkflowLoader(new WorkflowLoader());
+
         pdoNames = new ArrayList<>();
         Collections.addAll(pdoNames, STUB_TEST_PDO_KEY);
 
@@ -135,10 +143,16 @@ public class LabBatchEjbDBFreeTest {
     public void testCreateLabBatch() throws Exception {
 
         final String batchName = "Test create batch basic";
-        LabBatch testBatch = labBatchEJB
-                .createLabBatch(new LabBatch(batchName, new HashSet<>(mapBarcodeToTube.values()),
-                                             LabBatch.LabBatchType.WORKFLOW), "scottmat",
-                                CreateFields.IssueType.EXOME_EXPRESS);
+        LabBatch batchObject = new LabBatch(batchName, new HashSet<>(mapBarcodeToTube.values()),
+                LabBatch.LabBatchType.WORKFLOW);
+        for (LabVessel labVessel : mapBarcodeToTube.values()) {
+            for (BucketEntry bucketEntry : labVessel.getBucketEntries()) {
+                batchObject.addBucketEntry(bucketEntry);
+            }
+        }
+
+        LabBatch testBatch = labBatchEJB.createLabBatch(batchObject, "scottmat", CreateFields.IssueType.EXOME_EXPRESS,
+                CreateFields.ProjectType.LCSET_PROJECT);
 
         Assert.assertNotNull(testBatch);
         Assert.assertNotNull(testBatch.getJiraTicket());
@@ -157,9 +171,10 @@ public class LabBatchEjbDBFreeTest {
 
     @Test
     void testCreateFCTBatch() throws Exception {
-        LabBatch testBatch =
-                labBatchEJB.createLabBatch(new HashSet<>(mapBarcodeToTube.values()), "scottmat", testFCTKey,
-                                           LabBatch.LabBatchType.FCT, CreateFields.IssueType.FLOWCELL);
+
+        LabBatch testBatch = new LabBatch(testFCTKey, new HashSet<>(mapBarcodeToTube.values()),
+                LabBatch.LabBatchType.FCT);
+        labBatchEJB.createLabBatch(testBatch, "scottmat", CreateFields.IssueType.FLOWCELL);
         EasyMock.verify(mockJira);
 
         Assert.assertNotNull(testBatch);
@@ -167,47 +182,29 @@ public class LabBatchEjbDBFreeTest {
         Assert.assertNotNull(testBatch.getJiraTicket().getTicketName());
         Assert.assertNotNull(testBatch.getStartingBatchLabVessels());
         Assert.assertNotNull(testBatch.getBatchName());
-        Assert.assertEquals(testFCTKey, testBatch.getBatchName());
+        Assert.assertEquals("FCT-123", testBatch.getBatchName());
         Assert.assertEquals(6, testBatch.getStartingBatchLabVessels().size());
-        Assert.assertEquals(testBatch.getBatchDescription(),
-                            "null" +
-                            "\n" +
-                            "\n" + ProductOrderTestFactory.rpSynopsis);
+        Assert.assertEquals(testBatch.getBatchDescription(), null);
         Assert.assertNull(testBatch.getDueDate());
         Assert.assertEquals(testBatch.getBatchName(), testBatch.getJiraTicket().getTicketName());
         Assert.assertEquals(testBatch.getLabBatchType(), LabBatch.LabBatchType.FCT);
     }
 
     @Test
-    public void testCreateLabBatchWithVesselBarcodes() throws Exception {
-
-        LabBatch testBatch =
-                labBatchEJB.createLabBatch("scottmat", vesselSampleList, testLCSetKey, LabBatch.LabBatchType.WORKFLOW,
-                                           CreateFields.IssueType.EXOME_EXPRESS);
-        EasyMock.verify(mockJira, tubeDao);
-
-        Assert.assertNotNull(testBatch);
-        Assert.assertNotNull(testBatch.getJiraTicket());
-        Assert.assertNotNull(testBatch.getJiraTicket().getTicketName());
-        Assert.assertNotNull(testBatch.getStartingBatchLabVessels());
-        Assert.assertNotNull(testBatch.getBatchName());
-        Assert.assertEquals(testLCSetKey, testBatch.getBatchName());
-        Assert.assertEquals(6, testBatch.getStartingBatchLabVessels().size());
-        Assert.assertEquals(testBatch.getBatchDescription(),
-                            extractDescriptionPrefix(testBatch) +
-                            "\n" +
-                            "\n" + ProductOrderTestFactory.rpSynopsis);
-        Assert.assertNull(testBatch.getDueDate());
-
-        Assert.assertEquals(testBatch.getBatchName(), testBatch.getJiraTicket().getTicketName());
-    }
-
-    @Test
     public void testCreateLabBatchWithVessels() throws Exception {
 
         LabBatch testBatch =
-                labBatchEJB.createLabBatch(new HashSet<>(mapBarcodeToTube.values()), "scottmat", testLCSetKey,
-                                           LabBatch.LabBatchType.WORKFLOW, CreateFields.IssueType.EXOME_EXPRESS);
+                labBatchEJB.createLabBatch(LabBatch.LabBatchType.WORKFLOW, Workflow.ICE_EXOME_EXPRESS.getWorkflowName(),
+                        testLCSetKey,null,null,"","scottmat",new HashSet<>(mapBarcodeToTube.values()),
+                        Collections.<LabVessel>emptySet());
+        for (LabVessel labVessel : mapBarcodeToTube.values()) {
+            for (BucketEntry bucketEntry : labVessel.getBucketEntries()) {
+                testBatch.addBucketEntry(bucketEntry);
+            }
+        }
+
+        labBatchEJB.batchToJira("scottmat",null, testBatch, CreateFields.IssueType.EXOME_EXPRESS,
+                CreateFields.ProjectType.LCSET_PROJECT);
         EasyMock.verify(mockJira);
 
         Assert.assertNotNull(testBatch);
@@ -215,12 +212,10 @@ public class LabBatchEjbDBFreeTest {
         Assert.assertNotNull(testBatch.getJiraTicket().getTicketName());
         Assert.assertNotNull(testBatch.getStartingBatchLabVessels());
         Assert.assertNotNull(testBatch.getBatchName());
-        Assert.assertEquals(testLCSetKey, testBatch.getBatchName());
+        Assert.assertEquals("LCSET-123", testBatch.getBatchName());
         Assert.assertEquals(6, testBatch.getStartingBatchLabVessels().size());
         Assert.assertEquals(testBatch.getBatchDescription(),
-                            extractDescriptionPrefix(testBatch) +
-                            "\n" +
-                            "\n" + ProductOrderTestFactory.rpSynopsis);
+                            extractDescriptionPrefix(testBatch));
         Assert.assertNull(testBatch.getDueDate());
         Assert.assertEquals(testBatch.getBatchName(), testBatch.getJiraTicket().getTicketName());
     }
@@ -229,10 +224,17 @@ public class LabBatchEjbDBFreeTest {
     public void testCreateLabBatchWithJiraTicket() throws Exception {
 
         final String batchName = "second Test batch name";
-        LabBatch testBatch = labBatchEJB
-                .createLabBatch(new LabBatch(batchName, new HashSet<>(mapBarcodeToTube.values()),
-                                             LabBatch.LabBatchType.WORKFLOW), scottmat,
-                                CreateFields.IssueType.EXOME_EXPRESS);
+        LabBatch batchObject = new LabBatch(batchName, new HashSet<>(mapBarcodeToTube.values()),
+                LabBatch.LabBatchType.WORKFLOW);
+
+        for (LabVessel labVessel : mapBarcodeToTube.values()) {
+            for (BucketEntry bucketEntry : labVessel.getBucketEntries()) {
+                batchObject.addBucketEntry(bucketEntry);
+            }
+        }
+
+        LabBatch testBatch = labBatchEJB.createLabBatch(batchObject, scottmat, CreateFields.IssueType.EXOME_EXPRESS,
+                CreateFields.ProjectType.LCSET_PROJECT);
 
         Assert.assertNotNull(testBatch);
         Assert.assertNotNull(testBatch.getJiraTicket());
@@ -259,8 +261,14 @@ public class LabBatchEjbDBFreeTest {
                                            LabBatch.LabBatchType.WORKFLOW);
         batchInput.setBatchDescription(description);
 
-        LabBatch testBatch = labBatchEJB
-                .createLabBatch(batchInput, scottmat, CreateFields.IssueType.EXOME_EXPRESS);
+        for (LabVessel labVessel : mapBarcodeToTube.values()) {
+            for (BucketEntry bucketEntry : labVessel.getBucketEntries()) {
+                batchInput.addBucketEntry(bucketEntry);
+            }
+        }
+
+        LabBatch testBatch = labBatchEJB.createLabBatch(batchInput, scottmat, CreateFields.IssueType.EXOME_EXPRESS,
+                CreateFields.ProjectType.LCSET_PROJECT);
 
         Assert.assertNotNull(testBatch);
         Assert.assertNotNull(testBatch.getJiraTicket());

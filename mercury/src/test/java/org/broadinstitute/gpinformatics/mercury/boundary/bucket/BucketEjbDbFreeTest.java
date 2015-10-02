@@ -3,10 +3,10 @@ package org.broadinstitute.gpinformatics.mercury.boundary.bucket;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
@@ -25,15 +25,12 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 import org.easymock.EasyMock;
+import org.easymock.IAnswer;
 import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
@@ -77,7 +74,7 @@ public class BucketEjbDbFreeTest {
     private Bucket bucket;
     private String pdoCreator;
     private final Map<String, BspSampleData> bspSampleDataMap = new HashMap<>();
-    private final Collection<ProductOrderSample> expectedSamples = new ArrayList<>();
+    private final Collection<ProductOrderSample> expectedSamples = new HashSet<>();
     private final List<LabVessel> labVessels = new ArrayList<>();
 
     private BucketEjb bucketEjb;
@@ -106,12 +103,10 @@ public class BucketEjbDbFreeTest {
         switch (workflow) {
         case AGILENT_EXOME_EXPRESS:
             labBatch = new LabBatch("ExEx Batch", new HashSet<LabVessel>(), LabBatch.LabBatchType.SAMPLES_RECEIPT);
-            bucket = new Bucket(new WorkflowStepDef("Pico/Plating Bucket"));
             pdo = ProductOrderTestFactory.buildExExProductOrder(SAMPLE_SIZE);
             break;
         case ICE:
             labBatch = new LabBatch("ICE Batch", new HashSet<LabVessel>(), LabBatch.LabBatchType.SAMPLES_RECEIPT);
-            bucket = new Bucket(new WorkflowStepDef("Pico/Plating Bucket"));
             pdo = ProductOrderTestFactory.buildIceProductOrder(SAMPLE_SIZE);
             break;
         default:
@@ -151,7 +146,7 @@ public class BucketEjbDbFreeTest {
                 break;
 
             case 2:
-                // Received root but non-genomic material, should be rejected.
+                // Received root but non-genomic material, should NOT be accepted.
                 bspData.put(BSPSampleSearchColumn.MATERIAL_TYPE, "Tissue:Blood");
                 bspData.put(BSPSampleSearchColumn.SAMPLE_ID, pdoSample.getName());
                 bspData.put(BSPSampleSearchColumn.ROOT_SAMPLE, pdoSample.getName());
@@ -200,17 +195,19 @@ public class BucketEjbDbFreeTest {
             }
             setupCoreMocks(workflow, true);
 
-            expect(labEventFactory.buildFromBatchRequests((Collection<BucketEntry>) anyObject(), (String) anyObject(),
-                                                          (LabBatch) anyObject(), (String) anyObject(),
-                                                          (String) anyObject(), (LabEventType) anyObject()))
-                    .andReturn(Collections.<LabEvent>emptyList());
-            expect(bspSampleDataFetcher.fetchSampleData((List<String>) anyObject())).andReturn(
-                    bspSampleDataMap);
-            bucketDao.persist(bucket);
+            expect(labEventFactory
+                    .buildFromBatchRequests(EasyMock.<List<BucketEntry>>anyObject(), EasyMock.<String>anyObject(),
+                            EasyMock.<LabBatch>anyObject(), EasyMock.<String>anyObject(), EasyMock.<String>anyObject(),
+                            EasyMock.<LabEventType>anyObject()))
+                    .andReturn(Collections.<LabEvent>emptyList()).anyTimes();
+
+            expect(bspSampleDataFetcher.fetchSampleData(EasyMock.<Collection<String>>anyObject()))
+                    .andReturn(bspSampleDataMap);
 
             replay(mocks);
 
-            Collection<ProductOrderSample> addedSamples = bucketEjb.addSamplesToBucket(pdo);
+            Map<String, Collection<ProductOrderSample>> samplesByBucket = bucketEjb.addSamplesToBucket(pdo);
+            Collection<ProductOrderSample> addedSamples = samplesByBucket.get("Pico/Plating Bucket");
             Assert.assertEqualsNoOrder(addedSamples.toArray(), expectedSamples.toArray());
 
             verify(mocks);
@@ -230,8 +227,7 @@ public class BucketEjbDbFreeTest {
                 sampleDTO.addPlastic(badLabelResult);
             }
 
-            expect(bspSampleDataFetcher.fetchSampleData((List<String>) anyObject())).andReturn(
-                    bspSampleDataMap);
+            expect(bspSampleDataFetcher.fetchSampleData(EasyMock.<List<String>>anyObject())).andReturn( bspSampleDataMap);
 
             replay(mocks);
 
@@ -263,12 +259,6 @@ public class BucketEjbDbFreeTest {
     private void setupCoreMocks(Workflow workflow, boolean createVessels) {
         setUp(workflow);
 
-        WorkflowConfig workflowConfig = workflowLoader.load();
-        ProductWorkflowDefVersion workflowDefVersion = workflowConfig.getWorkflow(workflow).getEffectiveVersion();
-        WorkflowBucketDef initialBucketDef = workflowDefVersion.getInitialBucket();
-
-        reset(mocks);
-
         // Mock should return sample for those that Mercury knows about, i.e. all except the 1st and 4th samples.
         // The 4th sample is in house so a standalone vessel/sample should be created.
         List<LabVessel> mockVessels = new ArrayList<>();
@@ -289,9 +279,15 @@ public class BucketEjbDbFreeTest {
                 }
             }
         }
-        expect(labVesselDao.findBySampleKeyList((Collection<String>) anyObject())).andReturn(mockVessels);
+        expect(labVesselDao.findBySampleKeyList(EasyMock.<Collection<String>>anyObject())).andReturn(mockVessels);
 
-        expect(bucketDao.findByName((initialBucketDef.getName()))).andReturn(bucket);
-        // Should be OK to return more samples in map than was asked for.
+        expect(bucketDao.findByName(EasyMock.<String>anyObject())).andAnswer(new IAnswer<Bucket>() {
+            @Override
+            public Bucket answer() throws Throwable {
+                String arg = (String) EasyMock.getCurrentArguments()[0];
+                bucket = new Bucket(arg);
+                return bucket;
+            }
+        }).anyTimes();
     }
 }

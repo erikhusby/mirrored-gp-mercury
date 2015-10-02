@@ -581,11 +581,43 @@ public class ReagentFixupTest extends Arquillian {
 
         labEvent = labEventDao.findById(LabEvent.class, 998747L);
         System.out.println("Replacing reagent " + undesired.getReagentId() + " with " + desired.getReagentId() +
-                " for event " + labEvent.getLabEventId());
+                           " for event " + labEvent.getLabEventId());
         Assert.assertTrue(labEvent.getReagents().remove(undesired));
         labEvent.addReagent(desired);
 
         genericReagentDao.persist(new FixupCommentary("GPLIM-3712 change reagent used on PicoBufferAddition event."));
+        genericReagentDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim3743() {
+        userBean.loginOSUser();
+
+        // Replaces Buffer ATE reagent on event 1020154 with a new reagent having lot 151022297, exp 17-APR-2016
+        LabEvent labEvent = genericReagentDao.findById(LabEvent.class, 1020154L);
+        Assert.assertNotNull(labEvent);
+
+        String kitType = "Buffer ATE";
+        Reagent undesired = null;
+        for (Reagent reagent : labEvent.getReagents()) {
+            if (reagent.getName().equals(kitType)) {
+                Assert.assertNull(undesired);
+                undesired = reagent;
+            }
+        }
+        Assert.assertNotNull(undesired);
+
+        String barcode = "151022297";
+        Date expiration = new GregorianCalendar(2016, Calendar.APRIL, 17).getTime();
+        Assert.assertNull(genericReagentDao.findByReagentNameLotExpiration(kitType, barcode, expiration));
+        Reagent desired = new GenericReagent(kitType, barcode, expiration);
+        System.out.println("Created reagent " + kitType + " lot " + barcode + " expiration " + expiration);
+        Assert.assertTrue(labEvent.getReagents().remove(undesired));
+        labEvent.getReagents().add(desired);
+        System.out.println("Reagent " + undesired.getReagentId() + " removed and " + desired.getReagentId() +
+                           " added to event " + labEvent.getLabEventId());
+
+        genericReagentDao.persist(new FixupCommentary("GPLIM-3743 fixup incorrect Buffer ATE reagent"));
         genericReagentDao.flush();
     }
 }
