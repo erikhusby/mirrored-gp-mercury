@@ -176,10 +176,13 @@ public class WorkflowMatcher {
 
         boolean foundEvents = false;
         for (int i = workflowEvents.size() - 1; i >= 0; i--) {
-            if (!CollectionUtils.isEmpty(workflowEvents.get(i).getLabEvents())) {
+            WorkflowEvent workflowEvent = workflowEvents.get(i);
+            if (!CollectionUtils.isEmpty(workflowEvent.getLabEvents())) {
                 foundEvents = true;
             } else if (foundEvents) {
-                workflowEvents.get(i).setSkipped(true);
+                if (CollectionUtils.isEmpty(workflowEvent.getLabEvents())) {
+                    workflowEvent.setSkipped(true);
+                }
             }
         }
 
