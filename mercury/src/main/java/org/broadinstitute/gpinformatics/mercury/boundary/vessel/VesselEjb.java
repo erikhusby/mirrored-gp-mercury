@@ -389,7 +389,8 @@ public class VesselEjb {
                 decision = decider.makeDecision(tube, labMetric);
             }
             if (decision != null) {
-                labMetric.setLabMetricDecision(new LabMetricDecision(decision, new Date(), decidingUser, labMetric));
+                labMetric.setLabMetricDecision(
+                        new LabMetricDecision(decision, new Date(), decidingUser, labMetric, null));
             }
             tube.addMetric(labMetric);
             labMetricRun.addMetric(labMetric);
@@ -554,15 +555,18 @@ public class VesselEjb {
                                 metricType, LabMetric.LabUnit.RQS,
                                 sourcePosition.name(), caliperRun.getRunDate());
                         LabMetricDecision.Decision decision;
+                        String decisionNote = null;
                         if(plateWellResult.getLowerMarkerTime() < 28 || plateWellResult.getLowerMarkerTime() > 33) {
-                            decision = LabMetricDecision.Decision.LOWER_MARKER_OUT_OF_RANGE;
+                            decision = LabMetricDecision.Decision.REPEAT;
+                            decisionNote = "Lower Marker Time not in accepted 28-33 range.";
                         } else if(plateWellResult.getDv200TotalArea() <= 0 || plateWellResult.getDv200TotalArea() >= 1) {
-                            decision = LabMetricDecision.Decision.DV200_OUT_OF_RANGE;
+                            decision = LabMetricDecision.Decision.REPEAT;
+                            decisionNote = "DV200 not in accepted 0-1 range.";
                         } else {
                             decision = LabMetricDecision.Decision.PASS;
                         }
                         sourceVesselLabMetric.setLabMetricDecision(
-                                new LabMetricDecision(decision, new Date(), decidingUser, labMetric));
+                                new LabMetricDecision(decision, new Date(), decidingUser, labMetric, decisionNote));
                         sourceTube.addMetric(sourceVesselLabMetric);
                         labMetricRun.addMetric(sourceVesselLabMetric);
                     }

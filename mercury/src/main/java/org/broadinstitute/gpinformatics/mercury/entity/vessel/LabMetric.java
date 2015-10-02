@@ -48,7 +48,7 @@ public class LabMetric implements Comparable<LabMetric> {
         MBp("KBp"),
         GBp("GBp"),
         Bp("Bp"),
-        RQS("Rqs"); //TODO not really a unit, but more of a score
+        RQS("Rqs");
 
         private String displayName;
         private static final Map<String, LabUnit> mapNameToUnit = new HashMap<>();

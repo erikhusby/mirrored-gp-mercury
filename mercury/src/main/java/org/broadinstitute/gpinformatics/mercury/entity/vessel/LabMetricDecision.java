@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
 import org.hibernate.envers.Audited;
 
+import javax.annotation.Nullable;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
@@ -28,8 +29,7 @@ public class LabMetricDecision {
     public enum Decision {
         PASS(false),
         RUN_FAILED(false),
-        LOWER_MARKER_OUT_OF_RANGE(true), //TODO perhaps a well fail?
-        DV200_OUT_OF_RANGE(true),
+        REPEAT(true),
         FAIL(true),
         RISK(true);
 
@@ -72,6 +72,8 @@ public class LabMetricDecision {
 
     private Long deciderUserId;
 
+    private String note;
+
     /** This is actually OneToOne, but using OneToMany to avoid N+1 selects */
     @OneToMany(mappedBy = "labMetricDecision")
     private Set<LabMetric> labMetrics = new HashSet<>();
@@ -81,10 +83,11 @@ public class LabMetricDecision {
     }
 
     public LabMetricDecision(Decision decision, Date decidedDate, Long deciderUserId,
-            LabMetric labMetric) {
+            LabMetric labMetric, @Nullable String note) {
         this.decision = decision;
         this.decidedDate = decidedDate;
         this.deciderUserId = deciderUserId;
+        this.note = note;
         labMetrics.add(labMetric);
     }
 
@@ -118,6 +121,14 @@ public class LabMetricDecision {
 
     public void setDeciderUserId(Long deciderUserId) {
         this.deciderUserId = deciderUserId;
+    }
+
+    public String getNote() {
+        return note;
+    }
+
+    public void setNote(String note) {
+        this.note = note;
     }
 
     public LabMetric getLabMetrics() {

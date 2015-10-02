@@ -292,4 +292,15 @@
             <column name="workflow_qualifier" type="varchar2(255)"/>
         </addColumn>
     </changeSet>
+
+    <changeSet author="jowalsh" id="GPLIM-3750-1">
+        <addColumn schemaName="mercury" tableName="lab_metric_decision">
+            <column name="note" type="varchar2(255)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="jowalsh" id="GPLIM-3750-2">
+        <addColumn schemaName="mercury" tableName="lab_metric_decision_aud">
+            <column name="note" type="varchar2(255)"/>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>

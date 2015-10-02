@@ -86,7 +86,7 @@ public class PicoDispositionActionBeanTest {
                 decision = LabMetricDecision.Decision.PASS;
             }
             labMetric.setLabMetricDecision(
-                    new LabMetricDecision(decision, timeSteps[1], BSPManagerFactoryStub.QA_DUDE_USER_ID, labMetric));
+                    new LabMetricDecision(decision, timeSteps[1], BSPManagerFactoryStub.QA_DUDE_USER_ID, labMetric, null));
 
         }
 
@@ -226,19 +226,19 @@ public class PicoDispositionActionBeanTest {
         LabMetric labMetric0 = new LabMetric(new BigDecimal("94.0"), LabMetric.MetricType.INITIAL_PICO,
                 LabMetric.LabUnit.NG_PER_UL, FIRST_CELLNAME, timeSteps[0]);
         labMetric0.setLabMetricDecision(new LabMetricDecision(LabMetricDecision.Decision.PASS, timeSteps[0],
-                BSPManagerFactoryStub.QA_DUDE_USER_ID, labMetric0));
+                BSPManagerFactoryStub.QA_DUDE_USER_ID, labMetric0, null));
         barcodedTube.addMetric(labMetric0);
 
         LabMetric labMetric1 = new LabMetric(BD_1_1, LabMetric.MetricType.INITIAL_PICO,
                 LabMetric.LabUnit.NG_PER_UL, FIRST_CELLNAME, timeSteps[1]);
         labMetric1.setLabMetricDecision(new LabMetricDecision(LabMetricDecision.Decision.RISK, timeSteps[1],
-                BSPManagerFactoryStub.QA_DUDE_USER_ID, labMetric1));
+                BSPManagerFactoryStub.QA_DUDE_USER_ID, labMetric1, null));
         barcodedTube.addMetric(labMetric1);
 
         LabMetric labMetric2 = new LabMetric(BD_1_1, LabMetric.MetricType.INITIAL_PICO,
                 LabMetric.LabUnit.NG_PER_UL, FIRST_CELLNAME, timeSteps[2]);
         labMetric2.setLabMetricDecision(new LabMetricDecision(LabMetricDecision.Decision.FAIL, timeSteps[2],
-                BSPManagerFactoryStub.QA_DUDE_USER_ID, labMetric2));
+                BSPManagerFactoryStub.QA_DUDE_USER_ID, labMetric2, null));
         barcodedTube.addMetric(labMetric2);
 
         // Creates the list of sample dispositions.
@@ -260,13 +260,13 @@ public class PicoDispositionActionBeanTest {
         LabMetric labMetric0 = new LabMetric(new BigDecimal("94.0"), LabMetric.MetricType.INITIAL_PICO,
                 LabMetric.LabUnit.NG_PER_UL, FIRST_CELLNAME, timeSteps[0]);
         labMetric0.setLabMetricDecision(new LabMetricDecision(LabMetricDecision.Decision.PASS, timeSteps[0],
-                BSPManagerFactoryStub.QA_DUDE_USER_ID, labMetric0));
+                BSPManagerFactoryStub.QA_DUDE_USER_ID, labMetric0, null));
         barcodedTube.addMetric(labMetric0);
 
         LabMetric labMetric1 = new LabMetric(BD_1_1, LabMetric.MetricType.INITIAL_PICO,
                 LabMetric.LabUnit.NG_PER_UL, FIRST_CELLNAME, null);
         labMetric1.setLabMetricDecision(new LabMetricDecision(LabMetricDecision.Decision.FAIL, null,
-                BSPManagerFactoryStub.QA_DUDE_USER_ID, labMetric1));
+                BSPManagerFactoryStub.QA_DUDE_USER_ID, labMetric1, null));
         barcodedTube.addMetric(labMetric1);
 
         // Creates the list of sample dispositions.
