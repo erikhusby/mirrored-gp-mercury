@@ -1042,7 +1042,7 @@ public class LabVesselSearchDefinition {
     }
 
 
-    private class MaterialTypeEventCriteria implements TransferTraverserCriteria {
+    private class MaterialTypeEventCriteria extends TransferTraverserCriteria {
         private LabVessel.MaterialType materialType;
         private List<LabVessel> labVessels = new ArrayList<>();
 
@@ -1052,19 +1052,18 @@ public class LabVesselSearchDefinition {
 
         @Override
         public TraversalControl evaluateVesselPreOrder(Context context) {
-            LabEvent labEvent = context.getEvent();
-            if (labEvent != null) {
-                LabVessel.MaterialType resultingMaterialType = labEvent.getLabEventType().getResultingMaterialType();
-                if (resultingMaterialType != null && resultingMaterialType == materialType) {
-                    labVessels.add(context.getLabVessel());
+            if( context.getHopCount() > 0 ) {
+                LabVessel.VesselEvent vesselEvent = context.getVesselEvent();
+                if (vesselEvent != null) {
+                    LabVessel.MaterialType resultingMaterialType =
+                            vesselEvent.getLabEvent().getLabEventType().getResultingMaterialType();
+                    if (resultingMaterialType != null && resultingMaterialType == materialType) {
+                        labVessels.add(vesselEvent.getTargetLabVessel());
+                    }
                 }
             }
+
             return TraversalControl.ContinueTraversing;
-        }
-
-        @Override
-        public void evaluateVesselInOrder(Context context) {
-
         }
 
         @Override
