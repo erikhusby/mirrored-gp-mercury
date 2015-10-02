@@ -45,7 +45,7 @@
                 <th>Events</th>
             </tr>
             <c:forEach items="${actionBean.workflowEvents}" var="workflowEvent" varStatus="workflowEventStatus">
-                <tr>
+                <tr style="${workflowEvent.skipped ? "background-color:#FFFF99" : (empty workflowEvent.labEvents ? "" : "background-color:LightGray")}">
                     <td>
                         <a name="${workflowEventStatus.index}" id="anchor${workflowEventStatus.index}"></a>
                         <div>
@@ -81,15 +81,15 @@
                                             <c:when test="${labEventType eq 'ADD_REAGENT'}">
                                                 <c:forEach items="${workflowEvent.workflowStepDef.reagentTypes}" var="reagentType" varStatus="loop">
                                                     <div class="control-group">
-                                                        <label for="rgtType${loop.index}">Type </label>
-                                                        <input type="text" id="rgtType${loop.index}"
+                                                        <label for="rgtType${loop.index}">Type </label>${reagentType}
+                                                        <input type="hidden" id="rgtType${loop.index}"
                                                                 name="reagentNames[${loop.index}]" value="${reagentType}">
 
                                                         <label for="rgtBcd${loop.index}">Barcode </label>
                                                         <input type="text" id="rgtBcd${loop.index}"
                                                                 name="reagentLots[${loop.index}]">
 
-                                                        <label for="rgtExp${loop.index}">Expiration </label>
+                                                        <label for="rgtExp${loop.index}">Expiration mm/dd/yyyy</label>
                                                         <input type="text" id="rgtExp${loop.index}"
                                                                 name="reagentExpirations[${loop.index}]">
 

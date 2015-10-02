@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.workflow;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -30,6 +31,7 @@ public class WorkflowMatcher {
     public static class WorkflowEvent {
         private WorkflowStepDef workflowStepDef;
         private List<LabEvent> labEvents;
+        private boolean skipped;
 
         public WorkflowEvent(WorkflowStepDef workflowStepDef, List<LabEvent> labEvents) {
             this.workflowStepDef = workflowStepDef;
@@ -42,6 +44,14 @@ public class WorkflowMatcher {
 
         public List<LabEvent> getLabEvents() {
             return labEvents;
+        }
+
+        public boolean isSkipped() {
+            return skipped;
+        }
+
+        public void setSkipped(boolean skipped) {
+            this.skipped = skipped;
         }
     }
 
@@ -160,6 +170,18 @@ public class WorkflowMatcher {
                     workflowEvents.add(i, new WorkflowEvent(null, labEventKeyListEntry.getValue()));
                     iterator.remove();
                     break;
+                }
+            }
+        }
+
+        boolean foundEvents = false;
+        for (int i = workflowEvents.size() - 1; i >= 0; i--) {
+            WorkflowEvent workflowEvent = workflowEvents.get(i);
+            if (!CollectionUtils.isEmpty(workflowEvent.getLabEvents())) {
+                foundEvents = true;
+            } else if (foundEvents) {
+                if (CollectionUtils.isEmpty(workflowEvent.getLabEvents())) {
+                    workflowEvent.setSkipped(true);
                 }
             }
         }

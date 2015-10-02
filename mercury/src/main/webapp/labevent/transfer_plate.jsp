@@ -53,6 +53,7 @@ plate / rack.
                         onclick="this.form['scanIndex'].value='${stationEventIndex}';this.form['scanSource'].value='${source}';"
                         name="<%= ManualTransferActionBean.RACK_SCAN_EVENT %>"/>
             </div>
+            Or hand scan 2D barcodes.
         </c:if>
         <table>
             <c:forEach items="${geometry.rowNames}" var="rowName" varStatus="rowStatus">
@@ -71,7 +72,7 @@ plate / rack.
                                 value="${rowStatus.index * geometry.columnCount + columnStatus.index}"/>
                         <td align="right">
                             <c:if test="${empty rowName}">${geometry.vesselPositions[receptacleIndex]}</c:if>
-                            <input type="text"
+                            <input type="text" id="${source ? 'src' : 'dest'}RcpBcd${stationEventIndex}_${receptacleIndex}"
                                     name="stationEvents[${stationEventIndex}].${source ? 'sourcePositionMap' : 'positionMap'}.receptacle[${receptacleIndex}].barcode"
                                     value="${actionBean.findReceptacleAtPosition(positionMap, geometry.vesselPositions[receptacleIndex]).barcode}"
                                     class="clearable smalltext unique"/>
