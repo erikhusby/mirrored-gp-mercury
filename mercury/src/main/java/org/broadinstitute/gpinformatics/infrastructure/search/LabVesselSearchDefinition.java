@@ -430,6 +430,38 @@ public class LabVesselSearchDefinition {
         searchTerm.setSearchValueConversionExpression(new SearchDefinitionFactory.EventTypeValueConversionExpression());
         searchTerms.add(searchTerm);
 
+        class EventMaterialTypeEvaluator extends SearchTerm.Evaluator<Object> {
+
+            private final LabVessel.MaterialType materialType;
+
+            EventMaterialTypeEvaluator(LabVessel.MaterialType materialType) {
+                this.materialType = materialType;
+            }
+
+            @Override
+            public List<String> evaluate(Object entity, SearchContext context) {
+                LabVessel labVessel = (LabVessel) entity;
+
+                MaterialTypeEventCriteria criteria = new MaterialTypeEventCriteria(materialType);
+                labVessel.evaluateCriteria(criteria, TransferTraverserCriteria.TraversalDirection.Descendants);
+
+                List<String> barcodes = new ArrayList<>();
+                for (LabVessel vessel : criteria.getLabVessels()) {
+                    barcodes.add(vessel.getLabel());
+                }
+                return barcodes;
+            }
+        }
+        searchTerm = new SearchTerm();
+        searchTerm.setName("DNA Extracted Tube Barcode");
+        searchTerm.setDisplayValueExpression(new EventMaterialTypeEvaluator(LabVessel.MaterialType.DNA));
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("RNA Extracted Tube Barcode");
+        searchTerm.setDisplayValueExpression(new EventMaterialTypeEvaluator(LabVessel.MaterialType.RNA));
+        searchTerms.add(searchTerm);
+
         searchTerm = new SearchTerm();
         searchTerm.setName("Imported Sample Tube Barcode");
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
@@ -1010,4 +1042,38 @@ public class LabVesselSearchDefinition {
     }
 
 
+    private class MaterialTypeEventCriteria implements TransferTraverserCriteria {
+        private LabVessel.MaterialType materialType;
+        private List<LabVessel> labVessels = new ArrayList<>();
+
+        private MaterialTypeEventCriteria(LabVessel.MaterialType materialType) {
+            this.materialType = materialType;
+        }
+
+        @Override
+        public TraversalControl evaluateVesselPreOrder(Context context) {
+            LabEvent labEvent = context.getEvent();
+            if (labEvent != null) {
+                LabVessel.MaterialType resultingMaterialType = labEvent.getLabEventType().getResultingMaterialType();
+                if (resultingMaterialType != null && resultingMaterialType == materialType) {
+                    labVessels.add(context.getLabVessel());
+                }
+            }
+            return TraversalControl.ContinueTraversing;
+        }
+
+        @Override
+        public void evaluateVesselInOrder(Context context) {
+
+        }
+
+        @Override
+        public void evaluateVesselPostOrder(Context context) {
+
+        }
+
+        public List<LabVessel> getLabVessels() {
+            return labVessels;
+        }
+    }
 }

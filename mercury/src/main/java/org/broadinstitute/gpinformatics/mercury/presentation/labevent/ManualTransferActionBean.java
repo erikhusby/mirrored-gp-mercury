@@ -339,9 +339,8 @@ public class ManualTransferActionBean extends RackScanActionBean {
                         validateRepeatedEvent(plateTransferEventType, mapBarcodeToVessel, repeatedEvent,
                                 manualTransferDetails.getRepeatedWorkflowQualifier(), messageCollection);
                     }
-                    // todo jmt take required, empty from workflow
-                    loadPlateFromDb(plateTransferEventType.getPlate(), plateTransferEventType.getPositionMap(), false,
-                            labBatch, messageCollection);
+                    loadPlateFromDb(plateTransferEventType.getPlate(), plateTransferEventType.getPositionMap(),
+                            manualTransferDetails.isTargetExpectedToExist(), labBatch, messageCollection);
                 }
                 break;
             case STATION_SETUP_EVENT:
@@ -501,17 +500,27 @@ public class ManualTransferActionBean extends RackScanActionBean {
                 LabVessel labVessel = stringLabVesselEntry.getValue();
                 String barcode = stringLabVesselEntry.getKey();
                 if (labVessel == null) {
+                    String message = barcode + " is not in the database";
                     if (required) {
-                        messageCollection.addError(barcode + " is not in the database");
+                        messageCollection.addError(message);
                     } else {
-                        messageCollection.addInfo(barcode + " is not in the database");
+                        messageCollection.addInfo(message);
                     }
                 } else {
-                    messageCollection.addInfo(barcode + " is in the database");
+                    String message = barcode + " is in the database";
+                    if (required) {
+                        messageCollection.addInfo(message);
+                    } else {
+                        messageCollection.addError(message);
+                    }
                     if (!labVessel.getNearestWorkflowLabBatches().contains(labBatch)) {
                         messageCollection.addInfo(barcode + " is not in batch " + labBatch.getBatchName());
                     }
                 }
+            }
+            if (required && barcodes.size() != labBatch.getLabBatchStartingVessels().size()) {
+                messageCollection.addWarning("Batch has " + labBatch.getLabBatchStartingVessels().size() +
+                        " vessels, but " + barcodes.size() + " were scanned.");
             }
             returnMapBarcodeToVessel.putAll(mapBarcodeToVessel);
         }

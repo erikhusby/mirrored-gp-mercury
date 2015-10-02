@@ -616,6 +616,23 @@ public enum LabEventType {
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             LibraryType.NONE_ASSIGNED),
 
+    //Ribo Zero
+    RIBO_ZERO_TRANSFER("RiboZeroTransfer",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY),
+    RIBO_ZERO_DEPLETION("RiboZeroDepletion",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY),
+    RIBO_ZERO_ADDITIONAL_TRANSFER("RiboZeroAdditionalTransfer",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY),
+    RIBO_ZERO_CLEANUP("RiboZeroCleanup",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY),
+    EPF_ADDITION("EPFAddition",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY),
+
     // cDNA dUTP
     POLY_A_TRANSFER("PolyATransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
@@ -1611,9 +1628,12 @@ public enum LabEventType {
         /** Used by JAXB, because it doesn't support interfaces. */
         private String targetVesselTypeGeometryString;
 
-        /** The set of positions in the target geometry from which to transfer */
+        /** The set of positions in the target geometry from which to transfer. */
         private SBSSection targetSection;
-        
+
+        /** If true, display error message when target does not exist.  */
+        private boolean targetExpectedToExist = false;
+
         /** How many reagent fields for each entry in reagentNames. */
         private int[] reagentFieldCounts;
     
@@ -1641,6 +1661,9 @@ public enum LabEventType {
         /** Supports verification that two transfers have same source and destination. */
         private String repeatedWorkflowQualifier;
 
+        /** What to display in the button that sends the message. */
+        private String buttonValue = "Transfer";
+
         /** For JAXB */
         public ManualTransferDetails() {
         }
@@ -1660,6 +1683,8 @@ public enum LabEventType {
             secondaryEvent = builder.secondaryEvent;
             repeatedEvent = builder.repeatedEvent;
             repeatedWorkflowQualifier = builder.repeatedWorkflowQualifier;
+            buttonValue = builder.buttonValue;
+            targetExpectedToExist = builder.targetExpectedToExist;
         }
 
         public static class Builder {
@@ -1677,6 +1702,8 @@ public enum LabEventType {
             private LabEventType secondaryEvent;
             private LabEventType repeatedEvent;
             private String repeatedWorkflowQualifier;
+            private String buttonValue = "Transfer";
+            private boolean targetExpectedToExist = false;
 
             public Builder(MessageType messageType, VesselTypeGeometry sourceVesselTypeGeometry,
                     VesselTypeGeometry targetVesselTypeGeometry) {
@@ -1735,6 +1762,16 @@ public enum LabEventType {
                 return this;
             }
 
+            public Builder buttonValue(String buttonValue) {
+                this.buttonValue = buttonValue;
+                return this;
+            }
+
+            public Builder targetExpectedToExist(boolean targetExpectedToExist) {
+                this.targetExpectedToExist = targetExpectedToExist;
+                return this;
+            }
+
             public ManualTransferDetails build() {
                 return new ManualTransferDetails(this);
             }
@@ -1785,6 +1822,10 @@ public enum LabEventType {
             return targetSection;
         }
 
+        public boolean isTargetExpectedToExist() {
+            return targetExpectedToExist;
+        }
+
         public String[] getReagentNames() {
             return reagentNames;
         }
@@ -1829,6 +1870,10 @@ public enum LabEventType {
 
         public String getRepeatedWorkflowQualifier() {
             return repeatedWorkflowQualifier;
+        }
+
+        public String getButtonValue() {
+            return buttonValue;
         }
     }
 

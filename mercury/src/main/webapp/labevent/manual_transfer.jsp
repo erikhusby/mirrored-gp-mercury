@@ -222,7 +222,8 @@
                     </c:choose>
                 </c:forEach>
                 <stripes:submit name="fetchExisting" value="Validate Barcodes" class="btn"/>
-                <stripes:submit name="transfer" value="Transfer" class="btn btn-primary"/>
+                <stripes:submit name="transfer" value="${actionBean.manualTransferDetails.buttonValue}"
+                        class="btn btn-primary"/>
                 <input type="button" onclick="$('.clearable').each(function (){$(this).val('');});" value="Clear non-reagent fields">
             </c:if>
         </stripes:form>
