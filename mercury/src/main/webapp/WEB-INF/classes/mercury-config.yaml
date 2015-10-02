@@ -205,7 +205,7 @@ bettaLimsServer:
         jmsQueue: broad.queue.bettalims.test
 
     QA:
-        wsHost: vbettalimsqa
+        wsHost: vbettalimsqa1
         wsPort: 9998
         jmsHost: seqtest04
         jmsPort: 61616
