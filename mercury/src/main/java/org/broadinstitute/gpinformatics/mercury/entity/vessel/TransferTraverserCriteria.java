@@ -749,7 +749,7 @@ public interface TransferTraverserCriteria {
 
         private final Set<LabEvent> labEvents = new TreeSet<LabEvent>( LabEvent.BY_EVENT_DATE_LOC );
 
-        private final Set<LabVessel> parsedVessels = new HashSet<>();
+        private final Set<LabVessel> visitedVessels = new HashSet<>();
 
         @Override
         public TraversalControl evaluateVesselPreOrder(Context context) {
@@ -764,15 +764,13 @@ public interface TransferTraverserCriteria {
             if( context.getLabVessel() != null ) {
                 labEvents.addAll(context.getLabVessel().getInPlaceLabEvents());
                 for (VesselContainer containerVessel : context.getLabVessel().getContainers()) {
-                    // In place events on containers is only applicable to static containers
-                    if( containerVessel.hasAnonymousVessels()) {
-                        labEvents.addAll(containerVessel.getEmbedder().getInPlaceLabEvents());
-                    }
+                    // In place events may apply to containers
+                    labEvents.addAll(containerVessel.getEmbedder().getInPlaceLabEvents());
                 }
 
-                // Avoid repeatedly parsing the entire tree from the same vessel
-                // TODO: Use same logic for VesselContainer/Position
-                if( !parsedVessels.add(context.getLabVessel())) {
+                // Avoid repeatedly traversing the entire tree from the same vessel
+                // TODO: Adding same logic for VesselContainer/Position to GPLIM-3577
+                if( !visitedVessels.add(context.getLabVessel())) {
                     results = TraversalControl.StopTraversing;
                 }
             }
@@ -781,9 +779,7 @@ public interface TransferTraverserCriteria {
             if( context.getVesselContainer() != null ) {
                 VesselContainer containerVessel = context.getVesselContainer();
                 if (containerVessel != null) {
-                    if( containerVessel.hasAnonymousVessels()) {
-                        labEvents.addAll(containerVessel.getEmbedder().getInPlaceLabEvents());
-                    }
+                    labEvents.addAll(containerVessel.getEmbedder().getInPlaceLabEvents());
 
                     // Look for what comes in from the side (e.g. IndexedAdapterLigation, BaitAddition)
                     for (LabEvent containerEvent : containerVessel.getEmbedder().getTransfersTo()) {
