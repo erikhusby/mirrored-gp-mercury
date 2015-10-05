@@ -15,15 +15,31 @@
                 padding: 2px 2px;
             }
         </style>
+        <script src="${ctxpath}/resources/scripts/jquery.validate-1.14.0.min.js"></script>
         <script type="text/javascript">
-            <c:if test="${not empty actionBean.anchorName}">
+            $j(document).ready(function () {
+                <c:if test="${not empty actionBean.anchorName}">
                 // We're returning from the manual transfer page, so scroll to the link that took us there
-                $j(document).ready(function () {
-                    $j('#anchor${actionBean.anchorName}')[0].scrollIntoView();
-                });
-            </c:if>
+                $j('#anchor${actionBean.anchorName}')[0].scrollIntoView();
+                </c:if>
+
+                $j.validator.addMethod(
+                    "expirationDate",
+                    function (value, element) {
+                        try {
+                            var parsedDate = $j.datepicker.parseDate("mm/dd/yy", value, null);
+                            return this.optional(element) || parsedDate > new Date();
+                        } catch(error) {
+                            return false;
+                        }
+                    },
+                    "Enter a valid future date (m/d/yyyy)"
+                );
+                $j.validator.classRuleSettings.expirationDate = {expirationDate: true};
+                $j('.reagentForm').each(function() { $j(this).validate(); });
+            });
             // Some scanners send carriage return, we don't want this to submit the form
-            $j(document).on("keypress", ":input:not(textarea)", function(event) {
+            $j(document).on("keypress", ":input:not(textarea)", function (event) {
                 return event.keyCode != 13;
             });
         </script>
@@ -69,7 +85,8 @@
                                     </stripes:link>
                                 </c:when>
                                 <c:otherwise>
-                                    <stripes:form beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.BatchWorkflowActionBean">
+                                    <stripes:form beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.BatchWorkflowActionBean"
+                                            class="reagentForm">
                                         <input type="hidden" name="batchName" value="${actionBean.batchName}"/>
                                         <input type="hidden" name="workflowProcessName" value="${workflowEvent.workflowStepDef.processDef.name}"/>
                                         <input type="hidden" name="workflowStepName" value="${workflowEvent.workflowStepDef.name}"/>
@@ -86,15 +103,15 @@
                                                                 name="reagentNames[${loop.index}]" value="${reagentType}">
 
                                                         <label for="rgtBcd${loop.index}">Barcode </label>
-                                                        <input type="text" id="rgtBcd${loop.index}"
+                                                        <input type="text" id="rgtBcd${loop.index}" class="required"
                                                                 name="reagentLots[${loop.index}]">
 
                                                         <label for="rgtExp${loop.index}">Expiration mm/dd/yyyy</label>
-                                                        <input type="text" id="rgtExp${loop.index}"
+                                                        <input type="text" id="rgtExp${loop.index}" class="required expirationDate"
                                                                 name="reagentExpirations[${loop.index}]">
 
                                                         <label for="rgtVol${loop.index}">Volume </label>
-                                                        <input type="text" id="rgtVol${loop.index}"
+                                                        <input type="text" id="rgtVol${loop.index}" class="required number"
                                                                 name="reagentVolumes[${loop.index}]"> ul
                                                     </div>
                                                 </c:forEach>
