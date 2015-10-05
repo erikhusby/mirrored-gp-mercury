@@ -1388,6 +1388,7 @@
                     <sourceSection>ROWOF24</sourceSection>
                     <targetVesselTypeGeometryString>RackType.FlipperRackRow24</targetVesselTypeGeometryString>
                     <targetSection>ROWOF24</targetSection>
+                    <targetExpectedToExist>true</targetExpectedToExist>
                     <repeatedEvent>TRANSFER</repeatedEvent>
                     <repeatedWorkflowQualifier>ALLPREP_FLOWTHROUGH_TO_RNA_SPIN1</repeatedWorkflowQualifier>
                 </manualTransferDetails>
