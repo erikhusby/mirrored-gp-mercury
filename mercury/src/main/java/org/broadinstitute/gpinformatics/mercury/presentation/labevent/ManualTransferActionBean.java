@@ -80,7 +80,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
     /** Parameter from batch workflow page. */
     private String batchName;
     /** Parameter from batch workflow page, allows return to same link. */
-    private String anchorName;
+    private Integer anchorIndex;
     /** Loaded based on parameters. */
     private WorkflowStepDef workflowStepDef;
 
@@ -766,12 +766,12 @@ public class ManualTransferActionBean extends RackScanActionBean {
         this.scanSource = scanSource;
     }
 
-    public String getAnchorName() {
-        return anchorName;
+    public Integer getAnchorIndex() {
+        return anchorIndex;
     }
 
-    public void setAnchorName(String anchorName) {
-        this.anchorName = anchorName;
+    public void setAnchorIndex(Integer anchorIndex) {
+        this.anchorIndex = anchorIndex;
     }
 
     public LabEventType.ManualTransferDetails getManualTransferDetails() {

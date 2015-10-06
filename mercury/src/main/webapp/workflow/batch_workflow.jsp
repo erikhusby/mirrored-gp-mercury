@@ -18,9 +18,9 @@
         <script src="${ctxpath}/resources/scripts/jquery.validate-1.14.0.min.js"></script>
         <script type="text/javascript">
             $j(document).ready(function () {
-                <c:if test="${not empty actionBean.anchorName}">
+                <c:if test="${not empty actionBean.anchorIndex}">
                 // We're returning from the manual transfer page, so scroll to the link that took us there
-                $j('#anchor${actionBean.anchorName}')[0].scrollIntoView();
+                $j('#anchor${actionBean.anchorIndex - 1}')[0].scrollIntoView();
                 </c:if>
 
                 $j.validator.addMethod(
@@ -80,20 +80,24 @@
                                         <stripes:param name="workflowStepName" value="${workflowEvent.workflowStepDef.name}"/>
                                         <stripes:param name="workflowEffectiveDate" value="${actionBean.labBatch.createdOn}"/>
                                         <stripes:param name="batchName" value="${actionBean.labBatch.batchName}"/>
-                                        <stripes:param name="anchorName" value="${workflowEventStatus.index}"/>
+                                        <stripes:param name="anchorIndex" value="${workflowEventStatus.index}"/>
                                         Manual Transfer
                                     </stripes:link>
                                 </c:when>
                                 <c:otherwise>
                                     <stripes:form beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.BatchWorkflowActionBean"
                                             class="reagentForm">
+                                        <%-- See https://code.google.com/p/chromium/issues/detail?id=468153 --%>
+                                        <div style="display: none;">
+                                            <input type="text" id="PreventChromeAutocomplete" name="PreventChromeAutocomplete" autocomplete="address-level4" />
+                                        </div>
                                         <input type="hidden" name="batchName" value="${actionBean.batchName}"/>
                                         <input type="hidden" name="workflowProcessName" value="${workflowEvent.workflowStepDef.processDef.name}"/>
                                         <input type="hidden" name="workflowStepName" value="${workflowEvent.workflowStepDef.name}"/>
                                         <input type="hidden" name="workflowEffectiveDate" value="${actionBean.labBatch.createdOn}"/>
                                         <input type="hidden" name="labEventType" value="${labEventType}"/>
                                         <input type="hidden" name="workflowQualifier" value="${workflowEvent.workflowStepDef.workflowQualifier}"/>
-                                        <stripes:param name="anchorName" value="${workflowEventStatus.index}"/>
+                                        <stripes:param name="anchorIndex" value="${workflowEventStatus.index}"/>
                                         <c:choose>
                                             <c:when test="${labEventType eq 'ADD_REAGENT'}">
                                                 <c:forEach items="${workflowEvent.workflowStepDef.reagentTypes}" var="reagentType" varStatus="loop">
@@ -104,15 +108,15 @@
 
                                                         <label for="rgtBcd${loop.index}">Barcode </label>
                                                         <input type="text" id="rgtBcd${loop.index}" class="required"
-                                                                name="reagentLots[${loop.index}]">
+                                                                name="reagentLots[${loop.index}]" autocomplete="off">
 
                                                         <label for="rgtExp${loop.index}">Expiration mm/dd/yyyy</label>
                                                         <input type="text" id="rgtExp${loop.index}" class="required expirationDate"
-                                                                name="reagentExpirations[${loop.index}]">
+                                                                name="reagentExpirations[${loop.index}]" autocomplete="off">
 
                                                         <label for="rgtVol${loop.index}">Volume </label>
                                                         <input type="text" id="rgtVol${loop.index}" class="required number"
-                                                                name="reagentVolumes[${loop.index}]"> ul
+                                                                name="reagentVolumes[${loop.index}]" autocomplete="off"> ul
                                                     </div>
                                                 </c:forEach>
                                                 <stripes:submit name="${actionBean.batchReagentAction}" value="Add"/>
