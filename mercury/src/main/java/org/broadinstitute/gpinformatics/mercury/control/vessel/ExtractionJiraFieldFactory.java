@@ -29,7 +29,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.jvnet.inflector.Noun;
 
@@ -146,28 +145,24 @@ public class ExtractionJiraFieldFactory extends AbstractBatchJiraFieldFactory {
                     buildSamplesListString(batch, null)));
         }
 
-        boolean foundMaterialType=false;
-        WorkflowConfig workflowConfig = new WorkflowLoader().load();
-        Set<BucketEntry> bucketEntries = batch.getBucketEntries();
-
-        for (BucketEntry bucketEntry : bucketEntries) {
-            ProductWorkflowDef workflowByName = workflowConfig.getWorkflowByName(bucketEntry.getWorkflowName());
-            for (WorkflowBucketDef bucketDef : workflowByName.getEffectiveVersion().getCreationBuckets()) {
-                for (MaterialType materialType : bucketDef.getBucketEntryEvaluator().getMaterialTypes()) {
-                    if (bucketEntry.getLabVessel().isMaterialType(materialType)) {
-                        CustomField materialTypeField =
-                                new CustomField(submissionFields, LabBatch.TicketFields.BATCH_TYPE,
-                                        new Object[]{new CustomField.ValueContainer(materialType.getDisplayName())});
-                        customFields.add(materialTypeField);
-                        foundMaterialType = true;
-                    }
-                }
-                if (foundMaterialType) {
+        try {
+            // this is in a try/catch since getLatestMaterialType calls ServiceAccessUtility which will die
+            // when called in tests.
+            for (BucketEntry bucketEntry : batch.getBucketEntries()) {
+                MaterialType materialType = bucketEntry.getLabVessel().getLatestMaterialType();
+                CustomField materialTypeField =
+                        new CustomField(submissionFields, LabBatch.TicketFields.BATCH_TYPE,
+                                new Object[]{new CustomField.ValueContainer(materialType.getDisplayName())});
+                customFields.add(materialTypeField);
+                // TODO: the batchtype field will be changed to a multi-select in the near future,
+                // when it does, this code will change.
+                if (!customFields.isEmpty()) {
                     break;
                 }
             }
+        } catch (Exception e) {
+            log.error("Could not find material types for bucket entries.", e);
         }
-
         return customFields;
     }
 

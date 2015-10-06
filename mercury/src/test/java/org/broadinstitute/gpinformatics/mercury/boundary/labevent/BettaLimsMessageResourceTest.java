@@ -51,7 +51,6 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory
 import org.broadinstitute.gpinformatics.mercury.control.vessel.IndexedPlateFactory;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowValidator;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry;
@@ -720,7 +719,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
                 new ProductOrder(ResearchProjectTestFactory.TEST_CREATOR, "Messaging Test " + testPrefix,
                         productOrderSamples, "GSP-123",
                         product, researchProject);
-        productOrder.prepareToSave(bspUserList.getByUsername("jowalsh"));
+        productOrder.prepareToSave(bspUserList.getByUsername("QADudePDM"));
         productOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
         productOrderDao.persist(productOrder);
         try {
@@ -958,22 +957,26 @@ public class BettaLimsMessageResourceTest extends Arquillian {
                 iterator().next().getProductOrder();
         Map<String, BarcodedTube> mapBarcodeToCrspPond = barcodedTubeDao.findByBarcodes(tubeBarcodes);
         HashSet<LabVessel> crspPonds = new HashSet<LabVessel>(mapBarcodeToCrspPond.values());
-        bucketEjb.add(crspPonds, bucketDao.findByName(ICE_BUCKET),
-                BucketEntry.BucketEntryType.REWORK_ENTRY, "thompson", LabEvent.UI_EVENT_LOCATION,
-                LabEvent.UI_PROGRAM_NAME, LabEventType.ICE_BUCKET, crspProductOrder);
+        Collection<ReworkEjb.BucketCandidate> bucketCandidates = new HashSet<>();
+        for (LabVessel crspPond : crspPonds) {
+            bucketCandidates
+                    .add(new ReworkEjb.BucketCandidate(crspPond.getLabel(), crspPond.getSampleNames().iterator().next(),
+                            crspProductOrder));
+        }
+         reworkEjb.addAndValidateCandidates(bucketCandidates, "", "comment", "thompson", ICE_BUCKET);
 
         String batchName = "LCSET-Rework-" + crspTestPrefix;
         List<Long> reworkBucketEntryIds = new ArrayList<>();
 
+        // Have to flush to assign bucketEntryId
+        bucketDao.flush();
         for (LabVessel crspPond : crspPonds) {
             reworkBucketEntryIds.add(crspPond.getBucketEntries().iterator().next().getBucketEntryId());
         }
 
-
         LabBatch labBatch = labBatchEjb.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
                 Workflow.ICE_CRSP.getWorkflowName(), Collections.<Long>emptyList(), reworkBucketEntryIds, batchName,
                 "", new Date(), "", "thompson", ICE_BUCKET);
-
 
         return labBatch;
     }

@@ -130,7 +130,7 @@ public class LCSetJiraFieldFactoryTest {
         AbstractBatchJiraFieldFactory testBuilder = AbstractBatchJiraFieldFactory.getInstance(
                 CreateFields.ProjectType.LCSET_PROJECT, testBatch, productOrderDao);
 
-        Assert.assertEquals("1 samples from MyResearchProject PDO-7\n5 samples from MyResearchProject PDO-999\n",
+        Assert.assertEquals("1 sample with material types [] from MyResearchProject PDO-7\n5 samples with material types [] from MyResearchProject PDO-999\n",
                             testBuilder.generateDescription());
 
         Collection<CustomField> generatedFields = testBuilder.getCustomFields(jiraFieldDefs);
