@@ -18,7 +18,6 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlIDREF;
 import java.io.Serializable;
-import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -26,6 +25,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -304,21 +304,36 @@ public class ProductWorkflowDefVersion implements Serializable {
     }
 
     /**
-     * Find the correct Bucket for each LabVessel.
+     * Scans the workflow's processes for a matching bucket.
      *
-     * @return a mapping of the initial buckets to the LabVessels which will go in them.
+     * @return a map of buckets to vessels.
      */
-    public AbstractMap.SimpleEntry<WorkflowBucketDef, Workflow> getInitialBucket(LabVessel labVessel,
-                                                                                 ProductOrder productOrder) {
+    public Map<WorkflowBucketDef, Collection<LabVessel>> getInitialBucket(ProductOrder productOrder,
+                                                                          List<LabVessel> labVessels) {
+        ListIterator<LabVessel> vesselListIterator = labVessels.listIterator();
+
+        Map<WorkflowBucketDef, Collection<LabVessel>> vesselBuckets = new HashMap<>();
+        Set<LabVessel> vesselsInBucket = new HashSet<>();
         for (WorkflowProcessDef workflowProcessDef : workflowProcessDefs) {
             for (WorkflowBucketDef bucketDef : workflowProcessDef.getEffectiveVersion().getBuckets()) {
-                if (bucketDef.meetsBucketCriteria(labVessel, productOrder)) {
-                    return new AbstractMap.SimpleEntry<>(bucketDef,
-                            bucketDef.getBucketEntryEvaluator().getMatchingWorkflow(productOrder));
+                while (vesselListIterator.hasNext()) {
+                    LabVessel vessel = vesselListIterator.next();
+                    if (!vesselsInBucket.contains(vessel)) {
+                        if (bucketDef.meetsBucketCriteria(vessel, productOrder)) {
+                            Collection<LabVessel> vessels = vesselBuckets.get(bucketDef);
+                            if (vessels == null) {
+                                vessels = new ArrayList<>();
+                            }
+                            vessels.add(vessel);
+                            vesselBuckets.put(bucketDef, vessels);
+                            vesselsInBucket.add(vessel);
+                            vesselListIterator.remove();
+                        }
+                    }
                 }
             }
         }
-        return null;
+        return vesselBuckets;
     }
 
     /**

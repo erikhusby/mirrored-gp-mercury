@@ -166,7 +166,12 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
             Set<String> materialTypes = new HashSet<>();
             for (LabVessel currVessel : pdoKey.getValue()) {
                 sampleCount += currVessel.getSampleInstanceCount(LabVessel.SampleType.PREFER_PDO, null);
-                MaterialType latestMaterialType = currVessel.getLatestMaterialType();
+                MaterialType latestMaterialType = null;
+                try {
+                    latestMaterialType = currVessel.getLatestMaterialType();
+                } catch (Exception e) {
+                    log.error("Could not find latest material type for lab vessel.");
+                }
                 if (latestMaterialType != null) {
                     materialTypes.add(latestMaterialType.getDisplayName());
                 }

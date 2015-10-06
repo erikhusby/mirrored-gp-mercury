@@ -518,7 +518,8 @@ public class WorkflowTest {
         WorkflowConfig workflowConfig = new WorkflowLoader().load();
 
         for (Workflow workflow : EnumSet.complementOf(EnumSet.of(Workflow.NONE))) {
-            ProductOrder productOrder = ProductOrderTestFactory.buildProductOrder(1, workflow);
+            ProductOrder productOrder =
+                    ProductOrderTestFactory.buildProductOrder(1, ProductOrderTestFactory.SAMPLE_SUFFIX, workflow);
             ProductWorkflowDef workflowDef = workflowConfig.getWorkflow(workflow);
             ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
             for (WorkflowBucketDef bucket : workflowVersion.getCreationBuckets()) {
@@ -534,7 +535,8 @@ public class WorkflowTest {
         List<String> expectedValues = new ArrayList<>(Workflow.values().length);
         List<String> actualValues = new ArrayList<>(Workflow.values().length);
 
-        ProductOrder productOrder = ProductOrderTestFactory.buildProductOrder(1, Workflow.ICE_CRSP);
+        ProductOrder productOrder =
+                ProductOrderTestFactory.buildProductOrder(1, ProductOrderTestFactory.SAMPLE_SUFFIX, Workflow.ICE_CRSP);
         WorkflowConfig workflowConfig = new WorkflowLoader().load();
 
         for (Workflow workflow : EnumSet.complementOf(EnumSet.of(Workflow.NONE))) {

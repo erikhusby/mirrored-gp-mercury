@@ -226,10 +226,8 @@ public abstract class LabVessel implements Serializable {
         boolean hasMaterialConvertedToMaterialType = hasMaterialConvertedTo(materialType);
         if (!hasMaterialConvertedToMaterialType) {
             for (String sampleMaterialType : getMaterialTypes()) {
-                if (StringUtils.isNotBlank(sampleMaterialType)) {
-                    if (materialType.getDisplayName().equals(sampleMaterialType)) {
-                        return true;
-                    }
+                if (StringUtils.equalsIgnoreCase(materialType.getDisplayName(), sampleMaterialType)) {
+                    return true;
                 }
             }
         }
