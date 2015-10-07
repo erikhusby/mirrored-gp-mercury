@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.infrastructure.jira.customfields;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 
 import javax.annotation.Nonnull;
 import java.util.Map;
@@ -47,7 +46,7 @@ public class CustomField {
                 return false;
             }
 
-            ValueContainer that = OrmUtil.proxySafeCast(o, ValueContainer.class);
+            ValueContainer that = (ValueContainer) o;
 
             return new EqualsBuilder().append(value, that.value).isEquals();
         }
