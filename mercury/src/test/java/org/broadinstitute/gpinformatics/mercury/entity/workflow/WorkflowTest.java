@@ -45,7 +45,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
@@ -557,7 +556,6 @@ public class WorkflowTest {
                 actualValues.add(bucket.getWorkflowForProduct(productOrder));
             }
         }
-        assertThat(actualValues.size(), equalTo(expectedValues.size()));
         assertThat(actualValues, contains(expectedValues.toArray()));
     }
 
