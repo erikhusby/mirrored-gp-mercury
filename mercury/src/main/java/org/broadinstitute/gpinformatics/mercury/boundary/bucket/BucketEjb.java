@@ -50,7 +50,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -121,10 +120,11 @@ public class BucketEjb {
             Collection<LabVessel> bucketVessels = bucketVesselsEntry.getValue();
             WorkflowBucketDef bucketDef = bucketVesselsEntry.getKey();
             Bucket bucket = findOrCreateBucket(bucketDef.getName());
+            String workflow = bucketDef.getWorkflowForProduct(pdo);
             LabEventType bucketEventType = bucketDef.getBucketEventType();
 
             for (LabVessel currVessel : bucketVessels) {
-                listOfNewEntries.add(bucket.addEntry(pdo, currVessel, entryType));
+                listOfNewEntries.add(bucket.addEntry(pdo, currVessel, entryType, workflow));
             }
             labEventFactory.buildFromBatchRequests(listOfNewEntries, operator, null, eventLocation, programName,
                     bucketEventType);
@@ -341,9 +341,10 @@ public class BucketEjb {
                                                                           Collection<ProductOrderSample> samples) {
         boolean hasWorkflow=false;
         for (Workflow workflow : order.getProduct().getProductWorkflows()) {
-            hasWorkflow = Workflow.SUPPORTED_WORKFLOWS.contains(workflow);
-            if (hasWorkflow) {
-                break;
+            if (hasWorkflow = Workflow.SUPPORTED_WORKFLOWS.contains(workflow)) {
+                if (hasWorkflow){
+                    break;
+                }
             }
         }
         if (!hasWorkflow) {
@@ -425,45 +426,20 @@ public class BucketEjb {
                 possibleProducts.add(productOrderAddOn.getAddOn());
             }
         }
-        ArrayList<LabVessel> unBucktedLabVessels = new ArrayList<>(vessels);
         possibleProducts.add(productOrder.getProduct());
         for (Product product : possibleProducts) {
             ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflow(product.getWorkflow());
             ProductWorkflowDefVersion workflowDefVersion = productWorkflowDef.getEffectiveVersion();
+            Map<WorkflowBucketDef, Collection<LabVessel>> initialBucket =
+                    workflowDefVersion.getInitialBucket(productOrder, vessels);
 
-            if (!unBucktedLabVessels.isEmpty()) {
-                Map<WorkflowBucketDef, Collection<LabVessel>> initialBucket =
-                        workflowDefVersion.getInitialBucket(productOrder, unBucktedLabVessels);
-                removeBucketedVessels(unBucktedLabVessels, initialBucket);
-                if (!initialBucket.isEmpty()) {
-                    Collection<BucketEntry> entries = add(initialBucket, BucketEntry.BucketEntryType.PDO_ENTRY,
-                            LabEvent.UI_PROGRAM_NAME, username, LabEvent.UI_EVENT_LOCATION, productOrder);
-                    bucketEntries.addAll(entries);
-                }
+            if (!initialBucket.isEmpty()) {
+                Collection<BucketEntry> entries = add(initialBucket, BucketEntry.BucketEntryType.PDO_ENTRY,
+                        LabEvent.UI_PROGRAM_NAME, username, LabEvent.UI_EVENT_LOCATION, productOrder);
+                bucketEntries.addAll(entries);
             }
         }
         return bucketEntries;
-    }
-
-    /**
-     * iterate through values of bucketMap and remove vessels from unBucktedLabVessels List, so that they are
-     * added to only one bucket.
-     *
-     * @param unBucktedLabVessels List of buckets which have not been bucketed. <b>This list is mutable!</b>
-     * @param bucketMap           mapping of buckets to the vessels contained in it.
-     */
-    private void removeBucketedVessels(List<LabVessel> unBucktedLabVessels,
-                                       Map<WorkflowBucketDef, Collection<LabVessel>> bucketMap) {
-        ListIterator<LabVessel> unBucketedLabVesselIterator = unBucktedLabVessels.listIterator();
-
-        while (unBucketedLabVesselIterator.hasNext()) {
-            for (Map.Entry<WorkflowBucketDef, Collection<LabVessel>> workflowBucketDefsEntry : bucketMap
-                    .entrySet()) {
-                if (workflowBucketDefsEntry.getValue().contains(unBucketedLabVesselIterator.next())) {
-                    unBucketedLabVesselIterator.remove();
-                }
-            }
-        }
     }
 
     /**
