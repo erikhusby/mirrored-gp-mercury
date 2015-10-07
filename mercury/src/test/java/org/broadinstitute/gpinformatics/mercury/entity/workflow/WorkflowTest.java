@@ -527,7 +527,6 @@ public class WorkflowTest {
                 actualValues.add(bucket.getWorkflowForProduct(productOrder));
             }
         }
-        assertThat(actualValues.size(), equalTo(expectedValues.size()));
         assertThat(actualValues, contains(expectedValues.toArray()));
     }
 
