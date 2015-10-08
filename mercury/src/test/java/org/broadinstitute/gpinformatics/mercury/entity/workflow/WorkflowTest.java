@@ -314,6 +314,20 @@ public class WorkflowTest {
     }
 
     @Test
+    public void testBucketEntryEvaluatorsWithWhitespaceSucceed() {
+        BarcodedTube barcodedTube = new BarcodedTube("00002345");
+        barcodedTube.addSample(
+                new MercurySample("SM-2345", Collections.singleton(new Metadata(Metadata.Key.MATERIAL_TYPE, "DNA"))));
+
+        ProductWorkflowDef exomeExpressWorkflow = workflowConfig.getWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
+        for (WorkflowBucketDef workflowBucketDef : exomeExpressWorkflow.getEffectiveVersion().getBuckets()) {
+            workflowBucketDef.setBucketEntryEvaluators(
+                    Collections.singletonList(String.format("\n\t%s\n", AlwaysTrueEvaluator.class.getCanonicalName())));
+            assertThat(workflowBucketDef.meetsBucketCriteria(barcodedTube), is(true));
+        }
+    }
+
+    @Test
     public void testSupportedWorkflows() {
         Assert.assertTrue(Workflow.AGILENT_EXOME_EXPRESS.isWorkflowSupportedByMercury(),
                 "Uh oh, mercury doesn't support exome express!");
@@ -328,15 +342,15 @@ public class WorkflowTest {
 
          return new Object[][]{
                  {true,  Arrays.asList(trueEvaluatorName, trueEvaluatorName)},
-                 {false, Arrays.asList(trueEvaluatorName, falseEvaluatorName)},
+                 {true, Arrays.asList(trueEvaluatorName, falseEvaluatorName)},
                  {false, Arrays.asList(falseEvaluatorName, falseEvaluatorName)},
-                 {false, Arrays.asList(falseEvaluatorName, trueEvaluatorName)},
+                 {true, Arrays.asList(falseEvaluatorName, trueEvaluatorName)},
          };
 
     }
 
      @Test(dataProvider = "bucketEntryEvaluators")
-     public void testBucketEntryEvaluatorAndingWorks(boolean expectedResult, List<String> classNames) {
+     public void testBucketEntryEvaluatorOrringWorks(boolean expectedResult, List<String> classNames) {
          BarcodedTube barcodedTube = new BarcodedTube("00002345");
          barcodedTube.addSample(
                  new MercurySample("SM-2345", Collections.singleton(new Metadata(Metadata.Key.MATERIAL_TYPE, ""))));

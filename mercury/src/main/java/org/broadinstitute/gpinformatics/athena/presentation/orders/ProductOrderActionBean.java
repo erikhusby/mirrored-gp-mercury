@@ -2320,4 +2320,9 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
         return samplesNotReceived;
     }
+
+    public EnumSet<ProductOrder.OrderStatus> getOrderStatusNamesWhichCantBeAbandoned() {
+        return EnumSet.complementOf (ProductOrder.OrderStatus.canAbandonStatuses);
+    }
+
 }

@@ -1,20 +1,19 @@
 -------------------------------------------------------
--- https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-3641
--- Hotfix deploy to MercuryDW, no Mercury code changes required
+-- https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-3763
+-- Add metadata to PRODUCT_ORDER_SAMPLE
 -------------------------------------------------------
-BEGIN
-  FOR CUR_REC IN (
-    SELECT LAB_VESSEL_ID, QUANT_TYPE, MAX(RUN_DATE) AS NEWEST_RUN_DATE
-      FROM LAB_METRIC
-    GROUP BY LAB_VESSEL_ID, QUANT_TYPE
-    HAVING COUNT(*) > 1 )
-  LOOP
-    DELETE FROM LAB_METRIC
-     WHERE LAB_VESSEL_ID = CUR_REC.LAB_VESSEL_ID
-       AND QUANT_TYPE    = CUR_REC.QUANT_TYPE
-       AND RUN_DATE      < CUR_REC.NEWEST_RUN_DATE;
-  END LOOP;
-END;
-/
+ALTER TABLE IM_PRODUCT_ORDER_SAMPLE
+ADD (
+  PARTICIPANT_ID VARCHAR2(255) NULL,
+  SAMPLE_TYPE VARCHAR2(255) NULL,
+  SAMPLE_RECEIPT DATE NULL,
+  ORIGINAL_SAMPLE_TYPE VARCHAR2(255) NULL );
 
-COMMIT;
+-- Append to end of table
+-- todo jms - restructure table to insert new columns in more logical order?
+ALTER TABLE PRODUCT_ORDER_SAMPLE
+ADD (
+  PARTICIPANT_ID VARCHAR2(255) NULL,
+  SAMPLE_TYPE VARCHAR2(255) NULL,
+  SAMPLE_RECEIPT DATE NULL,
+  ORIGINAL_SAMPLE_TYPE VARCHAR2(255) NULL );

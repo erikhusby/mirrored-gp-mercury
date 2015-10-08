@@ -154,7 +154,7 @@ public abstract class GenericEntityAndStatusEtl<AUDITED_ENTITY_CLASS, ETL_DATA_S
                         statusFile.write(record);
                     } catch (RuntimeException e) {
                         logger.info("Error in ETL for " + entity.getClass().getSimpleName() +
-                                    " id " + dataSourceEntityId(entity));
+                                    " id " + dataSourceEntityId(entity), e);
                     }
                 }
             }

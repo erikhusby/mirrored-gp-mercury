@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.columns.BspSampleSearchAddRowsListener;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
@@ -31,6 +32,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -343,11 +345,17 @@ public class LabVesselSearchDefinition {
         searchTerm.setDbSortPath("bucketEntries.productOrder.jiraTicketKey");
         searchTerm.setSearchValueConversionExpression(SearchDefinitionFactory.getPdoInputConverter());
         List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
+
         SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
-        //new CriteriaProjection("bucketEntries", "labVesselId", "labVessel", BucketEntry.class));
         criteriaPath.setCriteria(Arrays.asList("bucketEntries", "productOrder"));
         criteriaPath.setPropertyName("jiraTicketKey");
         criteriaPaths.add(criteriaPath);
+
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList("mercurySample", "mercurySamples", "productOrderSamples", "productOrder" ));
+        criteriaPath.setPropertyName("jiraTicketKey");
+        criteriaPaths.add(criteriaPath);
+
         searchTerm.setCriteriaPaths(criteriaPaths);
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
@@ -356,6 +364,11 @@ public class LabVesselSearchDefinition {
                 LabVessel labVessel = (LabVessel) entity;
                 for (BucketEntry bucketEntry : labVessel.getBucketEntries()) {
                     results.add(bucketEntry.getProductOrder().getJiraTicketKey());
+                }
+                for (MercurySample mercurySample : labVessel.getMercurySamples() ) {
+                    for (ProductOrderSample productOrderSample : mercurySample.getProductOrderSamples() ) {
+                        results.add(productOrderSample.getProductOrder().getJiraTicketKey());
+                    }
                 }
                 return results;
             }
@@ -416,6 +429,38 @@ public class LabVesselSearchDefinition {
         });
         searchTerm.setConstrainedValuesExpression(new SearchDefinitionFactory.EventTypeValuesExpression());
         searchTerm.setSearchValueConversionExpression( new SearchDefinitionFactory.EventTypeValueConversionExpression() );
+        searchTerms.add(searchTerm);
+
+        class EventMaterialTypeEvaluator extends SearchTerm.Evaluator<Object> {
+
+            private final LabVessel.MaterialType materialType;
+
+            EventMaterialTypeEvaluator(LabVessel.MaterialType materialType) {
+                this.materialType = materialType;
+            }
+
+            @Override
+            public List<String> evaluate(Object entity, SearchContext context) {
+                LabVessel labVessel = (LabVessel) entity;
+
+                MaterialTypeEventCriteria criteria = new MaterialTypeEventCriteria(materialType);
+                labVessel.evaluateCriteria(criteria, TransferTraverserCriteria.TraversalDirection.Descendants);
+
+                List<String> barcodes = new ArrayList<>();
+                for (LabVessel vessel : criteria.getLabVessels()) {
+                    barcodes.add(vessel.getLabel());
+                }
+                return barcodes;
+            }
+        }
+        searchTerm = new SearchTerm();
+        searchTerm.setName("DNA Extracted Tube Barcode");
+        searchTerm.setDisplayValueExpression(new EventMaterialTypeEvaluator(LabVessel.MaterialType.DNA));
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("RNA Extracted Tube Barcode");
+        searchTerm.setDisplayValueExpression(new EventMaterialTypeEvaluator(LabVessel.MaterialType.RNA));
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
@@ -983,4 +1028,38 @@ public class LabVesselSearchDefinition {
     }
 
 
+    private class MaterialTypeEventCriteria implements TransferTraverserCriteria {
+        private LabVessel.MaterialType materialType;
+        private Set<LabVessel> labVessels = new LinkedHashSet<>();
+
+        private MaterialTypeEventCriteria(LabVessel.MaterialType materialType) {
+            this.materialType = materialType;
+        }
+
+        @Override
+        public TraversalControl evaluateVesselPreOrder(Context context) {
+            LabEvent labEvent = context.getEvent();
+            if (labEvent != null) {
+                LabVessel.MaterialType resultingMaterialType = labEvent.getLabEventType().getResultingMaterialType();
+                if (resultingMaterialType != null && resultingMaterialType == materialType) {
+                    labVessels.add(context.getLabVessel());
+                }
+            }
+            return TraversalControl.ContinueTraversing;
+        }
+
+        @Override
+        public void evaluateVesselInOrder(Context context) {
+
+        }
+
+        @Override
+        public void evaluateVesselPostOrder(Context context) {
+
+        }
+
+        public List<LabVessel> getLabVessels() {
+            return new ArrayList<>(labVessels);
+        }
+    }
 }

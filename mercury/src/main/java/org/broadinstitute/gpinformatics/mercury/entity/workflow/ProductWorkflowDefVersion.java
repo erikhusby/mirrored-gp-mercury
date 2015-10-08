@@ -299,17 +299,21 @@ public class ProductWorkflowDefVersion implements Serializable {
     }
 
     /**
-     * Scans the workflow's processes and returns the first bucket it finds.
+     * Find the correct Bucket for each LabVessel.
      *
-     * @return the first bucket for the workflow, or null if there are no buckets
+     * @return a mapping of the initial buckets to the LabVessels which will go in them.
      */
-    public WorkflowBucketDef getInitialBucket() {
+    public Map<WorkflowBucketDef, Collection<LabVessel>> getInitialBucket(Collection<LabVessel> labVessels) {
+        Map<WorkflowBucketDef, Collection<LabVessel>> vesselBuckets = new HashMap<>();
+        Collection<LabVessel> vesselsAvailableForBucket=new HashSet<>(labVessels);
         for (WorkflowProcessDef workflowProcessDef : workflowProcessDefs) {
             for (WorkflowBucketDef bucketDef : workflowProcessDef.getEffectiveVersion().getBuckets()) {
-                return bucketDef;
+                Collection<LabVessel> vesselsForBucket = bucketDef.meetsBucketCriteria(vesselsAvailableForBucket);
+                vesselBuckets.put(bucketDef, vesselsForBucket);
+                vesselsAvailableForBucket.removeAll(vesselsForBucket);
             }
         }
-        return null;
+        return vesselBuckets;
     }
 
     /**

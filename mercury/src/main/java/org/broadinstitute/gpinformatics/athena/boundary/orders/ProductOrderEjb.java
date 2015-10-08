@@ -331,9 +331,12 @@ public class ProductOrderEjb {
         ProductOrder order = productOrderDao.findByBusinessKey(productOrderKey);
         // Only add samples to the LIMS bucket if the order is ready for lab work.
         if (order.getOrderStatus().readyForLab()) {
-            Collection<ProductOrderSample> samples = bucketEjb.addSamplesToBucket(order, newSamples);
+            Map<String, Collection<ProductOrderSample>> samples = bucketEjb.addSamplesToBucket(order, newSamples);
             if (!samples.isEmpty()) {
-                reporter.addMessage("{0} samples have been added to the pico bucket.", samples.size());
+                for (Map.Entry<String, Collection<ProductOrderSample>> bucketSampleEntry : samples.entrySet()) {
+                    reporter.addMessage("{0} samples have been added to the {1}.",
+                            bucketSampleEntry.getValue().size(), bucketSampleEntry.getKey());
+                }
             }
         }
     }
