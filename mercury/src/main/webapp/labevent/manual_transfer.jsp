@@ -178,7 +178,7 @@
                             <label for="srcRcpBcd${stationEventStatus.index}">Barcode</label>
                             <input type="text" id="srcRcpBcd${stationEventStatus.index}" autocomplete="off"
                                     name="stationEvents[${stationEventStatus.index}].sourceReceptacle.barcode"
-                                    value="${receptacleTransfer.sourceReceptacle.barcode}" class="clearable barcode"/>
+                                    value="${receptacleTransfer.sourceReceptacle.barcode}" class="clearable barcode unique"/>
                             <label for="srcRcpVol${stationEventStatus.index}">Volume</label>
                             <input type="text" id="srcRcpVol${stationEventStatus.index}" autocomplete="off"
                                     name="stationEvents[${stationEventStatus.index}].sourceReceptacle.volume"
@@ -193,7 +193,7 @@
                                 <label for="destRcpBcd${stationEventStatus.index}">Barcode</label>
                                 <input type="text" id="destRcpBcd${stationEventStatus.index}" autocomplete="off"
                                         name="stationEvents[${stationEventStatus.index}].receptacle.barcode"
-                                        value="${receptacleTransfer.receptacle.barcode}" class="clearable barcode"/>
+                                        value="${receptacleTransfer.receptacle.barcode}" class="clearable barcode unique"/>
                                 <label for="destRcpVol${stationEventStatus.index}">Volume</label>
                                 <input type="text" id="destRcpVol${stationEventStatus.index}" autocomplete="off"
                                         name="stationEvents[${stationEventStatus.index}].receptacle.volume"
@@ -216,7 +216,7 @@
                                 </label>
                                 <input type="text" id="destRcpBcd${stationEventStatus.index}" autocomplete="off"
                                         name="stationEvents[${stationEventStatus.index}].receptacle.barcode"
-                                        value="${receptacleEvent.receptacle.barcode}" class="clearable barcode"/>
+                                        value="${receptacleEvent.receptacle.barcode}" class="clearable barcode unique"/>
                                 <label for="destRcpVol${stationEventStatus.index}">Volume</label>
                                 <input type="text" id="destRcpVol${stationEventStatus.index}" autocomplete="off"
                                         name="stationEvents[${stationEventStatus.index}].receptacle.volume"
