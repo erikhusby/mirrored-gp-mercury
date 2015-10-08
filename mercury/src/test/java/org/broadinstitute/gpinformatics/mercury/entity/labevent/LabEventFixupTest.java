@@ -882,6 +882,7 @@ public class LabEventFixupTest extends Arquillian {
                 Assert.assertEquals(labEvent.getLabEventType(), LabEventType.EXTRACT_FFPE_MICRO1_TO_MICRO2);
                 System.out.println("Deleting " + labEvent.getLabEventType() + " " + labEvent.getLabEventId());
                 labEvent.getReagents().clear();
+                labEvent.getVesselToVesselTransfers().clear();
                 labEventDao.remove(labEvent);
             }
             labEventDao.persist(new FixupCommentary("GPLIM-3788 delete looping event"));
