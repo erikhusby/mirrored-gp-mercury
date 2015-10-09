@@ -5,7 +5,9 @@ import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.GenericReagentDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowMatcher;
@@ -39,7 +41,7 @@ public class BatchWorkflowActionBean extends CoreActionBean {
     private String batchName;
 
     /** Parameter on return from manual transfer page. */
-    private String anchorName;
+    private Integer anchorIndex;
 
     /** Posted in form. */
     private String workflowProcessName;
@@ -79,6 +81,9 @@ public class BatchWorkflowActionBean extends CoreActionBean {
     private LabBatchDao labBatchDao;
 
     @Inject
+    private GenericReagentDao genericReagentDao;
+
+    @Inject
     private WorkflowLoader workflowLoader;
 
     @Inject
@@ -90,7 +95,11 @@ public class BatchWorkflowActionBean extends CoreActionBean {
     public Resolution view() {
         if (batchName != null) {
             labBatch = labBatchDao.findByName(batchName);
-            fetchWorkflow();
+            if (labBatch == null) {
+                addGlobalValidationError(batchName + " not found.");
+            } else {
+                fetchWorkflow();
+            }
         }
         return new ForwardResolution(VIEW_PAGE);
     }
@@ -106,7 +115,8 @@ public class BatchWorkflowActionBean extends CoreActionBean {
     @HandlesEvent(BATCH_EVENT_ACTION)
     public Resolution batchEvent() {
         labBatch = labBatchDao.findByName(batchName);
-        buildLabEvent();
+        LabEvent labEvent = buildLabEvent();
+        labEvent.setLabBatch(labBatch);
         labBatchDao.flush();
 
         fetchWorkflow();
@@ -125,19 +135,29 @@ public class BatchWorkflowActionBean extends CoreActionBean {
 
         LabEvent labEvent = buildLabEvent();
         for (int i = 0; i < reagentNames.size(); i++) {
-            if (StringUtils.isEmpty(reagentLots.get(i))) {
+            if (CollectionUtils.isEmpty(reagentLots) || StringUtils.isEmpty(reagentLots.get(i))) {
                 addGlobalValidationError("Barcode is required for " + reagentNames.get(i));
             }
-            if (reagentExpirations.get(i) == null) {
+            if (CollectionUtils.isEmpty(reagentExpirations) || reagentExpirations.get(i) == null) {
                 addGlobalValidationError("Expiration date is required for " + reagentNames.get(i));
             }
-            labEvent.addReagentVolume(
-                    new GenericReagent(reagentNames.get(i), reagentLots.get(i), reagentExpirations.get(i)),
-                    reagentVolumes.get(i));
+            if (getValidationErrors().isEmpty()) {
+                GenericReagent genericReagent = genericReagentDao.findByReagentNameLotExpiration(reagentNames.get(i),
+                        reagentLots.get(i), reagentExpirations.get(i));
+                if (genericReagent == null) {
+                    genericReagent = new GenericReagent(reagentNames.get(i), reagentLots.get(i),
+                            reagentExpirations.get(i));
+                }
+                labEvent.addReagentVolume(genericReagent, reagentVolumes.get(i));
+            }
         }
 
         if (getValidationErrors().isEmpty()) {
+            labEvent.setLabBatch(labBatch);
             labBatchDao.flush();
+        } else {
+            // Don't scroll to event, so user can see errors.
+            anchorIndex = null;
         }
 
         fetchWorkflow();
@@ -149,7 +169,6 @@ public class BatchWorkflowActionBean extends CoreActionBean {
         LabEvent labEvent = new LabEvent(labEventType, new Date(), LabEvent.UI_EVENT_LOCATION,
                 1L, getUserBean().getBspUser().getUserId(), LabEvent.UI_PROGRAM_NAME);
         labEvent.setWorkflowQualifier(workflowQualifier);
-        labEvent.setLabBatch(labBatch);
         return labEvent;
     }
 
@@ -245,11 +264,11 @@ public class BatchWorkflowActionBean extends CoreActionBean {
         this.reagentVolumes = reagentVolumes;
     }
 
-    public String getAnchorName() {
-        return anchorName;
+    public Integer getAnchorIndex() {
+        return anchorIndex;
     }
 
-    public void setAnchorName(String anchorName) {
-        this.anchorName = anchorName;
+    public void setAnchorIndex(Integer anchorIndex) {
+        this.anchorIndex = anchorIndex;
     }
 }

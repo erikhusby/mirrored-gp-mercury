@@ -1462,6 +1462,7 @@
                     <messageType>PLATE_EVENT</messageType>
                     <targetVesselTypeGeometryString>RackType.FlipperRackRow24</targetVesselTypeGeometryString>
                     <targetSection>ROWOF24</targetSection>
+                    <buttonValue>Cross Check</buttonValue>
                 </manualTransferDetails>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -1517,9 +1518,13 @@
                 <instructions>Add buffer RLT+ w/B-ME
                 </instructions>
             </workflowStepDefs>
-            <!--
-            aspirate supernatant
-            -->
+            <workflowStepDefs>
+                <name>Aspirate Supernatant</name>
+                <labEventTypes>DISCARD</labEventTypes>
+                <workflowQualifier>SUPERNATANT</workflowQualifier>
+                <instructions>Aspirate supernatant
+                </instructions>
+            </workflowStepDefs>
             <workflowStepDefs>
                 <name>Transfer to QIAshredder</name>
                 <labEventTypes>TRANSFER</labEventTypes>
@@ -1588,7 +1593,7 @@
                 <name>Add 70% ethanol</name>
                 <labEventTypes>ADD_REAGENT</labEventTypes>
                 <workflowQualifier>ETHANOL</workflowQualifier>
-                <reagentTypes>Ethanol</reagentTypes>
+                <reagentTypes>Ethanol70</reagentTypes>
                 <instructions>Add 70% ethanol to the flowthrough
                 </instructions>
             </workflowStepDefs>
@@ -1625,6 +1630,7 @@
                     <sourceSection>ROWOF24</sourceSection>
                     <targetVesselTypeGeometryString>RackType.FlipperRackRow24</targetVesselTypeGeometryString>
                     <targetSection>ROWOF24</targetSection>
+                    <targetExpectedToExist>true</targetExpectedToExist>
                     <repeatedEvent>TRANSFER</repeatedEvent>
                     <repeatedWorkflowQualifier>ALLPREP_FLOWTHROUGH_TO_RNA_SPIN1</repeatedWorkflowQualifier>
                 </manualTransferDetails>
@@ -1757,6 +1763,7 @@
                     <sourceSection>ROWOF24</sourceSection>
                     <targetVesselTypeGeometryString>RackType.Matrix96</targetVesselTypeGeometryString>
                     <targetSection>P96_ROWSAB</targetSection>
+                    <targetExpectedToExist>true</targetExpectedToExist>
                 </manualTransferDetails>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -1854,6 +1861,7 @@
                     <sourceSection>ROWOF24</sourceSection>
                     <targetVesselTypeGeometryString>RackType.Matrix96</targetVesselTypeGeometryString>
                     <targetSection>P96_ROWSAB</targetSection>
+                    <targetExpectedToExist>true</targetExpectedToExist>
                 </manualTransferDetails>
             </workflowStepDefs>
         </workflowProcessDefVersions>

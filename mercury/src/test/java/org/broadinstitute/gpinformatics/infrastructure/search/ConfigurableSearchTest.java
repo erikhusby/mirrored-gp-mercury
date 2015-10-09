@@ -25,6 +25,7 @@ import javax.inject.Inject;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -338,5 +339,30 @@ public class ConfigurableSearchTest extends Arquillian {
 
         // Delete instance
         searchInstanceEjb.deleteSearch(new MessageCollection(), PreferenceType.GLOBAL_MERCURY_SAMPLE_SEARCH_INSTANCES, newSearchName, mapTypeToPreference);
+    }
+
+    @Test
+    public void testEventMaterialType() {
+        SearchInstance searchInstance = new SearchInstance();
+        String entity = "LabVessel";
+        ConfigurableSearchDefinition configurableSearchDef = SearchDefinitionFactory.getForEntity(entity);
+
+        SearchInstance.SearchValue searchValue = searchInstance.addTopLevelTerm("PDO", configurableSearchDef);
+        searchValue.setOperator(SearchInstance.Operator.EQUALS);
+        searchValue.setValues(Collections.singletonList("PDO-7013"));
+
+        searchInstance.getPredefinedViewColumns().add("Barcode");
+        searchInstance.getPredefinedViewColumns().add("DNA Extracted Tube Barcode");
+
+        ConfigurableListFactory.FirstPageResults firstPageResults = configurableListFactory.getFirstResultsPage(
+                searchInstance, configurableSearchDef, null, 1, null, "ASC", entity);
+        List<ConfigurableList.ResultRow> resultRows = firstPageResults.getResultList().getResultRows();
+        Assert.assertEquals(resultRows.size(), 4);
+        Assert.assertEquals(resultRows.get(0).getRenderableCells().get(0), "0175568179");
+        Assert.assertEquals(resultRows.get(1).getRenderableCells().get(0), "0175568200");
+        Assert.assertEquals(resultRows.get(2).getRenderableCells().get(0), "SM-A19ZM");
+        Assert.assertEquals(resultRows.get(2).getRenderableCells().get(1), "0175568200");
+        Assert.assertEquals(resultRows.get(3).getRenderableCells().get(0), "SM-A19Z9");
+        Assert.assertEquals(resultRows.get(3).getRenderableCells().get(1), "E000000293 0175568179");
     }
 }

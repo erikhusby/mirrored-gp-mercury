@@ -20,7 +20,7 @@ plate / rack.
             value="${plate.physType}"/>
     <c:if test="${vesselTypeGeometry.barcoded}">
         <label for="${source ? 'src' : 'dst'}PltBcd${stationEventIndex}">Barcode</label>
-        <input type="text" id="${source ? 'src' : 'dst'}PltBcd${stationEventIndex}"
+        <input type="text" id="${source ? 'src' : 'dst'}PltBcd${stationEventIndex}" autocomplete="off"
                 name="stationEvents[${stationEventIndex}].${source ? 'sourcePlate' : 'plate'}.barcode"
                 value="${plate.barcode}" class="clearable barcode"/>
     </c:if>
@@ -53,6 +53,7 @@ plate / rack.
                         onclick="this.form['scanIndex'].value='${stationEventIndex}';this.form['scanSource'].value='${source}';"
                         name="<%= ManualTransferActionBean.RACK_SCAN_EVENT %>"/>
             </div>
+            Or hand scan 2D barcodes.
         </c:if>
         <table>
             <c:forEach items="${geometry.rowNames}" var="rowName" varStatus="rowStatus">
@@ -71,10 +72,10 @@ plate / rack.
                                 value="${rowStatus.index * geometry.columnCount + columnStatus.index}"/>
                         <td align="right">
                             <c:if test="${empty rowName}">${geometry.vesselPositions[receptacleIndex]}</c:if>
-                            <input type="text"
+                            <input type="text" id="${source ? 'src' : 'dest'}RcpBcd${stationEventIndex}_${receptacleIndex}"
                                     name="stationEvents[${stationEventIndex}].${source ? 'sourcePositionMap' : 'positionMap'}.receptacle[${receptacleIndex}].barcode"
                                     value="${actionBean.findReceptacleAtPosition(positionMap, geometry.vesselPositions[receptacleIndex]).barcode}"
-                                    class="clearable smalltext unique"/>
+                                    class="clearable smalltext unique" autocomplete="off"/>
                             <input type="hidden"
                                     name="stationEvents[${stationEventIndex}].${source ? 'sourcePositionMap' : 'positionMap'}.receptacle[${receptacleIndex}].position"
                                     value="${geometry.vesselPositions[receptacleIndex]}"/>

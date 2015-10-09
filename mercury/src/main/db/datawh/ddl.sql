@@ -117,6 +117,10 @@ CREATE TABLE product_order_sample (
   sample_name             VARCHAR2(255),
   delivery_status         VARCHAR2(40)            NOT NULL,
   sample_position         NUMERIC(19)             NOT NULL,
+  PARTICIPANT_ID          VARCHAR2(255)           NULL,
+  SAMPLE_TYPE             VARCHAR2(255)           NULL,
+  SAMPLE_RECEIPT          DATE                    NULL,
+  ORIGINAL_SAMPLE_TYPE    VARCHAR2(255)           NULL,
   on_risk                 CHAR(1) DEFAULT 'F'     NOT NULL CHECK (on_risk IN ('T', 'F')),
   is_billed               CHAR(1) DEFAULT 'F'     NOT NULL CHECK (is_billed IN ('T', 'F')),
   is_abandoned            CHAR(1) GENERATED ALWAYS AS (CASE WHEN delivery_status = 'ABANDONED' THEN 'T'
@@ -402,7 +406,11 @@ CREATE TABLE im_product_order_sample (
   product_order_id        NUMERIC(19),
   sample_name             VARCHAR2(255),
   delivery_status         VARCHAR2(40),
-  sample_position         NUMERIC(19)
+  sample_position         NUMERIC(19),
+  PARTICIPANT_ID          VARCHAR2(255) NULL,
+  SAMPLE_TYPE             VARCHAR2(255) NULL,
+  SAMPLE_RECEIPT          DATE          NULL,
+  ORIGINAL_SAMPLE_TYPE    VARCHAR2(255) NULL
 );
 
 CREATE TABLE im_product_order_add_on (

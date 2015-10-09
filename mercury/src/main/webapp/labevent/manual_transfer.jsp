@@ -61,14 +61,20 @@
     </stripes:layout-component>
 
     <stripes:layout-component name="content">
-        <stripes:form beanclass="${actionBean.class.name}" id="eventForm">
-            <stripes:select name="stationEvents[0].eventType" id="eventType">
-                <stripes:options-collection collection="${actionBean.manualEventTypes}" label="name" value="name"/>
-            </stripes:select>
-            <stripes:submit name="chooseEventType" value="Choose Event Type" class="btn btn-primary"/>
-        </stripes:form>
+        <c:if test="${empty actionBean.workflowStepDef}">
+            <stripes:form beanclass="${actionBean.class.name}" id="eventForm">
+                <stripes:select name="stationEvents[0].eventType" id="eventType">
+                    <stripes:options-collection collection="${actionBean.manualEventTypes}" label="name" value="name"/>
+                </stripes:select>
+                <stripes:submit name="chooseEventType" value="Choose Event Type" class="btn btn-primary"/>
+            </stripes:form>
+        </c:if>
 
         <stripes:form beanclass="${actionBean.class.name}" id="transferForm">
+            <%-- See https://code.google.com/p/chromium/issues/detail?id=468153 --%>
+            <div style="display: none;">
+                <input type="text" id="PreventChromeAutocomplete" name="PreventChromeAutocomplete" autocomplete="address-level4" />
+            </div>
             <%-- Can't use stripes:text because the value in the request takes precedence over the value set in the action bean. --%>
             <c:if test="${not empty actionBean.stationEvents}">
                 ${empty actionBean.workflowStepDef ? '' : actionBean.workflowStepDef.instructions}
@@ -76,7 +82,7 @@
                 <input type="hidden" name="workflowStepName" value="${actionBean.workflowStepName}"/>
                 <input type="hidden" name="workflowEffectiveDate" value="${actionBean.workflowEffectiveDate}"/>
                 <input type="hidden" name="batchName" value="${actionBean.batchName}"/>
-                <input type="hidden" name="anchorName" value="${actionBean.anchorName}"/>
+                <input type="hidden" name="anchorIndex" value="${actionBean.anchorIndex}"/>
                 <%-- Set by transfer_plate.jsp --%>
                 <input type="hidden" name="scanIndex" value="">
                 <%-- Set by transfer_plate.jsp --%>
@@ -98,26 +104,20 @@
                         <c:if test="${reagent.kitType != prevReagentType && !loop.first}">
                             </div>
                         </c:if>
-                        <c:choose>
-                            <c:when test="${reagent.kitType != prevReagentType}">
-                                <div class="control-group">
-                                <label for="rgtType${loop.index}">Type </label>
-                                <input type="text" id="rgtType${loop.index}" name="stationEvents[0].reagent[${loop.index}].kitType"
-                                        value="${reagent.kitType}" class="barcode"/>
-                            </c:when>
-                            <c:otherwise>
-                                <input type="hidden" name="stationEvents[0].reagent[${loop.index}].kitType"
-                                        value="${reagent.kitType}"/>
-                            </c:otherwise>
-                        </c:choose>
-                            <label for="rgtBcd${loop.index}">Barcode </label>
-                            <input type="text" id="rgtBcd${loop.index}" name="stationEvents[0].reagent[${loop.index}].barcode"
-                                    value="${reagent.barcode}" class="barcode"/>
-                            <c:if test="${actionBean.manualTransferDetails.expirationDateIncluded}">
-                                <label for="rgtExp${loop.index}">Expiration </label>
-                                <input type="text" id="rgtExp${loop.index}" name="stationEvents[0].reagent[${loop.index}].expiration"
-                                        value="${reagent.expiration}" class="date"/>
-                            </c:if>
+                        <c:if test="${reagent.kitType != prevReagentType}">
+                            <div class="control-group">
+                            <label for="rgtType${loop.index}">Type </label>${reagent.kitType}
+                        </c:if>
+                        <input type="hidden" name="stationEvents[0].reagent[${loop.index}].kitType"
+                                value="${reagent.kitType}"/>
+                        <label for="rgtBcd${loop.index}">Barcode </label>
+                        <input type="text" id="rgtBcd${loop.index}" name="stationEvents[0].reagent[${loop.index}].barcode"
+                                value="${reagent.barcode}" class="barcode" autocomplete="off"/>
+                        <c:if test="${actionBean.manualTransferDetails.expirationDateIncluded}">
+                            <label for="rgtExp${loop.index}">Expiration </label>
+                            <input type="text" id="rgtExp${loop.index}" name="stationEvents[0].reagent[${loop.index}].expiration"
+                                    value="${reagent.expiration}" class="date" autocomplete="off"/>
+                        </c:if>
                         <c:set var="prevReagentType" value="${reagent.kitType}"/>
                     </c:forEach>
                     </div>
@@ -176,11 +176,11 @@
                             <input type="hidden" name="stationEvents[${stationEventStatus.index}].sourceReceptacle.receptacleType"
                                     value="${receptacleTransfer.sourceReceptacle.receptacleType}"/>
                             <label for="srcRcpBcd${stationEventStatus.index}">Barcode</label>
-                            <input type="text" id="srcRcpBcd${stationEventStatus.index}"
+                            <input type="text" id="srcRcpBcd${stationEventStatus.index}" autocomplete="off"
                                     name="stationEvents[${stationEventStatus.index}].sourceReceptacle.barcode"
                                     value="${receptacleTransfer.sourceReceptacle.barcode}" class="clearable barcode"/>
                             <label for="srcRcpVol${stationEventStatus.index}">Volume</label>
-                            <input type="text" id="srcRcpVol${stationEventStatus.index}"
+                            <input type="text" id="srcRcpVol${stationEventStatus.index}" autocomplete="off"
                                     name="stationEvents[${stationEventStatus.index}].sourceReceptacle.volume"
                                     value="${receptacleTransfer.sourceReceptacle.volume}" class="clearable barcode"/> ul
                             </div>
@@ -191,11 +191,11 @@
                                 <input type="hidden" name="stationEvents[${stationEventStatus.index}].receptacle.receptacleType"
                                         value="${receptacleTransfer.receptacle.receptacleType}"/>
                                 <label for="destRcpBcd${stationEventStatus.index}">Barcode</label>
-                                <input type="text" id="destRcpBcd${stationEventStatus.index}"
+                                <input type="text" id="destRcpBcd${stationEventStatus.index}" autocomplete="off"
                                         name="stationEvents[${stationEventStatus.index}].receptacle.barcode"
                                         value="${receptacleTransfer.receptacle.barcode}" class="clearable barcode"/>
                                 <label for="destRcpVol${stationEventStatus.index}">Volume</label>
-                                <input type="text" id="destRcpVol${stationEventStatus.index}"
+                                <input type="text" id="destRcpVol${stationEventStatus.index}" autocomplete="off"
                                         name="stationEvents[${stationEventStatus.index}].receptacle.volume"
                                         value="${receptacleTransfer.receptacle.volume}" class="clearable barcode"/> ul
                             </div>
@@ -214,11 +214,11 @@
                                 <label for="destRcpBcd${stationEventStatus.index}">
                                     ${fn:containsIgnoreCase(receptacleEvent.receptacle.receptacleType, "matrix") ? '2D ' : ''}Barcode
                                 </label>
-                                <input type="text" id="destRcpBcd${stationEventStatus.index}"
+                                <input type="text" id="destRcpBcd${stationEventStatus.index}" autocomplete="off"
                                         name="stationEvents[${stationEventStatus.index}].receptacle.barcode"
                                         value="${receptacleEvent.receptacle.barcode}" class="clearable barcode"/>
                                 <label for="destRcpVol${stationEventStatus.index}">Volume</label>
-                                <input type="text" id="destRcpVol${stationEventStatus.index}"
+                                <input type="text" id="destRcpVol${stationEventStatus.index}" autocomplete="off"
                                         name="stationEvents[${stationEventStatus.index}].receptacle.volume"
                                         value="${receptacleEvent.receptacle.volume}" class="clearable barcode"/> ul
                             </div>
@@ -226,14 +226,15 @@
                     </c:choose>
                 </c:forEach>
                 <stripes:submit name="fetchExisting" value="Validate Barcodes" class="btn"/>
-                <stripes:submit name="transfer" value="Transfer" class="btn btn-primary"/>
+                <stripes:submit name="transfer" value="${actionBean.manualTransferDetails.buttonValue}"
+                        class="btn btn-primary"/>
                 <input type="button" onclick="$('.clearable').each(function (){$(this).val('');});" value="Clear non-reagent fields">
             </c:if>
         </stripes:form>
         <c:if test="${not empty actionBean.batchName}">
             <stripes:link beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.BatchWorkflowActionBean">
                 <stripes:param name="batchName" value="${actionBean.batchName}"/>
-                <stripes:param name="anchorName" value="${actionBean.anchorName}"/>
+                <stripes:param name="anchorIndex" value="${actionBean.anchorIndex}"/>
                 Return to Batch Workflow page
             </stripes:link>
         </c:if>
