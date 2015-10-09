@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
 import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -25,7 +26,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -310,30 +310,20 @@ public class ProductWorkflowDefVersion implements Serializable {
      */
     public Map<WorkflowBucketDef, Collection<LabVessel>> getInitialBucket(ProductOrder productOrder,
                                                                           List<LabVessel> labVessels) {
-        ListIterator<LabVessel> vesselListIterator = labVessels.listIterator();
 
-        Map<WorkflowBucketDef, Collection<LabVessel>> vesselBuckets = new HashMap<>();
-        Set<LabVessel> vesselsInBucket = new HashSet<>();
+        Multimap<WorkflowBucketDef, LabVessel> vesselBuckets = HashMultimap.create();
         for (WorkflowProcessDef workflowProcessDef : workflowProcessDefs) {
             for (WorkflowBucketDef bucketDef : workflowProcessDef.getEffectiveVersion().getBuckets()) {
-                while (vesselListIterator.hasNext()) {
-                    LabVessel vessel = vesselListIterator.next();
-                    if (!vesselsInBucket.contains(vessel)) {
+                for (LabVessel vessel : labVessels) {
+                    if (!vesselBuckets.containsValue(vessel)) {
                         if (bucketDef.meetsBucketCriteria(vessel, productOrder)) {
-                            Collection<LabVessel> vessels = vesselBuckets.get(bucketDef);
-                            if (vessels == null) {
-                                vessels = new ArrayList<>();
-                            }
-                            vessels.add(vessel);
-                            vesselBuckets.put(bucketDef, vessels);
-                            vesselsInBucket.add(vessel);
-                            vesselListIterator.remove();
+                            vesselBuckets.put(bucketDef, vessel);
                         }
                     }
                 }
             }
         }
-        return vesselBuckets;
+        return vesselBuckets.asMap();
     }
 
     /**

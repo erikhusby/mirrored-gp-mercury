@@ -124,7 +124,7 @@ public class BucketEjb {
             LabEventType bucketEventType = bucketDef.getBucketEventType();
 
             for (LabVessel currVessel : bucketVessels) {
-                listOfNewEntries.add(bucket.addEntry(pdo, currVessel, entryType, workflow));
+                listOfNewEntries.add(bucket.addEntry(pdo, currVessel, entryType, Workflow.findByName(workflow)));
             }
             labEventFactory.buildFromBatchRequests(listOfNewEntries, operator, null, eventLocation, programName,
                     bucketEventType);
@@ -340,7 +340,7 @@ public class BucketEjb {
     public Map<String, Collection<ProductOrderSample>> addSamplesToBucket(ProductOrder order,
                                                                           Collection<ProductOrderSample> samples) {
         boolean hasWorkflow=false;
-        for (Workflow workflow : order.getProduct().getProductWorkflows()) {
+        for (Workflow workflow : order.getProductWorkflows()) {
             if (hasWorkflow = Workflow.SUPPORTED_WORKFLOWS.contains(workflow)) {
                 if (hasWorkflow){
                     break;
@@ -416,8 +416,7 @@ public class BucketEjb {
     }
 
 
-    private Collection<BucketEntry> applyBucketCriteria(List<LabVessel> vessels, ProductOrder productOrder,
-                                                        String username) {
+    private Collection<BucketEntry> applyBucketCriteria(List<LabVessel> vessels, ProductOrder productOrder, String username) {
         Collection<BucketEntry> bucketEntries = new ArrayList<>(vessels.size());
         WorkflowConfig workflowConfig = workflowLoader.load();
         List<Product> possibleProducts = new ArrayList<>();

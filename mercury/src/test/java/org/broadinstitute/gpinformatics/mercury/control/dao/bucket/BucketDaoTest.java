@@ -104,7 +104,7 @@ public class BucketDaoTest extends ContainerTest {
 
         testOrder.setJiraTicketKey(ProductOrderTest.PDO_JIRA_KEY);
 
-        retrievedBucket.addEntry(testOrder, new BarcodedTube("SM-1321"), BucketEntry.BucketEntryType.PDO_ENTRY, null);
+        retrievedBucket.addEntry(testOrder, new BarcodedTube("SM-1321"), BucketEntry.BucketEntryType.PDO_ENTRY);
 
         bucketDao.flush();
         bucketDao.clear();

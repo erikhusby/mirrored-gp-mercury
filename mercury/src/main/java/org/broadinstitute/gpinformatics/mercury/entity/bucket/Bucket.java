@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.bucket;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Where;
@@ -116,17 +117,21 @@ public class Bucket {
      * @param vessel          Lab Vessel to enter into the bucket.
      * @param entryType
      *
-     * @param workflowName
+     * @param workflow
      * @return an instance of a Bucket entry which represents the lab vessel and the product order for that entry
      */
     public BucketEntry addEntry(ProductOrder productOrder, LabVessel vessel, BucketEntry.BucketEntryType entryType,
-                                String workflowName) {
-        BucketEntry newEntry = new BucketEntry(vessel, productOrder, this, entryType);
-        newEntry.setWorkflowName(workflowName);
-        newEntry.setProductOrderRanking(getBucketEntries().size() + 1);
+                                @Nonnull Workflow workflow) {
+        int productOrderRanking = getBucketEntries().size() + 1;
+        BucketEntry newEntry =
+                new BucketEntry(vessel, productOrder, this, entryType, workflow, productOrderRanking);
         bucketEntries.add(newEntry);
         vessel.addBucketEntry(newEntry);
         return newEntry;
+    }
+
+    public BucketEntry addEntry(ProductOrder productOrder, LabVessel vessel, BucketEntry.BucketEntryType entryType) {
+        return addEntry(productOrder, vessel, entryType, productOrder.getProduct().getWorkflow());
     }
 
     /**

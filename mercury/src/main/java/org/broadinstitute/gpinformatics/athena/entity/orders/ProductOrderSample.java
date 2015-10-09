@@ -350,6 +350,16 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         return (mercurySample!= null)?mercurySample.getReceivedDate():getSampleData().getReceiptDate();
     }
 
+    /**
+     * Find the latest material type by first searching the event history then falling back on the sample's metadata.
+     */
+    public String getLatestMaterialType() {
+        if (mercurySample != null) {
+            return mercurySample.getLatestMaterialType().getDisplayName();
+        }
+        return getSampleData().getMaterialType();
+    }
+
     public String getFormattedReceiptDate() {
         Date receiptDate = getReceiptDate();
 

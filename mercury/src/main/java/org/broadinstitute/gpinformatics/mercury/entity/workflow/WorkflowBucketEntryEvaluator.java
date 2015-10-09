@@ -88,7 +88,7 @@ public class WorkflowBucketEntryEvaluator implements Serializable {
         Set<MaterialType> missingMaterialTypes=getMaterialTypes();
         missingMaterialTypes.remove(latestMaterialType);
         Set<Workflow> missingWorkflows=getWorkflows();
-        missingWorkflows.removeAll(productOrder.getProduct().getProductWorkflows());
+        missingWorkflows.removeAll(productOrder.getProductWorkflows());
 
         String missingRequirements = "";
         if (!missingMaterialTypes.isEmpty()) {
@@ -97,7 +97,7 @@ public class WorkflowBucketEntryEvaluator implements Serializable {
         }
         if (!missingWorkflows.isEmpty()) {
             missingRequirements +=
-                    String.format("Workflows '%s' are not one of %s ", productOrder.getProduct().getProductWorkflows(),
+                    String.format("Workflows '%s' are not one of %s ", productOrder.getProductWorkflows(),
                             missingWorkflows);
         }
         return missingRequirements;

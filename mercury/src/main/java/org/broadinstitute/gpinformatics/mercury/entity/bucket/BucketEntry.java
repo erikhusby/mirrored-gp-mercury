@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
@@ -131,21 +132,36 @@ public class BucketEntry {
     protected BucketEntry() {
     }
 
-    public BucketEntry(@Nonnull LabVessel labVesselIn, @Nonnull ProductOrder productOrder, @Nonnull Bucket bucket,
-                       BucketEntryType entryType) {
-
-        this(labVesselIn, productOrder, entryType);
+    public BucketEntry(@Nonnull LabVessel vessel, @Nonnull ProductOrder productOrder, @Nonnull Bucket bucket,
+                       @Nonnull BucketEntryType entryType, @Nonnull Workflow workflow, int productOrderRanking) {
+        this.labVessel = vessel;
         this.bucket = bucket;
+        this.entryType = entryType;
+        this.workflowName = workflow.getWorkflowName();
+        this.productOrderRanking = productOrderRanking;
+        this.createdDate = new Date();
+        setProductOrder(productOrder);
     }
 
+    /**
+     * This Constructor is used in a fix-up Test, therefore it can't be removed.
+     */
+    @Deprecated
     public BucketEntry(@Nonnull LabVessel labVesselIn, @Nonnull ProductOrder productOrder,
-                       BucketEntryType entryType) {
-        this.labVessel = labVesselIn;
-        this.entryType = entryType;
+                       @Nonnull BucketEntryType entryType) {
+        this(labVesselIn, productOrder, null, entryType);
+    }
 
-        setProductOrder(productOrder);
 
-        createdDate = new Date();
+    public BucketEntry(@Nonnull LabVessel vessel, @Nonnull ProductOrder productOrder, @Nonnull Bucket bucket,
+                       @Nonnull BucketEntryType entryType,
+                       @Nonnull Workflow workflow) {
+        this(vessel, productOrder, bucket, entryType, workflow, 1);
+    }
+
+    public BucketEntry(@Nonnull LabVessel vessel, @Nonnull ProductOrder productOrder, Bucket bucket,
+                       @Nonnull BucketEntryType entryType) {
+        this(vessel, productOrder, bucket, entryType, productOrder.getProduct().getWorkflow(), 1);
     }
 
     /**

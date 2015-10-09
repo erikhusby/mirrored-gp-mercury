@@ -18,7 +18,6 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationWithRollbackException;
@@ -399,7 +398,7 @@ public class ReworkEjb {
             @Nonnull String userName)
             throws ValidationException {
         WorkflowBucketDef bucketDef =
-                findWorkflowBucketDef(bucketCandidate.getProductOrder().getProduct(), bucket.getBucketDefinitionName());
+                findWorkflowBucketDef(bucketCandidate.getProductOrder(), bucket.getBucketDefinitionName());
         LabEventType reworkFromStep = bucketDef.getBucketEventType();
 
         LabVessel reworkVessel =
@@ -412,10 +411,10 @@ public class ReworkEjb {
                 comment, userName, bucketCandidate.isReworkItem());
     }
 
-    private WorkflowBucketDef findWorkflowBucketDef(@Nonnull Product workflow, String bucketName) {
+    private WorkflowBucketDef findWorkflowBucketDef(@Nonnull ProductOrder productOrder, String bucketName) {
         WorkflowConfig workflowConfig = workflowLoader.load();
         WorkflowBucketDef bucketDef=null;
-        for (Workflow productWorkflow : workflow.getProductWorkflows()) {
+        for (Workflow productWorkflow : productOrder.getProductWorkflows()) {
             ProductWorkflowDefVersion workflowDefVersion = workflowConfig.getWorkflow(productWorkflow)
                     .getEffectiveVersion();
             bucketDef = workflowDefVersion.findBucketDefByName(bucketName);

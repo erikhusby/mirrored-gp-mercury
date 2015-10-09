@@ -241,6 +241,7 @@
                     {"bSortable":true},
                     {"bSortable":true},
                     {"bSortable":true},
+                    {"bSortable":true},
                     {"bSortable":true}
                 ],
                 "fnDrawCallback": editablePdo
@@ -404,6 +405,7 @@
                 <th>Batch Name</th>
                 <th width="100">Created Date</th>
                 <th>Bucket Entry Type</th>
+                <th>Workflow Name</th>
                 <th>Rework Reason</th>
                 <th>Rework Comment</th>
                 <th>Rework User</th>
@@ -434,10 +436,7 @@
                         </c:forEach>
                     </td>
                     <td class="ellipsis">
-                        <c:forEach items="${entry.labVessel.materialTypes}" var="materialType" varStatus="stat">
-                            ${materialType}
-                            <c:if test="${!stat.last}">&nbsp;</c:if>
-                        </c:forEach>
+                        ${entry.labVessel.latestMaterialType.displayName}
                     </td>
                     <td class="editable"><span class="ellipsis">${entry.productOrder.businessKey}</span><span style="display: none;"
                                                                                            class="icon-pencil"></span>
@@ -461,6 +460,9 @@
                     </td>
                     <td>
                             ${entry.entryType.name}
+                    </td>
+                    <td>
+                            ${entry.workflowName}
                     </td>
                     <td>
                             ${entry.reworkDetail.reason.reason}

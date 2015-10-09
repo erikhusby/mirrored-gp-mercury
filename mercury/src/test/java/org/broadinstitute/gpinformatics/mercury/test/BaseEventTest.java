@@ -268,7 +268,7 @@ public class BaseEventTest {
         }
         Bucket workingBucket = new Bucket(bucketName);
         for (BarcodedTube tube : mapBarcodeToTube.values()) {
-            workingBucket.addEntry(productOrder, tube, BucketEntry.BucketEntryType.PDO_ENTRY, null);
+            workingBucket.addEntry(productOrder, tube, BucketEntry.BucketEntryType.PDO_ENTRY);
             for (MercurySample mercurySample : tube.getMercurySamples()) {
                 if (mapSampleNameToPdoSample.containsKey(mercurySample.getSampleKey())) {
                     mercurySample.addProductOrderSample(mapSampleNameToPdoSample.get(mercurySample.getSampleKey()));
