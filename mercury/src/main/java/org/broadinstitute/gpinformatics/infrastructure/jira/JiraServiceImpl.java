@@ -327,7 +327,6 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
                 .queryParam("issuetypeName", issueType.getJiraName())
                 .queryParam("expand", "projects.issuetypes.fields")
                 .get(String.class);
-        log.info(jsonResponse);
         return CustomFieldJsonParser.parseRequiredFields(jsonResponse);
     }
 
