@@ -1079,6 +1079,17 @@ public class ResearchProjectActionBean extends CoreActionBean {
         return getUserBean().isDeveloperUser() || getUserBean().isPMUser() || getUserBean().isPDMUser();
     }
 
+    /**
+     * @return true if the current user is allowed to request data submissions for the current research project
+     */
+    public boolean isSubmissionAllowed() {
+        if (getUserBean().isDeveloperUser()) {
+            return true;
+        }
+        Collection<Long> projectManagerIds = Arrays.asList(editResearchProject.getPeople(RoleType.PM));
+        return getUserBean().isPMUser() && projectManagerIds.contains(getUserBean().getBspUser().getUserId());
+    }
+
     public CollaborationData getCollaborationData() {
         return collaborationData;
     }
