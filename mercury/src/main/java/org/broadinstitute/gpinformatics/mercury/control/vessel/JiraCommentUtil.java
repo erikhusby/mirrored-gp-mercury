@@ -126,6 +126,9 @@ public class JiraCommentUtil {
 
         for (JiraTicket ticket : tickets) {
             try {
+                if (!ticket.getTicketName().startsWith("LCSET")) {
+                    continue;
+                }
                 JiraIssue jiraIssue = ticket.getJiraDetails();
                 Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
                 String fieldValue = (String) jiraIssue.getFieldValue(submissionFields.get(
