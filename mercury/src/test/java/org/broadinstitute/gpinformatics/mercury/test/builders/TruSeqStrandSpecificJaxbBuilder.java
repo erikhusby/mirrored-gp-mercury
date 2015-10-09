@@ -139,6 +139,10 @@ public class TruSeqStrandSpecificJaxbBuilder {
         return pondPico2Barcode;
     }
 
+    public List<BettaLIMSMessage> getMessageList() {
+        return messageList;
+    }
+
     public TruSeqStrandSpecificJaxbBuilder invoke() {
         polyAPlateBarcode = "PolyAPlate" + testPrefix;
         polyATransferEventJaxb = bettaLimsMessageTestFactory.buildRackToPlate("PolyATransfer", rackBarcode,
