@@ -126,11 +126,11 @@ public class BucketEjb {
             Collection<LabVessel> bucketVessels = bucketVesselsEntry.getValue();
             WorkflowBucketDef bucketDef = bucketVesselsEntry.getKey();
             Bucket bucket = findOrCreateBucket(bucketDef.getName());
-            String workflow = bucketVesselsEntry.getKey().getWorkflowForProduct(pdo);
+            Workflow workflow = bucketVesselsEntry.getKey().getWorkflowForProductOrder(pdo);
             LabEventType bucketEventType = bucketDef.getBucketEventType();
 
             for (LabVessel currVessel : bucketVessels) {
-                listOfNewEntries.add(bucket.addEntry(pdo, currVessel, entryType, Workflow.findByName(workflow)));
+                listOfNewEntries.add(bucket.addEntry(pdo, currVessel, entryType, workflow));
             }
             labEventFactory.buildFromBatchRequests(listOfNewEntries, operator, null, eventLocation, programName,
                     bucketEventType);

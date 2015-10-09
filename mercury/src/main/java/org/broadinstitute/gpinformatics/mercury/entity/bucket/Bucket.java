@@ -124,12 +124,13 @@ public class Bucket {
                                 @Nonnull Workflow workflow) {
         int productOrderRanking = getBucketEntries().size() + 1;
         BucketEntry newEntry =
-                new BucketEntry(vessel, productOrder, this, entryType, workflow, productOrderRanking);
+                new BucketEntry(vessel, productOrder, this, entryType, productOrderRanking);
         bucketEntries.add(newEntry);
         vessel.addBucketEntry(newEntry);
         return newEntry;
     }
 
+    // TODO: since this is currently only used in tests it should be moved, or the tests should use a different constructor.
     public BucketEntry addEntry(ProductOrder productOrder, LabVessel vessel, BucketEntry.BucketEntryType entryType) {
         return addEntry(productOrder, vessel, entryType, productOrder.getProduct().getWorkflow());
     }

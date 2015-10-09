@@ -523,7 +523,7 @@ public class WorkflowTest {
             ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
             for (WorkflowBucketDef bucket : workflowVersion.getCreationBuckets()) {
                 expectedValues.add(workflowDef.getName());
-                actualValues.add(bucket.getWorkflowForProduct(productOrder));
+                actualValues.add(bucket.getWorkflowForProductOrder(productOrder).getWorkflowName());
             }
         }
         assertThat(actualValues, contains(expectedValues.toArray()));
@@ -553,7 +553,7 @@ public class WorkflowTest {
             ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
             for (WorkflowBucketDef bucket : workflowVersion.getCreationBuckets()) {
                 expectedValues.add(workflow.getWorkflowName());
-                actualValues.add(bucket.getWorkflowForProduct(productOrder));
+                actualValues.add(bucket.getWorkflowForProductOrder(productOrder).getWorkflowName());
             }
         }
         assertThat(actualValues, contains(expectedValues.toArray()));

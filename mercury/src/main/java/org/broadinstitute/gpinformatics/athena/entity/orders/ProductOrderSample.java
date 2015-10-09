@@ -354,7 +354,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
      * Find the latest material type by first searching the event history then falling back on the sample's metadata.
      */
     public String getLatestMaterialType() {
-        if (mercurySample != null) {
+        if (mercurySample != null && mercurySample.getLatestMaterialType() != null) {
             return mercurySample.getLatestMaterialType().getDisplayName();
         }
         return getSampleData().getMaterialType();
