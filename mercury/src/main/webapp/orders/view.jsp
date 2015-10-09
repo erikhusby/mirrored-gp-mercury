@@ -314,9 +314,9 @@ function showSamples(sampleData) {
                 {"bSortable": true},                            // Collaborator Participant ID
                 {"bSortable": true, "sType": "numeric"},        // Shipped Date
                 {"bSortable": true, "sType": "numeric"},        // Received Date
-                {"bSortable": true},                            // Collaborator Participant ID
-                {"bSortable": true, "sType": "numeric"},        // Sample Type
-                {"bSortable": true, "sType": "numeric"},        // Material Type
+                {"bSortable": true},                            // Sample Type
+                {"bSortable": true},                            // Material Type
+                {"bSortable": true, "sType": "numeric"},        // Volume
                 {"bSortable": true, "sType": "numeric"},        // Concentration
 
                 <c:if test="${actionBean.supportsRin}">

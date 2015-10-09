@@ -292,30 +292,6 @@
             <column name="workflow_qualifier" type="varchar2(255)"/>
         </addColumn>
     </changeSet>
-
-    <changeSet author="dryan" id="GPLIM-3739-1">
-        <preConditions onFail="MARK_RAN">
-            <not>
-                <columnExists columnName="workflow_name" schemaName="mercury" tableName="bucket_entry"/>
-            </not>
-        </preConditions>
-        <addColumn schemaName="mercury" tableName="bucket_entry">
-            <column name="workflow_name" type="varchar2(255)"/>
-        </addColumn>
-    </changeSet>
-    <changeSet author="dryan" id="GPLIM-3739-2">
-        <preConditions onFail="MARK_RAN">
-            <not>
-                <columnExists columnName="workflow_name" schemaName="mercury" tableName="bucket_entry_aud"/>
-            </not>
-        </preConditions>
-
-        <addColumn schemaName="mercury" tableName="bucket_entry_aud">
-            <column name="workflow_name" type="varchar2(255)"/>
-        </addColumn>
-    </changeSet>
-
-    
     <changeSet id="GPLIM-3707-1" author="thompson">
         <addColumn schemaName="mercury" tableName="lab_event_reagents">
             <column name="volume" type="number(10,2)"/>

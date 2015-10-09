@@ -236,9 +236,8 @@ public class BucketViewActionBean extends CoreActionBean {
                     // Filters out entries whose product workflow or add-on's workflow doesn't match the selected workflow.
                     for (Iterator<BucketEntry> iter = collectiveEntries.iterator(); iter.hasNext(); ) {
                         BucketEntry entry = iter.next();
-                        String workflowName = findWorkflowName(entry);
-                        if (!selectedWorkflowDef.getName().equals(workflowName)) {
-
+                        Workflow bucketWorkflow = entry.getWorkflow();
+                        if (!selectedWorkflowDef.getName().equals(bucketWorkflow.getWorkflowName())) {
                             iter.remove();
                             bucketEntries.remove(entry);
                             reworkEntries.remove(entry);
@@ -299,9 +298,7 @@ public class BucketViewActionBean extends CoreActionBean {
         // the add-on's product's workflow. (continued)
         for (BucketEntry entry : batch.getBucketEntries()) {
             pdoKeys.add(entry.getProductOrder().getBusinessKey());
-            if (entry.getWorkflowName() != null) {
-                workflowNames.add(entry.getWorkflowName());
-            }
+            workflowNames.add(entry.getWorkflowName());
         }
         // Therefore, if workflowNames is populated we know we are dealing with a post-extraction workflow.
         // If workflowNames is empty we get the workflowName from the product itself. This is all
@@ -325,7 +322,7 @@ public class BucketViewActionBean extends CoreActionBean {
             return new RedirectResolution(VIEW_PAGE);
         }
         addMessage(String.format("Successfully added %d sample(s) and %d rework(s) to %s at the '%s'.",
-                                 bucketEntryIds.size(), reworkEntryIds.size(), selectedLcset, selectedBucket));
+                bucketEntryIds.size(), reworkEntryIds.size(), selectedLcset, selectedBucket));
         return viewBucket();
     }
 

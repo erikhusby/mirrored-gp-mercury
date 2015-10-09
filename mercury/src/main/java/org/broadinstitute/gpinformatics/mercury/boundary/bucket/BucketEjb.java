@@ -105,22 +105,28 @@ public class BucketEjb {
     /**
      * Adds a pre-defined collection of {@link LabVessel}s to the given bucket using the specified pdoBusinessKey.
      *
-     * @param entriesToAdd     Collection of LabVessels to be added to a bucket
-     * @param entryType        the type of bucket entry to add
-     * @param programName      Name of the program that initiated this action
-     * @param operator         Represents the user that initiated adding the vessels to the bucket
-     * @param eventLocation Machine location from which operator initiated this action
-     * @param pdo              Product order for all vessels
+     * @param entriesToAdd    Collection of LabVessels to be added to a bucket
+     * @param programName     Name of the program that initiated this action
+     * @param operator        Represents the user that initiated adding the vessels to the bucket
+     * @param eventLocation   Machine location from which operator initiated this action
+     * @param pdo             Product order for all vessels
+     * @param reworkCandidate
      */
     public Collection<BucketEntry> add(@Nonnull Map<WorkflowBucketDef, Collection<LabVessel>> entriesToAdd,
-                                       BucketEntry.BucketEntryType entryType, @Nonnull String programName,
-                                       @Nonnull String operator, @Nonnull String eventLocation, @Nonnull ProductOrder pdo) {
+                                       @Nonnull String programName, @Nonnull String operator,
+                                       @Nonnull String eventLocation, @Nonnull ProductOrder pdo,
+                                       boolean reworkCandidate) {
+        BucketEntry.BucketEntryType entryType = BucketEntry.BucketEntryType.PDO_ENTRY;
+        if (reworkCandidate) {
+            entryType = BucketEntry.BucketEntryType.REWORK_ENTRY;
+        }
+
         List<BucketEntry> listOfNewEntries = new ArrayList<>(entriesToAdd.size());
         for (Map.Entry<WorkflowBucketDef, Collection<LabVessel>> bucketVesselsEntry : entriesToAdd.entrySet()) {
             Collection<LabVessel> bucketVessels = bucketVesselsEntry.getValue();
             WorkflowBucketDef bucketDef = bucketVesselsEntry.getKey();
             Bucket bucket = findOrCreateBucket(bucketDef.getName());
-            String workflow = bucketDef.getWorkflowForProduct(pdo);
+            Workflow workflow = bucketVesselsEntry.getKey().getWorkflowForProductOrder(pdo);
             LabEventType bucketEventType = bucketDef.getBucketEventType();
 
             for (LabVessel currVessel : bucketVessels) {
@@ -340,7 +346,7 @@ public class BucketEjb {
     public Map<String, Collection<ProductOrderSample>> addSamplesToBucket(ProductOrder order,
                                                                           Collection<ProductOrderSample> samples) {
         boolean hasWorkflow=false;
-        for (Workflow workflow : order.getProduct().getProductWorkflows()) {
+        for (Workflow workflow : order.getProductWorkflows()) {
             if (hasWorkflow = Workflow.SUPPORTED_WORKFLOWS.contains(workflow)) {
                 if (hasWorkflow){
                     break;
@@ -416,8 +422,7 @@ public class BucketEjb {
     }
 
 
-    private Collection<BucketEntry> applyBucketCriteria(List<LabVessel> vessels, ProductOrder productOrder,
-                                                        String username) {
+    private Collection<BucketEntry> applyBucketCriteria(List<LabVessel> vessels, ProductOrder productOrder, String username) {
         Collection<BucketEntry> bucketEntries = new ArrayList<>(vessels.size());
         WorkflowConfig workflowConfig = workflowLoader.load();
         List<Product> possibleProducts = new ArrayList<>();
@@ -434,8 +439,8 @@ public class BucketEjb {
                     workflowDefVersion.getInitialBucket(productOrder, vessels);
 
             if (!initialBucket.isEmpty()) {
-                Collection<BucketEntry> entries = add(initialBucket, BucketEntry.BucketEntryType.PDO_ENTRY,
-                        LabEvent.UI_PROGRAM_NAME, username, LabEvent.UI_EVENT_LOCATION, productOrder);
+                Collection<BucketEntry> entries = add(initialBucket,
+                        LabEvent.UI_PROGRAM_NAME, username, LabEvent.UI_EVENT_LOCATION, productOrder, false);
                 bucketEntries.addAll(entries);
             }
         }

@@ -337,6 +337,9 @@ public class LabBatchEjb {
 
             AbstractBatchJiraFieldFactory fieldBuilder = AbstractBatchJiraFieldFactory
                     .getInstance(projectType, newBatch, productOrderDao);
+            if (projectType == null) {
+                projectType = fieldBuilder.getProjectType();
+            }
 
             if (StringUtils.isBlank(newBatch.getBatchDescription())) {
                 newBatch.setBatchDescription(fieldBuilder.generateDescription());
@@ -510,6 +513,9 @@ public class LabBatchEjb {
 
         AbstractBatchJiraFieldFactory fieldBuilder = AbstractBatchJiraFieldFactory
                 .getInstance(projectType, batch, productOrderDao);
+        if (projectType == null) {
+            projectType = fieldBuilder.getProjectType();
+        }
 
         if (StringUtils.isBlank(batch.getBatchDescription())) {
             batch.setBatchDescription(fieldBuilder.generateDescription());
