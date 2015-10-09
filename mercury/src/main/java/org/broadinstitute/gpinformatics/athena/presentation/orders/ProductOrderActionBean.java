@@ -48,6 +48,7 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderCompletionStatus;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKit;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry;
@@ -254,7 +255,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private List<Long> sampleIdsForGetBspData;
 
-    private final CompletionStatusFetcher progressFetcher = new CompletionStatusFetcher();
+    private CompletionStatusFetcher progressFetcher;
 
     private boolean skipRegulatoryInfo;
 
@@ -413,7 +414,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (!StringUtils.isBlank(productOrder)) {
             editOrder = productOrderEjb.findProductOrderByBusinessKeySafely(productOrder);
             if (editOrder != null) {
-                progressFetcher.loadProgress(productOrderDao, Collections.singletonList(editOrder.getProductOrderId()));
+                progressFetcher = new CompletionStatusFetcher(
+                        productOrderDao.getProgress(Collections.singleton(editOrder.getProductOrderId())));
             }
         } else {
             // If this was a create with research project specified, find that.
@@ -444,7 +446,8 @@ public class ProductOrderActionBean extends CoreActionBean {
             // Since just getting the one item, get all the lazy data.
             editOrder = productOrderDao.findByBusinessKey(productOrder, ProductOrderDao.FetchSpec.RISK_ITEMS);
             if (editOrder != null) {
-                progressFetcher.loadProgress(productOrderDao, Collections.singletonList(editOrder.getProductOrderId()));
+                progressFetcher = new CompletionStatusFetcher(
+                        productOrderDao.getProgress(Collections.singleton(editOrder.getProductOrderId())));
             }
         }
     }
@@ -831,9 +834,8 @@ public class ProductOrderActionBean extends CoreActionBean {
                         productFamilyId, productTokenInput.getBusinessKeyList(), selectedStatuses, getDateRange(),
                         owner.getOwnerIds(), selectedLedgerStatuses);
 
-
-        progressFetcher.loadProgress(productOrderDao,
-                ProductOrderListEntry.getProductOrderIDs(displayedProductOrderListEntries));
+        progressFetcher = new CompletionStatusFetcher(productOrderDao
+                .getProgress(ProductOrderListEntry.getProductOrderIDs(displayedProductOrderListEntries)));
 
         // Get the sorted family list.
         productFamilies = productFamilyDao.findAll();
@@ -1956,57 +1958,26 @@ public class ProductOrderActionBean extends CoreActionBean {
      *
      * @return Percentage of sample abandoned.
      */
-    public int getPercentAbandoned() {
+    public double getPercentAbandoned() {
         return progressFetcher.getPercentAbandoned(editOrder.getBusinessKey());
     }
-
 
     /**
      * Convenience method for PDO view page to show percentage of samples completed for the current PDO.
      *
      * @return Percentage of sample completed.
      */
-    public int getPercentCompleted() {
+    public double getPercentCompleted() {
         return progressFetcher.getPercentCompleted(editOrder.getBusinessKey());
     }
-
 
     /**
      * Convenience method for PDO view page to show percentage of samples in progress for the current PDO.
      *
      * @return Percentage of sample in progress.
      */
-    public int getPercentInProgress() {
+    public double getPercentInProgress() {
         return progressFetcher.getPercentInProgress(editOrder.getBusinessKey());
-    }
-
-    /**
-     * Convenience method for PDO view page to show number of samples abandoned for the current PDO.
-     *
-     * @return Number of sample abandoned.
-     */
-    public int getNumberAbandoned() {
-        return progressFetcher.getNumberAbandoned(editOrder.getBusinessKey());
-    }
-
-
-    /**
-     * Convenience method for PDO view page to show number of samples completed for the current PDO.
-     *
-     * @return Number of sample completed.
-     */
-    public int getNumberCompleted() {
-        return progressFetcher.getNumberCompleted(editOrder.getBusinessKey());
-    }
-
-
-    /**
-     * Convenience method for PDO view page to show number of samples in progress for the current PDO.
-     *
-     * @return Number of sample in progress.
-     */
-    public int getNumberInProgress() {
-        return progressFetcher.getNumberInProgress(editOrder.getBusinessKey());
     }
 
     /**
@@ -2019,15 +1990,19 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (editOrder.isDraft()) {
             return "Draft order, work has not begun";
         } else {
+            ProductOrderCompletionStatus status = progressFetcher.getStatus(editOrder.getBusinessKey());
             List<String> progressPieces = new ArrayList<>();
-            if (getPercentAbandoned() != 0) {
-                progressPieces.add(formatProgress(getNumberAbandoned(), getPercentAbandoned(), "Abandoned"));
+            if (status.getPercentAbandoned() > 0) {
+                progressPieces.add(formatProgress(status.getNumberAbandoned(), status.getPercentAbandonedDisplay(),
+                        "Abandoned"));
             }
-            if (getPercentCompleted() != 0) {
-                progressPieces.add(formatProgress(getNumberCompleted(), getPercentCompleted(), "Completed"));
+            if (status.getPercentCompleted() > 0) {
+                progressPieces.add(formatProgress(status.getNumberCompleted(), status.getPercentCompletedDisplay(),
+                        "Completed"));
             }
-            if (getPercentInProgress() != 0) {
-                progressPieces.add(formatProgress(getNumberInProgress(), getPercentInProgress(), "In Progress"));
+            if (status.getPercentInProgress() > 0) {
+                progressPieces.add(formatProgress(status.getNumberInProgress(), status.getPercentInProgressDisplay(),
+                        "In Progress"));
             }
 
             return StringUtils.join(progressPieces, ", ");
@@ -2039,8 +2014,8 @@ public class ProductOrderActionBean extends CoreActionBean {
      *
      * @return Formatted progress string for display.
      */
-    private String formatProgress(int number, int percentage, String identifier) {
-        return String.format("%d %s (%d%%)", number, identifier, percentage);
+    private String formatProgress(int number, String percentageDisplay, String identifier) {
+        return String.format("%d %s (%s%%)", number, identifier, percentageDisplay);
     }
 
     public Map<String, Date> getProductOrderSampleReceiptDates() {

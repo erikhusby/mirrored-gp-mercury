@@ -241,7 +241,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     private String irbList;
 
-    private final CompletionStatusFetcher progressFetcher = new CompletionStatusFetcher();
+    private CompletionStatusFetcher progressFetcher;
 
     private CollaborationData collaborationData;
 
@@ -307,7 +307,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
             productOrderIds.add(order.getProductOrderId());
         }
 
-        progressFetcher.loadProgress(productOrderDao, productOrderIds);
+        progressFetcher = new CompletionStatusFetcher(productOrderDao.getProgress(productOrderIds));
     }
 
     /**
