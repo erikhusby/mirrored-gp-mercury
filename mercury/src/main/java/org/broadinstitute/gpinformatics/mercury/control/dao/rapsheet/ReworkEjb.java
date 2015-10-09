@@ -314,8 +314,8 @@ public class ReworkEjb {
                     } };
 
         Collection<BucketEntry> bucketEntries = bucketEjb
-                .add(bucketCandidate, BucketEntry.BucketEntryType.REWORK_ENTRY, LabEvent.UI_PROGRAM_NAME,
-                        userName, LabEvent.UI_EVENT_LOCATION, productOrder);
+                .add(bucketCandidate, LabEvent.UI_PROGRAM_NAME, userName, LabEvent.UI_EVENT_LOCATION, productOrder,
+                        reworkCandidate);
 
         // TODO: create the event in this scope instead of getting the "latest" event
         if (reworkCandidate) {
@@ -397,8 +397,12 @@ public class ReworkEjb {
             @Nonnull String comment,
             @Nonnull String userName)
             throws ValidationException {
-        WorkflowBucketDef bucketDef =
-                findWorkflowBucketDef(bucketCandidate.getProductOrder(), bucket.getBucketDefinitionName());
+        WorkflowBucketDef bucketDef = null;
+        try {
+            bucketDef = findWorkflowBucketDef(bucketCandidate.getProductOrder(), bucket.getBucketDefinitionName());
+        } catch (RuntimeException e) {
+            throw new ValidationException(e);
+        }
         LabEventType reworkFromStep = bucketDef.getBucketEventType();
 
         LabVessel reworkVessel =
@@ -449,14 +453,6 @@ public class ReworkEjb {
                             bucketDef.getName());
             logger.error(error);
             throw new ValidationException(error);
-        }
-
-        if (!bucketDef.meetsBucketCriteria(candidateVessel, productOrder)) {
-            String missingRequirements = bucketDef.findMissingRequirements(productOrder, candidateVessel.getLatestMaterialType());
-            throw new ValidationException(
-                    String.format(
-                            "You have submitted a vessel to the bucket that contains at least one sample that doesn't meet the requirements of the bucket: %s",
-                            missingRequirements));
         }
     }
 
