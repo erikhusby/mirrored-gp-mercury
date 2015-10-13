@@ -82,8 +82,10 @@ public class CaliperPlateProcessor {
                 messageCollection.addError("Failed to find position " + well);
             }
             BigDecimal bigDecimal;
+            boolean nan = false;
             if (result.equals("NA")) {
                 bigDecimal = new BigDecimal("0");
+                nan = true;
             } else {
                 Matcher matcher = SCORE_BRACKET_PATTERN.matcher(result);
                 if (matcher.matches()) {
@@ -95,7 +97,7 @@ public class CaliperPlateProcessor {
             }
             bigDecimal = MathUtils.scaleTwoDecimalPlaces(bigDecimal);
             plateWellResultMarkers.add(
-                    new PlateWellResultMarker(barcode, vesselPosition, bigDecimal, lowerTimeMarker, dv200TotalArea));
+                    new PlateWellResultMarker(barcode, vesselPosition, bigDecimal, lowerTimeMarker, dv200TotalArea, nan));
         }
 
         //Grab run info
@@ -186,15 +188,17 @@ public class CaliperPlateProcessor {
         private BigDecimal result;
         private double lowerMarkerTime;
         private double dv200TotalArea;
+        private final boolean nan;
 
         public PlateWellResultMarker(String plateBarcode,
                                      VesselPosition vesselPosition, BigDecimal result, double lowerMarkerTime,
-                                     double dv200TotalArea) {
+                                     double dv200TotalArea, boolean nan) {
             this.plateBarcode = plateBarcode;
             this.vesselPosition = vesselPosition;
             this.result = result;
             this.lowerMarkerTime = lowerMarkerTime;
             this.dv200TotalArea = dv200TotalArea;
+            this.nan = nan;
         }
 
         public String getPlateBarcode() {
@@ -215,6 +219,10 @@ public class CaliperPlateProcessor {
 
         public double getDv200TotalArea() {
             return dv200TotalArea;
+        }
+
+        public boolean isNan() {
+            return nan;
         }
     }
 

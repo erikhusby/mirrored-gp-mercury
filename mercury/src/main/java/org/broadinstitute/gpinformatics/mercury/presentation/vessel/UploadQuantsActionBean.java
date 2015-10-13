@@ -11,7 +11,6 @@ import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidationErrors;
 import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.broadinstitute.bsp.client.util.MessageCollection;
@@ -186,6 +185,7 @@ public class UploadQuantsActionBean extends CoreActionBean {
                     labMetricDecision.setDeciderUserId(userBean.getBspUser().getUserId());
                     labMetricDecision.setDecision(overrideDecision);
                     labMetricDecision.setOverrideReason(overrideReason);
+                    labMetricDecision.setNeedsReview(LabMetricDecision.NeedsReview.FALSE);
                 }
             }
 

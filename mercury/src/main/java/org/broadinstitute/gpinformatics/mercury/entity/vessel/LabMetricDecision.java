@@ -57,6 +57,20 @@ public class LabMetricDecision {
         }
     }
 
+    public enum NeedsReview {
+        TRUE(true),
+        FALSE(false);
+        private final boolean value;
+
+        NeedsReview(boolean value) {
+            this.value = value;
+        }
+
+        public boolean booleanValue() {
+            return value;
+        }
+    }
+
     @SuppressWarnings("UnusedDeclaration")
     @Id
     @SequenceGenerator(name = "SEQ_LAB_METRIC_DECISION", schema = "mercury", sequenceName = "SEQ_LAB_METRIC_DECISION")
@@ -65,6 +79,9 @@ public class LabMetricDecision {
 
     @Enumerated(EnumType.STRING)
     private Decision decision;
+
+    @Enumerated(EnumType.STRING)
+    private NeedsReview needsReview;
 
     private String overrideReason;
 
@@ -83,11 +100,22 @@ public class LabMetricDecision {
     }
 
     public LabMetricDecision(Decision decision, Date decidedDate, Long deciderUserId,
+                             LabMetric labMetric) {
+        this(decision, decidedDate, deciderUserId, labMetric, null);
+    }
+
+    public LabMetricDecision(Decision decision, Date decidedDate, Long deciderUserId,
             LabMetric labMetric, @Nullable String note) {
+        this(decision, decidedDate, deciderUserId, labMetric, null, NeedsReview.FALSE);
+    }
+
+    public LabMetricDecision(Decision decision, Date decidedDate, Long deciderUserId,
+                             LabMetric labMetric, @Nullable String note, NeedsReview needsReview) {
         this.decision = decision;
         this.decidedDate = decidedDate;
         this.deciderUserId = deciderUserId;
         this.note = note;
+        this.needsReview = needsReview;
         labMetrics.add(labMetric);
     }
 
@@ -129,6 +157,15 @@ public class LabMetricDecision {
 
     public void setNote(String note) {
         this.note = note;
+    }
+
+    public boolean isNeedsReview() {
+        return needsReview == NeedsReview.TRUE.TRUE;
+    }
+
+    public void setNeedsReview(
+            NeedsReview needsReview) {
+        this.needsReview = needsReview;
     }
 
     public LabMetric getLabMetrics() {

@@ -19,7 +19,8 @@
                 $j('#metricsTable').dataTable({
                     "oTableTools": ttExportDefines,
                     "aoColumnDefs" : [
-                        { "bSortable": false, "aTargets": "no-sort" }
+                        { "bSortable": false, "aTargets": "no-sort" },
+                        { "bSortable": true, "sType": "numeric", "aTargets": "sort-numeric" }
                     ]
                 });
                 <%-- Clears all checkboxes. --%>
@@ -109,8 +110,8 @@
                         <th>Collaborator Patient ID</th>
                         <th>Value</th>
                         <c:if test="${actionBean.labMetricRun.metricType.category != 'QUALITY'}">
-                            <th>Volume</th>
-                            <th>Total ng</th>
+                            <th class="sort-numeric">Volume</th>
+                            <th class="sort-numeric">Total ng</th>
                         </c:if>
                         <th>Decision</th>
                         <th>Note</th>
@@ -118,12 +119,15 @@
                         <th>Date</th>
                         <th>Reason</th>
                         <th class="no-sort"></th>
+                        <%--<th class="no-show"></th>--%>
                     </tr>
                     </thead>
                     <tbody>
                     <c:forEach items="${actionBean.labMetricRun.labMetrics}" var="labMetric">
                         <c:if test="${labMetric.labMetricDecision != null}">
-                            <tr>
+                            <tr <c:if test="${labMetric.labMetricDecision.needsReview}">
+                                    class="warning"
+                                </c:if>>
                                 <td>
                                     ${labMetric.vesselPosition}
                                 </td>

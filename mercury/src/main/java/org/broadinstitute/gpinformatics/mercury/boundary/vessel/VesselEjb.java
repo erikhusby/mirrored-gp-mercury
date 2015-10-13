@@ -251,8 +251,8 @@ public class VesselEjb {
                         pair = Pair.of(labMetricRun, tubeFormation.getLabel());
                     } else {
                         // Run date must be unique so that a search can reveal the latest quant.
-                        List<LabMetricRun> sameDateRuns = labMetricRunDao.findList(LabMetricRun.class,
-                                LabMetricRun_.runDate, parseRunDate(mapNameValueToValue));
+                        List<LabMetricRun> sameDateRuns = labMetricRunDao.findSameDateRuns(
+                                parseRunDate(mapNameValueToValue));
                         if (CollectionUtils.isNotEmpty(sameDateRuns)) {
                             messageCollection.addError("A previous upload has the same Run Started timestamp.");
                             pair = Pair.of(sameDateRuns.iterator().next(), tubeFormation.getLabel());
@@ -382,15 +382,15 @@ public class VesselEjb {
                         labMetric.getValue().multiply(tube.getVolume())));
             }
             LabMetric.Decider decider = metricType.getDecider();
-            LabMetricDecision.Decision decision = null;
+            LabMetricDecision decision = null;
             if (runFailed) {
-                decision = LabMetricDecision.Decision.RUN_FAILED;
+                decision = new LabMetricDecision(
+                        LabMetricDecision.Decision.RUN_FAILED, new Date(), decidingUser, labMetric);
             } else if (decider != null) {
-                decision = decider.makeDecision(tube, labMetric);
+                decision = decider.makeDecision(tube, labMetric, decidingUser);
             }
             if (decision != null) {
-                labMetric.setLabMetricDecision(
-                        new LabMetricDecision(decision, new Date(), decidingUser, labMetric, null));
+                labMetric.setLabMetricDecision(decision);
             }
             tube.addMetric(labMetric);
             labMetricRun.addMetric(labMetric);
@@ -471,8 +471,7 @@ public class VesselEjb {
                         pair = Pair.of(labMetricRun, tubeFormation.getLabel());
                     } else {
                         // Run date must be unique so that a search can reveal the latest quant.
-                        List<LabMetricRun> sameDateRuns = labMetricRunDao.findList(LabMetricRun.class,
-                                LabMetricRun_.runDate, caliperRun.getRunDate());
+                        List<LabMetricRun> sameDateRuns = labMetricRunDao.findSameDateRuns(caliperRun.getRunDate());
                         if (CollectionUtils.isNotEmpty(sameDateRuns)) {
                             messageCollection.addError("A previous upload has the same Run Started timestamp.");
                             pair = Pair.of(sameDateRuns.iterator().next(), tubeFormation.getLabel());
@@ -526,6 +525,7 @@ public class VesselEjb {
         labMetricRun.getMetadata().add(new Metadata(Metadata.Key.INSTRUMENT_NAME, caliperRun.getInstrumentName()));
 
         // Store raw values against plate wells
+        boolean requiresReview = false;
         for (CaliperPlateProcessor.PlateWellResultMarker plateWellResult : caliperRun.getPlateWellResultMarkers()) {
             StaticPlate staticPlate = mapBarcodeToPlate.get(plateWellResult.getPlateBarcode());
             LabMetric labMetric = new LabMetric(plateWellResult.getResult(), metricType, LabMetric.LabUnit.RQS,
@@ -554,19 +554,24 @@ public class VesselEjb {
                         LabMetric sourceVesselLabMetric = new LabMetric(plateWellResult.getResult(),
                                 metricType, LabMetric.LabUnit.RQS,
                                 sourcePosition.name(), caliperRun.getRunDate());
-                        LabMetricDecision.Decision decision;
-                        String decisionNote = null;
-                        if(plateWellResult.getLowerMarkerTime() < 28 || plateWellResult.getLowerMarkerTime() > 33) {
-                            decision = LabMetricDecision.Decision.REPEAT;
-                            decisionNote = "Lower Marker Time not in accepted 28-33 range.";
-                        } else if(plateWellResult.getDv200TotalArea() <= 0 || plateWellResult.getDv200TotalArea() >= 1) {
-                            decision = LabMetricDecision.Decision.REPEAT;
-                            decisionNote = "DV200 not in accepted 0-1 range.";
-                        } else {
-                            decision = LabMetricDecision.Decision.PASS;
+                        sourceVesselLabMetric.getMetadataSet().add(new Metadata(Metadata.Key.DV_200,
+                                new BigDecimal(plateWellResult.getDv200TotalArea())));
+                        sourceVesselLabMetric.getMetadataSet().add(new Metadata(Metadata.Key.LOWER_MARKER_TIME,
+                                new BigDecimal(plateWellResult.getLowerMarkerTime())));
+                        sourceVesselLabMetric.getMetadataSet().add(new Metadata(Metadata.Key.NA,
+                                String.valueOf(plateWellResult.isNan())));
+
+                        LabMetric.Decider decider = metricType.getDecider();
+                        LabMetricDecision decision = null;
+                        if (decider != null) {
+                            decision = decider.makeDecision(sourceTube, sourceVesselLabMetric, decidingUser);
                         }
-                        sourceVesselLabMetric.setLabMetricDecision(
-                                new LabMetricDecision(decision, new Date(), decidingUser, labMetric, decisionNote));
+                        if (decision != null) {
+                            sourceVesselLabMetric.setLabMetricDecision(decision);
+                            if(decision.isNeedsReview())
+                                requiresReview = true;
+                        }
+
                         sourceTube.addMetric(sourceVesselLabMetric);
                         labMetricRun.addMetric(sourceVesselLabMetric);
                     }
@@ -576,6 +581,10 @@ public class VesselEjb {
                 messageCollection.addError("Failed to find source tube for " + plateWellResult.getPlateBarcode() +
                                            " " + plateWellResult.getVesselPosition());
             }
+        }
+
+        if(requiresReview) {
+            messageCollection.addWarning("Rows highlighted in yellow will require review.");
         }
 
         return Pair.of(labMetricRun, tubeFormationLabel);

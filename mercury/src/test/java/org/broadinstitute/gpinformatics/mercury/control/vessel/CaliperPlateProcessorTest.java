@@ -40,7 +40,6 @@ public class CaliperPlateProcessorTest {
         try {
             CaliperPlateProcessor caliperPlateProcessor = new CaliperPlateProcessor();
             CaliperPlateProcessor.CaliperRun run  = caliperPlateProcessor.parse(testSpreadSheet);
-            Assert.assertEquals(run.getPlateWellResultMarkers().size(), 96);
             Assert.assertEquals(run.getPlateWellResultMarkers().size(), 192);
             Assert.assertFalse(caliperPlateProcessor.getMessageCollection().hasErrors());
         } catch (IOException e) {
