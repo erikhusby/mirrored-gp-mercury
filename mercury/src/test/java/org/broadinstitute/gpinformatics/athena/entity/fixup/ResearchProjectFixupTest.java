@@ -43,9 +43,6 @@ public class ResearchProjectFixupTest extends Arquillian {
     @Inject
     private BSPUserList bspUserList;
 
-    @Inject
-    private UserBean userBean;
-
     @Deployment
     public static WebArchive buildMercuryWar() {
         return DeploymentBuilder.buildMercuryWar(DEV, "dev");
