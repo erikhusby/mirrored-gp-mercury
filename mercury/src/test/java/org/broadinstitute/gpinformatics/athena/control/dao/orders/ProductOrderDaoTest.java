@@ -3,9 +3,13 @@ package org.broadinstitute.gpinformatics.athena.control.dao.orders;
 import org.apache.commons.lang3.time.DateUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
+import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderCompletionStatus;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
+import org.broadinstitute.gpinformatics.infrastructure.common.BaseSplitter;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.ThreadEntityManager;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -20,7 +24,21 @@ import javax.inject.Inject;
 import javax.persistence.PersistenceUnitUtil;
 import javax.transaction.UserTransaction;
 import java.text.MessageFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.is;
 
 
 @Test(groups = TestGroups.STUBBY, enabled = true)
@@ -136,9 +154,7 @@ public class ProductOrderDaoTest extends ContainerTest {
 
         int originalSize = allBusinessKeys.size();
 
-        allBusinessKeys.addAll(allBusinessKeys);
-
-        Assert.assertTrue(allBusinessKeys.size() > 1000);
+        Assert.assertTrue(allBusinessKeys.size() > BaseSplitter.DEFAULT_SPLIT_SIZE);
 
         List<ProductOrder> pdoList =
             productOrderDao.findListByList(ProductOrder.class, ProductOrder_.jiraTicketKey, allBusinessKeys);
@@ -218,4 +234,60 @@ public class ProductOrderDaoTest extends ContainerTest {
         Assert.assertEquals(unconvertedProductOrders.size(), 4);
     }
 
+    public void testGetStatusWithSplit() throws Exception {
+        List<ProductOrder> allOrders = productOrderDao.findAll();
+
+        List<Long> allOrderIds = new ArrayList<>();
+        for (ProductOrder order : allOrders) {
+            allOrderIds.add(order.getProductOrderId());
+        }
+
+        // Make sure we have enough PDOs to test that the Splitter API is being used correctly.
+        // This is also why we don't use getAllProgress() here instead.
+        Assert.assertTrue(allOrderIds.size() > BaseSplitter.DEFAULT_SPLIT_SIZE);
+
+        Map<String, ProductOrderCompletionStatus> statusMap = productOrderDao.getProgress(allOrderIds);
+
+        // Need to use x2 here because of the list duplication above.
+        Assert.assertEquals(statusMap.keySet().size(), allOrderIds.size(),
+                "There should be statuses for every item");
+    }
+
+    /**
+     * Test that {@link ProductOrderDao#getProgress(Collection)} returns counts equal to the result of iterating over
+     * all of the samples. Adapted from test for GPLIM-1206, previously in CompletionStatusFetcherTest.
+     */
+    public void testGetProgressCounts() {
+        ProductOrder productOrder = ProductOrderDBTestFactory
+                .createProductOrder(productOrderDao, "SM-0001", "SM-0002", "SM-0003", "SM-0004", "SM-0005", "SM-0006");
+
+        productOrder.getSamples().get(0).setDeliveryStatus(ProductOrderSample.DeliveryStatus.ABANDONED);
+        productOrder.getSamples().get(1).setDeliveryStatus(ProductOrderSample.DeliveryStatus.ABANDONED);
+        productOrder.getSamples().get(2).setDeliveryStatus(ProductOrderSample.DeliveryStatus.NOT_STARTED);
+
+        Set<LedgerEntry> ledgerEntries = new HashSet<>();
+        for (int i = 3; i < 6; i++) {
+            ProductOrderSample productOrderSample = productOrder.getSamples().get(i);
+            productOrderSample.setDeliveryStatus(ProductOrderSample.DeliveryStatus.DELIVERED);
+            LedgerEntry ledgerEntry =
+                    new LedgerEntry(productOrderSample, productOrder.getProduct().getPrimaryPriceItem(), new Date(), 1);
+            ledgerEntry.setPriceItemType(LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM);
+            ledgerEntries.add(ledgerEntry);
+        }
+        BillingSession billingSession = new BillingSession(1L, ledgerEntries);
+        billingSession.setBilledDate(new Date());
+        productOrderDao.persist(billingSession);
+
+        productOrderDao.flush();
+        productOrderDao.clear();
+
+        Map<String, ProductOrderCompletionStatus> statusMap =
+                productOrderDao.getProgress(Collections.singleton(productOrder.getProductOrderId()));
+        assertThat(statusMap.size(), equalTo(1));
+        ProductOrderCompletionStatus status = statusMap.values().iterator().next();
+
+        assertThat(status.getNumberCompleted(), is(equalTo(3)));
+        assertThat(status.getNumberAbandoned(), is(greaterThanOrEqualTo(2)));
+        assertThat(status.getNumberInProgress(), is(equalTo(1)));
+    }
 }

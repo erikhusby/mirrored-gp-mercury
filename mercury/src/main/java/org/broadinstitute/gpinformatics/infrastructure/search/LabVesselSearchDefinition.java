@@ -32,6 +32,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -1044,7 +1045,7 @@ public class LabVesselSearchDefinition {
 
     private class MaterialTypeEventCriteria extends TransferTraverserCriteria {
         private LabVessel.MaterialType materialType;
-        private List<LabVessel> labVessels = new ArrayList<>();
+        private Set<LabVessel> labVessels = new LinkedHashSet<>();
 
         private MaterialTypeEventCriteria(LabVessel.MaterialType materialType) {
             this.materialType = materialType;
@@ -1072,7 +1073,7 @@ public class LabVesselSearchDefinition {
         }
 
         public List<LabVessel> getLabVessels() {
-            return labVessels;
+            return new ArrayList<>(labVessels);
         }
     }
 }
