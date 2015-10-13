@@ -80,7 +80,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
     /** Parameter from batch workflow page. */
     private String batchName;
     /** Parameter from batch workflow page, allows return to same link. */
-    private String anchorName;
+    private Integer anchorIndex;
     /** Loaded based on parameters. */
     private WorkflowStepDef workflowStepDef;
 
@@ -326,21 +326,23 @@ public class ManualTransferActionBean extends RackScanActionBean {
                 for (StationEventType stationEvent : stationEvents) {
                     PlateEventType plateEventType = (PlateEventType) stationEvent;
                     loadPlateFromDb(plateEventType.getPlate(), plateEventType.getPositionMap(), true, labBatch,
-                            messageCollection);
+                            messageCollection, Direction.TARGET);
                 }
                 break;
             case PLATE_TRANSFER_EVENT:
                 for (StationEventType stationEvent : stationEvents) {
                     PlateTransferEventType plateTransferEventType = (PlateTransferEventType) stationEvent;
                     Map<String, LabVessel> mapBarcodeToVessel = loadPlateFromDb(plateTransferEventType.getSourcePlate(),
-                            plateTransferEventType.getSourcePositionMap(), true, labBatch, messageCollection);
+                            plateTransferEventType.getSourcePositionMap(), true, labBatch, messageCollection,
+                            Direction.SOURCE);
                     LabEventType repeatedEvent = manualTransferDetails.getRepeatedEvent();
                     if (repeatedEvent != null) {
                         validateRepeatedEvent(plateTransferEventType, mapBarcodeToVessel, repeatedEvent,
                                 manualTransferDetails.getRepeatedWorkflowQualifier(), messageCollection);
                     }
                     loadPlateFromDb(plateTransferEventType.getPlate(), plateTransferEventType.getPositionMap(),
-                            manualTransferDetails.isTargetExpectedToExist(), labBatch, messageCollection);
+                            manualTransferDetails.isTargetExpectedToExist(), labBatch, messageCollection,
+                            Direction.TARGET);
                 }
                 break;
             case STATION_SETUP_EVENT:
@@ -469,15 +471,21 @@ public class ManualTransferActionBean extends RackScanActionBean {
         }
     }
 
+    private enum Direction {
+        SOURCE,
+        TARGET
+    }
+
     private Map<String, LabVessel> loadPlateFromDb(PlateType plateType, PositionMapType positionMapType,
-            boolean required, LabBatch labBatch, MessageCollection messageCollection) {
+            boolean required, LabBatch labBatch, MessageCollection messageCollection, Direction direction) {
         Map<String, LabVessel> returnMapBarcodeToVessel = new HashMap<>();
         if (plateType != null) {
             String barcode = plateType.getBarcode();
             if (!StringUtils.isBlank(barcode)) {
                 LabVessel labVessel = labVesselDao.findByIdentifier(barcode);
                 if (labVessel == null) {
-                    if (required) {
+                    // Racks don't have to exist, static plates do
+                    if (required && positionMapType == null) {
                         messageCollection.addError(barcode + " is not in the database");
                     } else {
                         messageCollection.addInfo(barcode + " is not in the database");
@@ -513,7 +521,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
                     } else {
                         messageCollection.addError(message);
                     }
-                    if (!labVessel.getNearestWorkflowLabBatches().contains(labBatch)) {
+                    if (direction == Direction.SOURCE && !labVessel.getNearestWorkflowLabBatches().contains(labBatch)) {
                         messageCollection.addInfo(barcode + " is not in batch " + labBatch.getBatchName());
                     }
                 }
@@ -758,12 +766,12 @@ public class ManualTransferActionBean extends RackScanActionBean {
         this.scanSource = scanSource;
     }
 
-    public String getAnchorName() {
-        return anchorName;
+    public Integer getAnchorIndex() {
+        return anchorIndex;
     }
 
-    public void setAnchorName(String anchorName) {
-        this.anchorName = anchorName;
+    public void setAnchorIndex(Integer anchorIndex) {
+        this.anchorIndex = anchorIndex;
     }
 
     public LabEventType.ManualTransferDetails getManualTransferDetails() {

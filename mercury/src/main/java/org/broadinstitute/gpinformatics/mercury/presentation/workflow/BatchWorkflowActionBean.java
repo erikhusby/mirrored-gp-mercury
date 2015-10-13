@@ -41,7 +41,7 @@ public class BatchWorkflowActionBean extends CoreActionBean {
     private String batchName;
 
     /** Parameter on return from manual transfer page. */
-    private String anchorName;
+    private Integer anchorIndex;
 
     /** Posted in form. */
     private String workflowProcessName;
@@ -157,7 +157,7 @@ public class BatchWorkflowActionBean extends CoreActionBean {
             labBatchDao.flush();
         } else {
             // Don't scroll to event, so user can see errors.
-            anchorName = null;
+            anchorIndex = null;
         }
 
         fetchWorkflow();
@@ -264,11 +264,11 @@ public class BatchWorkflowActionBean extends CoreActionBean {
         this.reagentVolumes = reagentVolumes;
     }
 
-    public String getAnchorName() {
-        return anchorName;
+    public Integer getAnchorIndex() {
+        return anchorIndex;
     }
 
-    public void setAnchorName(String anchorName) {
-        this.anchorName = anchorName;
+    public void setAnchorIndex(Integer anchorIndex) {
+        this.anchorIndex = anchorIndex;
     }
 }
