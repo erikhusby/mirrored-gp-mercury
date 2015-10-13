@@ -493,7 +493,7 @@ public class BucketEjbTest extends ContainerTest {
         Map<WorkflowBucketDef, Collection<LabVessel>> initialBucket =
                 productWorkflowDef.getEffectiveVersion().getInitialBucket(productOrder, labVessels);
         productOrder.getProduct().getWorkflow();
-        return resource.add(initialBucket, programName, operator, eventLocation, productOrder, false);
+        return resource.add(initialBucket, bucketEntryType, programName, operator, eventLocation, productOrder);
     }
 
 }

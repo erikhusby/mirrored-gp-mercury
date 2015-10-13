@@ -105,22 +105,17 @@ public class BucketEjb {
     /**
      * Adds a pre-defined collection of {@link LabVessel}s to the given bucket using the specified pdoBusinessKey.
      *
-     * @param entriesToAdd    Collection of LabVessels to be added to a bucket
-     * @param programName     Name of the program that initiated this action
-     * @param operator        Represents the user that initiated adding the vessels to the bucket
-     * @param eventLocation   Machine location from which operator initiated this action
-     * @param pdo             Product order for all vessels
-     * @param reworkCandidate
+     * @param entriesToAdd  Collection of LabVessels to be added to a bucket
+     * @param entryType     Type of BucketEntry, PDO_ENTRY or REWORK_ENTRY
+     * @param programName   Name of the program that initiated this action
+     * @param operator      Represents the user that initiated adding the vessels to the bucket
+     * @param eventLocation Machine location from which operator initiated this action
+     * @param pdo           Product order for all vessels
      */
     public Collection<BucketEntry> add(@Nonnull Map<WorkflowBucketDef, Collection<LabVessel>> entriesToAdd,
-                                       @Nonnull String programName, @Nonnull String operator,
-                                       @Nonnull String eventLocation, @Nonnull ProductOrder pdo,
-                                       boolean reworkCandidate) {
-        BucketEntry.BucketEntryType entryType = BucketEntry.BucketEntryType.PDO_ENTRY;
-        if (reworkCandidate) {
-            entryType = BucketEntry.BucketEntryType.REWORK_ENTRY;
-        }
-
+                                       @Nonnull BucketEntry.BucketEntryType entryType, @Nonnull String programName,
+                                       @Nonnull String operator, @Nonnull String eventLocation,
+                                       @Nonnull ProductOrder pdo) {
         List<BucketEntry> listOfNewEntries = new ArrayList<>(entriesToAdd.size());
         for (Map.Entry<WorkflowBucketDef, Collection<LabVessel>> bucketVesselsEntry : entriesToAdd.entrySet()) {
             Collection<LabVessel> bucketVessels = bucketVesselsEntry.getValue();
@@ -439,8 +434,8 @@ public class BucketEjb {
                     workflowDefVersion.getInitialBucket(productOrder, vessels);
 
             if (!initialBucket.isEmpty()) {
-                Collection<BucketEntry> entries = add(initialBucket,
-                        LabEvent.UI_PROGRAM_NAME, username, LabEvent.UI_EVENT_LOCATION, productOrder, false);
+                Collection<BucketEntry> entries = add(initialBucket, BucketEntry.BucketEntryType.PDO_ENTRY,
+                        LabEvent.UI_PROGRAM_NAME, username, LabEvent.UI_EVENT_LOCATION, productOrder);
                 bucketEntries.addAll(entries);
             }
         }
