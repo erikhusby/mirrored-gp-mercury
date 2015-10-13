@@ -43,6 +43,9 @@ public class ResearchProjectFixupTest extends Arquillian {
     @Inject
     private BSPUserList bspUserList;
 
+    @Inject
+    private UserBean userBean;
+
     @Deployment
     public static WebArchive buildMercuryWar() {
         return DeploymentBuilder.buildMercuryWar(DEV, "dev");
@@ -160,5 +163,13 @@ public class ResearchProjectFixupTest extends Arquillian {
     @Test(enabled = false)
     public void reassignRPUserGPLIM_1156() {
         changeProjectOwner("namrata", "RP-57");
+    }
+
+    @Test(enabled = false)
+    public void changeRegulatoryDesignationSUPPORT796() {
+        userBean.loginOSUser();
+        ResearchProject researchProject = rpDao.findByBusinessKey("RP-976");
+        researchProject.setRegulatoryDesignation(ResearchProject.RegulatoryDesignation.GENERAL_CLIA_CAP);
+        rpDao.persist(new FixupCommentary("SUPPORT-796 updating incorrectly selected regulatory designation"));
     }
 }
