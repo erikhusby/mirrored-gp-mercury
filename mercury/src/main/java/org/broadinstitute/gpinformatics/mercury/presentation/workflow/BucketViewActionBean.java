@@ -238,9 +238,9 @@ public class BucketViewActionBean extends CoreActionBean {
                         BucketEntry entry = iter.next();
                         Workflow bucketWorkflow = entry.getWorkflow();
                         if (!selectedWorkflowDef.getName().equals(bucketWorkflow.getWorkflowName())) {
-                            iter.remove();
                             bucketEntries.remove(entry);
                             reworkEntries.remove(entry);
+                            iter.remove();
                         }
                     }
                     // Doesn't show JIRA details if there are no bucket entries.
