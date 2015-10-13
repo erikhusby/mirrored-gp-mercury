@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
@@ -28,6 +29,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import java.util.Comparator;
 import java.util.Date;
 
@@ -315,11 +317,10 @@ public class BucketEntry {
 
     private Workflow findWorkflow() {
         WorkflowConfig workflowConfig = new WorkflowLoader().load();
-        for (Workflow supportedWorkflow : Workflow.SUPPORTED_WORKFLOWS) {
-            for (WorkflowBucketDef workflowBucketDef : workflowConfig.getWorkflow(supportedWorkflow)
-                    .getEffectiveVersion().getBuckets()) {
-                Workflow workflow = workflowBucketDef.getWorkflowForProductOrder(getProductOrder());
-                if (workflow != Workflow.NONE) {
+        for (Workflow workflow : getProductOrder().getProductWorkflows()) {
+            ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflow(workflow);
+            for (WorkflowBucketDef workflowBucketDef : productWorkflowDef.getEffectiveVersion().getBuckets()) {
+                if (workflowBucketDef.meetsBucketCriteria(labVessel, productOrder)) {
                     return workflow;
                 }
             }
@@ -327,7 +328,8 @@ public class BucketEntry {
         return Workflow.NONE;
     }
 
-    private static Workflow workflow;
+    @Transient
+    private  Workflow workflow;
 
     public Workflow getWorkflow() {
         if (workflow == null) {
