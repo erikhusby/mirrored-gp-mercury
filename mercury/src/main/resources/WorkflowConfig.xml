@@ -202,6 +202,7 @@
                 <reEntryPoint>false</reEntryPoint>
                 <bucketEntryEvaluators>org.broadinstitute.gpinformatics.mercury.entity.workflow.RnaBucketEntryEvaluator</bucketEntryEvaluators>
                 <batchJiraProjectType>LCSET</batchJiraProjectType>
+                <batchJiraIssueType>CDNA_TRUSEQ_SS</batchJiraIssueType>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Poly A TS Aliquot</name>
@@ -1351,7 +1352,7 @@
                 <name>Add 70% ethanol</name>
                 <labEventTypes>ADD_REAGENT</labEventTypes>
                 <workflowQualifier>ETHANOL</workflowQualifier>
-                <reagentTypes>Ethanol70</reagentTypes>
+                <reagentTypes>70% Ethanol</reagentTypes>
                 <instructions>Add 70% ethanol to the flowthrough
                 </instructions>
             </workflowStepDefs>

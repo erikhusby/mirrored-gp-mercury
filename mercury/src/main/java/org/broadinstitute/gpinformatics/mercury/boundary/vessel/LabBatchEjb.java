@@ -33,7 +33,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
@@ -457,9 +456,8 @@ public class LabBatchEjb {
                     SampleInstanceV2 sampleInstance = sampleInstances.iterator().next();
                     SampleData sampleData = mapSampleNameToData.get(sampleInstance.getEarliestMercurySampleName());
                     boolean found = false;
-                    for (LabBatchStartingVessel labBatchStartingVessel : sampleInstance.getAllBatchVessels(
-                            LabBatch.LabBatchType.WORKFLOW)) {
-                        if (labBatchStartingVessel.getLabBatch().getBatchName().equals(lcsetName)) {
+                    for (LabBatch labBatch : sampleInstance.getAllWorkflowBatches()) {
+                        if (labBatch.getBatchName().equals(lcsetName)) {
                             found = true;
                         }
                     }
