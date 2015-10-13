@@ -575,7 +575,7 @@ public class ReagentFixupTest extends Arquillian {
 
         LabEvent labEvent = labEventDao.findById(LabEvent.class, 998742L);
         System.out.println("Replacing reagent " + undesired.getReagentId() + " with " + desired.getReagentId() +
-                " for event " + labEvent.getLabEventId());
+                           " for event " + labEvent.getLabEventId());
         Assert.assertTrue(labEvent.getReagents().remove(undesired));
         labEvent.addReagent(desired);
 
@@ -645,7 +645,7 @@ public class ReagentFixupTest extends Arquillian {
     public void fixupGplim3787date() throws Exception {
         userBean.loginOSUser();
         // Previous fixup used wrong date format.
-        Long reagentId = 987501L;
+        Long reagentId = 975951L;
         String expiration = "09/2016";
 
         Reagent reagent = genericReagentDao.findById(GenericReagent.class, reagentId);
