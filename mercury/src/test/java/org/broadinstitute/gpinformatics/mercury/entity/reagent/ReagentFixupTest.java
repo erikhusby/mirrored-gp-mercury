@@ -641,4 +641,19 @@ public class ReagentFixupTest extends Arquillian {
         genericReagentDao.flush();
     }
 
+    @Test(enabled = true)
+    public void fixupGplim3787date() throws Exception {
+        userBean.loginOSUser();
+        // Previous fixup used wrong date format.
+        Long reagentId = 987501L;
+        String expiration = "09/2016";
+
+        Reagent reagent = genericReagentDao.findById(GenericReagent.class, reagentId);
+        Assert.assertNotNull(reagent);
+        System.out.println("Changing expiration date on reagent id " + reagentId);
+        reagent.setExpiration((new SimpleDateFormat("MM/yyyy")).parse(expiration));
+        genericReagentDao.persist(new FixupCommentary("GPLIM-3787 fixup reagent expiration."));
+        genericReagentDao.flush();
+    }
+
 }
