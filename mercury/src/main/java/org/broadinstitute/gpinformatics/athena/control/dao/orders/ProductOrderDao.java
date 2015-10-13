@@ -299,7 +299,7 @@ public class ProductOrderDao extends GenericDao {
                            "      AND pos.DELIVERY_STATUS != 'ABANDONED' " +
                            "      AND (ledger.price_item_type = '" + LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM.name() + "' " +
                            "       OR  ledger.price_item_type = '" + LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM.name() + "') " +
-                           "      GROUP BY pos.product_order_sample_id, ledger.price_item_id " +
+                           "      GROUP BY pos.product_order_sample_id " +
                            "    ) AS completed, " +
                            "    (SELECT count(pos.PRODUCT_ORDER_SAMPLE_ID) FROM athena.product_order_sample pos " +
                            "        WHERE pos.product_order = ord.product_order_id AND pos.DELIVERY_STATUS = 'ABANDONED' " +
