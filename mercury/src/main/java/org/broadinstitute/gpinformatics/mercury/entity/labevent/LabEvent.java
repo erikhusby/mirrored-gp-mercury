@@ -42,6 +42,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -113,6 +114,7 @@ public class LabEvent {
     @Id
     @SequenceGenerator(name = "SEQ_LAB_EVENT", schema = "mercury", sequenceName = "SEQ_LAB_EVENT")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_LAB_EVENT")
+    @Column(name = "LAB_EVENT_ID")
     private Long labEventId;
 
     @Column(name = "EVENT_LOCATION", length = 255)
@@ -135,10 +137,9 @@ public class LabEvent {
     @Column(name = "PROGRAM_NAME", length = 255)
     private String programName;
 
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
-    @JoinTable(schema = "mercury")
+    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "labEvent")
     @BatchSize(size = 100)
-    private Set<Reagent> reagents = new HashSet<>();
+    private Set<LabEventReagent> labEventReagents = new HashSet<>();
 
     /**
      * for transfers using a tip box, e.g. Bravo
@@ -319,7 +320,11 @@ public class LabEvent {
     }
 
     public void addReagent(Reagent reagent) {
-        reagents.add(reagent);
+        labEventReagents.add(new LabEventReagent(this, reagent));
+    }
+
+    public void addReagentVolume(Reagent reagent, BigDecimal volume) {
+        labEventReagents.add(new LabEventReagent(this, reagent, volume));
     }
 
     public void addMetadata(LabEventMetadata labEventMetadata) {
@@ -368,7 +373,15 @@ public class LabEvent {
     }
 
     public Collection<Reagent> getReagents() {
-        return reagents;
+        Set<Reagent> reagents = new HashSet<>();
+        for (LabEventReagent labEventReagent : labEventReagents) {
+            reagents.add(labEventReagent.getReagent());
+        }
+        return Collections.unmodifiableCollection(reagents);
+    }
+
+    public Set<LabEventReagent> getLabEventReagents() {
+        return labEventReagents;
     }
 
     public Set<SectionTransfer> getSectionTransfers() {
