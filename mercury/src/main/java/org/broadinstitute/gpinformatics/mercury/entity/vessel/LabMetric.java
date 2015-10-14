@@ -47,7 +47,8 @@ public class LabMetric implements Comparable<LabMetric> {
         KBp("KBp"),
         MBp("KBp"),
         GBp("GBp"),
-        Bp("Bp");
+        Bp("Bp"),
+        RQS("Rqs");
 
         private String displayName;
         private static final Map<String, LabUnit> mapNameToUnit = new HashMap<>();
@@ -76,70 +77,117 @@ public class LabMetric implements Comparable<LabMetric> {
     }
 
     public interface Decider {
-        LabMetricDecision.Decision makeDecision(LabVessel labVessel, LabMetric labMetric);
+        LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser);
     }
 
     public enum MetricType {
         INITIAL_PICO("Initial Pico", true, Category.CONCENTRATION, new Decider() {
             @Override
-            public LabMetricDecision.Decision makeDecision(LabVessel labVessel, LabMetric labMetric) {
+            public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
+                LabMetricDecision.Decision decision = LabMetricDecision.Decision.FAIL;
                 if (labVessel.getVolume() != null) {
                     if (labMetric.getValue().multiply(labVessel.getVolume()).compareTo(new BigDecimal("250")) == 1) {
-                        return LabMetricDecision.Decision.PASS;
+                        decision = LabMetricDecision.Decision.PASS;
                     }
                 }
-                return LabMetricDecision.Decision.FAIL;
+                return new LabMetricDecision(decision, new Date(), decidingUser, labMetric);
             }
         }),
         FINGERPRINT_PICO("Fingerprint Pico", true, Category.CONCENTRATION, new Decider() {
             @Override
-            public LabMetricDecision.Decision makeDecision(LabVessel labVessel, LabMetric labMetric) {
+            public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
+                LabMetricDecision.Decision decision;
                 if (labMetric.getValue().compareTo(new BigDecimal("9.99")) == 1 &&
                         labMetric.getValue().compareTo(new BigDecimal("60.01")) == -1) {
-                    return LabMetricDecision.Decision.PASS;
+                    decision = LabMetricDecision.Decision.PASS;
+                } else {
+                    decision = LabMetricDecision.Decision.FAIL;
                 }
-                return LabMetricDecision.Decision.FAIL;
+                return new LabMetricDecision(decision, new Date(), decidingUser, labMetric);
             }
         }),
         SHEARING_PICO("Shearing Pico", true, Category.CONCENTRATION, new Decider() {
             @Override
-            public LabMetricDecision.Decision makeDecision(LabVessel labVessel, LabMetric labMetric) {
+            public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
+                LabMetricDecision.Decision decision;
                 if (labMetric.getValue().compareTo(new BigDecimal("1.49")) == 1 &&
                         labMetric.getValue().compareTo(new BigDecimal("5.01")) == -1) {
-                    return LabMetricDecision.Decision.PASS;
+                    decision = LabMetricDecision.Decision.PASS;
+                } else {
+                    decision = LabMetricDecision.Decision.FAIL;
                 }
-                return LabMetricDecision.Decision.FAIL;
+                return new LabMetricDecision(decision, new Date(), decidingUser, labMetric);
             }
         }),
         PLATING_RIBO("Plating Ribo", true, Category.CONCENTRATION, new Decider() {
             @Override
-            public LabMetricDecision.Decision makeDecision(LabVessel labVessel, LabMetric labMetric) {
+            public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
+                LabMetricDecision.Decision decision;
                 if (labMetric.getValue().compareTo(new BigDecimal("3")) == 1) {
-                    return LabMetricDecision.Decision.PASS;
+                    decision = LabMetricDecision.Decision.PASS;
+                } else {
+                    decision = LabMetricDecision.Decision.FAIL;
                 }
-                return LabMetricDecision.Decision.FAIL;
+                return new LabMetricDecision(decision, new Date(), decidingUser, labMetric);
             }
         }),
         POND_PICO("Pond Pico", true, Category.CONCENTRATION, new Decider() {
             @Override
-            public LabMetricDecision.Decision makeDecision(LabVessel labVessel, LabMetric labMetric) {
+            public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
+                LabMetricDecision.Decision decision;
                 if (labMetric.getValue().compareTo(new BigDecimal("25")) == 1) {
-                    return LabMetricDecision.Decision.PASS;
+                    decision = LabMetricDecision.Decision.PASS;
+                } else {
+                    decision = LabMetricDecision.Decision.FAIL;
                 }
-                return LabMetricDecision.Decision.FAIL;
+                return new LabMetricDecision(decision, new Date(), decidingUser, labMetric);
             }
         }),
         CATCH_PICO("Catch Pico", true, Category.CONCENTRATION, new Decider() {
             @Override
-            public LabMetricDecision.Decision makeDecision(LabVessel labVessel, LabMetric labMetric) {
+            public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
+                LabMetricDecision.Decision decision;
                 if (labMetric.getValue().compareTo(new BigDecimal("2")) == 1) {
-                    return LabMetricDecision.Decision.PASS;
+                    decision = LabMetricDecision.Decision.PASS;
+                }else {
+                    decision = LabMetricDecision.Decision.FAIL;
                 }
-                return LabMetricDecision.Decision.FAIL;
+                return new LabMetricDecision(decision, new Date(), decidingUser, labMetric);
             }
         }),
         FINAL_LIBRARY_SIZE("Final Library Size", false, Category.DNA_LENGTH, null),
-        ECO_QPCR("ECO QPCR", true, Category.CONCENTRATION, null);
+        ECO_QPCR("ECO QPCR", true, Category.CONCENTRATION, null),
+        INITIAL_RNA_CALIPER("Initial RNA Caliper", true, Category.QUALITY, new Decider() {
+            @Override
+            public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
+                LabMetricDecision.Decision decision = LabMetricDecision.Decision.PASS;
+                String decisionNote = null;
+                LabMetricDecision.NeedsReview needsReview = LabMetricDecision.NeedsReview.FALSE;
+                for (Metadata metadata : labMetric.getMetadataSet()) {
+                    if (metadata.getKey() == Metadata.Key.DV_200) {
+                        if(metadata.getNumberValue().compareTo(BigDecimal.ZERO) <= 0 ||
+                           metadata.getNumberValue().compareTo(BigDecimal.ONE) >= 0 ) {
+                            decision = LabMetricDecision.Decision.REPEAT;
+                            decisionNote = "DV200 not in accepted 0-1 range.";
+                        }
+                    }else if(metadata.getKey() == Metadata.Key.LOWER_MARKER_TIME) {
+                        if(metadata.getNumberValue().compareTo(BigDecimal.valueOf(28)) < 0 ||
+                           metadata.getNumberValue().compareTo(BigDecimal.valueOf(33)) > 0 ) {
+                            decisionNote = "Lower Marker Time not in accepted 28-33 range.";
+                            decision = LabMetricDecision.Decision.REPEAT;
+                        }
+                    }else if(metadata.getKey() == Metadata.Key.NA) {
+                        if (metadata.getValue().equals(String.valueOf(Boolean.TRUE))) {
+                            decisionNote = "NA";
+                            decision = LabMetricDecision.Decision.REPEAT;
+                            needsReview = LabMetricDecision.NeedsReview.TRUE;
+                        }
+                    }
+                }
+
+                return new LabMetricDecision(decision, new Date(), decidingUser, labMetric, decisionNote, needsReview);
+            }
+        });
 
         private String displayName;
         private boolean uploadEnabled;
@@ -197,7 +245,8 @@ public class LabMetric implements Comparable<LabMetric> {
          */
         public enum Category {
             CONCENTRATION,
-            DNA_LENGTH
+            DNA_LENGTH,
+            QUALITY
         }
     }
 
