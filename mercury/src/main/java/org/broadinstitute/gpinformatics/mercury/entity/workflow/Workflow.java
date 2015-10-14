@@ -18,7 +18,7 @@ public enum Workflow {
     WHOLE_GENOME("Whole Genome"),
     ICE("ICE"),
     ICE_CRSP("ICE CRSP"),
-    CLINICAL_EXTRACTION("Clinical Whole Blood Extraction"),
+    CLINICAL_WHOLE_BLOOD_EXTRACTION("Clinical Whole Blood Extraction"),
     DNA_RNA_EXTRACTION_FROZEN_TISSUE("DNA and RNA for Frozen Tissue - AllPrep"),
     DNA_RNA_EXTRACTION_CELL_PELLETS("DNA and RNA from Cell Pellets"),
     DNA_RNA_EXTRACTION_FFPE_SECTIONS("DNA and RNA for FFPE - AllPrep (sections)"),
@@ -69,28 +69,8 @@ public enum Workflow {
      * Workflow processes that Mercury supports.
      */
     public static final EnumSet<Workflow> SUPPORTED_WORKFLOWS =
-            EnumSet.of(AGILENT_EXOME_EXPRESS, ICE_EXOME_EXPRESS, ICE_CRSP,
-                    DNA_RNA_EXTRACTION_FROZEN_TISSUE, CLINICAL_EXTRACTION,
-                    DNA_RNA_EXTRACTION_CELL_PELLETS,
-                    DNA_RNA_EXTRACTION_FFPE_SECTIONS,
-                    DNA_RNA_EXTRACTION_FFPE_SCROLLS,
-                    DNA_RNA_EXTRACTION_FFPE_BLOCKS,
-                    DNA_RNA_EXTRACTION_STOOL,
-                    DNA_EXTRACTION_WHOLE_BLOOD_MANUAL,
-                    DNA_EXTRACTION_WHOLE_BLOOD_CHEMAGEN,
-                    DNA_EXTRACTION_SALIVA,
-                    DNA_EXTRACTION_CELL_PELLETS,
-                    DNA_EXTRACTION_FROZEN_TISSUE,
-                    DNA_EXTRACTION_FFPE_SECTIONS,
-                    DNA_EXTRACTION_FFPE_SCROLLS,
-                    DNA_EXTRACTION_FFPE_CORES,
-                    DNA_EXTRACTION_BLOOD_SPOTS,
-                    DNA_EXTRACTION_BUFFY_COATS,
-                    RNA_EXTRACTION_FROZEN_TISSUE,
-                    RNA_EXTRACTION_FFPE_SECTIONS,
-                    RNA_EXTRACTION_CELL_PELLETS,
-                    RNA_EXTRACTION_FFPE_SCROLLS,
-                    RNA_EXTRACTION_FFPE_CORES
+            EnumSet.of(AGILENT_EXOME_EXPRESS, ICE_EXOME_EXPRESS, ICE_CRSP, CLINICAL_WHOLE_BLOOD_EXTRACTION,
+                    DNA_RNA_EXTRACTION_CELL_PELLETS
             );
 
     public boolean isWorkflowSupportedByMercury() {

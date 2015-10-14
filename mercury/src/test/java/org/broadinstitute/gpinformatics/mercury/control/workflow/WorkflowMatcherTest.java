@@ -86,7 +86,8 @@ public class WorkflowMatcherTest {
         WorkflowConfig workflowConfig = workflowLoader.load();
 
         List<WorkflowMatcher.WorkflowEvent> workflowEvents = workflowMatcher.match(
-                workflowConfig.getWorkflowVersionByName(Workflow.CLINICAL_EXTRACTION.getWorkflowName(), new Date()),
+                workflowConfig.getWorkflowVersionByName(Workflow.CLINICAL_WHOLE_BLOOD_EXTRACTION.getWorkflowName(),
+                        new Date()),
                 labBatch);
         Assert.assertEquals(workflowEvents.size(), 26);
 
