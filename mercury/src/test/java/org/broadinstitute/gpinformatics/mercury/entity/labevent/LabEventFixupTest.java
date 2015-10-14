@@ -926,4 +926,12 @@ public class LabEventFixupTest extends Arquillian {
             throw new RuntimeException(e);
         }
     }
+
+    @Test(enabled = false)
+    public void gplim3796FixEventDisambiguator() {
+        userBean.loginOSUser();
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, 1052890L);
+        labEvent.setDisambiguator(1L);
+        labEventDao.persist(new FixupCommentary("GPLIM-3796 changed disambiguator of an event to avoid a unique constraint violation with another receipt event"));
+    }
 }
