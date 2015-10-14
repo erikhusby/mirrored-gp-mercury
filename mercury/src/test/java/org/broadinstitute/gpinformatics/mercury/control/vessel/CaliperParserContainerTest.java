@@ -85,7 +85,7 @@ public class CaliperParserContainerTest extends Arquillian {
 
         Assert.assertTrue(StringUtils.isNotBlank(pair1.getRight()));
         Assert.assertFalse(messageCollection.hasErrors());
-        Assert.assertFalse(messageCollection.hasWarnings());
+        Assert.assertTrue(messageCollection.hasWarnings());
         Assert.assertNotNull(pair1.getLeft());
         Assert.assertEquals(pair1.getLeft().getLabMetrics().size(), 96 * 2);
     }
