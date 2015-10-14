@@ -6,6 +6,8 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventTy
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -26,7 +28,8 @@ public class CrspRiboPlatingJaxbBuilder {
     private final BettaLimsMessageTestFactory bettaLimsMessageTestFactory;
     private final List<BettaLIMSMessage> messageList = new ArrayList<>();
     private String riboMicrofluorPlateBarcode;
-    private PlateTransferEventType riboMicrofluorEventJaxb;
+    private PlateTransferEventType riboMicrofluorEventJaxbA2;
+    private PlateTransferEventType riboMicrofluorEventJaxbB1;
     private PlateEventType riboBufferAdditionJaxb;
     private String polyAAliquotRackBarcode;
     private PlateTransferEventType polyATSAliquot;
@@ -61,8 +64,12 @@ public class CrspRiboPlatingJaxbBuilder {
         return riboMicrofluorPlateBarcode;
     }
 
-    public PlateTransferEventType getRiboMicrofluorEventJaxb() {
-        return riboMicrofluorEventJaxb;
+    public PlateTransferEventType getRiboMicrofluorEventJaxbA2() {
+        return riboMicrofluorEventJaxbA2;
+    }
+
+    public PlateTransferEventType getRiboMicrofluorEventJaxbB1() {
+        return riboMicrofluorEventJaxbB1;
     }
 
     public PlateEventType getRiboBufferAdditionJaxb() {
@@ -107,9 +114,16 @@ public class CrspRiboPlatingJaxbBuilder {
 
         //RiboGreen
         riboMicrofluorPlateBarcode = "RiboMicrofluorTransfer" + testPrefix;
-        riboMicrofluorEventJaxb = bettaLimsMessageTestFactory.buildRackToPlate(
+        riboMicrofluorEventJaxbA2 = bettaLimsMessageTestFactory.buildRackToPlate(
                 "RiboMicrofluorTransfer", rackBarcode, polyAAliquotTubes, riboMicrofluorPlateBarcode);
-        bettaLimsMessageTestFactory.addMessage(messageList, riboMicrofluorEventJaxb);
+        riboMicrofluorEventJaxbA2.getPlate().setSection(SBSSection.P384_96TIP_1INTERVAL_A2.getSectionName());
+        riboMicrofluorEventJaxbA2.getPlate().setPhysType(StaticPlate.PlateType.Eppendorf384.getAutomationName());
+
+        riboMicrofluorEventJaxbB1 = bettaLimsMessageTestFactory.buildRackToPlate(
+                "RiboMicrofluorTransfer", rackBarcode, polyAAliquotTubes, riboMicrofluorPlateBarcode);
+        riboMicrofluorEventJaxbB1.getPlate().setSection(SBSSection.P384_96TIP_1INTERVAL_B1.getSectionName());
+        riboMicrofluorEventJaxbB1.getPlate().setPhysType(StaticPlate.PlateType.Eppendorf384.getAutomationName());
+        bettaLimsMessageTestFactory.addMessage(messageList, riboMicrofluorEventJaxbA2, riboMicrofluorEventJaxbB1);
 
         GregorianCalendar gregorianCalendar = new GregorianCalendar();
         gregorianCalendar.add(Calendar.MONTH, 6);
