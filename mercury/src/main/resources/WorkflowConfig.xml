@@ -208,7 +208,9 @@
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
-                <bucketEntryEvaluators>org.broadinstitute.gpinformatics.mercury.entity.workflow.RnaBucketEntryEvaluator</bucketEntryEvaluators>
+                <bucketEntryEvaluator>
+                    <materialTypes>RNA</materialTypes>
+                </bucketEntryEvaluator>
                 <batchJiraProjectType>LCSET</batchJiraProjectType>
                 <batchJiraIssueType>CDNA_TRUSEQ_SS</batchJiraIssueType>
             </workflowStepDefs>
@@ -2734,7 +2736,7 @@
         <productWorkflowDefVersions>
             <version>01</version>
             <effectiveDate>2014-08-19T00:00:00.000-04:00</effectiveDate>
-            <workflowProcessDefs>AllPrep Extraction</workflowProcessDefs>
+            <workflowProcessDefs>DNA and RNA for Frozen Tissue - AllPrep</workflowProcessDefs>
         </productWorkflowDefVersions>
     </productWorkflowDefs>
     <productWorkflowDefs>

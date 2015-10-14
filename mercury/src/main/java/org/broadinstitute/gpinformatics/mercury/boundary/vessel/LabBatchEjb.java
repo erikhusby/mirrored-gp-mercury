@@ -348,10 +348,9 @@ public class LabBatchEjb {
             }
 
             if (jiraTicket == null) {
-                Map<String, CustomFieldDefinition> requiredFields =
-                        jiraService.getRequiredFields(new CreateFields.Project(projectType), issueType);
+                Map<String, CustomFieldDefinition> customFieldDefinitions = jiraService.getCustomFields();
 
-                List<CustomField> batchJiraTicketFields = new ArrayList<>(fieldBuilder.getCustomFields(requiredFields));
+                List<CustomField> batchJiraTicketFields = new ArrayList<>(fieldBuilder.getCustomFields(customFieldDefinitions));
                 verifyAllowedValues(batchJiraTicketFields, messageReporter);
 
                 JiraIssue jiraIssue = jiraService

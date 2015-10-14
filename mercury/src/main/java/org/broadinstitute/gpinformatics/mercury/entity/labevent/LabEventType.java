@@ -979,8 +979,9 @@ public enum LabEventType {
     EXTRACT_CELL_SUSP_TO_MATRIX("ExtractCellSuspToMatrix",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.SpinColumn,
-            BarcodedTube.BarcodedTubeType.MatrixTube075, new String[]{}, MaterialType.DNA),
+            new ManualTransferDetails.Builder(MessageType.RECEPTACLE_TRANSFER_EVENT,
+                    BarcodedTube.BarcodedTubeType.SpinColumn, BarcodedTube.BarcodedTubeType.MatrixTube075).build(),
+            MaterialType.DNA),
 
     // Transfer tissue in paraffin to micro centrifuge tube
     EXTRACT_FFPE_TO_MICRO1("ExtractFfpeToMicro1",
@@ -1007,8 +1008,9 @@ public enum LabEventType {
     EXTRACT_FFPE_SPIN_TO_MATRIX("ExtractFfpeSpinToMatrix",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.SpinColumn,
-            BarcodedTube.BarcodedTubeType.MatrixTube075, new String[]{}, MaterialType.DNA),
+            new ManualTransferDetails.Builder(MessageType.RECEPTACLE_TRANSFER_EVENT,
+                    BarcodedTube.BarcodedTubeType.SpinColumn, BarcodedTube.BarcodedTubeType.MatrixTube075).build(),
+            MaterialType.DNA),
 
     // Transfer fresh frozen tissue to micro centrifuge tube
     EXTRACT_FRESH_TISSUE_TO_MICRO("ExtractFreshTissueToMicro",
@@ -1028,8 +1030,9 @@ public enum LabEventType {
     EXTRACT_FRESH_TISSUE_SPIN_TO_MATRIX("ExtractFreshTissueSpinToMatrix",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.SpinColumn,
-            BarcodedTube.BarcodedTubeType.MatrixTube075, new String[]{}, MaterialType.DNA),
+            new ManualTransferDetails.Builder(MessageType.RECEPTACLE_TRANSFER_EVENT,
+                    BarcodedTube.BarcodedTubeType.SpinColumn, BarcodedTube.BarcodedTubeType.MatrixTube075).build(),
+            MaterialType.DNA),
 
     // Transfer saliva to conical tube
     EXTRACT_SALIVA_TO_CONICAL("ExtractSalivaToConical",
@@ -1049,8 +1052,9 @@ public enum LabEventType {
     EXTRACT_SALIVA_SPIN_TO_MATRIX("ExtractSalivaSpinToMatrix",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            MessageType.RECEPTACLE_TRANSFER_EVENT, BarcodedTube.BarcodedTubeType.SpinColumn,
-            BarcodedTube.BarcodedTubeType.MatrixTube075, new String[]{}, MaterialType.DNA),
+            new ManualTransferDetails.Builder(MessageType.RECEPTACLE_TRANSFER_EVENT,
+                    BarcodedTube.BarcodedTubeType.SpinColumn, BarcodedTube.BarcodedTubeType.MatrixTube075).build(),
+            MaterialType.DNA),
 
     RNA_CALIPER_SETUP("RNACaliperSetup",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
