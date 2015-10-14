@@ -161,4 +161,12 @@ public class ResearchProjectFixupTest extends Arquillian {
     public void reassignRPUserGPLIM_1156() {
         changeProjectOwner("namrata", "RP-57");
     }
+
+    @Test(enabled = false)
+    public void support1192ChangeRegulatoryDesignationForRp1037() {
+        userBean.loginOSUser();
+        ResearchProject researchProject = rpDao.findByBusinessKey("RP-1037");
+        researchProject.setRegulatoryDesignation(ResearchProject.RegulatoryDesignation.RESEARCH_ONLY);
+        rpDao.persist(new FixupCommentary("SUPPORT-1192 updating incorrectly selected regulatory designation"));
+    }
 }
