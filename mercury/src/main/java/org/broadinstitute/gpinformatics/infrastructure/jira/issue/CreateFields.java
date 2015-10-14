@@ -183,6 +183,18 @@ public class CreateFields extends UpdateFields {
             put(Workflow.ICE_CRSP.getWorkflowName(), EXOME_EXPRESS);
             put(Workflow.ICE.getWorkflowName(), EXOME_EXPRESS);
         }};
+
+        public static IssueType fromJiraName(String jiraName) {
+            IssueType foundValue = null;
+            for (IssueType issuetype : values()) {
+                if (issuetype.getJiraName().equals(jiraName)) {
+                    foundValue = issuetype;
+                    break;
+                }
+            }
+
+            return foundValue;
+        }
     }
 
 

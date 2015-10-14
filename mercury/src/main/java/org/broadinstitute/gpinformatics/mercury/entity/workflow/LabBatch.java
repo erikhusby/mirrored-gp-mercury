@@ -439,6 +439,7 @@ public class LabBatch {
         NUMBER_OF_CONTROLS("Number of Controls", true),
         NUMBER_OF_SAMPLES("Number of Samples", true),
         SAMPLE_IDS("Sample IDs", true),
+        BATCH_TYPE("Batch Type", true),
 
         // DO not set this value.  Leave at its default (for now).
         LIBRARY_QC_SEQUENCING_REQUIRED("Library QC Sequencing Required?", true),

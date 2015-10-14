@@ -13,13 +13,14 @@ public class CustomFieldDefinition {
     private final String fieldName;
 
     private final boolean isRequired;
+    private final Collection<CustomField.ValueContainer> allowedValues;
 
     public CustomFieldDefinition(@Nonnull String fieldId, @Nonnull String fieldName, boolean isRequired) {
-        this(fieldId, fieldName, isRequired, Collections.<String>emptyList());
+        this(fieldId, fieldName, isRequired, Collections.<CustomField.ValueContainer>emptyList());
     }
 
     public CustomFieldDefinition(@Nonnull String fieldId, @Nonnull String fieldName, boolean isRequired,
-                                 Collection<String> allowedValues) {
+                                 Collection<CustomField.ValueContainer> allowedValues) {
         if (fieldId == null) {
             throw new NullPointerException("fieldId cannot be null");
         }
@@ -29,6 +30,7 @@ public class CustomFieldDefinition {
         this.fieldId = fieldId;
         this.fieldName = fieldName;
         this.isRequired = isRequired;
+        this.allowedValues=allowedValues;
     }
 
     @JsonIgnore
@@ -42,5 +44,10 @@ public class CustomFieldDefinition {
 
     public boolean isRequired() {
         return isRequired;
+    }
+
+    @JsonIgnore
+    public Collection<CustomField.ValueContainer> getAllowedValues() {
+        return allowedValues;
     }
 }

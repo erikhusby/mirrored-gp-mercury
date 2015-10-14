@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -85,7 +86,8 @@ public class WorkflowMatcherTest {
         WorkflowConfig workflowConfig = workflowLoader.load();
 
         List<WorkflowMatcher.WorkflowEvent> workflowEvents = workflowMatcher.match(
-                workflowConfig.getWorkflowVersionByName("Clinical Whole Blood Extraction", new Date()),
+                workflowConfig.getWorkflowVersionByName(Workflow.CLINICAL_WHOLE_BLOOD_EXTRACTION.getWorkflowName(),
+                        new Date()),
                 labBatch);
         Assert.assertEquals(workflowEvents.size(), 26);
 

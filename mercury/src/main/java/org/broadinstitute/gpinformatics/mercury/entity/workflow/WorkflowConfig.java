@@ -1,11 +1,14 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
+import com.google.common.collect.HashMultimap;
+
 import javax.annotation.Nonnull;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -25,6 +28,13 @@ public class WorkflowConfig {
     private final List<ProductWorkflowDef> productWorkflowDefs;
     @XmlTransient
     private Map<String, ProductWorkflowDef> mapNameToWorkflow;
+
+    public Map<WorkflowStepDef, Collection<ProductWorkflowDef>> getMapProcessDefToWorkflow() {
+        return mapBucketToProductWorkflows;
+    }
+
+    @XmlTransient
+    private Map<WorkflowStepDef, Collection<ProductWorkflowDef>> mapBucketToProductWorkflows;
 
     /** List of sequencing configs,  */
     private final List<SequencingConfigDef> sequencingConfigDefs = new ArrayList<>();
@@ -64,11 +74,17 @@ public class WorkflowConfig {
     }
 
     public ProductWorkflowDef getWorkflowByName(String workflowName) {
+        HashMultimap<WorkflowStepDef, ProductWorkflowDef> bucketWorkflowsMap = HashMultimap.create();
+
         if (mapNameToWorkflow == null) {
             mapNameToWorkflow = new HashMap<>();
             for (ProductWorkflowDef productWorkflowDef : productWorkflowDefs) {
                 mapNameToWorkflow.put(productWorkflowDef.getName(), productWorkflowDef);
+                for (WorkflowBucketDef workflowBucketDef : productWorkflowDef.getEffectiveVersion().getBuckets()) {
+                    bucketWorkflowsMap.put(workflowBucketDef, productWorkflowDef);
+                }
             }
+            mapBucketToProductWorkflows = bucketWorkflowsMap.asMap();
         }
         ProductWorkflowDef productWorkflowDef = mapNameToWorkflow.get(workflowName);
         if (productWorkflowDef == null) {
