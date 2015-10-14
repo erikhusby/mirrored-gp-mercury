@@ -161,6 +161,11 @@ public class ProductOrderTestFactory {
                 "Test RP", rpSynopsis, ResearchProject.IRB_ENGAGED, "P-ARRtest-1232", SAMPLE_SUFFIX, "ExExQuoteId");
     }
 
+    public static ProductOrder buildTruSeqStrandSpecificProductOrder(int maxSamples) {
+        return createDummyProductOrder(maxSamples, "PDO-1TRUSS", Workflow.NONE, 101,
+                "Test RP", rpSynopsis, ResearchProject.IRB_ENGAGED, "P-TRUSStest-1232", SAMPLE_SUFFIX, "ExExQuoteId");
+    }
+
 
     /**
      * Database free creation of Product Order from scratch, including creation of a new Research Project and Product.

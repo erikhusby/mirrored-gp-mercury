@@ -372,7 +372,7 @@ function getHighlightClass() {
 }
 
 function updateFundsRemaining() {
-    var quoteIdentifier = $j("#quote").val();
+    var quoteIdentifier = '${actionBean.editOrder.quoteId}';
     if ($j.trim(quoteIdentifier)) {
         $j.ajax({
             url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier=${actionBean.editOrder.quoteId}",
@@ -386,7 +386,7 @@ function updateFundsRemaining() {
 
 function updateFunds(data) {
     if (data.fundsRemaining) {
-        $j("#fundsRemaining").text('Funds Remaining: ' + data.fundsRemaining);
+        $j("#fundsRemaining").text('Status: ' + data.status + ' - Funds Remaining: ' + data.fundsRemaining);
     } else {
         $j("#fundsRemaining").text('Error: ' + data.error);
     }
@@ -1049,14 +1049,7 @@ function formatInput(item) {
 
     <div class="controls">
         <div class="form-value">
-            <div class="barFull view" title="${actionBean.percentInProgress}% In Progress">
-                                    <span class="barAbandon"
-                                          title="${actionBean.percentAbandoned}% Abandoned"
-                                          style="width: ${actionBean.percentAbandoned}%"> </span>
-                                    <span class="barComplete"
-                                          title="${actionBean.percentCompleted}% Completed"
-                                          style="width: ${actionBean.percentCompleted}%"> </span>
-            </div>
+                <stripes:layout-render name="/orders/sample_progress_bar.jsp" status="${actionBean.progressFetcher.getStatus(actionBean.editOrder.businessKey)}" extraStyle="view"/>
                 ${actionBean.progressString}
         </div>
     </div>

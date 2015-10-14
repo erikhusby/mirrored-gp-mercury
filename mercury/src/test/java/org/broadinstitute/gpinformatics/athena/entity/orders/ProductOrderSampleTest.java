@@ -17,10 +17,13 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySample
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToVesselTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
+import org.jetbrains.annotations.NotNull;
 import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
@@ -30,6 +33,7 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -40,6 +44,7 @@ import java.util.Set;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ProductOrderSampleTest {
@@ -482,6 +487,83 @@ public class ProductOrderSampleTest {
         SampleDataSourceResolver resolver = new SampleDataSourceResolver(mockDao);
         resolver.populateSampleDataSources(Collections.singleton(productOrderSample));
         Assert.assertEquals(productOrderSample.isSampleAvailable(), expectedResult);
+    }
+
+    @Test
+    public void testGetNoReceiptDateFromMercurySample() {
+        ProductOrderSample productOrderSample = createProductOrderSample("SM-TEST", "0123");
+
+        assertThat(productOrderSample.getReceiptDate(), nullValue());
+    }
+
+    @Test
+    public void testGetReceiptDateFromMercurySampleFromCurrentVessel() {
+        ProductOrderSample productOrderSample = createProductOrderSample("SM-TEST", "0123");
+
+        Calendar calendar = Calendar.getInstance();
+        LabEvent labEvent =
+                new LabEvent(LabEventType.SAMPLE_RECEIPT, calendar.getTime(), "ProductOrderSampleTest", 0L, 0L, "Test");
+        LabVessel labVessel = productOrderSample.getMercurySample().getLabVessel().iterator().next();
+        labVessel.addInPlaceEvent(labEvent);
+
+        assertThat(productOrderSample.getReceiptDate(), equalTo(calendar.getTime()));
+    }
+
+    @Test
+    public void testGetReceiptDateFromMercurySampleFromAncestorVessel() {
+        ProductOrderSample productOrderSample = createProductOrderSample("SM-TEST", "0123");
+        MercurySample parentSample = createMercurySample("SM-PARENT", "0001");
+        LabVessel parentTube = parentSample.getLabVessel().iterator().next();
+
+        Calendar calendar = Calendar.getInstance();
+        LabEvent transferEvent =
+                new LabEvent(LabEventType.A_BASE, calendar.getTime(), "ProductOrderSampleTest", 0L, 0L, "Test");
+        transferEvent.getVesselToVesselTransfers()
+                .add(new VesselToVesselTransfer(parentTube,
+                        productOrderSample.getMercurySample().getLabVessel().iterator().next(), transferEvent));
+
+        calendar.add(Calendar.DAY_OF_MONTH, 1);
+        LabEvent receiptEvent =
+                new LabEvent(LabEventType.SAMPLE_RECEIPT, calendar.getTime(), "ProductOrderSampleTest", 0L, 0L, "Test");
+        parentTube.addInPlaceEvent(receiptEvent);
+
+        assertThat(productOrderSample.getReceiptDate(), equalTo(calendar.getTime()));
+    }
+
+    @Test
+    public void testDoNotGetReceivedDateFromMercurySampleFromDescendantVessel() {
+        ProductOrderSample productOrderSample = createProductOrderSample("SM-TEST", "0123");
+        LabVessel labVessel = productOrderSample.getMercurySample().getLabVessel().iterator().next();
+        MercurySample childSample = createMercurySample("SM-CHILD", "0001");
+        LabVessel childTube = childSample.getLabVessel().iterator().next();
+
+        Calendar calendar = Calendar.getInstance();
+        LabEvent transferEvent =
+                new LabEvent(LabEventType.A_BASE, calendar.getTime(), "ProductOrderSampleTest", 0L, 0L, "Test");
+        transferEvent.getVesselToVesselTransfers().add(new VesselToVesselTransfer(labVessel, childTube, transferEvent));
+
+        LabEvent receiptEvent =
+                new LabEvent(LabEventType.SAMPLE_RECEIPT, calendar.getTime(), "ProductOrderSampleTest", 0L, 0L, "Test");
+        childTube.addInPlaceEvent(receiptEvent);
+
+        assertThat(productOrderSample.getReceiptDate(), nullValue());
+    }
+
+    @NotNull
+    private ProductOrderSample createProductOrderSample(String sampleName, String tubeBarcode) {
+        ProductOrderSample productOrderSample;
+        productOrderSample = new ProductOrderSample(sampleName);
+        MercurySample mercurySample = createMercurySample(sampleName, tubeBarcode);
+        mercurySample.addProductOrderSample(productOrderSample);
+        return productOrderSample;
+    }
+
+    @NotNull
+    private MercurySample createMercurySample(String sampleName, String tubeBarcode) {
+        LabVessel labVessel = new BarcodedTube(tubeBarcode);
+        MercurySample mercurySample = new MercurySample(sampleName, Collections.<Metadata>emptySet());
+        mercurySample.addLabVessel(labVessel);
+        return mercurySample;
     }
 
     private enum TargetMercurySample {

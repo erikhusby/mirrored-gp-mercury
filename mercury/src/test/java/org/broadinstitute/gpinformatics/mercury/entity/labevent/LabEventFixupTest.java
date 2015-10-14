@@ -903,4 +903,27 @@ public class LabEventFixupTest extends Arquillian {
 
         labEventDao.flush();
     }
+
+    @Test(enabled = false)
+    public void fixupGplim3788() {
+        try {
+            userBean.loginOSUser();
+            utx.begin();
+            long[] ids = {1049478L};
+            for (long id: ids) {
+                LabEvent labEvent = labEventDao.findById(LabEvent.class, id);
+                Assert.assertEquals(labEvent.getLabEventType(), LabEventType.EXTRACT_FFPE_MICRO1_TO_MICRO2);
+                System.out.println("Deleting " + labEvent.getLabEventType() + " " + labEvent.getLabEventId());
+                labEvent.getReagents().clear();
+                labEvent.getVesselToVesselTransfers().clear();
+                labEventDao.remove(labEvent);
+            }
+            labEventDao.persist(new FixupCommentary("GPLIM-3788 delete looping event"));
+            labEventDao.flush();
+            utx.commit();
+        } catch (NotSupportedException | SystemException | HeuristicMixedException | HeuristicRollbackException |
+                RollbackException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

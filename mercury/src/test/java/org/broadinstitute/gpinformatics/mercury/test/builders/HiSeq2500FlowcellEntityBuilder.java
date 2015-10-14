@@ -10,7 +10,7 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
@@ -23,9 +23,7 @@ import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import org.testng.Assert;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -191,29 +189,20 @@ public class HiSeq2500FlowcellEntityBuilder {
             Assert.assertTrue(tube.getLabel().equals(expectedNearestTubeLabel));
         }
 
-        Set<SampleInstance> lane1SampleInstances =
-                illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(VesselPosition.LANE1);
-        Assert.assertEquals(lane1SampleInstances.size(), denatureTube.getSampleInstances().size(),
+        Set<SampleInstanceV2> lane1SampleInstances =
+                illuminaFlowcell.getContainerRole().getSampleInstancesAtPositionV2(VesselPosition.LANE1);
+        Assert.assertEquals(lane1SampleInstances.size(), denatureTube.getSampleInstancesV2().size(),
                 "Wrong number of samples in flowcell lane");
 
-        SampleInstance sampleInstance = null;
-        Collection<String> noWorkflowSamples = new HashSet<>();
-        for (SampleInstance instance : lane1SampleInstances) {
-            if (instance.getWorkflowName() == null) {
-                noWorkflowSamples.add(instance.getStartingSample().getSampleKey());
-            } else {
-                sampleInstance = instance;
-            }
-        }
-        // LabEventTest.testExomeExpressRework reworks 2 samples [SM-1243A, SM-49505251A] for which getSampleInstances cannot determine a workflow
-        // TODO: remove these calls to remove() after switching to getSampleInstancesV2
-        noWorkflowSamples.remove("SM-1243A");
-        noWorkflowSamples.remove("SM-49505251A");
-        Assert.assertTrue(noWorkflowSamples.isEmpty(), noWorkflowSamples.toString());
+        SampleInstanceV2 sampleInstance = lane1SampleInstances.iterator().next();
 
         Assert.assertNotNull(sampleInstance);
         String workflowName = sampleInstance.getWorkflowName();
         Assert.assertNotNull(workflowName);
+
+        for( SampleInstanceV2 sampleInstIteratee : lane1SampleInstances ) {
+            Assert.assertNotNull(sampleInstIteratee.getWorkflowName());
+        }
 
         int reagentsSize = 0;
         switch (Workflow.findByName(workflowName)) {
@@ -221,6 +210,7 @@ public class HiSeq2500FlowcellEntityBuilder {
             reagentsSize = 0;
             break;
         case WHOLE_GENOME:
+        case TRU_SEQ_STRAND_SPECIFIC_CRSP:
             reagentsSize = 1;
             break;
         case AGILENT_EXOME_EXPRESS:
@@ -234,15 +224,15 @@ public class HiSeq2500FlowcellEntityBuilder {
 
         Assert.assertEquals(sampleInstance.getReagents().size(), reagentsSize, "Wrong number of reagents");
 
-        Set<SampleInstance> lane2SampleInstances =
-                illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(VesselPosition.LANE2);
+        Set<SampleInstanceV2> lane2SampleInstances =
+                illuminaFlowcell.getContainerRole().getSampleInstancesAtPositionV2(VesselPosition.LANE2);
 
-        sampleInstance = TestUtils.getFirst(lane2SampleInstances);
+        sampleInstance = lane2SampleInstances.iterator().next();
         Assert.assertNotNull(sampleInstance);
         workflowName = sampleInstance.getWorkflowName();
         Assert.assertNotNull(workflowName);
 
-        Assert.assertEquals(lane2SampleInstances.size(), denatureTube.getSampleInstances().size(),
+        Assert.assertEquals(lane2SampleInstances.size(), denatureTube.getSampleInstancesV2().size(),
                 "Wrong number of samples in flowcell lane");
 
         Assert.assertEquals(sampleInstance.getReagents().size(), reagentsSize, "Wrong number of reagents");

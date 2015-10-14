@@ -99,7 +99,7 @@ public class VarioskanParserContainerTest extends Arquillian {
                                                         boolean persistVessels)
             throws Exception {
 
-        Workbook workbook = WorkbookFactory.create(VarioskanParserTest.getSpreadsheet());
+        Workbook workbook = WorkbookFactory.create(VarioskanParserTest.getSpreadsheet(VarioskanParserTest.VARIOSKAN_OUTPUT));
         Sheet curveSheet = workbook.getSheet(VarioskanRowParser.QUANTITATIVE_CURVE_FIT1_TAB);
         for (int i = 0; i < curveSheet.getLastRowNum(); i++) {
             Row row = curveSheet.getRow(i);

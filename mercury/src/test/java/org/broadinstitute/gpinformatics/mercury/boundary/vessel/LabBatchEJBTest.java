@@ -255,7 +255,7 @@ public class LabBatchEJBTest extends ContainerTest {
                 bucketIds.add(bucketEntry.getBucketEntryId());
             }
         }
-
+zz
         LabBatch savedBatch = labBatchEJB.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
                 Workflow.DNA_EXTRACTION_WHOLE_BLOOD_MANUAL.getWorkflowName(), bucketIds, Collections.<Long>emptyList(),
                 "LabBatchEJBTest.testCreateLabBatchAndRemoveFromBucket", "", new Date(), "", scottmat, bucketName);
@@ -330,7 +330,7 @@ public class LabBatchEJBTest extends ContainerTest {
                 bucketIds.add(bucketEntry.getBucketEntryId());
             }
         }
-
+zz
         LabBatch savedBatch = labBatchEJB.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
                 Workflow.DNA_EXTRACTION_WHOLE_BLOOD_MANUAL.getWorkflowName(), bucketIds, Collections.<Long>emptyList(),
                 expectedTicketId,"", new Date(), "", scottmat, selectedBucket);
