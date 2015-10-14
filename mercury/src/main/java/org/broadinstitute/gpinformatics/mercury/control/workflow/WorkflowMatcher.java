@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowProcessDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowProcessDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
@@ -150,9 +151,14 @@ public class WorkflowMatcher {
             WorkflowProcessDefVersion effectiveVersion = workflowProcessDef.getEffectiveVersion();
             for (WorkflowStepDef workflowStepDef : effectiveVersion.getWorkflowStepDefs()) {
                 for (LabEventType labEventType : workflowStepDef.getLabEventTypes()) {
-                    workflowEvents.add(new WorkflowEvent(
-                            workflowStepDef,
-                            mapTypeToEvent.remove(new LabEventKey(labEventType, workflowStepDef.getWorkflowQualifier()))));
+                    List<LabEvent> labEvents = mapTypeToEvent.remove(
+                            new LabEventKey(labEventType, workflowStepDef.getWorkflowQualifier()));
+                    // Don't include bucket event, it's artificial and confuses the users
+                    if (!(workflowStepDef instanceof WorkflowBucketDef)) {
+                        workflowEvents.add(new WorkflowEvent(
+                                workflowStepDef,
+                                labEvents));
+                    }
                 }
             }
         }
