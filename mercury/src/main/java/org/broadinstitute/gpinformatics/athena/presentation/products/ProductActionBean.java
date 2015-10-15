@@ -33,6 +33,8 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.AnalysisTypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
@@ -44,6 +46,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 import static org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao.IncludePDMOnly;
 import static org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao.TopLevelOnly;
@@ -519,16 +523,17 @@ public class ProductActionBean extends CoreActionBean {
     }
 
     /**
-     * Get the list of workflows with NONE removed.
+     * Get the list of workflows.
      *
-     * @return The workflows
+     * @return all workflows
      */
-    public List<Workflow> getVisibleWorkflowList() {
-        return Workflow.getVisibleWorkflowList();
-    }
-
-    public Workflow getWorkflowNone() {
-        return Workflow.NONE;
+    public Set<Workflow> getAvailableWorkflows() {
+        Set<Workflow> workflows = new TreeSet<>(Workflow.BY_NAME);
+        List<ProductWorkflowDef> productWorkflowDefs = new WorkflowLoader().load().getProductWorkflowDefs();
+        for (ProductWorkflowDef productWorkflowDef : productWorkflowDefs) {
+            workflows.add(Workflow.findByName(productWorkflowDef.getName()));
+        }
+        return workflows;
     }
 
     public ProductDao.Availability getAvailability() {
