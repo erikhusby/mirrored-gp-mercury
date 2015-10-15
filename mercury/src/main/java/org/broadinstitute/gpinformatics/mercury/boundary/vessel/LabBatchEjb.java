@@ -348,9 +348,12 @@ public class LabBatchEjb {
             }
 
             if (jiraTicket == null) {
-                Map<String, CustomFieldDefinition> customFieldDefinitions = jiraService.getCustomFields();
+                Map<String, CustomFieldDefinition> customFieldDefinitions = jiraService
+                        .getRequiredFields(new CreateFields.Project(CreateFields.ProjectType.EXTRACTION_PROJECT),
+                                issueType);
 
-                List<CustomField> batchJiraTicketFields = new ArrayList<>(fieldBuilder.getCustomFields(customFieldDefinitions));
+                List<CustomField> batchJiraTicketFields =
+                        new ArrayList<>(fieldBuilder.getCustomFields(customFieldDefinitions));
                 verifyAllowedValues(batchJiraTicketFields, messageReporter);
 
                 JiraIssue jiraIssue = jiraService
@@ -379,7 +382,7 @@ public class LabBatchEjb {
             }
             CustomFieldDefinition batchJiraTicketFieldFieldDefinition = batchJiraTicketField.getFieldDefinition();
             Collection<CustomField.ValueContainer> allowedValues = batchJiraTicketFieldFieldDefinition.getAllowedValues();
-             batchJiraTicketField.getFieldDefinition().getName();
+
             List<CustomField.ValueContainer> valueContainerValues = new ArrayList<>();
             if (batchJiraTicketField.getValue() instanceof Object[]) {
                 for (Object objectValue : ((Object[]) batchJiraTicketField.getValue())) {
