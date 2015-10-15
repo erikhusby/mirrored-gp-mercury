@@ -235,7 +235,9 @@
                     {"bSortable":true},
                     {"bSortable":true},
                     {"bSortable":true},
+                    {"bSortable":true},
                     {"bSortable":true, "sType":"date"},
+                    {"bSortable":true},
                     {"bSortable":true},
                     {"bSortable":true},
                     {"bSortable":true},
@@ -251,6 +253,24 @@
                 checkboxClass:'bucket-checkbox'});
 
             $j("#dueDate").datepicker();
+
+            $j("#lcsetText").blur(function(){
+                var createElements = ["#summary", "#description", "#important", "#dueDate"];
+                if ($j("#lcsetText").val()==$j("#lcsetText").attr('title')) {
+                    for (var i = 0; i < createElements.length; i++) {
+                        $j(createElements[i]).closest(".control-group").show();
+                        $j(createElements[i]).trigger('click');
+                    }
+                    $j("[name='createBatch']").prop('disabled', false);
+                } else {
+                    for (var i = 0; i < createElements.length; i++) {
+                        $j(createElements[i]).closest(".control-group").hide();
+                    }
+                    $j("[name='createBatch']").prop('disabled', true);
+                    $j("[name='addToBatch']").prop('disabled', false);
+                }
+            });
+
         });
 
         function showJiraInfo() {
@@ -260,6 +280,22 @@
 </stripes:layout-component>
 
 <stripes:layout-component name="content">
+    <c:if test="${actionBean.totalBucketEntries()>0 && (actionBean.selectedBucket!=null && actionBean.selectedWorkflowDef==null)}">
+        <div class="alert alert-success" style="margin-left:20%;margin-right:20%;">
+            <ul>
+                <c:if test="${actionBean.selectedBucket!=null && actionBean.selectedWorkflowDef==null}">
+                    <li>There are ${actionBean.totalBucketEntries()} entries in this bucket
+                        <c:if test="${actionBean.totalBucketEntries()>0}">
+                            and ${fn:length(actionBean.possibleWorkflows)} possible workflows.
+                        </c:if>
+                    </li>
+                    <c:if test="${actionBean.selectedWorkflowDef==null && actionBean.totalBucketEntries()>0}">
+                        <li>Select a workflow to view and batch bucket entries.</li>
+                    </c:if>
+                </c:if>
+            </ul>
+        </div>
+    </c:if>
     <stripes:form id="bucketForm" class="form-horizontal" action="/view/bucketView.action?setBucket">
         <div class="form-horizontal">
             <div class="control-group">
@@ -295,10 +331,10 @@
         <c:if test="${actionBean.jiraEnabled}">
             <div id="newTicketDiv">
                 <div class="control-group">
-                    <stripes:label for="lcsetText" name="LCSet Name" class="control-label"/>
+                    <stripes:label for="lcsetText" name="Batch Name" class="control-label"/>
                     <div class="controls">
                         <stripes:text id="lcsetText" class="defaultText" name="selectedLcset"
-                                      title="Enter if you are adding to a batch"/>
+                                      title="Enter if you are adding to an existing batch"/>
                     </div>
                 </div>
                 <div class="control-group">
@@ -353,7 +389,7 @@
             <stripes:submit name="removeFromBucket" value="Remove From Bucket" class="btn"/>
             <a href="javascript:void(0)" id="PasteBarcodesList" title="Use a pasted-in list of tube barcodes to select samples">Choose via list of barcodes...</a>
         </div>
-        <table id="bucketEntryView" class="table simple">
+        <table id="bucketEntryView" class="bucket-checkbox table simple">
             <thead>
             <tr>
                 <th width="10">
@@ -362,12 +398,14 @@
                 </th>
                 <th width="60">Vessel Name</th>
                 <th width="50">Sample Name</th>
+                <th>Material Type</th>
                 <th>PDO</th>
                 <th width="300">PDO Name</th>
                 <th width="200">PDO Owner</th>
                 <th>Batch Name</th>
                 <th width="100">Created Date</th>
                 <th>Bucket Entry Type</th>
+                <th>Workflow Name</th>
                 <th>Rework Reason</th>
                 <th>Rework Comment</th>
                 <th>Rework User</th>
@@ -397,6 +435,9 @@
                             <c:if test="${!stat.last}">&nbsp;</c:if>
                         </c:forEach>
                     </td>
+                    <td class="ellipsis">
+                        ${entry.labVessel.latestMaterialType.displayName}
+                    </td>
                     <td class="editable"><span class="ellipsis">${entry.productOrder.businessKey}</span><span style="display: none;"
                                                                                            class="icon-pencil"></span>
                     </td>
@@ -419,6 +460,9 @@
                     </td>
                     <td>
                             ${entry.entryType.name}
+                    </td>
+                    <td>
+                            ${entry.workflowName}
                     </td>
                     <td>
                             ${entry.reworkDetail.reason.reason}

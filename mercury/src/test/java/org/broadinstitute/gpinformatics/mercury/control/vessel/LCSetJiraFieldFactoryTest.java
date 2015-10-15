@@ -9,10 +9,11 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
@@ -91,16 +92,16 @@ public class LCSetJiraFieldFactoryTest {
         List<String> vesselSampleList = new ArrayList<>(6);
 
         Collections.addAll(vesselSampleList, "SM-423", "SM-243", "SM-765", "SM-143", "SM-9243", "SM-118");
-
+        Bucket bucket = new Bucket("Pico/Plating Bucket");
         // starting rack
         for (int sampleIndex = 1; sampleIndex <= vesselSampleList.size(); sampleIndex++) {
             String barcode = "R" + sampleIndex + sampleIndex + sampleIndex + sampleIndex + sampleIndex + sampleIndex;
             String bspStock = vesselSampleList.get(sampleIndex - 1);
             BarcodedTube bspAliquot = new BarcodedTube(barcode);
             bspAliquot.addSample(new MercurySample(bspStock, MercurySample.MetadataSource.BSP));
-            bspAliquot.addBucketEntry(new BucketEntry(bspAliquot,
-                                                      sampleIndex == 1 ? singleSampleOrder : testProductOrder,
-                                                      BucketEntry.BucketEntryType.PDO_ENTRY));
+            ProductOrder productOrder = sampleIndex == 1 ? singleSampleOrder : testProductOrder;
+            bucket.addEntry(productOrder, bspAliquot, BucketEntry.BucketEntryType.PDO_ENTRY,
+                    Workflow.AGILENT_EXOME_EXPRESS);
             mapBarcodeToTube.put(barcode, bspAliquot);
         }
 
@@ -130,7 +131,7 @@ public class LCSetJiraFieldFactoryTest {
         AbstractBatchJiraFieldFactory testBuilder = AbstractBatchJiraFieldFactory.getInstance(
                 CreateFields.ProjectType.LCSET_PROJECT, testBatch, productOrderDao);
 
-        Assert.assertEquals("1 samples from MyResearchProject PDO-7\n5 samples from MyResearchProject PDO-999\n",
+        Assert.assertEquals("1 sample with material types [] from MyResearchProject PDO-7\n5 samples with material types [] from MyResearchProject PDO-999\n",
                             testBuilder.generateDescription());
 
         Collection<CustomField> generatedFields = testBuilder.getCustomFields(jiraFieldDefs);

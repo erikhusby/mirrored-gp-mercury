@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.athena.presentation.orders;
 
 import org.apache.commons.lang3.time.FastDateFormat;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
@@ -15,6 +17,7 @@ import java.util.Date;
 public class ProductOrderSampleJsonFactory {
 
     private static final Format dateFormatter = FastDateFormat.getInstance(CoreActionBean.DATE_PATTERN);
+    private static final Log log = LogFactory.getLog(ProductOrderSampleJsonFactory.class);
 
     public JSONObject toJson(ProductOrderSample productOrderSample) throws JSONException {
         JSONObject jsonObject = new JSONObject();
@@ -54,6 +57,12 @@ public class ProductOrderSampleJsonFactory {
         item.put(BspSampleData.PATIENT_ID, sampleData.getPatientId());
         item.put(BspSampleData.COLLABORATOR_PARTICIPANT_ID, sampleData.getCollaboratorParticipantId());
         item.put(BspSampleData.SAMPLE_TYPE, sampleData.getSampleType());
+        // This is here because ServiceAccessUtility doesn't work DATABASE_FREE
+        try {
+            item.put(BspSampleData.MATERIAL_TYPE, sample.getLatestMaterialType());
+        } catch (Exception e) {
+            log.error("Could not get gt material type from sample");
+        }
         item.put(BspSampleData.VOLUME, sampleData.getVolume());
         item.put(BspSampleData.CONCENTRATION, sampleData.getConcentration());
         item.put(BspSampleData.JSON_RIN_KEY, sampleData.getRawRin());
@@ -89,6 +98,12 @@ public class ProductOrderSampleJsonFactory {
     public static void setupEmptyItems(ProductOrderSample sample, JSONObject item) throws JSONException {
         item.put(BspSampleData.SAMPLE_ID, sample.getProductOrderSampleId());
         item.put(BspSampleData.COLLABORATOR_SAMPLE_ID, "");
+        // This is here because ServiceAccessUtility doesn't work DATABASE_FREE
+        try {
+            item.put(BspSampleData.MATERIAL_TYPE, sample.getLatestMaterialType());
+        } catch (Exception e) {
+            log.error("Could not get gt material type from sample");
+        }
         item.put(BspSampleData.PATIENT_ID, "");
         item.put(BspSampleData.COLLABORATOR_PARTICIPANT_ID, "");
         item.put(BspSampleData.SAMPLE_TYPE, "");

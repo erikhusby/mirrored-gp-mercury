@@ -45,7 +45,7 @@ public class LabVesselTest {
         BSPSetVolumeConcentration bspSetVolumeConcentration = BSPSetVolumeConcentrationProducer.stubInstance();
         LabEventFactory labEventFactory = new LabEventFactory(testUserList, bspSetVolumeConcentration);
         BarcodedTube sourceVessel = new BarcodedTube("A_SOURCE_VESSEL", BarcodedTube.BarcodedTubeType.MatrixTube075);
-        LabVessel.MaterialType startingMaterialType = LabVessel.MaterialType.FRESH_BLOOD;
+        MaterialType startingMaterialType = MaterialType.FRESH_BLOOD;
         MercurySample mercurySample = SampleDataTestFactory.getTestMercurySample(startingMaterialType,
                 MercurySample.MetadataSource.MERCURY);
         mercurySample.addLabVessel(sourceVessel);
@@ -67,7 +67,7 @@ public class LabVesselTest {
 
         TransferTraverserCriteria.NearestMaterialTypeTraverserCriteria traverserCriteria =
                 destinationVessel.evaluateMaterialTypeTraverserCriteria();
-        assertThat(traverserCriteria.getMaterialType(), is(LabVessel.MaterialType.DNA));
+        assertThat(traverserCriteria.getMaterialType(), is(MaterialType.DNA));
         assertThat(destinationVessel.isDNA(), is(true));
     }
 
@@ -199,7 +199,7 @@ public class LabVesselTest {
 
     public static LabEvent doVesselToVesselTransfer(LabVessel sourceVessel,
                                                     LabVessel destinationVessel,
-                                                    LabVessel.MaterialType sampleMaterialType,
+                                                    MaterialType sampleMaterialType,
                                                     LabEventType labEventType,
                                                     MercurySample.MetadataSource metadataSource,
                                                     LabEventFactory labEventFactory) {

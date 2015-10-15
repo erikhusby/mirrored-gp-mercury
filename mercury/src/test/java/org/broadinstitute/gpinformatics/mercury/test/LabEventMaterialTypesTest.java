@@ -19,6 +19,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVesselTest;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -30,7 +31,7 @@ public class LabEventMaterialTypesTest extends BaseEventTest {
     public void testVesselWithDNAMercurySampleIsDNA() throws Exception {
         LabVessel sourceVessel = new BarcodedTube("A_SOURCE_VESSEL", BarcodedTube.BarcodedTubeType.MatrixTube075);
         MercurySample mercurySample = SampleDataTestFactory
-                .getTestMercurySample(LabVessel.MaterialType.DNA, MercurySample.MetadataSource.MERCURY);
+                .getTestMercurySample(MaterialType.DNA, MercurySample.MetadataSource.MERCURY);
         mercurySample.addLabVessel(sourceVessel);
 
         assertThat(sourceVessel.isDNA(), is(true));
@@ -39,15 +40,15 @@ public class LabEventMaterialTypesTest extends BaseEventTest {
     @DataProvider(name = "isDnaScenarios")
     public static Object[][] isDnaScenarios() {
         return new Object[][]{
-                {LabVessel.MaterialType.FRESH_BLOOD, LabEventType.EXTRACT_BLOOD_SPIN_TO_MATRIX, true},
-                {LabVessel.MaterialType.FRESH_BLOOD, LabEventType.EXTRACT_BLOOD_MICRO_TO_SPIN, false},
-                {LabVessel.MaterialType.DNA, LabEventType.EXTRACT_BLOOD_SPIN_TO_MATRIX, true},
-                {LabVessel.MaterialType.DNA, LabEventType.EXTRACT_BLOOD_MICRO_TO_SPIN, true}
+                {MaterialType.FRESH_BLOOD, LabEventType.EXTRACT_BLOOD_SPIN_TO_MATRIX, true},
+                {MaterialType.FRESH_BLOOD, LabEventType.EXTRACT_BLOOD_MICRO_TO_SPIN, false},
+                {MaterialType.DNA, LabEventType.EXTRACT_BLOOD_SPIN_TO_MATRIX, true},
+                {MaterialType.DNA, LabEventType.EXTRACT_BLOOD_MICRO_TO_SPIN, true}
         };
     }
 
     @Test(dataProvider = "isDnaScenarios")
-    public void testExtractToDna(LabVessel.MaterialType sampleMaterialType, LabEventType labEventType, boolean isDna)
+    public void testExtractToDna(MaterialType sampleMaterialType, LabEventType labEventType, boolean isDna)
             throws Exception {
         BarcodedTube sourceVessel = new BarcodedTube("A_SOURCE_VESSEL", BarcodedTube.BarcodedTubeType.MatrixTube075);
         MercurySample mercurySample =

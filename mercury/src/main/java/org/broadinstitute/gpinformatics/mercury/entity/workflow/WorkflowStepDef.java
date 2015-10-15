@@ -226,4 +226,5 @@ public class WorkflowStepDef implements Serializable {
     public LabEventType.ManualTransferDetails getManualTransferDetails() {
         return manualTransferDetails;
     }
+
 }
