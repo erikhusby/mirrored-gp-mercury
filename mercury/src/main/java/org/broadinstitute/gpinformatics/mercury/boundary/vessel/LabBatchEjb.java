@@ -348,9 +348,8 @@ public class LabBatchEjb {
             }
 
             if (jiraTicket == null) {
-                Map<String, CustomFieldDefinition> customFieldDefinitions = jiraService
-                        .getRequiredFields(new CreateFields.Project(CreateFields.ProjectType.EXTRACTION_PROJECT),
-                                issueType);
+                Map<String, CustomFieldDefinition> customFieldDefinitions = jiraService.getRequiredFields(
+                        new CreateFields.Project(projectType), issueType);
 
                 List<CustomField> batchJiraTicketFields =
                         new ArrayList<>(fieldBuilder.getCustomFields(customFieldDefinitions));
