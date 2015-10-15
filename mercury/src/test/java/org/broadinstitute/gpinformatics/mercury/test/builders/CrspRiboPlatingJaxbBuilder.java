@@ -30,7 +30,6 @@ public class CrspRiboPlatingJaxbBuilder {
     private PlateEventType riboBufferAdditionJaxb;
     private String polyAAliquotRackBarcode;
     private PlateTransferEventType polyATSAliquot;
-    private PlateEventType truSeqStrandSpecificBucket;
     private PlateEventType polyASpikeJaxb;
 
     public CrspRiboPlatingJaxbBuilder(String rackBarcode, List<String> tubeBarcodes, String testPrefix,
@@ -87,10 +86,6 @@ public class CrspRiboPlatingJaxbBuilder {
 
     public PlateEventType getPolyASpikeJaxb() {
         return polyASpikeJaxb;
-    }
-
-    public PlateEventType getTruSeqStrandSpecificBucket() {
-        return truSeqStrandSpecificBucket;
     }
 
     public CrspRiboPlatingJaxbBuilder invoke() {
