@@ -12,7 +12,6 @@ import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
-import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.sample.ClinicalSampleFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSessionDao;
@@ -28,6 +27,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.TubeTransferExcept
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
+import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -106,36 +106,46 @@ public class ManifestSessionEjb {
      * @param inputStream        File Input stream that contains the manifest being uploaded
      * @param pathToFile         Full path of the manifest as it was uploaded.  This is used to extract the
      *                           manifest name which will help to identify the accessioning session
-     * @param fromSampleKit
+     * @param fromSampleKit      whether or not the samples are in containers from a Broad sample kit
+     *
      * @return the newly created manifest session
      */
     public ManifestSession uploadManifest(String researchProjectKey, InputStream inputStream, String pathToFile,
                                           boolean fromSampleKit) {
 
         ResearchProject researchProject = findResearchProject(researchProjectKey);
-        ManifestSession manifestSession = uploadManifest(inputStream, pathToFile, researchProject, fromSampleKit);
+        Collection<ManifestRecord> manifestRecords = importManifestRecords(inputStream);
+        return createManifestSession(FilenameUtils.getBaseName(pathToFile), manifestRecords, researchProject,
+                fromSampleKit);
+    }
+
+    /**
+     * Create a new manifest session to begin the accessioning process for a set of received samples.
+     *
+     * @param manifestSessionName    the name to give the session
+     * @param manifestRecords        the records for the session
+     * @param researchProject        an existing research project to which the created accessioning session is to be
+     *                               associated
+     * @param fromSampleKit          whether or not the samples are in containers from a Broad sample kit
+     *
+     * @return the newly created manifest session
+     */
+    @Nonnull
+    public ManifestSession createManifestSession(String manifestSessionName,
+                                                 Collection<ManifestRecord> manifestRecords,
+                                                 ResearchProject researchProject, boolean fromSampleKit) {
+        ManifestSession manifestSession = new ManifestSession(researchProject, manifestSessionName,
+                userBean.getBspUser(), fromSampleKit);
+        manifestSession.addRecords(manifestRecords);
+        manifestSession.validateManifest();
+
         // Persist here so an ID will be generated for the ManifestSession.  This ID is used for the
         // ManifestSession's name which is displayed on the UI.
         manifestSessionDao.persist(manifestSession);
         return manifestSession;
     }
 
-    /**
-     * DBfree implementation to Upload a clinical manifest file to begin the accessioning process for a set of
-     * received samples.
-     *
-     * @param inputStream     File Input stream that contains the manifest being uploaded
-     * @param pathToFile      Full path of the manifest as it was uploaded.  This is used to extract the
-     *                        manifest name which will help to identify the accessioning session
-     * @param researchProject an existing research project to which the created accessioning session is to be
-     *                        associated
-     *
-     * @param fromSampleKit
-     * @return the newly created manifest session
-     */
-    @DaoFree
-    private ManifestSession uploadManifest(InputStream inputStream, String pathToFile,
-                                           ResearchProject researchProject, boolean fromSampleKit) {
+    private Collection<ManifestRecord> importManifestRecords(InputStream inputStream) {
         ManifestImportProcessor manifestImportProcessor = new ManifestImportProcessor();
         List<String> messages;
         try {
@@ -155,12 +165,7 @@ public class ManifestSessionEjb {
         } catch (ValidationException e) {
             throw new InformaticsServiceException(StringUtils.join(e.getValidationMessages(), "\n"));
         }
-
-        ManifestSession manifestSession = new ManifestSession(researchProject, FilenameUtils.getBaseName(pathToFile),
-                userBean.getBspUser(), fromSampleKit);
-        manifestSession.addRecords(manifestRecords);
-        manifestSession.validateManifest();
-        return manifestSession;
+        return manifestRecords;
     }
 
     private ResearchProject findResearchProject(String researchProjectKey) {
