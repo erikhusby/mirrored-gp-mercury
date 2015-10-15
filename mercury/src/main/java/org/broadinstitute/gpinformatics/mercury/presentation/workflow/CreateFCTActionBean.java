@@ -200,7 +200,7 @@ public class CreateFCTActionBean extends CoreActionBean {
                 LabBatch batch =
                         new LabBatch(denatureTubeBarcode + " FCT ticket", vesselSet, batchType, loadingConc, selectedType);
                 batch.setBatchDescription(batch.getBatchName());
-                labBatchEjb.createLabBatch(batch, userBean.getLoginUserName(), issueType);
+                labBatchEjb.createLabBatch(batch, userBean.getLoginUserName(), issueType, this);
                 createdBatches.add(batch);
                 //link tickets
                 labBatchEjb.linkJiraBatches(labBatch, batch);

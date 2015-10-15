@@ -232,7 +232,7 @@ public class ZimsIlluminaRunFactoryTest {
 
             if (!isPositiveControl(sampleId)) {
                 BucketEntry bucketEntry =
-                        new BucketEntry(testTube, testProductOrder, BucketEntry.BucketEntryType.PDO_ENTRY);
+                        new BucketEntry(testTube, testProductOrder, null, BucketEntry.BucketEntryType.PDO_ENTRY);
 
                 for (int batchTypeIdx = 0; batchTypeIdx < testLabBatchTypes.length; batchTypeIdx++) {
                     LabBatch.LabBatchType testLabBatchType = testLabBatchTypes[batchTypeIdx];

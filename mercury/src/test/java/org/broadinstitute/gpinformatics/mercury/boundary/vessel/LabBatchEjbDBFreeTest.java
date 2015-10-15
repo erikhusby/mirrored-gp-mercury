@@ -163,7 +163,7 @@ public class LabBatchEjbDBFreeTest {
         Assert.assertEquals(testBatch.getJiraTicket().getTicketName(), testBatch.getBatchName());
 
         Assert.assertEquals(6, testBatch.getStartingBatchLabVessels().size());
-        Assert.assertEquals("6 samples from MyResearchProject PDO-999\n", testBatch.getBatchDescription());
+        Assert.assertEquals("6 samples with material types [] from MyResearchProject PDO-999\n", testBatch.getBatchDescription());
         Assert.assertNull(testBatch.getDueDate());
         Assert.assertEquals(testBatch.getBatchName(), testBatch.getJiraTicket().getTicketName());
         Assert.assertEquals(testBatch.getLabBatchType(), LabBatch.LabBatchType.WORKFLOW);
@@ -290,10 +290,9 @@ public class LabBatchEjbDBFreeTest {
 
         ProductOrder testProductOrder = ProductOrderTestFactory.createDummyProductOrder(STUB_TEST_PDO_KEY);
 
-        final String descriptionPrefix = testBatch.getStartingBatchLabVessels().size() +
-                                         " samples from " +
-                                         testProductOrder.getResearchProject().getTitle() + " " + STUB_TEST_PDO_KEY +
-                                         "\n";
+        final String descriptionPrefix = String.format("%d samples with material types [] from %s %s\n",
+                testBatch.getStartingBatchLabVessels().size(),
+                                         testProductOrder.getResearchProject().getTitle(), STUB_TEST_PDO_KEY);
         return descriptionPrefix;
     }
 }

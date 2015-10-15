@@ -169,4 +169,12 @@ public class ResearchProjectFixupTest extends Arquillian {
         researchProject.setRegulatoryDesignation(ResearchProject.RegulatoryDesignation.GENERAL_CLIA_CAP);
         rpDao.persist(new FixupCommentary("SUPPORT-796 updating incorrectly selected regulatory designation"));
     }
+
+    @Test(enabled = false)
+    public void support1192ChangeRegulatoryDesignationForRp1037() {
+        userBean.loginOSUser();
+        ResearchProject researchProject = rpDao.findByBusinessKey("RP-1037");
+        researchProject.setRegulatoryDesignation(ResearchProject.RegulatoryDesignation.RESEARCH_ONLY);
+        rpDao.persist(new FixupCommentary("SUPPORT-1192 updating incorrectly selected regulatory designation"));
+    }
 }

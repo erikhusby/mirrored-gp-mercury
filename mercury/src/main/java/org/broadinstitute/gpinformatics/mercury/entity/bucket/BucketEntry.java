@@ -4,12 +4,16 @@ import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.hibernate.envers.Audited;
 
-import com.google.common.base.Preconditions;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.persistence.CascadeType;
@@ -25,6 +29,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import java.util.Comparator;
 import java.util.Date;
 
@@ -126,21 +131,34 @@ public class BucketEntry {
     protected BucketEntry() {
     }
 
-    public BucketEntry(@Nonnull LabVessel labVesselIn, @Nonnull ProductOrder productOrder, @Nonnull Bucket bucket,
-                       BucketEntryType entryType) {
-
-        this(labVesselIn, productOrder, entryType);
+    public BucketEntry(@Nonnull LabVessel vessel, @Nonnull ProductOrder productOrder, @Nonnull Bucket bucket,
+                       @Nonnull BucketEntryType entryType, int productOrderRanking) {
+        this.labVessel = vessel;
         this.bucket = bucket;
+        this.entryType = entryType;
+        this.productOrderRanking = productOrderRanking;
+        this.createdDate = new Date();
+        setProductOrder(productOrder);
     }
 
+    /**
+     * This Constructor is used in a fix-up Test, therefore it can't be removed.
+     */
+    @Deprecated
     public BucketEntry(@Nonnull LabVessel labVesselIn, @Nonnull ProductOrder productOrder,
-                       BucketEntryType entryType) {
-        this.labVessel = labVesselIn;
-        this.entryType = entryType;
+                       @Nonnull BucketEntryType entryType) {
+        this(labVesselIn, productOrder, null, entryType);
+    }
 
-        setProductOrder(productOrder);
 
-        createdDate = new Date();
+    /**
+     * TODO: since this is currently only used in tests it should be moved, or the tests should use a different constructor.
+     * This Constructor is only called by tests and another deprecated constructor
+     */
+    @Deprecated
+    public BucketEntry(@Nonnull LabVessel vessel, @Nonnull ProductOrder productOrder, Bucket bucket,
+                       @Nonnull BucketEntryType entryType) {
+        this(vessel, productOrder, bucket, entryType, 1);
     }
 
     /**
@@ -279,10 +297,11 @@ public class BucketEntry {
 
     @Override
     public String toString() {
-        return String.format("Bucket: %s, %s, Vessel %s, Batch %s",
+        return String.format("Bucket: %s, %s, Vessel %s, Batch %s, Workflow: %s",
                 bucket != null ? bucket.getBucketDefinitionName() : "(no bucket)",
                 productOrder != null?productOrder.getBusinessKey():"(no product order)",
                 labVessel != null ? labVessel.getLabel() : "(no vessel)",
+                workflow != null ? getWorkflowName(): "(no workflow)",
                 labBatch != null ? labBatch.getBatchName() : "(not batched)");
     }
 
@@ -294,6 +313,33 @@ public class BucketEntry {
         builder.append(getEntryType(), other.getEntryType());
 
         return builder.toComparison();
+    }
+
+    private Workflow findWorkflow() {
+        WorkflowConfig workflowConfig = new WorkflowLoader().load();
+        for (Workflow workflow : getProductOrder().getProductWorkflows()) {
+            ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflow(workflow);
+            for (WorkflowBucketDef workflowBucketDef : productWorkflowDef.getEffectiveVersion().getBuckets()) {
+                if (workflowBucketDef.meetsBucketCriteria(labVessel, productOrder)) {
+                    return workflow;
+                }
+            }
+        }
+        return Workflow.NONE;
+    }
+
+    @Transient
+    private  Workflow workflow;
+
+    public Workflow getWorkflow() {
+        if (workflow == null) {
+            workflow = findWorkflow();
+        }
+        return workflow;
+    }
+
+    public String getWorkflowName() {
+        return getWorkflow().getWorkflowName();
     }
 
     public enum BucketEntryType {

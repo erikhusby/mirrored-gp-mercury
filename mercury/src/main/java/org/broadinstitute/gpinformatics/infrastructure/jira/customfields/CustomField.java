@@ -1,5 +1,8 @@
 package org.broadinstitute.gpinformatics.infrastructure.jira.customfields;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
 import javax.annotation.Nonnull;
 import java.util.Map;
 
@@ -31,6 +34,26 @@ public class CustomField {
 
         public void setValue(String value) {
             this.value = value;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+
+            if (!(o instanceof ValueContainer)) {
+                return false;
+            }
+
+            ValueContainer that = (ValueContainer) o;
+
+            return new EqualsBuilder().append(value, that.value).isEquals();
+        }
+
+        @Override
+        public int hashCode() {
+            return new HashCodeBuilder(17, 37).append(value).toHashCode();
         }
     }
 

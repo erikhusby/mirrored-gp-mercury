@@ -17,10 +17,10 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 
 public class SampleDataTestFactory {
-    public static MercurySample getTestMercurySample(LabVessel.MaterialType sampleMaterialType,
+    public static MercurySample getTestMercurySample(MaterialType sampleMaterialType,
                                                       MercurySample.MetadataSource metadataSource) {
         if (metadataSource == MercurySample.MetadataSource.MERCURY) {
             return new MercurySample("SM-1", ImmutableSet.of(new Metadata(Metadata.Key.MATERIAL_TYPE,

@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -85,35 +86,31 @@ public class WorkflowMatcherTest {
         WorkflowConfig workflowConfig = workflowLoader.load();
 
         List<WorkflowMatcher.WorkflowEvent> workflowEvents = workflowMatcher.match(
-                workflowConfig.getWorkflowVersionByName("Clinical Whole Blood Extraction", new Date()),
+                workflowConfig.getWorkflowVersionByName(Workflow.CLINICAL_WHOLE_BLOOD_EXTRACTION.getWorkflowName(),
+                        new Date()),
                 labBatch);
-        Assert.assertEquals(workflowEvents.size(), 26);
+        Assert.assertEquals(workflowEvents.size(), 25);
 
         Assert.assertEquals(workflowEvents.get(0).getLabEvents().size(), 1);
-        LabEvent labEvent0 = workflowEvents.get(0).getLabEvents().get(0);
-        Assert.assertEquals(labEvent0.getLabEventType(), LabEventType.CLINICAL_WHOLE_BLOOD_EXTRACTION_BUCKET);
-//        Assert.assertEquals(labEvent0.getWorkflowQualifier(), "Reagents");
-
-        Assert.assertEquals(workflowEvents.get(1).getLabEvents().size(), 1);
-        LabEvent labEvent = workflowEvents.get(1).getLabEvents().get(0);
+        LabEvent labEvent = workflowEvents.get(0).getLabEvents().get(0);
         Assert.assertEquals(labEvent.getLabEventType(), LabEventType.PREP);
         Assert.assertEquals(labEvent.getWorkflowQualifier(), "Reagents");
 
-        Assert.assertEquals(workflowEvents.get(2).getLabEvents().size(), 1);
-        LabEvent labEvent1 = workflowEvents.get(2).getLabEvents().get(0);
+        Assert.assertEquals(workflowEvents.get(1).getLabEvents().size(), 1);
+        LabEvent labEvent1 = workflowEvents.get(1).getLabEvents().get(0);
         Assert.assertEquals(labEvent1.getLabEventType(), LabEventType.PREP);
         Assert.assertEquals(labEvent1.getWorkflowQualifier(), "Disinfect");
 
-        Assert.assertEquals(workflowEvents.get(4).getLabEvents().size(), 1);
-        Assert.assertEquals(workflowEvents.get(4).getLabEvents().get(0).getLabEventType(),
+        Assert.assertEquals(workflowEvents.get(3).getLabEvents().size(), 1);
+        Assert.assertEquals(workflowEvents.get(3).getLabEvents().get(0).getLabEventType(),
                 LabEventType.EXTRACT_BLOOD_TO_MICRO);
 
-        Assert.assertEquals(workflowEvents.get(8).getLabEvents().size(), 1);
-        Assert.assertEquals(workflowEvents.get(8).getLabEvents().get(0).getLabEventType(),
+        Assert.assertEquals(workflowEvents.get(7).getLabEvents().size(), 1);
+        Assert.assertEquals(workflowEvents.get(7).getLabEvents().get(0).getLabEventType(),
                 LabEventType.ADD_REAGENT);
 
-        Assert.assertEquals(workflowEvents.get(25).getLabEvents().size(), 1);
-        Assert.assertEquals(workflowEvents.get(25).getLabEvents().get(0).getLabEventType(),
+        Assert.assertEquals(workflowEvents.get(24).getLabEvents().size(), 1);
+        Assert.assertEquals(workflowEvents.get(24).getLabEvents().get(0).getLabEventType(),
                 LabEventType.ADD_REAGENT);
 
         // todo list of samples at top of page?

@@ -9,7 +9,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
@@ -66,7 +65,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import java.util.regex.Pattern;
 
 /**
  * This entity represents a piece of plastic or glass that holds sample, reagent or (if it embeds a
@@ -228,17 +226,28 @@ public abstract class LabVessel implements Serializable {
         boolean hasMaterialConvertedToMaterialType = hasMaterialConvertedTo(materialType);
         if (!hasMaterialConvertedToMaterialType) {
             for (String sampleMaterialType : getMaterialTypes()) {
-                if (StringUtils.isNotBlank(sampleMaterialType)) {
-                    if (materialType.matches(sampleMaterialType)) {
-                        return true;
-                    }
+                if (StringUtils.equalsIgnoreCase(materialType.getDisplayName(), sampleMaterialType)) {
+                    return true;
                 }
             }
         }
         return hasMaterialConvertedToMaterialType;
     }
 
-    private List<String> getMaterialTypes() {
+    /**
+     * Find the latest material type by first searching the event history then falling back on the sample's metadata.
+     * @return
+     */
+    public MaterialType getLatestMaterialType() {
+        MaterialType latestMaterialType = getLatestMaterialTypeFromEventHistory();
+        if (latestMaterialType == null) {
+            latestMaterialType = MaterialType.fromDisplayName(getMaterialTypes().iterator().next());
+        }
+        return latestMaterialType;
+    }
+
+
+    public List<String> getMaterialTypes() {
         List<String> materialTypes = new ArrayList<>();
         for (SampleInstanceV2 si : getSampleInstancesV2()) {
             String materialType = si.getRootOrEarliestMercurySample().getSampleData().getMaterialType();
@@ -638,50 +647,6 @@ public abstract class LabVessel implements Serializable {
 
         public String getName() {
             return name;
-        }
-    }
-
-    public enum MaterialType implements Displayable {
-        CELL_SUSPENSION("Cell Suspension"),
-        DNA("DNA"),
-        FFPE("FFPE"),
-        FRESH_BLOOD("Fresh Blood", "(?!.*frozen)(?!.*buffy)(?=.*blood).*"),
-        FRESH_FROZEN_BLOOD("Fresh Frozen Blood", "^(?=.*frozen)(?=.*blood).*"),
-        FRESH_FROZEN_TISSUE("Fresh Frozen Tissue", "^(?=.*frozen)(?=.*tissue).*"),
-        RNA("RNA"),
-        BUFFY_COAT("Buffy Coat");
-
-        private final String displayName;
-        private final Pattern matchPattern;
-
-        MaterialType(String displayName) {
-            this(displayName, String.format("(.*:\\s?)?%s.*", displayName.toLowerCase().replaceAll("\\s", "\\\\s+")));
-        }
-
-        MaterialType(String displayName, String matchPattern) {
-            this.displayName = displayName;
-            this.matchPattern = Pattern.compile(matchPattern);
-        }
-
-        public boolean matches(String value) {
-            return matchPattern.matcher(value.toLowerCase()).matches();
-        }
-
-        public static MaterialType fromDisplayName(String displayName) {
-
-            MaterialType foundType = null;
-            for (MaterialType materialType : values()) {
-                if(materialType.matches(displayName)) {
-                    foundType = materialType;
-                    break;
-                }
-            }
-            return foundType;
-        }
-
-        @Override
-        public String getDisplayName() {
-            return displayName;
         }
     }
 
