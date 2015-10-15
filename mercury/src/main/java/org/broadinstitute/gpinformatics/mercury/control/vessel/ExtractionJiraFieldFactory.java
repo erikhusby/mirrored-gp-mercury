@@ -152,7 +152,7 @@ public class ExtractionJiraFieldFactory extends AbstractBatchJiraFieldFactory {
                 MaterialType materialType = bucketEntry.getLabVessel().getLatestMaterialType();
                 CustomField materialTypeField =
                         new CustomField(submissionFields, LabBatch.TicketFields.BATCH_TYPE,
-                                new Object[]{new CustomField.ValueContainer(materialType.getDisplayName())});
+                                new CustomField.ValueContainer(materialType.getDisplayName()));
                 customFields.add(materialTypeField);
                 // TODO: the batchtype field will be changed to a multi-select in the near future,
                 // when it does, this code will change.
