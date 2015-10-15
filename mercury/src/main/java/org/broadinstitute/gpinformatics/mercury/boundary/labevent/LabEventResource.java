@@ -286,12 +286,7 @@ public class LabEventResource {
                 throw new IllegalStateException("LabEventResource.StarterCriteria supports ancestry traversal only.");
             }
 
-            LabVessel contextVessel;
-            if( context.getHopCount() == 0 ) {
-                contextVessel = context.getStartingLabVessel();
-            } else {
-                contextVessel = context.getVesselEvent().getSourceLabVessel();
-            }
+            LabVessel contextVessel = context.getContextVessel();
 
             if (contextVessel != null) {
                 if (contextVessel.getTransfersTo().isEmpty()) {

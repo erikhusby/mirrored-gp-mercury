@@ -54,9 +54,11 @@ public class LabBatchDbTest extends ContainerTest {
 
         @Override
         public TraversalControl evaluateVesselPreOrder(Context context) {
-            if ( context.getHopCount() > 0 ) {
+
+            LabVessel.VesselEvent contextVesselEvent = context.getVesselEvent();
+
+            if ( contextVesselEvent != null ) {
                 // Used for descendants only
-                LabVessel.VesselEvent contextVesselEvent = context.getVesselEvent();
                 LabEvent contextEvent = contextVesselEvent.getLabEvent();
                 if (!visitedLabEvents.add(contextEvent)) {
                     return TraversalControl.StopTraversing;

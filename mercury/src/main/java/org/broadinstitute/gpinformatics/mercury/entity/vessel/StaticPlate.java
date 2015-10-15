@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
@@ -184,24 +185,21 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
             // upstream tube (or empty slot in the rack) may be different, but the "sample containment" flag should
             // be set for the query vessel position.
 
-            LabVessel contextVessel;
-            VesselContainer contextVesselContainer;
+            Pair<LabVessel,VesselPosition> vesselPositionPair = context.getContextVesselAndPosition();
+            LabVessel contextVessel = vesselPositionPair.getLeft();
+            VesselPosition contextVesselPosition = vesselPositionPair.getRight();
+            VesselContainer contextVesselContainer = context.getContextVesselContainer();
 
-            if (context.getHopCount() == 0) {
-                queryVesselPosition = context.getStartingVesselPosition();
-                contextVessel = context.getStartingLabVessel();
-                contextVesselContainer = context.getStartingVesselContainer();
-                if (!result.containsKey(queryVesselPosition)) {
-                    result.put(queryVesselPosition, false);
+            if ( context.getHopCount() == 0 ) {
+                if( contextVesselPosition != null ) {
+                    queryVesselPosition = contextVesselPosition;
+                    if (!result.containsKey(queryVesselPosition)) {
+                        result.put(queryVesselPosition, false);
+                    }
                 }
-            } else {
-                // Ancestry traversal only, use source values
-                contextVessel = context.getVesselEvent().getSourceLabVessel();
-                contextVesselContainer = context.getVesselEvent().getSourceVesselContainer();
-            }
-            if( contextVessel != null && contextVesselContainer != null ) {
+            } else if( contextVessel != null && contextVesselContainer != null ) {
                 if (OrmUtil.proxySafeIsInstance(contextVesselContainer.getEmbedder(), TubeFormation.class)) {
-                        result.put(context.getVesselEvent().getSourcePosition(), true);
+                        result.put(contextVesselPosition, true);
                         return TraversalControl.StopTraversing;
                 }
             }

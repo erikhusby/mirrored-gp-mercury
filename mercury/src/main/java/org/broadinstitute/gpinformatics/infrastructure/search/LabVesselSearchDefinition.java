@@ -990,26 +990,20 @@ public class LabVesselSearchDefinition {
 
             TraversalControl outcome = TraversalControl.ContinueTraversing;
 
-            LabVessel contextVessel;
-            LabEvent contextEvent;
-            LabVessel.VesselEvent contextVesselEvent;
-            VesselPosition position;
-            String barcode;
-
+            LabVessel.VesselEvent contextVesselEvent = context.getVesselEvent();
             // No event at traversal starting vessel
-            if( context.getHopCount() == 0 ) {
+            if ( contextVesselEvent == null ) {
                 return outcome;
             }
 
-            contextVesselEvent = context.getVesselEvent();
-            contextEvent = contextVesselEvent.getLabEvent();
+            LabEvent contextEvent = contextVesselEvent.getLabEvent();
 
             if( !labEventTypes.contains( contextEvent.getLabEventType() ) ) {
                 return outcome;
             }
 
-            contextVesselEvent = context.getVesselEvent();
-
+            String barcode;
+            VesselPosition position;
             // Searching descendants uses default of target container
             if( useEventTarget ) {
                 position = contextVesselEvent.getTargetPosition();
@@ -1053,14 +1047,13 @@ public class LabVesselSearchDefinition {
 
         @Override
         public TraversalControl evaluateVesselPreOrder(Context context) {
-            if( context.getHopCount() > 0 ) {
-                LabVessel.VesselEvent vesselEvent = context.getVesselEvent();
-                if (vesselEvent != null) {
-                    LabVessel.MaterialType resultingMaterialType =
-                            vesselEvent.getLabEvent().getLabEventType().getResultingMaterialType();
-                    if (resultingMaterialType != null && resultingMaterialType == materialType) {
-                        labVessels.add(vesselEvent.getTargetLabVessel());
-                    }
+            LabVessel.VesselEvent vesselEvent = context.getVesselEvent();
+            // Starting vessel has no event
+            if (vesselEvent != null) {
+                LabVessel.MaterialType resultingMaterialType =
+                        vesselEvent.getLabEvent().getLabEventType().getResultingMaterialType();
+                if (resultingMaterialType != null && resultingMaterialType == materialType) {
+                    labVessels.add(vesselEvent.getTargetLabVessel());
                 }
             }
 
@@ -1069,7 +1062,6 @@ public class LabVesselSearchDefinition {
 
         @Override
         public void evaluateVesselPostOrder(Context context) {
-
         }
 
         public List<LabVessel> getLabVessels() {

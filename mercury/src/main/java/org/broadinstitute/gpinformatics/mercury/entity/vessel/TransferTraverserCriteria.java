@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -72,16 +73,6 @@ public abstract class TransferTraverserCriteria {
 
         private Context(){}
 
-        public LabVessel getStartingLabVessel() {
-            return startingLabVessel;
-        }
-        public VesselPosition getStartingVesselPosition() {
-            return startingVesselPosition;
-        }
-        public VesselContainer getStartingVesselContainer() {
-            return startingVesselContainer;
-        }
-
         /**
          * The vessel/event in the traversal path.
          * @return
@@ -96,6 +87,60 @@ public abstract class TransferTraverserCriteria {
 
         public TraversalDirection getTraversalDirection() {
             return traversalDirection;
+        }
+
+        /**
+         * The vessel being visited in the traversal,
+         *    default for ancestor traversal is source vessel, default for descendant is target vessel. <br />
+         *    If a non-default is required, extract from getVesselEvent().
+         * @return  The vessel being visited in the traversal, could be a container in a vessel to section transfer.
+         */
+        public LabVessel getContextVessel() {
+            if( hopCount == 0 ) {
+                return startingLabVessel;
+            } else {
+                if (getTraversalDirection() == TraversalDirection.Ancestors) {
+                    return vesselEvent.getSourceLabVessel();
+                } else {
+                    return vesselEvent.getTargetLabVessel();
+                }
+            }
+        }
+
+        /**
+         * The container being visited in the traversal,
+         *    default for ancestor traversal is source container, default for descendant is target container. <br />
+         *    If a non-default is required, extract from getVesselEvent().
+         * @return  The container being visited in the traversal.
+         */
+        public VesselContainer getContextVesselContainer() {
+            if( hopCount == 0 ) {
+                return startingVesselContainer;
+            } else {
+                if (getTraversalDirection() == TraversalDirection.Ancestors) {
+                    return vesselEvent.getSourceVesselContainer();
+                } else {
+                    return vesselEvent.getTargetVesselContainer();
+                }
+            }
+        }
+
+        /**
+         * The vessel and its position in a container being visited in the traversal,
+         *    default for ancestor traversal is source, default for descendant is target. <br />
+         *    If a non-default is required, extract from getVesselEvent().
+         * @return  The vessel and its position (null if not in a container) being visited in the traversal.
+         */
+        public Pair<LabVessel,VesselPosition> getContextVesselAndPosition(){
+            if( hopCount == 0 ) {
+                return Pair.of( startingLabVessel, startingVesselPosition );
+            } else {
+                if (getTraversalDirection() == TraversalDirection.Ancestors) {
+                    return Pair.of(vesselEvent.getSourceLabVessel(), vesselEvent.getSourcePosition());
+                } else {
+                    return Pair.of(vesselEvent.getTargetLabVessel(), vesselEvent.getTargetPosition());
+                }
+            }
         }
     }
 
@@ -240,11 +285,8 @@ public abstract class TransferTraverserCriteria {
                 throw new IllegalStateException("NearestLabBatchFinder supports ancestor traversal only");
             }
 
-            if( context.getHopCount() == 0 ) {
-                contextVessel = context.getStartingLabVessel();
-            } else {
-                contextVessel = context.getVesselEvent().getSourceLabVessel();
-            }
+            contextVessel = context.getContextVessel();
+
             if( contextVessel == null ) {
                 return TraversalControl.ContinueTraversing;
             }
@@ -341,18 +383,9 @@ public abstract class TransferTraverserCriteria {
 
         @Override
         public TraversalControl evaluateVesselPreOrder(Context context) {
-            LabVessel contextVessel;
+            LabVessel contextVessel = context.getContextVessel();
 
-            if( context.getHopCount() == 0 ) {
-                contextVessel = context.getStartingLabVessel();
-            } else {
-                LabVessel.VesselEvent contextVesselEvent = context.getVesselEvent();
-                if (context.getTraversalDirection() == TraversalDirection.Ancestors) {
-                    contextVessel = contextVesselEvent.getSourceLabVessel();
-                } else {
-                    contextVessel = contextVesselEvent.getTargetLabVessel();
-                }
-            }
+
 
             if (contextVessel != null) {
                 for (LabMetric metric : contextVessel.getMetrics()) {
@@ -397,18 +430,7 @@ public abstract class TransferTraverserCriteria {
         @Override
         public TraversalControl evaluateVesselPreOrder(Context context) {
 
-            LabVessel contextVessel;
-
-            if( context.getHopCount() == 0 ) {
-                contextVessel = context.getStartingLabVessel();
-            } else {
-                LabVessel.VesselEvent contextVesselEvent = context.getVesselEvent();
-                if (context.getTraversalDirection() == TraversalDirection.Ancestors) {
-                    contextVessel = contextVesselEvent.getSourceLabVessel();
-                } else {
-                    contextVessel = contextVesselEvent.getTargetLabVessel();
-                }
-            }
+            LabVessel contextVessel = context.getContextVessel();
 
             if (contextVessel != null) {
                 if (contextVessel.getMercurySamples() != null) {
@@ -466,10 +488,8 @@ public abstract class TransferTraverserCriteria {
                 vesselList = new ArrayList<>();
             }
 
-            if (context.getHopCount() == 0 ) {
-                vesselList.add(context.getStartingLabVessel());
-            } else if (context.getVesselEvent().getTargetLabVessel() != null) {
-                vesselList.add(context.getVesselEvent().getTargetLabVessel());
+            if (context.getContextVessel() != null) {
+                vesselList.add(context.getContextVessel());
             } else {
                 vesselList.addAll(context.getVesselEvent().getLabEvent().getTargetLabVessels());
             }
@@ -513,11 +533,10 @@ public abstract class TransferTraverserCriteria {
             }
 
 
-            if (context.getHopCount() == 0 ) {
-                vesselList.add(context.getStartingLabVessel());
-            } else if (context.getVesselEvent().getSourceLabVessel() != null) {
-                vesselList.add(context.getVesselEvent().getSourceLabVessel());
+            if ( context.getContextVessel() != null ) {
+                vesselList.add(context.getContextVessel());
             } else {
+                // No source vessels, use target vessels(?)
                 vesselList.addAll(context.getVesselEvent().getLabEvent().getTargetLabVessels());
             }
             labVesselAtHopCount.put(context.getHopCount(), vesselList);
@@ -560,23 +579,14 @@ public abstract class TransferTraverserCriteria {
                 throw new IllegalStateException("NearestTubeAncestorsCriteria supports ancestor traversal only");
             }
 
-            LabVessel contextVessel;
-            VesselPosition contextVesselPosition;
-            LabVessel.VesselEvent contextVesselEvent;
-
-            if( context.getHopCount() == 0 ) {
-                contextVessel = context.getStartingLabVessel();
-                contextVesselPosition = context.getStartingVesselPosition();
-                contextVesselEvent = null;
-            } else {
-                contextVesselEvent = context.getVesselEvent();
-                contextVessel = contextVesselEvent.getSourceLabVessel();
-                contextVesselPosition = contextVesselEvent.getSourcePosition();
-            }
+            Pair<LabVessel, VesselPosition> vesselPositionPair = context.getContextVesselAndPosition();
+            LabVessel contextVessel = vesselPositionPair.getLeft();
+            LabVessel.VesselEvent contextVesselEvent = context.getVesselEvent();
+            VesselPosition contextVesselPosition = vesselPositionPair.getRight();
 
             if (OrmUtil.proxySafeIsInstance(contextVessel, BarcodedTube.class)) {
                 tubes.add(contextVessel);
-                if( contextVesselEvent != null ) {
+                if( contextVesselEvent != null && contextVesselPosition != null ) {
                     vesselAndPositions.add(new VesselAndPosition(contextVessel, contextVesselPosition));
                     return TraversalControl.StopTraversing;
                 }
@@ -614,12 +624,7 @@ public abstract class TransferTraverserCriteria {
                 throw new IllegalStateException("NearestTubeAncestorCriteria supports ancestor traversal only");
             }
 
-            LabVessel contextVessel;
-            if( context.getHopCount() == 0 ) {
-                contextVessel = context.getStartingLabVessel();
-            } else {
-                contextVessel = context.getVesselEvent().getSourceLabVessel();
-            }
+            LabVessel contextVessel = context.getContextVessel();
 
             if (OrmUtil.proxySafeIsInstance(contextVessel, BarcodedTube.class)) {
                 if (tube == null) {
@@ -655,12 +660,7 @@ public abstract class TransferTraverserCriteria {
                 throw new IllegalStateException("VesselTypeDescendantCriteria supports descendant traversal only");
             }
 
-            LabVessel contextVessel;
-            if( context.getHopCount() == 0 ) {
-                contextVessel = context.getStartingLabVessel();
-            } else {
-                contextVessel = context.getVesselEvent().getTargetLabVessel();
-            }
+            LabVessel contextVessel = context.getContextVessel();
 
             if (OrmUtil.proxySafeIsInstance(contextVessel, typeParameterClass)) {
                 descendantsOfVesselType.add(typeParameterClass.cast(contextVessel));
@@ -693,21 +693,19 @@ public abstract class TransferTraverserCriteria {
 
         @Override
         public TraversalControl evaluateVesselPreOrder(Context context) {
-            LabVessel contextVessel;
-            LabEvent contextEvent;
 
-            if( context.getHopCount() == 0 ) {
-                contextVessel = context.getStartingLabVessel();
+            LabVessel.VesselEvent contextVesselEvent = context.getVesselEvent();
+            if( contextVesselEvent != null ) {
+                evaluteVesselEvent(contextVesselEvent, context.getTraversalDirection());
+            } else {
+                // No VesselEvent means we're on starting vessel, process any in place events
+                LabVessel contextVessel = context.getContextVessel();
                 if( contextVessel == null ) {
-                    contextVessel = context.getStartingVesselContainer().getEmbedder();
+                    contextVessel = context.getContextVesselContainer().getEmbedder();
                 }
-                // No event on starting vesssel, but may have in place event(s)
                 for (LabEvent inPlaceEvent : contextVessel.getInPlaceLabEvents()) {
                     evaluateEvent(contextVessel, inPlaceEvent);
                 }
-            } else {
-                LabVessel.VesselEvent contextVesselEvent = context.getVesselEvent();
-                evaluteVesselEvent(contextVesselEvent, context.getTraversalDirection());
             }
 
             return TraversalControl.ContinueTraversing;
@@ -781,31 +779,24 @@ public abstract class TransferTraverserCriteria {
 
         @Override
         public TraversalControl evaluateVesselPreOrder(Context context) {
-            LabVessel contextVessel;
-            LabEvent contextEvent;
 
             if (materialType != null) {
                 return TraversalControl.StopTraversing;
             }
 
+            LabVessel contextVessel = context.getContextVessel();
+            LabVessel.VesselEvent contextVesselEvent = context.getVesselEvent();
+            LabEvent contextEvent = contextVesselEvent == null?null:contextVesselEvent.getLabEvent();
+
             if( context.getHopCount() == 0 ) {
-                contextVessel = context.getStartingLabVessel();
-                contextEvent = null;
-                // Look backwards a step at the starting vessel
+                // Look backwards a step at the starting vessel (or fails starting at a dead-end event)
                 if (contextVessel != null) {
                     evaluateTransfers(context.getTraversalDirection(), contextVessel);
                 }
-            } else {
-                LabVessel.VesselEvent contextVesselEvent = context.getVesselEvent();
-                contextEvent = contextVesselEvent.getLabEvent();
-                if (context.getTraversalDirection() == TraversalDirection.Ancestors) {
-                    contextVessel = contextVesselEvent.getSourceLabVessel();
-                } else {
-                    contextVessel = contextVesselEvent.getTargetLabVessel();
-                }
             }
-            if (contextVessel != null && contextEvent != null) {
-                evaluateEvent(contextVessel, contextEvent);
+
+            if (contextEvent != null) {
+                evaluateEvent(contextEvent);
             }
             return TraversalControl.ContinueTraversing;
         }
@@ -818,11 +809,11 @@ public abstract class TransferTraverserCriteria {
                 transferEvents = vessel.getTransfersFrom();
             }
             for (LabEvent labEvent : transferEvents) {
-                evaluateEvent(vessel, labEvent);
+                evaluateEvent(labEvent);
             }
         }
 
-        private void evaluateEvent(LabVessel vessel, LabEvent event) {
+        private void evaluateEvent(LabEvent event) {
             LabVessel.MaterialType resultingMaterialType = event.getLabEventType().getResultingMaterialType();
             if (resultingMaterialType != null) {
                 materialType=resultingMaterialType;
@@ -847,36 +838,12 @@ public abstract class TransferTraverserCriteria {
 
         @Override
         public TraversalControl evaluateVesselPreOrder(Context context) {
-            LabVessel contextVessel;
-            VesselContainer contextVesselContainer = null;
-            LabVessel.VesselEvent contextVesselEvent;
+            LabVessel contextVessel = context.getContextVessel();
+            VesselContainer contextVesselContainer = context.getContextVesselContainer();
+            LabVessel.VesselEvent contextVesselEvent = context.getVesselEvent();
 
-            // Starting traversal vessel has no event
-            if( context.getHopCount() > 0 ) {
-                contextVesselEvent = context.getVesselEvent();
+            if(contextVesselEvent != null ) {
                 labEvents.add(contextVesselEvent.getLabEvent());
-
-                if (context.getTraversalDirection() == TraversalDirection.Ancestors) {
-                    if( contextVesselEvent.getSourceLabVessel() == null ) {
-                        contextVesselContainer = contextVesselEvent.getSourceVesselContainer();
-                        contextVessel = contextVesselContainer.getEmbedder();
-                    } else {
-                        contextVessel = contextVesselEvent.getSourceLabVessel();
-                    }
-                } else {
-                    if( contextVesselEvent.getTargetLabVessel() == null ) {
-                        contextVesselContainer = contextVesselEvent.getTargetVesselContainer();
-                        contextVessel = contextVesselContainer.getEmbedder();
-                    } else {
-                        contextVessel = contextVesselEvent.getTargetLabVessel();
-                    }
-                }
-
-            } else {
-                contextVessel = context.getStartingLabVessel();
-                if( contextVessel == null ) {
-                    contextVessel = context.getStartingVesselContainer().getEmbedder();
-                }
             }
 
             if( contextVessel != null ) {
