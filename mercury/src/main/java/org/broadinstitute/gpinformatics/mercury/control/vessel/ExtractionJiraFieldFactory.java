@@ -150,18 +150,19 @@ public class ExtractionJiraFieldFactory extends AbstractBatchJiraFieldFactory {
             // when called in tests.
             for (BucketEntry bucketEntry : batch.getBucketEntries()) {
                 MaterialType materialType = bucketEntry.getLabVessel().getLatestMaterialType();
-                CustomField materialTypeField =
-                        new CustomField(submissionFields, LabBatch.TicketFields.BATCH_TYPE,
-                                new CustomField.ValueContainer(materialType.getDisplayName()));
-                customFields.add(materialTypeField);
-                // TODO: the batchtype field will be changed to a multi-select in the near future,
-                // when it does, this code will change.
-                if (!customFields.isEmpty()) {
-                    break;
+                if (materialType!=null) {
+                    CustomField materialTypeField = new CustomField(submissionFields, LabBatch.TicketFields.BATCH_TYPE,
+                                    new CustomField.ValueContainer(materialType.getDisplayName()));
+                    customFields.add(materialTypeField);
+                    // TODO: the batchtype field will be changed to a multi-select in the near future,
+                    // when it does, this code will change.
+                    if (!customFields.isEmpty()) {
+                        break;
+                    }
                 }
             }
         } catch (Exception e) {
-            log.error("Could not find material types for bucket entries.", e);
+            log.error("Could not find material types for bucket entries.");
         }
         return customFields;
     }
