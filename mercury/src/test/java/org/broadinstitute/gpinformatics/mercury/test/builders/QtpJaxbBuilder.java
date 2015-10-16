@@ -155,38 +155,34 @@ public class QtpJaxbBuilder {
             }
         }
 
-        // EcoTransfer - Duplicate
         ecoPlateBarcode = "EcoPlate" + testPrefix;
-        ecoTransferDuplicateA3Jaxb = bettaLimsMessageTestFactory.buildRackToPlate("EcoTransfer", poolRackBarcode,
-                poolTubeBarcodes, ecoPlateBarcode, "Eco48", "3BY6A1", "8BY6A3ALTROWS");
-
-        ecoTransferDuplicateB3Jaxb = bettaLimsMessageTestFactory.buildRackToPlate("EcoTransfer", poolRackBarcode,
-                poolTubeBarcodes, ecoPlateBarcode, "Eco48", "3BY6A1", "8BY6B3ALTROWS");
-
-        //Eco Transfer - Triplicate
-        ecoTransferTriplicateA3 = bettaLimsMessageTestFactory.buildRackToPlate("EcoTransfer", poolRackBarcode,
-                poolTubeBarcodes, ecoPlateBarcode, "Eco48", "2BY6A1", "8BY6A3COLWISE2");
-
-        ecoTransferTriplicateA5 = bettaLimsMessageTestFactory.buildRackToPlate("EcoTransfer", poolRackBarcode,
-                poolTubeBarcodes, ecoPlateBarcode, "Eco48", "2BY6A1", "8BY6A5COLWISE2_ALT");
-
-        ecoTransferTriplicateA7 = bettaLimsMessageTestFactory.buildRackToPlate("EcoTransfer", poolRackBarcode,
-                poolTubeBarcodes, ecoPlateBarcode, "Eco48", "2BY6A1", "8BY6A7COLWISE2");
-
-        // Viia7Transfer reuses the eco barcode since they are interchangable from workflow point of view.
-        viia7TransferJaxb = bettaLimsMessageTestFactory.buildRackToPlate("Viia7Transfer", poolRackBarcode,
-                poolTubeBarcodes, ecoPlateBarcode, "Eco48", "3BY6A1", "8BY6A3ALTROWS");
 
         switch (pcrType) {
             case ECO_DUPLICATE:
+                ecoTransferDuplicateA3Jaxb = bettaLimsMessageTestFactory.buildRackToPlate("EcoTransfer", poolRackBarcode,
+                        poolTubeBarcodes, ecoPlateBarcode, "Eco48", "3BY6A1", "8BY6A3ALTROWS");
+
+                ecoTransferDuplicateB3Jaxb = bettaLimsMessageTestFactory.buildRackToPlate("EcoTransfer", poolRackBarcode,
+                        poolTubeBarcodes, ecoPlateBarcode, "Eco48", "3BY6A1", "8BY6B3ALTROWS");
                 ecoTransferMessage = bettaLimsMessageTestFactory.addMessage(
                         messageList, ecoTransferDuplicateA3Jaxb, ecoTransferDuplicateB3Jaxb);
                 break;
             case ECO_TRIPLICATE:
+                ecoTransferTriplicateA3 = bettaLimsMessageTestFactory.buildRackToPlate("EcoTransfer", poolRackBarcode,
+                        poolTubeBarcodes, ecoPlateBarcode, "Eco48", "2BY6A1", "8BY6A3COLWISE2");
+
+                ecoTransferTriplicateA5 = bettaLimsMessageTestFactory.buildRackToPlate("EcoTransfer", poolRackBarcode,
+                        poolTubeBarcodes, ecoPlateBarcode, "Eco48", "2BY6A1", "8BY6A5COLWISE2_ALT");
+
+                ecoTransferTriplicateA7 = bettaLimsMessageTestFactory.buildRackToPlate("EcoTransfer", poolRackBarcode,
+                        poolTubeBarcodes, ecoPlateBarcode, "Eco48", "2BY6A1", "8BY6A7COLWISE2");
                 ecoTransferTriplicateMessage = bettaLimsMessageTestFactory.addMessage(
                         messageList, ecoTransferTriplicateA3, ecoTransferTriplicateA5, ecoTransferTriplicateA7);
                 break;
             case VIIA_7:
+                // Viia7Transfer reuses the eco barcode since they are interchangable from workflow point of view.
+                viia7TransferJaxb = bettaLimsMessageTestFactory.buildRackToPlate("Viia7Transfer", poolRackBarcode,
+                        poolTubeBarcodes, ecoPlateBarcode, "Eco48", "3BY6A1", "8BY6A3ALTROWS");
                 viia7TransferMessage = bettaLimsMessageTestFactory.addMessage(messageList, viia7TransferJaxb);
                 break;
         }
