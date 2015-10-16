@@ -39,6 +39,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.jvnet.inflector.Noun;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -285,6 +286,10 @@ public class BucketViewActionBean extends CoreActionBean {
         return viewBucket();
     }
 
+    public String getConfirmationPageTitle() {
+        return String.format("%d bucket and %d rework entries.", bucketEntryIds.size(), reworkEntryIds.size());
+    }
+
     private void loadReworkVessels() {
         batch = labBatchDao.findByBusinessKey(selectedLcset);
         separateEntriesByType();
@@ -321,8 +326,10 @@ public class BucketViewActionBean extends CoreActionBean {
             addGlobalValidationError("IOException contacting JIRA service." + e.getMessage());
             return new RedirectResolution(VIEW_PAGE);
         }
-        addMessage(String.format("Successfully added %d sample(s) and %d rework(s) to %s at the '%s'.",
-                bucketEntryIds.size(), reworkEntryIds.size(), selectedLcset, selectedBucket));
+        addMessage(String.format("Successfully added %d %s and %d %s to batch '%s' from bucket '%s'.",
+                bucketEntryIds.size(), Noun.pluralOf("sample", bucketEntryIds.size()),
+                reworkEntryIds.size(), Noun.pluralOf("rework", reworkEntryIds.size()),
+                selectedLcset, selectedBucket));
         return viewBucket();
     }
 
