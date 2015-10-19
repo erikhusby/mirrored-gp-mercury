@@ -261,7 +261,11 @@ public class Metadata {
         INSTRUMENT_SERIAL_NUMBER(Category.LAB_METRIC_RUN, DataType.STRING, "Serial Number", Visibility.USER),
 
         TOTAL_NG(Category.LAB_METRIC, DataType.NUMBER, "Total ng", Visibility.USER),
-        RECEIPT_RECORD(Category.SAMPLE, DataType.STRING, "Receipt Record", Visibility.NONE);
+        RECEIPT_RECORD(Category.SAMPLE, DataType.STRING, "Receipt Record", Visibility.NONE),
+
+        DV_200(Category.LAB_METRIC, DataType.NUMBER, "DV200", Visibility.USER),
+        LOWER_MARKER_TIME(Category.LAB_METRIC, DataType.NUMBER, "Lower Marker Time", Visibility.USER),
+        NA(Category.LAB_METRIC, DataType.STRING, "NA", Visibility.USER);
 
         private final Category category;
         private final DataType dataType;
@@ -299,6 +303,19 @@ public class Metadata {
                 }
             }
             return null;
+        }
+
+        public static Key fromDisplayName(String displayName) {
+
+            Key foundKey = null;
+
+            for (Key key : values()) {
+                if (key.getDisplayName().equals(displayName)) {
+                    foundKey = key;
+                    break;
+                }
+            }
+            return foundKey;
         }
     }
 }

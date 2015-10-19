@@ -870,4 +870,68 @@ public class LabEventFixupTest extends Arquillian {
         }
 
     }
+
+    @Test(enabled = false)
+    public void fixupSupport1085() {
+        userBean.loginOSUser();
+        // Add cherry picks from bait to second row of samples in columns 1 and 3.
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, 992394L);
+        Assert.assertEquals(labEvent.getLabEventType(), LabEventType.ICE_1S_TBAIT_PICK);
+        CherryPickTransfer cherryPickTransfer = labEvent.getCherryPickTransfers().iterator().next();
+        labEvent.getCherryPickTransfers().add(new CherryPickTransfer(cherryPickTransfer.getSourceVesselContainer(),
+                VesselPosition.A01, cherryPickTransfer.getAncillarySourceVessel(),
+                cherryPickTransfer.getTargetVesselContainer(), VesselPosition.B01,
+                cherryPickTransfer.getAncillaryTargetVessel(), labEvent));
+        labEvent.getCherryPickTransfers().add(new CherryPickTransfer(cherryPickTransfer.getSourceVesselContainer(),
+                VesselPosition.A03, cherryPickTransfer.getAncillarySourceVessel(),
+                cherryPickTransfer.getTargetVesselContainer(), VesselPosition.B03,
+                cherryPickTransfer.getAncillaryTargetVessel(), labEvent));
+        System.out.println("Added cherry picks to " + labEvent.getLabEventId());
+
+        labEvent = labEventDao.findById(LabEvent.class, 992684L);
+        Assert.assertEquals(labEvent.getLabEventType(), LabEventType.ICE_2ND_BAIT_PICK);
+        cherryPickTransfer = labEvent.getCherryPickTransfers().iterator().next();
+        labEvent.getCherryPickTransfers().add(new CherryPickTransfer(cherryPickTransfer.getSourceVesselContainer(),
+                VesselPosition.A01, cherryPickTransfer.getAncillarySourceVessel(),
+                cherryPickTransfer.getTargetVesselContainer(), VesselPosition.B01,
+                cherryPickTransfer.getAncillaryTargetVessel(), labEvent));
+        labEvent.getCherryPickTransfers().add(new CherryPickTransfer(cherryPickTransfer.getSourceVesselContainer(),
+                VesselPosition.A03, cherryPickTransfer.getAncillarySourceVessel(),
+                cherryPickTransfer.getTargetVesselContainer(), VesselPosition.B03,
+                cherryPickTransfer.getAncillaryTargetVessel(), labEvent));
+        System.out.println("Added cherry picks to " + labEvent.getLabEventId());
+
+        labEventDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim3788() {
+        try {
+            userBean.loginOSUser();
+            utx.begin();
+            long[] ids = {1049478L};
+            for (long id: ids) {
+                LabEvent labEvent = labEventDao.findById(LabEvent.class, id);
+                Assert.assertEquals(labEvent.getLabEventType(), LabEventType.EXTRACT_FFPE_MICRO1_TO_MICRO2);
+                System.out.println("Deleting " + labEvent.getLabEventType() + " " + labEvent.getLabEventId());
+                labEvent.getReagents().clear();
+                labEvent.getVesselToVesselTransfers().clear();
+                labEventDao.remove(labEvent);
+            }
+            labEventDao.persist(new FixupCommentary("GPLIM-3788 delete looping event"));
+            labEventDao.flush();
+            utx.commit();
+        } catch (NotSupportedException | SystemException | HeuristicMixedException | HeuristicRollbackException |
+                RollbackException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test(enabled = false)
+    public void gplim3796FixEventDisambiguator() {
+        userBean.loginOSUser();
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, 1052890L);
+        labEvent.setDisambiguator(1L);
+        labEventDao.persist(new FixupCommentary("GPLIM-3796 changed disambiguator of an event to avoid a unique constraint violation with another receipt event"));
+    }
 }

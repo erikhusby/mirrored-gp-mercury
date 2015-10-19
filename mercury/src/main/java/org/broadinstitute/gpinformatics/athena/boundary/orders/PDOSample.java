@@ -104,4 +104,12 @@ public class PDOSample {
     public void setRiskCalculated(boolean isRiskCalculated) {
         this.isRiskCalculated = isRiskCalculated;
     }
+
+    public Date getReceiptDate() {
+        return receiptDate;
+    }
+
+    public void setReceiptDate(Date receiptDate) {
+        this.receiptDate = receiptDate;
+    }
 }

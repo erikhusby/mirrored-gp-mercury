@@ -84,13 +84,14 @@ public class BucketEntryDaoTest extends ContainerTest {
             testOrder.setResearchProject(researchProjectDao.findByTitle("ADHD"));
         }
         BucketEntry testEntry = new BucketEntry(new BarcodedTube(barcodeKey), testOrder, testBucket,
-                                                BucketEntry.BucketEntryType.PDO_ENTRY);
+                BucketEntry.BucketEntryType.PDO_ENTRY);
         bucketEntryDao.persist(testEntry);
         bucketEntryDao.flush();
         bucketEntryDao.clear();
 
     }
 
+    @Override
     @AfterMethod(groups = TestGroups.STUBBY)
     public void tearDown() throws Exception {
         // Skip if no injections, meaning we're not running in container

@@ -22,7 +22,8 @@ public class WorkflowStepDef implements Serializable {
         PICO,
         ECO_QPCR,
         FINAL_LIBRARY_SIZE,
-        AGILENT
+        AGILENT,
+        RIBO
     }
 
     enum OutputCategory {
@@ -120,6 +121,10 @@ public class WorkflowStepDef implements Serializable {
     private String workflowQualifier;
     /** Instructions to the users. */
     private String instructions;
+    /** Lab Batch Workflow type to assist with auto batch selection **/
+    private String batchJiraIssueType;
+    /** Configuration for the Manual Transfers page. */
+    private LabEventType.ManualTransferDetails manualTransferDetails;
 
     private transient WorkflowProcessDef processDef;
 
@@ -213,4 +218,13 @@ public class WorkflowStepDef implements Serializable {
     public String getInstructions() {
         return instructions;
     }
+
+    public String getBatchJiraIssueType() {
+        return batchJiraIssueType;
+    }
+
+    public LabEventType.ManualTransferDetails getManualTransferDetails() {
+        return manualTransferDetails;
+    }
+
 }

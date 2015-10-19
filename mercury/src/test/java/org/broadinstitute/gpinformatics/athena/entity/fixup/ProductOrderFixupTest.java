@@ -19,6 +19,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
+import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfoFixupTest;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
@@ -68,6 +69,9 @@ import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 
 /**
@@ -736,6 +740,53 @@ public class    ProductOrderFixupTest extends Arquillian {
         }
         productOrderDao.persist(new FixupCommentary(
                 "Support-809:  Updated PDOs which did not have the correct Regulatory Info associated with them."));
+    }
+
+    /**
+     * Clean up the regulatory information records for some PDOs. The currently selected regulatory information is
+     * "NHGRI_TCGA", which is not an IRB or ORSP number, however the name mentions two IRB numbers. The goal is to
+     * replace the "NHGRI_TCGA" record with two new regulatory information records with ORSP numbers (ORSP-2221 and
+     * ORSP-783) referencing the two IRBs. The effective IRBs are not being changed.
+     *
+     * ORSP-2221 is new. However, ORSP-783's IRB, 1107004579, already has a record under the IRB number instead of the
+     * ORSP number. Because ORSP numbers are preferred, the identifier for 1107004579 will be changed to ORSP-783. This
+     * is done in {@link RegulatoryInfoFixupTest#gplim3765FixRegulatoryInfoForOrsp783()} which must be run before this
+     * fixup test.
+     *
+     * It is assumed that the research projects for the PDOs being updated (RP-22, RP-608, RP-705) already have
+     * associations to ORSP-2221 and ORSP-783.
+     */
+    @Test(enabled = false)
+    public void gplim3765FixRegulatoryInfoForNhgriTcgaPdos() {
+        userBean.loginOSUser();
+
+        List<String> pdoIds = Arrays.asList("PDO-6976", "PDO-6977", "PDO-7006", "PDO-7007", "PDO-7070", "PDO-7075");
+
+        List<RegulatoryInfo> regulatoryInfos;
+        regulatoryInfos = regulatoryInfoDao.findByIdentifier("ORSP-2221");
+        assertThat(regulatoryInfos, hasSize(1));
+        RegulatoryInfo orsp2221 = regulatoryInfos.get(0);
+        assertThat(orsp2221.getType(), equalTo(RegulatoryInfo.Type.IRB));
+
+        regulatoryInfos = regulatoryInfoDao.findByIdentifier("ORSP-783");
+        assertThat(regulatoryInfos, hasSize(1));
+        RegulatoryInfo orsp783 = regulatoryInfos.get(0);
+        assertThat(orsp783.getType(), equalTo(RegulatoryInfo.Type.IRB));
+
+        for (String pdoId : pdoIds) {
+            ProductOrder pdo = productOrderDao.findByBusinessKey(pdoId);
+            assertThat(pdo.getRegulatoryInfos(), hasSize(1));
+            assertThat(pdo.getRegulatoryInfos().iterator().next().getIdentifier(), equalTo("NHGRI_TCGA"));
+            assertThat(pdo.getResearchProject().getRegulatoryInfos(), hasItem(orsp2221));
+            assertThat(pdo.getResearchProject().getRegulatoryInfos(), hasItem(orsp783));
+
+            pdo.getRegulatoryInfos().clear();
+            pdo.addRegulatoryInfo(orsp2221);
+            pdo.addRegulatoryInfo(orsp783);
+        }
+
+        productOrderDao.persist(new FixupCommentary(
+                "GPLIM-3765 Cleaning up regulatory designation records (not changing effective IRBs)"));
     }
 
     private static class RegulatoryInfoSelection {

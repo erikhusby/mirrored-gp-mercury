@@ -6,15 +6,14 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.RapSheet;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
 import org.hibernate.annotations.BatchSize;
@@ -35,7 +34,6 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -266,6 +264,19 @@ public class MercurySample extends AbstractSample {
         return labVessel;
     }
 
+    /**
+     * Find the latest material type by first searching the event history then falling back on the sample's metadata.
+     */
+    public MaterialType getLatestMaterialType() {
+        for (LabVessel currentVessel : labVessel) {
+            MaterialType materialType = currentVessel.getLatestMaterialType();
+            if (materialType != null) {
+                return materialType;
+            }
+        }
+        return null;
+    }
+
     public Date getReceivedDate() {
 
         for(LabVessel currentVessel:labVessel) {
@@ -310,6 +321,7 @@ public class MercurySample extends AbstractSample {
         return sampleId.matches("\\d+\\.\\d+");
     }
 
+    @Override
     public SampleData makeSampleData() {
         switch (metadataSource) {
         case BSP:

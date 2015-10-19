@@ -121,7 +121,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         private String summary;
         private String description;
         private Map<String, Object> extraFields = new HashMap<>();
-
+        private CreateFields.IssueType issueType;
         private Date dueDate;
         private Date created;
         private String reporter;
@@ -186,7 +186,6 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         issueResult.setDueDate(data.dueDate);
         issueResult.setCreated(data.created);
         issueResult.setReporter(data.reporter);
-
 
         if (null != fields) {
             for (String currField : fields) {
@@ -313,7 +312,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
     @Override
     public void addWatcher(String key, String watcherId) throws IOException {
         WebResource webResource = getJerseyClient().resource(getBaseUrl() + "/issue/" + key + "/watchers");
-        post(webResource, watcherId);
+        post(webResource, String.format("%s", watcherId));
     }
 
     @Override
@@ -325,10 +324,9 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
         String jsonResponse = getJerseyClient().resource(urlString)
                 .queryParam("projectKeys", project.getProjectType().getKeyPrefix())
-                .queryParam("issuetypeNames", issueType.getJiraName())
+                .queryParam("issuetypeName", issueType.getJiraName())
                 .queryParam("expand", "projects.issuetypes.fields")
                 .get(String.class);
-
         return CustomFieldJsonParser.parseRequiredFields(jsonResponse);
     }
 

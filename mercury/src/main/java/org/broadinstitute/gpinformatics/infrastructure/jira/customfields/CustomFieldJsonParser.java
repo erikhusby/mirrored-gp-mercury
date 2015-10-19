@@ -5,6 +5,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,13 +25,14 @@ public class CustomFieldJsonParser {
 
     private static final String REQUIRED = "required";
 
+    private static final String ALLOWED_VALUES = "allowedValues";
+
     private static final String FIELD_ID = "id";
 
     /**
      * Parses the custom fields from the given json response.
      */
-    public static Map<String, CustomFieldDefinition> parseRequiredFields(String jsonResponse)
-            throws IOException {
+    public static Map<String, CustomFieldDefinition> parseRequiredFields(String jsonResponse) throws IOException {
         final Map<String, CustomFieldDefinition> customFields = new HashMap<>();
         final Map root = new ObjectMapper().readValue(jsonResponse, Map.class);
         final List projects = (List) root.get(PROJECTS);
@@ -44,9 +46,19 @@ public class CustomFieldJsonParser {
             Map fieldProperties = field.getValue();
             String fieldName = (String) fieldProperties.get(NAME);
             Boolean required = (Boolean) fieldProperties.get(REQUIRED);
+            List<Map<String, String>> values = (ArrayList<Map<String, String>>) fieldProperties.get(ALLOWED_VALUES);
 
+            Collection<CustomField.ValueContainer> allowedValues = new ArrayList<>();
+            if (values!=null) {
+                for (Map<String, String> allowedValue : values) {
+                    if (allowedValue.containsKey("value")) {
+                        String value = allowedValue.get("value");
+                            allowedValues.add(new CustomField.ValueContainer(value));
+                    }
+                }
+            }
             if (StringUtils.isNotBlank(fieldName)) {
-                customFields.put(fieldName, new CustomFieldDefinition(fieldId, fieldName, required));
+                customFields.put(fieldName, new CustomFieldDefinition(fieldId, fieldName, required, allowedValues));
             }
         }
         return customFields;

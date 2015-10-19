@@ -660,5 +660,4 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     public boolean isExomeExpress() {
         return productFamily.getName().equals(ProductFamily.ProductFamilyName.EXOME.getFamilyName()) && productName.startsWith(EXOME_EXPRESS);
     }
-
 }

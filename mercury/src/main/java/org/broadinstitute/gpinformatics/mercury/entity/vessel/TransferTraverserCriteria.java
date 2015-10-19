@@ -684,19 +684,19 @@ public interface TransferTraverserCriteria {
     }
 
     /**
-     * Traverse LabVessels and LabEvents for events producing MaterialTypes
+     * Traverse LabVessels and LabEvents to find current MaterialType
      */
-    class LabEventsWithMaterialTypeTraverserCriteria implements TransferTraverserCriteria {
-        private final LabVessel.MaterialType materialType;
-        private LabVessel vesselForMaterialType = null;
+    class NearestMaterialTypeTraverserCriteria implements TransferTraverserCriteria {
+        private MaterialType materialType=null;
 
-        public LabEventsWithMaterialTypeTraverserCriteria(LabVessel.MaterialType materialTypes) {
-            this.materialType = materialTypes;
+        public NearestMaterialTypeTraverserCriteria() {
         }
-
 
         @Override
         public TraversalControl evaluateVesselPreOrder(Context context) {
+            if (materialType != null) {
+                return TraversalControl.StopTraversing;
+            }
             LabVessel vessel = context.getLabVessel();
             LabEvent event = context.getEvent();
             if (event != null) {
@@ -705,7 +705,6 @@ public interface TransferTraverserCriteria {
             if (vessel != null) {
                 evaluateTransfers(context.getTraversalDirection(), vessel);
             }
-
             return TraversalControl.ContinueTraversing;
         }
 
@@ -722,8 +721,9 @@ public interface TransferTraverserCriteria {
         }
 
         private void evaluateEvent(LabVessel vessel, LabEvent event) {
-            if (materialType == event.getLabEventType().getResultingMaterialType() && vesselForMaterialType == null) {
-                vesselForMaterialType = vessel;
+            MaterialType resultingMaterialType = event.getLabEventType().getResultingMaterialType();
+            if (resultingMaterialType != null) {
+                materialType=resultingMaterialType;
             }
         }
 
@@ -735,8 +735,8 @@ public interface TransferTraverserCriteria {
         public void evaluateVesselPostOrder(Context context) {
         }
 
-        public LabVessel getVesselForMaterialType() {
-            return vesselForMaterialType;
+        public MaterialType getMaterialType() {
+            return materialType;
         }
     }
 
