@@ -26,6 +26,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPKitRequestService;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
@@ -45,6 +46,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySample
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.workflow.AddReworkActionBean;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -95,6 +97,9 @@ public class ProductOrderEjb {
 
     @Inject
     private BSPKitRequestService bspKitRequestService;
+
+    @Inject
+    private AppConfig appConfig;
 
     private ProductOrderSampleDao productOrderSampleDao;
 
@@ -333,11 +338,25 @@ public class ProductOrderEjb {
         if (order.getOrderStatus().readyForLab()) {
             Map<String, Collection<ProductOrderSample>> samples = bucketEjb.addSamplesToBucket(order, newSamples);
             if (!samples.isEmpty()) {
+                Set<String> bucketedSampleIds = new HashSet<>();
                 for (Map.Entry<String, Collection<ProductOrderSample>> bucketSampleEntry : samples.entrySet()) {
                     String bucketName = bucketSampleEntry.getKey();
+                    bucketedSampleIds.addAll(ProductOrderSample.getSampleNames(bucketSampleEntry.getValue()));
                     bucketName = bucketName.toLowerCase().endsWith("bucket") ? bucketName : bucketName + " Bucket";
                     reporter.addMessage("{0} samples have been added to the {1}.",
                             bucketSampleEntry.getValue().size(), bucketName);
+                }
+
+                Collection<String> unBucketedSamples =
+                        CollectionUtils.subtract(ProductOrderSample.getSampleNames(newSamples), bucketedSampleIds);
+                if (!unBucketedSamples.isEmpty()) {
+                    reporter.addMessage(String.format(
+                            "Some samples were not added to a bucket. <a href='%s%s?%s&vesselLabel=%s'>Click here</a> if you wish to add %s manually.",
+                            appConfig.getUrl(),
+                            AddReworkActionBean.ADD_REWORK_ACTION_BEAN, AddReworkActionBean.VIEW_ACTION,
+                            StringUtils.join(unBucketedSamples, "%0A"),
+                            unBucketedSamples
+                    ));
                 }
             }
         }

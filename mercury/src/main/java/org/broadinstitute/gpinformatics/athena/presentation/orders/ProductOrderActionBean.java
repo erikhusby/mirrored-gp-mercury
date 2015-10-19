@@ -1403,12 +1403,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                 ProductOrder.loadSampleData(samples);
                 for (ProductOrderSample sample : samples) {
                     JSONObject item = new JSONObject();
-
-                    if (sample.isInBspFormat()) {
-                        ProductOrderSampleJsonFactory.setupSampleDTOItems(sample, item);
-                    } else {
-                        ProductOrderSampleJsonFactory.setupEmptyItems(sample, item);
-                    }
+                    ProductOrderSampleJsonFactory.toJson(sample);
                     itemList.put(item);
                 }
             } catch (BSPLookupException e) {

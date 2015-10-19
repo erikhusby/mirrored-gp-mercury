@@ -25,11 +25,6 @@
             showJiraInfo();
         }
 
-        function submitWorkflow() {
-            $j('#bucketWorkflowForm').submit();
-            showJiraInfo();
-        }
-
         function isBucketEmpty() {
             return $j('#bucketEntryView tbody tr td').not('.dataTables_empty').length == 0;
         }
@@ -242,6 +237,7 @@
                     {"bSortable":true},
                     {"bSortable":true},
                     {"bSortable":true},
+                    {"bSortable":true},
                     {"bSortable":true}
                 ],
                 "fnDrawCallback": editablePdo
@@ -280,22 +276,6 @@
 </stripes:layout-component>
 
 <stripes:layout-component name="content">
-    <c:if test="${actionBean.totalBucketEntries()>0 && (actionBean.selectedBucket!=null && actionBean.selectedWorkflowDef==null)}">
-        <div class="alert alert-success" style="margin-left:20%;margin-right:20%;">
-            <ul>
-                <c:if test="${actionBean.selectedBucket!=null && actionBean.selectedWorkflowDef==null}">
-                    <li>There are ${actionBean.totalBucketEntries()} entries in this bucket
-                        <c:if test="${actionBean.totalBucketEntries()>0}">
-                            and ${fn:length(actionBean.possibleWorkflows)} possible workflows.
-                        </c:if>
-                    </li>
-                    <c:if test="${actionBean.selectedWorkflowDef==null && actionBean.totalBucketEntries()>0}">
-                        <li>Select a workflow to view and batch bucket entries.</li>
-                    </c:if>
-                </c:if>
-            </ul>
-        </div>
-    </c:if>
     <stripes:form id="bucketForm" class="form-horizontal" action="/view/bucketView.action?setBucket">
         <div class="form-horizontal">
             <div class="control-group">
@@ -303,13 +283,15 @@
                 <div class="controls">
                     <stripes:select id="bucketSelect" name="selectedBucket" onchange="submitBucket()">
                         <stripes:option value="">Select a Bucket</stripes:option>
-                        <stripes:options-collection collection="${actionBean.buckets}"/>
+                        <c:forEach items="${actionBean.mapBucketToBucketEntryCount.keySet()}" var="bucketName">
+                            <c:set var="bucketCount" value="${actionBean.mapBucketToBucketEntryCount.get(bucketName)}"/>
+                            <stripes:option value="${bucketName}"
+                                            label="${bucketName} (${bucketCount.bucketEntryCount + bucketCount.reworkEntryCount} vessels)"/>
+                        </c:forEach>
                     </stripes:select>
                 </div>
             </div>
         </div>
-    </stripes:form>
-    <stripes:form id="bucketWorkflowForm" class="form-horizontal" action="/view/bucketView.action?viewBucket">
         <div class="form-horizontal">
         <stripes:hidden name="selectedBucket" value="${actionBean.selectedBucket}"/>
         <div class="control-group">
@@ -318,7 +300,12 @@
                 <stripes:select id="workflowSelect" name="selectedWorkflowDef" onchange="submitWorkflow()"
                                 value="selectedWorkflowDef.name">
                     <stripes:option value="">Select a Workflow</stripes:option>
-                    <stripes:options-collection collection="${actionBean.possibleWorkflows}" label="name" value="name"/>
+                    <c:forEach items="${actionBean.possibleWorkflows}" var="workflow">
+                        <stripes:option value="${workflow.name}"
+                                        label="${workflow.name} (${actionBean.workflowCounter.count(workflow.name)} vessels)"/>
+                    </c:forEach>
+
+                    <%--<stripes:options-collection collection="${actionBean.possibleWorkflows}" label="name" value="name"/>--%>
                 </stripes:select>
             </div>
         </div>
@@ -331,7 +318,7 @@
         <c:if test="${actionBean.jiraEnabled}">
             <div id="newTicketDiv">
                 <div class="control-group">
-                    <stripes:label for="lcsetText" name="Batch Name" class="control-label"/>
+                    <stripes:label for="lcsetText" name="Jira Batch Id" class="control-label"/>
                     <div class="controls">
                         <stripes:text id="lcsetText" class="defaultText" name="selectedLcset"
                                       title="Enter if you are adding to an existing batch"/>
@@ -405,7 +392,8 @@
                 <th>Batch Name</th>
                 <th width="100">Created Date</th>
                 <th>Bucket Entry Type</th>
-                <th>Workflow Name</th>
+                <th>Product</th>
+                <th>Add-ons</th>
                 <th>Rework Reason</th>
                 <th>Rework Comment</th>
                 <th>Rework User</th>
@@ -413,7 +401,7 @@
             </tr>
             </thead>
             <tbody>
-            <c:forEach items="${actionBean.collectiveEntries}" var="entry">
+            <c:forEach items="${actionBean.allBucketEntries}" var="entry">
                 <tr id="${entry.bucketEntryId}" data-vessel-label="${entry.labVessel.label}">
                     <td>
                         <stripes:checkbox class="bucket-checkbox" name="selectedEntryIds"
@@ -462,7 +450,10 @@
                             ${entry.entryType.name}
                     </td>
                     <td>
-                            ${entry.workflowName}
+                            ${entry.productOrder.product.name}
+                    </td>
+                    <td>
+                            ${entry.productOrder.addOnList}
                     </td>
                     <td>
                             ${entry.reworkDetail.reason.reason}

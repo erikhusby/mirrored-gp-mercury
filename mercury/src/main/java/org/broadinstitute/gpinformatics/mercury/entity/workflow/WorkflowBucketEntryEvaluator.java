@@ -11,6 +11,8 @@
 
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -27,6 +29,7 @@ import java.util.Set;
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 public class WorkflowBucketEntryEvaluator implements Serializable {
+    private static final Log log = LogFactory.getLog(WorkflowBucketEntryEvaluator.class);
     Set<Workflow> workflows = new HashSet<>();
     Set<MaterialType> materialTypes = new HashSet<>();
 
@@ -38,11 +41,11 @@ public class WorkflowBucketEntryEvaluator implements Serializable {
         this.materialTypes = materialTypes;
     }
 
-    private boolean materialTypeMatches(LabVessel labVessel) {
+    private boolean materialTypeMatches(MaterialType materialType) {
         if (materialTypes.isEmpty()){
             return true;
         }
-        return materialTypes.contains(labVessel.getLatestMaterialType());
+        return materialTypes.contains(materialType);
     }
 
     private boolean productOrAddOnsHaveWorkflow(ProductOrder productOrder) {
@@ -73,7 +76,12 @@ public class WorkflowBucketEntryEvaluator implements Serializable {
 
 
     public boolean invoke(LabVessel labVessel, ProductOrder productOrder) {
-        return productOrAddOnsHaveWorkflow(productOrder) && materialTypeMatches(labVessel);
+        return invoke(labVessel.getLatestMaterialType(), productOrder);
+    }
+
+    public boolean invoke(MaterialType materialType, ProductOrder productOrder) {
+        log.trace(String.format("invoke called with %s, %s", materialType.getDisplayName(), productOrder.getJiraTicketKey()));
+        return productOrAddOnsHaveWorkflow(productOrder) && materialTypeMatches(materialType);
     }
 
     public Set<MaterialType> getMaterialTypes() {
