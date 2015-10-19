@@ -934,4 +934,22 @@ public class LabEventFixupTest extends Arquillian {
         labEvent.setDisambiguator(1L);
         labEventDao.persist(new FixupCommentary("GPLIM-3796 changed disambiguator of an event to avoid a unique constraint violation with another receipt event"));
     }
+
+    @Test(enabled = false)
+    public void fixupGplim3805() {
+        userBean.loginOSUser();
+        LabEvent daughterPlateTransfer = labEventDao.findById(LabEvent.class, 1056208L);
+        Assert.assertNotNull(daughterPlateTransfer);
+        Assert.assertTrue(daughterPlateTransfer.getCherryPickTransfers().size() > 0);
+        System.out.print("Removing lab event " + daughterPlateTransfer.getLabEventId() + " and its cherry picks");
+        for (CherryPickTransfer transfer : daughterPlateTransfer.getCherryPickTransfers()) {
+            labEventDao.remove(transfer);
+        }
+        daughterPlateTransfer.getCherryPickTransfers().clear();
+        labEventDao.remove(daughterPlateTransfer);
+
+        labEventDao.persist(new FixupCommentary("GPLIM-3796 undo an earlier fixup that created a daughter plate."));
+        labEventDao.flush();
+    }
+
 }
