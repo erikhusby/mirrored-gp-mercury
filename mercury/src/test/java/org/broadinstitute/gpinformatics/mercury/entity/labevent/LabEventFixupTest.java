@@ -943,6 +943,7 @@ public class LabEventFixupTest extends Arquillian {
         Assert.assertTrue(daughterPlateTransfer.getCherryPickTransfers().size() > 0);
         System.out.print("Removing lab event " + daughterPlateTransfer.getLabEventId() + " and its cherry picks");
         for (CherryPickTransfer transfer : daughterPlateTransfer.getCherryPickTransfers()) {
+            transfer.clearLabEvent();
             labEventDao.remove(transfer);
         }
         daughterPlateTransfer.getCherryPickTransfers().clear();
