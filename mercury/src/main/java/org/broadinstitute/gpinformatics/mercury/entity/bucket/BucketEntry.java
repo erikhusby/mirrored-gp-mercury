@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
@@ -316,11 +317,13 @@ public class BucketEntry {
     }
 
     private Workflow findWorkflow() {
+        MaterialType materialType = labVessel.getLatestMaterialType();
+
         WorkflowConfig workflowConfig = new WorkflowLoader().load();
         for (Workflow workflow : getProductOrder().getProductWorkflows()) {
             ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflow(workflow);
             for (WorkflowBucketDef workflowBucketDef : productWorkflowDef.getEffectiveVersion().getBuckets()) {
-                if (workflowBucketDef.meetsBucketCriteria(labVessel, productOrder)) {
+                if (workflowBucketDef.getBucketEntryEvaluator().getMaterialTypes().contains(materialType)) {
                     return workflow;
                 }
             }
