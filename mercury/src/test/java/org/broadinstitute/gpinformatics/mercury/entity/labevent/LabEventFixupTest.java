@@ -44,6 +44,7 @@ import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
@@ -951,6 +952,28 @@ public class LabEventFixupTest extends Arquillian {
 
         labEventDao.persist(new FixupCommentary("GPLIM-3796 undo an earlier fixup that created a daughter plate."));
         labEventDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim3805a() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        TubeFormation tubeFormation = labEventDao.findById(TubeFormation.class, 2342838L);
+        // Disassociates cherry picks from the tube formation and removes the transfer.
+        Set<CherryPickTransfer> transfers = tubeFormation.getContainerRole().getCherryPickTransfersFrom();
+
+        System.out.print("Removing " + transfers.size() + " cherry picks from tube formation " +
+                         tubeFormation.getLabVesselId());
+        tubeFormation.getContainerRole().getCherryPickTransfersFrom().clear();
+
+        for (CherryPickTransfer transfer : transfers) {
+            System.out.print("Removing cherry pick " + transfer.getVesselTransferId());
+            labEventDao.remove(transfer);
+        }
+
+        labEventDao.persist(new FixupCommentary("GPLIM-3796 more undo of an earlier fixup that created a daughter plate."));
+        utx.commit();
     }
 
 }
