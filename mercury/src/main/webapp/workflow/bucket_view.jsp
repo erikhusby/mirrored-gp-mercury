@@ -25,6 +25,11 @@
             showJiraInfo();
         }
 
+        function submitWorkflow() {
+            $j('#bucketWorkflowForm').submit();
+            showJiraInfo();
+        }
+
         function isBucketEmpty() {
             return $j('#bucketEntryView tbody tr td').not('.dataTables_empty').length == 0;
         }
@@ -231,9 +236,9 @@
                     {"bSortable":true},
                     {"bSortable":true},
                     {"bSortable":true},
+                    {"bSortable":true},
+                    {"bSortable":true},
                     {"bSortable":true, "sType":"date"},
-                    {"bSortable":true},
-                    {"bSortable":true},
                     {"bSortable":true},
                     {"bSortable":true},
                     {"bSortable":true},
@@ -276,6 +281,22 @@
 </stripes:layout-component>
 
 <stripes:layout-component name="content">
+    <c:if test="${actionBean.totalBucketEntries()>0 && (actionBean.selectedBucket!=null && actionBean.selectedWorkflowDef==null)}">
+        <div class="alert alert-success" style="margin-left:20%;margin-right:20%;">
+            <ul>
+                <c:if test="${actionBean.selectedBucket!=null && actionBean.selectedWorkflowDef==null}">
+                    <li>There are ${actionBean.totalBucketEntries()} entries in this bucket
+                        <c:if test="${actionBean.totalBucketEntries()>0}">
+                            and ${fn:length(actionBean.possibleWorkflows)} possible workflows.
+                        </c:if>
+                    </li>
+                    <c:if test="${actionBean.selectedWorkflowDef==null && actionBean.totalBucketEntries()>0}">
+                        <li>Select a workflow to view and batch bucket entries.</li>
+                    </c:if>
+                </c:if>
+            </ul>
+        </div>
+    </c:if>
     <stripes:form id="bucketForm" class="form-horizontal" action="/view/bucketView.action?setBucket">
         <div class="form-horizontal">
             <div class="control-group">
@@ -283,15 +304,13 @@
                 <div class="controls">
                     <stripes:select id="bucketSelect" name="selectedBucket" onchange="submitBucket()">
                         <stripes:option value="">Select a Bucket</stripes:option>
-                        <c:forEach items="${actionBean.mapBucketToBucketEntryCount.keySet()}" var="bucketName">
-                            <c:set var="bucketCount" value="${actionBean.mapBucketToBucketEntryCount.get(bucketName)}"/>
-                            <stripes:option value="${bucketName}"
-                                            label="${bucketName} (${bucketCount.bucketEntryCount + bucketCount.reworkEntryCount} vessels)"/>
-                        </c:forEach>
+                        <stripes:options-collection collection="${actionBean.buckets}"/>
                     </stripes:select>
                 </div>
             </div>
         </div>
+    </stripes:form>
+    <stripes:form id="bucketWorkflowForm" class="form-horizontal" action="/view/bucketView.action?viewBucket">
         <div class="form-horizontal">
         <stripes:hidden name="selectedBucket" value="${actionBean.selectedBucket}"/>
         <div class="control-group">
@@ -300,12 +319,7 @@
                 <stripes:select id="workflowSelect" name="selectedWorkflowDef" onchange="submitWorkflow()"
                                 value="selectedWorkflowDef.name">
                     <stripes:option value="">Select a Workflow</stripes:option>
-                    <c:forEach items="${actionBean.possibleWorkflows}" var="workflow">
-                        <stripes:option value="${workflow.name}"
-                                        label="${workflow.name} (${actionBean.workflowCounter.count(workflow.name)} vessels)"/>
-                    </c:forEach>
-
-                    <%--<stripes:options-collection collection="${actionBean.possibleWorkflows}" label="name" value="name"/>--%>
+                    <stripes:options-collection collection="${actionBean.possibleWorkflows}" label="name" value="name"/>
                 </stripes:select>
             </div>
         </div>
@@ -318,7 +332,7 @@
         <c:if test="${actionBean.jiraEnabled}">
             <div id="newTicketDiv">
                 <div class="control-group">
-                    <stripes:label for="lcsetText" name="Jira Batch Id" class="control-label"/>
+                    <stripes:label for="lcsetText" name="Batch Name" class="control-label"/>
                     <div class="controls">
                         <stripes:text id="lcsetText" class="defaultText" name="selectedLcset"
                                       title="Enter if you are adding to an existing batch"/>
@@ -390,10 +404,10 @@
                 <th width="300">PDO Name</th>
                 <th width="200">PDO Owner</th>
                 <th>Batch Name</th>
-                <th width="100">Created Date</th>
-                <th>Bucket Entry Type</th>
                 <th>Product</th>
                 <th>Add-ons</th>
+                <th width="100">Created Date</th>
+                <th>Bucket Entry Type</th>
                 <th>Rework Reason</th>
                 <th>Rework Comment</th>
                 <th>Rework User</th>
@@ -401,7 +415,7 @@
             </tr>
             </thead>
             <tbody>
-            <c:forEach items="${actionBean.allBucketEntries}" var="entry">
+            <c:forEach items="${actionBean.collectiveEntries}" var="entry">
                 <tr id="${entry.bucketEntryId}" data-vessel-label="${entry.labVessel.label}">
                     <td>
                         <stripes:checkbox class="bucket-checkbox" name="selectedEntryIds"
@@ -443,17 +457,19 @@
                             <c:if test="${!stat.last}">&nbsp;</c:if></c:forEach>
 
                     </td>
+                    <td>
+                        <div class="ellipsis" style="max-width: 250px;">${entry.productOrder.product.name}</div>
+                    </td>
+                    <td>
+                        <div class="ellipsis" style="max-width: 250px;">
+                            ${entry.productOrder.getAddOnList("<br/>")}
+                        </div>
+                    </td>
                     <td class="ellipsis">
                         <fmt:formatDate value="${entry.createdDate}" pattern="MM/dd/yyyy HH:mm:ss"/>
                     </td>
                     <td>
                             ${entry.entryType.name}
-                    </td>
-                    <td>
-                            ${entry.productOrder.product.name}
-                    </td>
-                    <td>
-                            ${entry.productOrder.addOnList}
                     </td>
                     <td>
                             ${entry.reworkDetail.reason.reason}
