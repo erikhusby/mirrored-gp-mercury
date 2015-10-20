@@ -44,7 +44,6 @@ import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
@@ -933,7 +932,8 @@ public class LabEventFixupTest extends Arquillian {
         userBean.loginOSUser();
         LabEvent labEvent = labEventDao.findById(LabEvent.class, 1052890L);
         labEvent.setDisambiguator(1L);
-        labEventDao.persist(new FixupCommentary("GPLIM-3796 changed disambiguator of an event to avoid a unique constraint violation with another receipt event"));
+        labEventDao.persist(new FixupCommentary(
+                "GPLIM-3796 changed disambiguator of an event to avoid a unique constraint violation with another receipt event"));
     }
 
     @Test(enabled = false)
@@ -959,20 +959,24 @@ public class LabEventFixupTest extends Arquillian {
         userBean.loginOSUser();
         utx.begin();
 
-        TubeFormation tubeFormation = labEventDao.findById(TubeFormation.class, 2342838L);
-        // Disassociates cherry picks from the tube formation and removes the transfer.
-        Set<CherryPickTransfer> transfers = tubeFormation.getContainerRole().getCherryPickTransfersFrom();
+        TubeFormation source = labEventDao.findById(TubeFormation.class, 2342838L);
+        List<CherryPickTransfer> transfers = new ArrayList<>(source.getContainerRole().getCherryPickTransfersFrom());
+        Assert.assertEquals(transfers.size(), 74);
 
-        System.out.print("Removing " + transfers.size() + " cherry picks from tube formation " +
-                         tubeFormation.getLabVesselId());
-        tubeFormation.getContainerRole().getCherryPickTransfersFrom().clear();
+        System.out.println("Removing " + transfers.size() + " cherry picks from tube formation " +
+                           source.getLabVesselId());
 
         for (CherryPickTransfer transfer : transfers) {
-            System.out.print("Removing cherry pick " + transfer.getVesselTransferId());
+            transfer.getAncillaryTargetVessel().getVesselToVesselTransfersThisAsTarget().remove(transfer);
+            transfer.getAncillarySourceVessel().getVesselToVesselTransfersThisAsSource().remove(transfer);
+            transfer.getTargetVesselContainer().getCherryPickTransfersTo().remove(transfer);
+            transfer.getSourceVesselContainer().getCherryPickTransfersFrom().remove(transfer);
             labEventDao.remove(transfer);
         }
 
-        labEventDao.persist(new FixupCommentary("GPLIM-3796 more undo of an earlier fixup that created a daughter plate."));
+        labEventDao.flush();
+        labEventDao.persist(
+                new FixupCommentary("GPLIM-3796 more undo of an earlier fixup that created a daughter plate."));
         utx.commit();
     }
 
