@@ -201,6 +201,9 @@ public abstract class LabVessel implements Serializable {
     @Transient
     private Map<String, Set<LabMetric>> metricMap;
 
+    @Transient
+    private MaterialType latestMaterialType=null;
+
     /**
      * Set by {@link #preProcessEvents()}
      */
@@ -239,9 +242,11 @@ public abstract class LabVessel implements Serializable {
      * @return
      */
     public MaterialType getLatestMaterialType() {
-        MaterialType latestMaterialType = getLatestMaterialTypeFromEventHistory();
-        if (latestMaterialType == null) {
-            latestMaterialType = MaterialType.fromDisplayName(getMaterialTypes().iterator().next());
+        if (latestMaterialType==null) {
+            latestMaterialType = getLatestMaterialTypeFromEventHistory();
+            if (latestMaterialType == null) {
+                latestMaterialType = MaterialType.fromDisplayName(getMaterialTypes().iterator().next());
+            }
         }
         return latestMaterialType;
     }

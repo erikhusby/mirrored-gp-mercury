@@ -236,8 +236,9 @@
                     {"bSortable":true},
                     {"bSortable":true},
                     {"bSortable":true},
-                    {"bSortable":true, "sType":"date"},
                     {"bSortable":true},
+                    {"bSortable":true},
+                    {"bSortable":true, "sType":"date"},
                     {"bSortable":true},
                     {"bSortable":true},
                     {"bSortable":true},
@@ -403,9 +404,10 @@
                 <th width="300">PDO Name</th>
                 <th width="200">PDO Owner</th>
                 <th>Batch Name</th>
+                <th>Product</th>
+                <th>Add-ons</th>
                 <th width="100">Created Date</th>
                 <th>Bucket Entry Type</th>
-                <th>Workflow Name</th>
                 <th>Rework Reason</th>
                 <th>Rework Comment</th>
                 <th>Rework User</th>
@@ -455,14 +457,19 @@
                             <c:if test="${!stat.last}">&nbsp;</c:if></c:forEach>
 
                     </td>
+                    <td>
+                        <div class="ellipsis" style="max-width: 250px;">${entry.productOrder.product.name}</div>
+                    </td>
+                    <td>
+                        <div class="ellipsis" style="max-width: 250px;">
+                            ${entry.productOrder.getAddOnList("<br/>")}
+                        </div>
+                    </td>
                     <td class="ellipsis">
                         <fmt:formatDate value="${entry.createdDate}" pattern="MM/dd/yyyy HH:mm:ss"/>
                     </td>
                     <td>
                             ${entry.entryType.name}
-                    </td>
-                    <td>
-                            ${entry.workflowName}
                     </td>
                     <td>
                             ${entry.reworkDetail.reason.reason}
