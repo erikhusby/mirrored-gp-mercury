@@ -759,6 +759,7 @@ public interface TransferTraverserCriteria {
                 if (context.getHopCount() > hopCount) {
                     hopCount = context.getHopCount();
                 }
+                labEvents.add(context.getEvent());
             }
 
             if( context.getLabVessel() != null ) {
