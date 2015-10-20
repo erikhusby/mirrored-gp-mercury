@@ -52,7 +52,7 @@ public class WorkflowBucketEntryEvaluator implements Serializable {
         return workflows.isEmpty() || getMatchingWorkflow(productOrder) != Workflow.NONE;
     }
 
-    public Workflow getMatchingWorkflow(ProductOrder productOrder) {
+    protected Workflow getMatchingWorkflow(ProductOrder productOrder) {
         if (workflows.isEmpty()) {
             return productOrder.getProduct().getWorkflow();
         }
@@ -76,32 +76,19 @@ public class WorkflowBucketEntryEvaluator implements Serializable {
 
 
     public boolean invoke(LabVessel labVessel, ProductOrder productOrder) {
-        return invoke(labVessel.getLatestMaterialType(), productOrder);
+        return productOrAddOnsHaveWorkflow(productOrder) && materialTypeMatches(labVessel.getLatestMaterialType());
     }
 
-    public boolean invoke(MaterialType materialType, ProductOrder productOrder) {
-        log.trace(String.format("invoke called with %s, %s", materialType.getDisplayName(), productOrder.getJiraTicketKey()));
-        return productOrAddOnsHaveWorkflow(productOrder) && materialTypeMatches(materialType);
-    }
-
-    public Set<MaterialType> getMaterialTypes() {
-        return materialTypes;
-    }
-
-    public Set<Workflow> getWorkflows() {
-        return workflows;
-    }
-
-    protected String findMissingRequirements(ProductOrder productOrder, MaterialType latestMaterialType) {
-        Set<MaterialType> missingMaterialTypes=getMaterialTypes();
-        missingMaterialTypes.remove(latestMaterialType);
-        Set<Workflow> missingWorkflows=getWorkflows();
+    protected String findMissingRequirements(ProductOrder productOrder, MaterialType materialType) {
+        Set<MaterialType> missingMaterialTypes=materialTypes;
+        missingMaterialTypes.remove(materialType);
+        Set<Workflow> missingWorkflows = workflows;
         missingWorkflows.removeAll(productOrder.getProductWorkflows());
 
         String missingRequirements = "";
         if (!missingMaterialTypes.isEmpty()) {
             missingRequirements =
-                    String.format("Material Type: '%s' is not one of %s", latestMaterialType, missingMaterialTypes);
+                    String.format("Material Type: '%s' is not one of %s", materialType, missingMaterialTypes);
         }
         if (!missingWorkflows.isEmpty()) {
             missingRequirements +=
