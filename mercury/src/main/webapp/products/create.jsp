@@ -1,5 +1,6 @@
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
+<%@ page import="org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -389,8 +390,8 @@
                         </stripes:label>
                         <div class="controls">
                             <stripes:select name="editProduct.workflow" id="workflow">
-                                <stripes:option value="${actionBean.workflowNone}">None</stripes:option>
-                                <stripes:options-collection collection="${actionBean.visibleWorkflowList}" label="workflowName"/>
+                                <stripes:option value="<%= Workflow.NONE %>">None</stripes:option>
+                                <stripes:options-collection collection="${actionBean.availableWorkflows}" label="workflowName"/>
                             </stripes:select>
                         </div>
                     </div>

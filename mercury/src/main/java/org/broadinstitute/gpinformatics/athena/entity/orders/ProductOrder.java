@@ -397,6 +397,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public String getAddOnList() {
+        return getAddOnList(", ");
+    }
+
+    public String getAddOnList(String delimiter) {
         if (addOns.isEmpty()) {
             return "no Add-ons";
         }
@@ -407,7 +411,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             addOnArray[i++] = poAddOn.getAddOn().getProductName();
         }
 
-        return StringUtils.join(addOnArray, ", ");
+        return StringUtils.join(addOnArray, delimiter);
     }
 
     public int getLaneCount() {
