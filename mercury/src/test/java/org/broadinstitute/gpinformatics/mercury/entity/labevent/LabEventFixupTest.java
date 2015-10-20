@@ -932,6 +932,52 @@ public class LabEventFixupTest extends Arquillian {
         userBean.loginOSUser();
         LabEvent labEvent = labEventDao.findById(LabEvent.class, 1052890L);
         labEvent.setDisambiguator(1L);
-        labEventDao.persist(new FixupCommentary("GPLIM-3796 changed disambiguator of an event to avoid a unique constraint violation with another receipt event"));
+        labEventDao.persist(new FixupCommentary(
+                "GPLIM-3796 changed disambiguator of an event to avoid a unique constraint violation with another receipt event"));
     }
+
+    @Test(enabled = false)
+    public void fixupGplim3805() {
+        userBean.loginOSUser();
+        LabEvent daughterPlateTransfer = labEventDao.findById(LabEvent.class, 1056208L);
+        Assert.assertNotNull(daughterPlateTransfer);
+        Assert.assertTrue(daughterPlateTransfer.getCherryPickTransfers().size() > 0);
+        System.out.print("Removing lab event " + daughterPlateTransfer.getLabEventId() + " and its cherry picks");
+        for (CherryPickTransfer transfer : daughterPlateTransfer.getCherryPickTransfers()) {
+            transfer.clearLabEvent();
+            labEventDao.remove(transfer);
+        }
+        daughterPlateTransfer.getCherryPickTransfers().clear();
+        labEventDao.remove(daughterPlateTransfer);
+
+        labEventDao.persist(new FixupCommentary("GPLIM-3796 undo an earlier fixup that created a daughter plate."));
+        labEventDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim3805a() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        TubeFormation source = labEventDao.findById(TubeFormation.class, 2342838L);
+        List<CherryPickTransfer> transfers = new ArrayList<>(source.getContainerRole().getCherryPickTransfersFrom());
+        Assert.assertEquals(transfers.size(), 74);
+
+        System.out.println("Removing " + transfers.size() + " cherry picks from tube formation " +
+                           source.getLabVesselId());
+
+        for (CherryPickTransfer transfer : transfers) {
+            transfer.getAncillaryTargetVessel().getVesselToVesselTransfersThisAsTarget().remove(transfer);
+            transfer.getAncillarySourceVessel().getVesselToVesselTransfersThisAsSource().remove(transfer);
+            transfer.getTargetVesselContainer().getCherryPickTransfersTo().remove(transfer);
+            transfer.getSourceVesselContainer().getCherryPickTransfersFrom().remove(transfer);
+            labEventDao.remove(transfer);
+        }
+
+        labEventDao.flush();
+        labEventDao.persist(
+                new FixupCommentary("GPLIM-3796 more undo of an earlier fixup that created a daughter plate."));
+        utx.commit();
+    }
+
 }
