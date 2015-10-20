@@ -45,10 +45,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasItems;
+import static org.hamcrest.Matchers.lessThan;
 
 
 /**
@@ -291,11 +294,11 @@ public class WorkflowTest {
     @Test
     public void testExtractionBucketWithExtractionAddOn() {
         BarcodedTube barcodedTube = new BarcodedTube("00001234");
-        MercurySample mercurySample = createNewMercurySample("SM-1234", MaterialType.TISSUE_FRESH_FROZEN_TISSUE,
+        MercurySample mercurySample = createNewMercurySample("SM-1234", MaterialType.CELLS_PELLET_FROZEN,
                 MercurySample.MetadataSource.MERCURY);
         barcodedTube.addSample(mercurySample);
 
-        Product addOn = ProductTestFactory.createDummyProduct(Workflow.DNA_RNA_EXTRACTION_FROZEN_TISSUE, "ZZ-TOP");
+        Product addOn = ProductTestFactory.createDummyProduct(Workflow.DNA_RNA_EXTRACTION_CELL_PELLETS, "ZZ-TOP");
         ProductOrder productOrder = ProductOrderTestFactory
                 .createDummyProductOrder(1, "PDO-EDDIE_MONEY", Workflow.ICE_CRSP, 1, "JOURNEY", "TOM-SAWYER", true,
                         "ZZ-TOP", "AH_HA", "JOAN-JET");
@@ -303,7 +306,7 @@ public class WorkflowTest {
         productOrder.getSamples().iterator().next().setMercurySample(mercurySample);
         productOrder.updateAddOnProducts(Collections.singletonList(addOn));
 
-        ProductWorkflowDef workflow = new WorkflowLoader().load().getWorkflow(Workflow.DNA_RNA_EXTRACTION_FROZEN_TISSUE);
+        ProductWorkflowDef workflow = new WorkflowLoader().load().getWorkflow(Workflow.DNA_RNA_EXTRACTION_CELL_PELLETS);
         boolean meetsCriteria=false;
         List<WorkflowBucketDef> workflowBuckets = workflow.getEffectiveVersion().getBuckets();
         for (WorkflowBucketDef workflowBucketDef : workflowBuckets) {
@@ -317,18 +320,18 @@ public class WorkflowTest {
     @Test
     public void testExtractionBucketWithExtractionNoAddOn() {
         BarcodedTube barcodedTube = new BarcodedTube("00001234");
-        MercurySample mercurySample = createNewMercurySample("SM-1234", MaterialType.TISSUE_FRESH_FROZEN_TISSUE,
+        MercurySample mercurySample = createNewMercurySample("SM-1234", MaterialType.CELLS_PELLET_FROZEN,
                 MercurySample.MetadataSource.MERCURY);
         barcodedTube.addSample(mercurySample);
 
-        Product addOn = ProductTestFactory.createDummyProduct(Workflow.DNA_RNA_EXTRACTION_FROZEN_TISSUE, "ZZ-TOP");
+        Product addOn = ProductTestFactory.createDummyProduct(Workflow.DNA_RNA_EXTRACTION_CELL_PELLETS, "ZZ-TOP");
         ProductOrder productOrder = ProductOrderTestFactory
                 .createDummyProductOrder(1, "PDO-EDDIE_MONEY", Workflow.ICE_CRSP, 1, "JOURNEY", "TOM-SAWYER",
                         true, "ZZ-TOP", "AH_HA", "JOAN-JET");
         productOrder.getProduct().addAddOn(addOn);
         productOrder.getSamples().iterator().next().setMercurySample(mercurySample);
 
-        ProductWorkflowDef workflow = new WorkflowLoader().load().getWorkflow(Workflow.DNA_RNA_EXTRACTION_FROZEN_TISSUE);
+        ProductWorkflowDef workflow = new WorkflowLoader().load().getWorkflow(Workflow.DNA_RNA_EXTRACTION_CELL_PELLETS);
         boolean meetsCriteria=false;
         List<WorkflowBucketDef> workflowBuckets = workflow.getEffectiveVersion().getBuckets();
         for (WorkflowBucketDef workflowBucketDef : workflowBuckets) {
@@ -346,7 +349,7 @@ public class WorkflowTest {
                 MercurySample.MetadataSource.MERCURY);
         barcodedTube.addSample(mercurySample);
 
-        Product addOn = ProductTestFactory.createDummyProduct(Workflow.DNA_RNA_EXTRACTION_FROZEN_TISSUE, "ZZ-TOP");
+        Product addOn = ProductTestFactory.createDummyProduct(Workflow.DNA_RNA_EXTRACTION_CELL_PELLETS, "ZZ-TOP");
         ProductOrder productOrder = ProductOrderTestFactory
                 .createDummyProductOrder(1, "PDO-EDDIE_MONEY", Workflow.ICE_CRSP, 1, "JOURNEY", "TOM-SAWYER",
                         true, "ZZ-TOP", "AH_HA", "JOAN-JET");
@@ -354,7 +357,7 @@ public class WorkflowTest {
         productOrder.getSamples().iterator().next().setMercurySample(mercurySample);
         productOrder.updateAddOnProducts(Collections.singletonList(addOn));
 
-        ProductWorkflowDef workflow = new WorkflowLoader().load().getWorkflow(Workflow.DNA_RNA_EXTRACTION_FROZEN_TISSUE);
+        ProductWorkflowDef workflow = new WorkflowLoader().load().getWorkflow(Workflow.DNA_RNA_EXTRACTION_CELL_PELLETS);
         WorkflowBucketDef workflowBucketDef = workflow.getEffectiveVersion().findBucketDefByName("Extract to DNA and RNA");
         boolean meetsBucketCriteria = workflowBucketDef.meetsBucketCriteria(barcodedTube, productOrder);
 
@@ -368,14 +371,14 @@ public class WorkflowTest {
                 MercurySample.MetadataSource.MERCURY);
         barcodedTube.addSample(mercurySample);
 
-        Product addOn = ProductTestFactory.createDummyProduct(Workflow.DNA_RNA_EXTRACTION_FFPE_BLOCKS, "ZZ-TOP");
+        Product addOn = ProductTestFactory.createDummyProduct(Workflow.DNA_RNA_EXTRACTION_CELL_PELLETS, "ZZ-TOP");
         ProductOrder productOrder = ProductOrderTestFactory
                 .createDummyProductOrder(1, "PDO-EDDIE_MONEY", Workflow.ICE_CRSP, 1, "JOURNEY", "TOM-SAWYER", true,
                         "ZZ-TOP", "AH_HA", "JOAN-JET");
         productOrder.getSamples().iterator().next().setMercurySample(mercurySample);
         productOrder.updateAddOnProducts(Collections.singletonList(addOn));
 
-        ProductWorkflowDef workflow = new WorkflowLoader().load().getWorkflow(Workflow.DNA_RNA_EXTRACTION_FROZEN_TISSUE);
+        ProductWorkflowDef workflow = new WorkflowLoader().load().getWorkflow(Workflow.DNA_RNA_EXTRACTION_CELL_PELLETS);
 
         WorkflowBucketDef workflowBucketDef = workflow.getEffectiveVersion().findBucketDefByName("Extract to DNA and RNA");
         boolean meetsBucketCriteria = workflowBucketDef.meetsBucketCriteria(barcodedTube, productOrder);
@@ -395,7 +398,7 @@ public class WorkflowTest {
                         "ZZ-TOP", "AH_HA", "JOAN-JET");
         productOrder.getSamples().iterator().next().setMercurySample(mercurySample);
 
-        ProductWorkflowDef workflow = new WorkflowLoader().load().getWorkflow(Workflow.DNA_RNA_EXTRACTION_FROZEN_TISSUE);
+        ProductWorkflowDef workflow = new WorkflowLoader().load().getWorkflow(Workflow.DNA_RNA_EXTRACTION_CELL_PELLETS);
 
         WorkflowBucketDef workflowBucketDef = workflow.getEffectiveVersion()
                 .findBucketDefByName("Extract to DNA and RNA");
@@ -559,6 +562,23 @@ public class WorkflowTest {
         assertThat(actualValues, contains(expectedValues.toArray()));
     }
 
+
+    @Test(dataProvider = "WorkflowComparatorData")
+    public void workflowComparatorTest(Workflow theWorkflow, Workflow theOtherWorkflow, org.hamcrest.Matcher<Integer> matcher) {
+        assertThat(Workflow.BY_NAME.compare(theWorkflow, theOtherWorkflow), matcher);
+    }
+
+    @DataProvider(name = "WorkflowComparatorData")
+    public static Object[][] WorkflowComparatorData() {
+        return new Object[][]{
+                new Object[]{null, null, equalTo(0)},
+                new Object[]{Workflow.NONE, Workflow.NONE, equalTo(0)},
+                new Object[]{Workflow.NONE, Workflow.AGILENT_EXOME_EXPRESS, lessThan(0)},
+                new Object[]{Workflow.AGILENT_EXOME_EXPRESS, Workflow.NONE, greaterThan(0)},
+                new Object[]{Workflow.AGILENT_EXOME_EXPRESS, Workflow.DNA_RNA_EXTRACTION_CELL_PELLETS, lessThan(0)},
+                new Object[]{Workflow.DNA_RNA_EXTRACTION_CELL_PELLETS, Workflow.AGILENT_EXOME_EXPRESS, greaterThan(0)},
+        };
+    }
 
 }
 

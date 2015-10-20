@@ -454,6 +454,15 @@ public class ReworkEjb {
             logger.error(error);
             throw new ValidationException(error);
         }
+        if (!bucketDef.meetsBucketCriteria(candidateVessel, productOrder)) {
+            String error = String.format(
+                    "Vessel '%s' can not go into '%s' because it does not match the bucket's criteria. %s",
+                    candidateVessel.getLabel(),
+                    bucketDef.getName(),
+                    bucketDef.findMissingRequirements(productOrder, candidateVessel.getLatestMaterialType()));
+            logger.error(error);
+            throw new ValidationException(error);
+        }
     }
 
     // TODO: Only called from BatchToJiraTest. Can that be modified to use a method that is used by application code?

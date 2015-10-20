@@ -276,6 +276,10 @@ public class BucketViewActionBean extends CoreActionBean {
         return String.format("%d bucket and %d rework entries.", bucketEntryIds.size(), reworkEntryIds.size());
     }
 
+    public String getConfirmationPageTitle() {
+        return String.format("%d bucket and %d rework entries.", bucketEntryIds.size(), reworkEntryIds.size());
+    }
+
     private void loadReworkVessels() {
         batch = labBatchDao.findByBusinessKey(selectedLcset);
         separateEntriesByType();

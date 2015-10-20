@@ -289,9 +289,9 @@ public class SystemRouter implements Serializable {
                             badCrspRouting();
                             routingOptions.add(System.SQUID);
                         } else {
-                            String workflowName = sampleInstance.getWorkflowName();
                             for (LabBatch batch : sampleInstance.getAllWorkflowBatches()) {
-                                if (workflowName != null && batch != null) {
+                                String workflowName = batch.getWorkflowName();
+                                if (workflowName != null) {
                                     ProductWorkflowDefVersion productWorkflowDef = getWorkflowVersion(workflowName,
                                             batch.getCreatedOn());
                                     if (intent == Intent.SYSTEM_OF_RECORD) {
