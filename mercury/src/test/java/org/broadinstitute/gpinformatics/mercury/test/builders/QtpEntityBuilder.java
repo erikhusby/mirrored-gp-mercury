@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
@@ -57,12 +58,12 @@ public class QtpEntityBuilder {
     }
 
     public QtpEntityBuilder invoke() {
-        return invoke(true, true);
+        return invoke(true, QtpJaxbBuilder.PcrType.ECO_DUPLICATE);
     }
 
-    public QtpEntityBuilder invoke(boolean doPoolingTransfer, boolean doEco) {
+    public QtpEntityBuilder invoke(boolean doPoolingTransfer, QtpJaxbBuilder.PcrType pcrType) {
         QtpJaxbBuilder qtpJaxbBuilder = new QtpJaxbBuilder(bettaLimsMessageTestFactory, testPrefix,
-                listLcsetListNormCatchBarcodes, normCatchRackBarcodes, doPoolingTransfer, doEco).invoke();
+                listLcsetListNormCatchBarcodes, normCatchRackBarcodes, doPoolingTransfer, pcrType).invoke();
         PlateCherryPickEvent cherryPickJaxb = qtpJaxbBuilder.getPoolingTransferJaxb();
         PlateCherryPickEvent denatureJaxb = qtpJaxbBuilder.getDenatureJaxb();
         String normalizationRackBarcode = qtpJaxbBuilder.getNormalizationRackBarcode();
@@ -120,27 +121,85 @@ public class QtpEntityBuilder {
         int totalSampleInstanceCount = 0;
         int perTubeSampleInstanceCount = 0;
         for (TubeFormation normCatchRack : normCatchRacks) {
-            totalSampleInstanceCount += normCatchRack.getSampleInstances().size();
+            totalSampleInstanceCount += normCatchRack.getSampleInstancesV2().size();
         }
-        perTubeSampleInstanceCount = rearrayedPoolingRack.getContainerRole().getSampleInstancesAtPosition(VesselPosition.A01).size();
+        perTubeSampleInstanceCount = rearrayedPoolingRack.getContainerRole().getSampleInstancesAtPositionV2(VesselPosition.A01).size();
 
         // EcoTransfer or Viia7Transfer
-        String ecoViia7Step = doEco ? "EcoTransfer" : "Viia7Transfer";
-        PlateTransferEventType ecoViia7Event =
-                doEco ? qtpJaxbBuilder.getEcoTransferJaxb() : qtpJaxbBuilder.getViia7TransferJaxb();
+        boolean isEcoSetup = pcrType == QtpJaxbBuilder.PcrType.ECO_DUPLICATE ||
+                             pcrType == QtpJaxbBuilder.PcrType.ECO_TRIPLICATE;
 
+        String ecoViia7Step = isEcoSetup ? "EcoTransfer" : "Viia7Transfer";
         LabEventTest.validateWorkflow(ecoViia7Step, rearrayedPoolingRack);
+
         Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
         mapBarcodeToVessel.put(rearrayedPoolingRack.getLabel(), rearrayedPoolingRack);
         for (BarcodedTube barcodedTube : rearrayedPoolingRack.getContainerRole().getContainedVessels()) {
             mapBarcodeToVessel.put(barcodedTube.getLabel(), barcodedTube);
         }
-        LabEvent ecoViia7TransferEventEntity = labEventFactory.buildFromBettaLims(ecoViia7Event, mapBarcodeToVessel);
-        labEventHandler.processEvent(ecoViia7TransferEventEntity);
-        // asserts
-        StaticPlate ecoPlate = (StaticPlate) ecoViia7TransferEventEntity.getTargetLabVessels().iterator().next();
-        Assert.assertEquals(ecoPlate.getSampleInstances().size(), totalSampleInstanceCount,
-                "Wrong number of sample instances");
+
+        switch (pcrType) {
+            case ECO_DUPLICATE: {
+                PlateTransferEventType ecoDuplicateA3Event = qtpJaxbBuilder.getEcoTransferDuplicateA3Jaxb();
+                PlateTransferEventType ecoDuplicateB3Event = qtpJaxbBuilder.getEcoTransferDuplicateB3Jaxb();
+
+                LabEvent ecoDuplicateA3TransferEventEntity =
+                        labEventFactory.buildFromBettaLims(ecoDuplicateA3Event, mapBarcodeToVessel);
+                LabEvent ecoDuplicateB3TransferEventEntity =
+                        labEventFactory.buildFromBettaLims(ecoDuplicateB3Event, mapBarcodeToVessel);
+
+                labEventHandler.processEvent(ecoDuplicateA3TransferEventEntity);
+                labEventHandler.processEvent(ecoDuplicateB3TransferEventEntity);
+
+                StaticPlate ecoPlate =
+                        (StaticPlate) ecoDuplicateA3TransferEventEntity.getTargetLabVessels().iterator().next();
+
+                Set<SampleInstanceV2> ecoSampleInstancesA3 =
+                        ecoPlate.getContainerRole().getSampleInstancesAtPositionV2(VesselPosition.A03);
+                Set<SampleInstanceV2> ecoSampleInstancesB3 =
+                        ecoPlate.getContainerRole().getSampleInstancesAtPositionV2(VesselPosition.B03);
+                Assert.assertEquals(ecoSampleInstancesA3.size(), totalSampleInstanceCount,
+                        "Wrong number of sample instances");
+                Assert.assertEquals(ecoSampleInstancesB3.size(), totalSampleInstanceCount,
+                        "Wrong number of sample instances");
+                break;
+            }
+            case ECO_TRIPLICATE:
+                PlateTransferEventType ecoTripA3Event = qtpJaxbBuilder.getEcoTransferTriplicateA3();
+                PlateTransferEventType ecoTripA5Event = qtpJaxbBuilder.getEcoTransferTriplicateA5();
+                PlateTransferEventType ecoTripA7Event = qtpJaxbBuilder.getEcoTransferTriplicateA7();
+                LabEvent ecoTripA3TransferEventEntity = labEventFactory.buildFromBettaLims(ecoTripA3Event,
+                        mapBarcodeToVessel);
+                LabEvent ecoTripA5TransferEventEntity = labEventFactory.buildFromBettaLims(ecoTripA5Event,
+                        mapBarcodeToVessel);
+                LabEvent ecoTripA7TransferEventEntity = labEventFactory.buildFromBettaLims(ecoTripA7Event, mapBarcodeToVessel);
+                labEventHandler.processEvent(ecoTripA3TransferEventEntity);
+                labEventHandler.processEvent(ecoTripA5TransferEventEntity);
+                labEventHandler.processEvent(ecoTripA7TransferEventEntity);
+                StaticPlate ecoPlate = (StaticPlate) ecoTripA3TransferEventEntity.getTargetLabVessels().iterator().next();
+                //
+                Set<SampleInstanceV2> ecoSampleInstancesA3 =
+                        ecoPlate.getContainerRole().getSampleInstancesAtPositionV2(VesselPosition.A03);
+                Set<SampleInstanceV2> ecoSampleInstancesB5 =
+                        ecoPlate.getContainerRole().getSampleInstancesAtPositionV2(VesselPosition.B05);
+                Set<SampleInstanceV2> ecoSampleInstancesA7 =
+                        ecoPlate.getContainerRole().getSampleInstancesAtPositionV2(VesselPosition.A07);
+                Assert.assertEquals(ecoSampleInstancesA3.size(), totalSampleInstanceCount,
+                        "Wrong number of sample instances");
+                Assert.assertEquals(ecoSampleInstancesB5.size(), totalSampleInstanceCount,
+                        "Wrong number of sample instances");
+                Assert.assertEquals(ecoSampleInstancesA7.size(), totalSampleInstanceCount,
+                        "Wrong number of sample instances");
+                break;
+            case VIIA_7:
+                PlateTransferEventType viia7Event = qtpJaxbBuilder.getViia7TransferJaxb();
+                LabEvent viia7TransferEventEntity = labEventFactory.buildFromBettaLims(viia7Event, mapBarcodeToVessel);
+                labEventHandler.processEvent(viia7TransferEventEntity);
+                StaticPlate viiaPlate = (StaticPlate) viia7TransferEventEntity.getTargetLabVessels().iterator().next();
+                Assert.assertEquals(viiaPlate.getSampleInstances().size(), totalSampleInstanceCount,
+                        "Wrong number of sample instances");
+                break;
+        }
 
         // Normalization
         LabEventTest.validateWorkflow("NormalizationTransfer", rearrayedPoolingRack);
@@ -154,12 +213,12 @@ public class QtpEntityBuilder {
         // asserts
         normalizationRack = (TubeFormation) normalizationEntity.getTargetLabVessels().iterator().next();
         //
-        Set<SampleInstance> normalizedSampleInstances =
-                normalizationRack.getContainerRole().getSampleInstancesAtPosition(VesselPosition.A01);
+        Set<SampleInstanceV2> normalizedSampleInstances =
+                normalizationRack.getContainerRole().getSampleInstancesAtPositionV2(VesselPosition.A01);
         Assert.assertEquals(normalizedSampleInstances.size(), perTubeSampleInstanceCount,
                 "Wrong number of normalized samples");
         Assert.assertEquals(
-                normalizationRack.getContainerRole().getVesselAtPosition(VesselPosition.A01).getSampleInstances()
+                normalizationRack.getContainerRole().getVesselAtPosition(VesselPosition.A01).getSampleInstancesV2()
                         .size(),
                 perTubeSampleInstanceCount, "Wrong number of normalized samples");
 
@@ -176,13 +235,13 @@ public class QtpEntityBuilder {
         labEventHandler.processEvent(denatureEntity);
         // asserts
         denatureRack = (TubeFormation) denatureEntity.getTargetLabVessels().iterator().next();
-        Set<SampleInstance> denaturedSampleInstances =
-                denatureRack.getContainerRole().getSampleInstancesAtPosition(VesselPosition.A01);
+        Set<SampleInstanceV2> denaturedSampleInstances =
+                denatureRack.getContainerRole().getSampleInstancesAtPositionV2(VesselPosition.A01);
 
         Assert.assertEquals(denaturedSampleInstances.size(), perTubeSampleInstanceCount,
                 "Wrong number of denatured samples");
         Assert.assertEquals(
-                denatureRack.getContainerRole().getVesselAtPosition(VesselPosition.A01).getSampleInstances().size(),
+                denatureRack.getContainerRole().getVesselAtPosition(VesselPosition.A01).getSampleInstancesV2().size(),
                 perTubeSampleInstanceCount, "Wrong number of denatured samples");
         return this;
     }
