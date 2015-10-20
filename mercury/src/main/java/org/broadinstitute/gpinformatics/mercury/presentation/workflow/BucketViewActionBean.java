@@ -21,11 +21,13 @@ import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
@@ -52,6 +54,7 @@ import java.io.StringReader;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -97,7 +100,8 @@ public class BucketViewActionBean extends CoreActionBean {
     private LabBatchDao labBatchDao;
     @Inject
     private BucketEntryDao bucketEntryDao;
-
+    @Inject
+    LabVesselDao labVesselDao;
     @Validate(required = true, on = {CREATE_BATCH_ACTION, "viewBucket"})
     private String selectedBucket;
     @Validate(required = true, on = {CREATE_BATCH_ACTION, "viewBucket"})
@@ -105,12 +109,10 @@ public class BucketViewActionBean extends CoreActionBean {
     private Bucket bucket;
 
     private String jiraTicketId;
-
-//    private final Set<String> buckets = new HashSet<>();
+    private String vesselId;
     private final List<Long> bucketEntryIds = new ArrayList<>();
     private final List<Long> reworkEntryIds = new ArrayList<>();
     private List<BucketEntry> allBucketEntries = new ArrayList<>();
-    private Map<String, Collection<ProductWorkflowDef>> mapBucketToWorkflowDefs=null;
     private final Map<String, WorkflowBucketDef> mapBucketToBucketDef = new HashMap<>();
 
     private List<BucketEntry> selectedEntries = new ArrayList<>();
@@ -118,7 +120,6 @@ public class BucketViewActionBean extends CoreActionBean {
     private List<ProductOrder> availablePdos;
 
     private List<Long> selectedEntryIds = new ArrayList<>();
-    private Collection<ProductWorkflowDef> possibleWorkflows;
 
     private boolean jiraEnabled = false;
     private String important;
@@ -144,15 +145,11 @@ public class BucketViewActionBean extends CoreActionBean {
                 mapBucketToBucketDef.put(bucketName, bucket);
             }
         }
-        mapBucketToWorkflowDefs = bucketWorkflows.asMap();
         mapBucketToBucketEntryCount = BucketCount.initMap(bucketEntryDao.getBucketCounts());
     }
 
     @DefaultHandler
     public Resolution view() {
-        if (StringUtils.isNotBlank(selectedBucket)) {
-            possibleWorkflows = mapBucketToWorkflowDefs.get(selectedBucket);
-        }
         return new ForwardResolution(VIEW_PAGE);
     }
 
@@ -205,11 +202,6 @@ public class BucketViewActionBean extends CoreActionBean {
     @HandlesEvent("setBucket")
     public Resolution setBucket() {
         if (selectedBucket != null) {
-            // Sets the workflow selection list for this bucket.
-            possibleWorkflows = mapBucketToWorkflowDefs.get(selectedBucket);
-            if (possibleWorkflows.size() == 1) {
-                setSelectedWorkflowDef(possibleWorkflows.iterator().next());
-            }
             return viewBucket();
         }
         return view();
@@ -219,15 +211,15 @@ public class BucketViewActionBean extends CoreActionBean {
     public Resolution viewBucket() {
         if (selectedBucket != null) {
             bucket = bucketDao.findByName(selectedBucket);
-            possibleWorkflows = mapBucketToWorkflowDefs.get(selectedBucket);
             // Gets the bucket entries that are in the selected bucket.
             if (bucket != null) {
+                for (BucketEntry bucketEntry : bucket.getBucketEntries()) {
+                    bucketEntry.getProductOrder().loadSampleData(BSPSampleSearchColumn.MATERIAL_TYPE);
+                }
+
                 allBucketEntries.clear();
                 allBucketEntries.addAll(CollectionUtils.union(bucket.getBucketEntries(),
                         bucket.getReworkEntries()));
-//                for (BucketEntry bucketEntry : allBucketEntries) {
-//                    workflowCounter.add(findWorkflowName(bucketEntry));
-//                }
 
                 // Doesn't show JIRA details if there are no bucket entries.
                 jiraEnabled = !this.allBucketEntries.isEmpty();
@@ -406,6 +398,20 @@ public class BucketViewActionBean extends CoreActionBean {
         return new StreamingResolution("text", new StringReader(newPdoValues.toString()));
     }
 
+
+    public Resolution materialTypeForVessel() {
+        String vesselId = getContext().getRequest().getParameter("vesselId");
+        String materialType = "";
+        if (StringUtils.isNotBlank(vesselId)) {
+            LabVessel labVessel = labVesselDao.findByIdentifier(vesselId);
+            if (labVessel != null) {
+                materialType = labVessel.getLatestMaterialType().getDisplayName();
+            }
+        }
+        return new StreamingResolution("text/plain", materialType);
+
+    }
+
     public String getSelectedBucket() {
         return selectedBucket;
     }
@@ -486,10 +492,6 @@ public class BucketViewActionBean extends CoreActionBean {
         this.important = important;
     }
 
-    public Collection<ProductWorkflowDef> getPossibleWorkflows() {
-        return possibleWorkflows;
-    }
-
     public ProductWorkflowDef getSelectedWorkflowDef() {
         return selectedWorkflowDef;
     }
@@ -522,20 +524,32 @@ public class BucketViewActionBean extends CoreActionBean {
         this.batch = batch;
     }
 
-    public Multiset<String> getWorkflowCounter() {
-        return workflowCounter;
-    }
-
-
-    public Map<String, WorkflowBucketDef> getMapBucketToBucketDef() {
-        return mapBucketToBucketDef;
-    }
-
-    public Map<String, Collection<ProductWorkflowDef>> getMapBucketToWorkflowDefs() {
-        return mapBucketToWorkflowDefs;
+    public List<String> getBuckets() {
+        List<String> list = new ArrayList<>(mapBucketToBucketDef.keySet());
+        Collections.sort(list);
+        return list;
     }
 
     public Map<String, BucketCount> getMapBucketToBucketEntryCount() {
         return mapBucketToBucketEntryCount;
+    }
+
+    public Multiset<String> getWorkflowCounter() {
+        return workflowCounter;
+    }
+
+    public int totalBucketEntries() {
+        if (bucket != null) {
+            return bucket.getBucketEntries().size() + bucket.getReworkEntries().size();
+        }
+        return 0;
+    }
+
+    public String getVesselId() {
+        return vesselId;
+    }
+
+    public void setVesselId(String vesselId) {
+        this.vesselId = vesselId;
     }
 }

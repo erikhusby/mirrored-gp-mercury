@@ -237,8 +237,8 @@
                     {"bSortable":true},
                     {"bSortable":true},
                     {"bSortable":true},
-                    {"bSortable":true},
                     {"bSortable":true, "sType":"date"},
+                    {"bSortable":true},
                     {"bSortable":true},
                     {"bSortable":true},
                     {"bSortable":true},
@@ -272,7 +272,24 @@
                 }
             });
 
+            setupMaterialTypeAjax();
         });
+        function setupMaterialTypeAjax() {
+            $j('[id^="materialType-"]').each(function () {
+                var materialTypeDiv = this;
+                var vesselId = $j(this).attr('id').replace("materialType-", "");
+
+                $j.ajax({
+                    url: "${ctxpath}/view/bucketView.action?materialTypeForVessel=&vesselId=" + vesselId,
+                    dataType: 'text'
+                }).done(function (data) {
+                    $j(materialTypeDiv).text(data);
+                }).always(function(){
+                    $j(materialTypeDiv).find('img').hide();
+                });
+
+            });
+        }
 
         function showJiraInfo() {
             $j('#jiraTable').show();
@@ -281,22 +298,6 @@
 </stripes:layout-component>
 
 <stripes:layout-component name="content">
-    <c:if test="${actionBean.totalBucketEntries()>0 && (actionBean.selectedBucket!=null && actionBean.selectedWorkflowDef==null)}">
-        <div class="alert alert-success" style="margin-left:20%;margin-right:20%;">
-            <ul>
-                <c:if test="${actionBean.selectedBucket!=null && actionBean.selectedWorkflowDef==null}">
-                    <li>There are ${actionBean.totalBucketEntries()} entries in this bucket
-                        <c:if test="${actionBean.totalBucketEntries()>0}">
-                            and ${fn:length(actionBean.possibleWorkflows)} possible workflows.
-                        </c:if>
-                    </li>
-                    <c:if test="${actionBean.selectedWorkflowDef==null && actionBean.totalBucketEntries()>0}">
-                        <li>Select a workflow to view and batch bucket entries.</li>
-                    </c:if>
-                </c:if>
-            </ul>
-        </div>
-    </c:if>
     <stripes:form id="bucketForm" class="form-horizontal" action="/view/bucketView.action?setBucket">
         <div class="form-horizontal">
             <div class="control-group">
@@ -304,7 +305,11 @@
                 <div class="controls">
                     <stripes:select id="bucketSelect" name="selectedBucket" onchange="submitBucket()">
                         <stripes:option value="">Select a Bucket</stripes:option>
-                        <stripes:options-collection collection="${actionBean.buckets}"/>
+                        <c:forEach items="${actionBean.mapBucketToBucketEntryCount.keySet()}" var="bucketName">
+                            <c:set var="bucketCount" value="${actionBean.mapBucketToBucketEntryCount.get(bucketName)}"/>
+                            <stripes:option value="${bucketName}"
+                                            label="${bucketName} (${bucketCount.bucketEntryCount + bucketCount.reworkEntryCount} vessels)"/>
+                        </c:forEach>
                     </stripes:select>
                 </div>
             </div>
@@ -415,7 +420,7 @@
             </tr>
             </thead>
             <tbody>
-            <c:forEach items="${actionBean.collectiveEntries}" var="entry">
+            <c:forEach items="${actionBean.allBucketEntries}" var="entry">
                 <tr id="${entry.bucketEntryId}" data-vessel-label="${entry.labVessel.label}">
                     <td>
                         <stripes:checkbox class="bucket-checkbox" name="selectedEntryIds"
@@ -438,7 +443,9 @@
                         </c:forEach>
                     </td>
                     <td class="ellipsis">
-                        ${entry.labVessel.latestMaterialType.displayName}
+                        <div id="materialType-${entry.labVessel.label}">
+                            <img style="display:block" src="${ctxpath}/images/spinner.gif" alt="spinner"/>
+                        </div>
                     </td>
                     <td class="editable"><span class="ellipsis">${entry.productOrder.businessKey}</span><span style="display: none;"
                                                                                            class="icon-pencil"></span>
@@ -462,7 +469,7 @@
                     </td>
                     <td>
                         <div class="ellipsis" style="max-width: 250px;">
-                            ${entry.productOrder.getAddOnList("<br/>")}
+                                ${entry.productOrder.getAddOnList("<br/>")}
                         </div>
                     </td>
                     <td class="ellipsis">
