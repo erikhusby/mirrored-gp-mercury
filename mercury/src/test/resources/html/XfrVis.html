@@ -28,8 +28,8 @@
 
         .label {
             fill: black;
-            font-family: Verdana;
-            font-size: 10px;
+            font-family: Arial;
+            font-size: 12px;
             text-anchor: middle;
             cursor: move;
         }
@@ -111,8 +111,11 @@
 
         var nodeChild = nodeChildEnter.append("rect")
                 .attr("class", "nodeChild")
+                .attr("x", function (d) {
+                    return d.x;
+                })
                 .attr("y", function (d) {
-                    return 50;
+                    return d.y;
                 })
                 .attr("width", function (d) {
                     return d.w;
@@ -123,6 +126,12 @@
 
         nodeChildEnter.append("text")
                 .attr("class", "label")
+                .attr("x", function (d) {
+                    return d.x;
+                })
+                .attr("y", function (d) {
+                    return d.y;
+                })
                 .attr("dx", 25)
                 .attr("dy", 10)
                 .text(function (d) {
