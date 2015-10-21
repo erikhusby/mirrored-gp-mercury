@@ -298,6 +298,22 @@
 </stripes:layout-component>
 
 <stripes:layout-component name="content">
+    <c:if test="${actionBean.totalBucketEntries()>0 && (actionBean.selectedBucket!=null && actionBean.selectedWorkflowDef==null)}">
+        <div class="alert alert-success" style="margin-left:20%;margin-right:20%;">
+            <ul>
+                <c:if test="${actionBean.selectedBucket!=null && actionBean.selectedWorkflowDef==null}">
+                    <li>There are ${actionBean.totalBucketEntries()} entries in this bucket
+                        <c:if test="${actionBean.totalBucketEntries()>0}">
+                            and ${fn:length(actionBean.possibleWorkflows)} possible workflows.
+                        </c:if>
+                    </li>
+                    <c:if test="${actionBean.selectedWorkflowDef==null && actionBean.totalBucketEntries()>0}">
+                        <li>Select a workflow to view and batch bucket entries.</li>
+                    </c:if>
+                </c:if>
+            </ul>
+        </div>
+    </c:if>
     <stripes:form id="bucketForm" class="form-horizontal" action="/view/bucketView.action?setBucket">
         <div class="form-horizontal">
             <div class="control-group">
@@ -420,7 +436,7 @@
             </tr>
             </thead>
             <tbody>
-            <c:forEach items="${actionBean.allBucketEntries}" var="entry">
+            <c:forEach items="${actionBean.collectiveEntries}" var="entry">
                 <tr id="${entry.bucketEntryId}" data-vessel-label="${entry.labVessel.label}">
                     <td>
                         <stripes:checkbox class="bucket-checkbox" name="selectedEntryIds"
