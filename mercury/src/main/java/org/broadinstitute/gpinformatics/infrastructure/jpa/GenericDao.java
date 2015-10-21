@@ -397,7 +397,13 @@ public class GenericDao {
                 new CriteriaInClauseCreator<VALUE_TYPE>() {
                     @Override
                     public Query createCriteriaInQuery(Collection<VALUE_TYPE> parameterList) {
-                        criteriaQuery.where(root.get(singularAttribute).in(parameterList));
+                        List<Predicate> predicates = new ArrayList<>();
+                        Predicate restriction = criteriaQuery.getRestriction();
+                        if (restriction != null) {
+                            predicates.add(restriction);
+                        }
+                        predicates.add(root.get(singularAttribute).in(parameterList));
+                        criteriaQuery.where(predicates.toArray(new Predicate[predicates.size()]));
                         return getQuery(criteriaQuery, LockModeType.NONE, withPagination, firstResult, maxResults);
                     }
                 }
