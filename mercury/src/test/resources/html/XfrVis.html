@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <!-- This page allows Transfer Visualizer to be run on database free tests, without a web server. -->
 <head>
-    <title>Unix Family Tree</title>
+    <title>Transfer Visualizer</title>
     <style>
         /*@import url(../style.css);*/
         .background {
@@ -74,7 +74,7 @@
     d3.json("XfrVis.json", function (error, json) {
 
         var force = d3.layout.force()
-                .gravity(.05)
+                .gravity(.08)
                 .distance(100)
                 .charge(-350)
                 .size([width, height]);
@@ -103,10 +103,42 @@
                     return d.h;
                 });
 
+        var nodeChildEnter = node.selectAll(".nodeChild")
+                .data(function (d) {
+                    return d.children;
+                })
+                .enter();
+
+        var nodeChild = nodeChildEnter.append("rect")
+                .attr("class", "nodeChild")
+                .attr("y", function (d) {
+                    return 50;
+                })
+                .attr("width", function (d) {
+                    return d.w;
+                })
+                .attr("height", function (d) {
+                    return d.h;
+                });
+
+        nodeChildEnter.append("text")
+                .attr("class", "label")
+                .attr("dx", 25)
+                .attr("dy", 10)
+                .text(function (d) {
+                    return d.name;
+                })
+                .each(function (d) {
+                    var b = this.parentNode.getBBox();
+                    var extra = 2 * margin + 2 * pad;
+                    d.width = b.width + extra;
+                    d.height = b.height + extra;
+                });
+
         node.append("text")
                 .attr("class", "label")
-                .attr("dx", 12)
-                .attr("dy", ".35em")
+                .attr("dx", 25)
+                .attr("dy", 10)
                 .text(function (d) {
                     return d.name;
                 })
