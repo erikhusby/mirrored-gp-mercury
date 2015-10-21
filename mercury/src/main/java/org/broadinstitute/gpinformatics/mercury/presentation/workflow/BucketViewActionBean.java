@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.workflow;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ListMultimap;
 import net.sourceforge.stripes.action.Before;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
@@ -97,7 +99,6 @@ public class BucketViewActionBean extends CoreActionBean {
 
     @Validate(required = true, on = {CREATE_BATCH_ACTION, "viewBucket"})
     private String selectedBucket;
-    @Validate(required = true, on = {CREATE_BATCH_ACTION, "viewBucket"})
     private ProductWorkflowDef selectedWorkflowDef;
     private Bucket bucket;
 
@@ -109,7 +110,7 @@ public class BucketViewActionBean extends CoreActionBean {
     private final List<BucketEntry> bucketEntries = new ArrayList<>();
     private final List<BucketEntry> reworkEntries = new ArrayList<>();
     private final List<BucketEntry> collectiveEntries = new ArrayList<>();
-    private final Map<String, List<ProductWorkflowDef>> mapBucketToWorkflowDefs = new HashMap<>();
+    private final ListMultimap<String, ProductWorkflowDef> mapBucketToWorkflowDefs = ArrayListMultimap.create();
     private final Map<String, WorkflowBucketDef> mapBucketToBucketDef = new HashMap<>();
 
     private List<BucketEntry> selectedEntries = new ArrayList<>();
@@ -136,15 +137,9 @@ public class BucketViewActionBean extends CoreActionBean {
             ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
             for (WorkflowBucketDef bucket : workflowVersion.getCreationBuckets()) {
                 String bucketName = bucket.getName();
-                List<ProductWorkflowDef> bucketWorkflows;
-                if (buckets.add(bucketName)) {
-                    bucketWorkflows = new ArrayList<>();
-                    mapBucketToWorkflowDefs.put(bucketName, bucketWorkflows);
-                    mapBucketToBucketDef.put(bucketName, bucket);
-                } else {
-                    bucketWorkflows = mapBucketToWorkflowDefs.get(bucketName);
-                }
-                bucketWorkflows.add(workflowDef);
+                buckets.add(bucketName);
+                mapBucketToBucketDef.put(bucketName, bucket);
+                mapBucketToWorkflowDefs.put(bucketName, workflowDef);
             }
         }
     }
@@ -203,44 +198,27 @@ public class BucketViewActionBean extends CoreActionBean {
         }
     }
 
-    @HandlesEvent("setBucket")
-    public Resolution setBucket() {
-        if (selectedBucket != null) {
-            // Sets the workflow selection list for this bucket.
-            possibleWorkflows = mapBucketToWorkflowDefs.get(selectedBucket);
-            if (possibleWorkflows.size() == 1) {
-                setSelectedWorkflowDef(possibleWorkflows.get(0));
-            }
-            return viewBucket();
-        }
-        return view();
-    }
-
     @HandlesEvent("viewBucket")
     public Resolution viewBucket() {
         if (selectedBucket != null) {
             bucket = bucketDao.findByName(selectedBucket);
-            if (selectedBucket != null && selectedWorkflowDef != null) {
+            if (selectedWorkflowDef != null) {
                 possibleWorkflows = mapBucketToWorkflowDefs.get(selectedBucket);
 
                 // Gets the bucket entries that are in the selected bucket.
                 if (bucket != null) {
-                    bucketEntries.clear();
-                    reworkEntries.clear();
+                    bucket.initializeSampleData();
                     collectiveEntries.clear();
 
-                    bucketEntries.addAll(bucket.getBucketEntries());
-                    reworkEntries.addAll(bucket.getReworkEntries());
-                    collectiveEntries.addAll(bucketEntries);
-                    collectiveEntries.addAll(reworkEntries);
+                    collectiveEntries.addAll(bucket.getBucketEntries());
+                    collectiveEntries.addAll(bucket.getReworkEntries());
+
 
                     // Filters out entries whose product workflow or add-on's workflow doesn't match the selected workflow.
                     for (Iterator<BucketEntry> iter = collectiveEntries.iterator(); iter.hasNext(); ) {
                         BucketEntry entry = iter.next();
                         Workflow bucketWorkflow = entry.getWorkflow();
                         if (!selectedWorkflowDef.getName().equals(bucketWorkflow.getWorkflowName())) {
-                            bucketEntries.remove(entry);
-                            reworkEntries.remove(entry);
                             iter.remove();
                         }
                     }
