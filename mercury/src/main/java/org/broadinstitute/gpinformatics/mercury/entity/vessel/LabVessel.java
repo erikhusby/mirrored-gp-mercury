@@ -11,6 +11,7 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
@@ -276,12 +277,11 @@ public abstract class LabVessel implements Serializable {
         for (LabVessel labVessel : labVessels) {
             for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
                 MercurySample mercurySample = sampleInstanceV2.getRootOrEarliestMercurySample();
-                if (mercurySample.getMetadataSource() == MercurySample.MetadataSource.BSP) {
-                    sampleNames.put(mercurySample.getSampleKey(), mercurySample);
-                }
+                sampleNames.put(mercurySample.getSampleKey(), mercurySample);
             }
         }
-        Map<String, SampleData> sampleDataMap = sampleDataFetcher.fetchSampleData(sampleNames.keySet());
+        Map<String, SampleData> sampleDataMap = sampleDataFetcher.fetchSampleDataForSamples(sampleNames.values(),
+                BSPSampleSearchColumn.BUCKET_PAGE_COLUMNS);
         for (Map.Entry<String, SampleData> sampleDataEntry : sampleDataMap.entrySet()) {
             sampleNames.get(sampleDataEntry.getKey()).setSampleData(sampleDataEntry.getValue());
         }

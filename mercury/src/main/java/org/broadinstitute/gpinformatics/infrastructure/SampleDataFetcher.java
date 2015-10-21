@@ -7,8 +7,10 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.GetSampleDetails;
+import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleDataFetcher;
 
@@ -195,23 +197,31 @@ public class SampleDataFetcher implements Serializable {
      *
      * @return Mapping of sample id to its sample data
      */
-    public Map<String, SampleData> fetchSampleDataForProductOrderSamples(Collection<ProductOrderSample> samples,
-                                                                         BSPSampleSearchColumn... bspSampleSearchColumns) {
-
+    public Map<String, SampleData> fetchSampleDataForSamples(Collection<? extends AbstractSample> samples,
+                                                             BSPSampleSearchColumn... bspSampleSearchColumns) {
         Map<String, SampleData> sampleData = new HashMap<>();
 
         Collection<MercurySample> mercurySamplesWithMercurySource = new ArrayList<>();
         Collection<String> sampleIdsWithBspSource = new ArrayList<>();
 
         Set<String> sampleNames = new HashSet<>(samples.size());
-        for (ProductOrderSample productOrderSample : samples) {
-            if (productOrderSample.needsBspMetaData()) {
-                MercurySample mercurySample = productOrderSample.getMercurySample();
+        for (AbstractSample sample : samples) {
+            if (sample.needsBspMetaData()) {
+                MercurySample mercurySample;
+                String sampleName;
+                if (OrmUtil.proxySafeIsInstance(sample, MercurySample.class)) {
+                    mercurySample = OrmUtil.proxySafeCast(sample, MercurySample.class);
+                    sampleName = mercurySample.getSampleKey();
+                } else {
+                    ProductOrderSample productOrderSample = OrmUtil.proxySafeCast(sample, ProductOrderSample.class);
+                    mercurySample = productOrderSample.getMercurySample();
+                    sampleName = productOrderSample.getName();
+                }
                 if (mercurySample != null &&
                     mercurySample.getMetadataSource() == MercurySample.MetadataSource.MERCURY) {
                     mercurySamplesWithMercurySource.add(mercurySample);
                 } else {
-                    sampleNames.add(productOrderSample.getName());
+                    sampleNames.add(sampleName);
                 }
             }
         }
