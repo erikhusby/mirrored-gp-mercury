@@ -74,4 +74,10 @@ public enum BSPSampleSearchColumn {
     public static final BSPSampleSearchColumn[] BILLING_TRACKER_COLUMNS = {
             COLLABORATOR_SAMPLE_ID
     };
+
+    public static final BSPSampleSearchColumn[] BUCKET_PAGE_COLUMNS = {
+            COLLABORATOR_SAMPLE_ID, MATERIAL_TYPE
+    };
+
+
 }
