@@ -377,19 +377,12 @@ public class GenericDao {
     }
 
     private <VALUE_TYPE, METADATA_TYPE, ENTITY_TYPE extends METADATA_TYPE> List<ENTITY_TYPE> findListForPagination(
-            Class<ENTITY_TYPE> entity, final SingularAttribute<METADATA_TYPE, VALUE_TYPE> singularAttribute,
-            Collection<VALUE_TYPE> values, GenericDaoCallback<ENTITY_TYPE> genericDaoCallback,
+            final Class<ENTITY_TYPE> entity, final SingularAttribute<METADATA_TYPE, VALUE_TYPE> singularAttribute,
+            Collection<VALUE_TYPE> values, final GenericDaoCallback<ENTITY_TYPE> genericDaoCallback,
             final boolean withPagination, final int firstResult, final int maxResults) {
         List<ENTITY_TYPE> resultList = new ArrayList<>();
         if (values.isEmpty()) {
             return resultList;
-        }
-
-        final CriteriaQuery<ENTITY_TYPE> criteriaQuery = getCriteriaBuilder().createQuery(entity);
-        final Root<ENTITY_TYPE> root = criteriaQuery.from(entity);
-
-        if (genericDaoCallback != null) {
-            genericDaoCallback.callback(criteriaQuery, root);
         }
 
         List<ENTITY_TYPE> entity_types = JPASplitter.runCriteriaQuery (
@@ -397,6 +390,13 @@ public class GenericDao {
                 new CriteriaInClauseCreator<VALUE_TYPE>() {
                     @Override
                     public Query createCriteriaInQuery(Collection<VALUE_TYPE> parameterList) {
+                        final CriteriaQuery<ENTITY_TYPE> criteriaQuery = getCriteriaBuilder().createQuery(entity);
+                        final Root<ENTITY_TYPE> root = criteriaQuery.from(entity);
+
+                        if (genericDaoCallback != null) {
+                            genericDaoCallback.callback(criteriaQuery, root);
+                        }
+
                         List<Predicate> predicates = new ArrayList<>();
                         Predicate restriction = criteriaQuery.getRestriction();
                         if (restriction != null) {
