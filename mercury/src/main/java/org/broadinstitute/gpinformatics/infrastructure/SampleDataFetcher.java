@@ -195,7 +195,7 @@ public class SampleDataFetcher implements Serializable {
      *
      * @return Mapping of sample id to its sample data
      */
-    public Map<String, SampleData> fetchSampleDataForProductOrderSamples(Collection<? extends ProductOrderSample> samples,
+    public Map<String, SampleData> fetchSampleDataForProductOrderSamples(Collection<ProductOrderSample> samples,
                                                                          BSPSampleSearchColumn... bspSampleSearchColumns) {
         Map<String, SampleData> sampleData = new HashMap<>();
 
@@ -244,7 +244,7 @@ public class SampleDataFetcher implements Serializable {
      *
      * @return Mapping of sample id to its sample data
      */
-    public Map<String, SampleData> fetchSampleDataForMercurySamples(Collection<? extends MercurySample> samples,
+    public Map<String, SampleData> fetchSampleDataForMercurySamples(Collection<MercurySample> samples,
                                                                          BSPSampleSearchColumn... bspSampleSearchColumns) {
         Map<String, SampleData> sampleData = new HashMap<>();
 
