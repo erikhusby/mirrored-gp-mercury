@@ -236,7 +236,7 @@ public class SampleDataFetcherTest {
         if (sample instanceof String) {
             sampleDataBySampleId = sampleDataFetcher.fetchSampleData(Collections.singleton((String) sample));
         } else {
-            sampleDataBySampleId = sampleDataFetcher.fetchSampleDataForSamples(
+            sampleDataBySampleId = sampleDataFetcher.fetchSampleDataForProductOrderSamples(
                     Collections.singleton((ProductOrderSample) sample), BSPSampleSearchColumn.PDO_SEARCH_COLUMNS);
         }
 
@@ -272,7 +272,7 @@ public class SampleDataFetcherTest {
         if(sample instanceof String) {
             sampleData = sampleDataFetcher.fetchSampleData(Collections.singleton((String)sample));
         } else {
-            sampleData = sampleDataFetcher.fetchSampleDataForSamples(
+            sampleData = sampleDataFetcher.fetchSampleDataForProductOrderSamples(
                     Collections.singleton((ProductOrderSample) sample), BSPSampleSearchColumn.PDO_SEARCH_COLUMNS);
         }
 
@@ -343,7 +343,7 @@ public class SampleDataFetcherTest {
         configureMercuryFetcher(clinicalMercurySample, clinicalSampleData);
 
         Map<String, SampleData> sampleData = sampleDataFetcher
-                .fetchSampleDataForSamples(samples, BSPSampleSearchColumn.PDO_SEARCH_COLUMNS);
+                .fetchSampleDataForProductOrderSamples(samples, BSPSampleSearchColumn.PDO_SEARCH_COLUMNS);
 
         assertThat(sampleData.size(), equalTo(3));
         assertThat(sampleData.get(BSP_ONLY_SAMPLE_ID), equalTo((SampleData) bspOnlySampleData));

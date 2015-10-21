@@ -280,8 +280,8 @@ public abstract class LabVessel implements Serializable {
                 sampleNames.put(mercurySample.getSampleKey(), mercurySample);
             }
         }
-        Map<String, SampleData> sampleDataMap = sampleDataFetcher.fetchSampleDataForSamples(sampleNames.values(),
-                BSPSampleSearchColumn.BUCKET_PAGE_COLUMNS);
+        Map<String, SampleData> sampleDataMap = sampleDataFetcher.fetchSampleDataForMercurySamples(
+                sampleNames.values(), BSPSampleSearchColumn.BUCKET_PAGE_COLUMNS);
         for (Map.Entry<String, SampleData> sampleDataEntry : sampleDataMap.entrySet()) {
             sampleNames.get(sampleDataEntry.getKey()).setSampleData(sampleDataEntry.getValue());
         }

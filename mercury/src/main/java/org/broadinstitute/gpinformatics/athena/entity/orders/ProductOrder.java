@@ -352,7 +352,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         Map<String, SampleData> sampleDataMap = Collections.emptyMap();
 
         try {
-            sampleDataMap = sampleDataFetcher.fetchSampleDataForSamples(samples, bspSampleSearchColumns);
+            sampleDataMap = sampleDataFetcher.fetchSampleDataForProductOrderSamples(samples, bspSampleSearchColumns);
         } catch (BSPLookupException ignored) {
             // not a bsp sample?
         }
