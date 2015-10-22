@@ -178,8 +178,8 @@
                 var editablePdo = function()  {
                 if (columnsEditable) {
                     var oTable = $j('#bucketEntryView').dataTable();
-                    $j("td.editable").editable('${ctxpath}/view/bucketView.action?changePdo', {
-                        'loadurl': '${ctxpath}/view/bucketView.action?findPdo',
+                    $j("td.editable").editable('${ctxpath}/workflow/bucketView.action?changePdo', {
+                        'loadurl': '${ctxpath}/workflow/bucketView.action?findPdo',
                         'callback': function (sValue, y) {
                             var jsonValues = $j.parseJSON(sValue);
                             var pdoKeyCellValue='<span class="ellipsis">'+jsonValues.jiraKey+'</span><span style="display: none;" class="icon-pencil"></span>';
@@ -271,25 +271,7 @@
                     $j("[name='addToBatch']").prop('disabled', false);
                 }
             });
-
-            setupMaterialTypeAjax();
         });
-        function setupMaterialTypeAjax() {
-            $j('[id^="materialType-"]').each(function () {
-                var materialTypeDiv = this;
-                var vesselId = $j(this).attr('id').replace("materialType-", "");
-
-                $j.ajax({
-                    url: "${ctxpath}/view/bucketView.action?materialTypeForVessel=&vesselId=" + vesselId,
-                    dataType: 'text'
-                }).done(function (data) {
-                    $j(materialTypeDiv).text(data);
-                }).always(function(){
-                    $j(materialTypeDiv).find('img').hide();
-                });
-
-            });
-        }
 
         function showJiraInfo() {
             $j('#jiraTable').show();
@@ -298,28 +280,26 @@
 </stripes:layout-component>
 
 <stripes:layout-component name="content">
-    <c:if test="${actionBean.totalBucketEntries()>0 && (actionBean.selectedBucket!=null && actionBean.selectedWorkflowDef==null)}">
+    <c:if test="${actionBean.totalBucketEntries()>0 && (actionBean.selectedBucket!=null)}">
         <div class="alert alert-success" style="margin-left:20%;margin-right:20%;">
             <ul>
-                <c:if test="${actionBean.selectedBucket!=null && actionBean.selectedWorkflowDef==null}">
+                <c:if test="${actionBean.selectedBucket!=null}">
                     <li>There are ${actionBean.totalBucketEntries()} entries in this bucket
                         <c:if test="${actionBean.totalBucketEntries()>0}">
                             and ${fn:length(actionBean.possibleWorkflows)} possible workflows.
                         </c:if>
                     </li>
-                    <c:if test="${actionBean.selectedWorkflowDef==null && actionBean.totalBucketEntries()>0}">
-                        <li>Select a workflow to view and batch bucket entries.</li>
-                    </c:if>
                 </c:if>
             </ul>
         </div>
     </c:if>
-    <stripes:form id="bucketForm" class="form-horizontal" action="/view/bucketView.action?setBucket">
+    <stripes:form id="bucketForm" class="form-horizontal" beanclass="${actionBean.class}">
         <div class="form-horizontal">
             <div class="control-group">
                 <stripes:label for="bucketselect" name="Select Bucket" class="control-label"/>
                 <div class="controls">
                     <stripes:select id="bucketSelect" name="selectedBucket" onchange="submitBucket()">
+                        <stripes:param name="viewBucket"/>
                         <stripes:option value="">Select a Bucket</stripes:option>
                         <c:forEach items="${actionBean.mapBucketToBucketEntryCount.keySet()}" var="bucketName">
                             <c:set var="bucketCount" value="${actionBean.mapBucketToBucketEntryCount.get(bucketName)}"/>
@@ -331,22 +311,7 @@
             </div>
         </div>
     </stripes:form>
-    <stripes:form id="bucketWorkflowForm" class="form-horizontal" action="/view/bucketView.action?viewBucket">
-        <div class="form-horizontal">
-        <stripes:hidden name="selectedBucket" value="${actionBean.selectedBucket}"/>
-        <div class="control-group">
-            <stripes:label for="workflowSelect" name="Select Workflow" class="control-label"/>
-            <div class="controls">
-                <stripes:select id="workflowSelect" name="selectedWorkflowDef" onchange="submitWorkflow()"
-                                value="selectedWorkflowDef.name">
-                    <stripes:option value="">Select a Workflow</stripes:option>
-                    <stripes:options-collection collection="${actionBean.possibleWorkflows}" label="name" value="name"/>
-                </stripes:select>
-            </div>
-        </div>
-    </stripes:form>
-    <stripes:form beanclass="${actionBean.class.name}"
-                  id="bucketEntryForm" class="form-horizontal">
+    <stripes:form beanclass="${actionBean.class.name}" id="bucketEntryForm" class="form-horizontal">
         <div class="form-horizontal">
         <stripes:hidden name="selectedBucket" value="${actionBean.selectedBucket}"/>
         <stripes:hidden name="selectedWorkflowDef" value="${actionBean.selectedWorkflowDef}"/>
@@ -448,9 +413,7 @@
                         </a></td>
 
                     <td>
-                        <c:forEach items="${entry.labVessel.mercurySamples}"
-                                   var="mercurySample"
-                                   varStatus="stat">
+                        <c:forEach items="${entry.labVessel.mercurySamples}" var="mercurySample" varStatus="stat">
                             <a href="${ctxpath}/search/sample.action?sampleSearch=&searchKey=${mercurySample.sampleKey}">
                                     ${mercurySample.sampleKey}
                             </a>
@@ -459,9 +422,7 @@
                         </c:forEach>
                     </td>
                     <td class="ellipsis">
-                        <div id="materialType-${entry.labVessel.label}">
-                            <img style="display:block" src="${ctxpath}/images/spinner.gif" alt="spinner"/>
-                        </div>
+                        ${entry.labVessel.latestMaterialType.displayName}
                     </td>
                     <td class="editable"><span class="ellipsis">${entry.productOrder.businessKey}</span><span style="display: none;"
                                                                                            class="icon-pencil"></span>

@@ -63,6 +63,7 @@ import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -246,11 +247,18 @@ public abstract class LabVessel implements Serializable {
      * @return
      */
     public MaterialType getLatestMaterialType() {
-        if (latestMaterialType==null) {
+        if (latestMaterialType == null) {
             latestMaterialType = getLatestMaterialTypeFromEventHistory();
-            if (latestMaterialType == null) {
-                latestMaterialType = MaterialType.fromDisplayName(getMaterialTypes().iterator().next());
+            if (latestMaterialType == null || latestMaterialType == MaterialType.NONE) {
+                Iterator<String> materialTypeIterator = getMaterialTypes().iterator();
+                if (materialTypeIterator.hasNext()) {
+                    String materialType = materialTypeIterator.next();
+                    latestMaterialType = MaterialType.fromDisplayName(materialType);
+                }
             }
+        }
+        if (latestMaterialType == MaterialType.NONE || latestMaterialType==null) {
+            logger.error(String.format("No material type found for vessel %s", label));
         }
         return latestMaterialType;
     }

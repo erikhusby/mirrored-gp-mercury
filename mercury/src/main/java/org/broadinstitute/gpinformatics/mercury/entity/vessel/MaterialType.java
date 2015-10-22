@@ -126,7 +126,8 @@ public enum MaterialType implements Displayable {
     WHOLE_ORGANISM_OTHER("Whole Organism: Other"),
     WHOLE_ORGANISM_RNALATER_PRESERVED("Whole Organism:RNAlater Preserved"),
     WHOLE_ORGANISM_SINGLE_ETOH("Whole Organism:Single, ETOH"),
-    WHOLE_ORGANISM_SINGLE_FROZEN("Whole Organism:Single, Frozen");
+    WHOLE_ORGANISM_SINGLE_FROZEN("Whole Organism:Single, Frozen"),
+    NONE("");
 
     private final String displayName;
 
@@ -135,7 +136,7 @@ public enum MaterialType implements Displayable {
     }
 
     public static MaterialType fromDisplayName(String displayName) {
-        MaterialType foundType = null;
+        MaterialType foundType = NONE;
         for (MaterialType materialType : values()) {
             if(materialType.displayName.equals(displayName)) {
                 foundType = materialType;
