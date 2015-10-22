@@ -73,10 +73,11 @@
 
     d3.json("XfrVis.json", function (error, json) {
 
+        var linkDistance = 60;
         var force = d3.layout.force()
                 .gravity(.08)
-                .distance(500)
-                .charge(-350)
+                .linkDistance(linkDistance)
+                .charge(-120)
                 .size([width, height]);
 
         force.nodes(json.nodes)
@@ -159,7 +160,8 @@
                 });
 
         force.on("tick", function (e) {
-            var k = 6 * e.alpha;
+            // Push sources up and targets down to form a weak tree.
+            var k = linkDistance * 2 * e.alpha;
             json.links.forEach(function (d, i) {
                 d.source.y -= k;
                 d.target.y += k;
