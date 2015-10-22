@@ -1016,8 +1016,8 @@
             <version>02</version>
             <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
             <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
-                <name>Clinical Whole Blood Bucket</name>
-                <labEventTypes>CLINICAL_WHOLE_BLOOD_EXTRACTION_BUCKET</labEventTypes>
+                <name>Extract To DNA</name>
+                <labEventTypes>DNA_EXTRACTION_BUCKET</labEventTypes>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
