@@ -12,8 +12,11 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesig
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventReagent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventReagent_;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent_;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.hibernate.SQLQuery;
+import org.hibernate.type.LongType;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -21,6 +24,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import javax.persistence.Query;
 import javax.transaction.HeuristicMixedException;
 import javax.transaction.HeuristicRollbackException;
 import javax.transaction.NotSupportedException;
@@ -39,7 +43,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -658,340 +661,123 @@ public class ReagentFixupTest extends Arquillian {
         genericReagentDao.flush();
     }
 
-    // Adds bait reagents to events from data pulled from the Bravo logs.
+    // Two fixups:
+    // - Adds bait reagents to events from data pulled from the Bravo logs.
+    // - Moves bait reagents from Hybridization events to their companion Bait Pick events.
     @Test(enabled = false)
     public void gplim3791backfill() throws Exception {
         userBean.loginOSUser();
         final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+        final SimpleDateFormat expDateFormat = new SimpleDateFormat("MM-dd-yyyy");
+        // All existing RapCap4 bait reagents verified that they have exactly this name.
         final String reagentName = "Rapid Capture Kit Box 4 (Bait)";
-        final String[] extractedData = {
-                "10-31-2015", "14K14A0012", "Ice1stBaitPick", "2", "2014-11-20T10:59:15",
-                "10-31-2015", "14K14A0012", "Ice2ndBaitPick", "2", "2014-11-20T16:31:47",
-                "10-31-2015", "14K14A0012", "Ice1stBaitPick", "2", "2014-11-24T09:40:10",
-                "10-31-2015", "14K14A0012", "Ice2ndBaitPick", "2", "2014-11-24T14:56:46",
-                "11-28-2014", "1234567899", "Ice1stBaitPick", "2", "2014-11-26T12:40:13",
-                "11-28-2014", "0123456789", "Ice2ndBaitPick", "2", "2014-11-26T17:53:52",
-                "01-31-2015", "RAPCAPBUICKBX4", "Ice1stBaitPick", "2", "2014-12-04T14:10:39",
-                "10-31-2015", "14K14A0012", "Ice2ndBaitPick", "2", "2014-12-04T19:58:37",
-                "10-31-2015", "14K14A0012", "Ice1stBaitPick", "2", "2014-12-09T09:35:51",
-                "10-31-2015", "14K14A0012", "Ice2ndBaitPick", "2", "2014-12-09T15:25:55",
-                "12-01-2015", "WO0000110043291", "Ice1stBaitPick", "2", "2014-12-18T11:30:42",
-                "12-01-2015", "WO0000110043291", "Ice2ndBaitPick", "2", "2014-12-18T17:50:28",
-                "01-15-2015", "1234567890", "Ice2ndBaitPick", "2", "2015-01-14T13:44:43",
-                "03-23-2017", "9855097", "Ice2ndBaitPick", "2", "2015-01-21T14:52:34",
-                "05-29-2017", "9976286", "Ice1stBaitPick", "2", "2015-01-29T07:54:43",
-                "05-29-2017", "0150671523", "Ice2ndBaitPick", "2", "2015-01-29T13:01:20",
-                "03-23-2017", "14D24A0010", "Ice1stBaitPick", "2", "2015-02-03T09:56:36",
-                "03-23-2017", "14D24A0010", "Ice2ndBaitPick", "2", "2015-02-03T15:02:09",
-                "03-23-2017", "14D24A0010", "Ice1stBaitPick", "2", "2015-02-12T08:06:40",
-                "03-23-2017", "14D24A0010", "Ice2ndBaitPick", "2", "2015-02-12T13:20:45",
-                "08-18-2017", "14K25A0003", "Ice1stBaitPick", "2", "2015-02-17T09:32:09",
-                "08-18-2017", "14K25A0003", "Ice2ndBaitPick", "2", "2015-02-17T15:26:40",
-                "08-18-2017", "14K25A0003", "Ice1stBaitPick", "2", "2015-02-19T07:46:21",
-                "08-18-2017", "14K25A0003", "Ice2ndBaitPick", "2", "2015-02-19T13:01:04",
-                "10-05-2017", "14L16A0003", "Ice1stBaitPick", "2", "2015-02-25T10:39:12",
-                "10-05-2015", "14L16A0003", "Ice2ndBaitPick", "2", "2015-02-25T16:08:40",
-                "08-08-2018", "15A15A0008", "Ice1stBaitPick", "2", "2015-03-03T07:24:17",
-                "08-18-2018", "15A15A0008", "Ice2ndBaitPick", "2", "2015-03-03T12:38:33",
-                "11-05-2015", "14L16A0003", "Ice1stBaitPick", "2", "2015-03-05T11:01:43",
-                "10-05-2017", "14L16A0003", "Ice2ndBaitPick", "2", "2015-03-05T16:15:04",
-                "08-18-2018", "15A15A0008", "Ice1stBaitPick", "2", "2015-03-09T09:23:28",
-                "08-18-2018", "15A15A0008", "Ice2ndBaitPick", "2", "2015-03-09T14:29:56",
-                "10-05-2017", "14L16A0003", "Ice1stBaitPick", "2", "2015-03-11T10:57:22",
-                "10-05-2017", "14L16A0003", "Ice2ndBaitPick", "2", "2015-03-11T16:03:45",
-                "08-18-2018", "15A15A0008", "Ice1stBaitPick", "2", "2015-03-19T09:10:43",
-                "08-18-2018", "15A15A0008", "Ice2ndBaitPick", "2", "2015-03-19T14:15:03",
-                "08-08-2018", "15A15A0008", "Ice1stBaitPick", "2", "2015-03-26T11:10:34",
-                "08-18-2018", "15A15A0008", "Ice2ndBaitPick", "2", "2015-03-26T16:21:02",
-                "10-05-2017", "14L16A0003", "Ice1stBaitPick", "2", "2015-03-30T07:28:16",
-                "08-18-2018", "15A15A0008", "Ice1stBaitPick", "2", "2015-03-30T10:10:36",
-                "10-05-2017", "14L16A0003", "Ice2ndBaitPick", "2", "2015-03-30T12:42:18",
-                "08-18-2018", "15A15A0008", "Ice2ndBaitPick", "2", "2015-03-30T15:29:40",
-                "10-05-2017", "15A15A0010", "Ice1stBaitPick", "2", "2015-04-02T07:26:41",
-                "10-05-2017", "15A15A0010", "Ice2ndBaitPick", "2", "2015-04-02T12:46:13",
-                "10-05-2017", "14L16A0003", "Ice1stBaitPick", "2", "2015-04-08T07:14:15",
-                "10-05-2017", "14L16A0003", "Ice1stBaitPick", "2", "2015-04-08T08:39:06",
-                "10-05-2017", "14L16A0003", "Ice2ndBaitPick", "2", "2015-04-08T14:45:14",
-                "10-05-2016", "14L16A0003", "Ice1stBaitPick", "2", "2015-04-09T10:54:00",
-                "10-05-2016", "14L16A0003", "Ice2ndBaitPick", "2", "2015-04-09T16:15:27",
-                "10-05-2017", "15A15A0010", "Ice1stBaitPick", "2", "2015-04-14T08:04:35",
-                "10-05-2017", "15A15A0010", "Ice2ndBaitPick", "2", "2015-04-14T13:24:21",
-                "10-05-2017", "14L16A0003", "Ice1stBaitPick", "2", "2015-04-15T09:31:19",
-                "10-05-2017", "14L16A0003", "Ice1stBaitPick", "2", "2015-04-15T09:44:18",
-                "10-05-2017", "14L16A0003", "Ice2ndBaitPick", "2", "2015-04-15T14:34:15",
-                "10-05-2017", "15C11A0048", "Ice1stBaitPick", "2", "2015-04-16T10:47:50",
-                "10-05-2017", "15C11A0048", "Ice2ndBaitPick", "2", "2015-04-16T16:00:35",
-                "10-05-2015", "15B20A0006", "Ice1stBaitPick", "2", "2015-04-27T09:10:04",
-                "10-05-2015", "15B20A0006", "Ice2ndBaitPick", "2", "2015-04-27T14:14:46",
-                "10-05-2017", "15C11A0048", "Ice1stBaitPick", "2", "2015-04-29T10:26:00",
-                "10-05-2017", "15C11A0048", "Ice2ndBaitPick", "2", "2015-04-29T15:41:06",
-                "10-05-2017", "15C11A0048", "Ice1stBaitPick", "2", "2015-05-04T07:38:49",
-                "10-05-2017", "15C11A0048", "Ice1stBaitPick", "2", "2015-05-04T11:17:09",
-                "10-05-2017", "15C11A0048", "Ice2ndBaitPick", "2", "2015-05-04T12:45:33",
-                "10-05-2017", "15C11A0048", "Ice2ndBaitPick", "2", "2015-05-04T16:31:27",
-                "10-05-2017", "15C11A0048", "Ice1stBaitPick", "2", "2015-05-07T09:09:01",
-                "10-05-2017", "15C11A0048", "Ice2ndBaitPick", "2", "2015-05-07T16:12:39",
-                "10-05-2017", "15C11A0048", "Ice1stBaitPick", "2", "2015-05-11T08:27:02",
-                "10-05-2017", "15C11A0048", "Ice2ndBaitPick", "2", "2015-05-11T13:38:01",
-                "10-05-2017", "15C11A0048", "Ice1stBaitPick", "2", "2015-05-18T11:08:10",
-                "10-05-2017", "15C11A0048", "Ice1stBaitPick", "2", "2015-05-18T13:09:58",
-                "10-05-2017", "15C11A0048", "Ice2ndBaitPick", "2", "2015-05-18T16:33:47",
-                "01-05-2018", "15C27A0009", "Ice1stBaitPick", "2", "2015-05-20T08:12:50",
-                "01-05-2018", "15C27A0009", "Ice2ndBaitPick", "2", "2015-05-20T13:18:46",
-                "10-05-2017", "15C11A0048", "Ice1stBaitPick", "2", "2015-05-26T13:11:28",
-                "10-05-2017", "15C11A0048", "Ice2ndBaitPick", "2", "2015-05-26T18:15:33",
-                "10-05-2016", "15C27A0009", "Ice1stBaitPick", "2", "2015-05-28T08:26:14",
-                "01-15-2018", "15C27A0009", "Ice2ndBaitPick", "2", "2015-05-28T13:38:23",
-                "10-05-2017", "15C11A0048", "Ice1stBaitPick", "2", "2015-06-02T08:21:00",
-                "10-05-2017", "15C11A0048", "Ice2ndBaitPick", "2", "2015-06-02T13:38:05",
-                "01-05-2016", "15C27A0009", "Ice1stBaitPick", "2", "2015-06-03T10:18:39",
-                "01-05-2018", "15C27A0009", "Ice2ndBaitPick", "2", "2015-06-03T15:28:42",
-                "01-05-2018", "15C27A0009", "Ice1stBaitPick", "2", "2015-06-10T08:54:55",
-                "01-05-2018", "15C11A0049", "Ice2ndBaitPick", "2", "2015-06-10T14:08:54",
-                "03-17-2018", "15E28A0003", "Ice1stBaitPick", "2", "2015-06-16T09:38:20",
-                "03-17-2018", "15E28A0003", "Ice2ndBaitPick", "2", "2015-06-16T14:44:47",
-                "01-05-2018", "15C11A0049", "Ice1stBaitPick", "2", "2015-06-18T09:05:35",
-                "01-05-2018", "15C11A0049", "Ice2ndBaitPick", "2", "2015-06-18T14:10:49",
-                "10-05-2017", "15C11A0048", "Ice1stBaitPick", "2", "2015-06-24T10:29:13",
-                "10-05-2017", "15C11A0048", "Ice2ndBaitPick", "2", "2015-06-24T15:40:02",
-                "01-19-2016", "15E28A0006", "Ice1stBaitPick", "2", "2015-07-06T10:01:48",
-                "03-17-2018", "15E28A0003", "Ice2ndBaitPick", "2", "2015-07-06T15:31:07",
-                "03-17-2016", "15E28A0003", "Ice1stBaitPick", "2", "2015-07-14T10:01:28",
-                "03-17-2018", "15E28A0003", "Ice2ndBaitPick", "2", "2015-07-14T15:05:44",
-                "03-17-2018", "15E28A0003", "Ice1stBaitPick", "2", "2015-07-22T08:26:46",
-                "03-17-2018", "15E28A0003", "Ice2ndBaitPick", "2", "2015-07-22T13:40:48",
-                "03-17-2018", "15E28A0003", "Ice1stBaitPick", "2", "2015-07-29T09:18:24",
-                "03-17-2018", "15E28A0003", "Ice2ndBaitPick", "2", "2015-07-29T14:36:49",
-                "03-17-2018", "010066231", "Ice1stBaitPick", "2", "2015-08-05T09:16:17",
-                "03-17-2018", "010066231", "Ice2ndBaitPick", "2", "2015-08-05T14:17:27",
-                "03-17-2018", "15E28A0003", "Ice1stBaitPick", "2", "2015-08-12T10:38:14",
-                "03-17-2018", "15E28A0003", "Ice2ndBaitPick", "2", "2015-08-12T15:57:29",
-                "03-23-2017", "14D24A0011", "Ice1stBaitPick", "2", "2015-08-17T09:37:01",
-                "03-23-2017", "14D24A0011", "Ice2ndBaitPick", "2", "2015-08-17T14:48:44",
-                "03-17-2018", "15F10A0005", "Ice1stBaitPick", "2", "2015-08-19T10:02:10",
-                "03-17-2018", "15F10A0005", "Ice2ndBaitPick", "2", "2015-08-19T15:04:57",
-                "08-24-2015", "010066231", "Ice1stBaitPick", "2", "2015-08-24T08:11:59",
-                "08-24-2015", "010066231", "Ice2ndBaitPick", "2", "2015-08-24T13:17:12",
-                "03-17-2018", "15F24A0005", "Ice1stBaitPick", "2", "2015-08-26T10:37:10",
-                "03-17-2018", "15F24A0005", "Ice2ndBaitPick", "2", "2015-08-26T15:45:07",
-                "03-17-2018", "010066231", "Ice1stBaitPick", "2", "2015-09-02T08:15:19",
-                "03-17-2018", "010066231", "Ice2ndBaitPick", "2", "2015-09-02T13:25:56",
-                "03-17-2018", "15F24A0005", "Ice1stBaitPick", "2", "2015-09-10T09:21:07",
-                "03-17-2018", "15F24A0005", "Ice2ndBaitPick", "2", "2015-09-10T14:31:08",
-                "03-17-2018", "15F24A0005", "Ice1stBaitPick", "2", "2015-09-16T08:50:01",
-                "03-17-2018", "15F24A0005", "Ice2ndBaitPick", "2", "2015-09-16T13:56:01",
-                "03-17-2018", "15F24A0005", "Ice1stBaitPick", "2", "2015-09-21T09:08:48",
-                "03-17-2018", "15F24A0005", "Ice2ndBaitPick", "2", "2015-09-21T14:12:36",
-                "03-17-2018", "10066231", "Ice1stBaitPick", "2", "2015-09-29T09:04:04",
-                "03-17-2018", "15E28A0003", "Ice2ndBaitPick", "2", "2015-09-29T14:13:05",
-                "03-17-2018", "010066231", "Ice1stBaitPick", "2", "2015-10-07T08:13:56",
-                "03-17-2018", "010066231", "Ice2ndBaitPick", "2", "2015-10-07T13:22:53",
-                "03-17-2018", "15F24A0005", "Ice1stBaitPick", "2", "2015-10-14T11:13:25",
-                "03-17-2018", "15F24A0005", "Ice2ndBaitPick", "2", "2015-10-14T16:19:01",
+
+        // A mapping of the newly created reagents so that duplicate creation is not attempted (causes unique key fail).
+        Map<String, Reagent> mapExpLotToNewReagent = new HashMap<>();
+
+        final String[] bravoLogData = {
+                "2015-08-26T10:37:10", "Ice1stBaitPick", "03-17-2018", "15F24A0005",
+                "2015-08-26T15:45:07", "Ice2ndBaitPick", "03-17-2018", "15F24A0005",
+                "2015-09-02T08:15:19", "Ice1stBaitPick", "03-17-2018", "010066231",
+                "2015-09-02T13:25:56", "Ice2ndBaitPick", "03-17-2018", "010066231",
+                "2015-09-10T09:21:07", "Ice1stBaitPick", "03-17-2018", "15F24A0005",
+                "2015-09-10T14:31:08", "Ice2ndBaitPick", "03-17-2018", "15F24A0005",
+                "2015-09-16T08:50:01", "Ice1stBaitPick", "03-17-2018", "15F24A0005",
+                "2015-09-16T13:56:01", "Ice2ndBaitPick", "03-17-2018", "15F24A0005",
+                "2015-09-21T09:08:48", "Ice1stBaitPick", "03-17-2018", "15F24A0005",
+                "2015-09-21T14:12:36", "Ice2ndBaitPick", "03-17-2018", "15F24A0005",
+                "2015-09-29T09:04:04", "Ice1stBaitPick", "03-17-2018", "10066231",
+                "2015-09-29T14:13:05", "Ice2ndBaitPick", "03-17-2018", "15E28A0003",
+                //"2015-10-07T08:13:56", "Ice1stBaitPick", "03-17-2018", "010066231", // fixed up in GPLIM-3787
+                //"2015-10-07T13:22:53", "Ice2ndBaitPick", "03-17-2018", "010066231", // fixed up in GPLIM-3787
+                "2015-10-14T11:13:25", "Ice1stBaitPick", "03-17-2018", "15F24A0005",
+                "2015-10-14T16:19:01", "Ice2ndBaitPick", "03-17-2018", "15F24A0005",
         };
+        Assert.assertEquals(bravoLogData.length % 4, 0, "Bad input array length");
         utx.begin();
+        // Reads in the Bravo data and adds reagents.
         int index = 0;
-        while (index < extractedData.length) {
-            String baitLotExpiration = extractedData[index++] + "T00:00:00";
-            String baitLot = extractedData[index++];
-            String eventType = extractedData[index++];
-            String disambiguator = extractedData[index++];
-            String eventStart = extractedData[index++];
+        while (index < bravoLogData.length) {
+            String eventStart = bravoLogData[index++];
+            String pickEventType = bravoLogData[index++];
+            String baitLotExpiration = bravoLogData[index++];
+            String baitLot = bravoLogData[index++];
 
             Date eventDate = dateFormat.parse(eventStart);
-            Date expirationDate = dateFormat.parse(baitLotExpiration);
-            String eventCriteria = eventType + " event on " + eventStart + " having disambiguator " + disambiguator;
+            Date expirationDate = expDateFormat.parse(baitLotExpiration);
 
-            boolean foundEvent = false;
-            boolean foundReagent = false;
-            for (LabEvent baitPick : labEventDao.findByDate(eventDate, eventDate)) {
-                if (String.valueOf(baitPick.getDisambiguator()).equals(disambiguator) &&
-                    baitPick.getLabEventType().getName().equals(eventType)) {
-
-                    eventCriteria += " id " + baitPick.getLabEventId();
-                    Assert.assertFalse(foundEvent, "Multiple events match " + eventCriteria);
-                    foundEvent = true;
-                    for (Reagent reagent : baitPick.getReagents()) {
-                        if (reagentName.equals(reagent.getName())) {
-                            System.out.println(reagentName + " is already on " + eventCriteria);
-                            foundReagent = true;
-                        }
-                    }
-                    if (!foundReagent) {
-                        System.out.println("Adding " + reagentName + " lot " + baitLot + " exp " + baitLotExpiration +
-                                           " to " + eventCriteria);
-                        // Either reuses an existing reagent or creates a new one.
-                        Reagent existingReagent = genericReagentDao.findByReagentNameLotExpiration(reagentName, baitLot,
-                                expirationDate);
-                        if (existingReagent == null) {
-                            existingReagent = new GenericReagent(reagentName, baitLot, expirationDate);
-                        }
-                        baitPick.addReagent(existingReagent);
-                    }
+            LabEvent pickEvent = null;
+            for (LabEvent event : labEventDao.findByDate(eventDate, eventDate)) {
+                if (event.getLabEventType().getName().equals(pickEventType)) {
+                    Assert.assertNull(pickEvent, "Multiple ice bait pick events on " + eventStart);
+                    pickEvent = event;
                 }
             }
-            if (!foundEvent) System.out.println("Cannot find " + eventCriteria);
+            // Sanity checks the event and its reagents.
+            Assert.assertNotNull(pickEvent, "Missing " + pickEventType + " event on " + eventStart);
+            for (Reagent reagent : pickEvent.getReagents()) {
+                Assert.assertFalse(reagentName.equals(reagent.getName()),
+                        reagentName + " is already on pick event " + pickEvent.getLabEventId());
+            }
+
+            // Gets or makes the reagent to use.
+            Reagent baitReagent = mapExpLotToNewReagent.get(baitLot + baitLotExpiration);
+            if (baitReagent == null) {
+                baitReagent = genericReagentDao.findByReagentNameLotExpiration(reagentName, baitLot, expirationDate);
+            }
+            if (baitReagent == null) {
+                System.out.println("Making new instance of " + reagentName + " lot " + baitLot +
+                                   " exp " + baitLotExpiration);
+                baitReagent = new GenericReagent(reagentName, baitLot, expirationDate);
+                mapExpLotToNewReagent.put(baitLot + baitLotExpiration, baitReagent);
+            }
+
+            // Adds bait reagent to the pick event.
+            System.out.println("Adding " + baitReagent.getName() + " lot " + baitReagent.getLot() + " exp " +
+                               dateFormat.format(baitReagent.getExpiration()) + " to " + pickEventType +
+                               " on " + eventStart + " eventId " + pickEvent.getLabEventId());
+            pickEvent.addReagent(baitReagent);
+        }
+
+        // Finds all the bait reagents that are on hybridization events
+        Query query = labEventDao.getEntityManager().createNativeQuery(
+                "SELECT lab_event_reagent_id from lab_event_reagents ler, reagent r, lab_event le " +
+                "where ler.lab_event = le.lab_event_id and ler.reagents = r.reagent_id " +
+                "and r.reagent_name = 'Rapid Capture Kit Box 4 (Bait)' " +
+                "and le.lab_event_type like '%HYBRIDIZATION' ");
+        query.unwrap(SQLQuery.class).addScalar("lab_event_reagent_id", LongType.INSTANCE);
+        List<Long> labEventReagentIds = query.getResultList();
+        Assert.assertTrue(labEventReagentIds.size() > 0);
+        List<LabEventReagent> labEventReagents = new ArrayList<>(labEventDao.findListByList(LabEventReagent.class,
+                LabEventReagent_.labEventReagentId, labEventReagentIds));
+        Assert.assertEquals(labEventReagents.size(), labEventReagentIds.size());
+        for (LabEventReagent labEventReagent : labEventReagents) {
+            LabEvent hybEvent = labEventReagent.getLabEvent();
+            LabEvent pickEvent = null;
+            for (LabEvent event : labEventDao.findByDate(hybEvent.getEventDate(), hybEvent.getEventDate())) {
+                if (event.getLabEventType().getName().contains("BaitPick")) {
+                    Assert.assertNull(pickEvent, "Multiple bait picks " + dateFormat.format(hybEvent.getEventDate()));
+                    pickEvent = event;
+                }
+            }
+            // Sanity checks the pick event and its reagents.
+            Assert.assertNotNull(pickEvent, "Missing bait pick event on " + dateFormat.format(hybEvent.getEventDate()));
+            for (Reagent reagent : pickEvent.getReagents()) {
+                Assert.assertFalse(reagentName.equals(reagent.getName()),
+                        reagentName + " is already on pick event " + pickEvent.getLabEventId());
+            }
+            Reagent baitReagent = labEventReagent.getReagent();
+            System.out.println("Moving " + baitReagent.getName() + " lot " + baitReagent.getLot() +
+                               " exp " + dateFormat.format(baitReagent.getExpiration()) +
+                               " from " + hybEvent.getLabEventType().getName() + " (" + hybEvent.getLabEventId() + ")" +
+                               " on " + dateFormat.format(hybEvent.getEventDate()) +
+                               " to " + pickEvent.getLabEventType().getName() + " (" + pickEvent.getLabEventId() + ")");
+            pickEvent.addReagent(baitReagent);
+            hybEvent.getLabEventReagents().remove(labEventReagent);
+            labEventDao.remove(labEventReagent);
         }
         genericReagentDao.persist(new FixupCommentary("GPLIM-3791 backfill missing bait reagents."));
+        genericReagentDao.flush();
         utx.commit();
     }
-
-    // Removes bait reagents from Hybridization events using data pulled from the Bravo logs.
-    // The same log extraction was used to generate the GPLIM-3791 additions, so no fear of
-    // removing a reagent here and not putting it on the corresponding bait pick event.
-    @Test(enabled = false)
-    public void gplim3791deletes() throws Exception {
-        userBean.loginOSUser();
-        final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-        final String reagentName = "Rapid Capture Kit Box 4 (Bait)";
-        final String[] extractedData = {
-                //start, disambiguator, station, eventType
-                "2014-11-20T10:59:15", "1", "SKY_CAPTAIN", "Ice1stHybridization",
-                "2014-11-20T16:31:47", "1", "SKY_CAPTAIN", "Ice2ndHybridization",
-                "2014-11-24T09:40:10", "1", "SKY_CAPTAIN", "Ice1stHybridization",
-                "2014-11-24T14:56:46", "1", "SKY_CAPTAIN", "Ice2ndHybridization",
-                "2014-11-26T12:40:13", "1", "SKY_CAPTAIN", "Ice1stHybridization",
-                "2014-11-26T17:53:52", "1", "SKY_CAPTAIN", "Ice2ndHybridization",
-                "2014-12-04T14:10:39", "1", "SKY_CAPTAIN", "Ice1stHybridization",
-                "2014-12-04T19:58:37", "1", "SKY_CAPTAIN", "Ice2ndHybridization",
-                "2014-12-09T09:35:51", "1", "SKY_CAPTAIN", "Ice1stHybridization",
-                "2014-12-09T15:25:55", "1", "SKY_CAPTAIN", "Ice2ndHybridization",
-                "2014-12-18T11:30:42", "1", "SKY_CAPTAIN", "Ice1stHybridization",
-                "2014-12-18T17:50:28", "1", "SKY_CAPTAIN", "Ice2ndHybridization",
-                "2015-01-14T13:44:43", "1", "SKY_CAPTAIN", "Ice2ndHybridization",
-                "2015-01-21T14:52:34", "1", "SKY_CAPTAIN", "Ice2ndHybridization",
-                "2015-01-29T07:54:43", "1", "SKY_CAPTAIN", "Ice1stHybridization",
-                "2015-01-29T13:01:20", "1", "SKY_CAPTAIN", "Ice2ndHybridization",
-                "2015-02-03T09:56:36", "1", "SKY_CAPTAIN", "Ice1stHybridization",
-                "2015-02-03T15:02:09", "1", "SKY_CAPTAIN", "Ice2ndHybridization",
-                "2015-02-12T08:06:40", "1", "SKY_CAPTAIN", "Ice1stHybridization",
-                "2015-02-12T13:20:45", "1", "SKY_CAPTAIN", "Ice2ndHybridization",
-                "2015-02-17T09:32:09", "1", "SKY_CAPTAIN", "Ice1stHybridization",
-                "2015-02-17T15:26:40", "1", "SKY_CAPTAIN", "Ice2ndHybridization",
-                "2015-02-19T07:46:21", "1", "SKY_CAPTAIN", "Ice1stHybridization",
-                "2015-02-19T13:01:04", "1", "SKY_CAPTAIN", "Ice2ndHybridization",
-                "2015-02-25T10:39:12", "1", "SKY_CAPTAIN", "Ice1stHybridization",
-                "2015-02-25T16:08:40", "1", "SKY_CAPTAIN", "Ice2ndHybridization",
-                "2015-03-03T07:24:17", "1", "SKY_CAPTAIN", "Ice1stHybridization",
-                "2015-03-03T12:38:33", "1", "SKY_CAPTAIN", "Ice2ndHybridization",
-                "2015-03-05T11:01:43", "1", "SKY_CAPTAIN", "Ice1stHybridization",
-                "2015-03-05T16:15:04", "1", "SKY_CAPTAIN", "Ice2ndHybridization",
-                "2015-03-09T09:23:28", "1", "SKY_CAPTAIN", "Ice1stHybridization",
-                "2015-03-09T14:29:56", "1", "SKY_CAPTAIN", "Ice2ndHybridization",
-                "2015-03-11T10:57:22", "1", "SKY_CAPTAIN", "Ice1stHybridization",
-                "2015-03-11T16:03:45", "1", "SKY_CAPTAIN", "Ice2ndHybridization",
-                "2015-03-19T09:10:43", "1", "SKY_CAPTAIN", "Ice1stHybridization",
-                "2015-03-19T14:15:03", "1", "SKY_CAPTAIN", "Ice2ndHybridization",
-                "2015-03-26T11:10:34", "1", "SKY_CAPTAIN", "Ice1stHybridization",
-                "2015-03-26T16:21:02", "1", "SKY_CAPTAIN", "Ice2ndHybridization",
-                "2015-03-30T07:28:16", "1", "SKY_CAPTAIN", "Ice1stHybridization",
-                "2015-03-30T10:10:36", "1", "SKY_CAPTAIN", "Ice1stHybridization",
-                "2015-03-30T12:42:18", "1", "SKY_CAPTAIN", "Ice2ndHybridization",
-                "2015-03-30T15:29:40", "1", "SKY_CAPTAIN", "Ice2ndHybridization",
-                "2015-04-02T07:26:41", "1", "SKY_CAPTAIN", "Ice1stHybridization",
-                "2015-04-02T12:46:13", "1", "SKY_CAPTAIN", "Ice2ndHybridization",
-                "2015-04-08T07:14:15", "1", "SKY_CAPTAIN", "Ice1stHybridization",
-                "2015-04-08T08:39:06", "1", "SKY_CAPTAIN", "Ice1stHybridization",
-                "2015-04-08T14:45:14", "1", "SKY_CAPTAIN", "Ice2ndHybridization",
-                "2015-04-09T10:54:00", "1", "SKY_CAPTAIN", "Ice1stHybridization",
-                "2015-04-09T16:15:27", "1", "SKY_CAPTAIN", "Ice2ndHybridization",
-                "2015-04-14T08:04:35", "1", "SKY_CAPTAIN", "Ice1stHybridization",
-                "2015-04-14T13:24:21", "1", "SKY_CAPTAIN", "Ice2ndHybridization",
-                "2015-04-15T09:31:19", "1", "SKY_CAPTAIN", "Ice1stHybridization",
-                "2015-04-15T09:44:18", "1", "SKY_CAPTAIN", "Ice1stHybridization",
-                "2015-04-15T14:34:15", "1", "SKY_CAPTAIN", "Ice2ndHybridization",
-                "2015-04-16T10:47:50", "1", "SKY_CAPTAIN", "Ice1stHybridization",
-                "2015-04-16T16:00:35", "1", "SKY_CAPTAIN", "Ice2ndHybridization",
-                "2015-04-27T09:10:04", "1", "SKY_CAPTAIN", "Ice1stHybridization",
-                "2015-04-27T14:14:46", "1", "SKY_CAPTAIN", "Ice2ndHybridization",
-                "2015-04-29T10:26:00", "1", "SKY_CAPTAIN", "Ice1stHybridization",
-                "2015-04-29T15:41:06", "1", "SKY_CAPTAIN", "Ice2ndHybridization",
-                "2015-05-04T07:38:49", "1", "SKY_CAPTAIN", "Ice1stHybridization",
-                "2015-05-04T11:17:09", "1", "SKY_CAPTAIN", "Ice1stHybridization",
-                "2015-05-04T12:45:33", "1", "SKY_CAPTAIN", "Ice2ndHybridization",
-                "2015-05-04T16:31:27", "1", "SKY_CAPTAIN", "Ice2ndHybridization",
-                "2015-05-07T09:09:01", "1", "SKY_CAPTAIN", "Ice1stHybridization",
-                "2015-05-07T16:12:39", "1", "SKY_CAPTAIN", "Ice2ndHybridization",
-                "2015-05-11T08:27:02", "1", "SKY_CAPTAIN", "Ice1stHybridization",
-                "2015-05-11T13:38:01", "1", "SKY_CAPTAIN", "Ice2ndHybridization",
-                "2015-05-18T11:08:10", "1", "SKY_CAPTAIN", "Ice1stHybridization",
-                "2015-05-18T13:09:58", "1", "SKY_CAPTAIN", "Ice1stHybridization",
-                "2015-05-18T16:33:47", "1", "SKY_CAPTAIN", "Ice2ndHybridization",
-                "2015-05-20T08:12:50", "1", "SKY_CAPTAIN", "Ice1stHybridization",
-                "2015-05-20T13:18:46", "1", "SKY_CAPTAIN", "Ice2ndHybridization",
-                "2015-05-26T13:11:28", "1", "SKY_CAPTAIN", "Ice1stHybridization",
-                "2015-05-26T18:15:33", "1", "SKY_CAPTAIN", "Ice2ndHybridization",
-                "2015-05-28T08:26:14", "1", "SKY_CAPTAIN", "Ice1stHybridization",
-                "2015-05-28T13:38:23", "1", "SKY_CAPTAIN", "Ice2ndHybridization",
-                "2015-06-02T08:21:00", "1", "SKY_CAPTAIN", "Ice1stHybridization",
-                "2015-06-02T13:38:05", "1", "SKY_CAPTAIN", "Ice2ndHybridization",
-                "2015-06-03T10:18:39", "1", "SKY_CAPTAIN", "Ice1stHybridization",
-                "2015-06-03T15:28:42", "1", "SKY_CAPTAIN", "Ice2ndHybridization",
-                "2015-06-10T08:54:55", "1", "SKY_CAPTAIN", "Ice1stHybridization",
-                "2015-06-10T14:08:54", "1", "SKY_CAPTAIN", "Ice2ndHybridization",
-                "2015-06-16T09:38:20", "1", "SKY_CAPTAIN", "Ice1stHybridization",
-                "2015-06-16T14:44:47", "1", "SKY_CAPTAIN", "Ice2ndHybridization",
-                "2015-06-18T09:05:35", "1", "SKY_CAPTAIN", "Ice1stHybridization",
-                "2015-06-18T14:10:49", "1", "SKY_CAPTAIN", "Ice2ndHybridization",
-                "2015-06-24T10:29:13", "1", "SKY_CAPTAIN", "Ice1stHybridization",
-                "2015-06-24T15:40:02", "1", "SKY_CAPTAIN", "Ice2ndHybridization",
-                "2015-07-06T10:01:48", "1", "SKY_CAPTAIN", "Ice1stHybridization",
-                "2015-07-06T15:31:07", "1", "SKY_CAPTAIN", "Ice2ndHybridization",
-                "2015-07-14T10:01:28", "1", "SKY_CAPTAIN", "Ice1stHybridization",
-                "2015-07-14T15:05:44", "1", "SKY_CAPTAIN", "Ice2ndHybridization",
-                "2015-07-22T08:26:46", "1", "SKY_CAPTAIN", "Ice1stHybridization",
-                "2015-07-22T13:40:48", "1", "SKY_CAPTAIN", "Ice2ndHybridization",
-                "2015-07-29T09:18:24", "1", "SKY_CAPTAIN", "Ice1stHybridization",
-                "2015-07-29T14:36:49", "1", "SKY_CAPTAIN", "Ice2ndHybridization",
-                "2015-08-05T09:16:17", "1", "SKY_CAPTAIN", "Ice1stHybridization",
-                "2015-08-05T14:17:27", "1", "SKY_CAPTAIN", "Ice2ndHybridization",
-                "2015-08-12T10:38:14", "1", "SKY_CAPTAIN", "Ice1stHybridization",
-                "2015-08-12T15:57:29", "1", "SKY_CAPTAIN", "Ice2ndHybridization",
-                "2015-08-17T09:37:01", "1", "SKY_CAPTAIN", "Ice1stHybridization",
-                "2015-08-17T14:48:44", "1", "SKY_CAPTAIN", "Ice2ndHybridization",
-                "2015-08-19T10:02:10", "1", "SKY_CAPTAIN", "Ice1stHybridization",
-                "2015-08-19T15:04:57", "1", "SKY_CAPTAIN", "Ice2ndHybridization",
-                "2015-08-24T08:11:59", "1", "SKY_CAPTAIN", "Ice1stHybridization",
-                "2015-08-24T13:17:12", "1", "SKY_CAPTAIN", "Ice2ndHybridization",
-        };
-        utx.begin();
-        int index = 0;
-        while (index < extractedData.length) {
-            String eventStart = extractedData[index++];
-            String disambiguator = extractedData[index++];
-            String station = extractedData[index++];
-            String eventType = extractedData[index++];
-
-            Date eventDate = dateFormat.parse(eventStart);
-            String eventCriteria = eventType + " event on " + eventStart + " at " + station +
-                                   " having disambiguator " + disambiguator;
-
-            boolean foundEvent = false;
-            boolean foundReagent = false;
-            for (LabEvent hybridizationEvent : labEventDao.findByDate(eventDate, eventDate)) {
-                if (String.valueOf(hybridizationEvent.getDisambiguator()).equals(disambiguator) &&
-                    hybridizationEvent.getLabEventType().getName().equals(eventType) &&
-                    hybridizationEvent.getEventLocation().equals(station)) {
-
-                    eventCriteria += " id " + hybridizationEvent.getLabEventId();
-                    Assert.assertFalse(foundEvent, "Multiple " + eventCriteria);
-                    foundEvent = true;
-                    List<LabEventReagent> labEventReagents = new ArrayList<>(hybridizationEvent.getLabEventReagents());
-                    for (LabEventReagent labEventReagent : labEventReagents) {
-                        Reagent reagent = labEventReagent.getReagent();
-                        if (reagent.getName().equals(reagentName)) {
-                            foundReagent = true;
-                            System.out.println("Removing " + reagentName + " from " + eventCriteria);
-                            hybridizationEvent.getLabEventReagents().remove(labEventReagent);
-                        }
-                    }
-                }
-            }
-            if (!foundEvent) System.out.println("Cannot find " + eventCriteria);
-            if (!foundReagent) System.out.println("Cannot find reagent on " + eventCriteria);
-        }
-        genericReagentDao.persist(new FixupCommentary("GPLIM-3791 remove baits from hybridization events."));
-        utx.commit();
-    }
-
 }
