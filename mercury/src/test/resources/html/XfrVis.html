@@ -15,7 +15,7 @@
             stroke: black;
             stroke-width: 1.5px;
             cursor: move;
-            fill: lightcoral;
+            fill: #8dedf0;
         }
 
         .link {
@@ -38,7 +38,7 @@
 <body>
 <script src="../../../../src/main/webapp/resources/scripts/d3.3.5.6.min.js"></script>
 <script>
-    var width = 960, height = 700;
+    var width = 1200, height = 950;
 
     var svg = d3.select("body").append("svg")
             .attr({width: width, height: height, "pointer-events": "all"});
@@ -75,7 +75,7 @@
 
         var force = d3.layout.force()
                 .gravity(.08)
-                .distance(100)
+                .distance(500)
                 .charge(-350)
                 .size([width, height]);
 

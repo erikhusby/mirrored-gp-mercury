@@ -88,23 +88,21 @@ public class TransferVisualizerV2 {
                     }
                     targetId += cherryPickTransfer.getTargetVesselContainer().getEmbedder().getLabel();
 */
-                    renderLink(eventId, cherryPickTransfer.getSourceVesselContainer().getEmbedder().getLabel(),
-                            cherryPickTransfer.getTargetVesselContainer().getEmbedder().getLabel());
                     renderContainer(cherryPickTransfer.getTargetVesselContainer(),
                             cherryPickTransfer.getAncillaryTargetVessel());
+                    renderLink(eventId, cherryPickTransfer.getSourceVesselContainer().getEmbedder().getLabel(),
+                            cherryPickTransfer.getTargetVesselContainer().getEmbedder().getLabel());
                 }
                 for (VesselToSectionTransfer vesselToSectionTransfer : event.getVesselToSectionTransfers()) {
                     String sourceLabel = vesselToSectionTransfer.getSourceVessel().getLabel();
                     Set<VesselContainer<?>> containers = vesselToSectionTransfer.getSourceVessel().getContainers();
-/*
                     if (!containers.isEmpty()) {
-                        sourceLabel = sourceLabel + "|" + containers.iterator().next().getEmbedder().getLabel();
+                        sourceLabel = containers.iterator().next().getEmbedder().getLabel();
                     }
-*/
-                    renderLink(eventId, sourceLabel,
-                            vesselToSectionTransfer.getTargetVesselContainer().getEmbedder().getLabel());
                     renderContainer(vesselToSectionTransfer.getTargetVesselContainer(),
                             vesselToSectionTransfer.getAncillaryTargetVessel());
+                    renderLink(eventId, sourceLabel,
+                            vesselToSectionTransfer.getTargetVesselContainer().getEmbedder().getLabel());
                 }
             }
         }
@@ -125,14 +123,14 @@ public class TransferVisualizerV2 {
         private void renderVessel(LabVessel labVessel) {
             String label = labVessel.getLabel();
             // todo jmt distinguish between stand-alone tube and container
-            if (mapLabelToIndex.get(label) == null) {
-                logger.info("Rendering vessel " + label);
-                mapLabelToIndex.put(label, nodeIndex);
-                nodeIndex++;
+//            if (mapLabelToIndex.get(label) == null) {
+//                logger.info("Rendering vessel " + label);
+//                mapLabelToIndex.put(label, nodeIndex);
+//                nodeIndex++;
                 for (VesselContainer<?> vesselContainer : labVessel.getContainers()) {
                     renderContainer(vesselContainer, null);
                 }
-            }
+//            }
         }
 
         @Override
@@ -181,8 +179,8 @@ public class TransferVisualizerV2 {
                         }
                         first = false;
                         nodesJson.append("{ \"name\": \"").append(child.getLabel()).
-                                append("\", \"x\": ").append(rowColumn.getRow() * 60).
-                                append(", \"y\": ").append(rowColumn.getRow() * 20).
+                                append("\", \"x\": ").append((rowColumn.getColumn() - 1) * 60).
+                                append(", \"y\": ").append((rowColumn.getRow() - 1) * 20).
                                 append(", \"w\": 60, \"h\": 20 }");
 /*
                         if (child.getContainers().size() > 1) {
