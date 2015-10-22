@@ -21,6 +21,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 @Test(groups = TestGroups.ALTERNATIVES)
 public class ProductOrderEjbContainerTest extends Arquillian {
 
+    private static final String TEST_PDO = "PDO-312";
     @Inject
     ProductOrderEjb pdoEjb;
 
@@ -40,7 +41,7 @@ public class ProductOrderEjbContainerTest extends Arquillian {
 
     @Test(groups = TestGroups.ALTERNATIVES)
     public void testNullQuotePropagatesToJira() throws Exception {
-        String pdoName = "PDO-311";
+        String pdoName = TEST_PDO;
         ProductOrder pdo = pdoDao.findByBusinessKey(pdoName);
         pdo.setQuoteId("CASH");
         pdo.setSkipQuoteReason("Because of GPLIM-2462");
@@ -59,7 +60,7 @@ public class ProductOrderEjbContainerTest extends Arquillian {
 
     @Test(groups = TestGroups.ALTERNATIVES)
     public void testSummaryFieldPropagatesToJira() throws Exception {
-        String pdoName = "PDO-311";
+        String pdoName = TEST_PDO;
         ProductOrder pdo = pdoDao.findByBusinessKey(pdoName);
         String newTitle = "And now for something different " + System.currentTimeMillis();
         pdo.setTitle(newTitle);
