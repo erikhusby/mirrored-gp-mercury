@@ -262,7 +262,7 @@ public enum LabEventType {
     DENATURE_TO_FLOWCELL_TRANSFER("DenatureToFlowcellTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            LibraryType.NONE_ASSIGNED),
+            LibraryType.HISEQ_FLOWCELL),
     DENATURE_TO_DILUTION_TRANSFER("DenatureToDilutionTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
@@ -768,7 +768,7 @@ public enum LabEventType {
     ENRICHMENT_CLEANUP_TS("EnrichmentCleanupTS",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            LibraryType.NONE_ASSIGNED),
+            LibraryType.ENRICHED_POND),
 
     // Illumina Genome Network
     IGN_PRE_NORM_TRANSFER("IGNPreNormTransfer",
