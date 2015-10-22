@@ -202,6 +202,87 @@ public enum SBSSection {
             VesselPosition.E07,
             VesselPosition.E08
             )),
+    // In an 8 by 6 plate, start at B3 and skip rows, i.e. B3, D3, F3, B4 etc.
+    P8_BY_6_B3_ALT_ROWS("8BY6B3ALTROWS", Arrays.asList(
+            VesselPosition.B03,
+            VesselPosition.B04,
+            VesselPosition.B05,
+            VesselPosition.B06,
+            VesselPosition.B07,
+            VesselPosition.B08,
+            VesselPosition.D03,
+            VesselPosition.D04,
+            VesselPosition.D05,
+            VesselPosition.D06,
+            VesselPosition.D07,
+            VesselPosition.D08,
+            VesselPosition.F03,
+            VesselPosition.F04,
+            VesselPosition.F05,
+            VesselPosition.F06,
+            VesselPosition.F07,
+            VesselPosition.F08
+    )),
+    // 2 columns by 6 rows, starting at A1; source for transfer into 8x6 Eco plate
+    P2_BY_6_A1("2BY6A1", Arrays.asList(
+            VesselPosition.A01,
+            VesselPosition.A02,
+            VesselPosition.B01,
+            VesselPosition.B02,
+            VesselPosition.C01,
+            VesselPosition.C02,
+            VesselPosition.D01,
+            VesselPosition.D02,
+            VesselPosition.E01,
+            VesselPosition.E02,
+            VesselPosition.F01,
+            VesselPosition.F02
+    )),
+    // In an 8 by 6 plate, start at A3 and go down column wise for 2 cols
+    P8_BY_6_A3_COL_WISE_2("8BY6A3COLWISE2", Arrays.asList(
+            VesselPosition.A03,
+            VesselPosition.B03,
+            VesselPosition.C03,
+            VesselPosition.D03,
+            VesselPosition.E03,
+            VesselPosition.F03,
+            VesselPosition.A04,
+            VesselPosition.B04,
+            VesselPosition.C04,
+            VesselPosition.D04,
+            VesselPosition.E04,
+            VesselPosition.F04
+    )),
+    // In an 8 by 6 plate, start at Col 5 but with a flipped pattern for each pair going down.
+    P8_BY_6_A5_COL_WISE_2_ALT("8BY6A5COLWISE2_ALT", Arrays.asList(
+            VesselPosition.B05,
+            VesselPosition.A05,
+            VesselPosition.D05,
+            VesselPosition.C05,
+            VesselPosition.F05,
+            VesselPosition.E05,
+            VesselPosition.B06,
+            VesselPosition.A06,
+            VesselPosition.D06,
+            VesselPosition.C06,
+            VesselPosition.F06,
+            VesselPosition.E06
+    )),
+    // In an 8 by 6 plate, start at A7 and go down column wise for 2 cols
+    P8_BY_6_A7_COL_WISE_2("8BY6A7COLWISE2", Arrays.asList(
+            VesselPosition.A07,
+            VesselPosition.B07,
+            VesselPosition.C07,
+            VesselPosition.D07,
+            VesselPosition.E07,
+            VesselPosition.F07,
+            VesselPosition.A08,
+            VesselPosition.B08,
+            VesselPosition.C08,
+            VesselPosition.D08,
+            VesselPosition.E08,
+            VesselPosition.F08
+    )),
     // Columns 4-6 of a 384 well plate, ordered by row; sample inputs for a Fluidigm 48.48 chip
     P384COLS4_6BYROW("P384COLS4-6BYROW", Arrays.asList(
             VesselPosition.A04,
