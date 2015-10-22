@@ -1015,21 +1015,6 @@
         <workflowProcessDefVersions>
             <version>02</version>
             <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
-            <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
-                <name>Clinical Whole Blood Bucket</name>
-                <labEventTypes>CLINICAL_WHOLE_BLOOD_EXTRACTION_BUCKET</labEventTypes>
-                <optional>true</optional>
-                <entryPoint>false</entryPoint>
-                <reEntryPoint>false</reEntryPoint>
-                <bucketEntryEvaluator>
-                    <materialTypes>FRESH_BLOOD</materialTypes>
-                    <materialTypes>FRESH_FROZEN_BLOOD</materialTypes>
-                    <materialTypes>WHOLE_BLOOD_WHOLE_BLOOD_FRESH</materialTypes>
-                    <materialTypes>WHOLE_BLOOD_WHOLE_BLOOD_FROZEN</materialTypes>
-                </bucketEntryEvaluator>
-                <batchJiraProjectType>XTR</batchJiraProjectType>
-                <batchJiraIssueType>DNA_EXTRACTION</batchJiraIssueType>
-            </workflowStepDefs>
             <workflowStepDefs>
                 <name>Prep Reagents</name>
                 <labEventTypes>PREP</labEventTypes>

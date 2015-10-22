@@ -39,13 +39,6 @@ public class WorkflowMatcherTest {
 
         GregorianCalendar gregorianCalendar = new GregorianCalendar();
 
-        LabEvent bucketExtractions = new LabEvent(LabEventType.CLINICAL_WHOLE_BLOOD_EXTRACTION_BUCKET, gregorianCalendar.getTime(), LabEvent.UI_EVENT_LOCATION,
-                1L, 101L, LabEvent.UI_PROGRAM_NAME);
-                //todo: set workflowQualifier, if applicable
-//        bucketExtractions.setWorkflowQualifier("??");
-        bucketExtractions.setLabBatch(labBatch);
-        gregorianCalendar.add(Calendar.SECOND, 1);
-
         // Add batch event
         LabEvent prepReagents = new LabEvent(LabEventType.PREP, gregorianCalendar.getTime(), LabEvent.UI_EVENT_LOCATION,
                 1L, 101L, LabEvent.UI_PROGRAM_NAME);
