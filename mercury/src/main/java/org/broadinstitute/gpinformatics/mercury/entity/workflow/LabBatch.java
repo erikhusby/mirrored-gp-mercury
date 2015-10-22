@@ -194,10 +194,9 @@ public class LabBatch {
 
     public LabBatch(@Nonnull String batchName, @Nonnull Set<LabVessel> startingLabVessels,
                     Set<LabVessel> reworkLabVessels,
-                    @Nonnull LabBatchType labBatchType, String workflowName, String batchDescription, Date dueDate,
+                    @Nonnull LabBatchType labBatchType, String batchDescription, Date dueDate,
                     String important) {
         this(batchName, startingLabVessels, labBatchType, batchDescription, dueDate, important);
-        this.workflowName = workflowName;
         addReworks(reworkLabVessels);
     }
 

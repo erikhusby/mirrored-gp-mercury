@@ -14,6 +14,10 @@ package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
 import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
+
 public enum MaterialType implements Displayable {
     // These MaterialTypes already exist in the database.
     CELL_SUSPENSION("Cell Suspension"),
@@ -149,5 +153,13 @@ public enum MaterialType implements Displayable {
     @Override
     public String getDisplayName() {
         return displayName;
+    }
+
+    public static Set<String> displayNamesOf(Collection<MaterialType> materialTypes) {
+        Set<String> displayNames = new HashSet<>();
+        for (MaterialType materialType : materialTypes) {
+            displayNames.add(materialType.getDisplayName());
+        }
+        return displayNames;
     }
 }

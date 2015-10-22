@@ -280,19 +280,6 @@
 </stripes:layout-component>
 
 <stripes:layout-component name="content">
-    <c:if test="${actionBean.totalBucketEntries()>0 && (actionBean.selectedBucket!=null)}">
-        <div class="alert alert-success" style="margin-left:20%;margin-right:20%;">
-            <ul>
-                <c:if test="${actionBean.selectedBucket!=null}">
-                    <li>There are ${actionBean.totalBucketEntries()} entries in this bucket
-                        <c:if test="${actionBean.totalBucketEntries()>0}">
-                            and ${fn:length(actionBean.possibleWorkflows)} possible workflows.
-                        </c:if>
-                    </li>
-                </c:if>
-            </ul>
-        </div>
-    </c:if>
     <stripes:form id="bucketForm" class="form-horizontal" beanclass="${actionBean.class}">
         <div class="form-horizontal">
             <div class="control-group">
@@ -314,7 +301,6 @@
     <stripes:form beanclass="${actionBean.class.name}" id="bucketEntryForm" class="form-horizontal">
         <div class="form-horizontal">
         <stripes:hidden name="selectedBucket" value="${actionBean.selectedBucket}"/>
-        <stripes:hidden name="selectedWorkflowDef" value="${actionBean.selectedWorkflowDef}"/>
         <c:if test="${actionBean.jiraEnabled}">
             <div id="newTicketDiv">
                 <div class="control-group">

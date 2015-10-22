@@ -88,12 +88,13 @@ public class WorkflowBucketEntryEvaluator implements Serializable {
         String missingRequirements = "";
         if (!missingMaterialTypes.isEmpty()) {
             missingRequirements =
-                    String.format("Material Type: '%s' is not one of %s", materialType, missingMaterialTypes);
+                    String.format("Material Type: '%s' is not one of %s", materialType.getDisplayName(),
+                            MaterialType.displayNamesOf(missingMaterialTypes));
         }
         if (!missingWorkflows.isEmpty()) {
             missingRequirements +=
-                    String.format("Workflows '%s' are not one of %s ", productOrder.getProductWorkflows(),
-                            missingWorkflows);
+                    String.format("Workflows '%s' are not one of %s ", Workflow.workflowNamesOf(
+                            productOrder.getProductWorkflows()), Workflow.workflowNamesOf(missingWorkflows));
         }
         return missingRequirements;
     }
