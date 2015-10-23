@@ -768,7 +768,7 @@ public abstract class TransferTraverserCriteria {
     /**
      * Traverse LabVessels and LabEvents to find current MaterialType
      */
-    class NearestMaterialTypeTraverserCriteria extends TransferTraverserCriteria {
+    public static class NearestMaterialTypeTraverserCriteria extends TransferTraverserCriteria {
         private MaterialType materialType = null;
 
         public NearestMaterialTypeTraverserCriteria() {

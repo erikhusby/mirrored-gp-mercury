@@ -1327,7 +1327,8 @@ public enum LabEventType {
 
     RNA_CALIPER_SETUP("RNACaliperSetup",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY),
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
 
     //Infinium
     INFINIUM_AMPLIFICATION("InfiniumAmplification",
@@ -1435,7 +1436,6 @@ public enum LabEventType {
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             null, MaterialType.DNA, LibraryType.NONE_ASSIGNED),
-            null, LabVessel.MaterialType.DNA, LibraryType.NONE_ASSIGNED),
     EXTRACT_TO_RNA("ExtractToRna",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
