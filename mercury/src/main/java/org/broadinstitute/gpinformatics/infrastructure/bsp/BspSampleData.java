@@ -64,6 +64,7 @@ public class BspSampleData implements SampleData {
     public static final String JSON_RQS_KEY = "rqs";
     public static final String JSON_DV200_KEY = "dv200";
     public static final String SAMPLE_TYPE = "sampleType";
+    public static final String MATERIAL_TYPE = "materialType";
 
     private final Map<BSPSampleSearchColumn, String> columnToValue;
 

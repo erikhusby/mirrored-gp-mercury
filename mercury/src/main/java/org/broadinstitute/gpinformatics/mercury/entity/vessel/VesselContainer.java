@@ -467,7 +467,6 @@ public class VesselContainer<T extends LabVessel> {
             }
         }
         // handle VesselToVesselTransfers and un-racked VesselToSectionTransfers
-        sourceVessel = getVesselAtPosition(sourcePosition);
         if (continueTraversing && sourceVessel != null) {
             sourceVessel.evaluateCriteria(transferTraverserCriteria, traversalDirection, hopCount + 1);
         }
@@ -695,12 +694,13 @@ public class VesselContainer<T extends LabVessel> {
         return anonymousVessels;
     }
 
-    public void applyCriteriaToAllPositions(TransferTraverserCriteria criteria) {
+    public void applyCriteriaToAllPositions(TransferTraverserCriteria criteria
+            , TransferTraverserCriteria.TraversalDirection direction ) {
         Iterator<String> positionNames = getEmbedder().getVesselGeometry().getPositionNames();
         while (positionNames.hasNext()) {
             String positionName = positionNames.next();
             VesselPosition vesselPosition = VesselPosition.getByName(positionName);
-            evaluateCriteria(vesselPosition, criteria, TransferTraverserCriteria.TraversalDirection.Ancestors, 0);
+            evaluateCriteria(vesselPosition, criteria, direction, null, 0);
         }
     }
 
@@ -713,7 +713,8 @@ public class VesselContainer<T extends LabVessel> {
     public Collection<LabBatch> getAllLabBatches(@Nullable LabBatch.LabBatchType type) {
         TransferTraverserCriteria.NearestLabBatchFinder batchCriteria =
                 new TransferTraverserCriteria.NearestLabBatchFinder(type);
-        applyCriteriaToAllPositions(batchCriteria);
+        applyCriteriaToAllPositions(batchCriteria,
+                TransferTraverserCriteria.TraversalDirection.Ancestors);
         return batchCriteria.getAllLabBatches();
     }
 
@@ -726,7 +727,8 @@ public class VesselContainer<T extends LabVessel> {
     public Collection<LabBatch> getNearestLabBatches(@Nullable LabBatch.LabBatchType type) {
         TransferTraverserCriteria.NearestLabBatchFinder batchCriteria =
                 new TransferTraverserCriteria.NearestLabBatchFinder(type);
-        applyCriteriaToAllPositions(batchCriteria);
+        applyCriteriaToAllPositions(batchCriteria,
+                TransferTraverserCriteria.TraversalDirection.Ancestors);
         return batchCriteria.getNearestLabBatches();
     }
 
@@ -734,7 +736,8 @@ public class VesselContainer<T extends LabVessel> {
     public Collection<String> getNearestProductOrders() {
         TransferTraverserCriteria.NearestProductOrderCriteria productOrderCriteria =
                 new TransferTraverserCriteria.NearestProductOrderCriteria();
-        applyCriteriaToAllPositions(productOrderCriteria);
+        applyCriteriaToAllPositions(productOrderCriteria,
+                TransferTraverserCriteria.TraversalDirection.Ancestors);
         return productOrderCriteria.getNearestProductOrders();
     }
 
@@ -774,7 +777,8 @@ public class VesselContainer<T extends LabVessel> {
     public List<LabMetric> getNearestMetricOfType(LabMetric.MetricType metricType) {
         TransferTraverserCriteria.NearestLabMetricOfTypeCriteria metricTypeCriteria =
                 new TransferTraverserCriteria.NearestLabMetricOfTypeCriteria(metricType);
-        applyCriteriaToAllPositions(metricTypeCriteria);
+        applyCriteriaToAllPositions(metricTypeCriteria,
+                TransferTraverserCriteria.TraversalDirection.Ancestors);
         return metricTypeCriteria.getNearestMetrics();
     }
 
@@ -912,7 +916,8 @@ public class VesselContainer<T extends LabVessel> {
     public Map<LabEvent, Set<LabVessel>> getVesselsForLabEventTypes(List<LabEventType> eventTypes) {
         TransferTraverserCriteria.VesselForEventTypeCriteria vesselForEventTypeCriteria =
                 new TransferTraverserCriteria.VesselForEventTypeCriteria(eventTypes);
-        applyCriteriaToAllPositions(vesselForEventTypeCriteria);
+        applyCriteriaToAllPositions(vesselForEventTypeCriteria,
+                TransferTraverserCriteria.TraversalDirection.Ancestors);
         return vesselForEventTypeCriteria.getVesselsForLabEventType();
     }
 
@@ -927,7 +932,8 @@ public class VesselContainer<T extends LabVessel> {
     public List<VesselAndPosition> getNearestTubeAncestors() {
         TransferTraverserCriteria.NearestTubeAncestorsCriteria
                 criteria = new TransferTraverserCriteria.NearestTubeAncestorsCriteria();
-        applyCriteriaToAllPositions(criteria);
+        applyCriteriaToAllPositions(criteria,
+                TransferTraverserCriteria.TraversalDirection.Ancestors);
         return new ArrayList<>(criteria.getVesselAndPositions());
     }
 

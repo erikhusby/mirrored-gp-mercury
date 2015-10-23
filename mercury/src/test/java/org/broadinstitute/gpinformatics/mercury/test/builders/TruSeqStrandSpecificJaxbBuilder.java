@@ -4,7 +4,9 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMess
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -139,6 +141,10 @@ public class TruSeqStrandSpecificJaxbBuilder {
         return pondPico2Barcode;
     }
 
+    public List<BettaLIMSMessage> getMessageList() {
+        return messageList;
+    }
+
     public TruSeqStrandSpecificJaxbBuilder invoke() {
         polyAPlateBarcode = "PolyAPlate" + testPrefix;
         polyATransferEventJaxb = bettaLimsMessageTestFactory.buildRackToPlate("PolyATransfer", rackBarcode,
@@ -218,6 +224,10 @@ public class TruSeqStrandSpecificJaxbBuilder {
         }
         enrichmentCleanupTSJaxb = bettaLimsMessageTestFactory.buildPlateToRack("EnrichmentCleanupTS", adapterLigationCleanupPlate,
                 enrichmentCleanupRackBarcode, enrichmentcleanupTubeBarcodes);
+        for (ReceptacleType receptacleType : enrichmentCleanupTSJaxb.getPositionMap().getReceptacle()) {
+            receptacleType.setVolume(new BigDecimal("50"));
+        }
+        bettaLimsMessageTestFactory.addMessage(messageList, enrichmentCleanupTSJaxb);
 
         pondPico1Barcode = "771" + testPrefix;
         PlateTransferEventType pondPico1Jaxb = bettaLimsMessageTestFactory.buildRackToPlate("PondPico",

@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.labevent;
 
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
@@ -757,9 +757,10 @@ public enum LabEventType {
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             LibraryType.NONE_ASSIGNED),
+    // The PCR is associated with EnrichmentCleanupTS, because we want a tube barcode for the pipeline
     ENRICHMENT_TS("EnrichmentTS",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.PCR, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             LibraryType.NONE_ASSIGNED),
     ENRICHMENT_TS_THERMO_CYCLER_LOADED("EnrichmentTSThermoCyclerLoaded",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
@@ -767,7 +768,7 @@ public enum LabEventType {
             LibraryType.NONE_ASSIGNED),
     ENRICHMENT_CLEANUP_TS("EnrichmentCleanupTS",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            PlasticToValidate.SOURCE, PipelineTransformation.PCR, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             LibraryType.ENRICHED_POND),
 
     // Illumina Genome Network
@@ -1182,18 +1183,19 @@ public enum LabEventType {
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             LibraryType.NONE_ASSIGNED),
 
-    //    EXTRACTION_BUCKET("ExtractionBucket",ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
-//                PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY),
-//    WHOLE_BLOOD_EXTRACTION("WholeBloodExtraction",ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
-//                PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY),
-//    TISSUE_EXTRACTION("TissueExtraction",ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
-//                PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY),
     CLINICAL_WHOLE_BLOOD_EXTRACTION_BUCKET("ClinicalWholeBloodExtractionBucket", ExpectSourcesEmpty.TRUE,
             ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE, PlasticToValidate.SOURCE,
             PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             LibraryType.NONE_ASSIGNED),
-
-    ALLPREP_EXTRACTION_BUCKET("AllPrepExtractionBucket", ExpectSourcesEmpty.TRUE,
+    DNA_AND_RNA_EXTRACTION_BUCKET("ExtractToDnaAndRnaBucket", ExpectSourcesEmpty.TRUE,
+            ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE, PlasticToValidate.SOURCE,
+            PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    RNA_EXTRACTION_BUCKET("ExtractToRnaBucket", ExpectSourcesEmpty.TRUE,
+            ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE, PlasticToValidate.SOURCE,
+            PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    DNA_EXTRACTION_BUCKET("ExtractToDnaBucket", ExpectSourcesEmpty.TRUE,
             ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE, PlasticToValidate.SOURCE,
             PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             LibraryType.NONE_ASSIGNED),
@@ -1219,7 +1221,7 @@ public enum LabEventType {
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             new ManualTransferDetails.Builder(MessageType.RECEPTACLE_TRANSFER_EVENT,
                     BarcodedTube.BarcodedTubeType.SpinColumn, BarcodedTube.BarcodedTubeType.MatrixTube075).build(),
-            LabVessel.MaterialType.DNA, LibraryType.NONE_ASSIGNED),
+            MaterialType.DNA, LibraryType.NONE_ASSIGNED),
 
     // Transfer cell suspension to microcentrifuge tube
     EXTRACT_CELL_SUSP_TO_MICRO("ExtractCellSuspToMicro",
@@ -1248,7 +1250,7 @@ public enum LabEventType {
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             new ManualTransferDetails.Builder(MessageType.RECEPTACLE_TRANSFER_EVENT,
                     BarcodedTube.BarcodedTubeType.SpinColumn, BarcodedTube.BarcodedTubeType.MatrixTube075).build(),
-            LabVessel.MaterialType.DNA, LibraryType.NONE_ASSIGNED),
+            MaterialType.DNA, LibraryType.NONE_ASSIGNED),
 
     // Transfer tissue in paraffin to micro centrifuge tube
     EXTRACT_FFPE_TO_MICRO1("ExtractFfpeToMicro1",
@@ -1277,7 +1279,7 @@ public enum LabEventType {
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             new ManualTransferDetails.Builder(MessageType.RECEPTACLE_TRANSFER_EVENT,
                     BarcodedTube.BarcodedTubeType.SpinColumn, BarcodedTube.BarcodedTubeType.MatrixTube075).build(),
-            LabVessel.MaterialType.DNA, LibraryType.NONE_ASSIGNED),
+            MaterialType.DNA, LibraryType.NONE_ASSIGNED),
 
     // Transfer fresh frozen tissue to micro centrifuge tube
     EXTRACT_FRESH_TISSUE_TO_MICRO("ExtractFreshTissueToMicro",
@@ -1299,7 +1301,7 @@ public enum LabEventType {
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             new ManualTransferDetails.Builder(MessageType.RECEPTACLE_TRANSFER_EVENT,
                     BarcodedTube.BarcodedTubeType.SpinColumn, BarcodedTube.BarcodedTubeType.MatrixTube075).build(),
-            LabVessel.MaterialType.DNA, LibraryType.NONE_ASSIGNED),
+            MaterialType.DNA, LibraryType.NONE_ASSIGNED),
 
     // Transfer saliva to conical tube
     EXTRACT_SALIVA_TO_CONICAL("ExtractSalivaToConical",
@@ -1321,7 +1323,11 @@ public enum LabEventType {
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             new ManualTransferDetails.Builder(MessageType.RECEPTACLE_TRANSFER_EVENT,
                     BarcodedTube.BarcodedTubeType.SpinColumn, BarcodedTube.BarcodedTubeType.MatrixTube075).build(),
-            LabVessel.MaterialType.DNA, LibraryType.NONE_ASSIGNED),
+            MaterialType.DNA, LibraryType.NONE_ASSIGNED),
+
+    RNA_CALIPER_SETUP("RNACaliperSetup",
+            ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY),
 
     //Infinium
     INFINIUM_AMPLIFICATION("InfiniumAmplification",
@@ -1428,11 +1434,12 @@ public enum LabEventType {
     EXTRACT_TO_DNA("ExtractToDna",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            null, MaterialType.DNA, LibraryType.NONE_ASSIGNED),
             null, LabVessel.MaterialType.DNA, LibraryType.NONE_ASSIGNED),
     EXTRACT_TO_RNA("ExtractToRna",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            null, LabVessel.MaterialType.RNA, LibraryType.NONE_ASSIGNED)
+            null, MaterialType.RNA, LibraryType.NONE_ASSIGNED)
     ;
 
 
@@ -1444,7 +1451,7 @@ public enum LabEventType {
 
     private final CreateSources createSources;
 
-    private final LabVessel.MaterialType resultingMaterialType;
+    private final MaterialType resultingMaterialType;
 
     public PipelineTransformation getPipelineTransformation() {
         return pipelineTransformation;
@@ -1918,7 +1925,7 @@ public enum LabEventType {
             SystemOfRecord systemOfRecord, CreateSources createSources, PlasticToValidate plasticToValidate,
             PipelineTransformation pipelineTransformation, ForwardMessage forwardMessage,
             VolumeConcUpdate volumeConcUpdate, ManualTransferDetails manualTransferDetails,
-            LabVessel.MaterialType resultingMaterialType, LibraryType libraryType) {
+            MaterialType resultingMaterialType, LibraryType libraryType) {
         this.name = name;
         this.expectedEmptySources = expectSourcesEmpty;
         this.expectedEmptyTargets = expectTargetsEmpty;
@@ -1958,7 +1965,7 @@ public enum LabEventType {
         return mapNameToType.get(name);
     }
 
-    public static Set<LabEventType> getLabEventTypesForMaterialType(LabVessel.MaterialType materialType) {
+    public static Set<LabEventType> getLabEventTypesForMaterialType(MaterialType materialType) {
         Set<LabEventType> resultSet=new HashSet<>();
         for (LabEventType labEventType : LabEventType.values()) {
             if (labEventType.resultingMaterialType == materialType) {
@@ -1976,7 +1983,7 @@ public enum LabEventType {
         return volumeConcUpdate;
     }
 
-    public LabVessel.MaterialType getResultingMaterialType() {
+    public MaterialType getResultingMaterialType() {
         return resultingMaterialType;
     }
 

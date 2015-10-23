@@ -6,7 +6,6 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
@@ -18,7 +17,6 @@ import org.testng.Assert;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Builds entity graph for Ribo Plating Pico events
@@ -31,7 +29,8 @@ public class CrspRiboPlatingEntityBuilder {
     private final Map<String, BarcodedTube> mapBarcodeToTube;
     private final String rackBarcode;
     private final String testPrefix;
-    private LabEvent riboMicrofluorEntity;
+    private LabEvent riboMicrofluorEntityA2;
+    private LabEvent riboMicrofluorEntityB1;
     private StaticPlate riboMicrofluorPlate;
     private LabEvent polyAAliquotSpikeEvent;
     private LabEvent polyATSAliquot;
@@ -71,12 +70,6 @@ public class CrspRiboPlatingEntityBuilder {
         CrspRiboPlatingJaxbBuilder crspRiboPlatingJaxbBuilder = new CrspRiboPlatingJaxbBuilder(rackBarcode,
                 new ArrayList<>(mapBarcodeToTube.keySet()), testPrefix, bettaLimsMessageTestFactory).invoke();
 
-        //Bucket
-        LabEventTest.validateWorkflow(LabEventType.TRU_SEQ_STRAND_SPECIFIC_BUCKET.getName(), mapBarcodeToTube.values());
-        LabEvent riboPlatingBucket = labEventFactory.buildFromBettaLimsRackEventDbFree(
-                crspRiboPlatingJaxbBuilder.getTruSeqStrandSpecificBucket(), null, mapBarcodeToTube, null);
-        labEventHandler.processEvent(riboPlatingBucket);
-
         //PolyATSAliquot
         LabEventTest.validateWorkflow(LabEventType.POLY_A_TS_ALIQUOT.getName(), mapBarcodeToTube.values());
         Map<String, LabVessel> mapBarcodeToVessel = new LinkedHashMap<>();
@@ -105,7 +98,7 @@ public class CrspRiboPlatingEntityBuilder {
         for (BarcodedTube barcodedTube : polyAAliquotTS.getContainerRole().getContainedVessels()) {
             mapBarcodeToVessel.put(barcodedTube.getLabel(), barcodedTube);
         }
-        for (ReceptacleType receptacleType : crspRiboPlatingJaxbBuilder.getRiboMicrofluorEventJaxb().getSourcePositionMap()
+        for (ReceptacleType receptacleType : crspRiboPlatingJaxbBuilder.getRiboMicrofluorEventJaxbA2().getSourcePositionMap()
                 .getReceptacle()) {
             BarcodedTube barcodedTube = mapBarcodeToTube.get(receptacleType.getBarcode());
             if (barcodedTube != null) {
@@ -113,14 +106,18 @@ public class CrspRiboPlatingEntityBuilder {
             }
         }
 
-        riboMicrofluorEntity = labEventFactory.buildFromBettaLims(
-                crspRiboPlatingJaxbBuilder.getRiboMicrofluorEventJaxb(), mapBarcodeToVessel);
-        labEventHandler.processEvent(riboMicrofluorEntity);
+        riboMicrofluorEntityA2 = labEventFactory.buildFromBettaLims(
+                crspRiboPlatingJaxbBuilder.getRiboMicrofluorEventJaxbA2(), mapBarcodeToVessel);
+        labEventHandler.processEvent(riboMicrofluorEntityA2);
 
         // asserts
-        riboMicrofluorPlate = (StaticPlate) riboMicrofluorEntity.getTargetLabVessels().iterator().next();
+        riboMicrofluorPlate = (StaticPlate) riboMicrofluorEntityA2.getTargetLabVessels().iterator().next();
         Assert.assertEquals(riboMicrofluorPlate.getSampleInstancesV2().size(), mapBarcodeToTube.size(),
                 "Wrong number of sample instances");
+
+        riboMicrofluorEntityB1 = labEventFactory.buildFromBettaLims(
+                crspRiboPlatingJaxbBuilder.getRiboMicrofluorEventJaxbB1(), mapBarcodeToVessel);
+        labEventHandler.processEvent(riboMicrofluorEntityB1);
 
         //RiboBufferAddition
         LabEventTest.validateWorkflow(LabEventType.RIBO_BUFFER_ADDITION.getName(), riboMicrofluorPlate);

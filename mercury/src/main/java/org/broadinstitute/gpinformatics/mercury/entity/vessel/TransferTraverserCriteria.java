@@ -226,15 +226,12 @@ public abstract class TransferTraverserCriteria {
         return context;
     }
 
-
-
-
     /**
      * Callback method called before processing the next level of vessels in the traversal.
      *
      * @param context
      *
-     * @return
+     * @return TraversalControl to either allow evaluator to continue, or stop at this level
      */
     public abstract TraversalControl evaluateVesselPreOrder(Context context);
 
@@ -771,8 +768,8 @@ public abstract class TransferTraverserCriteria {
     /**
      * Traverse LabVessels and LabEvents to find current MaterialType
      */
-    public static class NearestMaterialTypeTraverserCriteria extends TransferTraverserCriteria {
-        private LabVessel.MaterialType materialType=null;
+    class NearestMaterialTypeTraverserCriteria extends TransferTraverserCriteria {
+        private MaterialType materialType = null;
 
         public NearestMaterialTypeTraverserCriteria() {
         }
@@ -814,7 +811,7 @@ public abstract class TransferTraverserCriteria {
         }
 
         private void evaluateEvent(LabEvent event) {
-            LabVessel.MaterialType resultingMaterialType = event.getLabEventType().getResultingMaterialType();
+            MaterialType resultingMaterialType = event.getLabEventType().getResultingMaterialType();
             if (resultingMaterialType != null) {
                 materialType=resultingMaterialType;
             }
@@ -824,7 +821,7 @@ public abstract class TransferTraverserCriteria {
         public void evaluateVesselPostOrder(Context context) {
         }
 
-        public LabVessel.MaterialType getMaterialType() {
+        public MaterialType getMaterialType() {
             return materialType;
         }
     }
@@ -849,6 +846,7 @@ public abstract class TransferTraverserCriteria {
             if( contextVessel != null ) {
                 labEvents.addAll(contextVessel.getInPlaceLabEvents());
                 for (VesselContainer containerVessel : contextVessel.getContainers()) {
+                    // In place events may apply to containers
                     labEvents.addAll(containerVessel.getEmbedder().getInPlaceLabEvents());
                 }
             }

@@ -575,7 +575,7 @@ public class ReagentFixupTest extends Arquillian {
 
         LabEvent labEvent = labEventDao.findById(LabEvent.class, 998742L);
         System.out.println("Replacing reagent " + undesired.getReagentId() + " with " + desired.getReagentId() +
-                " for event " + labEvent.getLabEventId());
+                           " for event " + labEvent.getLabEventId());
         Assert.assertTrue(labEvent.getReagents().remove(undesired));
         labEvent.addReagent(desired);
 
@@ -620,4 +620,40 @@ public class ReagentFixupTest extends Arquillian {
         genericReagentDao.persist(new FixupCommentary("GPLIM-3743 fixup incorrect Buffer ATE reagent"));
         genericReagentDao.flush();
     }
+
+    @Test(enabled = false)
+    public void fixupGplim3787() throws Exception {
+        userBean.loginOSUser();
+        // Puts a new reagent on two Ice1stBaitPick lab events. The reagent was missing from the bettalims msg.
+        String lot = "20008218";
+        String type = "Rapid Capture Kit Box 4 (Bait)";
+        String expiration = "09/2016";
+        List<Long> labEventIds = Arrays.asList(new Long[]{1048673L, 1049279L});
+
+        Reagent reagent = new GenericReagent(type, lot, (new SimpleDateFormat("mm/yyyy")).parse(expiration));
+        List<LabEvent> labEvents = labEventDao.findListByList(LabEvent.class, LabEvent_.labEventId, labEventIds);
+        Assert.assertEquals(labEvents.size(), labEventIds.size());
+        for (LabEvent labEvent : labEvents) {
+            System.out.println("Adding reagent to event " + labEvent.getLabEventId());
+            labEvent.addReagent(reagent);
+        }
+        genericReagentDao.persist(new FixupCommentary("GPLIM-3787 add missing reagent."));
+        genericReagentDao.flush();
+    }
+
+    @Test(enabled = true)
+    public void fixupGplim3787date() throws Exception {
+        userBean.loginOSUser();
+        // Previous fixup used wrong date format.
+        Long reagentId = 975951L;
+        String expiration = "09/2016";
+
+        Reagent reagent = genericReagentDao.findById(GenericReagent.class, reagentId);
+        Assert.assertNotNull(reagent);
+        System.out.println("Changing expiration date on reagent id " + reagentId);
+        reagent.setExpiration((new SimpleDateFormat("MM/yyyy")).parse(expiration));
+        genericReagentDao.persist(new FixupCommentary("GPLIM-3787 fixup reagent expiration."));
+        genericReagentDao.flush();
+    }
+
 }

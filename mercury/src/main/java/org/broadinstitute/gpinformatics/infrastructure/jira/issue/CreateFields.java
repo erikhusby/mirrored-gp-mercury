@@ -139,6 +139,7 @@ public class CreateFields extends UpdateFields {
         // jiraName is defined by JIRA and must not be based on Mercury Workflow.
         WHOLE_EXOME_HYBSEL("Whole Exome (HybSel)"),
         EXOME_EXPRESS("Exome Express"),
+        CDNA_TRUSEQ_SS("cDNA TruSeq Strand Specific Large Insert"),
         PRODUCT_ORDER("Product Order", "CLIA "),
         RESEARCH_PROJECT("Research Project", "CLIA "),
         FLOWCELL("Flowcell"),
@@ -182,6 +183,18 @@ public class CreateFields extends UpdateFields {
             put(Workflow.ICE_CRSP.getWorkflowName(), EXOME_EXPRESS);
             put(Workflow.ICE.getWorkflowName(), EXOME_EXPRESS);
         }};
+
+        public static IssueType fromJiraName(String jiraName) {
+            IssueType foundValue = null;
+            for (IssueType issuetype : values()) {
+                if (issuetype.getJiraName().equals(jiraName)) {
+                    foundValue = issuetype;
+                    break;
+                }
+            }
+
+            return foundValue;
+        }
     }
 
 

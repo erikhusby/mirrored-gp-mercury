@@ -33,12 +33,12 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
+import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -47,10 +47,12 @@ import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -101,17 +103,42 @@ public class LabBatchEjb {
      * @see #createLabBatch(org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch.LabBatchType, String, String, String, java.util.Date, String, String, java.util.Set, java.util.Set)
      */
     public LabBatch createLabBatch(@Nonnull LabBatch batchObject, String reporter,
+                                   @Nonnull CreateFields.IssueType issueType, MessageReporter messageReporter) {
+        return createLabBatch(batchObject, reporter, issueType,null, messageReporter);
+    }
+
+
+    /**
+     * This method will create a batch entity and a new JIRA Ticket for that entity.
+     * <p/>
+     * TODO: consider making this private; seems strange to take a batch object, persist it, then return the same object
+     *
+     * @param batchObject A constructed, but not persisted, batch object containing all initial information necessary
+     *                    to persist a new batch.
+     * @param reporter    The username of the person that is attempting to create the batch.
+     * @param issueType   The type of issue to create in JIRA for this lab batch.
+     *
+     * @return The lab batch that was created.
+     *
+     * @see #createLabBatch(org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch.LabBatchType, String, String, String, java.util.Date, String, String, java.util.Set, java.util.Set)
+     */
+    public LabBatch createLabBatch(@Nonnull LabBatch batchObject, String reporter,
                                    @Nonnull CreateFields.IssueType issueType) {
-        return createLabBatch(batchObject, reporter, issueType,null);
+        return createLabBatch(batchObject, reporter, issueType, MessageReporter.UNUSED);
     }
 
     public LabBatch createLabBatch(LabBatch batchObject, String reporter, CreateFields.IssueType issueType,
                                     CreateFields.ProjectType projectType) {
+        return createLabBatch(batchObject, reporter, issueType, projectType, MessageReporter.UNUSED);
+    }
+
+    public LabBatch createLabBatch(LabBatch batchObject, String reporter, CreateFields.IssueType issueType,
+                                    CreateFields.ProjectType projectType, MessageReporter messageReporter) {
         if (StringUtils.isBlank(batchObject.getBatchName())) {
             throw new InformaticsServiceException("The name for the batch object cannot be null");
         }
 
-        batchToJira(reporter, null, batchObject, issueType, projectType);
+        batchToJira(reporter, null, batchObject, issueType, projectType, messageReporter);
         labBatchDao.persist(batchObject);
         return batchObject;
     }
@@ -165,6 +192,32 @@ public class LabBatchEjb {
                                                       @Nonnull String batchName, @Nonnull String description,
                                                       @Nonnull Date dueDate, @Nonnull String important,
                                                       @Nonnull String username, String bucketName) throws ValidationException {
+        return createLabBatchAndRemoveFromBucket(labBatchType, workflowName, bucketEntryIds, reworkBucketEntryIds,
+                batchName, description, dueDate, important, username, bucketName, MessageReporter.UNUSED);
+    }
+    /**
+     * Creates a new lab batch and archives the bucket entries used to create the batch.
+     *
+     * @param labBatchType         the type of lab batch to create
+     * @param workflowName         the workflow that the batch is to run through
+     * @param bucketEntryIds       the IDs of the bucket entries to include in the batch
+     * @param reworkBucketEntryIds the vessels being reworked to include in the batch
+     * @param batchName            the name for the batch (also the summary for JIRA)
+     * @param description          the description for the batch (for JIRA)
+     * @param dueDate              the due date for the batch (for JIRA)
+     * @param important            the important notes for the batch (for JIRA)
+     * @param username             the user creating the batch (for JIRA)
+     *
+     * @param bucketName
+     * @return The lab batch that was created.
+     */
+    public LabBatch createLabBatchAndRemoveFromBucket(@Nonnull LabBatch.LabBatchType labBatchType,
+                                                      @Nonnull String workflowName, @Nonnull List<Long> bucketEntryIds,
+                                                      @Nonnull List<Long> reworkBucketEntryIds,
+                                                      @Nonnull String batchName, @Nonnull String description,
+                                                      @Nonnull Date dueDate, @Nonnull String important,
+                                                      @Nonnull String username, String bucketName,
+                                                      @Nonnull MessageReporter reporter) throws ValidationException {
         List<BucketEntry> bucketEntries = bucketEntryDao.findByIds(bucketEntryIds);
         List<BucketEntry> reworkBucketEntries = bucketEntryDao.findByIds(reworkBucketEntryIds);
         Set<String> pdoKeys = new HashSet<>();
@@ -221,7 +274,8 @@ public class LabBatchEjb {
 
         CreateFields.IssueType issueType = CreateFields.IssueType.valueOf(bucketDef.getBatchJiraIssueType());
 
-        batchToJira(username, null, batch, issueType, CreateFields.ProjectType.fromKeyPrefix(bucketDef.getBatchJiraProjectType()));
+        batchToJira(username, null, batch, issueType,
+                CreateFields.ProjectType.fromKeyPrefix(bucketDef.getBatchJiraProjectType()), reporter);
 
         //link the JIRA tickets for the batch created to the pdo batches.
         for (String pdoKey : pdoKeys) {
@@ -251,18 +305,40 @@ public class LabBatchEjb {
      * This method extracts all necessary information from the given batch object and creates (if necessary) and
      * associates a JIRA ticket that will represent this batch.
      *
-     * @param reporter   The username of the person that is attempting to create the batch
-     * @param jiraTicket Optional parameter that represents an existing Jira Ticket that refers to this batch
-     * @param newBatch   The source of the Batch information that will assist in populating the Jira Ticket
-     * @param issueType  The type of issue to create in JIRA for this lab batch
+     * @param reporter    The username of the person that is attempting to create the batch
+     * @param jiraTicket  Optional parameter that represents an existing Jira Ticket that refers to this batch
+     * @param newBatch    The source of the Batch information that will assist in populating the Jira Ticket
+     * @param issueType   The type of issue to create in JIRA for this lab batch
      * @param projectType
      */
     public void batchToJira(String reporter, @Nullable String jiraTicket, LabBatch newBatch,
                             @Nonnull CreateFields.IssueType issueType, CreateFields.ProjectType projectType) {
+        batchToJira(reporter, jiraTicket, newBatch, issueType, projectType, MessageReporter.UNUSED);
+    }
+
+    /**
+     * This method extracts all necessary information from the given batch object and creates (if necessary) and
+     * associates a JIRA ticket that will represent this batch.
+     *
+     * @param reporter    The username of the person that is attempting to create the batch
+     * @param jiraTicket  Optional parameter that represents an existing Jira Ticket that refers to this batch
+     * @param newBatch    The source of the Batch information that will assist in populating the Jira Ticket
+     * @param issueType   The type of issue to create in JIRA for this lab batch
+     * @param projectType
+     */
+    public void batchToJira(String reporter, @Nullable String jiraTicket, LabBatch newBatch,
+                            @Nonnull CreateFields.IssueType issueType, CreateFields.ProjectType projectType,
+                            @Nonnull MessageReporter messageReporter) {
         try {
+            if (issueType == null) {
+                throw new InformaticsServiceException("JIRA issue type must be specified");
+            }
 
             AbstractBatchJiraFieldFactory fieldBuilder = AbstractBatchJiraFieldFactory
                     .getInstance(projectType, newBatch, productOrderDao);
+            if (projectType == null) {
+                projectType = fieldBuilder.getProjectType();
+            }
 
             if (StringUtils.isBlank(newBatch.getBatchDescription())) {
                 newBatch.setBatchDescription(fieldBuilder.generateDescription());
@@ -272,13 +348,16 @@ public class LabBatchEjb {
             }
 
             if (jiraTicket == null) {
-                Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
-                if (issueType == null) {
-                    throw new InformaticsServiceException("JIRA issue type must be specified");
-                }
+                Map<String, CustomFieldDefinition> customFieldDefinitions = jiraService.getRequiredFields(
+                        new CreateFields.Project(projectType), issueType);
+
+                List<CustomField> batchJiraTicketFields =
+                        new ArrayList<>(fieldBuilder.getCustomFields(customFieldDefinitions));
+                verifyAllowedValues(batchJiraTicketFields, messageReporter);
+
                 JiraIssue jiraIssue = jiraService
                         .createIssue(fieldBuilder.getProjectType(), reporter, issueType, fieldBuilder.getSummary(),
-                                     fieldBuilder.getCustomFields(submissionFields));
+                                batchJiraTicketFields);
 
                 JiraTicket ticket = new JiraTicket(jiraService, jiraIssue.getKey());
 
@@ -287,6 +366,46 @@ public class LabBatchEjb {
         } catch (IOException ioe) {
             logger.error("Error attempting to create a lab batch in JIRA", ioe);
             throw new InformaticsServiceException("Error attempting to create a lab batch in JIRA", ioe);
+        }
+    }
+
+    private void verifyAllowedValues(List<CustomField> batchJiraTicketFields, @Nonnull MessageReporter messageReporter) {
+        ListIterator<CustomField> jiraBatchFieldsIterator = batchJiraTicketFields.listIterator();
+
+        Set<String> messages = new HashSet<>();
+        while (jiraBatchFieldsIterator.hasNext()) {
+            CustomField batchJiraTicketField = jiraBatchFieldsIterator.next();
+            if (StringUtils.isBlank(batchJiraTicketField.getValue().toString())) {
+                jiraBatchFieldsIterator.remove();
+                break;
+            }
+            CustomFieldDefinition batchJiraTicketFieldFieldDefinition = batchJiraTicketField.getFieldDefinition();
+            Collection<CustomField.ValueContainer> allowedValues = batchJiraTicketFieldFieldDefinition.getAllowedValues();
+
+            List<CustomField.ValueContainer> valueContainerValues = new ArrayList<>();
+            if (batchJiraTicketField.getValue() instanceof Object[]) {
+                for (Object objectValue : ((Object[]) batchJiraTicketField.getValue())) {
+                    if (objectValue instanceof CustomField.ValueContainer){
+                        valueContainerValues.add((CustomField.ValueContainer) objectValue);
+                    }
+                }
+            }
+            if (batchJiraTicketField.getValue() instanceof CustomField.ValueContainer) {
+                valueContainerValues.add((CustomField.ValueContainer) batchJiraTicketField.getValue());
+            }
+            for (CustomField.ValueContainer valueContainer : valueContainerValues) {
+                if (!allowedValues.isEmpty() && StringUtils.isNotBlank(valueContainer.getValue()) && !allowedValues
+                        .contains(valueContainer)) {
+                    String fieldName = batchJiraTicketFieldFieldDefinition.getName();
+                    messages.add(String.format(
+                            "Unknown value '%s' for field '%s'. This will not prevent the batch being created but you will need to update it manually.",
+                            valueContainer.getValue(), fieldName));
+                    jiraBatchFieldsIterator.remove();
+                }
+            }
+        }
+        for (String message : messages) {
+            messageReporter.addMessage(message);
         }
     }
 
@@ -337,23 +456,26 @@ public class LabBatchEjb {
      * @param reworkEntries  the rework bucket entries whose vessels are being added to the batch
      *
      * @param bucketName
+     * @param messageReporter
      * @throws IOException This exception is thrown when the JIRA service can not be contacted.
      */
     public void addToLabBatch(String businessKey, List<Long> bucketEntryIds, List<Long> reworkEntries,
-                              String bucketName)
+                              String bucketName, MessageReporter messageReporter)
             throws IOException {
         LabBatch batch = labBatchDao.findByBusinessKey(businessKey);
         Set<String> pdoKeys = new HashSet<>();
-
+        StringBuilder commentString = new StringBuilder();
         Set<String> bucketDefNames = new HashSet<>();
-
         List<BucketEntry> bucketEntries = bucketEntryDao.findByIds(bucketEntryIds);
         Set<LabVessel> labVessels = new HashSet<>();
+
         for (BucketEntry bucketEntry : bucketEntries) {
             bucketDefNames.add(bucketEntry.getBucket().getBucketDefinitionName());
             labVessels.add(bucketEntry.getLabVessel());
             pdoKeys.add(bucketEntry.getProductOrder().getBusinessKey());
             bucketEntry.getBucket().removeEntry(bucketEntry);
+            commentString.append(String.format("Added vessel *%s* with material type *%s* to *%s*.\n", bucketEntry.getLabVessel().getLabel(),
+                    bucketEntry.getLabVessel().getLatestMaterialType().getDisplayName(), bucketName));
         }
 
         batch.addLabVessels(labVessels);
@@ -363,49 +485,53 @@ public class LabBatchEjb {
         Set<LabVessel> reworkVessels = new HashSet<>();
         Bucket reworkFromBucket = null;
 
+        if (!reworkBucketEntries.isEmpty()) {
+            commentString.append("\n\n");
+        }
         for (BucketEntry entry : reworkBucketEntries) {
             reworkVessels.add(entry.getLabVessel());
             pdoKeys.add(entry.getProductOrder().getBusinessKey());
             entry.getBucket().removeEntry(entry);
             reworkFromBucket = entry.getBucket();
+            commentString.append(String.format("Added rework for vessel %s with material type %s to %s.\n",
+                    entry.getLabVessel().getLabel(), entry.getLabVessel().getLatestMaterialType().getDisplayName(),
+                    bucketName));
+
         }
 
         batch.addReworks(reworkVessels);
         bucketEjb.moveFromBucketToBatch(reworkBucketEntries, batch);
 
-        Set<CustomField> customFields = new HashSet<>();
-        Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
-
         CreateFields.ProjectType projectType = null;
+        CreateFields.IssueType issueType=null;
+
         if(batch.getLabBatchType() == LabBatch.LabBatchType.WORKFLOW) {
             WorkflowBucketDef bucketDef = getWorkflowBucketDef(bucketName);
             projectType = CreateFields.ProjectType.fromKeyPrefix(bucketDef.getBatchJiraProjectType());
+            issueType= CreateFields.IssueType.valueOf(bucketDef.getBatchJiraIssueType());
         }
-
-        if (projectType == CreateFields.ProjectType.EXTRACTION_PROJECT) {
-            customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.GSSR_IDS,
-                                             AbstractBatchJiraFieldFactory
-                                                     .buildSamplesListString(batch, reworkFromBucket)));
-        }
-
-        int sampleCount = batch.getStartingBatchLabVessels().size();
-        customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.NUMBER_OF_SAMPLES,
-                                         sampleCount));
 
         AbstractBatchJiraFieldFactory fieldBuilder = AbstractBatchJiraFieldFactory
                 .getInstance(projectType, batch, productOrderDao);
+        if (projectType == null) {
+            projectType = fieldBuilder.getProjectType();
+        }
 
         if (StringUtils.isBlank(batch.getBatchDescription())) {
             batch.setBatchDescription(fieldBuilder.generateDescription());
-        } else {
-            batch.setBatchDescription(
-                    fieldBuilder.generateDescription() + "\n\n" + batch.getBatchDescription());
         }
 
-        customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.DESCRIPTION,
-                                         batch.getBatchDescription()));
+        Map<String, CustomFieldDefinition> requiredFields =
+                jiraService.getRequiredFields(new CreateFields.Project(projectType), issueType);
+        Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
+        submissionFields.putAll(requiredFields);
 
-        jiraService.updateIssue(batch.getJiraTicket().getTicketName(), customFields);
+        List<CustomField> batchJiraTicketFields = new ArrayList<>(fieldBuilder.getCustomFields(submissionFields));
+
+        verifyAllowedValues(batchJiraTicketFields, messageReporter);
+        JiraIssue jiraIssue = jiraService.getIssue(batch.getJiraTicket().getTicketName());
+        jiraIssue.addComment(commentString.toString());
+        jiraIssue.updateIssue(batchJiraTicketFields);
 
         //link the JIRA tickets for the batch created to the pdo batches.
         for (String pdoKey : pdoKeys) {
@@ -457,9 +583,8 @@ public class LabBatchEjb {
                     SampleInstanceV2 sampleInstance = sampleInstances.iterator().next();
                     SampleData sampleData = mapSampleNameToData.get(sampleInstance.getEarliestMercurySampleName());
                     boolean found = false;
-                    for (LabBatchStartingVessel labBatchStartingVessel : sampleInstance.getAllBatchVessels(
-                            LabBatch.LabBatchType.WORKFLOW)) {
-                        if (labBatchStartingVessel.getLabBatch().getBatchName().equals(lcsetName)) {
+                    for (LabBatch labBatch : sampleInstance.getAllWorkflowBatches()) {
+                        if (labBatch.getBatchName().equals(lcsetName)) {
                             found = true;
                         }
                     }
@@ -551,4 +676,5 @@ public class LabBatchEjb {
     public void setWorkflowLoader(WorkflowLoader workflowLoader) {
         this.workflowLoader = workflowLoader;
     }
+
 }

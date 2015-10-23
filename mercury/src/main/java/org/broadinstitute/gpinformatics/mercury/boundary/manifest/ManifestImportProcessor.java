@@ -19,7 +19,7 @@ import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadshee
 import org.broadinstitute.gpinformatics.mercury.boundary.sample.ClinicalResource;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.jvnet.inflector.Noun;
 
 import java.io.IOException;
@@ -109,7 +109,7 @@ public class ManifestImportProcessor extends TableProcessor {
 
         for(Map.Entry<String, String> rowEntry: dataRow.entrySet()) {
             if(Metadata.Key.fromDisplayName(rowEntry.getKey()) == Metadata.Key.MATERIAL_TYPE &&
-               LabVessel.MaterialType.fromDisplayName(rowEntry.getValue()) == null) {
+               MaterialType.fromDisplayName(rowEntry.getValue()) == null) {
                 addDataMessage(ClinicalResource.UNRECOGNIZED_MATERIAL_TYPE + ": " + rowEntry.getValue(), dataRowIndex);
             }
         }

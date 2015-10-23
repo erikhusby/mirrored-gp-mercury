@@ -1,9 +1,11 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
 import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
@@ -281,6 +283,9 @@ public class ProductWorkflowDefVersion implements Serializable {
         if (labEventNodes.size() > 1) {
             throw new RuntimeException("More than one lab event for " + eventTypeName);
         }
+        if (labEventNodes.isEmpty()){
+            return null;
+        }
         return labEventNodes.iterator().next();
     }
 
@@ -299,21 +304,26 @@ public class ProductWorkflowDefVersion implements Serializable {
     }
 
     /**
-     * Find the correct Bucket for each LabVessel.
+     * Scans the workflow's processes for a matching bucket.
      *
-     * @return a mapping of the initial buckets to the LabVessels which will go in them.
+     * @return a map of buckets to vessels.
      */
-    public Map<WorkflowBucketDef, Collection<LabVessel>> getInitialBucket(Collection<LabVessel> labVessels) {
-        Map<WorkflowBucketDef, Collection<LabVessel>> vesselBuckets = new HashMap<>();
-        Collection<LabVessel> vesselsAvailableForBucket=new HashSet<>(labVessels);
+    public Map<WorkflowBucketDef, Collection<LabVessel>> getInitialBucket(ProductOrder productOrder,
+                                                                          List<LabVessel> labVessels) {
+
+        Multimap<WorkflowBucketDef, LabVessel> vesselBuckets = HashMultimap.create();
         for (WorkflowProcessDef workflowProcessDef : workflowProcessDefs) {
             for (WorkflowBucketDef bucketDef : workflowProcessDef.getEffectiveVersion().getBuckets()) {
-                Collection<LabVessel> vesselsForBucket = bucketDef.meetsBucketCriteria(vesselsAvailableForBucket);
-                vesselBuckets.put(bucketDef, vesselsForBucket);
-                vesselsAvailableForBucket.removeAll(vesselsForBucket);
+                for (LabVessel vessel : labVessels) {
+                    if (!vesselBuckets.containsValue(vessel)) {
+                        if (bucketDef.meetsBucketCriteria(vessel, productOrder)) {
+                            vesselBuckets.put(bucketDef, vessel);
+                        }
+                    }
+                }
             }
         }
-        return vesselBuckets;
+        return vesselBuckets.asMap();
     }
 
     /**

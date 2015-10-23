@@ -48,6 +48,7 @@ public class JiraCustomFieldsUtil {
                     LabBatch.TicketFields.DESCRIPTION.getName(),
                     LabBatch.TicketFields.SUMMARY.getName(),
                     LabBatch.TicketFields.SEQUENCING_STATION.getName(),
+                    LabBatch.TicketFields.BATCH_TYPE.getName(),
             };
 
     /**
@@ -79,6 +80,19 @@ public class JiraCustomFieldsUtil {
         }
 
         return requiredCustomFieldDefinitions;
+    }
+
+    /**
+     * Returns a map of Field name (from {@link #REQUIRED_FIELD_NAMES}) to actual field definition {@link CustomFieldDefinition}.
+     */
+    public static Map<String, CustomFieldDefinition> getAllowedFields(JiraService jiraService,
+                                                                      final CreateFields.ProjectType projectType,
+                                                                      final CreateFields.IssueType issueType)
+            throws IOException {
+        Map<String, CustomFieldDefinition> allCustomFields =
+                jiraService.getRequiredFields(new CreateFields.Project(projectType), issueType);
+
+        return allCustomFields;
     }
 
 }

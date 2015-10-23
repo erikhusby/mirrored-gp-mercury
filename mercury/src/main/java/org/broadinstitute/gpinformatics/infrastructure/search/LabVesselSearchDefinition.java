@@ -19,6 +19,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -433,9 +434,9 @@ public class LabVesselSearchDefinition {
 
         class EventMaterialTypeEvaluator extends SearchTerm.Evaluator<Object> {
 
-            private final LabVessel.MaterialType materialType;
+            private final MaterialType materialType;
 
-            EventMaterialTypeEvaluator(LabVessel.MaterialType materialType) {
+            EventMaterialTypeEvaluator(MaterialType materialType) {
                 this.materialType = materialType;
             }
 
@@ -455,12 +456,12 @@ public class LabVesselSearchDefinition {
         }
         searchTerm = new SearchTerm();
         searchTerm.setName("DNA Extracted Tube Barcode");
-        searchTerm.setDisplayValueExpression(new EventMaterialTypeEvaluator(LabVessel.MaterialType.DNA));
+        searchTerm.setDisplayValueExpression(new EventMaterialTypeEvaluator(MaterialType.DNA));
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
         searchTerm.setName("RNA Extracted Tube Barcode");
-        searchTerm.setDisplayValueExpression(new EventMaterialTypeEvaluator(LabVessel.MaterialType.RNA));
+        searchTerm.setDisplayValueExpression(new EventMaterialTypeEvaluator(MaterialType.RNA));
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
@@ -471,9 +472,8 @@ public class LabVesselSearchDefinition {
                 LabVessel labVessel = (LabVessel) entity;
                 Set<String> barcodes = null;
 
-                VesselDescendantTraverserCriteria eval
-                        = new VesselDescendantTraverserCriteria(Collections.singletonList(LabEventType.SAMPLE_IMPORT),
-                        true);
+                VesselDescendantTraverserCriteria eval = new VesselDescendantTraverserCriteria(
+                        Collections.singletonList(LabEventType.SAMPLE_IMPORT), true );
                 labVessel.evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
 
                 if (!eval.getPositions().isEmpty()) {
@@ -567,9 +567,8 @@ public class LabVesselSearchDefinition {
                 LabVessel labVessel = (LabVessel) entity;
                 Set<String> barcodes = null;
 
-                VesselDescendantTraverserCriteria eval
-                        = new VesselDescendantTraverserCriteria(
-                        Collections.singletonList(LabEventType.POND_REGISTRATION));
+                VesselDescendantTraverserCriteria eval = new VesselDescendantTraverserCriteria(
+                        Collections.singletonList(LabEventType.POND_REGISTRATION) );
                 labVessel.evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
 
                 if (!eval.getPositions().isEmpty()) {
@@ -646,8 +645,7 @@ public class LabVesselSearchDefinition {
                 // Agilent
                 labEventTypes.add(LabEventType.NORMALIZED_CATCH_REGISTRATION);
 
-                VesselDescendantTraverserCriteria eval
-                        = new VesselDescendantTraverserCriteria(labEventTypes);
+                VesselDescendantTraverserCriteria eval = new VesselDescendantTraverserCriteria(labEventTypes );
                 labVessel.evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
 
                 if (!eval.getPositions().isEmpty()) {
@@ -1038,10 +1036,10 @@ public class LabVesselSearchDefinition {
 
 
     private class MaterialTypeEventCriteria extends TransferTraverserCriteria {
-        private LabVessel.MaterialType materialType;
+        private MaterialType materialType;
         private Set<LabVessel> labVessels = new LinkedHashSet<>();
 
-        private MaterialTypeEventCriteria(LabVessel.MaterialType materialType) {
+        private MaterialTypeEventCriteria(MaterialType materialType) {
             this.materialType = materialType;
         }
 
@@ -1050,7 +1048,7 @@ public class LabVesselSearchDefinition {
             LabVessel.VesselEvent vesselEvent = context.getVesselEvent();
             // Starting vessel has no event
             if (vesselEvent != null) {
-                LabVessel.MaterialType resultingMaterialType =
+                MaterialType resultingMaterialType = 
                         vesselEvent.getLabEvent().getLabEventType().getResultingMaterialType();
                 if (resultingMaterialType != null && resultingMaterialType == materialType) {
                     labVessels.add(vesselEvent.getTargetLabVessel());

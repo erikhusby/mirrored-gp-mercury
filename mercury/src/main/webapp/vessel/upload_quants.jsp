@@ -18,19 +18,9 @@
                 });
                 $j('#metricsTable').dataTable({
                     "oTableTools": ttExportDefines,
-                    "aoColumns": [
-                        {"bSortable": true}, // rev id
-                        {"bSortable": true}, // barcode
-                        {"bSortable": true}, // sample ID
-                        {"bSortable": true}, // collaborator patient ID
-                        {"bSortable": true, "sType": "numeric"}, // value
-                        {"bSortable": true, "sType": "numeric"}, // volume
-                        {"bSortable": true, "sType": "numeric"}, // total ng
-                        {"bSortable": true},  // decision
-                        {"bSortable": true},  // user
-                        {"bSortable": true},  // date
-                        {"bSortable": true},  // reason
-                        {"bSortable": false}  // checkbox
+                    "aoColumnDefs" : [
+                        { "bSortable": false, "aTargets": "no-sort" },
+                        { "bSortable": true, "sType": "numeric", "aTargets": "sort-numeric" }
                     ]
                 });
                 <%-- Clears all checkboxes. --%>
@@ -119,19 +109,25 @@
                         <th>Sample ID</th>
                         <th>Collaborator Patient ID</th>
                         <th>Value</th>
-                        <th>Volume</th>
-                        <th>Total ng</th>
+                        <c:if test="${actionBean.labMetricRun.metricType.category != 'QUALITY'}">
+                            <th class="sort-numeric">Volume</th>
+                            <th class="sort-numeric">Total ng</th>
+                        </c:if>
                         <th>Decision</th>
+                        <th>Note</th>
                         <th>User</th>
                         <th>Date</th>
                         <th>Reason</th>
-                        <th></th>
+                        <th class="no-sort"></th>
+                        <%--<th class="no-show"></th>--%>
                     </tr>
                     </thead>
                     <tbody>
                     <c:forEach items="${actionBean.labMetricRun.labMetrics}" var="labMetric">
                         <c:if test="${labMetric.labMetricDecision != null}">
-                            <tr>
+                            <tr <c:if test="${labMetric.labMetricDecision.needsReview}">
+                                    class="warning"
+                                </c:if>>
                                 <td>
                                     ${labMetric.vesselPosition}
                                 </td>
@@ -147,14 +143,19 @@
                                 <td>
                                     ${labMetric.value}
                                 </td>
-                                <td>
-                                    ${labMetric.labVessel.volume}
-                                </td>
-                                <td>
-                                    ${labMetric.totalNg}
-                                </td>
+                                <c:if test="${labMetric.name.category != 'QUALITY'}">
+                                    <td>
+                                        ${labMetric.labVessel.volume}
+                                    </td>
+                                    <td>
+                                        ${labMetric.totalNg}
+                                    </td>
+                                </c:if>
                                 <td>
                                     ${labMetric.labMetricDecision.decision}
+                                </td>
+                                <td>
+                                    ${labMetric.labMetricDecision.note}
                                 </td>
                                 <td>
                                     ${actionBean.getUserFullName(labMetric.labMetricDecision.deciderUserId)}

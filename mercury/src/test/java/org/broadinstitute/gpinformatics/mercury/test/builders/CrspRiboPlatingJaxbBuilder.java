@@ -5,7 +5,6 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMes
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -26,11 +25,11 @@ public class CrspRiboPlatingJaxbBuilder {
     private final BettaLimsMessageTestFactory bettaLimsMessageTestFactory;
     private final List<BettaLIMSMessage> messageList = new ArrayList<>();
     private String riboMicrofluorPlateBarcode;
-    private PlateTransferEventType riboMicrofluorEventJaxb;
+    private PlateTransferEventType riboMicrofluorEventJaxbA2;
+    private PlateTransferEventType riboMicrofluorEventJaxbB1;
     private PlateEventType riboBufferAdditionJaxb;
     private String polyAAliquotRackBarcode;
     private PlateTransferEventType polyATSAliquot;
-    private PlateEventType truSeqStrandSpecificBucket;
     private PlateEventType polyASpikeJaxb;
 
     public CrspRiboPlatingJaxbBuilder(String rackBarcode, List<String> tubeBarcodes, String testPrefix,
@@ -61,8 +60,12 @@ public class CrspRiboPlatingJaxbBuilder {
         return riboMicrofluorPlateBarcode;
     }
 
-    public PlateTransferEventType getRiboMicrofluorEventJaxb() {
-        return riboMicrofluorEventJaxb;
+    public PlateTransferEventType getRiboMicrofluorEventJaxbA2() {
+        return riboMicrofluorEventJaxbA2;
+    }
+
+    public PlateTransferEventType getRiboMicrofluorEventJaxbB1() {
+        return riboMicrofluorEventJaxbB1;
     }
 
     public PlateEventType getRiboBufferAdditionJaxb() {
@@ -85,15 +88,7 @@ public class CrspRiboPlatingJaxbBuilder {
         return polyASpikeJaxb;
     }
 
-    public PlateEventType getTruSeqStrandSpecificBucket() {
-        return truSeqStrandSpecificBucket;
-    }
-
     public CrspRiboPlatingJaxbBuilder invoke() {
-        truSeqStrandSpecificBucket = bettaLimsMessageTestFactory
-                .buildRackEvent(LabEventType.TRU_SEQ_STRAND_SPECIFIC_BUCKET.getName(), rackBarcode, tubeBarcodes);
-        bettaLimsMessageTestFactory.addMessage(messageList, truSeqStrandSpecificBucket);
-
         //PolyATSAliquot
         List<String> polyAAliquotTubes = new ArrayList<>(tubeBarcodes.size());
         int i = 0;
@@ -104,31 +99,42 @@ public class CrspRiboPlatingJaxbBuilder {
         polyAAliquotRackBarcode = "polyATSAliquot" + testPrefix;
         polyATSAliquot = bettaLimsMessageTestFactory.buildRackToRack("PolyATSAliquot",
                 rackBarcode, tubeBarcodes, polyAAliquotRackBarcode, polyAAliquotTubes);
+        for (ReceptacleType receptacleType : polyATSAliquot.getPositionMap().getReceptacle()) {
+            receptacleType.setVolume(new BigDecimal("50"));
+        }
+        bettaLimsMessageTestFactory.addMessage(messageList, polyATSAliquot);
 
-        //RiboGreen
-        riboMicrofluorPlateBarcode = "RiboMicrofluorTransfer" + testPrefix;
-        riboMicrofluorEventJaxb = bettaLimsMessageTestFactory.buildRackToPlate(
+        // RiboGreen
+        // Pico plate barcode must be all numeric, otherwise upload parser will ignore it
+        riboMicrofluorPlateBarcode = "55" + testPrefix;
+        riboMicrofluorEventJaxbA2 = bettaLimsMessageTestFactory.buildRackToPlate(
                 "RiboMicrofluorTransfer", rackBarcode, polyAAliquotTubes, riboMicrofluorPlateBarcode);
-        bettaLimsMessageTestFactory.addMessage(messageList, riboMicrofluorEventJaxb);
+        riboMicrofluorEventJaxbA2.getPlate().setSection("P384_96TIP_1INTERVAL_A2");
+        riboMicrofluorEventJaxbA2.getPlate().setPhysType("Eppendorf384");
+
+        riboMicrofluorEventJaxbB1 = bettaLimsMessageTestFactory.buildRackToPlate(
+                "RiboMicrofluorTransfer", rackBarcode, polyAAliquotTubes, riboMicrofluorPlateBarcode);
+        riboMicrofluorEventJaxbB1.getPlate().setSection("P384_96TIP_1INTERVAL_B1");
+        riboMicrofluorEventJaxbB1.getPlate().setPhysType("Eppendorf384");
+        bettaLimsMessageTestFactory.addMessage(messageList, riboMicrofluorEventJaxbA2, riboMicrofluorEventJaxbB1);
 
         GregorianCalendar gregorianCalendar = new GregorianCalendar();
         gregorianCalendar.add(Calendar.MONTH, 6);
         Date expiration = gregorianCalendar.getTime();
 
-        riboBufferAdditionJaxb =
-                bettaLimsMessageTestFactory.buildPlateEvent("RiboBufferAddition", riboMicrofluorPlateBarcode,
-                        Arrays.asList(new BettaLimsMessageTestFactory.ReagentDto("RiboGreen", "1234-RiboGreen", expiration)));
+        riboBufferAdditionJaxb = bettaLimsMessageTestFactory.buildPlateEvent("RiboBufferAddition",
+                riboMicrofluorPlateBarcode,
+                Arrays.asList(new BettaLimsMessageTestFactory.ReagentDto("RiboGreen", "1234-RiboGreen", expiration)));
         bettaLimsMessageTestFactory.addMessage(messageList, riboBufferAdditionJaxb);
 
-        polyASpikeJaxb = bettaLimsMessageTestFactory.buildRackEvent(
-                LabEventType.POLY_A_TS_ALIQUOT_SPIKE.getName(),
-                rackBarcode, tubeBarcodes);
+        polyASpikeJaxb = bettaLimsMessageTestFactory.buildRackEvent( "PolyATSAliquotSpike", rackBarcode, tubeBarcodes);
         for (ReceptacleType receptacleType : polyASpikeJaxb.getPositionMap().getReceptacle()) {
             BigDecimal conc = new BigDecimal("5.5");
             BigDecimal vol = new BigDecimal("56");
             receptacleType.setConcentration(conc);
             receptacleType.setVolume(vol);
         }
+        bettaLimsMessageTestFactory.addMessage(messageList, polyASpikeJaxb);
 
         return this;
     }

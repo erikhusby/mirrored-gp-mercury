@@ -23,19 +23,18 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
-import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
-import org.jetbrains.annotations.Nullable;
+import org.jvnet.inflector.Noun;
 
 import javax.annotation.Nonnull;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -144,32 +143,51 @@ public class ExtractionJiraFieldFactory extends AbstractBatchJiraFieldFactory {
         if (CollectionUtils.isNotEmpty(batch.getStartingBatchLabVessels())) {
             customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.SAMPLE_IDS,
                     buildSamplesListString(batch, null)));
-
         }
 
+        try {
+            // this is in a try/catch since getLatestMaterialType calls ServiceAccessUtility which will die
+            // when called in tests.
+            for (BucketEntry bucketEntry : batch.getBucketEntries()) {
+                MaterialType materialType = bucketEntry.getLabVessel().getLatestMaterialType();
+                if (materialType!=null) {
+                    CustomField materialTypeField = new CustomField(submissionFields, LabBatch.TicketFields.BATCH_TYPE,
+                                    new CustomField.ValueContainer(materialType.getDisplayName()));
+                    customFields.add(materialTypeField);
+                    // TODO: the batchtype field will be changed to a multi-select in the near future,
+                    // when it does, this code will change.
+                    if (!customFields.isEmpty()) {
+                        break;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("Could not find material types for bucket entries.");
+        }
         return customFields;
-
     }
 
     @Override
     public String generateDescription() {
-
         StringBuilder ticketDescription = new StringBuilder();
-
         for (Map.Entry<String, Set<LabVessel>> pdoKey : pdoToVesselMap.entrySet()) {
-
             int sampleCount = 0;
-
+            Set<String> materialTypes = new HashSet<>();
             for (LabVessel currVessel : pdoKey.getValue()) {
                 sampleCount += currVessel.getSampleInstanceCount(LabVessel.SampleType.PREFER_PDO, null);
+                MaterialType latestMaterialType = currVessel.getLatestMaterialType();
+                if (latestMaterialType != null) {
+                    materialTypes.add(latestMaterialType.getDisplayName());
+                }
             }
-
-            ticketDescription.append(sampleCount).append(" samples ");
+            String projectName = "";
             if (foundResearchProjectList.containsKey(pdoKey.getKey())) {
-                ticketDescription.append("from ").append(foundResearchProjectList.get(pdoKey.getKey()).getTitle())
-                        .append(" ");
+                projectName = foundResearchProjectList.get(pdoKey.getKey()).getTitle();
             }
-            ticketDescription.append(pdoKey.getKey()).append("\n");
+            String vesselDescription = String.format("%d %s with material type %s from %s %s", sampleCount,
+                    Noun.pluralOf("sample", sampleCount), materialTypes, projectName, pdoKey.getKey());
+
+            ticketDescription.append(vesselDescription).append("\n");
         }
         return ticketDescription.toString();
     }

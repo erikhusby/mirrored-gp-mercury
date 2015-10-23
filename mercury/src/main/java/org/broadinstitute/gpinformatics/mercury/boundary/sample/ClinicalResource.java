@@ -12,7 +12,7 @@ import org.broadinstitute.gpinformatics.mercury.crsp.generated.Sample;
 import org.broadinstitute.gpinformatics.mercury.crsp.generated.SampleData;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.enterprise.context.RequestScoped;
@@ -121,7 +121,7 @@ public class ClinicalResource {
                     metadataCount++;
                 }
                 if( (Metadata.Key.valueOf(sampleData.getName()) == Metadata.Key.MATERIAL_TYPE) &&
-                    (LabVessel.MaterialType.fromDisplayName(sampleData.getValue()) == null)) {
+                    (MaterialType.fromDisplayName(sampleData.getValue()) == null)) {
                     invalidMaterialTypes.add(sampleData.getValue());
                 }
             }
