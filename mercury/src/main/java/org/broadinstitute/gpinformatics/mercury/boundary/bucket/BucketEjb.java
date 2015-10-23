@@ -418,6 +418,7 @@ public class BucketEjb {
 
 
     private Collection<BucketEntry> applyBucketCriteria(List<LabVessel> vessels, ProductOrder productOrder, String username) {
+        Set<LabVessel> bucketedVessels = new HashSet<>(vessels.size());
         Collection<BucketEntry> bucketEntries = new ArrayList<>(vessels.size());
         WorkflowConfig workflowConfig = workflowLoader.load();
         List<Product> possibleProducts = new ArrayList<>();
@@ -430,13 +431,19 @@ public class BucketEjb {
         for (Product product : possibleProducts) {
             ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflow(product.getWorkflow());
             ProductWorkflowDefVersion workflowDefVersion = productWorkflowDef.getEffectiveVersion();
-            Map<WorkflowBucketDef, Collection<LabVessel>> initialBucket =
-                    workflowDefVersion.getInitialBucket(productOrder, vessels);
+            List<LabVessel> vesselsToAdd = new ArrayList<>(CollectionUtils.subtract(vessels, bucketedVessels));
+            if (!vesselsToAdd.isEmpty()) {
+                Map<WorkflowBucketDef, Collection<LabVessel>> initialBucket =
+                        workflowDefVersion.getInitialBucket(productOrder, vesselsToAdd);
 
-            if (!initialBucket.isEmpty()) {
-                Collection<BucketEntry> entries = add(initialBucket, BucketEntry.BucketEntryType.PDO_ENTRY,
-                        LabEvent.UI_PROGRAM_NAME, username, LabEvent.UI_EVENT_LOCATION, productOrder);
-                bucketEntries.addAll(entries);
+                if (!initialBucket.isEmpty()) {
+                    Collection<BucketEntry> entries = add(initialBucket, BucketEntry.BucketEntryType.PDO_ENTRY,
+                            LabEvent.UI_PROGRAM_NAME, username, LabEvent.UI_EVENT_LOCATION, productOrder);
+                    bucketEntries.addAll(entries);
+                    for (Collection<LabVessel> collectionOfVessels : initialBucket.values()) {
+                        bucketedVessels.addAll(collectionOfVessels);
+                    }
+                }
             }
         }
         return bucketEntries;
