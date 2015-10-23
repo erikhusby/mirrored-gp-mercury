@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema">
+    <xs:element name="workflowConfig" type="workflowConfigType"/>
+    <xs:complexType name="workflowProcessDefsType">
+        <xs:sequence>
+            <xs:element type="xs:string" name="name"/>
+            <xs:element type="workflowProcessDefVersionsType" name="workflowProcessDefVersions">
+                <xs:unique name="uniqueTypeQualifier">
+                    <xs:selector xpath=".//workflowStepDefs"/>
+                    <xs:field xpath="labEventTypes"/>
+                    <xs:field xpath="workflowQualifier"/>
+                </xs:unique>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="manualTransferDetailsType">
+        <xs:sequence>
+            <xs:element name="messageType">
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:enumeration value="PLATE_EVENT"/>
+                        <xs:enumeration value="PLATE_TRANSFER_EVENT"/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:element>
+            <xs:element type="xs:string" name="sourceVesselTypeGeometryString" minOccurs="0"/>
+            <xs:element type="xs:string" name="sourceSection" minOccurs="0"/>
+            <xs:element type="xs:string" name="targetVesselTypeGeometryString"/>
+            <xs:element type="xs:string" name="targetSection"/>
+            <xs:element type="xs:string" name="buttonValue" minOccurs="0"/>
+            <xs:element type="xs:string" name="targetExpectedToExist" minOccurs="0"/>
+            <xs:element type="xs:string" name="repeatedEvent" minOccurs="0"/>
+            <xs:element type="xs:string" name="repeatedWorkflowQualifier" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="workflowStepDefsType">
+        <xs:sequence>
+            <xs:element type="xs:string" name="name"/>
+            <xs:element type="xs:string" name="labEventTypes" maxOccurs="unbounded" minOccurs="0"/>
+            <xs:element name="optional" minOccurs="0">
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:enumeration value="true"/>
+                        <xs:enumeration value="false"/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:element>
+            <xs:element type="xs:string" name="entryPoint" minOccurs="0"/>
+            <xs:element type="xs:string" name="reEntryPoint" minOccurs="0"/>
+            <xs:element type="jiraTransitionType" name="jiraTransition" maxOccurs="unbounded" minOccurs="0"/>
+            <xs:element type="bucketEntryEvaluatorType" name="bucketEntryEvaluator" minOccurs="0"/>
+            <xs:element type="xs:string" name="quantType" minOccurs="0"/>
+            <xs:element type="xs:integer" name="numberOfRepeats" minOccurs="0"/>
+            <xs:element name="batchJiraProjectType" minOccurs="0">
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:enumeration value="LCSET"/>
+                        <xs:enumeration value="XTR"/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:element>
+            <xs:element type="xs:string" name="batchJiraIssueType" minOccurs="0"/>
+            <xs:element type="xs:string" name="deadEndBranch" minOccurs="0"/>
+            <xs:element type="xs:string" name="workflowQualifier" minOccurs="0"/>
+            <xs:element type="xs:string" name="reagentTypes" maxOccurs="unbounded" minOccurs="0"/>
+            <xs:element type="xs:string" name="targetBarcodedTubeType" minOccurs="0"/>
+            <xs:element type="xs:string" name="instructions" minOccurs="0"/>
+            <xs:element type="manualTransferDetailsType" name="manualTransferDetails" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="workflowConfigType">
+        <xs:sequence>
+            <xs:element type="workflowProcessDefsType" name="workflowProcessDefs" maxOccurs="unbounded" minOccurs="0"/>
+            <xs:element type="productWorkflowDefsType" name="productWorkflowDefs" maxOccurs="unbounded" minOccurs="0"/>
+            <xs:element type="sequencingConfigDefsType" name="sequencingConfigDefs" maxOccurs="unbounded"
+                    minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="workflowProcessDefVersionsType">
+        <xs:sequence>
+            <xs:element type="xs:string" name="version"/>
+            <xs:element type="xs:string" name="effectiveDate"/>
+            <xs:element type="workflowStepDefsType" name="workflowStepDefs" maxOccurs="unbounded" minOccurs="0">
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="jiraTransitionType">
+        <xs:sequence>
+            <xs:element name="project">
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:enumeration value="LCSET"/>
+                        <xs:enumeration value="FCT"/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:element>
+            <xs:element type="xs:string" name="statusTransition" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="sequencingConfigDefsType" mixed="true">
+        <xs:sequence>
+            <xs:element type="xs:string" name="name"/>
+            <xs:element type="xs:string" name="instrumentWorkflow" minOccurs="0"/>
+            <xs:element type="xs:string" name="readStructure"/>
+            <xs:element type="xs:string" name="chemistry" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="productWorkflowDefVersionsType">
+        <xs:sequence>
+            <xs:element type="xs:string" name="version"/>
+            <xs:element type="xs:string" name="effectiveDate"/>
+            <xs:element type="xs:string" name="workflowProcessDefs" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element type="xs:string" name="sequencingConfigDefs" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="routingRule" minOccurs="0">
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:enumeration value="BOTH"/>
+                        <xs:enumeration value="MERCURY"/>
+                        <xs:enumeration value="SQUID"/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:element>
+            <xs:element name="inValidation" minOccurs="0">
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:enumeration value="true"/>
+                        <xs:enumeration value="false"/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="bucketEntryEvaluatorType">
+        <xs:choice maxOccurs="unbounded" minOccurs="0">
+            <xs:element type="xs:string" name="materialTypes"/>
+            <xs:element type="xs:string" name="workflows"/>
+        </xs:choice>
+    </xs:complexType>
+    <xs:complexType name="productWorkflowDefsType">
+        <xs:sequence>
+            <xs:element type="xs:string" name="name"/>
+            <xs:element type="productWorkflowDefVersionsType" name="productWorkflowDefVersions" maxOccurs="unbounded"
+                    minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+</xs:schema>
