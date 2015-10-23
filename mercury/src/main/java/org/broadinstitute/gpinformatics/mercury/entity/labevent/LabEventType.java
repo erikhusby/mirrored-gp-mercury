@@ -918,9 +918,6 @@ public enum LabEventType {
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY),
 
-    CLINICAL_WHOLE_BLOOD_EXTRACTION_BUCKET("ClinicalWholeBloodExtractionBucket", ExpectSourcesEmpty.TRUE,
-            ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE, PlasticToValidate.SOURCE,
-            PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY),
     DNA_AND_RNA_EXTRACTION_BUCKET("ExtractToDnaAndRnaBucket", ExpectSourcesEmpty.TRUE,
             ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE, PlasticToValidate.SOURCE,
             PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY),
