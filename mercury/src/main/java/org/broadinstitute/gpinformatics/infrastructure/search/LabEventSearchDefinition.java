@@ -775,11 +775,6 @@ public class LabEventSearchDefinition {
 
         List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
         SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
-        criteriaPath.setCriteria(Arrays.asList("bucketEntries", "productOrder"));
-        criteriaPath.setPropertyName("jiraTicketKey");
-        criteriaPaths.add(criteriaPath);
-
-        criteriaPath = new SearchTerm.CriteriaPath();
         criteriaPath.setCriteria(
                 Arrays.asList("mercurySample", "mercurySamples", "productOrderSamples", "productOrder"));
         criteriaPath.setPropertyName("jiraTicketKey");
