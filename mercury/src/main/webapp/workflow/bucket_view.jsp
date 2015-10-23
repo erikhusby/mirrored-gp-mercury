@@ -224,7 +224,7 @@
 
             };
 
-            $j('#bucketEntryView').dataTable({
+            oTable = $j('#bucketEntryView').dataTable({
                 "oTableTools":ttExportDefines,
                 "aaSorting": [[1,'asc'], [7,'asc']],
                 "aoColumns":[
@@ -247,6 +247,7 @@
                 ],
                 "fnDrawCallback": editablePdo
             });
+            includeAdvancedFilter(oTable, "#bucketEntryView");
 
             $j('.bucket-checkbox').enableCheckboxRangeSelection({
                 checkAllClass:'bucket-checkAll',
