@@ -174,7 +174,6 @@ public class LabBatchEjb {
      * Creates a new lab batch and archives the bucket entries used to create the batch.
      *
      * @param labBatchType         the type of lab batch to create
-     * @param workflowName         the workflow that the batch is to run through
      * @param bucketEntryIds       the IDs of the bucket entries to include in the batch
      * @param reworkBucketEntryIds the vessels being reworked to include in the batch
      * @param batchName            the name for the batch (also the summary for JIRA)
@@ -187,7 +186,7 @@ public class LabBatchEjb {
      * @return The lab batch that was created.
      */
     public LabBatch createLabBatchAndRemoveFromBucket(@Nonnull LabBatch.LabBatchType labBatchType,
-                                                      @Nonnull String workflowName, @Nonnull List<Long> bucketEntryIds,
+                                                      @Nonnull List<Long> bucketEntryIds,
                                                       @Nonnull List<Long> reworkBucketEntryIds,
                                                       @Nonnull String batchName, @Nonnull String description,
                                                       @Nonnull Date dueDate, @Nonnull String important,

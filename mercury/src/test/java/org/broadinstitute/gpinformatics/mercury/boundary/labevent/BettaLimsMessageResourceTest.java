@@ -325,9 +325,8 @@ public class BettaLimsMessageResourceTest extends Arquillian {
             reworkBucketIds.add(rework.getBucketEntries().iterator().next().getBucketEntryId());
         }
 
-        labBatchEjb.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
-                Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName(), bucketIds, reworkBucketIds, batchName, "", new Date(),
-                "", "jowalsh", PICO_PLATING_BUCKET);
+        labBatchEjb.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW, bucketIds, reworkBucketIds,
+                batchName, "", new Date(), "", "jowalsh", PICO_PLATING_BUCKET);
         // message
         hybridSelectionJaxbBuilder = sendMessagesUptoCatch(testPrefix, mapBarcodeToTube2, bettaLimsMessageFactory,
                 Workflow.AGILENT_EXOME_EXPRESS, bettaLimsMessageResource,
@@ -783,9 +782,8 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         }
 
 
-        labBatchEjb.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
-                Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName(), bucketIds, Collections.<Long>emptyList(), batchName,
-                "", new Date(), "", "jowalsh", bucketName);
+        labBatchEjb.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW, bucketIds,
+                Collections.<Long>emptyList(), batchName, "", new Date(), "", "jowalsh", bucketName);
 
     }
 
@@ -974,9 +972,9 @@ public class BettaLimsMessageResourceTest extends Arquillian {
             reworkBucketEntryIds.add(crspPond.getBucketEntries().iterator().next().getBucketEntryId());
         }
 
-        LabBatch labBatch = labBatchEjb.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
-                Workflow.ICE_CRSP.getWorkflowName(), Collections.<Long>emptyList(), reworkBucketEntryIds, batchName,
-                "", new Date(), "", "thompson", ICE_BUCKET);
+        LabBatch labBatch = labBatchEjb
+                .createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW, Collections.<Long>emptyList(),
+                        reworkBucketEntryIds, batchName, "", new Date(), "", "thompson", ICE_BUCKET);
 
         return labBatch;
     }

@@ -461,15 +461,4 @@ public class BucketViewActionBean extends CoreActionBean {
     public Map<String, BucketCount> getMapBucketToBucketEntryCount() {
         return mapBucketToBucketEntryCount;
     }
-
-    public Multiset<String> getWorkflowCounter() {
-        return workflowCounter;
-    }
-
-    public int totalBucketEntries() {
-        if (bucket != null) {
-            return bucket.getBucketEntries().size() + bucket.getReworkEntries().size();
-        }
-        return 0;
-    }
 }

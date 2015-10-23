@@ -86,8 +86,4 @@ public class WorkflowBucketDef extends WorkflowStepDef {
     public String findMissingRequirements(ProductOrder productOrder, MaterialType latestMaterialType) {
         return bucketEntryEvaluator.findMissingRequirements(productOrder, latestMaterialType);
     }
-
-    public Workflow findWorkflow() {
-        return Workflow.findByName(getName());
-    }
 }

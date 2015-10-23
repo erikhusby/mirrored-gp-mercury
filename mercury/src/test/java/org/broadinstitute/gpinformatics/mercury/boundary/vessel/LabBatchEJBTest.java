@@ -22,7 +22,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -181,7 +180,7 @@ public class LabBatchEJBTest extends ContainerTest {
         String futureDate = dFormatter.format(future);
 
         LabBatch batchInput = new LabBatch(batchName, new HashSet<LabVessel>(mapBarcodeToTube.values()),
-                                           LabBatch.LabBatchType.WORKFLOW);
+                LabBatch.LabBatchType.WORKFLOW);
         batchInput.setBatchDescription(description);
         batchInput.setDueDate(future);
 
@@ -224,9 +223,9 @@ public class LabBatchEJBTest extends ContainerTest {
             bucketIds.add(next.getBucketEntryId());
         }
 
-        LabBatch savedBatch = labBatchEJB.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
-                Workflow.ICE_EXOME_EXPRESS.getWorkflowName(), bucketIds, Collections.<Long>emptyList(),
-                "LabBatchEJBTest.testCreateLabBatchAndRemoveFromBucket", "", new Date(), "", scottmat, bucketName );
+        LabBatch savedBatch = labBatchEJB.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW, bucketIds,
+                Collections.<Long>emptyList(), "LabBatchEJBTest.testCreateLabBatchAndRemoveFromBucket", "", new Date(),
+                "", scottmat, bucketName);
 
         //link the JIRA tickets for the batch created to the pdo batches.
         for (String pdoKey : LabVessel.extractPdoKeyList(starters)) {
@@ -264,9 +263,9 @@ public class LabBatchEJBTest extends ContainerTest {
             }
         }
 
-        LabBatch savedBatch = labBatchEJB.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
-                Workflow.DNA_RNA_EXTRACTION_CELL_PELLETS.getWorkflowName(), bucketIds, Collections.<Long>emptyList(),
-                "LabBatchEJBTest.testCreateLabBatchAndRemoveFromBucket", "", new Date(), "", scottmat, bucketName);
+        LabBatch savedBatch = labBatchEJB.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW, bucketIds,
+                Collections.<Long>emptyList(), "LabBatchEJBTest.testCreateLabBatchAndRemoveFromBucket", "", new Date(),
+                "", scottmat, bucketName);
 
         //link the JIRA tickets for the batch created to the pdo batches.
         for (String pdoKey : LabVessel.extractPdoKeyList(starters)) {
@@ -298,16 +297,15 @@ public class LabBatchEJBTest extends ContainerTest {
 
         List<Long> bucketIds = new ArrayList<>();
         String selectedBucket = null;
-        for(LabVessel vessel:mapBarcodeToTube.values()) {
+        for (LabVessel vessel : mapBarcodeToTube.values()) {
 
             BucketEntry next = vessel.getBucketEntries().iterator().next();
             selectedBucket = next.getBucket().getBucketDefinitionName();
             bucketIds.add(next.getBucketEntryId());
         }
 
-        LabBatch savedBatch = labBatchEJB.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
-                Workflow.ICE_EXOME_EXPRESS.getWorkflowName(), bucketIds, Collections.<Long>emptyList(),
-                expectedTicketId, "", new Date(), "", scottmat, selectedBucket);
+        LabBatch savedBatch = labBatchEJB.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW, bucketIds,
+                Collections.<Long>emptyList(), expectedTicketId, "", new Date(), "", scottmat, selectedBucket);
         labBatchDao.flush();
         labBatchDao.clear();
         bucket = bucketDao.findByName(BUCKET_NAME);
@@ -332,16 +330,15 @@ public class LabBatchEJBTest extends ContainerTest {
         List<Long> bucketIds = new ArrayList<>();
 
         String selectedBucket = null;
-        for(LabVessel vessel:mapBarcodeToTube.values()) {
+        for (LabVessel vessel : mapBarcodeToTube.values()) {
             for (BucketEntry bucketEntry : vessel.getBucketEntries()) {
                 selectedBucket = bucketEntry.getBucket().getBucketDefinitionName();
                 bucketIds.add(bucketEntry.getBucketEntryId());
             }
         }
 
-        LabBatch savedBatch = labBatchEJB.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
-                "DNA and RNA from Cell Pellets", bucketIds, Collections.<Long>emptyList(),
-                expectedTicketId,"", new Date(), "", scottmat, selectedBucket);
+        LabBatch savedBatch = labBatchEJB.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW, bucketIds,
+                Collections.<Long>emptyList(), expectedTicketId, "", new Date(), "", scottmat, selectedBucket);
         labBatchDao.flush();
         labBatchDao.clear();
         bucket = bucketDao.findByName(EXTRACTION_BUCKET);
@@ -349,7 +346,7 @@ public class LabBatchEJBTest extends ContainerTest {
         Assert.assertEquals(savedBatch.getBatchName(), expectedTicketId);
         savedBatch = labBatchDao.findById(LabBatch.class, savedBatch.getLabBatchId());
 
-        Assert.assertEquals(savedBatch.getJiraTicket().getTicketName(),expectedTicketId);
+        Assert.assertEquals(savedBatch.getJiraTicket().getTicketName(), expectedTicketId);
         Assert.assertEquals(6, savedBatch.getStartingBatchLabVessels().size());
         for (BarcodedTube tube : mapBarcodeToTube.values()) {
             Assert.assertTrue(bucket.findEntry(tube) == null);
@@ -363,7 +360,7 @@ public class LabBatchEJBTest extends ContainerTest {
     private void putTubesInSpecificBucket(String bucketName) {
         bucket = bucketDao.findByName(bucketName);
 
-        if ( bucket == null) {
+        if (bucket == null) {
             bucket = new Bucket(bucketName);
         }
 
@@ -371,10 +368,10 @@ public class LabBatchEJBTest extends ContainerTest {
         stubTestPDO.setTitle(stubTestPDO.getTitle() + ((new Date()).getTime()));
         stubTestPDO.updateAddOnProducts(Collections.<Product>emptyList());
         stubTestPDO.setProduct(productDao.findByBusinessKey(Product.EXOME_EXPRESS_V2_PART_NUMBER));
-        stubTestPDO .setResearchProject(researchProjectDao.findByTitle("ADHD"));
+        stubTestPDO.setResearchProject(researchProjectDao.findByTitle("ADHD"));
         for (LabVessel vessel : mapBarcodeToTube.values()) {
             bucket.addEntry(stubTestPDO, vessel,
-                            org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry.BucketEntryType.PDO_ENTRY);
+                    org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry.BucketEntryType.PDO_ENTRY);
         }
 
         bucketDao.persist(bucket);
