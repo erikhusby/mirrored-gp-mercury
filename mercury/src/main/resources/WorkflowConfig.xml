@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<workflowConfig>
+<workflowConfig
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="WorkflowConfig.xsd">
     <workflowProcessDefs>
         <name>Preflight</name>
         <workflowProcessDefVersions>
@@ -2484,9 +2486,6 @@
             <sequencingConfigDefs>Resequencing-Production</sequencingConfigDefs>
             <routingRule>MERCURY</routingRule>
             <inValidation>false</inValidation>
-            <version>01</version>
-            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
-            <workflowProcessDefs>DNA and RNA for Frozen Tissue - AllPrep</workflowProcessDefs>
         </productWorkflowDefVersions>
     </productWorkflowDefs>
     <productWorkflowDefs>
