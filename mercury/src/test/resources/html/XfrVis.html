@@ -37,6 +37,7 @@
 </head>
 <body>
 <script src="../../../../src/main/webapp/resources/scripts/d3.3.5.6.min.js"></script>
+<script src="../../../../src/main/webapp/resources/scripts/dagre.min.0.7.3.js"></script>
 <script>
     var width = 1200, height = 950;
 
@@ -73,159 +74,157 @@
 
     d3.json("XfrVis.json", function (error, json) {
 
-        var linkDistance = 60;
-        var force = d3.layout.force()
-                .gravity(.08)
-                .linkDistance(linkDistance)
-                .charge(-120)
-                .size([width, height]);
+//        var linkDistance = 10;
+//        var force = d3.layout.force()
+//                .gravity(.03)
+//                .linkDistance(linkDistance)
+//                .charge(-240)
+//                .size([width, height]);
+//
+//        var drag = force.drag()
+//                .on("dragstart", dragstart);
+//
+//        force.nodes(json.nodes)
+//                .links(json.links)
+//                .start();
 
-        var drag = force.drag()
-                .on("dragstart", dragstart);
+        // Create a new directed graph
+        var g = new dagre.graphlib.Graph();
 
-        force.nodes(json.nodes)
-                .links(json.links)
-                .start();
+        // Set an object for the graph label
+        g.setGraph({});
 
-        var link = svg.selectAll(".link")
-                .data(json.links)
-                .enter().append("line")
-                .attr("class", "link");
+        // Default to assigning a new object as a label for each new edge.
+        g.setDefaultEdgeLabel(function() { return {}; });
+        // function read(json) {
+
+        for (i = 0; i < json.nodes.length; i++) {
+            g.setNode(i, {label: json.nodes[i].name, width: json.nodes[i].w, height: json.nodes[i].h});
+        }
+        for (i = 0; i < json.links.length; i++) {
+            g.setEdge(json.links[i].source, json.links[i].target);
+        }
+        dagre.layout(g);
+
+//        var link = svg.selectAll(".link")
+//                .data(json.links)
+//                .enter().append("line")
+//                .attr("class", "link");
 
         var margin = 10, pad = 12;
         var node = svg.selectAll(".node")
-                .data(json.nodes)
+                .data(g.nodes())
                 .enter().append("g")
-                .attr("class", "node")
-                .on("dblclick", dblclick)
-                .call(force.drag);
+                .attr("class", "node");
+//                .on("dblclick", dblclick)
+//                .call(force.drag);
 
         node.append("rect")
-                .attr("width", function (d) {
-                    return d.w;
-                })
-                .attr("height", function (d) {
-                    return d.h;
-                });
-
-        var nodeChildEnter = node.selectAll(".nodeChild")
-                .data(function (d) {
-                    return d.children;
-                })
-                .enter();
-
-        var nodeChild = nodeChildEnter.append("rect")
-                .attr("class", "nodeChild")
                 .attr("x", function (d) {
-                    return d.x;
+                    return g.node(d).x;
                 })
                 .attr("y", function (d) {
-                    return d.y;
+                    return g.node(d).y;
                 })
                 .attr("width", function (d) {
-                    return d.w;
+                    return g.node(d).width;
                 })
                 .attr("height", function (d) {
-                    return d.h;
+                    return g.node(d).height;
                 });
 
-        nodeChildEnter.append("text")
-                .attr("class", "label")
-                .attr("x", function (d) {
-                    return d.x;
-                })
-                .attr("y", function (d) {
-                    return d.y;
-                })
-                .attr("dx", 25)
-                .attr("dy", 10)
-                .text(function (d) {
-                    return d.name;
-                })
-                .each(function (d) {
-                    var b = this.parentNode.getBBox();
-                    var extra = 2 * margin + 2 * pad;
-                    d.width = b.width + extra;
-                    d.height = b.height + extra;
-                });
+//        var nodeChildEnter = node.selectAll(".nodeChild")
+//                .data(function (d) {
+//                    return d.children;
+//                })
+//                .enter();
+//
+//        var nodeChild = nodeChildEnter.append("rect")
+//                .attr("class", "nodeChild")
+//                .attr("x", function (d) {
+//                    return d.x;
+//                })
+//                .attr("y", function (d) {
+//                    return d.y;
+//                })
+//                .attr("width", function (d) {
+//                    return d.w;
+//                })
+//                .attr("height", function (d) {
+//                    return d.h;
+//                });
+//
+//        nodeChildEnter.append("text")
+//                .attr("class", "label")
+//                .attr("x", function (d) {
+//                    return d.x;
+//                })
+//                .attr("y", function (d) {
+//                    return d.y;
+//                })
+//                .attr("dx", 25)
+//                .attr("dy", 10)
+//                .text(function (d) {
+//                    return d.name;
+//                })
+//                .each(function (d) {
+//                    var b = this.parentNode.getBBox();
+//                    var extra = 2 * margin + 2 * pad;
+//                    d.width = b.width + extra;
+//                    d.height = b.height + extra;
+//                });
 
         node.append("text")
                 .attr("class", "label")
                 .attr("dx", 25)
                 .attr("dy", 10)
-                .text(function (d) {
-                    return d.name;
+                .attr("x", function (d) {
+                    return g.node(d).x;
                 })
-                .each(function (d) {
-                    var b = this.parentNode.getBBox();
-                    var extra = 2 * margin + 2 * pad;
-                    d.width = b.width + extra;
-                    d.height = b.height + extra;
+                .attr("y", function (d) {
+                    return g.node(d).y;
+                })
+                .text(function (d) {
+                    return g.node(d).label;
                 });
+//                .each(function (d) {
+//                    var b = this.parentNode.getBBox();
+//                    var extra = 2 * margin + 2 * pad;
+//                    d.width = b.width + extra;
+//                    d.height = b.height + extra;
+//                });
 
-        force.on("tick", function (e) {
-            // Push sources up and targets down to form a weak tree.
-            var k = linkDistance * 2 * e.alpha;
-            json.links.forEach(function (d, i) {
-                d.source.y -= k;
-                d.target.y += k;
-            });
-
-            var q = d3.geom.quadtree(json.nodes),
-                    i = 0,
-                    n = json.nodes.length;
-            while (++i < n) q.visit(collide(json.nodes[i]));
-
-            link
-                    .attr("x1", function (d) {
-                        return d.source.x;
-                    })
-                    .attr("y1", function (d) {
-                        return d.source.y;
-                    })
-                    .attr("x2", function (d) {
-                        return d.target.x;
-                    })
-                    .attr("y2", function (d) {
-                        return d.target.y;
-                    });
-
-            node.attr("transform", function (d) {
-                return "translate(" + d.x + "," + d.y + ")";
-            });
-        });
+//        force.on("tick", function (e) {
+//            // Push sources up and targets down to form a weak tree.
+//            var k = linkDistance * 6 * e.alpha;
+//            json.links.forEach(function (d, i) {
+//                d.source.y -= k;
+//                d.target.y += k;
+//            });
+//            link
+//                    .attr("x1", function (d) {
+//                        return d.source.x;
+//                    })
+//                    .attr("y1", function (d) {
+//                        return d.source.y;
+//                    })
+//                    .attr("x2", function (d) {
+//                        return d.target.x;
+//                    })
+//                    .attr("y2", function (d) {
+//                        return d.target.y;
+//                    });
+//
+//            node.attr("transform", function (d) {
+//                return "translate(" + d.x + "," + d.y + ")";
+//            });
+//        });
     });
     function dblclick(d) {
         d3.select(this).classed("fixed", d.fixed = false);
     }
     function dragstart(d) {
         d3.select(this).classed("fixed", d.fixed = true);
-    }
-    function collide(currentNode) {
-        var nx1, nx2, ny1, ny2, padding;
-        padding = 32;
-        nx1 = currentNode.x - padding;
-        nx2 = currentNode.x2 + padding;
-        ny1 = currentNode.y - padding;
-        ny2 = currentNode.y2 + padding;
-        return function(quad, x1, y1, x2, y2) {
-            var dx, dy;
-            if (quad.point && (quad.point !== currentNode)) {
-                if (overlap(currentNode, quad.point)) {
-                    dx = Math.min(currentNode.x2 - quad.point.x, quad.point.x2 - currentNode.x) / 2;
-                    currentNode.x -= dx;
-                    quad.point.x -= dx;
-                    dy = Math.min(currentNode.y2 - quad.point.y, quad.point.y2 - currentNode.y) / 2;
-                    currentNode.y -= dy;
-                    quad.point.y += dy;
-                }
-            }
-            return x1 > nx2 || x2 < nx1 || y1 > ny2 || y2 < ny1;
-        };
-    }
-    function overlap(a, b) {
-        return (a.x < b.x < a.x2 && a.y < b.y < a.y2) ||
-                (a.x < b.x2 < a.x2 && a.y < b.y2 < a.y2);
     }
     function isIE() {
         return ((navigator.appName == 'Microsoft Internet Explorer') || ((navigator.appName == 'Netscape') &&
