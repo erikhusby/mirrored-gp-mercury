@@ -109,7 +109,10 @@
                 .enter().append("g")
                 .attr("class", "node")
                 .attr("transform", function (d) {
-                    return "translate(" + g.node(d).x + "," + g.node(d).y + ")";
+                    var graphNode = g.node(d);
+                    var x = graphNode.x - (graphNode.width / 2);
+                    var y = graphNode.y - (graphNode.height / 2);
+                    return "translate(" + x + "," + y + ")";
                 });
 //                .on("dblclick", dblclick)
 //                .call(force.drag);
