@@ -528,10 +528,4 @@ public class BucketViewActionBean extends CoreActionBean {
         return list;
     }
 
-    public int totalBucketEntries() {
-        if (bucket != null) {
-            return bucket.getBucketEntries().size() + bucket.getReworkEntries().size();
-        }
-        return 0;
-    }
 }
