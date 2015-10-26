@@ -518,7 +518,11 @@ public class LabEventSearchDefinition {
             public Set<String> evaluate(Object entity, SearchContext context) {
                 LabEvent labEvent = (LabEvent) entity;
                 Set<String> productNames = new HashSet<>();
-                for( LabVessel labVessel : labEvent.getTargetLabVessels() ) {
+
+                Set<LabVessel> eventVessels = labEvent.getTargetLabVessels();
+                eventVessels.add(labEvent.getInPlaceLabVessel());
+
+                for( LabVessel labVessel : eventVessels ) {
                     for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
                         for (ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples() ) {
                             productNames.add(productOrderSample.getProductOrder().getJiraTicketKey());
