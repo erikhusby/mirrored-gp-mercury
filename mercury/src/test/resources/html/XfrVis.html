@@ -74,20 +74,6 @@
 
     d3.json("XfrVis.json", function (error, json) {
 
-//        var linkDistance = 10;
-//        var force = d3.layout.force()
-//                .gravity(.03)
-//                .linkDistance(linkDistance)
-//                .charge(-240)
-//                .size([width, height]);
-//
-//        var drag = force.drag()
-//                .on("dragstart", dragstart);
-//
-//        force.nodes(json.nodes)
-//                .links(json.links)
-//                .start();
-
         // Create a new directed graph
         var g = new dagre.graphlib.Graph();
 
@@ -99,7 +85,7 @@
         // function read(json) {
 
         for (i = 0; i < json.nodes.length; i++) {
-            g.setNode(i, {label: json.nodes[i].name, width: json.nodes[i].w, height: json.nodes[i].h});
+            g.setNode(json.nodes[i].id, json.nodes[i].values);
         }
         for (i = 0; i < json.links.length; i++) {
             g.setEdge(json.links[i].source, json.links[i].target);
@@ -115,17 +101,14 @@
         var node = svg.selectAll(".node")
                 .data(g.nodes())
                 .enter().append("g")
-                .attr("class", "node");
+                .attr("class", "node")
+                .attr("transform", function (d) {
+                    return "translate(" + g.node(d).x + "," + g.node(d).y + ")";
+                });
 //                .on("dblclick", dblclick)
 //                .call(force.drag);
 
         node.append("rect")
-                .attr("x", function (d) {
-                    return g.node(d).x;
-                })
-                .attr("y", function (d) {
-                    return g.node(d).y;
-                })
                 .attr("width", function (d) {
                     return g.node(d).width;
                 })
@@ -133,57 +116,51 @@
                     return g.node(d).height;
                 });
 
-//        var nodeChildEnter = node.selectAll(".nodeChild")
-//                .data(function (d) {
-//                    return d.children;
-//                })
-//                .enter();
-//
-//        var nodeChild = nodeChildEnter.append("rect")
-//                .attr("class", "nodeChild")
-//                .attr("x", function (d) {
-//                    return d.x;
-//                })
-//                .attr("y", function (d) {
-//                    return d.y;
-//                })
-//                .attr("width", function (d) {
-//                    return d.w;
-//                })
-//                .attr("height", function (d) {
-//                    return d.h;
-//                });
-//
-//        nodeChildEnter.append("text")
-//                .attr("class", "label")
-//                .attr("x", function (d) {
-//                    return d.x;
-//                })
-//                .attr("y", function (d) {
-//                    return d.y;
-//                })
-//                .attr("dx", 25)
-//                .attr("dy", 10)
-//                .text(function (d) {
-//                    return d.name;
-//                })
-//                .each(function (d) {
-//                    var b = this.parentNode.getBBox();
-//                    var extra = 2 * margin + 2 * pad;
-//                    d.width = b.width + extra;
-//                    d.height = b.height + extra;
-//                });
+        var nodeChildEnter = node.selectAll(".nodeChild")
+                .data(function (d) {
+                    return g.node(d).children;
+                })
+                .enter();
+
+        var nodeChild = nodeChildEnter.append("rect")
+                .attr("class", "nodeChild")
+                .attr("x", function (d) {
+                    return d.x;
+                })
+                .attr("y", function (d) {
+                    return d.y;
+                })
+                .attr("width", function (d) {
+                    return d.w;
+                })
+                .attr("height", function (d) {
+                    return d.h;
+                });
+
+        nodeChildEnter.append("text")
+                .attr("class", "label")
+                .attr("x", function (d) {
+                    return d.x;
+                })
+                .attr("y", function (d) {
+                    return d.y;
+                })
+                .attr("dx", 25)
+                .attr("dy", 10)
+                .text(function (d) {
+                    return d.name;
+                })
+                .each(function (d) {
+                    var b = this.parentNode.getBBox();
+                    var extra = 2 * margin + 2 * pad;
+                    d.width = b.width + extra;
+                    d.height = b.height + extra;
+                });
 
         node.append("text")
                 .attr("class", "label")
                 .attr("dx", 25)
                 .attr("dy", 10)
-                .attr("x", function (d) {
-                    return g.node(d).x;
-                })
-                .attr("y", function (d) {
-                    return g.node(d).y;
-                })
                 .text(function (d) {
                     return g.node(d).label;
                 });

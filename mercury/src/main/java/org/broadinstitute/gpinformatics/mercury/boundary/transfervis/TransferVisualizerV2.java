@@ -29,10 +29,6 @@ public class TransferVisualizerV2 {
     private static final Log logger = LogFactory.getLog(TransferVisualizerV2.class);
 
     private static class Traverser implements TransferTraverserCriteria {
-        // This class currently renders links interspersed with nodes.  D3 requires separate arrays.
-        // Links refer to node indexes.  Traverser needs to accumulate nodes and links, then caller can render when
-        // finished.
-
         @SuppressWarnings("StringBufferField")
         private final StringBuilder nodesJson = new StringBuilder();
         @SuppressWarnings("StringBufferField")
@@ -108,16 +104,16 @@ public class TransferVisualizerV2 {
         }
 
         private void renderLink(String eventId, String sourceId, String targetId) {
-            Integer sourceIndex = mapLabelToIndex.get(sourceId);
-            if (sourceIndex == null) {
-                throw new RuntimeException("Failed to find index for " + sourceId);
-            }
-            Integer targetIndex = mapLabelToIndex.get(targetId);
-            if (targetIndex == null) {
-                throw new RuntimeException("Failed to find index for " + targetId);
-            }
-            linksJson.append("{ \"source\": ").append(sourceIndex).append(", \"target\": ").append(targetIndex).
-                    append(" },\n");
+//            Integer sourceIndex = mapLabelToIndex.get(sourceId);
+//            if (sourceIndex == null) {
+//                throw new RuntimeException("Failed to find index for " + sourceId);
+//            }
+//            Integer targetIndex = mapLabelToIndex.get(targetId);
+//            if (targetIndex == null) {
+//                throw new RuntimeException("Failed to find index for " + targetId);
+//            }
+            linksJson.append("{ \"source\": \"").append(sourceId).append("\", \"target\": \"").append(targetId).
+                    append("\" },\n");
         }
 
         private void renderVessel(LabVessel labVessel) {
@@ -167,8 +163,8 @@ public class TransferVisualizerV2 {
                 nodeIndex++;
                 logger.info("Rendering container " + containerLabel);
                 VesselGeometry vesselGeometry = vesselContainer.getEmbedder().getVesselGeometry();
-                nodesJson.append("{ \"name\": \"").append(ancillaryLabel).
-                        append("\", \"w\": 120, \"h\": 20, \"children\": [");
+                nodesJson.append("{ \"id\":\"").append(containerLabel).append("\", \"values\": {\"label\": \"").
+                        append(ancillaryLabel).append("\", \"width\": 120, \"height\": 20, \"children\": [");
                 boolean first = true;
                 for (VesselPosition vesselPosition : vesselGeometry.getVesselPositions()) {
                     VesselGeometry.RowColumn rowColumn = vesselGeometry.getRowColumnForVesselPosition(vesselPosition);
@@ -194,7 +190,7 @@ public class TransferVisualizerV2 {
 */
                     }
                 }
-                nodesJson.append("] },\n");
+                nodesJson.append("] } },\n");
 
                 for (VesselContainer<?> otherContainer : otherContainers) {
                     renderContainer(otherContainer, null);
