@@ -1571,7 +1571,7 @@
                 <name>Centrifuge RNA Spin Column RPE 2</name>
                 <labEventTypes>CENTRIFUGE</labEventTypes>
                 <workflowQualifier>RPE2</workflowQualifier>
-                <instructions>Centrifuge for 2 min at full speed (max 20,000 x g).
+                <instructions>Centrifuge for 15 s at full speed (max 20,000 x g).
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -1586,20 +1586,20 @@
                 <labEventTypes>ADD_REAGENT</labEventTypes>
                 <workflowQualifier>ETHANOL3</workflowQualifier>
                 <reagentTypes>100% Ethanol</reagentTypes>
-                <instructions>Add 100% ethanol to the spin column
+                <instructions>Add 500uL 100% ethanol to the spin column
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Centrifuge RNA Spin Column Dry</name>
                 <labEventTypes>CENTRIFUGE</labEventTypes>
-                <workflowQualifier>DRY</workflowQualifier>
+                <workflowQualifier>RNA_DRY</workflowQualifier>
                 <instructions>centrifuge for 2 minutes at full speed to dry membrane
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Move Column After Dry</name>
                 <labEventTypes>MOVE</labEventTypes>
-                <workflowQualifier>DRY</workflowQualifier>
+                <workflowQualifier>RNA_DRY</workflowQualifier>
                 <instructions>Move RNA spin column to a new 1.5 ml collection tube
                 </instructions>
             </workflowStepDefs>
@@ -1731,8 +1731,15 @@
             <workflowStepDefs>
                 <name>Dry DNA Spin Column Membrane</name>
                 <labEventTypes>CENTRIFUGE</labEventTypes>
-                <workflowQualifier>DRY</workflowQualifier>
+                <workflowQualifier>DNA_DRY</workflowQualifier>
                 <instructions>Spin DNA spin column for 1 min at full speed (max 20,000 x g)
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Move Column After Dry</name>
+                <labEventTypes>MOVE</labEventTypes>
+                <workflowQualifier>DNA_DRY</workflowQualifier>
+                <instructions>Move DNA spin column to a new 1.5 ml collection tube and discard flow-through
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
