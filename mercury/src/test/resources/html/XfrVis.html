@@ -33,6 +33,11 @@
             text-anchor: middle;
             cursor: move;
         }
+
+        .overlay {
+            fill: LightYellow;
+            pointer-events: all;
+        }
     </style>
 </head>
 <body>
@@ -42,18 +47,19 @@
     var width = 1200, height = 950;
 
     var svg = d3.select("body").append("svg")
-            .attr({width: width, height: height, "pointer-events": "all"});
+            .attr("width", width)
+            .attr("height", height)
+            .append("g")
+            .call(d3.behavior.zoom().scaleExtent([.1, 8]).on("zoom", zoom))
+            .append("g");
 
-    svg.append('rect')
-            .attr({class: 'background', width: "100%", height: "100%"})
-            .call(d3.behavior.zoom().on("zoom", redraw));
+    svg.append("rect")
+            .attr("class", "overlay")
+            .attr("width", width * 10)
+            .attr("height", height * 10);
 
-//    var vis = svg
-//            .append('g')
-//            .attr('transform', 'translate(250,250) scale(0.3)');
-
-    function redraw() {
-        svg.attr("transform", "translate(" + d3.event.translate + ")" + " scale(" + d3.event.scale + ")");
+    function zoom() {
+        svg.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
     }
 
     svg.append('svg:defs').append('svg:marker')
@@ -115,6 +121,19 @@
                 .attr("height", function (d) {
                     return g.node(d).height;
                 });
+        node.append("text")
+                .attr("class", "label")
+                .attr("dx", 25)
+                .attr("dy", 10)
+                .text(function (d) {
+                    return g.node(d).label;
+                });
+//                .each(function (d) {
+//                    var b = this.parentNode.getBBox();
+//                    var extra = 2 * margin + 2 * pad;
+//                    d.width = b.width + extra;
+//                    d.height = b.height + extra;
+//                });
 
         var nodeChildEnter = node.selectAll(".nodeChild")
                 .data(function (d) {
@@ -156,20 +175,6 @@
                     d.width = b.width + extra;
                     d.height = b.height + extra;
                 });
-
-        node.append("text")
-                .attr("class", "label")
-                .attr("dx", 25)
-                .attr("dy", 10)
-                .text(function (d) {
-                    return g.node(d).label;
-                });
-//                .each(function (d) {
-//                    var b = this.parentNode.getBBox();
-//                    var extra = 2 * margin + 2 * pad;
-//                    d.width = b.width + extra;
-//                    d.height = b.height + extra;
-//                });
 
 //        force.on("tick", function (e) {
 //            // Push sources up and targets down to form a weak tree.
