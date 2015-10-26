@@ -46,22 +46,22 @@
 <script>
     var width = 1200, height = 950;
 
+    // Set up pan and zoom.
     var svg = d3.select("body").append("svg")
             .attr("width", width)
             .attr("height", height)
             .append("g")
             .call(d3.behavior.zoom().scaleExtent([.1, 8]).on("zoom", zoom))
             .append("g");
-
     svg.append("rect")
             .attr("class", "overlay")
             .attr("width", width * 10)
             .attr("height", height * 10);
-
     function zoom() {
         svg.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
     }
 
+    // Arrows for edges.
     svg.append('svg:defs').append('svg:marker')
             .attr({
                 id: 'end-arrow',
@@ -90,19 +90,18 @@
         g.setDefaultEdgeLabel(function() { return {}; });
         // function read(json) {
 
+        // Load json nodes and links into Dagre's model.  Dagre primarily uses width and height.
         for (i = 0; i < json.nodes.length; i++) {
             g.setNode(json.nodes[i].id, json.nodes[i].values);
         }
         for (i = 0; i < json.links.length; i++) {
             g.setEdge(json.links[i].source, json.links[i].target);
         }
+
+        // Assign x / y coordinates.
         dagre.layout(g);
 
-//        var link = svg.selectAll(".link")
-//                .data(json.links)
-//                .enter().append("line")
-//                .attr("class", "link");
-
+        // Render racks and plates.
         var margin = 10, pad = 12;
         var node = svg.selectAll(".node")
                 .data(g.nodes())
@@ -114,9 +113,6 @@
                     var y = graphNode.y - (graphNode.height / 2);
                     return "translate(" + x + "," + y + ")";
                 });
-//                .on("dblclick", dblclick)
-//                .call(force.drag);
-
         node.append("rect")
                 .attr("width", function (d) {
                     return g.node(d).width;
@@ -138,12 +134,14 @@
 //                    d.height = b.height + extra;
 //                });
 
+        // Set the D3 datum to the children.
         var nodeChildEnter = node.selectAll(".nodeChild")
                 .data(function (d) {
                     return g.node(d).children;
                 })
                 .enter();
 
+        // Render tubes.
         var nodeChild = nodeChildEnter.append("rect")
                 .attr("class", "nodeChild")
                 .attr("x", function (d) {
@@ -158,7 +156,6 @@
                 .attr("height", function (d) {
                     return d.h;
                 });
-
         nodeChildEnter.append("text")
                 .attr("class", "label")
                 .attr("x", function (d) {
@@ -172,45 +169,48 @@
                 .text(function (d) {
                     return d.name;
                 })
-                .each(function (d) {
-                    var b = this.parentNode.getBBox();
-                    var extra = 2 * margin + 2 * pad;
-                    d.width = b.width + extra;
-                    d.height = b.height + extra;
+//                .each(function (d) {
+//                    var b = this.parentNode.getBBox();
+//                    var extra = 2 * margin + 2 * pad;
+//                    d.width = b.width + extra;
+//                    d.height = b.height + extra;
+//                });
+
+        // Convert Dagre edge control points into pairs of line points.
+        var links = [];
+        g.edges().forEach(function(e) {
+            var points = g.edge(e).points;
+            for(var i=0, len=points.length-1; i<len; i++){
+                // (note: loop until length - 1 since we're getting the next
+                //  item with i+1)
+                links.push({
+                    sourceX: points[i].x,
+                    sourceY: points[i].y,
+                    targetX: points[i + 1].x,
+                    targetY: points[i + 1].y
+                });
+            }
+        });
+
+        // Render edges.
+        var points = svg.selectAll(".link")
+                .data(links)
+                .enter().append("line")
+                .attr("class", "link")
+                .attr("x1", function (d) {
+                    return d.sourceX;
+                })
+                .attr("y1", function (d) {
+                    return d.sourceY;
+                })
+                .attr("x2", function (d) {
+                    return d.targetX;
+                })
+                .attr("y2", function (d) {
+                    return d.targetY;
                 });
 
-//        force.on("tick", function (e) {
-//            // Push sources up and targets down to form a weak tree.
-//            var k = linkDistance * 6 * e.alpha;
-//            json.links.forEach(function (d, i) {
-//                d.source.y -= k;
-//                d.target.y += k;
-//            });
-//            link
-//                    .attr("x1", function (d) {
-//                        return d.source.x;
-//                    })
-//                    .attr("y1", function (d) {
-//                        return d.source.y;
-//                    })
-//                    .attr("x2", function (d) {
-//                        return d.target.x;
-//                    })
-//                    .attr("y2", function (d) {
-//                        return d.target.y;
-//                    });
-//
-//            node.attr("transform", function (d) {
-//                return "translate(" + d.x + "," + d.y + ")";
-//            });
-//        });
     });
-//    function dblclick(d) {
-//        d3.select(this).classed("fixed", d.fixed = false);
-//    }
-//    function dragstart(d) {
-//        d3.select(this).classed("fixed", d.fixed = true);
-//    }
     function isIE() {
         return ((navigator.appName == 'Microsoft Internet Explorer') || ((navigator.appName == 'Netscape') &&
         (new RegExp("Trident/.*rv:([0-9]{1,}[\.0-9]{0,})").exec(navigator.userAgent) != null)));
