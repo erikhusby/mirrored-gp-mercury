@@ -15,10 +15,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -33,8 +31,7 @@ public class TransferVisualizerV2 {
         private final StringBuilder nodesJson = new StringBuilder();
         @SuppressWarnings("StringBufferField")
         private final StringBuilder linksJson = new StringBuilder();
-        private int nodeIndex;
-        private final Map<String, Integer> mapLabelToIndex = new HashMap<>();
+        private final Set<String> renderedLabels = new HashSet<>();
         private final Set<String> renderedEvents = new HashSet<>();
 
         @Override
@@ -158,27 +155,25 @@ public class TransferVisualizerV2 {
             List<String> childIds = new ArrayList<>();
             Set<VesselContainer<?>> otherContainers = new HashSet<>();
             List<Rearray> rearrays = new ArrayList<>();
-            if (mapLabelToIndex.get(containerLabel) == null) {
-                mapLabelToIndex.put(containerLabel, nodeIndex);
-                nodeIndex++;
+            if (renderedLabels.add(containerLabel)) {
                 logger.info("Rendering container " + containerLabel);
                 VesselGeometry vesselGeometry = vesselContainer.getEmbedder().getVesselGeometry();
-                nodesJson.append("{ \"id\":\"").append(containerLabel).append("\", \"values\": {\"label\": \"").
-                        append(ancillaryLabel).append("\", \"width\": 120, \"height\": 20, \"children\": [");
-                boolean first = true;
+                StringBuilder childBuilder = new StringBuilder();
+                int maxColumn = 0;
+                int maxRow = 0;
                 for (VesselPosition vesselPosition : vesselGeometry.getVesselPositions()) {
                     VesselGeometry.RowColumn rowColumn = vesselGeometry.getRowColumnForVesselPosition(vesselPosition);
                     LabVessel child = vesselContainer.getVesselAtPosition(vesselPosition);
                     if (child != null) {
-                        if (!first) {
-                            nodesJson.append(",");
+                        if (childBuilder.length() > 0) {
+                            childBuilder.append(",");
                         }
-                        first = false;
-                        nodesJson.append("{ \"name\": \"").append(child.getLabel()).
+                        childBuilder.append("{ \"name\": \"").append(child.getLabel()).
                                 append("\", \"x\": ").append((rowColumn.getColumn() - 1) * 60).
                                 append(", \"y\": ").append((rowColumn.getRow() - 1) * 20).
                                 append(", \"w\": 60, \"h\": 20 }");
-/*
+                        maxColumn = Math.max(maxColumn, rowColumn.getColumn());
+                        maxRow = Math.max(maxRow, rowColumn.getRow());
                         if (child.getContainers().size() > 1) {
                             for (VesselContainer<?> otherContainer : child.getContainers()) {
                                 if (!renderedLabels.contains(otherContainer.getEmbedder().getLabel())) {
@@ -187,9 +182,14 @@ public class TransferVisualizerV2 {
                                 }
                             }
                         }
-*/
                     }
                 }
+                int width = Math.max(120, maxColumn * 60);
+                int height = Math.max(20, maxRow * 20);
+                nodesJson.append("{ \"id\":\"").append(containerLabel).append("\", \"values\": {\"label\": \"").
+                        append(ancillaryLabel).append("\", \"width\": ").append(width).append(", \"height\": ").
+                        append(height).append(", \"children\": [");
+                nodesJson.append(childBuilder.toString());
                 nodesJson.append("] } },\n");
 
                 for (VesselContainer<?> otherContainer : otherContainers) {
@@ -225,8 +225,8 @@ public class TransferVisualizerV2 {
             }
 
             private void render() {
-                String sourceId = labVessel.getLabel() + "|" + vesselContainer.getEmbedder().getLabel();
-                String targetId = labVessel.getLabel() + "|" + otherContainer.getEmbedder().getLabel();
+                String sourceId = /*labVessel.getLabel() + "|" + */vesselContainer.getEmbedder().getLabel();
+                String targetId = /*labVessel.getLabel() + "|" + */otherContainer.getEmbedder().getLabel();
                 renderLink(sourceId + "|" + targetId, sourceId, targetId);
             }
         }
