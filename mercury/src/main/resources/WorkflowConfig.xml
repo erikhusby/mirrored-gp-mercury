@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<workflowConfig>
+<workflowConfig
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="WorkflowConfig.xsd">
     <workflowProcessDefs>
         <name>Preflight</name>
         <workflowProcessDefVersions>
@@ -1398,7 +1400,7 @@
                 <name>Transfer to RNA Spin Column 1</name>
                 <labEventTypes>TRANSFER</labEventTypes>
                 <workflowQualifier>ALLPREP_FLOWTHROUGH_TO_RNA_SPIN1</workflowQualifier>
-                <instructions>Transfer half to RNA spin column.
+                <instructions>Transfer a third to RNA spin column.
                 </instructions>
                 <manualTransferDetails>
                     <messageType>PLATE_TRANSFER_EVENT</messageType>
@@ -1409,17 +1411,24 @@
                 </manualTransferDetails>
             </workflowStepDefs>
             <workflowStepDefs>
-                <name>Centrifuge RNA Spin Column</name>
+                <name>Centrifuge RNA Spin Column 1</name>
                 <labEventTypes>CENTRIFUGE</labEventTypes>
                 <workflowQualifier>RNA_SPIN1</workflowQualifier>
                 <instructions>centrifuge for 15 s at full speed (max 20,000 x g).
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
+                <name>Move Column After Transfer to RNA Spin Column 1</name>
+                <labEventTypes>MOVE</labEventTypes>
+                <workflowQualifier>RNA_SPIN1</workflowQualifier>
+                <instructions>Place the column in a clean 2ml collection tube and discard the tube with the filtrate.
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
                 <name>Transfer to RNA Spin Column 2</name>
                 <labEventTypes>TRANSFER</labEventTypes>
                 <workflowQualifier>ALLPREP_FLOWTHROUGH_TO_RNA_SPIN2</workflowQualifier>
-                <instructions>Transfer half to RNA spin column.
+                <instructions>Transfer a third to RNA spin column.
                 </instructions>
                 <manualTransferDetails>
                     <messageType>PLATE_TRANSFER_EVENT</messageType>
@@ -1433,10 +1442,48 @@
                 </manualTransferDetails>
             </workflowStepDefs>
             <workflowStepDefs>
-                <name>Centrifuge RNA Spin Column</name>
+                <name>Centrifuge RNA Spin Column 2</name>
                 <labEventTypes>CENTRIFUGE</labEventTypes>
                 <workflowQualifier>RNA_SPIN2</workflowQualifier>
                 <instructions>centrifuge for 15 s at full speed (max 20,000 x g).
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Move Column After Transfer to RNA Spin Column 2</name>
+                <labEventTypes>MOVE</labEventTypes>
+                <workflowQualifier>RNA_SPIN2</workflowQualifier>
+                <instructions>Place the column in a clean 2ml collection tube and discard the tube with the filtrate.
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Transfer to RNA Spin Column 3</name>
+                <labEventTypes>TRANSFER</labEventTypes>
+                <workflowQualifier>ALLPREP_FLOWTHROUGH_TO_RNA_SPIN3</workflowQualifier>
+                <instructions>Transfer a third to RNA spin column.
+                </instructions>
+                <manualTransferDetails>
+                    <messageType>PLATE_TRANSFER_EVENT</messageType>
+                    <sourceVesselTypeGeometryString>RackType.FlipperRackRow24</sourceVesselTypeGeometryString>
+                    <sourceSection>ROWOF24</sourceSection>
+                    <targetVesselTypeGeometryString>RackType.FlipperRackRow24</targetVesselTypeGeometryString>
+                    <targetSection>ROWOF24</targetSection>
+                    <targetExpectedToExist>true</targetExpectedToExist>
+                    <repeatedEvent>TRANSFER</repeatedEvent>
+                    <repeatedWorkflowQualifier>ALLPREP_FLOWTHROUGH_TO_RNA_SPIN2</repeatedWorkflowQualifier>
+                </manualTransferDetails>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Centrifuge RNA Spin Column 3</name>
+                <labEventTypes>CENTRIFUGE</labEventTypes>
+                <workflowQualifier>RNA_SPIN3</workflowQualifier>
+                <instructions>centrifuge for 15 s at full speed (max 20,000 x g).
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Move Column After Transfer to RNA Spin Column 3</name>
+                <labEventTypes>MOVE</labEventTypes>
+                <workflowQualifier>RNA_SPIN3</workflowQualifier>
+                <instructions>Place the column in a clean 2ml collection tube and discard the tube with the filtrate.
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -1488,7 +1535,7 @@
                 <name>Centrifuge RNA Spin Column</name>
                 <labEventTypes>CENTRIFUGE</labEventTypes>
                 <workflowQualifier>BUFFER_FRN</workflowQualifier>
-                <instructions>centrifuge for 15 s at ≥8000 x g and save flow-through.
+                <instructions>centrifuge for 15 s at ≥8000 x g and ***save flow-through***.
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -1532,6 +1579,14 @@
                 <labEventTypes>MOVE</labEventTypes>
                 <workflowQualifier>RPE2</workflowQualifier>
                 <instructions>Place the column in a clean 2ml collection tube and discard the tube with the filtrate.
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Add 100% ethanol</name>
+                <labEventTypes>ADD_REAGENT</labEventTypes>
+                <workflowQualifier>ETHANOL3</workflowQualifier>
+                <reagentTypes>100% Ethanol</reagentTypes>
+                <instructions>Add 100% ethanol to the spin column
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -2033,9 +2088,6 @@
             <sequencingConfigDefs>Resequencing-Production</sequencingConfigDefs>
             <routingRule>MERCURY</routingRule>
             <inValidation>false</inValidation>
-            <version>01</version>
-            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
-            <workflowProcessDefs>DNA and RNA for Frozen Tissue - AllPrep</workflowProcessDefs>
         </productWorkflowDefVersions>
     </productWorkflowDefs>
     <productWorkflowDefs>
