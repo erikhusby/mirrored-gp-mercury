@@ -147,7 +147,7 @@ public class LabMetric implements Comparable<LabMetric> {
             @Override
             public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
                 LabMetricDecision.Decision decision;
-                if (labMetric.getValue().compareTo(new BigDecimal("25")) == 1) {
+                if (labMetric.getValue().compareTo(new BigDecimal("5")) == 1) {
                     decision = LabMetricDecision.Decision.PASS;
                 } else {
                     decision = LabMetricDecision.Decision.FAIL;
