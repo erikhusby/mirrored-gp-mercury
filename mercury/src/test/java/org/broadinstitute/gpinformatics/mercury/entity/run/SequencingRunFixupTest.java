@@ -195,6 +195,53 @@ public class SequencingRunFixupTest extends Arquillian {
     }
 
     @Test(enabled = false)
+    public void fixupRunDirectoryGplim3288() {
+        String[] runNames = {
+                "141221_SL-HDJ_0508_AHBG13ADXX",
+                "141221_SL-HCD_0352_BFCHBFPTADXX",
+                "141221_SL-HCC_0522_BFCHBG2TADXX",
+                "141221_SL-HDC_0547_AFCHBFRVADXX",
+                "141220_SL-HDB_0563_BFCHBG2CADXX",
+                "141220_SL-HDJ_0507_BHBFMHADXX",
+                "141220_SL-HDG_0510_AHBFN0ADXX",
+                "141220_SL-HDF_0565_AHBFMGADXX",
+                "141220_SL-HDE_0522_BHBFMUADXX",
+                "141220_SL-HDE_0521_AHBG2KADXX",
+                "141221_SL-HCD_0351_AFCHBG29ADXX",
+                "141221_SL-HDB_0564_AFCHBFPPADXX",
+                "141221_SL-HCC_0521_AFCHBG24ADXX",
+                "141221_SL-HDB_0565_BFCHBG19ADXX",
+                "141221_SL-HDC_0548_BFCHBFPDADXX",
+                "141220_SL-HDH_0535_AHBFMYADXX",
+                "141220_SL-HCD_0350_BFCHBFN1ADXX",
+                "141220_SL-HCC_0519_AFCHBFRGADXX",
+                "141220_SL-HDC_0545_AFCHBG65ADXX",
+                "141220_SL-HDJ_0506_AHBG6AADXX",
+                "141220_SL-HDF_0566_BHBFMMADXX",
+                "141220_SL-HDG_0511_BHBG2BADXX",
+                "141220_SL-HCD_0349_AFCHBFMWADXX",
+                "141220_SL-HCC_0520_BFCHBFN7ADXX",
+                "141220_SL-HDB_0562_AFCHBFMVADXX",
+                "141220_SL-HDC_0546_BFCHBFRLADXX",
+                "141220_SL-HBW_0503_AHBFRJADXX",
+                "141220_SL-HBW_0504_BHBG5VADXX"
+        };
+        for (String runName : runNames) {
+            IlluminaSequencingRun run = illuminaSequencingRunDao.findByRunName(runName);
+            String machineName = runName.split("_")[1];
+            String badRunDirectory = run.getRunDirectory();
+            String goodRunDirectory = badRunDirectory
+                    .replace("/crsp/illumina2/proc/", String.format("/crsp/illumina2/proc/%s/", machineName));
+
+            run.setRunDirectory(goodRunDirectory);
+            System.out.println(String.format("Changed runDirectory for %s from %s to %s", runName, badRunDirectory,
+                    goodRunDirectory));
+        }
+        illuminaSequencingRunDao.persist(new FixupCommentary(
+                "Fixing missing machine name in run directory path. See https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-3288"));
+    }
+
+    @Test(enabled = false)
     public void gplim3376FixupFlowcellBarcode() {
         userBean.loginOSUser();
         // Change lab_vessel 1946416 flowcell_barcode to HGKJCADXX and flowcell_type to HiSeq2500Flowcell

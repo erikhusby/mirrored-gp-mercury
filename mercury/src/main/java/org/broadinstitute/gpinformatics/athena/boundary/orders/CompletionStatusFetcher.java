@@ -10,7 +10,10 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * This is a utility class for retrieving and storing PDO completion status.
+ * Holds sample status counts for multiple PDOs. Provides convenience methods for retrieving counts and percentages for
+ * individual PDOs. Returns zero rather than null when status counts for the PDO are not known by this holder.
+ *
+ * TODO: rename to remove the word "fetcher"
  */
 public class CompletionStatusFetcher {
 
@@ -19,18 +22,19 @@ public class CompletionStatusFetcher {
     @SuppressWarnings("unchecked")
     private Map<String, ProductOrderCompletionStatus> progressByBusinessKey = new DefaultedMap(DEFAULT);
 
-    @SuppressWarnings("unchecked")
-    public void loadProgress(ProductOrderDao productOrderDao, Collection<Long> productOrderIds) {
-        progressByBusinessKey = DefaultedMap.defaultedMap(productOrderDao.getProgress(productOrderIds), DEFAULT);
-    }
-
-    @SuppressWarnings("unchecked")
-    public void loadProgress(ProductOrderDao productOrderDao) {
-        progressByBusinessKey = DefaultedMap.defaultedMap(productOrderDao.getAllProgress(), DEFAULT);
+    /**
+     * Create a status object containing the sample status counts for a set of PDOs. This is designed to hold results
+     * from a call to {@link ProductOrderDao#getProgress(Collection)} in order to provide some extra convenience methods
+     * for accessing the data.
+     *
+     * @param progressByBusinessKey
+     */
+    public CompletionStatusFetcher(Map<String, ProductOrderCompletionStatus> progressByBusinessKey) {
+        this.progressByBusinessKey = DefaultedMap.defaultedMap(progressByBusinessKey, DEFAULT);
     }
 
     @DaoFree
-    public int getPercentAbandoned(String orderKey) {
+    public double getPercentAbandoned(String orderKey) {
         return progressByBusinessKey.get(orderKey).getPercentAbandoned();
     }
 
@@ -40,7 +44,7 @@ public class CompletionStatusFetcher {
     }
 
     @DaoFree
-    public int getPercentCompleted(String orderKey) {
+    public double getPercentCompleted(String orderKey) {
         return progressByBusinessKey.get(orderKey).getPercentCompleted();
     }
 
@@ -50,7 +54,7 @@ public class CompletionStatusFetcher {
     }
 
     @DaoFree
-    public int getPercentInProgress(String orderKey) {
+    public double getPercentInProgress(String orderKey) {
         return progressByBusinessKey.get(orderKey).getPercentInProgress();
     }
 
@@ -68,5 +72,9 @@ public class CompletionStatusFetcher {
     public Set<String> getKeys() {
         return progressByBusinessKey.keySet();
     }
-}
 
+    @DaoFree
+    public ProductOrderCompletionStatus getStatus(String orderKey) {
+        return progressByBusinessKey.get(orderKey);
+    }
+}

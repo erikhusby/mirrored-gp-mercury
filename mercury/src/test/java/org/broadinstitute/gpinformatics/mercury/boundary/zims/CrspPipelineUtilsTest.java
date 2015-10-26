@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -13,6 +14,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
 import org.testng.Assert;
@@ -42,22 +44,19 @@ public class CrspPipelineUtilsTest {
 
     private SampleData sampleDataWithNonBspSample = new MercurySampleData("Not from BSP", Collections.<Metadata>emptySet());
 
-    private ProductOrderSample createPdoSample(MercurySample.MetadataSource metadataSource,
-                                               String sampleName) {
-        ProductOrder pdo = new ProductOrder();
+    private ProductOrderSample createPdoSample(MercurySample.MetadataSource metadataSource, String sampleName) {
+        ProductOrder pdo = ProductOrderTestFactory.buildProductOrder(0, "SM-", Workflow.ICE_CRSP);
         ProductOrderSample pdoSample = new ProductOrderSample(sampleName);
         MercurySample mercurySample = new MercurySample(pdoSample.getSampleKey(), metadataSource);
 
         Set<Metadata> metadata = new HashSet<>();
-        metadata.add(new Metadata(Metadata.Key.BUICK_COLLECTION_DATE,BUICK_COLLECTION_DATE));
-        metadata.add(new Metadata(Metadata.Key.BUICK_VISIT,BUICK_VISIT));
-        MercurySampleData mercurySampleData = new MercurySampleData(pdoSample.getSampleKey(),metadata);
+        metadata.add(new Metadata(Metadata.Key.BUICK_COLLECTION_DATE, BUICK_COLLECTION_DATE));
+        metadata.add(new Metadata(Metadata.Key.BUICK_VISIT, BUICK_VISIT));
+        MercurySampleData mercurySampleData = new MercurySampleData(pdoSample.getSampleKey(), metadata);
 
         pdoSample.setMercurySample(mercurySample);
         pdoSample.setSampleData(mercurySampleData);
         pdo.addSample(pdoSample);
-        ResearchProject crspProject = new ResearchProject();
-        pdo.setResearchProject(crspProject);
         return pdoSample;
     }
 

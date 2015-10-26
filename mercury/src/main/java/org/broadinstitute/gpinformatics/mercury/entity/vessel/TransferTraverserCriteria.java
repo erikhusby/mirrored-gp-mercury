@@ -684,19 +684,19 @@ public interface TransferTraverserCriteria {
     }
 
     /**
-     * Traverse LabVessels and LabEvents for events producing MaterialTypes
+     * Traverse LabVessels and LabEvents to find current MaterialType
      */
-    class LabEventsWithMaterialTypeTraverserCriteria implements TransferTraverserCriteria {
-        private final LabVessel.MaterialType materialType;
-        private LabVessel vesselForMaterialType = null;
+    class NearestMaterialTypeTraverserCriteria implements TransferTraverserCriteria {
+        private MaterialType materialType=null;
 
-        public LabEventsWithMaterialTypeTraverserCriteria(LabVessel.MaterialType materialTypes) {
-            this.materialType = materialTypes;
+        public NearestMaterialTypeTraverserCriteria() {
         }
-
 
         @Override
         public TraversalControl evaluateVesselPreOrder(Context context) {
+            if (materialType != null) {
+                return TraversalControl.StopTraversing;
+            }
             LabVessel vessel = context.getLabVessel();
             LabEvent event = context.getEvent();
             if (event != null) {
@@ -705,7 +705,6 @@ public interface TransferTraverserCriteria {
             if (vessel != null) {
                 evaluateTransfers(context.getTraversalDirection(), vessel);
             }
-
             return TraversalControl.ContinueTraversing;
         }
 
@@ -722,8 +721,9 @@ public interface TransferTraverserCriteria {
         }
 
         private void evaluateEvent(LabVessel vessel, LabEvent event) {
-            if (materialType == event.getLabEventType().getResultingMaterialType() && vesselForMaterialType == null) {
-                vesselForMaterialType = vessel;
+            MaterialType resultingMaterialType = event.getLabEventType().getResultingMaterialType();
+            if (resultingMaterialType != null) {
+                materialType=resultingMaterialType;
             }
         }
 
@@ -735,8 +735,8 @@ public interface TransferTraverserCriteria {
         public void evaluateVesselPostOrder(Context context) {
         }
 
-        public LabVessel getVesselForMaterialType() {
-            return vesselForMaterialType;
+        public MaterialType getMaterialType() {
+            return materialType;
         }
     }
 
@@ -749,34 +749,41 @@ public interface TransferTraverserCriteria {
 
         private final Set<LabEvent> labEvents = new TreeSet<LabEvent>( LabEvent.BY_EVENT_DATE_LOC );
 
+        private final Set<LabVessel> visitedVessels = new HashSet<>();
+
         @Override
         public TraversalControl evaluateVesselPreOrder(Context context) {
+            TraversalControl results = TraversalControl.ContinueTraversing;
+
             if (context.getEvent() != null) {
-                if(!labEvents.add(context.getEvent())) {
-                    // Not sure if/how to avoid possibility of infinite looping on a circular relationship
-                    // This prunes off descendant events
-//                    return TraversalControl.StopTraversing;
-                }
                 if (context.getHopCount() > hopCount) {
                     hopCount = context.getHopCount();
                 }
+                labEvents.add(context.getEvent());
             }
 
             if( context.getLabVessel() != null ) {
                 labEvents.addAll(context.getLabVessel().getInPlaceLabEvents());
                 for (VesselContainer containerVessel : context.getLabVessel().getContainers()) {
+                    // In place events may apply to containers
                     labEvents.addAll(containerVessel.getEmbedder().getInPlaceLabEvents());
+                }
+
+                // Avoid repeatedly traversing the entire tree from the same vessel
+                // TODO: Adding same logic for VesselContainer/Position to GPLIM-3577
+                if( !visitedVessels.add(context.getLabVessel())) {
+                    results = TraversalControl.StopTraversing;
                 }
             }
 
             // Check for in place events on vessel container (e.g. EndRepair, ABase, APWash)
             if( context.getVesselContainer() != null ) {
-                LabVessel containerVessel = context.getVesselContainer().getEmbedder();
+                VesselContainer containerVessel = context.getVesselContainer();
                 if (containerVessel != null) {
-                    labEvents.addAll(containerVessel.getInPlaceLabEvents());
+                    labEvents.addAll(containerVessel.getEmbedder().getInPlaceLabEvents());
 
                     // Look for what comes in from the side (e.g. IndexedAdapterLigation, BaitAddition)
-                    for (LabEvent containerEvent : containerVessel.getTransfersTo()) {
+                    for (LabEvent containerEvent : containerVessel.getEmbedder().getTransfersTo()) {
                         labEvents.add(containerEvent);
                         for (LabVessel ancestorLabVessel : containerEvent.getSourceLabVessels()) {
                             if( ancestorLabVessel.getContainerRole() != null ){
@@ -787,7 +794,7 @@ public interface TransferTraverserCriteria {
                 }
             }
 
-            return TraversalControl.ContinueTraversing;
+            return results;
         }
 
         @Override

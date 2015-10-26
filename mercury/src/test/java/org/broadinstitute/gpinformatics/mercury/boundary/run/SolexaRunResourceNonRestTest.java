@@ -11,12 +11,11 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcherStub;
+import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.monitoring.HipChatMessageSender;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConfig;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnectorProducer;
@@ -40,9 +39,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.MiSeqReagentKitDao;
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -78,6 +75,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -243,7 +241,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
                                                                                                    .getNormCatchBarcodes()),
                                                                  Collections.singletonList(hybridSelectionJaxbBuilder
                                                                                                    .getNormCatchRackBarcode()),
-                                                                 true, false).invoke();
+                                                                 true, QtpJaxbBuilder.PcrType.VIIA_7).invoke();
         for (BettaLIMSMessage bettaLIMSMessage : qtpJaxbBuilder.getMessageList()) {
             BettaLimsMessageResourceTest.sendMessage(bettaLIMSMessage, bettaLimsMessageResource, appConfig.getUrl());
         }
@@ -542,16 +540,21 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
      * @param mapBarcodeToTube tubes
      */
     private void bucketAndBatch(String testPrefix, ProductOrder productOrder,
-                                Map<String, BarcodedTube> mapBarcodeToTube) {
+                                Map<String, BarcodedTube> mapBarcodeToTube) throws ValidationException {
         HashSet<LabVessel> starters = new HashSet<LabVessel>(mapBarcodeToTube.values());
         bucketEjb.addSamplesToBucket(productOrder);
 
         String batchName = "LCSET-MsgTest-" + testPrefix;
-        LabBatch labBatch = new LabBatch(batchName, starters, LabBatch.LabBatchType.WORKFLOW);
+        List<Long> bucketIds = new ArrayList<>();
+        String bucketName = null;
+        for (LabVessel starter : starters) {
+            bucketName = starter.getBucketEntries().iterator().next().getBucket().getBucketDefinitionName();
+            bucketIds.add(starter.getBucketEntries().iterator().next().getBucketEntryId());
+        }
+
+        LabBatch labBatch = labBatchEjb.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
+                Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName(), bucketIds, Collections.<Long>emptyList(), batchName,
+                "", new Date(), "", "jowalsh", bucketName );
         labBatch.setValidationBatch(true);
-        labBatch.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
-        labBatch.setJiraTicket(new JiraTicket(JiraServiceProducer.stubInstance(), batchName));
-        labBatchEjb.createLabBatchAndRemoveFromBucket(labBatch, "jowalsh", "Pico/Plating Bucket",
-                                                      LabEvent.UI_EVENT_LOCATION, CreateFields.IssueType.EXOME_EXPRESS);
     }
 }

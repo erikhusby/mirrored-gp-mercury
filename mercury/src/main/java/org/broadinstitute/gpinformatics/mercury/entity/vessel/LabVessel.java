@@ -9,7 +9,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
@@ -57,6 +56,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -219,24 +219,73 @@ public abstract class LabVessel implements Serializable {
     }
 
     public boolean isDNA() {
-        boolean hasMaterialConvertedToDNA = hasMaterialConvertedTo(MaterialType.DNA);
-        if (!hasMaterialConvertedToDNA) {
-            for (SampleInstanceV2 si : getSampleInstancesV2()) {
-                if (si.getRootOrEarliestMercurySample().getSampleData().getMaterialType()
-                        .startsWith(MaterialType.DNA.name())) {
+        return isMaterialType(MaterialType.DNA);
+    }
+
+    public boolean isMaterialType(MaterialType materialType) {
+        boolean hasMaterialConvertedToMaterialType = hasMaterialConvertedTo(materialType);
+        if (!hasMaterialConvertedToMaterialType) {
+            for (String sampleMaterialType : getMaterialTypes()) {
+                if (StringUtils.equalsIgnoreCase(materialType.getDisplayName(), sampleMaterialType)) {
                     return true;
                 }
             }
         }
-        return hasMaterialConvertedToDNA;
+        return hasMaterialConvertedToMaterialType;
     }
 
-    private boolean hasMaterialConvertedTo(MaterialType materialType) {
-        TransferTraverserCriteria.LabEventsWithMaterialTypeTraverserCriteria materialTypeTraverserCriteria =
-                new TransferTraverserCriteria.LabEventsWithMaterialTypeTraverserCriteria(materialType);
-        evaluateCriteria(materialTypeTraverserCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
+    /**
+     * Find the latest material type by first searching the event history then falling back on the sample's metadata.
+     * @return
+     */
+    public MaterialType getLatestMaterialType() {
+        MaterialType latestMaterialType = getLatestMaterialTypeFromEventHistory();
+        if (latestMaterialType == null) {
+            latestMaterialType = MaterialType.fromDisplayName(getMaterialTypes().iterator().next());
+        }
+        return latestMaterialType;
+    }
 
-        return materialTypeTraverserCriteria.getVesselForMaterialType() != null;
+
+    public List<String> getMaterialTypes() {
+        List<String> materialTypes = new ArrayList<>();
+        for (SampleInstanceV2 si : getSampleInstancesV2()) {
+            String materialType = si.getRootOrEarliestMercurySample().getSampleData().getMaterialType();
+            if (StringUtils.isNotBlank(materialType)) {
+                materialTypes.add(materialType);
+            }
+        }
+        return materialTypes;
+    }
+
+    /**
+     * Find the current MaterialType of this LabVesel.
+     * @param materialType materialType to test
+     * @return true if the event history indicates the latest MaterialType matches input
+     */
+    private boolean hasMaterialConvertedTo(MaterialType materialType) {
+        return materialType == getLatestMaterialTypeFromEventHistory();
+    }
+
+    /**
+     * Traverse the event history of this LabVessel to find the current MaterialType.
+     * @return the current MaterialType
+     */
+    public MaterialType getLatestMaterialTypeFromEventHistory() {
+        TransferTraverserCriteria.NearestMaterialTypeTraverserCriteria materialTypeTraverserCriteria =
+                evaluateMaterialTypeTraverserCriteria();
+
+        return materialTypeTraverserCriteria.getMaterialType();
+    }
+
+    /**
+     * Traverser which scans the event history of this LabVessel to find the current MaterialType.
+     */
+    TransferTraverserCriteria.NearestMaterialTypeTraverserCriteria evaluateMaterialTypeTraverserCriteria() {
+        TransferTraverserCriteria.NearestMaterialTypeTraverserCriteria materialTypeTraverserCriteria =
+                new TransferTraverserCriteria.NearestMaterialTypeTraverserCriteria();
+        evaluateCriteria(materialTypeTraverserCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
+        return materialTypeTraverserCriteria;
     }
 
     /**
@@ -598,26 +647,6 @@ public abstract class LabVessel implements Serializable {
 
         public String getName() {
             return name;
-        }
-    }
-
-    public enum MaterialType implements Displayable {
-        CELL_SUSPENSION("Cell Suspension"),
-        DNA("DNA"),
-        FFPE("FFPE"),
-        FRESH_BLOOD("Fresh Blood"),
-        FRESH_FROZEN_BLOOD("Fresh Frozen Blood"),
-        RNA("RNA");
-
-        private final String displayName;
-
-        MaterialType(String displayName) {
-            this.displayName = displayName;
-        }
-
-        @Override
-        public String getDisplayName() {
-            return displayName;
         }
     }
 
@@ -998,10 +1027,9 @@ public abstract class LabVessel implements Serializable {
         return traversalResults;
     }
 
-    void traverseDescendants(TransferTraverserCriteria criteria, TransferTraverserCriteria.TraversalDirection direction,
-                             int hopCount) {
+    void traverseDescendants(TransferTraverserCriteria criteria, int hopCount) {
         for (VesselEvent vesselEvent : getDescendants()) {
-            evaluateVesselEvent(criteria, direction, hopCount, vesselEvent);
+            evaluateVesselEvent(criteria, TransferTraverserCriteria.TraversalDirection.Descendants, hopCount, vesselEvent);
         }
     }
 
@@ -1231,13 +1259,15 @@ public abstract class LabVessel implements Serializable {
                           int hopCount) {
         TransferTraverserCriteria.Context context =
                 new TransferTraverserCriteria.Context(this, labEvent, hopCount, traversalDirection);
-        transferTraverserCriteria.evaluateVesselPreOrder(context);
+        if( transferTraverserCriteria.evaluateVesselPreOrder(context) == TransferTraverserCriteria.TraversalControl.StopTraversing ) {
+            return;
+        }
         if (traversalDirection == TransferTraverserCriteria.TraversalDirection.Ancestors) {
             for (VesselEvent vesselEvent : getAncestors()) {
                 evaluateVesselEvent(transferTraverserCriteria, traversalDirection, hopCount, vesselEvent);
             }
         } else if (traversalDirection == TransferTraverserCriteria.TraversalDirection.Descendants) {
-            traverseDescendants(transferTraverserCriteria, traversalDirection, hopCount);
+            traverseDescendants(transferTraverserCriteria, hopCount);
         } else {
             throw new RuntimeException("Unknown direction " + traversalDirection.name());
         }
@@ -1389,7 +1419,23 @@ public abstract class LabVessel implements Serializable {
      * @return A map of lab vessels keyed off the event they were present at filtered by type.
      */
     public Map<LabEvent, Set<LabVessel>> findVesselsForLabEventType(LabEventType type, boolean useTargetVessels) {
-        return findVesselsForLabEventTypes(Collections.singletonList(type), useTargetVessels);
+        return findVesselsForLabEventType(type, useTargetVessels,
+                EnumSet.allOf(TransferTraverserCriteria.TraversalDirection.class));
+    }
+
+    /**
+     * This method iterates over all of the ancestor and descendant vessels, adding them to a map of vessel -> event
+     * when the event matches the type given.
+     *
+     * @param type The type of event to filter the ancestors and descendants by.
+     * @param useTargetVessels True if the vessels returned are event targets (vs. sources).
+     * @param traversalDirections Direction(s) to traverse when searching for events
+     *
+     * @return A map of lab vessels keyed off the event they were present at filtered by type.
+     */
+    public Map<LabEvent, Set<LabVessel>> findVesselsForLabEventType(LabEventType type, boolean useTargetVessels,
+                                                                    EnumSet<TransferTraverserCriteria.TraversalDirection> traversalDirections) {
+        return findVesselsForLabEventTypes(Collections.singletonList(type), useTargetVessels, traversalDirections);
     }
 
     /**
@@ -1402,13 +1448,33 @@ public abstract class LabVessel implements Serializable {
      * @return A map of lab vessels keyed off the event they were present at filterd by types.
      */
     public Map<LabEvent, Set<LabVessel>> findVesselsForLabEventTypes(List<LabEventType> types, boolean useTargetVessels) {
+        return findVesselsForLabEventTypes(types, useTargetVessels,
+                EnumSet.allOf(TransferTraverserCriteria.TraversalDirection.class));
+    }
+
+    /**
+     * This method iterates over all of the ancestor and descendant vessels, adding them to a map of vessel -> event
+     * when the event matches the type given.
+     *
+     * @param types A list of types of event to filter the ancestors and descendants by.
+     * @param useTargetVessels True if the vessels returned are event targets (vs. sources).
+     * @param traversalDirections Direction(s) to traverse when searching for events
+     *
+     * @return A map of lab vessels keyed off the event they were present at filterd by types.
+     */
+    public Map<LabEvent, Set<LabVessel>> findVesselsForLabEventTypes(List<LabEventType> types, boolean useTargetVessels,
+                                                                     EnumSet<TransferTraverserCriteria.TraversalDirection> traversalDirections) {
         if (getContainerRole() != null) {
             return getContainerRole().getVesselsForLabEventTypes(types);
         }
         TransferTraverserCriteria.VesselForEventTypeCriteria vesselForEventTypeCriteria =
                 new TransferTraverserCriteria.VesselForEventTypeCriteria(types, useTargetVessels);
-        evaluateCriteria(vesselForEventTypeCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
-        evaluateCriteria(vesselForEventTypeCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
+        if (traversalDirections.contains(TransferTraverserCriteria.TraversalDirection.Ancestors)) {
+            evaluateCriteria(vesselForEventTypeCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
+        }
+        if (traversalDirections.contains(TransferTraverserCriteria.TraversalDirection.Descendants)) {
+            evaluateCriteria(vesselForEventTypeCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
+        }
         return vesselForEventTypeCriteria.getVesselsForLabEventType();
     }
 

@@ -36,6 +36,7 @@ public class ArrayPlatingJaxbBuilder {
         arrayPlatingJaxb = bettaLimsMessageTestFactory.buildRackToPlate("ArrayPlatingDilution", rackBarcode,
                 tubeBarcodeList, arrayPlatingPlate);
         PositionMapType sourcePositionMap = arrayPlatingJaxb.getSourcePositionMap();
+        arrayPlatingJaxb.getPlate().setPhysType("Plate96Well200PCR");
         PositionMapType destinationPositionMap = new PositionMapType();
         destinationPositionMap.setBarcode(arrayPlatingPlate);
         for(ReceptacleType receptacleType: sourcePositionMap.getReceptacle()) {

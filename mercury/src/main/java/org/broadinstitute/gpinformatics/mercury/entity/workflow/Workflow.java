@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * This represents the workflow associated with a product.
  *
- * The enun name field must exactly match WorkflowConfig.xml productWorkflowDef name value.
+ * The enum name field must exactly match WorkflowConfig.xml productWorkflowDef name value.
  */
 public enum Workflow {
     AGILENT_EXOME_EXPRESS("Agilent Exome Express"),
@@ -18,6 +18,29 @@ public enum Workflow {
     WHOLE_GENOME("Whole Genome"),
     ICE("ICE"),
     ICE_CRSP("ICE CRSP"),
+    CLINICAL_WHOLE_BLOOD_EXTRACTION("Clinical Whole Blood Extraction"),
+    DNA_RNA_EXTRACTION_FROZEN_TISSUE("DNA and RNA for Frozen Tissue - AllPrep"),
+    DNA_RNA_EXTRACTION_CELL_PELLETS("DNA and RNA from Cell Pellets"),
+    DNA_RNA_EXTRACTION_FFPE_SECTIONS("DNA and RNA for FFPE - AllPrep (sections)"),
+    DNA_RNA_EXTRACTION_FFPE_SCROLLS("DNA and RNA for FFPE - AllPrep (scrolls)"),
+    DNA_RNA_EXTRACTION_FFPE_BLOCKS("DNA and RNA for FFPE - AllPrep (blocks)"),
+    DNA_RNA_EXTRACTION_STOOL("DNA and RNA for Stool - Chemagen"),
+    DNA_EXTRACTION_WHOLE_BLOOD_MANUAL("DNA Extraction from Whole Blood - Manual"),
+    DNA_EXTRACTION_WHOLE_BLOOD_CHEMAGEN("DNA Extraction from Whole Blood - Chemagen"),
+    DNA_EXTRACTION_SALIVA("DNA Extraction from Saliva"),
+    DNA_EXTRACTION_CELL_PELLETS("DNA Extraction from Cell Pellets"),
+    DNA_EXTRACTION_FROZEN_TISSUE("DNA Extraction from Frozen Tissue"),
+    DNA_EXTRACTION_FFPE_SECTIONS("DNA Extraction from FFPE Tissue (sections)"),
+    DNA_EXTRACTION_FFPE_SCROLLS("DNA Extraction from FFPE Tissue (scrolls)"),
+    DNA_EXTRACTION_FFPE_CORES("DNA Extraction from FFPE Tissue (cores)"),
+    DNA_EXTRACTION_BLOOD_SPOTS("DNA Extraction from Blood Spots"),
+    DNA_EXTRACTION_BUFFY_COATS("DNA Extraction from Buffy Coats"),
+    RNA_EXTRACTION_FROZEN_TISSUE("RNA Extraction from Frozen Tissue"),
+    RNA_EXTRACTION_FFPE_SECTIONS("RNA Extraction from FFPE Tissue (sections)"),
+    RNA_EXTRACTION_CELL_PELLETS("RNA Extraction from Cell Pellets"),
+    RNA_EXTRACTION_FFPE_SCROLLS("RNA Extraction from FFPE Tissue (scrolls)"),
+    RNA_EXTRACTION_FFPE_CORES("RNA Extraction from FFPE Tissue (cores)"),
+    TRU_SEQ_STRAND_SPECIFIC_CRSP("TruSeq Strand Specific CRSP"),
     /** Use this to indicate that no workflow is associated. */
     NONE(null, false);
 
@@ -47,7 +70,9 @@ public enum Workflow {
      * Workflow processes that Mercury supports.
      */
     public static final EnumSet<Workflow> SUPPORTED_WORKFLOWS =
-            EnumSet.of(AGILENT_EXOME_EXPRESS, ICE_EXOME_EXPRESS, ICE_CRSP);
+            EnumSet.of(AGILENT_EXOME_EXPRESS, ICE_EXOME_EXPRESS, ICE_CRSP, CLINICAL_WHOLE_BLOOD_EXTRACTION,
+                    DNA_RNA_EXTRACTION_CELL_PELLETS, TRU_SEQ_STRAND_SPECIFIC_CRSP
+            );
 
     public boolean isWorkflowSupportedByMercury() {
         return SUPPORTED_WORKFLOWS.contains(this);

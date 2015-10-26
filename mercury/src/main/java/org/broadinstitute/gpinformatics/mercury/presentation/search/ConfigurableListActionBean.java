@@ -13,8 +13,9 @@ import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableListFactory;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.ThreadEntityManager;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
-import org.broadinstitute.gpinformatics.infrastructure.search.PaginationDao;
+import org.broadinstitute.gpinformatics.infrastructure.search.PaginationUtil;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
@@ -50,9 +51,6 @@ public class ConfigurableListActionBean extends CoreActionBean {
     private String sessionKey;
 
     @Inject
-    private PaginationDao paginationDao;
-
-    @Inject
     private ConfigurableListFactory configurableListFactory;
 
     @Inject
@@ -61,6 +59,9 @@ public class ConfigurableListActionBean extends CoreActionBean {
     @Inject
     private BSPUserList bspUserList;
 
+    @Inject
+    private ThreadEntityManager threadEntityManager;
+
     /**
      * Stream an Excel spreadsheet, from a list of IDs
      *
@@ -68,7 +69,7 @@ public class ConfigurableListActionBean extends CoreActionBean {
      */
     // TODO move to ConfigurableList ("Viewed Columns" needs access to SearchInstance?)
     public Resolution downloadFromIdList() {
-        PaginationDao.Pagination pagination = (PaginationDao.Pagination) getContext().getRequest().getSession()
+        PaginationUtil.Pagination pagination = (PaginationUtil.Pagination) getContext().getRequest().getSession()
                 .getAttribute(ConfigurableSearchActionBean.PAGINATION_PREFIX + sessionKey);
 
         List<?> entityList;
@@ -81,8 +82,8 @@ public class ConfigurableListActionBean extends CoreActionBean {
 
         try {
 
-            List<?> typeSafeIds = paginationDao.convertStringIdsToEntityType(pagination, selectedIds);
-            entityList = paginationDao.getByIds(pagination, typeSafeIds);
+            List<?> typeSafeIds = PaginationUtil.convertStringIdsToEntityType(pagination, selectedIds);
+            entityList = PaginationUtil.getByIds(threadEntityManager.getEntityManager(), pagination, typeSafeIds);
 
         } catch (Exception e) {
             log.error("Search failed: ", e);
@@ -132,7 +133,7 @@ public class ConfigurableListActionBean extends CoreActionBean {
         } else {
             columnTabulations = configurableListFactory.buildColumnSetTabulations(downloadColumnSetName, entityName);
         }
-        PaginationDao.Pagination pagination = (PaginationDao.Pagination) getContext().getRequest().getSession()
+        PaginationUtil.Pagination pagination = (PaginationUtil.Pagination) getContext().getRequest().getSession()
                 .getAttribute(ConfigurableSearchActionBean.PAGINATION_PREFIX + sessionKey);
         ConfigurableList configurableList = new ConfigurableList(columnTabulations, 0, "ASC",
                 ColumnEntity.getByName(entityName));
@@ -149,9 +150,9 @@ public class ConfigurableListActionBean extends CoreActionBean {
         // Get each page and add it to the configurable list
         SearchContext context = buildSearchContext();
         for (int i = 0; i < pagination.getNumberPages(); i++) {
-            List resultsPage = paginationDao.getPage(pagination, i);
+            List resultsPage = PaginationUtil.getPage(threadEntityManager.getEntityManager(), pagination, i);
             configurableList.addRows(resultsPage, context);
-            paginationDao.clear();
+            threadEntityManager.getEntityManager().clear();
         }
         return streamResultList(configurableList.getResultList(false));
     }

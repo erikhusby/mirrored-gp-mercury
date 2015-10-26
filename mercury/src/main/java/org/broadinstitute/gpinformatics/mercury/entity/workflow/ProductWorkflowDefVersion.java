@@ -1,9 +1,11 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
 import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
@@ -242,6 +244,7 @@ public class ProductWorkflowDefVersion implements Serializable {
      * when a user has at least one step
      */
     public void buildLabEventGraph() {
+        mapNameToLabEvents = ArrayListMultimap.create();
         LabEventNode previousNode = null;
         for (WorkflowProcessDef workflowProcessDef : workflowProcessDefs) {
             WorkflowProcessDefVersion effectiveProcessDef = workflowProcessDef.getEffectiveVersion();
@@ -274,12 +277,14 @@ public class ProductWorkflowDefVersion implements Serializable {
      */
     public LabEventNode findStepByEventType(String eventTypeName) {
         if (mapNameToLabEvents == null) {
-            mapNameToLabEvents = ArrayListMultimap.create();
             buildLabEventGraph();
         }
         Collection<LabEventNode> labEventNodes = mapNameToLabEvents.get(eventTypeName);
         if (labEventNodes.size() > 1) {
             throw new RuntimeException("More than one lab event for " + eventTypeName);
+        }
+        if (labEventNodes.isEmpty()){
+            return null;
         }
         return labEventNodes.iterator().next();
     }
@@ -293,24 +298,32 @@ public class ProductWorkflowDefVersion implements Serializable {
      */
     public Collection<LabEventNode> findStepsByEventType(String eventTypeName) {
         if (mapNameToLabEvents == null) {
-            mapNameToLabEvents = ArrayListMultimap.create();
             buildLabEventGraph();
         }
         return mapNameToLabEvents.get(eventTypeName);
     }
 
     /**
-     * Scans the workflow's processes and returns the first bucket it finds.
+     * Scans the workflow's processes for a matching bucket.
      *
-     * @return the first bucket for the workflow, or null if there are no buckets
+     * @return a map of buckets to vessels.
      */
-    public WorkflowBucketDef getInitialBucket() {
+    public Map<WorkflowBucketDef, Collection<LabVessel>> getInitialBucket(ProductOrder productOrder,
+                                                                          List<LabVessel> labVessels) {
+
+        Multimap<WorkflowBucketDef, LabVessel> vesselBuckets = HashMultimap.create();
         for (WorkflowProcessDef workflowProcessDef : workflowProcessDefs) {
             for (WorkflowBucketDef bucketDef : workflowProcessDef.getEffectiveVersion().getBuckets()) {
-                return bucketDef;
+                for (LabVessel vessel : labVessels) {
+                    if (!vesselBuckets.containsValue(vessel)) {
+                        if (bucketDef.meetsBucketCriteria(vessel, productOrder)) {
+                            vesselBuckets.put(bucketDef, vessel);
+                        }
+                    }
+                }
             }
         }
-        return null;
+        return vesselBuckets.asMap();
     }
 
     /**

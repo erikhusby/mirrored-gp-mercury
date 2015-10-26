@@ -1,10 +1,10 @@
 package org.broadinstitute.gpinformatics.mercury.entity.bucket;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
-import org.testng.Assert;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 /**
@@ -15,7 +15,6 @@ import org.testng.annotations.Test;
 @Test(groups = TestGroups.DATABASE_FREE)
 public class BucketDBFreeTest {
 
-    @Test(groups = TestGroups.DATABASE_FREE)
     public void testBucketCreation() {
 
         final String bucketCreationName = "Pico Bucket";

@@ -9,7 +9,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -68,6 +67,7 @@ public class MercurySampleSearchDefinition {
         criteriaPath.setCriteria( Arrays.asList( "PDOSamples", "productOrderSamples", "productOrder" ) );
         criteriaPath.setPropertyName("jiraTicketKey");
         criteriaPaths.add(criteriaPath);
+
         searchTerm.setCriteriaPaths(criteriaPaths);
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
@@ -115,6 +115,21 @@ public class MercurySampleSearchDefinition {
                     }
                 }
                 return results;
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Bucket Count");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Long evaluate(Object entity, SearchContext context) {
+                MercurySample sample = (MercurySample) entity;
+                int result = 0;
+                for (LabVessel sampleVessel : sample.getLabVessel()) {
+                    result += sampleVessel.getBucketEntriesCount();
+                }
+                return new Long(result);
             }
         });
         searchTerms.add(searchTerm);

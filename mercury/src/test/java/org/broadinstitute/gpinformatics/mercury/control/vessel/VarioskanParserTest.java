@@ -37,17 +37,19 @@ import java.util.Map;
 @Test(groups = TestGroups.DATABASE_FREE)
 public class VarioskanParserTest {
 
+    public static final String VARIOSKAN_OUTPUT = "VarioskanOutput.xls";
     public static final String PLATE1_BARCODE = "000001234567";
     public static final String PLATE1_BARCODE_IN_SS = "1234567";
     public static final String PLATE2_BARCODE = "000002345678";
     public static final String PLATE2_BARCODE_IN_SS = "2345678";
+    public static final String RIBO_PLATE_BARCODE = "000111222333";
 
     @Test
     public void testBasic() {
-        InputStream testSpreadSheetInputStream = getSpreadsheet();
+        InputStream testSpreadSheetInputStream = getSpreadsheet(VARIOSKAN_OUTPUT);
         try {
             VarioskanPlateProcessor varioskanPlateProcessor = new VarioskanPlateProcessor(
-                    VarioskanRowParser.QUANTITATIVE_CURVE_FIT1_TAB);
+                    VarioskanRowParser.QUANTITATIVE_CURVE_FIT1_TAB, LabMetric.MetricType.INITIAL_PICO);
             PoiSpreadsheetParser parser = new PoiSpreadsheetParser(Collections.<String, TableProcessor>emptyMap());
 
             parser.processRows(WorkbookFactory.create(testSpreadSheetInputStream).getSheet(
@@ -66,19 +68,19 @@ public class VarioskanParserTest {
     }
 
     @Test
-    public void testCreateRun() {
+    public void testCreatePicoRun() {
         try {
             VesselEjb vesselEjb = new VesselEjb();
             VarioskanPlateProcessor varioskanPlateProcessor = new VarioskanPlateProcessor(
-                    VarioskanRowParser.QUANTITATIVE_CURVE_FIT1_TAB);
+                    VarioskanRowParser.QUANTITATIVE_CURVE_FIT1_TAB, LabMetric.MetricType.INITIAL_PICO);
             PoiSpreadsheetParser parser = new PoiSpreadsheetParser(Collections.<String, TableProcessor>emptyMap());
 
             // get R2, just use raw POI API?
-            Workbook workbook = WorkbookFactory.create(getSpreadsheet());
+            Workbook workbook = WorkbookFactory.create(getSpreadsheet(VARIOSKAN_OUTPUT));
             parser.processRows(workbook.getSheet(VarioskanRowParser.QUANTITATIVE_CURVE_FIT1_TAB), varioskanPlateProcessor);
             Map<String, StaticPlate> mapBarcodeToPlate = new HashMap<>();
 
-            Map<VesselPosition, BarcodedTube> mapPositionToTube = buildTubesAndTransfers(mapBarcodeToPlate,
+            Map<VesselPosition, BarcodedTube> mapPositionToTube = buildPicoTubesAndTransfers(mapBarcodeToPlate,
                     PLATE1_BARCODE, PLATE2_BARCODE, "");
 
             VarioskanRowParser varioskanRowParser = new VarioskanRowParser(workbook);
@@ -100,8 +102,8 @@ public class VarioskanParserTest {
         }
     }
 
-    public static Map<VesselPosition, BarcodedTube> buildTubesAndTransfers(Map<String, StaticPlate> mapBarcodeToPlate,
-            String plate1Barcode, String plate2Barcode, String tubePrefix) {
+    public static Map<VesselPosition, BarcodedTube> buildPicoTubesAndTransfers(
+            Map<String, StaticPlate> mapBarcodeToPlate, String plate1Barcode, String plate2Barcode, String tubePrefix) {
         Map<VesselPosition, BarcodedTube> mapPositionToTube = new HashMap<>();
         for (VesselPosition vesselPosition : RackOfTubes.RackType.Matrix96.getVesselGeometry().getVesselPositions()) {
             BarcodedTube barcodedTube = new BarcodedTube(tubePrefix + vesselPosition.toString());
@@ -127,8 +129,67 @@ public class VarioskanParserTest {
         return mapPositionToTube;
     }
 
-    public static InputStream getSpreadsheet() {
-        InputStream testSpreadSheetInputStream = getTestResource("VarioskanOutput.xls");
+    @Test
+    public void testCreateRiboRun() {
+        try {
+            VesselEjb vesselEjb = new VesselEjb();
+            VarioskanPlateProcessor varioskanPlateProcessor = new VarioskanPlateProcessor(
+                    VarioskanRowParser.QUANTITATIVE_CURVE_FIT1_TAB, LabMetric.MetricType.PLATING_RIBO);
+            PoiSpreadsheetParser parser = new PoiSpreadsheetParser(Collections.<String, TableProcessor>emptyMap());
+
+            Workbook workbook = WorkbookFactory.create(getTestResource("VarioskanRiboOutput.xls"));
+            parser.processRows(workbook.getSheet(VarioskanRowParser.QUANTITATIVE_CURVE_FIT1_TAB), varioskanPlateProcessor);
+            Map<String, StaticPlate> mapBarcodeToPlate = new HashMap<>();
+
+            Map<VesselPosition, BarcodedTube> mapPositionToTube = buildRiboTubesAndTransfers(mapBarcodeToPlate,
+                    RIBO_PLATE_BARCODE, "");
+
+            VarioskanRowParser varioskanRowParser = new VarioskanRowParser(workbook);
+            Map<VarioskanRowParser.NameValue, String> mapNameValueToValue = varioskanRowParser.getValues();
+            MessageCollection messageCollection = new MessageCollection();
+            LabMetricRun labMetricRun = vesselEjb.createVarioskanRunDaoFree(mapNameValueToValue,
+                    LabMetric.MetricType.PLATING_RIBO, varioskanPlateProcessor, mapBarcodeToPlate, 101L,
+                    messageCollection).getLeft();
+            Assert.assertFalse(messageCollection.hasErrors());
+            Assert.assertEquals(labMetricRun.getLabMetrics().size(), 3 * 95 + 16);
+            Assert.assertEquals(mapPositionToTube.get(VesselPosition.A02).getMetrics().iterator().next().getValue(),
+                    new BigDecimal("3.39"));
+            Assert.assertEquals(mapPositionToTube.get(VesselPosition.A03).getMetrics().iterator().next().getValue(),
+                    new BigDecimal("3.28"));
+            Assert.assertEquals(mapPositionToTube.get(VesselPosition.A04).getMetrics().iterator().next().getValue(),
+                    new BigDecimal("3.11"));
+        } catch (IOException | InvalidFormatException | ValidationException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static Map<VesselPosition, BarcodedTube> buildRiboTubesAndTransfers(
+            Map<String, StaticPlate> mapBarcodeToPlate, String plate1Barcode, String tubePrefix) {
+        Map<VesselPosition, BarcodedTube> mapPositionToTube = new HashMap<>();
+        for (VesselPosition vesselPosition : RackOfTubes.RackType.Matrix96.getVesselGeometry().getVesselPositions()) {
+            BarcodedTube barcodedTube = new BarcodedTube(tubePrefix + vesselPosition.toString());
+            barcodedTube.setVolume(new BigDecimal("75"));
+            mapPositionToTube.put(vesselPosition, barcodedTube);
+        }
+
+        TubeFormation tubeFormation = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
+
+        StaticPlate staticPlate1 = new StaticPlate(plate1Barcode, StaticPlate.PlateType.Eppendorf384);
+        mapBarcodeToPlate.put(staticPlate1.getLabel(), staticPlate1);
+
+        LabEvent labEvent1 = new LabEvent(LabEventType.PICO_MICROFLUOR_TRANSFER, new Date(), "BATMAN", 1L, 101L,
+                "Bravo");
+        labEvent1.getSectionTransfers().add(new SectionTransfer(tubeFormation.getContainerRole(), SBSSection.ALL96,
+                null, staticPlate1.getContainerRole(), SBSSection.P384_96TIP_1INTERVAL_A2, null, labEvent1));
+        LabEvent labEvent2 = new LabEvent(LabEventType.PICO_MICROFLUOR_TRANSFER, new Date(), "BATMAN", 2L, 101L,
+                "Bravo");
+        labEvent2.getSectionTransfers().add(new SectionTransfer(tubeFormation.getContainerRole(), SBSSection.ALL96,
+                null, staticPlate1.getContainerRole(), SBSSection.P384_96TIP_1INTERVAL_B1, null, labEvent2));
+        return mapPositionToTube;
+    }
+
+    public static InputStream getSpreadsheet(String filename) {
+        InputStream testSpreadSheetInputStream = getTestResource(filename);
         Assert.assertNotNull(testSpreadSheetInputStream);
         return testSpreadSheetInputStream;
     }

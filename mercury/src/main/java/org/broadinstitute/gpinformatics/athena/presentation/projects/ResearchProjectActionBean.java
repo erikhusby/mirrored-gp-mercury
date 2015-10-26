@@ -241,7 +241,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     private String irbList;
 
-    private final CompletionStatusFetcher progressFetcher = new CompletionStatusFetcher();
+    private CompletionStatusFetcher progressFetcher;
 
     private CollaborationData collaborationData;
 
@@ -307,7 +307,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
             productOrderIds.add(order.getProductOrderId());
         }
 
-        progressFetcher.loadProgress(productOrderDao, productOrderIds);
+        progressFetcher = new CompletionStatusFetcher(productOrderDao.getProgress(productOrderIds));
     }
 
     /**
@@ -1077,6 +1077,17 @@ public class ResearchProjectActionBean extends CoreActionBean {
     @Override
     public boolean isEditAllowed() {
         return getUserBean().isDeveloperUser() || getUserBean().isPMUser() || getUserBean().isPDMUser();
+    }
+
+    /**
+     * @return true if the current user is allowed to request data submissions for the current research project
+     */
+    public boolean isSubmissionAllowed() {
+        if (getUserBean().isDeveloperUser()) {
+            return true;
+        }
+        Collection<Long> projectManagerIds = Arrays.asList(editResearchProject.getPeople(RoleType.PM));
+        return getUserBean().isPMUser() && projectManagerIds.contains(getUserBean().getBspUser().getUserId());
     }
 
     public CollaborationData getCollaborationData() {

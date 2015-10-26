@@ -47,7 +47,6 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.D
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.EventHandlerSelector;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.FlowcellLoadedHandler;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.FlowcellMessageHandler;
-import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.SamplesDaughterPlateHandler;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowValidator;
 import org.broadinstitute.gpinformatics.mercury.control.zims.ZimsIlluminaRunFactory;
@@ -68,19 +67,24 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowD
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.presentation.transfervis.TransferVisualizerClient;
 import org.broadinstitute.gpinformatics.mercury.presentation.transfervis.TransferVisualizerFrame;
+import org.broadinstitute.gpinformatics.mercury.test.builders.ArrayPlatingEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.CrspRiboPlatingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.IceEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.IceJaxbBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.InfiniumEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.MiSeqReagentKitEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.PreFlightEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ProductionFlowcellPath;
 import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.QtpJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.SageEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ShearingEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.TruSeqStrandSpecificEntityBuilder;
 import org.easymock.EasyMock;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -189,7 +193,7 @@ public class BaseEventTest {
             }
         });
         labBatchEJB.setProductOrderDao(mockProductOrderDao);
-
+        labBatchEJB.setWorkflowLoader(new WorkflowLoader());
 
         BSPUserList testUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
         BSPSetVolumeConcentration bspSetVolumeConcentration = BSPSetVolumeConcentrationProducer.stubInstance();
@@ -210,7 +214,7 @@ public class BaseEventTest {
         flowcellLoadedHandler.setAppConfig(appConfig);
 
         EventHandlerSelector eventHandlerSelector = new EventHandlerSelector(new DenatureToDilutionTubeHandler(),
-                flowcellMessageHandler, new SamplesDaughterPlateHandler(), flowcellLoadedHandler);
+                flowcellMessageHandler, flowcellLoadedHandler);
         labEventFactory.setEventHandlerSelector(eventHandlerSelector);
 
         bucketEjb = new BucketEjb(labEventFactory, jiraService, null, null, null, null,
@@ -320,7 +324,14 @@ public class BaseEventTest {
         });
         labBatchEJB.setProductOrderDao(mockProductOrderDao);
 
-        labBatchEJB.createLabBatch(workflowBatch, "scottmat", CreateFields.IssueType.EXOME_EXPRESS);
+        for (BarcodedTube barcodedTube : mapBarcodeToTube.values()) {
+            for (BucketEntry bucketEntry : barcodedTube.getBucketEntries()) {
+                workflowBatch.addBucketEntry(bucketEntry);
+            }
+        }
+
+        labBatchEJB.createLabBatch(workflowBatch, "scottmat", CreateFields.IssueType.EXOME_EXPRESS,
+                CreateFields.ProjectType.LCSET_PROJECT);
         JiraServiceStub.setCreatedIssueSuffix(defaultLcsetSuffix);
 
         drainBucket(workingBucket);
@@ -491,6 +502,18 @@ public class BaseEventTest {
                 mapBarcodeToTube, barcodeSuffix).invoke();
     }
 
+    public QtpEntityBuilder runQtpProcess(TubeFormation rack, List<String> tubeBarcodes,
+                                          Map<String, BarcodedTube> mapBarcodeToTube,
+                                          String barcodeSuffix, QtpJaxbBuilder.PcrType pcrType) {
+
+        return new QtpEntityBuilder(
+                bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
+                Collections.singletonList(rack),
+                Collections.singletonList(rack.getRacksOfTubes().iterator().next().getLabel()),
+                Collections.singletonList(tubeBarcodes),
+                mapBarcodeToTube, barcodeSuffix).invoke(true, pcrType);
+    }
+
     /**
      * This method runs the entities through the HiSeq2500 process.
      *
@@ -549,6 +572,45 @@ public class BaseEventTest {
                                             List<String> pondRegTubeBarcodes) {
         return new SageEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
                                      pondRegRackBarcode, pondRegRack, pondRegTubeBarcodes).invoke();
+    }
+
+    public InfiniumEntityBuilder runInfiniumProcess(StaticPlate sourcePlate, String barcodeSuffix) {
+        return new InfiniumEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
+                sourcePlate, barcodeSuffix).invoke();
+    }
+
+    public ArrayPlatingEntityBuilder runArrayPlatingProcess( Map<String, BarcodedTube> mapBarcodeToTube,
+                                                             String barcodeSuffix) {
+        return new ArrayPlatingEntityBuilder(mapBarcodeToTube, bettaLimsMessageTestFactory,
+                labEventFactory, getLabEventHandler(), barcodeSuffix).invoke();
+    }
+
+    public CrspRiboPlatingEntityBuilder runRiboPlatingProcess(BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
+                                                       LabEventFactory labEventFactory, LabEventHandler labEventHandler,
+                                                       Map<String, BarcodedTube> mapBarcodeToTube, String rackBarcode,
+                                                       String prefix) {
+        return new CrspRiboPlatingEntityBuilder(bettaLimsMessageTestFactory,
+                labEventFactory, labEventHandler, mapBarcodeToTube, rackBarcode, prefix).invoke();
+    }
+
+    /**
+     * This method runs the entities through the TruSeqStrandSpecific process.
+     *
+     * @param mapBarcodeToTube A map of barcodes to tubes that will be run the starting point of the TruSeq SS process.
+     * @param tubeFormation    The tube formation that represents the entities coming out of pico/plating.
+     * @param rackBarcode      The rack barcode of the tube formation.
+     * @param barcodeSuffix    Uniquifies the generated vessel barcodes. NOT date if test quickly invokes twice.
+     *
+     * @return Returns the entity builder that contains the entities after this process has been invoked.
+     */
+    public TruSeqStrandSpecificEntityBuilder runTruSeqStrandSpecificProcess(Map<String, BarcodedTube> mapBarcodeToTube,
+                                                    TubeFormation tubeFormation,
+                                                    String rackBarcode,
+                                                    String barcodeSuffix) {
+
+        return new TruSeqStrandSpecificEntityBuilder(mapBarcodeToTube, tubeFormation,
+                bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
+                rackBarcode, barcodeSuffix).invoke();
     }
 
     /**

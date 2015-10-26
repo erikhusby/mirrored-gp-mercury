@@ -19,9 +19,9 @@ import org.broadinstitute.gpinformatics.infrastructure.common.BaseSplitter;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
@@ -32,8 +32,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.ReworkDetail;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
@@ -49,16 +49,16 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import javax.transaction.HeuristicMixedException;
 import javax.transaction.HeuristicRollbackException;
 import javax.transaction.NotSupportedException;
 import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -531,7 +531,7 @@ public class LabBatchFixUpTest extends Arquillian {
      * If a denature tube contains only positive controls, it doesn't have an LCSET (until control inference is
      * removed), so the Create FCT Ticket page can't be used.  This method is adapted from that ActionBean.
      */
-    public void createFctsWithoutLcset(List<String> selectedVesselLabels,
+    private void createFctsWithoutLcset(List<String> selectedVesselLabels,
             IlluminaFlowcell.FlowcellType selectedType, int numberOfLanes, BigDecimal loadingConc, String reason) {
         try {
             userBean.loginOSUser();
@@ -562,5 +562,45 @@ public class LabBatchFixUpTest extends Arquillian {
             throw new RuntimeException(e);
         }
     }
+
+    /** Removes BSP Lab batches BP-71077 and BP-71083 along with their MercurySamples and BarcodedTubes. */
+    @Test(enabled = false)
+    public void fixupGplim3764() throws Exception {
+        userBean.loginOSUser();
+        userTransaction.begin();
+
+        List<LabBatch> batches = labBatchDao.findByListIdentifier(Arrays.asList(new String[]{"BP-71077", "BP-71083"}));
+        Assert.assertEquals(batches.size(), 2);
+        final int vesselCount = 192;
+
+        List<LabBatchStartingVessel> labBatchStartingVessels = labBatchDao.findListByList(LabBatchStartingVessel.class,
+                LabBatchStartingVessel_.labBatch, batches);
+        Assert.assertEquals(labBatchStartingVessels.size(), vesselCount);
+
+        Set<LabVessel> labVessels = new HashSet<>();
+        Set<MercurySample> mercurySamples = new HashSet<>();
+        for (LabBatchStartingVessel labBatchStartingVessel : labBatchStartingVessels) {
+            labVessels.add(labBatchStartingVessel.getLabVessel());
+            mercurySamples.addAll(labBatchStartingVessel.getLabVessel().getMercurySamples());
+        }
+        Assert.assertEquals(labVessels.size(), vesselCount);
+        Assert.assertEquals(mercurySamples.size(), vesselCount);
+
+        for (MercurySample mercurySample : mercurySamples) {
+            labBatchDao.remove(mercurySample);
+        }
+        for (LabVessel vessel : labVessels) {
+            // This also removes the labBatchStartingVessel.
+            labBatchDao.remove(vessel);
+        }
+        for (LabBatch labBatch : batches) {
+            System.out.println("Deleted batch " + labBatch.getBatchName());
+            labBatchDao.remove(labBatch);
+        }
+        labBatchDao.persist(new FixupCommentary("GPLIM-3764 delete batches, vessels, and samples created by BSP test"));
+        labBatchDao.flush();
+        userTransaction.commit();
+    }
+
 
 }

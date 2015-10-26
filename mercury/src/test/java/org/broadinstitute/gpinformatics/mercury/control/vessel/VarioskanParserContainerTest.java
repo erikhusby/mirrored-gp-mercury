@@ -99,7 +99,7 @@ public class VarioskanParserContainerTest extends Arquillian {
                                                         boolean persistVessels)
             throws Exception {
 
-        Workbook workbook = WorkbookFactory.create(VarioskanParserTest.getSpreadsheet());
+        Workbook workbook = WorkbookFactory.create(VarioskanParserTest.getSpreadsheet(VarioskanParserTest.VARIOSKAN_OUTPUT));
         Sheet curveSheet = workbook.getSheet(VarioskanRowParser.QUANTITATIVE_CURVE_FIT1_TAB);
         for (int i = 0; i < curveSheet.getLastRowNum(); i++) {
             Row row = curveSheet.getRow(i);
@@ -138,7 +138,7 @@ public class VarioskanParserContainerTest extends Arquillian {
         File tempFile = File.createTempFile("Varioskan", ".xls");
         workbook.write(new FileOutputStream(tempFile));
         Map<String, StaticPlate> mapBarcodeToPlate = new HashMap<>();
-        Map<VesselPosition, BarcodedTube> mapPositionToTube = VarioskanParserTest.buildTubesAndTransfers(
+        Map<VesselPosition, BarcodedTube> mapPositionToTube = VarioskanParserTest.buildPicoTubesAndTransfers(
                 mapBarcodeToPlate, plate1Barcode, plate2Barcode, namePrefix);
         if (persistVessels) {
             labVesselDao.persistAll(mapBarcodeToPlate.values());

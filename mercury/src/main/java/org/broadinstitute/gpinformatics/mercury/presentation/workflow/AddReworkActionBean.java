@@ -146,12 +146,13 @@ public class AddReworkActionBean extends CoreActionBean {
         try {
             Collection<String> validationMessages = reworkEjb.addAndValidateCandidates(bucketCandidates,
                     submittedReason, commentText, getUserBean().getLoginUserName(), bucketName);
-            addMessage("{0} vessel(s) have been added to the {1} bucket.", bucketCandidates.size(), bucketName);
 
             if (CollectionUtils.isNotEmpty(validationMessages)) {
                 for (String validationMessage : validationMessages) {
                     addGlobalValidationError(validationMessage);
                 }
+            } else {
+                addMessage("{0} vessel(s) have been added to the {1} bucket.", bucketCandidates.size(), bucketName);
             }
 
         } catch (ValidationException e) {

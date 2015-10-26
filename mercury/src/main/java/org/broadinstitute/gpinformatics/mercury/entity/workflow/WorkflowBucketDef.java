@@ -1,17 +1,14 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Where samples are placed for batching, typically the first step in a process
@@ -20,7 +17,7 @@ import java.util.List;
 public class WorkflowBucketDef extends WorkflowStepDef {
     private static final Log log = LogFactory.getLog(WorkflowBucketDef.class);
 
-    private List<String> bucketEntryEvaluators=new ArrayList<>();
+    private WorkflowBucketEntryEvaluator bucketEntryEvaluator;
 
     /** auto-drain rules - time / date based */
     private Double autoDrainDays;
@@ -42,46 +39,27 @@ public class WorkflowBucketDef extends WorkflowStepDef {
     }
 
     /**
-     * Set bucketEntryEvaluators; package-local access because it is used for testing.
-     */
-    void setBucketEntryEvaluators(List<String> bucketEntryEvaluators) {
-        this.bucketEntryEvaluators = bucketEntryEvaluators;
-    }
-
-    /**
-     * get bucketEntryEvaluators; package local-access because it is used for testing.
-     */
-    List<String> getBucketEntryEvaluators() {
-        return bucketEntryEvaluators;
-    }
-
-    /**
      * Test if the vessel is eligible for bucketing. When bucket is being evaluated BucketEntryEvaluators defined in
-     * the configuration are and-ed together. If no BucketEntryEvaluators are defined it will by default allow the
+     * the configuration are or-ed. If no BucketEntryEvaluators are defined it will by default allow the
      * labVessel to be bucketed.
      *
      * @return true if the vessel can go into the bucket, false otherwise
      */
-    public boolean meetsBucketCriteria(LabVessel labVessel) {
-        if (CollectionUtils.isNotEmpty(bucketEntryEvaluators)) {
-            for (String bucketEntryEvaluator : bucketEntryEvaluators) {
-                try {
-                    Class<?> bucketEntryEvaluatorClass = Class.forName(bucketEntryEvaluator);
-                    Constructor<?> bucketEntryEvaluatorConstructor = bucketEntryEvaluatorClass.getDeclaredConstructor();
-                    BucketEntryEvaluator bucketEntryInstance =
-                            (BucketEntryEvaluator) bucketEntryEvaluatorConstructor.newInstance();
-                    boolean meetsCriteria = bucketEntryInstance.invoke(labVessel);
-                    if (!meetsCriteria) {
-                        return false;
-                    }
-                } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException |
-                        InstantiationException | IllegalAccessException e) {
-                    throw new RuntimeException(
-                            String.format("error invoking BucketEntryEvaluator %s", bucketEntryEvaluator), e);
-                }
-            }
+    public boolean meetsBucketCriteria(LabVessel labVessel, ProductOrder productOrder) {
+        if (bucketEntryEvaluator == null) {
+            // If no bucketEntryEvaluators are configured, then, by default, the labVessels meet bucket criteria.
+            return true;
         }
-        return true;
+
+        return bucketEntryEvaluator.invoke(labVessel, productOrder);
+    }
+
+    public Workflow getWorkflowForProductOrder(ProductOrder productOrder) {
+        Workflow workflow = getBucketEntryEvaluator().getMatchingWorkflow(productOrder);
+        if (workflow == Workflow.NONE) {
+            workflow = productOrder.getProduct().getWorkflow();
+        }
+        return workflow;
     }
 
     /**
@@ -95,5 +73,17 @@ public class WorkflowBucketDef extends WorkflowStepDef {
         } else {
             return null;
         }
+    }
+
+    void setBucketEntryEvaluator(WorkflowBucketEntryEvaluator bucketEntryEvaluator) {
+        this.bucketEntryEvaluator = bucketEntryEvaluator;
+    }
+
+    public WorkflowBucketEntryEvaluator getBucketEntryEvaluator() {
+        return bucketEntryEvaluator;
+    }
+
+    public String findMissingRequirements(ProductOrder productOrder, MaterialType latestMaterialType) {
+        return bucketEntryEvaluator.findMissingRequirements(productOrder, latestMaterialType);
     }
 }

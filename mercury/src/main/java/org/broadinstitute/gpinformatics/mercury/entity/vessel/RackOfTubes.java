@@ -41,6 +41,7 @@ public class RackOfTubes extends LabVessel {
         Conical50ml_8x3rack("Conical50ml_8x3rack", VesselGeometry.G3x8_NUM),
         Eppendorf10x10Box("Eppendorf10x10Box", VesselGeometry.G10x10_NUM),
         Eppendorf12x8Box("Eppendorf12x8Box", VesselGeometry.G12x8),
+        FlipperRackRow24("FlipperRackRow24", VesselGeometry.G24x1, false),
         FourInch3x5Box("FourInch3x5Box", VesselGeometry.G5x3_NUM),
         FourInch7x7Box("FourInch7x7Box", VesselGeometry.G7x7_NUM),
         HamiltonSampleCarrier24("HamiltonSampleCarrier24", VesselGeometry.G24x1),
@@ -55,6 +56,7 @@ public class RackOfTubes extends LabVessel {
         SlideBox_1x10("SlideBox_1x10", VesselGeometry.G1x10_NUM),
         SlideBox_1x25("SlideBox_1x25", VesselGeometry.G1x25_NUM),
         SlideBox_2x50("SlideBox_2x50", VesselGeometry.G2x50_NUM),
+        TeFlow24("TeFlow24", VesselGeometry.TEFLOW3x8, false),
         ThreeInch9x9box("ThreeInch9x9box", VesselGeometry.G9x9_NUM),
         ThreeInch_FTA_Box("ThreeInch_FTA_Box", VesselGeometry.G1x100_NUM),
         TissueCassetteBox("TissueCassetteBox", VesselGeometry.G2x50_NUM),
@@ -67,10 +69,16 @@ public class RackOfTubes extends LabVessel {
                 new HashMap<>(RackType.values().length);
         private final String         displayName;
         private final VesselGeometry vesselGeometry;
+        private boolean barcoded = true;
 
         RackType(String displayName, VesselGeometry vesselGeometry) {
             this.displayName = displayName;
             this.vesselGeometry = vesselGeometry;
+        }
+
+        RackType(String displayName, VesselGeometry vesselGeometry, boolean barcoded) {
+            this(displayName, vesselGeometry);
+            this.barcoded = barcoded;
         }
 
         static {
@@ -91,6 +99,11 @@ public class RackOfTubes extends LabVessel {
         @Override
         public VesselGeometry getVesselGeometry() {
             return vesselGeometry;
+        }
+
+        @Override
+        public boolean isBarcoded() {
+            return barcoded;
         }
     }
 

@@ -48,6 +48,7 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructio
 import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ProductionFlowcellPath;
 import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.QtpJaxbBuilder;
 import org.easymock.EasyMock;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -323,7 +324,7 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
                 Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchRackBarcode()),
                 Collections.singletonList(hybridSelectionEntityBuilder.getNormCatchBarcodes()),
                 hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), "testPrefix");
-        qtpEntityBuilder.invoke(true, false);
+        qtpEntityBuilder.invoke(true, QtpJaxbBuilder.PcrType.VIIA_7);
 
         String flowcellBarcode = "flowcell" + new Date().getTime();
 

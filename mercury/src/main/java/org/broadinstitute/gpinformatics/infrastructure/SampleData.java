@@ -21,6 +21,8 @@ public interface SampleData {
 
     Double getRqs();
 
+    Double getDv200();
+
     double getVolume();
 
     Double getConcentration();

@@ -21,6 +21,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 @Test(groups = TestGroups.ALTERNATIVES)
 public class ProductOrderEjbContainerTest extends Arquillian {
 
+    private static final String TEST_PDO = "PDO-312";
     @Inject
     ProductOrderEjb pdoEjb;
 
@@ -40,7 +41,7 @@ public class ProductOrderEjbContainerTest extends Arquillian {
 
     @Test(groups = TestGroups.ALTERNATIVES)
     public void testNullQuotePropagatesToJira() throws Exception {
-        String pdoName = "PDO-310";
+        String pdoName = TEST_PDO;
         ProductOrder pdo = pdoDao.findByBusinessKey(pdoName);
         pdo.setQuoteId("CASH");
         pdo.setSkipQuoteReason("Because of GPLIM-2462");
@@ -59,7 +60,7 @@ public class ProductOrderEjbContainerTest extends Arquillian {
 
     @Test(groups = TestGroups.ALTERNATIVES)
     public void testSummaryFieldPropagatesToJira() throws Exception {
-        String pdoName = "PDO-310";
+        String pdoName = TEST_PDO;
         ProductOrder pdo = pdoDao.findByBusinessKey(pdoName);
         String newTitle = "And now for something different " + System.currentTimeMillis();
         pdo.setTitle(newTitle);
@@ -67,7 +68,7 @@ public class ProductOrderEjbContainerTest extends Arquillian {
         pdoEjb.updateJiraIssue(pdo);
         String titleFromJira = getSummaryFieldFromJiraTicket(pdo);
 
-        Assert.assertEquals(titleFromJira,newTitle,"jira summary field is not synchronized with pdo title.");
+        Assert.assertEquals(titleFromJira, newTitle, "jira summary field is not synchronized with pdo title.");
     }
 
 
@@ -80,6 +81,6 @@ public class ProductOrderEjbContainerTest extends Arquillian {
     }
 
     private String getSummaryFieldFromJiraTicket(ProductOrder pdo) throws IOException {
-        return (String)jiraService.getIssue(pdo.getBusinessKey()).getField(ProductOrder.JiraField.SUMMARY.getName());
+        return (String) jiraService.getIssue(pdo.getBusinessKey()).getField(ProductOrder.JiraField.SUMMARY.getName());
     }
 }
