@@ -21,13 +21,14 @@
         .link {
             fill: none;
             stroke: #000;
-            stroke-width: 3px;
+            stroke-width: 2px;
             opacity: 0.7;
             marker-end: url(#end-arrow);
         }
 
         .label {
             fill: black;
+            stroke-width: 1px;
             font-family: Arial;
             font-size: 12px;
             text-anchor: middle;
@@ -176,21 +177,55 @@
 //                    d.height = b.height + extra;
 //                });
 
-        // Convert Dagre edge control points into pairs of line points.
+        // Make list of edges to draw, including between children, if applicable.
         var links = [];
-        g.edges().forEach(function(e) {
-            var points = g.edge(e).points;
-            for(var i=0, len=points.length-1; i<len; i++){
-                // (note: loop until length - 1 since we're getting the next
-                //  item with i+1)
-                links.push({
-                    sourceX: points[i].x,
-                    sourceY: points[i].y,
-                    targetX: points[i + 1].x,
-                    targetY: points[i + 1].y
-                });
+        json.links.forEach(function(l) {
+            var sourceNode = g.node(l.source);
+            var sourceX = sourceNode.x;
+            var sourceY = sourceNode.y;
+            if (l.sourceChild) {
+                for (var i = 0, len = sourceNode.children.length; i < len; i++) {
+                    if (sourceNode.children[i].name === l.sourceChild) {
+                        sourceX += sourceNode.children[i].x - (sourceNode.width / 2);
+                        sourceY += sourceNode.children[i].y - (sourceNode.height / 2);
+                        break;
+                    }
+                }
             }
+            // todo jmt reduce copy / paste
+            var targetNode = g.node(l.target);
+            var targetX = targetNode.x;
+            var targetY = targetNode.y;
+            if (l.targetChild) {
+                for (var i = 0, len = targetNode.children.length; i < len; i++) {
+                    if (targetNode.children[i].name === l.targetChild) {
+                        targetX += targetNode.children[i].x - (targetNode.width / 2);
+                        targetY += targetNode.children[i].y - (targetNode.height / 2);
+                        break;
+                    }
+                }
+            }
+            links.push({
+                sourceX: sourceX,
+                sourceY: sourceY,
+                targetX: targetX,
+                targetY: targetY
+            });
         });
+        // Convert Dagre edge control points into pairs of line points.
+//        g.edges().forEach(function(e) {
+//            var points = g.edge(e).points;
+//            for (var i = 0, len = points.length - 1; i < len; i++) {
+//                // (note: loop until length - 1 since we're getting the next
+//                //  item with i+1)
+//                links.push({
+//                    sourceX: points[i].x,
+//                    sourceY: points[i].y,
+//                    targetX: points[i + 1].x,
+//                    targetY: points[i + 1].y
+//                });
+//            }
+//        });
 
         // Render edges.
         var points = svg.selectAll(".link")

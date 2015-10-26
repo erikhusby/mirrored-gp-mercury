@@ -63,28 +63,19 @@ public class TransferVisualizerV2 {
                 for (CherryPickTransfer cherryPickTransfer : event.getCherryPickTransfers()) {
                     LabVessel sourceVessel = cherryPickTransfer.getSourceVesselContainer().getVesselAtPosition(
                             cherryPickTransfer.getSourcePosition());
+                    String sourceVesselLabel = sourceVessel == null ? cherryPickTransfer.getSourcePosition().name() :
+                            sourceVessel.getLabel();
                     LabVessel targetVessel = cherryPickTransfer.getTargetVesselContainer().getVesselAtPosition(
                             cherryPickTransfer.getTargetPosition());
+                    String targetVesselLabel = targetVessel == null ? cherryPickTransfer.getTargetPosition().name() :
+                            targetVessel.getLabel();
                     // todo jmt handle plate wells
-/*
-                    String sourceId = "";
-                    if (sourceVessel != null) {
-                        sourceId = sourceVessel.getLabel() + "|";
-                    }
-                    sourceId += cherryPickTransfer.getSourceVesselContainer().getEmbedder().getLabel();
-*/
-
-/*
-                    String targetId = "";
-                    if (targetVessel != null) {
-                        targetId = targetVessel.getLabel() + "|";
-                    }
-                    targetId += cherryPickTransfer.getTargetVesselContainer().getEmbedder().getLabel();
-*/
                     renderContainer(cherryPickTransfer.getTargetVesselContainer(),
                             cherryPickTransfer.getAncillaryTargetVessel());
                     renderLink(eventId, cherryPickTransfer.getSourceVesselContainer().getEmbedder().getLabel(),
-                            cherryPickTransfer.getTargetVesselContainer().getEmbedder().getLabel());
+                            sourceVesselLabel,
+                            cherryPickTransfer.getTargetVesselContainer().getEmbedder().getLabel(),
+                            targetVesselLabel);
                 }
                 for (VesselToSectionTransfer vesselToSectionTransfer : event.getVesselToSectionTransfers()) {
                     String sourceLabel = vesselToSectionTransfer.getSourceVessel().getLabel();
@@ -101,15 +92,14 @@ public class TransferVisualizerV2 {
         }
 
         private void renderLink(String eventId, String sourceId, String targetId) {
-//            Integer sourceIndex = mapLabelToIndex.get(sourceId);
-//            if (sourceIndex == null) {
-//                throw new RuntimeException("Failed to find index for " + sourceId);
-//            }
-//            Integer targetIndex = mapLabelToIndex.get(targetId);
-//            if (targetIndex == null) {
-//                throw new RuntimeException("Failed to find index for " + targetId);
-//            }
             linksJson.append("{ \"source\": \"").append(sourceId).append("\", \"target\": \"").append(targetId).
+                    append("\" },\n");
+        }
+        private void renderLink(String eventId, String sourceId, String sourceChild, String targetId, String targetChild) {
+            linksJson.append("{ \"source\": \"").append(sourceId).
+                    append("\", \"sourceChild\": \"").append(sourceChild).
+                    append("\", \"target\": \"").append(targetId).
+                    append("\", \"targetChild\": \"").append(targetChild).
                     append("\" },\n");
         }
 
