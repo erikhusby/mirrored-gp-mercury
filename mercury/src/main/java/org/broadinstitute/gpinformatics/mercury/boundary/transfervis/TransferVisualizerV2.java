@@ -215,9 +215,17 @@ public class TransferVisualizerV2 {
             }
 
             private void render() {
-                String sourceId = /*labVessel.getLabel() + "|" + */vesselContainer.getEmbedder().getLabel();
-                String targetId = /*labVessel.getLabel() + "|" + */otherContainer.getEmbedder().getLabel();
-                renderLink(sourceId + "|" + targetId, sourceId, targetId);
+                VesselContainer<?> sourceContainer;
+                VesselContainer<?> targetContainer;
+                if (vesselContainer.getEmbedder().getCreatedOn().before(otherContainer.getEmbedder().getCreatedOn())) {
+                    sourceContainer = vesselContainer;
+                    targetContainer = otherContainer;
+                } else {
+                    sourceContainer = otherContainer;
+                    targetContainer = vesselContainer;
+                }
+                renderLink(null, sourceContainer.getEmbedder().getLabel(), labVessel.getLabel(),
+                        targetContainer.getEmbedder().getLabel(), labVessel.getLabel());
             }
         }
     }
