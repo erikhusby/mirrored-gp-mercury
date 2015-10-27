@@ -522,7 +522,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
                         messageCollection.addError(message);
                     }
                     if (direction == Direction.SOURCE && !labVessel.getNearestWorkflowLabBatches().contains(labBatch)) {
-                        messageCollection.addInfo(barcode + " is not in batch " + labBatch.getBatchName());
+                        messageCollection.addError(barcode + " is not in batch " + labBatch.getBatchName());
                     }
                 }
             }
