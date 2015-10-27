@@ -358,11 +358,8 @@ public class LabVesselSearchDefinition {
             public Set<String> evaluate(Object entity, SearchContext context) {
                 Set<String> results = new HashSet<>();
                 LabVessel labVessel = (LabVessel) entity;
-                for (BucketEntry bucketEntry : labVessel.getBucketEntries()) {
-                    results.add(bucketEntry.getProductOrder().getJiraTicketKey());
-                }
-                for (MercurySample mercurySample : labVessel.getMercurySamples() ) {
-                    for (ProductOrderSample productOrderSample : mercurySample.getProductOrderSamples() ) {
+                for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+                    for (ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples() ) {
                         results.add(productOrderSample.getProductOrder().getJiraTicketKey());
                     }
                 }
