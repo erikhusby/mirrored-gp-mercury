@@ -18,7 +18,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.JiraUserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
+import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
@@ -77,6 +79,8 @@ public class BucketViewActionBean extends CoreActionBean {
     private static final String FIND_PDO = "findPdo";
 
     @Inject
+    JiraUserTokenInput jiraUserTokenInput;
+    @Inject
     private WorkflowLoader workflowLoader;
     @Inject
     private BucketDao bucketDao;
@@ -127,6 +131,7 @@ public class BucketViewActionBean extends CoreActionBean {
     private Date dueDate;
     private String selectedLcset;
     private LabBatch batch;
+    private String q;
 
     @Before(stages = LifecycleStage.BindingAndValidation)
     public void init() {
@@ -142,6 +147,11 @@ public class BucketViewActionBean extends CoreActionBean {
                 mapBucketToWorkflowDefs.put(bucketName, workflowDef);
             }
         }
+    }
+
+    @HandlesEvent("watchersAutoComplete")
+    public Resolution watchersAutoComplete() throws JSONException {
+        return createTextResolution(jiraUserTokenInput.getJsonString(getQ()));
     }
 
     @DefaultHandler
@@ -319,13 +329,13 @@ public class BucketViewActionBean extends CoreActionBean {
     @HandlesEvent(CREATE_BATCH_ACTION)
     public Resolution createBatch() {
         separateEntriesByType();
+        String[] watchers = jiraUserTokenInput.getListOfKeys().split(TokenInput.TOKEN_INPUT_SEPARATOR);
         try {
             batch = labBatchEjb
                     .createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
-                                                       selectedWorkflowDef.getName(), bucketEntryIds, reworkEntryIds,
-                                                       summary.trim(),
-                                                       description, dueDate, important,
-                                                       userBean.getBspUser().getUsername(), selectedBucket, this);
+                            selectedWorkflowDef.getName(), bucketEntryIds, reworkEntryIds,
+                            summary.trim(), description, dueDate, important, userBean.getBspUser().getUsername(),
+                            selectedBucket, this, watchers);
         } catch (ValidationException e) {
             addGlobalValidationError(e.getMessage());
             return view();
@@ -527,5 +537,20 @@ public class BucketViewActionBean extends CoreActionBean {
         Collections.sort(list);
         return list;
     }
+    public JiraUserTokenInput getJiraUserTokenInput() {
+        return jiraUserTokenInput;
+    }
 
+    public void setJiraUserTokenInput(
+            JiraUserTokenInput jiraUserTokenInput) {
+        this.jiraUserTokenInput = jiraUserTokenInput;
+    }
+
+    public String getQ() {
+        return q;
+    }
+
+    public void setQ(String q) {
+        this.q = q;
+    }
 }

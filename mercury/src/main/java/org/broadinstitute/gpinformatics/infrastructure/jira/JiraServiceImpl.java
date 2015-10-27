@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.jira;
 
 import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.GenericType;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
@@ -16,7 +17,9 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueReq
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.IssueFieldsResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.IssueResolutionResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraUserResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.UpdateIssueRequest;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraUser;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.Visibility;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.comment.AddCommentRequest;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.comment.AddCommentResponse;
@@ -31,6 +34,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
+import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -194,6 +198,20 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         }
 
         return issueResult;
+    }
+
+    @Override
+    public List<JiraUser> getJiraUsers(String key) {
+        if (key == null) {
+            return Collections.emptyList();
+        }
+        String urlString = getBaseUrl() + "/user/picker";
+
+        WebResource webResource = getJerseyClient().resource(urlString).queryParam("query", key);
+        ClientResponse response = webResource.type(MediaType.APPLICATION_JSON_TYPE).get(ClientResponse.class);
+        JiraUserResponse jiraUserResponse = response.getEntity(JiraUserResponse.class);
+
+        return jiraUserResponse.getJiraUsers();
     }
 
     private static JiraSearchIssueData parseSearch(String queryResponse, String... searchFields) throws IOException {

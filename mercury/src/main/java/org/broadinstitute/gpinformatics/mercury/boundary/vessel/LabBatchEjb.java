@@ -217,7 +217,7 @@ public class LabBatchEjb {
                                                       @Nonnull String batchName, @Nonnull String description,
                                                       @Nonnull Date dueDate, @Nonnull String important,
                                                       @Nonnull String username, String bucketName,
-                                                      @Nonnull MessageReporter reporter) throws ValidationException {
+                                                      @Nonnull MessageReporter reporter, String ... watchers) throws ValidationException {
         List<BucketEntry> bucketEntries = bucketEntryDao.findByIds(bucketEntryIds);
         List<BucketEntry> reworkBucketEntries = bucketEntryDao.findByIds(reworkBucketEntryIds);
         Set<String> pdoKeys = new HashSet<>();
@@ -275,7 +275,7 @@ public class LabBatchEjb {
         CreateFields.IssueType issueType = CreateFields.IssueType.valueOf(bucketDef.getBatchJiraIssueType());
 
         batchToJira(username, null, batch, issueType,
-                CreateFields.ProjectType.fromKeyPrefix(bucketDef.getBatchJiraProjectType()), reporter);
+                CreateFields.ProjectType.fromKeyPrefix(bucketDef.getBatchJiraProjectType()), reporter, watchers);
 
         //link the JIRA tickets for the batch created to the pdo batches.
         for (String pdoKey : pdoKeys) {
@@ -328,7 +328,7 @@ public class LabBatchEjb {
      */
     public void batchToJira(String reporter, @Nullable String jiraTicket, LabBatch newBatch,
                             @Nonnull CreateFields.IssueType issueType, CreateFields.ProjectType projectType,
-                            @Nonnull MessageReporter messageReporter) {
+                            @Nonnull MessageReporter messageReporter, String ... watchers) {
         try {
             if (issueType == null) {
                 throw new InformaticsServiceException("JIRA issue type must be specified");
@@ -358,7 +358,9 @@ public class LabBatchEjb {
                 JiraIssue jiraIssue = jiraService
                         .createIssue(fieldBuilder.getProjectType(), reporter, issueType, fieldBuilder.getSummary(),
                                 batchJiraTicketFields);
-
+                for (String watcher : watchers) {
+                    jiraIssue.addWatcher(watcher);
+                }
                 JiraTicket ticket = new JiraTicket(jiraService, jiraIssue.getKey());
 
                 newBatch.setJiraTicket(ticket);

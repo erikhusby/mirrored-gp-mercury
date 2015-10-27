@@ -272,6 +272,14 @@
                 }
             });
 
+            $j("#watchers").tokenInput(
+                    "${ctxpath}/view/bucketView.action?watchersAutoComplete=", {
+                        prePopulate: ${actionBean.ensureStringResult(actionBean.jiraUserTokenInput.completeData)},
+                        tokenDelimiter: "${actionBean.jiraUserTokenInput.separator}",
+                        preventDuplicates: true,
+                        autoSelectFirstResult: true
+                    }
+            );
         });
 
         function showJiraInfo() {
@@ -362,6 +370,15 @@
                                 dateStyle="short"/></stripes:text>
                     </div>
                 </div>
+
+                <div class="control-group">
+                    <stripes:label for="watchers" name="Watchers" class="control-label"/>
+                    <div class="controls">
+                        <stripes:text id="watchers" name="jiraUserTokenInput.listOfKeys" class="defaultText"
+                                      title="Entery users to add as watchers."/>
+                    </div>
+                </div>
+
             </div>
             </div>
         </c:if>
