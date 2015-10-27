@@ -146,6 +146,7 @@ public class LabEventSearchDefinition {
 
         searchTerm = new SearchTerm();
         searchTerm.setName("EventDate");
+        searchTerm.setIsDefaultResultColumn(Boolean.TRUE);
         searchTerm.setDbSortPath("eventDate");
         criteriaPaths = new ArrayList<>();
         criteriaPath = new SearchTerm.CriteriaPath();
@@ -225,6 +226,7 @@ public class LabEventSearchDefinition {
 
         searchTerm = new SearchTerm();
         searchTerm.setName("EventType");
+        searchTerm.setIsDefaultResultColumn(Boolean.TRUE);
         searchTerm.setDbSortPath("labEventType");
         criteriaPaths = new ArrayList<>();
         criteriaPath = new SearchTerm.CriteriaPath();

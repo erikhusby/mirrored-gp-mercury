@@ -88,9 +88,21 @@ buttons to move columns from one to the other --%>
         /**
          * After the page is rendered, any columns in the chosen list must be made invisible in
          * the available list (so they can't be chosen twice)
+         * Also, if no columns are selected, populate chosen with search definition default(s)
          * @param available multi-select of available columns
          * @param chosen multi-select of chosen columns
          */
+        var searchDefaultColumns = [<c:set var="listDelim" value=""
+        /><c:forEach items="${actionBean.configurableSearchDef.defaultResultColumns}" var="defaultTerm"
+            ><c:forEach items="${availableMapGroupToColumnNames}" var="entry"
+                ><c:forEach items="${entry.value}" var="columnConfig"
+                    ><c:if test="${columnConfig.isDefaultResultColumn() and columnConfig.name == defaultTerm.name}"
+                        >${listDelim}"${defaultTerm.name}"<c:set var="listDelim" value=","
+                    /></c:if
+                ></c:forEach
+            ></c:forEach
+        ></c:forEach>];
+
         syncChosenAvailable = function () {
             var available = $j('#sourceColumnDefNames')[0];
             var chosen = $j('#selectedColumnDefNames')[0];
@@ -99,6 +111,20 @@ buttons to move columns from one to the other --%>
                 for (var j = 0; j < available.options.length; j++) {
                     if (available.options[j].text == option.text) {
                         available.options[j].style.display = 'none';
+                    }
+                }
+            }
+
+            if(chosen.options.length == 0){
+               for (var i = 0; i < searchDefaultColumns.length; i++) {
+                    for (var j = 0; j < available.options.length; j++) {
+                        if (available.options[j].text == searchDefaultColumns[i]) {
+                            var newOption = document.createElement('option');
+                            newOption.text = searchDefaultColumns[i];
+                            newOption.value = searchDefaultColumns[i];
+                            chosen.options[chosen.options.length] = newOption;
+                            available.options[j].style.display = 'none';
+                        }
                     }
                 }
             }
