@@ -39,15 +39,15 @@ public class TransferVisualizerV2 {
             if (context.getVesselContainer() == null) {
                 renderVessel(context.getLabVessel());
             } else {
-                renderContainer(context.getVesselContainer(), null);
+                renderContainer(context.getVesselContainer(), null, context.getLabVessel());
             }
             if (context.getEvent() != null) {
-                renderEvent(context.getEvent());
+                renderEvent(context.getEvent(), context.getLabVessel());
             }
             return TraversalControl.ContinueTraversing;
         }
 
-        private void renderEvent(LabEvent event) {
+        private void renderEvent(LabEvent event, LabVessel labVessel) {
             // events
             String eventId = event.getEventLocation() + "|" + event.getEventDate().getTime() + "|" +
                     event.getDisambiguator();
@@ -57,7 +57,7 @@ public class TransferVisualizerV2 {
                     String sourceId = sectionTransfer.getSourceVesselContainer().getEmbedder().getLabel();
                     String targetId = sectionTransfer.getTargetVesselContainer().getEmbedder().getLabel();
                     renderContainer(sectionTransfer.getTargetVesselContainer(),
-                            sectionTransfer.getAncillaryTargetVessel());
+                            sectionTransfer.getAncillaryTargetVessel(), labVessel);
                     renderLink(eventId, sourceId, targetId);
                 }
                 for (CherryPickTransfer cherryPickTransfer : event.getCherryPickTransfers()) {
@@ -71,7 +71,7 @@ public class TransferVisualizerV2 {
                             targetVessel.getLabel();
                     // todo jmt handle plate wells
                     renderContainer(cherryPickTransfer.getTargetVesselContainer(),
-                            cherryPickTransfer.getAncillaryTargetVessel());
+                            cherryPickTransfer.getAncillaryTargetVessel(), labVessel);
                     renderLink(eventId, cherryPickTransfer.getSourceVesselContainer().getEmbedder().getLabel(),
                             sourceVesselLabel,
                             cherryPickTransfer.getTargetVesselContainer().getEmbedder().getLabel(),
@@ -84,7 +84,7 @@ public class TransferVisualizerV2 {
                         sourceLabel = containers.iterator().next().getEmbedder().getLabel();
                     }
                     renderContainer(vesselToSectionTransfer.getTargetVesselContainer(),
-                            vesselToSectionTransfer.getAncillaryTargetVessel());
+                            vesselToSectionTransfer.getAncillaryTargetVessel(), labVessel);
                     renderLink(eventId, sourceLabel,
                             vesselToSectionTransfer.getTargetVesselContainer().getEmbedder().getLabel());
                 }
@@ -111,7 +111,7 @@ public class TransferVisualizerV2 {
 //                mapLabelToIndex.put(label, nodeIndex);
 //                nodeIndex++;
                 for (VesselContainer<?> vesselContainer : labVessel.getContainers()) {
-                    renderContainer(vesselContainer, null);
+                    renderContainer(vesselContainer, null, labVessel);
                 }
 //            }
         }
@@ -126,7 +126,7 @@ public class TransferVisualizerV2 {
 
         }
 
-        public void renderContainer(VesselContainer<?> vesselContainer, LabVessel ancillaryVessel) {
+        public void renderContainer(VesselContainer<?> vesselContainer, LabVessel ancillaryVessel, LabVessel labVessel) {
             String containerLabel = vesselContainer.getEmbedder().getLabel();
             String ancillaryLabel = null;
             if (ancillaryVessel == null) {
@@ -142,7 +142,6 @@ public class TransferVisualizerV2 {
             } else {
                 ancillaryLabel = ancillaryVessel.getLabel();
             }
-            List<String> childIds = new ArrayList<>();
             Set<VesselContainer<?>> otherContainers = new HashSet<>();
             List<Rearray> rearrays = new ArrayList<>();
             if (renderedLabels.add(containerLabel)) {
@@ -161,7 +160,11 @@ public class TransferVisualizerV2 {
                         childBuilder.append("{ \"name\": \"").append(child.getLabel()).
                                 append("\", \"x\": ").append((rowColumn.getColumn() - 1) * 60).
                                 append(", \"y\": ").append((rowColumn.getRow() - 1) * 20).
-                                append(", \"w\": 60, \"h\": 20 }");
+                                append(", \"w\": 60, \"h\": 20 ");
+                        if (child.equals(labVessel)) {
+                            childBuilder.append(", \"highlight\": 1");
+                        }
+                        childBuilder.append("}");
                         maxColumn = Math.max(maxColumn, rowColumn.getColumn());
                         maxRow = Math.max(maxRow, rowColumn.getRow());
                         if (child.getContainers().size() > 1) {
@@ -183,7 +186,7 @@ public class TransferVisualizerV2 {
                 nodesJson.append("] } },\n");
 
                 for (VesselContainer<?> otherContainer : otherContainers) {
-                    renderContainer(otherContainer, null);
+                    renderContainer(otherContainer, null, labVessel);
                 }
                 for (Rearray rearray : rearrays) {
                     rearray.render();

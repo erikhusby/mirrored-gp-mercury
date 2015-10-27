@@ -1260,8 +1260,8 @@ public class LabEventTest extends BaseEventTest {
             TransferVisualizerV2 transferVisualizerV2 = new TransferVisualizerV2();
             File xfrVis = File.createTempFile("XfrVis", ".json");
             String json = transferVisualizerV2.jsonForVessels(
-                    Collections.<LabVessel>singletonList(hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell()),
-                    Collections.singletonList(TransferTraverserCriteria.TraversalDirection.Ancestors));
+                    Collections.<LabVessel>singletonList(mapBarcodeToTube.values().iterator().next()),
+                    Collections.singletonList(TransferTraverserCriteria.TraversalDirection.Descendants));
             FileWriter fileWriter = new FileWriter(xfrVis);
             fileWriter.write(json);
             fileWriter.flush();

@@ -39,6 +39,10 @@
             fill: LightYellow;
             pointer-events: all;
         }
+
+        .highlight {
+            fill: Yellow;
+        }
     </style>
 </head>
 <body>
@@ -144,7 +148,9 @@
 
         // Render tubes.
         var nodeChild = nodeChildEnter.append("rect")
-                .attr("class", "nodeChild")
+                .attr("class", function (d) {
+                    return "nodeChild" + (d.hasOwnProperty('highlight') ? " highlight" : "");
+                })
                 .attr("x", function (d) {
                     return d.x;
                 })
