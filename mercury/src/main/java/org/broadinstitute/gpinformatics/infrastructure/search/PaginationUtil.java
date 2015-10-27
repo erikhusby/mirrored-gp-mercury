@@ -13,7 +13,6 @@ package org.broadinstitute.gpinformatics.infrastructure.search;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.common.BaseSplitter;
-import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.hibernate.Criteria;
 import org.hibernate.FetchMode;
 import org.hibernate.Session;
@@ -22,8 +21,7 @@ import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.ejb.HibernateEntityManager;
 
-import javax.ejb.Stateful;
-import javax.enterprise.context.RequestScoped;
+import javax.persistence.EntityManager;
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -34,13 +32,15 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Holds methods for pagination of criteria results. The start method projects the ID for
- * the entity out of the criteria, to get a list of IDs. The page method then retrieves
- * entities for a subset of the list of IDs.
+ * Holds methods for pagination of criteria results. The startPagination method uses the criteria to retrieve
+ *  either a list of IDs or a list of entities. The page method then processes a subset of the list for display.
  */
-@Stateful
-@RequestScoped
-public class PaginationDao extends GenericDao {
+public class PaginationUtil {
+
+    private PaginationUtil(){};
+
+    private static PaginationUtil paginationUtil = new PaginationUtil();
+
     /**
      * Holds the current location in a pagination sequence, intended to be placed in HTTP
      * session.
@@ -107,8 +107,10 @@ public class PaginationDao extends GenericDao {
      *
      * @param criteria   criteria for which results are to be paginated
      * @param pagination holds pagination state
+     * @param doInitialFetchFullEntity True if search logic (ancestry and descendant traversal evaluators)
+     *                                 requires a list of entities rather than the default of an ID list.
      */
-    public void startPagination(Criteria criteria, Pagination pagination, boolean doInitialFetchFullEntity) {
+    public static void startPagination(Criteria criteria, Pagination pagination, boolean doInitialFetchFullEntity) {
         if( !doInitialFetchFullEntity ) {
             criteria.setProjection(Projections.property(pagination.getResultEntityId()));
         }
@@ -119,11 +121,12 @@ public class PaginationDao extends GenericDao {
     /**
      * Gets one page out of the total set of results
      *
+     * @param em Used to obtain a Hibernate entity manager to build Criteria and retrieve entities
      * @param pagination holds IDs and page size
      * @param pageNumber number of requested page, starting at zero
      * @return list of entities for requested page, in same order as IDs
      */
-    public <T> List<T> getPage(Pagination pagination, int pageNumber) {
+    public static <T> List<T> getPage(EntityManager em, Pagination pagination, int pageNumber) {
         if (pagination.getIdList().isEmpty()) {
             return Collections.emptyList();
         }
@@ -131,19 +134,21 @@ public class PaginationDao extends GenericDao {
                 Math.min((pageNumber + 1) * pagination.getPageSize(), pagination.getIdList().size()));
 
         @SuppressWarnings("unchecked")
-        List<T> entityList = (List<T>) buildCriteria(pagination, idSubList).list();
-        return reorderList(pagination, idSubList, entityList);
+        List<T> entityList = (List<T>) paginationUtil.buildCriteria(
+                em.unwrap(HibernateEntityManager.class),
+                pagination, idSubList).list();
+        return paginationUtil.reorderList(pagination, idSubList, entityList);
     }
 
     /**
      * Builds criteria to retrieve entities with given IDs
      *
+     * @param hibernateEntityManager Required to obtain Hibernate session used to build Criteria
      * @param pagination contains metadata about the entity
      * @param idList     list of primary keys
      * @return criteria
      */
-    private Criteria buildCriteria(Pagination pagination, List<?> idList) {
-        HibernateEntityManager hibernateEntityManager = getEntityManager().unwrap(HibernateEntityManager.class);
+    private Criteria buildCriteria(HibernateEntityManager hibernateEntityManager , Pagination pagination, List<?> idList) {
         Session hibernateSession = hibernateEntityManager.getSession();
         Criteria criteria = hibernateSession.createCriteria(pagination.getResultEntity().getEntityClass());
         criteria.setResultTransformer(Criteria.DISTINCT_ROOT_ENTITY);
@@ -194,14 +199,16 @@ public class PaginationDao extends GenericDao {
     /**
      * The user interface allows a user to check multiple boxes next to result rows
      *
-     * @param pagination information about entity and ID property
-     * @param idList     ids the user wants to access
+     * @param em Used to obtain a Hibernate entity manager to build Criteria and retrieve entities
+     * @param pagination Information about entity and ID property
+     * @param idList     Ids for the entities the user wants to access
      * @return list of entities, in same order as idList
      */
-    public <T> List<T> getByIds(Pagination pagination, List<?> idList) {
+    public static <T> List<T> getByIds(EntityManager em, Pagination pagination, List<?> idList) {
         @SuppressWarnings("unchecked")
-        List<T> entityList = buildCriteria(pagination, idList).list();
-        return reorderList(pagination, idList, entityList);
+        List<T> entityList =  paginationUtil.buildCriteria(
+                em.unwrap(HibernateEntityManager.class), pagination, idList).list();
+        return paginationUtil.reorderList(pagination, idList, entityList);
     }
 
     /**
@@ -210,7 +217,7 @@ public class PaginationDao extends GenericDao {
      * @param pagination Entity data
      * @param idList List of String IDs
      */
-    public List<?> convertStringIdsToEntityType(Pagination pagination, List<String> idList) {
+    public static List<?> convertStringIdsToEntityType(Pagination pagination, List<String> idList) {
 
         List<Object> typeSafeIds = new ArrayList<>();
 

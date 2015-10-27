@@ -11,7 +11,6 @@ import javax.persistence.Table;
  */
 @Entity
 @Audited
-@Table(schema = "mercury")
 public class IlluminaSequencingRunChamber extends SequencingRunChamber {
 
     @ManyToOne

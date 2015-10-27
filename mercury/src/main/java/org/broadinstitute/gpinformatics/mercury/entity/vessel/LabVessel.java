@@ -9,8 +9,11 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
+import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -202,6 +205,9 @@ public abstract class LabVessel implements Serializable {
     @Transient
     private Map<String, Set<LabMetric>> metricMap;
 
+    @Transient
+    private MaterialType latestMaterialType=null;
+
     /**
      * Set by {@link #preProcessEvents()}
      */
@@ -220,24 +226,95 @@ public abstract class LabVessel implements Serializable {
     }
 
     public boolean isDNA() {
-        boolean hasMaterialConvertedToDNA = hasMaterialConvertedTo(MaterialType.DNA);
-        if (!hasMaterialConvertedToDNA) {
-            for (SampleInstanceV2 si : getSampleInstancesV2()) {
-                if (si.getRootOrEarliestMercurySample().getSampleData().getMaterialType()
-                        .startsWith(MaterialType.DNA.name())) {
+        return isMaterialType(MaterialType.DNA);
+    }
+
+    public boolean isMaterialType(MaterialType materialType) {
+        boolean hasMaterialConvertedToMaterialType = hasMaterialConvertedTo(materialType);
+        if (!hasMaterialConvertedToMaterialType) {
+            for (String sampleMaterialType : getMaterialTypes()) {
+                if (StringUtils.equalsIgnoreCase(materialType.getDisplayName(), sampleMaterialType)) {
                     return true;
                 }
             }
         }
-        return hasMaterialConvertedToDNA;
+        return hasMaterialConvertedToMaterialType;
     }
 
-    private boolean hasMaterialConvertedTo(MaterialType materialType) {
-        TransferTraverserCriteria.LabEventsWithMaterialTypeTraverserCriteria materialTypeTraverserCriteria =
-                new TransferTraverserCriteria.LabEventsWithMaterialTypeTraverserCriteria(materialType);
-        evaluateCriteria(materialTypeTraverserCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
+    /**
+     * Find the latest material type by first searching the event history then falling back on the sample's metadata.
+     * @return
+     */
+    public MaterialType getLatestMaterialType() {
+        if (latestMaterialType==null) {
+            latestMaterialType = getLatestMaterialTypeFromEventHistory();
+            if (latestMaterialType == null) {
+                latestMaterialType = MaterialType.fromDisplayName(getMaterialTypes().iterator().next());
+            }
+        }
+        return latestMaterialType;
+    }
 
-        return materialTypeTraverserCriteria.getVesselForMaterialType() != null;
+
+    public List<String> getMaterialTypes() {
+        List<String> materialTypes = new ArrayList<>();
+        for (SampleInstanceV2 si : getSampleInstancesV2()) {
+            String materialType = si.getRootOrEarliestMercurySample().getSampleData().getMaterialType();
+            if (StringUtils.isNotBlank(materialType)) {
+                materialTypes.add(materialType);
+            }
+        }
+        return materialTypes;
+    }
+
+    /**
+     * Initializes SampleData for all vessels with data used when viewing Buckets.
+     * @param labVessels
+     */
+    public static void loadSampleDataForBuckets(Collection<LabVessel> labVessels){
+        SampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(SampleDataFetcher.class);
+        Map<String, MercurySample> sampleNames = new HashMap<>();
+        for (LabVessel labVessel : labVessels) {
+            for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+                MercurySample mercurySample = sampleInstanceV2.getRootOrEarliestMercurySample();
+                sampleNames.put(mercurySample.getSampleKey(), mercurySample);
+            }
+        }
+        Map<String, SampleData> sampleDataMap = sampleDataFetcher.fetchSampleDataForMercurySamples(
+                sampleNames.values(), BSPSampleSearchColumn.BUCKET_PAGE_COLUMNS);
+        for (Map.Entry<String, SampleData> sampleDataEntry : sampleDataMap.entrySet()) {
+            sampleNames.get(sampleDataEntry.getKey()).setSampleData(sampleDataEntry.getValue());
+        }
+    }
+
+    /**
+     * Find the current MaterialType of this LabVesel.
+     * @param materialType materialType to test
+     * @return true if the event history indicates the latest MaterialType matches input
+     */
+    private boolean hasMaterialConvertedTo(MaterialType materialType) {
+        return materialType == getLatestMaterialTypeFromEventHistory();
+    }
+
+    /**
+     * Traverse the event history of this LabVessel to find the current MaterialType.
+     * @return the current MaterialType
+     */
+    public MaterialType getLatestMaterialTypeFromEventHistory() {
+        TransferTraverserCriteria.NearestMaterialTypeTraverserCriteria materialTypeTraverserCriteria =
+                evaluateMaterialTypeTraverserCriteria();
+
+        return materialTypeTraverserCriteria.getMaterialType();
+    }
+
+    /**
+     * Traverser which scans the event history of this LabVessel to find the current MaterialType.
+     */
+    TransferTraverserCriteria.NearestMaterialTypeTraverserCriteria evaluateMaterialTypeTraverserCriteria() {
+        TransferTraverserCriteria.NearestMaterialTypeTraverserCriteria materialTypeTraverserCriteria =
+                new TransferTraverserCriteria.NearestMaterialTypeTraverserCriteria();
+        evaluateCriteria(materialTypeTraverserCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
+        return materialTypeTraverserCriteria;
     }
 
     /**
@@ -599,26 +676,6 @@ public abstract class LabVessel implements Serializable {
 
         public String getName() {
             return name;
-        }
-    }
-
-    public enum MaterialType implements Displayable {
-        CELL_SUSPENSION("Cell Suspension"),
-        DNA("DNA"),
-        FFPE("FFPE"),
-        FRESH_BLOOD("Fresh Blood"),
-        FRESH_FROZEN_BLOOD("Fresh Frozen Blood"),
-        RNA("RNA");
-
-        private final String displayName;
-
-        MaterialType(String displayName) {
-            this.displayName = displayName;
-        }
-
-        @Override
-        public String getDisplayName() {
-            return displayName;
         }
     }
 

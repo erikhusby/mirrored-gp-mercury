@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.workflow;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -8,6 +9,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowProcessDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowProcessDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
@@ -30,6 +32,7 @@ public class WorkflowMatcher {
     public static class WorkflowEvent {
         private WorkflowStepDef workflowStepDef;
         private List<LabEvent> labEvents;
+        private boolean skipped;
 
         public WorkflowEvent(WorkflowStepDef workflowStepDef, List<LabEvent> labEvents) {
             this.workflowStepDef = workflowStepDef;
@@ -42,6 +45,14 @@ public class WorkflowMatcher {
 
         public List<LabEvent> getLabEvents() {
             return labEvents;
+        }
+
+        public boolean isSkipped() {
+            return skipped;
+        }
+
+        public void setSkipped(boolean skipped) {
+            this.skipped = skipped;
         }
     }
 
@@ -123,6 +134,9 @@ public class WorkflowMatcher {
                     TransferTraverserCriteria.TraversalDirection.Descendants);
         }
         for (LabEvent labEvent : labEventDescendantCriteria.getAllEvents()) {
+            if (labEvent.getEventDate().before(labBatch.getCreatedOn())) {
+                continue;
+            }
             LabEventKey labEventKey = new LabEventKey(labEvent);
             List<LabEvent> labEvents = mapTypeToEvent.get(labEventKey);
             if (labEvents == null) {
@@ -137,9 +151,14 @@ public class WorkflowMatcher {
             WorkflowProcessDefVersion effectiveVersion = workflowProcessDef.getEffectiveVersion();
             for (WorkflowStepDef workflowStepDef : effectiveVersion.getWorkflowStepDefs()) {
                 for (LabEventType labEventType : workflowStepDef.getLabEventTypes()) {
-                    workflowEvents.add(new WorkflowEvent(
-                            workflowStepDef,
-                            mapTypeToEvent.remove(new LabEventKey(labEventType, workflowStepDef.getWorkflowQualifier()))));
+                    List<LabEvent> labEvents = mapTypeToEvent.remove(
+                            new LabEventKey(labEventType, workflowStepDef.getWorkflowQualifier()));
+                    // Don't include bucket event, it's artificial and confuses the users
+                    if (!(workflowStepDef instanceof WorkflowBucketDef)) {
+                        workflowEvents.add(new WorkflowEvent(
+                                workflowStepDef,
+                                labEvents));
+                    }
                 }
             }
         }
@@ -157,6 +176,18 @@ public class WorkflowMatcher {
                     workflowEvents.add(i, new WorkflowEvent(null, labEventKeyListEntry.getValue()));
                     iterator.remove();
                     break;
+                }
+            }
+        }
+
+        boolean foundEvents = false;
+        for (int i = workflowEvents.size() - 1; i >= 0; i--) {
+            WorkflowEvent workflowEvent = workflowEvents.get(i);
+            if (!CollectionUtils.isEmpty(workflowEvent.getLabEvents())) {
+                foundEvents = true;
+            } else if (foundEvents) {
+                if (CollectionUtils.isEmpty(workflowEvent.getLabEvents())) {
+                    workflowEvent.setSkipped(true);
                 }
             }
         }

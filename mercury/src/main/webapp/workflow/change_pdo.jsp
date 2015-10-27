@@ -87,7 +87,7 @@
             </tr>
             </thead>
             <tbody>
-            <c:forEach items="${actionBean.collectiveEntries}" var="entry">
+            <c:forEach items="${actionBean.allBucketEntries}" var="entry">
                 <tr>
                     <td>
                         <stripes:checkbox class="bucket-checkbox" name="selectedEntryIds"

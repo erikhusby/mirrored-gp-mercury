@@ -4,6 +4,9 @@ import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
@@ -13,11 +16,13 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -31,6 +36,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -40,6 +46,7 @@ public class LabBatchEJBTest extends ContainerTest {
 
     public static final String STUB_TEST_PDO_KEY = "PDO-999";
     public static final String BUCKET_NAME = "Pico/Plating Bucket";
+    private static final String EXTRACTION_BUCKET = "Extract to DNA and RNA";
 
     @Inject
     private LabBatchEjb labBatchEJB;
@@ -98,7 +105,10 @@ public class LabBatchEJBTest extends ContainerTest {
             String barcode = "R" + sampleIndex + sampleIndex + sampleIndex + sampleIndex + sampleIndex + sampleIndex;
             String bspStock = vesselSampleList.get(sampleIndex - 1);
             BarcodedTube bspAliquot = new BarcodedTube(barcode);
-            bspAliquot.addSample(new MercurySample(bspStock, MercurySample.MetadataSource.BSP));
+            BspSampleData bspSampleData = new BspSampleData(new HashMap<BSPSampleSearchColumn, String>() {{
+                put(BSPSampleSearchColumn.MATERIAL_TYPE, MaterialType.CELLS_PELLET_FROZEN.getDisplayName());
+            }});
+            bspAliquot.addSample(new MercurySample(bspStock, bspSampleData));
             tubeDao.persist(bspAliquot);
             mapBarcodeToTube.put(barcode, bspAliquot);
         }
@@ -106,6 +116,7 @@ public class LabBatchEJBTest extends ContainerTest {
         scottmat = "scottmat";
     }
 
+    @Override
     @AfterMethod(groups = TestGroups.STUBBY)
     public void tearDown() throws Exception {
         if (utx == null) {
@@ -120,9 +131,19 @@ public class LabBatchEJBTest extends ContainerTest {
     @Test
     public void testCreateLabBatch() throws Exception {
 
-        LabBatch testBatch =
-                labBatchEJB.createLabBatch(new HashSet<LabVessel>(mapBarcodeToTube.values()), scottmat, "LCSET-123",
-                                           LabBatch.LabBatchType.WORKFLOW, CreateFields.IssueType.EXOME_EXPRESS);
+        putTubesInBucket();
+
+        LabBatch testBatch = new LabBatch("LCSET-123", new HashSet<LabVessel>(mapBarcodeToTube.values()),
+                LabBatch.LabBatchType.WORKFLOW);
+
+        for (BarcodedTube barcodedTube : mapBarcodeToTube.values()) {
+            for (BucketEntry bucketEntry : barcodedTube.getBucketEntries()) {
+                testBatch.addBucketEntry(bucketEntry);
+            }
+        }
+
+        labBatchEJB.createLabBatch(testBatch, scottmat, CreateFields.IssueType.EXOME_EXPRESS,
+                CreateFields.ProjectType.LCSET_PROJECT);
 
         final String batchName = testBatch.getBatchName();
 
@@ -141,6 +162,7 @@ public class LabBatchEJBTest extends ContainerTest {
 
     @Test
     public void testCreateLabBatchWithValues() throws Exception {
+        putTubesInBucket();
 
         String batchName = "Test lab Batch Name";
         final String description = "Test of New user input Batch Description";
@@ -163,7 +185,14 @@ public class LabBatchEJBTest extends ContainerTest {
         batchInput.setBatchDescription(description);
         batchInput.setDueDate(future);
 
-        labBatchEJB.createLabBatch(batchInput, scottmat, CreateFields.IssueType.EXOME_EXPRESS);
+        for (BarcodedTube barcodedTube : mapBarcodeToTube.values()) {
+            for (BucketEntry bucketEntry : barcodedTube.getBucketEntries()) {
+                batchInput.addBucketEntry(bucketEntry);
+            }
+        }
+
+        labBatchEJB.createLabBatch(batchInput, scottmat, CreateFields.IssueType.EXOME_EXPRESS,
+                CreateFields.ProjectType.LCSET_PROJECT);
 
         batchName = batchInput.getBatchName();
 
@@ -181,15 +210,23 @@ public class LabBatchEJBTest extends ContainerTest {
     }
 
     @Test
-    public void testCreateLabBatchAndRemoveFromBucket() {
-        putTubesInBucket();
+    public void testCreateLabBatchAndRemoveFromBucket() throws ValidationException {
+        putTubesInSpecificBucket(BUCKET_NAME);
 
         HashSet<LabVessel> starters = new HashSet<LabVessel>(mapBarcodeToTube.values());
-        LabBatch batch = new LabBatch("LabBatchEJBTest.testCreateLabBatchAndRemoveFromBucket",
-                                      starters, LabBatch.LabBatchType.WORKFLOW);
-        LabBatch savedBatch = labBatchEJB.createLabBatchAndRemoveFromBucket(batch, scottmat, BUCKET_NAME,
-                                                                            LabEvent.UI_EVENT_LOCATION,
-                                                                            CreateFields.IssueType.EXOME_EXPRESS);
+
+        List<Long> bucketIds = new ArrayList<>();
+        String bucketName = null;
+        for (LabVessel starter : starters) {
+
+            BucketEntry next = starter.getBucketEntries().iterator().next();
+            bucketName = next.getBucket().getBucketDefinitionName();
+            bucketIds.add(next.getBucketEntryId());
+        }
+
+        LabBatch savedBatch = labBatchEJB.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
+                Workflow.ICE_EXOME_EXPRESS.getWorkflowName(), bucketIds, Collections.<Long>emptyList(),
+                "LabBatchEJBTest.testCreateLabBatchAndRemoveFromBucket", "", new Date(), "", scottmat, bucketName );
 
         //link the JIRA tickets for the batch created to the pdo batches.
         for (String pdoKey : LabVessel.extractPdoKeyList(starters)) {
@@ -213,19 +250,35 @@ public class LabBatchEJBTest extends ContainerTest {
     }
 
     @Test
-    public void testCreateLabBatchAndRemoveFromBucketExistingTicket() {
-        putTubesInBucket();
+    public void testCreateXTRLabBatchAndRemoveFromBucket() throws ValidationException {
+        putTubesInSpecificBucket(EXTRACTION_BUCKET);
 
-        String expectedTicketId = "testCreateLabBatchAndRemoveFromBucketExistingTicket";
-        LabBatch savedBatch = labBatchEJB
-                .createLabBatchAndRemoveFromBucket(new ArrayList<>(mapBarcodeToTube.keySet()), scottmat,
-                                                   expectedTicketId, BUCKET_NAME, LabBatch.LabBatchType.WORKFLOW,
-                                                   CreateFields.IssueType.EXOME_EXPRESS);
+        HashSet<LabVessel> starters = new HashSet<LabVessel>(mapBarcodeToTube.values());
+
+        List<Long> bucketIds = new ArrayList<>();
+        String bucketName = null;
+        for (LabVessel starter : starters) {
+            for (BucketEntry bucketEntry : starter.getBucketEntries()) {
+                bucketName = bucketEntry.getBucket().getBucketDefinitionName();
+                bucketIds.add(bucketEntry.getBucketEntryId());
+            }
+        }
+
+        LabBatch savedBatch = labBatchEJB.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
+                Workflow.DNA_RNA_EXTRACTION_CELL_PELLETS.getWorkflowName(), bucketIds, Collections.<Long>emptyList(),
+                "LabBatchEJBTest.testCreateLabBatchAndRemoveFromBucket", "", new Date(), "", scottmat, bucketName);
+
+        //link the JIRA tickets for the batch created to the pdo batches.
+        for (String pdoKey : LabVessel.extractPdoKeyList(starters)) {
+            labBatchEJB.linkJiraBatchToTicket(pdoKey, savedBatch);
+        }
 
         labBatchDao.flush();
         labBatchDao.clear();
-        bucket = bucketDao.findByName(BUCKET_NAME);
+        bucket = bucketDao.findByName(EXTRACTION_BUCKET);
 
+        String expectedTicketId =
+                CreateFields.ProjectType.EXTRACTION_PROJECT.getKeyPrefix() + JiraServiceStub.getCreatedIssueSuffix();
         Assert.assertEquals(expectedTicketId, savedBatch.getBatchName());
         savedBatch = labBatchDao.findByName(expectedTicketId);
 
@@ -236,8 +289,83 @@ public class LabBatchEJBTest extends ContainerTest {
         }
     }
 
-    private void putTubesInBucket() {
+    @Test
+    public void testCreateLabBatchAndRemoveFromBucketExistingTicket() throws ValidationException {
+        putTubesInBucket();
+
+        String expectedTicketId =
+                CreateFields.ProjectType.LCSET_PROJECT.getKeyPrefix() + JiraServiceStub.getCreatedIssueSuffix();
+
+        List<Long> bucketIds = new ArrayList<>();
+        String selectedBucket = null;
+        for(LabVessel vessel:mapBarcodeToTube.values()) {
+
+            BucketEntry next = vessel.getBucketEntries().iterator().next();
+            selectedBucket = next.getBucket().getBucketDefinitionName();
+            bucketIds.add(next.getBucketEntryId());
+        }
+
+        LabBatch savedBatch = labBatchEJB.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
+                Workflow.ICE_EXOME_EXPRESS.getWorkflowName(), bucketIds, Collections.<Long>emptyList(),
+                expectedTicketId, "", new Date(), "", scottmat, selectedBucket);
+        labBatchDao.flush();
+        labBatchDao.clear();
         bucket = bucketDao.findByName(BUCKET_NAME);
+
+        Assert.assertEquals(savedBatch.getBatchName(), expectedTicketId);
+        savedBatch = labBatchDao.findById(LabBatch.class, savedBatch.getLabBatchId());
+
+        Assert.assertEquals(savedBatch.getJiraTicket().getTicketName(), expectedTicketId);
+        Assert.assertEquals(6, savedBatch.getStartingBatchLabVessels().size());
+        for (BarcodedTube tube : mapBarcodeToTube.values()) {
+            Assert.assertTrue(bucket.findEntry(tube) == null);
+        }
+    }
+
+    @Test
+    public void testCreateXTRLabBatchAndRemoveFromBucketExistingTicket() throws ValidationException {
+        putTubesInSpecificBucket(EXTRACTION_BUCKET);
+
+        String expectedTicketId =
+                CreateFields.ProjectType.EXTRACTION_PROJECT.getKeyPrefix() + JiraServiceStub.getCreatedIssueSuffix();
+
+        List<Long> bucketIds = new ArrayList<>();
+
+        String selectedBucket = null;
+        for(LabVessel vessel:mapBarcodeToTube.values()) {
+            for (BucketEntry bucketEntry : vessel.getBucketEntries()) {
+                selectedBucket = bucketEntry.getBucket().getBucketDefinitionName();
+                bucketIds.add(bucketEntry.getBucketEntryId());
+            }
+        }
+
+        LabBatch savedBatch = labBatchEJB.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
+                "DNA and RNA from Cell Pellets", bucketIds, Collections.<Long>emptyList(),
+                expectedTicketId,"", new Date(), "", scottmat, selectedBucket);
+        labBatchDao.flush();
+        labBatchDao.clear();
+        bucket = bucketDao.findByName(EXTRACTION_BUCKET);
+
+        Assert.assertEquals(savedBatch.getBatchName(), expectedTicketId);
+        savedBatch = labBatchDao.findById(LabBatch.class, savedBatch.getLabBatchId());
+
+        Assert.assertEquals(savedBatch.getJiraTicket().getTicketName(),expectedTicketId);
+        Assert.assertEquals(6, savedBatch.getStartingBatchLabVessels().size());
+        for (BarcodedTube tube : mapBarcodeToTube.values()) {
+            Assert.assertTrue(bucket.findEntry(tube) == null);
+        }
+    }
+
+    private void putTubesInBucket() {
+        putTubesInSpecificBucket(BUCKET_NAME);
+    }
+
+    private void putTubesInSpecificBucket(String bucketName) {
+        bucket = bucketDao.findByName(bucketName);
+
+        if ( bucket == null) {
+            bucket = new Bucket(bucketName);
+        }
 
         ProductOrder stubTestPDO = ProductOrderTestFactory.createDummyProductOrder(STUB_TEST_PDO_KEY);
         stubTestPDO.setTitle(stubTestPDO.getTitle() + ((new Date()).getTime()));
@@ -248,6 +376,9 @@ public class LabBatchEJBTest extends ContainerTest {
             bucket.addEntry(stubTestPDO, vessel,
                             org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry.BucketEntryType.PDO_ENTRY);
         }
+
+        bucketDao.persist(bucket);
+        bucketDao.flush();
 
         for (LabVessel vessel : mapBarcodeToTube.values()) {
             Assert.assertTrue(bucket.findEntry(vessel) != null);

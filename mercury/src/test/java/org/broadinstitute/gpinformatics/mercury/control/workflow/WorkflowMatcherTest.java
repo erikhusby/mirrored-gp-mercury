@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -37,6 +38,13 @@ public class WorkflowMatcherTest {
         LabBatch labBatch = new LabBatch("ESET-1", starterVessels, LabBatch.LabBatchType.WORKFLOW);
 
         GregorianCalendar gregorianCalendar = new GregorianCalendar();
+
+        LabEvent bucketExtractions = new LabEvent(LabEventType.DNA_EXTRACTION_BUCKET, gregorianCalendar.getTime(), LabEvent.UI_EVENT_LOCATION,
+                1L, 101L, LabEvent.UI_PROGRAM_NAME);
+                //todo: set workflowQualifier, if applicable
+//        bucketExtractions.setWorkflowQualifier("??");
+        bucketExtractions.setLabBatch(labBatch);
+        gregorianCalendar.add(Calendar.SECOND, 1);
 
         // Add batch event
         LabEvent prepReagents = new LabEvent(LabEventType.PREP, gregorianCalendar.getTime(), LabEvent.UI_EVENT_LOCATION,
@@ -78,7 +86,8 @@ public class WorkflowMatcherTest {
         WorkflowConfig workflowConfig = workflowLoader.load();
 
         List<WorkflowMatcher.WorkflowEvent> workflowEvents = workflowMatcher.match(
-                workflowConfig.getWorkflowVersionByName("Clinical Whole Blood Extraction", new Date()),
+                workflowConfig.getWorkflowVersionByName(Workflow.CLINICAL_WHOLE_BLOOD_EXTRACTION.getWorkflowName(),
+                        new Date()),
                 labBatch);
         Assert.assertEquals(workflowEvents.size(), 25);
 
@@ -104,24 +113,6 @@ public class WorkflowMatcherTest {
         Assert.assertEquals(workflowEvents.get(24).getLabEvents().get(0).getLabEventType(),
                 LabEventType.ADD_REAGENT);
 
-        // Move suggested reagents from LabEventType to workflow?
-
-        // Need to render per-sample transfer links for steps that haven't happened yet?  Not per-sample, because
-        // they must be scanned.  Could just render link unconditionally.
-
-        // todo for batch events: checkbox or button, or both
-        // todo LabEventType additions: batch event? vs vessel event vs transfer
-        // todo manual transfer page: support vessel event (reagent addition); event type parameter
-        // todo Enter LCSET and / or search.
         // todo list of samples at top of page?
-
-        // If there are multiple events for a step, should the step be repeated, or should the events be normalized?
-        // It's possible (likely?) that the dates overlap, unless the focus is on a single sample, this argues for
-        // repeating step information.
-
-        // Create LCSET
-        // Visit workflow page
-        // Link to manual transfer page
-        // Return to workflow page
     }
 }

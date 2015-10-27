@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent_;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
@@ -24,9 +25,11 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import javax.transaction.UserTransaction;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -62,6 +65,10 @@ public class LabVesselFixupTest extends Arquillian {
 
     @Inject
     private UserBean userBean;
+
+    @SuppressWarnings("CdiInjectionPointsInspection")
+    @Inject
+    private UserTransaction utx;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -1044,4 +1051,49 @@ public class LabVesselFixupTest extends Arquillian {
         labVesselDao.persist(new FixupCommentary("SUPPORT-1011 fixup incorrect rack contents due to label swap"));
         labVesselDao.flush();
     }
+
+    @Test(enabled = false)
+    public void fixupSupport1011_3() {
+        try {
+            userBean.loginOSUser();
+            utx.begin();
+            // Invalidates the plate barcodes by appending an X.
+            String[] plateBarcodes = {"000010676169", "000010720769"};
+            for (String plateBarcode : plateBarcodes) {
+                StaticPlate plate = staticPlateDao.findByBarcode(plateBarcode);
+                System.out.println("Rename plate " + plateBarcode + " to " + plateBarcode + "X");
+                plate.setLabel(plateBarcode + "X");
+            }
+            staticPlateDao.persist(new FixupCommentary(
+                    "SUPPORT-1011 invalidate barcodes of incorrect pico plates."));
+            staticPlateDao.flush();
+            utx.commit();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test(enabled = false)
+    public void fixupSupport1011_3a() {
+        try {
+            userBean.loginOSUser();
+            utx.begin();
+            // Removes vessel transfers from incorrect tube formation to white and black pico plates.
+            Collection<Long> eventIds = Arrays.asList(new Long[]{993964L, 993965L, 993966L, 993968L});
+            for (LabEvent labEvent : labVesselDao.findListByList(LabEvent.class, LabEvent_.labEventId, eventIds)) {
+                System.out.println("Deleting " + labEvent.getLabEventType() + " " + labEvent.getLabEventId());
+                labEvent.getReagents().clear();
+                labEvent.getSectionTransfers().clear();
+                labEvent.getVesselToSectionTransfers().clear();
+                labVesselDao.remove(labEvent);
+            }
+            labVesselDao.persist(new FixupCommentary(
+                    "SUPPORT-1011 delete incorrect pico transfer because of bad rack tube formation"));
+            labVesselDao.flush();
+            utx.commit();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 }

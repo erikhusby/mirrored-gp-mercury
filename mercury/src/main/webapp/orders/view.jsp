@@ -278,6 +278,7 @@ function showSamples(sampleData) {
         $j('#collab-patient-' + sampleId).text(sampleData[x].collaboratorParticipantId);
         $j('#volume-' + sampleId).text(sampleData[x].volume);
         $j('#sample-type-' + sampleId).text(sampleData[x].sampleType);
+        $j('#material-type-' + sampleId).text(sampleData[x].materialType);
         $j('#concentration-' + sampleId).text(sampleData[x].concentration);
         $j('#rin-' + sampleId).text(sampleData[x].rin);
         $j('#rqs-' + sampleId).text(sampleData[x].rqs);
@@ -313,8 +314,9 @@ function showSamples(sampleData) {
                 {"bSortable": true},                            // Collaborator Participant ID
                 {"bSortable": true, "sType": "numeric"},        // Shipped Date
                 {"bSortable": true, "sType": "numeric"},        // Received Date
-                {"bSortable": true},                            // Collaborator Participant ID
-                {"bSortable": true, "sType": "numeric"},        // Sample Type
+                {"bSortable": true},                            // Sample Type
+                {"bSortable": true},                            // Material Type
+                {"bSortable": true, "sType": "numeric"},        // Volume
                 {"bSortable": true, "sType": "numeric"},        // Concentration
 
                 <c:if test="${actionBean.supportsRin}">
@@ -370,7 +372,7 @@ function getHighlightClass() {
 }
 
 function updateFundsRemaining() {
-    var quoteIdentifier = $j("#quote").val();
+    var quoteIdentifier = '${actionBean.editOrder.quoteId}';
     if ($j.trim(quoteIdentifier)) {
         $j.ajax({
             url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier=${actionBean.editOrder.quoteId}",
@@ -384,7 +386,7 @@ function updateFundsRemaining() {
 
 function updateFunds(data) {
     if (data.fundsRemaining) {
-        $j("#fundsRemaining").text('Funds Remaining: ' + data.fundsRemaining);
+        $j("#fundsRemaining").text('Status: ' + data.status + ' - Funds Remaining: ' + data.fundsRemaining);
     } else {
         $j("#fundsRemaining").text('Error: ' + data.error);
     }
@@ -1047,14 +1049,7 @@ function formatInput(item) {
 
     <div class="controls">
         <div class="form-value">
-            <div class="barFull view" title="${actionBean.percentInProgress}% In Progress">
-                                    <span class="barAbandon"
-                                          title="${actionBean.percentAbandoned}% Abandoned"
-                                          style="width: ${actionBean.percentAbandoned}%"> </span>
-                                    <span class="barComplete"
-                                          title="${actionBean.percentCompleted}% Completed"
-                                          style="width: ${actionBean.percentCompleted}%"> </span>
-            </div>
+                <stripes:layout-render name="/orders/sample_progress_bar.jsp" status="${actionBean.progressFetcher.getStatus(actionBean.editOrder.businessKey)}" extraStyle="view"/>
                 ${actionBean.progressString}
         </div>
     </div>
@@ -1229,6 +1224,7 @@ function formatInput(item) {
                 <th width="40">Shipped Date</th>
                 <th width="40">Received Date</th>
                 <th width="40">Sample Type</th>
+                <th width="40">Material Type</th>
                 <th width="40">Volume</th>
                 <th width="40">Concentration</th>
 
@@ -1290,6 +1286,7 @@ function formatInput(item) {
                     </td>
 
                     <td id="sample-type-${sample.productOrderSampleId}"></td>
+                    <td id="material-type-${sample.productOrderSampleId}"></td>
                     <td id="volume-${sample.productOrderSampleId}"></td>
                     <td id="concentration-${sample.productOrderSampleId}"></td>
 

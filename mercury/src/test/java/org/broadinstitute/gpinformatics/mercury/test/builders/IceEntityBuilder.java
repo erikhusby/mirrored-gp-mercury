@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
+import org.testng.Assert;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -117,10 +118,10 @@ public class IceEntityBuilder {
         labEventHandler.processEvent(ice1stHybridization);
         StaticPlate firstHybPlate = (StaticPlate) ice1stHybridization.getTargetLabVessels().iterator().next();
         Set<LabBatch> computedLcSets = ice1stHybridization.getComputedLcSets();
-        // todo jmt enable this after GPLIM-3122 is merged
-//        Assert.assertFalse(computedLcSets.isEmpty());
+        Assert.assertFalse(computedLcSets.isEmpty());
 
         LabEventTest.validateWorkflow("Ice1stBaitAddition", firstHybPlate);
+        firstHybPlate.clearCaches();
         ReagentDesign baitDesign1 = new ReagentDesign("Ice Bait 1", ReagentDesign.ReagentType.BAIT);
         BarcodedTube baitTube1 = LabEventTest.buildBaitTube(iceJaxbBuilder.getBaitTube1Barcode(), baitDesign1);
         mapBarcodeToVessel.clear();
@@ -154,6 +155,7 @@ public class IceEntityBuilder {
         labEventHandler.processEvent(ice2ndHybridization);
 
         LabEventTest.validateWorkflow("Ice2ndBaitAddition", firstCapturePlate);
+        firstCapturePlate.clearCaches();
         ReagentDesign baitDesign2 = new ReagentDesign("Ice Bait 2", ReagentDesign.ReagentType.BAIT);
         BarcodedTube baitTube2 = LabEventTest.buildBaitTube(iceJaxbBuilder.getBaitTube2Barcode(), baitDesign2);
         mapBarcodeToVessel.clear();

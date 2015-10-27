@@ -3,6 +3,8 @@ package org.broadinstitute.gpinformatics.infrastructure.datawh;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 
 import javax.ejb.Stateful;
 import javax.inject.Inject;
@@ -10,6 +12,9 @@ import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 @Stateful
 public class ProductOrderSampleEtl extends GenericEntityAndStatusEtl<ProductOrderSample, ProductOrderSample> {
@@ -67,13 +72,91 @@ public class ProductOrderSampleEtl extends GenericEntityAndStatusEtl<ProductOrde
 
     @Override
     String dataRecord(String etlDateStr, boolean isDelete, ProductOrderSample entity) {
+
+        SampleEtlData etlMetadata = getMetadata(entity );
+
         return genericRecord(etlDateStr, isDelete,
                 entity.getProductOrderSampleId(),
                 format(entity.getProductOrder() != null ? entity.getProductOrder().getProductOrderId() : null),
                 format(entity.getName()),
                 format(entity.getDeliveryStatus().name()),
-                format(entity.getSamplePosition())
+                format(entity.getSamplePosition()),
+                format(etlMetadata.getParticipantId()),
+                format(etlMetadata.getSampleType()),
+                format(etlMetadata.getReceiptDate()),
+                format(etlMetadata.getOriginalSampleType())
         );
+    }
+
+    private SampleEtlData getMetadata( ProductOrderSample entity ) {
+        SampleEtlData etlMetadata = new SampleEtlData();
+        if( entity.getMercurySample() == null ) {
+            return etlMetadata;
+        } else {
+            MercurySample mercurySample = entity.getMercurySample();
+            Set<Metadata> metadataSet = mercurySample.getMetadata();
+            etlMetadata.setParticipantId(getMetadataValue(metadataSet, Metadata.Key.PATIENT_ID));
+            etlMetadata.setSampleType(getMetadataValue(metadataSet, Metadata.Key.TUMOR_NORMAL));
+            etlMetadata.setOriginalSampleType(getMetadataValue(metadataSet, Metadata.Key.ORIGINAL_MATERIAL_TYPE));
+            // Use mercury sample reciept date (PDO sample calls BSP!)
+            etlMetadata.setReceiptDate(mercurySample.getReceivedDate());
+            return etlMetadata;
+        }
+
+    }
+
+    private String getMetadataValue( Set<Metadata> metadataSet, Metadata.Key key ) {
+        String value = null;
+        for( Metadata metadata : metadataSet ) {
+            if( metadata.getKey() == key ) {
+                value = metadata.getValue();
+                break;
+            }
+        }
+        return value;
+    }
+
+    private class SampleEtlData {
+
+        private String participantId;
+        private String sampleType;
+        private Date receiptDate;
+        private String originalSampleType;
+
+        public SampleEtlData(){ }
+
+        public void setParticipantId(String participantId){
+            this.participantId = participantId;
+        }
+
+        public String getParticipantId(){
+            return participantId;
+        }
+
+        public void setSampleType(String sampleType) {
+            this.sampleType = sampleType;
+        }
+
+        public String getSampleType() {
+            return sampleType;
+        }
+
+        public void setReceiptDate(Date receiptDate){
+            this.receiptDate = receiptDate;
+        }
+
+        public Date getReceiptDate(){
+            return receiptDate;
+        }
+
+        public void setOriginalSampleType(String originalSampleType){
+            this.originalSampleType = originalSampleType;
+        }
+
+        public String getOriginalSampleType(){
+            return originalSampleType;
+        }
+
     }
 
 }

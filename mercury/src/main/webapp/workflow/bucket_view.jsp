@@ -235,6 +235,9 @@
                     {"bSortable":true},
                     {"bSortable":true},
                     {"bSortable":true},
+                    {"bSortable":true},
+                    {"bSortable":true},
+                    {"bSortable":true},
                     {"bSortable":true, "sType":"date"},
                     {"bSortable":true},
                     {"bSortable":true},
@@ -251,6 +254,24 @@
                 checkboxClass:'bucket-checkbox'});
 
             $j("#dueDate").datepicker();
+
+            $j("#lcsetText").blur(function(){
+                var createElements = ["#summary", "#description", "#important", "#dueDate"];
+                if ($j("#lcsetText").val()==$j("#lcsetText").attr('title')) {
+                    for (var i = 0; i < createElements.length; i++) {
+                        $j(createElements[i]).closest(".control-group").show();
+                        $j(createElements[i]).trigger('click');
+                    }
+                    $j("[name='createBatch']").prop('disabled', false);
+                } else {
+                    for (var i = 0; i < createElements.length; i++) {
+                        $j(createElements[i]).closest(".control-group").hide();
+                    }
+                    $j("[name='createBatch']").prop('disabled', true);
+                    $j("[name='addToBatch']").prop('disabled', false);
+                }
+            });
+
         });
 
         function showJiraInfo() {
@@ -260,7 +281,7 @@
 </stripes:layout-component>
 
 <stripes:layout-component name="content">
-    <stripes:form id="bucketForm" class="form-horizontal" action="/view/bucketView.action?setBucket">
+    <stripes:form id="bucketForm" class="form-horizontal" action="/view/bucketView.action?viewBucket">
         <div class="form-horizontal">
             <div class="control-group">
                 <stripes:label for="bucketselect" name="Select Bucket" class="control-label"/>
@@ -295,10 +316,10 @@
         <c:if test="${actionBean.jiraEnabled}">
             <div id="newTicketDiv">
                 <div class="control-group">
-                    <stripes:label for="lcsetText" name="LCSet Name" class="control-label"/>
+                    <stripes:label for="lcsetText" name="Batch Name" class="control-label"/>
                     <div class="controls">
                         <stripes:text id="lcsetText" class="defaultText" name="selectedLcset"
-                                      title="Enter if you are adding to a batch"/>
+                                      title="Enter if you are adding to an existing batch"/>
                     </div>
                 </div>
                 <div class="control-group">
@@ -353,7 +374,7 @@
             <stripes:submit name="removeFromBucket" value="Remove From Bucket" class="btn"/>
             <a href="javascript:void(0)" id="PasteBarcodesList" title="Use a pasted-in list of tube barcodes to select samples">Choose via list of barcodes...</a>
         </div>
-        <table id="bucketEntryView" class="table simple">
+        <table id="bucketEntryView" class="bucket-checkbox table simple">
             <thead>
             <tr>
                 <th width="10">
@@ -362,10 +383,13 @@
                 </th>
                 <th width="60">Vessel Name</th>
                 <th width="50">Sample Name</th>
+                <th>Material Type</th>
                 <th>PDO</th>
                 <th width="300">PDO Name</th>
                 <th width="200">PDO Owner</th>
                 <th>Batch Name</th>
+                <th>Product</th>
+                <th>Add-ons</th>
                 <th width="100">Created Date</th>
                 <th>Bucket Entry Type</th>
                 <th>Rework Reason</th>
@@ -397,6 +421,9 @@
                             <c:if test="${!stat.last}">&nbsp;</c:if>
                         </c:forEach>
                     </td>
+                    <td class="ellipsis">
+                        ${entry.labVessel.latestMaterialType.displayName}
+                    </td>
                     <td class="editable"><span class="ellipsis">${entry.productOrder.businessKey}</span><span style="display: none;"
                                                                                            class="icon-pencil"></span>
                     </td>
@@ -413,6 +440,14 @@
                             ${batch.businessKey}
                             <c:if test="${!stat.last}">&nbsp;</c:if></c:forEach>
 
+                    </td>
+                    <td>
+                        <div class="ellipsis" style="max-width: 250px;">${entry.productOrder.product.name}</div>
+                    </td>
+                    <td>
+                        <div class="ellipsis" style="max-width: 250px;">
+                            ${entry.productOrder.getAddOnList("<br/>")}
+                        </div>
                     </td>
                     <td class="ellipsis">
                         <fmt:formatDate value="${entry.createdDate}" pattern="MM/dd/yyyy HH:mm:ss"/>

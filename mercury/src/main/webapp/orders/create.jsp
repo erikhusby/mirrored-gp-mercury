@@ -665,7 +665,7 @@
 
         function updateFunds(data) {
             if (data.fundsRemaining) {
-                $j("#fundsRemaining").text('Funds Remaining: ' + data.fundsRemaining);
+                $j("#fundsRemaining").text('Status: ' + data.status + ' - Funds Remaining: ' + data.fundsRemaining);
             } else {
                 $j("#fundsRemaining").text('Error: ' + data.error);
             }

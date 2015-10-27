@@ -31,7 +31,7 @@ import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableListF
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDao;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConstrainedValueDao;
-import org.broadinstitute.gpinformatics.infrastructure.search.PaginationDao;
+import org.broadinstitute.gpinformatics.infrastructure.search.PaginationUtil;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstanceEjb;
@@ -437,7 +437,7 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
         try {
             configurableResultList =
                     configurableListFactory.getSubsequentResultsPage(searchInstance, pageNumber, getEntityName(),
-                            (PaginationDao.Pagination) getContext().getRequest().getSession().getAttribute(
+                            (PaginationUtil.Pagination) getContext().getRequest().getSession().getAttribute(
                                     PAGINATION_PREFIX + sessionKey));
         } catch (BSPLookupException bspse) {
             handleRemoteServiceFailure( bspse );

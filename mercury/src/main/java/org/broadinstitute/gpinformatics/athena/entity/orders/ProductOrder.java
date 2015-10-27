@@ -25,6 +25,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.BSPLookupException;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Formula;
 import org.hibernate.envers.AuditJoinTable;
@@ -396,6 +397,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public String getAddOnList() {
+        return getAddOnList(", ");
+    }
+
+    public String getAddOnList(String delimiter) {
         if (addOns.isEmpty()) {
             return "no Add-ons";
         }
@@ -406,7 +411,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             addOnArray[i++] = poAddOn.getAddOn().getProductName();
         }
 
-        return StringUtils.join(addOnArray, ", ");
+        return StringUtils.join(addOnArray, delimiter);
     }
 
     public int getLaneCount() {
@@ -1166,6 +1171,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         Abandoned,
         Completed;
 
+        public static final EnumSet<OrderStatus> canAbandonStatuses = EnumSet.of(Pending, Submitted);
         /** CSS Class to use when displaying this status in HTML. */
         private final String cssClass;
 
@@ -1212,7 +1218,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
         /** @return true if an order can be abandoned from this state. */
         public boolean canAbandon() {
-            return EnumSet.of(Pending, Submitted).contains(this);
+            return canAbandonStatuses.contains(this);
         }
 
         /** @return true if an order can be placed from this state. */
@@ -1672,6 +1678,22 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             genoChipType = "DBS_Wave_Psych";
         }
         return genoChipType;
+    }
+
+    public List<Workflow> getProductWorkflows() {
+        List<Workflow> workflows = new ArrayList<>();
+        for (ProductOrderAddOn addOn : getAddOns()) {
+            Workflow addOnWorkflow = addOn.getAddOn().getWorkflow();
+            if (addOnWorkflow != Workflow.NONE) {
+                workflows.add(addOnWorkflow);
+            }
+        }
+
+        Workflow workflow = getProduct().getWorkflow();
+        if (workflow != Workflow.NONE) {
+            workflows.add(workflow);
+        }
+        return workflows;
     }
 
 }

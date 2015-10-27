@@ -1,15 +1,16 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
+import org.apache.commons.lang3.ObjectUtils;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.EnumSet;
-import java.util.List;
 
 /**
  * This represents the workflow associated with a product.
  *
- * The enun name field must exactly match WorkflowConfig.xml productWorkflowDef name value.
+ * The enum name field must exactly match WorkflowConfig.xml productWorkflowDef name value.
  */
 public enum Workflow {
     AGILENT_EXOME_EXPRESS("Agilent Exome Express"),
@@ -18,6 +19,9 @@ public enum Workflow {
     WHOLE_GENOME("Whole Genome"),
     ICE("ICE"),
     ICE_CRSP("ICE CRSP"),
+    CLINICAL_WHOLE_BLOOD_EXTRACTION("Clinical Whole Blood Extraction"),
+    DNA_RNA_EXTRACTION_CELL_PELLETS("DNA and RNA from Cell Pellets"),
+    TRU_SEQ_STRAND_SPECIFIC_CRSP("TruSeq Strand Specific CRSP"),
     /** Use this to indicate that no workflow is associated. */
     NONE(null, false);
 
@@ -47,7 +51,9 @@ public enum Workflow {
      * Workflow processes that Mercury supports.
      */
     public static final EnumSet<Workflow> SUPPORTED_WORKFLOWS =
-            EnumSet.of(AGILENT_EXOME_EXPRESS, ICE_EXOME_EXPRESS, ICE_CRSP);
+            EnumSet.of(AGILENT_EXOME_EXPRESS, ICE_EXOME_EXPRESS, ICE_CRSP, CLINICAL_WHOLE_BLOOD_EXTRACTION,
+                    DNA_RNA_EXTRACTION_CELL_PELLETS, TRU_SEQ_STRAND_SPECIFIC_CRSP
+            );
 
     public boolean isWorkflowSupportedByMercury() {
         return SUPPORTED_WORKFLOWS.contains(this);
@@ -70,27 +76,19 @@ public enum Workflow {
         return NONE;
     }
 
-    /**
-     * Returns a list of the workflows for which the persisted workflow name is also usable as a label in the UI. This
-     * excludes, for example, the NONE value which persists as null since null does not make a good UI label. UIs should
-     * therefore use this list and, if applicable, manually add an option for the NONE value.
-     *
-     * The need for this method could be removed by adding a displayLabel property to Workflow. Additionally, the NONE
-     * value should probably be moved to the top so that it shows up as the first option instead of the last option, but
-     * that's more of a judgement call for the UI. The current implementation actually gives the UI more flexibility
-     * about where to render the NONE option (or whether or not to render it at all).
-     *
-     * @return
-     */
-    public static List<Workflow> getVisibleWorkflowList() {
-        // Remove the none from the list because the names are stored in the DB and NONE is null for that.
-        List<Workflow> workflows = new ArrayList<>();
-        for (Workflow currentWorkflow : Workflow.values()) {
-            if (currentWorkflow.displayable) {
-                workflows.add(currentWorkflow);
+    public static Comparator<Workflow> BY_NAME = new Comparator<Workflow>() {
+        @Override
+        public int compare(Workflow workflow, Workflow otherWorkflow) {
+            if (workflow == otherWorkflow) {
+                return 0;
             }
+            if (workflow == null) {
+                return -1;
+            }
+            if (otherWorkflow == null) {
+                return 1;
+            }
+            return ObjectUtils.compare(workflow.getWorkflowName(), otherWorkflow.getWorkflowName());
         }
-
-        return workflows;
-    }
+    };
 }

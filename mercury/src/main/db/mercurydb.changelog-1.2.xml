@@ -292,4 +292,84 @@
             <column name="workflow_qualifier" type="varchar2(255)"/>
         </addColumn>
     </changeSet>
+    
+    <changeSet id="GPLIM-3707-1" author="thompson">
+        <addColumn schemaName="mercury" tableName="lab_event_reagents">
+            <column name="volume" type="number(10,2)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-3707-2" author="thompson">
+        <addColumn schemaName="mercury" tableName="lab_event_reagents_aud">
+            <column name="volume" type="number(10,2)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-3707-3" author="thompson">
+        <addColumn tableName="LAB_EVENT_REAGENTS">
+            <column name="LAB_EVENT_REAGENT_ID" type="NUMBER(19,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-3707-4" author="thompson">
+        <addColumn tableName="LAB_EVENT_REAGENTS_AUD">
+            <column name="LAB_EVENT_REAGENT_ID" type="NUMBER(19,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-3707-5" author="thompson">
+        <dropPrimaryKey tableName="LAB_EVENT_REAGENTS"/>
+    </changeSet>
+    <changeSet id="GPLIM-3707-6" author="thompson">
+        <addUniqueConstraint tableName="LAB_EVENT_REAGENTS" columnNames="LAB_EVENT, REAGENTS"/>
+    </changeSet>
+    <changeSet id="GPLIM-3707-7" author="thompson">
+        <createSequence schemaName="mercury" sequenceName="SEQ_LAB_EVENT_REAGENT" incrementBy="50"/>
+    </changeSet>
+    <changeSet id="GPLIM-3707-8" author="thompson">
+        <sql>
+            update lab_event_reagents set lab_event_reagent_id = seq_lab_event_reagent.nextval;
+        </sql>
+    </changeSet>
+    <changeSet id="GPLIM-3707-9" author="thompson">
+        <sql>
+            update lab_event_reagents_aud lera set lab_event_reagent_id = (
+                select lab_event_reagent_id from lab_event_reagents ler
+                where ler.lab_event = lera.lab_event and ler.reagents = lera.reagents);
+        </sql>
+    </changeSet>
+    <changeSet id="GPLIM-3707-10" author="thompson">
+        <!-- A few hundred audit rows no longer have counterparts in the main table, mostly due to deletes.  Set these
+         IDs arbitrarily, so we can create the primary key. -->
+        <sql>
+            update lab_event_reagents_aud set lab_event_reagent_id = seq_lab_event_reagent.nextval
+                where lab_event_reagent_id is null;
+        </sql>
+    </changeSet>
+    <changeSet id="GPLIM-3707-11" author="thompson">
+        <addPrimaryKey tableName="LAB_EVENT_REAGENTS" columnNames="LAB_EVENT_REAGENT_ID" constraintName="PK_LAB_EVENT_REAGENTS"/>
+    </changeSet>
+    <changeSet id="GPLIM-3707-12" author="thompson">
+        <dropPrimaryKey tableName="LAB_EVENT_REAGENTS_AUD"/>
+    </changeSet>
+    <changeSet id="GPLIM-3707-13" author="thompson">
+        <addPrimaryKey tableName="LAB_EVENT_REAGENTS_AUD" columnNames="REV, LAB_EVENT_REAGENT_ID" constraintName="PK_LAB_EVENT_REAGENTS_AUD"/>
+    </changeSet>
+
+    <changeSet author="jowalsh" id="GPLIM-3750-1">
+        <addColumn schemaName="mercury" tableName="lab_metric_decision">
+            <column name="note" type="varchar2(255)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="jowalsh" id="GPLIM-3750-2">
+        <addColumn schemaName="mercury" tableName="lab_metric_decision_aud">
+            <column name="note" type="varchar2(255)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="jowalsh" id="GPLIM-3750-3">
+        <addColumn schemaName="mercury" tableName="lab_metric_decision">
+            <column name="NEEDS_REVIEW" type="varchar2(255)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="jowalsh" id="GPLIM-3750-4">
+        <addColumn schemaName="mercury" tableName="lab_metric_decision_aud">
+            <column name="NEEDS_REVIEW" type="varchar2(255)"/>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>
