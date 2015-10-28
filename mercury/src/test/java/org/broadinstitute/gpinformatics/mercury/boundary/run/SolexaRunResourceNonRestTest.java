@@ -237,11 +237,11 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
                 appConfig.getUrl(), BaseEventTest.NUM_POSITIONS_IN_RACK);
 
         final QtpJaxbBuilder qtpJaxbBuilder = new QtpJaxbBuilder(bettaLimsMessageFactory, testPrefix,
-                                                                 Collections.singletonList(hybridSelectionJaxbBuilder
-                                                                                                   .getNormCatchBarcodes()),
-                                                                 Collections.singletonList(hybridSelectionJaxbBuilder
-                                                                                                   .getNormCatchRackBarcode()),
-                                                                 true, QtpJaxbBuilder.PcrType.VIIA_7).invoke();
+                Collections.singletonList(hybridSelectionJaxbBuilder.getNormCatchBarcodes()),
+                Collections.singletonList(hybridSelectionJaxbBuilder.getNormCatchRackBarcode()),
+                true, QtpJaxbBuilder.PcrType.VIIA_7);
+        qtpJaxbBuilder.invokeToQuant();
+        qtpJaxbBuilder.invokePostQuant();
         for (BettaLIMSMessage bettaLIMSMessage : qtpJaxbBuilder.getMessageList()) {
             BettaLimsMessageResourceTest.sendMessage(bettaLIMSMessage, bettaLimsMessageResource, appConfig.getUrl());
         }
