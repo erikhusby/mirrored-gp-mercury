@@ -1,8 +1,8 @@
 <%@ include file="/resources/layout/taglibs.jsp" %>
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.BucketViewActionBean"/>
-
-<stripes:layout-render name="/layout.jsp" pageTitle="Confirm Rework Addition" sectionTitle="Confirm Rework">
+<stripes:layout-render name="/layout.jsp" pageTitle="${actionBean.selectedBucket}"
+                       sectionTitle="Confirm ${actionBean.confirmationPageTitle}">
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
             $j(document).ready(function () {

@@ -265,7 +265,7 @@ public class LabBatchEJBTest extends ContainerTest {
         }
 
         LabBatch savedBatch = labBatchEJB.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
-                Workflow.DNA_EXTRACTION_WHOLE_BLOOD_MANUAL.getWorkflowName(), bucketIds, Collections.<Long>emptyList(),
+                Workflow.DNA_RNA_EXTRACTION_CELL_PELLETS.getWorkflowName(), bucketIds, Collections.<Long>emptyList(),
                 "LabBatchEJBTest.testCreateLabBatchAndRemoveFromBucket", "", new Date(), "", scottmat, bucketName);
 
         //link the JIRA tickets for the batch created to the pdo batches.
