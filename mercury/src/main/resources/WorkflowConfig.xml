@@ -1018,8 +1018,8 @@
             <version>02</version>
             <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
             <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
-                <name>Extract To DNA</name>
-                <labEventTypes>DNA_EXTRACTION_BUCKET</labEventTypes>
+                <name>Clinical Whole Blood Bucket</name>
+                <labEventTypes>CLINICAL_WHOLE_BLOOD_EXTRACTION_BUCKET</labEventTypes>
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -1298,7 +1298,7 @@
                 <labEventTypes>ADD_REAGENT</labEventTypes>
                 <workflowQualifier>RLT</workflowQualifier>
                 <reagentTypes>RLT+ w/B-ME</reagentTypes>
-                <instructions>Add buffer RLT+ w/B-ME
+                <instructions>Add 350uL or 600uL buffer RLT+ w/B-ME
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -1370,7 +1370,7 @@
                 <labEventTypes>ADD_REAGENT</labEventTypes>
                 <workflowQualifier>PROTEINASE_K</workflowQualifier>
                 <reagentTypes>Proteinase K</reagentTypes>
-                <instructions>Add Proteinase K to flow-through.
+                <instructions>Add 50uL or 80uL Proteinase K to flow-through.
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -1378,7 +1378,7 @@
                 <labEventTypes>ADD_REAGENT</labEventTypes>
                 <workflowQualifier>ETHANOL1</workflowQualifier>
                 <reagentTypes>100% Ethanol</reagentTypes>
-                <instructions>Add 100% ethanol to the flowthrough
+                <instructions>Add 200uL or 350uL 100% ethanol to the flowthrough
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -1393,14 +1393,14 @@
                 <labEventTypes>ADD_REAGENT</labEventTypes>
                 <workflowQualifier>ETHANOL2</workflowQualifier>
                 <reagentTypes>100% Ethanol</reagentTypes>
-                <instructions>Add 100% ethanol to the flowthrough
+                <instructions>Add 400uL or 750uL 100% ethanol to the flowthrough
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Transfer to RNA Spin Column 1</name>
                 <labEventTypes>TRANSFER</labEventTypes>
                 <workflowQualifier>ALLPREP_FLOWTHROUGH_TO_RNA_SPIN1</workflowQualifier>
-                <instructions>Transfer a third to RNA spin column.
+                <instructions>Transfer 700uL to RNA spin column.
                 </instructions>
                 <manualTransferDetails>
                     <messageType>PLATE_TRANSFER_EVENT</messageType>
@@ -1428,7 +1428,7 @@
                 <name>Transfer to RNA Spin Column 2</name>
                 <labEventTypes>TRANSFER</labEventTypes>
                 <workflowQualifier>ALLPREP_FLOWTHROUGH_TO_RNA_SPIN2</workflowQualifier>
-                <instructions>Transfer a third to RNA spin column.
+                <instructions>Transfer 700uL to RNA spin column in 2 ml collection tube (supplied).
                 </instructions>
                 <manualTransferDetails>
                     <messageType>PLATE_TRANSFER_EVENT</messageType>
@@ -1459,7 +1459,7 @@
                 <name>Transfer to RNA Spin Column 3</name>
                 <labEventTypes>TRANSFER</labEventTypes>
                 <workflowQualifier>ALLPREP_FLOWTHROUGH_TO_RNA_SPIN3</workflowQualifier>
-                <instructions>Transfer a third to RNA spin column.
+                <instructions>Transfer remaining volume to RNA spin column in 2 ml collection tube (supplied).
                 </instructions>
                 <manualTransferDetails>
                     <messageType>PLATE_TRANSFER_EVENT</messageType>
@@ -1476,7 +1476,7 @@
                 <name>Centrifuge RNA Spin Column 3</name>
                 <labEventTypes>CENTRIFUGE</labEventTypes>
                 <workflowQualifier>RNA_SPIN3</workflowQualifier>
-                <instructions>centrifuge for 15 s at full speed (max 20,000 x g).
+                <instructions>Centrifuge for 15 s at full speed (max 20,000 x g).
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -1491,7 +1491,7 @@
                 <labEventTypes>ADD_REAGENT</labEventTypes>
                 <workflowQualifier>RPE1</workflowQualifier>
                 <reagentTypes>RPE</reagentTypes>
-                <instructions>Add Buffer RPE to the RNA spin column
+                <instructions>Add 500uL Buffer RPE to the RNA spin column
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -1513,7 +1513,7 @@
                 <labEventTypes>ADD_REAGENT</labEventTypes>
                 <workflowQualifier>BUFFER_RDD</workflowQualifier>
                 <reagentTypes>Buffer RDD w/DNase I</reagentTypes>
-                <instructions>Add Buffer RDD w/DNase I to RNA spin column.
+                <instructions>Add 80uL Buffer RDD w/DNase I to RNA spin column.
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -1528,14 +1528,14 @@
                 <labEventTypes>ADD_REAGENT</labEventTypes>
                 <workflowQualifier>BUFFER_FRN</workflowQualifier>
                 <reagentTypes>Buffer FRN</reagentTypes>
-                <instructions>Add Buffer FRN to RNA spin column.
+                <instructions>Add 500uL Buffer FRN to RNA spin column.
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Centrifuge RNA Spin Column</name>
                 <labEventTypes>CENTRIFUGE</labEventTypes>
                 <workflowQualifier>BUFFER_FRN</workflowQualifier>
-                <instructions>centrifuge for 15 s at ≥8000 x g and ***save flow-through***.
+                <instructions>centrifuge for 15 s at full speed (max 20,000 x g) and ***save flow-through***.
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -1556,7 +1556,7 @@
                 <name>Centrifuge RNA Spin Column</name>
                 <labEventTypes>CENTRIFUGE</labEventTypes>
                 <workflowQualifier>BUFFER_FRN2</workflowQualifier>
-                <instructions>Centrifuge for 15 s at ≥8000 x g
+                <instructions>Centrifuge for 15 s at full speed (max 20,000 x g).
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -1564,14 +1564,14 @@
                 <labEventTypes>ADD_REAGENT</labEventTypes>
                 <workflowQualifier>RPE2</workflowQualifier>
                 <reagentTypes>RPE</reagentTypes>
-                <instructions>Add Buffer RPE to the RNA spin column
+                <instructions>Add 500uL Buffer RPE to the RNA spin column
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Centrifuge RNA Spin Column RPE 2</name>
                 <labEventTypes>CENTRIFUGE</labEventTypes>
                 <workflowQualifier>RPE2</workflowQualifier>
-                <instructions>centrifuge for 2 min at ≥8000
+                <instructions>Centrifuge for 15 s at full speed (max 20,000 x g).
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -1586,20 +1586,20 @@
                 <labEventTypes>ADD_REAGENT</labEventTypes>
                 <workflowQualifier>ETHANOL3</workflowQualifier>
                 <reagentTypes>100% Ethanol</reagentTypes>
-                <instructions>Add 100% ethanol to the spin column
+                <instructions>Add 500uL 100% ethanol to the spin column
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Centrifuge RNA Spin Column Dry</name>
                 <labEventTypes>CENTRIFUGE</labEventTypes>
-                <workflowQualifier>DRY</workflowQualifier>
+                <workflowQualifier>RNA_DRY</workflowQualifier>
                 <instructions>centrifuge for 2 minutes at full speed to dry membrane
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Move Column After Dry</name>
                 <labEventTypes>MOVE</labEventTypes>
-                <workflowQualifier>DRY</workflowQualifier>
+                <workflowQualifier>RNA_DRY</workflowQualifier>
                 <instructions>Move RNA spin column to a new 1.5 ml collection tube
                 </instructions>
             </workflowStepDefs>
@@ -1608,7 +1608,7 @@
                 <labEventTypes>ADD_REAGENT</labEventTypes>
                 <workflowQualifier>WATER</workflowQualifier>
                 <reagentTypes>Water</reagentTypes>
-                <instructions>Add water directly to the spin column membrane
+                <instructions>Add 50uL water directly to the spin column membrane
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -1652,14 +1652,14 @@
                 <labEventTypes>ADD_REAGENT</labEventTypes>
                 <workflowQualifier>AW1</workflowQualifier>
                 <reagentTypes>AW1</reagentTypes>
-                <instructions>Add AW1 to DNA spin column
+                <instructions>Add 350uL AW1 to DNA spin column
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Centrifuge DNA Spin Column AW1</name>
                 <labEventTypes>CENTRIFUGE</labEventTypes>
                 <workflowQualifier>AW1</workflowQualifier>
-                <instructions>centrifuge for 15 s at full speed (max 20,000 x g).
+                <instructions>Centrifuge for 15 s at full speed (max 20,000 x g).
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -1674,7 +1674,7 @@
                 <labEventTypes>ADD_REAGENT</labEventTypes>
                 <workflowQualifier>AW1_PROTEINASE_K</workflowQualifier>
                 <reagentTypes>AW1 w/Proteinase K</reagentTypes>
-                <instructions>Add Buffer AW1 w/Proteinase K to DNA spin column
+                <instructions>Add 60uL Buffer AW1 w/ 20uL Proteinase K to DNA spin column
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -1689,7 +1689,7 @@
                 <labEventTypes>ADD_REAGENT</labEventTypes>
                 <workflowQualifier>AW1_2</workflowQualifier>
                 <reagentTypes>AW1</reagentTypes>
-                <instructions>Add AW1 to DNA spin column
+                <instructions>Add 350uL AW1 to DNA spin column
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -1729,11 +1729,25 @@
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
+                <name>Dry DNA Spin Column Membrane</name>
+                <labEventTypes>CENTRIFUGE</labEventTypes>
+                <workflowQualifier>DNA_DRY</workflowQualifier>
+                <instructions>Spin DNA spin column for 1 min at full speed (max 20,000 x g)
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Move Column After Dry</name>
+                <labEventTypes>MOVE</labEventTypes>
+                <workflowQualifier>DNA_DRY</workflowQualifier>
+                <instructions>Move DNA spin column to a new 1.5 ml collection tube and discard flow-through
+                </instructions>
+            </workflowStepDefs>
+            <workflowStepDefs>
                 <name>Add EB</name>
                 <labEventTypes>ADD_REAGENT</labEventTypes>
                 <workflowQualifier>EB</workflowQualifier>
                 <reagentTypes>EB</reagentTypes>
-                <instructions>Add Buffer EB to the spin column
+                <instructions>Add 100uL Buffer EB to the spin column
                 </instructions>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -1935,6 +1949,396 @@
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>DNA and RNA for FFPE - AllPrep (sections)</name>
+        <workflowProcessDefVersions>
+            <version>01</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
+                <name>Extract to DNA and RNA</name>
+                <labEventTypes>DNA_AND_RNA_EXTRACTION_BUCKET</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <bucketEntryEvaluator>
+                    <materialTypes>TISSUE_FFPE_TISSUE_SECTION</materialTypes>
+                    <workflows>DNA_RNA_EXTRACTION_FFPE_SECTIONS</workflows>
+                </bucketEntryEvaluator>
+                <batchJiraProjectType>XTR</batchJiraProjectType>
+                <batchJiraIssueType>ALLPREP</batchJiraIssueType>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>DNA and RNA for FFPE - AllPrep (scrolls)</name>
+        <workflowProcessDefVersions>
+            <version>01</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
+                <name>Extract to DNA and RNA</name>
+                <labEventTypes>DNA_AND_RNA_EXTRACTION_BUCKET</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <bucketEntryEvaluator>
+                    <workflows>DNA_RNA_EXTRACTION_FFPE_SCROLLS</workflows>
+                    <materialTypes>FFPE_SCROLL</materialTypes>
+                </bucketEntryEvaluator>
+                <batchJiraProjectType>XTR</batchJiraProjectType>
+                <batchJiraIssueType>ALLPREP</batchJiraIssueType>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>DNA and RNA for FFPE - AllPrep (blocks)</name>
+        <workflowProcessDefVersions>
+            <version>01</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
+                <name>Extract to DNA and RNA</name>
+                <labEventTypes>DNA_AND_RNA_EXTRACTION_BUCKET</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <bucketEntryEvaluator>
+                    <workflows>DNA_RNA_EXTRACTION_FFPE_BLOCKS</workflows>
+                    <materialTypes>FFPE_BLOCK</materialTypes>
+                </bucketEntryEvaluator>
+                <batchJiraProjectType>XTR</batchJiraProjectType>
+                <batchJiraIssueType>ALLPREP</batchJiraIssueType>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>DNA and RNA for Stool - Chemagen</name>
+        <workflowProcessDefVersions>
+            <version>01</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
+                <name>Extract to DNA and RNA</name>
+                <labEventTypes>DNA_AND_RNA_EXTRACTION_BUCKET</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <bucketEntryEvaluator>
+                    <workflows>DNA_RNA_EXTRACTION_STOOL</workflows>
+                    <materialTypes>STOOL</materialTypes>
+                </bucketEntryEvaluator>
+                <batchJiraProjectType>XTR</batchJiraProjectType>
+                <batchJiraIssueType>ALLPREP</batchJiraIssueType>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>DNA Extraction from Whole Blood - Manual</name>
+        <workflowProcessDefVersions>
+            <version>01</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
+                <name>Extract to DNA</name>
+                <labEventTypes>DNA_EXTRACTION_BUCKET</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <bucketEntryEvaluator>
+                    <workflows>DNA_EXTRACTION_WHOLE_BLOOD</workflows>
+                    <materialTypes>WHOLE_BLOOD_FRESH</materialTypes>
+                    <materialTypes>WHOLE_BLOOD_FROZEN</materialTypes>
+                    <materialTypes>WHOLE_BLOOD_PBMC</materialTypes>
+                    <materialTypes>WHOLE_BLOOD_BUFFY_COAT</materialTypes>
+                </bucketEntryEvaluator>
+                <batchJiraProjectType>XTR</batchJiraProjectType>
+                <batchJiraIssueType>DNA_EXTRACTION</batchJiraIssueType>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>DNA Extraction from Whole Blood - Chemagen</name>
+        <workflowProcessDefVersions>
+            <version>01</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
+                <name>Extract to DNA</name>
+                <labEventTypes>DNA_EXTRACTION_BUCKET</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <bucketEntryEvaluator>
+                    <workflows>DNA_EXTRACTION_WHOLE_BLOOD</workflows>
+                    <materialTypes>WHOLE_BLOOD_FRESH</materialTypes>
+                    <materialTypes>WHOLE_BLOOD_FROZEN</materialTypes>
+                    <materialTypes>WHOLE_BLOOD_PBMC</materialTypes>
+                    <materialTypes>WHOLE_BLOOD_BUFFY_COAT</materialTypes>
+                </bucketEntryEvaluator>
+                <batchJiraProjectType>XTR</batchJiraProjectType>
+                <batchJiraIssueType>DNA_EXTRACTION</batchJiraIssueType>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>DNA Extraction from Saliva</name>
+        <workflowProcessDefVersions>
+            <version>01</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
+                <name>Extract to DNA</name>
+                <labEventTypes>DNA_EXTRACTION_BUCKET</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <bucketEntryEvaluator>
+                    <workflows>DNA_EXTRACTION_SALIVA</workflows>
+                    <materialTypes>BODILY_FLUID_SALIVA</materialTypes>
+                </bucketEntryEvaluator>
+                <batchJiraProjectType>XTR</batchJiraProjectType>
+                <batchJiraIssueType>DNA_EXTRACTION</batchJiraIssueType>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>DNA Extraction from Cell Pellets</name>
+        <workflowProcessDefVersions>
+            <version>01</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
+                <name>Extract to DNA</name>
+                <labEventTypes>DNA_EXTRACTION_BUCKET</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <bucketEntryEvaluator>
+                    <workflows>DNA_EXTRACTION_CELL_PELLET</workflows>
+                    <materialTypes>CELLS_PELLET_FROZEN</materialTypes>
+                    <materialTypes>CELLS_CELL_LINE_VIABLE</materialTypes>
+                    <materialTypes>CELLS_PELLET_FROZEN_IN_X_MEDIA</materialTypes>
+                </bucketEntryEvaluator>
+                <batchJiraProjectType>XTR</batchJiraProjectType>
+                <batchJiraIssueType>DNA_EXTRACTION</batchJiraIssueType>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>DNA Extraction from Frozen Tissue</name>
+        <workflowProcessDefVersions>
+            <version>01</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
+                <name>Extract to DNA</name>
+                <labEventTypes>DNA_EXTRACTION_BUCKET</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <bucketEntryEvaluator>
+                    <workflows>DNA_EXTRACTION_FROZEN_TISSUE</workflows>
+                    <materialTypes>TISSUE_FRESH_FROZEN_TISSUE</materialTypes>
+                    <materialTypes>TISSUE_OCT_EMBEDDED_TISSUE</materialTypes>
+                </bucketEntryEvaluator>
+                <batchJiraProjectType>XTR</batchJiraProjectType>
+                <batchJiraIssueType>DNA_EXTRACTION</batchJiraIssueType>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>DNA Extraction from FFPE Tissue (sections)</name>
+        <workflowProcessDefVersions>
+            <version>01</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
+                <name>Extract to DNA</name>
+                <labEventTypes>DNA_EXTRACTION_BUCKET</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <bucketEntryEvaluator>
+                    <workflows>DNA_EXTRACTION_TISSUE_FFPE_TISSUE_SECTION</workflows>
+                    <materialTypes>TISSUE_FFPE_TISSUE_SECTION</materialTypes>
+                </bucketEntryEvaluator>
+                <batchJiraProjectType>XTR</batchJiraProjectType>
+                <batchJiraIssueType>DNA_EXTRACTION</batchJiraIssueType>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>DNA Extraction from FFPE Tissue (scrolls)</name>
+        <workflowProcessDefVersions>
+            <version>01</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
+                <name>Extract to DNA</name>
+                <labEventTypes>DNA_EXTRACTION_BUCKET</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <bucketEntryEvaluator>
+                    <workflows>DNA_EXTRACTION_FFPE_TISSUE_SCROLL</workflows>
+                    <materialTypes>FFPE_SCROLL</materialTypes>
+                </bucketEntryEvaluator>
+                <batchJiraProjectType>XTR</batchJiraProjectType>
+                <batchJiraIssueType>DNA_EXTRACTION</batchJiraIssueType>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>DNA Extraction from FFPE Tissue (cores)</name>
+        <workflowProcessDefVersions>
+            <version>01</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
+                <name>Extract to DNA</name>
+                <labEventTypes>DNA_EXTRACTION_BUCKET</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <bucketEntryEvaluator>
+                    <workflows>DNA_EXTRACTION_FFPE_TISSUE_CORES</workflows>
+                    <materialTypes>FFPE_BLOCK</materialTypes>
+                </bucketEntryEvaluator>
+                <batchJiraProjectType>XTR</batchJiraProjectType>
+                <batchJiraIssueType>DNA_EXTRACTION</batchJiraIssueType>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>DNA Extraction from Blood Spots</name>
+        <workflowProcessDefVersions>
+            <version>01</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
+                <name>Extract to DNA</name>
+                <labEventTypes>DNA_EXTRACTION_BUCKET</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <bucketEntryEvaluator>
+                    <workflows>DNA_EXTRACTION_BLOOD_SPOT</workflows>
+                    <materialTypes>WHOLE_BLOOD_BLOOD_SPOT</materialTypes>
+                </bucketEntryEvaluator>
+                <batchJiraProjectType>XTR</batchJiraProjectType>
+                <batchJiraIssueType>DNA_EXTRACTION</batchJiraIssueType>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>DNA Extraction from Blood Coat</name>
+        <workflowProcessDefVersions>
+            <version>01</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
+                <name>Extract to DNA</name>
+                <labEventTypes>DNA_EXTRACTION_BUCKET</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <bucketEntryEvaluator>
+                    <workflows>DNA_EXTRACTION_BLOOD_COAT</workflows>
+                    <materialTypes>WHOLE_BLOOD_BUFFY_COAT</materialTypes>
+                </bucketEntryEvaluator>
+                <batchJiraProjectType>XTR</batchJiraProjectType>
+                <batchJiraIssueType>DNA_EXTRACTION</batchJiraIssueType>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>RNA Extraction from Cell Pellets</name>
+        <workflowProcessDefVersions>
+            <version>01</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
+                <name>Extract to RNA</name>
+                <labEventTypes>RNA_EXTRACTION_BUCKET</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <bucketEntryEvaluator>
+                    <workflows>RNA_EXTRACTION_CELL_PELLET</workflows>
+                    <materialTypes>CELLS_PELLET_FROZEN</materialTypes>
+                </bucketEntryEvaluator>
+                <batchJiraProjectType>XTR</batchJiraProjectType>
+                <batchJiraIssueType>RNA_EXTRACTION</batchJiraIssueType>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>RNA Extraction from Frozen Tissue</name>
+        <workflowProcessDefVersions>
+            <version>01</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
+                <name>Extract to RNA</name>
+                <labEventTypes>RNA_EXTRACTION_BUCKET</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <bucketEntryEvaluator>
+                    <workflows>RNA_EXTRACTION_FROZEN_TISSUE</workflows>
+                    <materialTypes>TISSUE_FRESH_FROZEN_TISSUE</materialTypes>
+                    <materialTypes>TISSUE_OCT_EMBEDDED_TISSUE</materialTypes>
+                </bucketEntryEvaluator>
+                <batchJiraProjectType>XTR</batchJiraProjectType>
+                <batchJiraIssueType>RNA_EXTRACTION</batchJiraIssueType>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>RNA Extraction from FFPE Tissue (sections)</name>
+        <workflowProcessDefVersions>
+            <version>01</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
+                <name>Extract to RNA</name>
+                <labEventTypes>RNA_EXTRACTION_BUCKET</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <bucketEntryEvaluator>
+                    <workflows>RNA_EXTRACTION_TISSUE_FFPE_TISSUE_SECTION</workflows>
+                    <materialTypes>TISSUE_FFPE_TISSUE_SECTION</materialTypes>
+                </bucketEntryEvaluator>
+                <batchJiraProjectType>XTR</batchJiraProjectType>
+                <batchJiraIssueType>RNA_EXTRACTION</batchJiraIssueType>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>RNA Extraction from FFPE Tissue (scrolls)</name>
+        <workflowProcessDefVersions>
+            <version>01</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
+                <name>Extract to RNA</name>
+                <labEventTypes>RNA_EXTRACTION_BUCKET</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <bucketEntryEvaluator>
+                    <workflows>RNA_EXTRACTION_FFPE_TISSUE_SCROLL</workflows>
+                    <materialTypes>FFPE_SCROLL</materialTypes>
+                </bucketEntryEvaluator>
+                <batchJiraProjectType>XTR</batchJiraProjectType>
+                <batchJiraIssueType>RNA_EXTRACTION</batchJiraIssueType>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>RNA Extraction from FFPE Tissue (cores)</name>
+        <workflowProcessDefVersions>
+            <version>01</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
+                <name>Extract to RNA</name>
+                <labEventTypes>RNA_EXTRACTION_BUCKET</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <bucketEntryEvaluator>
+                    <workflows>RNA_EXTRACTION_FFPE_TISSUE_CORES</workflows>
+                    <materialTypes>FFPE_BLOCK</materialTypes>
+                </bucketEntryEvaluator>
+                <batchJiraProjectType>XTR</batchJiraProjectType>
+                <batchJiraIssueType>RNA_EXTRACTION</batchJiraIssueType>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
     <productWorkflowDefs>
         <name>Agilent Exome Express</name>
         <productWorkflowDefVersions>
@@ -2073,6 +2477,14 @@
         </productWorkflowDefVersions>
     </productWorkflowDefs>
     <productWorkflowDefs>
+        <name>DNA and RNA for Frozen Tissue - AllPrep</name>
+        <productWorkflowDefVersions>
+            <version>01</version>
+            <effectiveDate>2014-08-19T00:00:00.000-04:00</effectiveDate>
+            <workflowProcessDefs>DNA and RNA for Frozen Tissue - AllPrep</workflowProcessDefs>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
         <name>TruSeq Strand Specific CRSP</name>
         <productWorkflowDefVersions>
             <version>1.0</version>
@@ -2096,6 +2508,158 @@
             <version>01</version>
             <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
             <workflowProcessDefs>DNA and RNA from Cell Pellets</workflowProcessDefs>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>DNA and RNA for FFPE - AllPrep (sections)</name>
+        <productWorkflowDefVersions>
+            <version>01</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowProcessDefs>DNA and RNA for FFPE - AllPrep (sections)</workflowProcessDefs>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>DNA and RNA for FFPE - AllPrep (scrolls)</name>
+        <productWorkflowDefVersions>
+            <version>01</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowProcessDefs>DNA and RNA for FFPE - AllPrep (scrolls)</workflowProcessDefs>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>DNA and RNA for FFPE - AllPrep (blocks)</name>
+        <productWorkflowDefVersions>
+            <version>01</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowProcessDefs>DNA and RNA for FFPE - AllPrep (blocks)</workflowProcessDefs>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>DNA and RNA for Stool - Chemagen</name>
+        <productWorkflowDefVersions>
+            <version>01</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowProcessDefs>DNA and RNA for Stool - Chemagen</workflowProcessDefs>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>DNA Extraction from Whole Blood - Manual</name>
+        <productWorkflowDefVersions>
+            <version>01</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowProcessDefs>DNA Extraction from Whole Blood - Manual</workflowProcessDefs>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>DNA Extraction from Whole Blood - Chemagen</name>
+        <productWorkflowDefVersions>
+            <version>01</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowProcessDefs>DNA Extraction from Whole Blood - Chemagen</workflowProcessDefs>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>DNA Extraction from Saliva</name>
+        <productWorkflowDefVersions>
+            <version>01</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowProcessDefs>DNA Extraction from Saliva</workflowProcessDefs>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>DNA Extraction from Cell Pellets</name>
+        <productWorkflowDefVersions>
+            <version>01</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowProcessDefs>DNA Extraction from Cell Pellets</workflowProcessDefs>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>DNA Extraction from Frozen Tissue</name>
+        <productWorkflowDefVersions>
+            <version>01</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowProcessDefs>DNA Extraction from Frozen Tissue</workflowProcessDefs>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>DNA Extraction from FFPE Tissue (sections)</name>
+        <productWorkflowDefVersions>
+            <version>01</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowProcessDefs>DNA Extraction from FFPE Tissue (sections)</workflowProcessDefs>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>DNA Extraction from FFPE Tissue (scrolls)</name>
+        <productWorkflowDefVersions>
+            <version>01</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowProcessDefs>DNA Extraction from FFPE Tissue (scrolls)</workflowProcessDefs>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>DNA Extraction from FFPE Tissue (cores)</name>
+        <productWorkflowDefVersions>
+            <version>01</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowProcessDefs>DNA Extraction from FFPE Tissue (cores)</workflowProcessDefs>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>DNA Extraction from Blood Spots</name>
+        <productWorkflowDefVersions>
+            <version>01</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowProcessDefs>DNA Extraction from Blood Spots</workflowProcessDefs>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>DNA Extraction from Buffy Coats</name>
+        <productWorkflowDefVersions>
+            <version>01</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowProcessDefs>DNA Extraction from Buffy Coats</workflowProcessDefs>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>RNA Extraction from Frozen Tissue</name>
+        <productWorkflowDefVersions>
+            <version>01</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowProcessDefs>RNA Extraction from Frozen Tissue</workflowProcessDefs>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>RNA Extraction from FFPE Tissue (sections)</name>
+        <productWorkflowDefVersions>
+            <version>01</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowProcessDefs>RNA Extraction from FFPE Tissue (sections)</workflowProcessDefs>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>RNA Extraction from Cell Pellets</name>
+        <productWorkflowDefVersions>
+            <version>01</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowProcessDefs>RNA Extraction from Cell Pellets</workflowProcessDefs>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>RNA Extraction from FFPE Tissue (scrolls)</name>
+        <productWorkflowDefVersions>
+            <version>01</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowProcessDefs>RNA Extraction from FFPE Tissue (scrolls)</workflowProcessDefs>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>RNA Extraction from FFPE Tissue (cores)</name>
+        <productWorkflowDefVersions>
+            <version>01</version>
+            <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
+            <workflowProcessDefs>RNA Extraction from FFPE Tissue (cores)</workflowProcessDefs>
         </productWorkflowDefVersions>
     </productWorkflowDefs>
     <sequencingConfigDefs>

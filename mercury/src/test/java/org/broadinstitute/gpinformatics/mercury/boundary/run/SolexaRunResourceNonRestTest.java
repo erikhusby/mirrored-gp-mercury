@@ -241,7 +241,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
                                                                                                    .getNormCatchBarcodes()),
                                                                  Collections.singletonList(hybridSelectionJaxbBuilder
                                                                                                    .getNormCatchRackBarcode()),
-                                                                 true, false).invoke();
+                                                                 true, QtpJaxbBuilder.PcrType.VIIA_7).invoke();
         for (BettaLIMSMessage bettaLIMSMessage : qtpJaxbBuilder.getMessageList()) {
             BettaLimsMessageResourceTest.sendMessage(bettaLIMSMessage, bettaLimsMessageResource, appConfig.getUrl());
         }

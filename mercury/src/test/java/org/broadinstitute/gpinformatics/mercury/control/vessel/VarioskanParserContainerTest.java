@@ -138,7 +138,7 @@ public class VarioskanParserContainerTest extends Arquillian {
         File tempFile = File.createTempFile("Varioskan", ".xls");
         workbook.write(new FileOutputStream(tempFile));
         Map<String, StaticPlate> mapBarcodeToPlate = new HashMap<>();
-        Map<VesselPosition, BarcodedTube> mapPositionToTube = VarioskanParserTest.buildTubesAndTransfers(
+        Map<VesselPosition, BarcodedTube> mapPositionToTube = VarioskanParserTest.buildPicoTubesAndTransfers(
                 mapBarcodeToPlate, plate1Barcode, plate2Barcode, namePrefix);
         if (persistVessels) {
             labVesselDao.persistAll(mapBarcodeToPlate.values());

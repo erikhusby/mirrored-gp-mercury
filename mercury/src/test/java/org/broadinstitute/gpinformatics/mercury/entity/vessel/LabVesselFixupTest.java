@@ -1096,4 +1096,20 @@ public class LabVesselFixupTest extends Arquillian {
         }
     }
 
+
+    @Test(enabled = false)
+    public void fixupGplim3807() {
+        userBean.loginOSUser();
+
+        LabVessel labVessel = labVesselDao.findByIdentifier("ms2031375-50v2");
+        System.out.println("Changing " + labVessel.getLabel() + " to upper case");
+        labVessel.setLabel(labVessel.getLabel().toUpperCase());
+
+        labVessel = labVesselDao.findByIdentifier("ms2031414-50v2");
+        System.out.println("Changing " + labVessel.getLabel() + " to upper case");
+        labVessel.setLabel(labVessel.getLabel().toUpperCase());
+
+        labVesselDao.persist(new FixupCommentary("GPLIM-3807 change barcodes to uppercase"));
+        labVesselDao.flush();
+    }
 }

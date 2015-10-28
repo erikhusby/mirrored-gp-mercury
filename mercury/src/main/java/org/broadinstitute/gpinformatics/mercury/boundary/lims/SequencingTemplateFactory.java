@@ -232,7 +232,8 @@ public class SequencingTemplateFactory {
         TransferTraverserCriteria.NearestLabBatchFinder batchCriteria =
                 new TransferTraverserCriteria.NearestLabBatchFinder(LabBatch.LabBatchType.FCT,
                         TransferTraverserCriteria.NearestLabBatchFinder.AssociationType.DILUTION_VESSEL);
-        flowcell.getContainerRole().applyCriteriaToAllPositions(batchCriteria);
+        flowcell.getContainerRole().applyCriteriaToAllPositions(batchCriteria,
+                TransferTraverserCriteria.TraversalDirection.Ancestors);
         Collection<LabBatch> prodFlowcellBatches = batchCriteria.getAllLabBatches();
         if (prodFlowcellBatches.isEmpty()) {
             prodFlowcellBatches = flowcell.getAllLabBatches(LabBatch.LabBatchType.FCT);

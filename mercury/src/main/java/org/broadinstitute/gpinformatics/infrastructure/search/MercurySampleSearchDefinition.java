@@ -68,11 +68,6 @@ public class MercurySampleSearchDefinition {
         criteriaPath.setPropertyName("jiraTicketKey");
         criteriaPaths.add(criteriaPath);
 
-        criteriaPath = new SearchTerm.CriteriaPath();
-        criteriaPath.setCriteria(Arrays.asList("BatchVessels", "labVessel", "bucketEntries", "productOrder"));
-        criteriaPath.setPropertyName("jiraTicketKey");
-        criteriaPaths.add(criteriaPath);
-
         searchTerm.setCriteriaPaths(criteriaPaths);
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
