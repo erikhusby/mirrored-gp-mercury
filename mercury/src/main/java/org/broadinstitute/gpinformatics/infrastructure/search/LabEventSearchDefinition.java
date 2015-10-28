@@ -34,7 +34,16 @@ import java.util.Set;
  */
 public class LabEventSearchDefinition {
 
-    public LabEventSearchDefinition(){}
+    /**
+     * This alternate definition handles querying for events by their lab vessels
+     * and expanding the list of events by optional ancestor and/or descendant traversal. <br />
+     * Shared by terms in multiple groups (batch and vessel)
+     */
+    private ConfigurableSearchDefinition eventByVesselSearchDefinition;
+
+    public LabEventSearchDefinition(){
+        eventByVesselSearchDefinition = buildAlternateSearchDefByVessel();
+    }
 
     /**
      * Available user selectable traversal options for lab event search
@@ -69,44 +78,13 @@ public class LabEventSearchDefinition {
         destinationLayoutTerm.setIsNestedParent(Boolean.TRUE);
         destinationLayoutTerm.setPluginClass(EventVesselTargetPositionPlugin.class);
 
-        // This alternate definition handles querying for events by their lab vessels
-        // and expanding the list of events by optional ancestor and/or descendant traversal
-        ConfigurableSearchDefinition eventByVesselSearchDefinition = buildAlternateSearchDefByVessel();
-
         List<SearchTerm> searchTerms = buildLabEventBatch(sourceLayoutTerm, destinationLayoutTerm);
-        List<SearchTerm.CriteriaPath> blankCriteriaPaths = new ArrayList<>();
-        SearchTerm.CriteriaPath blankCriteriaPath = new SearchTerm.CriteriaPath();
-        blankCriteriaPath.setCriteria(new ArrayList<String>());
-        blankCriteriaPaths.add(blankCriteriaPath);
-        // Attach alternate search definition to these terms
-        for( SearchTerm searchTerm : searchTerms ){
-            if( searchTerm.getName().equals("PDO") ) {
-                searchTerm.setAlternateSearchDefinition(eventByVesselSearchDefinition);
-                searchTerm.setCriteriaPaths(blankCriteriaPaths);
-            } else if(searchTerm.getName().equals("LCSET") ) {
-                searchTerm.setAlternateSearchDefinition(eventByVesselSearchDefinition);
-                searchTerm.setCriteriaPaths(blankCriteriaPaths);
-            } else if(searchTerm.getName().equals("Mercury Sample ID") ) {
-                searchTerm.setAlternateSearchDefinition(eventByVesselSearchDefinition);
-                searchTerm.setCriteriaPaths(blankCriteriaPaths);
-            }
-        }
         mapGroupSearchTerms.put("Lab Batch", searchTerms);
 
         searchTerms = buildLabEventIds();
         mapGroupSearchTerms.put("IDs", searchTerms);
 
         searchTerms = buildLabEventVessel();
-        // Attach alternate search definition to these terms
-        for( SearchTerm searchTerm : searchTerms ){
-            if( searchTerm.getName().equals("In-Place Vessel Barcode")) {
-                searchTerm.setAlternateSearchDefinition(eventByVesselSearchDefinition);
-                searchTerm.setCriteriaPaths(blankCriteriaPaths);
-            } else if(searchTerm.getName().equals("Event Vessel Barcode")) {
-                searchTerm.setAlternateSearchDefinition(eventByVesselSearchDefinition);
-                searchTerm.setCriteriaPaths( blankCriteriaPaths );
-            }
-        }
         mapGroupSearchTerms.put("Lab Vessel", searchTerms);
 
         searchTerms = buildLabEventReagents();
@@ -518,6 +496,13 @@ public class LabEventSearchDefinition {
     private List<SearchTerm> buildLabEventBatch( SearchTerm... nestedTableTerms ) {
         List<SearchTerm> searchTerms = new ArrayList<>();
 
+        // Need a non-functional criteria path to make terms with alternate definitions visible in selection list
+        List<SearchTerm.CriteriaPath> blankCriteriaPaths = new ArrayList<>();
+        SearchTerm.CriteriaPath blankCriteriaPath = new SearchTerm.CriteriaPath();
+        blankCriteriaPath.setCriteria(new ArrayList<String>());
+        blankCriteriaPaths.add(blankCriteriaPath);
+
+
         SearchTerm searchTerm = new SearchTerm();
         searchTerm.setName("PDO");
         searchTerm.setHelpText(
@@ -543,6 +528,8 @@ public class LabEventSearchDefinition {
                 return productNames;
             }
         });
+        searchTerm.setAlternateSearchDefinition(eventByVesselSearchDefinition);
+        searchTerm.setCriteriaPaths(blankCriteriaPaths);
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
@@ -564,6 +551,8 @@ public class LabEventSearchDefinition {
                 return lcSetNames;
             }
         });
+        searchTerm.setAlternateSearchDefinition(eventByVesselSearchDefinition);
+        searchTerm.setCriteriaPaths(blankCriteriaPaths);
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
@@ -617,6 +606,8 @@ public class LabEventSearchDefinition {
                 return results;
             }
         });
+        searchTerm.setAlternateSearchDefinition(eventByVesselSearchDefinition);
+        searchTerm.setCriteriaPaths(blankCriteriaPaths);
         searchTerms.add(searchTerm);
 
         return searchTerms;
@@ -629,34 +620,16 @@ public class LabEventSearchDefinition {
         List<SearchTerm> searchTerms = new ArrayList<>();
 
         SearchTerm searchTerm = new SearchTerm();
-        searchTerm.setName("In-Place Vessel Barcode");
-        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
-            @Override
-            public List<String> evaluate(Object entity, SearchContext context) {
-                LabEvent labEvent = (LabEvent) entity;
-                List<String> results = new ArrayList<>();
-                LabVessel inPlaceLabVessel = labEvent.getInPlaceLabVessel();
-                if (inPlaceLabVessel == null) {
-                    return results;
-                } else {
-                    if( OrmUtil.proxySafeIsInstance( inPlaceLabVessel, TubeFormation.class )) {
-                        getLabelFromTubeFormation( labEvent, inPlaceLabVessel, results );
-                    } else {
-                        results.add( inPlaceLabVessel.getLabel() );
-                    }
-                }
-                return results;
-            }
-        });
-        searchTerms.add(searchTerm);
-
-
-        // ***********************************************************
-        // ************** Any vessel barcode in an event *************
-        searchTerm = new SearchTerm();
         searchTerm.setName("Event Vessel Barcode");
         // Do not show in output - redundant with source/target layouts
         searchTerm.setIsExcludedFromResultColumns(Boolean.TRUE);
+        searchTerm.setAlternateSearchDefinition(eventByVesselSearchDefinition);
+        // Need a non-functional criteria path to make terms with alternate definitions visible in selection list
+        List<SearchTerm.CriteriaPath> blankCriteriaPaths = new ArrayList<>();
+        SearchTerm.CriteriaPath blankCriteriaPath = new SearchTerm.CriteriaPath();
+        blankCriteriaPath.setCriteria(new ArrayList<String>());
+        blankCriteriaPaths.add(blankCriteriaPath);
+        searchTerm.setCriteriaPaths(blankCriteriaPaths);
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();

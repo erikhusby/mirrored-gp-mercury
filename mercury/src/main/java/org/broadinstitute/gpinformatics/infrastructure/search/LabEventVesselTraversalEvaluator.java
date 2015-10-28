@@ -56,39 +56,16 @@ public class LabEventVesselTraversalEvaluator extends TraversalEvaluator {
 
         if( searchInstance.getTraversalEvaluatorValues()
                 .get(LabEventSearchDefinition.TraversalEvaluatorName.ANCESTORS.getId()) ) {
-
-            TransferTraverserCriteria.LabEventDescendantCriteria eventTraversalCriteria =
-                    new TransferTraverserCriteria.LabEventDescendantCriteria();
-
-            for (LabVessel startingEventVessel : rootEventVessels) {
-                if (startingEventVessel.getContainerRole() != null) {
-                    traverseContainer(eventTraversalCriteria, startingEventVessel.getContainerRole()
-                            , TransferTraverserCriteria.TraversalDirection.Ancestors);
-                } else {
-                    startingEventVessel.evaluateCriteria(eventTraversalCriteria
-                            , TransferTraverserCriteria.TraversalDirection.Ancestors);
-                }
-            }
-            sortedSet.addAll(eventTraversalCriteria.getAllEvents());
+            sortedSet.addAll(traverseRootVessels(rootEventVessels,
+                    TransferTraverserCriteria.TraversalDirection.Ancestors));
         }
 
         if( searchInstance.getTraversalEvaluatorValues()
                 .get(LabEventSearchDefinition.TraversalEvaluatorName.DESCENDANTS.getId()) ) {
-
-            TransferTraverserCriteria.LabEventDescendantCriteria eventTraversalCriteria =
-                    new TransferTraverserCriteria.LabEventDescendantCriteria();
-
-            for (LabVessel startingEventVessel : rootEventVessels) {
-                if (startingEventVessel.getContainerRole() != null) {
-                    traverseContainer(eventTraversalCriteria, startingEventVessel.getContainerRole()
-                            , TransferTraverserCriteria.TraversalDirection.Descendants);
-                } else {
-                    startingEventVessel.evaluateCriteria(eventTraversalCriteria
-                            , TransferTraverserCriteria.TraversalDirection.Descendants);
-                }
-            }
-            sortedSet.addAll( eventTraversalCriteria.getAllEvents());
+            sortedSet.addAll(traverseRootVessels(rootEventVessels,
+                    TransferTraverserCriteria.TraversalDirection.Descendants));
         }
+
         return sortedSet;
     }
 
@@ -106,6 +83,37 @@ public class LabEventVesselTraversalEvaluator extends TraversalEvaluator {
         return idList;
     };
 
+    /**
+     * Gather all chain of custody events for a list of lab vessels
+     * @param rootVessels The list of lab vessels produced by the alternate search definition criteria
+     * @param traversalDirection The traversal direction to use for chain of custody events
+     * @return The chain of custody events resulting from traversal
+     */
+    private Set<LabEvent> traverseRootVessels(List<LabVessel> rootVessels,
+                                              TransferTraverserCriteria.TraversalDirection traversalDirection){
+        TransferTraverserCriteria.LabEventDescendantCriteria eventTraversalCriteria =
+                new TransferTraverserCriteria.LabEventDescendantCriteria();
+
+        for (LabVessel startingEventVessel : rootVessels) {
+            if (startingEventVessel.getContainerRole() != null) {
+                traverseContainer(eventTraversalCriteria, startingEventVessel.getContainerRole()
+                        , traversalDirection);
+            } else {
+                startingEventVessel.evaluateCriteria(eventTraversalCriteria
+                        , traversalDirection);
+            }
+        }
+
+        return eventTraversalCriteria.getAllEvents();
+    }
+
+    /**
+     * Traverse for chain of custody events against a starting lab vessel container
+     * @param eventTraversalCriteria  Gathers up all events in the chain of custody traversal
+     * @param vesselContainer The container from which to begin the traversal
+     *                        (traversal will include all positions in the container)
+     * @param traversalDirection Ancestors or descendants
+     */
     private void traverseContainer( TransferTraverserCriteria.LabEventDescendantCriteria eventTraversalCriteria
             , VesselContainer<?> vesselContainer, TransferTraverserCriteria.TraversalDirection traversalDirection){
 
