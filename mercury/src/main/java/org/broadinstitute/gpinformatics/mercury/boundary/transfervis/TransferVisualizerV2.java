@@ -126,7 +126,7 @@ public class TransferVisualizerV2 {
 
         }
 
-        public void renderContainer(VesselContainer<?> vesselContainer, LabVessel ancillaryVessel, LabVessel labVessel) {
+        private void renderContainer(VesselContainer<?> vesselContainer, LabVessel ancillaryVessel, LabVessel labVessel) {
             String containerLabel = vesselContainer.getEmbedder().getLabel();
             String ancillaryLabel = null;
             if (ancillaryVessel == null) {
@@ -142,8 +142,7 @@ public class TransferVisualizerV2 {
             } else {
                 ancillaryLabel = ancillaryVessel.getLabel();
             }
-            Set<VesselContainer<?>> otherContainers = new HashSet<>();
-            List<Rearray> rearrays = new ArrayList<>();
+
             if (renderedLabels.add(containerLabel)) {
                 logger.info("Rendering container " + containerLabel);
                 VesselGeometry vesselGeometry = vesselContainer.getEmbedder().getVesselGeometry();
@@ -167,14 +166,6 @@ public class TransferVisualizerV2 {
                         childBuilder.append("}");
                         maxColumn = Math.max(maxColumn, rowColumn.getColumn());
                         maxRow = Math.max(maxRow, rowColumn.getRow());
-                        if (child.getContainers().size() > 1) {
-                            for (VesselContainer<?> otherContainer : child.getContainers()) {
-                                if (!renderedLabels.contains(otherContainer.getEmbedder().getLabel())) {
-                                    otherContainers.add(otherContainer);
-                                    rearrays.add(new Rearray(child, vesselContainer, otherContainer));
-                                }
-                            }
-                        }
                     }
                 }
                 int width = Math.max(120, maxColumn * 60);
@@ -185,11 +176,23 @@ public class TransferVisualizerV2 {
                 nodesJson.append(childBuilder.toString());
                 nodesJson.append("] } },\n");
 
-                for (VesselContainer<?> otherContainer : otherContainers) {
-                    renderContainer(otherContainer, null, labVessel);
-                }
-                for (Rearray rearray : rearrays) {
-                    rearray.render();
+                if (labVessel != null) {
+                    Set<VesselContainer<?>> otherContainers = new HashSet<>();
+                    List<Rearray> rearrays = new ArrayList<>();
+                    if (labVessel.getContainers().size() > 1) {
+                        for (VesselContainer<?> otherContainer : labVessel.getContainers()) {
+                            if (!renderedLabels.contains(otherContainer.getEmbedder().getLabel())) {
+                                otherContainers.add(otherContainer);
+                                rearrays.add(new Rearray(labVessel, vesselContainer, otherContainer));
+                            }
+                        }
+                    }
+                    for (VesselContainer<?> otherContainer : otherContainers) {
+                        renderContainer(otherContainer, null, labVessel);
+                    }
+                    for (Rearray rearray : rearrays) {
+                        rearray.render();
+                    }
                 }
             }
         }
