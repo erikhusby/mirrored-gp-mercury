@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
@@ -516,17 +517,18 @@ public class LabEventSearchDefinition {
             @Override
             public Set<String> evaluate(Object entity, SearchContext context) {
                 LabEvent labEvent = (LabEvent) entity;
-                Set<String> productNames = new HashSet<String>();
-                LabVessel labVessel = labEvent.getInPlaceLabVessel();
-                if (labVessel != null) {
-                    Set<BucketEntry> bucketEntries = labVessel.getBucketEntries();
-                    if ( bucketEntries != null && !bucketEntries.isEmpty() ) {
-                        Iterator<BucketEntry> iterator = bucketEntries.iterator();
-                        BucketEntry bucketEntry = iterator.next();
-                        productNames.add( bucketEntry.getProductOrder().getJiraTicketKey() );
+                Set<String> productNames = new HashSet<>();
+
+                Set<LabVessel> eventVessels = labEvent.getTargetLabVessels();
+                eventVessels.add(labEvent.getInPlaceLabVessel());
+
+                for( LabVessel labVessel : eventVessels ) {
+                    for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+                        for (ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples() ) {
+                            productNames.add(productOrderSample.getProductOrder().getJiraTicketKey());
+                        }
                     }
                 }
-
                 return productNames;
             }
         });

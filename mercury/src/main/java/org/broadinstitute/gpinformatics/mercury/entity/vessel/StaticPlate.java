@@ -218,7 +218,7 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
      */
     public Map<VesselPosition, Boolean> getHasRackContentByWell() {
         HasRackContentByWellCriteria criteria = new HasRackContentByWellCriteria();
-        vesselContainer.applyCriteriaToAllPositions(criteria);
+        vesselContainer.applyCriteriaToAllPositions(criteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
         return criteria.getResult();
     }
 

@@ -265,7 +265,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         QtpJaxbBuilder qtpJaxbBuilder = new QtpJaxbBuilder(bettaLimsMessageFactory, testPrefix,
                 Collections.singletonList(hybridSelectionJaxbBuilder.getNormCatchBarcodes()),
                 Collections.singletonList(hybridSelectionJaxbBuilder.getNormCatchRackBarcode()),
-                true, false).invoke();
+                true, QtpJaxbBuilder.PcrType.VIIA_7).invoke();
         for (BettaLIMSMessage bettaLIMSMessage : qtpJaxbBuilder.getMessageList()) {
             sendMessage(bettaLIMSMessage, bettaLimsMessageResource, appConfig.getUrl());
         }
@@ -336,7 +336,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         qtpJaxbBuilder = new QtpJaxbBuilder(bettaLimsMessageFactory, testPrefix,
                 Collections.singletonList(hybridSelectionJaxbBuilder.getNormCatchBarcodes()),
                 Collections.singletonList(hybridSelectionJaxbBuilder.getNormCatchRackBarcode()),
-                true, false).invoke();
+                true, QtpJaxbBuilder.PcrType.VIIA_7).invoke();
         for (BettaLIMSMessage bettaLIMSMessage : qtpJaxbBuilder.getMessageList()) {
             sendMessage(bettaLIMSMessage, bettaLimsMessageResource, appConfig.getUrl());
         }
@@ -379,7 +379,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         QtpJaxbBuilder qtpJaxbBuilder = new QtpJaxbBuilder(bettaLimsMessageFactory, testPrefix,
                 Collections.singletonList(hybridSelectionJaxbBuilder.getNormCatchBarcodes()),
                 Collections.singletonList(hybridSelectionJaxbBuilder.getNormCatchRackBarcode()),
-                true, false).invoke();
+                true, QtpJaxbBuilder.PcrType.VIIA_7).invoke();
         for (BettaLIMSMessage bettaLIMSMessage : qtpJaxbBuilder.getMessageList()) {
             sendMessage(bettaLIMSMessage, bettaLimsMessageResource, appConfig.getUrl());
         }
@@ -468,7 +468,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         QtpJaxbBuilder qtpJaxbBuilder = new QtpJaxbBuilder(bettaLimsMessageFactory, testPrefix,
                 Collections.singletonList(iceJaxbBuilder.getCatchEnrichTubeBarcodes()),
                 Collections.singletonList(iceJaxbBuilder.getCatchEnrichRackBarcode()),
-                true, false).invoke();
+                true, QtpJaxbBuilder.PcrType.VIIA_7).invoke();
         for (BettaLIMSMessage bettaLIMSMessage : qtpJaxbBuilder.getMessageList()) {
             sendMessage(bettaLIMSMessage, bettaLimsMessageResource, appConfig.getUrl());
         }
@@ -819,7 +819,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         QtpJaxbBuilder qtpJaxbBuilder = new QtpJaxbBuilder(bettaLimsMessageFactory, testPrefix,
                 listLcsetListNormCatchBarcodes,
                 normCatchRackBarcodes,
-                true, false).invoke();
+                true, QtpJaxbBuilder.PcrType.VIIA_7).invoke();
         for (BettaLIMSMessage bettaLIMSMessage : qtpJaxbBuilder.getMessageList()) {
             sendMessage(bettaLIMSMessage, bettaLimsMessageResource, appConfig.getUrl());
         }
@@ -1007,7 +1007,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
             normCatchRackBarcodes.add("QtpRack" + testPrefix);
         }
         QtpJaxbBuilder qtpJaxbBuilder = new QtpJaxbBuilder(bettaLimsMessageFactory, testPrefixes.get(0),
-                listLcsetListNormCatchBarcodes, normCatchRackBarcodes, true, false).invoke();
+                listLcsetListNormCatchBarcodes, normCatchRackBarcodes, true, QtpJaxbBuilder.PcrType.VIIA_7).invoke();
         for (BettaLIMSMessage bettaLIMSMessage : qtpJaxbBuilder.getMessageList()) {
             sendMessage(bettaLIMSMessage, bettaLimsMessageResource, appConfig.getUrl());
         }

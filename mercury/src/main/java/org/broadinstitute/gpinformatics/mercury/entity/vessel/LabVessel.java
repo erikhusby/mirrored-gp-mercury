@@ -1056,10 +1056,9 @@ public abstract class LabVessel implements Serializable {
         return traversalResults;
     }
 
-    void traverseDescendants(TransferTraverserCriteria criteria, TransferTraverserCriteria.TraversalDirection direction,
-                             int hopCount) {
+    void traverseDescendants(TransferTraverserCriteria criteria, int hopCount) {
         for (VesselEvent vesselEvent : getDescendants()) {
-            evaluateVesselEvent(criteria, direction, hopCount, vesselEvent);
+            evaluateVesselEvent(criteria, TransferTraverserCriteria.TraversalDirection.Descendants, hopCount, vesselEvent);
         }
     }
 
@@ -1289,13 +1288,15 @@ public abstract class LabVessel implements Serializable {
                           int hopCount) {
         TransferTraverserCriteria.Context context =
                 new TransferTraverserCriteria.Context(this, labEvent, hopCount, traversalDirection);
-        transferTraverserCriteria.evaluateVesselPreOrder(context);
+        if( transferTraverserCriteria.evaluateVesselPreOrder(context) == TransferTraverserCriteria.TraversalControl.StopTraversing ) {
+            return;
+        }
         if (traversalDirection == TransferTraverserCriteria.TraversalDirection.Ancestors) {
             for (VesselEvent vesselEvent : getAncestors()) {
                 evaluateVesselEvent(transferTraverserCriteria, traversalDirection, hopCount, vesselEvent);
             }
         } else if (traversalDirection == TransferTraverserCriteria.TraversalDirection.Descendants) {
-            traverseDescendants(transferTraverserCriteria, traversalDirection, hopCount);
+            traverseDescendants(transferTraverserCriteria, hopCount);
         } else {
             throw new RuntimeException("Unknown direction " + traversalDirection.name());
         }

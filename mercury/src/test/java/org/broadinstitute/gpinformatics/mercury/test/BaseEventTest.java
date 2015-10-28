@@ -81,6 +81,7 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityB
 import org.broadinstitute.gpinformatics.mercury.test.builders.PreFlightEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ProductionFlowcellPath;
 import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.QtpJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.SageEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ShearingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.TruSeqStrandSpecificEntityBuilder;
@@ -499,6 +500,18 @@ public class BaseEventTest {
                 Collections.singletonList(rack.getRacksOfTubes().iterator().next().getLabel()),
                 Collections.singletonList(tubeBarcodes),
                 mapBarcodeToTube, barcodeSuffix).invoke();
+    }
+
+    public QtpEntityBuilder runQtpProcess(TubeFormation rack, List<String> tubeBarcodes,
+                                          Map<String, BarcodedTube> mapBarcodeToTube,
+                                          String barcodeSuffix, QtpJaxbBuilder.PcrType pcrType) {
+
+        return new QtpEntityBuilder(
+                bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
+                Collections.singletonList(rack),
+                Collections.singletonList(rack.getRacksOfTubes().iterator().next().getLabel()),
+                Collections.singletonList(tubeBarcodes),
+                mapBarcodeToTube, barcodeSuffix).invoke(true, pcrType);
     }
 
     /**

@@ -84,6 +84,7 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityB
 import org.broadinstitute.gpinformatics.mercury.test.builders.PreFlightEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ProductionFlowcellPath;
 import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.QtpJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.SageEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ShearingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.TruSeqStrandSpecificEntityBuilder;
@@ -1138,7 +1139,8 @@ public class LabEventTest extends BaseEventTest {
                 Collections.singletonList(iceEntityBuilder.getCatchEnrichRack()),
                 Collections.singletonList(iceEntityBuilder.getCatchEnrichRack().getRacksOfTubes().iterator().next().getLabel()),
                 Collections.singletonList(iceEntityBuilder.getCatchEnrichBarcodes()),
-                iceEntityBuilder.getMapBarcodeToCatchEnrichTubes(), lcsetSuffix).invoke(true, true);
+                iceEntityBuilder.getMapBarcodeToCatchEnrichTubes(), lcsetSuffix).
+                invoke(true, QtpJaxbBuilder.PcrType.ECO_DUPLICATE);
 
         final LabVessel denatureSource = qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(
                 VesselPosition.A01);
@@ -1674,7 +1676,8 @@ public class LabEventTest extends BaseEventTest {
         QtpEntityBuilder qtpEntityBuilder = runQtpProcess(truSeqStrandSpecificEntityBuilder.getEnrichmentCleanupRack(),
                 truSeqStrandSpecificEntityBuilder.getEnrichmentCleanupBarcodes(),
                 truSeqStrandSpecificEntityBuilder.getMapBarcodeToEnrichmentCleanupTubes(),
-                "1");
+                "1",
+                QtpJaxbBuilder.PcrType.ECO_TRIPLICATE);
 
         LabVessel denatureSource =
                 qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);

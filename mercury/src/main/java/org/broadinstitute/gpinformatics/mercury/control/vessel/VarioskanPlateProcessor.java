@@ -4,6 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
 import java.math.BigDecimal;
@@ -41,9 +42,11 @@ public class VarioskanPlateProcessor extends TableProcessor {
     public static final int SCALE = 2;
     private List<String> headers;
     private List<PlateWellResult> plateWellResults = new ArrayList<>();
+    private LabMetric.MetricType metricType;
 
-    public VarioskanPlateProcessor(String sheetName) {
+    public VarioskanPlateProcessor(String sheetName, LabMetric.MetricType metricType) {
         super(sheetName);
+        this.metricType = metricType;
     }
 
     @Override
@@ -95,7 +98,8 @@ public class VarioskanPlateProcessor extends TableProcessor {
 
         if (plate != null && !plate.isEmpty()) {
             Matcher matcher = BARCODE_PATTERN.matcher(plate);
-            if (matcher.matches()) {
+            // value and result empty means the row is in the Curve Fit Calibrator Table
+            if (matcher.matches() && !StringUtils.isEmpty(value) && !StringUtils.isEmpty(result)) {
                 String paddedBarcode = StringUtils.leftPad(matcher.group(1), 12, '0');
                 VesselPosition vesselPosition = VesselPosition.getByName(well.trim());
                 if (vesselPosition == null) {
@@ -104,6 +108,9 @@ public class VarioskanPlateProcessor extends TableProcessor {
                 try {
                     BigDecimal bigDecimal;
                     if (result.equals("NaN")) {
+                        if (metricType == LabMetric.MetricType.PLATING_RIBO) {
+                            throw new RuntimeException("NaN not currently supported for RIBO");
+                        }
                         // result = 0.73 * value + 0.69
                         bigDecimal = new BigDecimal(value).multiply(new BigDecimal("0.73")).add(new BigDecimal("0.69"));
                     } else {
@@ -112,7 +119,7 @@ public class VarioskanPlateProcessor extends TableProcessor {
                     bigDecimal = MathUtils.scaleTwoDecimalPlaces(bigDecimal);
                     plateWellResults.add(new PlateWellResult(paddedBarcode, vesselPosition, bigDecimal));
                 } catch (NumberFormatException e) {
-                    addDataMessage("Failed to find position " + well, dataRowIndex);
+                    addDataMessage("Failed to parse number " + result, dataRowIndex);
                 }
             }
         }
