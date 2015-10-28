@@ -51,9 +51,11 @@ import java.io.StringReader;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -115,6 +117,7 @@ public class BucketViewActionBean extends CoreActionBean {
     private List<ProductOrder> availablePdos;
 
     private List<Long> selectedEntryIds = new ArrayList<>();
+    private List<ProductWorkflowDef> possibleWorkflows;
 
     private boolean jiraEnabled = false;
     private String important;
