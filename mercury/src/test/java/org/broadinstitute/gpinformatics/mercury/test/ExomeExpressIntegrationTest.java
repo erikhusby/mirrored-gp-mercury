@@ -119,7 +119,9 @@ public class ExomeExpressIntegrationTest {
             QtpJaxbBuilder qtpJaxbBuilder = new QtpJaxbBuilder(bettaLimsMessageTestFactory, testSuffix,
                     Collections.singletonList(hybridSelectionJaxbBuilder.getNormCatchBarcodes()),
                     Collections.singletonList(hybridSelectionJaxbBuilder.getNormCatchRackBarcode()),
-                    true, QtpJaxbBuilder.PcrType.VIIA_7).invoke();
+                    true, QtpJaxbBuilder.PcrType.VIIA_7);
+            qtpJaxbBuilder.invokeToQuant();
+            qtpJaxbBuilder.invokePostQuant();
             for (BettaLIMSMessage bettaLIMSMessage : qtpJaxbBuilder.getMessageList()) {
                 sendMessage(baseUrl, bettaLIMSMessage);
             }
