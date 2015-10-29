@@ -142,6 +142,7 @@ public class MercurySampleSearchDefinition {
 
         SearchTerm searchTerm = new SearchTerm();
         searchTerm.setName("Mercury Sample ID");
+        searchTerm.setIsDefaultResultColumn(Boolean.TRUE);
         searchTerm.setDbSortPath("sampleKey");
         List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
         SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
