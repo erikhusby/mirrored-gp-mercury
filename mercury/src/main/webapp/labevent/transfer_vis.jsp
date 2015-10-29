@@ -27,10 +27,14 @@
 
     <stripes:layout-component name="content">
         <stripes:form beanclass="${actionBean.class.name}" id="eventForm">
-            <div class="control-group">
-                <label for="barcodes">Barcodes</label>
-                <input type="text" name="barcodes" id="barcodes">
-                <stripes:submit name="visualize" value="Visualize" class="btn btn-primary"/>
+            <div class="form-horizontal">
+                <div class="control-group">
+                    <label for="barcodes" class="control-label">Barcodes</label>
+                    <div class="controls">
+                        <input type="text" name="barcodes" id="barcodes">
+                        <stripes:submit name="visualize" value="Visualize" class="btn btn-primary"/>
+                    </div>
+                </div>
             </div>
         </stripes:form>
         <div id="graphDiv"></div>
