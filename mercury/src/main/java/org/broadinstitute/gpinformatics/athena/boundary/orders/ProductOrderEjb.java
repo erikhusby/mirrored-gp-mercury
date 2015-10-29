@@ -333,17 +333,17 @@ public class ProductOrderEjb {
         if (order.getOrderStatus().readyForLab()) {
             Map<String, Collection<ProductOrderSample>> samples = bucketEjb.addSamplesToBucket(order, newSamples);
             if (!samples.isEmpty()) {
-                Set<String> bucketedSampleIds = new HashSet<>();
+                Set<String> bucketedSampleNames = new HashSet<>();
                 for (Map.Entry<String, Collection<ProductOrderSample>> bucketSampleEntry : samples.entrySet()) {
                     String bucketName = bucketSampleEntry.getKey();
-                    bucketedSampleIds.addAll(ProductOrderSample.getSampleNames(bucketSampleEntry.getValue()));
+                    bucketedSampleNames.addAll(ProductOrderSample.getSampleNames(bucketSampleEntry.getValue()));
                     bucketName = bucketName.toLowerCase().endsWith("bucket") ? bucketName : bucketName + " Bucket";
                     reporter.addMessage("{0} samples have been added to the {1}.",
                             bucketSampleEntry.getValue().size(), bucketName);
                 }
 
                 Collection<String> unBucketedSamples =
-                        CollectionUtils.subtract(ProductOrderSample.getSampleNames(newSamples), bucketedSampleIds);
+                        CollectionUtils.subtract(ProductOrderSample.getSampleNames(newSamples), bucketedSampleNames);
                 if (!unBucketedSamples.isEmpty()) {
                     reporter.addMessage("No valid buckets found {0}", unBucketedSamples);
                 }
