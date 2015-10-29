@@ -272,6 +272,7 @@
                     $j("[name='addToBatch']").prop('disabled', false);
                 }
             });
+
         });
 
         function showJiraInfo() {
@@ -400,7 +401,9 @@
                         </a></td>
 
                     <td>
-                        <c:forEach items="${entry.labVessel.mercurySamples}" var="mercurySample" varStatus="stat">
+                        <c:forEach items="${entry.labVessel.mercurySamples}"
+                                   var="mercurySample"
+                                   varStatus="stat">
                             <a href="${ctxpath}/search/sample.action?sampleSearch=&searchKey=${mercurySample.sampleKey}">
                                     ${mercurySample.sampleKey}
                             </a>
@@ -433,7 +436,7 @@
                     </td>
                     <td>
                         <div class="ellipsis" style="max-width: 250px;">
-                                ${entry.productOrder.getAddOnList("<br/>")}
+                            ${entry.productOrder.getAddOnList("<br/>")}
                         </div>
                     </td>
                     <td class="ellipsis">

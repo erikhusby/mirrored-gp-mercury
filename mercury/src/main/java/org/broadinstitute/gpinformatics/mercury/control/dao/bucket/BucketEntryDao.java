@@ -58,7 +58,8 @@ public class BucketEntryDao extends GenericDao {
         CriteriaQuery<BucketEntry> query = vesselBucketCriteria.createQuery(BucketEntry.class);
         Root<BucketEntry> root = query.from(BucketEntry.class);
         query.where(vesselBucketCriteria.and(vesselBucketCriteria.equal(root.get(BucketEntry_.labVessel), vessel),
-                vesselBucketCriteria.equal(root.get(BucketEntry_.bucket), bucket)));
+                                             vesselBucketCriteria.equal(root.get(BucketEntry_.bucket),
+                                                                        bucket)));
         try {
             return getEntityManager().createQuery(query).getSingleResult();
         } catch (NoResultException ignored) {

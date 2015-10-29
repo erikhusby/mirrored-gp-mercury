@@ -1,7 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.workflow;
 
-import com.google.common.collect.HashMultiset;
-import com.google.common.collect.Multiset;
 import net.sourceforge.stripes.action.Before;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
@@ -51,11 +49,9 @@ import java.io.StringReader;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -127,7 +123,6 @@ public class BucketViewActionBean extends CoreActionBean {
     private String selectedLcset;
     private LabBatch batch;
     private Map<String, BucketCount> mapBucketToBucketEntryCount;
-    private Multiset<String> workflowCounter = HashMultiset.create();
 
     @Before(stages = LifecycleStage.BindingAndValidation)
     public void init() {
@@ -464,4 +459,5 @@ public class BucketViewActionBean extends CoreActionBean {
     public Map<String, BucketCount> getMapBucketToBucketEntryCount() {
         return mapBucketToBucketEntryCount;
     }
+
 }
