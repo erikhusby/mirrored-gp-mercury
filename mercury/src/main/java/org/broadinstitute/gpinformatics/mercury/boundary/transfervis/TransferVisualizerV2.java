@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Generates json to allow a javascript library to draw diagrams of transfers
+ * Generates json to allow a javascript library to draw diagrams of transfers.
  */
 public class TransferVisualizerV2 {
 
@@ -36,12 +36,18 @@ public class TransferVisualizerV2 {
     private BSPUserList bspUserList;
 
     private class Traverser implements TransferTraverserCriteria {
+        /** Accumulates JSON for graph nodes. */
         @SuppressWarnings("StringBufferField")
         private final StringBuilder nodesJson = new StringBuilder();
+        /** Accumulates JSON for graph edges. */
         @SuppressWarnings("StringBufferField")
-        private final StringBuilder linksJson = new StringBuilder();
+        private final StringBuilder edgesJson = new StringBuilder();
+        /** Prevents vessels being rendered more than once. */
         private final Set<String> renderedLabels = new HashSet<>();
+        /** Prevents events being rendered more than once. */
         private final Set<String> renderedEvents = new HashSet<>();
+        /** Prevents multiple labels for a pool. */
+        private final Set<String> renderedEdgeLabels = new HashSet<>();
 
         @Override
         public TraversalControl evaluateVesselPreOrder(Context context) {
@@ -57,7 +63,7 @@ public class TransferVisualizerV2 {
         }
 
         private void renderEvent(LabEvent event, LabVessel labVessel) {
-            // events
+            // Primary key for events
             String eventId = event.getEventLocation() + "|" + event.getEventDate().getTime() + "|" +
                     event.getDisambiguator();
 
@@ -117,18 +123,20 @@ public class TransferVisualizerV2 {
         }
 
         private void renderEdge(String sourceId, String targetId, String label) {
-            linksJson.append("{ \"source\": \"").append(sourceId).
+            edgesJson.append("{ \"source\": \"").append(sourceId).
                     append("\", \"target\": \"").append(targetId).
                     append("\", \"label\": \"").append(label).
                     append("\" },\n");
         }
         private void renderEdge(String sourceId, String sourceChild, String targetId, String targetChild, String label) {
-            linksJson.append("{ \"source\": \"").append(sourceId).
+            edgesJson.append("{ \"source\": \"").append(sourceId).
                     append("\", \"sourceChild\": \"").append(sourceChild).
                     append("\", \"target\": \"").append(targetId).
-                    append("\", \"targetChild\": \"").append(targetChild).
-                    append("\", \"label\": \"").append(label).
-                    append("\" },\n");
+                    append("\", \"targetChild\": \"").append(targetChild);
+            if (renderedEdgeLabels.add(sourceId + targetId + label)) {
+                edgesJson.append("\", \"label\": \"").append(label);
+            }
+            edgesJson.append("\" },\n");
         }
 
         private void renderVessel(LabVessel labVessel) {
@@ -226,7 +234,7 @@ public class TransferVisualizerV2 {
             if (nodesJsonString.endsWith(",\n")) {
                 nodesJsonString = nodesJsonString.substring(0, nodesJsonString.length() - 2);
             }
-            String linksJsonString = linksJson.toString();
+            String linksJsonString = edgesJson.toString();
             if (linksJsonString.endsWith(",\n")) {
                 linksJsonString = linksJsonString.substring(0, linksJsonString.length() - 2);
             }
