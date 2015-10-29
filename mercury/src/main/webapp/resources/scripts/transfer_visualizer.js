@@ -75,6 +75,7 @@ function renderJson(json, svg) {
             return "translate(" + x + "," + y + ")";
         });
     node.append("rect")
+        .attr("class", "graphNodeRect")
         .attr("width", function (d) {
             return g.node(d).width;
         })
@@ -176,7 +177,8 @@ function renderJson(json, svg) {
             sourceX: sourceX,
             sourceY: sourceY,
             targetX: targetX,
-            targetY: targetY
+            targetY: targetY,
+            label: l.label
         });
     });
     // Convert Dagre edge control points into pairs of line points.
@@ -195,9 +197,12 @@ function renderJson(json, svg) {
 //        });
 
     // Render edges.
-    var points = svg.selectAll(".graphEdge")
+    var edges = svg.selectAll(".graphEdgeGroup")
         .data(links)
-        .enter().append("line")
+        .enter()
+        .append("g")
+        .attr("class", "graphEdgeGroup")
+        .append("line")
         .attr("class", "graphEdge")
         .style("marker-end",  "url(#end-arrow)")
         .attr("x1", function (d) {
@@ -213,4 +218,25 @@ function renderJson(json, svg) {
             return d.targetY;
         });
 
+    var edgeText = svg.selectAll(".graphEdgeGroup")
+        .append("text")
+        .attr("class", "graphEdgeLabel")
+        .attr("text-anchor", "middle")
+        .attr("x", function(d) {
+            if (d.targetX > d.sourceX) {
+                return (d.sourceX + (d.targetX - d.sourceX)/2);
+            } else {
+                return (d.targetX + (d.sourceX - d.targetX)/2);
+            }
+        })
+        .attr("y", function(d) {
+            if (d.targetY > d.sourceY) {
+                return (d.sourceY + (d.targetY - d.sourceY)/2);
+            } else {
+                return (d.targetY + (d.sourceY - d.targetY)/2);
+            }
+        })
+        .text(function(d) {
+            return d.label;
+        });
 }

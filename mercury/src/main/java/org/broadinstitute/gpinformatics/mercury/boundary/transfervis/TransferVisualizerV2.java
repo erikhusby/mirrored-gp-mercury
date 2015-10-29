@@ -1,7 +1,10 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.transfervis;
 
+import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -14,6 +17,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
+import javax.inject.Inject;
+import java.text.Format;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -25,8 +30,12 @@ import java.util.Set;
 public class TransferVisualizerV2 {
 
     private static final Log logger = LogFactory.getLog(TransferVisualizerV2.class);
+    private static final Format DATE_FORMAT = FastDateFormat.getInstance("yyyy-MM-dd HH:mm:ss");
 
-    private static class Traverser implements TransferTraverserCriteria {
+    @Inject
+    private BSPUserList bspUserList;
+
+    private class Traverser implements TransferTraverserCriteria {
         @SuppressWarnings("StringBufferField")
         private final StringBuilder nodesJson = new StringBuilder();
         @SuppressWarnings("StringBufferField")
@@ -51,6 +60,20 @@ public class TransferVisualizerV2 {
             // events
             String eventId = event.getEventLocation() + "|" + event.getEventDate().getTime() + "|" +
                     event.getDisambiguator();
+
+            StringBuilder labelBuilder = new StringBuilder();
+            labelBuilder.append(event.getLabEventType().getName()).append(" ").
+                    append(event.getEventLocation()).append(" ").
+                    append(DATE_FORMAT.format(event.getEventDate()));
+            if (bspUserList != null) {
+                BspUser bspUser = bspUserList.getById(event.getEventOperator());
+                if (bspUser != null) {
+                    labelBuilder.append(bspUser.getFullName());
+                }
+                labelBuilder.append("<br/>");
+            }
+            String label = labelBuilder.toString();
+
             if (renderedEvents.add(eventId)) {
                 logger.info("Rendering event " + event.getLabEventType());
                 for (SectionTransfer sectionTransfer : event.getSectionTransfers()) {
@@ -58,7 +81,7 @@ public class TransferVisualizerV2 {
                     String targetId = sectionTransfer.getTargetVesselContainer().getEmbedder().getLabel();
                     renderContainer(sectionTransfer.getTargetVesselContainer(),
                             sectionTransfer.getAncillaryTargetVessel(), labVessel, false);
-                    renderLink(eventId, sourceId, targetId);
+                    renderEdge(sourceId, targetId, label);
                 }
                 for (CherryPickTransfer cherryPickTransfer : event.getCherryPickTransfers()) {
                     LabVessel sourceVessel = cherryPickTransfer.getSourceVesselContainer().getVesselAtPosition(
@@ -74,10 +97,10 @@ public class TransferVisualizerV2 {
                             cherryPickTransfer.getAncillarySourceVessel(), labVessel, false);
                     renderContainer(cherryPickTransfer.getTargetVesselContainer(),
                             cherryPickTransfer.getAncillaryTargetVessel(), labVessel, false);
-                    renderLink(eventId, cherryPickTransfer.getSourceVesselContainer().getEmbedder().getLabel(),
+                    renderEdge(cherryPickTransfer.getSourceVesselContainer().getEmbedder().getLabel(),
                             sourceVesselLabel,
                             cherryPickTransfer.getTargetVesselContainer().getEmbedder().getLabel(),
-                            targetVesselLabel);
+                            targetVesselLabel, label);
                 }
                 for (VesselToSectionTransfer vesselToSectionTransfer : event.getVesselToSectionTransfers()) {
                     String sourceLabel = vesselToSectionTransfer.getSourceVessel().getLabel();
@@ -87,21 +110,24 @@ public class TransferVisualizerV2 {
                     }
                     renderContainer(vesselToSectionTransfer.getTargetVesselContainer(),
                             vesselToSectionTransfer.getAncillaryTargetVessel(), labVessel, false);
-                    renderLink(eventId, sourceLabel,
-                            vesselToSectionTransfer.getTargetVesselContainer().getEmbedder().getLabel());
+                    renderEdge(sourceLabel,
+                            vesselToSectionTransfer.getTargetVesselContainer().getEmbedder().getLabel(), label);
                 }
             }
         }
 
-        private void renderLink(String eventId, String sourceId, String targetId) {
-            linksJson.append("{ \"source\": \"").append(sourceId).append("\", \"target\": \"").append(targetId).
+        private void renderEdge(String sourceId, String targetId, String label) {
+            linksJson.append("{ \"source\": \"").append(sourceId).
+                    append("\", \"target\": \"").append(targetId).
+                    append("\", \"label\": \"").append(label).
                     append("\" },\n");
         }
-        private void renderLink(String eventId, String sourceId, String sourceChild, String targetId, String targetChild) {
+        private void renderEdge(String sourceId, String sourceChild, String targetId, String targetChild, String label) {
             linksJson.append("{ \"source\": \"").append(sourceId).
                     append("\", \"sourceChild\": \"").append(sourceChild).
                     append("\", \"target\": \"").append(targetId).
                     append("\", \"targetChild\": \"").append(targetChild).
+                    append("\", \"label\": \"").append(label).
                     append("\" },\n");
         }
 
@@ -230,8 +256,8 @@ public class TransferVisualizerV2 {
                     sourceContainer = otherContainer;
                     targetContainer = vesselContainer;
                 }
-                renderLink(null, sourceContainer.getEmbedder().getLabel(), labVessel.getLabel(),
-                        targetContainer.getEmbedder().getLabel(), labVessel.getLabel());
+                renderEdge(sourceContainer.getEmbedder().getLabel(), labVessel.getLabel(),
+                        targetContainer.getEmbedder().getLabel(), labVessel.getLabel(), "rearray");
             }
         }
     }
