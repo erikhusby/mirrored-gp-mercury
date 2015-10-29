@@ -1402,8 +1402,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             try {
                 ProductOrder.loadSampleData(samples);
                 for (ProductOrderSample sample : samples) {
-                    JSONObject item = new JSONObject();
-                    ProductOrderSampleJsonFactory.toJson(sample);
+                    JSONObject item = ProductOrderSampleJsonFactory.toJson(sample);
                     itemList.put(item);
                 }
             } catch (BSPLookupException e) {

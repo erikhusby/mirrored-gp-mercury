@@ -197,36 +197,11 @@ public class SampleDataFetcher implements Serializable {
      */
     public Map<String, SampleData> fetchSampleDataForProductOrderSamples(Collection<ProductOrderSample> samples,
                                                                          BSPSampleSearchColumn... bspSampleSearchColumns) {
-        Map<String, SampleData> sampleData = new HashMap<>();
-
-        Collection<MercurySample> mercurySamplesWithMercurySource = new ArrayList<>();
-        Collection<String> sampleIdsWithBspSource = new ArrayList<>();
-
-        Set<String> sampleNames = new HashSet<>(samples.size());
-        for (ProductOrderSample productOrderSample : samples) {
-            if (productOrderSample.needsBspMetaData()) {
-                MercurySample mercurySample = productOrderSample.getMercurySample();
-                if (mercurySample != null &&
-                    mercurySample.getMetadataSource() == MercurySample.MetadataSource.MERCURY) {
-                    mercurySamplesWithMercurySource.add(mercurySample);
-                } else {
-                    sampleNames.add(productOrderSample.getName());
-                }
-            }
+        Map<String, MercurySample> sampleKeyToMercurySample = new HashMap<>(samples.size());
+        for (ProductOrderSample sample : samples) {
+            sampleKeyToMercurySample.put(sample.getName(), sample.getMercurySample());
         }
-        if (!sampleNames.isEmpty()) {
-
-            buildSampleCollectionsBySource(sampleNames, mercurySamplesWithMercurySource, sampleIdsWithBspSource);
-
-            if (!sampleIdsWithBspSource.isEmpty()) {
-                Map<String, BspSampleData> bspSampleData =
-                        bspSampleDataFetcher.fetchSampleData(sampleIdsWithBspSource, bspSampleSearchColumns);
-                sampleData.putAll(bspSampleData);
-            }
-        }
-        sampleData.putAll(mercurySampleDataFetcher.fetchSampleData(mercurySamplesWithMercurySource));
-
-        return sampleData;
+        return fetchSampleDataForMercurySamples(sampleKeyToMercurySample, bspSampleSearchColumns);
     }
 
     /**
@@ -245,21 +220,30 @@ public class SampleDataFetcher implements Serializable {
      * @return Mapping of sample id to its sample data
      */
     public Map<String, SampleData> fetchSampleDataForMercurySamples(Collection<MercurySample> samples,
+                                                                    BSPSampleSearchColumn... bspSampleSearchColumns) {
+        Map<String, MercurySample> sampleData = new HashMap<>();
+        for (MercurySample sample : samples) {
+            sampleData.put(sample.getSampleKey(), sample);
+        }
+        return fetchSampleDataForMercurySamples(sampleData, bspSampleSearchColumns);
+    }
+
+    private Map<String, SampleData> fetchSampleDataForMercurySamples(Map<String, MercurySample> samplesMap,
                                                                          BSPSampleSearchColumn... bspSampleSearchColumns) {
         Map<String, SampleData> sampleData = new HashMap<>();
-
         Collection<MercurySample> mercurySamplesWithMercurySource = new ArrayList<>();
         Collection<String> sampleIdsWithBspSource = new ArrayList<>();
 
-        Set<String> sampleNames = new HashSet<>(samples.size());
-        for (MercurySample mercurySample : samples) {
-            if (mercurySample.needsBspMetaData()) {
-                if (mercurySample != null && mercurySample.getMetadataSource() == MercurySample.MetadataSource.MERCURY) {
+        Set<String> sampleNames = new HashSet<>(samplesMap.keySet());
+        for (Map.Entry<String, MercurySample> mercurySampleEntry : samplesMap.entrySet()) {
+            MercurySample mercurySample = mercurySampleEntry.getValue();
+            String sampleKey = mercurySampleEntry.getKey();
+            if (mercurySample != null && mercurySample.needsBspMetaData()) {
+                if (mercurySample.getMetadataSource() == MercurySample.MetadataSource.MERCURY) {
                     mercurySamplesWithMercurySource.add(mercurySample);
-                } else {
-                    sampleNames.add(mercurySample.getSampleKey());
                 }
             }
+            sampleNames.add(sampleKey);
         }
         if (!sampleNames.isEmpty()) {
 
