@@ -68,8 +68,6 @@ public class BucketEjbTest extends ContainerTest {
     @Inject
     BarcodedTubeDao barcodedTubeDao;
 
-    @Inject
-    BucketEjb bucketEjb;
     private final static Log logger = LogFactory.getLog(BucketEjbTest.class);
 
     @Inject
