@@ -1,6 +1,5 @@
 window.onerror = function (errorMsg, url, lineNumber, column, errorObj) {
-    alert('Error: ' + errorMsg + ' Script: ' + url + ' Line: ' + lineNumber
-        + ' Column: ' + column + ' StackTrace: ' +  errorObj);
+    alert('Error: ' + errorMsg + ' Script: ' + url + ' Line: ' + lineNumber + ' Column: ' + column + ' StackTrace: ' +  errorObj);
 };
 
 function setupSvg() {
@@ -11,7 +10,7 @@ function setupSvg() {
         .attr("width", width)
         .attr("height", height)
         .append("g")
-        .call(d3.behavior.zoom().scaleExtent([.1, 8]).on("zoom", zoom))
+        .call(d3.behavior.zoom().scaleExtent([0.1, 8]).on("zoom", zoom))
         .append("g");
     svg.append("rect")
         .attr("class", "graphOverlay")
@@ -146,27 +145,32 @@ function renderJson(json, svg) {
         var sourceNode = g.node(l.source);
         var sourceX = sourceNode.x;
         var sourceY = sourceNode.y;
+        var i, len;
         if (l.sourceChild) {
-            for (var i = 0, len = sourceNode.children.length; i < len; i++) {
+            for (i = 0, len = sourceNode.children.length; i < len; i++) {
                 if (sourceNode.children[i].name === l.sourceChild) {
                     sourceX += sourceNode.children[i].x - (sourceNode.width / 2);
                     sourceY += sourceNode.children[i].y - (sourceNode.height / 2);
                     break;
                 }
             }
+        } else {
+            sourceY += sourceNode.height / 2;
         }
         // todo jmt reduce copy / paste
         var targetNode = g.node(l.target);
         var targetX = targetNode.x;
         var targetY = targetNode.y;
         if (l.targetChild) {
-            for (var i = 0, len = targetNode.children.length; i < len; i++) {
+            for (i = 0, len = targetNode.children.length; i < len; i++) {
                 if (targetNode.children[i].name === l.targetChild) {
                     targetX += targetNode.children[i].x - (targetNode.width / 2);
                     targetY += targetNode.children[i].y - (targetNode.height / 2);
                     break;
                 }
             }
+        } else {
+            targetY -= targetNode.height / 2;
         }
         links.push({
             sourceX: sourceX,
@@ -195,6 +199,7 @@ function renderJson(json, svg) {
         .data(links)
         .enter().append("line")
         .attr("class", "graphEdge")
+        .style("marker-end",  "url(#end-arrow)")
         .attr("x1", function (d) {
             return d.sourceX;
         })
