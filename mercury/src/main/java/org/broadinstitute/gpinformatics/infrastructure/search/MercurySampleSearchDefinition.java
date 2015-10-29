@@ -73,15 +73,26 @@ public class MercurySampleSearchDefinition {
             @Override
             public List<String> evaluate(Object entity, SearchContext context) {
                 MercurySample sample = (MercurySample) entity;
+                List<String> results = new ArrayList<>();
+
+                // Try for PDO sample directly from mercury sample
                 Set<ProductOrderSample> productOrderSamples = sample.getProductOrderSamples();
                 if (!productOrderSamples.isEmpty()) {
-                    List<String> results = new ArrayList<>();
                     for( ProductOrderSample productOrderSample : productOrderSamples ) {
                         results.add( productOrderSample.getProductOrder().getJiraTicketKey() );
                     }
-                    return results;
+                } else {
+                    // PDO sample needs to be found via SampleInstanceV2 ancestry
+                    Set<LabVessel> sampleVessels = sample.getLabVessel();
+                    for( LabVessel sampleVessel : sampleVessels ) {
+                        for( SampleInstanceV2 sampleInstanceV2 : sampleVessel.getSampleInstancesV2() ) {
+                            for( ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples() ) {
+                                results.add( productOrderSample.getProductOrder().getJiraTicketKey() );
+                            }
+                        }
+                    }
                 }
-                return null;
+                return results;
             }
         });
         searchTerms.add(searchTerm);
