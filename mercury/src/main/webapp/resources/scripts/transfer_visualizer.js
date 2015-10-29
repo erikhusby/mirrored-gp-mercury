@@ -7,7 +7,7 @@ function setupSvg() {
     var width = 1200, height = 950;
 
     // Set up pan and zoom.
-    var svg = d3.select("body").append("svg")
+    var svg = d3.select("#graphDiv").insert("svg")
         .attr("width", width)
         .attr("height", height)
         .append("g")

@@ -10,10 +10,13 @@
 <script src="../../../../src/main/webapp/resources/scripts/dagre.min.0.7.3.js"></script>
 <script src="../../../../src/main/webapp/resources/scripts/transfer_visualizer.js"></script>
 <script>
-    var svg = setupSvg();
-    d3.json("XfrVis.json", function (error, json) {
-        renderJson(json, svg);
-    });
+    window.onload = function () {
+        var svg = setupSvg();
+        d3.json("XfrVis.json", function (error, json) {
+            renderJson(json, svg);
+        });
+    }
 </script>
+<div id="graphDiv"></div>
 </body>
 </html>

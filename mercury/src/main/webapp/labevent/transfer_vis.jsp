@@ -33,6 +33,7 @@
                 <stripes:submit name="visualize" value="Visualize" class="btn btn-primary"/>
             </div>
         </stripes:form>
+        <div id="graphDiv"></div>
     </stripes:layout-component>
 
 </stripes:layout-render>
