@@ -99,15 +99,6 @@ public class Bucket {
     }
 
     /**
-     * add a rework entry.
-     * package-local because this should only be used in tests
-     * @param reworkEntry
-     */
-    void addReworkEntry(BucketEntry reworkEntry) {
-        reworkEntries.add(reworkEntry);
-    }
-
-    /**
      * Does this bucket contain the given {@link BucketEntry}?
      *
      * @param bucketEntry
