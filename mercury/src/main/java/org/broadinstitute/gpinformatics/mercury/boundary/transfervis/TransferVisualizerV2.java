@@ -36,6 +36,7 @@ public class TransferVisualizerV2 {
     private BSPUserList bspUserList;
 
     private class Traverser implements TransferTraverserCriteria {
+        public static final String REARRAY_LABEL = "rearray";
         /** Accumulates JSON for graph nodes. */
         @SuppressWarnings("StringBufferField")
         private final StringBuilder nodesJson = new StringBuilder();
@@ -133,6 +134,9 @@ public class TransferVisualizerV2 {
                     append("\", \"sourceChild\": \"").append(sourceChild).
                     append("\", \"target\": \"").append(targetId).
                     append("\", \"targetChild\": \"").append(targetChild);
+            if (label.equals(REARRAY_LABEL)) {
+                edgesJson.append("\", \"class\": \"graphEdgeDashed");
+            }
             if (renderedEdgeLabels.add(sourceId + targetId + label)) {
                 edgesJson.append("\", \"label\": \"").append(label);
             }
@@ -265,7 +269,7 @@ public class TransferVisualizerV2 {
                     targetContainer = vesselContainer;
                 }
                 renderEdge(sourceContainer.getEmbedder().getLabel(), labVessel.getLabel(),
-                        targetContainer.getEmbedder().getLabel(), labVessel.getLabel(), "rearray");
+                        targetContainer.getEmbedder().getLabel(), labVessel.getLabel(), REARRAY_LABEL);
             }
         }
     }

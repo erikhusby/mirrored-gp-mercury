@@ -182,7 +182,8 @@ function renderJson(json, svg) {
             sourceY: sourceY,
             targetX: targetX,
             targetY: targetY,
-            label: l.label
+            label: l.label,
+            class: l.class
         });
     });
     // Convert Dagre edge control points into pairs of line points.
@@ -207,7 +208,9 @@ function renderJson(json, svg) {
         .append("g")
         .attr("class", "graphEdgeGroup")
         .append("line")
-        .attr("class", "graphEdge")
+        .attr("class", function (d) {
+            return d.class ? d.class : "graphEdge";
+        })
         .style("marker-end",  "url(#end-arrow)")
         .attr("x1", function (d) {
             return d.sourceX;

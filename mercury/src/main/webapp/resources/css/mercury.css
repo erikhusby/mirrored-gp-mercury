@@ -191,6 +191,7 @@ legend + .control-group { margin-top: 0px; -webkit-margin-top-collapse: separate
 .nodeChild { stroke: black; fill: #8dedf0; }
 .nodeHighlight { fill: Yellow; }
 .graphEdge { fill: none; stroke: #000; stroke-width: 2px; opacity: 0.7; marker-end: url(#end-arrow); }
+.graphEdgeDashed { fill: none; stroke: #000; stroke-width: 2px; opacity: 0.7; marker-end: url(#end-arrow); stroke-dasharray: 5, 5 }
 .graphEdgeLabel {font-family: Arial}
 .graphLabel { fill: black; stroke-width: 1px; font-family: Arial; font-size: 12px; text-anchor: middle; cursor: move; }
 .graphOverlay { fill: LightYellow; pointer-events: all; }
