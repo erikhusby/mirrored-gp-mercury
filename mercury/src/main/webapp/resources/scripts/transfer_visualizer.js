@@ -84,10 +84,15 @@ function renderJson(json, svg) {
         });
     node.append("text")
         .attr("class", "graphLabel")
-        .attr("dx", 25)
-        .attr("dy", 10)
+        .attr("text-anchor", "middle")
         .text(function (d) {
             return g.node(d).label;
+        })
+        .attr("x", function (d) {
+            return g.node(d).width / 2;
+        })
+        .attr("y", function (d) {
+            return 14;
         });
 //                .each(function (d) {
 //                    var b = this.parentNode.getBBox();
@@ -123,13 +128,12 @@ function renderJson(json, svg) {
     nodeChildEnter.append("text")
         .attr("class", "graphLabel")
         .attr("x", function (d) {
-            return d.x;
+            return d.x + d.w / 2;
         })
         .attr("y", function (d) {
-            return d.y;
+            return d.y + 14;
         })
-        .attr("dx", 25)
-        .attr("dy", 10)
+        .attr("text-anchor", "middle")
         .text(function (d) {
             return d.name;
         });

@@ -195,14 +195,14 @@ public class TransferVisualizerV2 {
                         }
                         childBuilder.append("{ \"name\": \"").append(child.getLabel()).
                                 append("\", \"x\": ").append((rowColumn.getColumn() - 1) * 60).
-                                append(", \"y\": ").append((rowColumn.getRow() - 1) * 20).
+                                append(", \"y\": ").append((rowColumn.getRow()) * 20).
                                 append(", \"w\": 60, \"h\": 20 ");
                         if (child.equals(labVessel)) {
                             childBuilder.append(", \"highlight\": 1");
                         }
                         childBuilder.append("}");
                         maxColumn = Math.max(maxColumn, rowColumn.getColumn());
-                        maxRow = Math.max(maxRow, rowColumn.getRow());
+                        maxRow = Math.max(maxRow, rowColumn.getRow() + 1);
                     }
                 }
                 int width = Math.max(120, maxColumn * 60);
