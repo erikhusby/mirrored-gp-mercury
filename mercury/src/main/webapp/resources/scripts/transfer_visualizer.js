@@ -42,7 +42,7 @@ function renderJson(json) {
     var g = new dagre.graphlib.Graph();
 
     // Set an object for the graph label
-    g.setGraph({});
+    g.setGraph({ranksep: 100});
 
     // Default to assigning a new object as a label for each new edge.
     g.setDefaultEdgeLabel(function() { return {}; });

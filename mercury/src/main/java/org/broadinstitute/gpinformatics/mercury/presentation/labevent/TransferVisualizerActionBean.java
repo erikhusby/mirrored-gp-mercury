@@ -29,6 +29,8 @@ public class TransferVisualizerActionBean extends CoreActionBean {
 
     @Inject
     private LabVesselDao labVesselDao;
+    @Inject
+    private TransferVisualizerV2 transferVisualizerV2;
 
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
@@ -41,7 +43,6 @@ public class TransferVisualizerActionBean extends CoreActionBean {
     }
 
     public Resolution getJson() {
-        TransferVisualizerV2 transferVisualizerV2 = new TransferVisualizerV2();
         Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(barcodes);
 
         return createTextResolution(transferVisualizerV2.jsonForVessels(

@@ -78,9 +78,8 @@ public class TransferVisualizerV2 {
             if (bspUserList != null) {
                 BspUser bspUser = bspUserList.getById(event.getEventOperator());
                 if (bspUser != null) {
-                    labelBuilder.append(bspUser.getFullName());
+                    labelBuilder.append(" ").append(bspUser.getFullName());
                 }
-                labelBuilder.append("<br/>");
             }
             String label = labelBuilder.toString();
 
