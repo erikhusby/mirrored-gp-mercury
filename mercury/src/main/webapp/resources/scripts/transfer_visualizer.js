@@ -2,15 +2,16 @@ window.onerror = function (errorMsg, url, lineNumber, column, errorObj) {
     alert('Error: ' + errorMsg + ' Script: ' + url + ' Line: ' + lineNumber + ' Column: ' + column + ' StackTrace: ' +  errorObj);
 };
 
-function setupSvg() {
+function renderJson(json) {
     var width = 1200, height = 950;
 
     // Set up pan and zoom.
+    var zoomBehavior = d3.behavior.zoom().scaleExtent([0.1, 8]).on("zoom", zoom);
     var svg = d3.select("#graphDiv").insert("svg")
         .attr("width", width)
         .attr("height", height)
         .append("g")
-        .call(d3.behavior.zoom().scaleExtent([0.1, 8]).on("zoom", zoom))
+        .call(zoomBehavior)
         .append("g");
     svg.append("rect")
         .attr("class", "graphOverlay")
@@ -36,10 +37,6 @@ function setupSvg() {
             'stroke-width': '0px',
             fill: '#000'
         });
-    return svg;
-}
-
-function renderJson(json, svg) {
 
     // Create a new directed graph
     var g = new dagre.graphlib.Graph();
@@ -94,12 +91,6 @@ function renderJson(json, svg) {
         .attr("y", function (d) {
             return 14;
         });
-//                .each(function (d) {
-//                    var b = this.parentNode.getBBox();
-//                    var extra = 2 * margin + 2 * pad;
-//                    d.width = b.width + extra;
-//                    d.height = b.height + extra;
-//                });
 
     // Set the D3 datum to the children.
     var nodeChildEnter = node.selectAll(".nodeChild")
@@ -137,12 +128,6 @@ function renderJson(json, svg) {
         .text(function (d) {
             return d.name;
         });
-//                .each(function (d) {
-//                    var b = this.parentNode.getBBox();
-//                    var extra = 2 * margin + 2 * pad;
-//                    d.width = b.width + extra;
-//                    d.height = b.height + extra;
-//                });
 
     // Make list of edges to draw, including between children, if applicable.
     var links = [];
@@ -186,20 +171,6 @@ function renderJson(json, svg) {
             class: l.class
         });
     });
-    // Convert Dagre edge control points into pairs of line points.
-//        g.edges().forEach(function(e) {
-//            var points = g.edge(e).points;
-//            for (var i = 0, len = points.length - 1; i < len; i++) {
-//                // (note: loop until length - 1 since we're getting the next
-//                //  item with i+1)
-//                links.push({
-//                    sourceX: points[i].x,
-//                    sourceY: points[i].y,
-//                    targetX: points[i + 1].x,
-//                    targetY: points[i + 1].y
-//                });
-//            }
-//        });
 
     // Render edges.
     var edges = svg.selectAll(".graphEdgeGroup")
@@ -250,6 +221,14 @@ function renderJson(json, svg) {
         });
     svg.selectAll(".graphEdgeLabel")
         .call(wrap,  150);
+
+    // Pan to starting vessel.
+    var scale = 1;
+    var graphNode = g.node(json.startId);
+    var panX = (graphNode.x * -scale) + (width / 2);
+    var panY = (graphNode.y * -scale) + (height / 2);
+    zoomBehavior.translate([panX, panY]).scale(1);
+    zoomBehavior.event(svg.transition().duration(500));
 
     function wrap(text, width) {
         text.each(function() {

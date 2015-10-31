@@ -49,6 +49,9 @@ public class TransferVisualizerV2 {
         private final Set<String> renderedEvents = new HashSet<>();
         /** Prevents multiple labels for a pool. */
         private final Set<String> renderedEdgeLabels = new HashSet<>();
+        /** The ID to scroll to when the page is rendered.  If the starting barcode was a tube, this is one of the
+         * enclosing racks (the tube may appear in multiple racks, so it can't be used as the start). */
+        private String startId;
 
         @Override
         public TraversalControl evaluateVesselPreOrder(Context context) {
@@ -216,6 +219,9 @@ public class TransferVisualizerV2 {
                         append(height).append(", \"children\": [");
                 nodesJson.append(childBuilder.toString());
                 nodesJson.append("] } },\n");
+                if (startId == null) {
+                    startId = containerLabel;
+                }
 
                 if (labVessel != null && followRearrays) {
                     List<Rearray> rearrays = new ArrayList<>();
@@ -242,7 +248,8 @@ public class TransferVisualizerV2 {
             if (linksJsonString.endsWith(",\n")) {
                 linksJsonString = linksJsonString.substring(0, linksJsonString.length() - 2);
             }
-            return "{ \"nodes\": [\n" + nodesJsonString + "],\n  \"links\": [\n" + linksJsonString + "  ] }";
+            return "{ \"nodes\": [\n" + nodesJsonString + "],\n \"startId\":\"" + startId +
+                    "\", \n \"links\": [\n" + linksJsonString + "  ] }";
         }
 
         private class Rearray {

@@ -15,9 +15,8 @@
             <c:if test="${not empty actionBean.barcodes}">
             $j(document).ready(
                     function () {
-                        var svg = setupSvg();
                         d3.json("${ctxpath}/labevent/transfervis.action?getJson=&barcodes=${actionBean.barcodes[0]}", function (error, json) {
-                            renderJson(json, svg);
+                            renderJson(json);
                         });
                     }
             );
