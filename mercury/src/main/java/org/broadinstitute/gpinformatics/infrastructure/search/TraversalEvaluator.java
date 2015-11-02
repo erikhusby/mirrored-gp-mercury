@@ -16,7 +16,7 @@ public abstract class TraversalEvaluator {
 
     public TraversalEvaluator() {}
 
-    public abstract Set<Object> evaluate(List<? extends Object> rootEntities);
+    public abstract Set<Object> evaluate(List<? extends Object> rootEntities, SearchInstance searchInstance);
 
     public abstract List<Object> buildEntityIdList( Set<? extends Object> entities );
 

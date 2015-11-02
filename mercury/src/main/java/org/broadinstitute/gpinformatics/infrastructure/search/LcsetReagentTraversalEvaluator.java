@@ -22,14 +22,15 @@ public class LcsetReagentTraversalEvaluator extends LabEventTraversalEvaluator {
 
     /**
      * Traverse supplied lab event list and capture all reagents
-     * @param rootEntities
+     * @param rootEntities A group of events obtained from LCSET from which to begin descendant traversal
+     * @param searchInstance The search instance used for this search (not used in this case)
      * @return
      */
     @Override
-    public Set<Object> evaluate(List<?> rootEntities) {
+    public Set<Object> evaluate(List<?> rootEntities, SearchInstance searchInstance) {
 
         // Use existing event LCSET descendant traversal to find all descendant events
-        Set<Object> rootEvents = super.evaluate(rootEntities);
+        Set<Object> rootEvents = super.evaluate(rootEntities, searchInstance);
 
         Set<Object> reagents = new HashSet<>();
         for ( Object event : rootEvents ) {

@@ -236,8 +236,9 @@
                     {"bSortable":true},
                     {"bSortable":true},
                     {"bSortable":true},
-                    {"bSortable":true, "sType":"date"},
                     {"bSortable":true},
+                    {"bSortable":true},
+                    {"bSortable":true, "sType":"date"},
                     {"bSortable":true},
                     {"bSortable":true},
                     {"bSortable":true},
@@ -280,23 +281,7 @@
 </stripes:layout-component>
 
 <stripes:layout-component name="content">
-    <c:if test="${actionBean.totalBucketEntries()>0 && (actionBean.selectedBucket!=null && actionBean.selectedWorkflowDef==null)}">
-        <div class="alert alert-success" style="margin-left:20%;margin-right:20%;">
-            <ul>
-                <c:if test="${actionBean.selectedBucket!=null && actionBean.selectedWorkflowDef==null}">
-                    <li>There are ${actionBean.totalBucketEntries()} entries in this bucket
-                        <c:if test="${actionBean.totalBucketEntries()>0}">
-                            and ${fn:length(actionBean.possibleWorkflows)} possible workflows.
-                        </c:if>
-                    </li>
-                    <c:if test="${actionBean.selectedWorkflowDef==null && actionBean.totalBucketEntries()>0}">
-                        <li>Select a workflow to view and batch bucket entries.</li>
-                    </c:if>
-                </c:if>
-            </ul>
-        </div>
-    </c:if>
-    <stripes:form id="bucketForm" class="form-horizontal" action="/view/bucketView.action?setBucket">
+    <stripes:form id="bucketForm" class="form-horizontal" action="/view/bucketView.action?viewBucket">
         <div class="form-horizontal">
             <div class="control-group">
                 <stripes:label for="bucketselect" name="Select Bucket" class="control-label"/>
@@ -403,9 +388,10 @@
                 <th width="300">PDO Name</th>
                 <th width="200">PDO Owner</th>
                 <th>Batch Name</th>
+                <th>Product</th>
+                <th>Add-ons</th>
                 <th width="100">Created Date</th>
                 <th>Bucket Entry Type</th>
-                <th>Workflow Name</th>
                 <th>Rework Reason</th>
                 <th>Rework Comment</th>
                 <th>Rework User</th>
@@ -455,14 +441,19 @@
                             <c:if test="${!stat.last}">&nbsp;</c:if></c:forEach>
 
                     </td>
+                    <td>
+                        <div class="ellipsis" style="max-width: 250px;">${entry.productOrder.product.name}</div>
+                    </td>
+                    <td>
+                        <div class="ellipsis" style="max-width: 250px;">
+                            ${entry.productOrder.getAddOnList("<br/>")}
+                        </div>
+                    </td>
                     <td class="ellipsis">
                         <fmt:formatDate value="${entry.createdDate}" pattern="MM/dd/yyyy HH:mm:ss"/>
                     </td>
                     <td>
                             ${entry.entryType.name}
-                    </td>
-                    <td>
-                            ${entry.workflowName}
                     </td>
                     <td>
                             ${entry.reworkDetail.reason.reason}

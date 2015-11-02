@@ -385,7 +385,8 @@ public class BucketEjb {
         // This case will only apply to Samples with a BSP data source, at least for now.  There should not be a
         // scenario in which we fall into this conditional for Vessels that originate in Mercury
         if (!CollectionUtils.isEmpty(samplesWithoutVessel)) {
-            vessels.addAll(createInitialVessels(samplesWithoutVessel, username));
+            Collection<LabVessel> newVessels = createInitialVessels(samplesWithoutVessel, username);
+            vessels.addAll(newVessels);
         }
 
         Map<String, MercurySample> existingSamples = mercurySampleDao.findMapIdToMercurySample(nameToSampleMap.keys());
@@ -461,8 +462,9 @@ public class BucketEjb {
             if (bspSampleData != null &&
                 StringUtils.isNotBlank(bspSampleData.getBarcodeForLabVessel())) {
                 if (bspSampleData.isSampleReceived()) {
-                    vessels.addAll(labVesselFactory.buildInitialLabVessels(sampleName, bspSampleData.getBarcodeForLabVessel(),
-                            username, new Date(), MercurySample.MetadataSource.BSP));
+                    vessels.addAll(
+                            labVesselFactory.buildInitialLabVessels(sampleName, bspSampleData.getBarcodeForLabVessel(),
+                                    username, new Date(), MercurySample.MetadataSource.BSP));
                 }
             } else {
                 cannotAddToBucket.add(sampleName);
@@ -475,7 +477,10 @@ public class BucketEjb {
                                   "Could not find the manufacturer label for: %s",
                                   StringUtils.join(cannotAddToBucket, ", ")));
         }
-
+        if (!vessels.isEmpty()) {
+            labVesselDao.persistAll(vessels);
+            labVesselDao.flush();
+        }
         return vessels;
     }
 }

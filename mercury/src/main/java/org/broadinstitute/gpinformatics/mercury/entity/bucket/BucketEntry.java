@@ -128,6 +128,9 @@ public class BucketEntry {
     @JoinColumn(name = "rework_detail_id")
     private ReworkDetail reworkDetail;
 
+    @Transient
+    private  Workflow workflow;
+
     protected BucketEntry() {
     }
 
@@ -327,9 +330,6 @@ public class BucketEntry {
         }
         return Workflow.NONE;
     }
-
-    @Transient
-    private  Workflow workflow;
 
     public Workflow getWorkflow() {
         if (workflow == null) {
