@@ -30,10 +30,8 @@ import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -139,12 +137,11 @@ public class SampleMetadataFixupTest extends Arquillian {
 
     @Test(enabled = false)
     public void fixupGPLIM_3840_invalid_value_for_material_type() {
-        Set<MetaDataFixupItem> fixupItems = new HashSet<>();
+        Map<String, MetaDataFixupItem> fixupItems = new HashMap<>();
         String oldValue = "whole blood";
         String newValue = MaterialType.WHOLE_BLOOD_WHOLE_BLOOD_FROZEN.getDisplayName();
-        fixupItems.add(new MetaDataFixupItem("SM-A19ZA", Metadata.Key.ORIGINAL_MATERIAL_TYPE, oldValue, newValue));
-        fixupItems.add(new MetaDataFixupItem("SM-A19ZB", Metadata.Key.ORIGINAL_MATERIAL_TYPE, oldValue, newValue));
-        fixupItems.add(new MetaDataFixupItem("SM-A19ZB", Metadata.Key.MATERIAL_TYPE, oldValue, newValue));
+
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-A19ZB", Metadata.Key.MATERIAL_TYPE, oldValue, newValue));
 
         String fixupComment = "see https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-3840";
         updateMetadataAndValidate(fixupItems, fixupComment);
@@ -177,46 +174,6 @@ public class SampleMetadataFixupTest extends Arquillian {
 
         samplesById = mercurySampleDao.findMapIdToMercurySample(fixupItems.keySet());
         for (MetaDataFixupItem fixupItem : fixupItems.values()) {
-            MercurySample mercurySample = samplesById.get(fixupItem.getSampleKey());
-            fixUpErrors.putAll(fixupItem.validateUpdatedValue(mercurySample));
-        }
-        assertFailureReason =
-                        String.format("Updated values do not match expected values for some or all samples: %s. Please consult server log for more information.",
-                                fixUpErrors);
-        assertThat(assertFailureReason, fixUpErrors, equalTo(Collections.EMPTY_MAP));
-
-    }
-
-    /**
-     * Perform actual fixup and validate.
-     */
-    private void updateMetadataAndValidate(@Nonnull Set<MetaDataFixupItem> fixupItems, @Nonnull String fixupComment) {
-        userBean.loginOSUser();
-        Map<String, Metadata.Key> fixUpErrors = new HashMap<>();
-        Set<String> sampleIds = new HashSet<>();
-        for (MetaDataFixupItem fixupItem : fixupItems) {
-            sampleIds.add(fixupItem.getSampleKey());
-        }
-        Map<String, MercurySample> samplesById = mercurySampleDao.findMapIdToMercurySample(sampleIds);
-
-        for (MetaDataFixupItem fixupItem : fixupItems) {
-            Map<String, Metadata.Key> fixupItemErrors = new HashMap<>();
-            MercurySample mercurySample = samplesById.get(fixupItem.getSampleKey());
-            fixupItemErrors.putAll(fixupItem.validateOriginalValue(mercurySample));
-            if (fixupItemErrors.isEmpty()) {
-                fixupItemErrors.putAll(fixupItem.updateMetadataForSample(mercurySample));
-            }
-            fixUpErrors.putAll(fixupItemErrors);
-        }
-        String assertFailureReason =
-                String.format("Error updating some or all samples: %s. Please consult server log for more information.",
-                        fixUpErrors);
-        assertThat(assertFailureReason, fixUpErrors, equalTo(Collections.EMPTY_MAP));
-        mercurySampleDao.persist(new FixupCommentary(fixupComment));
-        mercurySampleDao.flush();
-
-        samplesById = mercurySampleDao.findMapIdToMercurySample(sampleIds);
-        for (MetaDataFixupItem fixupItem : fixupItems) {
             MercurySample mercurySample = samplesById.get(fixupItem.getSampleKey());
             fixUpErrors.putAll(fixupItem.validateUpdatedValue(mercurySample));
         }
