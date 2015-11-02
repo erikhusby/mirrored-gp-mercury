@@ -12,6 +12,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserC
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -43,12 +46,20 @@ public class TransferVisualizerActionBean extends CoreActionBean {
     }
 
     public Resolution getJson() {
-        Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(barcodes);
+        final Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(barcodes);
+        return new Resolution() {
+            @Override
+            public void execute(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse)
+                    throws IOException {
+                httpServletResponse.setContentType("text");
+                transferVisualizerV2.jsonForVessels(
+                        new ArrayList<>(mapBarcodeToVessel.values()),
+                        Arrays.asList(TransferTraverserCriteria.TraversalDirection.Ancestors,
+                                TransferTraverserCriteria.TraversalDirection.Descendants),
+                        httpServletResponse.getWriter());
 
-        return createTextResolution(transferVisualizerV2.jsonForVessels(
-                new ArrayList<>(mapBarcodeToVessel.values()),
-                Arrays.asList(TransferTraverserCriteria.TraversalDirection.Ancestors,
-                        TransferTraverserCriteria.TraversalDirection.Descendants)));
+            }
+        };
     }
 
     public List<String> getBarcodes() {

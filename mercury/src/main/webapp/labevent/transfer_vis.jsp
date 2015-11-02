@@ -15,9 +15,13 @@
             <c:if test="${not empty actionBean.barcodes}">
             $j(document).ready(
                     function () {
-                        d3.json("${ctxpath}/labevent/transfervis.action?getJson=&barcodes=${actionBean.barcodes[0]}", function (error, json) {
-                            renderJson(json);
-                        });
+                        d3.json("${ctxpath}/labevent/transfervis.action?getJson=&barcodes=${actionBean.barcodes[0]}")
+                                .on("progress", function() {
+                                    d3.select("#graphDiv").html("Bytes loaded: " + d3.event.loaded);
+                                })
+                                .get(function (error, json) {
+                                    renderJson(json);
+                                });
                     }
             );
             </c:if>
@@ -32,6 +36,7 @@
                     <div class="controls">
                         <input type="text" name="barcodes" id="barcodes">
                         <stripes:submit name="visualize" value="Visualize" class="btn btn-primary"/>
+                        <div id="progress"></div>
                     </div>
                 </div>
             </div>

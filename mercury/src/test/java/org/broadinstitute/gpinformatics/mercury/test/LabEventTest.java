@@ -1259,11 +1259,11 @@ public class LabEventTest extends BaseEventTest {
         try {
             TransferVisualizerV2 transferVisualizerV2 = new TransferVisualizerV2();
             File xfrVis = File.createTempFile("XfrVis", ".json");
-            String json = transferVisualizerV2.jsonForVessels(
-                    Collections.<LabVessel>singletonList(mapBarcodeToTube.values().iterator().next()),
-                    Collections.singletonList(TransferTraverserCriteria.TraversalDirection.Descendants));
             FileWriter fileWriter = new FileWriter(xfrVis);
-            fileWriter.write(json);
+            transferVisualizerV2.jsonForVessels(
+                    Collections.<LabVessel>singletonList(mapBarcodeToTube.values().iterator().next()),
+                    Collections.singletonList(TransferTraverserCriteria.TraversalDirection.Descendants),
+                    fileWriter);
             fileWriter.flush();
         } catch (IOException e) {
             throw new RuntimeException(e);

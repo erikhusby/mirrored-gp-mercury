@@ -16,9 +16,15 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.json.JSONWriter;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
+import java.io.IOException;
+import java.io.Writer;
 import java.text.Format;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -41,12 +47,13 @@ public class TransferVisualizerV2 {
         public static final int ROW_HEIGHT = 20;
         public static final int PLATE_WIDTH = 480;
         public static final int WELL_WIDTH = 80;
-        /** Accumulates JSON for graph nodes. */
-        @SuppressWarnings("StringBufferField")
-        private final StringBuilder nodesJson = new StringBuilder();
-        /** Accumulates JSON for graph edges. */
-        @SuppressWarnings("StringBufferField")
-        private final StringBuilder edgesJson = new StringBuilder();
+
+        /** Stream to browser. */
+        private Writer writer;
+        /** The stream to which to write JSON. */
+        private JSONWriter jsonWriter;
+        /** Accumulates JSON for graph edges (nodes are streamed).*/
+        private JSONArray edgesJson = new JSONArray();
         /** Prevents vessels being rendered more than once. */
         private final Set<String> renderedLabels = new HashSet<>();
         /** Prevents events being rendered more than once. */
@@ -57,20 +64,30 @@ public class TransferVisualizerV2 {
          * enclosing racks (the tube may appear in multiple racks, so it can't be used as the start). */
         private String startId;
 
-        @Override
-        public TraversalControl evaluateVesselPreOrder(Context context) {
-            if (context.getVesselContainer() == null) {
-                renderVessel(context.getLabVessel());
-            } else {
-                renderContainer(context.getVesselContainer(), null, context.getLabVessel(), true);
-            }
-            if (context.getEvent() != null) {
-                renderEvent(context.getEvent(), context.getLabVessel());
-            }
-            return TraversalControl.ContinueTraversing;
+        Traverser(Writer writer) throws JSONException {
+            this.writer = writer;
+            jsonWriter = new JSONWriter(writer);
+            jsonWriter.object().key("nodes").array();
         }
 
-        private void renderEvent(LabEvent event, LabVessel labVessel) {
+        @Override
+        public TraversalControl evaluateVesselPreOrder(Context context) {
+            try {
+                if (context.getVesselContainer() == null) {
+                    renderVessel(context.getLabVessel());
+                } else {
+                    renderContainer(context.getVesselContainer(), null, context.getLabVessel(), true);
+                }
+                if (context.getEvent() != null) {
+                    renderEvent(context.getEvent(), context.getLabVessel());
+                }
+                return TraversalControl.ContinueTraversing;
+            } catch (JSONException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        private void renderEvent(LabEvent event, LabVessel labVessel) throws JSONException {
             // Primary key for events
             String eventId = event.getEventLocation() + "|" + event.getEventDate().getTime() + "|" +
                     event.getDisambiguator();
@@ -133,27 +150,30 @@ public class TransferVisualizerV2 {
             return labelBuilder.toString();
         }
 
-        private void renderEdge(String sourceId, String targetId, String label) {
-            edgesJson.append("{ \"source\": \"").append(sourceId).
-                    append("\", \"target\": \"").append(targetId).
-                    append("\", \"label\": \"").append(label).
-                    append("\" },\n");
+        private void renderEdge(String sourceId, String targetId, String label) throws JSONException {
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("source", sourceId).
+                    put("target", targetId).
+                    put("label", label);
+            edgesJson.put(jsonObject);
         }
-        private void renderEdge(String sourceId, String sourceChild, String targetId, String targetChild, String label) {
-            edgesJson.append("{ \"source\": \"").append(sourceId).
-                    append("\", \"sourceChild\": \"").append(sourceChild).
-                    append("\", \"target\": \"").append(targetId).
-                    append("\", \"targetChild\": \"").append(targetChild);
+        private void renderEdge(String sourceId, String sourceChild, String targetId, String targetChild, String label)
+                throws JSONException {
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("source", sourceId).
+                    put("sourceChild", sourceChild).
+                    put("target", targetId).
+                    put("targetChild", targetChild);
             if (label.equals(REARRAY_LABEL)) {
-                edgesJson.append("\", \"class\": \"graphEdgeDashed");
+                jsonObject.put("class", "graphEdgeDashed");
             }
             if (renderedEdgeLabels.add(sourceId + targetId + label)) {
-                edgesJson.append("\", \"label\": \"").append(label);
+                jsonObject.put("label", label);
             }
-            edgesJson.append("\" },\n");
+            edgesJson.put(jsonObject);
         }
 
-        private void renderVessel(LabVessel labVessel) {
+        private void renderVessel(LabVessel labVessel) throws JSONException {
             String label = labVessel.getLabel();
             // todo jmt distinguish between stand-alone tube and container
 //            if (mapLabelToIndex.get(label) == null) {
@@ -177,7 +197,7 @@ public class TransferVisualizerV2 {
         }
 
         private void renderContainer(VesselContainer<?> vesselContainer, LabVessel ancillaryVessel, LabVessel labVessel,
-                boolean followRearrays) {
+                boolean followRearrays) throws JSONException {
             String containerLabel = vesselContainer.getEmbedder().getLabel();
             String ancillaryLabel = null;
             if (ancillaryVessel == null) {
@@ -199,7 +219,6 @@ public class TransferVisualizerV2 {
 
                 // JSON for child vessels (e.g. tubes in a rack)
                 VesselGeometry vesselGeometry = vesselContainer.getEmbedder().getVesselGeometry();
-                StringBuilder childBuilder = new StringBuilder();
                 int maxColumn = 0;
                 int maxRow = 0;
                 int inPlaceHeight = vesselContainer.getEmbedder().getInPlaceLabEvents().size() * ROW_HEIGHT;
@@ -207,17 +226,6 @@ public class TransferVisualizerV2 {
                     VesselGeometry.RowColumn rowColumn = vesselGeometry.getRowColumnForVesselPosition(vesselPosition);
                     LabVessel child = vesselContainer.getVesselAtPosition(vesselPosition);
                     if (child != null) {
-                        if (childBuilder.length() > 0) {
-                            childBuilder.append(",");
-                        }
-                        childBuilder.append("{ \"name\": \"").append(child.getLabel()).
-                                append("\", \"x\": ").append((rowColumn.getColumn() - 1) * WELL_WIDTH).
-                                append(", \"y\": ").append((rowColumn.getRow()) * ROW_HEIGHT + inPlaceHeight).
-                                append(", \"w\": ").append(WELL_WIDTH).append(", \"h\": ").append(ROW_HEIGHT);
-                        if (child.equals(labVessel)) {
-                            childBuilder.append(", \"highlight\": 1");
-                        }
-                        childBuilder.append("}");
                         maxColumn = Math.max(maxColumn, rowColumn.getColumn());
                         maxRow = Math.max(maxRow, rowColumn.getRow() + 1);
                     }
@@ -225,29 +233,40 @@ public class TransferVisualizerV2 {
                 int width = Math.max(PLATE_WIDTH, maxColumn * WELL_WIDTH);
                 int height = Math.max(ROW_HEIGHT, maxRow * ROW_HEIGHT) + inPlaceHeight;
 
+                // JSON for the parent vessel
+                jsonWriter.object().key("id").value(containerLabel).key("values").object().
+                        key("label").value(ancillaryLabel).
+                        key("width").value(width).
+                        key("height").value(height).
+                        key("children").array();
+
                 // JSON for in-place events
-                StringBuilder eventBuilder = new StringBuilder();
                 int inPlaceEventOffset = ROW_HEIGHT;
                 for (LabEvent labEvent : vesselContainer.getEmbedder().getInPlaceLabEvents()) {
-                    if (eventBuilder.length() > 0) {
-                        eventBuilder.append(",");
-                    }
-                    eventBuilder.append("{ \"name\": \"").append(buildEventLabel(labEvent)).
-                            append("\", \"x\": 0, \"y\": ").append(inPlaceEventOffset).
-                            append(", \"w\": ").append(width).append(", \"h\": ").append(ROW_HEIGHT).append("}");
+                    jsonWriter.object().
+                            key("name").value(buildEventLabel(labEvent)).
+                            key("x").value(0L).key("y").value(inPlaceEventOffset).
+                            key("w").value(width).key("h").value(ROW_HEIGHT).
+                            endObject();
                     inPlaceEventOffset += ROW_HEIGHT;
                 }
 
-                // JSON for the parent vessel
-                nodesJson.append("{ \"id\":\"").append(containerLabel).append("\", \"values\": {\"label\": \"").
-                        append(ancillaryLabel).append("\", \"width\": ").append(width).append(", \"height\": ").
-                        append(height).append(", \"children\": [");
-                nodesJson.append(eventBuilder.toString());
-                if (eventBuilder.length() > 0 && childBuilder.length() > 0) {
-                    nodesJson.append(", ");
+                for (VesselPosition vesselPosition : vesselGeometry.getVesselPositions()) {
+                    VesselGeometry.RowColumn rowColumn = vesselGeometry.getRowColumnForVesselPosition(vesselPosition);
+                    LabVessel child = vesselContainer.getVesselAtPosition(vesselPosition);
+                    if (child != null) {
+                        jsonWriter.object().
+                                key("name").value(child.getLabel()).
+                                key("x").value((rowColumn.getColumn() - 1) * WELL_WIDTH).
+                                key("y").value((rowColumn.getRow()) * ROW_HEIGHT + inPlaceHeight).
+                                key("w").value(WELL_WIDTH).key("h").value(ROW_HEIGHT);
+                        if (child.equals(labVessel)) {
+                            jsonWriter.key("highlight").value(1L);
+                        }
+                        jsonWriter.endObject();
+                    }
                 }
-                nodesJson.append(childBuilder.toString());
-                nodesJson.append("] } },\n");
+                jsonWriter.endArray().endObject().endObject();
                 if (startId == null) {
                     startId = containerLabel;
                 }
@@ -269,17 +288,15 @@ public class TransferVisualizerV2 {
             }
         }
 
-        public String getJson() {
-            String nodesJsonString = nodesJson.toString();
-            if (nodesJsonString.endsWith(",\n")) {
-                nodesJsonString = nodesJsonString.substring(0, nodesJsonString.length() - 2);
+        public void completeJson() {
+            try {
+                jsonWriter.endArray().key("startId").value(startId).key("links");
+                edgesJson.write(writer);
+                writer.write(" }");
+                writer.flush();
+            } catch (JSONException | IOException e) {
+                throw new RuntimeException(e);
             }
-            String linksJsonString = edgesJson.toString();
-            if (linksJsonString.endsWith(",\n")) {
-                linksJsonString = linksJsonString.substring(0, linksJsonString.length() - 2);
-            }
-            return "{ \"nodes\": [\n" + nodesJsonString + "],\n \"startId\":\"" + startId +
-                    "\", \n \"links\": [\n" + linksJsonString + "  ] }";
         }
 
         private class Rearray {
@@ -293,7 +310,7 @@ public class TransferVisualizerV2 {
                 this.otherContainer = otherContainer;
             }
 
-            private void render() {
+            private void render() throws JSONException {
                 renderContainer(vesselContainer, null, labVessel, false);
                 renderContainer(otherContainer, null, labVessel, false);
                 VesselContainer<?> sourceContainer;
@@ -311,12 +328,18 @@ public class TransferVisualizerV2 {
         }
     }
 
-    public String jsonForVessels(List<LabVessel> labVessels,
-            List<TransferTraverserCriteria.TraversalDirection> traversalDirections) {
+    public void jsonForVessels(List<LabVessel> labVessels,
+            List<TransferTraverserCriteria.TraversalDirection> traversalDirections,
+            Writer writer) {
         if (traversalDirections.isEmpty()) {
             throw new IllegalArgumentException("Must supply at least one direction");
         }
-        Traverser traverser = new Traverser();
+        Traverser traverser;
+        try {
+            traverser = new Traverser(writer);
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
         for (LabVessel labVessel : labVessels) {
             for (TransferTraverserCriteria.TraversalDirection traversalDirection : traversalDirections) {
                 VesselContainer<?> containerRole = labVessel.getContainerRole();
@@ -328,7 +351,7 @@ public class TransferVisualizerV2 {
                 }
             }
         }
-        return traverser.getJson();
+        traverser.completeJson();
     }
 
 }
