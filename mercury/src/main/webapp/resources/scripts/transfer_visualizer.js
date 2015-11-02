@@ -15,8 +15,8 @@ function renderJson(json) {
         .append("g");
     svg.append("rect")
         .attr("class", "graphOverlay")
-        .attr("width", width * 10)
-        .attr("height", height * 10);
+        .attr("width", width * 20)
+        .attr("height", height * 20);
     function zoom() {
         svg.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
     }

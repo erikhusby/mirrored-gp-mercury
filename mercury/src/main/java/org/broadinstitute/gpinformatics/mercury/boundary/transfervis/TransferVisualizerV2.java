@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
+import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.text.Format;
 import java.util.ArrayList;
@@ -37,6 +38,9 @@ public class TransferVisualizerV2 {
 
     private class Traverser implements TransferTraverserCriteria {
         public static final String REARRAY_LABEL = "rearray";
+        public static final int ROW_HEIGHT = 20;
+        public static final int PLATE_WIDTH = 480;
+        public static final int WELL_WIDTH = 80;
         /** Accumulates JSON for graph nodes. */
         @SuppressWarnings("StringBufferField")
         private final StringBuilder nodesJson = new StringBuilder();
@@ -70,18 +74,7 @@ public class TransferVisualizerV2 {
             // Primary key for events
             String eventId = event.getEventLocation() + "|" + event.getEventDate().getTime() + "|" +
                     event.getDisambiguator();
-
-            StringBuilder labelBuilder = new StringBuilder();
-            labelBuilder.append(event.getLabEventType().getName()).append(" ").
-                    append(event.getEventLocation()).append(" ").
-                    append(DATE_FORMAT.format(event.getEventDate()));
-            if (bspUserList != null) {
-                BspUser bspUser = bspUserList.getById(event.getEventOperator());
-                if (bspUser != null) {
-                    labelBuilder.append(" ").append(bspUser.getFullName());
-                }
-            }
-            String label = labelBuilder.toString();
+            String label = buildEventLabel(event);
 
             if (renderedEvents.add(eventId)) {
                 logger.info("Rendering event " + event.getLabEventType());
@@ -123,6 +116,21 @@ public class TransferVisualizerV2 {
                             vesselToSectionTransfer.getTargetVesselContainer().getEmbedder().getLabel(), label);
                 }
             }
+        }
+
+        @Nonnull
+        private String buildEventLabel(LabEvent event) {
+            StringBuilder labelBuilder = new StringBuilder();
+            labelBuilder.append(event.getLabEventType().getName()).append(" ").
+                    append(event.getEventLocation()).append(" ").
+                    append(DATE_FORMAT.format(event.getEventDate()));
+            if (bspUserList != null) {
+                BspUser bspUser = bspUserList.getById(event.getEventOperator());
+                if (bspUser != null) {
+                    labelBuilder.append(" ").append(bspUser.getFullName());
+                }
+            }
+            return labelBuilder.toString();
         }
 
         private void renderEdge(String sourceId, String targetId, String label) {
@@ -187,11 +195,14 @@ public class TransferVisualizerV2 {
             }
 
             if (renderedLabels.add(containerLabel)) {
-                logger.info("Rendering container " + containerLabel);
+                logger.debug("Rendering container " + containerLabel);
+
+                // JSON for child vessels (e.g. tubes in a rack)
                 VesselGeometry vesselGeometry = vesselContainer.getEmbedder().getVesselGeometry();
                 StringBuilder childBuilder = new StringBuilder();
                 int maxColumn = 0;
                 int maxRow = 0;
+                int inPlaceHeight = vesselContainer.getEmbedder().getInPlaceLabEvents().size() * ROW_HEIGHT;
                 for (VesselPosition vesselPosition : vesselGeometry.getVesselPositions()) {
                     VesselGeometry.RowColumn rowColumn = vesselGeometry.getRowColumnForVesselPosition(vesselPosition);
                     LabVessel child = vesselContainer.getVesselAtPosition(vesselPosition);
@@ -200,9 +211,9 @@ public class TransferVisualizerV2 {
                             childBuilder.append(",");
                         }
                         childBuilder.append("{ \"name\": \"").append(child.getLabel()).
-                                append("\", \"x\": ").append((rowColumn.getColumn() - 1) * 60).
-                                append(", \"y\": ").append((rowColumn.getRow()) * 20).
-                                append(", \"w\": 60, \"h\": 20 ");
+                                append("\", \"x\": ").append((rowColumn.getColumn() - 1) * WELL_WIDTH).
+                                append(", \"y\": ").append((rowColumn.getRow()) * ROW_HEIGHT + inPlaceHeight).
+                                append(", \"w\": ").append(WELL_WIDTH).append(", \"h\": ").append(ROW_HEIGHT);
                         if (child.equals(labVessel)) {
                             childBuilder.append(", \"highlight\": 1");
                         }
@@ -211,17 +222,37 @@ public class TransferVisualizerV2 {
                         maxRow = Math.max(maxRow, rowColumn.getRow() + 1);
                     }
                 }
-                int width = Math.max(120, maxColumn * 60);
-                int height = Math.max(20, maxRow * 20);
+                int width = Math.max(PLATE_WIDTH, maxColumn * WELL_WIDTH);
+                int height = Math.max(ROW_HEIGHT, maxRow * ROW_HEIGHT) + inPlaceHeight;
+
+                // JSON for in-place events
+                StringBuilder eventBuilder = new StringBuilder();
+                int inPlaceEventOffset = ROW_HEIGHT;
+                for (LabEvent labEvent : vesselContainer.getEmbedder().getInPlaceLabEvents()) {
+                    if (eventBuilder.length() > 0) {
+                        eventBuilder.append(",");
+                    }
+                    eventBuilder.append("{ \"name\": \"").append(buildEventLabel(labEvent)).
+                            append("\", \"x\": 0, \"y\": ").append(inPlaceEventOffset).
+                            append(", \"w\": ").append(width).append(", \"h\": ").append(ROW_HEIGHT).append("}");
+                    inPlaceEventOffset += ROW_HEIGHT;
+                }
+
+                // JSON for the parent vessel
                 nodesJson.append("{ \"id\":\"").append(containerLabel).append("\", \"values\": {\"label\": \"").
                         append(ancillaryLabel).append("\", \"width\": ").append(width).append(", \"height\": ").
                         append(height).append(", \"children\": [");
+                nodesJson.append(eventBuilder.toString());
+                if (eventBuilder.length() > 0 && childBuilder.length() > 0) {
+                    nodesJson.append(", ");
+                }
                 nodesJson.append(childBuilder.toString());
                 nodesJson.append("] } },\n");
                 if (startId == null) {
                     startId = containerLabel;
                 }
 
+                // JSON re-arrays
                 if (labVessel != null && followRearrays) {
                     List<Rearray> rearrays = new ArrayList<>();
                     if (labVessel.getContainers().size() > 1) {
