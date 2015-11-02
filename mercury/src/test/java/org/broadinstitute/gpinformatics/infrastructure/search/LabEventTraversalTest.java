@@ -93,7 +93,7 @@ public class LabEventTraversalTest extends Arquillian {
 
         // In place events on a sample tube
         searchInstance = new SearchInstance();
-        searchValue = searchInstance.addTopLevelTerm("In-Place Vessel Barcode", configurableSearchDefinition);
+        searchValue = searchInstance.addTopLevelTerm("Event Vessel Barcode", configurableSearchDefinition);
         searchValue.setOperator(SearchInstance.Operator.EQUALS);
         searchValue.setValues(Collections.singletonList("1090469488"));
 
@@ -105,7 +105,7 @@ public class LabEventTraversalTest extends Arquillian {
         firstPageResults = configurableListFactory.getFirstResultsPage(
                         searchInstance, configurableSearchDefinition, null, 1, null, "ASC", "LabEvent" );
 
-        Assert.assertEquals(firstPageResults.getPagination().getIdList().size(), 2);
+        Assert.assertEquals(firstPageResults.getPagination().getIdList().size(), 7);
 
         // Select descendants of in place vessels
         searchInstance.getTraversalEvaluatorValues().put("descendantOptionEnabled", Boolean.TRUE );
