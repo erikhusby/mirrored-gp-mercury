@@ -137,7 +137,7 @@ public class SampleMetadataFixupTest extends Arquillian {
                 "CRSP-163 repatienting of validation sample (pre-sequencing)");
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void fixupGPLIM_3840_invalid_value_for_material_type() {
         Set<MetaDataFixupItem> fixupItems = new HashSet<>();
         String oldValue = "whole blood";
