@@ -42,7 +42,7 @@ public class TransferVisualizerV2 {
     @Inject
     private BSPUserList bspUserList;
 
-    private class Traverser implements TransferTraverserCriteria {
+    private class Traverser extends TransferTraverserCriteria {
         public static final String REARRAY_LABEL = "rearray";
         public static final int ROW_HEIGHT = 20;
         public static final int PLATE_WIDTH = 480;
@@ -73,13 +73,13 @@ public class TransferVisualizerV2 {
         @Override
         public TraversalControl evaluateVesselPreOrder(Context context) {
             try {
-                if (context.getVesselContainer() == null) {
-                    renderVessel(context.getLabVessel());
+                if (context.getContextVesselContainer() == null) {
+                    renderVessel(context.getContextVessel());
                 } else {
-                    renderContainer(context.getVesselContainer(), null, context.getLabVessel(), true);
+                    renderContainer(context.getContextVesselContainer(), null, context.getContextVessel(), true);
                 }
-                if (context.getEvent() != null) {
-                    renderEvent(context.getEvent(), context.getLabVessel());
+                if (context.getVesselEvent() != null && context.getVesselEvent().getLabEvent() != null) {
+                    renderEvent(context.getVesselEvent().getLabEvent(), context.getContextVessel());
                 }
                 return TraversalControl.ContinueTraversing;
             } catch (JSONException e) {
@@ -184,11 +184,6 @@ public class TransferVisualizerV2 {
                     renderContainer(vesselContainer, null, labVessel, true);
                 }
 //            }
-        }
-
-        @Override
-        public void evaluateVesselInOrder(Context context) {
-
         }
 
         @Override
@@ -347,7 +342,7 @@ public class TransferVisualizerV2 {
                     labVessel.evaluateCriteria(traverser, traversalDirection);
                 } else {
                     containerRole.evaluateCriteria(labVessel.getVesselGeometry().getVesselPositions()[0], traverser,
-                            traversalDirection, null, 0);
+                            traversalDirection, 0);
                 }
             }
         }
