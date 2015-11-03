@@ -229,7 +229,7 @@ public class SampleDataFetcher implements Serializable {
     }
 
     private Map<String, SampleData> fetchSampleDataForMercurySamples(Map<String, MercurySample> samplesMap,
-                                                                         BSPSampleSearchColumn... bspSampleSearchColumns) {
+                                                                     BSPSampleSearchColumn... bspSampleSearchColumns) {
         Map<String, SampleData> sampleData = new HashMap<>();
         Collection<MercurySample> mercurySamplesWithMercurySource = new ArrayList<>();
         Collection<String> sampleIdsWithBspSource = new ArrayList<>();
@@ -238,12 +238,17 @@ public class SampleDataFetcher implements Serializable {
         for (Map.Entry<String, MercurySample> mercurySampleEntry : samplesMap.entrySet()) {
             MercurySample mercurySample = mercurySampleEntry.getValue();
             String sampleKey = mercurySampleEntry.getKey();
-            if (mercurySample != null && mercurySample.needsBspMetaData()) {
-                if (mercurySample.getMetadataSource() == MercurySample.MetadataSource.MERCURY) {
-                    mercurySamplesWithMercurySource.add(mercurySample);
+            if (mercurySample == null) {
+                sampleNames.add(sampleKey);
+            } else {
+                if (mercurySample.needsBspMetaData()) {
+                    if (mercurySample.getMetadataSource() == MercurySample.MetadataSource.MERCURY) {
+                        mercurySamplesWithMercurySource.add(mercurySample);
+                    } else {
+                        sampleNames.add(sampleKey);
+                    }
                 }
             }
-            sampleNames.add(sampleKey);
         }
         if (!sampleNames.isEmpty()) {
 
