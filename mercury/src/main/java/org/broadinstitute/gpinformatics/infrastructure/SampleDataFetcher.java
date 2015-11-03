@@ -234,7 +234,7 @@ public class SampleDataFetcher implements Serializable {
         Collection<MercurySample> mercurySamplesWithMercurySource = new ArrayList<>();
         Collection<String> sampleIdsWithBspSource = new ArrayList<>();
 
-        Set<String> sampleNames = new HashSet<>(samplesMap.keySet());
+        Set<String> sampleNames = new HashSet<>(samplesMap.keySet().size());
         for (Map.Entry<String, MercurySample> mercurySampleEntry : samplesMap.entrySet()) {
             MercurySample mercurySample = mercurySampleEntry.getValue();
             String sampleKey = mercurySampleEntry.getKey();
