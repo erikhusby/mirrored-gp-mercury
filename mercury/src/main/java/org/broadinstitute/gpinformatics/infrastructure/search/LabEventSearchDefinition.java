@@ -11,6 +11,10 @@ import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToVesselTransfer;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
@@ -612,6 +616,40 @@ public class LabEventSearchDefinition {
         });
         searchTerm.setAlternateSearchDefinition(eventByVesselSearchDefinition);
         searchTerm.setCriteriaPaths(blankCriteriaPaths);
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Molecular Index");
+//        TODO: JMS Implement this in position plugin.  Gets messy because plugin built for tubes and samples
+//        for( SearchTerm nestedTableTerm : nestedTableTerms ) {
+//            nestedTableTerm.addParentTermHandledByChild(searchTerm);
+//        }
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public List<String> evaluate(Object entity, SearchContext context) {
+                LabEvent labEvent = (LabEvent) entity;
+                List<String> results = new ArrayList<>();
+
+                LabVessel labVessel = labEvent.getInPlaceLabVessel();
+                if (labVessel == null) {
+                    for (LabVessel srcVessel : labEvent.getSourceLabVessels()) {
+                        for (SampleInstanceV2 sample : srcVessel.getSampleInstancesV2()) {
+                            if (sample.getMolecularIndexingScheme() != null) {
+                                results.add(sample.getMolecularIndexingScheme().getName());
+                            }
+                        }
+                    }
+                } else {
+                    for (SampleInstanceV2 sample : labVessel.getSampleInstancesV2()) {
+                        if (sample.getMolecularIndexingScheme() != null) {
+                            results.add(sample.getMolecularIndexingScheme().getName());
+                        }
+                    }
+                }
+
+                return results;
+            }
+        });
         searchTerms.add(searchTerm);
 
         return searchTerms;

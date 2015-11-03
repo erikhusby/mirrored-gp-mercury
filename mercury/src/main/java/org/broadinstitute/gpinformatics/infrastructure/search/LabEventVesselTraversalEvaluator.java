@@ -121,11 +121,7 @@ public class LabEventVesselTraversalEvaluator extends TraversalEvaluator {
         eventTraversalCriteria.getAllEvents().addAll(vesselContainer.getEmbedder().getInPlaceLabEvents());
 
         if( vesselContainer.getMapPositionToVessel().isEmpty() ) {
-            for( VesselPosition vesselPosition
-                    : vesselContainer.getEmbedder().getVesselGeometry().getVesselPositions() ) {
-                vesselContainer.evaluateCriteria(vesselPosition, eventTraversalCriteria,
-                        traversalDirection, null, 0);
-            }
+            vesselContainer.applyCriteriaToAllPositions(eventTraversalCriteria, traversalDirection);
         } else {
             for (LabVessel targetVessel : vesselContainer.getContainedVessels()) {
                 targetVessel.evaluateCriteria(eventTraversalCriteria, traversalDirection);

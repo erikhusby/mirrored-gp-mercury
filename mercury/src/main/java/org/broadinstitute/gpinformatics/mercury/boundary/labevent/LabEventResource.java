@@ -275,26 +275,30 @@ public class LabEventResource {
     }
 
     // todo jmt make this work for sample starters
-    static class StarterCriteria implements TransferTraverserCriteria {
+    static class StarterCriteria extends TransferTraverserCriteria {
         private LabVessel starter;
 
         @Override
         public TraversalControl evaluateVesselPreOrder(Context context) {
-            if (context.getLabVessel() != null) {
-                if (context.getLabVessel().getTransfersTo().isEmpty()) {
-                    for (LabBatch labBatch : context.getLabVessel().getLabBatches()) {
-                        if (labBatch.getStartingBatchLabVessels().contains(context.getLabVessel())) {
-                            starter = context.getLabVessel();
+
+            // Ancestry only!
+            if( context.getTraversalDirection() != TraversalDirection.Ancestors ) {
+                throw new IllegalStateException("LabEventResource.StarterCriteria supports ancestry traversal only.");
+            }
+
+            LabVessel contextVessel = context.getContextVessel();
+
+            if (contextVessel != null) {
+                if (contextVessel.getTransfersTo().isEmpty()) {
+                    for (LabBatch labBatch : contextVessel.getLabBatches()) {
+                        if (labBatch.getStartingBatchLabVessels().contains(contextVessel)) {
+                            starter = contextVessel;
                             return TraversalControl.StopTraversing;
                         }
                     }
                 }
             }
             return TraversalControl.ContinueTraversing;
-        }
-
-        @Override
-        public void evaluateVesselInOrder(Context context) {
         }
 
         @Override
@@ -358,7 +362,7 @@ public class LabEventResource {
                 StarterCriteria starterCriteria = new StarterCriteria();
                 vesselContainer.evaluateCriteria(VesselPosition.getByName(labVesselPositionBean.getPosition()),
                         starterCriteria,
-                        TransferTraverserCriteria.TraversalDirection.Ancestors, null, 0);
+                        TransferTraverserCriteria.TraversalDirection.Ancestors, 0);
                 if (starterCriteria.getStarter() != null) {
                     labVesselPositionBean.getLabVesselBean().setStarter(starterCriteria.getStarter().getLabel());
                 }
