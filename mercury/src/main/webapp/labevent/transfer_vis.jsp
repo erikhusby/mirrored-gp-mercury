@@ -7,9 +7,9 @@
 <stripes:layout-render name="/layout.jsp" pageTitle="Transfer Visualizer" sectionTitle="Transfer Visualizer">
 
     <stripes:layout-component name="extraHead">
-        <script src="${ctxpath}/resources/scripts/d3.3.5.6.min.js" type="text/javascript"></script>
-        <script src="${ctxpath}/resources/scripts/dagre.min.0.7.3.js" type="text/javascript"></script>
-        <script src="${ctxpath}/resources/scripts/transfer_visualizer.js" type="text/javascript"></script>
+        <script src="${ctxpath}/resources/scripts/D3/d3.3.5.6.min.js" type="text/javascript"></script>
+        <script src="${ctxpath}/resources/scripts/D3/dagre.min.0.7.3.js" type="text/javascript"></script>
+        <script src="${ctxpath}/resources/scripts/D3/transfer_visualizer.js" type="text/javascript"></script>
 
         <script type="text/javascript">
             <c:if test="${not empty actionBean.barcodes}">
