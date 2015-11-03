@@ -199,4 +199,18 @@ public class Bucket {
 
         return foundEntry;
     }
+
+    /**
+     * Initializes the SampleData used when viewing Buckets.
+     */
+    public void initializeSampleData() {
+        Set<LabVessel> labVessels = new HashSet<>();
+        for (BucketEntry bucketEntry : bucketEntries) {
+            labVessels.add(bucketEntry.getLabVessel());
+        }
+        for (BucketEntry bucketEntry : reworkEntries) {
+            labVessels.add(bucketEntry.getLabVessel());
+        }
+        LabVessel.loadSampleDataForBuckets(labVessels);
+    }
 }

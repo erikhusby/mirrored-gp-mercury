@@ -63,6 +63,11 @@ public class ConfigurableSearchDefinition /*extends PreferenceDefinition*/ {
     transient private Map<String, SearchTerm> mapNameToSearchTerm = new HashMap<>();
 
     /**
+     * Default result columns should none be selected by user
+     */
+    transient private List<SearchTerm> defaultResultColumns = new ArrayList<>();
+
+    /**
      * Allow an evaluator to expand entity list to be attached to search term.
      */
     private Map<String, TraversalEvaluator> traversalEvaluators;
@@ -80,6 +85,7 @@ public class ConfigurableSearchDefinition /*extends PreferenceDefinition*/ {
         this.criteriaProjections = criteriaProjections;
         this.mapGroupSearchTerms = mapGroupSearchTerms;
         buildNameMap();
+        buildDefaultColumnList();
     }
 
     /**
@@ -122,6 +128,10 @@ public class ConfigurableSearchDefinition /*extends PreferenceDefinition*/ {
             }
         }
         return requiredSearchTerms;
+    }
+
+    public List<SearchTerm> getDefaultResultColumns() {
+        return defaultResultColumns;
     }
 
     /**
@@ -247,6 +257,16 @@ public class ConfigurableSearchDefinition /*extends PreferenceDefinition*/ {
         if (this.mapGroupSearchTerms != null) {
             for (List<SearchTerm> searchTerms : mapGroupSearchTerms.values()) {
                 recurseSearchTerms(searchTerms);
+            }
+        }
+    }
+
+    private void buildDefaultColumnList(){
+        for (List<SearchTerm> searchTerms : mapGroupSearchTerms.values()) {
+            for( SearchTerm searchTerm : searchTerms ) {
+                if( searchTerm.isDefaultResultColumn()) {
+                    defaultResultColumns.add(searchTerm);
+                }
             }
         }
     }

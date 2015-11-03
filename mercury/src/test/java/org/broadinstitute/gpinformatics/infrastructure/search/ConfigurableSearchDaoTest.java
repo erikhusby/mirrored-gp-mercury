@@ -18,6 +18,7 @@ import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
@@ -88,56 +89,61 @@ public class ConfigurableSearchDaoTest extends Arquillian {
      * Tests use of tube formations in in-place events and transfer events
      */
     public void testEventMixForVessels(){
-        ConfigurableSearchDefinition configurableSearchDefinition =
+        ConfigurableSearchDefinition parentConfigurableSearchDefinition =
                 SearchDefinitionFactory.getForEntity( ColumnEntity.LAB_EVENT.getEntityName());
 
         SearchInstance searchInstance = new SearchInstance();
         SearchInstance.SearchValue searchValue = searchInstance.addTopLevelTerm("Event Vessel Barcode"
-                , configurableSearchDefinition);
+                , parentConfigurableSearchDefinition);
         searchValue.setOperator(SearchInstance.Operator.EQUALS);
         // This barcoded tube has a mixture of in place events and transfers in containers and not in containers
         //   (validates GPLIM-3471)
         searchValue.setValues(Arrays.asList("0175362333"));
-        Criteria criteria = configurableSearchDao.buildCriteria(configurableSearchDefinition, searchInstance);
-        @SuppressWarnings("unchecked")
-        List<LabEvent> list = criteria.list();
-        Assert.assertEquals(list.size(), 12);
+
+        searchInstance.establishRelationships(parentConfigurableSearchDefinition);
+
+        ConfigurableSearchDefinition alternateConfigurableSearchDefinition =
+                searchValue.getSearchTerm().getAlternateSearchDefinition();
+
+        Criteria criteria = configurableSearchDao.buildCriteria(alternateConfigurableSearchDefinition, searchInstance);
+        List<LabVessel> vesselList = criteria.list();
+        Assert.assertEquals(vesselList.size(), 1);
+
+        // Call alternate search definition traversal evaluator to look up all events for the seed vessel(s)
+        Set eventList = searchInstance.getAlternateSearchDefinition().getTraversalEvaluators()
+                .entrySet().iterator().next().getValue().evaluate(vesselList, searchInstance);
+        Assert.assertEquals(eventList.size(), 12);
     }
 
     public void testEventVessels() {
 
-        ConfigurableSearchDefinition configurableSearchDefinition =
+        ConfigurableSearchDefinition parentConfigurableSearchDefinition =
                 SearchDefinitionFactory.getForEntity( ColumnEntity.LAB_EVENT.getEntityName());
 
         SearchInstance searchInstance = new SearchInstance();
-        SearchInstance.SearchValue searchValue = searchInstance.addTopLevelTerm("In-Place Vessel Barcode"
-                , configurableSearchDefinition);
+        SearchInstance.SearchValue searchValue = searchInstance.addTopLevelTerm("Event Vessel Barcode"
+                , parentConfigurableSearchDefinition);
         searchValue.setOperator(SearchInstance.Operator.IN);
         // Two barcoded tubes and two static plates for a mix of in place vessels and container contents
         //      in source and target destinations
         searchValue.setValues(Arrays.asList("0169690767", "AB51755109", "000007959173", "000005686073"));
-        Criteria criteria = configurableSearchDao.buildCriteria(configurableSearchDefinition, searchInstance);
-        @SuppressWarnings("unchecked")
-        List<LabEvent> inPlaceList = criteria.list();
-        Assert.assertEquals(inPlaceList.size(), 2);
 
-        List<LabEvent> allList = getAllEventsForVessels();
-        // Check that the 2 in place vessel searches are included in the all event vessel search
-        int foundCount = 0;
-        for( LabEvent inPlaceEvent : inPlaceList ) {
-            for( LabEvent allEvent : allList ) {
-                if( allEvent.getLabEventId().equals(inPlaceEvent.getLabEventId() ) ) {
-                    foundCount++;
-                    // In place lab vessels should match
-                    Assert.assertEquals( allEvent.getInPlaceLabVessel().getLabVesselId(), inPlaceEvent.getInPlaceLabVessel().getLabVesselId() );
-                }
-            }
-        }
-        Assert.assertEquals(foundCount, 2);
+        searchInstance.establishRelationships(parentConfigurableSearchDefinition);
+
+        ConfigurableSearchDefinition alternateConfigurableSearchDefinition =
+                searchValue.getSearchTerm().getAlternateSearchDefinition();
+
+        Criteria criteria = configurableSearchDao.buildCriteria(alternateConfigurableSearchDefinition, searchInstance);
+        List<LabVessel> vesselList = criteria.list();
+        Assert.assertEquals(vesselList.size(), 4);
+
+        // Call alternate search definition traversal evaluator to look up all events for the seed vessel(s)
+        Set eventList = searchInstance.getAlternateSearchDefinition().getTraversalEvaluators()
+                .entrySet().iterator().next().getValue().evaluate(vesselList, searchInstance);
 
         // Check denature xfer target vessel is AB51755109 and source vessel is 0169690767
         LabEvent targetFoundEvent = null;
-        for( LabEvent allEvent : allList ) {
+        for( LabEvent allEvent : (Set<LabEvent>) eventList ) {
             if( allEvent.getLabEventId().equals( new Long(689215) ) ) {
                 targetFoundEvent = allEvent;
                 CherryPickTransfer xfer = allEvent.getCherryPickTransfers().iterator().next();

@@ -1,22 +1,38 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
 
+import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderSampleTestFactory;
+import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
+import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mocks.HappyQuoteServiceMock;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import java.io.IOException;
+import java.util.List;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.TEST;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.empty;
 
 @Test(groups = TestGroups.ALTERNATIVES)
 public class ProductOrderEjbContainerTest extends Arquillian {
@@ -29,7 +45,16 @@ public class ProductOrderEjbContainerTest extends Arquillian {
     ProductOrderDao pdoDao;
 
     @Inject
+    ProductDao productDao;
+
+    @Inject
+    ResearchProjectDao researchProjectDao;
+
+    @Inject
     JiraService jiraService;
+
+    @Inject
+    private UserBean userBean;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -69,6 +94,37 @@ public class ProductOrderEjbContainerTest extends Arquillian {
         String titleFromJira = getSummaryFieldFromJiraTicket(pdo);
 
         Assert.assertEquals(titleFromJira, newTitle, "jira summary field is not synchronized with pdo title.");
+    }
+
+    /**
+     * This test is disabled because of data setup. Once run, the samples it is adding will no longer hit the code
+     * this test is testing.
+     */
+    @Test(enabled=false)
+    public void test_Add_Samples_Without_Bound_Mercury_Samples() throws Exception {
+        userBean.loginTestUser();
+        MessageReporter mockReporter = Mockito.mock(MessageReporter.class);
+        String[] sampleNames = {"SM-XADF"};//"SM-XADE", "SM-XADF", "SM-XADG", "SM-XADH", "SM-XADI", "SM-XADJ", "SM-XADK"
+        ProductOrder order =
+                ProductOrderDBTestFactory.createTestExExProductOrder(researchProjectDao, productDao, sampleNames);
+
+        order.setCreatedBy(userBean.getBspUser().getUserId());
+        productDao.persist(order);
+        productDao.flush();
+        MessageCollection messageCollection = new MessageCollection();
+
+        pdoEjb.placeProductOrder(order.getProductOrderId(), order.getBusinessKey(), messageCollection);
+        pdoEjb.removeSamples(order.getJiraTicketKey(), order.getSamples(), MessageReporter.UNUSED);
+
+        List<ProductOrderSample> samples = ProductOrderSampleTestFactory.createSampleList(sampleNames);
+        pdoEjb.addSamples(order.getJiraTicketKey(), samples, mockReporter);
+
+        assertThat(order.getSamples(), is(not(empty())));
+        for (ProductOrderSample sample : order.getSamples()) {
+            assertThat(sample.getMercurySample(), is(not(nullValue())));
+            assertThat(sample.getMercurySample().getSampleKey(), is(equalTo(sample.getBusinessKey())));
+        }
+
     }
 
 

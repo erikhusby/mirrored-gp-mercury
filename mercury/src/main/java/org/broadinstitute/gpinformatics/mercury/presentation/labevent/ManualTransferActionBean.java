@@ -326,7 +326,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
                 for (StationEventType stationEvent : stationEvents) {
                     PlateEventType plateEventType = (PlateEventType) stationEvent;
                     loadPlateFromDb(plateEventType.getPlate(), plateEventType.getPositionMap(), true, labBatch,
-                            messageCollection, Direction.TARGET);
+                            messageCollection, Direction.SOURCE);
                 }
                 break;
             case PLATE_TRANSFER_EVENT:
@@ -522,7 +522,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
                         messageCollection.addError(message);
                     }
                     if (direction == Direction.SOURCE && !labVessel.getNearestWorkflowLabBatches().contains(labBatch)) {
-                        messageCollection.addInfo(barcode + " is not in batch " + labBatch.getBatchName());
+                        messageCollection.addError(barcode + " is not in batch " + labBatch.getBatchName());
                     }
                 }
             }

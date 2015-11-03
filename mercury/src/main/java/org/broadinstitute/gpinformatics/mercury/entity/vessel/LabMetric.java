@@ -143,6 +143,18 @@ public class LabMetric implements Comparable<LabMetric> {
                 return new LabMetricDecision(decision, new Date(), decidingUser, labMetric);
             }
         }),
+        CDNA_ENRICHED_PICO("cDNA Enriched Pico", true, Category.CONCENTRATION, new Decider() {
+            @Override
+            public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
+                LabMetricDecision.Decision decision;
+                if (labMetric.getValue().compareTo(new BigDecimal("5")) == 1) {
+                    decision = LabMetricDecision.Decision.PASS;
+                } else {
+                    decision = LabMetricDecision.Decision.FAIL;
+                }
+                return new LabMetricDecision(decision, new Date(), decidingUser, labMetric);
+            }
+        }),
         CATCH_PICO("Catch Pico", true, Category.CONCENTRATION, new Decider() {
             @Override
             public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
