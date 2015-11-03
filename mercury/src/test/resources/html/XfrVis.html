@@ -4,10 +4,12 @@
 <head>
     <title>Transfer Visualizer</title>
     <link rel="stylesheet"  href="../../../../src/main/webapp/resources/css/mercury.css"/>
+    <link rel="stylesheet"  href="../../../../src/main/webapp/resources/css/d3-context-menu.css"/>
 </head>
 <body>
 <script src="../../../main/webapp/resources/scripts/D3/d3.3.5.6.min.js"></script>
 <script src="../../../main/webapp/resources/scripts/D3/dagre.min.0.7.3.js"></script>
+<script src="../../../main/webapp/resources/scripts/D3/d3-context-menu.js"></script>
 <script src="../../../main/webapp/resources/scripts/D3/transfer_visualizer.js"></script>
 <script>
     window.onload = function () {
@@ -17,8 +19,5 @@
     }
 </script>
 <div id="graphDiv"></div>
-<ul id="context-menu" class="menu">
-    <li onclick="addBarcode(this)">Add barcode to search</li>
-</ul>
 </body>
 </html>

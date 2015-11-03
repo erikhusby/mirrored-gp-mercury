@@ -4,6 +4,14 @@ window.onerror = function (errorMsg, url, lineNumber, column, errorObj) {
 
 function renderJson(json) {
     var width = 1200, height = 950;
+    var menu = [
+        {
+            title: 'Add barcode',
+            action: function (element, d, i) {
+                console.log("adding " + element.__data__);
+            }
+        }
+    ];
 
     // Set up pan and zoom.
     var zoomBehavior = d3.behavior.zoom().scaleExtent([0.1, 8]).on("zoom", zoom);
@@ -79,10 +87,7 @@ function renderJson(json) {
         .attr("height", function (d) {
             return g.node(d).height;
         })
-        .on("contextmenu", function(data, index) {
-            contextMenu(this, data, index);
-            d3.event.preventDefault();
-        });
+        .on("contextmenu", d3.contextMenu(menu));
     node.append("text")
         .attr("class", "graphLabel")
         .attr("text-anchor", "middle")
@@ -95,10 +100,7 @@ function renderJson(json) {
         .attr("y", function (d) {
             return 14;
         })
-        .on("contextmenu", function(data, index) {
-            contextMenu(this, data, index);
-            d3.event.preventDefault();
-        });
+        .on("contextmenu", d3.contextMenu(menu));
 
     // Set the D3 datum to the children.
     var nodeChildEnter = node.selectAll(".nodeChild")
@@ -124,10 +126,7 @@ function renderJson(json) {
         .attr("height", function (d) {
             return d.h;
         })
-        .on("contextmenu", function(data, index) {
-            contextMenu(this, data, index);
-            d3.event.preventDefault();
-        });
+        .on("contextmenu", d3.contextMenu(menu));
     nodeChildEnter.append("text")
         .attr("class", "graphLabel")
         .attr("x", function (d) {
@@ -140,10 +139,7 @@ function renderJson(json) {
         .text(function (d) {
             return d.name;
         })
-        .on("contextmenu", function(data, index) {
-            contextMenu(this, data, index);
-            d3.event.preventDefault();
-        });
+        .on("contextmenu", d3.contextMenu(menu));
 
     // Make list of edges to draw, including between children, if applicable.
     var links = [];
@@ -270,25 +266,4 @@ function renderJson(json) {
             }
         });
     }
-
-    var contextMenu = function (that, data, index) {
-        d3.event.preventDefault();
-
-        var position = d3.mouse(d3.select('svg').node());
-        d3.select('#context-menu')
-            .style('position', 'absolute')
-            .style('left', position[0] + "px")
-            .style('top', position[1] + "px")
-            .style('display', 'inline-block')
-            .on('mouseleave', function() {
-                d3.select('#context-menu').style('display', 'none');
-                context = null;
-            });
-        //d3.select('#context-menu').attr('class', 'menu ' + context);
-    };
-
-}
-
-function addBarcode(element) {
-    console.log("adding " + element.__data__);
 }
