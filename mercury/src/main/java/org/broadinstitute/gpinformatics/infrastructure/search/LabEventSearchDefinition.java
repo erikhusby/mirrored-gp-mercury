@@ -614,35 +614,35 @@ public class LabEventSearchDefinition {
                 return results;
             }
         });
+        searchTerm.setAlternateSearchDefinition(eventByVesselSearchDefinition);
+        searchTerm.setCriteriaPaths(blankCriteriaPaths);
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
         searchTerm.setName("Molecular Index");
+//        TODO: JMS Implement this in position plugin.  Gets messy because plugin built for tubes and samples
+//        for( SearchTerm nestedTableTerm : nestedTableTerms ) {
+//            nestedTableTerm.addParentTermHandledByChild(searchTerm);
+//        }
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public List<String> evaluate(Object entity, SearchContext context) {
                 LabEvent labEvent = (LabEvent) entity;
                 List<String> results = new ArrayList<>();
 
-
                 LabVessel labVessel = labEvent.getInPlaceLabVessel();
                 if (labVessel == null) {
                     for (LabVessel srcVessel : labEvent.getSourceLabVessels()) {
                         for (SampleInstanceV2 sample : srcVessel.getSampleInstancesV2()) {
-                            for( Reagent reagent : sample.getReagents() ) {
-                                if( reagent instanceof MolecularIndexReagent ) {
-                                    results.add(
-                                            ((MolecularIndexReagent) reagent).getMolecularIndexingScheme().getName());
-                                }
+                            if (sample.getMolecularIndexingScheme() != null) {
+                                results.add(sample.getMolecularIndexingScheme().getName());
                             }
                         }
                     }
                 } else {
                     for (SampleInstanceV2 sample : labVessel.getSampleInstancesV2()) {
-                        for( Reagent reagent : sample.getReagents() ) {
-                            if( reagent instanceof MolecularIndexReagent ) {
-                                results.add(((MolecularIndexReagent) reagent ).getMolecularIndexingScheme().getName());
-                            }
+                        if (sample.getMolecularIndexingScheme() != null) {
+                            results.add(sample.getMolecularIndexingScheme().getName());
                         }
                     }
                 }
@@ -650,8 +650,6 @@ public class LabEventSearchDefinition {
                 return results;
             }
         });
-        searchTerm.setAlternateSearchDefinition(eventByVesselSearchDefinition);
-        searchTerm.setCriteriaPaths(blankCriteriaPaths);
         searchTerms.add(searchTerm);
 
         return searchTerms;
