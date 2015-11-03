@@ -78,6 +78,10 @@ function renderJson(json) {
         })
         .attr("height", function (d) {
             return g.node(d).height;
+        })
+        .on("contextmenu", function(data, index) {
+            contextMenu(this, data, index);
+            d3.event.preventDefault();
         });
     node.append("text")
         .attr("class", "graphLabel")
@@ -90,6 +94,10 @@ function renderJson(json) {
         })
         .attr("y", function (d) {
             return 14;
+        })
+        .on("contextmenu", function(data, index) {
+            contextMenu(this, data, index);
+            d3.event.preventDefault();
         });
 
     // Set the D3 datum to the children.
@@ -115,6 +123,10 @@ function renderJson(json) {
         })
         .attr("height", function (d) {
             return d.h;
+        })
+        .on("contextmenu", function(data, index) {
+            contextMenu(this, data, index);
+            d3.event.preventDefault();
         });
     nodeChildEnter.append("text")
         .attr("class", "graphLabel")
@@ -127,6 +139,10 @@ function renderJson(json) {
         .attr("text-anchor", "middle")
         .text(function (d) {
             return d.name;
+        })
+        .on("contextmenu", function(data, index) {
+            contextMenu(this, data, index);
+            d3.event.preventDefault();
         });
 
     // Make list of edges to draw, including between children, if applicable.
@@ -254,4 +270,25 @@ function renderJson(json) {
             }
         });
     }
+
+    var contextMenu = function (that, data, index) {
+        d3.event.preventDefault();
+
+        var position = d3.mouse(d3.select('svg').node());
+        d3.select('#context-menu')
+            .style('position', 'absolute')
+            .style('left', position[0] + "px")
+            .style('top', position[1] + "px")
+            .style('display', 'inline-block')
+            .on('mouseleave', function() {
+                d3.select('#context-menu').style('display', 'none');
+                context = null;
+            });
+        //d3.select('#context-menu').attr('class', 'menu ' + context);
+    };
+
+}
+
+function addBarcode(element) {
+    console.log("adding " + element.__data__);
 }

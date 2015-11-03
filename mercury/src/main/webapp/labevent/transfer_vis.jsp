@@ -42,6 +42,19 @@
             </div>
         </stripes:form>
         <div id="graphDiv"></div>
+        <ul id="context-menu" class="menu">
+            <li class="svg" id="svg-id">SVG Item</li>
+            <li class="circle" id="action-circle-1">Circle item 1</li>
+            <li class="rect" id="action-rect-1">Rect item 1</li>
+            <li class="rect" id="action-rect-2">Rect item 2</li>
+            <li class="circle" id="circle-2">Circle item 2</li>
+            <li class="rect circle svg" id="action-color-select">Color:
+                <ul>
+                    <li class="color color-1"></li>
+                    <li class="color color-2"></li>
+                </ul>
+            </li>
+        </ul>
     </stripes:layout-component>
 
 </stripes:layout-render>
