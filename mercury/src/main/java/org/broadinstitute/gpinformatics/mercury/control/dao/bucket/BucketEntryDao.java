@@ -76,16 +76,15 @@ public class BucketEntryDao extends GenericDao {
         Join<Bucket, BucketEntry> reworkEntryBucketJoin = root.join(Bucket_.reworkEntries, JoinType.LEFT);
 
         Path<String> bucketNamePath = root.get(Bucket_.bucketDefinitionName);
-        CriteriaQuery<BucketCount> multiselect = criteriaQuery.select(
+        CriteriaQuery<BucketCount> multiSelect = criteriaQuery.select(
                 criteriaBuilder.construct(
                         BucketCount.class,
                         bucketNamePath,
                         criteriaBuilder.countDistinct(bucketEntryBucketJoin),
                         criteriaBuilder.countDistinct(reworkEntryBucketJoin)
-                )).groupBy(bucketNamePath).orderBy(criteriaBuilder.asc(bucketNamePath));
+                )).groupBy(bucketNamePath);
 
-        CriteriaQuery<BucketCount> countCriteriaQuery = multiselect.where();
-        List<BucketCount> resultList = getEntityManager().createQuery(countCriteriaQuery).getResultList();
+        List<BucketCount> resultList = getEntityManager().createQuery(multiSelect).getResultList();
         Map<String, BucketCount> bucketCountMap = new HashMap<>(resultList.size());
         for (BucketCount bucketCount : resultList) {
             bucketCountMap.put(bucketCount.getBucket(), bucketCount);

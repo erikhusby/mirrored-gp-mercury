@@ -243,7 +243,8 @@ public class BucketViewActionBean extends CoreActionBean {
     }
 
     public String getConfirmationPageTitle() {
-        return String.format("%d bucket and %d rework entries.", bucketEntryIds.size(), reworkEntryIds.size());
+        return String.format("Confirm adding %d new and %d rework entries to %s.",
+                bucketEntryIds.size(), reworkEntryIds.size(), selectedBucket);
     }
 
     private void loadReworkVessels() {
