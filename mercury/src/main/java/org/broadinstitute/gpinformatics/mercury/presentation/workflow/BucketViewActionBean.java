@@ -55,6 +55,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 @UrlBinding(value = "/workflow/bucketView.action")
@@ -124,6 +125,7 @@ public class BucketViewActionBean extends CoreActionBean {
     private LabBatch batch;
     private Map<String, BucketCount> mapBucketToBucketEntryCount;
 
+
     @Before(stages = LifecycleStage.BindingAndValidation)
     public void init() {
         WorkflowConfig workflowConfig = workflowLoader.load();
@@ -137,7 +139,7 @@ public class BucketViewActionBean extends CoreActionBean {
                 mapBucketToBucketDef.put(bucketName, bucket);
             }
         }
-        mapBucketToBucketEntryCount = BucketCount.initMap(bucketEntryDao.getBucketCounts());
+        mapBucketToBucketEntryCount = initBucketCountsMap(bucketEntryDao.getBucketCounts());
     }
 
     @DefaultHandler
@@ -352,6 +354,25 @@ public class BucketViewActionBean extends CoreActionBean {
 
         return new StreamingResolution("text", new StringReader(newPdoValues.toString()));
     }
+
+    private static Map<String, BucketCount> initBucketCountsMap(Map<String, BucketCount> bucketCountMap) {
+        Map<String, BucketCount> resultBucketCountMap = new TreeMap<>();
+        WorkflowConfig workflowConfig = new WorkflowLoader().load();
+        for (Workflow workflow : Workflow.SUPPORTED_WORKFLOWS) {
+            ProductWorkflowDef workflowDef = workflowConfig.getWorkflowByName(workflow.getWorkflowName());
+            ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
+            for (WorkflowBucketDef bucket : workflowVersion.getCreationBuckets()) {
+                BucketCount bucketCount = bucketCountMap.get(bucket.getName());
+                if (bucketCount == null) {
+                    bucketCount = new BucketCount(bucket.getName());
+                }
+                resultBucketCountMap.put(bucket.getName(), bucketCount);
+            }
+        }
+
+        return resultBucketCountMap;
+    }
+
 
     public String getSelectedBucket() {
         return selectedBucket;

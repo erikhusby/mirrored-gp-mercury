@@ -49,21 +49,4 @@ public class BucketCount {
         return reworkEntryCount;
     }
 
-    public static Map<String, BucketCount> initMap(Map<String, BucketCount> bucketCountMap) {
-        Map<String, BucketCount> resultBucketCountMap = new TreeMap<>();
-        WorkflowConfig workflowConfig = new WorkflowLoader().load();
-        for (Workflow workflow : Workflow.SUPPORTED_WORKFLOWS) {
-            ProductWorkflowDef workflowDef = workflowConfig.getWorkflowByName(workflow.getWorkflowName());
-            ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
-            for (WorkflowBucketDef bucket : workflowVersion.getCreationBuckets()) {
-                BucketCount bucketCount = bucketCountMap.get(bucket.getName());
-                if (bucketCount == null) {
-                    bucketCount = new BucketCount(bucket.getName());
-                }
-                resultBucketCountMap.put(bucket.getName(), bucketCount);
-            }
-        }
-
-        return resultBucketCountMap;
-    }
 }
