@@ -258,24 +258,11 @@ public abstract class LabVessel implements Serializable {
             }
         }
         if (latestMaterialType == MaterialType.NONE || latestMaterialType==null) {
-            logger.error(String.format("No material type was found for vessel '%s' with metadata source '%s'", label,
-                    getMetadataSource()));
+            logger.error(String.format("No material type was found for vessel '%s'.", label));
         }
         return latestMaterialType;
     }
 
-    public MercurySample.MetadataSource getMetadataSource() {
-        for (SampleInstanceV2 sampleInstanceV2 : getSampleInstancesV2()) {
-            for (MercurySample mercurySample : sampleInstanceV2.getRootMercurySamples()) {
-                MercurySample.MetadataSource metadataSource = mercurySample.getMetadataSource();
-                if (metadataSource != null) {
-                    return metadataSource;
-                }
-            }
-        }
-        return null;
-    }
-    
     public List<String> getMaterialTypes() {
         List<String> materialTypes = new ArrayList<>();
         for (SampleInstanceV2 si : getSampleInstancesV2()) {
