@@ -207,18 +207,17 @@ public class ProductDao extends GenericDao implements Serializable {
     }
 
     /**
-     * Support finding add-on products for product definition, disallowing the top-level product as a search result
+     * Support finding add-on products for product definition including PDM-only products, disallowing the
+     * top-level product as a search result. If you wish to exclude PDM-only products you need to filter it yourself.
      *
-     * @param topLevelProduct Do we only want to get top level products?
+     * @param topLevelProduct product to find the add-ons for.
      * @param searchTerms     Collection of terms to search the product name and part number for.
      *
      * @return The products in the db that matches
      */
     public List<Product> searchProductsForAddOnsInProductEdit(Product topLevelProduct, Collection<String> searchTerms) {
         List<Product> products = findProducts(
-                ProductDao.Availability.CURRENT_OR_FUTURE,
-                ProductDao.TopLevelOnly.NO,
-                ProductDao.IncludePDMOnly.NO, searchTerms);
+                ProductDao.Availability.CURRENT_OR_FUTURE, TopLevelOnly.NO, IncludePDMOnly.YES, searchTerms);
 
         // remove top level product from the list if it's showing up there
         products.remove(topLevelProduct);
