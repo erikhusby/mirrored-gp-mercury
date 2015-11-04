@@ -524,7 +524,9 @@ public class LabEventSearchDefinition {
                 Set<String> productNames = new HashSet<>();
 
                 Set<LabVessel> eventVessels = labEvent.getTargetLabVessels();
-                eventVessels.add(labEvent.getInPlaceLabVessel());
+                if( labEvent.getInPlaceLabVessel() != null ) {
+                    eventVessels.add(labEvent.getInPlaceLabVessel());
+                }
 
                 for( LabVessel labVessel : eventVessels ) {
                     for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
