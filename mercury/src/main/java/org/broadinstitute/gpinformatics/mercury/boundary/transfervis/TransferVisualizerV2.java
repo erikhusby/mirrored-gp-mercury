@@ -329,24 +329,24 @@ public class TransferVisualizerV2 {
         if (traversalDirections.isEmpty()) {
             throw new IllegalArgumentException("Must supply at least one direction");
         }
-        Traverser traverser;
         try {
-            traverser = new Traverser(writer);
+            Traverser traverser = new Traverser(writer);
+            for (LabVessel labVessel : labVessels) {
+                for (TransferTraverserCriteria.TraversalDirection traversalDirection : traversalDirections) {
+                    VesselContainer<?> containerRole = labVessel.getContainerRole();
+                    if (containerRole == null) {
+                        labVessel.evaluateCriteria(traverser, traversalDirection);
+                    } else {
+                        containerRole.evaluateCriteria(labVessel.getVesselGeometry().getVesselPositions()[0], traverser,
+                                traversalDirection, 0);
+                    }
+                    traverser.resetAllTraversed();
+                }
+            }
+            traverser.completeJson();
         } catch (JSONException e) {
             throw new RuntimeException(e);
         }
-        for (LabVessel labVessel : labVessels) {
-            for (TransferTraverserCriteria.TraversalDirection traversalDirection : traversalDirections) {
-                VesselContainer<?> containerRole = labVessel.getContainerRole();
-                if (containerRole == null) {
-                    labVessel.evaluateCriteria(traverser, traversalDirection);
-                } else {
-                    containerRole.evaluateCriteria(labVessel.getVesselGeometry().getVesselPositions()[0], traverser,
-                            traversalDirection, 0);
-                }
-            }
-        }
-        traverser.completeJson();
     }
 
 }
