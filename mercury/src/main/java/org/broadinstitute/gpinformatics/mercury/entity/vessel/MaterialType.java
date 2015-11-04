@@ -12,6 +12,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 
 import java.util.Collection;
@@ -140,14 +141,30 @@ public enum MaterialType implements Displayable {
     }
 
     public static MaterialType fromDisplayName(String displayName) {
-        MaterialType foundType = NONE;
+        if (StringUtils.isBlank(displayName)) {
+            return NONE;
+        }
+
         for (MaterialType materialType : values()) {
-            if(materialType.displayName.equals(displayName)) {
-                foundType = materialType;
-                break;
+            if (materialType.displayName.equals(displayName)) {
+                return materialType;
             }
         }
-        return foundType;
+        throw new RuntimeException("Unknown MaterialType");
+    }
+
+    public static boolean isValid(String displayName) {
+        boolean isValid=false;
+        MaterialType materialType = null;
+        try {
+            materialType = fromDisplayName(displayName);
+            if (materialType != NONE) {
+                isValid=true;
+            }
+        } catch (Exception e) {
+            isValid=false;
+        }
+        return isValid;
     }
 
     @Override
