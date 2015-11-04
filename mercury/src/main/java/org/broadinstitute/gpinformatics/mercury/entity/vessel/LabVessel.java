@@ -9,7 +9,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
@@ -287,11 +286,7 @@ public abstract class LabVessel implements Serializable {
                 sampleNames.put(mercurySample.getSampleKey(), mercurySample);
             }
         }
-        Map<String, SampleData> sampleDataMap = sampleDataFetcher.fetchSampleDataForMercurySamples(
-                sampleNames.values(), BSPSampleSearchColumn.BUCKET_PAGE_COLUMNS);
-        for (Map.Entry<String, SampleData> sampleDataEntry : sampleDataMap.entrySet()) {
-            sampleNames.get(sampleDataEntry.getKey()).setSampleData(sampleDataEntry.getValue());
-        }
+        sampleDataFetcher.fetchSampleDataForMercurySamples(sampleNames, BSPSampleSearchColumn.BUCKET_PAGE_COLUMNS);
     }
 
     /**

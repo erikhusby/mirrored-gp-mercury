@@ -214,21 +214,12 @@ public class SampleDataFetcher implements Serializable {
      * the API. This should also involve an analysis of the overlap between BSPSampleSearchColumn and
      * {@link Metadata.Key}.
      *
-     * @param samples                collection of product order sample for which sample data is needed
+     * @param samplesMap             Mapping of sampleId to MercurySample for which sample data should be fetched.
      * @param bspSampleSearchColumns hint for which columns to return data for, if performance is a factor
      *
      * @return Mapping of sample id to its sample data
      */
-    public Map<String, SampleData> fetchSampleDataForMercurySamples(Collection<MercurySample> samples,
-                                                                    BSPSampleSearchColumn... bspSampleSearchColumns) {
-        Map<String, MercurySample> sampleData = new HashMap<>();
-        for (MercurySample sample : samples) {
-            sampleData.put(sample.getSampleKey(), sample);
-        }
-        return fetchSampleDataForMercurySamples(sampleData, bspSampleSearchColumns);
-    }
-
-    private Map<String, SampleData> fetchSampleDataForMercurySamples(Map<String, MercurySample> samplesMap,
+    public Map<String, SampleData> fetchSampleDataForMercurySamples(Map<String, MercurySample> samplesMap,
                                                                      BSPSampleSearchColumn... bspSampleSearchColumns) {
         Map<String, SampleData> sampleData = new HashMap<>();
         Collection<MercurySample> mercurySamplesWithMercurySource = new ArrayList<>();
