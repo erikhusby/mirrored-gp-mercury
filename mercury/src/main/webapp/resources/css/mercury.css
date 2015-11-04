@@ -196,25 +196,3 @@ legend + .control-group { margin-top: 0px; -webkit-margin-top-collapse: separate
 .graphEdgeLabel {font-family: Arial}
 .graphLabel { fill: black; stroke-width: 1px; font-family: Arial; font-size: 12px; text-anchor: middle; }
 .graphOverlay { fill: LightYellow; pointer-events: all; }
-
-.menu {
-   border: 1px solid black;
-   background-color: grey;
-   display: none;
-   position: relative;
-}
-.menu,
-.menu li {
-   padding: 0;
-   margin: 0;
-}
-.menu li {
-   color: white;
-}
-.menu > li:hover {
-   background-color: lightblue;
-   color: black;
-}
-.menu li {
-   display: block;
-}
