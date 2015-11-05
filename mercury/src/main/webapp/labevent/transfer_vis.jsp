@@ -14,10 +14,10 @@
         <script src="${ctxpath}/resources/scripts/D3/transfer_visualizer.js" type="text/javascript"></script>
 
         <script type="text/javascript">
-            <c:if test="${not empty actionBean.barcodes}">
+            <c:if test="${not empty actionBean.jsonUrl}">
             $j(document).ready(
                     function () {
-                        d3.json("${ctxpath}/labevent/transfervis.action?getJson=&barcodes=${actionBean.barcodes[0]}")
+                        d3.json("${ctxpath}${actionBean.jsonUrl}")
                                 .on("progress", function() {
                                     d3.select("#graphDiv").html("Bytes loaded: " + d3.event.loaded);
                                 })
@@ -36,7 +36,7 @@
                 <div class="control-group">
                     <label for="barcodes" class="control-label">Barcodes</label>
                     <div class="controls">
-                        <textarea name="barcodes" id="barcodes"></textarea>
+                        <textarea name="barcodes" id="barcodes">${actionBean.barcodes}</textarea>
                         <stripes:submit name="visualize" value="Visualize" class="btn btn-primary"/>
                         <div id="progress"></div>
                     </div>
