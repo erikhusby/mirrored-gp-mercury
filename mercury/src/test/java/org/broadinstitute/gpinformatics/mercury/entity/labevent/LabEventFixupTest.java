@@ -1032,4 +1032,26 @@ public class LabEventFixupTest extends Arquillian {
         utx.commit();
     }
 
+    @Test(enabled = false)
+    public void fixupGplim3845() throws Exception {
+        // Delete cherry pick.
+        userBean.loginOSUser();
+        utx.begin();
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, 1076569L);
+        CherryPickTransfer transfer = labEventDao.findById(CherryPickTransfer.class, 164987L);
+
+        labEvent.getCherryPickTransfers().clear();
+
+        transfer.getAncillaryTargetVessel().getVesselToVesselTransfersThisAsTarget().remove(transfer);
+        transfer.getAncillarySourceVessel().getVesselToVesselTransfersThisAsSource().remove(transfer);
+        transfer.getTargetVesselContainer().getCherryPickTransfersTo().remove(transfer);
+        transfer.getSourceVesselContainer().getCherryPickTransfersFrom().remove(transfer);
+        labEventDao.remove(transfer);
+
+        labEventDao.remove(labEvent);
+        labEventDao.persist(new FixupCommentary("GPLIM-3845 delete cherry pick event"));
+        labEventDao.flush();
+        utx.commit();
+    }
+
 }
