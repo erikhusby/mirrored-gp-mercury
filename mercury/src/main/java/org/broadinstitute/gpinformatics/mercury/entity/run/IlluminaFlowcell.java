@@ -50,15 +50,23 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
         return loadedVesselsAndPositions;
     }
 
+    public enum CreateFct {
+        YES,
+        NO
+    }
+
     public enum FlowcellType {
         MiSeqFlowcell("Flowcell1Lane", "MiSeq Flowcell", VesselGeometry.FLOWCELL1x1, "Illumina MiSeq", "^A\\w{4}$",
-                "MiSeq", CreateFields.IssueType.MISEQ, LabBatch.LabBatchType.MISEQ),
+                "MiSeq", CreateFields.IssueType.MISEQ, LabBatch.LabBatchType.MISEQ, CreateFct.YES),
         HiSeqFlowcell("Flowcell8Lane", "HiSeq 2000 Flowcell", VesselGeometry.FLOWCELL1x8, "Illumina HiSeq 2000",
-                "^\\w{9}$", "HiSeq", CreateFields.IssueType.FLOWCELL, LabBatch.LabBatchType.FCT),
+                "^\\w{9}$", "HiSeq", CreateFields.IssueType.FLOWCELL, LabBatch.LabBatchType.FCT, CreateFct.YES),
+        // todo jmt could also be ANXX or BCXX?
         HiSeq2500Flowcell("Flowcell2Lane", "HiSeq 2500 Flowcell", VesselGeometry.FLOWCELL1x2, "Illumina HiSeq 2500",
-                "^\\w+ADXX$", "HiSeq", CreateFields.IssueType.FLOWCELL, LabBatch.LabBatchType.FCT),
+                "^\\w+ADXX$", "HiSeq", CreateFields.IssueType.FLOWCELL, LabBatch.LabBatchType.FCT, CreateFct.YES),
+        HiSeq4000Flowcell("Flowcell8Lane4000", "HiSeq 4000 Flowcell", VesselGeometry.FLOWCELL1x8, "Illumina HiSeq 4000",
+                "^\\w+BBXX$", "HiSeq", CreateFields.IssueType.FLOWCELL, LabBatch.LabBatchType.FCT, CreateFct.YES),
         OtherFlowcell("FlowcellUnknown", "Unknown Flowcell", VesselGeometry.FLOWCELL1x2, "Unknown Model", ".*", null,
-                null, null);
+                null, null, CreateFct.NO);
 
         /**
          * The sequencer model (think vendor/make/model)
@@ -100,9 +108,13 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
         private LabBatch.LabBatchType batchType;
 
         /**
+         * Whether to display on Create FCT page.
+         */
+        private CreateFct createFct;
+
+        /**
          * Creates a FlowcellType with an automation name, display name, and geometry.
-         *
-         * @param automationName    The name that will be supplied by automation scripts
+         *  @param automationName    The name that will be supplied by automation scripts
          * @param displayName       The name that will be supplied by automation scripts
          * @param vesselGeometry    The vessel geometry
          * @param model             The sequencer model (think vendor/make/model).
@@ -110,9 +122,11 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
          * @param sequencingStationName The sequencing station used when the flowcell was sequenced.
          * @param issueType         The Jira IssueType used when creating FCT tickets.
          * @param batchType         The type of batch to use for this flowcell type.
+         * @param createFct         Whether to display on Create FCT page.
          */
         FlowcellType(String automationName, String displayName, VesselGeometry vesselGeometry, String model,
-                     String flowcellTypeRegex, String sequencingStationName, CreateFields.IssueType issueType, LabBatch.LabBatchType batchType) {
+                String flowcellTypeRegex, String sequencingStationName, CreateFields.IssueType issueType,
+                LabBatch.LabBatchType batchType, CreateFct createFct) {
             this.automationName = automationName;
             this.displayName = displayName;
             this.vesselGeometry = vesselGeometry;
@@ -120,6 +134,7 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
             this.sequencingStationName = sequencingStationName;
             this.issueType = issueType;
             this.batchType = batchType;
+            this.createFct = createFct;
             this.flowcellTypeRegex = Pattern.compile(flowcellTypeRegex);
         }
 
@@ -139,7 +154,6 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
 
         /**
          * Returns the model of the sequencer (think vendor/make/model)
-         * @return
          */
         public String getSequencerModel() {
             return model;
@@ -198,6 +212,8 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
                 return MiSeqFlowcell;
             } else if (FlowcellType.HiSeq2500Flowcell.getFlowcellTypeRegex().matcher(barcode).matches()) {
                 return HiSeq2500Flowcell;
+            } else if (FlowcellType.HiSeq4000Flowcell.getFlowcellTypeRegex().matcher(barcode).matches()) {
+                return HiSeq4000Flowcell;
             } else if (FlowcellType.HiSeqFlowcell.getFlowcellTypeRegex().matcher(barcode).matches()) {
                 return HiSeqFlowcell;
             } else if (FlowcellType.OtherFlowcell.getFlowcellTypeRegex().matcher(barcode).matches()) {
@@ -215,8 +231,8 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
             return batchType;
         }
 
-        public void setBatchType(LabBatch.LabBatchType batchType) {
-            this.batchType = batchType;
+        public CreateFct getCreateFct() {
+            return createFct;
         }
     }
 
