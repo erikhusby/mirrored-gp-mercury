@@ -191,6 +191,32 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
     }
 
     /**
+     * Overridden to gather LabEvent objects for entity ids and pass to writer so the file writes are forked
+     * into event or ancestry file
+     */
+    @Override
+    protected int writeRecords(Collection<Long> deletedEntityIds,
+                               Collection<Long> modifiedEntityIds,
+                               Collection<Long> addedEntityIds,
+                               Collection<RevInfoPair<LabEvent>> revInfoPairs,
+                               String etlDateStr) {
+
+        Collection<Long> nonDeletedIds = new ArrayList<>();
+        nonDeletedIds.addAll(modifiedEntityIds);
+        nonDeletedIds.addAll(addedEntityIds);
+
+        Collection<LabEvent> eventList = new ArrayList<>();
+        LabEvent event;
+        for (Long entityId : nonDeletedIds) {
+            event = dao.findById( LabEvent.class, entityId );
+            if( event != null ) {
+                eventList.add(event);
+            }
+        }
+        return writeRecords( eventList, deletedEntityIds, etlDateStr );
+    }
+
+    /**
 
     /**
      * Modifies the id lists and possibly also invokes sequencingSampleFact ETL, in order to fixup the downstream
