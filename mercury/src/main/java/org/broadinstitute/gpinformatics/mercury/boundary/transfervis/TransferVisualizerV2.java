@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.io.Writer;
 import java.text.Format;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -191,6 +192,7 @@ public class TransferVisualizerV2 {
 
         }
 
+        @SuppressWarnings("ImplicitNumericConversion")
         private void renderContainer(VesselContainer<?> vesselContainer, LabVessel ancillaryVessel, LabVessel labVessel,
                 boolean followRearrays) throws JSONException {
             String containerLabel = vesselContainer.getEmbedder().getLabel();
@@ -236,8 +238,10 @@ public class TransferVisualizerV2 {
                         key("children").array();
 
                 // JSON for in-place events
+                List<LabEvent> inPlaceLabEvents = new ArrayList<>(vesselContainer.getEmbedder().getInPlaceLabEvents());
+                Collections.sort(inPlaceLabEvents, LabEvent.BY_EVENT_DATE);
                 int inPlaceEventOffset = ROW_HEIGHT;
-                for (LabEvent labEvent : vesselContainer.getEmbedder().getInPlaceLabEvents()) {
+                for (LabEvent labEvent : inPlaceLabEvents) {
                     jsonWriter.object().
                             key("name").value(buildEventLabel(labEvent)).
                             key("x").value(0L).key("y").value(inPlaceEventOffset).
