@@ -6,9 +6,13 @@ function renderJson(json) {
     var width = 1200, height = 950;
     var menu = [
         {
-            title: 'Add barcode',
+            title: function (d) {
+                // todo jmt Avoid In-place events contextmenu
+                return 'Add barcode ' + d.label;
+            },
             action: function (element, d, i) {
-                console.log("adding " + element.__data__);
+                var currentValue = d3.select("#barcodes").text();
+                d3.select("#barcodes").text(currentValue + " " + d.label);
             }
         }
     ];
@@ -46,56 +50,56 @@ function renderJson(json) {
             fill: '#000'
         });
 
-    // Create a new directed graph
-    var g = new dagre.graphlib.Graph();
-
-    // Set an object for the graph label
-    g.setGraph({ranksep: 100});
+    // Create a new directed graph using Dagre (D3 doesn't currently have a good built-in layout for directed graphs).
+    var dagreGraph = new dagre.graphlib.Graph();
+    dagreGraph.setGraph({ranksep: 100});
 
     // Default to assigning a new object as a label for each new edge.
-    g.setDefaultEdgeLabel(function() { return {}; });
-    // function read(json) {
+    dagreGraph.setDefaultEdgeLabel(function() { return {}; });
 
     // Load json nodes and links into Dagre's model.  Dagre primarily uses width and height.
     for (var i = 0; i < json.nodes.length; i++) {
-        g.setNode(json.nodes[i].id, json.nodes[i].values);
+        dagreGraph.setNode(json.nodes[i].id, json.nodes[i]);
     }
     for (i = 0; i < json.links.length; i++) {
-        g.setEdge(json.links[i].source, json.links[i].target);
+        dagreGraph.setEdge(json.links[i].source, json.links[i].target);
     }
 
     // Assign x / y coordinates.
-    dagre.layout(g);
+    dagre.layout(dagreGraph);
 
     // Render racks and plates.
-    var margin = 10, pad = 12;
+    var dagreNodeIds = dagreGraph.nodes();
+    var dagreNodes = [];
+    for (i = 0; i < dagreNodeIds.length; i++) {
+        dagreNodes.push(dagreGraph.node(dagreNodeIds[i]));
+    }
     var node = svg.selectAll(".graphNode")
-        .data(g.nodes())
+        .data(dagreNodes)
         .enter().append("g")
         .attr("class", "graphNode")
         .attr("transform", function (d) {
-            var graphNode = g.node(d);
-            var x = graphNode.x - (graphNode.width / 2);
-            var y = graphNode.y - (graphNode.height / 2);
+            var x = d.x - (d.width / 2);
+            var y = d.y - (d.height / 2);
             return "translate(" + x + "," + y + ")";
         });
     node.append("rect")
         .attr("class", "graphNodeRect")
         .attr("width", function (d) {
-            return g.node(d).width;
+            return d.width;
         })
         .attr("height", function (d) {
-            return g.node(d).height;
+            return d.height;
         })
         .on("contextmenu", d3.contextMenu(menu));
     node.append("text")
         .attr("class", "graphLabel")
         .attr("text-anchor", "middle")
         .text(function (d) {
-            return g.node(d).label;
+            return d.label;
         })
         .attr("x", function (d) {
-            return g.node(d).width / 2;
+            return d.width / 2;
         })
         .attr("y", function (d) {
             return 14;
@@ -105,7 +109,7 @@ function renderJson(json) {
     // Set the D3 datum to the children.
     var nodeChildEnter = node.selectAll(".nodeChild")
         .data(function (d) {
-            return g.node(d).children;
+            return d.children;
         })
         .enter();
 
@@ -137,20 +141,20 @@ function renderJson(json) {
         })
         .attr("text-anchor", "middle")
         .text(function (d) {
-            return d.name;
+            return d.label ? d.label : d.name;
         })
         .on("contextmenu", d3.contextMenu(menu));
 
     // Make list of edges to draw, including between children, if applicable.
     var links = [];
     json.links.forEach(function(l) {
-        var sourceNode = g.node(l.source);
+        var sourceNode = dagreGraph.node(l.source);
         var sourceX = sourceNode.x;
         var sourceY = sourceNode.y;
         var i, len;
         if (l.sourceChild) {
             for (i = 0, len = sourceNode.children.length; i < len; i++) {
-                if (sourceNode.children[i].name === l.sourceChild) {
+                if (sourceNode.children[i].label === l.sourceChild) {
                     sourceX += sourceNode.children[i].x - (sourceNode.width / 2);
                     sourceY += sourceNode.children[i].y - (sourceNode.height / 2);
                     break;
@@ -160,12 +164,12 @@ function renderJson(json) {
             sourceY += sourceNode.height / 2;
         }
         // todo jmt reduce copy / paste
-        var targetNode = g.node(l.target);
+        var targetNode = dagreGraph.node(l.target);
         var targetX = targetNode.x;
         var targetY = targetNode.y;
         if (l.targetChild) {
             for (i = 0, len = targetNode.children.length; i < len; i++) {
-                if (targetNode.children[i].name === l.targetChild) {
+                if (targetNode.children[i].label === l.targetChild) {
                     targetX += targetNode.children[i].x - (targetNode.width / 2);
                     targetY += targetNode.children[i].y - (targetNode.height / 2);
                     break;
@@ -236,12 +240,13 @@ function renderJson(json) {
 
     // Pan to starting vessel.
     var scale = 1;
-    var graphNode = g.node(json.startId);
+    var graphNode = dagreGraph.node(json.startId);
     var panX = (graphNode.x * -scale) + (width / 2);
     var panY = (graphNode.y * -scale) + (height / 2);
     zoomBehavior.translate([panX, panY]).scale(1);
     zoomBehavior.event(svg.transition().duration(500));
 
+    // Creates tspan elements to break a long label across multiple lines.
     function wrap(text, width) {
         text.each(function() {
             var text = d3.select(this),

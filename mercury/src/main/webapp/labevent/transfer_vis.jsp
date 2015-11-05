@@ -36,7 +36,7 @@
                 <div class="control-group">
                     <label for="barcodes" class="control-label">Barcodes</label>
                     <div class="controls">
-                        <input type="text" name="barcodes" id="barcodes">
+                        <textarea name="barcodes" id="barcodes"></textarea>
                         <stripes:submit name="visualize" value="Visualize" class="btn btn-primary"/>
                         <div id="progress"></div>
                     </div>

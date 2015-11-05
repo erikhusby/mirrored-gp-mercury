@@ -229,7 +229,7 @@ public class TransferVisualizerV2 {
                 int height = Math.max(ROW_HEIGHT, maxRow * ROW_HEIGHT) + inPlaceHeight;
 
                 // JSON for the parent vessel
-                jsonWriter.object().key("id").value(containerLabel).key("values").object().
+                jsonWriter.object().key("id").value(containerLabel).
                         key("label").value(ancillaryLabel).
                         key("width").value(width).
                         key("height").value(height).
@@ -251,7 +251,7 @@ public class TransferVisualizerV2 {
                     LabVessel child = vesselContainer.getVesselAtPosition(vesselPosition);
                     if (child != null) {
                         jsonWriter.object().
-                                key("name").value(child.getLabel()).
+                                key("label").value(child.getLabel()).
                                 key("x").value((rowColumn.getColumn() - 1) * WELL_WIDTH).
                                 key("y").value((rowColumn.getRow()) * ROW_HEIGHT + inPlaceHeight).
                                 key("w").value(WELL_WIDTH).key("h").value(ROW_HEIGHT);
@@ -261,7 +261,7 @@ public class TransferVisualizerV2 {
                         jsonWriter.endObject();
                     }
                 }
-                jsonWriter.endArray().endObject().endObject();
+                jsonWriter.endArray().endObject();
                 if (startId == null) {
                     startId = containerLabel;
                 }
