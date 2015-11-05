@@ -11,10 +11,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToVesselTransfer;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
@@ -28,7 +24,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,7 +39,7 @@ public class LabEventSearchDefinition {
      * and expanding the list of events by optional ancestor and/or descendant traversal. <br />
      * Shared by terms in multiple groups (batch and vessel)
      */
-    private ConfigurableSearchDefinition eventByVesselSearchDefinition;
+    private final ConfigurableSearchDefinition eventByVesselSearchDefinition;
 
     public LabEventSearchDefinition(){
         eventByVesselSearchDefinition = buildAlternateSearchDefByVessel();
@@ -58,7 +53,7 @@ public class LabEventSearchDefinition {
     public enum TraversalEvaluatorName {
         ANCESTORS("ancestorOptionEnabled"), DESCENDANTS("descendantOptionEnabled");
 
-        private String id;
+        private final String id;
 
         TraversalEvaluatorName(String id ) {
             this.id = id;
@@ -435,7 +430,7 @@ public class LabEventSearchDefinition {
             @Override
             public Set<String> evaluate(Object entity, SearchContext context) {
                 // Has to handle LabEvent from parent term and LabVessel from nested table
-                LabVessel labVessel = null;
+                LabVessel labVessel;
                 LabEvent labEvent;
 
                 Set<String> results = new HashSet<>();
@@ -578,7 +573,7 @@ public class LabEventSearchDefinition {
             @Override
             public Set<String> evaluate(Object entity, SearchContext context) {
                 Set<String> results = new HashSet<>();
-                LabVessel labVessel = null;
+                LabVessel labVessel;
                 // Has to handle LabEvent from parent term, LabVessel from nested table,
                 //  and sample data from nested table.
 

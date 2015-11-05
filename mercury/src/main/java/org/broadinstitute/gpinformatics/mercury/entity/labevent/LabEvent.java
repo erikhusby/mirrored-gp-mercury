@@ -24,6 +24,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.envers.Audited;
 
+import javax.annotation.Nullable;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -171,6 +172,7 @@ public class LabEvent {
      */
     @ManyToOne(cascade = {CascadeType.PERSIST}, fetch = FetchType.LAZY)
     @JoinColumn(name = "IN_PLACE_LAB_VESSEL")
+    @Nullable
     private LabVessel inPlaceLabVessel;
 
     /**
@@ -435,6 +437,7 @@ todo jmt adder methods
         this.labEventMetadatas = labEventMetadatas;
     }
 
+    @Nullable
     public LabVessel getInPlaceLabVessel() {
         return inPlaceLabVessel;
     }
