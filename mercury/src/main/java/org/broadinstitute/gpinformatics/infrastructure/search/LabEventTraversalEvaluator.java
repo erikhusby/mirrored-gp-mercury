@@ -23,11 +23,12 @@ public abstract class LabEventTraversalEvaluator extends TraversalEvaluator {
 
     /**
      * Traverse ancestor and/or descendants of supplied event list (or neither if no options selected).
-     * @param rootEntities
+     * @param rootEntities A group of starting events from which to obtain ancestors or descendants
+     * @param searchInstance The search instance used for this search (not used in this case)
      * @return
      */
     @Override
-    public Set<Object> evaluate(List<?> rootEntities) {
+    public Set<Object> evaluate(List<?> rootEntities, SearchInstance searchInstance) {
 
         TransferTraverserCriteria.LabEventDescendantCriteria eventTraversalCriteria =
                 new TransferTraverserCriteria.LabEventDescendantCriteria();

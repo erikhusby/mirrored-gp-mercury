@@ -141,7 +141,7 @@ public class Preference {
         return data;
     }
 
-    private void setData(String data) {
+    public void setData(String data) {
         this.data = data;
     }
 

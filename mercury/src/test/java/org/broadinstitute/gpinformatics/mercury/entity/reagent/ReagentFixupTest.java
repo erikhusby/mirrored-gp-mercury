@@ -11,8 +11,12 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.GenericReage
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventReagent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventReagent_;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent_;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.hibernate.SQLQuery;
+import org.hibernate.type.LongType;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -20,6 +24,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import javax.persistence.Query;
 import javax.transaction.HeuristicMixedException;
 import javax.transaction.HeuristicRollbackException;
 import javax.transaction.NotSupportedException;
@@ -641,7 +646,7 @@ public class ReagentFixupTest extends Arquillian {
         genericReagentDao.flush();
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void fixupGplim3787date() throws Exception {
         userBean.loginOSUser();
         // Previous fixup used wrong date format.
@@ -656,4 +661,123 @@ public class ReagentFixupTest extends Arquillian {
         genericReagentDao.flush();
     }
 
+    // Two fixups:
+    // - Adds bait reagents to events from data pulled from the Bravo logs.
+    // - Moves bait reagents from Hybridization events to their companion Bait Pick events.
+    @Test(enabled = false)
+    public void gplim3791backfill() throws Exception {
+        userBean.loginOSUser();
+        final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+        final SimpleDateFormat expDateFormat = new SimpleDateFormat("MM-dd-yyyy");
+        // All existing RapCap4 bait reagents verified that they have exactly this name.
+        final String reagentName = "Rapid Capture Kit Box 4 (Bait)";
+
+        // A mapping of the newly created reagents so that duplicate creation is not attempted (causes unique key fail).
+        Map<String, Reagent> mapExpLotToNewReagent = new HashMap<>();
+
+        final String[] bravoLogData = {
+                "2015-08-26T10:37:10", "Ice1stBaitPick", "03-17-2018", "15F24A0005",
+                "2015-08-26T15:45:07", "Ice2ndBaitPick", "03-17-2018", "15F24A0005",
+                "2015-09-02T08:15:19", "Ice1stBaitPick", "03-17-2018", "010066231",
+                "2015-09-02T13:25:56", "Ice2ndBaitPick", "03-17-2018", "010066231",
+                "2015-09-10T09:21:07", "Ice1stBaitPick", "03-17-2018", "15F24A0005",
+                "2015-09-10T14:31:08", "Ice2ndBaitPick", "03-17-2018", "15F24A0005",
+                "2015-09-16T08:50:01", "Ice1stBaitPick", "03-17-2018", "15F24A0005",
+                "2015-09-16T13:56:01", "Ice2ndBaitPick", "03-17-2018", "15F24A0005",
+                "2015-09-21T09:08:48", "Ice1stBaitPick", "03-17-2018", "15F24A0005",
+                "2015-09-21T14:12:36", "Ice2ndBaitPick", "03-17-2018", "15F24A0005",
+                "2015-09-29T09:04:04", "Ice1stBaitPick", "03-17-2018", "10066231",
+                "2015-09-29T14:13:05", "Ice2ndBaitPick", "03-17-2018", "15E28A0003",
+                //"2015-10-07T08:13:56", "Ice1stBaitPick", "03-17-2018", "010066231", // fixed up in GPLIM-3787
+                //"2015-10-07T13:22:53", "Ice2ndBaitPick", "03-17-2018", "010066231", // fixed up in GPLIM-3787
+                "2015-10-14T11:13:25", "Ice1stBaitPick", "03-17-2018", "15F24A0005",
+                "2015-10-14T16:19:01", "Ice2ndBaitPick", "03-17-2018", "15F24A0005",
+        };
+        Assert.assertEquals(bravoLogData.length % 4, 0, "Bad input array length");
+        utx.begin();
+        // Reads in the Bravo data and adds reagents.
+        int index = 0;
+        while (index < bravoLogData.length) {
+            String eventStart = bravoLogData[index++];
+            String pickEventType = bravoLogData[index++];
+            String baitLotExpiration = bravoLogData[index++];
+            String baitLot = bravoLogData[index++];
+
+            Date eventDate = dateFormat.parse(eventStart);
+            Date expirationDate = expDateFormat.parse(baitLotExpiration);
+
+            LabEvent pickEvent = null;
+            for (LabEvent event : labEventDao.findByDate(eventDate, eventDate)) {
+                if (event.getLabEventType().getName().equals(pickEventType)) {
+                    Assert.assertNull(pickEvent, "Multiple ice bait pick events on " + eventStart);
+                    pickEvent = event;
+                }
+            }
+            // Sanity checks the event and its reagents.
+            Assert.assertNotNull(pickEvent, "Missing " + pickEventType + " event on " + eventStart);
+            for (Reagent reagent : pickEvent.getReagents()) {
+                Assert.assertFalse(reagentName.equals(reagent.getName()),
+                        reagentName + " is already on pick event " + pickEvent.getLabEventId());
+            }
+
+            // Gets or makes the reagent to use.
+            Reagent baitReagent = mapExpLotToNewReagent.get(baitLot + baitLotExpiration);
+            if (baitReagent == null) {
+                baitReagent = genericReagentDao.findByReagentNameLotExpiration(reagentName, baitLot, expirationDate);
+            }
+            if (baitReagent == null) {
+                System.out.println("Making new instance of " + reagentName + " lot " + baitLot +
+                                   " exp " + baitLotExpiration);
+                baitReagent = new GenericReagent(reagentName, baitLot, expirationDate);
+                mapExpLotToNewReagent.put(baitLot + baitLotExpiration, baitReagent);
+            }
+
+            // Adds bait reagent to the pick event.
+            System.out.println("Adding " + baitReagent.getName() + " lot " + baitReagent.getLot() + " exp " +
+                               dateFormat.format(baitReagent.getExpiration()) + " to " + pickEventType +
+                               " on " + eventStart + " eventId " + pickEvent.getLabEventId());
+            pickEvent.addReagent(baitReagent);
+        }
+
+        // Finds all the bait reagents that are on hybridization events
+        Query query = labEventDao.getEntityManager().createNativeQuery(
+                "SELECT lab_event_reagent_id from lab_event_reagents ler, reagent r, lab_event le " +
+                "where ler.lab_event = le.lab_event_id and ler.reagents = r.reagent_id " +
+                "and r.reagent_name = 'Rapid Capture Kit Box 4 (Bait)' " +
+                "and le.lab_event_type like '%HYBRIDIZATION' ");
+        query.unwrap(SQLQuery.class).addScalar("lab_event_reagent_id", LongType.INSTANCE);
+        List<Long> labEventReagentIds = query.getResultList();
+        Assert.assertTrue(labEventReagentIds.size() > 0);
+        List<LabEventReagent> labEventReagents = new ArrayList<>(labEventDao.findListByList(LabEventReagent.class,
+                LabEventReagent_.labEventReagentId, labEventReagentIds));
+        Assert.assertEquals(labEventReagents.size(), labEventReagentIds.size());
+        for (LabEventReagent labEventReagent : labEventReagents) {
+            LabEvent hybEvent = labEventReagent.getLabEvent();
+            LabEvent pickEvent = null;
+            for (LabEvent event : labEventDao.findByDate(hybEvent.getEventDate(), hybEvent.getEventDate())) {
+                if (event.getLabEventType().getName().contains("BaitPick")) {
+                    Assert.assertNull(pickEvent, "Multiple bait picks " + dateFormat.format(hybEvent.getEventDate()));
+                    pickEvent = event;
+                }
+            }
+            // Sanity checks the pick event and its reagents.
+            Assert.assertNotNull(pickEvent, "Missing bait pick event on " + dateFormat.format(hybEvent.getEventDate()));
+            for (Reagent reagent : pickEvent.getReagents()) {
+                Assert.assertFalse(reagentName.equals(reagent.getName()),
+                        reagentName + " is already on pick event " + pickEvent.getLabEventId());
+            }
+            Reagent baitReagent = labEventReagent.getReagent();
+            System.out.println("Moving " + baitReagent.getName() + " lot " + baitReagent.getLot() +
+                               " exp " + dateFormat.format(baitReagent.getExpiration()) +
+                               " from " + hybEvent.getLabEventType().getName() + " (" + hybEvent.getLabEventId() + ")" +
+                               " on " + dateFormat.format(hybEvent.getEventDate()) +
+                               " to " + pickEvent.getLabEventType().getName() + " (" + pickEvent.getLabEventId() + ")");
+            pickEvent.addReagent(baitReagent);
+            hybEvent.getLabEventReagents().remove(labEventReagent);
+            labEventDao.remove(labEventReagent);
+        }
+        genericReagentDao.persist(new FixupCommentary("GPLIM-3791 backfill missing bait reagents."));
+        genericReagentDao.flush();
+        utx.commit();
+    }
 }

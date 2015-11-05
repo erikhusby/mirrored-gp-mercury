@@ -63,7 +63,9 @@ public class QtpEntityBuilder {
 
     public QtpEntityBuilder invoke(boolean doPoolingTransfer, QtpJaxbBuilder.PcrType pcrType) {
         QtpJaxbBuilder qtpJaxbBuilder = new QtpJaxbBuilder(bettaLimsMessageTestFactory, testPrefix,
-                listLcsetListNormCatchBarcodes, normCatchRackBarcodes, doPoolingTransfer, pcrType).invoke();
+                listLcsetListNormCatchBarcodes, normCatchRackBarcodes, doPoolingTransfer, pcrType);
+        qtpJaxbBuilder.invokeToQuant();
+        qtpJaxbBuilder.invokePostQuant();
         PlateCherryPickEvent cherryPickJaxb = qtpJaxbBuilder.getPoolingTransferJaxb();
         PlateCherryPickEvent denatureJaxb = qtpJaxbBuilder.getDenatureJaxb();
         String normalizationRackBarcode = qtpJaxbBuilder.getNormalizationRackBarcode();

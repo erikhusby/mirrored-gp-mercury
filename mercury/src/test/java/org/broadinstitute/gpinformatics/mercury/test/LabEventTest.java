@@ -145,7 +145,7 @@ public class LabEventTest extends BaseEventTest {
     /**
      * Used in test verification, accumulates the events in a chain of transfers
      */
-    public static class ListTransfersFromStart implements TransferTraverserCriteria {
+    public static class ListTransfersFromStart extends TransferTraverserCriteria {
         private int hopCount = -1;
         private final List<String> labEventNames = new ArrayList<>();
 
@@ -165,22 +165,20 @@ public class LabEventTest extends BaseEventTest {
 
         @Override
         public TraversalControl evaluateVesselPreOrder(Context context) {
-            if (context.getEvent() != null) {
-                labEventNamesByHopCount.get(context.getHopCount()).add(context.getEvent());
+            if( context.getHopCount() > 0 ) {
+                // Traversal starting vessel has no event
+                LabEvent contextEvent = context.getVesselEvent().getLabEvent();
+                labEventNamesByHopCount.get(context.getHopCount()).add(contextEvent);
 
-                if (!getVisitedLabEvents().add(context.getEvent())) {
+                if (!getVisitedLabEvents().add(contextEvent)) {
                     return TraversalControl.StopTraversing;
                 }
                 if (context.getHopCount() > hopCount) {
                     hopCount = context.getHopCount();
-                    labEventNames.add(makeLabEventName(context.getEvent()));
+                    labEventNames.add(makeLabEventName(contextEvent));
                 }
             }
             return TraversalControl.ContinueTraversing;
-        }
-
-        @Override
-        public void evaluateVesselInOrder(Context context) {
         }
 
         @Override

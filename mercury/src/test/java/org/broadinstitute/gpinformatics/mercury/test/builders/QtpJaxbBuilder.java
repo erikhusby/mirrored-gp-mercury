@@ -126,7 +126,8 @@ public class QtpJaxbBuilder {
         return normalizationJaxb;
     }
 
-    public QtpJaxbBuilder invoke() {
+    /** Adds the optional pooling transfer message and the eco/viia7 quant messages. */
+    public QtpJaxbBuilder invokeToQuant() {
         if (doPoolingTransfer) {
             int i = 0;
             // PoolingTransfer
@@ -186,6 +187,12 @@ public class QtpJaxbBuilder {
                 viia7TransferMessage = bettaLimsMessageTestFactory.addMessage(messageList, viia7TransferJaxb);
                 break;
         }
+
+        return this;
+    }
+
+    /** Adds the normalization and denature transfer messages. */
+    public QtpJaxbBuilder invokePostQuant() {
 
         // NormalizationTransfer
         normalizationRackBarcode = "NormalizationRack" + testPrefix;

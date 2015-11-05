@@ -10,11 +10,15 @@ TRAILING NULLCOLS
  lab_event_id,
  workflow_id,
  process_id,
+ lab_event_type,
  product_order_id,
  sample_name,
+ lcset_sample_name,
  batch_name,
  station_name,
  lab_vessel_id,
+ position,
  event_date DATE "YYYYMMDDHH24MISS",
- program_name
+ program_name,
+ molecular_indexing_scheme
 )

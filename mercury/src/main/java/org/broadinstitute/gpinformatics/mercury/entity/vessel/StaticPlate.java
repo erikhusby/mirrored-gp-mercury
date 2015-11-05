@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
@@ -156,7 +157,7 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
         return parents;
     }
 
-    public static class HasRackContentByWellCriteria implements TransferTraverserCriteria {
+    public static class HasRackContentByWellCriteria extends TransferTraverserCriteria {
 
         private Map<VesselPosition, Boolean> result = new HashMap<>();
 
@@ -180,27 +181,30 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
              * possible for that test to pass even with this check. Note that this may also make code coverage waver
              * ever so slightly based on whether or not this expression evaluates to true for a particular test run.
              */
-            // Record the VesselPosition at hop count zero as the query position.  The position at which we find the
+            // Record the VesselPosition at hop count one as the query position.  The position at which we find the
             // upstream tube (or empty slot in the rack) may be different, but the "sample containment" flag should
             // be set for the query vessel position.
-            if (context.getHopCount() == 0) {
-                queryVesselPosition = context.getVesselPosition();
-                if (!result.containsKey(queryVesselPosition)) {
-                    result.put(queryVesselPosition, false);
-                }
-            }
 
-            if (context.getLabVessel() != null && context.getVesselContainer() != null) {
-                if (OrmUtil.proxySafeIsInstance(context.getVesselContainer().getEmbedder(), TubeFormation.class)) {
-                    result.put(queryVesselPosition, true);
-                    return TraversalControl.StopTraversing;
+            Pair<LabVessel,VesselPosition> vesselPositionPair = context.getContextVesselAndPosition();
+            LabVessel contextVessel = vesselPositionPair.getLeft();
+            VesselPosition contextVesselPosition = vesselPositionPair.getRight();
+            VesselContainer contextVesselContainer = context.getContextVesselContainer();
+
+            if ( context.getHopCount() == 0 ) {
+                if( contextVesselPosition != null ) {
+                    queryVesselPosition = contextVesselPosition;
+                    if (!result.containsKey(queryVesselPosition)) {
+                        result.put(queryVesselPosition, false);
+                    }
+                }
+            } else if( contextVessel != null && contextVesselContainer != null ) {
+                if (OrmUtil.proxySafeIsInstance(contextVesselContainer.getEmbedder(), TubeFormation.class)) {
+                        result.put(contextVesselPosition, true);
+                        return TraversalControl.StopTraversing;
                 }
             }
             return TraversalControl.ContinueTraversing;
         }
-
-        @Override
-        public void evaluateVesselInOrder(Context context) {}
 
         @Override
         public void evaluateVesselPostOrder(Context context) {}
