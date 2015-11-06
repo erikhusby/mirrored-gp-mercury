@@ -90,6 +90,9 @@ public class TransferVisualizerV2 {
             }
         }
 
+        /**
+         * Render a transfer event.
+         */
         private void renderEvent(LabEvent event, LabVessel labVessel) throws JSONException {
             // Primary key for events
             String eventId = event.getEventLocation() + "|" + event.getEventDate().getTime() + "|" +
@@ -136,19 +139,24 @@ public class TransferVisualizerV2 {
                             vesselToSectionTransfer.getTargetVesselContainer().getEmbedder().getLabel(), label);
                 }
                 for (VesselToVesselTransfer vesselToVesselTransfer : event.getVesselToVesselTransfers()) {
-                    renderVessel(vesselToVesselTransfer.getSourceVessel());
-                    renderVessel(vesselToVesselTransfer.getTargetVessel());
-                    renderEdge(vesselToVesselTransfer.getSourceVessel().getLabel(),
-                            vesselToVesselTransfer.getTargetVessel().getLabel(), label);
+                    LabVessel sourceVessel = vesselToVesselTransfer.getSourceVessel();
+                    renderVessel(sourceVessel);
+                    LabVessel targetVessel = vesselToVesselTransfer.getTargetVessel();
+                    renderVessel(targetVessel);
+
+                    renderEdge(sourceVessel.getLabel(), targetVessel.getLabel(), label);
                     // Target might be in a rack in another message
-                    for (VesselContainer<?> otherContainer : vesselToVesselTransfer.getTargetVessel().getContainers()) {
-                        renderEdge(vesselToVesselTransfer.getTargetVessel().getLabel(), null,
-                                otherContainer.getEmbedder().getLabel(), labVessel.getLabel(), REARRAY_LABEL);
+                    for (VesselContainer<?> otherContainer : targetVessel.getContainers()) {
+                        renderEdge(targetVessel.getLabel(), null, otherContainer.getEmbedder().getLabel(),
+                                targetVessel.getLabel(), REARRAY_LABEL);
                     }
                 }
             }
         }
 
+        /**
+         * Construct a label for an event (transfer or in-place).
+         */
         @Nonnull
         private String buildEventLabel(LabEvent event) {
             StringBuilder labelBuilder = new StringBuilder();
@@ -164,6 +172,9 @@ public class TransferVisualizerV2 {
             return labelBuilder.toString();
         }
 
+        /**
+         * Render an edge between two containers (a section transfer) or two tubes.
+         */
         private void renderEdge(String sourceId, String targetId, String label) throws JSONException {
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("source", sourceId).
@@ -172,6 +183,9 @@ public class TransferVisualizerV2 {
             edgesJson.put(jsonObject);
         }
 
+        /**
+         * Render an edge between tubes in racks (a cherry pick or a re-array).
+         */
         private void renderEdge(String sourceId, @Nullable String sourceChild, String targetId, String targetChild,
                 String label)
                 throws JSONException {
@@ -191,6 +205,9 @@ public class TransferVisualizerV2 {
             edgesJson.put(jsonObject);
         }
 
+        /**
+         * Render a stand-alone tube.
+         */
         private void renderVessel(LabVessel labVessel) throws JSONException {
             if (renderedLabels.add(labVessel.getLabel())) {
                 jsonWriter.object().key("id").value(labVessel.getLabel()).
@@ -210,6 +227,9 @@ public class TransferVisualizerV2 {
 
         }
 
+        /**
+         * Render a container, e.g. a rack of tubes.
+         */
         @SuppressWarnings("ImplicitNumericConversion")
         private void renderContainer(VesselContainer<?> vesselContainer, LabVessel ancillaryVessel, LabVessel labVessel,
                 boolean followRearrays) throws JSONException {
@@ -299,17 +319,9 @@ public class TransferVisualizerV2 {
             }
         }
 
-        public void completeJson() {
-            try {
-                jsonWriter.endArray().key("startId").value(startId).key("links");
-                edgesJson.write(writer);
-                writer.write(" }");
-                writer.flush();
-            } catch (JSONException | IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
+        /**
+         * Render a (dashed) edge for a tube moving to a different formation.
+         */
         private void renderReArray(VesselContainer<?> vesselContainer, VesselContainer<?> otherContainer,
                 LabVessel labVessel) throws JSONException {
             renderContainer(vesselContainer, null, labVessel, false);
@@ -326,8 +338,25 @@ public class TransferVisualizerV2 {
             renderEdge(sourceContainer.getEmbedder().getLabel(), labVessel.getLabel(),
                     targetContainer.getEmbedder().getLabel(), labVessel.getLabel(), REARRAY_LABEL);
         }
+
+        /**
+         * Finish the streamed nodes, then write the edges.
+         */
+        public void completeJson() {
+            try {
+                jsonWriter.endArray().key("startId").value(startId).key("links");
+                edgesJson.write(writer);
+                writer.write(" }");
+                writer.flush();
+            } catch (JSONException | IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
+    /**
+     * For the given vessels and directions, writes JSON for nodes and edges to the given writer.
+     */
     public void jsonForVessels(List<LabVessel> labVessels,
             List<TransferTraverserCriteria.TraversalDirection> traversalDirections,
             Writer writer) {

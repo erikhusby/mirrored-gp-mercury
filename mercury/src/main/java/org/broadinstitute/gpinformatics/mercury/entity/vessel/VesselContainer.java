@@ -414,6 +414,11 @@ public class VesselContainer<T extends LabVessel> {
                 transferTraverserCriteria.evaluateVesselPostOrder(context);
             }
         }
+        // handle VesselToVesselTransfers
+        if (continueTraversing && targetVessel != null) {
+            targetVessel.evaluateCriteria(transferTraverserCriteria,
+                    TransferTraverserCriteria.TraversalDirection.Ancestors, hopCount + 1);
+        }
     }
 
     private void traverseDescendants(VesselPosition sourcePosition, TransferTraverserCriteria transferTraverserCriteria,
