@@ -54,7 +54,6 @@ public class ProductTokenInput extends TokenInput<Product> {
     public String getAddOnsJsonString(Product editProduct, String query) throws JSONException {
         Collection<String> searchTerms = extractSearchTerms(query);
         List<Product> addOns = productDao.searchProductsForAddOnsInProductEdit(editProduct, searchTerms);
-        addOns.removeAll(editProduct.getAddOns());
         return createItemListString(addOns);
     }
 
