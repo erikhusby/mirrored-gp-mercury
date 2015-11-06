@@ -237,6 +237,7 @@
                     {"bSortable":true},
                     {"bSortable":true},
                     {"bSortable":true},
+                    {"bSortable":true},
                     {"bSortable":true, "sType":"date"},
                     {"bSortable":true},
                     {"bSortable":true},
@@ -378,6 +379,7 @@
                 <th width="300">PDO Name</th>
                 <th width="200">PDO Owner</th>
                 <th>Batch Name</th>
+                <th>Workflow</th>
                 <th>Product</th>
                 <th>Add-ons</th>
                 <th width="100">Created Date</th>
@@ -430,6 +432,9 @@
                             ${batch.businessKey}
                             <c:if test="${!stat.last}">&nbsp;</c:if></c:forEach>
 
+                    </td>
+                    <td>
+                        <div class="ellipsis" style="max-width: 250px;">${entry.workflowName}</div>
                     </td>
                     <td>
                         <div class="ellipsis" style="max-width: 250px;">${entry.productOrder.product.name}</div>
