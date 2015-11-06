@@ -21,7 +21,6 @@ import javax.annotation.Nullable;
 import javax.persistence.CascadeType;
 import javax.persistence.Embeddable;
 import javax.persistence.EnumType;
-import javax.persistence.FetchType;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.MapKeyColumn;
@@ -71,7 +70,7 @@ public class VesselContainer<T extends LabVessel> {
     * PTP holds regions.
     * smartpac holds smrtcells, smrtcells are removed, but not replaced.
     * striptube holds tubes, tubes can't be removed, don't have barcodes. */
-    @ManyToMany(targetEntity = LabVessel.class, cascade = CascadeType.PERSIST, fetch = FetchType.EAGER)
+    @ManyToMany(targetEntity = LabVessel.class, cascade = CascadeType.PERSIST)
     // have to specify name, generated name is too long for Oracle
     @JoinTable(schema = "mercury", name = "lv_map_position_to_vessel")
     @MapKeyEnumerated(EnumType.STRING)
