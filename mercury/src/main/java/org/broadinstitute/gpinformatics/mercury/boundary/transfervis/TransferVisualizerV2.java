@@ -35,7 +35,36 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Generates JSON to allow a javascript library to draw diagrams of transfers.
+ * Generates JSON to allow a javascript library to draw diagrams of transfers.  The JSON has the following structure:
+ * <ul>
+ * <li>array of nodes, each has:
+ *      <ul>
+ *      <li>id - unique, the label from the LabVessel (the hash for a TubeFormation)</li>
+ *      <li>label - more readable, usually the ancillary vessel (Rack) if a TubeFormation</li>
+ *      <li>width, height - including children</li>
+ *      <li>array of children, each has:
+ *          <ul>
+ *          <li>label - for tubes</li>
+ *          <li>name - for in-place events</li>
+ *          <li>x, y - relative to the parent</li>
+ *          <li>w, h - usually small, for a tube, but can be wide for an in-place event</li>
+ *          <li>highlight - 1 if the child is a direct ancestor or descendant of the searched tube</li>
+ *          </ul>
+ *      </li>
+ *      </ul>
+ * </li>
+ * <li>startId</li>
+ * <li>array of links, each has
+ *      <ul>
+ *      <li>label - who, what, where, when from LabEvent</li>
+ *      <li>source - rack or plate id</li>
+ *      <li>sourceChild - tube label</li>
+ *      <li>target - rack or plate id</li>
+ *      <li>targetChild - tube label</li>
+ *      <li>class - to make re-arrays dashed</li>
+ *      </ul>
+ * </li>
+ * </ul>
  */
 public class TransferVisualizerV2 {
 
@@ -100,7 +129,7 @@ public class TransferVisualizerV2 {
             String label = buildEventLabel(event);
 
             if (renderedEvents.add(eventId)) {
-                logger.info("Rendering event " + event.getLabEventType());
+                logger.debug("Rendering event " + event.getLabEventType());
                 for (SectionTransfer sectionTransfer : event.getSectionTransfers()) {
                     String sourceId = sectionTransfer.getSourceVesselContainer().getEmbedder().getLabel();
                     String targetId = sectionTransfer.getTargetVesselContainer().getEmbedder().getLabel();

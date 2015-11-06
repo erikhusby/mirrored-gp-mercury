@@ -25,7 +25,6 @@ import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferEntityGrapher;
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferVisualizer;
-import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferVisualizerV2;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
@@ -102,7 +101,6 @@ import org.testng.annotations.Test;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -1253,19 +1251,6 @@ public class LabEventTest extends BaseEventTest {
                 hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell(), "Wrong flowcell");
 
         Assert.assertEquals(illuminaSequencingRun.getSampleCartridge().getSequencerModel(), "Illumina HiSeq 2500");
-
-        try {
-            TransferVisualizerV2 transferVisualizerV2 = new TransferVisualizerV2();
-            File xfrVis = File.createTempFile("XfrVis", ".json");
-            FileWriter fileWriter = new FileWriter(xfrVis);
-            transferVisualizerV2.jsonForVessels(
-                    Collections.<LabVessel>singletonList(mapBarcodeToTube.values().iterator().next()),
-                    Collections.singletonList(TransferTraverserCriteria.TraversalDirection.Descendants),
-                    fileWriter);
-            fileWriter.flush();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
 
 //        Controller.stopCPURecording();
     }
