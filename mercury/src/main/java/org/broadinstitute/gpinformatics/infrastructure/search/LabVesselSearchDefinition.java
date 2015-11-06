@@ -684,6 +684,35 @@ public class LabVesselSearchDefinition {
         });
         searchTerms.add(searchTerm);
 
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Flowcell Barcode");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Set<String> evaluate(Object entity, SearchContext context) {
+
+                LabVessel labVessel = (LabVessel) entity;
+                Set<String> barcodes = null;
+
+                List<LabEventType> labEventTypes = new ArrayList<>();
+                labEventTypes.add(LabEventType.FLOWCELL_TRANSFER);
+                labEventTypes.add(LabEventType.DENATURE_TO_FLOWCELL_TRANSFER);
+                labEventTypes.add(LabEventType.DILUTION_TO_FLOWCELL_TRANSFER);
+
+                VesselDescendantTraverserCriteria eval
+                        = new VesselDescendantTraverserCriteria(labEventTypes );
+                labVessel.evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
+
+                if (!eval.getPositions().isEmpty()) {
+                    barcodes = new HashSet<>();
+                    for( Pair<String,VesselPosition> positionPair : eval.getPositions() ) {
+                        barcodes.add(positionPair.getLeft());
+                    }
+                }
+                return barcodes;
+            }
+        });
+        searchTerms.add(searchTerm);
+
         return searchTerms;
     }
 
@@ -935,8 +964,8 @@ public class LabVesselSearchDefinition {
 
         /**
          * Searches for descendant events of specific type(s).
-         * @param labEventTypes List of event types to locate
-         *                      Should be mutually exclusive based upon different workflows (ICE/Agilent)
+         * @param labEventTypes List of event types to locate.
+         *                      <strong>Note: This criteria does not handle in-place events</strong>
          */
         public VesselDescendantTraverserCriteria( List<LabEventType> labEventTypes ) {
             this.labEventTypes = labEventTypes;
@@ -945,7 +974,8 @@ public class LabVesselSearchDefinition {
         /**
          * Searches for descendant events and allow for traversal to be stopped at the first child vessel.
          * Saves the traversal overhead when it's known that there will be no other rework events (e.g. sample import)
-         * @param labEventTypes List of event types to locate (should be mutually exclusive)
+         * @param labEventTypes List of event types to locate.
+         *                      <strong>Note: This criteria does not handle in-place events</strong>
          * @param stopTraverseAtFirstFind Stop traversing at first matching event type (defaults to false)
          */
         public VesselDescendantTraverserCriteria( List<LabEventType> labEventTypes, boolean stopTraverseAtFirstFind ) {
@@ -956,7 +986,9 @@ public class LabVesselSearchDefinition {
         /**
          * Searches for descendant events and allow for traversal to be stopped at the first child vessel.
          * Saves the traversal overhead when it's known that there will be no other rework events (e.g. sample import)
-         * @param labEventTypes List of event types to locate (should be mutually exclusive)
+         *
+         * @param labEventTypes List of event types to locate.
+         *                      <strong>Note: This criteria does not handle in-place events</strong>
          * @param stopTraverseAtFirstFind Stop traversing at first matching event type (defaults to false)
          * @param useEventTarget Use to switch from default of true to false (use event source)
          */
@@ -966,6 +998,11 @@ public class LabVesselSearchDefinition {
             this.useEventTarget = useEventTarget;
         }
 
+        /**
+         * Obtains the outcome of the traversal
+         * @return A set of barcode-position pairs.
+         * Note:  If the vessel in the event of interest is not in a container, the position value will be null.
+         */
         public Set<Pair<String, VesselPosition>> getPositions(){
             return positions;
         }
@@ -981,16 +1018,64 @@ public class LabVesselSearchDefinition {
 
             TraversalControl outcome = TraversalControl.ContinueTraversing;
 
-            LabVessel.VesselEvent contextVesselEvent = context.getVesselEvent();
+            LabEvent contextEvent;
+
             // No event at traversal starting vessel
+            if ( context.getHopCount() == 0 ) {
+                boolean foundOne = examineStartingVessel(context);
+                if( foundOne && stopTraverseAtFirstFind ) {
+                    outcome = TraversalControl.StopTraversing;
+                }
+            } else {
+                boolean foundOne = examineTraversalVessel(context);
+                if( foundOne && stopTraverseAtFirstFind ) {
+                    outcome = TraversalControl.StopTraversing;
+                }
+
+            }
+
+            return outcome;
+        }
+
+        private boolean examineStartingVessel(Context context) {
+            return false;
+        }
+
+        private boolean examineTraversalVessel(Context context) {
+
+            boolean foundOne = false;
+
+            LabVessel.VesselEvent contextVesselEvent = context.getVesselEvent();
+
+            // Defend against no contextVesselEvent?  Should not happen if not at starting vessel
             if ( contextVesselEvent == null ) {
-                return outcome;
+                return foundOne;
             }
 
             LabEvent contextEvent = contextVesselEvent.getLabEvent();
 
             if( !labEventTypes.contains( contextEvent.getLabEventType() ) ) {
-                return outcome;
+                // In-place events?
+                LabVessel labVessel;
+                if( useEventTarget ) {
+                    labVessel = contextVesselEvent.getTargetLabVessel();
+                } else {
+                    labVessel = contextVesselEvent.getSourceLabVessel();
+                }
+
+                if( labVessel != null ) {
+                    // Vessel is not a container
+                    for( LabEvent inPlaceEvent : labVessel.getInPlaceLabEvents() ) {
+                        if( labEventTypes.contains(inPlaceEvent.getLabEventType())) {
+                            positions.add(Pair.of(labVessel.getLabel(), (VesselPosition)null));
+                            foundOne = true;
+                            break;
+                        }
+                    }
+                } else {
+
+                }
+                return false;
             }
 
             String barcode;
@@ -1014,12 +1099,7 @@ public class LabVesselSearchDefinition {
                 positions.add(Pair.of(barcode, position));
 
             }
-
-            if( stopTraverseAtFirstFind ) {
-                outcome = TraversalControl.StopTraversing;
-            }
-
-            return outcome;
+            return true;
         }
 
         @Override
