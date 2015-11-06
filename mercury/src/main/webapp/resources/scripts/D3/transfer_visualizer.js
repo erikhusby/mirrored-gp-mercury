@@ -12,7 +12,8 @@ function renderJson(json) {
             },
             action: function (element, d, i) {
                 var currentValue = d3.select("#barcodes").text();
-                d3.select("#barcodes").text(currentValue + " " + d.label);
+                // d.id for racks and plates, d.label for tubes
+                d3.select("#barcodes").text(currentValue + " " + (d.id ? d.id : d.label));
             }
         }
     ];
