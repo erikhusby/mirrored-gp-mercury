@@ -69,13 +69,8 @@ function renderJson(json) {
     dagre.layout(dagreGraph);
 
     // Render racks and plates.
-    var dagreNodeIds = dagreGraph.nodes();
-    var dagreNodes = [];
-    for (i = 0; i < dagreNodeIds.length; i++) {
-        dagreNodes.push(dagreGraph.node(dagreNodeIds[i]));
-    }
     var node = svg.selectAll(".graphNode")
-        .data(dagreNodes)
+        .data(json.nodes)
         .enter().append("g")
         .attr("class", "graphNode")
         .attr("transform", function (d) {

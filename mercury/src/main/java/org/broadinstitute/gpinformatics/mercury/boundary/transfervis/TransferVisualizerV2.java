@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransf
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToVesselTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
@@ -22,6 +23,7 @@ import org.json.JSONObject;
 import org.json.JSONWriter;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.io.Writer;
@@ -33,7 +35,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Generates json to allow a javascript library to draw diagrams of transfers.
+ * Generates JSON to allow a javascript library to draw diagrams of transfers.
  */
 public class TransferVisualizerV2 {
 
@@ -59,7 +61,7 @@ public class TransferVisualizerV2 {
         private final Set<String> renderedLabels = new HashSet<>();
         /** Prevents events being rendered more than once. */
         private final Set<String> renderedEvents = new HashSet<>();
-        /** Prevents multiple labels for a pool. */
+        /** Prevents multiple edge labels for a pool. */
         private final Set<String> renderedEdgeLabels = new HashSet<>();
         /** The ID to scroll to when the page is rendered.  If the starting barcode was a tube, this is one of the
          * enclosing racks (the tube may appear in multiple racks, so it can't be used as the start). */
@@ -133,6 +135,17 @@ public class TransferVisualizerV2 {
                     renderEdge(sourceLabel,
                             vesselToSectionTransfer.getTargetVesselContainer().getEmbedder().getLabel(), label);
                 }
+                for (VesselToVesselTransfer vesselToVesselTransfer : event.getVesselToVesselTransfers()) {
+                    renderVessel(vesselToVesselTransfer.getSourceVessel());
+                    renderVessel(vesselToVesselTransfer.getTargetVessel());
+                    renderEdge(vesselToVesselTransfer.getSourceVessel().getLabel(),
+                            vesselToVesselTransfer.getTargetVessel().getLabel(), label);
+                    // Target might be in a rack in another message
+                    for (VesselContainer<?> otherContainer : vesselToVesselTransfer.getTargetVessel().getContainers()) {
+                        renderEdge(vesselToVesselTransfer.getTargetVessel().getLabel(), null,
+                                otherContainer.getEmbedder().getLabel(), labVessel.getLabel(), REARRAY_LABEL);
+                    }
+                }
             }
         }
 
@@ -158,12 +171,16 @@ public class TransferVisualizerV2 {
                     put("label", label);
             edgesJson.put(jsonObject);
         }
-        private void renderEdge(String sourceId, String sourceChild, String targetId, String targetChild, String label)
+
+        private void renderEdge(String sourceId, @Nullable String sourceChild, String targetId, String targetChild,
+                String label)
                 throws JSONException {
             JSONObject jsonObject = new JSONObject();
-            jsonObject.put("source", sourceId).
-                    put("sourceChild", sourceChild).
-                    put("target", targetId).
+            jsonObject.put("source", sourceId);
+            if (sourceChild != null) {
+                jsonObject.put("sourceChild", sourceChild);
+            }
+            jsonObject.put("target", targetId).
                     put("targetChild", targetChild);
             if (label.equals(REARRAY_LABEL)) {
                 jsonObject.put("class", "graphEdgeDashed");
@@ -175,16 +192,17 @@ public class TransferVisualizerV2 {
         }
 
         private void renderVessel(LabVessel labVessel) throws JSONException {
-            String label = labVessel.getLabel();
-            // todo jmt distinguish between stand-alone tube and container
-//            if (mapLabelToIndex.get(label) == null) {
-//                logger.info("Rendering vessel " + label);
-//                mapLabelToIndex.put(label, nodeIndex);
-//                nodeIndex++;
-                for (VesselContainer<?> vesselContainer : labVessel.getContainers()) {
-                    renderContainer(vesselContainer, null, labVessel, true);
-                }
-//            }
+            if (renderedLabels.add(labVessel.getLabel())) {
+                jsonWriter.object().key("id").value(labVessel.getLabel()).
+                        key("label").value(labVessel.getLabel()).
+                        key("width").value(WELL_WIDTH).
+                        key("height").value(ROW_HEIGHT).
+                        key("children").
+                        array().endArray().endObject();
+            }
+            for (VesselContainer<?> vesselContainer : labVessel.getContainers()) {
+                renderContainer(vesselContainer, null, labVessel, true);
+            }
         }
 
         @Override
@@ -270,18 +288,12 @@ public class TransferVisualizerV2 {
                     startId = containerLabel;
                 }
 
-                // JSON re-arrays
+                // JSON for re-arrays
                 if (labVessel != null && followRearrays) {
-                    List<Rearray> rearrays = new ArrayList<>();
                     if (labVessel.getContainers().size() > 1) {
                         for (VesselContainer<?> otherContainer : labVessel.getContainers()) {
-                            if (!renderedLabels.contains(otherContainer.getEmbedder().getLabel())) {
-                                rearrays.add(new Rearray(labVessel, vesselContainer, otherContainer));
-                            }
+                            renderReArray(vesselContainer, otherContainer, labVessel);
                         }
-                    }
-                    for (Rearray rearray : rearrays) {
-                        rearray.render();
                     }
                 }
             }
@@ -298,32 +310,21 @@ public class TransferVisualizerV2 {
             }
         }
 
-        private class Rearray {
-            private LabVessel labVessel;
-            private VesselContainer<?> vesselContainer;
-            private VesselContainer<?> otherContainer;
-
-            private Rearray(LabVessel labVessel, VesselContainer<?> vesselContainer, VesselContainer<?> otherContainer) {
-                this.labVessel = labVessel;
-                this.vesselContainer = vesselContainer;
-                this.otherContainer = otherContainer;
+        private void renderReArray(VesselContainer<?> vesselContainer, VesselContainer<?> otherContainer,
+                LabVessel labVessel) throws JSONException {
+            renderContainer(vesselContainer, null, labVessel, false);
+            renderContainer(otherContainer, null, labVessel, false);
+            VesselContainer<?> sourceContainer;
+            VesselContainer<?> targetContainer;
+            if (vesselContainer.getEmbedder().getCreatedOn().before(otherContainer.getEmbedder().getCreatedOn())) {
+                sourceContainer = vesselContainer;
+                targetContainer = otherContainer;
+            } else {
+                sourceContainer = otherContainer;
+                targetContainer = vesselContainer;
             }
-
-            private void render() throws JSONException {
-                renderContainer(vesselContainer, null, labVessel, false);
-                renderContainer(otherContainer, null, labVessel, false);
-                VesselContainer<?> sourceContainer;
-                VesselContainer<?> targetContainer;
-                if (vesselContainer.getEmbedder().getCreatedOn().before(otherContainer.getEmbedder().getCreatedOn())) {
-                    sourceContainer = vesselContainer;
-                    targetContainer = otherContainer;
-                } else {
-                    sourceContainer = otherContainer;
-                    targetContainer = vesselContainer;
-                }
-                renderEdge(sourceContainer.getEmbedder().getLabel(), labVessel.getLabel(),
-                        targetContainer.getEmbedder().getLabel(), labVessel.getLabel(), REARRAY_LABEL);
-            }
+            renderEdge(sourceContainer.getEmbedder().getLabel(), labVessel.getLabel(),
+                    targetContainer.getEmbedder().getLabel(), labVessel.getLabel(), REARRAY_LABEL);
         }
     }
 
