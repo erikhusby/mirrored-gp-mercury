@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMes
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -86,6 +87,9 @@ public class ExtractionsBloodJaxbBuilder {
                 "ExtractionsBloodChemagenToFinalRack", postChemagenDeepwellBarcode,
                 finalRackBarcode, bloodFinalTubeBarcodes);
         extractionsBloodChemagenToFinalRack.getSourcePlate().setPhysType(DEEPWELL96);
+        for (ReceptacleType receptacleType : extractionsBloodChemagenToFinalRack.getPositionMap().getReceptacle()) {
+            receptacleType.setMaterialType(MaterialType.DNA_DNA_GENOMIC.getDisplayName());
+        }
         bettaLimsMessageTestFactory.addMessage(messageList, extractionsBloodChemagenToFinalRack);
 
         return this;
