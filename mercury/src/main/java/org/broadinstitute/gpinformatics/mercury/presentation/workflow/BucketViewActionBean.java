@@ -218,13 +218,6 @@ public class BucketViewActionBean extends CoreActionBean {
         LabVessel.loadSampleDataForBuckets(labVessels);
     }
 
-    private String findWorkflowName(BucketEntry entry) {
-        if (StringUtils.isNotBlank(entry.getWorkflowName())) {
-            return entry.getWorkflowName();
-        }
-        return entry.getProductOrder().getProduct().getWorkflow().getWorkflowName();
-    }
-
     public Set<String> getSampleNames(LabVessel vessel) {
         Set<SampleInstance> allSamples = vessel.getAllSamples();
         Set<String> sampleNames = new HashSet<>();
