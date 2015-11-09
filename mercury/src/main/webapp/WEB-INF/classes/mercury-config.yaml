@@ -257,6 +257,12 @@ submission:
       host:     seqsubmission01.broadinstitute.org
       port:     8080
 
+sap:
+    DEV:
+      baseUrl:    http://darwin:8000
+      wsdlUri:    /sap/bc/srt/wsdl/flv_10002A1111D1/bndg_url/sap/bc/srt/rfc/sap/znewwebserv_addition/100/znewwebserv_addition/zaddservicebind?sap-client=100
+      login:      GPCOMU
+      password:   Enj0ySAP!
 # Mercury configuration, this describes how Mercury deployments are connected to external system deployments.
 mercury:
 

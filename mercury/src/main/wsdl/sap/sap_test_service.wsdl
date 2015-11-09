@@ -1,156 +1,56 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<wsdl:definitions targetNamespace="urn:sap-com:document:sap:rfc:functions" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:wsoap12="http://schemas.xmlsoap.org/wsdl/soap12/" xmlns:http="http://schemas.xmlsoap.org/wsdl/http/" xmlns:mime="http://schemas.xmlsoap.org/wsdl/mime/" xmlns:tns="urn:sap-com:document:sap:rfc:functions" xmlns:wsp="http://schemas.xmlsoap.org/ws/2004/09/policy" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">
+<wsdl:definitions targetNamespace="urn:sap-com:document:sap:soap:functions:mc-style" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:wsoap12="http://schemas.xmlsoap.org/wsdl/soap12/" xmlns:http="http://schemas.xmlsoap.org/wsdl/http/" xmlns:mime="http://schemas.xmlsoap.org/wsdl/mime/" xmlns:tns="urn:sap-com:document:sap:soap:functions:mc-style" xmlns:n1="urn:sap-com:document:sap:rfc:functions">
   <wsdl:documentation>
     <sidl:sidl xmlns:sidl="http://www.sap.com/2007/03/sidl"/>
   </wsdl:documentation>
-  <wsp:Policy wsu:Id="BN__zaddservicebind">
-    <wsp:ExactlyOne>
-      <wsp:All>
-        <sapattahnd:Enabled xmlns:sapattahnd="http://www.sap.com/710/features/attachment/">false</sapattahnd:Enabled>
-        <saptrnbnd:OptimizedMimeSerialization wsp:Optional="true" xmlns:saptrnbnd="http://schemas.xmlsoap.org/ws/2004/09/policy/optimizedmimeserialization"/>
-        <wsaw:UsingAddressing wsp:Optional="true" xmlns:wsaw="http://www.w3.org/2006/05/addressing/wsdl"/>
-        <wsp:All>
-          <sp:TransportBinding xmlns:sp="http://docs.oasis-open.org/ws-sx/ws-securitypolicy/200702" xmlns:sapsp="http://www.sap.com/webas/630/soap/features/security/policy" xmlns:wsa="http://www.w3.org/2005/08/addressing" xmlns:wst="http://docs.oasis-open.org/ws-sx/ws-trust/200512" xmlns:wsu="http://schemas.xmlsoap.org/ws/2002/07/utility" xmlns:wsx="http://schemas.xmlsoap.org/ws/2004/09/mex">
-            <wsp:Policy>
-              <sp:TransportToken>
-                <wsp:Policy>
-                  <sp:HttpsToken/>
-                </wsp:Policy>
-              </sp:TransportToken>
-              <sp:AlgorithmSuite>
-                <wsp:Policy>
-                  <sp:Basic128Rsa15/>
-                </wsp:Policy>
-              </sp:AlgorithmSuite>
-              <sp:Layout>
-                <wsp:Policy>
-                  <sp:Strict/>
-                </wsp:Policy>
-              </sp:Layout>
-              <sp:IncludeTimestamp/>
-            </wsp:Policy>
-          </sp:TransportBinding>
-          <sp:SupportingTokens xmlns:sp="http://docs.oasis-open.org/ws-sx/ws-securitypolicy/200702" xmlns:sapsp="http://www.sap.com/webas/630/soap/features/security/policy" xmlns:wsa="http://www.w3.org/2005/08/addressing" xmlns:wst="http://docs.oasis-open.org/ws-sx/ws-trust/200512" xmlns:wsu="http://schemas.xmlsoap.org/ws/2002/07/utility" xmlns:wsx="http://schemas.xmlsoap.org/ws/2004/09/mex">
-            <wsp:Policy>
-              <sp:UsernameToken sp:IncludeToken="http://docs.oasis-open.org/ws-sx/ws-securitypolicy/200702/IncludeToken/AlwaysToRecipient">
-                <wsp:Policy>
-                  <sp:WssUsernameToken10/>
-                </wsp:Policy>
-              </sp:UsernameToken>
-            </wsp:Policy>
-          </sp:SupportingTokens>
-        </wsp:All>
-      </wsp:All>
-      <wsp:All>
-        <sapattahnd:Enabled xmlns:sapattahnd="http://www.sap.com/710/features/attachment/">false</sapattahnd:Enabled>
-        <saptrnbnd:OptimizedXMLTransfer uri="http://xml.sap.com/2006/11/esi/esp/binxml" wsp:Optional="true" xmlns:saptrnbnd="http://www.sap.com/webas/710/soap/features/transportbinding/"/>
-        <wsaw:UsingAddressing wsp:Optional="true" xmlns:wsaw="http://www.w3.org/2006/05/addressing/wsdl"/>
-        <wsp:All>
-          <sp:TransportBinding xmlns:sp="http://docs.oasis-open.org/ws-sx/ws-securitypolicy/200702" xmlns:sapsp="http://www.sap.com/webas/630/soap/features/security/policy" xmlns:wsa="http://www.w3.org/2005/08/addressing" xmlns:wst="http://docs.oasis-open.org/ws-sx/ws-trust/200512" xmlns:wsu="http://schemas.xmlsoap.org/ws/2002/07/utility" xmlns:wsx="http://schemas.xmlsoap.org/ws/2004/09/mex">
-            <wsp:Policy>
-              <sp:TransportToken>
-                <wsp:Policy>
-                  <sp:HttpsToken/>
-                </wsp:Policy>
-              </sp:TransportToken>
-              <sp:AlgorithmSuite>
-                <wsp:Policy>
-                  <sp:Basic128Rsa15/>
-                </wsp:Policy>
-              </sp:AlgorithmSuite>
-              <sp:Layout>
-                <wsp:Policy>
-                  <sp:Strict/>
-                </wsp:Policy>
-              </sp:Layout>
-              <sp:IncludeTimestamp/>
-            </wsp:Policy>
-          </sp:TransportBinding>
-          <sp:SupportingTokens xmlns:sp="http://docs.oasis-open.org/ws-sx/ws-securitypolicy/200702" xmlns:sapsp="http://www.sap.com/webas/630/soap/features/security/policy" xmlns:wsa="http://www.w3.org/2005/08/addressing" xmlns:wst="http://docs.oasis-open.org/ws-sx/ws-trust/200512" xmlns:wsu="http://schemas.xmlsoap.org/ws/2002/07/utility" xmlns:wsx="http://schemas.xmlsoap.org/ws/2004/09/mex">
-            <wsp:Policy>
-              <sp:UsernameToken sp:IncludeToken="http://docs.oasis-open.org/ws-sx/ws-securitypolicy/200702/IncludeToken/AlwaysToRecipient">
-                <wsp:Policy>
-                  <sp:WssUsernameToken10/>
-                </wsp:Policy>
-              </sp:UsernameToken>
-            </wsp:Policy>
-          </sp:SupportingTokens>
-        </wsp:All>
-      </wsp:All>
-    </wsp:ExactlyOne>
-  </wsp:Policy>
-  <wsp:Policy wsu:Id="IF__znewwebserv_addition">
-    <wsp:ExactlyOne>
-      <wsp:All>
-        <sapsession:Session xmlns:sapsession="http://www.sap.com/webas/630/soap/features/session/">
-          <sapsession:enableSession>false</sapsession:enableSession>
-        </sapsession:Session>
-        <sapcentraladmin:CentralAdministration wsp:Optional="true" xmlns:sapcentraladmin="http://www.sap.com/webas/700/soap/features/CentralAdministration/">
-          <sapcentraladmin:BusinessApplicationID>E83935AFEE641EE582F3550F2285324D</sapcentraladmin:BusinessApplicationID>
-        </sapcentraladmin:CentralAdministration>
-      </wsp:All>
-    </wsp:ExactlyOne>
-  </wsp:Policy>
-  <wsp:Policy wsu:Id="OP__ZUWEBRFCSIMPLEADD">
-    <wsp:ExactlyOne>
-      <wsp:All>
-        <saptrhnw05:required xmlns:saptrhnw05="http://www.sap.com/NW05/soap/features/transaction/">no</saptrhnw05:required>
-        <sapcomhnd:enableCommit xmlns:sapcomhnd="http://www.sap.com/NW05/soap/features/commit/">false</sapcomhnd:enableCommit>
-        <sapblock:enableBlocking xmlns:sapblock="http://www.sap.com/NW05/soap/features/blocking/">true</sapblock:enableBlocking>
-        <saprmnw05:enableWSRM xmlns:saprmnw05="http://www.sap.com/NW05/soap/features/wsrm/">false</saprmnw05:enableWSRM>
-      </wsp:All>
-    </wsp:ExactlyOne>
-  </wsp:Policy>
   <wsdl:types>
     <xsd:schema attributeFormDefault="qualified" targetNamespace="urn:sap-com:document:sap:rfc:functions">
+      <xsd:simpleType name="char100">
+        <xsd:restriction base="xsd:string">
+          <xsd:maxLength value="100"/>
+        </xsd:restriction>
+      </xsd:simpleType>
       <xsd:simpleType name="numeric10">
         <xsd:restriction base="xsd:string">
           <xsd:maxLength value="10"/>
           <xsd:pattern value="\d*"/>
         </xsd:restriction>
       </xsd:simpleType>
-      <xsd:element name="ZUWEBRFCSIMPLEADD">
+    </xsd:schema>
+    <xsd:schema attributeFormDefault="qualified" targetNamespace="urn:sap-com:document:sap:soap:functions:mc-style" xmlns:n0="urn:sap-com:document:sap:rfc:functions">
+      <xsd:import namespace="urn:sap-com:document:sap:rfc:functions"/>
+      <xsd:element name="Zuwebrfctry2">
         <xsd:complexType>
           <xsd:sequence>
-            <xsd:element name="NO1" type="tns:numeric10" minOccurs="0"/>
-            <xsd:element name="NO2" type="tns:numeric10" minOccurs="0"/>
+            <xsd:element name="Age" type="n0:numeric10" minOccurs="0"/>
           </xsd:sequence>
         </xsd:complexType>
       </xsd:element>
-      <xsd:element name="ZUWEBRFCSIMPLEADDResponse">
+      <xsd:element name="Zuwebrfctry2Response">
         <xsd:complexType>
           <xsd:sequence>
-            <xsd:element name="TOTAL" type="tns:numeric10"/>
+            <xsd:element name="Result" type="n0:char100"/>
           </xsd:sequence>
         </xsd:complexType>
       </xsd:element>
     </xsd:schema>
   </wsdl:types>
-  <wsdl:message name="ZUWEBRFCSIMPLEADD">
-    <wsdl:part name="parameters" element="tns:ZUWEBRFCSIMPLEADD"/>
+  <wsdl:message name="Zuwebrfctry2">
+    <wsdl:part name="parameters" element="tns:Zuwebrfctry2"/>
   </wsdl:message>
-  <wsdl:message name="ZUWEBRFCSIMPLEADDResponse">
-    <wsdl:part name="parameter" element="tns:ZUWEBRFCSIMPLEADDResponse"/>
+  <wsdl:message name="Zuwebrfctry2Response">
+    <wsdl:part name="parameter" element="tns:Zuwebrfctry2Response"/>
   </wsdl:message>
-  <wsdl:portType name="znewwebserv_addition">
-    <wsp:Policy>
-      <wsp:PolicyReference URI="#IF__znewwebserv_addition"/>
-    </wsp:Policy>
-    <wsdl:operation name="ZUWEBRFCSIMPLEADD">
-      <wsp:Policy>
-        <wsp:PolicyReference URI="#OP__ZUWEBRFCSIMPLEADD"/>
-      </wsp:Policy>
-      <wsdl:input message="tns:ZUWEBRFCSIMPLEADD"/>
-      <wsdl:output message="tns:ZUWEBRFCSIMPLEADDResponse"/>
+  <wsdl:portType name="ZTRY2">
+    <wsdl:operation name="Zuwebrfctry2">
+      <wsdl:input message="tns:Zuwebrfctry2"/>
+      <wsdl:output message="tns:Zuwebrfctry2Response"/>
     </wsdl:operation>
   </wsdl:portType>
-  <wsdl:binding name="zaddservicebind" type="tns:znewwebserv_addition">
-    <wsp:Policy>
-      <wsp:PolicyReference URI="#BN__zaddservicebind"/>
-    </wsp:Policy>
+  <wsdl:binding name="ZTRY2" type="tns:ZTRY2">
     <soap:binding transport="http://schemas.xmlsoap.org/soap/http" style="document"/>
-    <wsdl:operation name="ZUWEBRFCSIMPLEADD">
-      <soap:operation soapAction="urn:sap-com:document:sap:rfc:functions:znewwebserv_addition:ZUWEBRFCSIMPLEADDRequest" style="document"/>
+    <wsdl:operation name="Zuwebrfctry2">
+      <soap:operation soapAction="urn:sap-com:document:sap:soap:functions:mc-style:ZTRY2:Zuwebrfctry2Request" style="document"/>
       <wsdl:input>
         <soap:body use="literal"/>
       </wsdl:input>
@@ -159,9 +59,9 @@
       </wsdl:output>
     </wsdl:operation>
   </wsdl:binding>
-  <wsdl:service name="ZNEWWEBSERV_ADDITION">
-    <wsdl:port name="zaddservicebind" binding="tns:zaddservicebind">
-      <soap:address location="http://darwin:8000/sap/bc/srt/rfc/sap/znewwebserv_addition/100/znewwebserv_addition/zaddservicebind"/>
+  <wsdl:service name="ZTRY2">
+    <wsdl:port name="ZTRY2" binding="tns:ZTRY2">
+      <soap:address location="http://darwin:8000/sap/bc/srt/rfc/sap/ztry2/100/ztry2/ztry2"/>
     </wsdl:port>
   </wsdl:service>
 </wsdl:definitions>
