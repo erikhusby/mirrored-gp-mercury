@@ -434,7 +434,9 @@
 
                     </td>
                     <td>
-                        <div class="ellipsis" style="max-width: 250px;">${entry.workflowName}</div>
+                        <div class="ellipsis" style="max-width: 250px;">
+                            ${mercuryUseful:join(entry.workflowNames, "<br/>")}
+                        </div>
                     </td>
                     <td>
                         <div class="ellipsis" style="max-width: 250px;">${entry.productOrder.product.name}</div>
