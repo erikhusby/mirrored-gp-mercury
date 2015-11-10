@@ -9,6 +9,8 @@
  */
 package org.broadinstitute.gpinformatics.athena.entity.preference;
 
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
+
 /**
  * This enum holds all the needed information for converting preferences to their associated data.
  */
@@ -50,7 +52,10 @@ public enum PreferenceType {
     USER_REAGENT_SEARCH_INSTANCES("User Reagent Search Instances", PreferenceScope.USER, 1,
             new SearchInstanceList.SearchInstanceListPreferenceDefinitionCreator()),
     USER_REAGENT_COLUMN_SETS("User Reagent Column Sets", PreferenceScope.USER, 1,
-            new ColumnSetsPreference.ColumnSetsPreferenceDefinitionCreator());
+            new ColumnSetsPreference.ColumnSetsPreferenceDefinitionCreator()),
+
+    WORKFLOW_CONFIGURATION("Workflow Configuration", PreferenceScope.GLOBAL, 1,
+            new WorkflowConfig.WorkflowConfigPreferenceDefinitionCreator());
 
     private final String preferenceTypeName;
     private final PreferenceScope preferenceScope;
