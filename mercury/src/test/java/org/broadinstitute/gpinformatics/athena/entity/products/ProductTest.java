@@ -41,9 +41,7 @@ public class ProductTest {
     @DataProvider(name = "productsRolesDataProvider")
     public static Object[][] productsRolesDataProvider() {
         boolean PDM_ORDERABLE_ONLY = true;
-        Product pdmOnlyProduct = buildTestProduct("pdmOnlyProduct", PDM_ORDERABLE_ONLY);
         Product pdmOnlyAddOn = buildTestProduct("pdmOnlyAddOn", PDM_ORDERABLE_ONLY);
-        Product anyoneProduct =buildTestProduct("anyoneProduct", !PDM_ORDERABLE_ONLY);
         Product anyoneAddOn =buildTestProduct("anyoneAddOn", !PDM_ORDERABLE_ONLY);
 
         return new Object[][] {
@@ -60,21 +58,23 @@ public class ProductTest {
                 new Object[]{"anyoneProduct", !PDM_ORDERABLE_ONLY, pdmOnlyAddOn,  Role.LabUser, null},
                 new Object[]{"anyoneProduct", !PDM_ORDERABLE_ONLY, anyoneAddOn,   Role.LabUser, anyoneAddOn},
         };
-
     }
 
     @Test(dataProvider = "productsRolesDataProvider")
     public void testAddOns(String productName, boolean isPdmOrderableOnly, Product addOn, Role role, Product expectedAddOn){
         Product product = buildTestProduct(productName, isPdmOrderableOnly);
+        product.addAddOn(addOn);
         Mockito.when(mockUserBean.getRoles()).thenReturn(Collections.singleton(role));
-        Set<Product> expectedAddOns = Collections.singleton(expectedAddOn);
-        Set<Product> addOns = product.getAddOns(mockUserBean);
-        String expectedAddOnName;
-        if (expectedAddOns.isEmpty()) {
-            expectedAddOnName=null;
+        Set<Product> expectedAddOns;
+        String expectedAddOnName = null;
+
+        if (expectedAddOn != null) {
+            expectedAddOns = Collections.singleton(expectedAddOn);
+            expectedAddOnName = expectedAddOn.getProductName();
         } else {
-            expectedAddOnName = expectedAddOns.iterator().next().getProductName();
+            expectedAddOns = Collections.emptySet();
         }
+        Set<Product> addOns = product.getAddOns(mockUserBean);
         assertThat(String.format("%s:%s:%s=%s", product.getProductName(), addOn.getProductName(), role, expectedAddOnName),
                 addOns, containsInAnyOrder(expectedAddOns.toArray(new Product[expectedAddOns.size()])));
 
