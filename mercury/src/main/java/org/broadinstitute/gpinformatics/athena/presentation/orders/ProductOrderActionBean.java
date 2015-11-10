@@ -1283,17 +1283,14 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         if (product != null) {
             Product product = productDao.findByBusinessKey(this.product);
-            List<Product> addOns =
-                    productDao.searchProductsForAddOnsInProductEdit(product, Collections.<String>emptyList());
-            for (Product addOn : addOns) {
-                JSONObject item = new JSONObject();
-                item.put("key", addOn.getBusinessKey());
-                item.put("value", addOn.getProductName());
+            for (Product addOn : product.getAddOns(userBean)) {
+                    JSONObject item = new JSONObject();
+                    item.put("key", addOn.getBusinessKey());
+                    item.put("value", addOn.getProductName());
 
-                itemList.put(item);
+                    itemList.put(item);
+                }
             }
-        }
-
         return createTextResolution(itemList.toString());
     }
 
