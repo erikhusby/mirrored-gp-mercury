@@ -280,16 +280,17 @@ public abstract class LabVessel implements Serializable {
      */
     public static void loadSampleDataForBuckets(Collection<LabVessel> labVessels){
         SampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(SampleDataFetcher.class);
-        Map<String, MercurySample> sampleNames = new HashMap<>();
+        Map<String, MercurySample> samplesBySampleKey = new HashMap<>();
         for (LabVessel labVessel : labVessels) {
             for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
                 MercurySample mercurySample = sampleInstanceV2.getRootOrEarliestMercurySample();
-                sampleNames.put(mercurySample.getSampleKey(), mercurySample);
+                samplesBySampleKey.put(mercurySample.getSampleKey(), mercurySample);
             }
         }
-        Map<String, SampleData> sampleDataMap = sampleDataFetcher.fetchSampleDataForMercurySamples(sampleNames, BSPSampleSearchColumn.BUCKET_PAGE_COLUMNS);
+        Map<String, SampleData> sampleDataMap = sampleDataFetcher.fetchSampleDataForSamples(samplesBySampleKey.values(),
+                BSPSampleSearchColumn.BUCKET_PAGE_COLUMNS);
         for (Map.Entry<String, SampleData> sampleDataEntry : sampleDataMap.entrySet()) {
-            sampleNames.get(sampleDataEntry.getKey()).setSampleData(sampleDataEntry.getValue());
+            samplesBySampleKey.get(sampleDataEntry.getKey()).setSampleData(sampleDataEntry.getValue());
         }
     }
 

@@ -7,8 +7,10 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.GetSampleDetails;
+import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleDataFetcher;
 
@@ -195,49 +197,31 @@ public class SampleDataFetcher implements Serializable {
      *
      * @return Mapping of sample id to its sample data
      */
-    public Map<String, SampleData> fetchSampleDataForProductOrderSamples(Collection<ProductOrderSample> samples,
-                                                                         BSPSampleSearchColumn... bspSampleSearchColumns) {
-        Map<String, MercurySample> sampleKeyToMercurySample = new HashMap<>(samples.size());
-        for (ProductOrderSample sample : samples) {
-            sampleKeyToMercurySample.put(sample.getName(), sample.getMercurySample());
-        }
-        return fetchSampleDataForMercurySamples(sampleKeyToMercurySample, bspSampleSearchColumns);
-    }
-
-    /**
-     * Fetch the SampleData for multiple mercury samples. For cases where only a few pieces of data are needed for
-     * each sample, a list of result properties can be specified as a hint to help optimize the data fetch. This is
-     * helpful for performance when fetching sample data from BSP.
-     *
-     * Implementation note: The result properties are currently of type {@link BSPSampleSearchColumn}, which leaks some
-     * details of the BSP fetch through the SampleDataFetcher abstraction. This could be made more general to clean up
-     * the API. This should also involve an analysis of the overlap between BSPSampleSearchColumn and
-     * {@link Metadata.Key}.
-     *
-     * @param samplesMap             Mapping of sampleId to MercurySample for which sample data should be fetched.
-     * @param bspSampleSearchColumns hint for which columns to return data for, if performance is a factor
-     *
-     * @return Mapping of sample id to its sample data
-     */
-    public Map<String, SampleData> fetchSampleDataForMercurySamples(Map<String, MercurySample> samplesMap,
-                                                                     BSPSampleSearchColumn... bspSampleSearchColumns) {
+    public Map<String, SampleData> fetchSampleDataForSamples(Collection<? extends AbstractSample> samples,
+                                                             BSPSampleSearchColumn... bspSampleSearchColumns) {
         Map<String, SampleData> sampleData = new HashMap<>();
+
         Collection<MercurySample> mercurySamplesWithMercurySource = new ArrayList<>();
         Collection<String> sampleIdsWithBspSource = new ArrayList<>();
 
-        Set<String> sampleNames = new HashSet<>(samplesMap.keySet().size());
-        for (Map.Entry<String, MercurySample> mercurySampleEntry : samplesMap.entrySet()) {
-            MercurySample mercurySample = mercurySampleEntry.getValue();
-            String sampleKey = mercurySampleEntry.getKey();
-            if (mercurySample == null) {
-                sampleNames.add(sampleKey);
-            } else {
-                if (mercurySample.needsBspMetaData()) {
-                    if (mercurySample.getMetadataSource() == MercurySample.MetadataSource.MERCURY) {
-                        mercurySamplesWithMercurySource.add(mercurySample);
-                    } else {
-                        sampleNames.add(sampleKey);
-                    }
+        Set<String> sampleNames = new HashSet<>(samples.size());
+        for (AbstractSample sample : samples) {
+            if (sample.needsBspMetaData()) {
+                MercurySample mercurySample;
+                String sampleName;
+                if (OrmUtil.proxySafeIsInstance(sample, MercurySample.class)) {
+                    mercurySample = OrmUtil.proxySafeCast(sample, MercurySample.class);
+                    sampleName = mercurySample.getSampleKey();
+                } else {
+                    ProductOrderSample productOrderSample = OrmUtil.proxySafeCast(sample, ProductOrderSample.class);
+                    mercurySample = productOrderSample.getMercurySample();
+                    sampleName = productOrderSample.getName();
+                }
+                if (mercurySample != null &&
+                    mercurySample.getMetadataSource() == MercurySample.MetadataSource.MERCURY) {
+                    mercurySamplesWithMercurySource.add(mercurySample);
+                } else {
+                    sampleNames.add(sampleName);
                 }
             }
         }
