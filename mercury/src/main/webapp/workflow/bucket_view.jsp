@@ -435,7 +435,7 @@
                     </td>
                     <td>
                         <div class="ellipsis" style="max-width: 250px;">
-                            ${mercuryUseful:join(entry.workflowNames, "<br/>")}
+                            ${mercuryStatic:join(entry.workflowNames, "<br/>")}
                         </div>
                     </td>
                     <td>

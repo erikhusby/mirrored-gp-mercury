@@ -15,11 +15,11 @@
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-jsptaglibrary_2_1.xsd"
         version="2.1">
-    <description>Static methods which you would like to call directly from JSPs</description>
-    <display-name>Useful Functions</display-name>
+    <description>Static methods which can be called directly from JSPs</description>
+    <display-name>Useful Static Functions</display-name>
     <tlib-version>1.0</tlib-version>
-    <short-name>mercuryUseful</short-name>
-    <uri>https://mercury.broadinstitute.org/Mercury/mercuryUsefull</uri>
+    <short-name>mercuryStatic</short-name>
+    <uri>https://mercury.broadinstitute.org/Mercury/mercuryStatic</uri>
 
     <function>
         <description>Joins the elements of the provided Iterable into a single String containing the provided elements
