@@ -163,7 +163,7 @@ tableau:
 thrift:
 
     QA:
-      host: seqtest04
+      host: vsquidthriftserviceqa
       port: 9090
 
     TEST:
@@ -191,23 +191,23 @@ deckMsgs:
 bettaLimsServer:
 
     DEV:
-        wsHost: seqtest04
+        wsHost: vbettalimsqa1
         wsPort: 9997
-        jmsHost: seqtest04
+        jmsHost: vbettalimsqa1
         jmsPort: 61616
         jmsQueue: broad.queue.bettalims.test
 
     TEST:
-        wsHost: seqtest04
+        wsHost: vbettalimsqa1
         wsPort: 9997
-        jmsHost: seqtest04
+        jmsHost: vbettalimsqa1
         jmsPort: 61616
         jmsQueue: broad.queue.bettalims.test
 
     QA:
         wsHost: vbettalimsqa1
         wsPort: 9998
-        jmsHost: seqtest04
+        jmsHost: vbettalimsqa1
         jmsPort: 61616
         jmsQueue: broad.queue.bettalims.qa
 
