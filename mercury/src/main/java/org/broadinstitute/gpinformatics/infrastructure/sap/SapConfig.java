@@ -23,7 +23,7 @@ public class SapConfig extends AbstractConfig implements LoginAndPassword, Seria
     private String password;
 
     @Inject
-    protected SapConfig(@Nonnull Deployment mercuryDeployment) {
+    public SapConfig(@Nonnull Deployment mercuryDeployment) {
         super(mercuryDeployment);
     }
 
@@ -39,5 +39,33 @@ public class SapConfig extends AbstractConfig implements LoginAndPassword, Seria
 
     public String getWsdlPath() {
         return baseUrl + wsdlUri;
+    }
+
+    public String getBaseUrl() {
+        return baseUrl;
+    }
+
+    public void setBaseUrl(String baseUrl) {
+        this.baseUrl = baseUrl;
+    }
+
+    public String getWsdlUri() {
+        return wsdlUri;
+    }
+
+    public void setWsdlUri(String wsdlUri) {
+        this.wsdlUri = wsdlUri;
+    }
+
+    public void setLogin(String login) {
+        this.login = login;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public static SapConfig produce(Deployment deployment) {
+        return produce(SapConfig.class, deployment);
     }
 }

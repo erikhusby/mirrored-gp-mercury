@@ -5,19 +5,27 @@ import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceExcep
 
 import javax.inject.Inject;
 import javax.xml.namespace.QName;
+import javax.xml.ws.BindingProvider;
 import javax.xml.ws.Service;
+import javax.xml.ws.handler.MessageContext;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-/**
- * TODO scottmat fill in javadoc!!!
- */
 @Impl
 public class SapIntegrationClientImpl implements SapIntegrationClient {
 
+    private SapConfig sapConfig;
+
+//    private final static Log log = LogFactory.getLog(SapIntegrationClientImpl.class);
 
     @Inject
-    private SapConfig sapConfig;
+    public SapIntegrationClientImpl(SapConfig sapConfig) {
+        this.sapConfig = sapConfig;
+    }
 
     private ZTRY2 getSapService() {
         String namespace = "urn:sap-com:document:sap:soap:functions:mc-style";
@@ -40,7 +48,20 @@ public class SapIntegrationClientImpl implements SapIntegrationClient {
     @Override
     public String testConnection(String age) {
 
-        return getSapService().zuwebrfctry2(age);
+
+        ZTRY2 sapService = getSapService();
+
+        Map<String, List<String>> credentials = new HashMap<>();
+//        log.error("Using a login of: " + sapConfig.getLogin());
+        credentials.put("Username", Collections.singletonList(sapConfig.getLogin()));
+//        log.error("Using a password of: " + sapConfig.getPassword());
+        credentials.put("Password", Collections.singletonList(sapConfig.getPassword()));
+
+        ((BindingProvider) sapService).getRequestContext().put(MessageContext.HTTP_REQUEST_HEADERS, credentials);
+        ((BindingProvider) sapService).getRequestContext()
+                .put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY, sapConfig.getWsdlPath());
+
+        return sapService.zuwebrfctry2(age);
 
     }
 
