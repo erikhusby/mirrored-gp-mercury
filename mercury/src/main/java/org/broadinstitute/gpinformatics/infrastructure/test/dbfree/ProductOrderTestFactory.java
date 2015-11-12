@@ -69,6 +69,8 @@ public class ProductOrderTestFactory {
 
         Product dummyAddOnProduct =
                 ProductTestFactory.createDummyProduct(Workflow.NONE, "partNumber");
+        dummyAddOnProduct.setProductName("addOnProduct");
+
         productOrder.updateAddOnProducts(Collections.singletonList(dummyAddOnProduct));
 
         return productOrder;

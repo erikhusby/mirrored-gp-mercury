@@ -164,7 +164,7 @@ public abstract class TransferTraverserCriteria {
      * There are cases (e.g. LabVessel.findVesselsForLabEventTypes) which share the same criteria
      *   in ancestry and descendant traversals.  Prevent skipping of starting vessel when switching directions.
      */
-    protected void resetAllTraversed(){
+    public void resetAllTraversed(){
         traversedVessels.clear();
         traversedVesselsAndPositions.clear();
     }

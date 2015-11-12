@@ -113,6 +113,27 @@ public class ManifestImportProcessorTest {
 
     }
 
+    public void testProcessRowDetailsUnknownMaterialType() throws Exception {
+        String unknownMaterial = "Goop";
+        dataRow.put(ManifestHeader.MATERIAL_TYPE.getColumnName(), unknownMaterial);
+
+        processor.processRowDetails(dataRow, 0);
+        processor.getMessages();
+        assertThat(processor.getMessages(),
+                hasItem(String.format("Row #0 An unrecognized material type was entered: %s", unknownMaterial)));
+    }
+
+    public void testProcessRowDetailsNullMaterialType() throws Exception {
+        String nullMaterial = null;
+        dataRow.put(ManifestHeader.MATERIAL_TYPE.getColumnName(), nullMaterial);
+
+        processor.processRowDetails(dataRow, 0);
+        processor.getMessages();
+        assertThat(processor.getMessages(),
+                hasItem(String.format("Row #0 An unrecognized material type was entered: %s", nullMaterial)));
+    }
+
+
     public void testProcessHeadersUnknownColumn() throws Exception {
         String unknownHeader = "new to you";
         int row = 0;

@@ -63,6 +63,7 @@ import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -246,15 +247,21 @@ public abstract class LabVessel implements Serializable {
      * @return
      */
     public MaterialType getLatestMaterialType() {
-        if (latestMaterialType==null) {
+        if (latestMaterialType == null) {
             latestMaterialType = getLatestMaterialTypeFromEventHistory();
-            if (latestMaterialType == null) {
-                latestMaterialType = MaterialType.fromDisplayName(getMaterialTypes().iterator().next());
+            if (latestMaterialType == null || latestMaterialType == MaterialType.NONE) {
+                Iterator<String> materialTypeIterator = getMaterialTypes().iterator();
+                if (materialTypeIterator.hasNext()) {
+                    String materialType = materialTypeIterator.next();
+                    latestMaterialType = MaterialType.fromDisplayName(materialType);
+                }
             }
+        }
+        if (latestMaterialType == MaterialType.NONE || latestMaterialType==null) {
+            logger.error(String.format("No material type was found for vessel '%s'.", label));
         }
         return latestMaterialType;
     }
-
 
     public List<String> getMaterialTypes() {
         List<String> materialTypes = new ArrayList<>();
@@ -273,17 +280,17 @@ public abstract class LabVessel implements Serializable {
      */
     public static void loadSampleDataForBuckets(Collection<LabVessel> labVessels){
         SampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(SampleDataFetcher.class);
-        Map<String, MercurySample> sampleNames = new HashMap<>();
+        Map<String, MercurySample> samplesBySampleKey = new HashMap<>();
         for (LabVessel labVessel : labVessels) {
             for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
                 MercurySample mercurySample = sampleInstanceV2.getRootOrEarliestMercurySample();
-                sampleNames.put(mercurySample.getSampleKey(), mercurySample);
+                samplesBySampleKey.put(mercurySample.getSampleKey(), mercurySample);
             }
         }
-        Map<String, SampleData> sampleDataMap = sampleDataFetcher.fetchSampleDataForMercurySamples(
-                sampleNames.values(), BSPSampleSearchColumn.BUCKET_PAGE_COLUMNS);
+        Map<String, SampleData> sampleDataMap = sampleDataFetcher.fetchSampleDataForSamples(samplesBySampleKey.values(),
+                BSPSampleSearchColumn.BUCKET_PAGE_COLUMNS);
         for (Map.Entry<String, SampleData> sampleDataEntry : sampleDataMap.entrySet()) {
-            sampleNames.get(sampleDataEntry.getKey()).setSampleData(sampleDataEntry.getValue());
+            samplesBySampleKey.get(sampleDataEntry.getKey()).setSampleData(sampleDataEntry.getValue());
         }
     }
 
