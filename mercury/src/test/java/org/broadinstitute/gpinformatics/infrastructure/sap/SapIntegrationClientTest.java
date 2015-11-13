@@ -22,32 +22,32 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.ST
  * TODO scottmat fill in javadoc!!!
  */
 @Test(groups = STANDARD)
-public class SapIntegrationClientTest {
+public class SapIntegrationClientTest extends Arquillian {
 
-//    @Inject
+    @Inject
     SapIntegrationClient sapIntegrationClient;
 
 //    private final static Log log = LogFactory.getLog(SapIntegrationClientTest.class);
 
     @BeforeMethod
     public void setUp() {
-        sapIntegrationClient = SapIntegrationClientProducer.testInstance();
-//        if (sapIntegrationClient == null) {
-//            return;
-//        }
+//        sapIntegrationClient = SapIntegrationClientProducer.testInstance();
+        if (sapIntegrationClient == null) {
+            return;
+        }
     }
 
     @AfterMethod
     public void tearDown() {
-//        if (sapIntegrationClient == null) {
-//            return;
-//        }
+        if (sapIntegrationClient == null) {
+            return;
+        }
     }
 
-//    @Deployment
-//    public static WebArchive buildMercuryWar() {
-//        return DeploymentBuilder.buildMercuryWar(DEV, "dev");
-//    }
+    @Deployment
+    public static WebArchive buildMercuryWar() {
+        return DeploymentBuilder.buildMercuryWar(DEV, "dev");
+    }
 
     @Test
     public void testConnection() throws IOException {

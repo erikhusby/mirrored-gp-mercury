@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.sap;
 
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 
+import javax.enterprise.context.RequestScoped;
 import javax.enterprise.context.SessionScoped;
 import javax.enterprise.inject.Default;
 import javax.enterprise.inject.New;
@@ -13,7 +14,6 @@ import javax.ws.rs.Produces;
  */
 public class SapIntegrationClientProducer {
 
-    @Inject
     private Deployment deployment;
 
     private static SapIntegrationClient testInstance;
@@ -32,13 +32,18 @@ public class SapIntegrationClientProducer {
         return testInstance;
     }
 
+    @Inject
+    public SapIntegrationClientProducer(Deployment deployment) {
+        this.deployment = deployment;
+    }
+
     public static SapIntegrationClient stubInstance() {
         return new SapIntegrationClientStub();
     }
 
     @Produces
     @Default
-    @SessionScoped
+    @RequestScoped
     public SapIntegrationClient produce(@New SapIntegrationClientStub sapStub, @New SapIntegrationClientImpl sapImpl) {
         if(deployment == Deployment.STUBBY) {
             return sapStub;
