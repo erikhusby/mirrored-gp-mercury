@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
@@ -491,6 +492,9 @@ public class LabBatch {
 
     public void addBucketEntry(BucketEntry bucketEntry) {
         bucketEntries.add(bucketEntry);
+        if (StringUtils.isBlank(getWorkflowName())) {
+            setWorkflowName(bucketEntry.getProductOrder().getPrimaryWorkflow().getWorkflowName());
+        }
         bucketEntry.setLabBatch(this);
     }
 
