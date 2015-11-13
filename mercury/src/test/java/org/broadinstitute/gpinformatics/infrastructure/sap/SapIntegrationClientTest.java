@@ -11,6 +11,9 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 
+import java.io.IOException;
+import java.net.MalformedURLException;
+
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.STANDARD;
 
@@ -19,42 +22,38 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.ST
  * TODO scottmat fill in javadoc!!!
  */
 @Test(groups = STANDARD)
-public class SapIntegrationClientTest extends Arquillian {
+public class SapIntegrationClientTest {
 
-    @Inject
-    private SapIntegrationClient sapIntegrationClient;
+//    @Inject
+    SapIntegrationClient sapIntegrationClient;
 
 //    private final static Log log = LogFactory.getLog(SapIntegrationClientTest.class);
 
     @BeforeMethod
     public void setUp() {
-//        sapIntegrationClient = SapIntegrationClientProducer.testInstance();
-        if (sapIntegrationClient == null) {
-//            log.info("integration client is null");
-            return;
-        }
-//        log.info("integration client is NOT null");
+        sapIntegrationClient = SapIntegrationClientProducer.testInstance();
+//        if (sapIntegrationClient == null) {
+//            return;
+//        }
     }
 
     @AfterMethod
     public void tearDown() {
-        if (sapIntegrationClient == null) {
-//            log.info("integration client is null");
-            return;
-        }
-//        log.info("integration client is NOT null");
+//        if (sapIntegrationClient == null) {
+//            return;
+//        }
     }
 
-    @Deployment
-    public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWar(DEV, "dev");
-    }
+//    @Deployment
+//    public static WebArchive buildMercuryWar() {
+//        return DeploymentBuilder.buildMercuryWar(DEV, "dev");
+//    }
 
     @Test
-    public void testConnection() {
-        String result = sapIntegrationClient.testConnection("42");
+    public void testConnection() throws IOException {
+        String age = "42";
+        String result = sapIntegrationClient.testConnection(age);
 
-        Assert.assertEquals(result, "What? Just 42 - Great !");
+        Assert.assertEquals(result, "What? Just "+age+" - Great !");
     }
-
 }
