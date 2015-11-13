@@ -707,26 +707,36 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
      * @return A string with the full details for each {@link RiskItem} for the sample.
      */
     public String getRiskString() {
-        if (isOnRisk()) {
-            // We need to remove newlines and carriage returns as ETL will not accept the values.
-            return formatRiskItemsString().replaceAll("\r?\n", " ");
+        if (!isOnRisk()) {
+            return "";
         }
-        // Default
-        return "";
+
+        if( riskItems.size() == 0) {
+            return "";
+        } else if( riskItems.size() == 1 ) {
+            return riskItems.iterator().next().getInformation().replaceAll("\r?\n", " ");
+        } else {
+            StringBuilder riskTypeStringBuilder = new StringBuilder();
+
+            boolean isFirst = true;
+            for (RiskItem riskItem : riskItems) {
+                if( !isFirst ) {
+                    riskTypeStringBuilder.append(" AND ");
+                    isFirst = false;
+                }
+                riskTypeStringBuilder.append(riskItem.getInformation().replaceAll("\r?\n", " "));
+            }
+            return riskTypeStringBuilder.toString();
+        }
     }
 
     /**
      * @return A string of each {@link RiskItem}s {@link RiskCriterion} type for the sample.
      */
     public String getRiskTypeString() {
-        if (isOnRisk()) {
-            return formatRiskItemsString();
+        if (!isOnRisk()) {
+            return "";
         }
-        // Default
-        return "";
-    }
-
-    private String formatRiskItemsString() {
         if( riskItems.size() == 0) {
             return "";
         } else if( riskItems.size() == 1 ) {
