@@ -1,5 +1,6 @@
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
+<%@ page import="org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -60,17 +61,6 @@
                             resultsFormatter: formatInput,
                             tokenDelimiter: "${actionBean.addOnTokenInput.separator}",
                             preventDuplicates: true,
-                            autoSelectFirstResult: true
-                        }
-                    );
-
-                    $j("#materialTypes").tokenInput(
-                        "${ctxpath}/products/product.action?materialTypesAutocomplete=&product=${actionBean.editProduct.businessKey}", {
-                            hintText: "Type a Material Type name",
-                            prePopulate: ${actionBean.ensureStringResult(actionBean.materialTypeTokenInput.completeData)},
-                            preventDuplicates: true,
-                            tokenDelimiter: "${actionBean.materialTypeTokenInput.separator}",
-                            resultsFormatter: formatInput,
                             autoSelectFirstResult: true
                         }
                     );
@@ -354,13 +344,6 @@
                 </div>
 
                 <div class="control-group">
-                    <stripes:label for="materialTypes" name="MaterialTypes" class="control-label"/>
-                 	<div class="controls">
-                       	<stripes:text id="materialTypes" name="materialTypeTokenInput.listOfKeys"/>
-                    </div>
-                </div>
-
-                <div class="control-group">
                     <stripes:label for="riskCriterion" name="RiskCriteria" class="control-label"/>
                     <div id="riskCriterion" class="controls" style="margin-top: 5px;">
                         A sample is on risk if:
@@ -400,15 +383,15 @@
                     </div>
                 </security:authorizeBlock>
 
-                <security:authorizeBlock roles="<%= roles(Developer) %>">
+                <security:authorizeBlock roles="<%= roles(PDM, Developer) %>">
                     <div class="control-group">
                         <stripes:label for="workflow" class="control-label">
                             Workflow
                         </stripes:label>
                         <div class="controls">
                             <stripes:select name="editProduct.workflow" id="workflow">
-                                <stripes:option value="${actionBean.workflowNone}">None</stripes:option>
-                                <stripes:options-collection collection="${actionBean.visibleWorkflowList}" label="workflowName"/>
+                                <stripes:option value="<%= Workflow.NONE %>">None</stripes:option>
+                                <stripes:options-collection collection="${actionBean.availableWorkflows}" label="workflowName"/>
                             </stripes:select>
                         </div>
                     </div>

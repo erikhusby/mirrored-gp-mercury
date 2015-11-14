@@ -1,18 +1,19 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
+import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
 import org.broadinstitute.gpinformatics.infrastructure.columns.SampleMetadataPlugin;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
-import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Date;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,11 +41,14 @@ public class MercurySampleSearchDefinition {
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("PDOSamples",
                 "mercurySampleId", "productOrderSamples", MercurySample.class));
 
-        criteriaProjections.add( new ConfigurableSearchDefinition.CriteriaProjection("SampleBucketEntries",
+        criteriaProjections.add( new ConfigurableSearchDefinition.CriteriaProjection("BatchVessels",
                 "mercurySampleId", "labVessel", MercurySample.class));
 
         criteriaProjections.add( new ConfigurableSearchDefinition.CriteriaProjection("SampleID",
                 "mercurySampleId", "mercurySampleId", MercurySample.class));
+
+        criteriaProjections.add( new ConfigurableSearchDefinition.CriteriaProjection("mercurySample",
+                "mercurySampleId", "metadata", MercurySample.class));
 
         ConfigurableSearchDefinition configurableSearchDefinition = new ConfigurableSearchDefinition(
                 ColumnEntity.MERCURY_SAMPLE, 100, criteriaProjections, mapGroupSearchTerms);
@@ -57,18 +61,32 @@ public class MercurySampleSearchDefinition {
 
         SearchTerm searchTerm = new SearchTerm();
         searchTerm.setName("PDO");
-        searchTerm.setValueConversionExpression(SearchDefinitionFactory.getPdoInputConverter());
+        searchTerm.setSearchValueConversionExpression(SearchDefinitionFactory.getPdoInputConverter());
         List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
         SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
         criteriaPath.setCriteria( Arrays.asList( "PDOSamples", "productOrderSamples", "productOrder" ) );
         criteriaPath.setPropertyName("jiraTicketKey");
         criteriaPaths.add(criteriaPath);
+
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList("BatchVessels", "labVessel", "bucketEntries", "productOrder"));
+        criteriaPath.setPropertyName("jiraTicketKey");
+        criteriaPaths.add(criteriaPath);
+
         searchTerm.setCriteriaPaths(criteriaPaths);
-        searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public Object evaluate(Object entity, Map<String, Object> context) {
+            public List<String> evaluate(Object entity, SearchContext context) {
                 MercurySample sample = (MercurySample) entity;
-                return sample.getProductOrderSamples().iterator().next().getProductOrder().getJiraTicketKey();
+                Set<ProductOrderSample> productOrderSamples = sample.getProductOrderSamples();
+                if (!productOrderSamples.isEmpty()) {
+                    List<String> results = new ArrayList<>();
+                    for( ProductOrderSample productOrderSample : productOrderSamples ) {
+                        results.add( productOrderSample.getProductOrder().getJiraTicketKey() );
+                    }
+                    return results;
+                }
+                return null;
             }
         });
         searchTerms.add(searchTerm);
@@ -76,28 +94,47 @@ public class MercurySampleSearchDefinition {
 
         searchTerm = new SearchTerm();
         searchTerm.setName("LCSET");
-        searchTerm.setValueConversionExpression(SearchDefinitionFactory.getLcsetInputConverter());
+        searchTerm.setSearchValueConversionExpression(SearchDefinitionFactory.getLcsetInputConverter());
         criteriaPaths = new ArrayList<>();
+        // Non-reworks
         criteriaPath = new SearchTerm.CriteriaPath();
-        criteriaPath.setCriteria(Arrays.asList("SampleBucketEntries", "labVessel", "bucketEntries", "labBatch"));
+        criteriaPath.setCriteria(Arrays.asList("BatchVessels", "labVessel", "labBatches", "labBatch"));
+        criteriaPath.setPropertyName("batchName");
+        criteriaPaths.add(criteriaPath);
+        // Reworks
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList("BatchVessels", "labVessel", "reworkLabBatches"));
         criteriaPath.setPropertyName("batchName");
         criteriaPaths.add(criteriaPath);
         searchTerm.setCriteriaPaths(criteriaPaths);
-        searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public Object evaluate(Object entity, Map<String, Object> context) {
+            public Set<String> evaluate(Object entity, SearchContext context) {
                 MercurySample sample = (MercurySample) entity;
-                // Assumption that sample can't be added to the same batch more than once
-                List<String> results = new ArrayList<>();
+                Set<String> results = new HashSet<>();
                 for( LabVessel sampleVessel : sample.getLabVessel() ) {
-                    for( BucketEntry bucket : sampleVessel.getBucketEntries() ) {
-                        LabBatch batch = bucket.getLabBatch();
-                        if( batch != null ) {
-                            results.add(batch.getBatchName());
+                    for (SampleInstanceV2 sampleInstanceV2 : sampleVessel.getSampleInstancesV2()) {
+                        for( LabBatch labBatch : sampleInstanceV2.getAllWorkflowBatches() ) {
+                            results.add(labBatch.getBatchName());
                         }
                     }
                 }
                 return results;
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Bucket Count");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Long evaluate(Object entity, SearchContext context) {
+                MercurySample sample = (MercurySample) entity;
+                int result = 0;
+                for (LabVessel sampleVessel : sample.getLabVessel()) {
+                    result += sampleVessel.getBucketEntriesCount();
+                }
+                return new Long(result);
             }
         });
         searchTerms.add(searchTerm);
@@ -110,15 +147,16 @@ public class MercurySampleSearchDefinition {
 
         SearchTerm searchTerm = new SearchTerm();
         searchTerm.setName("Mercury Sample ID");
+        searchTerm.setDbSortPath("sampleKey");
         List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
         SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
         criteriaPath.setCriteria(Arrays.asList("SampleID"));
         criteriaPath.setPropertyName("sampleKey");
         criteriaPaths.add(criteriaPath);
         searchTerm.setCriteriaPaths(criteriaPaths);
-        searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public Object evaluate(Object entity, Map<String, Object> context) {
+            public String evaluate(Object entity, SearchContext context) {
                 MercurySample sample = (MercurySample) entity;
                 return sample.getSampleKey();
             }
@@ -127,9 +165,9 @@ public class MercurySampleSearchDefinition {
 
         searchTerm = new SearchTerm();
         searchTerm.setName("Mercury Sample Tube Barcode");
-        searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public Object evaluate(Object entity, Map<String, Object> context) {
+            public List<String> evaluate(Object entity, SearchContext context) {
                 List<String> values = new ArrayList<>();
                 MercurySample sample = (MercurySample) entity;
                 for( LabVessel vessel : sample.getLabVessel() ){
@@ -145,13 +183,12 @@ public class MercurySampleSearchDefinition {
         searchTerm = new SearchTerm();
         searchTerm.setName("Metadata Value");
         // This is needed to show the selected metadata column term in the results.
-        searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public Object evaluate(Object entity, Map<String, Object> context) {
+            public String evaluate(Object entity, SearchContext context) {
                 String values = "";
 
-                SearchInstance.SearchValue searchValue =
-                        (SearchInstance.SearchValue) context.get(SearchInstance.CONTEXT_KEY_SEARCH_VALUE);
+                SearchInstance.SearchValue searchValue = context.getSearchValue();
                 String header = searchValue.getParent().getValues().get(0);
                 Metadata.Key key = Metadata.Key.valueOf(header);
 
@@ -166,11 +203,11 @@ public class MercurySampleSearchDefinition {
                 return values;
             }
         });
-        searchTerm.setViewHeader(new SearchTerm.Evaluator<Object>() {
+        searchTerm.setViewHeaderExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public Object evaluate(Object entity, Map<String, Object> context) {
+            public Object evaluate(Object entity, SearchContext context) {
                 String header;
-                SearchInstance.SearchValue searchValue = (SearchInstance.SearchValue) context.get(SearchInstance.CONTEXT_KEY_SEARCH_VALUE);
+                SearchInstance.SearchValue searchValue = context.getSearchValue();
                 header = searchValue.getParent().getValues().get(0);
                 Metadata.Key key = Metadata.Key.valueOf(header);
                 if( key != null ) {
@@ -180,32 +217,32 @@ public class MercurySampleSearchDefinition {
                 }
             }
         });
-        searchTerm.setTypeExpression(new SearchTerm.Evaluator<String>() {
+        searchTerm.setValueTypeExpression(new SearchTerm.Evaluator<ColumnValueType>() {
             @Override
-            public String evaluate(Object entity, Map<String, Object> context) {
-                SearchInstance.SearchValue searchValue = (SearchInstance.SearchValue) context.get(SearchInstance.CONTEXT_KEY_SEARCH_VALUE);
+            public ColumnValueType evaluate(Object entity, SearchContext context) {
+                SearchInstance.SearchValue searchValue = context.getSearchValue();
                 String metaName = searchValue.getParent().getValues().get(0);
                 Metadata.Key key = Metadata.Key.valueOf(metaName);
                 switch (key.getDataType()) {
                 case STRING:
-                    return String.class.getSimpleName();
+                    return ColumnValueType.STRING;
                 case NUMBER:
-                    return BigDecimal.class.getSimpleName();
+                    return ColumnValueType.TWO_PLACE_DECIMAL;
                 case DATE:
-                    return Date.class.getSimpleName();
+                    return ColumnValueType.DATE;
                 }
                 throw new RuntimeException("Unhandled data type " + key.getDataType());
             }
         });
         criteriaPaths = new ArrayList<>();
         criteriaPath = new SearchTerm.CriteriaPath();
-        criteriaPath.setCriteria(Arrays.asList("mercurySample", "mercurySamples", "metadata" /* Metadata */));
+        criteriaPath.setCriteria(Arrays.asList("mercurySample", "metadata"));
         criteriaPath.setPropertyNameExpression(new SearchTerm.Evaluator<String>() {
             @Override
             // Defensive coding
             //   - as of 10/02/2014 sample metadata values are stored in value column (JPA aliased as "stringValue").
-            public String evaluate(Object entity, Map<String, Object> context) {
-                SearchInstance.SearchValue searchValue = (SearchInstance.SearchValue) context.get(SearchInstance.CONTEXT_KEY_SEARCH_VALUE);
+            public String evaluate(Object entity, SearchContext context) {
+                SearchInstance.SearchValue searchValue = context.getSearchValue();
                 String metaName = searchValue.getParent().getValues().get(0);
                 Metadata.Key key = Metadata.Key.valueOf(metaName);
                 switch (key.getDataType()) {
@@ -226,9 +263,9 @@ public class MercurySampleSearchDefinition {
         // *****  Build parent search term (the metadata name) ***** //
         searchTerm = new SearchTerm();
         searchTerm.setName("Sample Metadata");
-        searchTerm.setValuesExpression(new SearchTerm.Evaluator<List<ConstrainedValue>>() {
+        searchTerm.setConstrainedValuesExpression(new SearchTerm.Evaluator<List<ConstrainedValue>>() {
             @Override
-            public List<ConstrainedValue> evaluate(Object entity, Map<String, Object> context) {
+            public List<ConstrainedValue> evaluate(Object entity, SearchContext context) {
                 List<ConstrainedValue> constrainedValues = new ArrayList<>();
                 for (Metadata.Key meta : Metadata.Key.values()) {
                     if (meta.getCategory() == Metadata.Category.SAMPLE) {
@@ -239,10 +276,10 @@ public class MercurySampleSearchDefinition {
                 return constrainedValues;
             }
         });
-        searchTerm.setValueConversionExpression(new SearchTerm.Evaluator<Object>() {
+        searchTerm.setSearchValueConversionExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public Object evaluate(Object entity, Map<String, Object> context) {
-                return Enum.valueOf(Metadata.Key.class, (String) context.get(SearchInstance.CONTEXT_KEY_SEARCH_STRING));
+            public Metadata.Key evaluate(Object entity, SearchContext context) {
+                return Enum.valueOf(Metadata.Key.class, context.getSearchValueString());
             }
         });
         // Don't want this option in selectable columns
@@ -251,7 +288,7 @@ public class MercurySampleSearchDefinition {
         searchTerm.setAddDependentTermsToSearchTermList(Boolean.TRUE);
         criteriaPaths = new ArrayList<>();
         criteriaPath = new SearchTerm.CriteriaPath();
-        criteriaPath.setCriteria(Arrays.asList( "mercurySample", "mercurySamples", "metadata" ));
+        criteriaPath.setCriteria(Arrays.asList("mercurySample", "metadata"));
         criteriaPath.setPropertyName("key");
         criteriaPaths.add(criteriaPath);
         searchTerm.setCriteriaPaths(criteriaPaths);
@@ -263,7 +300,7 @@ public class MercurySampleSearchDefinition {
             if (meta.getCategory() == Metadata.Category.SAMPLE) {
                 searchTerm = new SearchTerm();
                 searchTerm.setName(meta.getDisplayName());
-                searchTerm.setDisplayExpression(sampleMetadataDisplayExpression);
+                searchTerm.setDisplayValueExpression(sampleMetadataDisplayExpression);
                 searchTerms.add(searchTerm);
             }
         }

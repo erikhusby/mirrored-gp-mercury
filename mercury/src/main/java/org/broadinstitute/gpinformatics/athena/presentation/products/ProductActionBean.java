@@ -27,12 +27,14 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.presentation.DisplayableItem;
-import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.MaterialTypeTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.PriceItemTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProductTokenInput;
-import org.broadinstitute.gpinformatics.infrastructure.mercury.MercuryClientService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
+import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.AnalysisTypeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
@@ -44,6 +46,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 import static org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao.IncludePDMOnly;
 import static org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao.TopLevelOnly;
@@ -67,9 +71,6 @@ public class ProductActionBean extends CoreActionBean {
     private static final String DOWNLOAD_PRODUCT_LIST = "downloadProductDescriptions";
 
     @Inject
-    private MercuryClientService mercuryClientService;
-
-    @Inject
     private ProductFamilyDao productFamilyDao;
 
     @Inject
@@ -88,7 +89,10 @@ public class ProductActionBean extends CoreActionBean {
     private PriceListCache priceListCache;
 
     @Inject
-    private MaterialTypeTokenInput materialTypeTokenInput;
+    private AnalysisTypeDao analysisTypeDao;
+
+    @Inject
+    private ReagentDesignDao reagentDesignDao;
 
     // Data needed for displaying the view.
     private List<ProductFamily> productFamilies;
@@ -141,8 +145,7 @@ public class ProductActionBean extends CoreActionBean {
      * Initialize the product with the passed in key for display in the form.
      */
     @Before(stages = LifecycleStage.BindingAndValidation,
-            on = {VIEW_ACTION, EDIT_ACTION, CREATE_ACTION, SAVE_ACTION, "addOnsAutocomplete",
-                    "materialTypesAutocomplete"})
+            on = {VIEW_ACTION, EDIT_ACTION, CREATE_ACTION, SAVE_ACTION, "addOnsAutocomplete"})
     public void init() {
         product = getContext().getRequest().getParameter(PRODUCT_PARAMETER);
         if (!StringUtils.isBlank(product)) {
@@ -305,7 +308,6 @@ public class ProductActionBean extends CoreActionBean {
      */
     private void populateTokenListsFromObjectData() {
         addOnTokenInput.setup(editProduct.getAddOnBusinessKeys());
-        materialTypeTokenInput.setup(editProduct.getAllowableMaterialTypeNames());
 
         PriceItem primaryPriceItem = editProduct.getPrimaryPriceItem();
         if (primaryPriceItem != null) {
@@ -323,21 +325,10 @@ public class ProductActionBean extends CoreActionBean {
         return createTextResolution(priceItemTokenInput.getJsonString(getQ()));
     }
 
-    /**
-     * This method retrieves all possible material types.
-     *
-     * @return The autocomplete text.
-     * @throws Exception Any errors.
-     */
-    @HandlesEvent("materialTypesAutocomplete")
-    public Resolution materialTypesAutocomplete() throws Exception {
-        return createTextResolution(materialTypeTokenInput.getJsonString(getQ()));
-    }
-
     @HandlesEvent(SAVE_ACTION)
     public Resolution save() {
         productEjb.saveProduct(
-                editProduct, addOnTokenInput, priceItemTokenInput, materialTypeTokenInput,
+                editProduct, addOnTokenInput, priceItemTokenInput,
                 allLengthsMatch(), criteria, operators, values);
         addMessage("Product \"" + editProduct.getProductName() + "\" has been saved");
         return new RedirectResolution(ProductActionBean.class, VIEW_ACTION).addParameter(PRODUCT_PARAMETER,
@@ -413,14 +404,6 @@ public class ProductActionBean extends CoreActionBean {
 
     public List<ProductFamily> getProductFamilies() {
         return productFamilies;
-    }
-
-    public MaterialTypeTokenInput getMaterialTypeTokenInput() {
-        return materialTypeTokenInput;
-    }
-
-    public void setMaterialTypeTokenInput(MaterialTypeTokenInput materialTypeTokenInput) {
-        this.materialTypeTokenInput = materialTypeTokenInput;
     }
 
     public PriceItemTokenInput getPriceItemTokenInput() {
@@ -505,7 +488,7 @@ public class ProductActionBean extends CoreActionBean {
      * @return List of strings representing the reagent designs
      */
     public Collection<DisplayableItem> getReagentDesigns() {
-        return mercuryClientService.getReagentDesigns();
+        return makeDisplayableItemCollection(reagentDesignDao.findAll());
     }
 
     /**
@@ -516,7 +499,7 @@ public class ProductActionBean extends CoreActionBean {
      * @return UI helper object {@link DisplayableItem} representing the reagent design
      */
     public DisplayableItem getReagentDesign(String businessKey) {
-        return mercuryClientService.getReagentDesign(businessKey);
+        return getDisplayableItemInfo(businessKey, reagentDesignDao);
     }
 
     /**
@@ -527,7 +510,7 @@ public class ProductActionBean extends CoreActionBean {
      * @return UI helper object {@link DisplayableItem} representing the analysis type
      */
     public DisplayableItem getAnalysisType(String businessKey) {
-        return mercuryClientService.getAnalysisType(businessKey);
+        return getDisplayableItemInfo(businessKey, analysisTypeDao);
     }
 
     /**
@@ -536,20 +519,21 @@ public class ProductActionBean extends CoreActionBean {
      * @return List of strings representing the analysis types
      */
     public Collection<DisplayableItem> getAnalysisTypes() {
-        return mercuryClientService.getAnalysisTypes();
+        return makeDisplayableItemCollection(analysisTypeDao.findAll());
     }
 
     /**
-     * Get the list of workflows with NONE removed.
+     * Get the list of workflows.
      *
-     * @return The workflows
+     * @return all workflows
      */
-    public List<Workflow> getVisibleWorkflowList() {
-        return Workflow.getVisibleWorkflowList();
-    }
-
-    public Workflow getWorkflowNone() {
-        return Workflow.NONE;
+    public Set<Workflow> getAvailableWorkflows() {
+        Set<Workflow> workflows = new TreeSet<>(Workflow.BY_NAME);
+        List<ProductWorkflowDef> productWorkflowDefs = new WorkflowLoader().load().getProductWorkflowDefs();
+        for (ProductWorkflowDef productWorkflowDef : productWorkflowDefs) {
+            workflows.add(Workflow.findByName(productWorkflowDef.getName()));
+        }
+        return workflows;
     }
 
     public ProductDao.Availability getAvailability() {

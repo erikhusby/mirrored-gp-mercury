@@ -21,6 +21,8 @@ public interface SampleData {
 
     Double getRqs();
 
+    Double getDv200();
+
     double getVolume();
 
     Double getConcentration();
@@ -59,7 +61,7 @@ public interface SampleData {
 
     boolean isSampleReceived();
 
-    Date getReceiptDate() throws ParseException;
+    Date getReceiptDate();
 
     boolean isActiveStock();
 

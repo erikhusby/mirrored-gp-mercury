@@ -22,12 +22,10 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.tableau.TableauConfig;
-import org.broadinstitute.gpinformatics.mercury.presentation.TableauRedirectActionBean;
 
 import java.awt.Color;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -174,7 +172,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
             List<ProductOrder> productOrders = orderMap.get(currentProduct);
             for (BillingTrackerHeader header : BillingTrackerHeader.values()) {
                 if (header.shouldShow(currentProduct)) {
-                    getWriter().writeHeaderCell(header.getText(), header == BillingTrackerHeader.TABLEAU_LINK);
+                    getWriter().writeHeaderCell(header.getText());
                 }
             }
 
@@ -198,9 +196,8 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
             int sortOrder = 1;
             List<SampleLedgerRow> sampleLedgerRows = sampleRowData.get(currentProduct);
             for (SampleLedgerRow sampleLedgerRow : sampleLedgerRows) {
-                ProductOrder productOrder = sampleLedgerRow.getProductOrderSample().getProductOrder();
                 writeRow(sortedPriceItems, sortedAddOns, historicalPriceItems, sampleLedgerRow.getProductOrderSample(),
-                        sortOrder++, getWorkCompleteMessageBySample(productOrder), sampleLedgerRow);
+                        sortOrder++, sampleLedgerRow);
             }
         }
 
@@ -229,77 +226,27 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
         return historicalPriceItems;
     }
 
-    // FIXME: This can be made more efficient by avoiding the remote call to BSP, since we have aliquot ID on the
-    // FIXME: PDO sample. This allows us to map directly from the PDO sample to its WorkCompleteMessage. The SQL
-    // FIXME: looks like:
-    // SELECT * FROM athena.message_data_value, athena.work_complete_message
-    // WHERE key = 'ALIQUOT_ID' AND value IN (SELECT
-    //                                      concat('broadinstitute.org:bsp.prod.sample:', aliquot_id)
-    //                                     FROM athena.product_order_sample
-    //                                     WHERE aliquot_id IS NOT NULL)
-    //    AND work_complete_message_id = work_complete_message;
-    private Map<String, WorkCompleteMessage> getWorkCompleteMessageBySample(ProductOrder productOrder) {
-        Map<String, WorkCompleteMessage> workCompleteMessageBySample = workCompleteMessageCache.get(productOrder);
-        if (workCompleteMessageBySample == null) {
-            workCompleteMessageBySample = new HashMap<>();
-            workCompleteMessageCache.put(productOrder, workCompleteMessageBySample);
-
-            List<WorkCompleteMessage> workCompleteMessages = workCompleteMessageDao.findByPDO(
-                    productOrder.getBusinessKey());
-
-            List<String> aliquotIds = new ArrayList<>();
-            for (WorkCompleteMessage workCompleteMessage : workCompleteMessages) {
-                String aliquotId = workCompleteMessage.getAliquotId();
-                if (BSPLSIDUtil.isBspLsid(aliquotId)) {
-                    aliquotId = BSPLSIDUtil.lsidToBareId(aliquotId);
-                    aliquotIds.add(aliquotId);
-                }
-            }
-            Map<String, String> stockIdByAliquotId = sampleDataFetcher.getStockIdByAliquotId(aliquotIds);
-
-            for (WorkCompleteMessage workCompleteMessage : workCompleteMessages) {
-                String aliquotId = workCompleteMessage.getAliquotId();
-                if (BSPLSIDUtil.isBspLsid(aliquotId)) {
-                    aliquotId = BSPLSIDUtil.lsidToBspSampleId(aliquotId);
-                    String stockId = stockIdByAliquotId.get(aliquotId);
-                    if (stockId != null) {
-                        workCompleteMessageBySample.put(stockId, workCompleteMessage);
-                    } else {
-                        /*
-                         * This isn't necessarily a useful thing to do, but it may work in some cases. While it may not
-                         * be tremendously useful, it's better than doing nothing or throwing an exception.
-                         */
-                        workCompleteMessageBySample.put(aliquotId, workCompleteMessage);
-                    }
-                }
-            }
-        }
-        return workCompleteMessageBySample;
-    }
-
     /**
      * Write a row of data for a single sample.
-     *
+     * <p/>
      * Currently, the data comes from many different places. In order to improve testability, the data is in the
      * process of being consolidated into a {@link SampleLedgerRow} object, which will make test setup easier.
-     *
+     * <p/>
      * Testing this method is a little difficult. Ideally, its inputs would be simple to make it straightforward to test
      * different scenarios by verifying interactions with the writer. Another idea is to move the responsibility into
      * {@link SampleLedgerRow}. See Phil Shapiro's code review
      * <a href="https://crucible.broadinstitute.org/cru/GPI-748#c32936">comment</a>.
      *
-     * @param sortedPriceItems               primary and alternative price items that apply to the product ordered
-     * @param sortedAddOns                   add-on products to provided price item columns for
-     * @param historicalPriceItems           price items that have ledger entries for this sample but are not primary, alternative, or add-on price items
-     * @param sample                         the product order sample for the row
-     * @param sortOrder                      the value for the sort order column, for re-sorting the tracker before uploading
-     * @param workCompleteMessageBySample    any work complete messages for the product order, by sample
-     * @param sampleLedgerRow                sample data to be written
+     * @param sortedPriceItems     primary and alternative price items that apply to the product ordered
+     * @param sortedAddOns         add-on products to provided price item columns for
+     * @param historicalPriceItems price items that have ledger entries for this sample but are not primary, alternative, or add-on price items
+     * @param sample               the product order sample for the row
+     * @param sortOrder            the value for the sort order column, for re-sorting the tracker before uploading
+     * @param sampleLedgerRow      sample data to be written
      */
-    private void writeRow(List<PriceItem> sortedPriceItems, List<Product> sortedAddOns,
-                          Collection<PriceItem> historicalPriceItems, ProductOrderSample sample,
-                          int sortOrder, Map<String, WorkCompleteMessage> workCompleteMessageBySample,
-                          SampleLedgerRow sampleLedgerRow) {
+    void writeRow(List<PriceItem> sortedPriceItems, List<Product> sortedAddOns,
+                  Collection<PriceItem> historicalPriceItems, ProductOrderSample sample, int sortOrder,
+                  SampleLedgerRow sampleLedgerRow) {
         SampleLedgerSpreadSheetWriter writer = getWriter();
         ProductOrder productOrder = sample.getProductOrder();
         Product product = productOrder.getProduct();
@@ -311,10 +258,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
         writer.writeCell(sample.getSampleKey());
 
         // collaborator sample ID, looks like this is properly initialized.
-        writer.writeCell(sampleData.getCollaboratorsSampleName());
-
-        // Material type.
-        writer.writeCell(sampleData.getMaterialType());
+        writer.writeCell(sampleData != null ? sampleData.getCollaboratorsSampleName() : "");
 
         // Risk Information.
         String riskString = sample.getRiskString();
@@ -334,12 +278,6 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
         writer.writeCellLink(productOrder.getJiraTicketKey(),
                 ProductOrderActionBean.getProductOrderLink(productOrder, appConfig));
 
-        // Product Order Name (actually this concept is called 'Title' in PDO world).
-        writer.writeCell(productOrder.getTitle());
-
-        // Project Manager - need to turn this into a user name.
-        writer.writeCell(sampleLedgerRow.getProjectManagerName());
-
         // Lane Count
         if (BillingTrackerHeader.LANE_COUNT.shouldShow(product)) {
             writer.writeCell(productOrder.getLaneCount());
@@ -350,47 +288,6 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
 
         // Work complete date is the date of any ledger items that are ready to be billed.
         writer.writeCell(sample.getWorkCompleteDate(), getDateStyle());
-
-        // Picard metrics
-        BigInteger pfReads = null;
-        BigInteger pfAlignedGb = null;
-        BigInteger pfReadsAlignedInPairs = null;
-        Double percentCoverageAt20x = null;
-        Double percentCoverageAt100x = null;
-        WorkCompleteMessage workCompleteMessage = workCompleteMessageBySample.get(sample.getSampleKey());
-        if (workCompleteMessage != null) {
-            pfReads = workCompleteMessage.getPfReads();
-            pfAlignedGb = workCompleteMessage.getAlignedGb();
-            pfReadsAlignedInPairs = workCompleteMessage.getPfReadsAlignedInPairs();
-            percentCoverageAt20x = workCompleteMessage.getPercentCoverageAt20X();
-            percentCoverageAt100x = workCompleteMessage.getPercentCoverageAt100X();
-        }
-
-        // PF Reads
-        writer.writeCell(pfReads);
-
-        // PF Aligned GB
-        writer.writeCell(pfAlignedGb);
-
-        // PF Reads Aligned in Pairs
-        writer.writeCell(pfReadsAlignedInPairs);
-
-        // % coverage at 20x
-        if (BillingTrackerHeader.PERCENT_COVERAGE_AT_20X.shouldShow(product)) {
-            writer.writeCell(percentCoverageAt20x, getPercentageStyle());
-        }
-
-        // % coverage at 100x
-        if (BillingTrackerHeader.TARGET_BASES_100X_PERCENT.shouldShow(product)) {
-            writer.writeCell(percentCoverageAt100x, getPercentageStyle());
-        }
-
-        writer.writeCell(sample.getSampleData().getSampleType());
-
-        // Tableau link
-        String pdoKey = productOrder.getJiraTicketKey();
-        writer.writeCellLink(TableauRedirectActionBean.getPdoSequencingSampleDashboardUrl(pdoKey, tableauConfig),
-                TableauRedirectActionBean.getPdoSequencingSamplesDashboardRedirectUrl(pdoKey, appConfig));
 
         // Quote ID.
         writer.writeCell(productOrder.getQuoteId());
@@ -416,17 +313,6 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
                 writeCountsForPriceItems(billCounts, item);
             }
         }
-
-        // Write the comments.
-        String theComment = "";
-        if (!StringUtils.isBlank(productOrder.getComments())) {
-            theComment += productOrder.getComments();
-        }
-
-        if (!StringUtils.isBlank(sample.getSampleComment())) {
-            theComment += "--" + sample.getSampleComment();
-        }
-        writer.writeCell(theComment);
 
         // Any messages for items that are not billed yet.
         String billingError = sample.getUnbilledLedgerItemMessages();
@@ -492,8 +378,6 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
             }
         }
 
-        getWriter().writeCell("Comments", getFixedHeaderStyle());
-        getWriter().setColumnWidth(COMMENTS_WIDTH);
         getWriter().writeCell("Billing Errors", getFixedHeaderStyle());
         getWriter().setColumnWidth(ERRORS_WIDTH);
     }

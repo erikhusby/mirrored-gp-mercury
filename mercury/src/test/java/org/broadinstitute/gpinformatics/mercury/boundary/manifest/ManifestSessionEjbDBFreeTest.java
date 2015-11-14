@@ -12,6 +12,11 @@ import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProj
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NextTransition;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
@@ -30,6 +35,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestStatus;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.TubeTransferException;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
@@ -44,6 +50,7 @@ import org.testng.annotations.Test;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -58,6 +65,7 @@ import static org.broadinstitute.gpinformatics.mercury.boundary.manifest.Manifes
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItem;
+import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -139,6 +147,8 @@ public class ManifestSessionEjbDBFreeTest {
      */
     private static final Map<String, Integer> SAMPLE_ID_TO_NUMBER_OF_COPIES_FOR_DUPLICATE_TESTS =
             ImmutableMap.of("03101231193", 2, "03101254356", 3, "03101411324", 2);
+    public JiraService jiraService;
+    private BSPUserList bspUserList;
 
     @BeforeMethod
     public void setUp() throws Exception {
@@ -147,8 +157,58 @@ public class ManifestSessionEjbDBFreeTest {
         mercurySampleDao = Mockito.mock(MercurySampleDao.class);
         labVesselDao = Mockito.mock(LabVesselDao.class);
         mockUserBean = Mockito.mock(UserBean.class);
+        jiraService = Mockito.mock(JiraService.class);
+        bspUserList = Mockito.mock(BSPUserList.class);
 
         Mockito.when(mockUserBean.getBspUser()).thenReturn(testLabUser);
+        Mockito.when(bspUserList.getByUsername(Mockito.anyString())).thenReturn(testLabUser);
+        Mockito.when(jiraService.getIssueInfo(Mockito.anyString())).thenAnswer(new Answer<JiraIssue>() {
+            @Override
+            public JiraIssue answer(InvocationOnMock invocationOnMock) throws Throwable {
+                String jiraKey = (String) invocationOnMock.getArguments()[0];
+
+                JiraIssue mockedIssue = new JiraIssue(jiraKey, jiraService);
+                if (jiraKey == null) {
+                    return null;
+                }
+                mockedIssue.setCreated(new Date());
+                mockedIssue.setSummary("");
+                mockedIssue.setDescription("");
+                mockedIssue.setReporter("QADudeLU");
+                return mockedIssue;
+            }
+        });
+        Mockito.when(jiraService.getIssueInfo(Mockito.anyString(),Mockito.anyString())).thenAnswer(new Answer<JiraIssue>() {
+            @Override
+            public JiraIssue answer(InvocationOnMock invocationOnMock) throws Throwable {
+                String jiraKey = (String) invocationOnMock.getArguments()[0];
+
+                JiraIssue mockedIssue = new JiraIssue(jiraKey, jiraService);
+                if(jiraKey == null) {
+                    return null;
+                }
+                mockedIssue.setCreated(new Date());
+                mockedIssue.setSummary("");
+                mockedIssue.setDescription("");
+                mockedIssue.setReporter("QADudeLU");
+                mockedIssue.addFieldValue((String) invocationOnMock.getArguments()[1],
+                        Collections.singletonList(new HashMap<>()));
+                return mockedIssue;
+            }
+        });
+        Mockito.when(jiraService.findAvailableTransitionByName(Mockito.anyString(), Mockito.anyString())).thenAnswer(
+                new Answer<Transition>() {
+                    @Override
+                    public Transition answer(InvocationOnMock invocationOnMock) throws Throwable {
+
+                        String transitionName = (String) invocationOnMock.getArguments()[1];
+
+
+                        return new Transition(transitionName, transitionName,
+                                new NextTransition("", transitionName+"next", "Next Transition", "",
+                                        transitionName + "next"));
+                    }
+                });
 
         testSampleForAccessioning =
                 new MercurySample(TEST_SAMPLE_KEY, MercurySample.MetadataSource.MERCURY);
@@ -164,7 +224,7 @@ public class ManifestSessionEjbDBFreeTest {
                 BarcodedTube.BarcodedTubeType.MatrixTube2mL);
         manifestSessionEjb =
                 new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao, labVesselDao,
-                        mockUserBean);
+                        mockUserBean, bspUserList, jiraService);
     }
 
     /**
@@ -197,7 +257,7 @@ public class ManifestSessionEjbDBFreeTest {
                 .thenReturn(researchProject);
 
         return new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao, labVesselDao,
-                mockUserBean);
+                mockUserBean, bspUserList, jiraService);
     }
 
     /**
@@ -295,7 +355,7 @@ public class ManifestSessionEjbDBFreeTest {
                 .thenReturn(testVesselAlreadyTransferred);
 
         holder.ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao, labVesselDao,
-                mockUserBean);
+                mockUserBean, bspUserList, jiraService);
 
         return holder;
     }
@@ -306,7 +366,7 @@ public class ManifestSessionEjbDBFreeTest {
 
     public void researchProjectNotFound() {
         ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao,
-                labVesselDao, mockUserBean);
+                labVesselDao, mockUserBean, bspUserList, jiraService);
         try {
             ejb.uploadManifest(null, null, null, false);
             Assert.fail();
@@ -338,8 +398,17 @@ public class ManifestSessionEjbDBFreeTest {
                         "manifest-upload/manifest-with-missing-column.xlsx"},
                 {"Empty manifest", "The uploaded Manifest has no data.",
                         "manifest-upload/empty-manifest.xlsx"},
-                {"Multiple Bad Columns in Manifest", "Required headers missing: Specimen_Number, Sex, Patient_ID, Collection_Date, Visit, SAMPLE_TYPE.\nUnknown headers '[Specimen_Numberz, Patient_Idee, Gender, Date, Visit Type, Sample Type]' present.",
-                        "manifest-upload/manifest-with-multiple-bad-columns.xlsx"}
+                {"Multiple Bad Columns in Manifest",
+                        "Required headers missing: Specimen_Number, Sex, Patient_ID, Collection_Date, Visit, "
+                        + "SAMPLE_TYPE."
+                        + "\nUnknown headers '[Specimen_Numberz, Patient_Idee, Gender, Date, Visit Type, Sample Type]' "
+                        + "present.",
+                        "manifest-upload/manifest-with-multiple-bad-columns.xlsx"},
+                {"Unrecognized Material Types in file",
+                        "Row #7 An unrecognized material type was entered: DNR:Heroic\n"
+                        + "Row #8 An unrecognized material type was entered: Fresh DNA\n"
+                        + "Row #9 An unrecognized material type was entered: Buffy Vampire Coat",
+                        "manifest-upload/manifest-with-bad-material-type.xlsx"}
         };
         // @formatter:on
     }
@@ -557,7 +626,7 @@ public class ManifestSessionEjbDBFreeTest {
 
     public void acceptUploadSessionNotFound() {
         ManifestSessionEjb ejb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao,
-                labVesselDao, mockUserBean);
+                labVesselDao, mockUserBean, bspUserList, jiraService);
         try {
             ejb.acceptManifestUpload(ARBITRARY_MANIFEST_SESSION_ID);
             Assert.fail();
@@ -890,6 +959,9 @@ public class ManifestSessionEjbDBFreeTest {
 
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.SCANNED, 20, false);
 
+        String receiptKey = String.format("%s-%d", CreateFields.ProjectType.RECEIPT_PROJECT.getKeyPrefix(),
+                ARBITRARY_MANIFEST_SESSION_ID);
+        holder.ejb.updateReceiptInfo(ARBITRARY_MANIFEST_SESSION_ID, receiptKey);
         holder.ejb.closeSession(ARBITRARY_MANIFEST_SESSION_ID);
 
         assertThat(holder.manifestSession.getStatus(), is(ManifestSession.SessionStatus.COMPLETED));
@@ -1084,7 +1156,7 @@ public class ManifestSessionEjbDBFreeTest {
     public void validateValidTargetSample() throws Exception {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 1, false);
 
-        MercurySample foundSample = holder.ejb.validateTargetSample(TEST_SAMPLE_KEY);
+        MercurySample foundSample = holder.ejb.findAndValidateTargetSample(TEST_SAMPLE_KEY);
 
         assertThat(foundSample.getSampleKey(), is(equalTo(TEST_SAMPLE_KEY)));
 
@@ -1094,7 +1166,7 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 1, false);
 
         try {
-            holder.ejb.validateTargetSample(BSP_TEST_SAMPLE_KEY);
+            holder.ejb.findAndValidateTargetSample(BSP_TEST_SAMPLE_KEY);
             Assert.fail();
         } catch (Exception e) {
             assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.INVALID_TARGET
@@ -1107,7 +1179,7 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 1, false);
 
         try {
-            holder.ejb.validateTargetSample(TEST_SAMPLE_KEY + "BAD");
+            holder.ejb.findAndValidateTargetSample(TEST_SAMPLE_KEY + "BAD");
             Assert.fail();
         } catch (Exception e) {
             assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.INVALID_TARGET
@@ -1125,7 +1197,7 @@ public class ManifestSessionEjbDBFreeTest {
     public void validateTargetTubeAndSampleOnValidRecord() throws Exception {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 1, false);
 
-        LabVessel foundVessel = holder.ejb.validateTargetSampleAndVessel(TEST_SAMPLE_KEY, TEST_VESSEL_LABEL);
+        LabVessel foundVessel = holder.ejb.findAndValidateTargetSampleAndVessel(TEST_SAMPLE_KEY, TEST_VESSEL_LABEL);
 
         assertThat(foundVessel.getLabel(), is(equalTo(TEST_VESSEL_LABEL)));
 
@@ -1137,7 +1209,7 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 1, false);
 
         try {
-            holder.ejb.validateTargetSampleAndVessel(TEST_SAMPLE_KEY_UNASSOCIATED, TEST_VESSEL_LABEL);
+            holder.ejb.findAndValidateTargetSampleAndVessel(TEST_SAMPLE_KEY_UNASSOCIATED, TEST_VESSEL_LABEL);
             Assert.fail();
         } catch (Exception e) {
             assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.INVALID_TARGET
@@ -1151,7 +1223,7 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 1, false);
 
         try {
-            holder.ejb.validateTargetSampleAndVessel(TEST_SAMPLE_KEY + "BAD", TEST_VESSEL_LABEL);
+            holder.ejb.findAndValidateTargetSampleAndVessel(TEST_SAMPLE_KEY + "BAD", TEST_VESSEL_LABEL);
             Assert.fail();
         } catch (Exception e) {
             assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.INVALID_TARGET
@@ -1165,7 +1237,7 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 1, false);
 
         try {
-            holder.ejb.validateTargetSampleAndVessel(TEST_SAMPLE_KEY, TEST_VESSEL_LABEL + "BAD");
+            holder.ejb.findAndValidateTargetSampleAndVessel(TEST_SAMPLE_KEY, TEST_VESSEL_LABEL + "BAD");
             Assert.fail();
         } catch (Exception e) {
             assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.INVALID_TARGET
@@ -1179,7 +1251,7 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.ACCESSIONED, 1, false);
 
         try {
-            holder.ejb.validateTargetSampleAndVessel(TEST_SAMPLE_ALREADY_TRANSFERRED,
+            holder.ejb.findAndValidateTargetSampleAndVessel(TEST_SAMPLE_ALREADY_TRANSFERRED,
                     TEST_VESSEL_LABEL_ALREADY_TRANSFERRED);
             Assert.fail();
         } catch (Exception e) {
@@ -1208,8 +1280,9 @@ public class ManifestSessionEjbDBFreeTest {
 
         assertThat(testSample.getMetadata(), is(empty()));
 
-        holder.ejb.transferSample(ARBITRARY_MANIFEST_SESSION_ID, GOOD_TUBE_BARCODE, TEST_SAMPLE_KEY, TEST_VESSEL_LABEL
-        );
+        holder.ejb.updateReceiptInfo(ARBITRARY_MANIFEST_SESSION_ID, "RCT-1");
+
+        holder.ejb.transferSample(ARBITRARY_MANIFEST_SESSION_ID, GOOD_TUBE_BARCODE, TEST_SAMPLE_KEY, TEST_VESSEL_LABEL);
 
         assertThat(usedRecord.getStatus(), is(equalTo(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE)));
 
@@ -1222,6 +1295,8 @@ public class ManifestSessionEjbDBFreeTest {
         MercurySample testSample = mercurySampleDao.findBySampleKey(TEST_SAMPLE_KEY);
 
         assertThat(testSample.getMetadata(), is(empty()));
+
+        holder.ejb.updateReceiptInfo(ARBITRARY_MANIFEST_SESSION_ID, "RCT-1");
 
         try {
             holder.ejb.transferSample(ARBITRARY_MANIFEST_SESSION_ID, GOOD_TUBE_BARCODE, TEST_SAMPLE_KEY,
@@ -1320,6 +1395,8 @@ public class ManifestSessionEjbDBFreeTest {
 
         assertThat(testSample.getMetadata(), is(empty()));
 
+        holder.ejb.updateReceiptInfo(ARBITRARY_MANIFEST_SESSION_ID, "RCT-1");
+
         try {
             holder.ejb.transferSample(ARBITRARY_MANIFEST_SESSION_ID, GOOD_TUBE_BARCODE, TEST_SAMPLE_KEY,
                     TEST_VESSEL_LABEL);
@@ -1345,8 +1422,9 @@ public class ManifestSessionEjbDBFreeTest {
 
         assertThat(testSample.getMetadata(), is(empty()));
 
-        holder.ejb.transferSample(ARBITRARY_MANIFEST_SESSION_ID, GOOD_TUBE_BARCODE, TEST_SAMPLE_KEY, TEST_VESSEL_LABEL
-        );
+        holder.ejb.updateReceiptInfo(ARBITRARY_MANIFEST_SESSION_ID, "RCT-1");
+
+        holder.ejb.transferSample(ARBITRARY_MANIFEST_SESSION_ID, GOOD_TUBE_BARCODE, TEST_SAMPLE_KEY, TEST_VESSEL_LABEL);
 
         assertThat(usedRecord.getStatus(), is(equalTo(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE)));
 
@@ -1370,6 +1448,7 @@ public class ManifestSessionEjbDBFreeTest {
         try {
             holder.ejb.transferSample(ARBITRARY_MANIFEST_SESSION_ID, GOOD_TUBE_BARCODE, TEST_SAMPLE_ALREADY_TRANSFERRED,
                     TEST_VESSEL_LABEL_ALREADY_TRANSFERRED);
+            Assert.fail();
         } catch (Exception e) {
             assertThat(e.getMessage(), containsString(ManifestRecord.ErrorStatus.INVALID_TARGET.getBaseMessage()));
             assertThat(e.getMessage(), containsString(ManifestSessionEjb.VESSEL_USED_FOR_PREVIOUS_TRANSFER));
@@ -1382,6 +1461,9 @@ public class ManifestSessionEjbDBFreeTest {
         ManifestSessionAndEjbHolder holder = buildHolderForSession(ManifestRecord.Status.UPLOAD_ACCEPTED, 5, true);
 
         assertThat(holder.manifestSession.getStatus(), is(ManifestSession.SessionStatus.ACCESSIONING));
+
+        holder.ejb.updateReceiptInfo(ARBITRARY_MANIFEST_SESSION_ID, "RCT-1");
+
         Map<Metadata.Key, String> initialData = new HashMap<>();
         initialData .put(Metadata.Key.BROAD_SAMPLE_ID, TEST_SAMPLE_KEY);
         addRecord(holder, NO_ERROR, ManifestRecord.Status.UPLOAD_ACCEPTED,
@@ -1446,16 +1528,95 @@ public class ManifestSessionEjbDBFreeTest {
     public void testAddDuplicateSamplesToManifestSession() throws Exception {
         stubResearchProjectDaoFindReturnsNewObject();
         List<Sample> samples = new ArrayList<>();
-        Sample sample = ClinicalSampleTestFactory
-                .createSample(ImmutableMap.of(Metadata.Key.SAMPLE_ID, SM_1, Metadata.Key.PATIENT_ID, PATIENT_1));
+        Sample sample = ClinicalSampleTestFactory.createSample(ImmutableMap.of(Metadata.Key.SAMPLE_ID, SM_1,
+                Metadata.Key.PATIENT_ID, PATIENT_1, Metadata.Key.BROAD_SAMPLE_ID, SM_1));
         samples.add(sample);
-        sample = ClinicalSampleTestFactory
-                .createSample(ImmutableMap.of(Metadata.Key.SAMPLE_ID, SM_1, Metadata.Key.PATIENT_ID, PATIENT_1));
+        sample = ClinicalSampleTestFactory.createSample(ImmutableMap.of(Metadata.Key.SAMPLE_ID, SM_1,
+                Metadata.Key.PATIENT_ID, PATIENT_1, Metadata.Key.BROAD_SAMPLE_ID, SM_1));
         samples.add(sample);
+
+        Mockito.when(mercurySampleDao.findMapIdToMercurySample(Mockito.anyCollectionOf(String.class)))
+                .thenReturn(ImmutableMap.of(SM_1,new MercurySample(SM_1, MercurySample.MetadataSource.MERCURY)));
+
 
         ManifestSession manifestSession = manifestSessionEjb
                 .createManifestSession(TEST_RESEARCH_PROJECT_KEY, TEST_SESSION_NAME, true, samples);
         assertThat(manifestSession.getRecords().size(), is(2));
+    }
+
+    public void testAddAccessionedSampleToManifestSession() throws Exception {
+        stubResearchProjectDaoFindReturnsNewObject();
+        List<Sample> samples = Arrays.asList(ClinicalSampleTestFactory
+                .createSample(ImmutableMap.of(Metadata.Key.SAMPLE_ID, SM_1, Metadata.Key.PATIENT_ID, PATIENT_1,
+                        Metadata.Key.BROAD_SAMPLE_ID, SM_1)));
+
+        MercurySample sample = new MercurySample(SM_1, MercurySample.MetadataSource.MERCURY);
+        BarcodedTube barcodedTube = new BarcodedTube("VesselFor" + SM_1, BarcodedTube.BarcodedTubeType.MatrixTube);
+        LabEvent collaboratorTransferEvent =
+                new LabEvent(LabEventType.COLLABORATOR_TRANSFER, new Date(), "thisLocation", 0l, 0l, "testprogram");
+        barcodedTube.getInPlaceLabEvents().add(collaboratorTransferEvent);
+        sample.addLabVessel(barcodedTube);
+
+        Mockito.when(mercurySampleDao.findMapIdToMercurySample(Mockito.anyCollectionOf(String.class)))
+                .thenReturn(Collections.singletonMap(SM_1, sample));
+
+        try {
+            manifestSessionEjb
+                    .createManifestSession(TEST_RESEARCH_PROJECT_KEY, TEST_SESSION_NAME + "_NEW", true, samples);
+            Assert.fail();
+        } catch (InformaticsServiceException | TubeTransferException e) {
+            assertThat(e.getCause(), instanceOf(TubeTransferException.class));
+            assertThat(e.getLocalizedMessage(), containsString(ManifestSessionEjb.VESSEL_USED_FOR_PREVIOUS_TRANSFER));
+        }
+    }
+
+    public void testAddBSPSampleToManifestSession() throws Exception {
+        stubResearchProjectDaoFindReturnsNewObject();
+        List<Sample> samples = Arrays.asList(ClinicalSampleTestFactory
+                .createSample(ImmutableMap.of(Metadata.Key.SAMPLE_ID, SM_1, Metadata.Key.PATIENT_ID, PATIENT_1, Metadata.Key.BROAD_SAMPLE_ID, SM_1)));
+
+        MercurySample sample = new MercurySample(SM_1, MercurySample.MetadataSource.BSP);
+        BarcodedTube barcodedTube = new BarcodedTube("VesselFor" + SM_1, BarcodedTube.BarcodedTubeType.MatrixTube);
+
+        sample.addLabVessel(barcodedTube);
+
+        Mockito.when(mercurySampleDao.findMapIdToMercurySample(Mockito.anyCollectionOf(String.class)))
+                .thenReturn(Collections.singletonMap(SM_1, sample));
+
+        try {
+            manifestSessionEjb
+                    .createManifestSession(TEST_RESEARCH_PROJECT_KEY, TEST_SESSION_NAME + "_NEW", true, samples);
+            Assert.fail();
+        } catch (InformaticsServiceException e) {
+            assertThat(e.getCause(), instanceOf(TubeTransferException.class));
+            assertThat(e.getLocalizedMessage(), containsString(ManifestSessionEjb.SAMPLE_NOT_ELIGIBLE_FOR_CLINICAL_MESSAGE));
+        }
+    }
+
+
+    @DataProvider(name = "metaDataProvider")
+    public static Object[][] metaDataProvider() {
+        return new Object[][]{
+                {new HashMap<Metadata.Key, String>() {{ put(Metadata.Key.PERCENT_TUMOR, ""); put(Metadata.Key.BROAD_SAMPLE_ID, SM_1);}}},
+                {new HashMap<Metadata.Key, String>() {{ put(Metadata.Key.PERCENT_TUMOR, null); put(Metadata.Key.BROAD_SAMPLE_ID, SM_1);}}}
+        };
+    }
+
+    @Test(dataProvider = "metaDataProvider")
+    public void testAddSampleWithProvidedMetadataToManifestSession(final Map<Metadata.Key, String> metadata)
+            throws Exception {
+        stubResearchProjectDaoFindReturnsNewObject();
+        Sample sample = ClinicalSampleTestFactory.createSample(metadata);
+
+        Mockito.when(mercurySampleDao.findMapIdToMercurySample(Mockito.anyCollectionOf(String.class)))
+                .thenReturn(Collections.singletonMap(SM_1, new MercurySample(SM_1, MercurySample.MetadataSource.MERCURY)));
+
+        ManifestSession manifestSession = manifestSessionEjb.createManifestSession(
+                TEST_RESEARCH_PROJECT_KEY, TEST_SESSION_NAME, true, Collections.singletonList(sample));
+        assertThat(manifestSession.getRecords().size(), is(1));
+        for (ManifestRecord manifestRecord : manifestSession.getRecords()) {
+            assertThat(manifestRecord.getMetadata().size(), is(1));
+        }
     }
 
     /* ************************************************** *
@@ -1469,6 +1630,10 @@ public class ManifestSessionEjbDBFreeTest {
         stubResearchProjectDaoFindReturnsNewObject();
         Collection<Sample> samples = Collections.singleton(
                 ClinicalSampleTestFactory.createSample(Collections.singletonMap(Metadata.Key.BROAD_SAMPLE_ID, SM_1)));
+
+        Mockito.when(mercurySampleDao.findMapIdToMercurySample(Mockito.anyCollectionOf(String.class)))
+                .thenReturn(Collections.singletonMap(SM_1, new MercurySample(SM_1, MercurySample.MetadataSource.MERCURY)));
+
         ManifestSession manifestSession = manifestSessionEjb
                 .createManifestSession(TEST_RESEARCH_PROJECT_KEY, TEST_SESSION_NAME, true, samples);
 
@@ -1479,8 +1644,29 @@ public class ManifestSessionEjbDBFreeTest {
         assertThat(manifestSession.getRecords().size(), equalTo(samples.size()));
         ManifestRecord manifestRecord = manifestSession.getRecords().iterator().next();
         assertThat(manifestRecord.getValueByKey(Metadata.Key.BROAD_SAMPLE_ID), equalTo(SM_1));
+    }
 
-        Mockito.verify(manifestSessionDao).persist(manifestSession);
+    /* ************************************************** *
+     * createManifestSession tests
+     * ************************************************** */
+
+    /**
+     * Test creation of a valid manifest session.
+     */
+    public void testCreateManifestWithBadSamples() {
+        stubResearchProjectDaoFindReturnsNewObject();
+        Collection<Sample> samples = Collections.singleton(
+                ClinicalSampleTestFactory.createSample(Collections.singletonMap(Metadata.Key.BROAD_SAMPLE_ID, SM_1)));
+
+        ManifestSession manifestSession = null;
+        try {
+            manifestSession = manifestSessionEjb
+                    .createManifestSession(TEST_RESEARCH_PROJECT_KEY, TEST_SESSION_NAME, true, samples);
+            Assert.fail();
+        } catch (Exception e) {
+            assertThat(e.getLocalizedMessage(),
+                    containsString(ManifestSessionEjb.SAMPLE_IDS_ARE_NOT_FOUND_MESSAGE));
+        }
     }
 
     /**

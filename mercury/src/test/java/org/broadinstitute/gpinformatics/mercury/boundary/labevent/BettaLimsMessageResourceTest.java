@@ -6,6 +6,8 @@ import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
@@ -24,10 +26,10 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
@@ -39,6 +41,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunResource;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.IlluminaRunResource;
 import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
+import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
@@ -48,7 +51,6 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory
 import org.broadinstitute.gpinformatics.mercury.control.vessel.IndexedPlateFactory;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowValidator;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry;
@@ -84,12 +86,11 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
-import javax.xml.datatype.DatatypeConfigurationException;
-import javax.xml.datatype.DatatypeFactory;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -101,10 +102,10 @@ import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.EnumMap;
-import java.util.GregorianCalendar;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -121,6 +122,8 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 @Test(groups = TestGroups.ALTERNATIVES)
 public class BettaLimsMessageResourceTest extends Arquillian {
 
+    public static final String PICO_PLATING_BUCKET = "Pico/Plating Bucket";
+    public static final String ICE_BUCKET = "ICE Bucket";
     @Inject
     private BettaLimsMessageResource bettaLimsMessageResource;
 
@@ -184,12 +187,16 @@ public class BettaLimsMessageResourceTest extends Arquillian {
     @Inject
     private BSPSampleDataFetcher bspSampleDataFetcher;
 
+    @Inject
+    private BucketDao bucketDao;
+
     private final SimpleDateFormat testPrefixDateFormat = new SimpleDateFormat("MMddHHmmss");
 
     public static final Map<Workflow, String> mapWorkflowToPartNum = new EnumMap<Workflow, String>(Workflow.class) {{
         put(Workflow.WHOLE_GENOME, "P-WG-0002");
         put(Workflow.AGILENT_EXOME_EXPRESS, "P-EX-0002");
-        put(Workflow.ICE_EXOME_EXPRESS, "P-EX-0009");
+        put(Workflow.ICE_EXOME_EXPRESS, "P-EX-0012");
+        put(Workflow.ICE_CRSP, "P-CLA-0004");
         put(Workflow.HYBRID_SELECTION, "P-EX-0001");
     }};
 
@@ -247,7 +254,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         ProductOrder productOrder1 = buildProductOrder(testPrefix, BaseEventTest.NUM_POSITIONS_IN_RACK,
                 Workflow.AGILENT_EXOME_EXPRESS);
         Map<String, BarcodedTube> mapBarcodeToTube = buildSampleTubes(testPrefix,
-                BaseEventTest.NUM_POSITIONS_IN_RACK, barcodedTubeDao);
+                BaseEventTest.NUM_POSITIONS_IN_RACK, barcodedTubeDao, MercurySample.MetadataSource.BSP, productOrder1);
         bucketAndBatch(testPrefix, productOrder1, mapBarcodeToTube);
         // message
         BettaLimsMessageTestFactory bettaLimsMessageFactory = new BettaLimsMessageTestFactory(false);
@@ -276,7 +283,8 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         ProductOrder productOrder2 = buildProductOrder(testPrefix, BaseEventTest.NUM_POSITIONS_IN_RACK - 2,
                 Workflow.AGILENT_EXOME_EXPRESS);
         Map<String, BarcodedTube> mapBarcodeToTube2 = buildSampleTubes(testPrefix,
-                BaseEventTest.NUM_POSITIONS_IN_RACK - 2, barcodedTubeDao);
+                BaseEventTest.NUM_POSITIONS_IN_RACK - 2, barcodedTubeDao, MercurySample.MetadataSource.BSP,
+                productOrder2);
 
         // Add two samples from first PDO to bucket
         Set<LabVessel> reworks = new HashSet<>();
@@ -285,7 +293,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         reworkEjb.addAndValidateCandidates(
                 Collections.singleton(
                         new ReworkEjb.BucketCandidate(barcodeTubeEntry.getValue().getLabel(), productOrder1)),
-                ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue(), "Test", "jowalsh", "Pico/Plating Bucket");
+                ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue(), "Test", "jowalsh", PICO_PLATING_BUCKET);
         mapBarcodeToTube2.put(barcodeTubeEntry.getKey(), barcodeTubeEntry.getValue());
         reworks.add(barcodeTubeEntry.getValue());
 
@@ -293,7 +301,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         reworkEjb.addAndValidateCandidates(
                 Collections.singleton(
                         new ReworkEjb.BucketCandidate(barcodeTubeEntry.getValue().getLabel(), productOrder1)),
-                ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue(), "Test", "jowalsh", "Pico/Plating Bucket");
+                ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue(), "Test", "jowalsh", PICO_PLATING_BUCKET);
         mapBarcodeToTube2.put(barcodeTubeEntry.getKey(), barcodeTubeEntry.getValue());
         reworks.add(barcodeTubeEntry.getValue());
 
@@ -305,8 +313,21 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         LabBatch labBatch = new LabBatch(batchName, starters, LabBatch.LabBatchType.WORKFLOW);
         labBatch.addReworks(reworks);
         labBatch.setJiraTicket(new JiraTicket(JiraServiceProducer.stubInstance(), batchName));
-        labBatchEjb.createLabBatchAndRemoveFromBucket(labBatch, "jowalsh", "Pico/Plating Bucket",
-                LabEvent.UI_EVENT_LOCATION, CreateFields.IssueType.EXOME_EXPRESS);
+
+        List<Long> bucketIds = new ArrayList<>();
+        List<Long> reworkBucketIds = new ArrayList<>();
+
+        for (LabVessel starter : starters) {
+            bucketIds.add(starter.getBucketEntries().iterator().next().getBucketEntryId());
+        }
+
+        for (LabVessel rework : reworks) {
+            reworkBucketIds.add(rework.getBucketEntries().iterator().next().getBucketEntryId());
+        }
+
+        labBatchEjb.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
+                Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName(), bucketIds, reworkBucketIds, batchName, "", new Date(),
+                "", "jowalsh", PICO_PLATING_BUCKET);
         // message
         hybridSelectionJaxbBuilder = sendMessagesUptoCatch(testPrefix, mapBarcodeToTube2, bettaLimsMessageFactory,
                 Workflow.AGILENT_EXOME_EXPRESS, bettaLimsMessageResource,
@@ -334,7 +355,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
      * Message one LCSET, and register run.
      */
     @Test(enabled = true)
-    public void testProcessMessage() {
+    public void testProcessMessage() throws ValidationException {
         String testPrefix = testPrefixDateFormat.format(new Date());
 //        Controller.startCPURecording(true);
 
@@ -399,7 +420,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
      * Message one LCSET, and register run.
      */
     @Test(enabled = true)
-    public void testIce() {
+    public void testIce() throws ValidationException {
         String testPrefix = testPrefixDateFormat.format(new Date());
 //        Controller.startCPURecording(true);
 
@@ -426,8 +447,9 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         }
 
         IceJaxbBuilder iceJaxbBuilder = new IceJaxbBuilder(bettaLimsMessageFactory,
-                testPrefix, libraryConstructionJaxbBuilder.getPondRegRackBarcode(),
-                libraryConstructionJaxbBuilder.getPondRegTubeBarcodes(), "Bait" + testPrefix, "Bait" + testPrefix,
+                testPrefix, Collections.singletonList(libraryConstructionJaxbBuilder.getPondRegRackBarcode()),
+                Collections.singletonList(libraryConstructionJaxbBuilder.getPondRegTubeBarcodes()),
+                "Bait" + testPrefix, "Bait" + testPrefix,
                 LibraryConstructionJaxbBuilder.TargetSystem.MERCURY_ONLY, IceJaxbBuilder.PlexType.PLEX96)
                 .invoke();
         List<ReagentDesign> reagentDesigns = reagentDesignDao.findAll(ReagentDesign.class, 0, 1);
@@ -474,8 +496,8 @@ public class BettaLimsMessageResourceTest extends Arquillian {
                     getBucketEntries().iterator().next().getLabBatch().getBatchName());
         }
 
-        for (BarcodedTube tube:mapBarcodeToTube.values()) {
-            for (BucketEntry entry:tube.getBucketEntries()) {
+        for (BarcodedTube tube : mapBarcodeToTube.values()) {
+            for (BucketEntry entry : tube.getBucketEntries()) {
                 entry.setStatus(BucketEntry.Status.Archived);
             }
         }
@@ -496,8 +518,8 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         // A01  0109784754  SM-1Z8XY
         // A02  0109784741  SM-1Z8XN
         // A03  0109784822  SM-1Z8XB
-        String[] barcodes = new String[] {"0109784754", "0109784741", "0109784822"};
-        String[] sampleNames = new String[] {"SM-1Z8XY", "SM-1Z8XN", "SM-1Z8XB"};
+        String[] barcodes = new String[]{"0109784754", "0109784741", "0109784822"};
+        String[] sampleNames = new String[]{"SM-1Z8XY", "SM-1Z8XN", "SM-1Z8XB"};
         // Verify none of the samples are known to mercury.  It's not really a code failure if for some reason
         // Mercury dev gains awareness of these samples, but the test cannot continue.
         Assert.assertTrue(CollectionUtils.isEmpty(barcodedTubeDao.findListByList(MercurySample.class,
@@ -632,7 +654,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
             // source or destination to be more accurate.  However, this test doesn't create the source in Squid,
             // so the message would fail there.  To avoid this, override routing.
             if (!bettaLIMSMessage.getReceptaclePlateTransferEvent().isEmpty() &&
-                    bettaLIMSMessage.getReceptaclePlateTransferEvent().get(0).getEventType().equals("BaitSetup")) {
+                bettaLIMSMessage.getReceptaclePlateTransferEvent().get(0).getEventType().equals("BaitSetup")) {
                 bettaLIMSMessage.setMode(LabEventFactory.MODE_MERCURY);
             }
             sendMessage(bettaLIMSMessage, bettalimsMessageResource, testMercuryUrl);
@@ -649,10 +671,11 @@ public class BettaLimsMessageResourceTest extends Arquillian {
      * @return map from tube barcode to sample tube
      */
     private Map<String, BarcodedTube> buildSamplesInPdo(String testPrefix, int numberOfSamples,
-                                                        Workflow workflow) {
+                                                        Workflow workflow) throws ValidationException {
         ProductOrder productOrder = buildProductOrder(testPrefix, numberOfSamples, workflow);
         Map<String, BarcodedTube> mapBarcodeToTube = buildSampleTubes(testPrefix, numberOfSamples,
-                barcodedTubeDao);
+                barcodedTubeDao, workflow == Workflow.ICE_CRSP ? MercurySample.MetadataSource.MERCURY :
+                        MercurySample.MetadataSource.BSP, productOrder);
         bucketAndBatch(testPrefix, productOrder, mapBarcodeToTube);
         return mapBarcodeToTube;
     }
@@ -678,7 +701,8 @@ public class BettaLimsMessageResourceTest extends Arquillian {
             productDao.persist(product);
         }
 
-        ResearchProject researchProject = researchProjectDao.findByBusinessKey("RP-19");
+        String researchProjectKey = workflow == Workflow.ICE_CRSP ? "RP-926" : "RP-19";
+        ResearchProject researchProject = researchProjectDao.findByBusinessKey(researchProjectKey);
         if (researchProject == null) {
             researchProject = new ResearchProject(10950L, "SIGMA Sarcoma", "SIGMA Sarcoma", false,
                     ResearchProject.RegulatoryDesignation.RESEARCH_ONLY);
@@ -692,9 +716,10 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         }
 
         ProductOrder productOrder =
-                new ProductOrder(10950L, "Messaging Test " + testPrefix, productOrderSamples, "GSP-123",
+                new ProductOrder(ResearchProjectTestFactory.TEST_CREATOR, "Messaging Test " + testPrefix,
+                        productOrderSamples, "GSP-123",
                         product, researchProject);
-        productOrder.prepareToSave(bspUserList.getByUsername("jowalsh"));
+        productOrder.prepareToSave(bspUserList.getByUsername("QADudePDM"));
         productOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
         productOrderDao.persist(productOrder);
         try {
@@ -711,17 +736,23 @@ public class BettaLimsMessageResourceTest extends Arquillian {
      * @param testPrefix      make unique
      * @param numberOfSamples how many samples
      * @param barcodedTubeDao
+     * @param metadataSource
      *
      * @return map from tube barcode to tube
      */
     public static Map<String, BarcodedTube> buildSampleTubes(String testPrefix, int numberOfSamples,
-                                                             BarcodedTubeDao barcodedTubeDao) {
+                                                             BarcodedTubeDao barcodedTubeDao,
+                                                             MercurySample.MetadataSource metadataSource,
+                                                             ProductOrder productOrder) {
         Map<String, BarcodedTube> mapBarcodeToTube = new LinkedHashMap<>();
+        Iterator<ProductOrderSample> iterator = productOrder.getSamples().iterator();
         for (int rackPosition = 1; rackPosition <= numberOfSamples; rackPosition++) {
             String barcode = "R" + testPrefix + rackPosition;
             String bspStock = "SM-" + testPrefix + rackPosition;
             BarcodedTube bspAliquot = new BarcodedTube(barcode);
-            bspAliquot.addSample(new MercurySample(bspStock, MercurySample.MetadataSource.BSP));
+            MercurySample mercurySample = new MercurySample(bspStock, metadataSource);
+            mercurySample.addProductOrderSample(iterator.next());
+            bspAliquot.addSample(mercurySample);
             mapBarcodeToTube.put(barcode, bspAliquot);
 
             barcodedTubeDao.persist(bspAliquot);
@@ -737,17 +768,25 @@ public class BettaLimsMessageResourceTest extends Arquillian {
      * @param mapBarcodeToTube tubes
      */
     private void bucketAndBatch(String testPrefix, ProductOrder productOrder,
-                                Map<String, BarcodedTube> mapBarcodeToTube) {
+                                Map<String, BarcodedTube> mapBarcodeToTube) throws ValidationException {
         HashSet<LabVessel> starters = new HashSet<LabVessel>(mapBarcodeToTube.values());
         bucketEjb.addSamplesToBucket(productOrder);
 
         String batchName = "LCSET-MsgTest-" + testPrefix;
-        LabBatch labBatch = new LabBatch(batchName, starters, LabBatch.LabBatchType.WORKFLOW);
-        labBatch.setValidationBatch(true);
-        labBatch.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
-        labBatch.setJiraTicket(new JiraTicket(JiraServiceProducer.stubInstance(), batchName));
-        labBatchEjb.createLabBatchAndRemoveFromBucket(labBatch, "jowalsh", "Pico/Plating Bucket",
-                LabEvent.UI_EVENT_LOCATION, CreateFields.IssueType.EXOME_EXPRESS);
+        List<Long> bucketIds = new ArrayList<>();
+        String bucketName = null;
+
+        for (LabVessel starter : starters) {
+            BucketEntry next = starter.getBucketEntries().iterator().next();
+            bucketName = next.getBucket().getBucketDefinitionName();
+            bucketIds.add(next.getBucketEntryId());
+        }
+
+
+        labBatchEjb.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
+                Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName(), bucketIds, Collections.<Long>emptyList(), batchName,
+                "", new Date(), "", "jowalsh", bucketName);
+
     }
 
     /**
@@ -755,7 +794,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
      * Needs -Dorg.jboss.remoting-jmx.timeout=3000
      */
     @Test(enabled = false)
-    public void test8Lcsets() {
+    public void test8Lcsets() throws ValidationException {
         String testPrefix;
         BettaLimsMessageTestFactory bettaLimsMessageFactory = new BettaLimsMessageTestFactory(false);
         List<List<String>> listLcsetListNormCatchBarcodes = new ArrayList<>();
@@ -808,6 +847,216 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         beginEvent.setStation("BUZZ");
         beginMessage.setStationSetupEvent(beginEvent);
         sendMessage(beginMessage, bettaLimsMessageResource, appConfig.getUrl());
+    }
+
+    /**
+     * Test that Exome Express LCSETs can be combined with a CRSP LCSET during the ICE process.
+     */
+    @Test
+    public void testSonic() throws ValidationException {
+        String date = testPrefixDateFormat.format(new Date());
+        int numExExLcsets = 2;
+        List<String> exExTestPrefixes = new ArrayList<>();
+        List<Pair<LibraryConstructionJaxbBuilder, Map<String, BarcodedTube>>> exExBuilderMapPairs = new ArrayList<>();
+        BettaLimsMessageTestFactory bettaLimsMessageFactory = new BettaLimsMessageTestFactory(false);
+        List<String> regulatoryDesignations = new ArrayList<>();
+
+        for (int i = 0; i < numExExLcsets; i++) {
+            exExTestPrefixes.add(date + "X" + i);
+            exExBuilderMapPairs.add(libraryConstruction(exExTestPrefixes.get(i), bettaLimsMessageFactory,
+                    Workflow.ICE_EXOME_EXPRESS));
+            regulatoryDesignations.add("RESEARCH_ONLY");
+        }
+        regulatoryDesignations.add("CLINICAL_DIAGNOSTICS");
+        String crspTestPrefix = date + "C";
+
+        Pair<LibraryConstructionJaxbBuilder, Map<String, BarcodedTube>> crspBuilderMapPair = libraryConstruction(
+                crspTestPrefix, bettaLimsMessageFactory, Workflow.ICE_CRSP);
+        BarcodedTube crspTube = crspBuilderMapPair.getRight().values().iterator().next();
+        LibraryConstructionJaxbBuilder libraryConstructionCrspJaxbBuilder = crspBuilderMapPair.getLeft();
+
+        List<String> pondRegRackBarcodes = new ArrayList<>();
+        List<List<String>> listPondRegTubeBarcodes = new ArrayList<>();
+        List<String> batchNames = new ArrayList<>();
+        List<Set<String>> listSampleNamesSet = new ArrayList<>();
+        for (int i = 0; i < numExExLcsets; i++) {
+            pondRegRackBarcodes.add(exExBuilderMapPairs.get(i).getLeft().getPondRegRackBarcode());
+            listPondRegTubeBarcodes.add(exExBuilderMapPairs.get(i).getLeft().getPondRegTubeBarcodes());
+            Collection<BarcodedTube> barcodedTubes = exExBuilderMapPairs.get(i).getRight().values();
+            batchNames.add(barcodedTubes.iterator().next().getLabBatches().iterator().next().getBatchName());
+            Set<String> sampleNames = new HashSet<>();
+            listSampleNamesSet.add(sampleNames);
+            for (BarcodedTube barcodedTube : barcodedTubes) {
+                sampleNames.add(barcodedTube.getMercurySamples().iterator().next().getSampleKey());
+            }
+        }
+        pondRegRackBarcodes.add(libraryConstructionCrspJaxbBuilder.getPondRegRackBarcode());
+        listPondRegTubeBarcodes.add(libraryConstructionCrspJaxbBuilder.getPondRegTubeBarcodes());
+        batchNames.add(crspTube.getLabBatches().iterator().next().getBatchName());
+        Set<String> sampleNames = new HashSet<>();
+        listSampleNamesSet.add(sampleNames);
+        Collection<BarcodedTube> barcodedTubes = crspBuilderMapPair.getRight().values();
+        for (BarcodedTube barcodedTube : barcodedTubes) {
+            sampleNames.add(barcodedTube.getMercurySamples().iterator().next().getSampleKey());
+        }
+
+        List<String> testPrefixes = new ArrayList<>();
+        testPrefixes.addAll(exExTestPrefixes);
+        testPrefixes.add(crspTestPrefix);
+
+        List<ZimsIlluminaRun> zimsIlluminaRuns = iceAndQtp(testPrefixes, batchNames, bettaLimsMessageFactory,
+                pondRegRackBarcodes, listPondRegTubeBarcodes);
+
+        List<LabBatch> exExReworkLabBatches = new ArrayList<>();
+        for (int i = 0; i < numExExLcsets; i++) {
+            exExReworkLabBatches.add(reworkBatch(exExTestPrefixes.get(i),
+                    exExBuilderMapPairs.get(i).getRight().values().iterator().next(),
+                    exExBuilderMapPairs.get(i).getLeft().getPondRegTubeBarcodes()));
+        }
+        LabBatch crspReworkLabBatch = reworkBatch(crspTestPrefix, crspTube,
+                libraryConstructionCrspJaxbBuilder.getPondRegTubeBarcodes());
+
+        List<String> reworkTestPrefixes = new ArrayList<>();
+        List<String> reworkLabBatchNames = new ArrayList<>();
+        for (int i = 0; i < numExExLcsets; i++) {
+            reworkTestPrefixes.add(exExTestPrefixes.get(i) + "R");
+            reworkLabBatchNames.add(exExReworkLabBatches.get(i).getBatchName());
+        }
+        reworkTestPrefixes.add(crspTestPrefix + "R");
+        reworkLabBatchNames.add(crspReworkLabBatch.getBatchName());
+        List<ZimsIlluminaRun> zimsIlluminaReworkRuns = iceAndQtp(reworkTestPrefixes, reworkLabBatchNames,
+                bettaLimsMessageFactory, pondRegRackBarcodes, listPondRegTubeBarcodes);
+
+        assertRuns(batchNames, zimsIlluminaRuns, regulatoryDesignations, listSampleNamesSet);
+
+        assertRuns(reworkLabBatchNames, zimsIlluminaReworkRuns, regulatoryDesignations, listSampleNamesSet);
+    }
+
+    private void assertRuns(List<String> batchNames, List<ZimsIlluminaRun> zimsIlluminaRuns,
+                            List<String> regulatoryDesignations, List<Set<String>> listSampleNamesSet) {
+        for (int i = 0; i < zimsIlluminaRuns.size(); i++) {
+            ZimsIlluminaRun zimsIlluminaRun = zimsIlluminaRuns.get(i);
+            Assert.assertEquals(zimsIlluminaRun.getLanes().size(), 2, "Wrong number of lanes");
+            ZimsIlluminaChamber zimsIlluminaChamber = zimsIlluminaRun.getLanes().iterator().next();
+            Assert.assertEquals(zimsIlluminaChamber.getLibraries().size(), BaseEventTest.NUM_POSITIONS_IN_RACK);
+
+            Set<String> sampleIds = new HashSet<>();
+            for (LibraryBean libraryBean : zimsIlluminaChamber.getLibraries()) {
+                Assert.assertEquals(libraryBean.getLcSet(), batchNames.get(i));
+                sampleIds.add(libraryBean.getSampleId());
+                Assert.assertEquals(libraryBean.getRegulatoryDesignation(), regulatoryDesignations.get(i));
+            }
+            Assert.assertEquals(sampleIds, listSampleNamesSet.get(i));
+        }
+    }
+
+    @Nonnull
+    private LabBatch reworkBatch(String crspTestPrefix, BarcodedTube crspTube, List<String> tubeBarcodes)
+            throws ValidationException {
+        ProductOrder crspProductOrder = crspTube.getMercurySamples().iterator().next().getProductOrderSamples().
+                iterator().next().getProductOrder();
+        Map<String, BarcodedTube> mapBarcodeToCrspPond = barcodedTubeDao.findByBarcodes(tubeBarcodes);
+        HashSet<LabVessel> crspPonds = new HashSet<LabVessel>(mapBarcodeToCrspPond.values());
+        Collection<ReworkEjb.BucketCandidate> bucketCandidates = new HashSet<>();
+        for (LabVessel crspPond : crspPonds) {
+            bucketCandidates
+                    .add(new ReworkEjb.BucketCandidate(crspPond.getLabel(), crspPond.getSampleNames().iterator().next(),
+                            crspProductOrder));
+        }
+         reworkEjb.addAndValidateCandidates(bucketCandidates, "", "comment", "thompson", ICE_BUCKET);
+
+        String batchName = "LCSET-Rework-" + crspTestPrefix;
+        List<Long> reworkBucketEntryIds = new ArrayList<>();
+
+        // Have to flush to assign bucketEntryId
+        bucketDao.flush();
+        for (LabVessel crspPond : crspPonds) {
+            reworkBucketEntryIds.add(crspPond.getBucketEntries().iterator().next().getBucketEntryId());
+        }
+
+        LabBatch labBatch = labBatchEjb.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
+                Workflow.ICE_CRSP.getWorkflowName(), Collections.<Long>emptyList(), reworkBucketEntryIds, batchName,
+                "", new Date(), "", "thompson", ICE_BUCKET);
+
+        return labBatch;
+    }
+
+    private List<ZimsIlluminaRun> iceAndQtp(List<String> testPrefixes, List<String> lcsets,
+                                            BettaLimsMessageTestFactory bettaLimsMessageFactory,
+                                            List<String> pondRegRackBarcodes,
+                                            List<List<String>> listPondRegTubeBarcodes) {
+        IceJaxbBuilder iceJaxbBuilder = new IceJaxbBuilder(bettaLimsMessageFactory, testPrefixes.get(0),
+                pondRegRackBarcodes, listPondRegTubeBarcodes, "0177198254", "0177198254",
+                LibraryConstructionJaxbBuilder.TargetSystem.MERCURY_ONLY, IceJaxbBuilder.PlexType.PLEX96).invoke();
+
+        for (BettaLIMSMessage bettaLIMSMessage : iceJaxbBuilder.getMessageList()) {
+            sendMessage(bettaLIMSMessage, bettaLimsMessageResource, appConfig.getUrl());
+        }
+
+        ArrayList<List<String>> listLcsetListNormCatchBarcodes = new ArrayList<>();
+        for (int i = 0; i < lcsets.size(); i++) {
+            listLcsetListNormCatchBarcodes.add(new ArrayList<String>());
+        }
+        for (int i = 0; i < iceJaxbBuilder.getCatchEnrichTubeBarcodes().size(); i++) {
+            String tubeBarcode = iceJaxbBuilder.getCatchEnrichTubeBarcodes().get(i);
+            listLcsetListNormCatchBarcodes.get(i % lcsets.size()).add(tubeBarcode);
+        }
+
+        ArrayList<String> normCatchRackBarcodes = new ArrayList<>();
+        for (String testPrefix : testPrefixes) {
+            normCatchRackBarcodes.add("QtpRack" + testPrefix);
+        }
+        QtpJaxbBuilder qtpJaxbBuilder = new QtpJaxbBuilder(bettaLimsMessageFactory, testPrefixes.get(0),
+                listLcsetListNormCatchBarcodes, normCatchRackBarcodes, true, false).invoke();
+        for (BettaLIMSMessage bettaLIMSMessage : qtpJaxbBuilder.getMessageList()) {
+            sendMessage(bettaLIMSMessage, bettaLimsMessageResource, appConfig.getUrl());
+        }
+
+        List<ZimsIlluminaRun> zimsIlluminaRuns = new ArrayList<>();
+        for (int i = 0; i < qtpJaxbBuilder.getDenatureTubeBarcodes().size(); i++) {
+            String denatureTubeBarcode = qtpJaxbBuilder.getDenatureTubeBarcodes().get(i);
+            HiSeq2500JaxbBuilder hiSeq2500JaxbBuilder = new HiSeq2500JaxbBuilder(bettaLimsMessageFactory,
+                    testPrefixes.get(i), Collections.singletonList(denatureTubeBarcode),
+                    qtpJaxbBuilder.getDenatureRackBarcode(), "FCT-1", ProductionFlowcellPath.DENATURE_TO_FLOWCELL,
+                    BaseEventTest.NUM_POSITIONS_IN_RACK, null, 2).invoke();
+            for (BettaLIMSMessage bettaLIMSMessage : hiSeq2500JaxbBuilder.getMessageList()) {
+                sendMessage(bettaLIMSMessage, bettaLimsMessageResource, appConfig.getUrl());
+            }
+            BarcodedTube poolTube = barcodedTubeDao.findByBarcode(qtpJaxbBuilder.getPoolTubeBarcodes().get(0));
+            Assert.assertEquals(poolTube.getSampleInstancesV2().size(), BaseEventTest.NUM_POSITIONS_IN_RACK,
+                    "Wrong number of sample instances");
+
+            IlluminaSequencingRun illuminaSequencingRun = registerIlluminaSequencingRun(testPrefixes.get(i),
+                    hiSeq2500JaxbBuilder.getFlowcellBarcode());
+
+            ZimsIlluminaRun zimsIlluminaRun = illuminaRunResource.getRun(illuminaSequencingRun.getRunName());
+            zimsIlluminaRuns.add(zimsIlluminaRun);
+        }
+        return zimsIlluminaRuns;
+    }
+
+    @Nonnull
+    private Pair<LibraryConstructionJaxbBuilder, Map<String, BarcodedTube>> libraryConstruction(String testPrefix,
+                                                                                                BettaLimsMessageTestFactory bettaLimsMessageFactory,
+                                                                                                Workflow workflow)
+            throws ValidationException {
+        Map<String, BarcodedTube> mapBarcodeToTube = buildSamplesInPdo(testPrefix,
+                BaseEventTest.NUM_POSITIONS_IN_RACK, workflow);
+        ShearingJaxbBuilder shearingExExJaxbBuilder = new ShearingJaxbBuilder(bettaLimsMessageFactory,
+                new ArrayList<>(mapBarcodeToTube.keySet()), testPrefix, "Shear" + testPrefix).invoke();
+        for (BettaLIMSMessage bettaLIMSMessage : shearingExExJaxbBuilder.getMessageList()) {
+            sendMessage(bettaLIMSMessage, bettaLimsMessageResource, appConfig.getUrl());
+        }
+
+        LibraryConstructionJaxbBuilder libraryConstructionExExJaxbBuilder = new LibraryConstructionJaxbBuilder(
+                bettaLimsMessageFactory, testPrefix, shearingExExJaxbBuilder.getShearCleanPlateBarcode(),
+                LibraryConstructionJaxbBuilder.P_7_INDEX_PLATE_BARCODE,
+                LibraryConstructionJaxbBuilder.P_5_INDEX_PLATE_BARCODE, BaseEventTest.NUM_POSITIONS_IN_RACK,
+                LibraryConstructionJaxbBuilder.TargetSystem.SQUID_VIA_MERCURY).invoke();
+        for (BettaLIMSMessage bettaLIMSMessage : libraryConstructionExExJaxbBuilder.getMessageList()) {
+            sendMessage(bettaLIMSMessage, bettaLimsMessageResource, appConfig.getUrl());
+        }
+        return new ImmutablePair<>(libraryConstructionExExJaxbBuilder, mapBarcodeToTube);
     }
 
     public static String sendMessage(BettaLIMSMessage bettaLIMSMessage,

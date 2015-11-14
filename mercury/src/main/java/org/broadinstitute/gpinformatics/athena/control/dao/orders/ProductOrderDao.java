@@ -289,27 +289,26 @@ public class ProductOrderDao extends GenericDao {
          *       2. The number of abandoned samples on each pdo.
          *       3. The total number of samples on each pdo.
          */
+        // @formatter:off
         String sqlString = "SELECT JIRA_TICKET_KEY AS name, PRODUCT_ORDER_ID as ID, " +
-                           "    ( SELECT count( DISTINCT pos.PRODUCT_ORDER_SAMPLE_ID) " +
+                           "    ( SELECT count(nullif(sum(ledger.QUANTITY), 0)) " +
                            "      FROM athena.product_order_sample pos " +
                            "           INNER JOIN athena.BILLING_LEDGER ledger " +
-                           "           ON ledger.PRODUCT_ORDER_SAMPLE_ID = pos.PRODUCT_ORDER_SAMPLE_ID" +
+                           "           ON ledger.PRODUCT_ORDER_SAMPLE_ID = pos.PRODUCT_ORDER_SAMPLE_ID " +
                            "      WHERE pos.product_order = ord.product_order_id " +
                            "      AND pos.DELIVERY_STATUS != 'ABANDONED' " +
-                           "      AND (ledger.price_item_type = '" + LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM.name()
-                           + "'" +
-                           "             OR " +
-                           "           ledger.price_item_type = '" + LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM
-                .name() + "')" +
+                           "      AND (ledger.price_item_type = '" + LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM.name() + "' " +
+                           "       OR  ledger.price_item_type = '" + LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM.name() + "') " +
+                           "      GROUP BY pos.product_order_sample_id " +
                            "    ) AS completed, " +
-                           "    (SELECT count(pos.PRODUCT_ORDER_SAMPLE_ID) FROM athena.product_order_sample pos" +
-                           "        WHERE pos.product_order = ord.product_order_id AND pos.DELIVERY_STATUS = 'ABANDONED' "
-                           +
+                           "    (SELECT count(pos.PRODUCT_ORDER_SAMPLE_ID) FROM athena.product_order_sample pos " +
+                           "        WHERE pos.product_order = ord.product_order_id AND pos.DELIVERY_STATUS = 'ABANDONED' " +
                            "    ) AS abandoned, " +
-                           "    (SELECT count(pos.PRODUCT_ORDER_SAMPLE_ID) FROM athena.product_order_sample pos" +
-                           "        WHERE pos.product_order = ord.product_order_id" +
-                           "    ) AS total" +
+                           "    (SELECT count(pos.PRODUCT_ORDER_SAMPLE_ID) FROM athena.product_order_sample pos " +
+                           "        WHERE pos.product_order = ord.product_order_id " +
+                           "    ) AS total " +
                            " FROM athena.PRODUCT_ORDER ord ";
+        // @formatter:on
 
         // Handle searching by ID.
         if (productOrderIds != null) {

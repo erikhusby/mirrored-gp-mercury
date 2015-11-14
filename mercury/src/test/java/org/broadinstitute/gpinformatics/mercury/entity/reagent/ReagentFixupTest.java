@@ -6,8 +6,12 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.GenericReagentDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent_;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -16,15 +20,23 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.NotSupportedException;
+import javax.transaction.RollbackException;
+import javax.transaction.SystemException;
+import javax.transaction.UserTransaction;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,7 +53,16 @@ public class ReagentFixupTest extends Arquillian {
     private ReagentDesignDao reagentDesignDao;
 
     @Inject
+    private GenericReagentDao genericReagentDao;
+
+    @Inject
     private UserBean userBean;
+
+    @Inject
+    private LabEventDao labEventDao;
+
+    @Inject
+    private UserTransaction utx;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -142,7 +163,7 @@ public class ReagentFixupTest extends Arquillian {
         }
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void gplim3370addExpirationDates() throws Exception {
         Multimap<String, Reagent> barcodeReagentMap = HashMultimap.create();
 
@@ -283,6 +304,356 @@ public class ReagentFixupTest extends Arquillian {
         entitiesToPersist.add(new FixupCommentary("GPLIM-3370 add missing reagents and expiration dates"));
         reagentDesignDao.persistAll(entitiesToPersist);
         reagentDesignDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void fixupQual676(){
+        /*
+        Used this query to find duplicate reagents, and the events that they are associated with:
+        SELECT
+            reagent.reagent_id,
+            reagent.lot,
+            reagent.reagent_name,
+            le.lab_event_id,
+            le.lab_event_type
+        FROM
+            reagent
+            INNER JOIN lab_event_reagents ler
+                ON   ler.reagents = reagent.reagent_id
+            INNER JOIN lab_event le
+                ON   le.lab_event_id = ler.lab_event
+        WHERE
+            (reagent.reagent_name, reagent.lot) IN (SELECT
+                                                        reagent_name,
+                                                        lot
+                                                    FROM
+                                                        reagent
+                                                    GROUP BY
+                                                        reagent_name,
+                                                        lot
+                                                    HAVING
+                                                        COUNT(*) > 1)
+        ORDER BY
+            reagent.reagent_name,
+            le.lab_event_id;
+
+        931959	10046231	Cleavage Reagent Master Mix	854895	DILUTION_TO_FLOWCELL_TRANSFER
+        931970	10046231	Cleavage Reagent Master Mix	854896	DILUTION_TO_FLOWCELL_TRANSFER
+        631024	14D24A0013	ET2	688467	ICE_1ST_CAPTURE
+        631027	14D24A0013	ET2	688625	ICE_2ND_CAPTURE
+        931966	10029679	Fast Amplification Premix	854895	DILUTION_TO_FLOWCELL_TRANSFER
+        931978	10029679	Fast Amplification Premix	854896	DILUTION_TO_FLOWCELL_TRANSFER
+        931958	10029663	Fast Amplifixation Mix	854895	DILUTION_TO_FLOWCELL_TRANSFER
+        931985	10029663	Fast Amplifixation Mix	854896	DILUTION_TO_FLOWCELL_TRANSFER
+        931957	10029690	Fast Denaturation Reagent	854895	DILUTION_TO_FLOWCELL_TRANSFER
+        931979	10029690	Fast Denaturation Reagent	854896	DILUTION_TO_FLOWCELL_TRANSFER
+        931962	10032298	Fast Linearization Mix 1	854895	DILUTION_TO_FLOWCELL_TRANSFER
+        931974	10032298	Fast Linearization Mix 1	854896	DILUTION_TO_FLOWCELL_TRANSFER
+        931956	10037762	Fast Linearization Mix 2	854895	DILUTION_TO_FLOWCELL_TRANSFER
+        931976	10037762	Fast Linearization Mix 2	854896	DILUTION_TO_FLOWCELL_TRANSFER
+        931954	10037735	Fast Resynthesis Mix	854895	DILUTION_TO_FLOWCELL_TRANSFER
+        931981	10037735	Fast Resynthesis Mix	854896	DILUTION_TO_FLOWCELL_TRANSFER
+        931963	10052129	Incorporation Master Mix	854895	DILUTION_TO_FLOWCELL_TRANSFER
+        931983	10052129	Incorporation Master Mix	854896	DILUTION_TO_FLOWCELL_TRANSFER
+        931967	10029525	Primer Mix Index i7	854895	DILUTION_TO_FLOWCELL_TRANSFER
+        931972	10029525	Primer Mix Index i7	854896	DILUTION_TO_FLOWCELL_TRANSFER
+        931960	10037740	Primer Mix Read 1	854895	DILUTION_TO_FLOWCELL_TRANSFER
+        931971	10037740	Primer Mix Read 1	854896	DILUTION_TO_FLOWCELL_TRANSFER
+        931965	10035675	Primer Mix Read 2	854895	DILUTION_TO_FLOWCELL_TRANSFER
+        931984	10035675	Primer Mix Read 2	854896	DILUTION_TO_FLOWCELL_TRANSFER
+        931968	10048313	Scan Reagent	854895	DILUTION_TO_FLOWCELL_TRANSFER
+        931977	10048313	Scan Reagent	854896	DILUTION_TO_FLOWCELL_TRANSFER
+        931969	15C11A0046	TruSeq Rapid PE Cluster Kit	854895	DILUTION_TO_FLOWCELL_TRANSFER
+        931980	15C11A0046	TruSeq Rapid PE Cluster Kit	854896	DILUTION_TO_FLOWCELL_TRANSFER
+        931955	15C11A0042	TruSeq Rapid SBS Kit	854895	DILUTION_TO_FLOWCELL_TRANSFER
+        931973	15C11A0042	TruSeq Rapid SBS Kit	854896	DILUTION_TO_FLOWCELL_TRANSFER
+        931961	10046204	Universal Sequencing Buffer	854895	DILUTION_TO_FLOWCELL_TRANSFER
+        931964	10046204	Universal Sequencing Buffer	854895	DILUTION_TO_FLOWCELL_TRANSFER
+        931975	10046204	Universal Sequencing Buffer	854896	DILUTION_TO_FLOWCELL_TRANSFER
+        931982	10046204	Universal Sequencing Buffer	854896	DILUTION_TO_FLOWCELL_TRANSFER
+
+        For each pair, fetch the second event and both reagents.  Remove the second reagent from the second event,
+          and add the first reagent.  Delete the second reagent.
+         */
+        try {
+            userBean.loginOSUser();
+            utx.begin();
+
+            int[][] ids = {
+                    {931959, /* 10046231Cleavage Reagent Master Mix 854895DILUTION_TO_FLOWCELL_TRANSFER*/
+                    931970, /*10046231Cleavage Reagent Master Mix */854896/*DILUTION_TO_FLOWCELL_TRANSFER*/},
+                    // The following pair aren't directly related, but are preparation for adding a unique constraint.
+                    {631024,/* 14D24A0013 ET2 688467ICE_1ST_CAPTURE*/
+                    631027, /*14D24A0013 ET2 */688625/*ICE_2ND_CAPTURE*/},
+                    {931966, /*10029679Fast Amplification Premix 854895DILUTION_TO_FLOWCELL_TRANSFER*/
+                    931978, /*10029679Fast Amplification Premix */854896/*DILUTION_TO_FLOWCELL_TRANSFER*/},
+                    {931958, /*10029663Fast Amplifixation Mix 854895DILUTION_TO_FLOWCELL_TRANSFER*/
+                    931985, /*10029663Fast Amplifixation Mix */854896/*DILUTION_TO_FLOWCELL_TRANSFER*/},
+                    {931957, /*10029690Fast Denaturation Reagent 854895DILUTION_TO_FLOWCELL_TRANSFER*/
+                    931979, /*10029690Fast Denaturation Reagent */854896/*DILUTION_TO_FLOWCELL_TRANSFER*/},
+                    {931962, /*10032298Fast Linearization Mix 1 854895DILUTION_TO_FLOWCELL_TRANSFER*/
+                    931974, /*10032298Fast Linearization Mix 1 */854896/*DILUTION_TO_FLOWCELL_TRANSFER*/},
+                    {931956, /*10037762Fast Linearization Mix 2 854895DILUTION_TO_FLOWCELL_TRANSFER*/
+                    931976, /*10037762Fast Linearization Mix 2 */854896/*DILUTION_TO_FLOWCELL_TRANSFER*/},
+                    {931954, /*10037735Fast Resynthesis Mix 854895DILUTION_TO_FLOWCELL_TRANSFER*/
+                    931981, /*10037735Fast Resynthesis Mix */854896/*DILUTION_TO_FLOWCELL_TRANSFER*/},
+                    {931963, /*10052129Incorporation Master Mix 854895DILUTION_TO_FLOWCELL_TRANSFER*/
+                    931983, /*10052129Incorporation Master Mix */854896/*DILUTION_TO_FLOWCELL_TRANSFER*/},
+                    {931967, /*10029525Primer Mix Index i7 854895DILUTION_TO_FLOWCELL_TRANSFER*/
+                    931972, /*10029525Primer Mix Index i7 */854896/*DILUTION_TO_FLOWCELL_TRANSFER*/},
+                    {931960, /*10037740Primer Mix Read 1 854895DILUTION_TO_FLOWCELL_TRANSFER*/
+                    931971, /*10037740Primer Mix Read 1 */854896/*DILUTION_TO_FLOWCELL_TRANSFER*/},
+                    {931965, /*10035675Primer Mix Read 2 854895DILUTION_TO_FLOWCELL_TRANSFER*/
+                    931984, /*10035675Primer Mix Read 2 */854896/*DILUTION_TO_FLOWCELL_TRANSFER*/},
+                    {931968, /*10048313Scan Reagent 854895DILUTION_TO_FLOWCELL_TRANSFER*/
+                    931977, /*10048313Scan Reagent */854896/*DILUTION_TO_FLOWCELL_TRANSFER*/},
+                    {931969, /*15C11A0046 TruSeq Rapid PE Cluster Kit 854895DILUTION_TO_FLOWCELL_TRANSFER*/
+                    931980, /*15C11A0046 TruSeq Rapid PE Cluster Kit */854896/*DILUTION_TO_FLOWCELL_TRANSFER*/},
+                    {931955, /*15C11A0042 TruSeq Rapid SBS Kit 854895DILUTION_TO_FLOWCELL_TRANSFER*/
+                    931973, /*15C11A0042 TruSeq Rapid SBS Kit */854896/*DILUTION_TO_FLOWCELL_TRANSFER*/},
+                    {931961, /*10046204Universal Sequencing Buffer 854895DILUTION_TO_FLOWCELL_TRANSFER*/
+                    931964, /*10046204Universal Sequencing Buffer */854895/*DILUTION_TO_FLOWCELL_TRANSFER*/},
+                    {931975, /*10046204Universal Sequencing Buffer 854896DILUTION_TO_FLOWCELL_TRANSFER*/
+                    931982, /*10046204Universal Sequencing Buffer */854896/*DILUTION_TO_FLOWCELL_TRANSFER*/},
+                    // Added this pair after the first run of this fixup, because there were still duplicates
+                    {931961,/*	10046204	Universal Sequencing Buffer	854895	DILUTION_TO_FLOWCELL_TRANSFER*/
+                    931975,	/*10046204	Universal Sequencing Buffer	*/854896/*	DILUTION_TO_FLOWCELL_TRANSFER*/},
+            };
+
+            for (int[] triple : ids) {
+                GenericReagent correctReagent = genericReagentDao.findById(GenericReagent.class, (long) triple[0]);
+                GenericReagent duplicateReagent = genericReagentDao.findById(GenericReagent.class, (long) triple[1]);
+                LabEvent labEvent = labEventDao.findById(LabEvent.class, (long) triple[2]);
+                System.out.println("For event " + labEvent.getLabEventId() + ", merge " + duplicateReagent.getName());
+                labEvent.getReagents().remove(duplicateReagent);
+                labEvent.getReagents().add(correctReagent);
+                genericReagentDao.remove(duplicateReagent);
+            }
+            genericReagentDao.persist(new FixupCommentary("QUAL-676 reagent merge"));
+            genericReagentDao.flush();
+            utx.commit();
+        } catch (NotSupportedException | SystemException | HeuristicRollbackException | RollbackException |
+                HeuristicMixedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test(enabled = false)
+    public void fixupSupport565(){
+        userBean.loginOSUser();
+        GenericReagent genericReagent = genericReagentDao.findByReagentNameAndLot("HS buffer", "91Q33120101670146301");
+        System.out.print("Updating " + genericReagent.getLot());
+        genericReagent.setLot("RG-8252");
+        System.out.println(" to " + genericReagent.getLot());
+        genericReagentDao.persist(new FixupCommentary("SUPPORT-565 reagent fixup"));
+        genericReagentDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void fixupSupport565Try2(){
+        try {
+            userBean.loginOSUser();
+            utx.begin();
+            GenericReagent correctReagent = genericReagentDao.findById(GenericReagent.class, 628953L);
+            GenericReagent duplicateReagent = genericReagentDao.findById(GenericReagent.class, 929980L);
+            List<LabEvent> labEvents = labEventDao.findListByList(LabEvent.class, LabEvent_.labEventId, Arrays.asList(
+                    846510L,
+                    846511L,
+                    846512L,
+                    846486L,
+                    846487L,
+                    846488L,
+                    846500L,
+                    846501L,
+                    846502L,
+                    846522L,
+                    846523L,
+                    846524L,
+                    846619L,
+                    846620L,
+                    846621L,
+                    846723L,
+                    846724L,
+                    846725L,
+                    846830L,
+                    846831L,
+                    846832L,
+                    846838L,
+                    846839L,
+                    846840L,
+                    846845L,
+                    846846L,
+                    846847L,
+                    846857L,
+                    846858L,
+                    846859L));
+            for (LabEvent labEvent : labEvents) {
+                labEvent.getReagents().remove(duplicateReagent);
+                labEvent.getReagents().add(correctReagent);
+            }
+            genericReagentDao.remove(duplicateReagent);
+            genericReagentDao.persist(new FixupCommentary("SUPPORT-565 reagent merge"));
+            genericReagentDao.flush();
+            utx.commit();
+        } catch (NotSupportedException | SystemException | HeuristicRollbackException | RollbackException |
+                HeuristicMixedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    @Test(enabled = false)
+    public void fixupSupport660() {
+        // Used SQL to verify that RG-8552 is used only by the 9 events in question, so it's safe to change it.
+        userBean.loginOSUser();
+        GenericReagent genericReagentRg150 = genericReagentDao.findByReagentNameAndLot("HS buffer", "RG-150");
+        Assert.assertNull(genericReagentRg150);
+        GenericReagent genericReagentRg8552 = genericReagentDao.findByReagentNameAndLot("HS buffer", "RG-8552");
+        genericReagentRg8552.setLot("RG-150");
+        genericReagentDao.persist(new FixupCommentary("SUPPORT-660 change lot"));
+        genericReagentDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim3538ReagentBarcode() {
+        userBean.loginOSUser();
+        // Change lab_event 872452 reagents from reagentId 813365 (EWS reagent having lot 10D06A0004)
+        // to reagentId 929964 (EWS reagent having lot BATCH-001).
+        Reagent reagentEws10d06a0004 = genericReagentDao.findById(GenericReagent.class, 813365L);
+        Assert.assertEquals(reagentEws10d06a0004.getName(), "EWS");
+        Assert.assertEquals(reagentEws10d06a0004.getLot(), "10D06A0004");
+
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, 872452L);
+        Assert.assertTrue(labEvent.getReagents().remove(reagentEws10d06a0004));
+
+        Reagent reagentEwsBatch001 = genericReagentDao.findById(GenericReagent.class, 929964L);
+        Assert.assertEquals(reagentEwsBatch001.getName(), "EWS");
+        Assert.assertEquals(reagentEwsBatch001.getLot(), "BATCH-001");
+
+        labEvent.addReagent(reagentEwsBatch001);
+        Assert.assertEquals(labEvent.getReagents().size(), 3);
+
+        // Change lot from 'rgt4828222' to '10029298' (Mercury reagent id 933959).
+        // This reagent is used in only one lab event, so it's safe to update it.
+        Reagent reagentRgt = genericReagentDao.findById(Reagent.class, 933959L);
+        Assert.assertEquals(reagentRgt.getLot(), "rgt4828222");
+        reagentRgt.setLot("10029298");
+        genericReagentDao.persist(new FixupCommentary("GPLIM-3538 change lot due to reagent script failure"));
+        genericReagentDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim3588() {
+        userBean.loginOSUser();
+        // Change reagent on labEventId 897423
+        // from "Rapid Capture Kit Box 2 (HP3, EE1)" lot 15C11A0054 expiration 10/22/2015 (reagentId 934964)
+        // to same type reagent but with lot 15C27A0012 and expiration 11/25/15 (reagentId 937963).
+        Reagent undesired = genericReagentDao.findByReagentNameLotExpiration("Rapid Capture Kit Box 2 (HP3, EE1)",
+                "15C11A0054", new GregorianCalendar(2015, Calendar.OCTOBER, 22).getTime());
+        Assert.assertNotNull(undesired);
+
+        Reagent desired = genericReagentDao.findByReagentNameLotExpiration(undesired.getName(),
+                "15C27A0012", new GregorianCalendar(2015, Calendar.NOVEMBER, 25).getTime());
+        Assert.assertNotNull(desired);
+
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, 897423L);
+        Assert.assertTrue(labEvent.getReagents().remove(undesired));
+        labEvent.addReagent(desired);
+
+        genericReagentDao.persist(new FixupCommentary("GPLIM-3588 change reagent used on Ice Capture 2 event."));
+        genericReagentDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim3712() {
+        userBean.loginOSUser();
+        Reagent undesired = genericReagentDao.findByReagentNameLotExpiration("HS buffer",
+                "91Q33120101689868301", null);
+        Assert.assertNotNull(undesired);
+
+        Reagent desired = genericReagentDao.findByReagentNameLotExpiration(undesired.getName(),
+                "RG-8252", null);
+        Assert.assertNotNull(desired);
+
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, 998742L);
+        System.out.println("Replacing reagent " + undesired.getReagentId() + " with " + desired.getReagentId() +
+                           " for event " + labEvent.getLabEventId());
+        Assert.assertTrue(labEvent.getReagents().remove(undesired));
+        labEvent.addReagent(desired);
+
+        labEvent = labEventDao.findById(LabEvent.class, 998747L);
+        System.out.println("Replacing reagent " + undesired.getReagentId() + " with " + desired.getReagentId() +
+                           " for event " + labEvent.getLabEventId());
+        Assert.assertTrue(labEvent.getReagents().remove(undesired));
+        labEvent.addReagent(desired);
+
+        genericReagentDao.persist(new FixupCommentary("GPLIM-3712 change reagent used on PicoBufferAddition event."));
+        genericReagentDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim3743() {
+        userBean.loginOSUser();
+
+        // Replaces Buffer ATE reagent on event 1020154 with a new reagent having lot 151022297, exp 17-APR-2016
+        LabEvent labEvent = genericReagentDao.findById(LabEvent.class, 1020154L);
+        Assert.assertNotNull(labEvent);
+
+        String kitType = "Buffer ATE";
+        Reagent undesired = null;
+        for (Reagent reagent : labEvent.getReagents()) {
+            if (reagent.getName().equals(kitType)) {
+                Assert.assertNull(undesired);
+                undesired = reagent;
+            }
+        }
+        Assert.assertNotNull(undesired);
+
+        String barcode = "151022297";
+        Date expiration = new GregorianCalendar(2016, Calendar.APRIL, 17).getTime();
+        Assert.assertNull(genericReagentDao.findByReagentNameLotExpiration(kitType, barcode, expiration));
+        Reagent desired = new GenericReagent(kitType, barcode, expiration);
+        System.out.println("Created reagent " + kitType + " lot " + barcode + " expiration " + expiration);
+        Assert.assertTrue(labEvent.getReagents().remove(undesired));
+        labEvent.getReagents().add(desired);
+        System.out.println("Reagent " + undesired.getReagentId() + " removed and " + desired.getReagentId() +
+                           " added to event " + labEvent.getLabEventId());
+
+        genericReagentDao.persist(new FixupCommentary("GPLIM-3743 fixup incorrect Buffer ATE reagent"));
+        genericReagentDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim3787() throws Exception {
+        userBean.loginOSUser();
+        // Puts a new reagent on two Ice1stBaitPick lab events. The reagent was missing from the bettalims msg.
+        String lot = "20008218";
+        String type = "Rapid Capture Kit Box 4 (Bait)";
+        String expiration = "09/2016";
+        List<Long> labEventIds = Arrays.asList(new Long[]{1048673L, 1049279L});
+
+        Reagent reagent = new GenericReagent(type, lot, (new SimpleDateFormat("mm/yyyy")).parse(expiration));
+        List<LabEvent> labEvents = labEventDao.findListByList(LabEvent.class, LabEvent_.labEventId, labEventIds);
+        Assert.assertEquals(labEvents.size(), labEventIds.size());
+        for (LabEvent labEvent : labEvents) {
+            System.out.println("Adding reagent to event " + labEvent.getLabEventId());
+            labEvent.addReagent(reagent);
+        }
+        genericReagentDao.persist(new FixupCommentary("GPLIM-3787 add missing reagent."));
+        genericReagentDao.flush();
+    }
+
+    @Test(enabled = true)
+    public void fixupGplim3787date() throws Exception {
+        userBean.loginOSUser();
+        // Previous fixup used wrong date format.
+        Long reagentId = 975951L;
+        String expiration = "09/2016";
+
+        Reagent reagent = genericReagentDao.findById(GenericReagent.class, reagentId);
+        Assert.assertNotNull(reagent);
+        System.out.println("Changing expiration date on reagent id " + reagentId);
+        reagent.setExpiration((new SimpleDateFormat("MM/yyyy")).parse(expiration));
+        genericReagentDao.persist(new FixupCommentary("GPLIM-3787 fixup reagent expiration."));
+        genericReagentDao.flush();
     }
 
 }

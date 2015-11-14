@@ -3,10 +3,12 @@ package org.broadinstitute.gpinformatics.infrastructure;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.GetSampleDetails;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleDataFetcher;
 
@@ -19,7 +21,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -180,12 +181,22 @@ public class SampleDataFetcher implements Serializable {
     }
 
     /**
-     * Fetch the sampleData for multiple product Order Samples
-     * @param samples collection of product order sample for which sample data is needed
+     * Fetch the SampleData for multiple product order samples. For cases where only a few pieces of data are needed for
+     * each sample, a list of result properties can be specified as a hint to help optimize the data fetch. This is
+     * helpful for performance when fetching sample data from BSP.
+     *
+     * Implementation note: The result properties are currently of type {@link BSPSampleSearchColumn}, which leaks some
+     * details of the BSP fetch through the SampleDataFetcher abstraction. This could be made more general to clean up
+     * the API. This should also involve an analysis of the overlap between BSPSampleSearchColumn and
+     * {@link Metadata.Key}.
+     *
+     * @param samples                collection of product order sample for which sample data is needed
+     * @param bspSampleSearchColumns hint for which columns to return data for, if performance is a factor
+     *
      * @return Mapping of sample id to its sample data
      */
-    public Map<String, SampleData> fetchSampleDataForProductOrderSample(Collection<ProductOrderSample> samples) {
-
+    public Map<String, SampleData> fetchSampleDataForProductOrderSamples(Collection<ProductOrderSample> samples,
+                                                                         BSPSampleSearchColumn... bspSampleSearchColumns) {
         Map<String, SampleData> sampleData = new HashMap<>();
 
         Collection<MercurySample> mercurySamplesWithMercurySource = new ArrayList<>();
@@ -195,8 +206,8 @@ public class SampleDataFetcher implements Serializable {
         for (ProductOrderSample productOrderSample : samples) {
             if (productOrderSample.needsBspMetaData()) {
                 MercurySample mercurySample = productOrderSample.getMercurySample();
-                if(mercurySample != null &&
-                   mercurySample.getMetadataSource() == MercurySample.MetadataSource.MERCURY) {
+                if (mercurySample != null &&
+                    mercurySample.getMetadataSource() == MercurySample.MetadataSource.MERCURY) {
                     mercurySamplesWithMercurySource.add(mercurySample);
                 } else {
                     sampleNames.add(productOrderSample.getName());
@@ -208,7 +219,55 @@ public class SampleDataFetcher implements Serializable {
             buildSampleCollectionsBySource(sampleNames, mercurySamplesWithMercurySource, sampleIdsWithBspSource);
 
             if (!sampleIdsWithBspSource.isEmpty()) {
-                Map<String, BspSampleData> bspSampleData = bspSampleDataFetcher.fetchSampleData(sampleIdsWithBspSource);
+                Map<String, BspSampleData> bspSampleData =
+                        bspSampleDataFetcher.fetchSampleData(sampleIdsWithBspSource, bspSampleSearchColumns);
+                sampleData.putAll(bspSampleData);
+            }
+        }
+        sampleData.putAll(mercurySampleDataFetcher.fetchSampleData(mercurySamplesWithMercurySource));
+
+        return sampleData;
+    }
+
+    /**
+     * Fetch the SampleData for multiple mercury samples. For cases where only a few pieces of data are needed for
+     * each sample, a list of result properties can be specified as a hint to help optimize the data fetch. This is
+     * helpful for performance when fetching sample data from BSP.
+     *
+     * Implementation note: The result properties are currently of type {@link BSPSampleSearchColumn}, which leaks some
+     * details of the BSP fetch through the SampleDataFetcher abstraction. This could be made more general to clean up
+     * the API. This should also involve an analysis of the overlap between BSPSampleSearchColumn and
+     * {@link Metadata.Key}.
+     *
+     * @param samples                collection of product order sample for which sample data is needed
+     * @param bspSampleSearchColumns hint for which columns to return data for, if performance is a factor
+     *
+     * @return Mapping of sample id to its sample data
+     */
+    public Map<String, SampleData> fetchSampleDataForMercurySamples(Collection<MercurySample> samples,
+                                                                         BSPSampleSearchColumn... bspSampleSearchColumns) {
+        Map<String, SampleData> sampleData = new HashMap<>();
+
+        Collection<MercurySample> mercurySamplesWithMercurySource = new ArrayList<>();
+        Collection<String> sampleIdsWithBspSource = new ArrayList<>();
+
+        Set<String> sampleNames = new HashSet<>(samples.size());
+        for (MercurySample mercurySample : samples) {
+            if (mercurySample.needsBspMetaData()) {
+                if (mercurySample != null && mercurySample.getMetadataSource() == MercurySample.MetadataSource.MERCURY) {
+                    mercurySamplesWithMercurySource.add(mercurySample);
+                } else {
+                    sampleNames.add(mercurySample.getSampleKey());
+                }
+            }
+        }
+        if (!sampleNames.isEmpty()) {
+
+            buildSampleCollectionsBySource(sampleNames, mercurySamplesWithMercurySource, sampleIdsWithBspSource);
+
+            if (!sampleIdsWithBspSource.isEmpty()) {
+                Map<String, BspSampleData> bspSampleData =
+                        bspSampleDataFetcher.fetchSampleData(sampleIdsWithBspSource, bspSampleSearchColumns);
                 sampleData.putAll(bspSampleData);
             }
         }

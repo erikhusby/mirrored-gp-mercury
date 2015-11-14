@@ -61,6 +61,7 @@ import java.util.Set;
 public class ManifestSession implements Updatable {
 
     public static final String VESSEL_LABEL = "Vessel barcode";
+    public static final String RECEIPT_BSP_USER = "receiptBspUser";
 
     @Id
     @SequenceGenerator(name = "SEQ_MANIFEST_SESSION", schema = "mercury", sequenceName = "SEQ_MANIFEST_SESSION")
@@ -110,6 +111,9 @@ public class ManifestSession implements Updatable {
 
     @Column(name = "FROM_SAMPLE_KIT")
     private boolean fromSampleKit;
+
+    @Column(name = "RECEIPT_TICKET")
+    private String receiptTicket;
 
     /**
      * For JPA.
@@ -164,6 +168,13 @@ public class ManifestSession implements Updatable {
     public void addRecord(ManifestRecord record) {
         records.add(record);
         record.setManifestSession(this);
+        if(record.getManifestRecordIndex() == null) {
+            /*  ManifestRecords use a zero-based offset.  Normally the spreadsheet parser assigns these but the
+                addition of LabEvents for receipt utilizing this index makes it necessary for us to set this value
+                even without spreadsheet upload
+                */
+            record.setManifestRecordIndex(getRecords().size()-1);
+        }
         if(isFromSampleKit()) {
             if(status == SessionStatus.PENDING_SAMPLE_INFO) {
                 setStatus(SessionStatus.ACCESSIONING);
@@ -193,6 +204,14 @@ public class ManifestSession implements Updatable {
 
     public boolean isFromSampleKit() {
         return fromSampleKit;
+    }
+
+    public String getReceiptTicket() {
+        return receiptTicket;
+    }
+
+    public void setReceiptTicket(String receiptTicket) {
+        this.receiptTicket = receiptTicket;
     }
 
     /**
@@ -271,8 +290,7 @@ public class ManifestSession implements Updatable {
     private void validateDuplicateCollaboratorSampleIDs(Collection<ManifestRecord> manifestRecords) {
 
         // Build a map of collaborator sample IDs to manifest records with those collaborator sample IDs.
-        Multimap<String, ManifestRecord> recordsBySampleId = buildMultimapByKey(
-                manifestRecords, Metadata.Key.SAMPLE_ID);
+        Multimap<String, ManifestRecord> recordsBySampleId = buildMultimapBySampleId(manifestRecords);
 
         // Remove entries in this map which are not duplicates (i.e., leave only the duplicates).
         Iterable<Map.Entry<String, Collection<ManifestRecord>>> filteredDuplicateSamples =
@@ -327,6 +345,23 @@ public class ManifestSession implements Updatable {
                     @Override
                     public String apply(ManifestRecord manifestRecord) {
                         return manifestRecord.getValueByKey(key);
+                    }
+                });
+    }
+
+    /**
+     * Helper method to Build a MultiMap of manifest records by the sampleId.
+     *
+     * @param manifestRecords The set of manifest records to be divided up into a MultiMap
+     *
+     * @return A MultiMap of manifest records indexed by the corresponding sampleId value
+     */
+    private Multimap<String, ManifestRecord> buildMultimapBySampleId(Collection<ManifestRecord> manifestRecords) {
+        return Multimaps.index(manifestRecords,
+                new Function<ManifestRecord, String>() {
+                    @Override
+                    public String apply(ManifestRecord manifestRecord) {
+                        return manifestRecord.getSampleId();
                     }
                 });
     }
@@ -553,15 +588,15 @@ public class ManifestSession implements Updatable {
     /**
      * Encapsulates the logic required to informatically execute a transfer from the collaborator provided tube to
      * a broad tube.  This is primarily done by marking a record within this session as having been transferred.
-     *
      * @param sourceCollaboratorSample Sample ID for the source sample.  This should correspond to a record within
-     *                                 the session
+*                                 the session
      * @param targetSample             Mercury Sample to which the transfer will be associated
      * @param targetVessel             Lab Vessel to which the transfer will be associated
      * @param user                     Represents the user attempting to make the transfer
+     * @param disambiguator            LabEvent disambiguator to avoid unique constraint errors when called in a tight loop
      */
     public void performTransfer(String sourceCollaboratorSample, MercurySample targetSample, LabVessel targetVessel,
-                                BspUser user) {
+                                BspUser user, long disambiguator) {
 
         ManifestRecord sourceRecord ;
 
@@ -571,12 +606,14 @@ public class ManifestSession implements Updatable {
             sourceRecord = findRecordForTransferByKey(Metadata.Key.BROAD_SAMPLE_ID, targetSample.getSampleKey());
         }
 
-        targetSample.addMetadata(sourceRecord.getMetadata());
+        Set<Metadata> metadataToTransfer = new HashSet<>(sourceRecord.getMetadata());
+        targetSample.addMetadata(metadataToTransfer);
+
         sourceRecord.setStatus(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE);
 
         LabEvent collaboratorTransferEvent =
                 new LabEvent(LabEventType.COLLABORATOR_TRANSFER, new Date(), LabEvent.UI_EVENT_LOCATION,
-                        1L, user.getUserId(), LabEvent.UI_PROGRAM_NAME);
+                        disambiguator, user.getUserId(), LabEvent.UI_PROGRAM_NAME);
         targetVessel.addInPlaceEvent(collaboratorTransferEvent);
     }
 
@@ -596,6 +633,17 @@ public class ManifestSession implements Updatable {
         }
         manifestRecord.accessionScan(recordSampleKey, recordReferenceValue);
     }
+
+    public boolean canSessionExcludeReceiptTicket() {
+
+        boolean result = true;
+
+        if(StringUtils.isBlank(getReceiptTicket())) {
+            result = false;
+        }
+        return result;
+    }
+
 
     /**
      * Indicator to denote the availability (complete or otherwise) of a manifest session for the sample registration

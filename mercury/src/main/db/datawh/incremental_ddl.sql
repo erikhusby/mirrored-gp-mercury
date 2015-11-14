@@ -1,5 +1,19 @@
 -------------------------------------------------------
--- For release 1.49
+-- https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-3763
+-- Add metadata to PRODUCT_ORDER_SAMPLE
 -------------------------------------------------------
-alter table ledger_entry add quote_server_work_item varchar2(255);
-alter table im_ledger_entry add quote_server_work_item varchar2(255);
+ALTER TABLE IM_PRODUCT_ORDER_SAMPLE
+ADD (
+  PARTICIPANT_ID VARCHAR2(255) NULL,
+  SAMPLE_TYPE VARCHAR2(255) NULL,
+  SAMPLE_RECEIPT DATE NULL,
+  ORIGINAL_SAMPLE_TYPE VARCHAR2(255) NULL );
+
+-- Append to end of table
+-- todo jms - restructure table to insert new columns in more logical order?
+ALTER TABLE PRODUCT_ORDER_SAMPLE
+ADD (
+  PARTICIPANT_ID VARCHAR2(255) NULL,
+  SAMPLE_TYPE VARCHAR2(255) NULL,
+  SAMPLE_RECEIPT DATE NULL,
+  ORIGINAL_SAMPLE_TYPE VARCHAR2(255) NULL );

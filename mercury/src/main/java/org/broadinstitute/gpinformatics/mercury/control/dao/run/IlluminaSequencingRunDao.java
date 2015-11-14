@@ -6,7 +6,10 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Root;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Data Access Object for sequencing runs
@@ -29,5 +32,14 @@ public class IlluminaSequencingRunDao extends GenericDao{
      */
     public Collection<IlluminaSequencingRun> findByBarcode(String runBarcode) {
         return findList(IlluminaSequencingRun.class, IlluminaSequencingRun_.runBarcode, runBarcode);
+    }
+
+    public List<IlluminaSequencingRun> findAllOrderByRunName() {
+        return findAll(IlluminaSequencingRun.class, new GenericDaoCallback<IlluminaSequencingRun>() {
+            @Override
+            public void callback(CriteriaQuery<IlluminaSequencingRun> criteriaQuery, Root<IlluminaSequencingRun> root) {
+                criteriaQuery.orderBy(getCriteriaBuilder().asc(root.get(IlluminaSequencingRun_.runName)));
+            }
+        });
     }
 }

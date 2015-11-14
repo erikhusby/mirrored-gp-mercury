@@ -134,6 +134,12 @@ public class HiSeq2500JaxbBuilder {
                     stripTubeHolderBarcode,
                     Collections.singletonList(stripTubeBarcode),
                     stripTubeCherryPicks);
+            dilutionMetadata = new MetadataType();
+            dilutionMetadata.setName(DenatureToDilutionTubeHandler.FCT_METADATA_NAME);
+            dilutionMetadata.setValue(fctTicket);
+            stripTubeTransferJaxb.getPositionMap().iterator().next().getReceptacle().iterator().next().getMetadata().
+                    add(dilutionMetadata);
+
             bettaLimsMessageTestFactory.addMessage(messageList, stripTubeTransferJaxb);
 
             // FlowcellTransfer
@@ -145,6 +151,7 @@ public class HiSeq2500JaxbBuilder {
         }
         flowcellLoad = bettaLimsMessageTestFactory.buildReceptacleEvent("FlowcellLoaded",
                 flowcellBarcode, LabEventFactory.PHYS_TYPE_FLOWCELL);
+        flowcellLoad.setStation(BettaLimsMessageTestFactory.HISEQ_SEQUENCING_STATION_MACHINE_NAME);
         bettaLimsMessageTestFactory.addMessage(messageList, flowcellLoad);
 
         return this;

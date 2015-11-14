@@ -6,12 +6,11 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
-import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
-import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.broadinstitute.gpinformatics.athena.entity.samples.SampleReceiptValidation;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
@@ -39,6 +38,7 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.io.Serializable;
 import java.text.MessageFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -117,9 +117,6 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
 
     @Transient
     private MercurySample.MetadataSource metadataSource;
-
-    @Transient
-    private boolean isMetadataSourceInitialized;
 
     /**
      * Convert a list of ProductOrderSamples into a list of sample names.
@@ -244,13 +241,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         return canRinScoreBeUsed;
     }
 
-    /**
-     * A sample is completely billed if its primary or replacement for the primary price item has been billed. If
-     * only an add-on has been billed, it's not yet completely billed.
-     *
-     * @return true if this sample has been completely billed.
-     */
-    public boolean isCompletelyBilled() {
+    public boolean isCompletelyBilledOld() {
         for (LedgerEntry entry : ledgerItems) {
             if (entry.isBilled() && entry.getPriceItemType() != LedgerEntry.PriceItemType.ADD_ON_PRICE_ITEM) {
                 return true;
@@ -259,8 +250,66 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         return false;
     }
 
+    /**
+     * A sample is completely billed if its primary or replacement for the primary price item has been billed. If
+     * only an add-on has been billed, it's not yet completely billed. If the net billed quantity is 0 due to a credit
+     * being billed after a debit, the sample has not been billed. Add-ons are only considered if the same price item
+     * has also been billed as a primary or replacement.
+     *
+     * @return true if this sample has been completely billed.
+     */
+    public boolean isCompletelyBilled() {
+
+        /*
+         * Gather the net quantity billed to each price item by price item type. Separate Maps are used because they
+         * contribute to this calculation in different ways. This is like {@link getLedgerQuantities}, but only counts
+         * quantities actually billed and also separates the quantities depending on price item type.
+         */
+        Map<PriceItem, Double> primaryAndReplacementQuantities = new HashMap<>();
+        Map<PriceItem, Double> addOnQuantities = new HashMap<>();
+        for (LedgerEntry item : ledgerItems) {
+            if (item.isBilled()) {
+
+                // Guard against some initial testing data that is billed but doesn't have a price item type.
+                if (item.getPriceItemType() != null) {
+                    Map<PriceItem, Double> typeSpecificQuantities = null;
+                    switch (item.getPriceItemType()) {
+                    case PRIMARY_PRICE_ITEM:
+                    case REPLACEMENT_PRICE_ITEM:
+                        typeSpecificQuantities = primaryAndReplacementQuantities;
+                        break;
+                    case ADD_ON_PRICE_ITEM:
+                        typeSpecificQuantities = addOnQuantities;
+                        break;
+                    }
+
+                    PriceItem priceItem = item.getPriceItem();
+                    Double currentQuantity = typeSpecificQuantities.get(priceItem);
+                    if (currentQuantity == null) {
+                        currentQuantity = 0.0;
+                    }
+                    typeSpecificQuantities.put(priceItem, currentQuantity + item.getQuantity());
+                }
+            }
+        }
+
+        for (Map.Entry<PriceItem, Double> entry : primaryAndReplacementQuantities.entrySet()) {
+            PriceItem priceItem = entry.getKey();
+            Double quantity = entry.getValue();
+
+            // Include add-on quantities if this price item was accidentally billed as an add-on as well as a primary.
+            if (addOnQuantities.containsKey(priceItem)) {
+                quantity += addOnQuantities.get(priceItem);
+            }
+            if (quantity > 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Override
-    protected SampleData makeSampleData() {
+    public SampleData makeSampleData() {
         SampleData sampleData;
         if(mercurySample != null) {
             sampleData = mercurySample.makeSampleData();
@@ -275,7 +324,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         if (mercurySample != null) {
             return mercurySample.getMetadataSource();
         }
-        if (!isMetadataSourceInitialized) {
+        if (!isMetadataSourceInitialized()) {
            throw new IllegalStateException(String.format("ProductOrderSample %s transient metadataSource has not been initialized", sampleName));
         }
         return metadataSource;
@@ -295,7 +344,34 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
 
     public void setMetadataSource(MercurySample.MetadataSource metadataSource) {
         this.metadataSource = metadataSource;
-        isMetadataSourceInitialized = true;
+    }
+
+    public Date getReceiptDate() {
+        return (mercurySample!= null)?mercurySample.getReceivedDate():getSampleData().getReceiptDate();
+    }
+
+    /**
+     * Find the latest material type by first searching the event history then falling back on the sample's metadata.
+     */
+    public String getLatestMaterialType() {
+        if (mercurySample != null && mercurySample.getLatestMaterialType() != null) {
+            return mercurySample.getLatestMaterialType().getDisplayName();
+        }
+        return getSampleData().getMaterialType();
+    }
+
+    public String getFormattedReceiptDate() {
+        Date receiptDate = getReceiptDate();
+
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(LabEventSampleDTO.BSP_DATE_FORMAT_STRING);
+        if (receiptDate == null) {
+            return "";
+        }
+        return simpleDateFormat.format(receiptDate);
+    }
+
+    public boolean isSampleReceived() {
+        return (mercurySample!= null)?mercurySample.getReceivedDate() != null:getSampleData().isSampleReceived();
     }
 
     public enum DeliveryStatus implements StatusType {
@@ -470,36 +546,6 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     }
 
     /**
-     * Given a sample, compute its billable price items based on its material type.  We assume that all add-ons
-     * in the sample's order's product that can accept the sample's material type are required, in addition to the
-     * product's primary price item.
-     *
-     * @return the list of required add-ons.
-     */
-    List<PriceItem> getBillablePriceItems() {
-        List<PriceItem> items = new ArrayList<>();
-        items.add(getProductOrder().getProduct().getPrimaryPriceItem());
-        org.broadinstitute.bsp.client.sample.MaterialType materialTypeObject =
-                getSampleData().getMaterialTypeObject();
-        Set<Product> productAddOns = productOrder.getProduct().getAddOns();
-        if (materialTypeObject != null && !productAddOns.isEmpty()) {
-            MaterialType sampleMaterialType =
-                    new MaterialType(materialTypeObject.getCategory(), materialTypeObject.getName());
-            for (Product addOn : productAddOns) {
-                for (MaterialType materialType : addOn.getAllowableMaterialTypes()) {
-                    if (materialType.equals(sampleMaterialType)) {
-                        items.add(addOn.getPrimaryPriceItem());
-                        // Skip to the next add-on.
-                        break;
-                    }
-                }
-            }
-        }
-
-        return items;
-    }
-
-    /**
      * Automatically generate the billing ledger items for this sample.  Once this is done, its price items will be
      * correctly billed when the next billing session is created.
      *
@@ -508,15 +554,27 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
      */
     public void autoBillSample(Date completedDate, double quantity) {
         Date now = new Date();
-
-        List<PriceItem> itemsToBill = getBillablePriceItems();
         Map<PriceItem, LedgerQuantities> ledgerQuantitiesMap = getLedgerQuantities();
+        PriceItem priceItem = getProductOrder().getProduct().getPrimaryPriceItem();
 
-        for (PriceItem priceItem : itemsToBill) {
-            LedgerQuantities quantities = ledgerQuantitiesMap.get(priceItem);
-            if (quantities == null) {
-                // No ledger item exists for this price item, create it using the current order's price item
-                addAutoLedgerItem(completedDate, priceItem, quantity, now);
+        LedgerQuantities quantities = ledgerQuantitiesMap.get(priceItem);
+        if (quantities == null) {
+            // No ledger item exists for this price item, create it using the current order's price item
+            addAutoLedgerItem(completedDate, priceItem, quantity, now);
+        } else {
+            // This price item already has a ledger entry.
+            // - If it's been billed, don't bill it again, but report this as an issue.
+            // - If it hasn't been billed check & see if the quantity is the same as the current.  If they differ,
+            // replace the existing quantity with the new quantity. When replacing, also set the timestamp so
+            // the PDM can be warned about downloading the spreadsheet AFTER this change.
+            if (quantities.getBilled() != 0) {
+                log.debug(MessageFormat.format(
+                        "Trying to update an already billed sample, PDO: {0}, sample: {1}, price item: {2}",
+                        productOrder.getJiraTicketKey(), sampleName, priceItem.getName()));
+            } else if (MathUtils.isSame(quantities.getUploaded(), quantity)) {
+                log.debug(MessageFormat.format(
+                        "Sample already has the same quantity to bill, PDO: {0}, sample: {1}, price item: {2}, quantity {3}",
+                        productOrder.getJiraTicketKey(), sampleName, priceItem.getName(), quantity));
             } else {
                 // This price item already has a ledger entry.
                 // - If it's been billed, don't bill it again, but report this as an issue.
@@ -532,6 +590,9 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
                             "Sample already has the same quantity to bill, PDO: {0}, sample: {1}, price item: {2}, quantity {3}",
                             productOrder.getJiraTicketKey(), sampleName, priceItem.getName(), quantity));
                 } else {
+                    /*
+                     * Why overwrite what a user likely manually uploaded? This seems wrong and/or dangerous.
+                     */
                     for (LedgerEntry item : getLedgerItems()) {
                         if (item.getPriceItem().equals(priceItem)) {
                             item.setQuantity(quantity);
@@ -684,6 +745,44 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         return criteriaString.substring(0, criteriaString.lastIndexOf(" AND "));
     }
 
+    /**
+     * Rolls up visibility of the samples availability from just the sample data
+     *
+     * If the metadata is essentially BSP,
+     */
+    public boolean isSampleAvailable() {
+        boolean available;
+        if(!isMetadataSourceInitialized()) {
+            available = false;
+        } else {
+            switch (getMetadataSource()) {
+            case BSP:
+                available = isSampleReceived();
+                break;
+            case MERCURY:
+                available = isSampleAccessioned() && isSampleReceived();
+                break;
+            default:
+                throw new IllegalStateException("The metadata Source is undetermined");
+            }
+        }
+        return available;
+    }
+
+    private boolean isMetadataSourceInitialized() {
+        return mercurySample != null || metadataSource != null ;
+    }
+
+    /**
+     * Exposes if a sample has been Accessioned.
+     */
+    private boolean isSampleAccessioned() {
+        boolean sampleAccessioned = false;
+        if (mercurySample != null) {
+            sampleAccessioned = mercurySample.hasSampleBeenAccessioned();
+        }
+        return sampleAccessioned;
+    }
 
     @SuppressWarnings("UnusedDeclaration")
     public Collection<RiskItem> getRiskItems() {

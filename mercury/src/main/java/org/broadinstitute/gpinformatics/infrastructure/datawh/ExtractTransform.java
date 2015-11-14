@@ -105,7 +105,7 @@ public class ExtractTransform implements Serializable {
     /**
      * Name of subdirectory under configured ETL root dir where new sqlLoader files are put.
      */
-    public static final String DATAFILE_SUBDIR = "/new";
+    public static final String DATAFILE_SUBDIR = File.separator + "new";
 
     /**
      * Name of directory where sqlLoader files are put.
@@ -161,6 +161,7 @@ public class ExtractTransform implements Serializable {
             ProductEtl productEtl,
             ProductOrderAddOnEtl productOrderAddOnEtl,
             ProductOrderEtl productOrderEtl,
+            RegulatoryInfoEtl regulatoryInfoEtl,
             ProductOrderSampleEtl productOrderSampleEtl,
             ProjectPersonEtl projectPersonEtl,
             ResearchProjectCohortEtl researchProjectCohortEtl,
@@ -182,6 +183,7 @@ public class ExtractTransform implements Serializable {
         etlInstances.add(productEtl);
         etlInstances.add(productOrderAddOnEtl);
         etlInstances.add(productOrderEtl);
+        etlInstances.add(regulatoryInfoEtl);
         etlInstances.add(productOrderSampleEtl);
         etlInstances.add(projectPersonEtl);
         etlInstances.add(researchProjectCohortEtl);
@@ -220,13 +222,20 @@ public class ExtractTransform implements Serializable {
     }
 
     /**
+     * This time period (in seconds) should be well beyond the expected time that a committing
+     * transaction may need in order to finish and become visible to AuditReader. See GPLIM-3590.
+     */
+    static final int TRANSACTION_COMPLETION_GUARDBAND = 10;
+
+    /**
      * Extracts data from operational database, transforms the data into data warehouse records,
      * and writes the records to files, one per DW table.
      *
      * @param requestedStart start of interval of audited changes, in yyyyMMddHHmmss format,
      *                       or "0" to use previous end time.
-     * @param requestedEnd   end of interval of audited changes, in yyyyMMddHHmmss format, or "0" for now.
-     *                       Excludes endpoint.  "0" will cause updating of the lastEtlRun file.
+     * @param requestedEnd   end of interval of audited changes, in yyyyMMddHHmmss format, or "0" for now
+     *                       (minus the TRANSACTION_COMPLETION_GUARDBAND). "0" will cause updating of the
+     *                       lastEtlRun file. Excludes transactions whose commit date is the end time.
      * @return count of records created, or -1 if could not run
      */
     public int incrementalEtl(String requestedStart, String requestedEnd) {
@@ -270,7 +279,7 @@ public class ExtractTransform implements Serializable {
 
             long endTimeSec;
             if (isZero(requestedEnd)) {
-                endTimeSec = System.currentTimeMillis() / MSEC_IN_SEC;
+                endTimeSec = (System.currentTimeMillis() / MSEC_IN_SEC) - TRANSACTION_COMPLETION_GUARDBAND;
             } else {
                 endTimeSec = parseTimestamp(requestedEnd).getTime() / MSEC_IN_SEC;
             }
@@ -350,6 +359,8 @@ public class ExtractTransform implements Serializable {
                     }
                     count.add(0, recordCount);
                     date.add(0, actualEtlDateStr);
+                    // Reset state of all Hibernate entities (the ETL process is read-only)
+                    auditReaderDao.clear();
                 }
             });
 

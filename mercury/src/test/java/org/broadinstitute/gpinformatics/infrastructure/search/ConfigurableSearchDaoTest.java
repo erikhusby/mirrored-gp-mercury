@@ -2,11 +2,15 @@ package org.broadinstitute.gpinformatics.infrastructure.search;
 
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.hibernate.Criteria;
+import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.testng.Arquillian;
+import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -15,14 +19,21 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+
 /**
  * Test searches.
  */
 @Test(groups = TestGroups.STANDARD)
-public class ConfigurableSearchDaoTest extends ContainerTest {
+public class ConfigurableSearchDaoTest extends Arquillian {
 
     @Inject
     private ConfigurableSearchDao configurableSearchDao;
+
+    @Deployment
+    public static WebArchive buildMercuryWar() {
+        return DeploymentBuilder.buildMercuryWar(DEV, "dev");
+    }
 
     public void testLcset() {
         ConfigurableSearchDefinition configurableSearchDefinition =
@@ -35,7 +46,7 @@ public class ConfigurableSearchDaoTest extends ContainerTest {
         Criteria criteria = configurableSearchDao.buildCriteria(configurableSearchDefinition, searchInstance);
         @SuppressWarnings("unchecked")
         List<LabVessel> list = criteria.list();
-        Assert.assertEquals(list.size(), 14);
+        Assert.assertEquals(list.size(), 15);
     }
 
     public void testLabel() {
@@ -69,8 +80,28 @@ public class ConfigurableSearchDaoTest extends ContainerTest {
         Criteria criteria = configurableSearchDao.buildCriteria(configurableSearchDefinition, searchInstance);
         @SuppressWarnings("unchecked")
         List<LabEvent> list = criteria.list();
-        Assert.assertEquals(list.size(), 12);
+        Assert.assertEquals(list.size(), 13);
         return list;
+    }
+
+    /**
+     * Tests use of tube formations in in-place events and transfer events
+     */
+    public void testEventMixForVessels(){
+        ConfigurableSearchDefinition configurableSearchDefinition =
+                SearchDefinitionFactory.getForEntity( ColumnEntity.LAB_EVENT.getEntityName());
+
+        SearchInstance searchInstance = new SearchInstance();
+        SearchInstance.SearchValue searchValue = searchInstance.addTopLevelTerm("Event Vessel Barcode"
+                , configurableSearchDefinition);
+        searchValue.setOperator(SearchInstance.Operator.EQUALS);
+        // This barcoded tube has a mixture of in place events and transfers in containers and not in containers
+        //   (validates GPLIM-3471)
+        searchValue.setValues(Arrays.asList("0175362333"));
+        Criteria criteria = configurableSearchDao.buildCriteria(configurableSearchDefinition, searchInstance);
+        @SuppressWarnings("unchecked")
+        List<LabEvent> list = criteria.list();
+        Assert.assertEquals(list.size(), 12);
     }
 
     public void testEventVessels() {

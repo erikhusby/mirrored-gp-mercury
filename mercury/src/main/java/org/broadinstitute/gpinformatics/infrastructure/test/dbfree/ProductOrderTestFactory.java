@@ -29,7 +29,7 @@ public class ProductOrderTestFactory {
     public static final String JIRA_KEY = "PD0-2WGS";
     public static final String SAMPLE_SUFFIX = "A";
     public static final String TEST_SKIP_QUOTE_REASON = "I am skipping the quote because I can.";
-    public static final Long TEST_CREATOR = 1111L;
+    public static final Long TEST_CREATOR = 18356L;
     public static final String pdoTitle= "Test synopsis";
     public static final String rpSynopsis = "Test synopsis";
     public static final String otherRpSynopsis = "To Study Stuff";
@@ -116,28 +116,25 @@ public class ProductOrderTestFactory {
     }
 
     public static ProductOrder buildExExProductOrder(int maxSamples) {
-        return createDummyProductOrder(maxSamples, "PD0-1EE", Workflow.AGILENT_EXOME_EXPRESS, 101, "Test RP",
+        return buildProductOrder(maxSamples, SAMPLE_SUFFIX, Workflow.AGILENT_EXOME_EXPRESS);
+    }
+
+    public static ProductOrder buildProductOrder(int maxSamples, String sampleSuffix, Workflow workflow) {
+        return createDummyProductOrder(maxSamples, "PD0-1EE", workflow, 101, "Test RP",
                 rpSynopsis,
-                ResearchProject.IRB_ENGAGED, "P-EXEXTest-1232", SAMPLE_SUFFIX, "ExExQuoteId");
+                ResearchProject.IRB_ENGAGED, "P-" + workflow.name() + "-1232", sampleSuffix, "ExExQuoteId");
     }
 
     public static ProductOrder buildIceProductOrder(int maxSamples) {
-        return createDummyProductOrder(maxSamples, "PD0-1IC", Workflow.ICE, 101, "Test RP",
-                rpSynopsis,
-                ResearchProject.IRB_ENGAGED, "P-ICEtest-1232", SAMPLE_SUFFIX, "ExExQuoteId");
+        return buildProductOrder(maxSamples, SAMPLE_SUFFIX, Workflow.ICE);
     }
 
     public static ProductOrder buildHybridSelectionProductOrder(int maxSamples, String sampleSuffix) {
-        return createDummyProductOrder(maxSamples, "PD0-1HS",
-                Workflow.HYBRID_SELECTION, 101,
-                "Test RP", rpSynopsis,
-                ResearchProject.IRB_ENGAGED, "P-HSEL-9293", sampleSuffix, "ExExQuoteId");
+        return buildProductOrder(maxSamples, sampleSuffix, Workflow.HYBRID_SELECTION);
     }
 
     public static ProductOrder buildWholeGenomeProductOrder(int maxSamples) {
-        return createDummyProductOrder(maxSamples, JIRA_KEY, Workflow.WHOLE_GENOME,
-                301, "Test RP", rpSynopsis,
-                ResearchProject.IRB_ENGAGED, "P-WGS-9294", SAMPLE_SUFFIX, "ExExQuoteId");
+        return buildProductOrder(maxSamples, SAMPLE_SUFFIX, Workflow.WHOLE_GENOME);
     }
 
     public static ProductOrder buildSampleInitiationProductOrder(int maxSamples) {
@@ -152,6 +149,21 @@ public class ProductOrderTestFactory {
         sampleInitiationProductOrder.getProduct().setProductFamily(sampleInitiationProductFamily);
         sampleInitiationProductOrder.setSkipQuoteReason(ProductOrderTestFactory.TEST_SKIP_QUOTE_REASON);
         return sampleInitiationProductOrder;
+    }
+
+    public static ProductOrder buildInfiniumProductOrder(int maxSamples) {
+        return createDummyProductOrder(maxSamples, "PDO-1INF", Workflow.NONE, 101,
+                "Test RP", rpSynopsis, ResearchProject.IRB_ENGAGED, "P-INFtest-1232", SAMPLE_SUFFIX, "ExExQuoteId");
+    }
+
+    public static ProductOrder buildArrayPlatingProductOrder(int maxSamples) {
+        return createDummyProductOrder(maxSamples, "PDO-1ARR", Workflow.NONE, 101,
+                "Test RP", rpSynopsis, ResearchProject.IRB_ENGAGED, "P-ARRtest-1232", SAMPLE_SUFFIX, "ExExQuoteId");
+    }
+
+    public static ProductOrder buildTruSeqStrandSpecificProductOrder(int maxSamples) {
+        return createDummyProductOrder(maxSamples, "PDO-1TRUSS", Workflow.NONE, 101,
+                "Test RP", rpSynopsis, ResearchProject.IRB_ENGAGED, "P-TRUSStest-1232", SAMPLE_SUFFIX, "ExExQuoteId");
     }
 
 

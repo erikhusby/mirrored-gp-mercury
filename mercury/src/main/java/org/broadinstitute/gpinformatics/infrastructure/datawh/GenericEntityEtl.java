@@ -20,6 +20,7 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -499,7 +500,7 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
      * @return the data file name
      */
     public static String dataFilename(String etlDateStr, String baseFilename) {
-        return ExtractTransform.getDatafileDir() + "/" + etlDateStr + "_" + baseFilename + ".dat";
+        return ExtractTransform.getDatafileDir() + File.separator + etlDateStr + "_" + baseFilename + ".dat";
     }
 
     /**

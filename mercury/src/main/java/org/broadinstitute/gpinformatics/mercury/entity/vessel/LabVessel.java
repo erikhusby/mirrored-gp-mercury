@@ -7,8 +7,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.infrastructure.SampleData;
+import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
+import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -21,10 +26,10 @@ import org.broadinstitute.gpinformatics.mercury.entity.notice.UserRemarks;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
-import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.TubeTransferException;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 import org.hibernate.annotations.BatchSize;
@@ -55,6 +60,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -181,7 +187,6 @@ public abstract class LabVessel implements Serializable {
     @BatchSize(size = 100)
     private Set<MercurySample> mercurySamples = new HashSet<>();
 
-    // todo jmt set these fields db-free
     @OneToMany(mappedBy = "sourceVessel", cascade = CascadeType.PERSIST)
     @BatchSize(size = 100)
     private Set<VesselToVesselTransfer> vesselToVesselTransfersThisAsSource = new HashSet<>();
@@ -200,6 +205,9 @@ public abstract class LabVessel implements Serializable {
     @Transient
     private Map<String, Set<LabMetric>> metricMap;
 
+    @Transient
+    private MaterialType latestMaterialType=null;
+
     /**
      * Set by {@link #preProcessEvents()}
      */
@@ -217,25 +225,96 @@ public abstract class LabVessel implements Serializable {
     protected LabVessel() {
     }
 
-    @SuppressWarnings("unused")
-    private static Collection<String> getVesselNameList(Collection<LabVessel> vessels) {
-
-        List<String> vesselNames = new ArrayList<>(vessels.size());
-
-        for (LabVessel currVessel : vessels) {
-            vesselNames.add(currVessel.getLabCentricName());
-        }
-
-        return vesselNames;
+    public boolean isDNA() {
+        return isMaterialType(MaterialType.DNA);
     }
 
-    public boolean isDNA() {
-        for (SampleInstance si : getSampleInstances()) {
-            if (!si.getStartingSample().getSampleData().getMaterialType().startsWith("DNA:")) {
-                return false;
+    public boolean isMaterialType(MaterialType materialType) {
+        boolean hasMaterialConvertedToMaterialType = hasMaterialConvertedTo(materialType);
+        if (!hasMaterialConvertedToMaterialType) {
+            for (String sampleMaterialType : getMaterialTypes()) {
+                if (StringUtils.equalsIgnoreCase(materialType.getDisplayName(), sampleMaterialType)) {
+                    return true;
+                }
             }
         }
-        return true;
+        return hasMaterialConvertedToMaterialType;
+    }
+
+    /**
+     * Find the latest material type by first searching the event history then falling back on the sample's metadata.
+     * @return
+     */
+    public MaterialType getLatestMaterialType() {
+        if (latestMaterialType==null) {
+            latestMaterialType = getLatestMaterialTypeFromEventHistory();
+            if (latestMaterialType == null) {
+                latestMaterialType = MaterialType.fromDisplayName(getMaterialTypes().iterator().next());
+            }
+        }
+        return latestMaterialType;
+    }
+
+
+    public List<String> getMaterialTypes() {
+        List<String> materialTypes = new ArrayList<>();
+        for (SampleInstanceV2 si : getSampleInstancesV2()) {
+            String materialType = si.getRootOrEarliestMercurySample().getSampleData().getMaterialType();
+            if (StringUtils.isNotBlank(materialType)) {
+                materialTypes.add(materialType);
+            }
+        }
+        return materialTypes;
+    }
+
+    /**
+     * Initializes SampleData for all vessels with data used when viewing Buckets.
+     * @param labVessels
+     */
+    public static void loadSampleDataForBuckets(Collection<LabVessel> labVessels){
+        SampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(SampleDataFetcher.class);
+        Map<String, MercurySample> sampleNames = new HashMap<>();
+        for (LabVessel labVessel : labVessels) {
+            for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+                MercurySample mercurySample = sampleInstanceV2.getRootOrEarliestMercurySample();
+                sampleNames.put(mercurySample.getSampleKey(), mercurySample);
+            }
+        }
+        Map<String, SampleData> sampleDataMap = sampleDataFetcher.fetchSampleDataForMercurySamples(
+                sampleNames.values(), BSPSampleSearchColumn.BUCKET_PAGE_COLUMNS);
+        for (Map.Entry<String, SampleData> sampleDataEntry : sampleDataMap.entrySet()) {
+            sampleNames.get(sampleDataEntry.getKey()).setSampleData(sampleDataEntry.getValue());
+        }
+    }
+
+    /**
+     * Find the current MaterialType of this LabVesel.
+     * @param materialType materialType to test
+     * @return true if the event history indicates the latest MaterialType matches input
+     */
+    private boolean hasMaterialConvertedTo(MaterialType materialType) {
+        return materialType == getLatestMaterialTypeFromEventHistory();
+    }
+
+    /**
+     * Traverse the event history of this LabVessel to find the current MaterialType.
+     * @return the current MaterialType
+     */
+    public MaterialType getLatestMaterialTypeFromEventHistory() {
+        TransferTraverserCriteria.NearestMaterialTypeTraverserCriteria materialTypeTraverserCriteria =
+                evaluateMaterialTypeTraverserCriteria();
+
+        return materialTypeTraverserCriteria.getMaterialType();
+    }
+
+    /**
+     * Traverser which scans the event history of this LabVessel to find the current MaterialType.
+     */
+    TransferTraverserCriteria.NearestMaterialTypeTraverserCriteria evaluateMaterialTypeTraverserCriteria() {
+        TransferTraverserCriteria.NearestMaterialTypeTraverserCriteria materialTypeTraverserCriteria =
+                new TransferTraverserCriteria.NearestMaterialTypeTraverserCriteria();
+        evaluateCriteria(materialTypeTraverserCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
+        return materialTypeTraverserCriteria;
     }
 
     /**
@@ -263,6 +342,14 @@ public abstract class LabVessel implements Serializable {
         return vesselToSectionTransfersThisAsSource;
     }
 
+    public Set<VesselToVesselTransfer> getVesselToVesselTransfersThisAsSource() {
+        return vesselToVesselTransfersThisAsSource;
+    }
+
+    public Set<VesselToVesselTransfer> getVesselToVesselTransfersThisAsTarget() {
+        return vesselToVesselTransfersThisAsTarget;
+    }
+
     public void addMetric(LabMetric labMetric) {
         labMetrics.add(labMetric);
         labMetric.setLabVessel(this);
@@ -284,16 +371,6 @@ public abstract class LabVessel implements Serializable {
         }
 
         return null;
-    }
-
-    @SuppressWarnings("unused")
-    public Map<String, Set<LabMetric>> getMetricMap() {
-        return metricMap;
-    }
-
-    @SuppressWarnings("unused")
-    public void setMetricMap(Map<String, Set<LabMetric>> metricMap) {
-        this.metricMap = metricMap;
     }
 
     /**
@@ -527,43 +604,14 @@ public abstract class LabVessel implements Serializable {
         return vesselByPdoMap;
     }
 
-    @SuppressWarnings("unused")
-    public String getNearestLabBatchesString() {
-        Collection<LabBatch> nearest = getNearestLabBatches();
-        if (nearest == null) {
-            return "";
-        }
-
-        return StringUtils.join(nearest, "");
-    }
-
-    @SuppressWarnings("unused")
-    public int getNearestLabBatchesCount() {
-        Collection<LabBatch> nearest = getNearestLabBatches();
-        if (nearest == null) {
-            return 0;
-        }
-
-        return nearest.size();
-    }
-
-    /**
-     * Sets the rework state to inactive, meaning it will no longer appear in the bucket.
-     */
-    public void deactivateRework() {
-        for (MercurySample sample : getMercurySamples()) {
-            sample.getRapSheet().deactivateRework();
-        }
-    }
-
     /**
      * This method gets a collection of the nearest lab metrics of the specified type. This only traverses ancestors.
      *
      * @param metricType The type of metric to search for during the traversal.
      *
-     * @return A collection of the closest metrics of the type specified.
+     * @return A list of the closest metrics of the type specified, ordered by ascending date
      */
-    public Collection<LabMetric> getNearestMetricsOfType(LabMetric.MetricType metricType) {
+    public List<LabMetric> getNearestMetricsOfType(LabMetric.MetricType metricType) {
         if (getContainerRole() != null) {
             return getContainerRole().getNearestMetricOfType(metricType);
         } else {
@@ -587,6 +635,24 @@ public abstract class LabVessel implements Serializable {
             eventName = eventList.get(eventList.size() - 1).getLabEventType().getName();
         }
         return eventName;
+    }
+
+    /**
+     * Check if the vessel has been accessioned
+     * Does nothing typically, but will throw an exception if it has been accessioned
+     *
+     * @throws TubeTransferException if it has been accessioned
+     *
+     */
+    public boolean canBeUsedForAccessioning() {
+        return !doesChainOfCustodyInclude(LabEventType.COLLABORATOR_TRANSFER);
+    }
+
+    public void setReceiptEvent(BspUser user, Date receivedDate, long disambiguator) {
+        LabEvent receiptEvent =
+                new LabEvent(LabEventType.SAMPLE_RECEIPT, receivedDate, LabEvent.UI_EVENT_LOCATION,
+                        disambiguator, user.getUserId(), LabEvent.UI_PROGRAM_NAME);
+        addInPlaceEvent(receiptEvent);
     }
 
     public enum ContainerType {
@@ -742,7 +808,11 @@ public abstract class LabVessel implements Serializable {
     }
 
     public int getSampleInstanceCount() {
-        return getSampleInstanceCount(SampleType.ANY, null);
+        Set<SampleInstanceV2> sampleInstancesV2 = getSampleInstancesV2();
+        if (sampleInstancesV2.size() == 1 && sampleInstancesV2.iterator().next().isReagentOnly()) {
+            return 0;
+        }
+        return sampleInstancesV2.size();
     }
 
     public int getSampleInstanceCount(SampleType sampleType, @Nullable LabBatch.LabBatchType batchType) {
@@ -1016,7 +1086,7 @@ public abstract class LabVessel implements Serializable {
      *
      * @return descendant and events
      */
-    private List<VesselEvent> getDescendants() {
+    protected List<VesselEvent> getDescendants() {
         List<VesselEvent> vesselEvents = new ArrayList<>();
         for (VesselToVesselTransfer vesselToVesselTransfer : vesselToVesselTransfersThisAsSource) {
             vesselEvents.add(new VesselEvent(vesselToVesselTransfer.getTargetVessel(), null, null,
@@ -1073,16 +1143,11 @@ public abstract class LabVessel implements Serializable {
     }
 
     public Set<BucketEntry> getBucketEntries() {
-        return Collections.unmodifiableSet(bucketEntries);
+        return bucketEntries;
     }
 
     public Integer getBucketEntriesCount(){
         return bucketEntriesCount;
-    }
-
-    /** For fixups only. */
-    Set<BucketEntry> getModifiableBucketEntries() {
-        return bucketEntries;
     }
 
     public void addBucketEntry(BucketEntry bucketEntry) {
@@ -1118,11 +1183,21 @@ public abstract class LabVessel implements Serializable {
         return allLabBatches;
     }
 
+    public List<LabBatch> getWorkflowLabBatches() {
+        List<LabBatch> allLabBatches = new ArrayList<>();
+        for (LabBatchStartingVessel batchStartingVessel : labBatches) {
+            if (batchStartingVessel.getLabBatch().getLabBatchType() == LabBatch.LabBatchType.WORKFLOW) {
+                allLabBatches.add(batchStartingVessel.getLabBatch());
+            }
+        }
+        allLabBatches.addAll(reworkLabBatches);
+        return allLabBatches;
+    }
+
     public Set<LabBatch> getReworkLabBatches() {
         return reworkLabBatches;
     }
 
-    @SuppressWarnings("unused")
     public Set<LabBatchStartingVessel> getLabBatchStartingVessels() {
         return labBatches;
     }
@@ -1142,41 +1217,8 @@ public abstract class LabVessel implements Serializable {
         return dilutionReferences;
     }
 
-    @SuppressWarnings("unused")
-    public void setDilutionReferences(Set<LabBatchStartingVessel> dilutionReferences) {
-        this.dilutionReferences = dilutionReferences;
-    }
-
     public void addDilutionReferences(LabBatchStartingVessel dilutionReferences) {
         this.dilutionReferences.add(dilutionReferences);
-    }
-
-    /**
-     * Get lab batches of the specified type
-     *
-     * @param labBatchType null to get all types
-     *
-     * @return filtered lab batches
-     *
-     * @deprecated this implementation is not necessary with the addition of a method that utilizes transfer entity
-     *             traverser
-     */
-    @Deprecated
-    @SuppressWarnings("unused")
-    public Collection<LabBatch> getLabBatchesOfType(LabBatch.LabBatchType labBatchType) {
-        Collection<LabBatch> allLabBatches = getAllLabBatches(labBatchType);
-
-        if (labBatchType == null) {
-            return allLabBatches;
-        } else {
-            Set<LabBatch> labBatchesOfType = new HashSet<>();
-            for (LabBatch labBatch : allLabBatches) {
-                if (labBatch.getLabBatchType() == labBatchType) {
-                    labBatchesOfType.add(labBatch);
-                }
-            }
-            return labBatchesOfType;
-        }
     }
 
     public Set<MercurySample> getMercurySamples() {
@@ -1187,7 +1229,6 @@ public abstract class LabVessel implements Serializable {
         mercurySamples.add(mercurySample);
     }
 
-    @SuppressWarnings("unused")
     public void addAllSamples(Collection<MercurySample> mercurySamples) {
         this.mercurySamples.addAll(mercurySamples);
     }
@@ -1349,36 +1390,6 @@ public abstract class LabVessel implements Serializable {
         return batchList;
     }
 
-    /**
-     * Finds all the lab batches represented in this container, and determines how many vessels in this
-     * container belong to each of the batches.
-     *
-     * @return list of lab batches sorted by vessel count (descending).
-     */
-    @SuppressWarnings("unused")
-    public List<LabBatchComposition> getLabBatchCompositions() {
-
-        List<SampleInstance> sampleInstances = new ArrayList<>();
-        sampleInstances.addAll(getSampleInstances(SampleType.WITH_PDO, null));
-
-        Map<LabBatch, LabBatchComposition> batchMap = new HashMap<>();
-        for (SampleInstance sampleInstance : sampleInstances) {
-            for (LabBatch labBatch : sampleInstance.getAllLabBatches()) {
-                LabBatchComposition batchComposition = batchMap.get(labBatch);
-                if (batchComposition == null) {
-                    batchMap.put(labBatch, new LabBatchComposition(labBatch, 1, sampleInstances.size()));
-                } else {
-                    batchComposition.addCount();
-                }
-            }
-        }
-
-        List<LabBatchComposition> batchList = new ArrayList<>(batchMap.values());
-        Collections.sort(batchList, LabBatchComposition.HIGHEST_COUNT_FIRST);
-
-        return batchList;
-    }
-
     public Collection<LabBatch> getAllLabBatches() {
         if (getContainerRole() != null) {
             return getContainerRole().getAllLabBatches();
@@ -1401,26 +1412,29 @@ public abstract class LabVessel implements Serializable {
         }
     }
 
-    public Collection<LabBatch> getNearestLabBatches() {
-        if (getContainerRole() != null) {
-            return getContainerRole().getNearestLabBatches();
-        } else {
-            TransferTraverserCriteria.NearestLabBatchFinder batchCriteria =
-                    new TransferTraverserCriteria.NearestLabBatchFinder(null);
-            evaluateCriteria(batchCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
-            return batchCriteria.getNearestLabBatches();
-        }
-    }
-
     public Collection<LabBatch> getNearestWorkflowLabBatches() {
+        Set<LabBatch> workLabBatches = new HashSet<>();
+        Set<SampleInstanceV2> sampleInstancesLocal;
         if (getContainerRole() != null) {
-            return getContainerRole().getNearestLabBatches(LabBatch.LabBatchType.WORKFLOW);
+            sampleInstancesLocal = getContainerRole().getSampleInstancesV2();
         } else {
-            TransferTraverserCriteria.NearestLabBatchFinder batchCriteria =
-                    new TransferTraverserCriteria.NearestLabBatchFinder(LabBatch.LabBatchType.WORKFLOW);
-            evaluateCriteria(batchCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
-            return batchCriteria.getNearestLabBatches();
+            sampleInstancesLocal = getSampleInstancesV2();
         }
+        for (SampleInstanceV2 sampleInstance : sampleInstancesLocal) {
+            if (sampleInstance.getSingleBatch() != null) {
+                workLabBatches.add(sampleInstance.getSingleBatch());
+            }
+        }
+        if (workLabBatches.isEmpty()) {
+            // Vessel is used in more than a single lab batch, so use the lab batch with the latest creation date.
+            for (SampleInstanceV2 sampleInstance : sampleInstancesLocal) {
+                if (!sampleInstance.getAllWorkflowBatches().isEmpty()) {
+                    workLabBatches.add(sampleInstance.getAllWorkflowBatches().get(
+                            sampleInstance.getAllWorkflowBatches().size() - 1));
+                }
+            }
+        }
+        return workLabBatches;
     }
 
     /**
@@ -1433,9 +1447,23 @@ public abstract class LabVessel implements Serializable {
      * @return A map of lab vessels keyed off the event they were present at filtered by type.
      */
     public Map<LabEvent, Set<LabVessel>> findVesselsForLabEventType(LabEventType type, boolean useTargetVessels) {
-        List<LabEventType> eventTypeList = new ArrayList<>();
-        eventTypeList.add(type);
-        return findVesselsForLabEventTypes(eventTypeList, useTargetVessels);
+        return findVesselsForLabEventType(type, useTargetVessels,
+                EnumSet.allOf(TransferTraverserCriteria.TraversalDirection.class));
+    }
+
+    /**
+     * This method iterates over all of the ancestor and descendant vessels, adding them to a map of vessel -> event
+     * when the event matches the type given.
+     *
+     * @param type The type of event to filter the ancestors and descendants by.
+     * @param useTargetVessels True if the vessels returned are event targets (vs. sources).
+     * @param traversalDirections Direction(s) to traverse when searching for events
+     *
+     * @return A map of lab vessels keyed off the event they were present at filtered by type.
+     */
+    public Map<LabEvent, Set<LabVessel>> findVesselsForLabEventType(LabEventType type, boolean useTargetVessels,
+                                                                    EnumSet<TransferTraverserCriteria.TraversalDirection> traversalDirections) {
+        return findVesselsForLabEventTypes(Collections.singletonList(type), useTargetVessels, traversalDirections);
     }
 
     /**
@@ -1448,22 +1476,56 @@ public abstract class LabVessel implements Serializable {
      * @return A map of lab vessels keyed off the event they were present at filterd by types.
      */
     public Map<LabEvent, Set<LabVessel>> findVesselsForLabEventTypes(List<LabEventType> types, boolean useTargetVessels) {
+        return findVesselsForLabEventTypes(types, useTargetVessels,
+                EnumSet.allOf(TransferTraverserCriteria.TraversalDirection.class));
+    }
+
+    /**
+     * This method iterates over all of the ancestor and descendant vessels, adding them to a map of vessel -> event
+     * when the event matches the type given.
+     *
+     * @param types A list of types of event to filter the ancestors and descendants by.
+     * @param useTargetVessels True if the vessels returned are event targets (vs. sources).
+     * @param traversalDirections Direction(s) to traverse when searching for events
+     *
+     * @return A map of lab vessels keyed off the event they were present at filterd by types.
+     */
+    public Map<LabEvent, Set<LabVessel>> findVesselsForLabEventTypes(List<LabEventType> types, boolean useTargetVessels,
+                                                                     EnumSet<TransferTraverserCriteria.TraversalDirection> traversalDirections) {
         if (getContainerRole() != null) {
             return getContainerRole().getVesselsForLabEventTypes(types);
         }
         TransferTraverserCriteria.VesselForEventTypeCriteria vesselForEventTypeCriteria =
                 new TransferTraverserCriteria.VesselForEventTypeCriteria(types, useTargetVessels);
-        evaluateCriteria(vesselForEventTypeCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
-        evaluateCriteria(vesselForEventTypeCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
+        if (traversalDirections.contains(TransferTraverserCriteria.TraversalDirection.Ancestors)) {
+            evaluateCriteria(vesselForEventTypeCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
+        }
+        if (traversalDirections.contains(TransferTraverserCriteria.TraversalDirection.Descendants)) {
+            evaluateCriteria(vesselForEventTypeCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
+        }
         return vesselForEventTypeCriteria.getVesselsForLabEventType();
     }
 
-    /**
-     * This method walks the vessel transfers in both directions and returns all of the ancestor and descendant
-     * vessels.
-     *
-     * @return A collection containing all ancestor and descendant vessels.
-     */
+    public Map<LabEvent, Set<LabVessel>> findVesselsForLabEventTypes(List<LabEventType> types,
+            List<TransferTraverserCriteria.TraversalDirection> traversalDirections, boolean useTargetVessels) {
+        if (getContainerRole() != null) {
+            // todo jmt this is ancestors only
+            return getContainerRole().getVesselsForLabEventTypes(types);
+        }
+        TransferTraverserCriteria.VesselForEventTypeCriteria vesselForEventTypeCriteria =
+                new TransferTraverserCriteria.VesselForEventTypeCriteria(types, useTargetVessels);
+        for (TransferTraverserCriteria.TraversalDirection traversalDirection : traversalDirections) {
+            evaluateCriteria(vesselForEventTypeCriteria, traversalDirection);
+        }
+        return vesselForEventTypeCriteria.getVesselsForLabEventType();
+    }
+
+        /**
+         * This method walks the vessel transfers in both directions and returns all of the ancestor and descendant
+         * vessels.
+         *
+         * @return A collection containing all ancestor and descendant vessels.
+         */
     public Collection<LabVessel> getAncestorAndDescendantVessels() {
         Collection<LabVessel> allVessels;
         allVessels = getAncestorVessels();
@@ -1483,14 +1545,6 @@ public abstract class LabVessel implements Serializable {
                 new TransferTraverserCriteria.LabVesselAncestorCriteria();
         evaluateCriteria(ancestorCritera, TransferTraverserCriteria.TraversalDirection.Ancestors);
         return ancestorCritera.getLabVesselAncestors();
-    }
-
-    @SuppressWarnings("unused")
-    public Collection<IlluminaFlowcell> getDescendantFlowcells() {
-        TransferTraverserCriteria.VesselTypeDescendantCriteria<IlluminaFlowcell> flowcellDescendantCriteria =
-                new TransferTraverserCriteria.VesselTypeDescendantCriteria<>(IlluminaFlowcell.class);
-        evaluateCriteria(flowcellDescendantCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
-        return flowcellDescendantCriteria.getDescendantsOfVesselType();
     }
 
     /**
@@ -1566,6 +1620,7 @@ public abstract class LabVessel implements Serializable {
         return indexes;
     }
 
+    // used in JSP
     @SuppressWarnings("unused")
     public int getIndexesCount() {
         Collection<MolecularIndexReagent> indexes = getIndexes();
@@ -1592,23 +1647,6 @@ public abstract class LabVessel implements Serializable {
             }
         }
         return pdoKeys;
-    }
-
-    @SuppressWarnings("unused")
-    public String getPdoKeysString() {
-        Collection<String> keys = getPdoKeys();
-        String[] batchArray = keys.toArray(new String[keys.size()]);
-        return StringUtils.join(batchArray);
-    }
-
-    @SuppressWarnings("unused")
-    public int getPdoKeysCount() {
-        Collection<String> keys = getPdoKeys();
-        if (keys == null) {
-            return 0;
-        }
-
-        return keys.size();
     }
 
     /**
@@ -1657,35 +1695,6 @@ public abstract class LabVessel implements Serializable {
 
     public String[] getSampleNamesArray() {
         return getSampleNames().toArray(new String[]{});
-    }
-
-    /**
-     * Helper method to determine if a given vessel or any of its ancestors are currently in a bucket.
-     *
-     * @param pdoKey     Business key of a Product order associated with a bucket entry
-     * @param bucketName name of a bucket to search for a bucket entry
-     *
-     * @return boolean indicating whether an ancestor of the current vessel has been in a bucket.
-     */
-    @SuppressWarnings("unused")
-    public boolean isAncestorInBucket(@Nonnull String pdoKey, @Nonnull String bucketName) {
-
-        List<LabVessel> vesselHierarchy = new ArrayList<>();
-
-        vesselHierarchy.add(this);
-        vesselHierarchy.addAll(getAncestorVessels());
-
-        for (LabVessel currentAncestor : vesselHierarchy) {
-            for (BucketEntry currentEntry : currentAncestor.getBucketEntries()) {
-                if (pdoKey.equals(currentEntry.getProductOrder().getBusinessKey()) &&
-                    bucketName.equals(currentEntry.getBucket().getBucketDefinitionName()) &&
-                    BucketEntry.Status.Active == currentEntry.getStatus()) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
     }
 
     /**
@@ -1743,12 +1752,12 @@ public abstract class LabVessel implements Serializable {
      *
      * @return Returns a map of lab metrics keyed by the metric display name.
      */
-    public Map<String, Set<LabMetric>> getMetricsForVesselAndDescendants() {
+    public Map<String, Set<LabMetric>> getMetricsForVesselAndRelatives() {
         Set<LabMetric> allMetrics = new HashSet<>();
         if (metricMap == null) {
             metricMap = new HashMap<>();
             allMetrics.addAll(getMetrics());
-            for (LabVessel curVessel : getDescendantVessels()) {
+            for (LabVessel curVessel : getAncestorAndDescendantVessels()) {
                 allMetrics.addAll(curVessel.getMetrics());
             }
             Set<LabMetric> metricSet;
@@ -1832,6 +1841,10 @@ public abstract class LabVessel implements Serializable {
         if (containerRole != null) {
             containerRole.clearCaches();
         }
+        for (LabVessel container : containers) {
+            container.clearCaches();
+            container.getContainerRole().clearCaches();
+        }
     }
 
     /** Looks up the most recent lab metric using the lab metric's created date. */
@@ -1865,7 +1878,7 @@ public abstract class LabVessel implements Serializable {
                 new TransferTraverserCriteria.LabEventDescendantCriteria();
         evaluateCriteria(eventTraversalCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
 
-        return LabEvent.isEventPresent(eventTraversalCriteria.getAllEvents(), LabEventType.COLLABORATOR_TRANSFER);
+        return LabEvent.isEventPresent(eventTraversalCriteria.getAllEvents(), labEventType);
     }
 
     /**

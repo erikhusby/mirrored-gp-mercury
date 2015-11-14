@@ -16,19 +16,17 @@ import javax.inject.Inject;
  */
 public class EventHandlerSelector {
 
-    DenatureToDilutionTubeHandler denatureToDilutionTubeHandler;
-
+    private DenatureToDilutionTubeHandler denatureToDilutionTubeHandler;
     private FlowcellMessageHandler flowcellMessageHandler;
-    private SamplesDaughterPlateHandler samplesDaughterPlateHandler;
-
+    private FlowcellLoadedHandler flowcellLoadedHandler;
 
     @Inject
-    public EventHandlerSelector(
-            DenatureToDilutionTubeHandler denatureToDilutionTubeHandler,
-            FlowcellMessageHandler flowcellMessageHandler, SamplesDaughterPlateHandler samplesDaughterPlateHandler) {
+    public EventHandlerSelector(DenatureToDilutionTubeHandler denatureToDilutionTubeHandler,
+            FlowcellMessageHandler flowcellMessageHandler,
+            FlowcellLoadedHandler flowcellLoadedHandler) {
         this.denatureToDilutionTubeHandler = denatureToDilutionTubeHandler;
         this.flowcellMessageHandler = flowcellMessageHandler;
-        this.samplesDaughterPlateHandler = samplesDaughterPlateHandler;
+        this.flowcellLoadedHandler = flowcellLoadedHandler;
     }
 
     /**
@@ -47,6 +45,7 @@ public class EventHandlerSelector {
 
         switch (targetEvent.getLabEventType()) {
         case DENATURE_TO_DILUTION_TRANSFER:
+        case STRIP_TUBE_B_TRANSFER:
             denatureToDilutionTubeHandler.handleEvent(targetEvent, stationEvent);
             break;
         case DILUTION_TO_FLOWCELL_TRANSFER:
@@ -59,15 +58,17 @@ public class EventHandlerSelector {
         case AUTO_DAUGHTER_PLATE_CREATION:
             stationEvent.setEventType(LabEventType.SAMPLES_DAUGHTER_PLATE_CREATION.getName());
             break;
-        }
-
-        // For automated plate transfers in BSP, post the message to BSP PlateTransferResource.
-        if (targetEvent.getLabEventType().isSendToBsp()) {
-            samplesDaughterPlateHandler.postToBsp(stationEvent, SamplesDaughterPlateHandler.BSP_TRANSFER_REST_URL);
+        case FLOWCELL_LOADED:
+            flowcellLoadedHandler.handleEvent(targetEvent, stationEvent);
+            break;
         }
     }
 
     public FlowcellMessageHandler getFlowcellMessageHandler() {
         return flowcellMessageHandler;
+    }
+
+    public FlowcellLoadedHandler getFlowcellLoadedHandler() {
+        return flowcellLoadedHandler;
     }
 }

@@ -12,11 +12,13 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.common.TestLogHandler;
 import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
+import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteFundingList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePlatformType;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
@@ -90,11 +92,10 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
 
 
     private TestLogHandler testLogHandler;
-    private Logger billingAdaptorLogger;
 
     @BeforeTest
     public void setUpTestLogger() {
-        billingAdaptorLogger = Logger.getLogger(BillingAdaptor.class.getName());
+        Logger billingAdaptorLogger = Logger.getLogger(BillingAdaptor.class.getName());
         billingAdaptorLogger.setLevel(Level.ALL);
         testLogHandler = new TestLogHandler();
         billingAdaptorLogger.addHandler(testLogHandler);
@@ -158,11 +159,32 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         public Quote getQuoteByAlphaId(String alphaId) throws QuoteServerException, QuoteNotFoundException {
             return new Quote();
         }
+
+        @Override
+        public Quote getQuoteWithPriceItems(String alphaId) throws QuoteServerException, QuoteNotFoundException {
+            return getQuoteByAlphaId(alphaId);
+        }
+
+        @Override
+        public Set<Funding> getAllFundingSources() throws QuoteServerException, QuoteNotFoundException{
+            return null;
+        }
+
+        @Override
+        public Quotes getAllQuotes() throws QuoteServerException, QuoteNotFoundException {
+            return null;
+        }
+
+        @Override
+        public PriceList getPlatformPriceItems(QuotePlatformType quotePlatformType)
+                throws QuoteServerException, QuoteNotFoundException {
+            return getAllPriceItems();
+        }
     }
 
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWarWithAlternatives(DummyPMBQuoteService.class, PartiallySuccessfulQuoteServiceStub.class);
+        return DeploymentBuilder.buildMercuryWarWithAlternatives(PartiallySuccessfulQuoteServiceStub.class);
     }
 
     /**
@@ -176,7 +198,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
      * <li>Persist all of this data, outside of a transaction, flush and clear the entity manager.</li>
      * </ul>
      *
-     * @param orderSamples
+     * @param orderSamples The sampels for the order
      */
     private BillingSession writeFixtureData(String... orderSamples) {
 

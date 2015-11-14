@@ -4,6 +4,8 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
@@ -12,8 +14,12 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -30,16 +36,25 @@ public class PDOSamplesTest {
 
     private PDOSamples pdoSamples;
 
+    private Date receiptDate;
+
     private Product riskyProduct;
 
     @BeforeMethod
     public void setUp() {
         pdoSamplesList = new ArrayList<>();
         pdoSamples = new PDOSamples();
-        pdoSamples.addPdoSample(pdoKey, sample1, null, null);
-        pdoSamples.addPdoSample(pdoKey, sample2, null, null);
+        pdoSamples.addPdoSample(pdoKey, sample1, null, null, null);
+        pdoSamples.addPdoSample(pdoKey, sample2, null, null, null);
 
-        ProductOrderSample pdoSample1 = new ProductOrderSample(sample1);
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(2015, Calendar.OCTOBER, 1, 0, 0, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        receiptDate = calendar.getTime();
+        String receiptDateString = new SimpleDateFormat("MM/dd/yyyy").format(receiptDate);
+
+        ProductOrderSample pdoSample1 = new ProductOrderSample(sample1, new BspSampleData(Collections.singletonMap(
+                BSPSampleSearchColumn.RECEIPT_DATE, receiptDateString)));
         Product dummyProduct = ProductTestFactory.createDummyProduct(Workflow.AGILENT_EXOME_EXPRESS, "partNumber");
         riskyProduct = ProductTestFactory.createDummyProduct(Workflow.AGILENT_EXOME_EXPRESS, "partNumber", true, false);
         ProductOrder pdo1 = new ProductOrder(ResearchProjectTestFactory.TEST_CREATOR, "containerTest Product Order Test1",
@@ -52,7 +67,8 @@ public class PDOSamplesTest {
 
         pdo1.addSample(pdoSample1);
 
-        ProductOrderSample pdoSample2 = new ProductOrderSample(sample2);
+        ProductOrderSample pdoSample2 = new ProductOrderSample(sample2, new BspSampleData(Collections.singletonMap(
+                BSPSampleSearchColumn.RECEIPT_DATE, receiptDateString)));
         ProductOrder pdo2 = new ProductOrder(ResearchProjectTestFactory.TEST_CREATOR, "containerTest Product Order Test2",
                         Arrays.asList(pdoSample2),
                                 "newQuote", riskyProduct,
@@ -72,6 +88,9 @@ public class PDOSamplesTest {
         Assert.assertTrue(pdoSamplesResult.getErrors().isEmpty());
         for (ProductOrderSample pdoSample : pdoSamplesList) {
             Assert.assertTrue(doesPdoSamplePairContainSample(pdoSamplesResult, pdoSample.getName()));
+        }
+        for (PDOSample pdoSample : pdoSamplesResult.getPdoSamples()) {
+            Assert.assertEquals(pdoSample.getReceiptDate(), this.receiptDate);
         }
     }
 
@@ -95,7 +114,7 @@ public class PDOSamplesTest {
     }
 
     public void testSomeSamplesAreNotFound() {
-        pdoSamples.addPdoSample("PDO-NOTFOUND", "SM-NOTTHERE", null, null);
+        pdoSamples.addPdoSample("PDO-NOTFOUND", "SM-NOTTHERE", null, null, new Date());
 
         PDOSamples pdoSamplesResult = pdoSamples.buildOutputPDOSamplePairsFromInputAndQueryResults(pdoSamplesList);
         Assert.assertEquals(pdoSamplesResult.getPdoSamples().size(),3);
@@ -127,7 +146,7 @@ public class PDOSamplesTest {
     }
 
     public void testListToMapConversion() {
-        pdoSamples.addPdoSample(pdoKey2, sample1, null, null);
+        pdoSamples.addPdoSample(pdoKey2, sample1, null, null, new Date());
         Map<String,Set<String>> pdoToSamples = pdoSamples.convertPdoSamplePairsListToMap();
         Assert.assertEquals(pdoToSamples.keySet().size(),2);
         Assert.assertTrue(pdoToSamples.containsKey(pdoKey));

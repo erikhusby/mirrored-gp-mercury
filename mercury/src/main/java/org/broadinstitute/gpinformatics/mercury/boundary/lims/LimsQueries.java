@@ -6,7 +6,11 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDa
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
@@ -29,6 +33,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
 
 /**
  * Mercury-based implementations of services provided by LimsQueryResource.
@@ -86,10 +91,23 @@ public class LimsQueries {
                 libraryDataType.setWasFound(false);
             } else {
                 libraryDataType.setWasFound(true);
-                for (SampleInstance sampleInstance : stringLabVesselEntry.getValue().getSampleInstances()) {
+                for (SampleInstanceV2 sampleInstance : stringLabVesselEntry.getValue().getSampleInstancesV2()) {
+                    MercurySample mercurySample = sampleInstance.getRootOrEarliestMercurySample();
                     SampleInfoType sampleInfoType = new SampleInfoType();
-                    sampleInfoType.setSampleName(sampleInstance.getStartingSample().getSampleKey());
+                    sampleInfoType.setSampleName(mercurySample.getSampleKey());
                     sampleInfoType.setLsid("not implemented yet");
+                    MolecularIndexingScheme molecularIndexingScheme =
+                            sampleInstance.getMolecularIndexingScheme();
+                    if(molecularIndexingScheme != null) {
+                        SortedMap<MolecularIndexingScheme.IndexPosition, MolecularIndex> indexes =
+                                molecularIndexingScheme.getIndexes();
+                        String indexSequence = "";
+                        for (Map.Entry<MolecularIndexingScheme.IndexPosition, MolecularIndex> entry : indexes
+                                .entrySet()) {
+                            indexSequence += entry.getValue().getSequence();
+                        }
+                        sampleInfoType.setIndexSequence(indexSequence);
+                    }
                     libraryDataType.getSampleDetails().add(sampleInfoType);
                 }
             }
@@ -258,13 +276,9 @@ public class LimsQueries {
     public Double fetchQuantForTube(String tubeBarcode, String quantType) {
         LabVessel vessel = labVesselDao.findByIdentifier(tubeBarcode);
         if (vessel != null) {
-            Collection<LabMetric> metrics =
-                    vessel.getNearestMetricsOfType(LabMetric.MetricType.getByDisplayName(quantType));
-            if (metrics != null && metrics.size() == 1) {
-                return metrics.iterator().next().getValue().doubleValue();
-            } else {
-                throw new RuntimeException(
-                        "Got more than one quant for barcode:" + tubeBarcode + ", quant type: " + quantType);
+            List<LabMetric> metrics = vessel.getNearestMetricsOfType(LabMetric.MetricType.getByDisplayName(quantType));
+            if (metrics != null && !metrics.isEmpty()) {
+                return metrics.get(metrics.size() - 1).getValue().doubleValue();
             }
         }
         throw new RuntimeException(

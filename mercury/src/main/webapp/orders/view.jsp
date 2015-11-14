@@ -3,6 +3,7 @@
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
 <%@ page import="org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance" %>
+<%@ page import="org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -64,6 +65,11 @@ $j(document).ready(function () {
 var bspDataCount = 0;
 
 function setupDialogs() {
+    function handleCancelEvent () {
+        $j(this).dialog("close");
+        $j("#dialogAction").attr("name", "");
+    }
+
     $j("#confirmDialog").dialog({
         modal: true,
         autoOpen: false,
@@ -79,9 +85,7 @@ function setupDialogs() {
             },
             {
                 text: "Cancel",
-                click: function () {
-                    $j(this).dialog("close");
-                }
+                click: handleCancelEvent
             }
         ]
     });
@@ -102,9 +106,7 @@ function setupDialogs() {
             },
             {
                 text: "Cancel",
-                click: function () {
-                    $j(this).dialog("close");
-                }
+                click: handleCancelEvent
             }
         ]
     });
@@ -127,9 +129,7 @@ function setupDialogs() {
             },
             {
                 text: "Cancel",
-                click: function () {
-                    $j(this).dialog("close");
-                }
+                click: handleCancelEvent
             }
         ]
     });
@@ -152,9 +152,7 @@ function setupDialogs() {
             },
             {
                 text: "Cancel",
-                click: function () {
-                    $j(this).dialog("close");
-                }
+                click: handleCancelEvent
             }
         ]
     });
@@ -177,9 +175,7 @@ function setupDialogs() {
             },
             {
                 text: "Cancel",
-                click: function () {
-                    $j(this).dialog("close");
-                }
+                click: handleCancelEvent
             }
         ]
     });
@@ -200,9 +196,7 @@ function setupDialogs() {
             },
             {
                 text: "Cancel",
-                click: function () {
-                    $j(this).dialog("close");
-                }
+                click: handleCancelEvent
             }
         ]
     });
@@ -225,9 +219,7 @@ function setupDialogs() {
             },
             {
                 text: "Cancel",
-                click: function () {
-                    $j(this).dialog("close");
-                }
+                click: handleCancelEvent
             }
         ]
     });
@@ -247,9 +239,7 @@ function setupDialogs() {
             },
             {
                 text: "Cancel",
-                click: function () {
-                    $j(this).dialog("close");
-                }
+                click: handleCancelEvent
             }
         ]
     });
@@ -288,9 +278,11 @@ function showSamples(sampleData) {
         $j('#collab-patient-' + sampleId).text(sampleData[x].collaboratorParticipantId);
         $j('#volume-' + sampleId).text(sampleData[x].volume);
         $j('#sample-type-' + sampleId).text(sampleData[x].sampleType);
+        $j('#material-type-' + sampleId).text(sampleData[x].materialType);
         $j('#concentration-' + sampleId).text(sampleData[x].concentration);
         $j('#rin-' + sampleId).text(sampleData[x].rin);
         $j('#rqs-' + sampleId).text(sampleData[x].rqs);
+        $j('#dv200-' + sampleId).text(sampleData[x].dv200);
         $j('#total-' + sampleId).text(sampleData[x].total);
         $j('#picoDate-' + sampleId).text(sampleData[x].picoDate);
         $j('#picoDate-' + sampleId).attr("title", sampleData[x].picoDate);
@@ -322,13 +314,15 @@ function showSamples(sampleData) {
                 {"bSortable": true},                            // Collaborator Participant ID
                 {"bSortable": true, "sType": "numeric"},        // Shipped Date
                 {"bSortable": true, "sType": "numeric"},        // Received Date
-                {"bSortable": true},                            // Collaborator Participant ID
-                {"bSortable": true, "sType": "numeric"},        // Sample Type
+                {"bSortable": true},                            // Sample Type
+                {"bSortable": true},                            // Material Type
+                {"bSortable": true, "sType": "numeric"},        // Volume
                 {"bSortable": true, "sType": "numeric"},        // Concentration
 
                 <c:if test="${actionBean.supportsRin}">
                 {"bSortable": true, "sType": "numeric"},        // RIN
                 {"bSortable": true, "sType": "numeric"},        // RQS
+                {"bSortable": true, "sType": "numeric"},        // DV200
                 </c:if>
 
                 <c:if test="${actionBean.supportsPico}">
@@ -337,6 +331,7 @@ function showSamples(sampleData) {
                 {"bSortable": true, "sType": "numeric"},        // Yield Amount
                 {"bSortable": true},                            // sample kit upload/rackscan mismatch
                 {"bSortable": true},                            // On Risk
+                {"bSortable": false},                           // On Risk Details
                 {"bSortable": true},                            // Status
                 {"bSortable": true, "sType": "title-string"},   // is billed
                 {"bSortable": true}                             // Comment
@@ -377,7 +372,7 @@ function getHighlightClass() {
 }
 
 function updateFundsRemaining() {
-    var quoteIdentifier = $j("#quote").val();
+    var quoteIdentifier = '${actionBean.editOrder.quoteId}';
     if ($j.trim(quoteIdentifier)) {
         $j.ajax({
             url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier=${actionBean.editOrder.quoteId}",
@@ -391,7 +386,7 @@ function updateFundsRemaining() {
 
 function updateFunds(data) {
     if (data.fundsRemaining) {
-        $j("#fundsRemaining").text('Funds Remaining: ' + data.fundsRemaining);
+        $j("#fundsRemaining").text('Status: ' + data.status + ' - Funds Remaining: ' + data.fundsRemaining);
     } else {
         $j("#fundsRemaining").text('Error: ' + data.error);
     }
@@ -667,8 +662,14 @@ function formatInput(item) {
         </c:when>
     </c:choose>
 
-    <div>
-        Regulatory Info: ${actionBean.regulatoryInfoForPendingOrder.displayText}
+    <div class="form-horizontal span7">
+        <div class="view-control-group control-group">
+            <label class="control-label label-form">Regulatory Info</label>
+
+            <div class="controls">
+                <jsp:include page="regulatory_info_view.jsp"/>
+            </div>
+        </div>
     </div>
 
     <span class="control-group">
@@ -746,15 +747,26 @@ function formatInput(item) {
                 <security:authorizeBlock roles="<%= roles(Developer, PDM, BillingManager) %>">
                     <stripes:param name="selectedProductOrderBusinessKeys" value="${actionBean.editOrder.businessKey}"/>
                     <stripes:submit name="downloadBillingTracker" value="Download Billing Tracker" class="btn"
-                                    style="margin-right:5px;"/>
+                                    style="margin-right:30px;"/>
                 </security:authorizeBlock>
 
                 <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
-                    <stripes:link
-                            beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.UploadTrackerActionBean"
-                            event="view">
-                        Upload Billing Tracker
-                    </stripes:link>
+                    <c:choose>
+                        <c:when test="${actionBean.productOrderListEntry.billing}">
+                            <span class="disabled-link" title="Upload not allowed while billing is in progress">Upload Billing Tracker</span>
+                        </c:when>
+                        <c:otherwise>
+                            <stripes:link
+                                    beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.UploadTrackerActionBean"
+                                    event="view" >
+                                Upload Billing Tracker
+                            </stripes:link>
+                        </c:otherwise>
+                    </c:choose>
+                    <c:if test="${actionBean.productOrderListEntry.billing}">
+                        &#160;
+                        Upload not allowed while billing is in progress
+                    </c:if>
                 </security:authorizeBlock>
 
             </c:if>
@@ -895,22 +907,7 @@ function formatInput(item) {
 
     <div class="controls">
         <div class="form-value">
-            <c:choose>
-                <c:when test="${fn:length(actionBean.editOrder.regulatoryInfos) ne 0}">
-                    <c:forEach var="regulatoryInfo" items="${actionBean.editOrder.regulatoryInfos}">
-                        ${regulatoryInfo.displayText}<br/>
-                    </c:forEach>
-                </c:when>
-
-                <c:otherwise>
-                    <c:choose><c:when test="${actionBean.editOrder.canSkipRegulatoryRequirements()}">
-                        Regulatory information not entered because: ${actionBean.editOrder.skipRegulatoryReason}
-                    </c:when>
-                        <c:otherwise>
-                            No regulatory information entered.
-                        </c:otherwise></c:choose>
-                </c:otherwise>
-            </c:choose>
+            <jsp:include page="regulatory_info_view.jsp"/>
         </div>
     </div>
 </div>
@@ -1000,7 +997,7 @@ function formatInput(item) {
 
 
 <div class="view-control-group control-group">
-    <label class="control-label label-form">Can Bill</label>
+    <label class="control-label label-form">Can Bill / Ledger Status</label>
 
     <div class="controls">
         <div class="form-value">
@@ -1025,6 +1022,24 @@ function formatInput(item) {
                     No
                 </c:otherwise>
             </c:choose>
+            &nbsp;
+            <c:choose>
+                <c:when test="${actionBean.productOrderListEntry.readyForReview}">
+                        <span class="badge badge-warning">
+                            <%=ProductOrderListEntry.LedgerStatus.READY_FOR_REVIEW.getDisplayName()%>
+                        </span>
+                </c:when>
+                <c:when test="${actionBean.productOrderListEntry.billing}">
+                        <span class="badge badge-info">
+                            <%=ProductOrderListEntry.LedgerStatus.BILLING_STARTED.getDisplayName()%>
+                        </span>
+                </c:when>
+                <c:when test="${actionBean.productOrderListEntry.readyForBilling}">
+                        <span class="badge badge-success">
+                            <%=ProductOrderListEntry.LedgerStatus.READY_TO_BILL.getDisplayName()%>
+                        </span>
+                </c:when>
+            </c:choose>
         </div>
     </div>
 </div>
@@ -1034,14 +1049,7 @@ function formatInput(item) {
 
     <div class="controls">
         <div class="form-value">
-            <div class="barFull view" title="${actionBean.percentInProgress}% In Progress">
-                                    <span class="barAbandon"
-                                          title="${actionBean.percentAbandoned}% Abandoned"
-                                          style="width: ${actionBean.percentAbandoned}%"> </span>
-                                    <span class="barComplete"
-                                          title="${actionBean.percentCompleted}% Completed"
-                                          style="width: ${actionBean.percentCompleted}%"> </span>
-            </div>
+                <stripes:layout-render name="/orders/sample_progress_bar.jsp" status="${actionBean.progressFetcher.getStatus(actionBean.editOrder.businessKey)}" extraStyle="view"/>
                 ${actionBean.progressString}
         </div>
     </div>
@@ -1216,12 +1224,14 @@ function formatInput(item) {
                 <th width="40">Shipped Date</th>
                 <th width="40">Received Date</th>
                 <th width="40">Sample Type</th>
+                <th width="40">Material Type</th>
                 <th width="40">Volume</th>
                 <th width="40">Concentration</th>
 
                 <c:if test="${actionBean.supportsRin}">
                     <th width="40">RIN</th>
                     <th width="40">RQS</th>
+                    <th width="40">DV200</th>
                 </c:if>
 
                 <c:if test="${actionBean.supportsPico}">
@@ -1230,6 +1240,7 @@ function formatInput(item) {
                 <th width="40">Yield Amount</th>
                 <th width="60"><abbr title="Sample Kit Upload/Rackscan Mismatch">Rackscan Mismatch</abbr></th>
                 <th>On Risk</th>
+                <th style="display:none;">On Risk Details</th>
                 <th width="40">Status</th>
                 <th width="40">Billed</th>
                 <th width="200">Comment</th>
@@ -1271,16 +1282,18 @@ function formatInput(item) {
                             ${sample.labEventSampleDTO.samplePackagedDate}
                     </td>
                     <td id="receipt-date-${sample.productOrderSampleId}">
-                            ${sample.labEventSampleDTO.sampleReceiptDate}
+                            ${sample.formattedReceiptDate}
                     </td>
 
                     <td id="sample-type-${sample.productOrderSampleId}"></td>
+                    <td id="material-type-${sample.productOrderSampleId}"></td>
                     <td id="volume-${sample.productOrderSampleId}"></td>
                     <td id="concentration-${sample.productOrderSampleId}"></td>
 
                     <c:if test="${actionBean.supportsRin}">
                         <td id="rin-${sample.productOrderSampleId}"></td>
                         <td id="rqs-${sample.productOrderSampleId}"></td>
+                        <td id="dv200-${sample.productOrderSampleId}"></td>
                     </c:if>
 
                     <c:if test="${actionBean.supportsPico}">
@@ -1300,6 +1313,7 @@ function formatInput(item) {
                             </div>
                         </c:if>
                     </td>
+                    <td id="onRiskDetails-${sample.productOrderSampleId}" style="display:none;">${sample.riskString}</td>
                     <td>${sample.deliveryStatus.displayName}</td>
                     <td id="completelyBilled-${sample.productOrderSampleId}" style="text-align: center"></td>
                     <td>${sample.sampleComment}</td>

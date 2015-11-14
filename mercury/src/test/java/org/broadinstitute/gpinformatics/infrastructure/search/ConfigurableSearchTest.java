@@ -6,28 +6,38 @@ import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
 import org.broadinstitute.gpinformatics.athena.entity.preference.SearchInstanceList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
+import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableListFactory;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.testng.Arquillian;
+import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+
 /**
  * Test creating, saving, retrieving and executing a search.
  */
 @Test(groups = TestGroups.STANDARD)
-public class ConfigurableSearchTest extends ContainerTest {
+public class ConfigurableSearchTest extends Arquillian {
 
     @Inject
     private SearchInstanceEjb searchInstanceEjb;
@@ -40,6 +50,14 @@ public class ConfigurableSearchTest extends ContainerTest {
 
     @Inject
     private UserBean userBean;
+
+    @Inject
+    private LabEventDao labEventDao;
+
+    @Deployment
+    public static WebArchive buildMercuryWar() {
+        return DeploymentBuilder.buildMercuryWar(DEV, "dev");
+    }
 
     /**
      * Create, execute, then delete a global saved lab event search instance
@@ -61,6 +79,8 @@ public class ConfigurableSearchTest extends ContainerTest {
 
         // Add columns
         searchInstance.getPredefinedViewColumns().add("LabEventId");
+        searchInstance.getPredefinedViewColumns().add("EventDate");
+        searchInstance.getPredefinedViewColumns().add("EventType");
 
         // Save instance
         Map<PreferenceType, Preference> mapTypeToPreference = new HashMap<>();
@@ -109,10 +129,97 @@ public class ConfigurableSearchTest extends ContainerTest {
         ConfigurableListFactory.FirstPageResults firstPageResults = configurableListFactory.getFirstResultsPage(
                 fetchedSearchInstance, configurableSearchDef, null, 1, null, "ASC", entity);
         Assert.assertEquals(firstPageResults.getResultList().getResultRows().size(), 100);
+        Assert.assertEquals(firstPageResults.getPagination().getIdList().size(), 736);
+
+        // Default sort is entity ID column (labEventId) ascending
+        Assert.assertEquals(
+                firstPageResults.getResultList().getResultRows().get(0).getRenderableCells().get(0), "508066");
+
+        // Re-sort on labEventId descending using database sort
+        firstPageResults = configurableListFactory.getFirstResultsPage(
+                fetchedSearchInstance, configurableSearchDef, null, null, "labEventId", "DSC", entity);
+
+        Assert.assertEquals(
+                firstPageResults.getResultList().getResultRows().get(0).getRenderableCells().get(0), "508801");
 
         // Delete instance
         searchInstanceEjb.deleteSearch(new MessageCollection(), PreferenceType.GLOBAL_LAB_EVENT_SEARCH_INSTANCES, newSearchName, mapTypeToPreference);
     }
+
+
+    /**
+     * Execute a lab event search with nested table plugins
+     *  and search term parent handled by child when creating a spreadsheet download.
+     * The raw data source for an Excel download is a 2D array
+     */
+    @Test
+    public void testSearchResultsDownload() {
+
+        // Login a fake user
+        userBean.loginTestUser();
+
+        // Create a search instance
+        SearchInstance searchInstance = new SearchInstance();
+        ConfigurableSearchDefinition configurableSearchDef =
+                SearchDefinitionFactory.getForEntity(ColumnEntity.LAB_EVENT.getEntityName());
+        SearchInstance.SearchValue searchValue = searchInstance.addTopLevelTerm("LabEventId",
+                configurableSearchDef);
+        searchValue.setOperator(SearchInstance.Operator.EQUALS);
+        searchValue.setValues(Arrays.asList("268634"));
+
+        // Add columns
+        searchInstance.getPredefinedViewColumns().add("LabEventId");
+        searchInstance.getPredefinedViewColumns().add("Mercury Sample ID");
+        searchInstance.getPredefinedViewColumns().add("Source Layout");
+        searchInstance.getPredefinedViewColumns().add("Destination Layout");
+
+        searchInstance.establishRelationships(configurableSearchDef);
+
+        List<String> columnNameList = searchInstance.getPredefinedViewColumns();
+        List<ColumnTabulation> columnTabulations = new ArrayList<>();
+        for (String columnName : columnNameList) {
+            columnTabulations.add(configurableSearchDef.getSearchTerm(columnName));
+        }
+        columnTabulations.addAll(searchInstance.findTopLevelColumnTabulations());
+
+        ConfigurableList configurableList = new ConfigurableList(columnTabulations, 0, "ASC", ColumnEntity.LAB_EVENT);
+
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, new Long("268634"));
+        List<LabEvent> entityList = new ArrayList<>();
+        entityList.add(labEvent);
+
+        SearchContext searchContext = new SearchContext();
+        searchContext.setSearchInstance(searchInstance);
+        searchContext.setColumnEntityType(ColumnEntity.LAB_EVENT);
+
+        configurableList.addRows(entityList, searchContext);
+
+        // Does the logic to extract values from the entity for display
+        // Creates a 2D array to pass to spreadsheet creator
+        Object[][] data = configurableList.getResultList(false).getAsArray();
+
+        Assert.assertEquals(data[0][0].toString(), "LabEventId" );
+        Assert.assertEquals(data[1][0].toString(), "268634" );
+        // Matrix 96 layout nested table
+        Assert.assertEquals(data[2][1].toString(), "Source Layout" );
+        Assert.assertEquals(data[3][2].toString(), "01");
+        Assert.assertEquals(data[3][13].toString(), "12" );
+        Assert.assertTrue(data[5][2].toString().indexOf("0154862184") >= 0);
+        // Parent term handled by child
+        Assert.assertTrue(data[5][2].toString().indexOf("SM-4CRI7") >= 0);
+        Assert.assertEquals(data[11][1].toString(), "H");
+        // Matrix 96 layout nested table
+        Assert.assertEquals(data[12][1].toString(), "Destination Layout");
+        Assert.assertEquals(data[13][2].toString(), "01" );
+        Assert.assertEquals(data[13][13].toString(), "12" );
+        Assert.assertEquals(data[14][1].toString(), "A" );
+        Assert.assertTrue(data[14][2].toString().indexOf("0116400397") >= 0);
+        // Parent term handled by child
+        Assert.assertTrue(data[14][2].toString().indexOf("SM-4CRI7") >= 0);
+        Assert.assertEquals(data[21][1].toString(), "H");
+
+    }
+
 
     /**
      * Create, execute, then delete a global saved mercury sample search instance
@@ -194,6 +301,7 @@ public class ConfigurableSearchTest extends ContainerTest {
         for( ConfigurableList.ResultRow currentRow : firstPageResults.getResultList().getResultRows() ){
             if( currentRow.getResultId().equals("797366")) {
                 row = currentRow;
+                break;
             }
         }
         Assert.assertNotNull(row, "mercurySampleId 797366 not found in results");
@@ -218,7 +326,43 @@ public class ConfigurableSearchTest extends ContainerTest {
         Assert.assertEquals( values.get(columnNumbersByHeader.get(Metadata.Key.SAMPLE_ID.getDisplayName())),             "23102117605", "Incorrect Sample ID Value");
         Assert.assertEquals( values.get(columnNumbersByHeader.get(Metadata.Key.BUICK_VISIT.getDisplayName())),           "Screening",   "Incorrect Incorrect Visit Value");
 
+        // Test in-memory sorting of 1 page of results, sort on Patient ID
+        columnNumber = columnNumbersByHeader.get(Metadata.Key.PATIENT_ID.getDisplayName());
+        firstPageResults = configurableListFactory.getFirstResultsPage(
+                fetchedSearchInstance, configurableSearchDef, null, columnNumber, null, "DSC", entity);
+
+        row = firstPageResults.getResultList().getResultRows().get(0);
+        Assert.assertEquals( row.getRenderableCells().get(columnNumber), "63014-003");
+
+        row = firstPageResults.getResultList().getResultRows().get(93);
+        Assert.assertEquals( row.getRenderableCells().get(columnNumber), "02002-009");
+
         // Delete instance
         searchInstanceEjb.deleteSearch(new MessageCollection(), PreferenceType.GLOBAL_MERCURY_SAMPLE_SEARCH_INSTANCES, newSearchName, mapTypeToPreference);
+    }
+
+    @Test
+    public void testEventMaterialType() {
+        SearchInstance searchInstance = new SearchInstance();
+        String entity = "LabVessel";
+        ConfigurableSearchDefinition configurableSearchDef = SearchDefinitionFactory.getForEntity(entity);
+
+        SearchInstance.SearchValue searchValue = searchInstance.addTopLevelTerm("PDO", configurableSearchDef);
+        searchValue.setOperator(SearchInstance.Operator.EQUALS);
+        searchValue.setValues(Collections.singletonList("PDO-7013"));
+
+        searchInstance.getPredefinedViewColumns().add("Barcode");
+        searchInstance.getPredefinedViewColumns().add("DNA Extracted Tube Barcode");
+
+        ConfigurableListFactory.FirstPageResults firstPageResults = configurableListFactory.getFirstResultsPage(
+                searchInstance, configurableSearchDef, null, 1, null, "ASC", entity);
+        List<ConfigurableList.ResultRow> resultRows = firstPageResults.getResultList().getResultRows();
+        Assert.assertEquals(resultRows.size(), 4);
+        Assert.assertEquals(resultRows.get(0).getRenderableCells().get(0), "0175568179");
+        Assert.assertEquals(resultRows.get(1).getRenderableCells().get(0), "0175568200");
+        Assert.assertEquals(resultRows.get(2).getRenderableCells().get(0), "SM-A19ZM");
+        Assert.assertEquals(resultRows.get(2).getRenderableCells().get(1), "0175568200");
+        Assert.assertEquals(resultRows.get(3).getRenderableCells().get(0), "SM-A19Z9");
+        Assert.assertEquals(resultRows.get(3).getRenderableCells().get(1), "E000000293 0175568179");
     }
 }

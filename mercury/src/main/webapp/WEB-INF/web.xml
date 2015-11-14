@@ -80,6 +80,8 @@
             <!-- https://issues.jboss.org/browse/ARQ-1426
                 Unable to force Arquillian tests to redirect to ssl, so we are creating a hole to allow arquillian
                 tests to still utilize http when initiating.
+
+                This constraint is removed from web.xml for Production builds. See the pom.xml Profile PROD.
             -->
             <web-resource-name>ArquillianTestRunnerAccess</web-resource-name>
             <url-pattern>/ArquillianServletRunner</url-pattern>
@@ -225,7 +227,7 @@
     </filter-mapping>
 
     <session-config>
-        <session-timeout>480</session-timeout>
+        <session-timeout>1200</session-timeout>
     </session-config>
 
     <error-page>

@@ -21,8 +21,8 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationWithRollbackException;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
@@ -37,7 +37,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.ReworkLevel;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.ReworkReason;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
@@ -53,12 +53,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import static org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel.SampleType.PREFER_PDO;
 
 /**
  * Encapsulates the business logic related to rework. This includes the creation of a new batch
@@ -158,21 +157,15 @@ public class ReworkEjb {
         labVessels.addAll(labVesselDao.findBySampleKeyList(query));
 
         for (LabVessel vessel : labVessels) {
-
-            /*
-             * By using PREFER_PDO, we are able to get all samples for a vessel.  If there are samples associated with
-             * PDOs, we will get just the PDO associated Samples.  If there are samples that are NOT associated with
-             * PDOs, we will get those samples.
-             */
-            Set<SampleInstance> sampleInstances = vessel.getSampleInstances(PREFER_PDO, null);
-
-            List<String> sampleIds = new ArrayList<>(sampleInstances.size());
-            for (SampleInstance currentInstance : sampleInstances) {
-                sampleIds.add(currentInstance.getStartingSample().getSampleKey());
+            List<ProductOrderSample> productOrderSamples = new ArrayList<>();
+            for (SampleInstanceV2 sampleInstanceV2 : vessel.getSampleInstancesV2()) {
+                for (ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples()) {
+                    if (productOrderSample.getProductOrder().getOrderStatus().readyForLab()) {
+                        productOrderSamples.add(productOrderSample);
+                    }
+                }
             }
-
-            Collection<ProductOrderSample> mapBySamples = productOrderSampleDao.findBySamples(sampleIds);
-            bucketCandidates.addAll(collectBucketCandidatesForAMercuryVessel(vessel, mapBySamples));
+            bucketCandidates.addAll(collectBucketCandidatesForAMercuryVessel(vessel, productOrderSamples));
         }
 
         /*
@@ -190,7 +183,12 @@ public class ReworkEjb {
          * sample data is in Mercury, especially those that are BSP tubes that have been exported to CRSP!
          */
         if (bucketCandidates.isEmpty()) {
-            Collection<ProductOrderSample> sampleCollection = productOrderSampleDao.findBySamples(query);
+            Collection<ProductOrderSample> sampleCollection = new ArrayList<>();
+            for (ProductOrderSample productOrderSample : productOrderSampleDao.findBySamples(query)) {
+                if (productOrderSample.getProductOrder().getOrderStatus().readyForLab()) {
+                    sampleCollection.add(productOrderSample);
+                }
+            }
             bucketCandidates.addAll(collectBucketCandidatesThatHaveBSPVessels(sampleCollection));
         }
 
@@ -216,17 +214,19 @@ public class ReworkEjb {
         Map<String, BspSampleData> bspResult = bspSampleDataFetcher.fetchSampleData(sampleIDs);
         bspSampleDataFetcher.fetchSamplePlastic(bspResult.values());
         for (ProductOrderSample sample : samplesById) {
-            Workflow workflow = sample.getProductOrder().getProduct().getWorkflow();
-
-            if (!sample.getProductOrder().isDraft() && Workflow.isWorkflowSupportedByMercury(workflow)) {
+            if (productOrderSampleCanEnterBucket(sample)) {
                 String sampleKey = sample.getName();
                 String tubeBarcode = bspResult.get(sampleKey).getBarcodeForLabVessel();
-
                 bucketCandidates.add(getBucketCandidateConsideringProductFamily(sample, sampleKey,
                         tubeBarcode, ProductFamily.ProductFamilyName.EXOME, null, ""));
             }
         }
         return bucketCandidates;
+    }
+
+    private boolean productOrderSampleCanEnterBucket(ProductOrderSample sample) {
+        Workflow workflow = sample.getProductOrder().getProduct().getWorkflow();
+        return sample.getProductOrder().getOrderStatus().readyForLab() && workflow.isWorkflowSupportedByMercury();
     }
 
     /**
@@ -245,12 +245,8 @@ public class ReworkEjb {
         Collection<BucketCandidate> bucketCandidates = new ArrayList<>();
         // make sure we have a matching product order sample
         for (ProductOrderSample sample : productOrderSamples) {
-            Workflow workflow = sample.getProductOrder().getProduct().getWorkflow();
-
-            if (!sample.getProductOrder().isDraft() && Workflow.isWorkflowSupportedByMercury(workflow)) {
-
+            if (productOrderSampleCanEnterBucket(sample)) {
                 String eventName = vessel.getLastEventName();
-
                 bucketCandidates.add(getBucketCandidateConsideringProductFamily(sample, sample.getName(),
                         vessel.getLabel(),
                         ProductFamily.ProductFamilyName.EXOME, vessel, eventName));
@@ -294,10 +290,10 @@ public class ReworkEjb {
      * TODO: make this @DaoFree; can't right now because of an eventual call to persist from LabEventFactory
      *
      * @param candidateVessel the vessel being added to the bucket
+     * @param bucketDef
      * @param productOrder    the product order that the vessel is being added to the bucket for
      * @param reworkReason    If this is a rework, why the rework is being done
      * @param reworkFromStep  If this is a rework, where the rework should be reworked from
-     * @param bucket          the bucket to which the sample is to be added
      * @param comment         If this is a rework, text describing why you are doing this
      * @param userName        the user adding the sample to the bucket, in case vessels/samples need to be created
      *                        on-the-fly
@@ -307,17 +303,19 @@ public class ReworkEjb {
      *
      * @throws ValidationException
      */
-    private LabVessel addCandidate(@Nonnull LabVessel candidateVessel, @Nonnull ProductOrder productOrder,
-                                   ReworkReason reworkReason, LabEventType reworkFromStep,
-                                   @Nonnull Bucket bucket, String comment, @Nonnull String userName,
-                                   boolean reworkCandidate)
-            throws ValidationException {
+    private LabVessel addCandidate(@Nonnull final LabVessel candidateVessel, final WorkflowBucketDef bucketDef,
+                                   @Nonnull ProductOrder productOrder, ReworkReason reworkReason,
+                                   LabEventType reworkFromStep, String comment, @Nonnull String userName,
+                                   boolean reworkCandidate) throws ValidationException {
+        Map<WorkflowBucketDef, Collection<LabVessel>> bucketCandidate =
+                new HashMap<WorkflowBucketDef, Collection<LabVessel>>() {
+                    {
+                        put(bucketDef, Collections.singleton(candidateVessel));
+                    } };
+
         Collection<BucketEntry> bucketEntries = bucketEjb
-                .add(Collections.singleton(candidateVessel), bucket,
-                        reworkCandidate ? BucketEntry.BucketEntryType.REWORK_ENTRY :
-                                BucketEntry.BucketEntryType.PDO_ENTRY,
-                        userName, LabEvent.UI_EVENT_LOCATION, LabEvent.UI_PROGRAM_NAME,
-                        reworkFromStep, productOrder);
+                .add(bucketCandidate, BucketEntry.BucketEntryType.REWORK_ENTRY, LabEvent.UI_PROGRAM_NAME, userName,
+                        LabEvent.UI_EVENT_LOCATION, productOrder);
 
         // TODO: create the event in this scope instead of getting the "latest" event
         if (reworkCandidate) {
@@ -370,8 +368,7 @@ public class ReworkEjb {
         Collection<String> validationMessages = new ArrayList<>();
         for (BucketCandidate bucketCandidate : bucketCandidates) {
             try {
-                validationMessages.addAll(addAndValidateBucketCandidate(bucketCandidate, reason, bucket, comment,
-                        userName));
+                addAndValidateBucketCandidate(bucketCandidate, reason, bucket, comment, userName);
             } catch (ValidationException e) {
                 throw new ValidationWithRollbackException(e);
             }
@@ -393,41 +390,43 @@ public class ReworkEjb {
      * @throws ValidationException Thrown in the case that some checked state of the Lab Vessel will not allow the
      *                             method to continue
      */
-    private Collection<String> addAndValidateBucketCandidate(
+    private void addAndValidateBucketCandidate(
             @Nonnull BucketCandidate bucketCandidate,
             @Nonnull ReworkReason reworkReason,
             @Nonnull Bucket bucket,
             @Nonnull String comment,
             @Nonnull String userName)
             throws ValidationException {
-
-        Workflow workflow = bucketCandidate.getProductOrder().getProduct().getWorkflow();
-        WorkflowBucketDef bucketDef = findWorkflowBucketDef(workflow, bucket.getBucketDefinitionName());
+        WorkflowBucketDef bucketDef = null;
+        try {
+            bucketDef = findWorkflowBucketDef(bucketCandidate.getProductOrder(), bucket.getBucketDefinitionName());
+        } catch (RuntimeException e) {
+            throw new ValidationException(e);
+        }
         LabEventType reworkFromStep = bucketDef.getBucketEventType();
 
         LabVessel reworkVessel =
                 getLabVessel(bucketCandidate.getTubeBarcode(), bucketCandidate.getSampleKey(), userName);
 
-        Collection<String> validationMessages =
-                validateBucketItem(reworkVessel, ProductWorkflowDefVersion.findBucketDef(workflow, reworkFromStep),
-                        bucketCandidate.getProductOrder(), bucketCandidate.getSampleKey(),
-                        bucketCandidate.isReworkItem());
+        validateBucketItem(reworkVessel, bucketDef, bucketCandidate.getProductOrder(), bucketCandidate.getSampleKey(),
+                bucketCandidate.isReworkItem());
 
-        addCandidate(reworkVessel, bucketCandidate.getProductOrder(), reworkReason, reworkFromStep,
-                bucket, comment, userName, bucketCandidate.isReworkItem());
-
-        return validationMessages;
+        addCandidate(reworkVessel, bucketDef, bucketCandidate.getProductOrder(), reworkReason, reworkFromStep,
+                comment, userName, bucketCandidate.isReworkItem());
     }
 
-    private WorkflowBucketDef findWorkflowBucketDef(@Nonnull Workflow workflow, String bucketName) {
+    private WorkflowBucketDef findWorkflowBucketDef(@Nonnull ProductOrder productOrder, String bucketName) {
         WorkflowConfig workflowConfig = workflowLoader.load();
-        ProductWorkflowDefVersion workflowDefVersion = workflowConfig.getWorkflow(workflow)
-                                                                     .getEffectiveVersion();
-        WorkflowBucketDef bucketDef = workflowDefVersion.findBucketDefByName(bucketName);
-        if (bucketDef == null) {
-            throw new RuntimeException("Could not find bucket definition for: " + bucketName);
+        WorkflowBucketDef bucketDef=null;
+        for (Workflow productWorkflow : productOrder.getProductWorkflows()) {
+            ProductWorkflowDefVersion workflowDefVersion = workflowConfig.getWorkflow(productWorkflow)
+                    .getEffectiveVersion();
+            bucketDef = workflowDefVersion.findBucketDefByName(bucketName);
+            if (bucketDef != null) {
+                return bucketDef;
+            }
         }
-        return bucketDef;
+        throw new RuntimeException("Could not find bucket definition for: " + bucketName);
     }
 
     /**
@@ -442,14 +441,11 @@ public class ReworkEjb {
      *
      * @return Collection of validation messages
      */
-    public Collection<String> validateBucketItem(@Nonnull LabVessel candidateVessel,
+    public void validateBucketItem(@Nonnull LabVessel candidateVessel,
                                                  @Nonnull WorkflowBucketDef bucketDef,
                                                  @Nonnull ProductOrder productOrder, @Nonnull String sampleKey,
                                                  boolean reworkItem)
             throws ValidationException {
-
-        List<String> validationMessages = new ArrayList<>();
-
         if (candidateVessel.checkCurrentBucketStatus(productOrder, bucketDef.getName(), BucketEntry.Status.Active)) {
             String error =
                     String.format("Tube %s with sample %s in product order %s already exists in the %s bucket.",
@@ -458,19 +454,15 @@ public class ReworkEjb {
             logger.error(error);
             throw new ValidationException(error);
         }
-
-        if (reworkItem && !candidateVessel.hasAncestorBeenInBucket(bucketDef.getName())) {
-            validationMessages.add("You have submitted a vessel to the bucket that may not be considered a rework.  " +
-                                   "No ancestor of " + candidateVessel.getLabel() + " has ever been in been in the " +
-                                   bucketDef.getName() + " before.");
+        if (!bucketDef.meetsBucketCriteria(candidateVessel, productOrder)) {
+            String error = String.format(
+                    "Vessel '%s' can not go into '%s' because it does not match the bucket's criteria. %s",
+                    candidateVessel.getLabel(),
+                    bucketDef.getName(),
+                    bucketDef.findMissingRequirements(productOrder, candidateVessel.getLatestMaterialType()));
+            logger.error(error);
+            throw new ValidationException(error);
         }
-
-        if (!bucketDef.meetsBucketCriteria(candidateVessel)) {
-            validationMessages.add("You have submitted a vessel to the bucket that contains at least one sample that " +
-                                   "is not DNA");
-        }
-
-        return validationMessages;
     }
 
     // TODO: Only called from BatchToJiraTest. Can that be modified to use a method that is used by application code?
@@ -561,8 +553,8 @@ public class ReworkEjb {
             this.lastEventStep = lastEventStep;
             Set<String> sampleNames = new HashSet<>();
             if (labVessel != null) {
-                for (SampleInstance instance : this.labVessel.getSampleInstances(LabVessel.SampleType.ANY, null)) {
-                    sampleNames.add(instance.getStartingSample().getSampleKey());
+                for (SampleInstanceV2 instance : this.labVessel.getSampleInstancesV2()) {
+                    sampleNames.add(instance.getMercuryRootSampleName());
                 }
             }
             this.currentSampleKey = StringUtils.join(sampleNames, ", ");

@@ -26,7 +26,7 @@ public class PriceListCache extends AbstractCache implements Serializable {
 
     private Collection<QuotePriceItem> quotePriceItems = new ArrayList<>();
 
-    private PMBQuoteService quoteService;
+    private QuoteService quoteService;
 
     private static final Log logger = LogFactory.getLog(PriceListCache.class);
 
@@ -42,7 +42,7 @@ public class PriceListCache extends AbstractCache implements Serializable {
     }
 
     @Inject
-    public PriceListCache(PMBQuoteService quoteService) {
+    public PriceListCache(QuoteService quoteService) {
         this.quoteService = quoteService;
     }
 

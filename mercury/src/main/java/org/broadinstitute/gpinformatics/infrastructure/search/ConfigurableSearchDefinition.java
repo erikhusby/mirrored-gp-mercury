@@ -29,6 +29,9 @@ public class ConfigurableSearchDefinition /*extends PreferenceDefinition*/ {
 
     private static final long serialVersionUID = 4774977707743986613L;
 
+    // If any search terms have an alternate search definitions, give it a common name
+    public static final String ALTERNATE_DEFINITION_ID = "ALT";
+
     /**
      * Hibernate entity returned by the search
      */

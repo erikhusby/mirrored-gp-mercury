@@ -23,7 +23,7 @@
                     beforeLoad: function(event, ui) {
                         if (ui.panel.children('form').length == 0) {
                             if (ui.panel.children('p.loading').length == 0) {
-                                $j('<p>').addClass('loading').append('Loading...').appendTo(ui.panel);
+                                $j('<p>').addClass('loading').append('Please wait. Gathering data from Mercury, Bass, and Picard. This may take a few minutes.').appendTo(ui.panel);
                             }
                         } else {
                             event.preventDefault();
@@ -149,12 +149,6 @@
                 return false;
             }
         </script>
-
-        <style type="text/css">
-            .barFull { height: 10px; width:80px; background-color: white; border-color: #a9a9a9; border-style: solid; border-width: thin; }
-            .barComplete { height: 10px; float:left; background-color: #c4eec0; }
-            .barAbandon { height: 10px; float:left; background-color: #eed6e1; }
-        </style>
     </stripes:layout-component>
 
     <stripes:layout-component name="content">
@@ -521,6 +515,9 @@
             <h4 style="display:inline">Regulatory Information for ${actionBean.editResearchProject.title}</h4>
             <a href="#" id="addRegulatoryInfo" class="pull-right"><i class="icon-plus"></i>Add Regulatory Information</a>
         </div>
+        <div>
+            <h5>${actionBean.complianceStatement}</h5>
+        </div>
 
         <stripes:form beanclass="${actionBean.class.name}">
             <input type="hidden" name="<%= ResearchProjectActionBean.REMOVE_REGULATORY_INFO_ACTION %>">
@@ -600,14 +597,7 @@
                             <fmt:formatDate value="${order.modifiedDate}" pattern="${actionBean.datePattern}"/>
                         </td>
                         <td align="center">
-                            <div class="barFull" title="${actionBean.progressFetcher.getPercentInProgress(order.businessKey)}% In Progress">
-                                <span class="barAbandon"
-                                      title="${actionBean.progressFetcher.getPercentAbandoned(order.businessKey)}% Abandoned"
-                                      style="width: ${actionBean.progressFetcher.getPercentAbandoned(order.businessKey)}%"> </span>
-                                <span class="barComplete"
-                                      title="${actionBean.progressFetcher.getPercentCompleted(order.businessKey)}% Completed"
-                                      style="width: ${actionBean.progressFetcher.getPercentCompleted(order.businessKey)}%"> </span>
-                            </div>
+                            <stripes:layout-render name="/orders/sample_progress_bar.jsp" status="${actionBean.progressFetcher.getStatus(order.businessKey)}"/>
                         </td>
                         <td>${actionBean.progressFetcher.getNumberOfSamples(order.businessKey)}</td>
                     </tr>

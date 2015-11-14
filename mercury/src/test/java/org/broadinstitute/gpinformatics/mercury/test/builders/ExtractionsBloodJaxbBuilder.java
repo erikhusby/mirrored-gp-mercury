@@ -5,7 +5,6 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMes
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -13,8 +12,9 @@ import java.util.List;
 import java.util.Random;
 
 /**
- * Builds JAXB objects for Extractions cryovial blood messages
+ * Builds JAXB objects for Extractions cryovial blood messages.  This is used in GPUI tests.
  */
+@SuppressWarnings("unused")
 public class ExtractionsBloodJaxbBuilder {
     private static final int NUMBER_OF_RACK_COLUMNS = 32;
     private final BettaLimsMessageTestFactory bettaLimsMessageTestFactory;

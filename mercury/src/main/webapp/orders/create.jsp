@@ -34,6 +34,12 @@
             color:#ffffff;
             background-color:#0076da;
         }
+
+        /* Override Bootstrap's block display of labels for add-ons to constrain the hit box. */
+        #addOnCheckboxes label {
+            display: inline;
+            vertical-align: bottom;
+        }
     </style>
         <script type="text/javascript">
 
@@ -217,6 +223,7 @@
 
                         updateUIForMaterialInfoChoice(index, getSelectedPostReceiveOptions(index));
                     });
+                    $j("#skipQuoteDiv").hide();
                     updateUIForProductChoice();
                     updateUIForProjectChoice();
                     updateFundsRemaining();
@@ -364,6 +371,9 @@
                 $j("#addOnCheckboxes").text('If you select a product, its Add-ons will show up here');
                 $j("#sampleInitiationKitRequestEdit").hide();
                 $j("#numberOfLanesDiv").fadeOut(duration);
+                $j("#skipQuoteDiv").hide();
+                $j("#quote").show();
+
             } else {
                 if (productKey == '<%= Product.SAMPLE_INITIATION_PART_NUMBER %>') {
                     // Product is Sample Initiation "P-ESH-0001".
@@ -575,6 +585,7 @@
                 var addOnId = "addOnCheckbox-" + index;
                 checkboxText += '  <input id="' + addOnId + '" type="checkbox"' + checked + ' name="addOnKeys" value="' + val.key + '"/>';
                 checkboxText += '  <label style="font-size: x-small;" for="' + addOnId + '">' + val.value + ' [' + val.key + ']</label>';
+                checkboxText += '  <br>';
             });
 
             var checkboxes = $j("#addOnCheckboxes");
@@ -654,7 +665,7 @@
 
         function updateFunds(data) {
             if (data.fundsRemaining) {
-                $j("#fundsRemaining").text('Funds Remaining: ' + data.fundsRemaining);
+                $j("#fundsRemaining").text('Status: ' + data.status + ' - Funds Remaining: ' + data.fundsRemaining);
             } else {
                 $j("#fundsRemaining").text('Error: ' + data.error);
             }
@@ -924,30 +935,6 @@
                                         title="Enter the research project for this order"/>
                             </div>
                         </div>
-
-                        <div class="control-group">
-                            <stripes:label for="regulatoryInfo" class="control-label">
-                                Regulatory Information
-                            </stripes:label>
-
-
-                            <div id="regulatoryActive" class="controls">
-                                <stripes:checkbox name="skipRegulatoryInfo" id="skipRegulatoryInfoCheckbox"
-                                       title="Click if no IRB/ORSP review is required."/>No IRB/ORSP Review Required
-                            </div>
-                            <div id="skipRegulatoryDiv" class="controls controls-text">
-                                Please enter a reason for not including regulatory information<br/>(eg: mouse
-                                samples)<br/>
-                                <stripes:text id="skipRegulatoryInfoReason" name="editOrder.skipRegulatoryReason"
-                                              maxlength="255"/>
-                            </div>
-                            <div id="regulatorySelect" class="controls controls-text"></div>
-                            <div id="attestationDiv" class="controls controls-text">
-
-                                <stripes:checkbox name="editOrder.attestationConfirmed" id="attestationConfirmed"/>
-                                ${actionBean.attestationMessage}
-                            </div>
-                        </div>
                     </c:when>
                     <c:otherwise>
                         <div class="view-control-group control-group" style="margin-bottom: 20px;">
@@ -955,7 +942,7 @@
 
                             <div class="controls">
                                 <div class="form-value">
-                                    <stripes:hidden name="projectTokenInput.listOfKeys"
+                                    <stripes:hidden id="researchProject" name="projectTokenInput.listOfKeys"
                                                     value="${actionBean.editOrder.researchProject.jiraTicketKey}"/>
                                     <stripes:link title="Research Project"
                                                   beanclass="<%=ResearchProjectActionBean.class.getName()%>"
@@ -972,6 +959,34 @@
                                 </div>
                             </div>
                         </div>
+                    </c:otherwise>
+                </c:choose>
+                <c:choose>
+                    <c:when test="${actionBean.editOrder.regulatoryInfoEditAllowed}">
+                        <div class="control-group">
+                            <stripes:label for="regulatoryInfo" class="control-label">
+                                Regulatory Information
+                            </stripes:label>
+
+
+                            <div id="regulatoryActive" class="controls">
+                                <stripes:checkbox name="skipRegulatoryInfo" id="skipRegulatoryInfoCheckbox"
+                                       title="Click if no IRB/ORSP review is required."/>No IRB/ORSP Review Required
+                            </div>
+                            <div id="skipRegulatoryDiv" class="controls controls-text">
+                                ${actionBean.complianceStatement}<br/>
+                                <stripes:text id="skipRegulatoryInfoReason" name="editOrder.skipRegulatoryReason"
+                                              maxlength="255"/>
+                            </div>
+                            <div id="regulatorySelect" class="controls controls-text"></div>
+                            <div id="attestationDiv" class="controls controls-text">
+
+                                <stripes:checkbox name="editOrder.attestationConfirmed" id="attestationConfirmed"/>
+                                ${actionBean.attestationMessage}
+                            </div>
+                        </div>
+                    </c:when>
+                    <c:otherwise>
                         <div class="view-control-group control-group">
                             <label class="control-label">Regulatory Information</label>
 

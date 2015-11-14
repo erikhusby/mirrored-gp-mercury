@@ -1,35 +1,58 @@
 package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceImpl;
+import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
+import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NextTransition;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
+import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestSessionEjb;
+import org.broadinstitute.gpinformatics.mercury.boundary.sample.ClinicalSampleTestFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.manifest.ManifestSessionDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.UpdateData;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.hamcrest.Matchers;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -39,6 +62,7 @@ import java.util.Map;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.broadinstitute.gpinformatics.infrastructure.matchers.ExceptionMessageMatcher.containsMessage;
 import static org.broadinstitute.gpinformatics.mercury.boundary.manifest.ManifestEventMatcher.hasEventError;
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -88,15 +112,13 @@ public class ManifestSessionContainerTest extends Arquillian {
     private List<String> secondUploadedSamplesDupes = Arrays.asList("03101231193", "03101752020");
     private Map<String, MercurySample> sourceSampleToMercurySample;
     private Map<String, LabVessel> sourceSampleToTargetVessel;
-    @Inject
-    private MercurySampleDao mercurySampleDao;
     public ManifestSession uploadedSession;
     public ManifestSession uploadedSession2;
 
-    @Deployment
-    public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWar(DEV);
-    }
+    private ManifestSessionEjb manifestSessionEjb;
+
+    @Inject
+    private MercurySampleDao mercurySampleDao;
 
     @Inject
     private ResearchProjectDao researchProjectDao;
@@ -105,13 +127,18 @@ public class ManifestSessionContainerTest extends Arquillian {
     private ManifestSessionDao manifestSessionDao;
 
     @Inject
-    private ManifestSessionEjb manifestSessionEjb;
-
-    @Inject
     private LabVesselDao labVesselDao;
 
     @Inject
     private UserBean userBean;
+
+    @Inject
+    private BSPUserList bspUserList;
+
+    @Deployment
+    public static WebArchive buildMercuryWar() {
+        return DeploymentBuilder.buildMercuryWar(DEV);
+    }
 
     @BeforeMethod
     public void setUp() throws Exception {
@@ -128,6 +155,57 @@ public class ManifestSessionContainerTest extends Arquillian {
                         .createTestResearchProject(ResearchProject.PREFIX + researchProjectCreateTime.getTime());
         researchProject.setTitle("Buick test Project" + researchProjectCreateTime.getTime());
         researchProject.setRegulatoryDesignation(ResearchProject.RegulatoryDesignation.CLINICAL_DIAGNOSTICS);
+
+        final JiraService jiraService = Mockito.mock(JiraService.class);
+
+        Mockito.when(jiraService.getIssueInfo(Mockito.anyString())).thenAnswer(new Answer<JiraIssue>() {
+            @Override
+            public JiraIssue answer(InvocationOnMock invocationOnMock) throws Throwable {
+                String jiraKey = (String) invocationOnMock.getArguments()[0];
+
+                JiraIssue mockedIssue = new JiraIssue(jiraKey, jiraService);
+                if (jiraKey == null) {
+                    return null;
+                }
+                mockedIssue.setCreated(new Date());
+                mockedIssue.setSummary("");
+                mockedIssue.setDescription("");
+                return mockedIssue;
+            }
+        });
+        Mockito.when(jiraService.getIssueInfo(Mockito.anyString(),Mockito.anyString())).thenAnswer(new Answer<JiraIssue>() {
+            @Override
+            public JiraIssue answer(InvocationOnMock invocationOnMock) throws Throwable {
+                String jiraKey = (String) invocationOnMock.getArguments()[0];
+
+                JiraIssue mockedIssue = new JiraIssue(jiraKey, jiraService);
+                if(jiraKey == null) {
+                    return null;
+                }
+                mockedIssue.setCreated(new Date());
+                mockedIssue.setSummary("");
+                mockedIssue.setDescription("");
+                mockedIssue.addFieldValue((String) invocationOnMock.getArguments()[1],
+                        Collections.singletonList(new HashMap<>()));
+                return mockedIssue;
+            }
+        });
+        Mockito.when(jiraService.findAvailableTransitionByName(Mockito.anyString(), Mockito.anyString())).thenAnswer(
+                new Answer<Transition>() {
+                    @Override
+                    public Transition answer(InvocationOnMock invocationOnMock) throws Throwable {
+
+                        String transitionName = (String) invocationOnMock.getArguments()[1];
+
+
+                        return new Transition(transitionName, transitionName,
+                                new NextTransition("", transitionName+"next", "Next Transition", "",
+                                        transitionName + "next"));
+                    }
+                });
+
+        manifestSessionEjb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao,
+                labVesselDao, userBean, bspUserList, jiraService);
 
         String SAMPLE_ID_1 = COLLAB_PREFIX + today.getTime() + "1";
         String SAMPLE_ID_2 = COLLAB_PREFIX + today.getTime() + "2";
@@ -272,6 +350,7 @@ public class ManifestSessionContainerTest extends Arquillian {
 
         // Clear the Session to force retrieval of a persistent instance 'manifestSessionOut' below that is distinct
         // from the detached 'manifestSessionI' instance.
+        manifestSessionDao.flush();
         manifestSessionDao.clear();
 
         ManifestSession manifestSessionOut =
@@ -359,6 +438,7 @@ public class ManifestSessionContainerTest extends Arquillian {
         assertThat(uploadedSession.findRecordByKey(UPLOADED_COLLABORATOR_SESSION_1, Metadata.Key.SAMPLE_ID)
                 .getValueByKey(Metadata.Key.PATIENT_ID), is(UPLOADED_PATIENT_ID_SESSION_1));
 
+        manifestSessionDao.flush();
         manifestSessionDao.clear();
 
         /*
@@ -366,6 +446,7 @@ public class ManifestSessionContainerTest extends Arquillian {
          */
         manifestSessionEjb.acceptManifestUpload(uploadedSession.getManifestSessionId());
 
+        manifestSessionDao.flush();
         manifestSessionDao.clear();
 
         ManifestSession acceptedSession = manifestSessionDao.find(uploadedSession.getManifestSessionId());
@@ -385,6 +466,7 @@ public class ManifestSessionContainerTest extends Arquillian {
         }
 
         // Clear the session to reload the ManifestSession.
+        manifestSessionDao.flush();
         manifestSessionDao.clear();
         ManifestSession sessionOfScan = manifestSessionDao.find(uploadedSession.getManifestSessionId());
 
@@ -396,6 +478,7 @@ public class ManifestSessionContainerTest extends Arquillian {
 
             manifestSessionEjb.accessionScan(sessionOfScan.getManifestSessionId(), sourceSampleToTest,
                     sourceSampleToTest);
+            manifestSessionDao.flush();
             manifestSessionDao.clear();
 
             ManifestSession reFetchedSessionOfScan = manifestSessionDao.find(sessionOfScan.getManifestSessionId());
@@ -425,9 +508,13 @@ public class ManifestSessionContainerTest extends Arquillian {
         /*
          * Mimic a user closing the session, and the ramifications of that.
          */
+
+        manifestSessionEjb.updateReceiptInfo(sessionOfScan.getManifestSessionId(),
+                "RCT-"+researchProject.getBusinessKey());
         manifestSessionEjb.closeSession(sessionOfScan.getManifestSessionId());
 
         // Clear to force a reload.
+        manifestSessionDao.flush();
         manifestSessionDao.clear();
         ManifestSession closedSession = manifestSessionDao.find(sessionOfScan.getManifestSessionId());
 
@@ -468,13 +555,13 @@ public class ManifestSessionContainerTest extends Arquillian {
 
             String sourceSampleKey = sourceSampleToMercurySample.get(sourceSampleToTest).getSampleKey();
 
-            MercurySample targetSample = manifestSessionEjb.validateTargetSample(sourceSampleKey);
+            MercurySample targetSample = manifestSessionEjb.findAndValidateTargetSample(sourceSampleKey);
             assertThat(targetSample, is(notNullValue()));
 
             String sourceSampleLabel = sourceSampleToTargetVessel.get(sourceSampleToTest).getLabel();
 
             LabVessel targetVessel =
-                    manifestSessionEjb.validateTargetSampleAndVessel(sourceSampleKey, sourceSampleLabel);
+                    manifestSessionEjb.findAndValidateTargetSampleAndVessel(sourceSampleKey, sourceSampleLabel);
             assertThat(targetVessel, is(notNullValue()));
 
             MercurySample mercurySample = sourceSampleToMercurySample.get(sourceSampleToTest);
@@ -482,6 +569,7 @@ public class ManifestSessionContainerTest extends Arquillian {
                     mercurySample.getSampleKey(), sourceSampleLabel);
 
             // Make sure the metadata was persisted with the sample.
+            manifestSessionDao.flush();
             manifestSessionDao.clear();
             MercurySample otherSample =
                     mercurySampleDao.findById(MercurySample.class, mercurySample.getMercurySampleId());
@@ -505,11 +593,11 @@ public class ManifestSessionContainerTest extends Arquillian {
         String omittedScanSampleKey = sourceSampleToMercurySample.get(firstUploadedOmittedScan).getSampleKey();
         String omittedScanSampleLabel = sourceSampleToTargetVessel.get(firstUploadedOmittedScan).getLabel();
 
-        MercurySample targetSampleForOmittedScan = manifestSessionEjb.validateTargetSample(omittedScanSampleKey);
+        MercurySample targetSampleForOmittedScan = manifestSessionEjb.findAndValidateTargetSample(omittedScanSampleKey);
         assertThat(targetSampleForOmittedScan, is(notNullValue()));
 
         LabVessel targetVesselForOmittedScan =
-                manifestSessionEjb.validateTargetSampleAndVessel(omittedScanSampleKey, omittedScanSampleLabel);
+                manifestSessionEjb.findAndValidateTargetSampleAndVessel(omittedScanSampleKey, omittedScanSampleLabel);
 
         assertThat(targetVesselForOmittedScan, is(notNullValue()));
 
@@ -530,6 +618,7 @@ public class ManifestSessionContainerTest extends Arquillian {
          */
         int NUM_DUPLICATES_IN_SESSION_2 = 2;
         int NUM_MISMATCHED_GENDERS_IN_SESSION_2 = 1;
+        manifestSessionDao.flush();
         manifestSessionDao.clear();
 
         /*
@@ -574,6 +663,7 @@ public class ManifestSessionContainerTest extends Arquillian {
         assertThat(checkOpenSessions, hasItem(uploadedSession2));
         assertThat(checkClosedSessions, not(hasItem(uploadedSession2)));
 
+        manifestSessionDao.flush();
         manifestSessionDao.clear();
 
         /*
@@ -581,6 +671,7 @@ public class ManifestSessionContainerTest extends Arquillian {
          */
         manifestSessionEjb.acceptManifestUpload(uploadedSession2.getManifestSessionId());
 
+        manifestSessionDao.flush();
         manifestSessionDao.clear();
 
         ManifestSession acceptedSession2 = manifestSessionDao.find(uploadedSession2.getManifestSessionId());
@@ -609,6 +700,7 @@ public class ManifestSessionContainerTest extends Arquillian {
             assertThat(record.getManifestEvents(), is(empty()));
             assertThat(record.getStatus(), is(ManifestRecord.Status.UPLOAD_ACCEPTED));
         }
+        manifestSessionDao.flush();
         manifestSessionDao.clear();
 
         ManifestSession sessionOfScan2 = manifestSessionDao.find(acceptedSession2.getManifestSessionId());
@@ -619,6 +711,7 @@ public class ManifestSessionContainerTest extends Arquillian {
         for (String sampleId : secondUploadedSamplesGood) {
             manifestSessionEjb.accessionScan(sessionOfScan2.getManifestSessionId(), sampleId, sampleId);
 
+            manifestSessionDao.flush();
             manifestSessionDao.clear();
             ManifestSession reFetchedSessionOfScan2 = manifestSessionDao.find(sessionOfScan2.getManifestSessionId());
             ManifestRecord sourceToTest = reFetchedSessionOfScan2.findRecordByKey(sampleId,
@@ -649,6 +742,7 @@ public class ManifestSessionContainerTest extends Arquillian {
         for (String sampleId : secondUploadPatientsWithMismatchedGender) {
             manifestSessionEjb.accessionScan(sessionOfScan2.getManifestSessionId(), sampleId, sampleId);
 
+            manifestSessionDao.flush();
             manifestSessionDao.clear();
             ManifestSession reFetchedSessionOfScan2 = manifestSessionDao.find(sessionOfScan2.getManifestSessionId());
             ManifestRecord sourceToTest = reFetchedSessionOfScan2.findRecordByKey(sampleId,
@@ -676,6 +770,7 @@ public class ManifestSessionContainerTest extends Arquillian {
          * Mimic the user closing the session
          */
         manifestSessionEjb.closeSession(sessionOfScan2.getManifestSessionId());
+        manifestSessionDao.flush();
         manifestSessionDao.clear();
         ManifestSession closedSession2 = manifestSessionDao.find(sessionOfScan2.getManifestSessionId());
 
@@ -718,12 +813,12 @@ public class ManifestSessionContainerTest extends Arquillian {
                     is(closedSession2.getManifestSessionId()));
 
             String sourceSampleKey = sourceSampleToMercurySample.get(sourceSampleToTest).getSampleKey();
-            MercurySample targetSample = manifestSessionEjb.validateTargetSample(sourceSampleKey);
+            MercurySample targetSample = manifestSessionEjb.findAndValidateTargetSample(sourceSampleKey);
             assertThat(targetSample, is(notNullValue()));
             String sourceSampleLabel = sourceSampleToTargetVessel.get(sourceSampleToTest).getLabel();
 
             LabVessel targetVessel =
-                    manifestSessionEjb.validateTargetSampleAndVessel(sourceSampleKey, sourceSampleLabel);
+                    manifestSessionEjb.findAndValidateTargetSampleAndVessel(sourceSampleKey, sourceSampleLabel);
             assertThat(targetVessel, is(notNullValue()));
 
             manifestSessionEjb.transferSample(closedSession2.getManifestSessionId(), sourceSampleToTest,
@@ -747,11 +842,11 @@ public class ManifestSessionContainerTest extends Arquillian {
                     is(closedSession2.getManifestSessionId()));
 
             String sourceSampleKey = sourceSampleToMercurySample.get(sourceSampleToTest).getSampleKey();
-            MercurySample targetSample = manifestSessionEjb.validateTargetSample(sourceSampleKey);
+            MercurySample targetSample = manifestSessionEjb.findAndValidateTargetSample(sourceSampleKey);
             assertThat(targetSample, is(notNullValue()));
             String sourceSampleLabel = sourceSampleToTargetVessel.get(sourceSampleToTest).getLabel();
             LabVessel targetVessel =
-                    manifestSessionEjb.validateTargetSampleAndVessel(sourceSampleKey, sourceSampleLabel);
+                    manifestSessionEjb.findAndValidateTargetSampleAndVessel(sourceSampleKey, sourceSampleLabel);
             assertThat(targetVessel, is(notNullValue()));
 
             manifestSessionEjb.transferSample(closedSession2.getManifestSessionId(), sourceSampleToTest,
@@ -779,6 +874,34 @@ public class ManifestSessionContainerTest extends Arquillian {
                         .getBaseMessage()));
             }
         }
+    }
+
+    private JiraIssue createReceiptTicket(JiraService jiraService) throws IOException {
+        String summary = "Sample Receipt " + System.currentTimeMillis();
+        String shipmentCondition = "Shipment Condition";
+        String materialTypeCounts = "Material Type Counts";
+        String storageLocation = "Storage Location";
+        String kitDeliveryMethod = "Kit Delivery Method";
+        String trackingNumber = "Tracking Number";
+
+        Map<String, CustomFieldDefinition> receiptFields =
+                jiraService.getCustomFields(shipmentCondition, materialTypeCounts, storageLocation, kitDeliveryMethod,
+                        trackingNumber);
+
+        Collection<CustomField> customFields = new ArrayList<>(receiptFields.size());
+        customFields.add(new CustomField(receiptFields.get(shipmentCondition), "A-OK"));
+        customFields.add(new CustomField(receiptFields.get(materialTypeCounts), "6 DNA"));
+        customFields.add(new CustomField(receiptFields.get(storageLocation), "LOC" + System.currentTimeMillis()));
+
+        customFields
+                .add(new CustomField(receiptFields.get(kitDeliveryMethod), new CustomField.ValueContainer("FedEx")));
+
+        customFields.add(new CustomField(receiptFields.get(trackingNumber),
+                String.format("%12d", System.currentTimeMillis())));
+
+        return jiraService.createIssue(CreateFields.ProjectType.RECEIPT_PROJECT, "QADude",
+                CreateFields.IssueType.RECEIPT,
+                summary, customFields);
     }
 
     @Test(groups = TestGroups.STANDARD)
@@ -811,6 +934,7 @@ public class ManifestSessionContainerTest extends Arquillian {
 
         researchProjectDao.persist(researchProject);
         int counter = 0;
+        manifestSessionDao.flush();
         manifestSessionDao.clear();
         ManifestSession retrievedSession = manifestSessionDao.find(manifestSessionI.getManifestSessionId());
 
@@ -835,6 +959,7 @@ public class ManifestSessionContainerTest extends Arquillian {
     public void testNumberTubesTransferred() throws Exception {
         researchProjectDao.persist(researchProject);
         int counter = 0;
+        manifestSessionDao.flush();
         manifestSessionDao.clear();
         ManifestSession retrievedSession = manifestSessionDao.find(manifestSessionI.getManifestSessionId());
 
@@ -936,6 +1061,7 @@ public class ManifestSessionContainerTest extends Arquillian {
         assertThat(uploadedSession.findRecordByKey(UPLOADED_COLLABORATOR_SESSION_1, Metadata.Key.SAMPLE_ID)
                 .getValueByKey(Metadata.Key.PATIENT_ID), is(UPLOADED_PATIENT_ID_SESSION_1));
 
+        manifestSessionDao.flush();
         manifestSessionDao.clear();
 
         ManifestSession acceptedSession = manifestSessionDao.find(uploadedSession.getManifestSessionId());
@@ -954,6 +1080,7 @@ public class ManifestSessionContainerTest extends Arquillian {
             manifestSessionEjb.accessionScan(sessionOfScan.getManifestSessionId(),
                     sourceSampleToMercurySample.get(sourceSampleToTest).getSampleKey(),
                     sourceSampleToTargetVessel.get(sourceSampleToTest).getLabel());
+            manifestSessionDao.flush();
             manifestSessionDao.clear();
 
             ManifestSession reFetchedSessionOfScan = manifestSessionDao.find(sessionOfScan.getManifestSessionId());
@@ -981,9 +1108,12 @@ public class ManifestSessionContainerTest extends Arquillian {
         /*
          * Mimic a user closing the session, and the ramifications of that.
          */
+        manifestSessionEjb.updateReceiptInfo(sessionOfScan.getManifestSessionId(),
+                "RCT-"+researchProject.getBusinessKey());
         manifestSessionEjb.closeSession(sessionOfScan.getManifestSessionId());
 
         // Clear to force a reload.
+        manifestSessionDao.flush();
         manifestSessionDao.clear();
         ManifestSession closedSession = manifestSessionDao.find(sessionOfScan.getManifestSessionId());
 
@@ -998,7 +1128,7 @@ public class ManifestSessionContainerTest extends Arquillian {
             assertThat(manifestRecord.getStatus(), is(ManifestRecord.Status.SAMPLE_TRANSFERRED_TO_TUBE));
             LabVessel transferedVessel = labVesselDao.findByIdentifier(sourceSampleToTargetVessel.get(manifestRecord.getValueByKey(
                     Metadata.Key.SAMPLE_ID)).getLabel());
-            assertThat(transferedVessel.doesChainOfCustodyInclude(LabEventType.COLLABORATOR_TRANSFER), is(true));
+            assertThat(transferedVessel.canBeUsedForAccessioning(), is(false));
         }
 
         /*
@@ -1045,5 +1175,94 @@ public class ManifestSessionContainerTest extends Arquillian {
             labVesselDao.persist(vessel);
             labVesselDao.flush();
         }
+    }
+
+    public void testCreateManifestSampleAlreadyExists() throws Exception {
+        String sampleId = String.valueOf(System.currentTimeMillis());
+        MercurySample mercurySample = new MercurySample(sampleId, MercurySample.MetadataSource.MERCURY);
+        LabVessel labVessel = new BarcodedTube("A" + sampleId, BarcodedTube.BarcodedTubeType.MatrixTube);
+        LabEvent labEvent = new LabEvent(LabEventType.COLLABORATOR_TRANSFER, new Date(), "inTheLab", 0l,
+                0l, "mercury");
+        labVessel.getInPlaceLabEvents().add(labEvent);
+        mercurySample.addLabVessel(labVessel);
+        mercurySampleDao.persist(mercurySample);
+
+        try {
+            manifestSessionEjb.createManifestSession("RP-12", "new session", true, Collections.singleton(
+                    ClinicalSampleTestFactory.createSample(ImmutableMap.of(Metadata.Key.BROAD_SAMPLE_ID, sampleId))));
+        } catch (InformaticsServiceException e) {
+            assertThat(e.getMessage(),
+                    containsString(ManifestRecord.ErrorStatus.INVALID_TARGET.getBaseMessage()));
+            assertThat(e.getMessage(), containsString("The target vessel has already been used for a tube transfer."));
+        }
+
+    }
+
+    public void testSampleReceipt() throws IOException {
+        JiraService jiraService = new JiraServiceImpl(new JiraConfig(DEV));
+        BSPCohortList bspCohortList = Mockito.mock(BSPCohortList.class);
+        Mockito.when(bspCohortList.getCohortListString(Mockito.any(String[].class))).thenReturn("");
+
+        ResearchProjectEjb researchProjectEjb =
+                new ResearchProjectEjb(jiraService, userBean, bspUserList, bspCohortList, AppConfig.produce(
+                        DEV), researchProjectDao, null);
+
+        manifestSessionEjb = new ManifestSessionEjb(manifestSessionDao, researchProjectDao, mercurySampleDao,
+                labVesselDao, userBean, bspUserList, jiraService);
+        JiraIssue receiptIssue = createReceiptTicket(jiraService);
+        ResearchProject testResearchProject = ResearchProjectTestFactory.createTestResearchProject();
+        testResearchProject.setRegulatoryDesignation(ResearchProject.RegulatoryDesignation.GENERAL_CLIA_CAP);
+        researchProjectEjb.submitToJira(testResearchProject);
+        researchProjectDao.persist(testResearchProject);
+        researchProjectDao.flush();
+        researchProjectDao.clear();
+        String excelFilePath = "manifest-upload/duplicates/good-manifest-1.xlsx";
+        InputStream testStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(excelFilePath);
+
+        uploadedSession =
+                manifestSessionEjb
+                        .uploadManifest(testResearchProject.getBusinessKey(), testStream, excelFilePath, false);
+        manifestSessionEjb.acceptManifestUpload(uploadedSession.getManifestSessionId());
+
+        manifestSessionDao.flush();
+        manifestSessionDao.clear();
+
+        ManifestSession acceptedSession = manifestSessionDao.find(uploadedSession.getManifestSessionId());
+        String sourceSampleToTest = firstUploadedScannedSamples.iterator().next();
+        manifestSessionEjb.accessionScan(acceptedSession.getManifestSessionId(), sourceSampleToTest,
+                sourceSampleToTest);
+        manifestSessionDao.flush();
+        manifestSessionDao.clear();
+
+        ManifestSession reFetchedSessionOfScan = manifestSessionDao.find(acceptedSession.getManifestSessionId());
+
+        ManifestRecord sourceRecordToTest = reFetchedSessionOfScan.findRecordByKey(sourceSampleToTest,
+                Metadata.Key.SAMPLE_ID);
+
+        assertThat(sourceRecordToTest.getStatus(), is(ManifestRecord.Status.SCANNED));
+        assertThat(reFetchedSessionOfScan.hasErrors(), is(false));
+
+
+        manifestSessionEjb.updateReceiptInfo(acceptedSession.getManifestSessionId(), receiptIssue.getKey());
+        manifestSessionEjb.closeSession(acceptedSession.getManifestSessionId());
+        manifestSessionDao.flush();
+        manifestSessionDao.clear();
+
+        List<String> comments = extractComment(receiptIssue.getKey(), jiraService);
+        assertThat(comments.get(0), Matchers.containsString(sourceSampleToTest));
+    }
+
+    private List<String> extractComment(String issueKey, JiraService jiraService) throws IOException {
+        JiraIssue jiraIssue = jiraService.getIssueInfo(issueKey, "comment");
+        List<String> allComments=new ArrayList<>();
+        Map<String, List<Map<String, String>>> map= (HashMap) jiraIssue.getFieldValue("comment");
+        if (map.containsKey("comments")) {
+            for (Map<String, String> jiraComment : map.get("comments")) {
+                if (jiraComment.containsKey("body")){
+                    allComments.add(jiraComment.get("body"));
+                }
+            }
+        }
+        return allComments;
     }
 }

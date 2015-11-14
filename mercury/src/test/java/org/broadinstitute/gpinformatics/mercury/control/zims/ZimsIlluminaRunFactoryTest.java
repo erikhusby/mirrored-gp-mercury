@@ -16,12 +16,19 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SequencingTemplateFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.CrspPipelineUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventRefDataFetcher;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
@@ -33,32 +40,45 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.StripTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
+import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
 import org.broadinstitute.gpinformatics.mercury.test.CrspControlsTestUtils;
+import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
+import org.hamcrest.Matchers;
 import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import static org.broadinstitute.gpinformatics.Matchers.argThat;
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
+// TODO: extend and use capabilities of BaseEventTest
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ZimsIlluminaRunFactoryTest {
 
@@ -75,10 +95,12 @@ public class ZimsIlluminaRunFactoryTest {
     private ResearchProject crspPositiveControlsResearchProject;
     private ResearchProjectDao mockResearchProjectDao;
     private static final String PRODUCT_ORDER_KEY = "TestPDO-1";
+    private final String labBatchName = "LCSET-1";
     private static final short LANE_NUMBER = 1;
     private final Map<String, SampleData> mapSampleIdToDto = new HashMap<>();
     private final Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<>();
     private final List<String> testSampleIds = new ArrayList<>();
+    private BarcodedTube testTube;
     private ZimsIlluminaRunFactory zimsIlluminaRunFactory;
     private IlluminaFlowcell flowcell;
     private SampleDataFetcher mockSampleDataFetcher;
@@ -88,8 +110,10 @@ public class ZimsIlluminaRunFactoryTest {
     private ProductOrderDao productOrderDao;
     private List<MolecularIndexReagent> reagents;
     private static final ResearchProject.RegulatoryDesignation
-            REGULATORY_DESIGNATION = ResearchProject.RegulatoryDesignation.CLINICAL_DIAGNOSTICS;
+            REGULATORY_DESIGNATION = ResearchProject.RegulatoryDesignation.RESEARCH_ONLY;
     private Map<String, Control> controlMap;
+    private Product testProduct;
+    private ResearchProject testResearchProject;
 
     private void setupCrsp() {
         CrspControlsTestUtils crspControlsTestUtils = new CrspControlsTestUtils();
@@ -116,36 +140,18 @@ public class ZimsIlluminaRunFactoryTest {
         Mockito.when(mockJiraService.createTicketUrl(Mockito.anyString())).thenReturn("jira://LCSET-1");
 
         // Create a test product
-        Product testProduct = new Product("Test Product", new ProductFamily("Test Product Family"), "Test product",
+        testProduct = new Product("Test Product", new ProductFamily("Test Product Family"), "Test product",
                                           "P-EX-0011", new Date(), new Date(), 0, 0, 0, 0, "Test samples only", "None",
                                           true, Workflow.AGILENT_EXOME_EXPRESS, false, "agg type");
         testProduct.setAnalysisTypeKey("Resequencing");
 
         zimsIlluminaRunFactory = new ZimsIlluminaRunFactory(mockSampleDataFetcher, mockControlDao,
                 new SequencingTemplateFactory(), productOrderDao, mockResearchProjectDao, crspPipelineUtils);
-        LabEventFactory labEventFactory = new LabEventFactory(null, null);
-        labEventFactory.setLabEventRefDataFetcher(new LabEventRefDataFetcher() {
-            @Override
-            public BspUser getOperator(String userId) {
-                return new BSPUserList.QADudeUser("Test", 101L);
-            }
 
-            @Override
-            public BspUser getOperator(Long bspUserId) {
-                return new BSPUserList.QADudeUser("Test", bspUserId);
-            }
-
-            @Override
-            public LabBatch getLabBatch(String labBatchName) {
-                return null;
-            }
-        });
         // Create a test research project
-        ResearchProject testResearchProject =
-                new ResearchProject(101L, "Test Project", "ZimsIlluminaRunFactoryTest project", true,
-                                    ResearchProject.RegulatoryDesignation.RESEARCH_ONLY);
+        testResearchProject = new ResearchProject(101L, "Test Project", "ZimsIlluminaRunFactoryTest project", true,
+                REGULATORY_DESIGNATION);
         testResearchProject.setJiraTicketKey("TestRP-1");
-        testResearchProject.setRegulatoryDesignation(REGULATORY_DESIGNATION);
         testResearchProject.setReferenceSequenceKey("Homo_sapiens_assembly19|1");
 
         // Create a test product order
@@ -190,7 +196,7 @@ public class ZimsIlluminaRunFactoryTest {
                 put(BSPSampleSearchColumn.PRIMARY_DISEASE, "Test failure");
                 put(BSPSampleSearchColumn.GENDER, "M");
                 put(BSPSampleSearchColumn.STOCK_TYPE, "Stock Type");
-                put(BSPSampleSearchColumn.SAMPLE_TYPE, "ZimsIlluminaRunFactoryTest");
+                put(BSPSampleSearchColumn.SAMPLE_TYPE, "Primary");
                 put(BSPSampleSearchColumn.RACE, "N/A");
                 put(BSPSampleSearchColumn.ETHNICITY, "unknown");
                 put(BSPSampleSearchColumn.RACKSCAN_MISMATCH, "false");
@@ -203,7 +209,6 @@ public class ZimsIlluminaRunFactoryTest {
         mapKeyToProductOrder.clear();
         mapKeyToProductOrder.put(PRODUCT_ORDER_KEY, testProductOrder);
 
-        flowcell = new IlluminaFlowcell(IlluminaFlowcell.FlowcellType.HiSeqFlowcell, "testFlowcell");
         setupPositiveControlMap();
     }
 
@@ -227,7 +232,7 @@ public class ZimsIlluminaRunFactoryTest {
 
             if (!isPositiveControl(sampleId)) {
                 BucketEntry bucketEntry =
-                        new BucketEntry(testTube, testProductOrder, BucketEntry.BucketEntryType.PDO_ENTRY);
+                        new BucketEntry(testTube, testProductOrder, null, BucketEntry.BucketEntryType.PDO_ENTRY);
 
                 for (int batchTypeIdx = 0; batchTypeIdx < testLabBatchTypes.length; batchTypeIdx++) {
                     LabBatch.LabBatchType testLabBatchType = testLabBatchTypes[batchTypeIdx];
@@ -279,7 +284,6 @@ public class ZimsIlluminaRunFactoryTest {
         return BSP_SM_ID_FOR_POSITIVE_CONTROL.equals(sampleId);
     }
 
-
     @Test(groups = DATABASE_FREE)
     public void testGetLibraryTwoLcSetBatches() {
         List<ZimsIlluminaRunFactory.SampleInstanceDto> instanceDtoList =
@@ -299,6 +303,7 @@ public class ZimsIlluminaRunFactoryTest {
     public void testMakeZimsIlluminaRun() {
         Date runDate = new Date(1358889107084L);
         String testRunDirectory = "TestRun";
+        doSequencing("TestSM-1", false);
         LabVessel denatureTube = flowcell.getNearestTubeAncestorsForLanes().values().iterator().next();
 
         IlluminaSequencingRun sequencingRun = new IlluminaSequencingRun(flowcell, testRunDirectory, "Run-123",
@@ -311,17 +316,195 @@ public class ZimsIlluminaRunFactoryTest {
         assertThat(zimsIlluminaRun.getName(), equalTo("TestRun"));
         assertThat(zimsIlluminaRun.getBarcode(), equalTo("Run-123"));
         assertThat(zimsIlluminaRun.getSequencer(), equalTo("ZimsIlluminaRunFactoryTest"));
-        assertThat(zimsIlluminaRun.getFlowcellBarcode(), equalTo("testFlowcell"));
+        assertThat(zimsIlluminaRun.getFlowcellBarcode(), equalTo("Flowcell1"));
         assertThat(zimsIlluminaRun.getRunDateString(), equalTo("01/22/2013 16:11"));
         assertThat(zimsIlluminaRun.getSequencerModel(), equalTo(
                 IlluminaFlowcell.FlowcellType.HiSeqFlowcell.getSequencerModel()));
 
+        assertThat(zimsIlluminaRun.getLanes().size(), equalTo(8));
         for (ZimsIlluminaChamber lane : zimsIlluminaRun.getLanes()) {
             assertThat(lane.getLibraries().size(), is(1));
-            assertThat(lane.getSequencedLibrary(), equals(denatureTube.getLabel()));
+            assertThat(lane.getSequencedLibrary(), equalTo(denatureTube.getLabel()));
+            assertThat(lane.getLibraries().size(), equalTo(1));
+            LibraryBean libraryBean = lane.getLibraries().iterator().next();
+            assertThat(libraryBean.getRootSample(), equalTo("TestSM-0"));
+            assertThat(libraryBean.getSampleId(), equalTo("TestSM-1"));
+            assertThat(libraryBean.getProductOrderSample(), equalTo("TestSM-1"));
         }
         assertThat(zimsIlluminaRun.getSequencerModel(), equalTo("Illumina HiSeq 2000"));
         assertThat(zimsIlluminaRun.getRunFolder(), equalTo("/root/path/to/run/" + testRunDirectory));
+    }
+
+
+    @Test(groups = DATABASE_FREE)
+    public void testMakeZimsIlluminaRunWithExtraction() {
+        Date runDate = new Date(1358889107084L);
+        String testRunDirectory = "TestRun";
+        doSequencing("TestSM-1", true);
+        LabVessel denatureTube = flowcell.getNearestTubeAncestorsForLanes().values().iterator().next();
+
+        IlluminaSequencingRun sequencingRun = new IlluminaSequencingRun(flowcell, testRunDirectory, "Run-123",
+                "ZimsIlluminaRunFactoryTest", 101L, true,
+                runDate,
+                "/root/path/to/run/" + testRunDirectory);
+        ZimsIlluminaRun zimsIlluminaRun = zimsIlluminaRunFactory.makeZimsIlluminaRun(sequencingRun);
+
+        assertThat(zimsIlluminaRun.getLanes().size(), equalTo(8));
+        for (ZimsIlluminaChamber lane : zimsIlluminaRun.getLanes()) {
+            assertThat(lane.getLibraries().size(), is(1));
+            assertThat(lane.getSequencedLibrary(), equalTo(denatureTube.getLabel()));
+            assertThat(lane.getLibraries().size(), equalTo(1));
+            LibraryBean libraryBean = lane.getLibraries().iterator().next();
+            assertThat(libraryBean.getRootSample(), equalTo("TestSM-0"));
+            assertThat(libraryBean.getSampleId(), equalTo("TestSM-0"));
+            assertThat(libraryBean.getProductOrderSample(), equalTo("TestSM-1"));
+        }
+    }
+
+    private void doSequencing(String sampleId, boolean withExtractionInMercury) {
+        Map<String, SampleData> sampleDataMap = new HashMap<>();
+        MercurySample.MetadataSource metadataSource;
+        if (withExtractionInMercury) {
+            metadataSource = MercurySample.MetadataSource.MERCURY;
+        } else {
+            metadataSource = MercurySample.MetadataSource.BSP;
+        }
+        switch (metadataSource) {
+        case BSP:
+            Map<BSPSampleSearchColumn, String> dataMap = new HashMap<>();
+            dataMap.put(BSPSampleSearchColumn.ROOT_SAMPLE, "TestSM-0");
+            dataMap.put(BSPSampleSearchColumn.SAMPLE_ID, sampleId);
+            sampleDataMap.put(sampleId, new BspSampleData(dataMap));
+            break;
+        case MERCURY:
+            HashSet<Metadata> metadata = new HashSet<>();
+            metadata.add(new Metadata(Metadata.Key.BROAD_SAMPLE_ID, sampleId));
+            sampleDataMap.put(sampleId, new MercurySampleData(sampleId, metadata));
+            break;
+        default:
+            throw new RuntimeException("Unrecognized MetadataSource: " + metadataSource);
+        }
+        Mockito.when(mockSampleDataFetcher.fetchSampleData(argThat(Matchers.contains(sampleId))))
+                .thenReturn(sampleDataMap);
+
+        LabEventFactory labEventFactory = new LabEventFactory(null, null);
+        labEventFactory.setLabEventRefDataFetcher(new LabEventRefDataFetcher() {
+            @Override
+            public BspUser getOperator(String userId) {
+                return new BSPUserList.QADudeUser("Test", 101L);
+            }
+
+            @Override
+            public BspUser getOperator(Long bspUserId) {
+                return new BSPUserList.QADudeUser("Test", bspUserId);
+            }
+
+            @Override
+            public LabBatch getLabBatch(String labBatchName) {
+                return null;
+            }
+        });
+
+        String sourceTubeBarcode = "testTube";
+        testTube = new BarcodedTube(sourceTubeBarcode);
+        MercurySample mercurySample = new MercurySample(sampleId, metadataSource);
+        testTube.addSample(mercurySample);
+
+        // Extraction
+        if (withExtractionInMercury) {
+            LabEvent extractionTransfer = new LabEvent(LabEventType.SAMPLES_EXTRACTION_END_TRANSFER, new Date(), "HULK", 1L, 101L, "Bravo");
+            Map<VesselPosition, BarcodedTube> mapPositionToSourceTube = new EnumMap<>(VesselPosition.class);
+            BarcodedTube bloodTube = new BarcodedTube("bloodTube");
+            bloodTube.addSample(new MercurySample("TestSM-0", metadataSource));
+            Map<String, SampleData> sampleDataMap2 = new HashMap<>();
+            sampleDataMap2.put("TestSM-0", new MercurySampleData("TestSM-0", new HashSet<Metadata>()));
+            Mockito.when(mockSampleDataFetcher.fetchSampleData(argThat(Matchers.contains("TestSM-0")))).thenReturn(sampleDataMap2);
+
+            mapPositionToSourceTube.put(VesselPosition.A01, bloodTube);
+            TubeFormation sourceTubeFormation = new TubeFormation(mapPositionToSourceTube, RackOfTubes.RackType.Matrix96);
+            Map<VesselPosition, BarcodedTube> mapPositionToExtractTube = new EnumMap<>(VesselPosition.class);
+            mapPositionToExtractTube.put(VesselPosition.A01, testTube);
+            TubeFormation targetTubeFormation = new TubeFormation(mapPositionToExtractTube, RackOfTubes.RackType.Matrix96);
+            extractionTransfer.getSectionTransfers().add(new SectionTransfer(
+                    sourceTubeFormation.getContainerRole(), SBSSection.ALL96, null,
+                    targetTubeFormation.getContainerRole(), SBSSection.ALL96, null, extractionTransfer));
+        }
+
+        ProductOrderSample productOrderSample = new ProductOrderSample("TestSM-1");
+        ProductOrder productOrder =
+                new ProductOrder(101L, "Test Order", Collections.singletonList(productOrderSample), "Quote-1",
+                        testProduct, testResearchProject);
+        productOrder.setJiraTicketKey("TestPDO-2");
+
+        // Create an LCSET lab batch
+        BucketEntry bucketEntry = new BucketEntry(testTube, productOrder, BucketEntry.BucketEntryType.PDO_ENTRY);
+        testTube.addBucketEntry(bucketEntry);
+        mercurySample.addProductOrderSample(productOrderSample);
+
+        JiraTicket lcSetTicket = new JiraTicket(mockJiraService, labBatchName);
+        LabBatch lcSetBatch = new LabBatch(labBatchName, Collections.<LabVessel>singleton(testTube),
+                LabBatch.LabBatchType.WORKFLOW);
+        lcSetBatch.setJiraTicket(lcSetTicket);
+        lcSetBatch.setWorkflowName("Exome Express");
+        lcSetBatch.addBucketEntry(bucketEntry);
+        bucketEntry.setLabBatch(lcSetBatch);
+
+        // Record some events for the sample
+        BettaLimsMessageTestFactory bettaLimsMessageFactory = new BettaLimsMessageTestFactory(true);
+
+        // Normalized Catch Registration
+        String catchTubeBarcode = "catchTube";
+        final String catchRackBarcode = "CatchRack";
+        PlateTransferEventType catchTransferJaxb = bettaLimsMessageFactory.buildRackToRack(
+                LabEventType.NORMALIZED_CATCH_REGISTRATION.getName(),
+                "SourceRack", Collections.singletonList(sourceTubeBarcode),
+                catchRackBarcode, Collections.singletonList(catchTubeBarcode));
+        Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
+        mapBarcodeToVessel.put(sourceTubeBarcode, testTube);
+        LabEvent catchTransfer = labEventFactory.buildFromBettaLims(catchTransferJaxb, mapBarcodeToVessel);
+        final TubeFormation catchTubeFormation = (TubeFormation) catchTransfer.getTargetLabVessels().iterator().next();
+        BarcodedTube catchTube = catchTubeFormation. getContainerRole().getVesselAtPosition(VesselPosition.A01);
+
+        // Index addition
+        StaticPlate indexPlate = LabEventTest.buildIndexPlate(null, null,
+                Collections.singletonList(MolecularIndexingScheme.IndexPosition.ILLUMINA_P5),
+                Collections.singletonList("indexPlate")).get(0);
+        mapBarcodeToVessel.put("indexPlate", indexPlate);
+        PlateTransferEventType indexAdditionJaxb = bettaLimsMessageFactory
+                .buildPlateToRack(LabEventType.INDEX_P5_POND_ENRICHMENT.getName(), "indexPlate", catchRackBarcode,
+                        Collections.singletonList(catchTubeBarcode));
+        LabEvent indexAddition = labEventFactory.buildFromBettaLims(indexAdditionJaxb, mapBarcodeToVessel);
+
+        // Strip tube B transfer
+        List<BettaLimsMessageTestFactory.CherryPick> cherryPicks = new ArrayList<>();
+        String[] stripTubeWells = {"A01", "B01", "C01", "D01", "E01", "F01", "G01", "H01"};
+        for (int i = 0; i < 8; i++) {
+            cherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(catchRackBarcode, "A01", "testStripTubeHolder", stripTubeWells[i]));
+        }
+        PlateCherryPickEvent stripTubeBTransferEvent = bettaLimsMessageFactory.buildCherryPickToStripTube(
+                LabEventType.STRIP_TUBE_B_TRANSFER.getName(), Collections.singletonList(catchRackBarcode),
+                Collections.singletonList(Collections.singletonList(catchTubeBarcode)),
+                "testStripTubeHolder", Collections.singletonList("testStripTube"), cherryPicks);
+        Map<String, BarcodedTube> mapBarcodeToSourceTube = new HashMap<>();
+        mapBarcodeToSourceTube.put(catchTubeBarcode, catchTube);
+        LabEvent stripTubeBTransfer = labEventFactory.buildCherryPickRackToStripTubeDbFree(stripTubeBTransferEvent,
+                new HashMap<String, TubeFormation>() {{
+                    put(catchRackBarcode, catchTubeFormation);
+                }},
+                mapBarcodeToSourceTube, null, new HashMap<String, StripTube>(), new HashMap<String, RackOfTubes>());
+
+        // Flowcell transfer
+        PlateTransferEventType flowcellTransferEvent = bettaLimsMessageFactory.buildStripTubeToFlowcell(
+                LabEventType.FLOWCELL_TRANSFER.getName(), "testStripTube", "Flowcell1");
+        StripTube stripTube = (StripTube) getOnly(stripTubeBTransfer.getTargetLabVessels());
+        LabEvent flowcellTransfer =
+                labEventFactory.buildFromBettaLimsPlateToPlateDbFree(flowcellTransferEvent, stripTube, null);
+        flowcell = (IlluminaFlowcell) getOnly(flowcellTransfer.getTargetLabVessels());
+    }
+
+    private <T> T getOnly(Collection<T> items) {
+        assertThat(items.size(), is(1));
+        return items.iterator().next();
     }
 
     @Test(groups = DATABASE_FREE)
@@ -377,6 +560,7 @@ public class ZimsIlluminaRunFactoryTest {
                 assertThat(libraryBean.getProductOrderSample(), equalTo(sampleId));
                 assertThat("The pipeline API expects enum names for regulatory designations",libraryBean.getRegulatoryDesignation(),equalTo(REGULATORY_DESIGNATION.name()));
                 assertThat(libraryBean.getMetadataSource(),equalTo(MercurySample.BSP_METADATA_SOURCE));
+                assertThat(libraryBean.getSampleType(), equalTo("Tumor"));
             }
             else {
                 numPositiveControls++;

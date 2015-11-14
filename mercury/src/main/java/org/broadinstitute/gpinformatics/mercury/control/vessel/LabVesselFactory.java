@@ -188,13 +188,17 @@ public class LabVesselFactory implements Serializable {
                 labVessels.add(barcodedTube);
             } else {
                 if (vesselType.toLowerCase().contains("plate")) {
-                    // todo jmt what if the plate already exists?
                     StaticPlate.PlateType plateType = StaticPlate.PlateType.getByAutomationName(vesselType);
                     if (plateType == null) {
                         plateType = StaticPlate.PlateType.Eppendorf96;
                     }
-                    StaticPlate staticPlate = new StaticPlate(parentVesselBean.getManufacturerBarcode(), plateType);
+                    StaticPlate staticPlate = (StaticPlate) mapBarcodeToVessel.get(
+                            parentVesselBean.getManufacturerBarcode());
+                    if (staticPlate == null) {
+                        staticPlate = new StaticPlate(parentVesselBean.getManufacturerBarcode(), plateType);
+                    }
                     labVessels.add(staticPlate);
+
                     for (ChildVesselBean childVesselBean : parentVesselBean.getChildVesselBeans()) {
                         VesselPosition vesselPosition = VesselPosition.getByName(childVesselBean.getPosition());
                         if (vesselPosition == null) {

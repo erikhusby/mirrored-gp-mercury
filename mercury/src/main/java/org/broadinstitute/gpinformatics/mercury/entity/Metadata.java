@@ -4,6 +4,8 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
+import org.broadinstitute.gpinformatics.mercury.crsp.generated.Sample;
+import org.broadinstitute.gpinformatics.mercury.crsp.generated.SampleData;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
@@ -18,7 +20,12 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.math.BigDecimal;
 import java.text.Format;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Generic metadata storage class with String keys and values.
@@ -253,7 +260,12 @@ public class Metadata {
         INSTRUMENT_NAME(Category.LAB_METRIC_RUN, DataType.STRING, "Instrument Name", Visibility.USER),
         INSTRUMENT_SERIAL_NUMBER(Category.LAB_METRIC_RUN, DataType.STRING, "Serial Number", Visibility.USER),
 
-        TOTAL_NG(Category.LAB_METRIC, DataType.NUMBER, "Total ng", Visibility.USER);
+        TOTAL_NG(Category.LAB_METRIC, DataType.NUMBER, "Total ng", Visibility.USER),
+        RECEIPT_RECORD(Category.SAMPLE, DataType.STRING, "Receipt Record", Visibility.NONE),
+
+        DV_200(Category.LAB_METRIC, DataType.NUMBER, "DV200", Visibility.USER),
+        LOWER_MARKER_TIME(Category.LAB_METRIC, DataType.NUMBER, "Lower Marker Time", Visibility.USER),
+        NA(Category.LAB_METRIC, DataType.STRING, "NA", Visibility.USER);
 
         private final Category category;
         private final DataType dataType;
@@ -284,5 +296,26 @@ public class Metadata {
             return visibility;
         }
 
+        public String getValueFor(Sample sample) {
+            for (SampleData sampleData : sample.getSampleData()) {
+                if (sampleData.getName().equals(name())) {
+                    return sampleData.getValue();
+                }
+            }
+            return null;
+        }
+
+        public static Key fromDisplayName(String displayName) {
+
+            Key foundKey = null;
+
+            for (Key key : values()) {
+                if (key.getDisplayName().equals(displayName)) {
+                    foundKey = key;
+                    break;
+                }
+            }
+            return foundKey;
+        }
     }
 }

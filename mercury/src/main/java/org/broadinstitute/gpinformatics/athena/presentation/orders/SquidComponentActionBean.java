@@ -107,7 +107,7 @@ public class SquidComponentActionBean extends CoreActionBean {
 
     @Validate(required = true, on = BUILD_SQUID_COMPONENT_ACTION, label = "A value for paired sequencing is required")
     private String pairedSequence;
-    private final CompletionStatusFetcher progressFetcher = new CompletionStatusFetcher();
+    private CompletionStatusFetcher progressFetcher;
 
     private CreateProjectOptions squidProjectOptions;
     private CreateWorkRequestOptions workRequestOptions;
@@ -138,8 +138,8 @@ public class SquidComponentActionBean extends CoreActionBean {
         if (StringUtils.isNotBlank(productOrderKey)) {
             sourceOrder = productOrderDao.findByBusinessKey(productOrderKey);
             if (sourceOrder != null) {
-                progressFetcher.loadProgress(productOrderDao, Collections.singletonList(
-                        sourceOrder.getProductOrderId()));
+                progressFetcher = new CompletionStatusFetcher(
+                        productOrderDao.getProgress(Collections.singleton(sourceOrder.getProductOrderId())));
                 sampleDataSourceResolver.populateSampleDataSources(sourceOrder);
             }
             autoSquidDto.setProductOrderKey(productOrderKey);

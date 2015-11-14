@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.run;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.BSPExportsService;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.monitoring.HipChatMessageSender;
@@ -13,7 +12,6 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderT
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.VesselTransferEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.MiSeqReagentKitDao;
@@ -21,9 +19,10 @@ import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRu
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.test.BaseEventTest;
@@ -46,6 +45,7 @@ import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.io.File;
 import java.text.SimpleDateFormat;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -55,6 +55,7 @@ import java.util.Map;
 public class SolexaRunRoutingTest extends BaseEventTest {
 
     private static final int NUM_POSITIONS_IN_RACK = 96;
+    public static final String FCT_NAME = "FCT-1";
 
     private final SimpleDateFormat dateFormat = new SimpleDateFormat(IlluminaSequencingRun.RUN_FORMAT_PATTERN);
     private String reagentBlockBarcode;
@@ -112,8 +113,11 @@ public class SolexaRunRoutingTest extends BaseEventTest {
                 runQtpProcess(sageEntityBuilder.getSageCleanupRack(), sageEntityBuilder.getSageCleanupTubeBarcodes(),
                               sageEntityBuilder.getMapBarcodeToSageUnloadTubes(), "1");
 
+        LabVessel denatureSource =
+                qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
+        LabBatch fctBatch = new LabBatch(FCT_NAME, Collections.singleton(denatureSource), LabBatch.LabBatchType.FCT);
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
-                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1", null,
+                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1", FCT_NAME,
                                             ProductionFlowcellPath.STRIPTUBE_TO_FLOWCELL, "designation",
                                             Workflow.WHOLE_GENOME);
 
@@ -149,9 +153,7 @@ public class SolexaRunRoutingTest extends BaseEventTest {
         VesselTransferEjb vesselTransferEjb = EasyMock.createMock(VesselTransferEjb.class);
         BSPExportsService bspExportsService = EasyMock.createMock(BSPExportsService.class);
 
-        SystemRouter router = new SystemRouter(vesselDao, EasyMock.createNiceMock(ControlDao.class),
-                                               new WorkflowLoader(),
-                                               EasyMock.createNiceMock(SampleDataFetcher.class), bspExportsService);
+        SystemRouter router = new SystemRouter(vesselDao, new WorkflowLoader(), bspExportsService);
         HipChatMessageSender hipChatMsgSender = EasyMock.createNiceMock(HipChatMessageSender.class);
         MiSeqReagentKitDao reagentKitDao = EasyMock.createNiceMock(MiSeqReagentKitDao.class);
 
@@ -186,9 +188,7 @@ public class SolexaRunRoutingTest extends BaseEventTest {
         LabVesselDao vesselDao = EasyMock.createNiceMock(LabVesselDao.class);
         BSPExportsService bspExportsService = EasyMock.createMock(BSPExportsService.class);
 
-        SystemRouter router = new SystemRouter(vesselDao, EasyMock.createNiceMock(ControlDao.class),
-                                               new WorkflowLoader(),
-                                               EasyMock.createNiceMock(SampleDataFetcher.class), bspExportsService);
+        SystemRouter router = new SystemRouter(vesselDao, new WorkflowLoader(), bspExportsService);
         HipChatMessageSender hipChatMsgSender = EasyMock.createNiceMock(HipChatMessageSender.class);
         UriInfo uriInfoMock = EasyMock.createNiceMock(UriInfo.class);
 
@@ -319,9 +319,7 @@ public class SolexaRunRoutingTest extends BaseEventTest {
 
         IlluminaSequencingRunFactory runFactory = EasyMock.createMock(IlluminaSequencingRunFactory.class);
         BSPExportsService bspExportsService = EasyMock.createMock(BSPExportsService.class);
-        SystemRouter router = new SystemRouter(vesselDao, EasyMock.createNiceMock(ControlDao.class),
-                                               new WorkflowLoader(),
-                                               EasyMock.createNiceMock(SampleDataFetcher.class), bspExportsService);
+        SystemRouter router = new SystemRouter(vesselDao, new WorkflowLoader(), bspExportsService);
 
         HipChatMessageSender hipChatMsgSender = EasyMock.createNiceMock(HipChatMessageSender.class);
         VesselTransferEjb vesselTransferEjb = EasyMock.createMock(VesselTransferEjb.class);

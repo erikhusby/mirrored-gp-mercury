@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent_;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
@@ -24,9 +25,11 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import javax.transaction.UserTransaction;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -62,6 +65,10 @@ public class LabVesselFixupTest extends Arquillian {
 
     @Inject
     private UserBean userBean;
+
+    @SuppressWarnings("CdiInjectionPointsInspection")
+    @Inject
+    private UserTransaction utx;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -359,7 +366,7 @@ public class LabVesselFixupTest extends Arquillian {
         for (Pair<String, String> pair : listOfPairsOldNew) {
             LabVessel labVesselOld = labVesselDao.findByIdentifier(pair.getLeft());
             LabVessel labVesselNew = labVesselDao.findByIdentifier(pair.getRight());
-            Set<BucketEntry> bucketEntries = labVesselOld.getModifiableBucketEntries();
+            Set<BucketEntry> bucketEntries = labVesselOld.getBucketEntries();
             BucketEntry bucketEntry = null;
             for (BucketEntry currentBucketEntry : bucketEntries) {
                 if (currentBucketEntry.getLabBatch().getBatchName().equals(lcset)) {
@@ -982,6 +989,111 @@ public class LabVesselFixupTest extends Arquillian {
         System.out.println("Updated flowcell " + flowcell.getLabVesselId() + " label to " + flowcell.getLabel());
         labVesselDao.persist(new FixupCommentary("GPLIM-3376 fixup flowcell label."));
         labVesselDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void qual623FixupVolumes() {
+        userBean.loginOSUser();
+        Map<String, BarcodedTube> mapBarcodeToTube = barcodedTubeDao.findByBarcodes(Arrays.asList(
+                "0175568063",
+                "0175568040",
+                "0175568039",
+                "0175568016",
+                "0175568015",
+                "0175567992",
+                "0175567991",
+                "0175567968"));
+        for (Map.Entry<String, BarcodedTube> stringBarcodedTubeEntry : mapBarcodeToTube.entrySet()) {
+            BarcodedTube barcodedTube = stringBarcodedTubeEntry.getValue();
+            if (barcodedTube == null) {
+                throw new RuntimeException("Failed to find tube " + stringBarcodedTubeEntry.getKey());
+            }
+            System.out.println(barcodedTube.getLabel() + " has volume " + barcodedTube.getVolume());
+            barcodedTube.setVolume(new BigDecimal("65.00"));
+            System.out.println("Updated to " + barcodedTube.getVolume());
+        }
+        barcodedTubeDao.persist(new FixupCommentary("QUAL-623 update volumes"));
+        barcodedTubeDao.flush();
+    }
+    
+    @Test(enabled = false)
+    public void gplim3525UpdateVolume() {
+        userBean.loginOSUser();
+        String barcode = "0129040052";
+        BarcodedTube barcodedTube = barcodedTubeDao.findByBarcode(barcode);
+        if (barcodedTube == null) {
+            throw new RuntimeException("Failed to find tube " + barcode);
+        }
+        BigDecimal newVolume = new BigDecimal("157");
+        System.out.println(
+                "Updating volume of " + barcodedTube.getLabel() + " from " + barcodedTube.getVolume() + " to "
+                + newVolume);
+        barcodedTube.setVolume(newVolume);
+        barcodedTubeDao.persist(new FixupCommentary("GPLIM-3525 manually set volume for tube missing initial tare"));
+        barcodedTubeDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void fixupSupport1011_2() {
+        userBean.loginOSUser();
+
+        // Rack CO-15323029 has two tube formations. Keep the one that is lab_vessel_id 2197589
+        // and remove the one that is lab_vessel_id 2212665.
+        RackOfTubes rackToDisassociate = (RackOfTubes) labVesselDao.findByIdentifier("CO-15323029");
+        TubeFormation tubeFormation = labVesselDao.findById(TubeFormation.class, 2212665L);
+
+        Assert.assertNotNull(rackToDisassociate);
+        Assert.assertNotNull(tubeFormation);
+        Assert.assertTrue(tubeFormation.getRacksOfTubes().contains(rackToDisassociate));
+        System.out.println("Removing tube formation " + tubeFormation.getLabel() + " id " +
+                           tubeFormation.getLabVesselId() + " from rack " + rackToDisassociate.getLabel());
+        tubeFormation.getRacksOfTubes().remove(rackToDisassociate);
+        labVesselDao.persist(new FixupCommentary("SUPPORT-1011 fixup incorrect rack contents due to label swap"));
+        labVesselDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void fixupSupport1011_3() {
+        try {
+            userBean.loginOSUser();
+            utx.begin();
+            // Invalidates the plate barcodes by appending an X.
+            String[] plateBarcodes = {"000010676169", "000010720769"};
+            for (String plateBarcode : plateBarcodes) {
+                StaticPlate plate = staticPlateDao.findByBarcode(plateBarcode);
+                System.out.println("Rename plate " + plateBarcode + " to " + plateBarcode + "X");
+                plate.setLabel(plateBarcode + "X");
+            }
+            staticPlateDao.persist(new FixupCommentary(
+                    "SUPPORT-1011 invalidate barcodes of incorrect pico plates."));
+            staticPlateDao.flush();
+            utx.commit();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test(enabled = false)
+    public void fixupSupport1011_3a() {
+        try {
+            userBean.loginOSUser();
+            utx.begin();
+            // Removes vessel transfers from incorrect tube formation to white and black pico plates.
+            Collection<Long> eventIds = Arrays.asList(new Long[]{993964L, 993965L, 993966L, 993968L});
+            for (LabEvent labEvent : labVesselDao.findListByList(LabEvent.class, LabEvent_.labEventId, eventIds)) {
+                System.out.println("Deleting " + labEvent.getLabEventType() + " " + labEvent.getLabEventId());
+                labEvent.getReagents().clear();
+                labEvent.getSectionTransfers().clear();
+                labEvent.getVesselToSectionTransfers().clear();
+                labVesselDao.remove(labEvent);
+            }
+            labVesselDao.persist(new FixupCommentary(
+                    "SUPPORT-1011 delete incorrect pico transfer because of bad rack tube formation"));
+            labVesselDao.flush();
+            utx.commit();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }

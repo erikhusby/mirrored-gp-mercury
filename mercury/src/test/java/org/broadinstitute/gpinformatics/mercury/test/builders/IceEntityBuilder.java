@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import org.testng.Assert;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,9 +27,9 @@ public class IceEntityBuilder {
     private final BettaLimsMessageTestFactory bettaLimsMessageTestFactory;
     private final LabEventFactory labEventFactory;
     private final LabEventHandler labEventHandler;
-    private final TubeFormation pondRegRack;
-    private final String pondRegRackBarcode;
-    private final List<String> pondRegTubeBarcodes;
+    private final List<TubeFormation> pondRegRacks;
+    private final List<String> pondRegRackBarcodes = new ArrayList<>();
+    private final List<List<String>> listPondRegTubeBarcodes = new ArrayList<>();
     private final String testPrefix;
     private final IceJaxbBuilder.PlexType plexType;
 
@@ -38,31 +39,39 @@ public class IceEntityBuilder {
 
     public IceEntityBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
             LabEventFactory labEventFactory, LabEventHandler labEventHandler,
-            TubeFormation pondRegRack, String pondRegRackBarcode,
-            List<String> pondRegTubeBarcodes, String testPrefix, IceJaxbBuilder.PlexType plexType) {
+            List<TubeFormation> pondRegRacks, String testPrefix, IceJaxbBuilder.PlexType plexType) {
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
         this.labEventFactory = labEventFactory;
         this.labEventHandler = labEventHandler;
-        this.pondRegRack = pondRegRack;
-        this.pondRegRackBarcode = pondRegRackBarcode;
-        this.pondRegTubeBarcodes = pondRegTubeBarcodes;
+        this.pondRegRacks = pondRegRacks;
+        for (TubeFormation pondRegRack : pondRegRacks) {
+            pondRegRackBarcodes.add(pondRegRack.getRacksOfTubes().iterator().next().getLabel());
+            ArrayList<String> pondRegTubeBarcodes = new ArrayList<>();
+            listPondRegTubeBarcodes.add(pondRegTubeBarcodes);
+            for (BarcodedTube barcodedTube : pondRegRack.getContainerRole().getContainedVessels()) {
+                pondRegTubeBarcodes.add(barcodedTube.getLabel());
+            }
+        }
         this.testPrefix = testPrefix;
         this.plexType = plexType;
     }
 
     public IceEntityBuilder invoke() {
-        IceJaxbBuilder iceJaxbBuilder = new IceJaxbBuilder(bettaLimsMessageTestFactory, testPrefix, pondRegRackBarcode,
-                pondRegTubeBarcodes, testPrefix + "IceBait1", testPrefix + "IceBait2",
+        IceJaxbBuilder iceJaxbBuilder = new IceJaxbBuilder(bettaLimsMessageTestFactory, testPrefix, pondRegRackBarcodes,
+                listPondRegTubeBarcodes, testPrefix + "IceBait1", testPrefix + "IceBait2",
                 LibraryConstructionJaxbBuilder.TargetSystem.SQUID_VIA_MERCURY, plexType).invoke();
         catchEnrichBarcodes = iceJaxbBuilder.getCatchEnrichTubeBarcodes();
 
         Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
 
-        LabEventTest.validateWorkflow("IcePoolingTransfer", pondRegRack);
-        mapBarcodeToVessel.put(pondRegRack.getLabel(), pondRegRack);
-        for (BarcodedTube barcodedTube : pondRegRack.getContainerRole().getContainedVessels()) {
-            mapBarcodeToVessel.put(barcodedTube.getLabel(), barcodedTube);
+        LabEventTest.validateWorkflow("IcePoolingTransfer", pondRegRacks.get(0));
+        for (TubeFormation pondRegRack : pondRegRacks) {
+            mapBarcodeToVessel.put(pondRegRack.getLabel(), pondRegRack);
+            for (BarcodedTube barcodedTube : pondRegRack.getContainerRole().getContainedVessels()) {
+                mapBarcodeToVessel.put(barcodedTube.getLabel(), barcodedTube);
+            }
         }
+
         LabEvent icePoolingTransfer = labEventFactory.buildFromBettaLims(iceJaxbBuilder.getIcePoolingTransfer(),
                 mapBarcodeToVessel);
         labEventHandler.processEvent(icePoolingTransfer);
@@ -109,10 +118,10 @@ public class IceEntityBuilder {
         labEventHandler.processEvent(ice1stHybridization);
         StaticPlate firstHybPlate = (StaticPlate) ice1stHybridization.getTargetLabVessels().iterator().next();
         Set<LabBatch> computedLcSets = ice1stHybridization.getComputedLcSets();
-        // todo jmt enable this after GPLIM-3122 is merged
-//        Assert.assertFalse(computedLcSets.isEmpty());
+        Assert.assertFalse(computedLcSets.isEmpty());
 
         LabEventTest.validateWorkflow("Ice1stBaitAddition", firstHybPlate);
+        firstHybPlate.clearCaches();
         ReagentDesign baitDesign1 = new ReagentDesign("Ice Bait 1", ReagentDesign.ReagentType.BAIT);
         BarcodedTube baitTube1 = LabEventTest.buildBaitTube(iceJaxbBuilder.getBaitTube1Barcode(), baitDesign1);
         mapBarcodeToVessel.clear();
@@ -146,6 +155,7 @@ public class IceEntityBuilder {
         labEventHandler.processEvent(ice2ndHybridization);
 
         LabEventTest.validateWorkflow("Ice2ndBaitAddition", firstCapturePlate);
+        firstCapturePlate.clearCaches();
         ReagentDesign baitDesign2 = new ReagentDesign("Ice Bait 2", ReagentDesign.ReagentType.BAIT);
         BarcodedTube baitTube2 = LabEventTest.buildBaitTube(iceJaxbBuilder.getBaitTube2Barcode(), baitDesign2);
         mapBarcodeToVessel.clear();

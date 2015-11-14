@@ -22,7 +22,7 @@ public class MetadataPluginHelper {
         for( Metadata.Key key : Metadata.Key.values() ) {
             if(key.getCategory() == Metadata.Category.SAMPLE ) {
                 metadataHeaders
-                        .put(key, new ConfigurableList.Header(key.getDisplayName(), key.getDisplayName(), "", ""));
+                        .put(key, new ConfigurableList.Header(key.getDisplayName(), key.getDisplayName(), ""));
             }
         }
         METADATA_HEADERS = Collections.unmodifiableMap(metadataHeaders);

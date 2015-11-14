@@ -1,10 +1,15 @@
 package org.broadinstitute.gpinformatics.mercury.entity.reagent;
 
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventReagent;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nullable;
 import javax.persistence.*;
+import java.util.Comparator;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Some chemistry bits applied to a Sample to help transform it into a sequenceable state.
@@ -17,9 +22,44 @@ import java.util.Date;
 @Audited
 @Table(schema = "mercury")
 public abstract class Reagent {
+
+    /**
+     * Used for Reagent list sorting
+     */
+    public static final Comparator<Reagent> BY_NAME_LOT_EXP = new Comparator<Reagent>() {
+        @Override
+        public int compare(Reagent o1, Reagent o2) {
+            int result = compareField( o1.getName(), o2.getName() );
+            if( result == 0 ) {
+                result = compareField( o1.getLot(), o2.getLot() );
+            }
+            if( result == 0 ) {
+                result = compareField(o1.getExpiration(), o2.getExpiration());
+            }
+            return result;
+        }
+
+        /**
+         * Everything nullable and either String or Date
+         */
+        private int compareField(Comparable me, Comparable you) {
+            if( me == null && you == null ) {
+                return 0;
+            } else if( me == null && you != null ) {
+                return -1;
+            } else if( me != null && you == null ) {
+                return 1;
+            } else {
+                return me.compareTo(you);
+            }
+        }
+    };
+
+
     @Id
     @SequenceGenerator(name = "SEQ_REAGENT", schema = "mercury", sequenceName = "SEQ_REAGENT")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_REAGENT")
+    @Column(name = "REAGENT_ID", nullable = true)
     private Long reagentId;
 
     @Column(name = "REAGENT_NAME", nullable = true)
@@ -31,6 +71,10 @@ public abstract class Reagent {
     @Column(name = "EXPIRATION", nullable = true)
     private Date expiration;
 
+    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "reagent")
+    @BatchSize(size = 100)
+    private Set<LabEventReagent> labEventReagents = new HashSet<>();
+
     protected Reagent(@Nullable String reagentName, @Nullable String lot, @Nullable Date expiration) {
         this.name = reagentName;
         this.lot = lot;
@@ -38,6 +82,10 @@ public abstract class Reagent {
     }
 
     protected Reagent() {
+    }
+
+    public Long getReagentId(){
+        return reagentId;
     }
 
     public String getName() {

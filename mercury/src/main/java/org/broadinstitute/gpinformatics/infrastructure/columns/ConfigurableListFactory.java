@@ -6,7 +6,8 @@ import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDao;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
-import org.broadinstitute.gpinformatics.infrastructure.search.PaginationDao;
+import org.broadinstitute.gpinformatics.infrastructure.search.PaginationUtil;
+import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchTerm;
@@ -29,15 +30,13 @@ public class ConfigurableListFactory {
     @Inject
     private ConfigurableSearchDao configurableSearchDao;
 
-    @Inject
-    private PaginationDao paginationDao;
-
     /**
      * Create a ConfigurableList instance.
+     * TODO jms 07/2015 not used, replace with ConfigurableList constructor as in other ConfigurableListActionBean methods
      *
      * @param entityList  Entities for which to display data
      * @param downloadColumnSetName Name of the column set to display
-     * @param entityName Name of the entity  TODO jms Use ColumnEntity
+     * @param entityName Name of the entity
      * @param entityId ID of the entity
      *
      * @return ConfigurableList instance
@@ -46,7 +45,7 @@ public class ConfigurableListFactory {
             @Nonnull String downloadColumnSetName,
             @Nonnull String entityName,
             @Nonnull ColumnEntity entityId,
-            @Nonnull Map<String, Object> evalContext) {
+            @Nonnull SearchContext evalContext) {
 
         List<ColumnTabulation> columnTabulations = buildColumnSetTabulations(downloadColumnSetName, entityName);
         ConfigurableList configurableList = new ConfigurableList(columnTabulations, 0, "ASC", entityId);
@@ -238,10 +237,10 @@ public class ConfigurableListFactory {
      */
     public static class FirstPageResults {
         private ConfigurableList.ResultList resultList;
-        private PaginationDao.Pagination pagination;
+        private PaginationUtil.Pagination pagination;
 
         public FirstPageResults(ConfigurableList.ResultList resultList,
-                PaginationDao.Pagination pagination) {
+                PaginationUtil.Pagination pagination) {
             this.resultList = resultList;
             this.pagination = pagination;
         }
@@ -250,7 +249,7 @@ public class ConfigurableListFactory {
             return resultList;
         }
 
-        public PaginationDao.Pagination getPagination() {
+        public PaginationUtil.Pagination getPagination() {
             return pagination;
         }
     }
@@ -271,12 +270,25 @@ public class ConfigurableListFactory {
             SearchInstance searchInstance,
             ConfigurableSearchDefinition configurableSearchDef,
             String columnSetName,
-            Integer sortColumnIndex, String dbSortPath,
+            Integer sortColumnIndex,
+            String dbSortPath,
             String sortDirection,
             String entityName) {
 
-        Criteria criteria = configurableSearchDao.buildCriteria(configurableSearchDef, searchInstance, dbSortPath,
-                sortDirection);
+        Criteria criteria;
+
+        // Swap out base search definition when an alternate (and exclusive) search term is available
+        if( searchInstance.hasAlternateSearchDefinition() ) {
+            criteria = configurableSearchDao.buildCriteria(
+                    searchInstance.getAlternateSearchDefinition(),
+                    searchInstance, null,
+                    null);
+        } else {
+            criteria = configurableSearchDao.buildCriteria(
+                    configurableSearchDef,
+                    searchInstance, dbSortPath,
+                    sortDirection);
+        }
 
         // TODO move join-fetch stuff into ListConfig and SearchInstance
         // If the user chose columns to view, use those, else use a pre-defined column set
@@ -321,12 +333,12 @@ public class ConfigurableListFactory {
         }
         columnTabulations.addAll(searchInstance.findTopLevelColumnTabulations());
 
-        PaginationDao.Pagination pagination = new PaginationDao.Pagination( configurableSearchDef.getPageSize() );
+        PaginationUtil.Pagination pagination = new PaginationUtil.Pagination( configurableSearchDef.getPageSize() );
 
         configurableSearchDao.startPagination(pagination, criteria, searchInstance, configurableSearchDef );
 
         pagination.setJoinFetchPaths(joinFetchPaths);
-        List<?> entityList = paginationDao.getPage(pagination, 0);
+        List<?> entityList = PaginationUtil.getPage(configurableSearchDao.getEntityManager(), pagination, 0);
 
         // Format the results into columns
         ConfigurableList configurableList = new ConfigurableList(columnTabulations,
@@ -342,6 +354,7 @@ public class ConfigurableListFactory {
         }
 
         configurableList.addRows( entityList, searchInstance.getEvalContext() );
+
         ConfigurableList.ResultList resultList = configurableList.getResultList();
 
         return new FirstPageResults(resultList, pagination);
@@ -357,9 +370,9 @@ public class ConfigurableListFactory {
      * @return list of results
      */
     public ConfigurableList.ResultList getSubsequentResultsPage(
-            SearchInstance searchInstance, int pageNumber, String entityName, PaginationDao.Pagination pagination) {
+            SearchInstance searchInstance, int pageNumber, String entityName, PaginationUtil.Pagination pagination) {
         // Get requested page of results
-        List<?> entityList = paginationDao.getPage(pagination, pageNumber);
+        List<?> entityList = PaginationUtil.getPage(configurableSearchDao.getEntityManager(), pagination, pageNumber);
 
         // Format the results into columns
         ConfigurableSearchDefinition configurableSearchDef = SearchDefinitionFactory.getForEntity(entityName);

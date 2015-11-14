@@ -53,9 +53,25 @@
                 }).fnSetFilteringDelay(300);
 
                 setupDialogs();
-
                 statusChange();
+
+                var cantAbandonOrderStatuses=buildCantAbandonOrderStatusesXpath();
+                $j("input.shiftCheckbox, input.checkAll").on('click', function(){
+                    var disableButton = $j(".shiftCheckbox:checked").closest("tr").children(cantAbandonOrderStatuses).size() > 0;
+                    $j("input[name='abandonOrders']").prop('disabled', disableButton);
+                });
             });
+
+            function buildCantAbandonOrderStatusesXpath() {
+                var disallowStatuses = [];
+                disallowStatuses = [<c:forEach
+                items="${actionBean.getOrderStatusNamesWhichCantBeAbandoned()}" var="item">"${item}", </c:forEach>]
+                return disallowStatuses.map(
+                        function (value) {
+                            return "td:contains(\"" + value + "\")";
+                        }
+                ).join(", ");
+            }
 
             function statusChange() {
                 if ($j(".selectedStatuses[value='Draft']").attr('checked')
@@ -313,14 +329,7 @@
                                 <fmt:formatDate value="${order.placedDate}" pattern="${actionBean.datePattern}"/>
                             </td>
                             <td align="center">
-                                <div class="barFull" title="${actionBean.progressFetcher.getPercentInProgress(order.businessKey)}% In Progress">
-                                    <span class="barAbandon"
-                                          title="${actionBean.progressFetcher.getPercentAbandoned(order.businessKey)}% Abandoned"
-                                          style="width: ${actionBean.progressFetcher.getPercentAbandoned(order.businessKey)}%"> </span>
-                                    <span class="barComplete"
-                                          title="${actionBean.progressFetcher.getPercentCompleted(order.businessKey)}% Completed"
-                                          style="width: ${actionBean.progressFetcher.getPercentCompleted(order.businessKey)}%"> </span>
-                                </div>
+                                <stripes:layout-render name="/orders/sample_progress_bar.jsp" status="${actionBean.progressFetcher.getStatus(order.businessKey)}"/>
                             </td>
                             <td>${actionBean.progressFetcher.getNumberOfSamples(order.businessKey)}</td>
                             <td>
@@ -344,7 +353,7 @@
                                     </c:when>
                                     <c:when test="${order.billing}">
                                         <span class="badge badge-info">
-                                            <%=ProductOrderListEntry.LedgerStatus.BILLING.getDisplayName()%>
+                                            <%=ProductOrderListEntry.LedgerStatus.BILLING_STARTED.getDisplayName()%>
                                         </span>
                                     </c:when>
                                     <c:when test="${order.readyForBilling}">

@@ -41,6 +41,10 @@
     <style>
         label {display:inline; margin-left: 5px;}
         input.displayTerm, input.termoperator, input.termvalue { margin: 3px; }
+        <%-- Firefox select options allow this, Chrome quietly ignores --%>
+       .help-option { background-image: url("${ctxpath}/images/help.png");
+           background-repeat: no-repeat;
+           background-position: right; }
 
     </style>
 </stripes:layout-component>
@@ -106,27 +110,33 @@ Move the mouse over the question marks to see details about each section.
         <c:if test="${not actionBean.readOnly}">
             <%-- Allow user to add top-level terms, and terms that are derived from
             constrained values (e.g. phenotype names) --%>
-            <p class="control-group">
-                <label>Search terms:</label>
-                <stripes:select name="searchTermSelect" id="searchTermSelect">
+            <table>
+                <tr style="vertical-align: top;">
+                <td style="padding-right: 8px;text-align: right"><label>Search terms: </label></td>
+                    <td style="padding-right: 6px"><stripes:select name="searchTermSelect" id="searchTermSelect" size="5">
                     <c:forEach items="${actionBean.configurableSearchDef.mapGroupSearchTerms}" var="entry">
                         <optgroup label="${entry.key}">
                             <c:forEach items="${entry.value}" var="searchTerm">
-                                <option value="${searchTerm.name}">${searchTerm.name}</option>
+                                <option id="${searchTerm.uiId}_opt" value="${searchTerm.name}" ondblclick="addTerm()"
+                                <%-- Firefox select options allow this style class, Chrome quietly ignores --%>
+                                <c:if test="${not empty searchTerm.helpText}"> class="help-option"</c:if>>${searchTerm.name}</option>
                                 <c:if test="${searchTerm.addDependentTermsToSearchTermList}">
                                     <c:forEach items="${searchTerm.constrainedValues}" var="constrainedValue">
-                                        <option value="${constrainedValue.code}"
+                                        <option value="${constrainedValue.code}" ondblclick="addTerm()"
                                                 searchTerm="${searchTerm.name}">${constrainedValue.label}</option>
                                     </c:forEach>
                                 </c:if>
                             </c:forEach>
                         </optgroup>
                     </c:forEach>
-                </stripes:select>
-                <stripes:button id="addTermBtn" name="addTermBtn" value="Add Term" onclick="addTerm();" class="btn btn-primary"/>
-                <img id="addTermTooltip" src="${ctxpath}/images/help.png" alt="help">
-            </p>
-            <label>Filter: </label> <input type="text" id="filterSearchTerms" onkeyup="filterSelect($j('#searchTermSelect')[0], this);">
+                </stripes:select></td>
+                    <td><stripes:button id="addTermBtn" name="addTermBtn" value="Add Term" onclick="addTerm();" class="btn btn-primary"/>
+                <img id="addTermTooltip" src="${ctxpath}/images/help.png" alt="help"></td>
+                </tr>
+                <tr style="vertical-align: top">
+                    <td style="padding-right: 8px;text-align: right;padding-top: 10px"> <label>Filter: </label></td>
+                <td style="padding-top: 10px"><input type="text" id="filterSearchTerms" onkeyup="filterSelect($j('#searchTermSelect')[0], this);"></td>
+            </table>
 
             <hr style="margin: 4px 0px"/>
 
@@ -196,13 +206,12 @@ function addTerm() {
     var select = $j('#searchTermSelect')[0];
     var option = select.options[select.selectedIndex];
     var searchTerm = option.getAttribute('searchTerm');
-    var searchTermName;
+    var searchTermName = option.value;
     var parameters;
     if (searchTerm == null) {
-        searchTermName = option.value;
-        parameters = 'addTopLevelTerm&searchTermName=' + option.value + '&entityName=' + getEntityName();
+        parameters = 'addTopLevelTerm&searchTermName=' + searchTermName + '&entityName=' + getEntityName();
     } else {
-        parameters = 'addTopLevelTermWithValue&searchTermName=' + searchTerm + '&searchTermFirstValue=' + option.value
+        parameters = 'addTopLevelTermWithValue&searchTermName=' + searchTerm + '&searchTermFirstValue=' + searchTermName
                 + '&entityName=' + getEntityName();
     }
     new $j.ajax({
@@ -385,7 +394,7 @@ function changeOperator(operatorSelect) {
                 valueElement.parentNode.insertBefore(andText, valueElement);
                 valueElement.parentNode.replaceChild(textInput2, valueElement);
 
-                if (dataType == 'Date') {
+                if (dataType == 'DATE' || dataType == 'DATE_TIME') {
                     $j("#" + valueElementId + "1").datepicker();
                     $j("#" + valueElementId + "2").datepicker();
                 }
@@ -405,7 +414,7 @@ function changeOperator(operatorSelect) {
                 }
                 valueElement.parentNode.replaceChild(textInput1, valueElement);
 
-                if (dataType == 'Date') {
+                if (dataType == 'DATE' || dataType == 'DATE_TIME' ) {
                     $j("#" + valueElementId).datepicker();
                 }
             }
@@ -583,6 +592,15 @@ function chooseColumnSet() {
         </ul>
     </c:if>
 </div>
+<%-- A div with a unique ID for search terms tool tips (search term has help text)  --%>
+<c:forEach items="${actionBean.availableMapGroupToColumnNames}" var="entry">
+    <c:forEach items="${entry.value}" var="searchTerm">
+        <c:if test="${not empty searchTerm.helpText}">
+<div id="${searchTerm.uiId}_dscr" style="display: none;">${searchTerm.helpText}</div>
+        </c:if>
+    </c:forEach>
+</c:forEach>
+
 <script type="text/javascript">
     $j(function(){
         // This is required in order to render HTML in title attributes.
@@ -612,7 +630,50 @@ function chooseColumnSet() {
             return $j('#traversalOptionDescription').remove().html();
         });
 
+        <%-- Initialize search terms tool tips for result columns (if search term has help text)  --%>
+        <c:forEach items="${actionBean.availableMapGroupToColumnNames}" var="entry">
+         <c:forEach items="${entry.value}" var="searchTerm">
+          <c:if test="${not empty searchTerm.helpText}">
+    $j('#${searchTerm.uiId}_col').attr('title', function(){
+        // Don't remove, need to share...
+        return $j('#${searchTerm.uiId}_dscr').html();
+    });
+    $j('#${searchTerm.uiId}_col').tooltip({
+        position: { my: "left top",
+            at: "right+10 top+35",
+            of: "#sourceColumnDefNames" },
+        show: false
+    });
+          </c:if>
+         </c:forEach>
+        </c:forEach>
+
+        <%-- Initialize search terms tool tips for search terms (if search term has help text)  --%>
+        <c:forEach items="${actionBean.configurableSearchDef.mapGroupSearchTerms}" var="entry">
+            <c:forEach items="${entry.value}" var="searchTerm">
+                <c:if test="${not empty searchTerm.helpText}">
+                    $j('#${searchTerm.uiId}_opt').attr('title', function(){
+                        // Don't remove, need to share...
+                        return $j('#${searchTerm.uiId}_dscr').html();
+                    });
+                    <%-- Firefox tooltip works for 1 line select list, Chrome needs to have size > 1 or quietly ignores functionality --%>
+                    $j('#${searchTerm.uiId}_opt').tooltip({
+                        position: { my: "left top",
+                            at: "left bottom-10",
+                            of: "#addTermBtn" },
+                        show: false
+                    });
+                </c:if>
+            </c:forEach>
+        </c:forEach>
+
         $j(document).tooltip();
+
+        // Bump width of list boxes out so background icon doesn't overlay longest text
+        var selectList = $j('#sourceColumnDefNames');
+        selectList.outerWidth( selectList.outerWidth() + 40 );
+        selectList = $j('#searchTermSelect');
+        selectList.outerWidth( selectList.outerWidth() + 40 );
     });
 </script>
 </stripes:layout-component>

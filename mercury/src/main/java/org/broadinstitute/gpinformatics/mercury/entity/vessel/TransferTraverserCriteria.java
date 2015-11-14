@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStarting
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -290,7 +291,7 @@ public interface TransferTraverserCriteria {
 
     class NearestLabMetricOfTypeCriteria implements TransferTraverserCriteria {
         private LabMetric.MetricType metricType;
-        private Map<Integer, Collection<LabMetric>> labMetricsAtHop = new HashMap<>();
+        private Map<Integer, List<LabMetric>> labMetricsAtHop = new HashMap<>();
 
         public NearestLabMetricOfTypeCriteria(LabMetric.MetricType metricType) {
             this.metricType = metricType;
@@ -302,7 +303,7 @@ public interface TransferTraverserCriteria {
             if (context.getLabVessel() != null) {
                 for (LabMetric metric : vessel.getMetrics()) {
                     if (metric.getName().equals(metricType)) {
-                        Collection<LabMetric> metricsAtHop;
+                        List<LabMetric> metricsAtHop;
                         metricsAtHop = labMetricsAtHop.get(context.getHopCount());
                         if (metricsAtHop == null) {
                             metricsAtHop = new ArrayList<>();
@@ -323,14 +324,18 @@ public interface TransferTraverserCriteria {
         public void evaluateVesselPostOrder(Context context) {
         }
 
-        public Collection<LabMetric> getNearestMetrics() {
+        public List<LabMetric> getNearestMetrics() {
             int nearest = Integer.MAX_VALUE;
-            for (Map.Entry<Integer, Collection<LabMetric>> labMetricsForHopCount : labMetricsAtHop.entrySet()) {
+            for (Map.Entry<Integer, List<LabMetric>> labMetricsForHopCount : labMetricsAtHop.entrySet()) {
                 if (labMetricsForHopCount.getKey() < nearest) {
                     nearest = labMetricsForHopCount.getKey();
                 }
             }
-            return labMetricsAtHop.get(nearest);
+            List<LabMetric> labMetrics = labMetricsAtHop.get(nearest);
+            if (labMetrics != null) {
+                Collections.sort(labMetrics);
+            }
+            return labMetrics;
         }
     }
 
@@ -679,6 +684,63 @@ public interface TransferTraverserCriteria {
     }
 
     /**
+     * Traverse LabVessels and LabEvents to find current MaterialType
+     */
+    class NearestMaterialTypeTraverserCriteria implements TransferTraverserCriteria {
+        private MaterialType materialType=null;
+
+        public NearestMaterialTypeTraverserCriteria() {
+        }
+
+        @Override
+        public TraversalControl evaluateVesselPreOrder(Context context) {
+            if (materialType != null) {
+                return TraversalControl.StopTraversing;
+            }
+            LabVessel vessel = context.getLabVessel();
+            LabEvent event = context.getEvent();
+            if (event != null) {
+                evaluateEvent(vessel, event);
+            }
+            if (vessel != null) {
+                evaluateTransfers(context.getTraversalDirection(), vessel);
+            }
+            return TraversalControl.ContinueTraversing;
+        }
+
+        private void evaluateTransfers(TraversalDirection traversalDirection, LabVessel vessel) {
+            Set<LabEvent> transferEvents = null;
+            if (traversalDirection == TraversalDirection.Ancestors) {
+                transferEvents = vessel.getTransfersTo();
+            } else {
+                transferEvents = vessel.getTransfersFrom();
+            }
+            for (LabEvent labEvent : transferEvents) {
+                evaluateEvent(vessel, labEvent);
+            }
+        }
+
+        private void evaluateEvent(LabVessel vessel, LabEvent event) {
+            MaterialType resultingMaterialType = event.getLabEventType().getResultingMaterialType();
+            if (resultingMaterialType != null) {
+                materialType=resultingMaterialType;
+            }
+        }
+
+        @Override
+        public void evaluateVesselInOrder(Context context) {
+        }
+
+        @Override
+        public void evaluateVesselPostOrder(Context context) {
+        }
+
+        public MaterialType getMaterialType() {
+            return materialType;
+        }
+    }
+
+    /**
      * Capture chain of events following a lab vessel
      */
     public class LabEventDescendantCriteria implements TransferTraverserCriteria {
@@ -701,6 +763,7 @@ public interface TransferTraverserCriteria {
             }
 
             if( context.getLabVessel() != null ) {
+                labEvents.addAll(context.getLabVessel().getInPlaceLabEvents());
                 for (VesselContainer containerVessel : context.getLabVessel().getContainers()) {
                     labEvents.addAll(containerVessel.getEmbedder().getInPlaceLabEvents());
                 }

@@ -11,14 +11,14 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
-import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
-import org.jetbrains.annotations.Nullable;
+import org.jvnet.inflector.Noun;
 
 import javax.annotation.Nonnull;
 import java.util.Collection;
@@ -99,56 +99,6 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
 
     }
 
-    /**
-     * Returns the unique list of sample names referenced by the given collection of vessels.
-     */
-    private static Set<String> getUniqueSampleNames(Collection<LabVessel> labVessels) {
-        Set<String> sampleNames = new HashSet<>();
-        for (LabVessel labVessel : labVessels) {
-            Collection<String> sampleNamesForVessel = labVessel.getSampleNames();
-            if (sampleNamesForVessel.size() > 1) {
-                throw new RuntimeException("Cannot build samples list for " + labVessel.getLabel()
-                                           + " because we're expecting only a single sample within the vessel.");
-            }
-            sampleNames.addAll(labVessel.getSampleNames());
-        }
-        return sampleNames;
-    }
-
-    /**
-     * Takes the initial samples and the rework samples
-     * from the batch and builds a string to display
-     * on the batch ticket
-     *
-     * @param labBatch contains samples
-     *
-     * @return sample list
-     */
-    public static String buildSamplesListString(LabBatch labBatch, @Nullable Bucket bucket) {
-        StringBuilder samplesText = new StringBuilder();
-        Set<String> newSamples = new HashSet<>();
-        Set<String> reworkSamples = new HashSet<>();
-        newSamples.addAll(getUniqueSampleNames(labBatch.getNonReworkStartingLabVessels()));
-        reworkSamples.addAll(getUniqueSampleNames(labBatch.getReworks()));
-
-        samplesText.append(StringUtils.join(newSamples, "\n"));
-        samplesText.append("\n");
-
-        if (!reworkSamples.isEmpty()) {
-            samplesText.append("\n");
-            for (String reworkSample : reworkSamples) {
-                if (bucket == null) {
-                    samplesText.append(reworkSample).append(" (rework)\n");
-                } else {
-                    samplesText.append(reworkSample).append(" (rework from ").append(bucket.getBucketDefinitionName())
-                            .append(
-                                    ")\n");
-                }
-            }
-        }
-        return samplesText.toString();
-    }
-
     @Override
     public Collection<CustomField> getCustomFields(Map<String, CustomFieldDefinition> submissionFields) {
 
@@ -210,32 +160,41 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
 
     @Override
     public String generateDescription() {
-
         StringBuilder ticketDescription = new StringBuilder();
-
         for (Map.Entry<String, Set<LabVessel>> pdoKey : pdoToVesselMap.entrySet()) {
-
             int sampleCount = 0;
-
+            Set<String> materialTypes = new HashSet<>();
             for (LabVessel currVessel : pdoKey.getValue()) {
                 sampleCount += currVessel.getSampleInstanceCount(LabVessel.SampleType.PREFER_PDO, null);
+                MaterialType latestMaterialType = null;
+                try {
+                    latestMaterialType = currVessel.getLatestMaterialType();
+                } catch (Exception e) {
+                    log.error("Could not find latest material type for lab vessel.");
+                }
+                if (latestMaterialType != null) {
+                    materialTypes.add(latestMaterialType.getDisplayName());
+                }
             }
-
-            ticketDescription.append(sampleCount).append(" samples ");
+            String projectName = "";
             if (foundResearchProjectList.containsKey(pdoKey.getKey())) {
-                ticketDescription.append("from ").append(foundResearchProjectList.get(pdoKey.getKey()).getTitle())
-                        .append(" ");
+                projectName = foundResearchProjectList.get(pdoKey.getKey()).getTitle();
             }
-            ticketDescription.append(pdoKey.getKey()).append("\n");
+            String vesselDescription = String.format("%d %s with %s %s from %s %s", sampleCount,
+                    Noun.pluralOf("sample", sampleCount), Noun.pluralOf("material type", materialTypes.size()),
+                    materialTypes, projectName, pdoKey.getKey());
+
+            ticketDescription.append(vesselDescription).append("\n");
         }
         return ticketDescription.toString();
     }
+
 
     @Override
     public String getSummary() {
 
         StringBuilder summary = new StringBuilder();
-        if (clover.org.apache.commons.lang.StringUtils.isBlank(batch.getBatchName())) {
+        if (StringUtils.isBlank(batch.getBatchName())) {
 
             for (ResearchProject currProj : foundResearchProjectList.values()) {
                 summary.append(currProj.getTitle()).append("; ");

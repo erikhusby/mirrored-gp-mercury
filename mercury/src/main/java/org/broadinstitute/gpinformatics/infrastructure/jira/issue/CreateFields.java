@@ -87,7 +87,9 @@ public class CreateFields extends UpdateFields {
         LCSET_PROJECT("Illumina Library Construction Tracking", "LCSET", "CLCSET"),
         FCT_PROJECT("Flowcell Tracking", "FCT", "CFCT"),
         PRODUCT_ORDERING("Product Ordering", "PDO", "CPDO"),
-        RESEARCH_PROJECTS("Research Projects", "RP", "CRP");
+        RESEARCH_PROJECTS("Research Projects", "RP", "CRP"),
+        RECEIPT_PROJECT("Sample Receipt Tracking", "RCT"),
+        EXTRACTION_PROJECT("Extractions", "XTR");
 
         private final String projectName;
         private final String keyPrefix;
@@ -116,6 +118,20 @@ public class CreateFields extends UpdateFields {
         public String getKeyPrefix() {
             return keyPrefix;
         }
+
+        public static ProjectType fromKeyPrefix(String keyPrefix) {
+
+            ProjectType foundValue = null;
+
+            for (ProjectType projectType : values()) {
+                if (projectType.getKeyPrefix().equals(keyPrefix)) {
+                    foundValue = projectType;
+                    break;
+                }
+            }
+
+            return foundValue;
+        }
     }
 
     @JsonSerialize(using = NameableTypeJsonSerializer.class)
@@ -123,11 +139,17 @@ public class CreateFields extends UpdateFields {
         // jiraName is defined by JIRA and must not be based on Mercury Workflow.
         WHOLE_EXOME_HYBSEL("Whole Exome (HybSel)"),
         EXOME_EXPRESS("Exome Express"),
+        CDNA_TRUSEQ_SS("cDNA TruSeq Strand Specific Large Insert"),
         PRODUCT_ORDER("Product Order", "CLIA "),
         RESEARCH_PROJECT("Research Project", "CLIA "),
         FLOWCELL("Flowcell"),
         MISEQ("MiSeq"),
-        SAMPLE_INITIATION("Sample Initiation");
+        SAMPLE_INITIATION("Sample Initiation"),
+        RECEIPT("Receipt"),
+        ALLPREP("AllPrep"),
+        DNA_EXTRACTION("DNA Extraction"),
+        EXTRACTION_OTHER("Extraction (Other)"),
+        RNA_EXTRACTION("RNA Extraction");
 
         private final String jiraName;
 
@@ -161,6 +183,18 @@ public class CreateFields extends UpdateFields {
             put(Workflow.ICE_CRSP.getWorkflowName(), EXOME_EXPRESS);
             put(Workflow.ICE.getWorkflowName(), EXOME_EXPRESS);
         }};
+
+        public static IssueType fromJiraName(String jiraName) {
+            IssueType foundValue = null;
+            for (IssueType issuetype : values()) {
+                if (issuetype.getJiraName().equals(jiraName)) {
+                    foundValue = issuetype;
+                    break;
+                }
+            }
+
+            return foundValue;
+        }
     }
 
 

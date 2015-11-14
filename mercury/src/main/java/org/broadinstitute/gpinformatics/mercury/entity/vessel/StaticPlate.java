@@ -55,7 +55,10 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
         Plate96WellCollectionTube2000("Plate96WellCollectionTube2000", VesselGeometry.G12x8),
         Plate96WellRNA("Plate96WellRNA", VesselGeometry.G12x8),
         SageCassette("SageCassette", VesselGeometry.SAGE_CASSETTE),
-        SpinColumn96SlotRack("SpinColumn96SlotRack", VesselGeometry.G12x8);
+        SpinColumn96SlotRack("SpinColumn96SlotRack", VesselGeometry.G12x8),
+        InfiniumChip24("InfiniumChip24", VesselGeometry.INFINIUM_24_CHIP),
+        InfiniumChip12("InfiniumChip12", VesselGeometry.INFINIUM_12_CHIP),
+        InfiniumChip8("InfiniumChip8", VesselGeometry.INFINIUM_8_CHIP);
 
         /**
          * The name that will be supplied by automation scripts.
@@ -110,6 +113,12 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
         public VesselGeometry getVesselGeometry() {
             return vesselGeometry;
         }
+
+        @Override
+        public boolean isBarcoded() {
+            return true;
+        }
+
     }
 
 

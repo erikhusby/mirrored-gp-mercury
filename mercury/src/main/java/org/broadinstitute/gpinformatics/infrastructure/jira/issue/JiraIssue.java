@@ -13,8 +13,12 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.*;
-
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 public class JiraIssue implements Serializable {
 
     private final String key;
@@ -24,7 +28,10 @@ public class JiraIssue implements Serializable {
 
     private final Map<String, Object> extraFields = new HashMap<>();
 
+    private Date created;
     private Date dueDate;
+
+    private String reporter;
 
     private final JiraService jiraService;
 
@@ -40,10 +47,7 @@ public class JiraIssue implements Serializable {
     public String getSummary() throws IOException{
 
         if(summary == null) {
-            JiraIssue tempIssue = jiraService.getIssueInfo(key, (String []) null);
-            summary = tempIssue.getSummary();
-            description = tempIssue.getDescription();
-            dueDate = tempIssue.getDueDate();
+            copyFromJiraIssue(null);
         }
         return summary;
     }
@@ -55,10 +59,7 @@ public class JiraIssue implements Serializable {
     public String getDescription() throws IOException {
 
         if(description == null && summary == null) {
-            JiraIssue tempIssue = jiraService.getIssueInfo(key, (String []) null);
-            summary = tempIssue.getSummary();
-            description = tempIssue.getDescription();
-            dueDate = tempIssue.getDueDate();
+            copyFromJiraIssue(null);
         }
 
         return description;
@@ -71,10 +72,7 @@ public class JiraIssue implements Serializable {
     public Date getDueDate() throws IOException {
 
         if(dueDate == null && summary == null) {
-            JiraIssue tempIssue = jiraService.getIssueInfo(key, (String []) null);
-            summary = tempIssue.getSummary();
-            description = tempIssue.getDescription();
-            dueDate = tempIssue.getDueDate();
+            copyFromJiraIssue(null);
         }
 
         return dueDate;
@@ -84,19 +82,48 @@ public class JiraIssue implements Serializable {
         this.dueDate = dueDate;
     }
 
+    public void setCreated(Date created) {
+        this.created = created;
+    }
+
+    public Date getCreated() throws IOException {
+
+        if(created == null && summary == null) {
+            copyFromJiraIssue(null);
+        }
+        return created;
+    }
+
+    public String getReporter() throws IOException {
+        if (this.reporter == null && summary == null) {
+            copyFromJiraIssue(null);
+        }
+        return reporter;
+    }
+
+    public void setReporter(String reporter) {
+        this.reporter = reporter;
+    }
+
     public Object getFieldValue(@Nonnull String fieldName) throws IOException{
 
         Object foundValue;
 
         if(!extraFields.containsKey(fieldName)) {
-            JiraIssue tempIssue = jiraService.getIssueInfo(key, fieldName);
-            extraFields.put(fieldName,tempIssue.getFieldValue(fieldName));
-            summary = tempIssue.getSummary();
-            description = tempIssue.getDescription();
-            dueDate = tempIssue.getDueDate();
+            copyFromJiraIssue(fieldName);
         }
         foundValue = extraFields.get(fieldName);
         return foundValue;
+    }
+
+    private void copyFromJiraIssue(String fieldName) throws IOException {
+        JiraIssue tempIssue = jiraService.getIssueInfo(key, fieldName);
+        extraFields.put(fieldName,tempIssue.getFieldValue(fieldName));
+        summary = tempIssue.getSummary();
+        description = tempIssue.getDescription();
+        dueDate = tempIssue.getDueDate();
+        created = tempIssue.getCreated();
+        reporter = tempIssue.getReporter();
     }
 
     public <TV> void addFieldValue(String filedName, TV value) {
@@ -140,6 +167,10 @@ public class JiraIssue implements Serializable {
      */
     public void addLink(String targetIssueIn) throws IOException {
         addLink(AddIssueLinkRequest.LinkType.Related, targetIssueIn);
+    }
+
+    public void deleteLink(String linkId) throws IOException {
+        jiraService.deleteLink(linkId);
     }
 
     // Workaround for BSP users whose username includes their email address. This is an interim fix until
@@ -216,5 +247,22 @@ public class JiraIssue implements Serializable {
 
     public String getResolution() throws IOException {
         return jiraService.getResolution(key);
+    }
+
+    public void updateIssueLink(String receiptKey, String oldReceiptKey) throws IOException {
+        JiraIssue jiraIssue = this;
+
+        List<Map> issuelinks = (List<Map>) jiraIssue.getFieldValue("issuelinks");
+        if(issuelinks != null) {
+            for(Map<String, Object> links : issuelinks) {
+                if(links.get("outwardIssue") != null) {
+                    Map<String, Object> otherIssue = (Map<String, Object>) links.get("outwardIssue");
+                    if (otherIssue.get("key").equals(oldReceiptKey)) {
+                        jiraIssue.deleteLink((String) links.get("id"));
+                    }
+                }
+            }
+        }
+        jiraIssue.addLink(receiptKey);
     }
 }

@@ -4,24 +4,18 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MultiMap;
 import org.apache.commons.collections4.map.MultiValueMap;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.gpinformatics.infrastructure.SampleData;
-import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.BSPExportsService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.IsExported;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
-import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
-import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
@@ -34,7 +28,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -76,22 +69,16 @@ public class SystemRouter implements Serializable {
     }
 
     private LabVesselDao         labVesselDao;
-    private ControlDao           controlDao;
     private WorkflowLoader       workflowLoader;
-    private SampleDataFetcher    sampleDataFetcher;
     private BSPExportsService    bspExportsService;
 
     SystemRouter() {
     }
 
     @Inject
-    public SystemRouter(LabVesselDao labVesselDao, ControlDao controlDao,
-                        WorkflowLoader workflowLoader, SampleDataFetcher sampleDataFetcher,
-                        BSPExportsService bspExportsService) {
+    public SystemRouter(LabVesselDao labVesselDao, WorkflowLoader workflowLoader, BSPExportsService bspExportsService) {
         this.labVesselDao = labVesselDao;
-        this.controlDao = controlDao;
         this.workflowLoader = workflowLoader;
-        this.sampleDataFetcher = sampleDataFetcher;
         this.bspExportsService = bspExportsService;
     }
 
@@ -244,8 +231,7 @@ public class SystemRouter implements Serializable {
 
         // None of the above short cuts succeeded, so do the full vessel analysis.
         Set<System> routingOptions = EnumSet.noneOf(System.class);
-        System system = routeForVessels(labVessels, getControlCollaboratorSampleIds(),
-                fetchPossibleControlsSampleData(labVessels), intent, false);
+        System system = routeForVesselsDaoFree(labVessels, intent);
         if (system != null) {
             routingOptions.add(system);
         }
@@ -275,28 +261,17 @@ public class SystemRouter implements Serializable {
     }
 
 
-    // TODO: figure out how to handle libraryNames for fetchLibraryDetailsByLibraryName
-
     /**
      * Determines the system to use for the specified intent (e.g. which system will process a vessel,
      * or which has the sample data records), using what is configured for the workflow associated with
-     * the vessels' product order.
-     *
-     * Controls that don't have a PDO are handled by their context, i.e. the other vessels sharing
-     * a container with the control.
+     * the vessels' workflow lab batch.
      *
      * @param vessels a collection of LabVessel.
-     * @param controlCollaboratorSampleIds list of collaborator IDs for active controls.
-     * @param mapSampleNameToSampleData sample data for the control samples and may include non-controls.
      * @param intent whether to return one routing option, or multiple
-     * @param excludeControlsWithoutWorkflow whether code should ignore controls whose routing cannot be determined
-     *                                       from workflow
      * @return determines which system or systems serve the vessels.
      */
     @DaoFree
-    public System routeForVessels(Collection<LabVessel> vessels, List<String> controlCollaboratorSampleIds,
-                                  Map<String, SampleData> mapSampleNameToSampleData, Intent intent,
-                                  boolean excludeControlsWithoutWorkflow) {
+    public System routeForVesselsDaoFree(Collection<LabVessel> vessels, Intent intent) {
         Set<System> routingOptions = EnumSet.noneOf(System.class);
         for (LabVessel vessel : vessels) {
             if (vessel == null) {
@@ -306,18 +281,17 @@ public class SystemRouter implements Serializable {
                 if (sampleInstances.isEmpty()) {
                     routingOptions.add(System.SQUID);
                 } else {
-                    Set<SampleInstanceV2> possibleControls = new HashSet<>();
                     for (SampleInstanceV2 sampleInstance : sampleInstances) {
                         if (sampleInstance.isReagentOnly()) {
                             continue;
                         }
-                        if (sampleInstance.getAllBucketEntries().isEmpty()) {
-                            possibleControls.add(sampleInstance);
+                        if (sampleInstance.getAllWorkflowBatches().isEmpty()) { // todo jmt what about bucket entry with no batch?
+                            badCrspRouting();
+                            routingOptions.add(System.SQUID);
                         } else {
-                            String workflowName = sampleInstance.getWorkflowName();
-                            for (BucketEntry bucketEntry : sampleInstance.getAllBucketEntries()) {
-                                LabBatch batch = bucketEntry.getLabBatch();
-                                if (workflowName != null && batch != null) {
+                            for (LabBatch batch : sampleInstance.getAllWorkflowBatches()) {
+                                String workflowName = batch.getWorkflowName();
+                                if (workflowName != null) {
                                     ProductWorkflowDefVersion productWorkflowDef = getWorkflowVersion(workflowName,
                                             batch.getCreatedOn());
                                     if (intent == Intent.SYSTEM_OF_RECORD) {
@@ -341,49 +315,6 @@ public class SystemRouter implements Serializable {
                             }
                         }
                     }
-                    if (!possibleControls.isEmpty()) {
-
-                        // TODO: move this logic into ControlEjb?
-
-                        // Don't bother querying BSP if Mercury doesn't have any active controls.
-                        if (controlCollaboratorSampleIds.isEmpty()) {
-                            badCrspRouting();
-                            routingOptions.add(System.SQUID);
-                        } else {
-                            for (SampleInstanceV2 possibleControl : possibleControls) {
-                                String sampleKey = possibleControl.getEarliestMercurySampleName();
-                                SampleData sampleData = mapSampleNameToSampleData.get(sampleKey);
-                                if (sampleData == null) {
-                                    // Don't know what this is, but it isn't for Mercury.
-                                    badCrspRouting();
-                                    routingOptions.add(System.SQUID);
-                                } else {
-                                    if (controlCollaboratorSampleIds.contains(sampleData.getCollaboratorParticipantId())) {
-                                        // Determine the control's routing from either its workflow, or if workflow
-                                        // cannot be identified, from the routing of other vessels in its container(s).
-                                        String workflowName = possibleControl.getWorkflowName();
-                                        for (BucketEntry bucketEntry : possibleControl.getAllBucketEntries()) {
-                                            LabBatch batch = bucketEntry.getLabBatch();
-                                            if (workflowName != null && batch != null) {
-                                                ProductWorkflowDefVersion productWorkflowDef =
-                                                        getWorkflowVersion(workflowName, batch.getCreatedOn());
-                                                routingOptions.add(productWorkflowDef.getRouting());
-                                            } else if (!excludeControlsWithoutWorkflow) {
-                                                System system = routesForAccompanyingVessels(vessel, intent,
-                                                        controlCollaboratorSampleIds);
-                                                if (system != null) {
-                                                    routingOptions.add(system);
-                                                }
-                                            }
-                                        }
-                                    } else {
-                                        badCrspRouting();
-                                        routingOptions.add(System.SQUID);
-                                    }
-                                }
-                            }
-                        }
-                    }
                 }
             }
         }
@@ -398,23 +329,6 @@ public class SystemRouter implements Serializable {
     private void badCrspRouting() {
         if(ApplicationInstance.CRSP.isCurrent()) {
             throw new RouterException("For a CRSP Deployment, Squid should never be a routing option")  ;
-        }
-    }
-
-    /** Returns the routing for the other vessels that accompany the given vessel. */
-    private System routesForAccompanyingVessels(@Nonnull LabVessel labVessel, @Nonnull Intent intent,
-                                                List<String> controlCollaboratorSampleIds) {
-        Set<LabVessel> accompanyingVessels = new HashSet<>();
-        for (VesselContainer<?> vesselContainer : labVessel.getContainers()) {
-            accompanyingVessels.addAll(vesselContainer.getContainedVessels());
-        }
-        accompanyingVessels.remove(labVessel);
-        if (accompanyingVessels.size() > 0) {
-            // Gets the routing for accompanying vessels, excluding controls without a known workflow.
-            return routeForVessels(accompanyingVessels, controlCollaboratorSampleIds,
-                    fetchPossibleControlsSampleData(accompanyingVessels), intent, true);
-        } else {
-            return null;
         }
     }
 
@@ -433,11 +347,6 @@ public class SystemRouter implements Serializable {
      *     historically been the main LIMS system of record, in this scenario it is the safest bet</li>
      *     <li>If there are any other combinations, throw a {@link RouterException}</li>
      * </ul>
-     *
-     * TODO: Consider routing for controls
-     * Controls recognized by Mercury currently route to BOTH. When Mercury is the system of record for a workflow,
-     * we'll start to see routingOptions of { BOTH, MERCURY }, which this implementation will currently reject.
-     *
      *
      * @param routingOptions A navigable collection of determined routing options for a collection of lab vessels.
      *
@@ -475,38 +384,4 @@ public class SystemRouter implements Serializable {
         return workflowConfig.getWorkflowVersionByName(workflowName, effectiveDate);
     }
 
-    /**
-     * Returns sample data for controls and possibly some non-controls also.
-     *
-     * @return map of sample id -> sample data.
-     */
-    private Map<String, SampleData> fetchPossibleControlsSampleData(Collection<LabVessel> labVessels) {
-        Collection<String> controlSampleNames = new ArrayList<>();
-        Set<SampleInstanceV2> controlSampleInstances = new HashSet<>();
-        for (LabVessel labVessel : labVessels) {
-            if (labVessel != null) {
-                Set<SampleInstanceV2> sampleInstances = labVessel.getSampleInstancesV2();
-                for (SampleInstanceV2 sampleInstance : sampleInstances) {
-                    if (!sampleInstance.isReagentOnly() && sampleInstance.getAllBucketEntries().isEmpty()) {
-                        if (controlSampleInstances.add(sampleInstance)) {
-                            controlSampleNames.add(sampleInstance.getEarliestMercurySampleName());
-                        }
-                    }
-                }
-            }
-        }
-        return sampleDataFetcher.fetchSampleData(controlSampleNames);
-    }
-
-    /** Returns the active controls' collaborator participant ids. */
-    private List<String> getControlCollaboratorSampleIds() {
-        List<String> controlCollaboratorSampleIds = new ArrayList<>();
-        List<Control> controls = controlDao.findAllActive();
-        if (CollectionUtils.isNotEmpty(controls)) {
-            for (Control control : controls) {
-                controlCollaboratorSampleIds.add(control.getCollaboratorParticipantId());
-            }
-        }
-        return controlCollaboratorSampleIds;
-    }
 }

@@ -19,6 +19,7 @@ import java.util.Date;
 @RequestScoped
 public class GenericReagentDao extends GenericDao {
 
+    @Deprecated
     public GenericReagent findByReagentNameAndLot(String reagentName, String lot) {
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<GenericReagent> criteriaQuery = criteriaBuilder.createQuery(GenericReagent.class);
@@ -40,7 +41,8 @@ public class GenericReagentDao extends GenericDao {
         criteriaQuery.where(
                 criteriaBuilder.equal(root.get(Reagent_.name), reagentName),
                 criteriaBuilder.equal(root.get(Reagent_.lot), lot),
-                criteriaBuilder.equal(root.get(Reagent_.expiration), expiration));
+                (expiration == null ? criteriaBuilder.isNull(root.get(Reagent_.expiration)) :
+                        criteriaBuilder.equal(root.get(Reagent_.expiration), expiration)));
         try {
             return getEntityManager().createQuery(criteriaQuery).getSingleResult();
         } catch (NoResultException ignored) {

@@ -15,14 +15,17 @@ import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraProject;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
+import org.broadinstitute.gpinformatics.mercury.boundary.zims.BSPLookupException;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Formula;
 import org.hibernate.envers.AuditJoinTable;
@@ -322,15 +325,23 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
      * @see SampleDataFetcher
      */
     public static void loadSampleData(List<ProductOrderSample> samples) {
+        loadSampleData(samples, BSPSampleSearchColumn.PDO_SEARCH_COLUMNS);
+    }
+
+    /**
+     * Load SampleData for all the supplied ProductOrderSamples.
+     * @see SampleDataFetcher
+     */
+    public static void loadSampleData(List<ProductOrderSample> samples, BSPSampleSearchColumn... bspSampleSearchColumns) {
 
         // Create a subset of the samples so we only call BSP for BSP samples that aren't already cached.
         Set<String> sampleNames = new HashSet<>(samples.size());
         for (ProductOrderSample productOrderSample : samples) {
-            if (productOrderSample.needsBspMetaData()) {
+            if (!productOrderSample.isHasBspSampleDataBeenInitialized()) {
                 sampleNames.add(productOrderSample.getName());
             }
         }
-         if (sampleNames.isEmpty()) {
+        if (sampleNames.isEmpty()) {
             // This early return is needed to avoid making a unnecessary injection, which could cause
             // DB Free automated tests to fail.
             return;
@@ -338,7 +349,13 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
         // This gets all the sample names. We could get unique sample names from BSP as a future optimization.
         SampleDataFetcher sampleDataFetcher = ServiceAccessUtility.getBean(SampleDataFetcher.class);
-        Map<String, SampleData> sampleDataMap = sampleDataFetcher.fetchSampleData(sampleNames);
+        Map<String, SampleData> sampleDataMap = Collections.emptyMap();
+
+        try {
+            sampleDataMap = sampleDataFetcher.fetchSampleDataForProductOrderSamples(samples, bspSampleSearchColumns);
+        } catch (BSPLookupException ignored) {
+            // not a bsp sample?
+        }
 
         // Collect SampleData which we will then use to look up FFPE status.
         List<SampleData> nonNullSampleData = new ArrayList<>();
@@ -349,6 +366,8 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             if (sampleData != null) {
                 sample.setSampleData(sampleData);
                 nonNullSampleData.add(sampleData);
+            } else {
+                sample.setSampleData(sample.makeSampleData());
             }
         }
 
@@ -378,6 +397,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public String getAddOnList() {
+        return getAddOnList(", ");
+    }
+
+    public String getAddOnList(String delimiter) {
         if (addOns.isEmpty()) {
             return "no Add-ons";
         }
@@ -388,7 +411,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             addOnArray[i++] = poAddOn.getAddOn().getProductName();
         }
 
-        return StringUtils.join(addOnArray, ", ");
+        return StringUtils.join(addOnArray, delimiter);
     }
 
     public int getLaneCount() {
@@ -754,6 +777,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         loadSampleData(samples);
     }
 
+    public void loadSampleDataForBillingTracker() {
+        loadSampleData(samples, BSPSampleSearchColumn.BILLING_TRACKER_COLUMNS);
+    }
+
     // Return the sample counts object to allow call chaining.
     private SampleCounts updateSampleCounts() {
         sampleCounts.generateCounts();
@@ -982,6 +1009,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return false;
     }
 
+    public boolean isRegulatoryInfoEditAllowed() {
+        return isDraft() || isPending();
+    }
+
     public boolean canSkipRegulatoryRequirements() {
         return !StringUtils.isBlank(skipRegulatoryReason);
     }
@@ -1140,6 +1171,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         Abandoned,
         Completed;
 
+        public static final EnumSet<OrderStatus> canAbandonStatuses = EnumSet.of(Pending, Submitted);
         /** CSS Class to use when displaying this status in HTML. */
         private final String cssClass;
 
@@ -1186,17 +1218,22 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
         /** @return true if an order can be abandoned from this state. */
         public boolean canAbandon() {
-            return this == Pending || this == Submitted;
+            return canAbandonStatuses.contains(this);
         }
 
         /** @return true if an order can be placed from this state. */
         public boolean canPlace() {
-            return this == Draft || this == Pending;
+            return EnumSet.of(Draft, Pending).contains(this);
+        }
+
+        /** @return true if an order is ready for the lab to begin work on it. */
+        public boolean readyForLab() {
+            return !EnumSet.of(Draft, Pending, Abandoned).contains(this);
         }
 
         /** @return true if an order can be billed from this state. */
         public boolean canBill() {
-            return this == Submitted || this == Abandoned || this == Completed;
+            return EnumSet.of(Submitted, Abandoned, Completed).contains(this);
         }
     }
 
@@ -1303,11 +1340,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                     // This is a unique sample name, so do any counts that are only needed for unique names. Since
                     // BSP looks up samples by name, it would always get the same data, so only counting unique values.
                     if (sample.isInBspFormat()) {
-                        if (sample.bspMetaDataMissing()) {
-                            missingBspMetaDataCount++;
-                        } else {
-                            updateSampleCounts(participantSet, sample);
-                        }
+                        updateSampleCounts(participantSet, sample);
                     }
                 }
 
@@ -1362,9 +1395,15 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
          * @param sample         the sample to update the counts with
          */
         private void updateSampleCounts(Set<String> participantSet, ProductOrderSample sample) {
+            if (sample.bspMetaDataMissing()) {
+                missingBspMetaDataCount++;
+            }
+
             incrementSampleCountByMetadata(sample);
             SampleData sampleData = sample.getSampleData();
-            if (sampleData.isSampleReceived()) {
+
+            //Exposing that we look at received to be either received or accessioned.
+            if (sample.isSampleAvailable()) {
                 receivedSampleCount++;
             } else if (!sample.getDeliveryStatus().isAbandoned()) {
                 notReceivedAndNotAbandonedCount++;
@@ -1598,23 +1637,16 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
      */
     @Transient
     public boolean canSkipQuote() {
-        return !StringUtils.isBlank(getSkipQuoteReason()) && getProduct().getSupportsSkippingQuote();
+        return StringUtils.isNotBlank(getSkipQuoteReason()) && allowedToSkipQuote();
+    }
+
+    public boolean allowedToSkipQuote() {
+        return null != getProduct() &&
+               getProduct().getSupportsSkippingQuote();
     }
 
     public int getSampleCount() {
         return sampleCount;
-    }
-
-    /**
-     * Is the current PDO ready for lab work? A PDO is ready if all of its samples are received (or abandoned) and
-     * the PM has placed the order.
-     *
-     * @return true if this PDO contains samples that are ready for lab work
-     */
-    public boolean readyForLab() {
-        // Abandoned and Completed PDOs are considered "ready" because they can transition back to the
-        // Submitted state.
-        return orderStatus != OrderStatus.Draft && orderStatus != OrderStatus.Pending;
     }
 
     public Collection<String> getPrintFriendlyRegulatoryInfo() {
@@ -1625,4 +1657,43 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         }
         return regInfo;
     }
+
+    // todo jmt move this to a preference
+    private static final Map<String, String> mapProductPartToGenoChip = new HashMap<>();
+    static {
+        mapProductPartToGenoChip.put("P-WG-0022", "HumanOmni2.5-8v1_A");
+        mapProductPartToGenoChip.put("P-WG-0023", "HumanOmniExpressExome-8v1_B");
+        mapProductPartToGenoChip.put("P-WG-0025", "HumanExome-12v1-2_A");
+        mapProductPartToGenoChip.put("P-WG-0028", "HumanOmniExpress-24v1-1_A");
+        mapProductPartToGenoChip.put("P-WG-0029", "HumanExome-12v1-2_A");
+        mapProductPartToGenoChip.put("P-WG-0031", "HumanCoreExome-24v1-0_A");
+        mapProductPartToGenoChip.put("P-WG-0036", "PsychChip_15048346_B");
+        mapProductPartToGenoChip.put("P-WG-0053", "Broad_GWAS_supplemental_15061359_A1");
+        mapProductPartToGenoChip.put("P-WG-0055", "PsychChip_v1-1_15073391_A1");
+    }
+
+    public String getGenoChipType() {
+        String genoChipType = mapProductPartToGenoChip.get(getProduct().getPartNumber());
+        if (getProduct().getPartNumber().equals("P-WG-0036") && getTitle().contains("Danish")) {
+            genoChipType = "DBS_Wave_Psych";
+        }
+        return genoChipType;
+    }
+
+    public List<Workflow> getProductWorkflows() {
+        List<Workflow> workflows = new ArrayList<>();
+        for (ProductOrderAddOn addOn : getAddOns()) {
+            Workflow addOnWorkflow = addOn.getAddOn().getWorkflow();
+            if (addOnWorkflow != Workflow.NONE) {
+                workflows.add(addOnWorkflow);
+            }
+        }
+
+        Workflow workflow = getProduct().getWorkflow();
+        if (workflow != Workflow.NONE) {
+            workflows.add(workflow);
+        }
+        return workflows;
+    }
+
 }

@@ -1,24 +1,23 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
-
-//import org.mvel2.MVEL;
-//import org.mvel2.optimizers.OptimizerFactory;
 
 /**
  * Where samples are placed for batching, typically the first step in a process
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 public class WorkflowBucketDef extends WorkflowStepDef {
+    private static final Log log = LogFactory.getLog(WorkflowBucketDef.class);
 
-    /** Expression to determine whether a vessel can enter the bucket */
-    private String entryExpression;
+    private WorkflowBucketEntryEvaluator bucketEntryEvaluator;
 
     /** auto-drain rules - time / date based */
     private Double autoDrainDays;
@@ -39,31 +38,28 @@ public class WorkflowBucketDef extends WorkflowStepDef {
         this.autoDrainDays = autoDrainDays;
     }
 
-    public boolean meetsBucketCriteria(LabVessel labVessel) {
-        // Samples with a Mercury metadata source always meet the criteria, because they don't have material types.
-        for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
-            for (MercurySample mercurySample : sampleInstanceV2.getRootMercurySamples()) {
-                if (mercurySample.getMetadataSource() == MercurySample.MetadataSource.MERCURY) {
-                    return true;
-                }
-            }
+    /**
+     * Test if the vessel is eligible for bucketing. When bucket is being evaluated BucketEntryEvaluators defined in
+     * the configuration are or-ed. If no BucketEntryEvaluators are defined it will by default allow the
+     * labVessel to be bucketed.
+     *
+     * @return true if the vessel can go into the bucket, false otherwise
+     */
+    public boolean meetsBucketCriteria(LabVessel labVessel, ProductOrder productOrder) {
+        if (bucketEntryEvaluator == null) {
+            // If no bucketEntryEvaluators are configured, then, by default, the labVessels meet bucket criteria.
+            return true;
         }
 
-        // todo remove this code block when Bamboo works with MVEL
-        if (entryExpression != null && entryExpression.contains("getMaterialType() contains \"DNA:\"")) {
-            return labVessel.isDNA();
+        return bucketEntryEvaluator.invoke(labVessel, productOrder);
+    }
+
+    public Workflow getWorkflowForProductOrder(ProductOrder productOrder) {
+        Workflow workflow = getBucketEntryEvaluator().getMatchingWorkflow(productOrder);
+        if (workflow == Workflow.NONE) {
+            workflow = productOrder.getProduct().getWorkflow();
         }
-
-        // Compile, even though we're using it only once, because MVEL sometimes has
-        // problems with Hibernate proxies in eval method
-        // todo uncomment this code block when Bamboo works with MVEL
-//        OptimizerFactory.setDefaultOptimizer("reflective");
-//        Serializable compiled = MVEL.compileExpression(entryExpression);
-//        Map<String, Object> context = new HashMap<String, Object>();
-//        context.put("labVessel", labVessel);
-//        return (Boolean) MVEL.executeExpression(compiled, context);
-
-        return true;
+        return workflow;
     }
 
     /**
@@ -77,5 +73,17 @@ public class WorkflowBucketDef extends WorkflowStepDef {
         } else {
             return null;
         }
+    }
+
+    void setBucketEntryEvaluator(WorkflowBucketEntryEvaluator bucketEntryEvaluator) {
+        this.bucketEntryEvaluator = bucketEntryEvaluator;
+    }
+
+    public WorkflowBucketEntryEvaluator getBucketEntryEvaluator() {
+        return bucketEntryEvaluator;
+    }
+
+    public String findMissingRequirements(ProductOrder productOrder, MaterialType latestMaterialType) {
+        return bucketEntryEvaluator.findMissingRequirements(productOrder, latestMaterialType);
     }
 }

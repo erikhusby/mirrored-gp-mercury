@@ -31,7 +31,8 @@ public enum BSPSampleSearchColumn {
     RQS("RNA Quality Score (RQS)"),
     PICO_RUN_DATE("Pico Run Date"),
     RECEIPT_DATE("Receipt Date"),
-    ORIGINAL_MATERIAL_TYPE("Original Material Type");
+    ORIGINAL_MATERIAL_TYPE("Original Material Type"),
+    DV200("DV200");
 
     private final String columnName;
     public String columnName() { return columnName; }
@@ -66,6 +67,17 @@ public enum BSPSampleSearchColumn {
         BSPSampleSearchColumn.RIN,
         BSPSampleSearchColumn.RQS,
         BSPSampleSearchColumn.PICO_RUN_DATE,
-        BSPSampleSearchColumn.RECEIPT_DATE
+        BSPSampleSearchColumn.RECEIPT_DATE,
+        BSPSampleSearchColumn.DV200
     };
+
+    public static final BSPSampleSearchColumn[] BILLING_TRACKER_COLUMNS = {
+            COLLABORATOR_SAMPLE_ID
+    };
+
+    public static final BSPSampleSearchColumn[] BUCKET_PAGE_COLUMNS = {
+            COLLABORATOR_SAMPLE_ID, MATERIAL_TYPE
+    };
+
+
 }

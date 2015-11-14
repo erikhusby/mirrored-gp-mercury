@@ -31,6 +31,8 @@ public class VesselToVesselTransfer extends VesselTransfer {
         this.sourceVessel = sourceVessel;
         this.targetVessel = targetVessel;
         this.labEvent = labEvent;
+        this.sourceVessel.getVesselToVesselTransfersThisAsSource().add(this);
+        this.targetVessel.getVesselToVesselTransfersThisAsTarget().add(this);
     }
 
     protected VesselToVesselTransfer() {
@@ -42,6 +44,11 @@ public class VesselToVesselTransfer extends VesselTransfer {
 
     public LabVessel getTargetVessel() {
         return targetVessel;
+    }
+
+    /** For fixups only. */
+    void setTargetVessel(LabVessel targetVessel) {
+        this.targetVessel = targetVessel;
     }
 
     public LabEvent getLabEvent() {

@@ -19,6 +19,7 @@ import org.broadinstitute.gpinformatics.mercury.BSPRestClient;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ObjectFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
@@ -33,22 +34,11 @@ import javax.ws.rs.core.Response;
 public class SamplesDaughterPlateHandler {
     public static final String BSP_TRANSFER_REST_URL = "plate/transfer";
     private static final Log logger = LogFactory.getLog(SamplesDaughterPlateHandler.class);
-    private ObjectFactory factory = new ObjectFactory();
 
     @Inject
     private BSPRestClient bspRestClient;
 
-    public void postToBsp(StationEventType stationEvent, String bspRestUrl) {
-
-        // Creates a bettalims message to pass to BSP.
-        BettaLIMSMessage message = factory.createBettaLIMSMessage();
-        if (OrmUtil.proxySafeIsInstance(stationEvent, PlateTransferEventType.class)) {
-            PlateTransferEventType transferEvent = OrmUtil.proxySafeCast(stationEvent, PlateTransferEventType.class);
-            message.getPlateTransferEvent().add(transferEvent);
-        } else if (OrmUtil.proxySafeIsInstance(stationEvent, PlateCherryPickEvent.class)) {
-            PlateCherryPickEvent event = OrmUtil.proxySafeCast(stationEvent, PlateCherryPickEvent.class);
-            message.getPlateCherryPickEvent().add(event);
-        }
+    public void postToBsp(BettaLIMSMessage message, String bspRestUrl) {
 
         // Posts message to BSP using the specified REST url.
         String urlString = bspRestClient.getUrl(bspRestUrl);
@@ -61,4 +51,5 @@ public class SamplesDaughterPlateHandler {
         }
 
     }
+
 }

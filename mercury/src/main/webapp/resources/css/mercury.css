@@ -182,3 +182,7 @@ legend + .control-group { margin-top: 0px; -webkit-margin-top-collapse: separate
 
 .notificationText { font-size: x-small; font-weight: 600; color: green; clear: both; margin-left: 15px; }
 
+/* Use with a span to render text that looks something like a link but is not currently enabled. It is helpful to put a
+   reason for the link being disabled in the title attribute which the user will see while hovering over the link as
+   well as repeating that information near the link if space allows. */
+.disabled-link { text-decoration: underline line-through; color: #666666; font-size: medium; }

@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -14,21 +15,23 @@ public class PDOSample {
     public PDOSample() {
     }
 
-    public PDOSample(String pdoKey, String sampleName, Boolean hasPrimaryPriceItemBeenBilled) {
-        this(pdoKey, sampleName, hasPrimaryPriceItemBeenBilled, null, false);
+    public PDOSample(String pdoKey, String sampleName, Boolean hasPrimaryPriceItemBeenBilled, Date receiptDate) {
+        this(pdoKey, sampleName, hasPrimaryPriceItemBeenBilled, null, false, receiptDate);
     }
 
     public PDOSample(String pdoKey, String sampleName, Boolean hasPrimaryPriceItemBeenBilled, Boolean onRisk,
-                     boolean isRiskCalculated) {
+                     boolean isRiskCalculated, Date receiptDate) {
         this.pdoKey = pdoKey;
         this.sampleName = sampleName;
         this.hasPrimaryPriceItemBeenBilled = hasPrimaryPriceItemBeenBilled;
         this.onRisk = onRisk;
         this.isRiskCalculated = isRiskCalculated;
+        this.receiptDate = receiptDate;
     }
 
-    public PDOSample(String pdoKey, String sampleName, Boolean hasPrimaryPriceItemBeenBilled, Boolean onRisk) {
-        this(pdoKey, sampleName, hasPrimaryPriceItemBeenBilled, onRisk, true);
+    public PDOSample(String pdoKey, String sampleName, Boolean hasPrimaryPriceItemBeenBilled, Boolean onRisk,
+                     Date receiptDate) {
+        this(pdoKey, sampleName, hasPrimaryPriceItemBeenBilled, onRisk, true, receiptDate);
     }
 
     private String pdoKey;
@@ -42,6 +45,8 @@ public class PDOSample {
     private boolean isRiskCalculated;
 
     private List<String> riskCategories;
+
+    private Date receiptDate;
 
     public List<String> getRiskCategories() {
         return riskCategories;
@@ -98,5 +103,13 @@ public class PDOSample {
 
     public void setRiskCalculated(boolean isRiskCalculated) {
         this.isRiskCalculated = isRiskCalculated;
+    }
+
+    public Date getReceiptDate() {
+        return receiptDate;
+    }
+
+    public void setReceiptDate(Date receiptDate) {
+        this.receiptDate = receiptDate;
     }
 }

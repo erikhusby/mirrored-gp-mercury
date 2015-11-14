@@ -73,7 +73,7 @@ public class QuotesCacheTest {
     @Test(groups = {TestGroups.EXTERNAL_INTEGRATION}, enabled = false)
     public void test_known_good_funding_sources() throws Exception {
 
-        PMBQuoteService quoteService = PMBQuoteServiceProducer.testInstance();
+        QuoteService quoteService = QuoteServiceProducer.testInstance();
 
         long start = System.currentTimeMillis();
         QuotesCache cache = new QuotesCache(quoteService.getAllQuotes());

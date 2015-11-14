@@ -37,6 +37,7 @@ import java.util.Map;
 @Test(groups = TestGroups.DATABASE_FREE)
 public class VarioskanParserTest {
 
+    public static final String VARIOSKAN_OUTPUT = "VarioskanOutput.xls";
     public static final String PLATE1_BARCODE = "000001234567";
     public static final String PLATE1_BARCODE_IN_SS = "1234567";
     public static final String PLATE2_BARCODE = "000002345678";
@@ -44,7 +45,7 @@ public class VarioskanParserTest {
 
     @Test
     public void testBasic() {
-        InputStream testSpreadSheetInputStream = getSpreadsheet();
+        InputStream testSpreadSheetInputStream = getSpreadsheet(VARIOSKAN_OUTPUT);
         try {
             VarioskanPlateProcessor varioskanPlateProcessor = new VarioskanPlateProcessor(
                     VarioskanRowParser.QUANTITATIVE_CURVE_FIT1_TAB);
@@ -74,7 +75,7 @@ public class VarioskanParserTest {
             PoiSpreadsheetParser parser = new PoiSpreadsheetParser(Collections.<String, TableProcessor>emptyMap());
 
             // get R2, just use raw POI API?
-            Workbook workbook = WorkbookFactory.create(getSpreadsheet());
+            Workbook workbook = WorkbookFactory.create(getSpreadsheet(VARIOSKAN_OUTPUT));
             parser.processRows(workbook.getSheet(VarioskanRowParser.QUANTITATIVE_CURVE_FIT1_TAB), varioskanPlateProcessor);
             Map<String, StaticPlate> mapBarcodeToPlate = new HashMap<>();
 
@@ -127,8 +128,8 @@ public class VarioskanParserTest {
         return mapPositionToTube;
     }
 
-    public static InputStream getSpreadsheet() {
-        InputStream testSpreadSheetInputStream = getTestResource("VarioskanOutput.xls");
+    public static InputStream getSpreadsheet(String filename) {
+        InputStream testSpreadSheetInputStream = getTestResource(filename);
         Assert.assertNotNull(testSpreadSheetInputStream);
         return testSpreadSheetInputStream;
     }

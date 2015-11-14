@@ -143,7 +143,7 @@ public class ProductOrderEjb {
         List<ProductOrderSample> samplesToRemove =
                 new ArrayList<>(editOrder.getSampleCount() - editOrder.getReceivedSampleCount());
         for (ProductOrderSample sample : editOrder.getSamples()) {
-            if (!sample.getSampleData().isSampleReceived()) {
+            if (!sample.isSampleAvailable()) {
                 samplesToRemove.add(sample);
             }
         }
@@ -168,8 +168,8 @@ public class ProductOrderEjb {
      * @throws QuoteNotFoundException
      */
     public void persistProductOrder(ProductOrder.SaveType saveType, ProductOrder editedProductOrder,
-                                    Collection<String> deletedIds,
-                                    Collection<ProductOrderKitDetail> kitDetailCollection)
+                                    @Nonnull Collection<String> deletedIds,
+                                    @Nonnull Collection<ProductOrderKitDetail> kitDetailCollection)
             throws IOException, QuoteNotFoundException {
 
         kitDetailCollection.removeAll(Collections.singleton(null));
@@ -330,10 +330,15 @@ public class ProductOrderEjb {
                                    @Nonnull MessageReporter reporter) {
         ProductOrder order = productOrderDao.findByBusinessKey(productOrderKey);
         // Only add samples to the LIMS bucket if the order is ready for lab work.
-        if (order.readyForLab()) {
-            Collection<ProductOrderSample> samples = bucketEjb.addSamplesToBucket(order, newSamples);
+        if (order.getOrderStatus().readyForLab()) {
+            Map<String, Collection<ProductOrderSample>> samples = bucketEjb.addSamplesToBucket(order, newSamples);
             if (!samples.isEmpty()) {
-                reporter.addMessage("{0} samples have been added to the pico bucket.", samples.size());
+                for (Map.Entry<String, Collection<ProductOrderSample>> bucketSampleEntry : samples.entrySet()) {
+                    String bucketName = bucketSampleEntry.getKey();
+                    bucketName = bucketName.toLowerCase().endsWith("bucket") ? bucketName : bucketName + " Bucket";
+                    reporter.addMessage("{0} samples have been added to the {1}.",
+                            bucketSampleEntry.getValue().size(), bucketName);
+                }
             }
         }
     }
@@ -900,9 +905,10 @@ public class ProductOrderEjb {
      * if necessary.
      *
      * @param jiraTicketKey the PDO key
-     * @param samples       the samples to add
+     * @param samples       the samples to add. this argument must not be changed to Collection, or
+     *                      ImmutableListMultiMap does not work correctly.
      */
-    public void addSamples(@Nonnull String jiraTicketKey, @Nonnull Collection<ProductOrderSample> samples,
+    public void addSamples(@Nonnull String jiraTicketKey, @Nonnull List<ProductOrderSample> samples,
                            @Nonnull MessageReporter reporter) throws NoSuchPDOException, IOException {
         ProductOrder order = findProductOrder(jiraTicketKey);
         order.addSamples(samples);
@@ -917,10 +923,9 @@ public class ProductOrderEjb {
 
         Map<String, MercurySample> mercurySampleMap = mercurySampleDao.findMapIdToMercurySample(samplesBySampleId.keySet());
 
-        for (Map.Entry<String, ProductOrderSample> productOrderSampleEntry : samplesBySampleId.entries()) {
-            if (productOrderSampleEntry.getValue().getMercurySample() == null) {
-                productOrderSampleEntry.getValue()
-                        .setMercurySample(mercurySampleMap.get(productOrderSampleEntry.getKey()));
+        for (Map.Entry<String, ProductOrderSample> sampleMapEntry : samplesBySampleId.entries()) {
+            if (sampleMapEntry.getValue().getMercurySample() == null && mercurySampleMap.get(sampleMapEntry.getKey()) !=null) {
+                mercurySampleMap.get(sampleMapEntry.getKey()).addProductOrderSample(sampleMapEntry.getValue());
             }
         }
 

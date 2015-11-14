@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.columns;
 
+import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
@@ -27,7 +28,7 @@ public class LabVesselMetadataPlugin implements ListPlugin {
      */
     @Override
     public List<ConfigurableList.Row> getData(List<?> entityList, ConfigurableList.HeaderGroup headerGroup
-            , @Nonnull Map<String, Object> context) {
+            , @Nonnull SearchContext context) {
         List<LabVessel> labVesselList = (List<LabVessel>) entityList;
         List<ConfigurableList.Row> metricRows = new ArrayList<>();
 
@@ -59,7 +60,7 @@ public class LabVesselMetadataPlugin implements ListPlugin {
 
     @Override
     public ConfigurableList.ResultList getNestedTableData(Object entity, ColumnTabulation columnTabulation,
-                                                          @Nonnull Map<String, Object> context) {
+                                                          @Nonnull SearchContext context) {
         throw new UnsupportedOperationException("Method getNestedTableData not implemented in "
                                                 + getClass().getSimpleName() );
     }

@@ -60,6 +60,25 @@ bsp:
       host:     bsp.broadinstitute.org
       port:     80
 
+gap:
+
+    DEV:
+      login:    seqsystem
+      password: bspbsp
+      host:     gapdev.broadinstitute.org
+      port:     8080
+
+    RC:
+      login:    seqsystem
+      password: bspbsp
+      host:     gaprc.broadinstitute.org
+      port:     8080
+
+    PROD:
+      login:    seqsystem
+      password: bspbsp
+      host:     gap.broadinstitute.org
+      port:     80
 
 jira:
 
@@ -152,7 +171,7 @@ thrift:
       port: 9090
 
     PROD:
-      host: seqlims
+      host: vsquidthriftservice
       port: 9090
 
 
@@ -186,7 +205,7 @@ bettaLimsServer:
         jmsQueue: broad.queue.bettalims.test
 
     QA:
-        wsHost: vbettalimsqa
+        wsHost: vbettalimsqa1
         wsPort: 9998
         jmsHost: seqtest04
         jmsPort: 61616
@@ -245,8 +264,9 @@ mercury:
 
       app:      DEV
       bsp:      DEV
+      gap:      DEV
       jira:     TEST
-      quote:    DEV # temp change, due to QA down 
+      quote:    QA
       squid:    TEST
       tableau:  PROD
       thrift:   TEST
@@ -263,8 +283,9 @@ mercury:
 
       app:      AUTO_BUILD
       bsp:      DEV
+      gap:      DEV
       jira:     TEST
-      quote:    DEV  # temp change, due to QA down
+      quote:    QA
       squid:    DEV
       tableau:  PROD
       thrift:   TEST
@@ -280,8 +301,9 @@ mercury:
 
       app:      TEST
       bsp:      DEV
+      gap:      DEV
       jira:     TEST
-      quote:    DEV  # temp change, due to QA down
+      quote:    QA
       squid:    TEST
       tableau:  PROD
       thrift:   TEST
@@ -296,8 +318,9 @@ mercury:
     QA:
       app:      QA
       bsp:      RC
+      gap:      RC
       jira:     TEST
-      quote:    DEV  # temp change, due to QA down
+      quote:    QA
       squid:    QA
       tableau:  PROD
       thrift:   QA
@@ -313,8 +336,9 @@ mercury:
 
       app:      RC
       bsp:      RC
+      gap:      RC
       jira:     TEST
-      quote:    DEV  # temp change, due to QA down
+      quote:    QA
       squid:    QA
       tableau:  PROD
       thrift:   QA
@@ -331,6 +355,7 @@ mercury:
 
       app:      PROD
       bsp:      PROD
+      gap:      PROD
       jira:     PROD
       quote:    PROD
       squid:    PROD

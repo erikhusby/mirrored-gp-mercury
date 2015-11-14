@@ -47,11 +47,12 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.collaborate.CollaborationNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.collaborate.CollaborationPortalException;
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
-import org.broadinstitute.gpinformatics.infrastructure.mercury.MercuryClientService;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDto;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDtoFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionStatusDetailBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
+import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.AlignerDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.ReferenceSequenceDao;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.json.JSONArray;
@@ -108,9 +109,6 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     // Reference sequence that will be used for Exome projects.
     private static final String DEFAULT_REFERENCE_SEQUENCE = "Homo_sapiens_assembly19|1";
-
-    @Inject
-    private MercuryClientService mercuryClientService;
 
     @Inject
     private ResearchProjectDao researchProjectDao;
@@ -192,6 +190,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     private List<String> selectedSubmissionSamples;
 
+    @Inject
+    private AlignerDao alignerDao;
+
     public Map<String, String> getBioSamples() {
         return bioSamples;
     }
@@ -235,9 +236,12 @@ public class ResearchProjectActionBean extends CoreActionBean {
     @Inject
     private CollaborationService collaborationService;
 
+    @Inject
+    private ReferenceSequenceDao referenceSequenceDao;
+
     private String irbList;
 
-    private final CompletionStatusFetcher progressFetcher = new CompletionStatusFetcher();
+    private CompletionStatusFetcher progressFetcher;
 
     private CollaborationData collaborationData;
 
@@ -303,7 +307,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
             productOrderIds.add(order.getProductOrderId());
         }
 
-        progressFetcher.loadProgress(productOrderDao, productOrderIds);
+        progressFetcher = new CompletionStatusFetcher(productOrderDao.getProgress(productOrderIds));
     }
 
     /**
@@ -1025,7 +1029,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
      * @return List of strings representing the sequence aligners
      */
     public Collection<DisplayableItem> getSequenceAligners() {
-        return mercuryClientService.getSequenceAligners();
+        return makeDisplayableItemCollection(alignerDao.findAll());
     }
 
     /**
@@ -1036,7 +1040,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
      * @return UI helper object {@link DisplayableItem} representing the sequence aligner
      */
     public DisplayableItem getSequenceAligner(String businessKey) {
-        return mercuryClientService.getSequenceAligner(businessKey);
+        return getDisplayableItemInfo(businessKey, alignerDao);
     }
 
     /**
@@ -1047,7 +1051,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
      * @return UI helper object {@link DisplayableItem} representing the reference sequence
      */
     public DisplayableItem getReferenceSequence(String businessKey) {
-        return mercuryClientService.getReferenceSequence(businessKey);
+        return getDisplayableItemInfo(businessKey, referenceSequenceDao);
     }
 
     /**
@@ -1056,7 +1060,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
      * @return List of strings representing the reference sequences
      */
     public Collection<DisplayableItem> getReferenceSequences() {
-        return mercuryClientService.getReferenceSequences();
+        return makeDisplayableItemCollection(referenceSequenceDao.findAllCurrent());
     }
 
     /**
@@ -1073,6 +1077,17 @@ public class ResearchProjectActionBean extends CoreActionBean {
     @Override
     public boolean isEditAllowed() {
         return getUserBean().isDeveloperUser() || getUserBean().isPMUser() || getUserBean().isPDMUser();
+    }
+
+    /**
+     * @return true if the current user is allowed to request data submissions for the current research project
+     */
+    public boolean isSubmissionAllowed() {
+        if (getUserBean().isDeveloperUser()) {
+            return true;
+        }
+        Collection<Long> projectManagerIds = Arrays.asList(editResearchProject.getPeople(RoleType.PM));
+        return getUserBean().isPMUser() && projectManagerIds.contains(getUserBean().getBspUser().getUserId());
     }
 
     public CollaborationData getCollaborationData() {
@@ -1160,5 +1175,10 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     public void setSampleKitRecipient(SampleKitRecipient sampleKitRecipient) {
         this.sampleKitRecipient = sampleKitRecipient;
+    }
+
+    public String getComplianceStatement() {
+        return String.format(ResearchProject.REGULATORY_COMPLIANCE_STATEMENT,
+                "orders created from this Research Project involve");
     }
 }
