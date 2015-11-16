@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.workflow;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import net.sourceforge.stripes.action.Before;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
@@ -99,22 +101,21 @@ public class BucketViewActionBean extends CoreActionBean {
     LabVesselDao labVesselDao;
     @Validate(required = true, on = {CREATE_BATCH_ACTION})
     private String selectedBucket;
+    private String selectedWorkflow;
     private Bucket bucket;
-
     private String jiraTicketId;
-
     private final Set<String> buckets = new HashSet<>();
     private final List<Long> bucketEntryIds = new ArrayList<>();
     private final List<Long> reworkEntryIds = new ArrayList<>();
     private final Set<BucketEntry> collectiveEntries = new HashSet<>();
     private final Map<String, WorkflowBucketDef> mapBucketToBucketDef = new HashMap<>();
-
+    private Map<String, Collection<String>> mapBucketToWorkflows;
     private List<BucketEntry> selectedEntries = new ArrayList<>();
+
     private String selectedPdo;
     private List<ProductOrder> availablePdos;
-
     private List<Long> selectedEntryIds = new ArrayList<>();
-    private List<ProductWorkflowDef> possibleWorkflows;
+    private Set<String> possibleWorkflows = new TreeSet<>();
 
     private boolean jiraEnabled = false;
     private String important;
@@ -130,6 +131,7 @@ public class BucketViewActionBean extends CoreActionBean {
     public void init() {
         WorkflowConfig workflowConfig = workflowLoader.load();
         // Gets bucket names for supported products (workflows), and associates workflow(s) for each bucket.
+        Multimap<String, String> bucketWorkflows = HashMultimap.create();
         for (Workflow workflow : Workflow.SUPPORTED_WORKFLOWS) {
             ProductWorkflowDef workflowDef = workflowConfig.getWorkflowByName(workflow.getWorkflowName());
             ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
@@ -137,8 +139,10 @@ public class BucketViewActionBean extends CoreActionBean {
                 String bucketName = bucket.getName();
                 buckets.add(bucketName);
                 mapBucketToBucketDef.put(bucketName, bucket);
+                bucketWorkflows.put(bucketName, workflow.getWorkflowName());
             }
         }
+        mapBucketToWorkflows = bucketWorkflows.asMap();
         mapBucketToBucketEntryCount = initBucketCountsMap(bucketEntryDao.getBucketCounts());
     }
 
@@ -149,9 +153,12 @@ public class BucketViewActionBean extends CoreActionBean {
 
     @ValidationMethod(on = CREATE_BATCH_ACTION)
     public void createBatchValidation() {
-
+        if (StringUtils.isBlank(selectedWorkflow)) {
+            addValidationError("selectedWorkflow", "You must choose a workflow to create a batch");
+            viewBucket();
+        }
         if (!getUserBean().isValidJiraUser()) {
-            addValidationError("jiraTicketId", "You must be A valid Jira user to create an LCSet.");
+            addValidationError("jiraTicketId", "You must be A valid Jira user to create a batch.");
             viewBucket();
         }
 
@@ -197,6 +204,8 @@ public class BucketViewActionBean extends CoreActionBean {
     public Resolution viewBucket() {
         if (selectedBucket != null) {
             bucket = bucketDao.findByName(selectedBucket);
+            possibleWorkflows.addAll(mapBucketToWorkflows.get(selectedBucket));
+
             // Gets the bucket entries that are in the selected bucket.
             if (bucket != null) {
                 collectiveEntries.addAll(bucket.getBucketEntries());
@@ -272,10 +281,9 @@ public class BucketViewActionBean extends CoreActionBean {
     public Resolution createBatch() {
         separateEntriesByType();
         try {
-            batch = labBatchEjb
-                    .createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW, bucketEntryIds, reworkEntryIds,
-                            summary.trim(), description, dueDate, important, userBean.getBspUser().getUsername(),
-                            selectedBucket, this);
+            batch = labBatchEjb.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW, selectedWorkflow,
+                    bucketEntryIds, reworkEntryIds, summary.trim(), description, dueDate, important,
+                    userBean.getBspUser().getUsername(), selectedBucket, this);
         } catch (ValidationException e) {
             addGlobalValidationError(e.getMessage());
             return view();
@@ -469,6 +477,14 @@ public class BucketViewActionBean extends CoreActionBean {
 
     public void setBatch(LabBatch batch) {
         this.batch = batch;
+    }
+
+    public void setSelectedWorkflow(String selectedWorkflow) {
+        this.selectedWorkflow = selectedWorkflow;
+    }
+
+    public Set<String> getPossibleWorkflows() {
+        return possibleWorkflows;
     }
 
     public Map<String, BucketCount> getMapBucketToBucketEntryCount() {

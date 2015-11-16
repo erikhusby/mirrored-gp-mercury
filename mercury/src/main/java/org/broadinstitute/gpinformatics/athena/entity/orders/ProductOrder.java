@@ -1703,12 +1703,4 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         }
         return workflows;
     }
-
-    /**
-     * @return The workflow of the ProductOrders Product.
-     */
-    public Workflow getPrimaryWorkflow() {
-        return getProduct().getWorkflow();
-    }
-
 }

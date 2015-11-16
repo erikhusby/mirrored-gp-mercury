@@ -258,7 +258,7 @@
             $j("#dueDate").datepicker();
 
             $j("#lcsetText").blur(function(){
-                var createElements = ["#summary", "#description", "#important", "#dueDate"];
+                var createElements = ["#workflowSelect", "#summary", "#description", "#important", "#dueDate"];
                 if ($j("#lcsetText").val()==$j("#lcsetText").attr('title')) {
                     for (var i = 0; i < createElements.length; i++) {
                         $j(createElements[i]).closest(".control-group").show();
@@ -306,6 +306,15 @@
         <stripes:hidden name="selectedBucket" value="${actionBean.selectedBucket}"/>
         <c:if test="${actionBean.jiraEnabled}">
             <div id="newTicketDiv">
+                <div class="control-group">
+                    <stripes:label for="workflowSelect" name="Select Workflow" class="control-label"/>
+                    <div class="controls">
+                        <stripes:select id="workflowSelect" name="selectedWorkflow">
+                            <stripes:option value="">Select a Workflow</stripes:option>
+                            <stripes:options-collection collection="${actionBean.possibleWorkflows}"/>
+                        </stripes:select>
+                    </div>
+                </div>
                 <div class="control-group">
                     <stripes:label for="lcsetText" name="Batch Name" class="control-label"/>
                     <div class="controls">

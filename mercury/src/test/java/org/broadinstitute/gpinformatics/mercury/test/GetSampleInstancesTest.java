@@ -506,7 +506,7 @@ public class GetSampleInstancesTest {
         mapLcset2Pos1ToTube.put(VesselPosition.A01, lcset2T1);
         mapLcset2Pos1ToTube.put(VesselPosition.A02, lcset1T2);
         LabBatch lcset2 = new LabBatch("LCSET2", Collections.<LabVessel>singleton(lcset2T1),
-                Collections.<LabVessel>singleton(lcset1T2), LabBatch.LabBatchType.WORKFLOW, "", new Date(), "");
+                Collections.<LabVessel>singleton(lcset1T2), LabBatch.LabBatchType.WORKFLOW, "", "", new Date(), "");
         TubeFormation lcset2TubeForm1 = new TubeFormation(mapLcset2Pos1ToTube, RackOfTubes.RackType.Matrix96);
 
         // LCSET 1 rack to rack
@@ -590,7 +590,7 @@ public class GetSampleInstancesTest {
         mapLcset3Pos1ToTube.put(VesselPosition.A01, lcset1T2Child);
         mapLcset3Pos1ToTube.put(VesselPosition.A02, lcset2T1Child);
         LabBatch lcset3 = new LabBatch("LCSET3", Collections.<LabVessel>emptySet(),
-                new HashSet<LabVessel>(mapLcset3Pos1ToTube.values()), LabBatch.LabBatchType.WORKFLOW, "",
+                new HashSet<LabVessel>(mapLcset3Pos1ToTube.values()), LabBatch.LabBatchType.WORKFLOW, "", "",
                 new Date(), "");
         TubeFormation lcset3TubeForm2 = new TubeFormation(mapLcset3Pos1ToTube, RackOfTubes.RackType.Matrix96);
 
