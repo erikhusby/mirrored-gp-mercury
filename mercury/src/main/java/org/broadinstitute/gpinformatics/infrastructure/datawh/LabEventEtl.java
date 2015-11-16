@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent_;
@@ -523,7 +524,14 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
             return dtos;
         }
 
-        Collection<LabVessel> vessels = entity.getTargetLabVessels();
+        Collection<LabVessel> vessels;
+        if( entity.getLabEventType().getPlasticToValidate() == LabEventType.PlasticToValidate.TARGET ) {
+            vessels = entity.getTargetLabVessels();
+        } else {
+            // SOURCE (default for ancestor search) or BOTH
+            vessels = entity.getSourceLabVessels();
+        }
+
         if (vessels.isEmpty() && entity.getInPlaceLabVessel() != null) {
             vessels.add(entity.getInPlaceLabVessel());
         }
@@ -592,77 +600,94 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
             VesselPosition targetPosition, Set<SampleInstanceV2> sampleInstances ) {
         List<EventFactDto> dtos = new ArrayList<>();
 
-        // Default to event date, overwritten if lab batch available
-        Date workflowEffectiveDate = labEvent.getEventDate();
-
         try {
             if (!sampleInstances.isEmpty()) {
                 for (SampleInstanceV2 si : sampleInstances) {
 
                     ProductOrder pdo = null;
-                    LabBatch labBatch;
+                    LabBatch labBatch = null;
                     String batchName = NONE;
                     String pdoSampleID = null;
                     String workflowName = null;
-                    String molecularIndexingSchemeName;
+                    String molecularIndexingSchemeName = "";
+                    String lcsetSampleID = "";
 
-                    String lcsetSampleID = si.getNearestMercurySampleName();
-
-                    if (lcsetSampleID != null) {
-                        // Obtained a useable event DTO, dive into additional logic
-                        molecularIndexingSchemeName =  si.getMolecularIndexingScheme() != null ?
-                            si.getMolecularIndexingScheme().getName() : null;
-
-                        // Get latest PDO and the sample which matches it (the PDO and sample must match)
-                        for( ProductOrderSample pdoSample : si.getAllProductOrderSamples() ) {
-                            // Get a valid PDO
-                            pdo = pdoSample.getProductOrder();
-                            if( pdoSample.getMercurySample() != null ) {
-                                // And associate a sample with it if available
-                                pdoSampleID = pdoSample.getMercurySample().getSampleKey();
-                                // getAllProductOrderSamples() sorts by closest first so we're done at first hit
-                                break;
-                            }
+                    // Get latest PDO and the sample which matches it (the PDO and sample must match)
+                    for( ProductOrderSample pdoSample : si.getAllProductOrderSamples() ) {
+                        // Get a valid PDO
+                        pdo = pdoSample.getProductOrder();
+                        if( pdoSample.getMercurySample() != null ) {
+                            // And associate a sample with it if available
+                            pdoSampleID = pdoSample.getMercurySample().getSampleKey();
+                            // getAllProductOrderSamples() sorts by closest first so we're done at first hit
+                            break;
                         }
+                    }
 
+// TODO JMS shoud we discard event vessels with no PDO?  Or no PDO sample?
+//                    if( pdo != null ) {
+
+                        // Batch logic
                         labBatch = si.getSingleBatch();
-                        if( labBatch == null ) {
-                            // Get the latest batch this sample participated in
-                            long latestBatchTs = 0L;
-                            for (LabBatch batch : si.getAllWorkflowBatches()) {
-                                if (batch.getCreatedOn().getTime() > latestBatchTs) {
-                                    latestBatchTs = batch.getCreatedOn().getTime();
-                                    labBatch = batch;
+
+                        // Use the newest non-extraction bucket which was created sometime before this event
+                        long eventTs = labEvent.getEventDate().getTime();
+                        long bucketTs = 0L;
+                        LabBatch bucketBatch = null;
+                        for( BucketEntry bucketEntry : si.getAllBucketEntries() ) {
+                            if(bucketEntry.getLabBatch() != null
+                               && bucketEntry.getLabBatch().getBatchName().startsWith("LCSET")
+                               && bucketEntry.getCreatedDate().getTime() > bucketTs
+                               && bucketEntry.getCreatedDate().getTime() <= eventTs) {
+                                bucketBatch = bucketEntry.getLabBatch();
+                                bucketTs = bucketEntry.getCreatedDate().getTime();
+                                if( !bucketEntry.getLabVessel().getMercurySamples().isEmpty() ) {
+                                    lcsetSampleID =
+                                            bucketEntry.getLabVessel().getMercurySamples().iterator().next().getSampleKey();
                                 }
                             }
                         }
 
+                        // Use batch from sample buckets
+                        if( labBatch == null && bucketBatch != null ) {
+                            labBatch = bucketBatch;
+                        }
+
+                        // Pull workflow from lab batch
+                        // Default to event date, overwritten if lab batch available
+                        Date workflowEffectiveDate;
                         if( labBatch != null ) {
                             batchName = labBatch.getBatchName();
                             workflowEffectiveDate = labBatch.getCreatedOn();
                             workflowName = labBatch.getWorkflowName();
+                        } else {
+                            workflowEffectiveDate = labEvent.getEventDate();
                         }
 
                         if (StringUtils.isBlank(workflowName) && pdo != null) {
                             workflowName = pdo.getProduct().getWorkflow().getWorkflowName();
                         }
+
                         WorkflowConfigDenorm wfDenorm = workflowConfigLookup.lookupWorkflowConfig(
                                 labEvent.getLabEventType().getName(), workflowName, workflowEffectiveDate);
+
+                        molecularIndexingSchemeName =  si.getMolecularIndexingScheme() != null ?
+                                si.getMolecularIndexingScheme().getName() : null;
 
                         dtos.add( new EventFactDto(labEvent, vessel, targetPosition, molecularIndexingSchemeName,
                                 batchName, workflowEffectiveDate, workflowName,
                                 pdoSampleID, lcsetSampleID, pdo, wfDenorm, true) );
-                    } else {
-                        // Reject for lack of nearest mercury sample
-                        EventFactDto rejectedDto = new EventFactDto(labEvent, vessel, targetPosition,
-                                null, null, null, null, null, null, pdo, null, false);
-                        rejectedDto.setRejectReason("Skipping ETL on labEvent: " + labEvent.getLabEventId() +
-                                                    ", vessel: " + vessel.getLabel() +
-                                                    (targetPosition == null ? "" : ", position: " + targetPosition) +
-                                                    " - NearestMercurySample is null");
-                        dtos.add(rejectedDto);
-                        loggingDtos.add(rejectedDto);
-                    }
+//                    } else {
+//                        // Reject for lack of any pdo data
+//                        EventFactDto rejectedDto = new EventFactDto(labEvent, vessel, targetPosition,
+//                                null, null, null, null, null, null, pdo, null, false);
+//                        rejectedDto.setRejectReason("Skipping ETL on labEvent: " + labEvent.getLabEventId() +
+//                                                    ", vessel: " + vessel.getLabel() +
+//                                                    (targetPosition == null ? "" : ", position: " + targetPosition) +
+//                                                    " - No PDO available on sample instance.");
+//                        dtos.add(rejectedDto);
+//                        loggingDtos.add(rejectedDto);
+//                    }
                 } // sampleInstances loop
             } else {
                 // Reject for lack of any sample instances
