@@ -955,7 +955,7 @@ public class LabEventFixupTest extends Arquillian {
 
     @Test(enabled = false)
     public void fixupGplim3513Backfill() {
-        backfillReagents("DilutionToFlowcellTransfer", "GPLIM-3151 backfill reagents", "20141|2015");
+        backfillReagents("DilutionToFlowcellTransfer", "GPLIM-3151 backfill reagents", "20141|201504");
     }
 
     private void backfillReagents(String eventTypeParam, String reason, String directoryRegex) {
@@ -1040,6 +1040,7 @@ public class LabEventFixupTest extends Arquillian {
                                 continue;
                             }
                             if (!labEvent.getReagents().isEmpty()) {
+                                System.out.println("Reagents already persisted in " + file.getName());
                                 continue;
                             }
                             System.out.println("Adding reagents to " + station + " " + startDate);
