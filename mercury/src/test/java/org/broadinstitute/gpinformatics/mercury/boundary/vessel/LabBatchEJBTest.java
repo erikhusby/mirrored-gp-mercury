@@ -22,6 +22,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -223,9 +224,9 @@ public class LabBatchEJBTest extends ContainerTest {
             bucketIds.add(next.getBucketEntryId());
         }
 
-        LabBatch savedBatch = labBatchEJB.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW, bucketIds,
-                Collections.<Long>emptyList(), "LabBatchEJBTest.testCreateLabBatchAndRemoveFromBucket", "", new Date(),
-                "", scottmat, bucketName);
+        LabBatch savedBatch = labBatchEJB.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
+                Workflow.ICE_EXOME_EXPRESS.getWorkflowName(), bucketIds, Collections.<Long>emptyList(),
+                "LabBatchEJBTest.testCreateLabBatchAndRemoveFromBucket", "", new Date(), "", scottmat, bucketName );
 
         //link the JIRA tickets for the batch created to the pdo batches.
         for (String pdoKey : LabVessel.extractPdoKeyList(starters)) {
@@ -263,9 +264,9 @@ public class LabBatchEJBTest extends ContainerTest {
             }
         }
 
-        LabBatch savedBatch = labBatchEJB.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW, bucketIds,
-                Collections.<Long>emptyList(), "LabBatchEJBTest.testCreateLabBatchAndRemoveFromBucket", "", new Date(),
-                "", scottmat, bucketName);
+        LabBatch savedBatch = labBatchEJB.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
+                Workflow.CLINICAL_WHOLE_BLOOD_EXTRACTION.getWorkflowName(), bucketIds, Collections.<Long>emptyList(),
+                "LabBatchEJBTest.testCreateLabBatchAndRemoveFromBucket", "", new Date(), "", scottmat, bucketName);
 
         //link the JIRA tickets for the batch created to the pdo batches.
         for (String pdoKey : LabVessel.extractPdoKeyList(starters)) {
@@ -304,8 +305,9 @@ public class LabBatchEJBTest extends ContainerTest {
             bucketIds.add(next.getBucketEntryId());
         }
 
-        LabBatch savedBatch = labBatchEJB.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW, bucketIds,
-                Collections.<Long>emptyList(), expectedTicketId, "", new Date(), "", scottmat, selectedBucket);
+        LabBatch savedBatch = labBatchEJB.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
+                Workflow.ICE_EXOME_EXPRESS.getWorkflowName(), bucketIds, Collections.<Long>emptyList(),
+                expectedTicketId, "", new Date(), "", scottmat, selectedBucket);
         labBatchDao.flush();
         labBatchDao.clear();
         bucket = bucketDao.findByName(BUCKET_NAME);
@@ -337,8 +339,9 @@ public class LabBatchEJBTest extends ContainerTest {
             }
         }
 
-        LabBatch savedBatch = labBatchEJB.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW, bucketIds,
-                Collections.<Long>emptyList(), expectedTicketId, "", new Date(), "", scottmat, selectedBucket);
+        LabBatch savedBatch = labBatchEJB.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
+                Workflow.CLINICAL_WHOLE_BLOOD_EXTRACTION.getWorkflowName(), bucketIds, Collections.<Long>emptyList(),
+                expectedTicketId,"", new Date(), "", scottmat, selectedBucket);
         labBatchDao.flush();
         labBatchDao.clear();
         bucket = bucketDao.findByName(EXTRACTION_BUCKET);
