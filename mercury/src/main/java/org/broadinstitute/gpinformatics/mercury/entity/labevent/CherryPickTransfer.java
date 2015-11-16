@@ -120,4 +120,8 @@ public class CherryPickTransfer extends VesselTransfer {
         return getVesselTransferId() + "|" + sourceVessel.getLabel() + "|" + sourcePosition + "|" +
                targetVessel.getLabel() + "|" + targetPosition;
     }
+
+    void clearLabEvent() {
+        labEvent = null;
+    }
 }

@@ -152,7 +152,7 @@ public class ReworkEjb {
     public Collection<BucketCandidate> findBucketCandidates(List<String> query) {
         Collection<BucketCandidate> bucketCandidates = new ArrayList<>();
 
-        List<LabVessel> labVessels = new ArrayList<>();
+        Set<LabVessel> labVessels = new HashSet<>();
         labVessels.addAll(labVesselDao.findByListIdentifiers(query));
         labVessels.addAll(labVesselDao.findBySampleKeyList(query));
 

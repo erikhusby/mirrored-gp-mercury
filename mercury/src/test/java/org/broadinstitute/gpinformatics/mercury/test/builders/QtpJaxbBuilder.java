@@ -18,8 +18,8 @@ public class QtpJaxbBuilder {
     private final String testPrefix;
     private final List<List<String>> listLcsetListNormCatchBarcodes;
     private final List<String> normCatchRackBarcodes;
-    private final boolean doEco;
     private final boolean doPoolingTransfer;
+    private final PcrType pcrType;
 
     private String poolRackBarcode;
     private List<String> poolTubeBarcodes = new ArrayList<>();
@@ -29,7 +29,7 @@ public class QtpJaxbBuilder {
     private final List<BettaLIMSMessage> messageList = new ArrayList<>();
     private String denatureTubeBarcode;
     private String ecoPlateBarcode;
-    private PlateTransferEventType ecoTransferJaxb;
+    private PlateTransferEventType ecoTransferDuplicateA3Jaxb;
     private String viia7PlateBarcode;
     private PlateTransferEventType viia7TransferJaxb;
     private String normalizationTubeBarcode;
@@ -45,16 +45,21 @@ public class QtpJaxbBuilder {
     private BettaLIMSMessage stripTubeTransferMessage;
     private BettaLIMSMessage flowcellTransferMessage;
     private BettaLIMSMessage flowcellLoadMessage;
+    private PlateTransferEventType ecoTransferTriplicateA3;
+    private PlateTransferEventType ecoTransferTriplicateA5;
+    private PlateTransferEventType ecoTransferTriplicateA7;
+    private BettaLIMSMessage ecoTransferTriplicateMessage;
+    private PlateTransferEventType ecoTransferDuplicateB3Jaxb;
 
     public QtpJaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageFactory, String testPrefix,
             List<List<String>> listLcsetListNormCatchBarcodes, List<String> normCatchRackBarcodes,
-            boolean doPoolingTransfer, boolean doEco) {
+            boolean doPoolingTransfer, PcrType pcrType) {
         this.bettaLimsMessageTestFactory = bettaLimsMessageFactory;
         this.testPrefix = testPrefix;
         this.listLcsetListNormCatchBarcodes = listLcsetListNormCatchBarcodes;
         this.normCatchRackBarcodes = normCatchRackBarcodes;
-        this.doEco = doEco;
         this.doPoolingTransfer = doPoolingTransfer;
+        this.pcrType = pcrType;
     }
 
     public String getPoolRackBarcode() {
@@ -69,8 +74,24 @@ public class QtpJaxbBuilder {
         return poolingTransferJaxb;
     }
 
-    public PlateTransferEventType getEcoTransferJaxb() {
-        return ecoTransferJaxb;
+    public PlateTransferEventType getEcoTransferDuplicateA3Jaxb() {
+        return ecoTransferDuplicateA3Jaxb;
+    }
+
+    public PlateTransferEventType getEcoTransferDuplicateB3Jaxb() {
+        return ecoTransferDuplicateB3Jaxb;
+    }
+
+    public PlateTransferEventType getEcoTransferTriplicateA7() {
+        return ecoTransferTriplicateA7;
+    }
+
+    public PlateTransferEventType getEcoTransferTriplicateA5() {
+        return ecoTransferTriplicateA5;
+    }
+
+    public PlateTransferEventType getEcoTransferTriplicateA3() {
+        return ecoTransferTriplicateA3;
     }
 
     public PlateTransferEventType getViia7TransferJaxb() {
@@ -105,7 +126,8 @@ public class QtpJaxbBuilder {
         return normalizationJaxb;
     }
 
-    public QtpJaxbBuilder invoke() {
+    /** Adds the optional pooling transfer message and the eco/viia7 quant messages. */
+    public QtpJaxbBuilder invokeToQuant() {
         if (doPoolingTransfer) {
             int i = 0;
             // PoolingTransfer
@@ -134,20 +156,43 @@ public class QtpJaxbBuilder {
             }
         }
 
-        // EcoTransfer
         ecoPlateBarcode = "EcoPlate" + testPrefix;
-        ecoTransferJaxb = bettaLimsMessageTestFactory.buildRackToPlate("EcoTransfer", poolRackBarcode,
-                poolTubeBarcodes, ecoPlateBarcode, "Eco48", "3BY6A1", "8BY6A3ALTROWS");
-        if (doEco) {
-            ecoTransferMessage = bettaLimsMessageTestFactory.addMessage(messageList, ecoTransferJaxb);
+
+        switch (pcrType) {
+            case ECO_DUPLICATE:
+                ecoTransferDuplicateA3Jaxb = bettaLimsMessageTestFactory.buildRackToPlate("EcoTransfer", poolRackBarcode,
+                        poolTubeBarcodes, ecoPlateBarcode, "Eco48", "3BY6A1", "8BY6A3ALTROWS");
+
+                ecoTransferDuplicateB3Jaxb = bettaLimsMessageTestFactory.buildRackToPlate("EcoTransfer", poolRackBarcode,
+                        poolTubeBarcodes, ecoPlateBarcode, "Eco48", "3BY6A1", "8BY6B3ALTROWS");
+                ecoTransferMessage = bettaLimsMessageTestFactory.addMessage(
+                        messageList, ecoTransferDuplicateA3Jaxb, ecoTransferDuplicateB3Jaxb);
+                break;
+            case ECO_TRIPLICATE:
+                ecoTransferTriplicateA3 = bettaLimsMessageTestFactory.buildRackToPlate("EcoTransfer", poolRackBarcode,
+                        poolTubeBarcodes, ecoPlateBarcode, "Eco48", "2BY6A1", "8BY6A3COLWISE2");
+
+                ecoTransferTriplicateA5 = bettaLimsMessageTestFactory.buildRackToPlate("EcoTransfer", poolRackBarcode,
+                        poolTubeBarcodes, ecoPlateBarcode, "Eco48", "2BY6A1", "8BY6A5COLWISE2_ALT");
+
+                ecoTransferTriplicateA7 = bettaLimsMessageTestFactory.buildRackToPlate("EcoTransfer", poolRackBarcode,
+                        poolTubeBarcodes, ecoPlateBarcode, "Eco48", "2BY6A1", "8BY6A7COLWISE2");
+                ecoTransferTriplicateMessage = bettaLimsMessageTestFactory.addMessage(
+                        messageList, ecoTransferTriplicateA3, ecoTransferTriplicateA5, ecoTransferTriplicateA7);
+                break;
+            case VIIA_7:
+                // Viia7Transfer reuses the eco barcode since they are interchangable from workflow point of view.
+                viia7TransferJaxb = bettaLimsMessageTestFactory.buildRackToPlate("Viia7Transfer", poolRackBarcode,
+                        poolTubeBarcodes, ecoPlateBarcode, "Eco48", "3BY6A1", "8BY6A3ALTROWS");
+                viia7TransferMessage = bettaLimsMessageTestFactory.addMessage(messageList, viia7TransferJaxb);
+                break;
         }
 
-        // Viia7Transfer reuses the eco barcode since they are interchangable from workflow point of view.
-        viia7TransferJaxb = bettaLimsMessageTestFactory.buildRackToPlate("Viia7Transfer", poolRackBarcode,
-                poolTubeBarcodes, ecoPlateBarcode, "Eco48", "3BY6A1", "8BY6A3ALTROWS");
-        if (!doEco) {
-            viia7TransferMessage = bettaLimsMessageTestFactory.addMessage(messageList, viia7TransferJaxb);
-        }
+        return this;
+    }
+
+    /** Adds the normalization and denature transfer messages. */
+    public QtpJaxbBuilder invokePostQuant() {
 
         // NormalizationTransfer
         normalizationRackBarcode = "NormalizationRack" + testPrefix;
@@ -221,5 +266,9 @@ public class QtpJaxbBuilder {
 
     public List<String> getDenatureTubeBarcodes() {
         return denatureTubeBarcodes;
+    }
+
+    public enum PcrType {
+        ECO_DUPLICATE, ECO_TRIPLICATE, VIIA_7
     }
 }

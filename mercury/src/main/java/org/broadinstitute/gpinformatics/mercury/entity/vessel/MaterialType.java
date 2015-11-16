@@ -12,7 +12,12 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
+
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 public enum MaterialType implements Displayable {
     // These MaterialTypes already exist in the database.
@@ -126,7 +131,8 @@ public enum MaterialType implements Displayable {
     WHOLE_ORGANISM_OTHER("Whole Organism: Other"),
     WHOLE_ORGANISM_RNALATER_PRESERVED("Whole Organism:RNAlater Preserved"),
     WHOLE_ORGANISM_SINGLE_ETOH("Whole Organism:Single, ETOH"),
-    WHOLE_ORGANISM_SINGLE_FROZEN("Whole Organism:Single, Frozen");
+    WHOLE_ORGANISM_SINGLE_FROZEN("Whole Organism:Single, Frozen"),
+    NONE("");
 
     private final String displayName;
 
@@ -135,18 +141,42 @@ public enum MaterialType implements Displayable {
     }
 
     public static MaterialType fromDisplayName(String displayName) {
-        MaterialType foundType = null;
+        if (StringUtils.isBlank(displayName)) {
+            return NONE;
+        }
+
         for (MaterialType materialType : values()) {
-            if(materialType.displayName.equals(displayName)) {
-                foundType = materialType;
-                break;
+            if (materialType.displayName.equals(displayName)) {
+                return materialType;
             }
         }
-        return foundType;
+        throw new RuntimeException("Unknown MaterialType");
+    }
+
+    public static boolean isValid(String displayName) {
+        boolean isValid=false;
+        MaterialType materialType = null;
+        try {
+            materialType = fromDisplayName(displayName);
+            if (materialType != NONE) {
+                isValid=true;
+            }
+        } catch (Exception e) {
+            isValid=false;
+        }
+        return isValid;
     }
 
     @Override
     public String getDisplayName() {
         return displayName;
+    }
+
+    public static Set<String> displayNamesOf(Collection<MaterialType> materialTypes) {
+        Set<String> displayNames = new HashSet<>();
+        for (MaterialType materialType : materialTypes) {
+            displayNames.add(materialType.getDisplayName());
+        }
+        return displayNames;
     }
 }

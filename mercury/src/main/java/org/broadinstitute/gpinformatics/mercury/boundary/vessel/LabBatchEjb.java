@@ -100,7 +100,7 @@ public class LabBatchEjb {
      *
      * @return The lab batch that was created.
      *
-     * @see #createLabBatch(org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch.LabBatchType, String, String, String, java.util.Date, String, String, java.util.Set, java.util.Set)
+     * @see #createLabBatch(LabBatch.LabBatchType, String, String, Date, String, String, Set, Set)
      */
     public LabBatch createLabBatch(@Nonnull LabBatch batchObject, String reporter,
                                    @Nonnull CreateFields.IssueType issueType, MessageReporter messageReporter) {
@@ -120,7 +120,7 @@ public class LabBatchEjb {
      *
      * @return The lab batch that was created.
      *
-     * @see #createLabBatch(org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch.LabBatchType, String, String, String, java.util.Date, String, String, java.util.Set, java.util.Set)
+     * @see #createLabBatch(LabBatch.LabBatchType, String, String, Date, String, String, Set, Set)
      */
     public LabBatch createLabBatch(@Nonnull LabBatch batchObject, String reporter,
                                    @Nonnull CreateFields.IssueType issueType) {
@@ -147,7 +147,6 @@ public class LabBatchEjb {
      * Creates a lab batch for a set of lab vessels (and reworks).
      *
      * @param labBatchType  the type of lab batch to create
-     * @param workflowName  the workflow that the batch is to run through
      * @param batchName     the name for the batch (also the summary for JIRA)
      * @param description   the description for the batch (for JIRA)
      * @param dueDate       the due date for the batch (for JIRA)
@@ -158,13 +157,14 @@ public class LabBatchEjb {
      *
      * @return a new lab batch
      */
-    public LabBatch createLabBatch(@Nonnull LabBatch.LabBatchType labBatchType, @Nonnull String workflowName,
-                                   @Nonnull String batchName, @Nonnull String description, @Nonnull Date dueDate,
-                                   @Nonnull String important, @Nonnull String username,
-                                   @Nonnull Set<LabVessel> vessels, @Nonnull Set<LabVessel> reworkVessels) {
+    public LabBatch createLabBatch(@Nonnull LabBatch.LabBatchType labBatchType, @Nonnull String batchName,
+                                   @Nonnull String description, @Nonnull Date dueDate, @Nonnull String important,
+                                   @Nonnull String username, @Nonnull Set<LabVessel> vessels,
+                                   @Nonnull Set<LabVessel> reworkVessels) {
+
         LabBatch batch =
-                new LabBatch(batchName, vessels, reworkVessels, labBatchType, workflowName, description, dueDate,
-                             important);
+                new LabBatch(batchName, vessels, reworkVessels, labBatchType, description, dueDate,
+                        important);
         labBatchDao.persist(batch);
 
         return batch;
@@ -174,7 +174,6 @@ public class LabBatchEjb {
      * Creates a new lab batch and archives the bucket entries used to create the batch.
      *
      * @param labBatchType         the type of lab batch to create
-     * @param workflowName         the workflow that the batch is to run through
      * @param bucketEntryIds       the IDs of the bucket entries to include in the batch
      * @param reworkBucketEntryIds the vessels being reworked to include in the batch
      * @param batchName            the name for the batch (also the summary for JIRA)
@@ -187,19 +186,18 @@ public class LabBatchEjb {
      * @return The lab batch that was created.
      */
     public LabBatch createLabBatchAndRemoveFromBucket(@Nonnull LabBatch.LabBatchType labBatchType,
-                                                      @Nonnull String workflowName, @Nonnull List<Long> bucketEntryIds,
+                                                      @Nonnull List<Long> bucketEntryIds,
                                                       @Nonnull List<Long> reworkBucketEntryIds,
                                                       @Nonnull String batchName, @Nonnull String description,
                                                       @Nonnull Date dueDate, @Nonnull String important,
                                                       @Nonnull String username, String bucketName) throws ValidationException {
-        return createLabBatchAndRemoveFromBucket(labBatchType, workflowName, bucketEntryIds, reworkBucketEntryIds,
+        return createLabBatchAndRemoveFromBucket(labBatchType, bucketEntryIds, reworkBucketEntryIds,
                 batchName, description, dueDate, important, username, bucketName, MessageReporter.UNUSED);
     }
     /**
      * Creates a new lab batch and archives the bucket entries used to create the batch.
      *
      * @param labBatchType         the type of lab batch to create
-     * @param workflowName         the workflow that the batch is to run through
      * @param bucketEntryIds       the IDs of the bucket entries to include in the batch
      * @param reworkBucketEntryIds the vessels being reworked to include in the batch
      * @param batchName            the name for the batch (also the summary for JIRA)
@@ -212,7 +210,7 @@ public class LabBatchEjb {
      * @return The lab batch that was created.
      */
     public LabBatch createLabBatchAndRemoveFromBucket(@Nonnull LabBatch.LabBatchType labBatchType,
-                                                      @Nonnull String workflowName, @Nonnull List<Long> bucketEntryIds,
+                                                      @Nonnull List<Long> bucketEntryIds,
                                                       @Nonnull List<Long> reworkBucketEntryIds,
                                                       @Nonnull String batchName, @Nonnull String description,
                                                       @Nonnull Date dueDate, @Nonnull String important,
@@ -263,7 +261,7 @@ public class LabBatchEjb {
         }
 
         LabBatch batch =
-                createLabBatch(labBatchType, workflowName, batchName, description, dueDate, important, username,
+                createLabBatch(labBatchType, batchName, description, dueDate, important, username,
                                vessels, reworkVessels);
 
         Set<BucketEntry> allBucketEntries = new HashSet<>(bucketEntries);

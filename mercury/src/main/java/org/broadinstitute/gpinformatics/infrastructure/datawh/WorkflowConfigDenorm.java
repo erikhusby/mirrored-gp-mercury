@@ -33,6 +33,7 @@ public class WorkflowConfigDenorm implements Serializable {
     private final String workflowStepEventName;
     private final boolean productOrderNeeded;
     private final boolean batchNeeded;
+    private final boolean ancestryEtlFlag;
 
 
     public WorkflowConfigDenorm(Date effectiveDate,
@@ -43,7 +44,8 @@ public class WorkflowConfigDenorm implements Serializable {
                                 String workflowStepName,
                                 String workflowStepEventName,
                                 boolean productOrderNeeded,
-                                boolean batchNeeded) {
+                                boolean batchNeeded,
+                                boolean ancestryEtlFlag) {
 
         this.effectiveDate = effectiveDate;
         this.productWorkflowName = productWorkflowName;
@@ -54,6 +56,7 @@ public class WorkflowConfigDenorm implements Serializable {
         this.workflowStepEventName = workflowStepEventName;
         this.productOrderNeeded = productOrderNeeded;
         this.batchNeeded = batchNeeded;
+        this.ancestryEtlFlag = ancestryEtlFlag;
 
         workflowConfigDenormId = calculateId();
         workflowId = calculateWorkflowId(productWorkflowName, productWorkflowVersion);
@@ -179,7 +182,7 @@ public class WorkflowConfigDenorm implements Serializable {
                                 list.add(new WorkflowConfigDenorm(netEffectiveDate, productWorkflowName,
                                         productWorkflowVersion, workflowProcessName, workflowProcessVersion,
                                         workflowStepName, workflowStepEventName, NEEDS_PDO,
-                                        WorkflowConfigLookup.needsBatch(workflowStepEventName)));
+                                        WorkflowConfigLookup.needsBatch(workflowStepEventName), wsd.doAncestryEtl()));
                             }
                         }
                     }

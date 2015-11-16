@@ -70,12 +70,6 @@ public class CrspRiboPlatingEntityBuilder {
         CrspRiboPlatingJaxbBuilder crspRiboPlatingJaxbBuilder = new CrspRiboPlatingJaxbBuilder(rackBarcode,
                 new ArrayList<>(mapBarcodeToTube.keySet()), testPrefix, bettaLimsMessageTestFactory).invoke();
 
-        //Bucket
-        LabEventTest.validateWorkflow(LabEventType.TRU_SEQ_STRAND_SPECIFIC_BUCKET.getName(), mapBarcodeToTube.values());
-        LabEvent riboPlatingBucket = labEventFactory.buildFromBettaLimsRackEventDbFree(
-                crspRiboPlatingJaxbBuilder.getTruSeqStrandSpecificBucket(), null, mapBarcodeToTube, null);
-        labEventHandler.processEvent(riboPlatingBucket);
-
         //PolyATSAliquot
         LabEventTest.validateWorkflow(LabEventType.POLY_A_TS_ALIQUOT.getName(), mapBarcodeToTube.values());
         Map<String, LabVessel> mapBarcodeToVessel = new LinkedHashMap<>();

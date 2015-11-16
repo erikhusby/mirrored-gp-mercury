@@ -24,6 +24,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
@@ -95,7 +96,8 @@ public class ClinicalResourceTest extends RestServiceContainerTest {
         ClinicalResourceBean clinicalResourceBean = ClinicalSampleTestFactory
                 .createClinicalResourceBean(QA_DUDE_PM, MANIFEST_NAME, EXISTING_RESEARCH_PROJECT_KEY, Boolean.TRUE,
                         ImmutableMap.of(
-                                Metadata.Key.BROAD_SAMPLE_ID, sampleId, Metadata.Key.MATERIAL_TYPE, "DNA:Genomic"));
+                                Metadata.Key.BROAD_SAMPLE_ID, sampleId, Metadata.Key.MATERIAL_TYPE,
+                                MaterialType.DNA_DNA_GENOMIC.getDisplayName()));
         long manifestId = clinicalResource.createManifestWithSamples(clinicalResourceBean);
 
         ManifestSession manifestSession = manifestSessionDao.find(manifestId);

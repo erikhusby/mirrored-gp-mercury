@@ -120,8 +120,8 @@ public class ClinicalResource {
                 if (StringUtils.isNotEmpty(sampleData.getValue())) {
                     metadataCount++;
                 }
-                if( (Metadata.Key.valueOf(sampleData.getName()) == Metadata.Key.MATERIAL_TYPE) &&
-                    (MaterialType.fromDisplayName(sampleData.getValue()) == null)) {
+                if (Metadata.Key.valueOf(sampleData.getName()) == Metadata.Key.MATERIAL_TYPE
+                                && !MaterialType.isValid(sampleData.getValue())) {
                     invalidMaterialTypes.add(sampleData.getValue());
                 }
             }

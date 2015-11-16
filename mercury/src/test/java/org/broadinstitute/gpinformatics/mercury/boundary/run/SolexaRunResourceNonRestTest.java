@@ -237,11 +237,11 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
                 appConfig.getUrl(), BaseEventTest.NUM_POSITIONS_IN_RACK);
 
         final QtpJaxbBuilder qtpJaxbBuilder = new QtpJaxbBuilder(bettaLimsMessageFactory, testPrefix,
-                                                                 Collections.singletonList(hybridSelectionJaxbBuilder
-                                                                                                   .getNormCatchBarcodes()),
-                                                                 Collections.singletonList(hybridSelectionJaxbBuilder
-                                                                                                   .getNormCatchRackBarcode()),
-                                                                 true, false).invoke();
+                Collections.singletonList(hybridSelectionJaxbBuilder.getNormCatchBarcodes()),
+                Collections.singletonList(hybridSelectionJaxbBuilder.getNormCatchRackBarcode()),
+                true, QtpJaxbBuilder.PcrType.VIIA_7);
+        qtpJaxbBuilder.invokeToQuant();
+        qtpJaxbBuilder.invokePostQuant();
         for (BettaLIMSMessage bettaLIMSMessage : qtpJaxbBuilder.getMessageList()) {
             BettaLimsMessageResourceTest.sendMessage(bettaLIMSMessage, bettaLimsMessageResource, appConfig.getUrl());
         }
@@ -552,9 +552,8 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
             bucketIds.add(starter.getBucketEntries().iterator().next().getBucketEntryId());
         }
 
-        LabBatch labBatch = labBatchEjb.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
-                Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName(), bucketIds, Collections.<Long>emptyList(), batchName,
-                "", new Date(), "", "jowalsh", bucketName );
+        LabBatch labBatch = labBatchEjb.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW, bucketIds,
+                Collections.<Long>emptyList(), batchName, "", new Date(), "", "jowalsh", bucketName );
         labBatch.setValidationBatch(true);
     }
 }

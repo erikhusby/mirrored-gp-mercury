@@ -178,8 +178,8 @@
                 var editablePdo = function()  {
                 if (columnsEditable) {
                     var oTable = $j('#bucketEntryView').dataTable();
-                    $j("td.editable").editable('${ctxpath}/view/bucketView.action?changePdo', {
-                        'loadurl': '${ctxpath}/view/bucketView.action?findPdo',
+                    $j("td.editable").editable('${ctxpath}/workflow/bucketView.action?changePdo', {
+                        'loadurl': '${ctxpath}/workflow/bucketView.action?findPdo',
                         'callback': function (sValue, y) {
                             var jsonValues = $j.parseJSON(sValue);
                             var pdoKeyCellValue='<span class="ellipsis">'+jsonValues.jiraKey+'</span><span style="display: none;" class="icon-pencil"></span>';
@@ -224,7 +224,7 @@
 
             };
 
-            $j('#bucketEntryView').dataTable({
+            oTable = $j('#bucketEntryView').dataTable({
                 "oTableTools":ttExportDefines,
                 "aaSorting": [[1,'asc'], [7,'asc']],
                 "aoColumns":[
@@ -243,10 +243,12 @@
                     {"bSortable":true},
                     {"bSortable":true},
                     {"bSortable":true},
+                    {"bSortable":true},
                     {"bSortable":true}
                 ],
                 "fnDrawCallback": editablePdo
             });
+            includeAdvancedFilter(oTable, "#bucketEntryView");
 
             $j('.bucket-checkbox').enableCheckboxRangeSelection({
                 checkAllClass:'bucket-checkAll',
@@ -281,38 +283,27 @@
 </stripes:layout-component>
 
 <stripes:layout-component name="content">
-    <stripes:form id="bucketForm" class="form-horizontal" action="/view/bucketView.action?viewBucket">
+    <stripes:form id="bucketForm" class="form-horizontal" beanclass="${actionBean.class}">
         <div class="form-horizontal">
             <div class="control-group">
                 <stripes:label for="bucketselect" name="Select Bucket" class="control-label"/>
                 <div class="controls">
                     <stripes:select id="bucketSelect" name="selectedBucket" onchange="submitBucket()">
+                        <stripes:param name="viewBucket"/>
                         <stripes:option value="">Select a Bucket</stripes:option>
-                        <stripes:options-collection collection="${actionBean.buckets}"/>
+                        <c:forEach items="${actionBean.mapBucketToBucketEntryCount.keySet()}" var="bucketName">
+                            <c:set var="bucketCount" value="${actionBean.mapBucketToBucketEntryCount.get(bucketName)}"/>
+                            <stripes:option value="${bucketName}"
+                                            label="${bucketName} (${bucketCount.bucketEntryCount + bucketCount.reworkEntryCount} vessels)"/>
+                        </c:forEach>
                     </stripes:select>
                 </div>
             </div>
         </div>
     </stripes:form>
-    <stripes:form id="bucketWorkflowForm" class="form-horizontal" action="/view/bucketView.action?viewBucket">
+    <stripes:form beanclass="${actionBean.class.name}" id="bucketEntryForm" class="form-horizontal">
         <div class="form-horizontal">
         <stripes:hidden name="selectedBucket" value="${actionBean.selectedBucket}"/>
-        <div class="control-group">
-            <stripes:label for="workflowSelect" name="Select Workflow" class="control-label"/>
-            <div class="controls">
-                <stripes:select id="workflowSelect" name="selectedWorkflowDef" onchange="submitWorkflow()"
-                                value="selectedWorkflowDef.name">
-                    <stripes:option value="">Select a Workflow</stripes:option>
-                    <stripes:options-collection collection="${actionBean.possibleWorkflows}" label="name" value="name"/>
-                </stripes:select>
-            </div>
-        </div>
-    </stripes:form>
-    <stripes:form beanclass="${actionBean.class.name}"
-                  id="bucketEntryForm" class="form-horizontal">
-        <div class="form-horizontal">
-        <stripes:hidden name="selectedBucket" value="${actionBean.selectedBucket}"/>
-        <stripes:hidden name="selectedWorkflowDef" value="${actionBean.selectedWorkflowDef}"/>
         <c:if test="${actionBean.jiraEnabled}">
             <div id="newTicketDiv">
                 <div class="control-group">
@@ -388,6 +379,7 @@
                 <th width="300">PDO Name</th>
                 <th width="200">PDO Owner</th>
                 <th>Batch Name</th>
+                <th>Workflow</th>
                 <th>Product</th>
                 <th>Add-ons</th>
                 <th width="100">Created Date</th>
@@ -440,6 +432,11 @@
                             ${batch.businessKey}
                             <c:if test="${!stat.last}">&nbsp;</c:if></c:forEach>
 
+                    </td>
+                    <td>
+                        <div class="ellipsis" style="max-width: 250px;">
+                            ${mercuryStatic:join(entry.workflowNames, "<br/>")}
+                        </div>
                     </td>
                     <td>
                         <div class="ellipsis" style="max-width: 250px;">${entry.productOrder.product.name}</div>

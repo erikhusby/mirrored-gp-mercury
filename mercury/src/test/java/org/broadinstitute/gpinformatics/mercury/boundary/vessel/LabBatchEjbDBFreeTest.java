@@ -17,7 +17,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.easymock.EasyMock;
 import org.mockito.Mockito;
@@ -194,7 +193,7 @@ public class LabBatchEjbDBFreeTest {
     public void testCreateLabBatchWithVessels() throws Exception {
 
         LabBatch testBatch =
-                labBatchEJB.createLabBatch(LabBatch.LabBatchType.WORKFLOW, Workflow.ICE_EXOME_EXPRESS.getWorkflowName(),
+                labBatchEJB.createLabBatch(LabBatch.LabBatchType.WORKFLOW,
                         testLCSetKey,null,null,"","scottmat",new HashSet<>(mapBarcodeToTube.values()),
                         Collections.<LabVessel>emptySet());
         for (LabVessel labVessel : mapBarcodeToTube.values()) {
