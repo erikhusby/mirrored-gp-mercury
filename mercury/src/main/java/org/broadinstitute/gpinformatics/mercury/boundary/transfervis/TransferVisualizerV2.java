@@ -71,6 +71,11 @@ public class TransferVisualizerV2 {
     private static final Log logger = LogFactory.getLog(TransferVisualizerV2.class);
     private static final Format DATE_FORMAT = FastDateFormat.getInstance("yyyy-MM-dd HH:mm:ss");
 
+    public enum AlternativeIds {
+        SAMPLE_ID,
+        LCSET
+    }
+
     @Inject
     private BSPUserList bspUserList;
 
@@ -239,6 +244,7 @@ public class TransferVisualizerV2 {
          */
         private void renderVessel(LabVessel labVessel) throws JSONException {
             if (renderedLabels.add(labVessel.getLabel())) {
+                // todo jmt add alternative IDs
                 jsonWriter.object().key("id").value(labVessel.getLabel()).
                         key("label").value(labVessel.getLabel()).
                         key("width").value(WELL_WIDTH).
@@ -290,6 +296,7 @@ public class TransferVisualizerV2 {
                     VesselGeometry.RowColumn rowColumn = vesselGeometry.getRowColumnForVesselPosition(vesselPosition);
                     LabVessel child = vesselContainer.getVesselAtPosition(vesselPosition);
                     if (child != null) {
+                        // todo jmt include alternative IDs in size of child
                         maxColumn = Math.max(maxColumn, rowColumn.getColumn());
                         maxRow = Math.max(maxRow, rowColumn.getRow() + 1);
                     }
@@ -317,10 +324,12 @@ public class TransferVisualizerV2 {
                     inPlaceEventOffset += ROW_HEIGHT;
                 }
 
+                // JSON for children
                 for (VesselPosition vesselPosition : vesselGeometry.getVesselPositions()) {
                     VesselGeometry.RowColumn rowColumn = vesselGeometry.getRowColumnForVesselPosition(vesselPosition);
                     LabVessel child = vesselContainer.getVesselAtPosition(vesselPosition);
                     if (child != null) {
+                        // todo jmt add alternative IDs
                         jsonWriter.object().
                                 key("label").value(child.getLabel()).
                                 key("x").value((rowColumn.getColumn() - 1) * WELL_WIDTH).
