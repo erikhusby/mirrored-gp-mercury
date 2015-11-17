@@ -824,7 +824,7 @@ public class ReagentFixupTest extends Arquillian {
         }
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void gplim3791addMissingBaits() throws Exception {
         userBean.loginOSUser();
         utx.begin();
@@ -849,7 +849,7 @@ public class ReagentFixupTest extends Arquillian {
         utx.commit();
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void gplim3850addOrFixQpcrStandards() throws Exception {
         userBean.loginOSUser();
         utx.begin();
@@ -970,7 +970,7 @@ public class ReagentFixupTest extends Arquillian {
     }
 
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void gplim3849addMissingEEW() throws Exception {
         userBean.loginOSUser();
         utx.begin();
