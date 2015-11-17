@@ -1120,8 +1120,8 @@ public class LabVesselFixupTest extends Arquillian {
                 if (fields.length != 2) {
                     throw new RuntimeException("Expected two white-space separated fields in " + lines.get(i));
                 }
-                BigDecimal newVolume = new BigDecimal(fields[1]);
                 String barcode = fields[0];
+                BigDecimal newVolume = new BigDecimal(fields[1]);
                 BarcodedTube barcodedTube = barcodedTubeDao.findByBarcode(barcode);
                 if (barcodedTube == null) {
                     throw new RuntimeException("Failed to find tube " + barcode);
