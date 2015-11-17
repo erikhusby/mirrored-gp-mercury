@@ -93,6 +93,18 @@ public class LabMetric implements Comparable<LabMetric> {
                 return new LabMetricDecision(decision, new Date(), decidingUser, labMetric);
             }
         }),
+        INITIAL_RIBO("Initial Ribo", true, Category.CONCENTRATION, new Decider() {
+            @Override
+            public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
+                LabMetricDecision.Decision decision = LabMetricDecision.Decision.FAIL;
+                if (labVessel.getVolume() != null) {
+                    if (labMetric.getValue().multiply(labVessel.getVolume()).compareTo(new BigDecimal("250")) == 1) {
+                        decision = LabMetricDecision.Decision.PASS;
+                    }
+                }
+                return new LabMetricDecision(decision, new Date(), decidingUser, labMetric);
+            }
+        }),
         FINGERPRINT_PICO("Fingerprint Pico", true, Category.CONCENTRATION, new Decider() {
             @Override
             public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
@@ -136,6 +148,18 @@ public class LabMetric implements Comparable<LabMetric> {
             public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
                 LabMetricDecision.Decision decision;
                 if (labMetric.getValue().compareTo(new BigDecimal("25")) == 1) {
+                    decision = LabMetricDecision.Decision.PASS;
+                } else {
+                    decision = LabMetricDecision.Decision.FAIL;
+                }
+                return new LabMetricDecision(decision, new Date(), decidingUser, labMetric);
+            }
+        }),
+        CDNA_ENRICHED_PICO("cDNA Enriched Pico", true, Category.CONCENTRATION, new Decider() {
+            @Override
+            public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
+                LabMetricDecision.Decision decision;
+                if (labMetric.getValue().compareTo(new BigDecimal("5")) == 1) {
                     decision = LabMetricDecision.Decision.PASS;
                 } else {
                     decision = LabMetricDecision.Decision.FAIL;
