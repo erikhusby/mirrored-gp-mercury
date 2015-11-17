@@ -124,11 +124,11 @@ public class FlowcellMessageHandler extends AbstractEventHandler {
 
         Map<VesselPosition, LabVessel> loadedVesselsAndPosition;
         List<LabVessel.VesselEvent> ancestors = flowcell.getContainerRole().getAncestors(VesselPosition.LANE1);
-        if (ancestors.get(0).getVesselContainer() != null &&
-                ancestors.get(0).getVesselContainer().getEmbedder().getType() == LabVessel.ContainerType.STRIP_TUBE) {
+        if (ancestors.get(0).getSourceVesselContainer() != null &&
+                ancestors.get(0).getSourceVesselContainer().getEmbedder().getType() == LabVessel.ContainerType.STRIP_TUBE) {
             loadedVesselsAndPosition = new HashMap<>();
             // position is arbitrary in strip tube case
-            loadedVesselsAndPosition.put(VesselPosition.A01, ancestors.get(0).getVesselContainer().getEmbedder());
+            loadedVesselsAndPosition.put(VesselPosition.A01, ancestors.get(0).getSourceVesselContainer().getEmbedder());
         } else {
             loadedVesselsAndPosition = flowcell.getNearestTubeAncestorsForLanes();
         }

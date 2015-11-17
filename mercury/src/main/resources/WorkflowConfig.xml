@@ -1,7 +1,15 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!-- WorkflowConfig.xml file represents the workflow configuration and is kept in-sync with the contents of
+         ATHENA.PREF_PREFERENCE.DATA field for PREFERENCE_TYPE = 'WORKFLOW_CONFIGURATION'.
+     The file is used for DBFree testing.  The PREF_PREFERENCE table is used for container tests and the deployed app.
+         (See org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader)
+     Use org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowPrefXmlReloadFixupTest to load changes
+         to the configuration in this file to the PREF_PREFERENCE table.
+-->
 <workflowConfig
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:noNamespaceSchemaLocation="WorkflowConfig.xsd">
+
     <workflowProcessDefs>
         <name>Preflight</name>
         <workflowProcessDefVersions>
@@ -442,6 +450,7 @@
                     <project>LCSET</project>
                     <statusTransition>In Hyb Sel</statusTransition>
                 </jiraTransition>
+                <ancestryEtlFlag>true</ancestryEtlFlag>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Pond Pico</name>
@@ -586,6 +595,7 @@
                     <project>LCSET</project>
                     <statusTransition>In QTP</statusTransition>
                 </jiraTransition>
+                <ancestryEtlFlag>true</ancestryEtlFlag>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Catch Pico</name>
@@ -621,6 +631,7 @@
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
+                <ancestryEtlFlag>true</ancestryEtlFlag>
             </workflowStepDefs>
             <!-- next two are alternatives -->
             <workflowStepDefs>
@@ -761,6 +772,7 @@
                     <project>LCSET</project>
                     <statusTransition>In QTP</statusTransition>
                 </jiraTransition>
+                <ancestryEtlFlag>true</ancestryEtlFlag>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>IceCatchPico</name> <!-- will change on deck, from CatchPico -->
@@ -831,6 +843,7 @@
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
+                <ancestryEtlFlag>true</ancestryEtlFlag>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>EcoTransfer</name>
@@ -852,6 +865,7 @@
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
+                <ancestryEtlFlag>true</ancestryEtlFlag>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Denature Transfer</name>
@@ -859,6 +873,7 @@
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
+                <ancestryEtlFlag>true</ancestryEtlFlag>
                 <jiraTransition>
                     <project>LCSET</project>
                     <statusTransition>In HiSeq Sequencing</statusTransition>
@@ -1926,6 +1941,7 @@
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
+                <ancestryEtlFlag>true</ancestryEtlFlag>
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>
@@ -2085,6 +2101,7 @@
             <version>02</version>
             <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
             <workflowProcessDefs>Clinical Whole Blood Extraction</workflowProcessDefs>
+            <routingRule>MERCURY</routingRule>
         </productWorkflowDefVersions>
     </productWorkflowDefs>
     <productWorkflowDefs>
@@ -2111,6 +2128,7 @@
             <version>01</version>
             <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
             <workflowProcessDefs>DNA and RNA from Cell Pellets</workflowProcessDefs>
+            <routingRule>MERCURY</routingRule>
         </productWorkflowDefVersions>
     </productWorkflowDefs>
     <sequencingConfigDefs>

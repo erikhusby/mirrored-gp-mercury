@@ -214,7 +214,7 @@ public class VesselEjb {
             Map<VarioskanRowParser.NameValue, String> mapNameValueToValue = varioskanRowParser.getValues();
 
             VarioskanPlateProcessor varioskanPlateProcessor = new VarioskanPlateProcessor(
-                    VarioskanRowParser.QUANTITATIVE_CURVE_FIT1_TAB);
+                    VarioskanRowParser.QUANTITATIVE_CURVE_FIT1_TAB, metricType);
             PoiSpreadsheetParser parser = new PoiSpreadsheetParser(Collections.<String, TableProcessor>emptyMap());
             parser.processRows(workbook.getSheet(VarioskanRowParser.QUANTITATIVE_CURVE_FIT1_TAB),
                     varioskanPlateProcessor);
@@ -336,10 +336,12 @@ public class VesselEjb {
             plateWell.addMetric(labMetric);
 
             LabVessel sourceTube = null;
+            boolean inSection = false;
             for (SectionTransfer sectionTransfer : staticPlate.getContainerRole().getSectionTransfersTo()) {
                 int sectionIndex = sectionTransfer.getTargetSection().getWells().indexOf(
                         plateWellResult.getVesselPosition());
                 if (sectionIndex > -1) {
+                    inSection = true;
                     VesselPosition sourcePosition = sectionTransfer.getSourceSection().getWells().get(sectionIndex);
                     VesselContainer vesselContainer = sectionTransfer.getSourceVesselContainer();
                     if (tubeFormationLabel == null) {
@@ -358,6 +360,11 @@ public class VesselEjb {
                 }
             }
             if (sourceTube == null) {
+                // RIBO includes the curve samples in the destination plate, but they are not in the sections involved
+                // in the transfers from the source tubes, so they should be ignored.
+                if (metricType == LabMetric.MetricType.PLATING_RIBO && !inSection) {
+                    continue;
+                }
                 messageCollection.addError("Failed to find source tube for " + plateWellResult.getPlateBarcode() +
                     " " + plateWellResult.getVesselPosition());
             }

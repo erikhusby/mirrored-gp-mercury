@@ -19,6 +19,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -133,6 +134,19 @@ public class SampleMetadataFixupTest extends Arquillian {
                 .mapOf(mercurySample.getSampleKey(), Metadata.Key.PATIENT_ID, "HCC-1143_100% N1", "HCC-1143_100% N"),
                 "CRSP-163 repatienting of validation sample (pre-sequencing)");
     }
+
+    @Test(enabled = false)
+    public void fixupGPLIM_3840_invalid_value_for_material_type() {
+        Map<String, MetaDataFixupItem> fixupItems = new HashMap<>();
+        String oldValue = "whole blood";
+        String newValue = MaterialType.WHOLE_BLOOD_WHOLE_BLOOD_FROZEN.getDisplayName();
+
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-A19ZB", Metadata.Key.MATERIAL_TYPE, oldValue, newValue));
+
+        String fixupComment = "see https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-3840";
+        updateMetadataAndValidate(fixupItems, fixupComment);
+    }
+
 
     /**
      * Perform actual fixup and validate.

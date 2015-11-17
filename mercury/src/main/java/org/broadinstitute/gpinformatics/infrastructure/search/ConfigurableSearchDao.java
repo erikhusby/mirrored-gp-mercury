@@ -301,30 +301,27 @@ public class ConfigurableSearchDao extends GenericDao {
             Map<String,TraversalEvaluator> traversalEvaluators;
             if( isAlternateSearchDefinition ) {
                 traversalEvaluators = searchInstance.getAlternateSearchDefinition().getTraversalEvaluators();
+
+                // Alternate traversal evaluator configured
+                evaluator = traversalEvaluators.get(ConfigurableSearchDefinition.ALTERNATE_DEFINITION_ID);
+                idList = evaluator.evaluate(pagination.getIdList(), searchInstance);
+                // Reconfigure pagination with correct base entity type
+                pagination.setResultEntity(configurableSearchDef.getResultEntity());
             } else {
                 traversalEvaluators = configurableSearchDef.getTraversalEvaluators();
-            }
-
-            // Handle user configurable traversal options
-            if( traversalRequired ) {
-                for (Map.Entry<String, TraversalEvaluator> configuredEvaluatorEntry : traversalEvaluators.entrySet()) {
+                for (Map.Entry<String, TraversalEvaluator> configuredEvaluatorEntry
+                        : traversalEvaluators.entrySet()) {
                     // Traverse the options which are checked
                     Boolean doTraverse = traversalEvaluatorValues.get(configuredEvaluatorEntry.getKey());
-                    if ( doTraverse ) {
+                    if (doTraverse) {
                         evaluator = configuredEvaluatorEntry.getValue();
                         if (idList == null) {
-                            idList = evaluator.evaluate(pagination.getIdList());
+                            idList = evaluator.evaluate(pagination.getIdList(), searchInstance);
                         } else {
-                            idList.addAll(evaluator.evaluate(pagination.getIdList()));
+                            idList.addAll(evaluator.evaluate(pagination.getIdList(), searchInstance));
                         }
                     }
                 }
-            } else {
-                // Alternate traversal evaluator configured
-                evaluator = traversalEvaluators.get(ConfigurableSearchDefinition.ALTERNATE_DEFINITION_ID);
-                idList = evaluator.evaluate(pagination.getIdList());
-                // Reconfigure pagination with correct base entity type
-                pagination.setResultEntity(configurableSearchDef.getResultEntity());
             }
 
             // Replace the full entities in the pagination with ids using last evaluator

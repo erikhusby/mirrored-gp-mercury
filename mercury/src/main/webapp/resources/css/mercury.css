@@ -186,3 +186,13 @@ legend + .control-group { margin-top: 0px; -webkit-margin-top-collapse: separate
    reason for the link being disabled in the title attribute which the user will see while hovering over the link as
    well as repeating that information near the link if space allows. */
 .disabled-link { text-decoration: underline line-through; color: #666666; font-size: medium; }
+
+/* Transfer Visualizer styles */
+.graphNodeRect { stroke: black; stroke-width: 1.5px; fill: #8dedf0; }
+.nodeChild { stroke: black; fill: #8dedf0; }
+.nodeHighlight { fill: Yellow; }
+.graphEdge { fill: none; stroke: #000; stroke-width: 2px; opacity: 0.7; marker-end: url(#end-arrow); }
+.graphEdgeDashed { fill: none; stroke: #000; stroke-width: 2px; opacity: 0.7; marker-end: url(#end-arrow); stroke-dasharray: 5, 5 }
+.graphEdgeLabel {font-family: Arial}
+.graphLabel { fill: black; stroke-width: 1px; font-family: Arial; font-size: 12px; text-anchor: middle; }
+.graphOverlay { fill: LightYellow; pointer-events: all; }

@@ -4,8 +4,11 @@ import org.apache.commons.lang3.ObjectUtils;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * This represents the workflow associated with a product.
@@ -91,4 +94,12 @@ public enum Workflow {
             return ObjectUtils.compare(workflow.getWorkflowName(), otherWorkflow.getWorkflowName());
         }
     };
+
+    public static Collection<String> workflowNamesOf(Collection<Workflow> workflows) {
+        Set<String> workflowNames = new HashSet<>();
+        for (Workflow workflow : workflows) {
+            workflowNames.add(workflow.getWorkflowName());
+        }
+        return workflowNames;
+    }
 }

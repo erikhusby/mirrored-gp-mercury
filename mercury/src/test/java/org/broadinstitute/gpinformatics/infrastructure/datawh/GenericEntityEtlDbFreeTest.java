@@ -43,13 +43,20 @@ public class GenericEntityEtlDbFreeTest {
 
     private final String datafileDir = System.getProperty("java.io.tmpdir");
 
-    private final AuditReaderDao auditReader = createMock(AuditReaderDao.class);
+    private final AuditReaderDaoStub auditReader = createMock(AuditReaderDaoStub.class);
     private final LabVessel obj = createMock(LabVessel.class);
     private final LabVesselDao dao = createMock(LabVesselDao.class);
     private final Object[] mocks = new Object[]{auditReader, dao, obj};
     
     private final LabVesselEtl tst = new LabVesselEtl(dao);
     private final RevInfo[] revInfo = new RevInfo[] {new RevInfo(), new RevInfo(), new RevInfo()};
+
+    private class AuditReaderDaoStub extends AuditReaderDao {
+        @Override
+        public void clear(){
+            // Do nothing in DBFree test
+        }
+    }
 
     @BeforeClass(groups = TestGroups.DATABASE_FREE)
     public void beforeClass() {
@@ -87,11 +94,14 @@ public class GenericEntityEtlDbFreeTest {
         expect(obj.getLabel()).andReturn(label);
         expect(obj.getType()).andReturn(type);
 
+        auditReader.clear();
+
         replay(mocks);
 
         tst.setAuditReaderDao(auditReader);
 
         int recordCount = tst.doEtl(revIds, etlDateStr);
+
         assertEquals(recordCount, 1);
 
         String dataFilename = etlDateStr + "_" + tst.baseFilename + ".dat";
@@ -113,6 +123,8 @@ public class GenericEntityEtlDbFreeTest {
 
         expect(auditReader.fetchEnversAudits(eq(revIds), (Class) anyObject())).andReturn(dataChanges);
         expect(obj.getLabVesselId()).andReturn(entityId).times(3);
+
+        auditReader.clear();
 
         replay(mocks);
 
