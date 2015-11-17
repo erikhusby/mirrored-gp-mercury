@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
@@ -919,6 +920,46 @@ public class LabEventFixupTest extends Arquillian {
                 labEventDao.remove(labEvent);
             }
             labEventDao.persist(new FixupCommentary("GPLIM-3788 delete looping event"));
+            labEventDao.flush();
+            utx.commit();
+        } catch (NotSupportedException | SystemException | HeuristicMixedException | HeuristicRollbackException |
+                RollbackException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test(enabled = false)
+    public void fixupSupport1296() {
+        try {
+            userBean.loginOSUser();
+            utx.begin();
+
+            // Need to find and flip a P7 transfer.
+            StaticPlate shearCleanPlate = staticPlateDao.findByBarcode("000007126773");
+            StaticPlate indexPlate = null;
+            LabEvent adapterLigation = null;
+            for (LabEvent labEvent : shearCleanPlate.getTransfersTo()) {
+                if (labEvent.getLabEventType() == LabEventType.INDEXED_ADAPTER_LIGATION) {
+                    indexPlate = (StaticPlate) labEvent.getSectionTransfers().iterator().next().getSourceVesselContainer().
+                            getEmbedder();
+                    adapterLigation = labEvent;
+                }
+            }
+            Assert.assertNotNull(indexPlate);
+            Assert.assertEquals(indexPlate.getLabel(), "000001976523");
+
+            // Traversal code doesn't currently honor PlateTransferEventType.isFlipped, so replace section transfer with
+            // cherry picks.
+            List<VesselPosition> wells = SBSSection.ALL96.getWells();
+            for (int i = 0; i < 96; i++) {
+                adapterLigation.getCherryPickTransfers().add(new CherryPickTransfer(
+                        indexPlate.getContainerRole(), wells.get(95 - i), null,
+                        shearCleanPlate.getContainerRole(), wells.get(i), null, adapterLigation));
+            }
+
+            adapterLigation.getSectionTransfers().clear();
+            System.out.println("Flipping " + adapterLigation.getLabEventType() + " " + adapterLigation.getLabEventId());
+            labEventDao.persist(new FixupCommentary("SUPPORT-1296 flip adapter plate"));
             labEventDao.flush();
             utx.commit();
         } catch (NotSupportedException | SystemException | HeuristicMixedException | HeuristicRollbackException |
