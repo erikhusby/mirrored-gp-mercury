@@ -530,11 +530,24 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
             vessels.add(entity.getInPlaceLabVessel());
         }
 
+        // If a synthetic event exists, record it, otherwise, skip it
         if (vessels.isEmpty()) {
-            // Record ActivityBegin/End events and any others with no vessels
-            EventFactDto placeholderEventDto =
-                    new EventFactDto(entity, null, null, null, "", null, null, null, null, null, null, true);
-            dtos.add(placeholderEventDto);
+            // Record ActivityBegin/End events (synthetic events)
+            WorkflowConfigDenorm wfDenorm = workflowConfigLookup.lookupWorkflowConfig(
+                    entity.getLabEventType().getName(), null, entity.getEventDate());
+            if( wfDenorm != null ) {
+                EventFactDto placeholderEventDto =
+                        new EventFactDto(entity, null, null, null, null, null, null, null, null, null, wfDenorm, true);
+                dtos.add(placeholderEventDto);
+            } else {
+                // Record the failure
+                EventFactDto rejectedDto =
+                        new EventFactDto(entity, null, null, null, null, null, null, null, null, null, null, false);
+                rejectedDto.setRejectReason("Skipping ETL on labEvent with no vessels " + entity.getLabEventId()
+                                            + ": No synthetic workflow configured");
+                dtos.add(rejectedDto);
+                loggingDtos.add(rejectedDto);
+            }
         } else {
             for (LabVessel vessel : vessels) {
                 VesselContainer<? extends LabVessel> vesselContainer = vessel.getContainerRole();

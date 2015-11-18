@@ -158,18 +158,29 @@ public class EventEtlDbFreeTest {
         EasyMock.expect(obj.getEventLocation()).andReturn(location);
         EasyMock.expect(obj.getProgramName()).andReturn(programName);
         EasyMock.expect(obj.getLabEventId()).andReturn(entityId).anyTimes();
+
+        EasyMock.expect(wfLookup.lookupWorkflowConfig(LabEventType.A_BASE.getName(),
+                null, eventDate)).andReturn(wfConfig);
+
+        EasyMock.expect(wfConfig.getWorkflowId()).andReturn(workflowId);
+        EasyMock.expect(wfConfig.getProductWorkflowName()).andReturn(workflowName);
+        EasyMock.expect(wfConfig.getWorkflowProcessName()).andReturn("ABase");
+        EasyMock.expect(wfConfig.getWorkflowStepName()).andReturn(LabEventType.A_BASE.toString());
+        EasyMock.expect(wfConfig.getProcessId()).andReturn(processId);
+
         EasyMock.replay(mocks);
 
         Collection<String> records = tst.dataRecords(etlDateStr, false, entityId);
         Assert.assertEquals(records.size(), 1);
         String record = records.iterator().next();
         String expected = etlDateStr + ",F,"
-                          + String.valueOf(entityId)
-                          + ",\"\",\"\"," + LabEventType.A_BASE.getName() + ",\"\",\"\",\"\",,"
+                          + String.valueOf(entityId) + ","
+                          + workflowId + "," + processId + ","
+                          + LabEventType.A_BASE.getName() + ",\"\",\"\",\"\",NONE,"
                           + location + ",\"\",," + ExtractTransform.formatTimestamp(eventDate)
                           + "," + programName + ",\"\",E";
 
-        Assert.assertEquals( record, expected, "Record for no-vessel event is not as expected" );
+        Assert.assertEquals(record, expected, "Record for no-vessel event is not as expected" );
 
         EasyMock.verify(mocks);
     }
