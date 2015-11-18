@@ -1283,15 +1283,14 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         if (product != null) {
             Product product = productDao.findByBusinessKey(this.product);
-            for (Product addOn : product.getAddOns()) {
-                JSONObject item = new JSONObject();
-                item.put("key", addOn.getBusinessKey());
-                item.put("value", addOn.getProductName());
+            for (Product addOn : product.getAddOns(userBean)) {
+                    JSONObject item = new JSONObject();
+                    item.put("key", addOn.getBusinessKey());
+                    item.put("value", addOn.getProductName());
 
-                itemList.put(item);
+                    itemList.put(item);
+                }
             }
-        }
-
         return createTextResolution(itemList.toString());
     }
 
@@ -1402,13 +1401,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             try {
                 ProductOrder.loadSampleData(samples);
                 for (ProductOrderSample sample : samples) {
-                    JSONObject item = new JSONObject();
-
-                    if (sample.isInBspFormat()) {
-                        ProductOrderSampleJsonFactory.setupSampleDTOItems(sample, item);
-                    } else {
-                        ProductOrderSampleJsonFactory.setupEmptyItems(sample, item);
-                    }
+                    JSONObject item = ProductOrderSampleJsonFactory.toJson(sample);
                     itemList.put(item);
                 }
             } catch (BSPLookupException e) {

@@ -91,7 +91,7 @@ thrift:
 
     QA:
 
-      host: seqtest04
+      host: vsquidthriftserviceqa
       port: 9090
 
 
