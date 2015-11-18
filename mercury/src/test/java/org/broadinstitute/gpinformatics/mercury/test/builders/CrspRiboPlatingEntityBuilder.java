@@ -97,11 +97,6 @@ public class CrspRiboPlatingEntityBuilder {
         labEventFactory.buildFromBettaLimsPlateEventDbFree(crspRiboPlatingJaxbBuilder.getInitialRiboBufferAddition2(),
                 initialRiboPlate2);
 
-        labEventFactory.buildFromBettaLimsPlateEventDbFree(crspRiboPlatingJaxbBuilder.getInitialRiboTransfer1(),
-                initialRiboPlate1);
-        labEventFactory.buildFromBettaLimsPlateEventDbFree(crspRiboPlatingJaxbBuilder.getInitialRiboTransfer2(),
-                initialRiboPlate2);
-
         //PolyATSAliquot
         LabEventTest.validateWorkflow(LabEventType.POLY_A_TS_ALIQUOT.getName(), mapBarcodeToTube.values());
         polyATSAliquot = labEventFactory.buildFromBettaLims(
