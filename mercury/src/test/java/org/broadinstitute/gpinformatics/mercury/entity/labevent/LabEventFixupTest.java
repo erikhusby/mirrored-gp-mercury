@@ -979,6 +979,10 @@ public class LabEventFixupTest extends Arquillian {
         }
     }
 
+    /**
+     * This fixup is not a good example.  The necessary orphanRemoval = true was on a different branch, so the
+     * fixup didn't work the first time.  It had to be run several times, with modifications, to have the desired effect.
+     */
     @Test(enabled = false)
     public void fixupSupport1296() {
         try {
@@ -990,10 +994,19 @@ public class LabEventFixupTest extends Arquillian {
             StaticPlate indexPlate = null;
             LabEvent adapterLigation = null;
             for (LabEvent labEvent : shearCleanPlate.getTransfersTo()) {
+                if (labEvent == null) {
+                    continue;
+                }
                 if (labEvent.getLabEventType() == LabEventType.INDEXED_ADAPTER_LIGATION) {
-                    indexPlate = (StaticPlate) labEvent.getSectionTransfers().iterator().next().getSourceVesselContainer().
-                            getEmbedder();
+                    if (labEvent.getSectionTransfers().isEmpty()) {
+                        indexPlate = (StaticPlate) labEvent.getCherryPickTransfers().iterator().next().
+                                getSourceVesselContainer().getEmbedder();
+                    } else {
+                        indexPlate = (StaticPlate) labEvent.getSectionTransfers().iterator().next().
+                                getSourceVesselContainer().getEmbedder();
+                    }
                     adapterLigation = labEvent;
+                    break;
                 }
             }
             Assert.assertNotNull(indexPlate);
@@ -1001,6 +1014,15 @@ public class LabEventFixupTest extends Arquillian {
 
             // Traversal code doesn't currently honor PlateTransferEventType.isFlipped, so replace section transfer with
             // cherry picks.
+            for (CherryPickTransfer cherryPickTransfer : shearCleanPlate.getContainerRole().getCherryPickTransfersTo()) {
+                cherryPickTransfer.getSourceVesselContainer().getCherryPickTransfersFrom().clear();
+            }
+            shearCleanPlate.getContainerRole().getCherryPickTransfersTo().clear();
+
+            for (CherryPickTransfer cherryPickTransfer : adapterLigation.getCherryPickTransfers()) {
+                cherryPickTransfer.clearLabEvent();
+            }
+            adapterLigation.getCherryPickTransfers().clear();
             List<VesselPosition> wells = SBSSection.ALL96.getWells();
             for (int i = 0; i < 96; i++) {
                 adapterLigation.getCherryPickTransfers().add(new CherryPickTransfer(
