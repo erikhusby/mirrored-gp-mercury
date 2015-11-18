@@ -55,7 +55,7 @@ public class WorkflowBucketDef extends WorkflowStepDef {
     }
 
     public Workflow getWorkflowForProductOrder(ProductOrder productOrder) {
-        Workflow workflow = getBucketEntryEvaluator().getMatchingWorkflow(productOrder);
+        Workflow workflow = bucketEntryEvaluator.getMatchingWorkflow(productOrder);
         if (workflow == Workflow.NONE) {
             workflow = productOrder.getProduct().getWorkflow();
         }
@@ -79,7 +79,7 @@ public class WorkflowBucketDef extends WorkflowStepDef {
         this.bucketEntryEvaluator = bucketEntryEvaluator;
     }
 
-    public WorkflowBucketEntryEvaluator getBucketEntryEvaluator() {
+    WorkflowBucketEntryEvaluator getBucketEntryEvaluator() {
         return bucketEntryEvaluator;
     }
 

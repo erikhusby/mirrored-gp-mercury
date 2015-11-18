@@ -38,10 +38,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-@UrlBinding(value = "/workflow/AddToBucket.action")
+@UrlBinding(value = AddReworkActionBean.ADD_REWORK_ACTION_BEAN)
 public class AddReworkActionBean extends CoreActionBean {
 
     public static final String OTHER_REASON_REFERENCE = "Other...";
+    public static final String ADD_REWORK_ACTION_BEAN = "/workflow/AddToBucket.action";
     @Inject
     private LabVesselDao labVesselDao;
 

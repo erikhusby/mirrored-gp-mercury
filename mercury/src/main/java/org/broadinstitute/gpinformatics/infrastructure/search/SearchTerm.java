@@ -268,6 +268,12 @@ public class SearchTerm implements Serializable, ColumnTabulation {
      */
     private Boolean isExclusive = Boolean.FALSE;
 
+    /**
+     * Should term be added to result column as a default if user forgets to select any results
+     * (isExcludedFromResultColumns value conflict takes precedence)
+     */
+    private Boolean isDefaultResultColumn = Boolean.FALSE;
+
 
     private ConfigurableSearchDefinition alternateSearchDefinition;
 
@@ -450,6 +456,18 @@ public class SearchTerm implements Serializable, ColumnTabulation {
 
     public void setIsExcludedFromResultColumns(Boolean isExcludedFromResultColumns) {
         this.isExcludedFromResultColumns = isExcludedFromResultColumns;
+    }
+
+    /**
+     * If user does not select any result columns, add any flagged as default to results
+     * @return
+     */
+    public Boolean isDefaultResultColumn(){
+        return  isDefaultResultColumn && !isExcludedFromResultColumns;
+    }
+
+    public void setIsDefaultResultColumn(Boolean isDefaultResultColumn) {
+        this.isDefaultResultColumn = isDefaultResultColumn;
     }
 
     @Override

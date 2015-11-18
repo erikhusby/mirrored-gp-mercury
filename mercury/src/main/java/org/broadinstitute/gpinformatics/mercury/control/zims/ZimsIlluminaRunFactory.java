@@ -524,64 +524,6 @@ public class ZimsIlluminaRunFactory {
         return controlProductPartNumber;
     }
 
-    // todo jmt delete this class
-    private static class PipelineTransformationCriteria implements TransferTraverserCriteria {
-
-        private Map<Integer, Set<LabVessel>> mapHopToLabVessels = LazyMap.lazyMap(
-                new TreeMap<Integer, Set<LabVessel>>(),
-                new Factory<Set<LabVessel>>() {
-                    @Override
-                    public Set<LabVessel> create() {
-                        return new HashSet<>();
-                    }
-                });
-
-        @Override
-        public TraversalControl evaluateVesselPreOrder(Context context) {
-            LabEvent event = context.getEvent();
-            if (event == null
-                || event.getLabEventType().getPipelineTransformation() == LabEventType.PipelineTransformation.NONE) {
-                return TraversalControl.ContinueTraversing;
-            }
-            // todo jmt in place events?
-            for (LabVessel labVessel : event.getTargetLabVessels()) {
-                VesselContainer<?> containerRole = labVessel.getContainerRole();
-                if (containerRole == null) {
-                    mapHopToLabVessels.get(context.getHopCount()).add(labVessel);
-                } else {
-                    LabVessel vesselAtPosition = containerRole.getVesselAtPosition(context.getVesselPosition());
-                    if (vesselAtPosition == null) {
-                        if (OrmUtil.proxySafeIsInstance(labVessel, StaticPlate.class)) {
-                            vesselAtPosition = new PlateWellTransient((StaticPlate) labVessel, context.getVesselPosition());
-                        } else {
-                            throw new RuntimeException("No vessel at position " + context.getVesselPosition() + " in " +
-                                    labVessel.getLabel());
-                        }
-                    }
-                    mapHopToLabVessels.get(context.getHopCount()).add(vesselAtPosition);
-                }
-            }
-            return TraversalControl.StopTraversing;
-        }
-
-        Set<LabVessel> getNearestLabVessels() {
-            Set<Map.Entry<Integer, Set<LabVessel>>> entries = mapHopToLabVessels.entrySet();
-            Iterator<Map.Entry<Integer, Set<LabVessel>>> iterator = entries.iterator();
-            if (iterator.hasNext()) {
-                return iterator.next().getValue();
-            }
-            return Collections.emptySet();
-        }
-
-        @Override
-        public void evaluateVesselInOrder(Context context) {
-        }
-
-        @Override
-        public void evaluateVesselPostOrder(Context context) {
-        }
-    }
-
     /**
      * Need DTO to store choice of aliquot or root sample ID.
      */

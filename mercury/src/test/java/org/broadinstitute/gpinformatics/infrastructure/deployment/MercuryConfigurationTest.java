@@ -49,7 +49,7 @@ public class MercuryConfigurationTest {
         configuration.load(globalDoc, localDoc);
 
         ThriftConfig qaThriftConfig = (ThriftConfig) configuration.getConfig(ThriftConfig.class, Deployment.QA);
-        Assert.assertEquals(qaThriftConfig.getHost(), "seqtest04");
+        Assert.assertEquals(qaThriftConfig.getHost(), "vsquidthriftserviceqa");
 
         ThriftConfig devThriftConfig = (ThriftConfig) configuration.getConfig(ThriftConfig.class, Deployment.DEV);
 

@@ -106,10 +106,9 @@ public class ManifestImportProcessor extends TableProcessor {
     }
 
     private void validateRow(Map<String, String> dataRow, int dataRowIndex) {
-
         for(Map.Entry<String, String> rowEntry: dataRow.entrySet()) {
-            if(Metadata.Key.fromDisplayName(rowEntry.getKey()) == Metadata.Key.MATERIAL_TYPE &&
-               MaterialType.fromDisplayName(rowEntry.getValue()) == null) {
+            Metadata.Key metadataKey = Metadata.Key.fromDisplayName(rowEntry.getKey());
+            if (metadataKey == Metadata.Key.MATERIAL_TYPE && !MaterialType.isValid(rowEntry.getValue())) {
                 addDataMessage(ClinicalResource.UNRECOGNIZED_MATERIAL_TYPE + ": " + rowEntry.getValue(), dataRowIndex);
             }
         }

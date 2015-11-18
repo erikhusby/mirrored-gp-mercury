@@ -30,8 +30,11 @@ import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Transient;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -128,8 +131,12 @@ public class BucketEntry {
     @JoinColumn(name = "rework_detail_id")
     private ReworkDetail reworkDetail;
 
+    /**
+     * Workflows for this bucket. A null value indicates it has not been initialized. Initialization occurs in
+     * getWorkflows()
+     */
     @Transient
-    private  Workflow workflow;
+    private Collection<Workflow> workflows = null;
 
     protected BucketEntry() {
     }
@@ -304,7 +311,7 @@ public class BucketEntry {
                 bucket != null ? bucket.getBucketDefinitionName() : "(no bucket)",
                 productOrder != null?productOrder.getBusinessKey():"(no product order)",
                 labVessel != null ? labVessel.getLabel() : "(no vessel)",
-                workflow != null ? getWorkflowName(): "(no workflow)",
+                workflows != null && !workflows.isEmpty() ? getWorkflowNames(): "(no workflows)",
                 labBatch != null ? labBatch.getBatchName() : "(not batched)");
     }
 
@@ -318,28 +325,40 @@ public class BucketEntry {
         return builder.toComparison();
     }
 
-    private Workflow findWorkflow() {
+    @Nonnull
+    private Collection<Workflow> findWorkflows() {
+        Collection<Workflow> workflows = new HashSet<>();
         WorkflowConfig workflowConfig = new WorkflowLoader().load();
         for (Workflow workflow : getProductOrder().getProductWorkflows()) {
             ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflow(workflow);
             for (WorkflowBucketDef workflowBucketDef : productWorkflowDef.getEffectiveVersion().getBuckets()) {
                 if (workflowBucketDef.meetsBucketCriteria(labVessel, productOrder)) {
-                    return workflow;
+                    workflows.add(workflow);
                 }
             }
         }
-        return Workflow.NONE;
+        return workflows;
     }
 
-    public Workflow getWorkflow() {
-        if (workflow == null) {
-            workflow = findWorkflow();
+    /**
+     * Initialize workflows for this batch
+     * @return
+     */
+    @Nonnull
+    public Collection<Workflow> getWorkflows() {
+        if (workflows == null) {
+            workflows = findWorkflows();
         }
-        return workflow;
+        return workflows;
     }
 
-    public String getWorkflowName() {
-        return getWorkflow().getWorkflowName();
+    @Nonnull
+    public Collection<String> getWorkflowNames() {
+        Set<String> workflowNames = new HashSet<>();
+        for (Workflow workflow : getWorkflows()) {
+            workflowNames.add(workflow.getWorkflowName());
+        }
+        return workflowNames;
     }
 
     public enum BucketEntryType {

@@ -43,6 +43,7 @@ public class ReagentSearchDefinition {
 
         SearchTerm searchTerm = new SearchTerm();
         searchTerm.setName("Reagent Name");
+        searchTerm.setIsDefaultResultColumn(Boolean.TRUE);
         searchTerm.setDbSortPath("name");
         List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
         SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
@@ -61,6 +62,7 @@ public class ReagentSearchDefinition {
 
         searchTerm = new SearchTerm();
         searchTerm.setName("Lot Number");
+        searchTerm.setIsDefaultResultColumn(Boolean.TRUE);
         searchTerm.setDbSortPath("lot");
         criteriaPaths = new ArrayList<>();
         criteriaPath = new SearchTerm.CriteriaPath();

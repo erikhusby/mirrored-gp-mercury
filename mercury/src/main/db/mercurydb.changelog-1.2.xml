@@ -372,4 +372,10 @@
             <column name="NEEDS_REVIEW" type="varchar2(255)"/>
         </addColumn>
     </changeSet>
+
+    <changeSet id="GPLIM-3791" author="epolk">
+        <dropNotNullConstraint columnName="lab_event" schemaName="mercury" tableName="LAB_EVENT_REAGENTS_AUD"/>
+        <dropNotNullConstraint columnName="reagents" schemaName="mercury" tableName="LAB_EVENT_REAGENTS_AUD"/>
+    </changeSet>
+
 </databaseChangeLog>
