@@ -722,6 +722,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
             for (RiskItem riskItem : riskItems) {
                 if( !isFirst ) {
                     riskTypeStringBuilder.append(" AND ");
+                } else {
                     isFirst = false;
                 }
                 riskTypeStringBuilder.append(riskItem.getInformation().replaceAll("\r?\n", " "));
