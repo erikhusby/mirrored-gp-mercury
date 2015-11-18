@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToVesselTransfer;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
@@ -25,13 +26,18 @@ import org.json.JSONWriter;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.Writer;
 import java.text.Format;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -100,9 +106,16 @@ public class TransferVisualizerV2 {
         /** The ID to scroll to when the page is rendered.  If the starting barcode was a tube, this is one of the
          * enclosing racks (the tube may appear in multiple racks, so it can't be used as the start). */
         private String startId;
+        /** The IDs to add to each rect. */
+        private List<AlternativeIds> alternativeIds;
 
-        Traverser(Writer writer) throws JSONException {
+        private Font font = new Font("SansSerif", Font.PLAIN, 10);
+        private BufferedImage img = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
+        private FontMetrics fm = img.getGraphics().getFontMetrics(font);
+
+        Traverser(Writer writer, List<AlternativeIds> alternativeIds) throws JSONException {
             this.writer = writer;
+            this.alternativeIds = alternativeIds;
             jsonWriter = new JSONWriter(writer);
             jsonWriter.object().key("nodes").array();
         }
@@ -290,15 +303,36 @@ public class TransferVisualizerV2 {
                 // JSON for child vessels (e.g. tubes in a rack)
                 VesselGeometry vesselGeometry = vesselContainer.getEmbedder().getVesselGeometry();
                 int maxColumn = 0;
+                int maxColumnWidth = 0;
                 int maxRow = 0;
+                int maxRowHeight = 0;
                 int inPlaceHeight = vesselContainer.getEmbedder().getInPlaceLabEvents().size() * ROW_HEIGHT;
+                Map<String, List<String>> mapBarcodeToAlternativeIds = new HashMap<>();
                 for (VesselPosition vesselPosition : vesselGeometry.getVesselPositions()) {
                     VesselGeometry.RowColumn rowColumn = vesselGeometry.getRowColumnForVesselPosition(vesselPosition);
                     LabVessel child = vesselContainer.getVesselAtPosition(vesselPosition);
                     if (child != null) {
-                        // todo jmt include alternative IDs in size of child
+                        // todo jmt include alternative IDs in size of child (popup if more than one sample?)
                         maxColumn = Math.max(maxColumn, rowColumn.getColumn());
                         maxRow = Math.max(maxRow, rowColumn.getRow() + 1);
+                        for (AlternativeIds alternativeId : alternativeIds) {
+                            switch (alternativeId) {
+                                case SAMPLE_ID:
+                                    Set<SampleInstanceV2> sampleInstancesV2 = child.getSampleInstancesV2();
+                                    if (sampleInstancesV2.size() == 1) {
+                                        SampleInstanceV2 sampleInstanceV2 = sampleInstancesV2.iterator().next();
+                                        String indexName = sampleInstanceV2.getMolecularIndexingScheme() == null ? "" :
+                                                " " + sampleInstanceV2.getMolecularIndexingScheme().getName();
+                                        String ids = sampleInstanceV2.getNearestMercurySampleName() + indexName;
+                                        int width = fm.stringWidth(ids);
+                                        mapBarcodeToAlternativeIds.put(child.getLabel(), Collections.singletonList(ids));
+                                        maxColumnWidth = Math.max(width, maxColumnWidth);
+                                    }
+                                    break;
+                                case LCSET:
+                                    break;
+                            }
+                        }
                     }
                 }
                 int width = Math.max(PLATE_WIDTH, maxColumn * WELL_WIDTH);
@@ -329,12 +363,14 @@ public class TransferVisualizerV2 {
                     VesselGeometry.RowColumn rowColumn = vesselGeometry.getRowColumnForVesselPosition(vesselPosition);
                     LabVessel child = vesselContainer.getVesselAtPosition(vesselPosition);
                     if (child != null) {
-                        // todo jmt add alternative IDs
                         jsonWriter.object().
                                 key("label").value(child.getLabel()).
                                 key("x").value((rowColumn.getColumn() - 1) * WELL_WIDTH).
                                 key("y").value((rowColumn.getRow()) * ROW_HEIGHT + inPlaceHeight).
-                                key("w").value(WELL_WIDTH).key("h").value(ROW_HEIGHT);
+                                key("w").value(WELL_WIDTH).key("h").value(ROW_HEIGHT).
+                                key("altIds").array().object().
+                                        key("altId").value(mapBarcodeToAlternativeIds.get(child.getLabel())).
+                                endObject().endArray();
                         if (child.equals(labVessel)) {
                             jsonWriter.key("highlight").value(1L);
                         }
@@ -397,12 +433,13 @@ public class TransferVisualizerV2 {
      */
     public void jsonForVessels(List<LabVessel> labVessels,
             List<TransferTraverserCriteria.TraversalDirection> traversalDirections,
-            Writer writer) {
+            Writer writer,
+            List<AlternativeIds> alternativeIds) {
         if (traversalDirections.isEmpty()) {
             throw new IllegalArgumentException("Must supply at least one direction");
         }
         try {
-            Traverser traverser = new Traverser(writer);
+            Traverser traverser = new Traverser(writer, alternativeIds);
             for (LabVessel labVessel : labVessels) {
                 for (TransferTraverserCriteria.TraversalDirection traversalDirection : traversalDirections) {
                     VesselContainer<?> containerRole = labVessel.getContainerRole();

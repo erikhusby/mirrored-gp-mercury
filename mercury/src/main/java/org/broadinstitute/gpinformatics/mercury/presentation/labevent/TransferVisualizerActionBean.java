@@ -20,6 +20,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -72,7 +73,8 @@ public class TransferVisualizerActionBean extends CoreActionBean {
                         new ArrayList<>(mapBarcodeToVessel.values()),
                         Arrays.asList(TransferTraverserCriteria.TraversalDirection.Ancestors,
                                 TransferTraverserCriteria.TraversalDirection.Descendants),
-                        httpServletResponse.getWriter());
+                        httpServletResponse.getWriter(),
+                        Collections.singletonList(TransferVisualizerV2.AlternativeIds.SAMPLE_ID));
 
             }
         };
