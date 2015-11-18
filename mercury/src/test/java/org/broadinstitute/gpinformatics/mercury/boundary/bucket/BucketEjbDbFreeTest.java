@@ -27,6 +27,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.easymock.EasyMock;
@@ -139,7 +140,7 @@ public class BucketEjbDbFreeTest {
             switch (rackPosition) {
             case 1:
                 // Unreceived root should be rejected.
-                bspData.put(BSPSampleSearchColumn.MATERIAL_TYPE, "DNA:DNA Genomic");
+                bspData.put(BSPSampleSearchColumn.MATERIAL_TYPE, MaterialType.DNA_DNA_GENOMIC.getDisplayName());
                 bspData.put(BSPSampleSearchColumn.SAMPLE_ID, pdoSample.getName());
                 bspData.put(BSPSampleSearchColumn.ROOT_SAMPLE, pdoSample.getName());
                 bspData.put(BSPSampleSearchColumn.RECEIPT_DATE, null);
@@ -147,7 +148,7 @@ public class BucketEjbDbFreeTest {
 
             case 2:
                 // Received root but non-genomic material, should NOT be accepted.
-                bspData.put(BSPSampleSearchColumn.MATERIAL_TYPE, "Tissue:Blood");
+                bspData.put(BSPSampleSearchColumn.MATERIAL_TYPE, MaterialType.FRESH_BLOOD.getDisplayName());
                 bspData.put(BSPSampleSearchColumn.SAMPLE_ID, pdoSample.getName());
                 bspData.put(BSPSampleSearchColumn.ROOT_SAMPLE, pdoSample.getName());
                 bspData.put(BSPSampleSearchColumn.RECEIPT_DATE, "04/22/2013");
@@ -155,7 +156,7 @@ public class BucketEjbDbFreeTest {
 
             case 3:
                 // Received root should be accepted.
-                bspData.put(BSPSampleSearchColumn.MATERIAL_TYPE, "DNA:DNA Genomic");
+                bspData.put(BSPSampleSearchColumn.MATERIAL_TYPE, MaterialType.DNA_DNA_GENOMIC.getDisplayName());
                 bspData.put(BSPSampleSearchColumn.ROOT_SAMPLE, pdoSample.getName());
                 bspData.put(BSPSampleSearchColumn.SAMPLE_ID, pdoSample.getName());
                 bspData.put(BSPSampleSearchColumn.RECEIPT_DATE, "04/22/2013");
@@ -165,7 +166,7 @@ public class BucketEjbDbFreeTest {
             default:
                 // FYI case 4 will be a derived sample that Mercury doesn't know about yet.
                 // Non-root samples should all be accepted.
-                bspData.put(BSPSampleSearchColumn.MATERIAL_TYPE, "DNA:DNA Genomic");
+                bspData.put(BSPSampleSearchColumn.MATERIAL_TYPE, MaterialType.DNA_DNA_GENOMIC.getDisplayName());
                 bspData.put(BSPSampleSearchColumn.ROOT_SAMPLE, "ROOT");
                 bspData.put(BSPSampleSearchColumn.SAMPLE_ID, pdoSample.getName());
                 expectedSamples.add(pdoSample);

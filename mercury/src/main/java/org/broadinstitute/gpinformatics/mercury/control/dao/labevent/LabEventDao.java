@@ -31,4 +31,15 @@ public class LabEventDao extends GenericDao {
             }
         });
     }
+
+    public LabEvent findByLocationDateDisambiguator(final String location, final Date date, final Long disambiguator) {
+        return findSingle(LabEvent.class, new GenericDaoCallback<LabEvent>() {
+            @Override
+            public void callback(CriteriaQuery<LabEvent> criteriaQuery, Root<LabEvent> root) {
+                criteriaQuery.where(getCriteriaBuilder().equal(root.get(LabEvent_.eventLocation), location),
+                        getCriteriaBuilder().equal(root.get(LabEvent_.eventDate), date),
+                        getCriteriaBuilder().equal(root.get(LabEvent_.disambiguator), disambiguator));
+            }
+        });
+    }
 }

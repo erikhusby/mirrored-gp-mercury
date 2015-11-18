@@ -24,6 +24,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.envers.Audited;
 
+import javax.annotation.Nullable;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -171,6 +172,7 @@ public class LabEvent {
      */
     @ManyToOne(cascade = {CascadeType.PERSIST}, fetch = FetchType.LAZY)
     @JoinColumn(name = "IN_PLACE_LAB_VESSEL")
+    @Nullable
     private LabVessel inPlaceLabVessel;
 
     /**
@@ -323,6 +325,24 @@ public class LabEvent {
         labEventReagents.add(new LabEventReagent(this, reagent));
     }
 
+    /** Removes the corresponding lab event reagent. Intended only for data fixup use. */
+    public LabEventReagent removeLabEventReagent(Reagent reagent) {
+        LabEventReagent found = null;
+        for (LabEventReagent labEventReagent : labEventReagents) {
+            if (Reagent.BY_NAME_LOT_EXP.compare(reagent, labEventReagent.getReagent()) == 0) {
+                if (found != null) {
+                    throw new RuntimeException("Identical " + reagent.getName() + " reagents on LabEvent " +
+                                               getLabEventId());
+                }
+                found = labEventReagent;
+            }
+        }
+        if (found != null) {
+            labEventReagents.remove(found);
+        }
+        return found;
+    }
+
     public void addReagentVolume(Reagent reagent, BigDecimal volume) {
         labEventReagents.add(new LabEventReagent(this, reagent, volume));
     }
@@ -435,6 +455,7 @@ todo jmt adder methods
         this.labEventMetadatas = labEventMetadatas;
     }
 
+    @Nullable
     public LabVessel getInPlaceLabVessel() {
         return inPlaceLabVessel;
     }

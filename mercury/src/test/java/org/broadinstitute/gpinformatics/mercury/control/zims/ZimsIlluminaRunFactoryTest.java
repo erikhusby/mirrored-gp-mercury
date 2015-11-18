@@ -38,8 +38,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
@@ -445,7 +445,7 @@ public class ZimsIlluminaRunFactoryTest {
         LabBatch lcSetBatch = new LabBatch(labBatchName, Collections.<LabVessel>singleton(testTube),
                 LabBatch.LabBatchType.WORKFLOW);
         lcSetBatch.setJiraTicket(lcSetTicket);
-        lcSetBatch.setWorkflowName("Exome Express");
+        lcSetBatch.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
         lcSetBatch.addBucketEntry(bucketEntry);
         bucketEntry.setLabBatch(lcSetBatch);
 

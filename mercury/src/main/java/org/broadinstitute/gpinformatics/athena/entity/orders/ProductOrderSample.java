@@ -40,6 +40,7 @@ import java.io.Serializable;
 import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -706,43 +707,63 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
      * @return A string with the full details for each {@link RiskItem} for the sample.
      */
     public String getRiskString() {
-        StringBuilder riskStringBuilder = new StringBuilder();
-
-        if (isOnRisk()) {
-            for (RiskItem riskItem : riskItems) {
-                // We need to remove newlines and carriage returns as ETL will not accept the values.
-                riskStringBuilder.append(riskItem.getInformation().replaceAll("\r?\n", " "));
-                riskStringBuilder.append(" AND ");
-            }
+        if (!isOnRisk()) {
+            return "";
         }
 
-        return formatAndString(riskStringBuilder.toString());
+        if( riskItems.size() == 0) {
+            return "";
+        } else if( riskItems.size() == 1 ) {
+            return riskItems.iterator().next().getInformation().replaceAll("\r?\n", " ");
+        } else {
+            StringBuilder riskTypeStringBuilder = new StringBuilder();
+
+            boolean isFirst = true;
+            for (RiskItem riskItem : riskItems) {
+                if( !isFirst ) {
+                    riskTypeStringBuilder.append(" AND ");
+                } else {
+                    isFirst = false;
+                }
+                riskTypeStringBuilder.append(riskItem.getInformation().replaceAll("\r?\n", " "));
+            }
+            return riskTypeStringBuilder.toString();
+        }
     }
 
     /**
      * @return A string of each {@link RiskItem}s {@link RiskCriterion} type for the sample.
      */
     public String getRiskTypeString() {
-        StringBuilder riskTypeStringBuilder = new StringBuilder();
-
-        if (isOnRisk()) {
-            for (RiskItem riskItem : riskItems) {
-                riskTypeStringBuilder.append(riskItem.getRiskCriterion().getType().getLabel());
-                riskTypeStringBuilder.append(" AND ");
-            }
-        }
-
-        return formatAndString(riskTypeStringBuilder.toString());
-    }
-
-
-    public String formatAndString(String criteriaString) {
-        if (StringUtils.isBlank(criteriaString)) {
+        if (!isOnRisk()) {
             return "";
         }
+        if( riskItems.size() == 0) {
+            return "";
+        } else if( riskItems.size() == 1 ) {
+            return riskItems.iterator().next().getRiskCriterion().getType().getLabel();
+        } else {
+            StringBuilder riskTypeStringBuilder = new StringBuilder();
 
-        // If the string had a value then we need to strip the trailing ' AND '.
-        return criteriaString.substring(0, criteriaString.lastIndexOf(" AND "));
+            // Multiple risk items need to be consistently sorted
+            String[] sortedNames = new String[riskItems.size()];
+
+            int i = 0;
+            for (RiskItem riskItem : riskItems) {
+                sortedNames[i++] = riskItem.getRiskCriterion().getType().getLabel();
+            }
+
+            Arrays.sort(sortedNames);
+
+            for (int j = 0; j < sortedNames.length; j++ ) {
+                if( j > 0 ) {
+                    riskTypeStringBuilder.append(" AND ");
+                }
+                riskTypeStringBuilder.append(sortedNames[j]);
+            }
+
+            return riskTypeStringBuilder.toString();
+        }
     }
 
     /**
