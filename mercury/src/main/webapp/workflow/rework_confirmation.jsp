@@ -2,7 +2,7 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.BucketViewActionBean"/>
 <stripes:layout-render name="/layout.jsp" pageTitle="${actionBean.selectedBucket}"
-                       sectionTitle="Confirm ${actionBean.confirmationPageTitle}">
+                       sectionTitle="${actionBean.confirmationPageTitle}">
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
             $j(document).ready(function () {

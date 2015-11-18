@@ -48,11 +48,34 @@ public class LabEventTraversalTest extends Arquillian {
         searchValue.setOperator(SearchInstance.Operator.EQUALS);
         searchValue.setValues(Collections.singletonList("LCSET-5102"));
 
-        searchValue = searchInstance.addTopLevelTerm("EventDate", configurableSearchDefinition);
-        searchValue.setOperator(SearchInstance.Operator.BETWEEN);
-        List<String> dateVals = new ArrayList<>();
-        dateVals.add("11/20/2013"); dateVals.add("11/21/2013");
-        searchValue.setValues(dateVals);
+        searchInstance.getPredefinedViewColumns().add("LabEventId");
+        searchInstance.getPredefinedViewColumns().add("EventType");
+
+        searchInstance.establishRelationships(configurableSearchDefinition);
+
+        // Side effect of traversal evaluator
+        Assert.assertFalse(searchInstance.getIsDbSortable(), "Traversal evaluator results are not sortable in DB");
+
+        ConfigurableListFactory.FirstPageResults firstPageResults =
+                configurableListFactory.getFirstResultsPage(
+                        searchInstance, configurableSearchDefinition, null, 1, null, "ASC", "LabEvent" );
+
+        Assert.assertEquals(firstPageResults.getPagination().getIdList().size(), 364);
+
+    }
+
+    /**
+     *  The three tests here exercise the lab event by vessels alternate search definition
+     * */
+    public void testEventByVesselAlternateSearch() {
+        ConfigurableSearchDefinition configurableSearchDefinition =
+                SearchDefinitionFactory.getForEntity(ColumnEntity.LAB_EVENT.getEntityName());
+
+        // In place events and transfers to/from a sample tube
+        SearchInstance searchInstance = new SearchInstance();
+        SearchInstance.SearchValue searchValue = searchInstance.addTopLevelTerm("Event Vessel Barcode", configurableSearchDefinition);
+        searchValue.setOperator(SearchInstance.Operator.EQUALS);
+        searchValue.setValues(Collections.singletonList("1090469488"));
 
         searchInstance.getPredefinedViewColumns().add("LabEventId");
         searchInstance.getPredefinedViewColumns().add("EventType");
@@ -66,8 +89,32 @@ public class LabEventTraversalTest extends Arquillian {
                 configurableListFactory.getFirstResultsPage(
                         searchInstance, configurableSearchDefinition, null, 1, null, "ASC", "LabEvent" );
 
-        Assert.assertEquals(firstPageResults.getPagination().getIdList().size(), 223);
+        Assert.assertEquals(firstPageResults.getPagination().getIdList().size(), 7);
 
+        // In place events on a sample tube
+        searchInstance = new SearchInstance();
+        searchValue = searchInstance.addTopLevelTerm("Event Vessel Barcode", configurableSearchDefinition);
+        searchValue.setOperator(SearchInstance.Operator.EQUALS);
+        searchValue.setValues(Collections.singletonList("1090469488"));
+
+        searchInstance.getPredefinedViewColumns().add("LabEventId");
+        searchInstance.getPredefinedViewColumns().add("EventType");
+
+        searchInstance.establishRelationships(configurableSearchDefinition);
+
+        firstPageResults = configurableListFactory.getFirstResultsPage(
+                        searchInstance, configurableSearchDefinition, null, 1, null, "ASC", "LabEvent" );
+
+        Assert.assertEquals(firstPageResults.getPagination().getIdList().size(), 7);
+
+        // Select descendants of in place vessels
+        searchInstance.getTraversalEvaluatorValues().put("descendantOptionEnabled", Boolean.TRUE );
+        searchInstance.establishRelationships(configurableSearchDefinition);
+
+        firstPageResults = configurableListFactory.getFirstResultsPage(
+                searchInstance, configurableSearchDefinition, null, 1, null, "ASC", "LabEvent" );
+
+        Assert.assertEquals(firstPageResults.getPagination().getIdList().size(), 61);
     }
 
     public void testLcsetReworkDescendantSearch() {

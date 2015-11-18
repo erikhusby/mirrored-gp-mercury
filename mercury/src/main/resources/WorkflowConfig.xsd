@@ -67,6 +67,14 @@
             <xs:element type="xs:string" name="targetBarcodedTubeType" minOccurs="0"/>
             <xs:element type="xs:string" name="instructions" minOccurs="0"/>
             <xs:element type="manualTransferDetailsType" name="manualTransferDetails" minOccurs="0"/>
+            <xs:element name="ancestryEtlFlag" minOccurs="0">
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:enumeration value="true"/>
+                        <xs:enumeration value="false"/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:element>
         </xs:sequence>
     </xs:complexType>
     <xs:complexType name="workflowConfigType">

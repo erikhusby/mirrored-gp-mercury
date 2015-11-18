@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
@@ -872,6 +873,57 @@ public class LabEventFixupTest extends Arquillian {
     }
 
     @Test(enabled = false)
+    public void fixupGplim3834() {
+        try {
+            userBean.loginOSUser();
+            utx.begin();
+
+            // Need to find and flip a P7 transfer.
+            StaticPlate shearCleanPlate = staticPlateDao.findByBarcode("000006874373");
+            StaticPlate indexPlate = null;
+            LabEvent adapterLigation = null;
+            for (LabEvent labEvent : shearCleanPlate.getTransfersTo()) {
+                if (labEvent.getLabEventType() == LabEventType.INDEXED_ADAPTER_LIGATION) {
+                    indexPlate = (StaticPlate) labEvent.getSectionTransfers().iterator().next().getSourceVesselContainer().
+                            getEmbedder();
+                    adapterLigation = labEvent;
+                }
+            }
+            Assert.assertNotNull(indexPlate);
+            Assert.assertEquals(indexPlate.getLabel(), "000002933523");
+
+            // Traversal code doesn't currently honor PlateTransferEventType.isFlipped, so replace section transfer with
+            // cherry picks.
+            List<VesselPosition> wells = SBSSection.ALL96.getWells();
+            for (int i = 0; i < 96; i++) {
+                adapterLigation.getCherryPickTransfers().add(new CherryPickTransfer(
+                        indexPlate.getContainerRole(), wells.get(95 - i), null,
+                        shearCleanPlate.getContainerRole(), wells.get(i), null, adapterLigation));
+            }
+
+            adapterLigation.getSectionTransfers().clear();
+            labEventDao.flush();
+            labEventDao.clear();
+
+            LabEvent pondReg = labEventDao.findById(LabEvent.class, 1052911L);
+            BarcodedTube pondTube = (BarcodedTube) pondReg.getSectionTransfers().iterator().next().
+                    getTargetVesselContainer().getVesselAtPosition(VesselPosition.D04);
+            // Currently 0187458266_Illumina_P5-Lorez_P7-Hinij in pipeline API.
+            // Changing tagged_357 to tagged_288 = P7-Fofeb.
+            Assert.assertEquals(pondTube.getSampleInstancesV2().iterator().next().getMolecularIndexingScheme().getName(),
+                    "Illumina_P5-Lorez_P7-Fofeb");
+            System.out.println("Flipping " + adapterLigation.getLabEventType() + " " + adapterLigation.getLabEventId());
+            labEventDao.persist(new FixupCommentary("GPLIM-3834 delete incorrect events due to label swap"));
+            labEventDao.flush();
+            utx.commit();
+            // Verify 151022_SL-HDJ_0670_AH2MN7ADXX
+        } catch (NotSupportedException | SystemException | HeuristicMixedException | HeuristicRollbackException |
+                RollbackException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test(enabled = false)
     public void fixupSupport1085() {
         userBean.loginOSUser();
         // Add cherry picks from bait to second row of samples in columns 1 and 3.
@@ -977,6 +1029,28 @@ public class LabEventFixupTest extends Arquillian {
         labEventDao.flush();
         labEventDao.persist(
                 new FixupCommentary("GPLIM-3796 more undo of an earlier fixup that created a daughter plate."));
+        utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim3845() throws Exception {
+        // Delete cherry pick.
+        userBean.loginOSUser();
+        utx.begin();
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, 1076569L);
+        CherryPickTransfer transfer = labEventDao.findById(CherryPickTransfer.class, 164987L);
+
+        labEvent.getCherryPickTransfers().clear();
+
+        transfer.getAncillaryTargetVessel().getVesselToVesselTransfersThisAsTarget().remove(transfer);
+        transfer.getAncillarySourceVessel().getVesselToVesselTransfersThisAsSource().remove(transfer);
+        transfer.getTargetVesselContainer().getCherryPickTransfersTo().remove(transfer);
+        transfer.getSourceVesselContainer().getCherryPickTransfersFrom().remove(transfer);
+        labEventDao.remove(transfer);
+
+        labEventDao.remove(labEvent);
+        labEventDao.persist(new FixupCommentary("GPLIM-3845 delete cherry pick event"));
+        labEventDao.flush();
         utx.commit();
     }
 

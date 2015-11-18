@@ -321,7 +321,7 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
                     criteria = new TransferTraverserCriteria.NearestTubeAncestorCriteria();
 
             vesselContainer.evaluateCriteria(vesselPosition, criteria,
-                    TransferTraverserCriteria.TraversalDirection.Ancestors, null, 0);
+                    TransferTraverserCriteria.TraversalDirection.Ancestors, 0);
 
             vesselsWithPositions.put(vesselPosition,criteria.getTube());
         }
