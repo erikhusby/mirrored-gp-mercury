@@ -37,14 +37,31 @@ import javax.transaction.NotSupportedException;
 import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.nio.CharBuffer;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
@@ -53,6 +70,12 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
  */
 @Test(groups = TestGroups.FIXUP)
 public class LabEventFixupTest extends Arquillian {
+
+    private static final Pattern EVENT_TYPE_PATTERN = Pattern.compile("eventType=\"([^\"]*)\"");
+    private static final Pattern STATION_PATTERN = Pattern.compile("station=\"([^\"]*)\"");
+    private static final Pattern START_PATTERN = Pattern.compile("start=\"([^\"]*)\"");
+    private static final Pattern REAGENT_PATTERN = Pattern.compile(
+            "reagent barcode=\"([^\"]*)\" kitType=\"([^\"]*)\" expiration=\"([^\"]*)\"");
 
     @Inject
     private LabEventDao labEventDao;
@@ -68,6 +91,9 @@ public class LabEventFixupTest extends Arquillian {
 
     @Inject
     private StaticPlateDao staticPlateDao;
+
+    @Inject
+    private GenericReagentDao genericReagentDao;
 
     @Inject
     private UserBean userBean;
@@ -1037,6 +1063,125 @@ public class LabEventFixupTest extends Arquillian {
             utx.commit();
         } catch (NotSupportedException | SystemException | HeuristicMixedException | HeuristicRollbackException |
                 RollbackException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim3513Backfill() {
+        backfillReagents("DilutionToFlowcellTransfer", "GPLIM-3151 backfill reagents", "20141|201504");
+    }
+
+    private void backfillReagents(String eventTypeParam, String reason, String directoryRegex) {
+        userBean.loginOSUser();
+        try {
+            utx.begin();
+            SimpleDateFormat xmlDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
+            Charset charset = Charset.forName("US-ASCII");
+            CharsetDecoder decoder = charset.newDecoder();
+
+            // Visit the inbox date directories that match the regex
+            String inbox = "\\\\neon\\seq_lims\\mercury\\prod\\bettalims\\inbox";
+            Pattern dirPattern = Pattern.compile(directoryRegex);
+            DirectoryStream<Path> dateDirs = Files.newDirectoryStream(Paths.get(inbox));
+            for (Path path : dateDirs) {
+                Matcher dirMatcher = dirPattern.matcher(path.toString());
+                if (!dirMatcher.find()) {
+                    continue;
+                }
+                for (File file : path.toFile().listFiles()) {
+                    // Open the file and then get a channel from the stream
+                    FileInputStream fis = new FileInputStream(file);
+                    FileChannel fc = fis.getChannel();
+
+                    // Get the file's size and then map it into memory
+                    MappedByteBuffer byteBuffer = fc.map(FileChannel.MapMode.READ_ONLY, 0L, fc.size());
+
+                    // Decode the file into a char buffer
+                    CharBuffer charBuffer = decoder.decode(byteBuffer);
+
+                    try {
+                        Matcher eventMatcher = EVENT_TYPE_PATTERN.matcher(charBuffer);
+                        if (!eventMatcher.find()) {
+                            continue;
+                        }
+                        String eventType = eventMatcher.group(1);
+                        if (!eventType.equals(eventTypeParam)) {
+                            continue;
+                        }
+
+                        // Parse the unique key for the event
+                        Matcher matcher = STATION_PATTERN.matcher(charBuffer);
+                        if (!matcher.find()) {
+                            System.out.println("Failed to find station in " + file.getName());
+                            continue;
+                        }
+                        String station = matcher.group(1);
+                        matcher = START_PATTERN.matcher(charBuffer);
+                        if (!matcher.find()) {
+                            System.out.println("Failed to find start date in " + file.getName());
+                            continue;
+                        }
+                        String startDateString = matcher.group(1);
+                        Date startDate = xmlDateFormat.parse(startDateString);
+
+                        // Parse the reagents
+                        List<GenericReagent> genericReagents = new ArrayList<>();
+                        matcher = REAGENT_PATTERN.matcher(charBuffer);
+                        int i = 1;
+                        while(matcher.find()) {
+                            String lot = matcher.group(1);
+                            String reagentName = matcher.group(2);
+                            if (reagentName.equals("Universal Sequencing Buffer")) {
+                                reagentName += " " + i;
+                                i++;
+                            }
+                            String expirationString = matcher.group(3);
+                            if (expirationString.startsWith("12015") || expirationString.startsWith("42015")) {
+                                expirationString = expirationString.substring(1);
+                            } else if (expirationString.startsWith("302015")) {
+                                expirationString = expirationString.substring(2);
+                            }
+                            Date expiration = xmlDateFormat.parse(expirationString);
+                            genericReagents.add(new GenericReagent(reagentName, lot, expiration));
+                        }
+
+                        // Fetch the event and add the reagents
+                        if (!genericReagents.isEmpty()) {
+                            LabEvent labEvent = labEventDao.findByLocationDateDisambiguator(station, startDate, 1L);
+                            if (labEvent == null) {
+                                System.out.println("Failed to find database event in " + file.getName());
+                                continue;
+                            }
+                            if (!labEvent.getReagents().isEmpty()) {
+                                System.out.println("Reagents already persisted in " + file.getName());
+                                continue;
+                            }
+                            System.out.println("Adding reagents to " + station + " " + startDate);
+                            for (GenericReagent genericReagent : genericReagents) {
+                                // Fetching each reagent individually like this is not ideal for performance,
+                                // but the slowness of reading the files is more of a bottleneck.
+                                GenericReagent dbGenericReagent = genericReagentDao.findByReagentNameLotExpiration(
+                                        genericReagent.getName(), genericReagent.getLot(),
+                                        genericReagent.getExpiration());
+                                if (dbGenericReagent != null) {
+                                    genericReagent = dbGenericReagent;
+                                }
+                                labEvent.addReagent(genericReagent);
+                            }
+                            labEventDao.flush();
+                            labEventDao.clear();
+                        }
+                    } finally {
+                        fc.close();
+                    }
+                }
+            }
+            labEventDao.persist(new FixupCommentary(reason));
+            labEventDao.flush();
+            utx.commit();
+        } catch (IOException | ParseException | HeuristicRollbackException | HeuristicMixedException | SystemException |
+                NotSupportedException |RollbackException e) {
             throw new RuntimeException(e);
         }
     }
