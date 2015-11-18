@@ -152,7 +152,7 @@ public class EventEtlDbFreeTest {
     public void testNoVessels() throws Exception {
         EasyMock.expect(dao.findById(LabEvent.class, entityId)).andReturn(obj);
         EasyMock.expect(obj.getLabEventType()).andReturn(LabEventType.A_BASE).anyTimes();
-        EasyMock.expect(obj.getSourceLabVessels()).andReturn(new HashSet<LabVessel>());
+        EasyMock.expect(obj.getTargetLabVessels()).andReturn(new HashSet<LabVessel>());
         EasyMock.expect(obj.getInPlaceLabVessel()).andReturn(null);
         EasyMock.expect(obj.getEventDate()).andReturn(eventDate).anyTimes();
         EasyMock.expect(obj.getEventLocation()).andReturn(location);
@@ -160,7 +160,16 @@ public class EventEtlDbFreeTest {
         EasyMock.expect(obj.getLabEventId()).andReturn(entityId).anyTimes();
         EasyMock.replay(mocks);
 
-        Assert.assertEquals(tst.dataRecords(etlDateStr, false, entityId).size(), 0);
+        Collection<String> records = tst.dataRecords(etlDateStr, false, entityId);
+        Assert.assertEquals(records.size(), 1);
+        String record = records.iterator().next();
+        String expected = etlDateStr + ",F,"
+                          + String.valueOf(entityId)
+                          + ",\"\",\"\"," + LabEventType.A_BASE.getName() + ",\"\",\"\",\"\",,"
+                          + location + ",\"\",," + ExtractTransform.formatTimestamp(eventDate)
+                          + "," + programName + ",\"\",E";
+
+        Assert.assertEquals( record, expected, "Record for no-vessel event is not as expected" );
 
         EasyMock.verify(mocks);
     }
@@ -168,7 +177,7 @@ public class EventEtlDbFreeTest {
     public void testEtlNoSampleInstances() throws Exception {
         EasyMock.expect(dao.findById(LabEvent.class, entityId)).andReturn(obj);
         EasyMock.expect(obj.getLabEventType()).andReturn(LabEventType.A_BASE).anyTimes();
-        EasyMock.expect(obj.getSourceLabVessels()).andReturn(vesselList);
+        EasyMock.expect(obj.getTargetLabVessels()).andReturn(vesselList);
         EasyMock.expect(obj.getEventDate()).andReturn(eventDate);
         EasyMock.expect(obj.getLabEventId()).andReturn(entityId).times(2);
         EasyMock.expect(obj.getEventLocation()).andReturn(location);
@@ -192,7 +201,7 @@ public class EventEtlDbFreeTest {
         EasyMock.expect(dao.findById(LabEvent.class, entityId)).andReturn(obj);
 
         EasyMock.expect(obj.getLabEventType()).andReturn(LabEventType.A_BASE).anyTimes();
-        EasyMock.expect(obj.getSourceLabVessels()).andReturn(vesselList);
+        EasyMock.expect(obj.getTargetLabVessels()).andReturn(vesselList);
         EasyMock.expect(obj.getEventDate()).andReturn(eventDate).anyTimes();
         EasyMock.expect(obj.getLabEventId()).andReturn(entityId).anyTimes();
         EasyMock.expect(obj.getEventLocation()).andReturn(location);
@@ -233,7 +242,7 @@ public class EventEtlDbFreeTest {
 
         EasyMock.expect(obj.getLabEventId()).andReturn(entityId).anyTimes();
         EasyMock.expect(obj.getLabEventType()).andReturn(LabEventType.PICO_PLATING_BUCKET).anyTimes();
-        EasyMock.expect(obj.getSourceLabVessels()).andReturn(vesselList);
+        EasyMock.expect(obj.getTargetLabVessels()).andReturn(vesselList);
         EasyMock.expect(obj.getEventDate()).andReturn(eventDate).anyTimes();
         EasyMock.expect(obj.getEventLocation()).andReturn(location);
         EasyMock.expect(obj.getProgramName()).andReturn(programName);
@@ -282,7 +291,7 @@ public class EventEtlDbFreeTest {
         EasyMock.expect(dao.findById(LabEvent.class, entityId)).andReturn(obj);
 
         EasyMock.expect(obj.getLabEventType()).andReturn(LabEventType.PICO_PLATING_BUCKET).anyTimes();
-        EasyMock.expect(obj.getSourceLabVessels()).andReturn(vesselList);
+        EasyMock.expect(obj.getTargetLabVessels()).andReturn(vesselList);
         EasyMock.expect(obj.getLabEventId()).andReturn(entityId).anyTimes();
         EasyMock.expect(obj.getEventLocation()).andReturn(location);
         EasyMock.expect(obj.getProgramName()).andReturn(programName);
@@ -337,7 +346,7 @@ public class EventEtlDbFreeTest {
         EasyMock.expect(dao.findById(LabEvent.class, entityId)).andReturn(obj);
 
         EasyMock.expect(obj.getLabEventType()).andReturn(LabEventType.SAMPLE_IMPORT).anyTimes();
-        EasyMock.expect(obj.getSourceLabVessels()).andReturn(vesselList);
+        EasyMock.expect(obj.getTargetLabVessels()).andReturn(vesselList);
         EasyMock.expect(obj.getEventDate()).andReturn(eventDate).anyTimes();
         EasyMock.expect(obj.getLabEventId()).andReturn(entityId).anyTimes();
         EasyMock.expect(obj.getEventLocation()).andReturn(location);
@@ -384,7 +393,7 @@ public class EventEtlDbFreeTest {
         EasyMock.expect(dao.findById(LabEvent.class, entityId)).andReturn(obj);
 
         EasyMock.expect(obj.getLabEventType()).andReturn(LabEventType.SAMPLE_IMPORT).anyTimes();
-        EasyMock.expect(obj.getSourceLabVessels()).andReturn(vesselList);
+        EasyMock.expect(obj.getTargetLabVessels()).andReturn(vesselList);
         EasyMock.expect(obj.getEventDate()).andReturn(eventDate).anyTimes();
         EasyMock.expect(obj.getLabEventId()).andReturn(entityId).anyTimes();
         EasyMock.expect(obj.getEventLocation()).andReturn(location);
@@ -439,8 +448,8 @@ public class EventEtlDbFreeTest {
 
         EasyMock.expect(obj.getLabEventId()).andReturn(entityId).anyTimes();
         EasyMock.expect(obj.getLabEventType()).andReturn(LabEventType.PICO_PLATING_BUCKET).anyTimes();
-        EasyMock.expect(obj.getSourceLabVessels()).andReturn(vesselList);
-        EasyMock.expect(obj.getEventDate()).andReturn(eventDate).times(2);
+        EasyMock.expect(obj.getTargetLabVessels()).andReturn(vesselList);
+        EasyMock.expect(obj.getEventDate()).andReturn(eventDate).times(1);
         EasyMock.expect(obj.getEventLocation()).andReturn(location);
         EasyMock.expect(obj.getProgramName()).andReturn(programName);
 
@@ -452,21 +461,15 @@ public class EventEtlDbFreeTest {
         EasyMock.expect(sampleInst.getAllProductOrderSamples()).andReturn(pdoSamples);
         EasyMock.expect(sampleInst.getMolecularIndexingScheme()).andReturn(indexingScheme).times(2);
         EasyMock.expect(sampleInst.getSingleBatch()).andReturn(labBatch);
-        EasyMock.expect(sampleInst.getAllBucketEntries()).andReturn(bucketEntries);
 
-        EasyMock.expect(labBatch.getBatchName()).andReturn(labBatchName).times(2);
+        EasyMock.expect(labBatch.getBatchName()).andReturn(labBatchName);
         EasyMock.expect(labBatch.getWorkflowName()).andReturn(workflowName);
         EasyMock.expect(labBatch.getCreatedOn()).andReturn(eventDate).anyTimes();
 
-        EasyMock.expect(bucketEntry.getCreatedDate()).andReturn(eventDate).times(3);
-        EasyMock.expect(bucketEntry.getLabBatch()).andReturn(labBatch).times(3);
-        EasyMock.expect(bucketEntry.getLabVessel()).andReturn(vessel).times(2);
-
-        EasyMock.expect(vessel.getMercurySamples()).andReturn(mercurySamples).times(2);
-        EasyMock.expect(sample.getSampleKey()).andReturn(sampleKey).times(2);
-
         EasyMock.expect(pdoSample.getMercurySample()).andReturn(sample).anyTimes();
         EasyMock.expect(pdoSample.getProductOrder()).andReturn(pdo);
+
+        EasyMock.expect(sample.getSampleKey()).andReturn(sampleKey);
 
         EasyMock.expect(pdo.getProductOrderId()).andReturn(pdoId);
         EasyMock.expect(pdo.getBusinessKey()).andReturn(pdoName);
@@ -489,14 +492,14 @@ public class EventEtlDbFreeTest {
         Assert.assertEquals(dtos.size(), 1);
         Assert.assertTrue(dtos.get(0).canEtl());
         Assert.assertEquals(dtos.get(0).getBatchName(), labBatchName);
-        Assert.assertEquals(dtos.get(0).getLcsetSampleId(), sampleKey);
+        Assert.assertEquals(dtos.get(0).getPdoSampleId(), sampleKey);
     }
 
     public void testInPlaceLabVessel() throws Exception {
         EasyMock.expect(dao.findById(LabEvent.class, entityId)).andReturn(obj);
 
         EasyMock.expect(obj.getLabEventType()).andReturn(LabEventType.PICO_PLATING_BUCKET).anyTimes();
-        EasyMock.expect(obj.getSourceLabVessels()).andReturn(new HashSet<LabVessel>());
+        EasyMock.expect(obj.getTargetLabVessels()).andReturn(new HashSet<LabVessel>());
         EasyMock.expect(obj.getInPlaceLabVessel()).andReturn(vessel).times(2);
         EasyMock.expect(obj.getEventDate()).andReturn(eventDate).times(2);
         EasyMock.expect(obj.getLabEventId()).andReturn(entityId);
