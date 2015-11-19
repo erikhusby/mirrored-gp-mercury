@@ -834,7 +834,8 @@ public class BaseEventTest {
                 transferVisualizerV2.jsonForVessels(
                         Collections.singletonList(labVessel),
                         Collections.singletonList(TransferTraverserCriteria.TraversalDirection.Descendants),
-                        fileWriter);
+                        fileWriter,
+                        Collections.singletonList(TransferVisualizerV2.AlternativeIds.SAMPLE_ID));
                 fileWriter.flush();
             } catch (IOException e) {
                 throw new RuntimeException(e);

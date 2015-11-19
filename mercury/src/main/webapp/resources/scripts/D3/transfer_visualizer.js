@@ -105,7 +105,7 @@ function renderJson(json) {
     // Set the D3 datum to the children.
     var nodeChildEnter = node.selectAll(".nodeChild")
         .data(function (d) {
-            return d.children;
+            return d.children ? d.children : [];
         })
         .enter();
 
@@ -127,7 +127,7 @@ function renderJson(json) {
             return d.h;
         })
         .on("contextmenu", d3.contextMenu(menu));
-    nodeChildEnter.append("text")
+    var childText = nodeChildEnter.append("text")
         .attr("class", "graphLabel")
         .attr("x", function (d) {
             return d.x + d.w / 2;
@@ -140,6 +140,27 @@ function renderJson(json) {
             return d.label ? d.label : d.name;
         })
         .on("contextmenu", d3.contextMenu(menu));
+
+    // Set the D3 datum to the alternateIds.
+    var childTextEnter = childText.selectAll(".graphLabel")
+        .data(function (d) {
+            return d.altIds ? d.altIds : [];
+        })
+        .enter();
+
+    // Render tspans for the alternate IDs
+    childTextEnter.append("tspan")
+        .attr("x", function (d) {
+            var parentData = d3.select(this.parentNode).datum();
+            return parentData.x + parentData.w / 2;
+        })
+        .attr("y", function (d) {
+            // todo jmt generalize multiplication by 2
+            return d3.select(this.parentNode).datum().y + (14 * 2);
+        })
+        .text(function (d) {
+            return d.altId;
+        });
 
     // Make list of edges to draw, including between children, if applicable.
     var links = [];

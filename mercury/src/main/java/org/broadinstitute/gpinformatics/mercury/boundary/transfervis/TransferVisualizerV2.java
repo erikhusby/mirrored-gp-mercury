@@ -109,7 +109,7 @@ public class TransferVisualizerV2 {
         /** The IDs to add to each rect. */
         private List<AlternativeIds> alternativeIds;
 
-        private Font font = new Font("SansSerif", Font.PLAIN, 10);
+        private Font font = new Font("SansSerif", Font.PLAIN, 12);
         private BufferedImage img = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
         private FontMetrics fm = img.getGraphics().getFontMetrics(font);
 
@@ -303,19 +303,20 @@ public class TransferVisualizerV2 {
                 // JSON for child vessels (e.g. tubes in a rack)
                 VesselGeometry vesselGeometry = vesselContainer.getEmbedder().getVesselGeometry();
                 int maxColumn = 0;
-                int maxColumnWidth = 0;
+                int maxColumnWidth = WELL_WIDTH;
                 int maxRow = 0;
-                int maxRowHeight = 0;
+                int maxRowHeight = ROW_HEIGHT;
                 int inPlaceHeight = vesselContainer.getEmbedder().getInPlaceLabEvents().size() * ROW_HEIGHT;
                 Map<String, List<String>> mapBarcodeToAlternativeIds = new HashMap<>();
                 for (VesselPosition vesselPosition : vesselGeometry.getVesselPositions()) {
                     VesselGeometry.RowColumn rowColumn = vesselGeometry.getRowColumnForVesselPosition(vesselPosition);
                     LabVessel child = vesselContainer.getVesselAtPosition(vesselPosition);
                     if (child != null) {
-                        // todo jmt include alternative IDs in size of child (popup if more than one sample?)
+                        // todo jmt popup if more than one sample?
                         maxColumn = Math.max(maxColumn, rowColumn.getColumn());
                         maxRow = Math.max(maxRow, rowColumn.getRow() + 1);
-                        for (AlternativeIds alternativeId : alternativeIds) {
+                        for (int i = 0; i < alternativeIds.size(); i++) {
+                            AlternativeIds alternativeId = alternativeIds.get(i);
                             switch (alternativeId) {
                                 case SAMPLE_ID:
                                     Set<SampleInstanceV2> sampleInstancesV2 = child.getSampleInstancesV2();
@@ -327,6 +328,7 @@ public class TransferVisualizerV2 {
                                         int width = fm.stringWidth(ids);
                                         mapBarcodeToAlternativeIds.put(child.getLabel(), Collections.singletonList(ids));
                                         maxColumnWidth = Math.max(width, maxColumnWidth);
+                                        maxRowHeight = Math.max(ROW_HEIGHT * (i + 2), maxRowHeight);
                                     }
                                     break;
                                 case LCSET:
@@ -335,8 +337,8 @@ public class TransferVisualizerV2 {
                         }
                     }
                 }
-                int width = Math.max(PLATE_WIDTH, maxColumn * WELL_WIDTH);
-                int height = Math.max(ROW_HEIGHT, maxRow * ROW_HEIGHT) + inPlaceHeight;
+                int width = Math.max(PLATE_WIDTH, maxColumn * maxColumnWidth);
+                int height = Math.max(ROW_HEIGHT, maxRow * maxRowHeight) + inPlaceHeight;
 
                 // JSON for the parent vessel
                 jsonWriter.object().key("id").value(containerLabel).
@@ -365,9 +367,10 @@ public class TransferVisualizerV2 {
                     if (child != null) {
                         jsonWriter.object().
                                 key("label").value(child.getLabel()).
-                                key("x").value((rowColumn.getColumn() - 1) * WELL_WIDTH).
-                                key("y").value((rowColumn.getRow()) * ROW_HEIGHT + inPlaceHeight).
-                                key("w").value(WELL_WIDTH).key("h").value(ROW_HEIGHT).
+                                key("x").value((rowColumn.getColumn() - 1) * maxColumnWidth).
+                                key("y").value((rowColumn.getRow()) * maxRowHeight + inPlaceHeight).
+                                key("w").value(maxColumnWidth).
+                                key("h").value(maxRowHeight).
                                 key("altIds").array().object().
                                         key("altId").value(mapBarcodeToAlternativeIds.get(child.getLabel())).
                                 endObject().endArray();
