@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.testng.Assert;
 
+import javax.inject.Inject;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -29,16 +30,26 @@ import java.util.List;
  */
 public class LabBatchTestUtils {
 
+    BucketDao bucketDao;
 
-    protected static Bucket putTubesInSpecificBucket(String bucketName, BucketEntry.BucketEntryType bucketEntryType,
-                                              BucketDao bucketDao, ProductDao productDao,
-                                              ResearchProjectDao researchProjectDao,
-                                              LinkedHashMap<String, BarcodedTube> mapBarcodeToTube) {
-        Bucket bucket = bucketDao.findByName(bucketName);
+    ProductDao productDao;
+    ResearchProjectDao researchProjectDao;
+    BarcodedTubeDao tubeDao;
 
-        if (bucket == null) {
-            bucket = new Bucket(bucketName);
-        }
+    @Inject
+    public LabBatchTestUtils(BucketDao bucketDao,
+                             ProductDao productDao,
+                             ResearchProjectDao researchProjectDao,
+                             BarcodedTubeDao barcodedTubeDao) {
+        this.bucketDao = bucketDao;
+        this.productDao = productDao;
+        this.researchProjectDao = researchProjectDao;
+        this.tubeDao = barcodedTubeDao;
+    }
+
+    protected Bucket putTubesInSpecificBucket(String bucketName, BucketEntry.BucketEntryType bucketEntryType,
+                                                     LinkedHashMap<String, BarcodedTube> mapBarcodeToTube) {
+        Bucket bucket = initializeBucket(bucketName);
 
         ProductOrder stubTestPDO = ProductOrderTestFactory.createDummyProductOrder(LabBatchEJBTest.STUB_TEST_PDO_KEY);
         stubTestPDO.setTitle(stubTestPDO.getTitle() + ((new Date()).getTime()));
@@ -59,20 +70,18 @@ public class LabBatchTestUtils {
         return bucket;
     }
 
-    public static Bucket initializeBucket(BucketDao bucketDao, String bucketName) {
+    public Bucket initializeBucket(String bucketName) {
         Bucket bucket = bucketDao.findByName(bucketName);
 
         if (bucket == null) {
             bucket = new Bucket(new WorkflowBucketDef(bucketName));
             bucketDao.persist(bucket);
             bucketDao.flush();
-            bucketDao.clear();
         }
         return bucket;
     }
 
-    public static LinkedHashMap<String, BarcodedTube> initializeTubes(List<String> vesselSampleList,
-                                                                      BarcodedTubeDao tubeDao) {
+    public LinkedHashMap<String, BarcodedTube> initializeTubes(List<String> vesselSampleList) {
 
         LinkedHashMap<String, BarcodedTube> barcodedTubes = new LinkedHashMap<>();
         // starting rack

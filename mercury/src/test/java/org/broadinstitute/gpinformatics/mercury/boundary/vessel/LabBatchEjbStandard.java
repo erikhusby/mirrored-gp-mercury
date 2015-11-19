@@ -1,11 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
-import com.google.common.base.Predicate;
-import com.google.common.collect.Iterables;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -33,11 +30,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
-import java.util.Set;
 
 /**
  * TODO scottmat fill in javadoc!!!
@@ -69,6 +63,9 @@ public class LabBatchEjbStandard extends Arquillian {
     @Inject
     private JiraService jiraService;
 
+    @Inject
+    LabBatchTestUtils labBatchTestUtils;
+
     private Bucket bucket;
 
     private LinkedHashMap<String, BarcodedTube> mapBarcodeToTube = new LinkedHashMap<>();
@@ -86,8 +83,7 @@ public class LabBatchEjbStandard extends Arquillian {
 
         Collections.addAll(vesselSampleList, "SM-423", "SM-243", "SM-765", "SM-143", "SM-9243", "SM-118");
 
-        this.bucket = LabBatchTestUtils.initializeBucket(bucketDao, LabBatchEJBTest.BUCKET_NAME);
-        mapBarcodeToTube = LabBatchTestUtils.initializeTubes(vesselSampleList, tubeDao);
+        mapBarcodeToTube = labBatchTestUtils.initializeTubes(vesselSampleList);
     }
 
     @AfterMethod
@@ -108,8 +104,8 @@ public class LabBatchEjbStandard extends Arquillian {
     @Test
     public void testUpdateLabBatch() throws Exception {
 
-        bucket=LabBatchTestUtils.putTubesInSpecificBucket(LabBatchEJBTest.BUCKET_NAME,
-                BucketEntry.BucketEntryType.PDO_ENTRY, bucketDao, productDao, researchProjectDao, mapBarcodeToTube);
+        bucket = labBatchTestUtils.putTubesInSpecificBucket(LabBatchEJBTest.BUCKET_NAME,
+                BucketEntry.BucketEntryType.PDO_ENTRY, mapBarcodeToTube);
 
         Date today = new Date();
 
@@ -138,7 +134,7 @@ public class LabBatchEjbStandard extends Arquillian {
 
         JiraIssue jiraIssue = jiraService.getIssue(testFind.getJiraTicket().getTicketName());
 
-        System.out.println("Jira ticket ID is... "+testFind.getJiraTicket().getTicketName());
+        System.out.println("Jira ticket ID is... " + testFind.getJiraTicket().getTicketName());
         Assert.assertEquals(jiraIssue.getSummary(), nameForBatch);
 
 
@@ -153,12 +149,10 @@ public class LabBatchEjbStandard extends Arquillian {
 
         Collections.addAll(vesselSampleList, "SM-423RS");
 
-        LinkedHashMap<String, BarcodedTube> newMapBarcodeToTube =
-                LabBatchTestUtils.initializeTubes(vesselSampleList, tubeDao);
+        LinkedHashMap<String, BarcodedTube> newMapBarcodeToTube = labBatchTestUtils.initializeTubes(vesselSampleList);
 
-        bucket =LabBatchTestUtils.putTubesInSpecificBucket(LabBatchEJBTest.BUCKET_NAME,
-                BucketEntry.BucketEntryType.PDO_ENTRY,
-                bucketDao, productDao, researchProjectDao, newMapBarcodeToTube);
+        bucket = labBatchTestUtils.putTubesInSpecificBucket(LabBatchEJBTest.BUCKET_NAME,
+                BucketEntry.BucketEntryType.PDO_ENTRY, newMapBarcodeToTube);
 
         LabVessel vessel = newMapBarcodeToTube.values().iterator().next();
 
@@ -174,9 +168,8 @@ public class LabBatchEjbStandard extends Arquillian {
     @Test
     public void testUpdateExtractionLabBatch() throws Exception {
 
-        bucket=LabBatchTestUtils.putTubesInSpecificBucket(LabBatchEJBTest.EXTRACTION_BUCKET,
-                BucketEntry.BucketEntryType.PDO_ENTRY,
-                bucketDao, productDao, researchProjectDao, mapBarcodeToTube);
+        bucket = labBatchTestUtils.putTubesInSpecificBucket(LabBatchEJBTest.EXTRACTION_BUCKET,
+                BucketEntry.BucketEntryType.PDO_ENTRY, mapBarcodeToTube);
 
         Date today = new Date();
 
@@ -221,12 +214,10 @@ public class LabBatchEjbStandard extends Arquillian {
 
         Collections.addAll(vesselSampleList, "SM-423RS");
 
-        LinkedHashMap<String, BarcodedTube> newMapBarcodeToTube =
-                LabBatchTestUtils.initializeTubes(vesselSampleList, tubeDao);
+        LinkedHashMap<String, BarcodedTube> newMapBarcodeToTube = labBatchTestUtils.initializeTubes(vesselSampleList);
 
-        bucket =LabBatchTestUtils.putTubesInSpecificBucket(LabBatchEJBTest.EXTRACTION_BUCKET,
-                BucketEntry.BucketEntryType.PDO_ENTRY,
-                bucketDao, productDao, researchProjectDao, newMapBarcodeToTube);
+        bucket = labBatchTestUtils.putTubesInSpecificBucket(LabBatchEJBTest.EXTRACTION_BUCKET,
+                BucketEntry.BucketEntryType.PDO_ENTRY, newMapBarcodeToTube);
 
         LabVessel vessel = newMapBarcodeToTube.values().iterator().next();
 

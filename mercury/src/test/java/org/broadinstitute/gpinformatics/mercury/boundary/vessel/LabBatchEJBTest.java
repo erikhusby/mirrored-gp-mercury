@@ -60,6 +60,9 @@ public class LabBatchEJBTest extends ContainerTest {
     @Inject
     private ResearchProjectDao researchProjectDao;
 
+    @Inject
+    LabBatchTestUtils labBatchTestUtils;
+
     private LinkedHashMap<String, BarcodedTube> mapBarcodeToTube = new LinkedHashMap<>();
 
     private String scottmat;
@@ -78,8 +81,7 @@ public class LabBatchEJBTest extends ContainerTest {
 
         Collections.addAll(vesselSampleList, "SM-423", "SM-243", "SM-765", "SM-143", "SM-9243", "SM-118");
 
-        this.bucket = LabBatchTestUtils.initializeBucket(bucketDao, BUCKET_NAME);
-        mapBarcodeToTube = LabBatchTestUtils.initializeTubes(vesselSampleList, tubeDao);
+        mapBarcodeToTube = labBatchTestUtils.initializeTubes(vesselSampleList);
         scottmat = "scottmat";
     }
 
@@ -217,9 +219,8 @@ public class LabBatchEJBTest extends ContainerTest {
 
     @Test
     public void testCreateXTRLabBatchAndRemoveFromBucket() throws ValidationException {
-        this.bucket = LabBatchTestUtils.putTubesInSpecificBucket(EXTRACTION_BUCKET, BucketEntry.BucketEntryType.PDO_ENTRY, bucketDao,
-                productDao,
-                researchProjectDao, mapBarcodeToTube);
+        this.bucket = labBatchTestUtils.putTubesInSpecificBucket(EXTRACTION_BUCKET, BucketEntry.BucketEntryType.PDO_ENTRY,
+                mapBarcodeToTube);
 
         HashSet<LabVessel> starters = new HashSet<LabVessel>(mapBarcodeToTube.values());
 
@@ -292,9 +293,8 @@ public class LabBatchEJBTest extends ContainerTest {
 
     @Test
     public void testCreateXTRLabBatchAndRemoveFromBucketExistingTicket() throws ValidationException {
-        this.bucket = LabBatchTestUtils.putTubesInSpecificBucket(EXTRACTION_BUCKET, BucketEntry.BucketEntryType.PDO_ENTRY, bucketDao,
-                productDao,
-                researchProjectDao, mapBarcodeToTube);
+        this.bucket = labBatchTestUtils.putTubesInSpecificBucket(EXTRACTION_BUCKET, BucketEntry.BucketEntryType.PDO_ENTRY,
+                mapBarcodeToTube);
 
         String expectedTicketId =
                 CreateFields.ProjectType.EXTRACTION_PROJECT.getKeyPrefix() + JiraServiceStub.getCreatedIssueSuffix();
@@ -327,7 +327,7 @@ public class LabBatchEJBTest extends ContainerTest {
     }
 
     private void putTubesInBucket(BucketEntry.BucketEntryType bucketEntryType) {
-        bucket = LabBatchTestUtils.putTubesInSpecificBucket(BUCKET_NAME, bucketEntryType, bucketDao, productDao,
-                researchProjectDao, mapBarcodeToTube);
+        bucket = labBatchTestUtils.putTubesInSpecificBucket(BUCKET_NAME, bucketEntryType,
+                mapBarcodeToTube);
     }
 }
