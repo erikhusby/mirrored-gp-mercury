@@ -55,14 +55,16 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
         NO
     }
 
+    /**
+     * See the Google doc "Illumina Flowcell Suffix Guide".
+     */
     public enum FlowcellType {
         MiSeqFlowcell("Flowcell1Lane", "MiSeq Flowcell", VesselGeometry.FLOWCELL1x1, "Illumina MiSeq", "^A\\w{4}$",
                 "MiSeq", CreateFields.IssueType.MISEQ, LabBatch.LabBatchType.MISEQ, CreateFct.YES),
         HiSeqFlowcell("Flowcell8Lane", "HiSeq 2000 Flowcell", VesselGeometry.FLOWCELL1x8, "Illumina HiSeq 2000",
                 "^\\w{9}$", "HiSeq", CreateFields.IssueType.FLOWCELL, LabBatch.LabBatchType.FCT, CreateFct.YES),
-        // todo jmt could also be ANXX or BCXX?
         HiSeq2500Flowcell("Flowcell2Lane", "HiSeq 2500 Flowcell", VesselGeometry.FLOWCELL1x2, "Illumina HiSeq 2500",
-                "^\\w+ADXX$", "HiSeq", CreateFields.IssueType.FLOWCELL, LabBatch.LabBatchType.FCT, CreateFct.YES),
+                "^\\w+(ADXX|ANXX|BCXX)$", "HiSeq", CreateFields.IssueType.FLOWCELL, LabBatch.LabBatchType.FCT, CreateFct.YES),
         HiSeq4000Flowcell("Flowcell8Lane4000", "HiSeq 4000 Flowcell", VesselGeometry.FLOWCELL1x8, "Illumina HiSeq 4000",
                 "^\\w+BBXX$", "HiSeq", CreateFields.IssueType.FLOWCELL, LabBatch.LabBatchType.FCT, CreateFct.YES),
         OtherFlowcell("FlowcellUnknown", "Unknown Flowcell", VesselGeometry.FLOWCELL1x2, "Unknown Model", ".*", null,

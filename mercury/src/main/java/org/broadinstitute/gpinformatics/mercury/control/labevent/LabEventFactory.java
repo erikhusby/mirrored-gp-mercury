@@ -715,7 +715,7 @@ public class LabEventFactory implements Serializable {
                 }
             } else {
                 LabVessel labVessel = mapBarcodeToVessel.get(plateType.getBarcode());
-                if (labVessel == null) {
+                if (labVessel == null) { // todo jmt replace with getByAutomationName?
                     for (IlluminaFlowcell.FlowcellType flowcellType : IlluminaFlowcell.FlowcellType.values()) {
                         if (plateType.getPhysType().equals(flowcellType.getAutomationName())) {
                             labVessel = new IlluminaFlowcell(flowcellType, plateType.getBarcode());
