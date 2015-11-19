@@ -524,7 +524,12 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
             return dtos;
         }
 
-        Collection<LabVessel> vessels = entity.getTargetLabVessels();
+        Collection<LabVessel> vessels;
+        if( entity.getLabEventType().getPlasticToValidate() == LabEventType.PlasticToValidate.SOURCE ) {
+            vessels = entity.getSourceLabVessels();
+        } else {
+            vessels = entity.getTargetLabVessels();
+        }
 
         if (vessels.isEmpty() && entity.getInPlaceLabVessel() != null) {
             vessels.add(entity.getInPlaceLabVessel());
@@ -605,8 +610,28 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
             VesselPosition targetPosition, Set<SampleInstanceV2> sampleInstances ) {
         List<EventFactDto> dtos = new ArrayList<>();
 
-        try {
-            if (!sampleInstances.isEmpty()) {
+        if( sampleInstances.isEmpty() ) {
+            // Reject for lack of any sample instances
+            EventFactDto rejectedDto =
+                    new EventFactDto(labEvent, vessel, null, null, null, null, null, null, null, null, null, false);
+            rejectedDto.setRejectReason("Skipping ETL on labEvent: " + labEvent.getLabEventId() +
+                                        ", vessel: " + vessel.getLabel() +
+                                        (targetPosition == null ? "" : ", position: " + targetPosition) +
+                                        " - No SampleInstanceV2 instances");
+            dtos.add(rejectedDto);
+            loggingDtos.add(rejectedDto);
+        } else if (sampleInstances.size() == 1 && sampleInstances.iterator().next().isReagentOnly() ) {
+            // Reject for sample instance having only reagent (Hybridization bait)
+            EventFactDto rejectedDto =
+                    new EventFactDto(labEvent, vessel, null, null, null, null, null, null, null, null, null, false);
+            rejectedDto.setRejectReason("Skipping ETL on labEvent: " + labEvent.getLabEventId() +
+                                        ", vessel: " + vessel.getLabel() +
+                                        (targetPosition == null ? "" : ", position: " + targetPosition) +
+                                        " - SampleInstanceV2 instance is reagent only");
+            dtos.add(rejectedDto);
+            loggingDtos.add(rejectedDto);
+        } else {
+            try {
                 for (SampleInstanceV2 si : sampleInstances) {
 
                     ProductOrder pdo = null;
@@ -618,10 +643,10 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                     String lcsetSampleID = "";
 
                     // Get latest PDO and the sample which matches it (the PDO and sample must match)
-                    for( ProductOrderSample pdoSample : si.getAllProductOrderSamples() ) {
+                    for (ProductOrderSample pdoSample : si.getAllProductOrderSamples()) {
                         // Get a valid PDO
                         pdo = pdoSample.getProductOrder();
-                        if( pdoSample.getMercurySample() != null ) {
+                        if (pdoSample.getMercurySample() != null) {
                             // And associate a sample with it if available
                             pdoSampleID = pdoSample.getMercurySample().getSampleKey();
                             // getAllProductOrderSamples() sorts by closest first so we're done at first hit
@@ -630,20 +655,20 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                     }
 
                     // Batch logic
-                    labBatch = si.getSingleBatch();
+                    BucketEntry singleBucketEntry = si.getSingleBucketEntry();
 
-                    if( labBatch == null ) {
+                    if (singleBucketEntry == null) {
                         // Use the newest non-extraction bucket which was created sometime before this event
                         long eventTs = labEvent.getEventDate().getTime();
                         long bucketTs = 0L;
                         for (BucketEntry bucketEntry : si.getAllBucketEntries()) {
                             if (bucketEntry.getLabBatch() != null
-                                    && bucketEntry.getLabBatch().getBatchName().startsWith("LCSET")
-                                    && bucketEntry.getCreatedDate().getTime() > bucketTs
-                                    && bucketEntry.getCreatedDate().getTime() <= eventTs) {
+                                && bucketEntry.getLabBatch().getBatchName().startsWith("LCSET")
+                                && bucketEntry.getCreatedDate().getTime() > bucketTs
+                                && bucketEntry.getCreatedDate().getTime() <= eventTs) {
                                 labBatch = bucketEntry.getLabBatch();
                                 bucketTs = bucketEntry.getCreatedDate().getTime();
-                                // Bucket entry meets the criteria, so grab and hold a sample ID
+                                // Bucket entry meets the criteria, so hold onto newest sample ID
                                 if (!bucketEntry.getLabVessel().getMercurySamples().isEmpty()) {
                                     lcsetSampleID =
                                             bucketEntry.getLabVessel().getMercurySamples().iterator().next()
@@ -651,12 +676,19 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                                 }
                             }
                         }
+                    } else {
+                        labBatch = singleBucketEntry.getLabBatch();
+                        if (!singleBucketEntry.getLabVessel().getMercurySamples().isEmpty()) {
+                            lcsetSampleID =
+                                    singleBucketEntry.getLabVessel().getMercurySamples().iterator().next()
+                                            .getSampleKey();
+                        }
                     }
 
                     // Pull workflow from lab batch
                     // Default to event date, overwritten if lab batch available
                     Date workflowEffectiveDate;
-                    if( labBatch != null ) {
+                    if (labBatch != null) {
                         batchName = labBatch.getBatchName();
                         workflowEffectiveDate = labBatch.getCreatedOn();
                         workflowName = labBatch.getWorkflowName();
@@ -671,28 +703,18 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                     WorkflowConfigDenorm wfDenorm = workflowConfigLookup.lookupWorkflowConfig(
                             labEvent.getLabEventType().getName(), workflowName, workflowEffectiveDate);
 
-                    molecularIndexingSchemeName =  si.getMolecularIndexingScheme() != null ?
+                    molecularIndexingSchemeName = si.getMolecularIndexingScheme() != null ?
                             si.getMolecularIndexingScheme().getName() : null;
 
-                    dtos.add( new EventFactDto(labEvent, vessel, targetPosition, molecularIndexingSchemeName,
+                    dtos.add(new EventFactDto(labEvent, vessel, targetPosition, molecularIndexingSchemeName,
                             batchName, workflowEffectiveDate, workflowName,
-                            pdoSampleID, lcsetSampleID, pdo, wfDenorm, true) );
+                            pdoSampleID, lcsetSampleID, pdo, wfDenorm, true));
 
                 } // sampleInstances loop
-            } else {
-                // Reject for lack of any sample instances
-                EventFactDto rejectedDto =
-                        new EventFactDto(labEvent, vessel, null, null, null, null, null, null, null, null, null, false);
-                rejectedDto.setRejectReason("Skipping ETL on labEvent: " + labEvent.getLabEventId() +
-                                            ", vessel: " + vessel.getLabel() +
-                                            (targetPosition == null ? "" : ", position: " + targetPosition) +
-                                            " - No SampleInstanceV2 instances");
-                dtos.add(rejectedDto);
-                loggingDtos.add( rejectedDto );
+            } catch (RuntimeException e) {
+                logger.debug("Skipping ETL on labEvent " + labEvent.getLabEventId() +
+                             " on vessel " + vessel.getLabel(), e);
             }
-        } catch (RuntimeException e) {
-            logger.debug("Skipping ETL on labEvent " + labEvent.getLabEventId() +
-                         " on vessel " + vessel.getLabel(), e);
         }
         return dtos;
     }

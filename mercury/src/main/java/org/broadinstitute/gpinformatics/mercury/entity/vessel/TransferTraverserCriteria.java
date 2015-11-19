@@ -711,13 +711,17 @@ public abstract class TransferTraverserCriteria {
         private void evaluteVesselEvent(LabVessel.VesselEvent contextVesselEvent, TraversalDirection traversalDirection){
             LabEvent contextEvent = contextVesselEvent.getLabEvent();
 
-            LabVessel sourceVessel = contextVesselEvent.getSourceLabVessel();
-            if( sourceVessel == null ) {
+            LabVessel sourceVessel;
+            if( contextVesselEvent.getSourceVesselContainer() == null ) {
+                sourceVessel = contextVesselEvent.getSourceLabVessel();
+            } else {
                 sourceVessel = contextVesselEvent.getSourceVesselContainer().getEmbedder();
             }
 
-            LabVessel targetVessel = contextVesselEvent.getTargetLabVessel();
-            if( targetVessel == null ) {
+            LabVessel targetVessel;
+            if( contextVesselEvent.getTargetVesselContainer() == null ) {
+                targetVessel = contextVesselEvent.getTargetLabVessel();
+            } else {
                 targetVessel = contextVesselEvent.getTargetVesselContainer().getEmbedder();
             }
 
