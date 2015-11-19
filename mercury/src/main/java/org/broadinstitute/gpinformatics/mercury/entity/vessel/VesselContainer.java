@@ -83,19 +83,19 @@ public class VesselContainer<T extends LabVessel> {
     @Transient
     private Map<LabVessel, VesselPosition> vesselToMapPosition;
 
-    @OneToMany(mappedBy = "sourceVessel", cascade = CascadeType.PERSIST)
+    @OneToMany(mappedBy = "sourceVessel", cascade = CascadeType.PERSIST, orphanRemoval = true)
     @BatchSize(size = 100)
     private Set<SectionTransfer> sectionTransfersFrom = new HashSet<>();
 
-    @OneToMany(mappedBy = "targetVessel", cascade = CascadeType.PERSIST)
+    @OneToMany(mappedBy = "targetVessel", cascade = CascadeType.PERSIST, orphanRemoval = true)
     @BatchSize(size = 100)
     private Set<SectionTransfer> sectionTransfersTo = new HashSet<>();
 
-    @OneToMany(mappedBy = "sourceVessel", cascade = CascadeType.PERSIST)
+    @OneToMany(mappedBy = "sourceVessel", cascade = CascadeType.PERSIST, orphanRemoval = true)
     @BatchSize(size = 100)
     private Set<CherryPickTransfer> cherryPickTransfersFrom = new HashSet<>();
 
-    @OneToMany(mappedBy = "targetVessel", cascade = CascadeType.PERSIST)
+    @OneToMany(mappedBy = "targetVessel", cascade = CascadeType.PERSIST, orphanRemoval = true)
     @BatchSize(size = 100)
     private Set<CherryPickTransfer> cherryPickTransfersTo = new HashSet<>();
 
@@ -412,6 +412,11 @@ public class VesselContainer<T extends LabVessel> {
                 }
                 transferTraverserCriteria.evaluateVesselPostOrder(context);
             }
+        }
+        // handle VesselToVesselTransfers
+        if (continueTraversing && targetVessel != null) {
+            targetVessel.evaluateCriteria(transferTraverserCriteria,
+                    TransferTraverserCriteria.TraversalDirection.Ancestors, hopCount + 1);
         }
     }
 

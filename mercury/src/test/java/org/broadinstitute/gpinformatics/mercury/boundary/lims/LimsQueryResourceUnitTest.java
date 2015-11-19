@@ -442,6 +442,8 @@ public class LimsQueryResourceUnitTest {
                 LimsQueryObjectFactory
                         .createSequencingTemplate("NAME_1234", "BARCODE_1234", true, "Resequencing", "Default",
                                 "76T8B76T", laneType);
+        template.setProduct("Lims Product");
+        template.setRegulatoryDesignation("RESEARCH_ONLY");
         expect(resource.fetchIlluminaSeqTemplate("12345", SequencingTemplateFactory.QueryVesselType.FLOWCELL, true))
                 .andReturn(template);
         replayAll();
@@ -454,6 +456,8 @@ public class LimsQueryResourceUnitTest {
         Assert.assertEquals(result.getOnRigChemistry(), "Default");
         Assert.assertEquals(result.getOnRigWorkflow(), "Resequencing");
         Assert.assertEquals(result.getReadStructure(), "76T8B76T");
+        Assert.assertEquals(result.getProduct(), "Lims Product");
+        Assert.assertEquals(result.getRegulatoryDesignation(), "RESEARCH_ONLY");
         Assert.assertTrue(result.isPairedRun());
         Assert.assertEquals(result.getLanes().size(), 1);
         SequencingTemplateLaneType laneOne = result.getLanes().get(0);
