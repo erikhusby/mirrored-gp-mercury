@@ -122,7 +122,6 @@ public class ExtractionJiraFieldFactory extends AbstractBatchJiraFieldFactory {
 
         customFields
                 .add(new CustomField(submissionFields, LabBatch.TicketFields.DESCRIPTION, batch.getBatchDescription()));
-        customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.SUMMARY, batch.getBatchName()));
 
         int sampleCount = batch.getStartingBatchLabVessels().size();
 
