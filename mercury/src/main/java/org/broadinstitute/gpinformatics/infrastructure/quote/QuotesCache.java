@@ -1,6 +1,12 @@
 package org.broadinstitute.gpinformatics.infrastructure.quote;
 
-import java.util.*;
+import org.apache.commons.collections4.CollectionUtils;
+
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * A simple cache of quotes extracted
@@ -45,9 +51,11 @@ public class QuotesCache {
         Set<Funding> fundingSources = new HashSet<>();
         for (Quote quote : quotes.getQuotes()) {
             if (quote.getQuoteFunding() != null) {
-                if (quote.getQuoteFunding().getFundingLevel() != null) {
-                    if (quote.getQuoteFunding().getFundingLevel().getFunding() != null) {
-                        fundingSources.add(quote.getQuoteFunding().getFundingLevel().getFunding());
+                if (CollectionUtils.isNotEmpty(quote.getQuoteFunding().getFundingLevel())) {
+                    for (FundingLevel level : quote.getQuoteFunding().getFundingLevel()) {
+                        if (level.getFunding() != null) {
+                            fundingSources.add(level.getFunding());
+                        }
                     }
                 }
             }
@@ -68,12 +76,14 @@ public class QuotesCache {
         Set<Quote> quotesForFundingSource = new HashSet<>();
         for (Quote quote : quotes.getQuotes()) {
             if (quote.getQuoteFunding() != null) {
-                if (quote.getQuoteFunding().getFundingLevel() != null) {
-                    if (quote.getQuoteFunding().getFundingLevel().getFunding() != null) {
-                        Funding fundingForQuote = quote.getQuoteFunding().getFundingLevel().getFunding();
-                        if (fundingForQuote.getGrantDescription() != null) {
-                            if (grantDescription.equalsIgnoreCase(fundingForQuote.getGrantDescription())) {
-                                quotesForFundingSource.add(quote);
+                if (CollectionUtils.isNotEmpty(quote.getQuoteFunding().getFundingLevel())) {
+                    for(FundingLevel level : quote.getQuoteFunding().getFundingLevel()) {
+                        if (level.getFunding() != null) {
+                            Funding fundingForQuote = level.getFunding();
+                            if (fundingForQuote.getGrantDescription() != null) {
+                                if (grantDescription.equalsIgnoreCase(fundingForQuote.getGrantDescription())) {
+                                    quotesForFundingSource.add(quote);
+                                }
                             }
                         }
                     }
@@ -91,23 +101,24 @@ public class QuotesCache {
 
         for (Quote quote : quotes.getQuotes()) {
             if (quote.getQuoteFunding() != null) {
-                if (quote.getQuoteFunding().getFundingLevel() != null) {
-                    if (quote.getQuoteFunding().getFundingLevel().getFunding() != null) {
-                        Funding funding = quote.getQuoteFunding().getFundingLevel().getFunding();
-                        if ((funding.getGrantDescription() != null) && (funding.getGrantNumber() != null)) {
-                            // get/create the set of quotes
-                            HashSet<Quote> quotesSet=quotesByFundingSource.get(funding);
-                            if  (quotesSet== null) {
-                                quotesSet = new HashSet<>();
-                                quotesByFundingSource.put(funding, quotesSet);
+                if (CollectionUtils.isNotEmpty(quote.getQuoteFunding().getFundingLevel())) {
+                    for (FundingLevel level : quote.getQuoteFunding().getFundingLevel()) {
+                        if (level.getFunding() != null) {
+                            Funding funding = level.getFunding();
+                            if ((funding.getGrantDescription() != null) && (funding.getGrantNumber() != null)) {
+                                // get/create the set of quotes
+                                HashSet<Quote> quotesSet=quotesByFundingSource.get(funding);
+                                if  (quotesSet== null) {
+                                    quotesSet = new HashSet<>();
+                                    quotesByFundingSource.put(funding, quotesSet);
+                                }
+                                quotesSet.add(quote);
                             }
-                            quotesSet.add(quote);
                         }
                     }
                 }
             }
         }
-
 
         return quotesByFundingSource;
 
