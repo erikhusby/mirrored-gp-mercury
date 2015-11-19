@@ -586,9 +586,18 @@
                             </stripes:link>
                         </td>
                         <td>
-                            <a class="external" target="JIRA" href="${actionBean.jiraUrl(order.jiraTicketKey)}" class="external" target="JIRA">
-                                    ${order.jiraTicketKey}
-                            </a>
+                            <c:choose>
+                                <%-- draft PDO --%>
+                                <c:when test="${order.draft}">
+                                    <span title="DRAFT">&#160;</span>
+                                </c:when>
+                                <c:otherwise>
+                                    <a class="external" target="JIRA" href="${actionBean.jiraUrl(order.jiraTicketKey)}"
+                                       class="external" target="JIRA">
+                                            ${order.jiraTicketKey}
+                                    </a>
+                                </c:otherwise>
+                            </c:choose>
                         </td>
                         <td>${order.product.name}</td>
                         <td>${order.orderStatus}</td>
