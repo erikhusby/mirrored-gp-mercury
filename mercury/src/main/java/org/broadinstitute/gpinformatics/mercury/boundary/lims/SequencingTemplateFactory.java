@@ -30,6 +30,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.SequencingConfigDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ProductType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateLaneType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateType;
 
@@ -356,7 +357,7 @@ public class SequencingTemplateFactory {
     private void attachRegulatoryDesignationAndProductOrder(Set<SampleInstanceV2> sampleInstances,
                                                             SequencingTemplateType sequencingTemplateType) {
         ResearchProject.RegulatoryDesignation regulatoryDesignation = null;
-        String productName = null;
+        List<String> productNames = new ArrayList<>();
         for(SampleInstanceV2 sampleInstance: sampleInstances) {
             if (sampleInstance.getSingleBucketEntry() != null) {
                 if (regulatoryDesignation == null) {
@@ -366,11 +367,12 @@ public class SequencingTemplateFactory {
                         getProductOrder().getResearchProject().getRegulatoryDesignation()) {
                     throw new InformaticsServiceException("Multiple Regulatory Designations found for template tube");
                 }
-                if (productName == null) {
-                    productName = sampleInstance.getSingleBucketEntry().getProductOrder().getProduct().getName();
-                } else if (!productName.equals(
-                        sampleInstance.getSingleBucketEntry().getProductOrder().getProduct().getName())) {
-                    throw new InformaticsServiceException("Multiple Products found for template tube");
+                String productName = sampleInstance.getSingleBucketEntry().getProductOrder().getProduct().getName();
+                if (!productNames.contains(productName)) {
+                    ProductType productType = new ProductType();
+                    productType.setName(productName);
+                    sequencingTemplateType.getProducts().add(productType);
+                    productNames.add(productName);
                 }
             }
         }
@@ -378,12 +380,12 @@ public class SequencingTemplateFactory {
         if(regulatoryDesignation == null) {
             throw new InformaticsServiceException("Could not find regulatory designation.");
         }
-        if(productName == null) {
-            throw new InformaticsServiceException("Could not find product name.");
+
+        if(productNames.isEmpty()) {
+            throw new InformaticsServiceException("Could not find any products.");
         }
 
         sequencingTemplateType.setRegulatoryDesignation(regulatoryDesignation.name());
-        sequencingTemplateType.setProduct(productName);
     }
 
     private static SequencingConfigDef getSequencingConfig(boolean isPoolTest) {

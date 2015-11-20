@@ -479,7 +479,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
         String result = get(resource);
         assertThat(result, containsString("\"readStructure\":\"76T8B8B76T\""));
         assertThat(result, containsString("\"derivedVesselLabel\":\"AB56835527\""));
-        assertThat(result, containsString("\"product\":\"Express Human WES (Deep Coverage) v1\""));
+        assertThat(result, containsString("\"name\":\"Express Human WES (Deep Coverage) v1\""));
         assertThat(result, containsString("\"regulatoryDesignation\":\"RESEARCH_ONLY\""));
         for (String varToTest : Arrays
                 .asList("barcode", "name", "onRigWorkflow", "onRigChemistry")) {
