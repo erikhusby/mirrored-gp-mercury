@@ -19,6 +19,7 @@ import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
@@ -125,6 +126,7 @@ public class BucketViewActionBean extends CoreActionBean {
     private String selectedLcset;
     private LabBatch batch;
     private Map<String, BucketCount> mapBucketToBucketEntryCount;
+    private CreateFields.ProjectType projectType = null;
 
 
     @Before(stages = LifecycleStage.BindingAndValidation)
@@ -213,6 +215,9 @@ public class BucketViewActionBean extends CoreActionBean {
 
                 // Doesn't show JIRA details if there are no bucket entries.
                 jiraEnabled = !collectiveEntries.isEmpty();
+                WorkflowBucketDef bucketDef = mapBucketToBucketDef.get(selectedBucket);
+                projectType = CreateFields.ProjectType.fromKeyPrefix(bucketDef.getBatchJiraProjectType());
+
                 preFetchSampleData(collectiveEntries);
             }
         }
@@ -491,4 +496,20 @@ public class BucketViewActionBean extends CoreActionBean {
         return mapBucketToBucketEntryCount;
     }
 
+    public Resolution projectTypeMatches() {
+        String jiraTicketId = getContext().getRequest().getParameter("jiraTicketId").trim();
+        String projectTypeString = getContext().getRequest().getParameter("projectType").trim();
+        CreateFields.ProjectType projectType = CreateFields.ProjectType.valueOf(projectTypeString);
+        return new StreamingResolution("text/plain",
+                String.valueOf(projectType == CreateFields.ProjectType.fromIssueKey(jiraTicketId)));
+    }
+
+    public CreateFields.ProjectType getProjectType() {
+        return projectType;
+    }
+
+    public void setProjectType(
+            CreateFields.ProjectType projectType) {
+        this.projectType = projectType;
+    }
 }
