@@ -655,9 +655,10 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                     }
 
                     // Batch logic
-                    BucketEntry singleBucketEntry = si.getSingleBucketEntry();
+                    //BucketEntry singleBucketEntry = si.getSingleBucketEntry();
+                    labBatch = si.getSingleBatch();
 
-                    if (singleBucketEntry == null) {
+                    if (labBatch == null) {
                         // Use the newest non-extraction bucket which was created sometime before this event
                         long eventTs = labEvent.getEventDate().getTime();
                         long bucketTs = 0L;
@@ -677,14 +678,10 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                             }
                         }
                     } else {
-                        labBatch = singleBucketEntry.getLabBatch();
+                        // This will capture controls
                         lcsetSampleID = si.getNearestMercurySampleName();
                     }
 
-                    // This will pick up controls
-                    if( lcsetSampleID == null || lcsetSampleID.isEmpty() ) {
-                        lcsetSampleID = si.getRootOrEarliestMercurySampleName();
-                    }
 
                     // Pull workflow from lab batch
                     // Default to event date, overwritten if lab batch available
