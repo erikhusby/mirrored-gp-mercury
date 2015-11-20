@@ -525,10 +525,10 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
         }
 
         Collection<LabVessel> vessels;
-        if( entity.getLabEventType().getPlasticToValidate() == LabEventType.PlasticToValidate.SOURCE ) {
-            vessels = entity.getSourceLabVessels();
-        } else {
+        if( entity.getLabEventType().getPlasticToValidate() == LabEventType.PlasticToValidate.TARGET ) {
             vessels = entity.getTargetLabVessels();
+        } else {
+            vessels = entity.getSourceLabVessels();
         }
 
         if (vessels.isEmpty() && entity.getInPlaceLabVessel() != null) {
@@ -678,11 +678,12 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                         }
                     } else {
                         labBatch = singleBucketEntry.getLabBatch();
-                        if (!singleBucketEntry.getLabVessel().getMercurySamples().isEmpty()) {
-                            lcsetSampleID =
-                                    singleBucketEntry.getLabVessel().getMercurySamples().iterator().next()
-                                            .getSampleKey();
-                        }
+                        lcsetSampleID = si.getNearestMercurySampleName();
+                    }
+
+                    // This will pick up controls
+                    if( lcsetSampleID == null || lcsetSampleID.isEmpty() ) {
+                        lcsetSampleID = si.getRootOrEarliestMercurySampleName();
                     }
 
                     // Pull workflow from lab batch
