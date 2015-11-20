@@ -225,6 +225,17 @@
                 <batchJiraIssueType>CDNA_TRUSEQ_SS</batchJiraIssueType>
             </workflowStepDefs>
             <workflowStepDefs>
+                <name>Initial Ribo</name>
+                <labEventTypes>RIBO_TRANSFER</labEventTypes>
+                <labEventTypes>RIBO_BUFFER_ADDITION</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <quantType>RIBO</quantType>
+                <numberOfRepeats>2</numberOfRepeats>
+                <deadEndBranch>true</deadEndBranch>
+            </workflowStepDefs>
+            <workflowStepDefs>
                 <name>Poly A TS Aliquot</name>
                 <labEventTypes>POLY_A_TS_ALIQUOT</labEventTypes>
                 <optional>false</optional>
