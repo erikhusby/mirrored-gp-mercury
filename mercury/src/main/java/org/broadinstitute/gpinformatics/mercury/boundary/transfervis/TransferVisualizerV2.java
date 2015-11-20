@@ -78,8 +78,18 @@ public class TransferVisualizerV2 {
     private static final Format DATE_FORMAT = FastDateFormat.getInstance("yyyy-MM-dd HH:mm:ss");
 
     public enum AlternativeIds {
-        SAMPLE_ID,
-        LCSET
+        SAMPLE_ID("Sample Id"),
+        LCSET("LCSET");
+
+        private String displayName;
+
+        AlternativeIds(String displayName) {
+            this.displayName = displayName;
+        }
+
+        public String getDisplayName() {
+            return displayName;
+        }
     }
 
     @Inject
