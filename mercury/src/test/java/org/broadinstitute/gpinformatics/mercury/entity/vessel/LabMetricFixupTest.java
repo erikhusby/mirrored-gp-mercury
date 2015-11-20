@@ -255,9 +255,9 @@ public class LabMetricFixupTest extends Arquillian {
             userBean.loginOSUser();
             deleteRun("CRSP_ribotest_Nov19_pico", "SUPPORT-1289 remove Pico run, leaving Ribo run only");
             deleteRun("CRSP_ribotest_Nov16", "SUPPORT-1289 remove Pico run, leaving Ribo run only");
-            utx.rollback();
-        } catch (NotSupportedException | SystemException /*| RollbackException | HeuristicMixedException |
-                HeuristicRollbackException*/ e) {
+            utx.commit();
+        } catch (NotSupportedException | SystemException | RollbackException | HeuristicMixedException |
+                HeuristicRollbackException e) {
             throw new RuntimeException(e);
         }
     }
