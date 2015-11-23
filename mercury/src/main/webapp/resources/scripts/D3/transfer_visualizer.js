@@ -3,7 +3,7 @@ window.onerror = function (errorMsg, url, lineNumber, column, errorObj) {
 };
 
 function renderJson(json) {
-    var width = 1200, height = 950;
+    var width = window.innerWidth - 50, height = window.innerHeight - 50;
     var menu = [
         {
             title: function (d) {
