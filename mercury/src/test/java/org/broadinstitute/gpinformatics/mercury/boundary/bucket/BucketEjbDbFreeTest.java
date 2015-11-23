@@ -69,6 +69,7 @@ public class BucketEjbDbFreeTest {
     private final int SAMPLE_SIZE = 5;
 
     private ProductOrder pdo;
+    private List<LabVessel> mockVessels;
     private LabBatch labBatch;
     private final WorkflowLoader workflowLoader = new WorkflowLoader();
     private BSPUserList bspUserList;
@@ -253,6 +254,14 @@ public class BucketEjbDbFreeTest {
         return badLabelInfo.toArray(new Object[badLabelInfo.size()][]);
     }
 
+    public void testApplyBucketCriteriaNoWorkflow(){
+        setupCoreMocks(Workflow.AGILENT_EXOME_EXPRESS, true);
+        pdo.getProduct().setWorkflow(Workflow.NONE);
+
+        Collection<BucketEntry> bucketEntries = bucketEjb.applyBucketCriteria(mockVessels, pdo, "whatever");
+        Assert.assertTrue(bucketEntries.isEmpty());
+    }
+
     private String makeTubeBarcode(int rackPosition) {
         return "R" + rackPosition;
     }
@@ -262,7 +271,7 @@ public class BucketEjbDbFreeTest {
 
         // Mock should return sample for those that Mercury knows about, i.e. all except the 1st and 4th samples.
         // The 4th sample is in house so a standalone vessel/sample should be created.
-        List<LabVessel> mockVessels = new ArrayList<>();
+        mockVessels = new ArrayList<>();
         ProductOrderSample pdoSample;
         for (int rackPosition = 1; rackPosition <= SAMPLE_SIZE; ++rackPosition) {
             pdoSample = pdo.getSamples().get(rackPosition - 1);
