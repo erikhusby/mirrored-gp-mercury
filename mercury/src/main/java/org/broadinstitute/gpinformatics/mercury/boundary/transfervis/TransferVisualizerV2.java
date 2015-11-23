@@ -417,8 +417,13 @@ public class TransferVisualizerV2 {
                                 key("w").value(maxColumnWidth).
                                 key("h").value(maxRowHeight).
                                 key("altIds").array();
-                        for (String id : mapBarcodeToAlternativeIds.get(child.getLabel())) {
-                            jsonWriter.object().key("altId").value(id).endObject();
+                        if (!mapBarcodeToAlternativeIds.isEmpty()) {
+                            List<String> ids = mapBarcodeToAlternativeIds.get(child.getLabel());
+                            if (ids != null) {
+                                for (String id : ids) {
+                                    jsonWriter.object().key("altId").value(id).endObject();
+                                }
+                            }
                         }
                         jsonWriter.endArray();
                         if (child.equals(labVessel)) {
