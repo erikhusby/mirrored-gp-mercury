@@ -128,7 +128,7 @@ public class BucketViewActionBean extends CoreActionBean {
     private Date dueDate;
     private String selectedLcset;
     private LabBatch batch;
-    private String q;
+    private String jiraUserQuery;
     private Map<String, BucketCount> mapBucketToBucketEntryCount;
 
 
@@ -153,7 +153,7 @@ public class BucketViewActionBean extends CoreActionBean {
 
     @HandlesEvent("watchersAutoComplete")
     public Resolution watchersAutoComplete() throws JSONException {
-        return createTextResolution(jiraUserTokenInput.getJsonString(getQ()));
+        return createTextResolution(jiraUserTokenInput.getJsonString(getJiraUserQuery()));
     }
 
     @DefaultHandler
@@ -394,20 +394,12 @@ public class BucketViewActionBean extends CoreActionBean {
         this.selectedBucket = selectedBucket;
     }
 
-    public Collection<BucketEntry> getBucketEntries() {
-        return bucketEntries;
-    }
-
     public boolean isJiraEnabled() {
         return jiraEnabled;
     }
 
     public void setJiraEnabled(boolean jiraEnabled) {
         this.jiraEnabled = jiraEnabled;
-    }
-
-    public Collection<BucketEntry> getReworkEntries() {
-        return reworkEntries;
     }
 
     public String getSelectedLcset() {
@@ -474,18 +466,6 @@ public class BucketViewActionBean extends CoreActionBean {
         this.important = important;
     }
 
-    public List<ProductWorkflowDef> getPossibleWorkflows() {
-        return possibleWorkflows;
-    }
-
-    public ProductWorkflowDef getSelectedWorkflowDef() {
-        return selectedWorkflowDef;
-    }
-
-    public void setSelectedWorkflowDef(ProductWorkflowDef selectedWorkflowDef) {
-        this.selectedWorkflowDef = selectedWorkflowDef;
-    }
-
     public String getJiraTicketId() {
         return jiraTicketId;
     }
@@ -521,6 +501,15 @@ public class BucketViewActionBean extends CoreActionBean {
     public Map<String, BucketCount> getMapBucketToBucketEntryCount() {
         return mapBucketToBucketEntryCount;
     }
+
+    public String getJiraUserQuery() {
+        return jiraUserQuery;
+    }
+
+    public void setJiraUserQuery(String jiraUserQuery) {
+        this.jiraUserQuery = jiraUserQuery;
+    }
+
     public JiraUserTokenInput getJiraUserTokenInput() {
         return jiraUserTokenInput;
     }
@@ -528,13 +517,5 @@ public class BucketViewActionBean extends CoreActionBean {
     public void setJiraUserTokenInput(
             JiraUserTokenInput jiraUserTokenInput) {
         this.jiraUserTokenInput = jiraUserTokenInput;
-    }
-
-    public String getQ() {
-        return q;
-    }
-
-    public void setQ(String q) {
-        this.q = q;
     }
 }

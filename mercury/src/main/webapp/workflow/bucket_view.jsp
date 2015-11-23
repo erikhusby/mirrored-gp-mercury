@@ -275,10 +275,11 @@
             });
 
             $j("#watchers").tokenInput(
-                    "${ctxpath}/view/bucketView.action?watchersAutoComplete=", {
+                    "${ctxpath}/workflow/bucketView.action?watchersAutoComplete=", {
                         prePopulate: ${actionBean.ensureStringResult(actionBean.jiraUserTokenInput.completeData)},
                         tokenDelimiter: "${actionBean.jiraUserTokenInput.separator}",
                         preventDuplicates: true,
+                        queryParam: 'jiraUserQuery',
                         autoSelectFirstResult: true
                     }
             );
