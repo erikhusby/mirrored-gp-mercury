@@ -20,7 +20,6 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.JiraUserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
-import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
@@ -467,10 +466,6 @@ public class BucketViewActionBean extends CoreActionBean {
 
     public void setImportant(String important) {
         this.important = important;
-    }
-
-    public List<ProductWorkflowDef> getPossibleWorkflows() {
-        return possibleWorkflows;
     }
 
     public String getJiraTicketId() {
