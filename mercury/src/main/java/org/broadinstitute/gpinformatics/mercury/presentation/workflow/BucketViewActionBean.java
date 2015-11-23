@@ -20,6 +20,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.JiraUserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
+import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
@@ -127,7 +128,7 @@ public class BucketViewActionBean extends CoreActionBean {
     private Date dueDate;
     private String selectedLcset;
     private LabBatch batch;
-    private String q;
+    private String jiraUserQuery;
     private Map<String, BucketCount> mapBucketToBucketEntryCount;
 
     @Before(stages = LifecycleStage.BindingAndValidation)
@@ -151,7 +152,7 @@ public class BucketViewActionBean extends CoreActionBean {
 
     @HandlesEvent("watchersAutoComplete")
     public Resolution watchersAutoComplete() throws JSONException {
-        return createTextResolution(jiraUserTokenInput.getJsonString(getQ()));
+        return createTextResolution(jiraUserTokenInput.getJsonString(getJiraUserQuery()));
     }
 
     @DefaultHandler
@@ -468,6 +469,10 @@ public class BucketViewActionBean extends CoreActionBean {
         this.important = important;
     }
 
+    public List<ProductWorkflowDef> getPossibleWorkflows() {
+        return possibleWorkflows;
+    }
+
     public String getJiraTicketId() {
         return jiraTicketId;
     }
@@ -508,19 +513,19 @@ public class BucketViewActionBean extends CoreActionBean {
         return mapBucketToBucketEntryCount;
     }
 
+    public String getJiraUserQuery() {
+        return jiraUserQuery;
+    }
+
+    public void setJiraUserQuery(String jiraUserQuery) {
+        this.jiraUserQuery = jiraUserQuery;
+    }
+
     public JiraUserTokenInput getJiraUserTokenInput() {
         return jiraUserTokenInput;
     }
 
     public void setJiraUserTokenInput(JiraUserTokenInput jiraUserTokenInput) {
         this.jiraUserTokenInput = jiraUserTokenInput;
-    }
-
-    public String getQ() {
-        return q;
-    }
-
-    public void setQ(String q) {
-        this.q = q;
     }
 }

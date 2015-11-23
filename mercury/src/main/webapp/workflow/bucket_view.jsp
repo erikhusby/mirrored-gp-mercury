@@ -279,6 +279,7 @@
                         prePopulate: ${actionBean.ensureStringResult(actionBean.jiraUserTokenInput.completeData)},
                         tokenDelimiter: "${actionBean.jiraUserTokenInput.separator}",
                         preventDuplicates: true,
+                        queryParam: 'jiraUserQuery',
                         autoSelectFirstResult: true
                     }
             );
