@@ -126,7 +126,8 @@ public class EventAncestryEtlUtil {
                 ancestorEventTypes, Arrays.asList(TransferTraverserCriteria.TraversalDirection.Ancestors), true);
 
         for( LabEvent ancestorLabEvent : ancestorEventVesselMap.keySet() ) {
-            for( LabVessel ancestorLabVessel : ancestorEventVesselMap.get(ancestorLabEvent) ) {
+            Set<LabVessel> eventVessels = ancestorEventVesselMap.get(ancestorLabEvent);
+            for( LabVessel ancestorLabVessel : eventVessels ) {
                 if( ancestorLabVessel.getContainerRole() != null ) {
                     VesselContainer containerVessel = ancestorLabVessel.getContainerRole();
                     if( containerVessel.hasAnonymousVessels() ) {
@@ -145,16 +146,18 @@ public class EventAncestryEtlUtil {
                         VesselGeometry geometry = containerVessel.getEmbedder().getVesselGeometry();
                         for (VesselPosition vesselPosition : geometry.getVesselPositions()) {
                             LabVessel containedVessel = containerVessel.getVesselAtPosition(vesselPosition);
-                            if( containedVessel != null ) {
-                            ancestryFactDtos.add(new AncestryFactDto(
-                                    ancestorLabEvent.getLabEventId(),
-                                    containedVessel,
-                                    ancestorLabEvent.getLabEventType().getLibraryType().getDisplayName(),
-                                    ancestorLabEvent.getEventDate(),
-                                    labEvent.getLabEventId(),
-                                    labVessel,
-                                    labEvent.getLabEventType().getLibraryType().getDisplayName(),
-                                    labEvent.getEventDate()));
+                            // Vessel set may include a tube and the tube formation it's in, exclude duplicates
+                            // TODO JMS Investigate why vessel/container traversal getAncestor()/getDescendant() logic does this.
+                            if( containedVessel != null && !eventVessels.contains(containedVessel)) {
+                                ancestryFactDtos.add(new AncestryFactDto(
+                                        ancestorLabEvent.getLabEventId(),
+                                        containedVessel,
+                                        ancestorLabEvent.getLabEventType().getLibraryType().getDisplayName(),
+                                        ancestorLabEvent.getEventDate(),
+                                        labEvent.getLabEventId(),
+                                        labVessel,
+                                        labEvent.getLabEventType().getLibraryType().getDisplayName(),
+                                        labEvent.getEventDate()));
                             }
                         }
                     }

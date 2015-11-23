@@ -112,6 +112,7 @@ DROP PROCEDURE MERGE_IMPORT;
 
 -- https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-3763
 -- Add metadata to PRODUCT_ORDER_SAMPLE
+-- Note:  Must be run prior to deploy (all columns nullable - deploy of ticket GPLIM-3763 not required)
 -------------------------------------------------------
 ALTER TABLE IM_PRODUCT_ORDER_SAMPLE
 ADD (
