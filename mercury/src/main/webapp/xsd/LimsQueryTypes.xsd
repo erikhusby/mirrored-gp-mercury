@@ -13,6 +13,8 @@
             <xsd:element name="onRigWorkflow" type="xsd:string"/>
             <xsd:element name="onRigChemistry" type="xsd:string"/>
             <xsd:element name="concentration" type="xsd:decimal" />
+            <xsd:element name="product" type="xsd:string"/>
+            <xsd:element name="regulatoryDesignation" type="xsd:string"/>
             <xsd:element name="readStructure" type="xsd:string">
                 <xsd:annotation>
                     <xsd:documentation>A read structure string is a textual encoding of templates, barcodes, or skips.

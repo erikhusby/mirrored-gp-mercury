@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
@@ -10,6 +11,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.RackOfTubesDa
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormationDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -26,6 +28,7 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,6 +39,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
@@ -44,6 +48,8 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
  */
 @Test(groups = TestGroups.FIXUP)
 public class LabVesselFixupTest extends Arquillian {
+
+    private static final Pattern WHITESPACE_PATTERN = Pattern.compile("\\s");
 
     @Inject
     private LabVesselDao labVesselDao;
@@ -1111,5 +1117,39 @@ public class LabVesselFixupTest extends Arquillian {
 
         labVesselDao.persist(new FixupCommentary("GPLIM-3807 change barcodes to uppercase"));
         labVesselDao.flush();
+    }
+    /**
+     * This test reads its parameters from a file, testdata/FixupVolumes.txt, so it can be used for other similar fixups,
+     * without writing a new test.  Example contents of the file are:
+     * SUPPORT-1289
+     * 0185769113 50.00
+     * 0185769029 50.00
+     */
+    @Test(enabled = false)
+    public void support1289UpdateVolume() {
+        try {
+            userBean.loginOSUser();
+            List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("FixupVolumes.txt"));
+            String jiraTicket = lines.get(0);
+            for (int i = 1; i < lines.size(); i++) {
+                String[] fields = WHITESPACE_PATTERN.split(lines.get(i));
+                if (fields.length != 2) {
+                    throw new RuntimeException("Expected two white-space separated fields in " + lines.get(i));
+                }
+                String barcode = fields[0];
+                BigDecimal newVolume = new BigDecimal(fields[1]);
+                BarcodedTube barcodedTube = barcodedTubeDao.findByBarcode(barcode);
+                if (barcodedTube == null) {
+                    throw new RuntimeException("Failed to find tube " + barcode);
+                }
+                System.out.println("Updating volume of " + barcodedTube.getLabel() + " from " +
+                        barcodedTube.getVolume() + " to " + newVolume);
+                barcodedTube.setVolume(newVolume);
+            }
+            barcodedTubeDao.persist(new FixupCommentary(jiraTicket + " update volumes"));
+            barcodedTubeDao.flush();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
