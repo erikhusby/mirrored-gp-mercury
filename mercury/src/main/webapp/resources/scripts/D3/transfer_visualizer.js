@@ -154,9 +154,8 @@ function renderJson(json) {
             var parentData = d3.select(this.parentNode).datum();
             return parentData.x + parentData.w / 2;
         })
-        .attr("y", function (d) {
-            // todo jmt generalize multiplication by 2
-            return d3.select(this.parentNode).datum().y + (14 * 2);
+        .attr("y", function (d, i) {
+            return d3.select(this.parentNode).datum().y + (14 * (i + 2));
         })
         .text(function (d) {
             return d.altId;

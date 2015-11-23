@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -97,7 +98,7 @@ public class TransferVisualizerV2 {
 
     private class Traverser extends TransferTraverserCriteria {
         public static final String REARRAY_LABEL = "rearray";
-        public static final int ROW_HEIGHT = 20;
+        public static final int ROW_HEIGHT = 16;
         public static final int PLATE_WIDTH = 480;
         public static final int WELL_WIDTH = 80;
 
@@ -118,10 +119,9 @@ public class TransferVisualizerV2 {
         private String startId;
         /** The IDs to add to each rect. */
         private List<AlternativeIds> alternativeIds;
-
-        private Font font = new Font("SansSerif", Font.PLAIN, 12);
-        private BufferedImage img = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
-        private FontMetrics fm = img.getGraphics().getFontMetrics(font);
+        /** Used to determine size of text elements. */
+        private FontMetrics fontMetrics = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB).getGraphics().
+                getFontMetrics(new Font("SansSerif", Font.PLAIN, 12));
 
         Traverser(Writer writer, List<AlternativeIds> alternativeIds) throws JSONException {
             this.writer = writer;
@@ -325,23 +325,58 @@ public class TransferVisualizerV2 {
                         // todo jmt popup if more than one sample?
                         maxColumn = Math.max(maxColumn, rowColumn.getColumn());
                         maxRow = Math.max(maxRow, rowColumn.getRow() + 1);
-                        for (int i = 0; i < alternativeIds.size(); i++) {
-                            AlternativeIds alternativeId = alternativeIds.get(i);
+                        for (AlternativeIds alternativeId : alternativeIds) {
                             switch (alternativeId) {
                                 case SAMPLE_ID:
-                                    Set<SampleInstanceV2> sampleInstancesV2 = child.getSampleInstancesV2();
-                                    if (sampleInstancesV2.size() == 1) {
-                                        SampleInstanceV2 sampleInstanceV2 = sampleInstancesV2.iterator().next();
-                                        String indexName = sampleInstanceV2.getMolecularIndexingScheme() == null ? "" :
-                                                " " + sampleInstanceV2.getMolecularIndexingScheme().getName();
-                                        String ids = sampleInstanceV2.getNearestMercurySampleName() + indexName;
-                                        int width = fm.stringWidth(ids);
-                                        mapBarcodeToAlternativeIds.put(child.getLabel(), Collections.singletonList(ids));
+                                    Set<SampleInstanceV2> sampleInstances = child.getSampleInstancesV2();
+                                    if (sampleInstances.size() == 1) {
+                                        SampleInstanceV2 sampleInstance = sampleInstances.iterator().next();
+                                        String indexName = sampleInstance.getMolecularIndexingScheme() == null ? "" :
+                                                " " + sampleInstance.getMolecularIndexingScheme().getName();
+                                        String ids = sampleInstance.getNearestMercurySampleName() + indexName;
+
+                                        List<String> idsList = mapBarcodeToAlternativeIds.get(child.getLabel());
+                                        if (idsList == null) {
+                                            idsList = new ArrayList<>();
+                                            mapBarcodeToAlternativeIds.put(child.getLabel(), idsList);
+                                        }
+                                        idsList.add(ids);
+
+                                        int width = fontMetrics.stringWidth(ids);
                                         maxColumnWidth = Math.max(width, maxColumnWidth);
-                                        maxRowHeight = Math.max(ROW_HEIGHT * (i + 2), maxRowHeight);
+                                        maxRowHeight = Math.max(ROW_HEIGHT * (idsList.size() + 1), maxRowHeight);
                                     }
                                     break;
                                 case LCSET:
+                                    Set<LabBatch> labBatches = new HashSet<>();
+                                    for (SampleInstanceV2 sampleInstance : child.getSampleInstancesV2()) {
+                                        LabBatch singleBatch = sampleInstance.getSingleBatch();
+                                        if (singleBatch != null) {
+                                            labBatches.add(singleBatch);
+                                        }
+                                    }
+                                    if (!labBatches.isEmpty()) {
+                                        StringBuilder idsBuilder = new StringBuilder();
+                                        for (LabBatch labBatch : labBatches) {
+                                            if (idsBuilder.length() > 0) {
+                                                idsBuilder.append(", ");
+                                            }
+                                            idsBuilder.append(labBatch.getBatchName());
+                                        }
+
+                                        // todo jmt reduce copy / paste
+                                        List<String> idsList = mapBarcodeToAlternativeIds.get(child.getLabel());
+                                        if (idsList == null) {
+                                            idsList = new ArrayList<>();
+                                            mapBarcodeToAlternativeIds.put(child.getLabel(), idsList);
+                                        }
+                                        String ids = idsBuilder.toString();
+                                        idsList.add(ids);
+
+                                        int width = fontMetrics.stringWidth(ids);
+                                        maxColumnWidth = Math.max(width, maxColumnWidth);
+                                        maxRowHeight = Math.max(ROW_HEIGHT * (idsList.size() + 1), maxRowHeight);
+                                    }
                                     break;
                             }
                         }
@@ -381,9 +416,11 @@ public class TransferVisualizerV2 {
                                 key("y").value((rowColumn.getRow()) * maxRowHeight + inPlaceHeight).
                                 key("w").value(maxColumnWidth).
                                 key("h").value(maxRowHeight).
-                                key("altIds").array().object().
-                                        key("altId").value(mapBarcodeToAlternativeIds.get(child.getLabel())).
-                                endObject().endArray();
+                                key("altIds").array();
+                        for (String id : mapBarcodeToAlternativeIds.get(child.getLabel())) {
+                            jsonWriter.object().key("altId").value(id).endObject();
+                        }
+                        jsonWriter.endArray();
                         if (child.equals(labVessel)) {
                             jsonWriter.key("highlight").value(1L);
                         }
