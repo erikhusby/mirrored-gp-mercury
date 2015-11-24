@@ -24,6 +24,10 @@ public class CrspRiboPlatingJaxbBuilder {
     private final String testPrefix;
     private final BettaLimsMessageTestFactory bettaLimsMessageTestFactory;
     private final List<BettaLIMSMessage> messageList = new ArrayList<>();
+    private PlateTransferEventType initialRiboTransfer1;
+    private PlateTransferEventType initialRiboTransfer2;
+    private PlateEventType initialRiboBufferAddition1;
+    private PlateEventType initialRiboBufferAddition2;
     private String riboMicrofluorPlateBarcode;
     private PlateTransferEventType riboMicrofluorEventJaxbA2;
     private PlateTransferEventType riboMicrofluorEventJaxbB1;
@@ -88,7 +92,44 @@ public class CrspRiboPlatingJaxbBuilder {
         return polyASpikeJaxb;
     }
 
+    public PlateTransferEventType getInitialRiboTransfer1() {
+        return initialRiboTransfer1;
+    }
+
+    public PlateTransferEventType getInitialRiboTransfer2() {
+        return initialRiboTransfer2;
+    }
+
+    public PlateEventType getInitialRiboBufferAddition1() {
+        return initialRiboBufferAddition1;
+    }
+
+    public PlateEventType getInitialRiboBufferAddition2() {
+        return initialRiboBufferAddition2;
+    }
+
     public CrspRiboPlatingJaxbBuilder invoke() {
+        //RiboTransfer
+        String initialRiboPlate1 = "RiboTransfer1" + testPrefix;
+        String initialRiboPlate2 = "RiboTransfer2" + testPrefix;
+        initialRiboTransfer1 = bettaLimsMessageTestFactory.buildRackToPlate("RiboTransfer", rackBarcode,
+                tubeBarcodes, initialRiboPlate1);
+        for (ReceptacleType receptacleType : initialRiboTransfer1.getSourcePositionMap().getReceptacle()) {
+            receptacleType.setVolume(new BigDecimal("60"));
+        }
+        initialRiboTransfer2 = bettaLimsMessageTestFactory.buildRackToPlate("RiboTransfer", rackBarcode,
+                tubeBarcodes, initialRiboPlate2);
+        for (ReceptacleType receptacleType : initialRiboTransfer2.getSourcePositionMap().getReceptacle()) {
+            receptacleType.setVolume(new BigDecimal("60"));
+        }
+        initialRiboTransfer2.setDisambiguator(2L);
+        bettaLimsMessageTestFactory.addMessage(messageList, initialRiboTransfer1, initialRiboTransfer2);
+
+        initialRiboBufferAddition1 = bettaLimsMessageTestFactory.buildPlateEvent("RiboBufferAddition", initialRiboPlate1);
+        initialRiboBufferAddition2 = bettaLimsMessageTestFactory.buildPlateEvent("RiboBufferAddition", initialRiboPlate2);
+        initialRiboBufferAddition2.setDisambiguator(2L);
+        bettaLimsMessageTestFactory.addMessage(messageList, initialRiboBufferAddition1, initialRiboBufferAddition2);
+
         //PolyATSAliquot
         List<String> polyAAliquotTubes = new ArrayList<>(tubeBarcodes.size());
         int i = 0;

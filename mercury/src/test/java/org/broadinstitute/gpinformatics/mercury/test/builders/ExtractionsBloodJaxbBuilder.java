@@ -86,6 +86,9 @@ public class ExtractionsBloodJaxbBuilder {
                 "ExtractionsBloodChemagenToFinalRack", postChemagenDeepwellBarcode,
                 finalRackBarcode, bloodFinalTubeBarcodes);
         extractionsBloodChemagenToFinalRack.getSourcePlate().setPhysType(DEEPWELL96);
+        for (ReceptacleType receptacleType : extractionsBloodChemagenToFinalRack.getPositionMap().getReceptacle()) {
+            receptacleType.setMaterialType("DNA:DNA Genomic");
+        }
         bettaLimsMessageTestFactory.addMessage(messageList, extractionsBloodChemagenToFinalRack);
 
         return this;

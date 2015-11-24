@@ -93,6 +93,18 @@ public class LabMetric implements Comparable<LabMetric> {
                 return new LabMetricDecision(decision, new Date(), decidingUser, labMetric);
             }
         }),
+        INITIAL_RIBO("Initial Ribo", true, Category.CONCENTRATION, new Decider() {
+            @Override
+            public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
+                LabMetricDecision.Decision decision = LabMetricDecision.Decision.FAIL;
+                if (labVessel.getVolume() != null) {
+                    if (labMetric.getValue().multiply(labVessel.getVolume()).compareTo(new BigDecimal("250")) == 1) {
+                        decision = LabMetricDecision.Decision.PASS;
+                    }
+                }
+                return new LabMetricDecision(decision, new Date(), decidingUser, labMetric);
+            }
+        }),
         FINGERPRINT_PICO("Fingerprint Pico", true, Category.CONCENTRATION, new Decider() {
             @Override
             public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {

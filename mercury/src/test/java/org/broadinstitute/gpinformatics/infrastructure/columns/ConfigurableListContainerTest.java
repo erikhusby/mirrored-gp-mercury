@@ -5,10 +5,10 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
-import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchTerm;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -37,6 +37,9 @@ public class ConfigurableListContainerTest extends Arquillian {
 
     @Inject
     private LabBatchDao labBatchDao;
+
+    @Inject
+    private LabVesselDao labVesselDao;
 
     @Inject
     private BSPUserList bspUserList;
@@ -131,6 +134,60 @@ public class ConfigurableListContainerTest extends Arquillian {
         Assert.assertEquals(resultRow.getRenderableCells().get(columnIndex), "DilutionToFlowcellTransfer");
         Assert.assertEquals(resultRow.getRenderableCells().get(columnIndex + 3), "03/06/2014 12:44:45" );
 
+
+    }
+
+
+    /**
+     * This test verifies the stability of the LabVesselSearchDefinition.VesselDescendantTraverserCriteria
+     * Using a sample vessel, validate shearing tube and flowcell are found in the descendant traversal
+     */
+    public void testVesselDescendantLookups() {
+        List<ColumnTabulation> columnTabulations = new ArrayList<>();
+
+        ConfigurableSearchDefinition configurableSearchDef =
+                SearchDefinitionFactory.getForEntity( ColumnEntity.LAB_VESSEL.getEntityName());
+
+        columnTabulations.add(configurableSearchDef.getSearchTerm("Barcode"));
+        columnTabulations.add(configurableSearchDef.getSearchTerm("Mercury Sample ID"));
+        columnTabulations.add(configurableSearchDef.getSearchTerm("Imported Sample ID"));
+        columnTabulations.add(configurableSearchDef.getSearchTerm("Imported Sample Tube Barcode"));
+        columnTabulations.add(configurableSearchDef.getSearchTerm("Shearing Sample Barcode"));
+        columnTabulations.add(configurableSearchDef.getSearchTerm("Flowcell Barcode"));
+
+        ConfigurableList configurableList = new ConfigurableList(columnTabulations, 1, "ASC", ColumnEntity.LAB_VESSEL);
+
+        // Add any row listeners
+        ConfigurableSearchDefinition.AddRowsListenerFactory addRowsListenerFactory = configurableSearchDef.getAddRowsListenerFactory();
+        if( addRowsListenerFactory != null ) {
+            for( Map.Entry<String,ConfigurableList.AddRowsListener> entry : addRowsListenerFactory.getAddRowsListeners().entrySet() ) {
+                configurableList.addAddRowsListener(entry.getKey(), entry.getValue());
+            }
+        }
+
+        SearchContext context = buildSearchContext();
+        configurableList.addRows(labVesselDao.findBySampleKey("SM-7RDNO"), context);
+
+        ConfigurableList.ResultList resultList = configurableList.getResultList();
+
+        Assert.assertEquals(resultList.getResultRows().size(), 1);
+
+        ConfigurableList.ResultRow resultRow = resultList.getResultRows().get(0);
+        Assert.assertEquals(resultRow.getResultId(), "1109099877");
+
+        // Test column values
+        // Barcode
+        Assert.assertEquals(resultRow.getRenderableCells().get(0), "1109099877");
+        // Mercury Sample ID
+        Assert.assertEquals(resultRow.getRenderableCells().get(1), "SM-7RDNO");
+        // Imported Sample ID
+        Assert.assertEquals(resultRow.getRenderableCells().get(2), "SM-9MRYP");
+        // Imported Sample Tube Barcode
+        Assert.assertEquals(resultRow.getRenderableCells().get(3), "0175488349");
+        // Shearing Sample Barcode
+        Assert.assertEquals(resultRow.getRenderableCells().get(4), "0175488349");
+        // Flowcell Barcode
+        Assert.assertTrue(resultRow.getRenderableCells().get(5).contains("HJJH5ADXX"));
 
     }
 
