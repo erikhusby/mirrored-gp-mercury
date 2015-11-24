@@ -20,7 +20,7 @@
                     function () {
                         d3.json("${ctxpath}${actionBean.jsonUrl}")
                                 .on("progress", function() {
-                                    d3.select("#graphDiv").html("Bytes loaded: " + d3.event.loaded);
+                                    d3.select("#progress").html("Bytes loaded: " + d3.event.loaded);
                                 })
                                 .get(function (error, json) {
                                     renderJson(json);
@@ -38,11 +38,13 @@
                 <textarea name="barcodes" id="barcodes">${actionBean.barcodes}</textarea>
                 <c:forEach items="<%=TransferVisualizerV2.AlternativeIds.values()%>" var="alternateId">
                     <label class="checkbox">
-                        <input type="checkbox" name="alternativeIds" value="${alternateId.toString()}">${alternateId.displayName}
+                        <input type="checkbox" name="alternativeIds" value="${alternateId.toString()}"
+                            ${actionBean.alternativeIds.contains(alternateId) ? 'checked="true"' : ''}>
+                            ${alternateId.displayName}
                     </label>
                 </c:forEach>
                 <stripes:submit name="visualize" value="Visualize" class="btn btn-primary"/>
-                <div id="progress"></div>
+                <label id="progress"></label>
             </div>
         </stripes:form>
         <div id="graphDiv"></div>
