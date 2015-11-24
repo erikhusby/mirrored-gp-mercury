@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -22,11 +23,12 @@ public abstract class LabEventTraversalEvaluator extends TraversalEvaluator {
 
     /**
      * Traverse ancestor and/or descendants of supplied event list (or neither if no options selected).
-     * @param rootEntities
+     * @param rootEntities A group of starting events from which to obtain ancestors or descendants
+     * @param searchInstance The search instance used for this search (not used in this case)
      * @return
      */
     @Override
-    public Set<Object> evaluate(List<?> rootEntities) {
+    public Set<Object> evaluate(List<?> rootEntities, SearchInstance searchInstance) {
 
         TransferTraverserCriteria.LabEventDescendantCriteria eventTraversalCriteria =
                 new TransferTraverserCriteria.LabEventDescendantCriteria();
@@ -62,37 +64,35 @@ public abstract class LabEventTraversalEvaluator extends TraversalEvaluator {
 
     private void traverse( TransferTraverserCriteria.LabEventDescendantCriteria eventTraversalCriteria,
                            List<LabEvent> rootEvents, TransferTraverserCriteria.TraversalDirection traversalDirection ){
-        for (LabEvent startingEvent : rootEvents) {
-            // See if event has an in place lab vessel
-            LabVessel vessel = startingEvent.getInPlaceLabVessel();
 
-            Set<LabVessel> eventVessels;
+        Set<LabVessel> eventVessels = new HashSet<>();
+
+        // Gather up vessels
+        for (LabEvent startingEvent : rootEvents) {
 
             if( traversalDirection == TransferTraverserCriteria.TraversalDirection.Descendants) {
-                eventVessels = startingEvent.getSourceLabVessels();
+                eventVessels.addAll(startingEvent.getTargetLabVessels());
             } else {
-                eventVessels = startingEvent.getTargetLabVessels();
+                eventVessels.addAll(startingEvent.getSourceLabVessels());
             }
 
-            // If not, pull from transfer(s)
-            if( vessel == null ) {
-                for( LabVessel xferVessel : eventVessels ) {
-                    if( xferVessel.getContainerRole() != null ) {
-                        // VesselContainer.getAncestors fails with hasAnonymousVessels()
-                        if( xferVessel.getContainerRole().hasAnonymousVessels() &&
-                                traversalDirection == TransferTraverserCriteria.TraversalDirection.Ancestors ) {
-                            xferVessel.getContainerRole().applyCriteriaToAllPositions(eventTraversalCriteria);
-                        } else {
-                            for (LabVessel targetVessel : xferVessel.getContainerRole().getContainedVessels()) {
-                                targetVessel.evaluateCriteria(eventTraversalCriteria, traversalDirection);
-                            }
-                        }
-                    } else {
-                        xferVessel.evaluateCriteria(eventTraversalCriteria, traversalDirection);
+            // See if event has an in place lab vessel
+            if( startingEvent.getInPlaceLabVessel() != null ) {
+                eventVessels.add(startingEvent.getInPlaceLabVessel());
+            }
+        }
+
+        for( LabVessel xferVessel : eventVessels ) {
+            if( xferVessel.getContainerRole() != null ) {
+                if(xferVessel.getContainerRole().getMapPositionToVessel().isEmpty()) {
+                    xferVessel.getContainerRole().applyCriteriaToAllPositions(eventTraversalCriteria, traversalDirection);
+                } else {
+                    for (LabVessel targetVessel : xferVessel.getContainerRole().getContainedVessels()) {
+                        targetVessel.evaluateCriteria(eventTraversalCriteria, traversalDirection);
                     }
                 }
             } else {
-                vessel.evaluateCriteria(eventTraversalCriteria, traversalDirection);
+               xferVessel.evaluateCriteria(eventTraversalCriteria, traversalDirection);
             }
         }
     }

@@ -181,9 +181,7 @@ public class BspSampleData implements SampleData {
     }
 
     /**
-     * Returns true if the sample has a rin score
-     * that can be converted to a number.  Otherwise,
-     * returns false.
+     * Returns true if the sample has a rin score that can be converted to a number. Otherwise, returns false.
      */
     @Override
     public boolean canRinScoreBeUsedForOnRiskCalculation() {
@@ -224,8 +222,10 @@ public class BspSampleData implements SampleData {
     }
 
     /**
-     * Returns the unmodified value of the "RIN Number"
-     * annotation from BSP.
+     * Returns the unmodified value of the "RIN Number" annotation from BSP.
+     *
+     * {@inheritDoc}
+     *
      * @see #getRin()
      */
     @Override
@@ -234,14 +234,7 @@ public class BspSampleData implements SampleData {
     }
 
     /**
-     * Get the RIN value for the sample. Returns null if no RIN value is set. If the RIN value is expressed as a range,
-     * the lower value is returned. Throws NumberFormatException if the value cannot be parsed as a single value or as a
-     * range.
-     *
-     * @return the (lowest) RIN value from BSP; null if no value is set
-     * @throws NumberFormatException if the value cannot be parsed as a single value or a range
-     *
-     * @see #getRawRin() to get the unmodified rin value as a string.
+     * {@inheritDoc}
      */
     @Override
     public Double getRin() {

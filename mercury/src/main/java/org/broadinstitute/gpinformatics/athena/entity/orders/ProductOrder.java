@@ -352,7 +352,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         Map<String, SampleData> sampleDataMap = Collections.emptyMap();
 
         try {
-            sampleDataMap = sampleDataFetcher.fetchSampleDataForProductOrderSamples(samples, bspSampleSearchColumns);
+            sampleDataMap = sampleDataFetcher.fetchSampleDataForSamples(samples, bspSampleSearchColumns);
         } catch (BSPLookupException ignored) {
             // not a bsp sample?
         }
@@ -1680,6 +1680,14 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return genoChipType;
     }
 
+    /**
+     * A product can have more then one Workflow if its AddOns have workflows. This method returns a List of
+     * AddOn workflows and the workflow of its Product.
+     * <p/>
+     * If the AddOn's Workflow is Workflow.NONE, it will Not be included in the List.
+     *
+     * @return List of all Workflows associated with the ProductOrder
+     */
     public List<Workflow> getProductWorkflows() {
         List<Workflow> workflows = new ArrayList<>();
         for (ProductOrderAddOn addOn : getAddOns()) {
@@ -1695,5 +1703,4 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         }
         return workflows;
     }
-
 }

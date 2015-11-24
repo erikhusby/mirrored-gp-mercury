@@ -49,8 +49,8 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
     /** The empty formatted value. */
     private static final String EMPTY_VALUE = QUOTE + QUOTE;
 
-    private final Set<Long> errorIds = new HashSet<>();
-    private Exception errorException = null;
+    protected final Set<Long> errorIds = new HashSet<>();
+    protected Exception errorException = null;
 
     public final Class<AUDITED_ENTITY_CLASS> entityClass;
     /**
@@ -183,8 +183,12 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
             Collection<Long> modifiedEntityIds = convertAuditedEntityIdToDataSourceEntityId(auditLists.modifiedEntityIds);
             Collection<Long> addedEntityIds = convertAuditedEntityIdToDataSourceEntityId(auditLists.addedEntityIds);
 
-            return writeEtlDataFile(deletedEntityIds, modifiedEntityIds, addedEntityIds, auditLists.revInfoPairs,
+            int count =  writeEtlDataFile(deletedEntityIds, modifiedEntityIds, addedEntityIds, auditLists.revInfoPairs,
                     etlDateStr);
+
+            auditReaderDao.clear();
+
+            return count;
         } catch (RuntimeException e) {
             logger.error(getClass().getSimpleName() + " ETL failed", e);
             return 0;
@@ -247,7 +251,9 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
                 dataSourceDeletedIds.clear();
             }
 
-            return writeRecords(dataSourceEntities, dataSourceDeletedIds, etlDateStr);
+            int count = writeRecords(dataSourceEntities, dataSourceDeletedIds, etlDateStr);
+            auditReaderDao.clear();
+            return count;
 
         } catch (RuntimeException e) {
             logger.error(getClass().getSimpleName() + " ETL failed", e);

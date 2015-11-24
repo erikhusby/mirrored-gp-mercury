@@ -19,7 +19,7 @@ public class ProductOrderSampleJsonFactory {
     private static final Format dateFormatter = FastDateFormat.getInstance(CoreActionBean.DATE_PATTERN);
     private static final Log log = LogFactory.getLog(ProductOrderSampleJsonFactory.class);
 
-    public JSONObject toJson(ProductOrderSample productOrderSample) throws JSONException {
+    public static JSONObject toJson(ProductOrderSample productOrderSample) throws JSONException {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put(BspSampleData.SAMPLE_ID, productOrderSample.getSampleKey());
         if (productOrderSample.isInBspFormat()) {

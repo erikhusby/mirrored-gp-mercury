@@ -100,7 +100,7 @@ public class LabBatchEjb {
      *
      * @return The lab batch that was created.
      *
-     * @see #createLabBatch(org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch.LabBatchType, String, String, String, java.util.Date, String, String, java.util.Set, java.util.Set)
+     * @see #createLabBatch(LabBatch.LabBatchType, String, String, Date, String, String, Set, Set)
      */
     public LabBatch createLabBatch(@Nonnull LabBatch batchObject, String reporter,
                                    @Nonnull CreateFields.IssueType issueType, MessageReporter messageReporter) {
@@ -120,7 +120,7 @@ public class LabBatchEjb {
      *
      * @return The lab batch that was created.
      *
-     * @see #createLabBatch(org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch.LabBatchType, String, String, String, java.util.Date, String, String, java.util.Set, java.util.Set)
+     * @see #createLabBatch(LabBatch.LabBatchType, String, String, Date, String, String, Set, Set)
      */
     public LabBatch createLabBatch(@Nonnull LabBatch batchObject, String reporter,
                                    @Nonnull CreateFields.IssueType issueType) {

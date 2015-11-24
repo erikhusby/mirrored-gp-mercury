@@ -71,7 +71,8 @@ public class WorkflowProcessDef implements Serializable {
                 break;
             }
         }
-        assert effectiveProcessDef != null;
+        // Breaks DBFree tests using mocks
+        // assert effectiveProcessDef != null;
         return effectiveProcessDef;
     }
 

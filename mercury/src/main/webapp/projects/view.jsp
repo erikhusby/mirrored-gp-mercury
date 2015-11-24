@@ -592,7 +592,7 @@
                         </td>
                         <td>${order.product.name}</td>
                         <td>${order.orderStatus}</td>
-                        <td>${actionBean.getUserFullName(order.modifiedBy)}</td>
+                        <td>${actionBean.getUserFullName(order.createdBy)}</td>
                         <td>
                             <fmt:formatDate value="${order.modifiedDate}" pattern="${actionBean.datePattern}"/>
                         </td>

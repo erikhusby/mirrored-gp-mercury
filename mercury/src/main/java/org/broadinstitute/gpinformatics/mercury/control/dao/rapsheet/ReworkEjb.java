@@ -152,7 +152,7 @@ public class ReworkEjb {
     public Collection<BucketCandidate> findBucketCandidates(List<String> query) {
         Collection<BucketCandidate> bucketCandidates = new ArrayList<>();
 
-        List<LabVessel> labVessels = new ArrayList<>();
+        Set<LabVessel> labVessels = new HashSet<>();
         labVessels.addAll(labVesselDao.findByListIdentifiers(query));
         labVessels.addAll(labVesselDao.findBySampleKeyList(query));
 
@@ -313,9 +313,9 @@ public class ReworkEjb {
                         put(bucketDef, Collections.singleton(candidateVessel));
                     } };
 
-        Collection<BucketEntry> bucketEntries = bucketEjb
-                .add(bucketCandidate, BucketEntry.BucketEntryType.REWORK_ENTRY, LabEvent.UI_PROGRAM_NAME, userName,
-                        LabEvent.UI_EVENT_LOCATION, productOrder);
+        Collection<BucketEntry> bucketEntries = bucketEjb.add(bucketCandidate,
+                reworkCandidate ? BucketEntry.BucketEntryType.REWORK_ENTRY : BucketEntry.BucketEntryType.PDO_ENTRY,
+                LabEvent.UI_PROGRAM_NAME, userName, LabEvent.UI_EVENT_LOCATION, productOrder);
 
         // TODO: create the event in this scope instead of getting the "latest" event
         if (reworkCandidate) {

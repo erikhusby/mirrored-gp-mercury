@@ -34,6 +34,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.lims.SequencingTemplate
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferEntityGrapher;
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferVisualizer;
+import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferVisualizerV2;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.CrspPipelineUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
@@ -59,6 +60,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
@@ -81,6 +83,7 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityB
 import org.broadinstitute.gpinformatics.mercury.test.builders.PreFlightEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ProductionFlowcellPath;
 import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.QtpJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.SageEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ShearingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.TruSeqStrandSpecificEntityBuilder;
@@ -92,6 +95,9 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 
 import javax.annotation.Nonnull;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -501,6 +507,18 @@ public class BaseEventTest {
                 mapBarcodeToTube, barcodeSuffix).invoke();
     }
 
+    public QtpEntityBuilder runQtpProcess(TubeFormation rack, List<String> tubeBarcodes,
+                                          Map<String, BarcodedTube> mapBarcodeToTube,
+                                          String barcodeSuffix, QtpJaxbBuilder.PcrType pcrType) {
+
+        return new QtpEntityBuilder(
+                bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
+                Collections.singletonList(rack),
+                Collections.singletonList(rack.getRacksOfTubes().iterator().next().getLabel()),
+                Collections.singletonList(tubeBarcodes),
+                mapBarcodeToTube, barcodeSuffix).invoke(true, pcrType);
+    }
+
     /**
      * This method runs the entities through the HiSeq2500 process.
      *
@@ -809,6 +827,19 @@ public class BaseEventTest {
     public static void runTransferVisualizer(LabVessel labVessel) {
         // Disabled by default, because it would block Bamboo tests.
         if (false) {
+            try {
+                TransferVisualizerV2 transferVisualizerV2 = new TransferVisualizerV2();
+                File xfrVis = File.createTempFile("XfrVis", ".json");
+                FileWriter fileWriter = new FileWriter(xfrVis);
+                transferVisualizerV2.jsonForVessels(
+                        Collections.singletonList(labVessel),
+                        Collections.singletonList(TransferTraverserCriteria.TraversalDirection.Descendants),
+                        fileWriter);
+                fileWriter.flush();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
             TransferEntityGrapher transferEntityGrapher = new TransferEntityGrapher();
             // "More Transfers" buttons won't work when there's no server, so render all vessels in first "request"
             transferEntityGrapher.setMaxNumVesselsPerRequest(10000);
