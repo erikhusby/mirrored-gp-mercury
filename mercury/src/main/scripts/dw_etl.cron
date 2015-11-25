@@ -258,7 +258,7 @@ do
     rm ${NEW_DIR}/${TIMESTAMP}_sqlplus.start
 
     if [ -s ${ERROR_DIR}/${TIMESTAMP}_sqlplus.log ]; then
-        grep -Fxq "ORA-" ${ERROR_DIR}/${TIMESTAMP}_sqlplus.log
+        grep "ORA-" ${ERROR_DIR}/${TIMESTAMP}_sqlplus.log
         if [ $? -eq 0 ]; then
             echo "** Manual intervention is needed **" | tee /dev/stderr
             echo "There were data problems running the merge stored procedure." | tee /dev/stderr
