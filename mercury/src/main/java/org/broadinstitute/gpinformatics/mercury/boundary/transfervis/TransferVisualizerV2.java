@@ -56,6 +56,10 @@ import java.util.Set;
  *          <li>x, y - relative to the parent</li>
  *          <li>w, h - usually small, for a tube, but can be wide for an in-place event</li>
  *          <li>highlight - 1 if the child is a direct ancestor or descendant of the searched tube</li>
+ *          <li>array of altIds, each has:</li>
+ *              <ul>
+ *              <li>altId - an alternative ID, e.g. SM- or LCSET-</li>
+ *              </ul>
  *          </ul>
  *      </li>
  *      </ul>
