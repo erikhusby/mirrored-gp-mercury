@@ -260,9 +260,14 @@ public class LabMetricFixupTest extends Arquillian {
             calendar.setTime(labMetricRun.getRunDate());
             calendar.set(Calendar.DAY_OF_MONTH, 24);
             // avoid clash with 112415_XTRval_InitialRiboNorm_MC
-            calendar.add(Calendar.MINUTE, 1);
+            calendar.set(Calendar.MINUTE, 47);
             System.out.println("Setting date to " + calendar.getTime() + " on " + labMetricRun.getRunName());
             labMetricRun.setRunDate(calendar.getTime());
+            for (LabMetric labMetric : labMetricRun.getLabMetrics()) {
+                System.out.println("Setting date to " + calendar.getTime() + " on " + labMetric.getLabMetricId());
+                labMetric.setCreatedDate(calendar.getTime());
+            }
+
             dao.persist(new FixupCommentary("GPLIM-3903 fix date on Initial Ribo run"));
             dao.flush();
             utx.commit();
