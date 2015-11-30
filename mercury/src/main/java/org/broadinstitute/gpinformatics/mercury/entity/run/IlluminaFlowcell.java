@@ -62,7 +62,8 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
         MiSeqFlowcell("Flowcell1Lane", "MiSeq Flowcell", VesselGeometry.FLOWCELL1x1, "Illumina MiSeq", "^A\\w{4}$",
                 "MiSeq", CreateFields.IssueType.MISEQ, LabBatch.LabBatchType.MISEQ, CreateFct.YES),
         HiSeqFlowcell("Flowcell8Lane", "HiSeq 2000 Flowcell", VesselGeometry.FLOWCELL1x8, "Illumina HiSeq 2000",
-                "^\\w{9}$", "HiSeq", CreateFields.IssueType.FLOWCELL, LabBatch.LabBatchType.FCT, CreateFct.YES),
+                // todo jmt or just XX?
+                "^\\w+(ABXX|ACXX)$", "HiSeq", CreateFields.IssueType.FLOWCELL, LabBatch.LabBatchType.FCT, CreateFct.YES),
         HiSeq2500Flowcell("Flowcell2Lane", "HiSeq 2500 Flowcell", VesselGeometry.FLOWCELL1x2, "Illumina HiSeq 2500",
                 "^\\w+(ADXX|ANXX|BCXX)$", "HiSeq", CreateFields.IssueType.FLOWCELL, LabBatch.LabBatchType.FCT, CreateFct.YES),
         HiSeq4000Flowcell("Flowcell8Lane4000", "HiSeq 4000 Flowcell", VesselGeometry.FLOWCELL1x8, "Illumina HiSeq 4000",
@@ -208,6 +209,17 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
          * @return The FlowcellType.
          */
         public static FlowcellType getTypeForBarcode(@Nonnull String barcode) {
+            FlowcellType flowcellType = getTypeForBarcodeStrict(barcode);
+            if (flowcellType != null) {
+                return flowcellType;
+            } else if (FlowcellType.OtherFlowcell.getFlowcellTypeRegex().matcher(barcode).matches()) {
+                return OtherFlowcell;
+            } else {
+                throw new RuntimeException("You seem to have found a FlowcellType that I don't know about.");
+            }
+        }
+
+        public static FlowcellType getTypeForBarcodeStrict(@Nonnull String barcode) {
             // The order that these are evaluated is important which is why there are a
             // bunch of if-else's instead iterating over an enumSet or values().
             if (FlowcellType.MiSeqFlowcell.getFlowcellTypeRegex().matcher(barcode).matches()) {
@@ -218,11 +230,23 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
                 return HiSeq4000Flowcell;
             } else if (FlowcellType.HiSeqFlowcell.getFlowcellTypeRegex().matcher(barcode).matches()) {
                 return HiSeqFlowcell;
-            } else if (FlowcellType.OtherFlowcell.getFlowcellTypeRegex().matcher(barcode).matches()) {
-                return OtherFlowcell;
-            } else {
-                throw new RuntimeException("You seem to have found a FlowcellType that I don't know about.");
             }
+            return null;
+        }
+
+        public static FlowcellType getTypeForPhysTypeAndBarcode(@Nonnull String physType, @Nonnull String barcode) {
+            if (!physType.startsWith("Flowcell")) {
+                return null;
+            }
+            FlowcellType flowcellType = getTypeForBarcodeStrict(barcode);
+            if (flowcellType != null) {
+                return flowcellType;
+            }
+            FlowcellType byAutomationName = getByAutomationName(physType);
+            if (byAutomationName == null) {
+                return HiSeqFlowcell;
+            }
+            return byAutomationName;
         }
 
         public static CreateFields.IssueType getIssueTypeByAutomationName(String automationName) {
