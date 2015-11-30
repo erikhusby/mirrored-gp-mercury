@@ -125,8 +125,8 @@ public class LabVesselFixupTest extends Arquillian {
 
         for (int i = 0; i < tubeList.size(); i++) {
             LabVessel tube = labVesselDao.findByIdentifier(tubeList.get(i));
-            Assert.assertEquals(tube.getContainers().size(), 1, "Wrong number of containers");
-            TubeFormation tubeFormation = (TubeFormation) (tube.getContainers().iterator().next().getEmbedder());
+            Assert.assertEquals(tube.getVesselContainers().size(), 1, "Wrong number of containers");
+            TubeFormation tubeFormation = (TubeFormation) (tube.getVesselContainers().iterator().next().getEmbedder());
             Set<RackOfTubes> racksOfTubes = tubeFormation.getRacksOfTubes();
             Assert.assertEquals(racksOfTubes.size(), 1, "Wrong number of racks");
             if (racksOfTubes.iterator().next().getLabel().equals("0")) {
@@ -394,7 +394,7 @@ public class LabVesselFixupTest extends Arquillian {
         // so it can be altered
         BarcodedTube barcodedTube = barcodedTubeDao.findByBarcode("0159873624");
         boolean found = false;
-        for (VesselContainer<?> vesselContainer : barcodedTube.getContainers()) {
+        for (VesselContainer<?> vesselContainer : barcodedTube.getVesselContainers()) {
             for (LabEvent labEvent : vesselContainer.getTransfersFrom()) {
                 if (labEvent.getLabEventType() == LabEventType.SHEARING_TRANSFER) {
                     found = true;
@@ -458,7 +458,7 @@ public class LabVesselFixupTest extends Arquillian {
     public void fixupGplim2367Part2() {
         BarcodedTube barcodedTube = barcodedTubeDao.findByBarcode("0156349661");
         boolean found = false;
-        for (VesselContainer<?> vesselContainer : barcodedTube.getContainers()) {
+        for (VesselContainer<?> vesselContainer : barcodedTube.getVesselContainers()) {
             for (LabEvent labEvent : vesselContainer.getTransfersTo()) {
                 if (labEvent.getLabEventType() == LabEventType.SAMPLES_DAUGHTER_PLATE_CREATION) {
                     found = true;
@@ -554,7 +554,7 @@ public class LabVesselFixupTest extends Arquillian {
     }
 
     private VesselContainer<?> getContainerForTube(BarcodedTube barcodedTube, Long tubeFormationId) {
-        for (VesselContainer<?> container : barcodedTube.getContainers()) {
+        for (VesselContainer<?> container : barcodedTube.getVesselContainers()) {
             if (container.getEmbedder().getLabVesselId().equals(tubeFormationId)) {
                 return container;
             }

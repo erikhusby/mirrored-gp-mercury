@@ -78,7 +78,7 @@ public class TransferVisualizerActionBean extends CoreActionBean {
                                 TransferTraverserCriteria.TraversalDirection.Descendants),
                         httpServletResponse.getWriter(),
                         alternativeIds);
-
+                labVesselDao.clear();
             }
         };
     }

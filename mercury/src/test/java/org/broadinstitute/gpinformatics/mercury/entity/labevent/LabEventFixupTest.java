@@ -479,7 +479,7 @@ public class LabEventFixupTest extends Arquillian {
         BarcodedTube dilutionTube = barcodedTubeDao.findByBarcode(dilutionTubeBarcode);
         Assert.assertNotNull(dilutionTube);
 
-        Collection<VesselContainer<?>> containers = dilutionTube.getContainers();
+        Collection<VesselContainer<?>> containers = dilutionTube.getVesselContainers();
         Assert.assertEquals(containers.size(), 1);
         VesselContainer<?> vesselContainer = containers.iterator().next();
         String vesselPositionName = null;

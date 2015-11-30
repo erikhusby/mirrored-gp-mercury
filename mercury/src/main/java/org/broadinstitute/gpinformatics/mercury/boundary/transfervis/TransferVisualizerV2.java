@@ -190,7 +190,7 @@ public class TransferVisualizerV2 {
                 }
                 for (VesselToSectionTransfer vesselToSectionTransfer : event.getVesselToSectionTransfers()) {
                     String sourceLabel = vesselToSectionTransfer.getSourceVessel().getLabel();
-                    Set<VesselContainer<?>> containers = vesselToSectionTransfer.getSourceVessel().getContainers();
+                    Set<VesselContainer<?>> containers = vesselToSectionTransfer.getSourceVessel().getVesselContainers();
                     if (!containers.isEmpty()) {
                         sourceLabel = containers.iterator().next().getEmbedder().getLabel();
                     }
@@ -207,7 +207,7 @@ public class TransferVisualizerV2 {
 
                     renderEdge(sourceVessel.getLabel(), targetVessel.getLabel(), label);
                     // Target might be in a rack in another message
-                    for (VesselContainer<?> otherContainer : targetVessel.getContainers()) {
+                    for (VesselContainer<?> otherContainer : targetVessel.getVesselContainers()) {
                         renderEdge(targetVessel.getLabel(), null, otherContainer.getEmbedder().getLabel(),
                                 targetVessel.getLabel(), REARRAY_LABEL);
                     }
@@ -279,7 +279,7 @@ public class TransferVisualizerV2 {
                         key("children").
                         array().endArray().endObject();
             }
-            for (VesselContainer<?> vesselContainer : labVessel.getContainers()) {
+            for (VesselContainer<?> vesselContainer : labVessel.getVesselContainers()) {
                 renderContainer(vesselContainer, null, labVessel, true);
             }
         }
@@ -443,8 +443,8 @@ public class TransferVisualizerV2 {
 
                 // JSON for re-arrays
                 if (labVessel != null && followRearrays) {
-                    if (labVessel.getContainers().size() > 1) {
-                        for (VesselContainer<?> otherContainer : labVessel.getContainers()) {
+                    if (labVessel.getVesselContainers().size() > 1) {
+                        for (VesselContainer<?> otherContainer : labVessel.getVesselContainers()) {
                             renderReArray(vesselContainer, otherContainer, labVessel);
                         }
                     }

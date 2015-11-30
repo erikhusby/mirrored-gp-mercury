@@ -414,7 +414,14 @@ public abstract class LabVessel implements Serializable {
         containersCount++;
     }
 
-    public Set<VesselContainer<?>> getContainers() {
+    public Set<LabVessel> getContainers() {
+        if (containersCount != null && containersCount > 0) {
+            return containers;
+        }
+        return Collections.emptySet();
+    }
+
+    public Set<VesselContainer<?>> getVesselContainers() {
         Set<VesselContainer<?>> vesselContainers = new HashSet<>();
         if (containersCount != null && containersCount > 0) {
             for (LabVessel container : containers) {
@@ -468,7 +475,7 @@ public abstract class LabVessel implements Serializable {
             transfersFrom.add(vesselToVesselTransfer.getLabEvent());
         }
         if (getContainerRole() == null) {
-            for (VesselContainer<?> vesselContainer : getContainers()) {
+            for (VesselContainer<?> vesselContainer : getVesselContainers()) {
                 transfersFrom.addAll(vesselContainer.getTransfersFrom());
             }
             return transfersFrom;
@@ -488,7 +495,7 @@ public abstract class LabVessel implements Serializable {
             transfersTo.add(vesselToVesselTransfer.getLabEvent());
         }
         if (getContainerRole() == null) {
-            for (VesselContainer<?> vesselContainer : getContainers()) {
+            for (VesselContainer<?> vesselContainer : getVesselContainers()) {
                 transfersTo.addAll(vesselContainer.getTransfersTo());
             }
         } else {
@@ -508,7 +515,7 @@ public abstract class LabVessel implements Serializable {
             transfersTo.add(vesselToVesselTransfer.getLabEvent());
         }
         if (getContainerRole() == null) {
-            for (VesselContainer<?> vesselContainer : getContainers()) {
+            for (VesselContainer<?> vesselContainer : getVesselContainers()) {
                 transfersTo.addAll(vesselContainer.getTransfersToWithRearrays());
             }
         } else {
@@ -565,7 +572,7 @@ public abstract class LabVessel implements Serializable {
 
     public Set<LabEvent> getInPlaceEventsWithContainers() {
         Set<LabEvent> totalInPlaceEventsSet = Collections.unmodifiableSet(inPlaceLabEvents);
-        for (LabVessel vesselContainer : containers) {
+        for (LabVessel vesselContainer : getContainers()) {
             totalInPlaceEventsSet = Sets.union(totalInPlaceEventsSet, vesselContainer.getInPlaceEventsWithContainers());
         }
         return totalInPlaceEventsSet;
@@ -1094,7 +1101,7 @@ public abstract class LabVessel implements Serializable {
                     this, null, null);
             vesselEvents.add(vesselEvent);
         }
-        for (LabVessel container : containers) {
+        for (LabVessel container : getContainers()) {
             vesselEvents.addAll(container.getContainerRole().getAncestors(this));
         }
         Collections.sort(vesselEvents, VesselEvent.COMPARE_VESSEL_EVENTS_BY_DATE);
@@ -1117,7 +1124,7 @@ public abstract class LabVessel implements Serializable {
                     vesselToSectionTransfer.getTargetVesselContainer().getEmbedder(), null, null);
             vesselEvents.add(vesselEvent);
         }
-        for (LabVessel container : containers) {
+        for (LabVessel container : getContainers()) {
             vesselEvents.addAll(container.getContainerRole().getDescendants(this));
         }
         Collections.sort(vesselEvents, VesselEvent.COMPARE_VESSEL_EVENTS_BY_DATE);
@@ -1222,6 +1229,7 @@ public abstract class LabVessel implements Serializable {
         return labBatches;
     }
 
+    // todo jmt cache this?
     public List<LabBatchStartingVessel> getLabBatchStartingVesselsByDate() {
         List<LabBatchStartingVessel> batchVesselsByDate = new ArrayList<>(labBatches);
         Collections.sort(batchVesselsByDate, new Comparator<LabBatchStartingVessel>() {
