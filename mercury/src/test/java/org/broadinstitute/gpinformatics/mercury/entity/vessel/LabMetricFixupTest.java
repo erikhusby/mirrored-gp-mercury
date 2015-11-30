@@ -265,9 +265,9 @@ public class LabMetricFixupTest extends Arquillian {
             labMetricRun.setRunDate(calendar.getTime());
             dao.persist(new FixupCommentary("GPLIM-3903 fix date on Initial Ribo run"));
             dao.flush();
-            utx.rollback();
-        } catch (NotSupportedException | SystemException /*| HeuristicMixedException | RollbackException |
-                HeuristicRollbackException*/ e) {
+            utx.commit();
+        } catch (NotSupportedException | SystemException | HeuristicMixedException | RollbackException |
+                HeuristicRollbackException e) {
             throw new RuntimeException(e);
         }
     }
