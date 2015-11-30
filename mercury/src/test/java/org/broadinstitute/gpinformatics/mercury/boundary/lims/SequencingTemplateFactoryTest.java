@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
@@ -45,6 +46,7 @@ import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.collection.IsEmptyCollection.empty;
 import static org.hamcrest.core.IsNot.not;
 
 /**
@@ -211,6 +213,8 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
         template = factory.getSequencingTemplate(flowcellHiSeq2500, vesselsAndPositions, false);
         assertThat(template.getOnRigChemistry(), is(nullValue()));
         assertThat(template.getOnRigWorkflow(), is(nullValue()));
+        assertThat(template.getRegulatoryDesignation(), is(ResearchProject.RegulatoryDesignation.RESEARCH_ONLY.name()));
+        assertThat(template.getProducts(), not(empty()));
 
         assertThat(template.getReadStructure(), is(PRODUCTION_CIGAR));
 
@@ -260,6 +264,8 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
         assertThat(template.getOnRigChemistry(), is(nullValue()));
         assertThat(template.getOnRigWorkflow(), is(nullValue()));
         assertThat(template.getReadStructure(), is(PRODUCTION_CIGAR));
+        assertThat(template.getRegulatoryDesignation(), is(ResearchProject.RegulatoryDesignation.RESEARCH_ONLY.name()));
+        assertThat(template.getProducts(), not(empty()));
         assertThat(template.getLanes().size(), is(2));
         Set<String> allLanes = new HashSet<>();
 
@@ -279,6 +285,8 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
         assertThat(template.getOnRigChemistry(), is(nullValue()));
         assertThat(template.getOnRigWorkflow(), is(nullValue()));
         assertThat(template.getReadStructure(), is(PRODUCTION_CIGAR));
+        assertThat(template.getRegulatoryDesignation(), is(ResearchProject.RegulatoryDesignation.RESEARCH_ONLY.name()));
+        assertThat(template.getProducts(), not(empty()));
         assertThat(template.getLanes().size(), is(2));
         Set<String> allLanes = new HashSet<>();
 
@@ -298,6 +306,8 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
         assertThat(template.getOnRigChemistry(), is(nullValue()));
         assertThat(template.getOnRigWorkflow(), is(nullValue()));
         assertThat(template.getReadStructure(), is(PRODUCTION_CIGAR));
+        assertThat(template.getRegulatoryDesignation(), is(ResearchProject.RegulatoryDesignation.RESEARCH_ONLY.name()));
+        assertThat(template.getProducts(), not(empty()));
         assertThat(template.getLanes().size(), is(2));
         Set<String> allLanes = new HashSet<>();
 

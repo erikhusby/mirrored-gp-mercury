@@ -276,4 +276,38 @@ public class LabMetricFixupTest extends Arquillian {
             throw new RuntimeException(e);
         }
     }
+
+    @Test(enabled = false)
+    public void fixupSupport1289() {
+        try {
+            utx.begin();
+            userBean.loginOSUser();
+            deleteRun("CRSP_ribotest_Nov19_pico", "SUPPORT-1289 remove Pico run, leaving Ribo run only");
+            deleteRun("CRSP_ribotest_Nov16", "SUPPORT-1289 remove Pico run, leaving Ribo run only");
+            utx.commit();
+        } catch (NotSupportedException | SystemException | RollbackException | HeuristicMixedException |
+                HeuristicRollbackException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void deleteRun(String runName, String reason) {
+        LabMetricRun labMetricRun = dao.findByName(runName);
+        for (LabMetric labMetric : labMetricRun.getLabMetrics()) {
+            labMetric.getLabVessel().getMetrics().remove(labMetric);
+            for (Metadata metadata : labMetric.getMetadataSet()) {
+                dao.remove(metadata);
+            }
+            dao.remove(labMetric);
+        }
+        for (Metadata metadata : labMetricRun.getMetadata()) {
+            dao.remove(metadata);
+        }
+
+        System.out.println("Deleting " + labMetricRun.getRunName());
+        dao.remove(labMetricRun);
+        dao.persist(new FixupCommentary(reason));
+        dao.flush();
+    }
+
 }
