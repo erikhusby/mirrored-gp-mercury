@@ -66,6 +66,8 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasItems;
 
 /**
  *
@@ -576,6 +578,30 @@ public class ReworkEjbTest extends Arquillian {
 
         product.setPrimaryPriceItem(priceItem);
         return product;
+    }
+
+    @Test(groups = TestGroups.ALTERNATIVES)
+    public void testNonRework() throws Exception {
+        createInitialTubes(bucketReadySamples1, String.valueOf((new Date()).getTime()) + "tst1");
+
+        Collection<String> bucketedTubeLabels = new ArrayList<>();
+        for (BarcodedTube vessel : mapBarcodeToTube.values()) {
+            ReworkEjb.BucketCandidate bucketCandidate =
+                    new ReworkEjb.BucketCandidate(vessel.getLabel(), exExProductOrder1);
+            reworkEjb.addAndValidateCandidates(Collections.singleton(bucketCandidate), "", "test non-rework", "breilly",
+                    "Pico/Plating Bucket");
+            bucketedTubeLabels.add(vessel.getLabel());
+        }
+
+        bucketDao.clear();
+
+        Bucket bucket = bucketDao.findByName("Pico/Plating Bucket");
+        Collection<String> bucketEntryVesselLabels = new ArrayList<>();
+        for (BucketEntry bucketEntry : bucket.getBucketEntries()) {
+            bucketEntryVesselLabels.add(bucketEntry.getLabVessel().getLabel());
+        }
+        assertThat(bucketEntryVesselLabels,
+                hasItems(bucketedTubeLabels.toArray(new String[bucketedTubeLabels.size()])));
     }
 
     @Test(groups = TestGroups.ALTERNATIVES, enabled = true)

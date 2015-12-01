@@ -1537,6 +1537,10 @@ public class LabEventTest extends BaseEventTest {
         CrspRiboPlatingEntityBuilder crspRiboPlatingBuilder = new CrspRiboPlatingEntityBuilder(getBettaLimsMessageTestFactory(),
                 getLabEventFactory(), getLabEventHandler(), mapBarcodeToTube, "Ribo", "").invoke();
 
+        StaticPlate initialRibo = (StaticPlate) crspRiboPlatingBuilder.getInitialRiboTransfer1().
+                getTargetLabVessels().iterator().next();
+        Assert.assertEquals(initialRibo.getContainerRole().getSampleInstancesV2().size(), numSamples);
+
         TubeFormation polyAAliquotTF = (TubeFormation) crspRiboPlatingBuilder.getPolyATSAliquot().
                 getTargetLabVessels().iterator().next();
         Assert.assertEquals(polyAAliquotTF.getContainerRole().getSampleInstancesV2().size(), numSamples);

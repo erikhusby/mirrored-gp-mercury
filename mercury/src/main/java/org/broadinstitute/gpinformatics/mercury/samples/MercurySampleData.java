@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.samples;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.sample.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 
@@ -71,9 +72,22 @@ public class MercurySampleData implements SampleData {
         return hasData;
     }
 
+    /**
+     * Mercury currently doesn't capture RIN (or RQS) scores. For the purpose of this method, the lack of data is a
+     * valid case, so this always returns true.
+     *
+     * It is likely that, should Mercury start capturing this data, it will only store valid values. Therefore,
+     * returning true here will probably always be the right thing to do.
+     *
+     * See {@link SampleData#canRinScoreBeUsedForOnRiskCalculation()} and
+     * {@link BspSampleData#canRinScoreBeUsedForOnRiskCalculation()} for more details about the reason why this check is
+     * needed.
+     *
+     * @return
+     */
     @Override
     public boolean canRinScoreBeUsedForOnRiskCalculation() {
-        return false;
+        return true;
     }
 
     @Override
@@ -81,13 +95,23 @@ public class MercurySampleData implements SampleData {
         return null;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String getRawRin() {
         return "";
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Double getRin() {
+        /*
+         * Note: This currently always returns null. When changing this, review and update the implementation of
+         * {@link canRinScoreBeUsedForOnRiskCalculation()} (and this comment) if necessary.
+         */
         return null;
     }
 
