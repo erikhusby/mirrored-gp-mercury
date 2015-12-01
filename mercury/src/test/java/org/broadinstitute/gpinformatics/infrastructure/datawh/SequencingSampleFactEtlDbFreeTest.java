@@ -14,11 +14,10 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.envers.ReflectionUti
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
-import org.broadinstitute.gpinformatics.mercury.control.zims.ZimsIlluminaRunFactoryTest;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
@@ -86,9 +85,11 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
     private final long pdoId = 564738L;
     private final String sampleName = "SM-jklm";
     private final Set<SampleInstanceV2> sampleInstances = new HashSet<>();
-    private final List<Reagent> reagents = new ArrayList<>();
+    private final List<ProductOrderSample> pdoSampleList = new ArrayList<>();
     private LabBatch fctBatch;
     private final Map<VesselPosition, LabVessel> laneVesselsAndPositions = new HashMap<>();
+
+    private final String indexingSchemeName = "Illumina_P5-Bilbo_P7-Frodo";
 
     private SequencingRun run;
     private SequencingSampleFactEtl tst;
@@ -99,16 +100,18 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
     private VesselContainer vesselContainer = EasyMock.createMock(VesselContainer.class);
     private ResearchProject researchProject = EasyMock.createMock(ResearchProject.class);
     private ProductOrder pdo = EasyMock.createMock(ProductOrder.class);
-    private ProductOrderSample pdoSample = EasyMock.createMock(ProductOrderSample.class);
+    private ProductOrderSample pdoSample1 = EasyMock.createMock(ProductOrderSample.class);
+    private ProductOrderSample pdoSample2 = EasyMock.createMock(ProductOrderSample.class);
     private MercurySample sample = EasyMock.createMock(MercurySample.class);
-    private MercurySample sample2 = EasyMock.createMock(MercurySample.class);
     private SampleInstanceV2 sampleInstance = EasyMock.createMock(SampleInstanceV2.class);
     private SampleInstanceV2 sampleInstance2 = EasyMock.createMock(SampleInstanceV2.class);
     private LabVessel denatureSource = EasyMock.createMock(BarcodedTube.class);
     private BucketEntry bucketEntry = EasyMock.createMock(BucketEntry.class);
+    private MolecularIndexingScheme indexingScheme = EasyMock.createMock(MolecularIndexingScheme.class);
 
     private Object[] mocks = new Object[]{auditReader, dao, runCartridge, vesselContainer, researchProject, pdo,
-            pdoSample, sample, sampleInstance, sampleInstance2, denatureSource, bucketEntry};
+            pdoSample1, pdoSample2, sample, sampleInstance, sampleInstance2, denatureSource, bucketEntry,
+            indexingScheme };
 
     private final TemplateEngine templateEngine = new TemplateEngine();
     private LabBatch labBatch;
@@ -118,11 +121,13 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         templateEngine.postConstruct();
         super.setUp();
 
-        reagents.clear();
         sampleInstances.clear();
-
         sampleInstances.add(sampleInstance);
         EasyMock.reset(mocks);
+
+        pdoSampleList.clear();
+        pdoSampleList.add(pdoSample1);
+        pdoSampleList.add(pdoSample2);
 
         run = new SequencingRun(runName, barcode, machineName, operator, false, runDate, runCartridge, "/some/dirname");
         run.setSequencingRunId(entityId);
@@ -151,6 +156,10 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         EasyMock.verify(mocks);
     }
 
+    /**
+     * Handles a NullPointerException with some logging output and ETL returns no data records.
+     * @throws Exception
+     */
     public void testCantMakeEtlRecord() throws Exception {
         EasyMock.expect(dao.findById(SequencingRun.class, -1L)).andReturn(null);
         EasyMock.replay(mocks);
@@ -175,25 +184,25 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
 
         EasyMock.expect(denatureSource.getSampleInstancesV2()).andReturn(sampleInstances).anyTimes();
 
-        EasyMock.expect(bucketEntry.getProductOrder()).andReturn(pdo).anyTimes();
         EasyMock.expect(pdo.getProductOrderId()).andReturn(pdoId).anyTimes();
-        EasyMock.expect(bucketEntry.getLabBatch()).andReturn(labBatch).anyTimes();
 
         EasyMock.expect(sample.getSampleKey()).andReturn(sampleName).anyTimes();
         EasyMock.expect(pdo.getResearchProject()).andReturn(researchProject).anyTimes();
         EasyMock.expect(researchProject.getResearchProjectId()).andReturn(researchProjectId).anyTimes();
 
+        EasyMock.expect(indexingScheme.getName()).andReturn(indexingSchemeName).anyTimes();
+
         for (SampleInstanceV2 si : sampleInstances) {
-            EasyMock.expect(si.getSingleBucketEntry()).andReturn(bucketEntry).anyTimes();
-            EasyMock.expect(si.getRootOrEarliestMercurySample()).andReturn(sample).anyTimes();
-            EasyMock.expect(si.getReagents()).andReturn(reagents).anyTimes();
+            EasyMock.expect(si.getAllProductOrderSamples()).andReturn(pdoSampleList).anyTimes();
+            EasyMock.expect(si.getSingleBatch()).andReturn(labBatch).anyTimes();
+            EasyMock.expect(si.getMolecularIndexingScheme()).andReturn(indexingScheme).anyTimes();
         }
+
+        EasyMock.expect(pdoSample1.getProductOrder()).andReturn(pdo).anyTimes();
+        EasyMock.expect(pdoSample1.getMercurySample()).andReturn(sample).anyTimes();
     }
 
     public void testIncrementalEtl() throws Exception {
-        reagents.addAll(ZimsIlluminaRunFactoryTest.makeTestReagents(1, false));
-        String misName = ((MolecularIndexReagent)reagents.get(0)).getMolecularIndexingScheme().getName();
-
         doExpects();
         EasyMock.replay(mocks);
 
@@ -203,10 +212,10 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         Assert.assertEquals(records.size(), 2);
         for (String record : records) {
             if (record.contains(",2,")) {
-                verifyRecord(record, misName, pdoId, sampleName, 2, tubeBarcode,
+                verifyRecord(record, indexingSchemeName, pdoId, sampleName, 2, tubeBarcode,
                         tubeCreateDateFormat, cartridgeName, researchProjectId, labBatch.getBatchName());
             } else {
-                verifyRecord(record, misName, pdoId, sampleName, 1, tubeBarcode,
+                verifyRecord(record, indexingSchemeName, pdoId, sampleName, 1, tubeBarcode,
                         tubeCreateDateFormat, cartridgeName, researchProjectId, labBatch.getBatchName());
             }
         }
@@ -217,9 +226,6 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
     }
 
     public void testMultiple1() throws Exception {
-        // Adds a second molecular barcode on the one reagent.
-        reagents.addAll(ZimsIlluminaRunFactoryTest.makeTestReagents(1, true));
-        String misName = ((MolecularIndexReagent)reagents.get(0)).getMolecularIndexingScheme().getName();
 
         doExpects();
         EasyMock.replay(mocks);
@@ -230,11 +236,11 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         Assert.assertEquals(records.size(), 2);
         for (String record : records) {
             if (record.contains(",2,")) {
-                verifyRecord(record, misName, pdoId, sampleName, 2, denatureSource.getLabel(),
+                verifyRecord(record, indexingSchemeName, pdoId, sampleName, 2, denatureSource.getLabel(),
                         ExtractTransform.formatTimestamp(denatureSource.getCreatedOn()), cartridgeName,
                         researchProjectId, labBatch.getBatchName());
             } else {
-                verifyRecord(record, misName, pdoId, sampleName, 1, denatureSource.getLabel(),
+                verifyRecord(record, indexingSchemeName, pdoId, sampleName, 1, denatureSource.getLabel(),
                         ExtractTransform.formatTimestamp(denatureSource.getCreatedOn()), cartridgeName,
                         researchProjectId, labBatch.getBatchName());
             }
@@ -243,13 +249,6 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
     }
 
     public void testMultiple2() throws Exception {
-        // Adds two molecular barcodes in two reagents.
-        reagents.addAll(ZimsIlluminaRunFactoryTest.makeTestReagents(2, false));
-        String[] misNames = new String[] {
-                ((MolecularIndexReagent)reagents.get(0)).getMolecularIndexingScheme().getName(),
-                ((MolecularIndexReagent)reagents.get(1)).getMolecularIndexingScheme().getName()
-        };
-
         doExpects();
         EasyMock.replay(mocks);
         Collection<String> records = tst.dataRecords(etlDateString, false, entityId);
@@ -258,11 +257,11 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         Assert.assertEquals(records.size(), 2);
         for (String record : records) {
             if (record.contains(",2,")) {
-                verifyRecord(record, misNames, pdoId, sampleName, 2, denatureSource.getLabel(),
+                verifyRecord(record, indexingSchemeName, pdoId, sampleName, 2, denatureSource.getLabel(),
                         ExtractTransform.formatTimestamp(denatureSource.getCreatedOn()), cartridgeName,
                         researchProjectId, labBatch.getBatchName());
             } else {
-                verifyRecord(record, misNames, pdoId, sampleName, 1, denatureSource.getLabel(),
+                verifyRecord(record, indexingSchemeName, pdoId, sampleName, 1, denatureSource.getLabel(),
                         ExtractTransform.formatTimestamp(denatureSource.getCreatedOn()), cartridgeName,
                         researchProjectId, labBatch.getBatchName());
             }
@@ -272,11 +271,15 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
 
     public void testGenericIndexAndDedup() throws Exception {
         // Has only non-indexed reagents so molecular indexes are all "NONE"
-        reagents.add(new GenericReagent("DMSO", "a whole lot", new Date()));
-        reagents.add(new GenericReagent("H2O", "Quabbans finest", new Date()));
-//        sampleInstances.add(sampleInstance2);
 
         doExpects();
+
+        for (SampleInstanceV2 si : sampleInstances) {
+            EasyMock.reset(si);
+            EasyMock.expect(si.getAllProductOrderSamples()).andReturn(pdoSampleList).anyTimes();
+            EasyMock.expect(si.getSingleBatch()).andReturn(labBatch).anyTimes();
+            EasyMock.expect(si.getMolecularIndexingScheme()).andReturn(null).anyTimes();
+        }
 
         EasyMock.replay(mocks);
 

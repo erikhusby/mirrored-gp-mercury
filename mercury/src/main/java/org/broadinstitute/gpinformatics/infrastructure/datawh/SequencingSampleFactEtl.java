@@ -5,15 +5,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
 import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRun_;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
@@ -32,8 +30,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
 
 @Stateful
 public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, SequencingRun> {
@@ -140,7 +136,8 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
             this.sequencingRun = sequencingRun;
             this.flowcellBarcode = flowcellBarcode;
             this.position = position;
-            this.molecularIndexingSchemeName = molecularIndexingSchemeName;
+            this.molecularIndexingSchemeName
+                    = StringUtils.isBlank(molecularIndexingSchemeName)?NONE:molecularIndexingSchemeName;
             this.productOrderId = productOrderId;
             this.sampleKey = sampleKey;
             this.researchProjectId = researchProjectId;
@@ -280,30 +277,51 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
                     LabVessel fctVessel = (fctBatch != null) ? fctBatch.getStartingVesselByPosition(position) : tube;
                     Collection<SampleInstanceV2> sampleInstances = tube.getSampleInstancesV2();
                     for (SampleInstanceV2 si : sampleInstances) {
-                        BucketEntry bucketEntry = si.getSingleBucketEntry();
-                        ProductOrder pdo = bucketEntry != null ? bucketEntry.getProductOrder() : null;
-                        String productOrderId = (pdo == null) ? null : String.valueOf(pdo.getProductOrderId());
-                        LabBatch labBatch = bucketEntry != null ? bucketEntry.getLabBatch() : null;
-                        String batchName = labBatch != null ? labBatch.getBatchName() : NONE;
-                        MercurySample sample = si.getRootOrEarliestMercurySample();
-                        String sampleKey = (sample != null ? sample.getSampleKey() : null);
-                        String researchProjectId = (pdo != null && pdo.getResearchProject() != null) ?
-                                String.valueOf(pdo.getResearchProject().getResearchProjectId()) : null;
-                        // Finds the molecular barcode, or "NONE" if not found, or a sorted comma-delimited
-                        // concatenation if multiple are found.
-                        SortedSet<String> names = new TreeSet<>();
-                        for (Reagent reagent : si.getReagents()) {
-                            if (OrmUtil.proxySafeIsInstance(reagent, MolecularIndexReagent.class)) {
-                                names.add(((MolecularIndexReagent) reagent).getMolecularIndexingScheme().getName());
+                        ProductOrder pdo = null;
+                        String pdoSampleKey = null;
+                        // Get latest PDO and the sample which matches it (the PDO and sample must match)
+                        for (ProductOrderSample pdoSample : si.getAllProductOrderSamples()) {
+                            // Get a valid PDO
+                            pdo = pdoSample.getProductOrder();
+                            if (pdoSample.getMercurySample() != null) {
+                                // And associate a sample with it if available
+                                pdoSampleKey = pdoSample.getMercurySample().getSampleKey();
+                                // getAllProductOrderSamples() sorts by closest first so we're done at first hit
+                                break;
                             }
                         }
-                        String molecularIndexingSchemeName = (names.size() == 0 ? NONE : StringUtils.join(names, " "));
+
+                        String productOrderId = (pdo == null) ? null : String.valueOf(pdo.getProductOrderId());
+
+                        LabBatch labBatch = si.getSingleBatch();
+                        if (labBatch == null) {
+                            // Use the newest non-extraction bucket which was created sometime before this event
+                            long eventTs = entity.getRunDate().getTime();
+                            long bucketTs = 0L;
+                            for (BucketEntry bucketEntry : si.getAllBucketEntries()) {
+                                if (bucketEntry.getLabBatch() != null
+                                    && bucketEntry.getLabBatch().getBatchName().startsWith("LCSET")
+                                    && bucketEntry.getCreatedDate().getTime() > bucketTs
+                                    && bucketEntry.getCreatedDate().getTime() <= eventTs) {
+                                    labBatch = bucketEntry.getLabBatch();
+                                    bucketTs = bucketEntry.getCreatedDate().getTime();
+                                }
+                            }
+                        }
+
+                        String batchName = labBatch != null ? labBatch.getBatchName() : NONE;
+
+                        String researchProjectId = (pdo != null && pdo.getResearchProject() != null) ?
+                                String.valueOf(pdo.getResearchProject().getResearchProjectId()) : null;
+
+                        String molecularIndexingSchemeName = si.getMolecularIndexingScheme() != null ?
+                                si.getMolecularIndexingScheme().getName() : NONE;
 
                         boolean canEtl = !StringUtils.isBlank(flowcellBarcode) && !StringUtils.isBlank(productOrderId)
                                          && !StringUtils.isBlank(researchProjectId);
 
                         dtos.add(new SequencingRunDto(entity, flowcellBarcode, position.name(),
-                                molecularIndexingSchemeName, productOrderId, sampleKey, researchProjectId,
+                                molecularIndexingSchemeName, productOrderId, pdoSampleKey, researchProjectId,
                                 canEtl, fctVessel, batchName));
                     }
                     if (sampleInstances.size() == 0) {
