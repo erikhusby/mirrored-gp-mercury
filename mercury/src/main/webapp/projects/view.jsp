@@ -587,6 +587,7 @@
                         </td>
                         <td>
                             <c:choose>
+
                                 <%-- draft PDO --%>
                                 <c:when test="${order.draft}">
                                     <span title="DRAFT">&#160;</span>
