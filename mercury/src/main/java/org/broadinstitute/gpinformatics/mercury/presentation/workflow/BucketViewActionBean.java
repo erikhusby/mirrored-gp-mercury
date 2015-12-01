@@ -235,15 +235,6 @@ public class BucketViewActionBean extends CoreActionBean {
         LabVessel.loadSampleDataForBuckets(labVessels);
     }
 
-    public Set<String> getSampleNames(LabVessel vessel) {
-        Set<SampleInstance> allSamples = vessel.getAllSamples();
-        Set<String> sampleNames = new HashSet<>();
-        for (SampleInstance sampleInstance : allSamples) {
-            sampleNames.add(sampleInstance.getStartingSample().getSampleKey());
-        }
-        return sampleNames;
-    }
-
     @HandlesEvent(ADD_TO_BATCH_ACTION)
     public Resolution addToBatch() {
         loadReworkVessels();
