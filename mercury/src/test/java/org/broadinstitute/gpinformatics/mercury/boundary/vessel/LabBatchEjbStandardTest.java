@@ -37,7 +37,7 @@ import java.util.List;
  * TODO scottmat fill in javadoc!!!
  */
 @Test(groups = TestGroups.STANDARD)
-public class LabBatchEjbStandard extends Arquillian {
+public class LabBatchEjbStandardTest extends Arquillian {
 
     @Inject
     private LabBatchEjb labBatchEJB;
@@ -123,7 +123,7 @@ public class LabBatchEjbStandard extends Arquillian {
         LabBatch testBatch = labBatchEJB.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
                 Workflow.ICE_CRSP.getWorkflowName(), bucketIds, Collections.<Long>emptyList(),
                 nameForBatch, "", new Date(), null, "scottmat", LabBatchEJBTest.BUCKET_NAME,
-                MessageReporter.UNUSED);
+                MessageReporter.UNUSED,Collections.<String>emptyList());
 
         final String batchName = testBatch.getBatchName();
 
@@ -158,7 +158,7 @@ public class LabBatchEjbStandard extends Arquillian {
 
         labBatchEJB.addToLabBatch(testFind.getJiraTicket().getTicketId(),
                 Collections.singletonList(vessel.getBucketEntries().iterator().next().getBucketEntryId()),
-                Collections.<Long>emptyList(), LabBatchEJBTest.BUCKET_NAME, MessageReporter.UNUSED);
+                Collections.<Long>emptyList(), LabBatchEJBTest.BUCKET_NAME, MessageReporter.UNUSED,Collections.<String>emptyList());
 
         jiraIssue = jiraService.getIssue(testFind.getJiraTicket().getTicketName());
 
@@ -188,7 +188,7 @@ public class LabBatchEjbStandard extends Arquillian {
         LabBatch testBatch = labBatchEJB.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
                 Workflow.DNA_RNA_EXTRACTION_CELL_PELLETS.getWorkflowName(),bucketIds,Collections.<Long>emptyList(),
                 nameForBatch, "", new Date(), null,"scottmat", LabBatchEJBTest.EXTRACTION_BUCKET,
-                MessageReporter.UNUSED);
+                MessageReporter.UNUSED, Collections.<String>emptyList());
 
         final String batchName = testBatch.getBatchName();
 
@@ -223,7 +223,7 @@ public class LabBatchEjbStandard extends Arquillian {
 
         labBatchEJB.addToLabBatch(testFind.getJiraTicket().getTicketId(),
                 Collections.singletonList(vessel.getBucketEntries().iterator().next().getBucketEntryId()),
-                Collections.<Long>emptyList(), LabBatchEJBTest.EXTRACTION_BUCKET, MessageReporter.UNUSED);
+                Collections.<Long>emptyList(), LabBatchEJBTest.EXTRACTION_BUCKET, MessageReporter.UNUSED, Collections.<String>emptyList());
 
         jiraIssue = jiraService.getIssue(testFind.getJiraTicket().getTicketName());
 
