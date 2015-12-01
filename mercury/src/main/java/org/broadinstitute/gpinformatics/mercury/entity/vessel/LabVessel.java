@@ -841,10 +841,6 @@ public abstract class LabVessel implements Serializable {
         return sampleInstancesV2.size();
     }
 
-    public int getSampleInstanceCount(SampleType sampleType, @Nullable LabBatch.LabBatchType batchType) {
-        return getSampleInstances(sampleType, batchType).size();
-    }
-
     /**
      * The results of traversing (ancestor) vessels.  The main branch in the graph is likely to have (multiple)
      * SampleInstances, while side branches add reagents.
@@ -1737,8 +1733,8 @@ public abstract class LabVessel implements Serializable {
      */
     public Collection<String> getSampleNames() {
         Set<String> sampleNames = new HashSet<>();
-        for (SampleInstance sampleInstance : getSampleInstances()) {
-            MercurySample sample = sampleInstance.getStartingSample();
+        for (SampleInstanceV2 sampleInstance : getSampleInstancesV2()) {
+            MercurySample sample = sampleInstance.getRootOrEarliestMercurySample();
             if (sample != null) {
                 String sampleKey = StringUtils.trimToNull(sample.getSampleKey());
                 if (sampleKey != null) {
