@@ -379,7 +379,7 @@
     </changeSet>
 
     <changeSet id="GPLIM-3905-1" author="jowalsh">
-        <createTable schemaName="mercury" tableName="le_reagents_metadata">
+        <createTable schemaName="mercury" tableName="le_reagent_metadata">
             <column name="lab_event_reagent_id" type="number(19,0)">
                 <constraints nullable="false"/>
             </column>
@@ -387,11 +387,11 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-        <addPrimaryKey constraintName="pk_le_reagents_metadata" tableName="le_reagents_metadata"
+        <addPrimaryKey constraintName="pk_le_reagent_metadata" tableName="le_reagent_metadata"
                        columnNames="lab_event_reagent_id, metadata_id"/>
     </changeSet>
     <changeSet id="GPLIM-3905-2" author="jowalsh">
-        <createTable schemaName="mercury" tableName="le_reagents_metadata_aud">
+        <createTable schemaName="mercury" tableName="le_reagent_metadata_aud">
             <column name="rev" type="number(19,0)">
                 <constraints nullable="false"/>
             </column>
@@ -403,17 +403,17 @@
             </column>
             <column name="revtype" type="number(3,0)"/>
         </createTable>
-        <addPrimaryKey constraintName="pk_le_reagents_metadata_aud" tableName="le_reagents_metadata_aud"
+        <addPrimaryKey constraintName="pk_le_reagent_metadata_aud" tableName="le_reagent_metadata_aud"
                        columnNames="rev, lab_event_reagent_id, metadata_id"/>
     </changeSet>
     <changeSet id="GPLIM-3905-3" author="jowalsh">
         <addForeignKeyConstraint constraintName="fk_ler_metadata_ler_id"
-                                 baseTableSchemaName="mercury" baseTableName="le_reagents_metadata" baseColumnNames="lab_event_reagent_id"
+                                 baseTableSchemaName="mercury" baseTableName="le_reagent_metadata" baseColumnNames="lab_event_reagent_id"
                                  referencedTableSchemaName="mercury" referencedTableName="lab_event_reagents" referencedColumnNames="lab_event_reagent_id"/>
     </changeSet>
     <changeSet id="GPLIM-3905-4" author="jowalsh">
         <addForeignKeyConstraint constraintName="fk_ler_metadata_metadata_id"
-                                 baseTableSchemaName="mercury" baseTableName="le_reagents_metadata" baseColumnNames="metadata_id"
+                                 baseTableSchemaName="mercury" baseTableName="le_reagent_metadata" baseColumnNames="metadata_id"
                                  referencedTableSchemaName="mercury" referencedTableName="metadata" referencedColumnNames="metadata_id"/>
     </changeSet>
     <changeSet id="GPLIM-3905-5" author="jowalsh">

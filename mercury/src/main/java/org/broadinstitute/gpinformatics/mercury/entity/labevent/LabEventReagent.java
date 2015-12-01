@@ -47,7 +47,7 @@ public class LabEventReagent {
     private Reagent reagent;
 
     @ManyToMany(cascade = CascadeType.PERSIST)
-    @JoinTable(name = "lab_event_reagent_metadata", schema = "mercury",
+    @JoinTable(name = "le_reagent_metadata", schema = "mercury",
             joinColumns = @JoinColumn(name = "LAB_EVENT_REAGENT_ID"),
             inverseJoinColumns = @JoinColumn(name = "METADATA_ID"))
     private Set<Metadata> metadata = new HashSet<>();
