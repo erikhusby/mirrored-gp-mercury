@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.quote;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import java.util.Collection;
 
 /**
  * Created by IntelliJ IDEA.
@@ -18,7 +19,7 @@ public class QuoteFunding {
     private String fundsRemaining;
 
     @XmlElement(name = "FundingLevel")
-    private FundingLevel fundingLevel;
+    private Collection<FundingLevel> fundingLevel;
 
     public QuoteFunding() {}
 
@@ -26,11 +27,11 @@ public class QuoteFunding {
         this.fundsRemaining = fundsRemaining;
     }
     
-    public QuoteFunding(FundingLevel fundLevel) {
+    public QuoteFunding(Collection<FundingLevel> fundLevel) {
         this.fundingLevel = fundLevel;
     }
 
-    public FundingLevel getFundingLevel() {
+    public Collection<FundingLevel> getFundingLevel() {
         return fundingLevel;
     }
 
