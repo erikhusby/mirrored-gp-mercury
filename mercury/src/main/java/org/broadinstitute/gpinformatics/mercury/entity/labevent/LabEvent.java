@@ -4,6 +4,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
@@ -345,6 +346,10 @@ public class LabEvent {
 
     public void addReagentVolume(Reagent reagent, BigDecimal volume) {
         labEventReagents.add(new LabEventReagent(this, reagent, volume));
+    }
+
+    public void addReagentMetadata(Reagent reagent, Set<Metadata> metadataSet) {
+        labEventReagents.add(new LabEventReagent(this, reagent, metadataSet));
     }
 
     public void addMetadata(LabEventMetadata labEventMetadata) {

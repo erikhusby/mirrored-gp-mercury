@@ -38,6 +38,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.EventHandlerSelector;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.GapHandler;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.SamplesDaughterPlateHandler;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
@@ -1162,7 +1163,17 @@ public class LabEventFactory implements Serializable {
                 genericReagent = new GenericReagent(reagentType.getKitType(), reagentType.getBarcode(),
                         reagentType.getExpiration());
             }
-            labEvent.addReagent(genericReagent);
+            Set<Metadata> metadataSet = new HashSet<>();
+            for (MetadataType metadataType: reagentType.getMetadata()) {
+                Metadata.Key metadataKey = Metadata.Key.fromDisplayName(metadataType.getName());
+                if(metadataKey != null) {
+                    Metadata metadata = new Metadata(metadataKey, metadataType.getValue());
+                    metadataSet.add(metadata);
+                } else {
+                    throw new RuntimeException("Failed to find metadata " + metadataType.getName());
+                }
+            }
+            labEvent.addReagentMetadata(genericReagent, metadataSet);
         }
     }
 

@@ -265,7 +265,9 @@ public class Metadata {
 
         DV_200(Category.LAB_METRIC, DataType.NUMBER, "DV200", Visibility.USER),
         LOWER_MARKER_TIME(Category.LAB_METRIC, DataType.NUMBER, "Lower Marker Time", Visibility.USER),
-        NA(Category.LAB_METRIC, DataType.STRING, "NA", Visibility.USER);
+        NA(Category.LAB_METRIC, DataType.STRING, "NA", Visibility.USER),
+        BAIT_WELL(Category.SAMPLE, DataType.STRING, "Bait Well", Visibility.USER);
+
 
         private final Category category;
         private final DataType dataType;

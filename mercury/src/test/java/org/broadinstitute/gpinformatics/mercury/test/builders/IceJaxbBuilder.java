@@ -2,9 +2,11 @@ package org.broadinstitute.gpinformatics.mercury.test.builders;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.MetadataType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReagentType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 
@@ -215,6 +217,14 @@ public class IceJaxbBuilder {
                 LabEventFactory.PHYS_TYPE_TUBE_RACK, Collections.singletonList(bait1RackBarcode),
                 Collections.singletonList(Collections.singletonList(baitTube1Barcode)),
                 Collections.singletonList(firstHybPlateBarcode), bait1CherryPicks);
+        ReagentType baitReagent = new ReagentType();
+        baitReagent.setBarcode("Bait" + Long.toString(System.currentTimeMillis()));
+        baitReagent.setKitType("Rapid Capture Kit Box 4 (Bait)");
+        MetadataType metadataType = new MetadataType();
+        metadataType.setName("Bait Well");
+        metadataType.setValue("A1");
+        baitReagent.getMetadata().add(metadataType);
+        ice1stBaitPick.getReagent().add(baitReagent);
         bettaLimsMessageTestFactory.addMessage(messageList, ice1stBaitPick);
 
         //PostIce1stHybridizationThermoCyclerLoaded

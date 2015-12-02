@@ -68,6 +68,11 @@ public class LabEventReagent {
         this.volume = volume;
     }
 
+    public LabEventReagent(LabEvent labEvent, Reagent reagent, Set<Metadata> metadataSet) {
+        this(labEvent, reagent);
+        this.metadata = metadataSet;
+    }
+
     public LabEvent getLabEvent() {
         return labEvent;
     }
@@ -82,5 +87,13 @@ public class LabEventReagent {
 
     public void setVolume(BigDecimal volume) {
         this.volume = volume;
+    }
+
+    public Set<Metadata> getMetadata() {
+        return metadata;
+    }
+
+    public void setMetadata(Set<Metadata> metadata) {
+        this.metadata = metadata;
     }
 }
