@@ -224,4 +224,13 @@ public class ProductDao extends GenericDao implements Serializable {
         products.remove(topLevelProduct);
         return products;
     }
+
+    public List<Product> findAllWithAnalysisType() {
+        return findAll(Product.class, new GenericDaoCallback<Product>() {
+            @Override
+            public void callback(CriteriaQuery<Product> criteriaQuery, Root<Product> root) {
+                criteriaQuery.where(getCriteriaBuilder().isNotNull(root.get(Product_.analysisTypeKey)));
+            }
+        });
+    }
 }
