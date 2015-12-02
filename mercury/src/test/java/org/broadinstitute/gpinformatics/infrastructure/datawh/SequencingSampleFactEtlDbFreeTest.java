@@ -458,7 +458,7 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
                                   String tubeBarcode, String createdDateStr, String cartridgeName,
                                   long researchProjectId, String batchName) {
         int i = 0;
-        String[] parts = record.split(",");
+        String[] parts = record.split(",", 12);
         Assert.assertEquals(parts[i++], etlDateString);
         Assert.assertEquals(parts[i++], "F");
         Assert.assertEquals(parts[i++], String.valueOf(entityId));

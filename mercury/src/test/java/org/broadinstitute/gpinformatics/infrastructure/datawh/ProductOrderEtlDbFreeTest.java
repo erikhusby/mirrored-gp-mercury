@@ -115,7 +115,7 @@ public class ProductOrderEtlDbFreeTest {
 
     private void verifyRecord(String record) {
         int i = 0;
-        String[] parts = record.split(",");
+        String[] parts = record.split(",", 15);
         assertEquals(parts[i++], etlDateString);
         assertEquals(parts[i++], "F");
         assertEquals(parts[i++], String.valueOf(entityId));
@@ -129,7 +129,8 @@ public class ProductOrderEtlDbFreeTest {
         assertEquals(parts[i++], jiraTicketKey);
         assertEquals(parts[i++], ownerName);
         assertEquals(parts[i++], ExtractTransform.formatTimestamp(modifiedDate));
-        assertEquals(parts[i++], "\"\"");
+        assertEquals(parts[i++], "");
+        assertEquals(parts[i++], "");
         assertEquals(parts.length, i);
     }
 }

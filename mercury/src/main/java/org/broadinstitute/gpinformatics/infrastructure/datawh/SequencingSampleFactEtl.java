@@ -143,7 +143,7 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
             this.researchProjectId = researchProjectId;
             this.canEtl = canEtl;
             this.loadingVessel = loadingVessel;
-            this.batchName = batchName;
+            this.batchName = StringUtils.isBlank(batchName)?NONE:batchName;
         }
 
         public static final Comparator<SequencingRunDto> BY_SAMPLE_KEY = new Comparator<SequencingRunDto>() {
@@ -277,45 +277,22 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
                     LabVessel fctVessel = (fctBatch != null) ? fctBatch.getStartingVesselByPosition(position) : tube;
                     Collection<SampleInstanceV2> sampleInstances = tube.getSampleInstancesV2();
                     for (SampleInstanceV2 si : sampleInstances) {
-                        ProductOrder pdo = null;
-                        String pdoSampleKey = null;
-                        // Get latest PDO and the sample which matches it (the PDO and sample must match)
-                        for (ProductOrderSample pdoSample : si.getAllProductOrderSamples()) {
-                            // Get a valid PDO
-                            pdo = pdoSample.getProductOrder();
-                            if (pdoSample.getMercurySample() != null) {
-                                // And associate a sample with it if available
-                                pdoSampleKey = pdoSample.getMercurySample().getSampleKey();
-                                // getAllProductOrderSamples() sorts by closest first so we're done at first hit
-                                break;
-                            }
-                        }
 
-                        String productOrderId = (pdo == null) ? null : String.valueOf(pdo.getProductOrderId());
+                        // Extract ETL data from sample instance
+                        SampleInstanceEtlData sampleInstanceEtlData = SampleInstanceEtlData.buildFromSampleInstance
+                                ( si, entity.getRunDate(), false );
 
-                        LabBatch labBatch = si.getSingleBatch();
-                        if (labBatch == null) {
-                            // Use the newest non-extraction bucket which was created sometime before this event
-                            long eventTs = entity.getRunDate().getTime();
-                            long bucketTs = 0L;
-                            for (BucketEntry bucketEntry : si.getAllBucketEntries()) {
-                                if (bucketEntry.getLabBatch() != null
-                                    && bucketEntry.getLabBatch().getBatchName().startsWith("LCSET")
-                                    && bucketEntry.getCreatedDate().getTime() > bucketTs
-                                    && bucketEntry.getCreatedDate().getTime() <= eventTs) {
-                                    labBatch = bucketEntry.getLabBatch();
-                                    bucketTs = bucketEntry.getCreatedDate().getTime();
-                                }
-                            }
-                        }
+                        String pdoSampleKey = sampleInstanceEtlData.getPdoSampleId();
+                        ProductOrder pdo = sampleInstanceEtlData.getPdo();
+                        LabBatch labBatch = sampleInstanceEtlData.getLabBatch();
+                        String molecularIndexingSchemeName = sampleInstanceEtlData.getMolecularIndexingSchemeName();
 
-                        String batchName = labBatch != null ? labBatch.getBatchName() : NONE;
+                        String productOrderId = pdo == null ? null : String.valueOf(pdo.getProductOrderId());
+                        String batchName = labBatch != null ? labBatch.getBatchName() : null;
+
 
                         String researchProjectId = (pdo != null && pdo.getResearchProject() != null) ?
                                 String.valueOf(pdo.getResearchProject().getResearchProjectId()) : null;
-
-                        String molecularIndexingSchemeName = si.getMolecularIndexingScheme() != null ?
-                                si.getMolecularIndexingScheme().getName() : NONE;
 
                         boolean canEtl = !StringUtils.isBlank(flowcellBarcode) && !StringUtils.isBlank(productOrderId)
                                          && !StringUtils.isBlank(researchProjectId);
