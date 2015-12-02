@@ -497,9 +497,6 @@ public class BucketViewActionBean extends CoreActionBean {
     }
 
     public Resolution projectTypeMatches() {
-        String jiraTicketId = getContext().getRequest().getParameter("jiraTicketId").trim();
-        String projectTypeString = getContext().getRequest().getParameter("projectType").trim();
-        CreateFields.ProjectType projectType = CreateFields.ProjectType.valueOf(projectTypeString);
         return new StreamingResolution("text/plain",
                 String.valueOf(projectType == CreateFields.ProjectType.fromIssueKey(jiraTicketId)));
     }
