@@ -20,9 +20,10 @@
 
 
 <%--@elvariable id="actionBean" type="org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean"--%>
-<%--@elvariable id="tableId" type="java.lang.String"--%>
-<%--@elvariable id="formsEnabled" type="java.lang.Boolean"--%>
-
+<%--@elvariable id="tableId" type="java.lang.String" --%>
+<%--@elvariable id="formsEnabled" type="java.lang.Boolean" --%>
+<c:set var="tableId" value="bucketEntryView"/>
+<c:set var="formsEnabled" value="true"/>
 <stripes:layout-definition>
     <style type="text/css">
         td.editable {
@@ -36,6 +37,8 @@
     </style>
     <script src="${ctxpath}/resources/scripts/jquery.jeditable.mini.js" type="text/javascript"></script>
     <script type="text/javascript">
+        var formsEnabled=${formsEnabled}
+
         $j(document).ready(function () {
             oTable = $j('#${tableId}').dataTable({
                 "oTableTools":ttExportDefines,
@@ -58,69 +61,72 @@
                     {"bSortable":true},
                     {"bSortable":true},
                     {"bSortable":true}
-                ],
-                "fnDrawCallback": editablePdo
+                ]
             });
+            if (formsEnabled) {
+                oTable.fnDrawCallback = editablePdo();
+            }
             includeAdvancedFilter(oTable, "#${tableId}");
 
             $j('.bucket-checkbox').enableCheckboxRangeSelection({
-                checkAllClass:'bucket-checkAll',
-                countDisplayClass:'bucket-checkedCount',
-                checkboxClass:'bucket-checkbox'});
+                checkAllClass: 'bucket-checkAll',
+                countDisplayClass: 'bucket-checkedCount',
+                checkboxClass: 'bucket-checkbox'
+            });
         });
 
-            function editablePdo()  {
-                var columnsEditable = false;
-                <security:authorizeBlock roles="<%= roles(LabManager, PDM, PM, Developer) %>">
-                columnsEditable = true;
-                </security:authorizeBlock>
+        function editablePdo() {
+            var columnsEditable = false;
+            <security:authorizeBlock roles="<%= roles(LabManager, PDM, PM, Developer) %>">
+            columnsEditable = true;
+            </security:authorizeBlock>
 
-                if (columnsEditable) {
-                    var oTable = $j('#bucketEntryView').dataTable();
-                    $j("td.editable").editable('${ctxpath}/workflow/bucketView.action?changePdo', {
-                        'loadurl': '${ctxpath}/workflow/bucketView.action?findPdo',
-                        'callback': function (sValue, y) {
-                            var jsonValues = $j.parseJSON(sValue);
-                            var pdoKeyCellValue = '<span class="ellipsis">' + jsonValues.jiraKey + '</span><span style="display: none;" class="icon-pencil"></span>';
+            if (columnsEditable) {
+                var oTable = $j('#bucketEntryView').dataTable();
+                $j("td.editable").editable('${ctxpath}/workflow/bucketView.action?changePdo', {
+                    'loadurl': '${ctxpath}/workflow/bucketView.action?findPdo',
+                    'callback': function (sValue, y) {
+                        var jsonValues = $j.parseJSON(sValue);
+                        var pdoKeyCellValue = '<span class="ellipsis">' + jsonValues.jiraKey + '</span><span style="display: none;" class="icon-pencil"></span>';
 
-                            var aPos = oTable.fnGetPosition(this);
-                            oTable.fnUpdate(pdoKeyCellValue, aPos[0] /*row*/, aPos[1]/*column*/);
+                        var aPos = oTable.fnGetPosition(this);
+                        oTable.fnUpdate(pdoKeyCellValue, aPos[0] /*row*/, aPos[1]/*column*/);
 
-                            var pdoTitleCellValue = '<div class="ellipsis" style="width: 300px">' + jsonValues.pdoTitle + '</div>';
-                            oTable.fnUpdate(pdoTitleCellValue, aPos[0] /*row*/, aPos[1] + 1/*column*/);
+                        var pdoTitleCellValue = '<div class="ellipsis" style="width: 300px">' + jsonValues.pdoTitle + '</div>';
+                        oTable.fnUpdate(pdoTitleCellValue, aPos[0] /*row*/, aPos[1] + 1/*column*/);
 
-                            var pdoCreatorCellValue = jsonValues.pdoOwner;
-                            oTable.fnUpdate(pdoCreatorCellValue, aPos[0] /*row*/, aPos[1] + 2/*column*/);
-                        },
-                        'submitdata': function (value, settings) {
-                            return {
-                                "selectedEntryIds": this.parentNode.getAttribute('id'),
-                                "column": oTable.fnGetPosition(this)[2],
-                                "newPdoValue": $j(this).find(':selected').text()
-                            };
-                        },
-                        'loaddata': function (value, settings) {
-                            return {
-                                "selectedEntryIds": this.parentNode.getAttribute('id')
-                            };
-                        },
+                        var pdoCreatorCellValue = jsonValues.pdoOwner;
+                        oTable.fnUpdate(pdoCreatorCellValue, aPos[0] /*row*/, aPos[1] + 2/*column*/);
+                    },
+                    'submitdata': function (value, settings) {
+                        return {
+                            "selectedEntryIds": this.parentNode.getAttribute('id'),
+                            "column": oTable.fnGetPosition(this)[2],
+                            "newPdoValue": $j(this).find(':selected').text()
+                        };
+                    },
+                    'loaddata': function (value, settings) {
+                        return {
+                            "selectedEntryIds": this.parentNode.getAttribute('id')
+                        };
+                    },
 //                        If you need to debug the generated html you need to ignore onblur events
-                        "onblur": "ignore",
-                        cssclass: "editable",
-                        tooltip: 'Click the value in this field to edit',
-                        type: "select",
-                        indicator: '<img src="${ctxpath}/images/spinner.gif">',
-                        submit: 'Save',
-                        cancel: 'Cancel',
-                        height: "auto",
-                        width: "auto"
-                    });
-                    $j(".icon-pencil").show();
-                } else {
-                    $j(".icon-pencil").hide();
-                    $j(".editable").removeClass("editable")
-                }
+                    "onblur": "ignore",
+                    cssclass: "editable",
+                    tooltip: 'Click the value in this field to edit',
+                    type: "select",
+                    indicator: '<img src="${ctxpath}/images/spinner.gif">',
+                    submit: 'Save',
+                    cancel: 'Cancel',
+                    height: "auto",
+                    width: "auto"
+                });
+                $j(".icon-pencil").show();
+            } else {
+                $j(".icon-pencil").hide();
+                $j(".editable").removeClass("editable")
             }
+        }
     </script>
 
     <table id="${tableId}" class="bucket-checkbox table simple">

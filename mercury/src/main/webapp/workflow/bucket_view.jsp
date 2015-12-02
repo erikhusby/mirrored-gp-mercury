@@ -297,10 +297,8 @@
         </div>
 
         <div>
-            <stripes:layout-render name="/workflow/bucket_sample_list.jsp"
-                                   withFormElements="true"
-                                   tableId="bucketEntryView"
-                                   actionBean="${actionBean}"/>
+            <stripes:layout-render name="/workflow/bucket_sample_list.jsp"/>
+
         </div>
 
     </stripes:form>
