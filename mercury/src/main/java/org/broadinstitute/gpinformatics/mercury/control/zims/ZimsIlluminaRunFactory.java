@@ -443,8 +443,19 @@ public class ZimsIlluminaRunFactory {
                     positiveControl = true;
                     if (analysisTypes.size() == 1 && referenceSequenceKeys.size() == 1 &&
                             aggregationDataTypes.size() == 1) {
+                        analysisType = analysisTypes.iterator().next();
                         // horrible 7/25 hack.  todo fixme with workflow
-                        analysisType = "HybridSelection." + analysisTypes.iterator().next();
+                        /*
+                         * Temporary adaptor logic to support old, incorrect analysis types. The corrected types all
+                         * have a "." in the name whereas the old ones did not and needed "HybridSelection." prepended
+                         * to them (which was only valid for "Resequencing"). This will make sure that any Illumina run
+                         * queries that happen between the 1.66.1 hotfix release and running the fixup test will be
+                         * correct. Once the data is fixed up and there are no remaining analysis types without ".",
+                         * this entire "horrible 7/25 hack" can be removed.
+                         */
+                        if (!analysisType.contains(".")) {
+                            analysisType = "HybridSelection." + analysisType;
+                        }
 
                         String[] referenceSequenceValues = referenceSequenceKeys.iterator().next().split("\\|");
                         referenceSequence = referenceSequenceValues[0];
@@ -488,7 +499,17 @@ public class ZimsIlluminaRunFactory {
 
             // horrible 7/25 hack.  todo fixme with workflow
             if (analysisType != null) {
-                analysisType = "HybridSelection." + analysisType;
+                /*
+                 * Temporary adaptor logic to support old, incorrect analysis types. The corrected types all
+                 * have a "." in the name whereas the old ones did not and needed "HybridSelection." prepended
+                 * to them (which was only valid for "Resequencing"). This will make sure that any Illumina run
+                 * queries that happen between the 1.66.1 hotfix release and running the fixup test will be
+                 * correct. Once the data is fixed up and there are no remaining analysis types without ".",
+                 * this entire "horrible 7/25 hack" can be removed.
+                 */
+                if (!analysisType.contains(".")) {
+                    analysisType = "HybridSelection." + analysisType;
+                }
             }
         }
         String libraryCreationDate = dateFormat.format(labVessel.getCreatedOn());
