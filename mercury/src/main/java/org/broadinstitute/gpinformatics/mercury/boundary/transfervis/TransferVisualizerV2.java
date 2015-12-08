@@ -289,6 +289,62 @@ public class TransferVisualizerV2 {
 
         }
 
+        private class Dimensions {
+            private int maxColumn;
+            private int maxColumnWidth = WELL_WIDTH;
+            private int maxRow;
+            private int maxRowHeight = ROW_HEIGHT;
+            private int inPlaceHeight;
+
+            public int getMaxColumn() {
+                return maxColumn;
+            }
+
+            public void setMaxColumn(int maxColumn) {
+                this.maxColumn = maxColumn;
+            }
+
+            public int getMaxColumnWidth() {
+                return maxColumnWidth;
+            }
+
+            public void setMaxColumnWidth(int maxColumnWidth) {
+                this.maxColumnWidth = maxColumnWidth;
+            }
+
+            public int getMaxRow() {
+                return maxRow;
+            }
+
+            public void setMaxRow(int maxRow) {
+                this.maxRow = maxRow;
+            }
+
+            public int getMaxRowHeight() {
+                return maxRowHeight;
+            }
+
+            public void setMaxRowHeight(int maxRowHeight) {
+                this.maxRowHeight = maxRowHeight;
+            }
+
+            public int getInPlaceHeight() {
+                return inPlaceHeight;
+            }
+
+            public void setInPlaceHeight(int inPlaceHeight) {
+                this.inPlaceHeight = inPlaceHeight;
+            }
+
+            public int getWidth() {
+                return Math.max(PLATE_WIDTH, maxColumn * maxColumnWidth);
+            }
+
+            public int getHeight() {
+                return Math.max(ROW_HEIGHT, maxRow * maxRowHeight) + inPlaceHeight;
+            }
+        }
+
         /**
          * Render a container, e.g. a rack of tubes.
          */
@@ -314,126 +370,32 @@ public class TransferVisualizerV2 {
             if (renderedLabels.add(containerLabel)) {
                 logger.debug("Rendering container " + containerLabel);
 
-                // JSON for child vessels (e.g. tubes in a rack)
+                Dimensions dimensions = new Dimensions();
+                // Sizes for child vessels (e.g. tubes in a rack)
                 VesselGeometry vesselGeometry = vesselContainer.getEmbedder().getVesselGeometry();
-                int maxColumn = 0;
-                int maxColumnWidth = WELL_WIDTH;
-                int maxRow = 0;
-                int maxRowHeight = ROW_HEIGHT;
-                int inPlaceHeight = vesselContainer.getEmbedder().getInPlaceLabEvents().size() * ROW_HEIGHT;
+                dimensions.setInPlaceHeight(vesselContainer.getEmbedder().getInPlaceLabEvents().size() * ROW_HEIGHT);
                 Map<String, List<String>> mapBarcodeToAlternativeIds = new HashMap<>();
                 for (VesselPosition vesselPosition : vesselGeometry.getVesselPositions()) {
                     VesselGeometry.RowColumn rowColumn = vesselGeometry.getRowColumnForVesselPosition(vesselPosition);
                     LabVessel child = vesselContainer.getVesselAtPosition(vesselPosition);
                     if (child != null) {
                         // todo jmt popup if more than one sample?
-                        maxColumn = Math.max(maxColumn, rowColumn.getColumn());
-                        maxRow = Math.max(maxRow, rowColumn.getRow() + 1);
-                        for (AlternativeIds alternativeId : alternativeIds) {
-                            switch (alternativeId) {
-                                case SAMPLE_ID:
-                                    Set<SampleInstanceV2> sampleInstances = child.getSampleInstancesV2();
-                                    if (sampleInstances.size() == 1) {
-                                        SampleInstanceV2 sampleInstance = sampleInstances.iterator().next();
-                                        String indexName = sampleInstance.getMolecularIndexingScheme() == null ? "" :
-                                                " " + sampleInstance.getMolecularIndexingScheme().getName();
-                                        String ids = sampleInstance.getNearestMercurySampleName() + indexName;
-
-                                        List<String> idsList = mapBarcodeToAlternativeIds.get(child.getLabel());
-                                        if (idsList == null) {
-                                            idsList = new ArrayList<>();
-                                            mapBarcodeToAlternativeIds.put(child.getLabel(), idsList);
-                                        }
-                                        idsList.add(ids);
-
-                                        int width = fontMetrics.stringWidth(ids);
-                                        maxColumnWidth = Math.max(width, maxColumnWidth);
-                                        maxRowHeight = Math.max(ROW_HEIGHT * (idsList.size() + 1), maxRowHeight);
-                                    }
-                                    break;
-                                case LCSET:
-                                    Set<LabBatch> labBatches = new HashSet<>();
-                                    for (SampleInstanceV2 sampleInstance : child.getSampleInstancesV2()) {
-                                        LabBatch singleBatch = sampleInstance.getSingleBatch();
-                                        if (singleBatch != null) {
-                                            labBatches.add(singleBatch);
-                                        }
-                                    }
-                                    if (!labBatches.isEmpty()) {
-                                        StringBuilder idsBuilder = new StringBuilder();
-                                        for (LabBatch labBatch : labBatches) {
-                                            if (idsBuilder.length() > 0) {
-                                                idsBuilder.append(", ");
-                                            }
-                                            idsBuilder.append(labBatch.getBatchName());
-                                        }
-
-                                        // todo jmt reduce copy / paste
-                                        List<String> idsList = mapBarcodeToAlternativeIds.get(child.getLabel());
-                                        if (idsList == null) {
-                                            idsList = new ArrayList<>();
-                                            mapBarcodeToAlternativeIds.put(child.getLabel(), idsList);
-                                        }
-                                        String ids = idsBuilder.toString();
-                                        idsList.add(ids);
-
-                                        int width = fontMetrics.stringWidth(ids);
-                                        maxColumnWidth = Math.max(width, maxColumnWidth);
-                                        maxRowHeight = Math.max(ROW_HEIGHT * (idsList.size() + 1), maxRowHeight);
-                                    }
-                                    break;
-                            }
-                        }
+                        dimensionsForChild(dimensions, mapBarcodeToAlternativeIds, child, rowColumn.getColumn(),
+                                rowColumn.getRow());
                     }
                 }
-                int width = Math.max(PLATE_WIDTH, maxColumn * maxColumnWidth);
-                int height = Math.max(ROW_HEIGHT, maxRow * maxRowHeight) + inPlaceHeight;
 
                 // JSON for the parent vessel
-                jsonWriter.object().key("id").value(containerLabel).
-                        key("label").value(ancillaryLabel).
-                        key("width").value(width).
-                        key("height").value(height).
-                        key("children").array();
-
-                // JSON for in-place events
                 List<LabEvent> inPlaceLabEvents = new ArrayList<>(vesselContainer.getEmbedder().getInPlaceLabEvents());
-                Collections.sort(inPlaceLabEvents, LabEvent.BY_EVENT_DATE);
-                int inPlaceEventOffset = ROW_HEIGHT;
-                for (LabEvent labEvent : inPlaceLabEvents) {
-                    jsonWriter.object().
-                            key("name").value(buildEventLabel(labEvent)).
-                            key("x").value(0L).key("y").value(inPlaceEventOffset).
-                            key("w").value(width).key("h").value(ROW_HEIGHT).
-                            endObject();
-                    inPlaceEventOffset += ROW_HEIGHT;
-                }
+                jsonForParent(containerLabel, inPlaceLabEvents, dimensions, ancillaryLabel);
 
                 // JSON for children
                 for (VesselPosition vesselPosition : vesselGeometry.getVesselPositions()) {
                     VesselGeometry.RowColumn rowColumn = vesselGeometry.getRowColumnForVesselPosition(vesselPosition);
                     LabVessel child = vesselContainer.getVesselAtPosition(vesselPosition);
                     if (child != null) {
-                        jsonWriter.object().
-                                key("label").value(child.getLabel()).
-                                key("x").value((rowColumn.getColumn() - 1) * maxColumnWidth).
-                                key("y").value((rowColumn.getRow()) * maxRowHeight + inPlaceHeight).
-                                key("w").value(maxColumnWidth).
-                                key("h").value(maxRowHeight).
-                                key("altIds").array();
-                        if (!mapBarcodeToAlternativeIds.isEmpty()) {
-                            List<String> ids = mapBarcodeToAlternativeIds.get(child.getLabel());
-                            if (ids != null) {
-                                for (String id : ids) {
-                                    jsonWriter.object().key("altId").value(id).endObject();
-                                }
-                            }
-                        }
-                        jsonWriter.endArray();
-                        if (child.equals(labVessel)) {
-                            jsonWriter.key("highlight").value(1L);
-                        }
-                        jsonWriter.endObject();
+                        jsonForChild(child, dimensions, mapBarcodeToAlternativeIds, labVessel, rowColumn.getColumn(),
+                                rowColumn.getRow());
                     }
                 }
                 jsonWriter.endArray().endObject();
@@ -452,6 +414,119 @@ public class TransferVisualizerV2 {
             }
         }
 
+        /**
+         * Calculates the dimensions of a child, including alternative IDs.
+         */
+        private void dimensionsForChild(Dimensions dimensions, Map<String, List<String>> mapBarcodeToAlternativeIds,
+                LabVessel child, int columnNumber, int rowNumber) {
+            dimensions.setMaxColumn(Math.max(dimensions.getMaxColumn(), columnNumber));
+            dimensions.setMaxRow(Math.max(dimensions.getMaxRow(), rowNumber + 1));
+            for (AlternativeIds alternativeId : alternativeIds) {
+                switch (alternativeId) {
+                    case SAMPLE_ID:
+                        Set<SampleInstanceV2> sampleInstances = child.getSampleInstancesV2();
+                        if (sampleInstances.size() == 1) {
+                            SampleInstanceV2 sampleInstance = sampleInstances.iterator().next();
+                            String indexName = sampleInstance.getMolecularIndexingScheme() == null ? "" :
+                                    " " + sampleInstance.getMolecularIndexingScheme().getName();
+                            String ids = sampleInstance.getNearestMercurySampleName() + indexName;
+                            dimensionsForAltId(dimensions, mapBarcodeToAlternativeIds, child, ids);
+                        }
+                        break;
+                    case LCSET:
+                        Set<LabBatch> labBatches = new HashSet<>();
+                        for (SampleInstanceV2 sampleInstance : child.getSampleInstancesV2()) {
+                            LabBatch singleBatch = sampleInstance.getSingleBatch();
+                            if (singleBatch != null) {
+                                labBatches.add(singleBatch);
+                            }
+                        }
+                        if (!labBatches.isEmpty()) {
+                            StringBuilder idsBuilder = new StringBuilder();
+                            for (LabBatch labBatch : labBatches) {
+                                if (idsBuilder.length() > 0) {
+                                    idsBuilder.append(", ");
+                                }
+                                idsBuilder.append(labBatch.getBatchName());
+                            }
+                            dimensionsForAltId(dimensions, mapBarcodeToAlternativeIds, child, idsBuilder.toString());
+                        }
+                        break;
+                }
+            }
+        }
+
+        /**
+         * Calculates the size of an alternative ID.
+         */
+        private void dimensionsForAltId(Dimensions dimensions, Map<String, List<String>> mapBarcodeToAlternativeIds,
+                LabVessel child, String ids) {
+            List<String> idsList = mapBarcodeToAlternativeIds.get(child.getLabel());
+            if (idsList == null) {
+                idsList = new ArrayList<>();
+                mapBarcodeToAlternativeIds.put(child.getLabel(), idsList);
+            }
+            idsList.add(ids);
+
+            int width = fontMetrics.stringWidth(ids);
+            dimensions.setMaxColumnWidth(Math.max(width, dimensions.getMaxColumnWidth()));
+            dimensions.setMaxRowHeight(Math.max(ROW_HEIGHT * (idsList.size() + 1), dimensions.getMaxRowHeight()));
+        }
+
+        /**
+         * Writes JSON for a parent, e.g. a plate, a rack, a flowcell or a strip tube.
+         * @throws JSONException
+         */
+        private void jsonForParent(String containerLabel, List<LabEvent> inPlaceLabEvents, Dimensions dimensions,
+                String ancillaryLabel) throws JSONException {
+            // JSON for the parent vessel
+            jsonWriter.object().key("id").value(containerLabel).
+                    key("label").value(ancillaryLabel).
+                    key("width").value(dimensions.getWidth()).
+                    key("height").value(dimensions.getHeight()).
+                    key("children").array();
+
+            // JSON for in-place events
+            Collections.sort(inPlaceLabEvents, LabEvent.BY_EVENT_DATE);
+            int inPlaceEventOffset = ROW_HEIGHT;
+            for (LabEvent labEvent : inPlaceLabEvents) {
+                jsonWriter.object().
+                        key("name").value(buildEventLabel(labEvent)).
+                        key("x").value(0L).key("y").value(inPlaceEventOffset).
+                        key("w").value(dimensions.getWidth()).key("h").value(ROW_HEIGHT).
+                        endObject();
+                inPlaceEventOffset += ROW_HEIGHT;
+            }
+        }
+
+        /**
+         * Writes JSON for a child, e.g. a tube, a flowcell lane or a strip tube well.
+         * @throws JSONException
+         */
+        private void jsonForChild(LabVessel child, Dimensions dimensions,
+                Map<String, List<String>> mapBarcodeToAlternativeIds, LabVessel labVessel, int columnNumber,
+                int rowNumber) throws JSONException {
+            jsonWriter.object().
+                    key("label").value(child.getLabel()).
+                    key("x").value((columnNumber - 1) * dimensions.getMaxColumnWidth()).
+                    key("y").value((rowNumber) * dimensions.getMaxRowHeight() + dimensions.getInPlaceHeight()).
+                    key("w").value(dimensions.getMaxColumnWidth()).
+                    key("h").value(dimensions.getMaxRowHeight()).
+                    key("altIds").array();
+            if (!mapBarcodeToAlternativeIds.isEmpty()) {
+                List<String> ids = mapBarcodeToAlternativeIds.get(child.getLabel());
+                if (ids != null) {
+                    for (String id : ids) {
+                        jsonWriter.object().key("altId").value(id).endObject();
+                    }
+                }
+            }
+            jsonWriter.endArray();
+            if (child.equals(labVessel)) {
+                jsonWriter.key("highlight").value(1L);
+            }
+            jsonWriter.endObject();
+        }
         /**
          * Render a (dashed) edge for a tube moving to a different formation.
          */
