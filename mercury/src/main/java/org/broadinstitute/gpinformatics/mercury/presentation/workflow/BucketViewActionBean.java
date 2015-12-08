@@ -31,7 +31,6 @@ import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketCount;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
@@ -65,11 +64,11 @@ import java.util.TreeSet;
 public class BucketViewActionBean extends CoreActionBean {
     private static final String VIEW_PAGE = "/workflow/bucket_view.jsp";
     private static final String ADD_TO_BATCH_ACTION = "addToBatch";
+    private static final String CREATE_BATCH_ACTION = "createBatch";
     private static final String CONFIRMATION_PAGE = "/workflow/rework_confirmation.jsp";
     private static final String BATCH_CONFIRM_PAGE = "/batch/batch_confirm.jsp";
     private static final String EXISTING_TICKET = "existingTicket";
     private static final String NEW_TICKET = "newTicket";
-    private static final String CREATE_BATCH_ACTION = "createBatch";
     private static final String REWORK_CONFIRMED_ACTION = "reworkConfirmed";
     private static final String REMOVE_FROM_BUCKET_ACTION = "removeFromBucket";
     private static final String REMOVE_FROM_BUCKET_CONFIRM_PAGE = "/workflow/remove_from_bucket_confirm.jsp";
@@ -120,7 +119,6 @@ public class BucketViewActionBean extends CoreActionBean {
     private List<Long> selectedEntryIds = new ArrayList<>();
     private Set<String> possibleWorkflows = new TreeSet<>();
 
-    private boolean jiraEnabled = false;
     private String important;
     private String description;
     private String summary;
@@ -201,7 +199,6 @@ public class BucketViewActionBean extends CoreActionBean {
 
     @ValidationMethod(on = REMOVE_FROM_BUCKET_ACTION)
     public void removeSampleFromBucketValidation() {
-
         if (CollectionUtils.isEmpty(selectedEntryIds)) {
             addValidationError("bucketEntryView", "At least one sample must be selected to remove from the bucket.");
             viewBucket();
@@ -218,10 +215,10 @@ public class BucketViewActionBean extends CoreActionBean {
             if (bucket != null) {
                 collectiveEntries.addAll(bucket.getBucketEntries());
                 collectiveEntries.addAll(bucket.getReworkEntries());
-
-                // Doesn't show JIRA details if there are no bucket entries.
-                jiraEnabled = !collectiveEntries.isEmpty();
                 preFetchSampleData(collectiveEntries);
+                if (possibleWorkflows.size() == 1 && StringUtils.isNotBlank(selectedWorkflow)) {
+                    selectedWorkflow = possibleWorkflows.iterator().next();
+                }
             }
         }
         return view();
@@ -385,14 +382,6 @@ public class BucketViewActionBean extends CoreActionBean {
 
     public void setSelectedBucket(String selectedBucket) {
         this.selectedBucket = selectedBucket;
-    }
-
-    public boolean isJiraEnabled() {
-        return jiraEnabled;
-    }
-
-    public void setJiraEnabled(boolean jiraEnabled) {
-        this.jiraEnabled = jiraEnabled;
     }
 
     public String getSelectedLcset() {
