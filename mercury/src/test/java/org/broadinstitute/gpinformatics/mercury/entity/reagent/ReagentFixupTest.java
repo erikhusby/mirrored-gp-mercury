@@ -71,7 +71,7 @@ public class ReagentFixupTest extends Arquillian {
 
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWar(DEV, "dev");
+        return DeploymentBuilder.buildMercuryWar(DEV, "prod");
     }
 
     @Test(enabled = false)
@@ -784,33 +784,14 @@ public class ReagentFixupTest extends Arquillian {
     @Test(enabled = false)
     public void fixupGplim3917date() throws Exception {
         userBean.loginOSUser();
-
-        // Replaces wrong expiration for P5 Indexed Adapter Plate reagent on event 1121392
-        // with a new reagent having barcode 000001818323, exp 05/21/16
-        LabEvent labEvent = genericReagentDao.findById(LabEvent.class, 1121392L);
-        Assert.assertNotNull(labEvent);
-
-        String kitType = "P5 Indexed Adapter Plate";
-        String barcode = "000001818323";
-        Reagent undesired = null;
-        for (Reagent reagent : labEvent.getReagents()) {
-            if (reagent.getName().equals(kitType)) {
-                Assert.assertNull(undesired);
-                undesired = reagent;
-            }
-        }
-        Assert.assertNotNull(undesired);
-        Assert.assertEquals(barcode, undesired.getLot());
-
+        Long reagentId = 984977L;
         Date expiration = new GregorianCalendar(2016, Calendar.MAY, 21).getTime();
-        Assert.assertNull(genericReagentDao.findByReagentNameLotExpiration(kitType, barcode, expiration));
-        Reagent desired = new GenericReagent(kitType, barcode, expiration);
-        System.out.println("Created reagent " + kitType + " lot " + barcode + " expiration " + expiration);
-        Assert.assertTrue(labEvent.getReagents().remove(undesired));
-        labEvent.getReagents().add(desired);
-        System.out.println("Reagent " + undesired.getReagentId() + " removed and " + desired.getReagentId() +
-                           " added to event " + labEvent.getLabEventId());
 
+        Reagent reagent = genericReagentDao.findById(GenericReagent.class, reagentId);
+        Assert.assertNotNull(reagent);
+        Assert.assertEquals("000001818323", reagent.getLot());
+        System.out.println("Changing expiration date on reagent id " + reagentId + " to " + expiration);
+        reagent.setExpiration(expiration);
         genericReagentDao.persist(new FixupCommentary("GPLIM-3917 fixup incorrect P5 adapter expiration"));
         genericReagentDao.flush();
     }
