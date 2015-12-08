@@ -67,7 +67,7 @@ DECLARE
       v_segment := '';
 
       -- Let Oracle sort
-      FOR cur_rec IN ( SELECT COLUMN_VALUE AS token
+      FOR cur_rec IN ( SELECT DISTINCT COLUMN_VALUE AS token
                        FROM TABLE (v_types_varr)
                        ORDER BY 1 ) LOOP
         v_segment := v_segment || v_token || cur_rec.token;
@@ -91,8 +91,8 @@ BEGIN
     RAISE_APPLICATION_ERROR( -20001, '*** SORT FAIL > [Corn AND Apple AND Bread]');
   END IF;
 
-  IF sort_types('C AND A AND A') <> 'A AND A AND C' THEN
-    RAISE_APPLICATION_ERROR( -20001, '*** SORT FAIL > [A AND C AND B]');
+  IF sort_types('C AND A AND A') <> 'A AND C' THEN
+    RAISE_APPLICATION_ERROR( -20001, '*** SORT FAIL > [C AND A AND A]');
   END IF;
 
   IF sort_types('A AND C AND B') <> 'A AND B AND C' THEN
@@ -101,6 +101,10 @@ BEGIN
 
   IF sort_types('Is FFPE AND Concentration AND Total DNA') <> 'Concentration AND Is FFPE AND Total DNA' THEN
     RAISE_APPLICATION_ERROR( -20001, '*** SORT FAIL > [Is FFPE AND Concentration AND Total DNA]');
+  END IF;
+
+  IF sort_types('Concentration AND Concentration') <> 'Concentration' THEN
+    RAISE_APPLICATION_ERROR( -20001, '*** SORT FAIL > [Concentration AND Concentration]');
   END IF;
 
   OPEN cur_risk;
