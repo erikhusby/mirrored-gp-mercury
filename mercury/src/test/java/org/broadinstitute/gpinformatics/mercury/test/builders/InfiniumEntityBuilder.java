@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.test.builders;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
@@ -10,6 +11,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,8 +42,18 @@ public class InfiniumEntityBuilder {
     }
 
     public InfiniumEntityBuilder invoke() {
-        infiniumJaxbBuilder =
-                new InfiniumJaxbBuilder(bettaLimsMessageTestFactory, testPrefix, sourceplate.getLabCentricName());
+        infiniumJaxbBuilder = new InfiniumJaxbBuilder(bettaLimsMessageTestFactory, testPrefix,
+                sourceplate.getLabCentricName(),
+                Arrays.asList(Pair.of("NaOH", "1234-NaOH"), Pair.of("MA1", "1234-MA1")),
+                Arrays.asList(Pair.of("MA2", "1234-MA2"), Pair.of("MSM", "1234-MSM")),
+                Arrays.asList(Pair.of("FMS", "1234-FMS")),
+                Arrays.asList(Pair.of("PM1", "1234-PM1")),
+                Arrays.asList(Pair.of("Isopropanol", "2345")),
+                Arrays.asList(Pair.of("RA1", "1234-RA1")),
+                Arrays.asList(Pair.of("RA1", "1234-RA1"), Pair.of("LX1", "1234-LX1"), Pair.of("LX2", "1234-LX2"),
+                        Pair.of("XC3", "1234-XC3"), Pair.of("XC4", "1234-XC4"), Pair.of("SML", "1234-SML"),
+                        Pair.of("ATM", "1234-ATM"), Pair.of("EML", "1234-EML"), Pair.of("PB1", "1234-PB1"))
+        );
         infiniumJaxbBuilder.invoke();
 
         Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();

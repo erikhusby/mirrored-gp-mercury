@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.test.dbfree;
 
 import org.apache.commons.lang3.time.DateUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.CherryPickSourceType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
@@ -26,8 +27,11 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +46,14 @@ public class BettaLimsMessageTestFactory {
     public static final String MISEQ_SEQUENCING_STATION_MACHINE_NAME = "SL-MAA";
 
     private long time = System.currentTimeMillis();
+    private static final Date expiration;
+
+    static {
+        GregorianCalendar gregorianCalendar = new GregorianCalendar();
+        gregorianCalendar.add(Calendar.MONTH, 6);
+        expiration = gregorianCalendar.getTime();
+    }
+
     /**
      * True if the mode element in the messages should be set to Mercury. This causes all messages to bypass
      * routing logic and be processed by Mercury.
@@ -646,5 +658,15 @@ public class BettaLimsMessageTestFactory {
         public String getDestinationWell() {
             return destinationWell;
         }
+    }
+
+    /** Converts a list of reagent type & lot pairs to a list of ReagentDto */
+    public static List<ReagentDto> reagentList(List<Pair<String, String>> reagentTypeAndLot) {
+        List<ReagentDto> reagentDtos = new ArrayList<>();
+        for (Pair<String, String> typeAndLot : reagentTypeAndLot) {
+            reagentDtos.add(new BettaLimsMessageTestFactory.ReagentDto(typeAndLot.getLeft(),
+                    typeAndLot.getRight(), expiration));
+        }
+        return reagentDtos;
     }
 }

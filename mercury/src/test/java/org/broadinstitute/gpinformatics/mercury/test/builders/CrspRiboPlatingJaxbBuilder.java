@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.test.builders;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
@@ -35,13 +36,16 @@ public class CrspRiboPlatingJaxbBuilder {
     private String polyAAliquotRackBarcode;
     private PlateTransferEventType polyATSAliquot;
     private PlateEventType polyASpikeJaxb;
+    private Pair<String, String> reagentTypeAndLot;
 
     public CrspRiboPlatingJaxbBuilder(String rackBarcode, List<String> tubeBarcodes, String testPrefix,
-                                      BettaLimsMessageTestFactory bettaLimsMessageTestFactory) {
+                                      BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
+                                      Pair<String, String> reagentTypeAndLot) {
         this.rackBarcode = rackBarcode;
         this.tubeBarcodes = tubeBarcodes;
         this.testPrefix = testPrefix;
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
+        this.reagentTypeAndLot = reagentTypeAndLot;
     }
 
     public String getRackBarcode() {
@@ -164,8 +168,9 @@ public class CrspRiboPlatingJaxbBuilder {
         Date expiration = gregorianCalendar.getTime();
 
         riboBufferAdditionJaxb = bettaLimsMessageTestFactory.buildPlateEvent("RiboBufferAddition",
-                riboMicrofluorPlateBarcode,
-                Arrays.asList(new BettaLimsMessageTestFactory.ReagentDto("RiboGreen", "1234-RiboGreen", expiration)));
+                riboMicrofluorPlateBarcode, Arrays.asList(new BettaLimsMessageTestFactory.ReagentDto(
+                        reagentTypeAndLot.getLeft(), reagentTypeAndLot.getRight(), expiration)));
+
         bettaLimsMessageTestFactory.addMessage(messageList, riboBufferAdditionJaxb);
 
         polyASpikeJaxb = bettaLimsMessageTestFactory.buildRackEvent( "PolyATSAliquotSpike", rackBarcode, tubeBarcodes);

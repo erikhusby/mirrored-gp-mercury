@@ -446,7 +446,14 @@ public class BettaLimsMessageResourceTest extends Arquillian {
                 bettaLimsMessageFactory, testPrefix, shearingJaxbBuilder.getShearCleanPlateBarcode(),
                 LibraryConstructionJaxbBuilder.P_7_INDEX_PLATE_BARCODE,
                 LibraryConstructionJaxbBuilder.P_5_INDEX_PLATE_BARCODE, BaseEventTest.NUM_POSITIONS_IN_RACK,
-                LibraryConstructionJaxbBuilder.TargetSystem.MERCURY_ONLY).invoke();
+                LibraryConstructionJaxbBuilder.TargetSystem.MERCURY_ONLY,
+                Arrays.asList(Pair.of("KAPA Reagent Box", "0009753252")),
+                Arrays.asList(Pair.of("PEG", "0009753352"),
+                        Pair.of("70% Ethanol", "LCEtohTest"),
+                        Pair.of("EB", "0009753452"),
+                        Pair.of("SPRI", "LCSpriTest")),
+                Arrays.asList(Pair.of("KAPA Amp Kit", "0009753250"))
+        ).invoke();
 
         for (BettaLIMSMessage bettaLIMSMessage : libraryConstructionJaxbBuilder.getMessageList()) {
             sendMessage(bettaLIMSMessage, bettaLimsMessageResource, appConfig.getUrl());
@@ -456,8 +463,17 @@ public class BettaLimsMessageResourceTest extends Arquillian {
                 testPrefix, Collections.singletonList(libraryConstructionJaxbBuilder.getPondRegRackBarcode()),
                 Collections.singletonList(libraryConstructionJaxbBuilder.getPondRegTubeBarcodes()),
                 "Bait" + testPrefix, "Bait" + testPrefix,
-                LibraryConstructionJaxbBuilder.TargetSystem.MERCURY_ONLY, IceJaxbBuilder.PlexType.PLEX96)
-                .invoke();
+                LibraryConstructionJaxbBuilder.TargetSystem.MERCURY_ONLY, IceJaxbBuilder.PlexType.PLEX96,
+                new ArrayList<Pair<String, String>>() {{
+                    add(Pair.of("CT3", "0009763452"));
+                    add(Pair.of("Rapid Capture Kit bait", "0009773452"));
+                    add(Pair.of("Rapid Capture Kit Resuspension Buffer", "0009783452"));
+                }},
+                new ArrayList<Pair<String, String>>() {{
+                    add(Pair.of("Dual Index Primers Lot", "0009764452"));
+                    add(Pair.of("Rapid Capture Enrichment Amp Lot Barcode", "0009765452"));
+                }}
+        ).invoke();
         List<ReagentDesign> reagentDesigns = reagentDesignDao.findAll(ReagentDesign.class, 0, 1);
         ReagentDesign baitDesign = null;
         if (reagentDesigns != null && !reagentDesigns.isEmpty()) {
@@ -639,7 +655,14 @@ public class BettaLimsMessageResourceTest extends Arquillian {
                 bettaLimsMessageFactory, testPrefix, shearingJaxbBuilder.getShearCleanPlateBarcode(),
                 LibraryConstructionJaxbBuilder.P_7_INDEX_PLATE_BARCODE,
                 LibraryConstructionJaxbBuilder.P_5_INDEX_PLATE_BARCODE, numPositionsInRack,
-                LibraryConstructionJaxbBuilder.TargetSystem.SQUID_VIA_MERCURY).invoke();
+                LibraryConstructionJaxbBuilder.TargetSystem.SQUID_VIA_MERCURY,
+                Arrays.asList(Pair.of("KAPA Reagent Box", "0009753252")),
+                Arrays.asList(Pair.of("PEG", "0009753352"),
+                        Pair.of("70% Ethanol", "LCEtohTest"),
+                        Pair.of("EB", "0009753452"),
+                        Pair.of("SPRI", "LCSpriTest")),
+                Arrays.asList(Pair.of("KAPA Amp Kit", "0009753250"))
+        ).invoke();
 
         for (BettaLIMSMessage bettaLIMSMessage : libraryConstructionJaxbBuilder.getMessageList()) {
             sendMessage(bettaLIMSMessage, bettalimsMessageResource, testMercuryUrl);
@@ -995,7 +1018,17 @@ public class BettaLimsMessageResourceTest extends Arquillian {
                                             List<List<String>> listPondRegTubeBarcodes) {
         IceJaxbBuilder iceJaxbBuilder = new IceJaxbBuilder(bettaLimsMessageFactory, testPrefixes.get(0),
                 pondRegRackBarcodes, listPondRegTubeBarcodes, "0177198254", "0177198254",
-                LibraryConstructionJaxbBuilder.TargetSystem.MERCURY_ONLY, IceJaxbBuilder.PlexType.PLEX96).invoke();
+                LibraryConstructionJaxbBuilder.TargetSystem.MERCURY_ONLY, IceJaxbBuilder.PlexType.PLEX96,
+                new ArrayList<Pair<String, String>>() {{
+                    add(Pair.of("CT3", "0009763452"));
+                    add(Pair.of("Rapid Capture Kit bait", "0009773452"));
+                    add(Pair.of("Rapid Capture Kit Resuspension Buffer", "0009783452"));
+                }},
+                new ArrayList<Pair<String, String>>() {{
+                    add(Pair.of("Dual Index Primers Lot", "0009764452"));
+                    add(Pair.of("Rapid Capture Enrichment Amp Lot Barcode", "0009765452"));
+                }}
+        ).invoke();
 
         for (BettaLIMSMessage bettaLIMSMessage : iceJaxbBuilder.getMessageList()) {
             sendMessage(bettaLIMSMessage, bettaLimsMessageResource, appConfig.getUrl());
@@ -1062,7 +1095,14 @@ public class BettaLimsMessageResourceTest extends Arquillian {
                 bettaLimsMessageFactory, testPrefix, shearingExExJaxbBuilder.getShearCleanPlateBarcode(),
                 LibraryConstructionJaxbBuilder.P_7_INDEX_PLATE_BARCODE,
                 LibraryConstructionJaxbBuilder.P_5_INDEX_PLATE_BARCODE, BaseEventTest.NUM_POSITIONS_IN_RACK,
-                LibraryConstructionJaxbBuilder.TargetSystem.SQUID_VIA_MERCURY).invoke();
+                LibraryConstructionJaxbBuilder.TargetSystem.SQUID_VIA_MERCURY,
+                Arrays.asList(Pair.of("KAPA Reagent Box", "0009753252")),
+                Arrays.asList(Pair.of("PEG", "0009753352"),
+                        Pair.of("70% Ethanol", "LCEtohTest"),
+                        Pair.of("EB", "0009753452"),
+                        Pair.of("SPRI", "LCSpriTest")),
+                Arrays.asList(Pair.of("KAPA Amp Kit", "0009753250"))
+        ).invoke();
         for (BettaLIMSMessage bettaLIMSMessage : libraryConstructionExExJaxbBuilder.getMessageList()) {
             sendMessage(bettaLIMSMessage, bettaLimsMessageResource, appConfig.getUrl());
         }

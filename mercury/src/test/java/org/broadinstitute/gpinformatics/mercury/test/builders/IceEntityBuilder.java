@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.test.builders;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
@@ -59,7 +60,17 @@ public class IceEntityBuilder {
     public IceEntityBuilder invoke() {
         IceJaxbBuilder iceJaxbBuilder = new IceJaxbBuilder(bettaLimsMessageTestFactory, testPrefix, pondRegRackBarcodes,
                 listPondRegTubeBarcodes, testPrefix + "IceBait1", testPrefix + "IceBait2",
-                LibraryConstructionJaxbBuilder.TargetSystem.SQUID_VIA_MERCURY, plexType).invoke();
+                LibraryConstructionJaxbBuilder.TargetSystem.SQUID_VIA_MERCURY, plexType,
+                new ArrayList<Pair<String, String>>() {{
+                    add(Pair.of("CT3", "0009763452"));
+                    add(Pair.of("Rapid Capture Kit bait", "0009773452"));
+                    add(Pair.of("Rapid Capture Kit Resuspension Buffer", "0009783452"));
+                }},
+                new ArrayList<Pair<String, String>>() {{
+                    add(Pair.of("Dual Index Primers Lot", "0009764452"));
+                    add(Pair.of("Rapid Capture Enrichment Amp Lot Barcode", "0009765452"));
+                }}
+        ).invoke();
         catchEnrichBarcodes = iceJaxbBuilder.getCatchEnrichTubeBarcodes();
 
         Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
