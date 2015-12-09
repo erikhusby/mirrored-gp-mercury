@@ -429,7 +429,7 @@
                     </div>
         <br/>
         <ul id="editable-text"> <li>If you would like to change the value of a PDO for an item in the bucket, click on the value of the PDO in the table and select the new value.</li> </ul>
-        <div class="actionControls">
+        <div class="actionControls" style="margin-bottom: 5px">
             <stripes:submit name="createBatch" value="Create Batch" class="btn bucket-control"/>
             <stripes:submit name="addToBatch" value="Add to Batch" class="btn bucket-control"/>
             <stripes:submit name="removeFromBucket" value="Remove From Bucket" class="btn bucket-control"/>
