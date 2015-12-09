@@ -72,7 +72,7 @@ public class ReagentFixupTest extends Arquillian {
 
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWar(DEV, "prod");
+        return DeploymentBuilder.buildMercuryWar(DEV, "dev");
     }
 
     @Test(enabled = false)
@@ -803,7 +803,7 @@ public class ReagentFixupTest extends Arquillian {
         }
         Assert.assertNotNull(reagent);
         Assert.assertEquals(barcode, reagent.getLot());
-
+        Assert.assertNull(genericReagentDao.findByReagentNameLotExpiration(kitType, barcode, expiration));
         System.out.println("Changing expiration date on reagent id " + reagent.getReagentId() + " to " + expiration);
         reagent.setExpiration(expiration);
         genericReagentDao.persist(new FixupCommentary("GPLIM-3917 fixup incorrect P5 adapter expiration"));
