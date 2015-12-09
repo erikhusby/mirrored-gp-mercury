@@ -40,7 +40,6 @@ import java.io.Serializable;
 import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -49,6 +48,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * Class to describe Athena's view of a Sample. A Sample is identified by a sample Id and
@@ -745,21 +745,21 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         } else {
             StringBuilder riskTypeStringBuilder = new StringBuilder();
 
-            // Multiple risk items need to be consistently sorted
-            String[] sortedNames = new String[riskItems.size()];
+            // Multiple risk items need to be consistently sorted and de-duped
+            Set<String> sortedNames = new TreeSet<>();
 
             int i = 0;
             for (RiskItem riskItem : riskItems) {
-                sortedNames[i++] = riskItem.getRiskCriterion().getType().getLabel();
+                sortedNames.add(riskItem.getRiskCriterion().getType().getLabel());
             }
 
-            Arrays.sort(sortedNames);
-
-            for (int j = 0; j < sortedNames.length; j++ ) {
-                if( j > 0 ) {
+            boolean isFirst = true;
+            for ( String label : sortedNames ) {
+                if( !isFirst ) {
                     riskTypeStringBuilder.append(" AND ");
                 }
-                riskTypeStringBuilder.append(sortedNames[j]);
+                isFirst = false;
+                riskTypeStringBuilder.append(label);
             }
 
             return riskTypeStringBuilder.toString();
