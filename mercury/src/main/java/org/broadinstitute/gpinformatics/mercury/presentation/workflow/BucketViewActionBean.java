@@ -6,7 +6,6 @@ import net.sourceforge.stripes.action.Before;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
-import net.sourceforge.stripes.action.RedirectResolution;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.StreamingResolution;
 import net.sourceforge.stripes.action.UrlBinding;
@@ -69,7 +68,6 @@ public class BucketViewActionBean extends CoreActionBean {
     private static final String NEW_TICKET = "newTicket";
     private static final String REWORK_CONFIRMED_ACTION = "reworkConfirmed";
     private static final String REMOVE_FROM_BUCKET_ACTION = "removeFromBucket";
-    private static final String REMOVE_FROM_BUCKET_CONFIRM_PAGE = "/workflow/remove_from_bucket_confirm.jsp";
     private static final String CONFIRM_REMOVE_FROM_BUCKET_ACTION = "confirmRemoveFromBucket";
     private static final String CHANGE_PDO = "changePdo";
     private static final String FIND_PDO = "findPdo";
@@ -232,22 +230,6 @@ public class BucketViewActionBean extends CoreActionBean {
         LabVessel.loadSampleDataForBuckets(labVessels);
     }
 
-//    @HandlesEvent(ADD_TO_BATCH_ACTION)
-//    public Resolution addToBatch() {
-//        loadReworkVessels();
-//        if (batch == null) {
-//            addValidationError("selectedLcset", String.format("Could not find %s.", selectedLcset));
-//            return viewBucket();
-//        }
-//        String batchName = batch.getJiraTicket().getTicketName();
-//        String link = getLink(batchName);
-//        addMessage(MessageFormat.format("Bucket entries  ''{0}'' has been created.", link));
-//
-//        return viewBucket();
-//
-//        return new ForwardResolution(VIEW_PAGE);
-//    }
-
     public String getConfirmationPageTitle() {
         return String.format("Confirm adding %d new and %d rework entries to %s.",
                 bucketEntryIds.size(), reworkEntryIds.size(), selectedBucket);
@@ -315,22 +297,13 @@ public class BucketViewActionBean extends CoreActionBean {
 
     @HandlesEvent(REMOVE_FROM_BUCKET_ACTION)
     public Resolution removeFromBucket() {
-
         separateEntriesByType();
-
-        return new ForwardResolution(REMOVE_FROM_BUCKET_CONFIRM_PAGE);
-    }
-
-    @HandlesEvent(CONFIRM_REMOVE_FROM_BUCKET_ACTION)
-    public Resolution confirmRemoveFromBucket() {
-        separateEntriesByType();
-
         bucketEjb.removeEntriesByIds(selectedEntryIds, "");
 
         addMessage(String.format("Successfully removed %d sample(s) and %d rework(s) from bucket '%s'.",
                                  bucketEntryIds.size(), reworkEntryIds.size(), selectedBucket));
 
-        return new RedirectResolution(BucketViewActionBean.class, VIEW_ACTION);
+        return viewBucket();
     }
 
     public Set<String> findPotentialPdos() {
