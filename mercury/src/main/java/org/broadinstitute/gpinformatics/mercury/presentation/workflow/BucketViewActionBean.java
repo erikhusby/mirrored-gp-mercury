@@ -66,7 +66,6 @@ public class BucketViewActionBean extends CoreActionBean {
     private static final String ADD_TO_BATCH_ACTION = "addToBatch";
     private static final String CREATE_BATCH_ACTION = "createBatch";
     private static final String CONFIRMATION_PAGE = "/workflow/rework_confirmation.jsp";
-    private static final String BATCH_CONFIRM_PAGE = "/batch/batch_confirm.jsp";
     private static final String EXISTING_TICKET = "existingTicket";
     private static final String NEW_TICKET = "newTicket";
     private static final String REWORK_CONFIRMED_ACTION = "reworkConfirmed";
@@ -292,7 +291,7 @@ public class BucketViewActionBean extends CoreActionBean {
 
         addMessage(MessageFormat.format("Lab batch ''{0}'' has been created.", batch.getJiraTicket().getTicketName()));
 
-        return new ForwardResolution(BATCH_CONFIRM_PAGE);
+        return new ForwardResolution(VIEW_BUCKET_ACTION);
     }
 
     @HandlesEvent(REMOVE_FROM_BUCKET_ACTION)

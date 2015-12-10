@@ -11,12 +11,18 @@
     <style type="text/css">
         td.editable {
             width: 105px !important;
-            height: 78px;
         }
         .editable select {
             width: auto !important;
         }
 
+        .form-horizontal .control-group {
+            margin-bottom: 10px;
+        }
+
+        td.nowrap {
+            white-space: nowrap;
+        }
     </style>
     <script src="${ctxpath}/resources/scripts/jquery.jeditable.mini.js" type="text/javascript"></script>
     <script type="text/javascript">
@@ -177,9 +183,9 @@
                 }
                 var clickedButtonEvent = clickedButton.attr('name');
                 if (clickedButtonEvent == "addToBatch") {
-                    $j(".batch-append").show();
+                    $j(".batch-append").slideDown(200);
                 } else if (clickedButtonEvent == "createBatch") {
-                    $j(".batch-create").show();
+                    $j(".batch-create").slideDown(200);
                 }
 
                 var clickedButtonName = clickedButton.attr("value");
@@ -194,6 +200,14 @@
                         $j(loopButton).hide();
                     }
                 }
+                // hide dataTables filter
+                $j('.dataTables_filter').closest('.row-fluid').hide();
+
+                // hide pdo editable stuff
+                $j('#editable-text').hide();
+                $(".editable").removeClass("editable")
+                $(".icon-pencil").removeClass("icon-pencil")
+
                 if ($j("input[type=checkbox]:checked").length > 0) {
                     $j("input[type=checkbox]").not(":checked").closest("tbody tr").hide()
                 }
@@ -272,8 +286,8 @@
                 "aaSorting": [[1,'asc'], [7,'asc']],
                 "aoColumns":[
                     {"bSortable":false},
-                    {"bSortable":true},
-                    {"bSortable":true},
+                    {"bSortable": true, "sClass": "nowrap"},
+                    {"bSortable": true, "sClass": "nowrap"},
                     {"bSortable":true},
                     {"bSortable":true},
                     {"bSortable":true},
@@ -283,7 +297,7 @@
                     {"bSortable":true},
                     {"bSortable":true, "sType":"date"},
                     {"bSortable":true},
-                    {"bSortable":true},
+                    {"bSortable": true, "sClass": "nowrap"},
                     {"bSortable":true},
                     {"bSortable":true},
                     {"bSortable":true},
@@ -311,22 +325,13 @@
 
             $j("#dueDate").datepicker();
 
-            $j("#lcsetText").blur(function(){
-                var createElements = ["#workflowSelect", "#summary", "#description", "#important", "#dueDate"];
-                if ($j("#lcsetText").val()==$j("#lcsetText").attr('title')) {
-                    for (var i = 0; i < createElements.length; i++) {
-                        $j(createElements[i]).closest(".control-group").show();
-                        $j(createElements[i]).trigger('click');
-                    }
-                    $j("[name='createBatch']").prop('disabled', false);
-                } else {
-                    for (var i = 0; i < createElements.length; i++) {
-                        $j(createElements[i]).closest(".control-group").hide();
-                    }
-                    $j("[name='createBatch']").prop('disabled', true);
-                    $j("[name='addToBatch']").prop('disabled', false);
-                }
-            });
+            $j("input[name='selectedEntryIds'], .bucket-checkAll").change(function () {
+                            if ($j("input[name='selectedEntryIds']:checked").length == 0) {
+                                $j(".actionControls").find("input").attr("disabled", "disabled")
+                            } else {
+                                $j(".actionControls").find("input").removeAttr("disabled");
+                            }
+                        });
 
             $j("#watchers").tokenInput(
                     "${ctxpath}/workflow/bucketView.action?watchersAutoComplete=", {
@@ -342,7 +347,7 @@
 </stripes:layout-component>
 
 <stripes:layout-component name="content">
-    <stripes:form id="bucketForm" class="form-horizontal" beanclass="${actionBean.class}">
+    <stripes:form style="margin-bottom: 10px" id="bucketForm" beanclass="${actionBean.class}">
         <div class="form-horizontal">
             <div class="control-group">
                 <stripes:label for="bucketselect" name="Select Bucket" class="control-label"/>
@@ -429,10 +434,11 @@
                     </div>
         <br/>
         <ul id="editable-text"> <li>If you would like to change the value of a PDO for an item in the bucket, click on the value of the PDO in the table and select the new value.</li> </ul>
-        <div class="actionControls" style="margin-bottom: 5px">
-            <stripes:submit name="createBatch" value="Create Batch" class="btn bucket-control"/>
-            <stripes:submit name="addToBatch" value="Add to Batch" class="btn bucket-control"/>
-            <stripes:submit name="removeFromBucket" value="Remove From Bucket" class="btn bucket-control"/>
+        <div class="actionControls" style="margin-bottom: 20px">
+            <stripes:submit name="createBatch" value="Create Batch" class="btn bucket-control" disabled="true"/>
+            <stripes:submit name="addToBatch" value="Add to Batch" class="btn bucket-control" disabled="true"/>
+            <stripes:submit name="removeFromBucket" value="Remove From Bucket" class="btn bucket-control"
+                            disabled="true"/>
                 <a href="javascript:void(0)" id="PasteBarcodesList" class="bucket-control"
                    title="Use a pasted-in list of tube barcodes to select samples">Choose via list of barcodes...</a>
         </div>
