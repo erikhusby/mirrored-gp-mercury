@@ -845,7 +845,7 @@ public abstract class TransferTraverserCriteria {
 
             if( contextVessel != null ) {
                 labEvents.addAll(contextVessel.getInPlaceLabEvents());
-                for (VesselContainer containerVessel : contextVessel.getContainers()) {
+                for (VesselContainer containerVessel : contextVessel.getVesselContainers()) {
                     // In place events may apply to containers
                     labEvents.addAll(containerVessel.getEmbedder().getInPlaceLabEvents());
                 }
