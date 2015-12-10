@@ -43,6 +43,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -735,6 +736,34 @@ public class ReagentFixupTest extends Arquillian {
         genericReagentDao.flush();
         utx.commit();
 
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim3917date() throws Exception {
+        userBean.loginOSUser();
+
+        // Replaces wrong expiration for P5 Indexed Adapter Plate reagent on event 1121392
+        LabEvent labEvent = genericReagentDao.findById(LabEvent.class, 1121392L);
+        Assert.assertNotNull(labEvent);
+
+        String kitType = "P5 Indexed Adapter Plate";
+        String barcode = "000001818323";
+        Date expiration = new GregorianCalendar(2016, Calendar.MAY, 21).getTime();
+
+        Reagent reagent = null;
+        for (LabEventReagent labEventReagent : labEvent.getLabEventReagents()) {
+            if (labEventReagent.getReagent().getName().equals(kitType)) {
+                Assert.assertNull(reagent);
+                reagent = labEventReagent.getReagent();
+            }
+        }
+        Assert.assertNotNull(reagent);
+        Assert.assertEquals(barcode, reagent.getLot());
+        Assert.assertNull(genericReagentDao.findByReagentNameLotExpiration(kitType, barcode, expiration));
+        System.out.println("Changing expiration date on reagent id " + reagent.getReagentId() + " to " + expiration);
+        reagent.setExpiration(expiration);
+        genericReagentDao.persist(new FixupCommentary("GPLIM-3917 fixup incorrect P5 adapter expiration"));
+        genericReagentDao.flush();
     }
 
     private void addReagentsToEvents(String[] bravoLogData, String reagentName) throws Exception {

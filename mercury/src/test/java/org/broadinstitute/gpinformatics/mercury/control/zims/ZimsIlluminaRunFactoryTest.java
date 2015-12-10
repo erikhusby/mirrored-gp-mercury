@@ -143,7 +143,7 @@ public class ZimsIlluminaRunFactoryTest {
         testProduct = new Product("Test Product", new ProductFamily("Test Product Family"), "Test product",
                                           "P-EX-0011", new Date(), new Date(), 0, 0, 0, 0, "Test samples only", "None",
                                           true, Workflow.AGILENT_EXOME_EXPRESS, false, "agg type");
-        testProduct.setAnalysisTypeKey("Resequencing");
+        testProduct.setAnalysisTypeKey("HybridSelection.Resequencing");
 
         zimsIlluminaRunFactory = new ZimsIlluminaRunFactory(mockSampleDataFetcher, mockControlDao,
                 new SequencingTemplateFactory(), productOrderDao, mockResearchProjectDao, crspPipelineUtils);
