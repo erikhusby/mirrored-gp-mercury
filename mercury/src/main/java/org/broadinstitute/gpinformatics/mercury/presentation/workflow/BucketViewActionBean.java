@@ -140,6 +140,10 @@ public class BucketViewActionBean extends CoreActionBean {
             }
         }
         mapBucketToWorkflows = bucketWorkflows.asMap();
+    }
+
+    @Before(stages = LifecycleStage.ResolutionExecution)
+    public void updateBucketCounts() {
         mapBucketToBucketEntryCount = initBucketCountsMap(bucketEntryDao.getBucketCounts());
     }
 
