@@ -12,9 +12,6 @@
         .editable {
             white-space: nowrap;
         }
-        /*.editable select {*/
-            /*width: auto !important;*/
-        /*}*/
 
         .form-horizontal .control-group {
             margin-bottom: 10px;
@@ -165,6 +162,15 @@
             });
 
             hideBarcodeEntryDialog();
+        }
+
+        // Enable or disable the form buttons when bucket entries are selected or deselected.
+        function showOrHideControls() {
+            if ($j("input[name='selectedEntryIds']:checked").length == 0) {
+                $j(".actionControls").find("input").attr("disabled", "disabled")
+            } else {
+                $j(".actionControls").find("input").removeAttr("disabled");
+            }
         }
 
         function setupBucketEvents() {
@@ -340,14 +346,8 @@
 
             $j("#dueDate").datepicker();
 
-            // Enable or disable the form buttons when bucket entries are selected or deselected.
-            $j("input[name='selectedEntryIds'], .bucket-checkAll").change(function () {
-                if ($j("input[name='selectedEntryIds']:checked").length == 0) {
-                    $j(".actionControls").find("input").attr("disabled", "disabled")
-                } else {
-                    $j(".actionControls").find("input").removeAttr("disabled");
-                }
-            });
+            showOrHideControls();
+            $j("input[name='selectedEntryIds'], .bucket-checkAll").change(showOrHideControls);
 
             $j("#watchers").tokenInput(
                     "${ctxpath}/workflow/bucketView.action?watchersAutoComplete=", {
@@ -469,9 +469,9 @@
                 <th width="50">Sample Name</th>
                 <th>Material Type</th>
                 <th>PDO</th>
-                <th width="300">PDO Name</th>
-                <th width="200">PDO Owner</th>
-                <th>Batch Name</th>
+                <th>PDO Name</th>
+                <th>PDO Owner</th>
+                <th style="min-width: 50px">Batch Name</th>
                 <th>Workflow</th>
                 <th>Product</th>
                 <th>Add-ons</th>
@@ -516,12 +516,8 @@
                             ${actionBean.getUserFullName(entry.productOrder.createdBy)}
                     </td>
                     <td>
-                        <c:forEach items="${entry.labVessel.nearestWorkflowLabBatches}" var="batch"
-                                   varStatus="stat">
-
-                            ${batch.businessKey}
-                            <c:if test="${!stat.last}">&nbsp;</c:if></c:forEach>
-
+                        <c:forEach items="${entry.labVessel.nearestWorkflowLabBatches}" var="batch" varStatus="stat">
+                            ${actionBean.getLink(batch.businessKey)} <c:if test="${!stat.last}">&nbsp;</c:if></c:forEach>
                     </td>
                     <td>
                         <div class="ellipsis" style="max-width: 250px;">

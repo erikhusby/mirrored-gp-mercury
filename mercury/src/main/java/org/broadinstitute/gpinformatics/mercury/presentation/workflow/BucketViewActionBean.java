@@ -233,15 +233,21 @@ public class BucketViewActionBean extends CoreActionBean {
         LabVessel.loadSampleDataForBuckets(labVessels);
     }
 
-    @HandlesEvent(ADD_TO_BATCH_ACTION)
-    public Resolution addToBatch() {
-        loadReworkVessels();
-        if (batch == null) {
-            addValidationError("selectedLcset", String.format("Could not find %s.", selectedLcset));
-            return viewBucket();
-        }
-        return new ForwardResolution(CONFIRMATION_PAGE);
-    }
+//    @HandlesEvent(ADD_TO_BATCH_ACTION)
+//    public Resolution addToBatch() {
+//        loadReworkVessels();
+//        if (batch == null) {
+//            addValidationError("selectedLcset", String.format("Could not find %s.", selectedLcset));
+//            return viewBucket();
+//        }
+//        String batchName = batch.getJiraTicket().getTicketName();
+//        String link = getLink(batchName);
+//        addMessage(MessageFormat.format("Bucket entries  ''{0}'' has been created.", link));
+//
+//        return viewBucket();
+//
+//        return new ForwardResolution(VIEW_PAGE);
+//    }
 
     public String getConfirmationPageTitle() {
         return String.format("Confirm adding %d new and %d rework entries to %s.",
@@ -253,9 +259,10 @@ public class BucketViewActionBean extends CoreActionBean {
         separateEntriesByType();
     }
 
-    @HandlesEvent(REWORK_CONFIRMED_ACTION)
-    public Resolution reworkConfirmed() {
+    @HandlesEvent(ADD_TO_BATCH_ACTION)
+    public Resolution addToBatch() {
         separateEntriesByType();
+
         try {
             labBatchEjb.addToLabBatch(selectedLcset, bucketEntryIds, reworkEntryIds, selectedBucket, this,
                     jiraUserTokenInput.getTokenBusinessKeys());
@@ -264,12 +271,16 @@ public class BucketViewActionBean extends CoreActionBean {
             jiraUserTokenInput.setup();
         } catch (IOException e) {
             addGlobalValidationError("IOException contacting JIRA service." + e.getMessage());
-            return new RedirectResolution(VIEW_PAGE);
+            return new ForwardResolution(VIEW_PAGE);
+        } catch (ValidationException e) {
+            addGlobalValidationError(e.getMessage());
+            return viewBucket();
         }
+
         addMessage(String.format("Successfully added %d %s and %d %s to batch '%s' from bucket '%s'.",
                 bucketEntryIds.size(), Noun.pluralOf("sample", bucketEntryIds.size()),
                 reworkEntryIds.size(), Noun.pluralOf("rework", reworkEntryIds.size()),
-                selectedLcset, selectedBucket));
+                getLink(selectedLcset), selectedBucket));
         return viewBucket();
     }
 
@@ -290,10 +301,17 @@ public class BucketViewActionBean extends CoreActionBean {
             addGlobalValidationError(e.getMessage());
             return view();
         }
+        String batchName = batch.getJiraTicket().getTicketName();
+        String link = getLink(batchName);
+        addMessage(MessageFormat.format("Lab batch ''{0}'' has been created.", link));
 
-        addMessage(MessageFormat.format("Lab batch ''{0}'' has been created.", batch.getJiraTicket().getTicketName()));
+        return viewBucket();
+    }
 
-        return new ForwardResolution(VIEW_BUCKET_ACTION);
+    public String getLink(String batchName) {
+        String jiraUrl = jiraUrl(batchName);;
+        return String.format("<a target='JIRA' title='%s' href='%s' class='external'>%s</a>", batchName, jiraUrl,
+                batchName);
     }
 
     @HandlesEvent(REMOVE_FROM_BUCKET_ACTION)

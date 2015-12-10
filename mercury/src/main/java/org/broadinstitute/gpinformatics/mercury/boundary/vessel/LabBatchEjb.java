@@ -470,8 +470,11 @@ public class LabBatchEjb {
      */
     public void addToLabBatch(String businessKey, List<Long> bucketEntryIds, List<Long> reworkEntries,
                               String bucketName, MessageReporter messageReporter, List<String> watchers)
-            throws IOException {
+            throws IOException, ValidationException {
         LabBatch batch = labBatchDao.findByBusinessKey(businessKey);
+        if (batch == null) {
+            throw new ValidationException(String.format("Batch '%s' does not exist.", businessKey));
+        }
         Set<String> pdoKeys = new HashSet<>();
         StringBuilder commentString = new StringBuilder();
         Set<String> bucketDefNames = new HashSet<>();
