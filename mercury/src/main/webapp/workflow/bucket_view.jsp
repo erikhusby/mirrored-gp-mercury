@@ -9,12 +9,12 @@
 <stripes:layout-render name="/layout.jsp" pageTitle="Bucket View" sectionTitle="Select Bucket">
 <stripes:layout-component name="extraHead">
     <style type="text/css">
-        td.editable {
-            width: 105px !important;
+        .editable {
+            white-space: nowrap;
         }
-        .editable select {
-            width: auto !important;
-        }
+        /*.editable select {*/
+            /*width: auto !important;*/
+        /*}*/
 
         .form-horizontal .control-group {
             margin-bottom: 10px;
@@ -171,16 +171,24 @@
             $j(".batch-create,.batch-append").hide();
 
             var bucketFormJquery = $j("#bucketEntryForm");
+
+            // record which button in the form was clicked. The click target will be used when the form is submitted.
             bucketFormJquery.click(function(event) {
                 if ($j(event.target).is('[type=submit')) {
                     $j(this).data('clicked', $j(event.target));
                 }
             });
+
+            // update view of data similar to a confirmation page.
             bucketFormJquery.submit(function (event) {
+
+                // retrieve the button that was clicked from the event's data object.
                 var clickedButton = $j(this).data('clicked');
                 if (clickedButton == undefined) {
                     return;
                 }
+
+                // Show form input fields based on which button was clicked.
                 var clickedButtonEvent = clickedButton.attr('name');
                 if (clickedButtonEvent == "addToBatch") {
                     $j(".batch-append").slideDown(200);
@@ -188,11 +196,15 @@
                     $j(".batch-create").slideDown(200);
                 }
 
+                // if the button starts with Confirm, we know they are on the confirmation page now, and the form
+                // should submit as usual.
                 var clickedButtonName = clickedButton.attr("value");
-
                 if (clickedButtonName.startsWith("Confirm") || clickedButton == undefined) {
                     return true;
                 }
+
+                // The bucket-control class is used to indicate which controls are used when creating-updating-deleting
+                // bucket entries. Once we know which button was clicked, we hide the other ones.
                 var buttons = bucketFormJquery.find(".bucket-control");
                 for (var i = 0; i < buttons.length; i++) {
                     loopButton = buttons[i];
@@ -208,11 +220,14 @@
                 $(".editable").removeClass("editable")
                 $(".icon-pencil").removeClass("icon-pencil")
 
+                // Hide the unchecked rows so the user knows what will be included in the request.
                 if ($j("input[type=checkbox]:checked").length > 0) {
                     $j("input[type=checkbox]").not(":checked").closest("tbody tr").hide()
                 }
+
                 clickedButton.attr('value', "Confirm "+clickedButtonName);
 
+                // returning false will prevent the form from being submitted.
                 return false;
             });
         }
@@ -224,9 +239,15 @@
         $j(document).ready(function () {
             initializeBarcodeEntryDialog();
             setupBucketEvents();
+
+            // Hide the input form when there are no bucket entries.
             if (isBucketEmpty()) {
-                $j("bucketEntryForm").hide()
+                $j("bucketEntryForm").hide();
+                $j(".actionControls").hide();
+            } else {
+                $j(".actionControls").show();
             }
+
             var columnsEditable=false;
             <security:authorizeBlock roles="<%= roles(LabManager, PDM, PM, Developer) %>">
                 columnsEditable=true;
@@ -311,12 +332,6 @@
             } else {
                 $j("bucketEntryView_filter").show();
             }
-            if (isBucketEmpty()) {
-                $j("bucketEntryForm").hide();
-                $j(".actionControls").hide();
-            } else {
-                $j(".actionControls").show();
-            }
 
             $j('.bucket-checkbox').enableCheckboxRangeSelection({
                 checkAllClass:'bucket-checkAll',
@@ -325,13 +340,14 @@
 
             $j("#dueDate").datepicker();
 
+            // Enable or disable the form buttons when bucket entries are selected or deselected.
             $j("input[name='selectedEntryIds'], .bucket-checkAll").change(function () {
-                            if ($j("input[name='selectedEntryIds']:checked").length == 0) {
-                                $j(".actionControls").find("input").attr("disabled", "disabled")
-                            } else {
-                                $j(".actionControls").find("input").removeAttr("disabled");
-                            }
-                        });
+                if ($j("input[name='selectedEntryIds']:checked").length == 0) {
+                    $j(".actionControls").find("input").attr("disabled", "disabled")
+                } else {
+                    $j(".actionControls").find("input").removeAttr("disabled");
+                }
+            });
 
             $j("#watchers").tokenInput(
                     "${ctxpath}/workflow/bucketView.action?watchersAutoComplete=", {
@@ -445,10 +461,10 @@
         <table id="bucketEntryView" class="bucket-checkbox table simple">
             <thead>
             <tr>
-                    <th width="10" class="bucket-control">
-                        <input type="checkbox" class="bucket-checkAll"/>
-                        <span id="count" class="bucket-checkedCount"></span>
-                    </th>
+                <th width="10" class="bucket-control">
+                    <input type="checkbox" class="bucket-checkAll"/>
+                    <span id="count" class="bucket-checkedCount"></span>
+                </th>
                 <th width="60">Vessel Name</th>
                 <th width="50">Sample Name</th>
                 <th>Material Type</th>
@@ -470,30 +486,28 @@
             <tbody>
             <c:forEach items="${actionBean.collectiveEntries}" var="entry">
                 <tr id="${entry.bucketEntryId}" data-vessel-label="${entry.labVessel.label}">
-                        <td class="bucket-control">
-                            <stripes:checkbox class="bucket-checkbox" name="selectedEntryIds" value="${entry.bucketEntryId}"/>
-                        </td>
+                    <td class="bucket-control">
+                        <stripes:checkbox class="bucket-checkbox" name="selectedEntryIds"
+                                          value="${entry.bucketEntryId}"/>
+                    </td>
                     <td>
                         <a href="${ctxpath}/search/vessel.action?vesselSearch=&searchKey=${entry.labVessel.label}">
                                 ${entry.labVessel.label}
                         </a></td>
 
                     <td>
-                        <c:forEach items="${entry.labVessel.mercurySamples}"
-                                   var="mercurySample"
-                                   varStatus="stat">
+                        <c:forEach items="${entry.labVessel.mercurySamples}" var="mercurySample" varStatus="stat">
                             <a href="${ctxpath}/search/sample.action?sampleSearch=&searchKey=${mercurySample.sampleKey}">
-                                    ${mercurySample.sampleKey}
-                            </a>
-
+                                    ${mercurySample.sampleKey}</a>
                             <c:if test="${!stat.last}">&nbsp;</c:if>
                         </c:forEach>
                     </td>
                     <td class="ellipsis">
-                        ${entry.labVessel.latestMaterialType.displayName}
+                            ${entry.labVessel.latestMaterialType.displayName}
                     </td>
-                    <td class="editable"><span class="ellipsis">${entry.productOrder.businessKey}</span><span style="display: none;"
-                                                                                           class="icon-pencil"></span>
+                    <td class="editable"><span class="ellipsis">${entry.productOrder.businessKey}</span><span
+                            style="display: none;"
+                            class="icon-pencil"></span>
                     </td>
                     <td>
                         <div class="ellipsis" style="width: 300px">${entry.productOrder.title}</div>
@@ -511,7 +525,7 @@
                     </td>
                     <td>
                         <div class="ellipsis" style="max-width: 250px;">
-                            ${mercuryStatic:join(entry.workflowNames, "<br/>")}
+                                ${mercuryStatic:join(entry.workflowNames, "<br/>")}
                         </div>
                     </td>
                     <td>
@@ -519,7 +533,7 @@
                     </td>
                     <td>
                         <div class="ellipsis" style="max-width: 250px;">
-                            ${entry.productOrder.getAddOnList("<br/>")}
+                                ${entry.productOrder.getAddOnList("<br/>")}
                         </div>
                     </td>
                     <td class="ellipsis">
