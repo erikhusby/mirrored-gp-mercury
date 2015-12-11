@@ -109,11 +109,12 @@
                         // todo does not uptick the # in the upper left hand corner of the datatable,
                         // click() does not work either
                         // todo event handler for enter
-                        $j('[data-vessel-label="' + barcode + '"]>>input[type="checkbox"]').prop('checked',true);
+                        $j('[data-vessel-label="' + barcode + '"]>>:checkbox').prop('checked', true);
                     }
                 }
+                showOrHideControls();
                 dialog.dialog("close");
-                alert("Successfully chose " + splitBarcodes.length + " bucket entries");
+                addSuccessMessage(splitBarcodes.length + " bucket entries successfully chosen.");
             }
             else {
                 if (hasAmbiguousBucketEntryErrors) {
@@ -125,6 +126,11 @@
             }
         }
 
+        function addSuccessMessage(message) {
+            var messageBoxJquery = $j("div.alert-success");
+            messageBoxJquery.find("ul").append("<li>" + message + "</li>");
+            messageBoxJquery.show();
+        }
 
         function hideBarcodeEntryDialog() {
             $j('#BarcodeErrors').hide();
@@ -174,8 +180,6 @@
         }
 
         function setupBucketEvents() {
-            $j(".batch-create,.batch-append").hide();
-
             var bucketFormJquery = $j("#bucketEntryForm");
 
             // record which button in the form was clicked. The click target will be used when the form is submitted.
@@ -205,7 +209,7 @@
                 // if the button starts with Confirm, we know they are on the confirmation page now, and the form
                 // should submit as usual.
                 var clickedButtonName = clickedButton.attr("value");
-                if (clickedButtonName.startsWith("Confirm") || clickedButton == undefined) {
+                if (clickedButtonName.startsWith("Confirm")) {
                     return true;
                 }
 
@@ -216,21 +220,24 @@
                     loopButton = buttons[i];
                     if (loopButton.value != clickedButtonName) {
                         $j(loopButton).hide();
+                    } else {
+                        $j(loopButton).show();
                     }
                 }
+                $j("#cancel").show();
+
                 // hide dataTables filter
                 $j('.dataTables_filter').closest('.row-fluid').hide();
 
                 // hide pdo editable stuff
                 $j('#editable-text').hide();
-                $(".editable").removeClass("editable")
-                $(".icon-pencil").removeClass("icon-pencil")
+                $(".editable").removeClass("editable");
+                $(".icon-pencil").removeClass("icon-pencil");
 
                 // Hide the unchecked rows so the user knows what will be included in the request.
                 if ($j("input[type=checkbox]:checked").length > 0) {
-                    $j("input[type=checkbox]").not(":checked").closest("tbody tr").hide()
+                    $j("input[type=checkbox]").not(":checked").closest("tbody tr").hide();
                 }
-
                 clickedButton.attr('value', "Confirm "+clickedButtonName);
 
                 // returning false will prevent the form from being submitted.
@@ -363,6 +370,10 @@
 </stripes:layout-component>
 
 <stripes:layout-component name="content">
+    <div class="alert alert-success" style="margin-left:20%;margin-right:20%;display:none;">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        <ul></ul>
+    </div>
     <stripes:form style="margin-bottom: 10px" id="bucketForm" beanclass="${actionBean.class}">
         <div class="form-horizontal">
             <div class="control-group">
@@ -384,7 +395,7 @@
     <stripes:form beanclass="${actionBean.class.name}" id="bucketEntryForm" class="form-horizontal">
         <div class="form-horizontal">
                 <stripes:hidden name="selectedBucket" value="${actionBean.selectedBucket}"/>
-                        <div class="control-group batch-create">
+            <div class="control-group batch-create" style="display: none;">
                             <stripes:label for="workflowSelect" name="Select Workflow" class="control-label"/>
                             <div class="controls">
                                 <stripes:select id="workflowSelect" name="selectedWorkflow">
@@ -393,14 +404,14 @@
                                 </stripes:select>
                             </div>
                         </div>
-                        <div class="control-group batch-append">
+            <div class="control-group batch-append" style="display: none;">
                             <stripes:label for="lcsetText" name="Batch Name" class="control-label"/>
                             <div class="controls">
                                 <stripes:text id="lcsetText" class="defaultText" name="selectedLcset"
                                               title="Enter if you are adding to an existing batch"/>
                             </div>
                         </div>
-                        <div class="control-group batch-create">
+            <div class="control-group batch-create" style="display: none;">
                             <stripes:label for="summary" name="Summary" class="control-label"/>
                             <div class="controls">
                                 <stripes:text name="summary" class="defaultText"
@@ -409,7 +420,7 @@
                             </div>
                         </div>
 
-                        <div class="control-group batch-create">
+            <div class="control-group batch-create" style="display: none;">
                             <stripes:label for="description" name="Description" class="control-label"/>
                             <div class="controls">
                                 <stripes:textarea name="description" class="defaultText"
@@ -418,7 +429,7 @@
                             </div>
                         </div>
 
-                        <div class="control-group batch-create" >
+            <div class="control-group batch-create" style="display: none;">
                             <stripes:label for="important" name="Important Information"
                                            class="control-label"/>
                             <div class="controls">
@@ -429,7 +440,7 @@
                             </div>
                         </div>
 
-                        <div class="control-group batch-create">
+            <div class="control-group batch-create" style="display: none;">
                             <stripes:label for="dueDate" name="Due Date" class="control-label"/>
                             <div class="controls">
                                 <stripes:text id="dueDate" name="dueDate" class="defaultText"
@@ -440,7 +451,7 @@
                                         dateStyle="short"/></stripes:text>
                             </div>
                         </div>
-                        <div class="control-group batch-create batch-append">
+            <div class="control-group batch-create batch-append" style="display: none;">
                             <stripes:label for="watchers" name="Watchers" class="control-label"/>
                             <div class="controls">
                                 <stripes:text id="watchers" name="jiraUserTokenInput.listOfKeys" class="defaultText"
@@ -455,8 +466,9 @@
             <stripes:submit name="addToBatch" value="Add to Batch" class="btn bucket-control" disabled="true"/>
             <stripes:submit name="removeFromBucket" value="Remove From Bucket" class="btn bucket-control"
                             disabled="true"/>
-                <a href="javascript:void(0)" id="PasteBarcodesList" class="bucket-control"
-                   title="Use a pasted-in list of tube barcodes to select samples">Choose via list of barcodes...</a>
+            <a href="javascript:void(0)" id="PasteBarcodesList" class="bucket-control"
+               title="Use a pasted-in list of tube barcodes to select samples">Choose via list of barcodes...</a>
+            <a href="#" id="cancel" onClick="submitBucket()" style="display: none;">Cancel</a>
         </div>
         <table id="bucketEntryView" class="bucket-checkbox table simple">
             <thead>
