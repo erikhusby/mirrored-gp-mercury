@@ -183,7 +183,7 @@
             var bucketFormJquery = $j("#bucketEntryForm");
 
             // record which button in the form was clicked. The click target will be used when the form is submitted.
-            bucketFormJquery.click(function(event) {
+            bucketFormJquery.click(function (event) {
                 if ($j(event.target).is('[type=submit')) {
                     $j(this).data('clicked', $j(event.target));
                 }
@@ -212,9 +212,10 @@
                 if (clickedButtonName.startsWith("Confirm")) {
                     return true;
                 }
+                // The page is now being set up as a confirmation screen.
 
-                // The bucket-control class is used to indicate which controls are used when creating-updating-deleting
-                // bucket entries. Once we know which button was clicked, we hide the other ones.
+                // The bucket-control class is used to indicate which controls are visible when creating, updating
+                // or deleting bucket entries. Once we know which button was clicked, we hide the other ones.
                 var buttons = bucketFormJquery.find(".bucket-control");
                 for (var i = 0; i < buttons.length; i++) {
                     loopButton = buttons[i];
@@ -238,16 +239,12 @@
                 if ($j("input[type=checkbox]:checked").length > 0) {
                     $j("input[type=checkbox]").not(":checked").closest("tbody tr").hide();
                 }
-                clickedButton.attr('value', "Confirm "+clickedButtonName);
+                clickedButton.attr('value', "Confirm " + clickedButtonName);
 
-                // returning false will prevent the form from being submitted.
+                // Since we are in 'Confirmation' mode, we want to prevent the form from submitting and return false.
                 return false;
             });
         }
-
-
-
-
 
         $j(document).ready(function () {
             initializeBarcodeEntryDialog();
