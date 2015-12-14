@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.test.builders;
 
-import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
@@ -80,7 +80,7 @@ public class CrspRiboPlatingEntityBuilder {
     public CrspRiboPlatingEntityBuilder invoke() {
         CrspRiboPlatingJaxbBuilder crspRiboPlatingJaxbBuilder = new CrspRiboPlatingJaxbBuilder(rackBarcode,
                 new ArrayList<>(mapBarcodeToTube.keySet()), testPrefix, bettaLimsMessageTestFactory,
-                Pair.of("RiboGreen", "1234-RiboGreen")).invoke();
+                Triple.of("RiboGreen", "1234-RiboGreen", 1)).invoke();
 
         Map<String, LabVessel> mapBarcodeToVessel = new LinkedHashMap<>();
         mapBarcodeToVessel.putAll(mapBarcodeToTube);

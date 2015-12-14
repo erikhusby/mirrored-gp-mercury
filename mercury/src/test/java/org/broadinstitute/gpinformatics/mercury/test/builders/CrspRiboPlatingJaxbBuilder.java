@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.test.builders;
 
-import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
@@ -11,7 +11,6 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
 
@@ -36,16 +35,16 @@ public class CrspRiboPlatingJaxbBuilder {
     private String polyAAliquotRackBarcode;
     private PlateTransferEventType polyATSAliquot;
     private PlateEventType polyASpikeJaxb;
-    private Pair<String, String> reagentTypeAndLot;
+    private Triple<String, String, Integer> reagentTypeLotYearOffset;
 
     public CrspRiboPlatingJaxbBuilder(String rackBarcode, List<String> tubeBarcodes, String testPrefix,
                                       BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
-                                      Pair<String, String> reagentTypeAndLot) {
+                                      Triple<String, String, Integer> reagentTypeLotYearOffset) {
         this.rackBarcode = rackBarcode;
         this.tubeBarcodes = tubeBarcodes;
         this.testPrefix = testPrefix;
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
-        this.reagentTypeAndLot = reagentTypeAndLot;
+        this.reagentTypeLotYearOffset = reagentTypeLotYearOffset;
     }
 
     public String getRackBarcode() {
@@ -163,13 +162,12 @@ public class CrspRiboPlatingJaxbBuilder {
         riboMicrofluorEventJaxbB1.getPlate().setPhysType("Eppendorf384");
         bettaLimsMessageTestFactory.addMessage(messageList, riboMicrofluorEventJaxbA2, riboMicrofluorEventJaxbB1);
 
-        GregorianCalendar gregorianCalendar = new GregorianCalendar();
-        gregorianCalendar.add(Calendar.MONTH, 6);
-        Date expiration = gregorianCalendar.getTime();
+        GregorianCalendar reagentExpiration = new GregorianCalendar();
+        reagentExpiration.add(Calendar.YEAR, reagentTypeLotYearOffset.getRight());
 
         riboBufferAdditionJaxb = bettaLimsMessageTestFactory.buildPlateEvent("RiboBufferAddition",
                 riboMicrofluorPlateBarcode, Arrays.asList(new BettaLimsMessageTestFactory.ReagentDto(
-                        reagentTypeAndLot.getLeft(), reagentTypeAndLot.getRight(), expiration)));
+                        reagentTypeLotYearOffset.getLeft(), reagentTypeLotYearOffset.getMiddle(), reagentExpiration.getTime())));
 
         bettaLimsMessageTestFactory.addMessage(messageList, riboBufferAdditionJaxb);
 

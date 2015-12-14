@@ -5,6 +5,7 @@ import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
@@ -95,12 +96,10 @@ public class ExomeExpressIntegrationTest {
                     bettaLimsMessageTestFactory, testSuffix, shearingJaxbBuilder.getShearCleanPlateBarcode(),
                     "000002453323", null, sampleBarcodeMap.size(),
                     LibraryConstructionJaxbBuilder.TargetSystem.SQUID_VIA_MERCURY,
-                    Arrays.asList(Pair.of("KAPA Reagent Box", "0009753252")),
-                    Arrays.asList(Pair.of("PEG", "0009753352"),
-                            Pair.of("70% Ethanol", "LCEtohTest"),
-                            Pair.of("EB", "0009753452"),
-                            Pair.of("SPRI", "LCSpriTest")),
-                    Arrays.asList(Pair.of("KAPA Amp Kit", "0009753250"))
+                    Arrays.asList(Triple.of("KAPA Reagent Box", "0009753252", 1)),
+                    Arrays.asList(Triple.of("PEG", "0009753352", 2), Triple.of("70% Ethanol", "LCEtohTest", 3),
+                            Triple.of("EB", "0009753452", 4), Triple.of("SPRI", "LCSpriTest", 5)),
+                    Arrays.asList(Triple.of("KAPA Amp Kit", "0009753250", 6))
             ).invoke();
 
             for (BettaLIMSMessage bettaLIMSMessage : libraryConstructionJaxbBuilder.getMessageList()) {

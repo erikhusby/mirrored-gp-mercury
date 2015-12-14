@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.test.builders;
 
-import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
@@ -47,9 +47,9 @@ public class LibraryConstructionJaxbBuilder {
     private PlateEventType postIdxAdapterLigationThermoCyclerLoadedJaxb;
     private PlateEventType postPondEnrichmentThermoCyclerLoadedJaxb;
     private final List<BettaLIMSMessage> messageList = new ArrayList<>();
-    private final List<Pair<String, String>> endRepairReagents;
-    private final List<Pair<String, String>> endRepairCleanupReagents;
-    private final List<Pair<String, String>> pondEnrichmentReagents;
+    private final List<Triple<String, String, Integer>> endRepairReagents;
+    private final List<Triple<String, String, Integer>> endRepairCleanupReagents;
+    private final List<Triple<String, String, Integer>> pondEnrichmentReagents;
 
     public enum TargetSystem {
         /** Messages that might be routed to Squid must have pre-registered lab machines and reagent kit types. */
@@ -61,9 +61,9 @@ public class LibraryConstructionJaxbBuilder {
     public LibraryConstructionJaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory, String testPrefix,
                                           String shearCleanPlateBarcode, String p7IndexPlateBarcode,
                                           String p5IndexPlateBarcode, int numSamples, TargetSystem targetSystem,
-                                          List<Pair<String, String>> endRepairReagents,
-                                          List<Pair<String, String>> endRepairCleanupReagents,
-                                          List<Pair<String, String>> pondEnrichmentReagents) {
+                                          List<Triple<String, String, Integer>> endRepairReagents,
+                                          List<Triple<String, String, Integer>> endRepairCleanupReagents,
+                                          List<Triple<String, String, Integer>> pondEnrichmentReagents) {
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
         this.testPrefix = testPrefix;
         this.shearCleanPlateBarcode = shearCleanPlateBarcode;

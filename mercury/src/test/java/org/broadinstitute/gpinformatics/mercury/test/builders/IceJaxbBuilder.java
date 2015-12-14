@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.test.builders;
 
-import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.MetadataType;
@@ -13,10 +13,7 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collections;
-import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.List;
 
 /**
@@ -76,14 +73,14 @@ public class IceJaxbBuilder {
     private PlateTransferEventType iceCatchPico1;
     private PlateTransferEventType iceCatchPico2;
     private PlateCherryPickEvent icePoolTest;
-    private List<Pair<String, String>> ice2ndHybReagents;
-    private List<Pair<String, String>> iceCatchEnrichmentSetupReagents;
+    private List<Triple<String, String, Integer>> ice2ndHybReagents;
+    private List<Triple<String, String, Integer>> iceCatchEnrichmentSetupReagents;
 
     public IceJaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory, String testPrefix,
             List<String> pondRegRackBarcodes, List<List<String>> listPondRegTubeBarcodes, String baitTube1Barcode,
             String baitTube2Barcode, LibraryConstructionJaxbBuilder.TargetSystem targetSystem, PlexType plexType,
-            List<Pair<String, String>> ice2ndHybReagentTypeAndLot,
-            List<Pair<String, String>> iceCatchEnrichmentSetupReagentTypeAndLot) {
+            List<Triple<String, String, Integer>> ice2ndHybReagentTypeLotYearOffset,
+            List<Triple<String, String, Integer>> iceCatchEnrichmentSetupReagentTypeLotOffset) {
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
         this.testPrefix = testPrefix;
         this.pondRegRackBarcodes = pondRegRackBarcodes;
@@ -92,8 +89,8 @@ public class IceJaxbBuilder {
         this.baitTube2Barcode = baitTube2Barcode;
         this.targetSystem = targetSystem;
         this.plexType = plexType;
-        this.ice2ndHybReagents = ice2ndHybReagentTypeAndLot;
-        this.iceCatchEnrichmentSetupReagents = iceCatchEnrichmentSetupReagentTypeAndLot;
+        this.ice2ndHybReagents = ice2ndHybReagentTypeLotYearOffset;
+        this.iceCatchEnrichmentSetupReagents = iceCatchEnrichmentSetupReagentTypeLotOffset;
     }
 
     public IceJaxbBuilder invoke() {

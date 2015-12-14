@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.test.dbfree;
 
 import org.apache.commons.lang3.time.DateUtils;
-import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.CherryPickSourceType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
@@ -46,13 +46,6 @@ public class BettaLimsMessageTestFactory {
     public static final String MISEQ_SEQUENCING_STATION_MACHINE_NAME = "SL-MAA";
 
     private long time = System.currentTimeMillis();
-    private static final Date expiration;
-
-    static {
-        GregorianCalendar gregorianCalendar = new GregorianCalendar();
-        gregorianCalendar.add(Calendar.MONTH, 6);
-        expiration = gregorianCalendar.getTime();
-    }
 
     /**
      * True if the mode element in the messages should be set to Mercury. This causes all messages to bypass
@@ -660,12 +653,18 @@ public class BettaLimsMessageTestFactory {
         }
     }
 
-    /** Converts a list of reagent type & lot pairs to a list of ReagentDto */
-    public static List<ReagentDto> reagentList(List<Pair<String, String>> reagentTypeAndLot) {
+    /**
+     * Converts a list of triples to a list of ReagentDto.  Each triple consists of reagent type,
+     * reagent lot, and expiration year offset (added to current year to make an expiration date).
+     */
+    public static List<ReagentDto> reagentList(List<Triple<String, String, Integer>> reagentTypeLotYearOffset) {
         List<ReagentDto> reagentDtos = new ArrayList<>();
-        for (Pair<String, String> typeAndLot : reagentTypeAndLot) {
-            reagentDtos.add(new BettaLimsMessageTestFactory.ReagentDto(typeAndLot.getLeft(),
-                    typeAndLot.getRight(), expiration));
+        for (Triple<String, String, Integer> typeLotYearOffset : reagentTypeLotYearOffset) {
+            GregorianCalendar gregorianCalendar = new GregorianCalendar();
+            gregorianCalendar.add(Calendar.YEAR, typeLotYearOffset.getRight());
+
+            reagentDtos.add(new BettaLimsMessageTestFactory.ReagentDto(typeLotYearOffset.getLeft(),
+                    typeLotYearOffset.getMiddle(), gregorianCalendar.getTime()));
         }
         return reagentDtos;
     }

@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.test.builders;
 
-import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
@@ -9,7 +9,9 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransfe
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReagentType;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
+import java.util.GregorianCalendar;
 import java.util.List;
 
 /**
@@ -36,22 +38,22 @@ public class InfiniumJaxbBuilder {
     private List<PlateEventType> infiniumPostHybridizationHybOvenLoadedJaxbs = new ArrayList<>();
     private List<PlateEventType> infiniumHybChamberLoadedJaxbs = new ArrayList<>();
     private List<PlateEventType> infiniumXStainJaxbs = new ArrayList<>();
-    private List<Pair<String, String>> amplificationReagents;
-    private List<Pair<String, String>> amplificationReagentReagents;
-    private List<Pair<String, String>> fragmentationReagents;
-    private List<Pair<String, String>> precipitationReagents;
-    private List<Pair<String, String>> precipitationIsopropanolReagents;
-    private List<Pair<String, String>> resuspensionReagents;
-    private List<Pair<String, String>> xstainReagents;
+    private List<Triple<String, String, Integer>> amplificationReagents;
+    private List<Triple<String, String, Integer>> amplificationReagentReagents;
+    private List<Triple<String, String, Integer>> fragmentationReagents;
+    private List<Triple<String, String, Integer>> precipitationReagents;
+    private List<Triple<String, String, Integer>> precipitationIsopropanolReagents;
+    private List<Triple<String, String, Integer>> resuspensionReagents;
+    private List<Triple<String, String, Integer>> xstainReagents;
 
     public InfiniumJaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory, String testPrefix,
-                               String sourcePlate, List<Pair<String, String>> amplificationReagents,
-                               List<Pair<String, String>> amplificationReagentReagents,
-                               List<Pair<String, String>> fragmentationReagents,
-                               List<Pair<String, String>> precipitationReagents,
-                               List<Pair<String, String>> precipitationIsopropanolReagents,
-                               List<Pair<String, String>> resuspensionReagents,
-                               List<Pair<String, String>> xstainReagents) {
+                               String sourcePlate, List<Triple<String, String, Integer>> amplificationReagents,
+                               List<Triple<String, String, Integer>> amplificationReagentReagents,
+                               List<Triple<String, String, Integer>> fragmentationReagents,
+                               List<Triple<String, String, Integer>> precipitationReagents,
+                               List<Triple<String, String, Integer>> precipitationIsopropanolReagents,
+                               List<Triple<String, String, Integer>> resuspensionReagents,
+                               List<Triple<String, String, Integer>> xstainReagents) {
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
         this.testPrefix = testPrefix;
         this.sourcePlate = sourcePlate;
@@ -68,10 +70,13 @@ public class InfiniumJaxbBuilder {
         ampPlate = testPrefix + "AmplificationPlate";
         infiniumAmplificationJaxb =
                 bettaLimsMessageTestFactory.buildPlateToPlate("InfiniumAmplification", sourcePlate, ampPlate);
-        for (Pair<String, String> typeAndLot : amplificationReagents) {
+        for (Triple<String, String, Integer> typeLotYearOffset : amplificationReagents) {
             ReagentType reagentType = new ReagentType();
-            reagentType.setKitType(typeAndLot.getLeft());
-            reagentType.setBarcode(typeAndLot.getRight());
+            reagentType.setKitType(typeLotYearOffset.getLeft());
+            reagentType.setBarcode(typeLotYearOffset.getMiddle());
+            GregorianCalendar expiration = new GregorianCalendar();
+            expiration.add(Calendar.YEAR, typeLotYearOffset.getRight());
+            reagentType.setExpiration(expiration.getTime());
             infiniumAmplificationJaxb.getReagent().add(reagentType);
         }
         bettaLimsMessageTestFactory.addMessage(messageList, infiniumAmplificationJaxb);

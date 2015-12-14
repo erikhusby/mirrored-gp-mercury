@@ -8,6 +8,7 @@ import com.sun.jersey.api.client.config.DefaultClientConfig;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
@@ -447,12 +448,10 @@ public class BettaLimsMessageResourceTest extends Arquillian {
                 LibraryConstructionJaxbBuilder.P_7_INDEX_PLATE_BARCODE,
                 LibraryConstructionJaxbBuilder.P_5_INDEX_PLATE_BARCODE, BaseEventTest.NUM_POSITIONS_IN_RACK,
                 LibraryConstructionJaxbBuilder.TargetSystem.MERCURY_ONLY,
-                Arrays.asList(Pair.of("KAPA Reagent Box", "0009753252")),
-                Arrays.asList(Pair.of("PEG", "0009753352"),
-                        Pair.of("70% Ethanol", "LCEtohTest"),
-                        Pair.of("EB", "0009753452"),
-                        Pair.of("SPRI", "LCSpriTest")),
-                Arrays.asList(Pair.of("KAPA Amp Kit", "0009753250"))
+                Arrays.asList(Triple.of("KAPA Reagent Box", "0009753252", 1)),
+                Arrays.asList(Triple.of("PEG", "0009753352", 2), Triple.of("70% Ethanol", "LCEtohTest", 3),
+                        Triple.of("EB", "0009753452", 4), Triple.of("SPRI", "LCSpriTest", 5)),
+                Arrays.asList(Triple.of("KAPA Amp Kit", "0009753250", 6))
         ).invoke();
 
         for (BettaLIMSMessage bettaLIMSMessage : libraryConstructionJaxbBuilder.getMessageList()) {
@@ -464,15 +463,11 @@ public class BettaLimsMessageResourceTest extends Arquillian {
                 Collections.singletonList(libraryConstructionJaxbBuilder.getPondRegTubeBarcodes()),
                 "Bait" + testPrefix, "Bait" + testPrefix,
                 LibraryConstructionJaxbBuilder.TargetSystem.MERCURY_ONLY, IceJaxbBuilder.PlexType.PLEX96,
-                new ArrayList<Pair<String, String>>() {{
-                    add(Pair.of("CT3", "0009763452"));
-                    add(Pair.of("Rapid Capture Kit bait", "0009773452"));
-                    add(Pair.of("Rapid Capture Kit Resuspension Buffer", "0009783452"));
-                }},
-                new ArrayList<Pair<String, String>>() {{
-                    add(Pair.of("Dual Index Primers Lot", "0009764452"));
-                    add(Pair.of("Rapid Capture Enrichment Amp Lot Barcode", "0009765452"));
-                }}
+                Arrays.asList(Triple.of("CT3", "0009763452", 1),
+                        Triple.of("Rapid Capture Kit bait", "0009773452", 2),
+                        Triple.of("Rapid Capture Kit Resuspension Buffer", "0009783452", 3)),
+                Arrays.asList(Triple.of("Dual Index Primers Lot", "0009764452", 4),
+                        Triple.of("Rapid Capture Enrichment Amp Lot Barcode", "0009765452", 5))
         ).invoke();
         List<ReagentDesign> reagentDesigns = reagentDesignDao.findAll(ReagentDesign.class, 0, 1);
         ReagentDesign baitDesign = null;
@@ -656,12 +651,12 @@ public class BettaLimsMessageResourceTest extends Arquillian {
                 LibraryConstructionJaxbBuilder.P_7_INDEX_PLATE_BARCODE,
                 LibraryConstructionJaxbBuilder.P_5_INDEX_PLATE_BARCODE, numPositionsInRack,
                 LibraryConstructionJaxbBuilder.TargetSystem.SQUID_VIA_MERCURY,
-                Arrays.asList(Pair.of("KAPA Reagent Box", "0009753252")),
-                Arrays.asList(Pair.of("PEG", "0009753352"),
-                        Pair.of("70% Ethanol", "LCEtohTest"),
-                        Pair.of("EB", "0009753452"),
-                        Pair.of("SPRI", "LCSpriTest")),
-                Arrays.asList(Pair.of("KAPA Amp Kit", "0009753250"))
+                Arrays.asList(Triple.of("KAPA Reagent Box", "0009753252", 1)),
+                Arrays.asList(Triple.of("PEG", "0009753352", 2),
+                        Triple.of("70% Ethanol", "LCEtohTest", 3),
+                        Triple.of("EB", "0009753452", 4),
+                        Triple.of("SPRI", "LCSpriTest", 5)),
+                Arrays.asList(Triple.of("KAPA Amp Kit", "0009753250", 6))
         ).invoke();
 
         for (BettaLIMSMessage bettaLIMSMessage : libraryConstructionJaxbBuilder.getMessageList()) {
@@ -1019,14 +1014,14 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         IceJaxbBuilder iceJaxbBuilder = new IceJaxbBuilder(bettaLimsMessageFactory, testPrefixes.get(0),
                 pondRegRackBarcodes, listPondRegTubeBarcodes, "0177198254", "0177198254",
                 LibraryConstructionJaxbBuilder.TargetSystem.MERCURY_ONLY, IceJaxbBuilder.PlexType.PLEX96,
-                new ArrayList<Pair<String, String>>() {{
-                    add(Pair.of("CT3", "0009763452"));
-                    add(Pair.of("Rapid Capture Kit bait", "0009773452"));
-                    add(Pair.of("Rapid Capture Kit Resuspension Buffer", "0009783452"));
+                new ArrayList<Triple<String, String, Integer>>() {{
+                    add(Triple.of("CT3", "0009763452", 1));
+                    add(Triple.of("Rapid Capture Kit bait", "0009773452", 2));
+                    add(Triple.of("Rapid Capture Kit Resuspension Buffer", "0009783452", 3));
                 }},
-                new ArrayList<Pair<String, String>>() {{
-                    add(Pair.of("Dual Index Primers Lot", "0009764452"));
-                    add(Pair.of("Rapid Capture Enrichment Amp Lot Barcode", "0009765452"));
+                new ArrayList<Triple<String, String, Integer>>() {{
+                    add(Triple.of("Dual Index Primers Lot", "0009764452", 4));
+                    add(Triple.of("Rapid Capture Enrichment Amp Lot Barcode", "0009765452", 5));
                 }}
         ).invoke();
 
@@ -1096,12 +1091,12 @@ public class BettaLimsMessageResourceTest extends Arquillian {
                 LibraryConstructionJaxbBuilder.P_7_INDEX_PLATE_BARCODE,
                 LibraryConstructionJaxbBuilder.P_5_INDEX_PLATE_BARCODE, BaseEventTest.NUM_POSITIONS_IN_RACK,
                 LibraryConstructionJaxbBuilder.TargetSystem.SQUID_VIA_MERCURY,
-                Arrays.asList(Pair.of("KAPA Reagent Box", "0009753252")),
-                Arrays.asList(Pair.of("PEG", "0009753352"),
-                        Pair.of("70% Ethanol", "LCEtohTest"),
-                        Pair.of("EB", "0009753452"),
-                        Pair.of("SPRI", "LCSpriTest")),
-                Arrays.asList(Pair.of("KAPA Amp Kit", "0009753250"))
+                Arrays.asList(Triple.of("KAPA Reagent Box", "0009753252", 1)),
+                Arrays.asList(Triple.of("PEG", "0009753352", 2),
+                        Triple.of("70% Ethanol", "LCEtohTest", 3),
+                        Triple.of("EB", "0009753452", 4),
+                        Triple.of("SPRI", "LCSpriTest", 5)),
+                Arrays.asList(Triple.of("KAPA Amp Kit", "0009753250", 6))
         ).invoke();
         for (BettaLIMSMessage bettaLIMSMessage : libraryConstructionExExJaxbBuilder.getMessageList()) {
             sendMessage(bettaLIMSMessage, bettaLimsMessageResource, appConfig.getUrl());
