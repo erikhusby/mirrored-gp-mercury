@@ -182,6 +182,18 @@ public class LabBatch {
         createdOn = new Date();
     }
 
+    public LabBatch(@Nonnull String batchName, @Nonnull Map<LabVessel, List<VesselPosition>> starterVesselToLanePosition,
+                    @Nonnull LabBatchType labBatchType, @Nullable BigDecimal concentration,
+                    @Nullable IlluminaFlowcell.FlowcellType flowcellType) {
+        this.batchName = batchName;
+        this.labBatchType = labBatchType;
+        this.flowcellType = flowcellType;
+        for (Map.Entry<LabVessel, List<VesselPosition>> startToPosition : starterVesselToLanePosition.entrySet()) {
+            addLabVessel(startToPosition.getKey(), concentration, startToPosition.getValue());
+        }
+        createdOn = new Date();
+    }
+
     public LabBatch(@Nonnull String batchName, @Nonnull Set<LabVessel> startingBatchLabVessels,
                     @Nonnull LabBatchType labBatchType,
                     String batchDescription, Date dueDate, String important) {
@@ -249,6 +261,16 @@ public class LabBatch {
         LabBatchStartingVessel labBatchStartingVessel = new LabBatchStartingVessel(labVessel, this, concentration);
         startingBatchLabVessels.add(labBatchStartingVessel);
         labVessel.addNonReworkLabBatchStartingVessel(labBatchStartingVessel);
+    }
+
+    public void addLabVessel(@Nonnull LabVessel labVessel, @Nullable BigDecimal concentration,
+                             @Nonnull List<VesselPosition> positions) {
+        for (VesselPosition vesselPosition : positions) {
+            LabBatchStartingVessel labBatchStartingVessel =
+                    new LabBatchStartingVessel(labVessel, this, concentration, vesselPosition);
+            startingBatchLabVessels.add(labBatchStartingVessel);
+            labVessel.addNonReworkLabBatchStartingVessel(labBatchStartingVessel);
+        }
     }
 
     public void addLabVessels(@Nonnull Collection<LabVessel> vessels) {
