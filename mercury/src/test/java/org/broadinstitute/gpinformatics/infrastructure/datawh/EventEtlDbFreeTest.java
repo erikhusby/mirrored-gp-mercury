@@ -177,9 +177,9 @@ public class EventEtlDbFreeTest {
         String expected = etlDateStr + ",F,"
                           + String.valueOf(entityId) + ","
                           + workflowId + "," + processId + ","
-                          + LabEventType.A_BASE.getName() + ",\"\",\"\",\"\",NONE,"
-                          + location + ",\"\",," + ExtractTransform.formatTimestamp(eventDate)
-                          + "," + programName + ",\"\",E";
+                          + LabEventType.A_BASE.getName() + ",,,,NONE,"
+                          + location + ",,," + ExtractTransform.formatTimestamp(eventDate)
+                          + "," + programName + ",,E";
 
         Assert.assertEquals(record, expected, "Record for no-vessel event is not as expected" );
 
