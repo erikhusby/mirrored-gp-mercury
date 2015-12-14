@@ -49,6 +49,7 @@ public class JiraCustomFieldsUtil {
                     LabBatch.TicketFields.SUMMARY.getName(),
                     LabBatch.TicketFields.SEQUENCING_STATION.getName(),
                     LabBatch.TicketFields.BATCH_TYPE.getName(),
+                    LabBatch.TicketFields.LANE_INFO.getName(),
             };
 
     /**

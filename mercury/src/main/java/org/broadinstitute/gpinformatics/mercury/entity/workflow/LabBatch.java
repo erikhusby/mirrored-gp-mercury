@@ -52,6 +52,44 @@ import java.util.TreeMap;
 @Table(schema = "mercury", uniqueConstraints = @UniqueConstraint(columnNames = {"batchName"}))
 public class LabBatch {
 
+    public static class VesselToLanesInfo {
+        private List<VesselPosition> vesselPositions;
+        private BigDecimal concentration;
+        private LabVessel labVessel;
+
+        public VesselToLanesInfo(List<VesselPosition> vesselPositions, BigDecimal concentration,
+                                 LabVessel labVessel) {
+            this.vesselPositions = vesselPositions;
+            this.concentration = concentration;
+            this.labVessel = labVessel;
+        }
+
+        public List<VesselPosition> getVesselPositions() {
+            return vesselPositions;
+        }
+
+        public void setVesselPositions(
+                List<VesselPosition> vesselPositions) {
+            this.vesselPositions = vesselPositions;
+        }
+
+        public BigDecimal getConcentration() {
+            return concentration;
+        }
+
+        public void setConcentration(BigDecimal concentration) {
+            this.concentration = concentration;
+        }
+
+        public LabVessel getLabVessel() {
+            return labVessel;
+        }
+
+        public void setLabVessel(LabVessel labVessel) {
+            this.labVessel = labVessel;
+        }
+    }
+
     public static final Comparator<LabBatch> byDate = new Comparator<LabBatch>() {
         @Override
         public int compare(LabBatch bucketEntryPrime, LabBatch bucketEntrySecond) {
@@ -182,14 +220,14 @@ public class LabBatch {
         createdOn = new Date();
     }
 
-    public LabBatch(@Nonnull String batchName, @Nonnull Map<LabVessel, List<VesselPosition>> starterVesselToLanePosition,
-                    @Nonnull LabBatchType labBatchType, @Nullable BigDecimal concentration,
+    public LabBatch(@Nonnull String batchName, @Nonnull List<VesselToLanesInfo> vesselToLanesInfos,
+                    @Nonnull LabBatchType labBatchType,
                     @Nullable IlluminaFlowcell.FlowcellType flowcellType) {
         this.batchName = batchName;
         this.labBatchType = labBatchType;
         this.flowcellType = flowcellType;
-        for (Map.Entry<LabVessel, List<VesselPosition>> startToPosition : starterVesselToLanePosition.entrySet()) {
-            addLabVessel(startToPosition.getKey(), concentration, startToPosition.getValue());
+        for (VesselToLanesInfo vesselToLanesInfo : vesselToLanesInfos) {
+            addLabVessel(vesselToLanesInfo.getLabVessel(), vesselToLanesInfo.getConcentration(), vesselToLanesInfo.getVesselPositions());
         }
         createdOn = new Date();
     }
@@ -475,7 +513,8 @@ public class LabBatch {
         LIMS_ACTIVITY_STREAM("LIMS Activity Stream", true),
         SUMMARY("Summary", false),
         SEQUENCING_STATION("Sequencing Station", true),
-        MATERIAL_TYPE("BATCH_TYPE", true);
+        MATERIAL_TYPE("BATCH_TYPE", true),
+        LANE_INFO("Lane Info", true);
 
 
         private final String fieldName;

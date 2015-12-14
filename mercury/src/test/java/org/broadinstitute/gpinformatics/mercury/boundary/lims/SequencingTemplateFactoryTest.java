@@ -34,6 +34,7 @@ import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -82,7 +83,8 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
     private LabBatch fctBatchHiSeq2000;
     private LabBatch fctBatchHiSeq4000;
     private BarcodedTube denatureTube4000;
-    private Map<LabVessel, List<VesselPosition>> starterVesselToPosition;
+    private LabBatch.VesselToLanesInfo vesselToLanesInfo;
+    private LabBatch.VesselToLanesInfo vesselToLanesInfo2;
 
     @Override
     @BeforeTest(alwaysRun = true)
@@ -174,18 +176,25 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
 
         denatureTube4000 = qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
 
-        starterVesselToPosition = new HashMap<>();
         VesselPosition[] hiseq4000VesselPositions =
                 IlluminaFlowcell.FlowcellType.HiSeq4000Flowcell.getVesselGeometry().getVesselPositions();
         List<VesselPosition> vesselPositionList = Arrays.asList(hiseq4000VesselPositions);
         List<List<VesselPosition>> partition = Lists.partition(vesselPositionList, hiseq4000VesselPositions.length / 2);
         List<VesselPosition> vesselPositions1 = partition.get(0);
         List<VesselPosition> vesselPositions2 = partition.get(1);
-        starterVesselToPosition.put(denatureTube4000, vesselPositions1);
-        starterVesselToPosition.put(denatureTube2000, vesselPositions2);
+        List<LabBatch.VesselToLanesInfo> vesselToLanesInfos = new ArrayList<>();
 
-        fctBatchHiSeq4000 = new LabBatch(FLOWCELL_4000_TICKET, starterVesselToPosition,
-                LabBatch.LabBatchType.FCT, BigDecimal.valueOf(15.22f), IlluminaFlowcell.FlowcellType.HiSeq4000Flowcell);
+        vesselToLanesInfo = new LabBatch.VesselToLanesInfo(
+                vesselPositions1, BigDecimal.valueOf(16.22f), denatureTube2000);
+
+        vesselToLanesInfo2 = new LabBatch.VesselToLanesInfo(
+                vesselPositions2, BigDecimal.valueOf(12.22f), denatureTube4000);
+
+        vesselToLanesInfos.add(vesselToLanesInfo);
+        vesselToLanesInfos.add(vesselToLanesInfo2);
+
+        fctBatchHiSeq4000 = new LabBatch(FLOWCELL_4000_TICKET, vesselToLanesInfos,
+                LabBatch.LabBatchType.FCT, IlluminaFlowcell.FlowcellType.HiSeq4000Flowcell);
     }
 
     public void testGetSequencingTemplateFromReagentKitPoolTest() {
@@ -379,23 +388,22 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
         Set<String> allLanes = new HashSet<>();
 
         for (SequencingTemplateLaneType lane : template.getLanes()) {
-            boolean foundLabVessel = false;
-            for (Map.Entry<LabVessel, List<VesselPosition>> entry : starterVesselToPosition.entrySet()) {
-                if (entry.getKey().getLabel().equals(lane.getDerivedVesselLabel())) {
-                    foundLabVessel = true;
-                    assertThat(lane.getLoadingConcentration(), is(BigDecimal.valueOf(15.22f)));
-                    boolean foundVesselPosition = false;
-                    for (VesselPosition vesselPosition : entry.getValue()) {
-                        if(vesselPosition.name().equals(lane.getLaneName())) {
-                            allLanes.add(lane.getLaneName());
-                            foundVesselPosition = true;
-                            break;
-                        }
-                    }
-                    assertThat(foundVesselPosition, is(true));
+            LabBatch.VesselToLanesInfo laneInfo = null;
+            if(vesselToLanesInfo.getLabVessel().getLabel().equals(lane.getDerivedVesselLabel())) {
+                laneInfo = vesselToLanesInfo;
+            } else if(vesselToLanesInfo2.getLabVessel().getLabel().equals(lane.getDerivedVesselLabel())) {
+                laneInfo = vesselToLanesInfo2;
+            }
+            assertThat(laneInfo, not(nullValue()));
+            boolean foundVesselPosition = false;
+            for (VesselPosition vesselPosition : laneInfo.getVesselPositions()) {
+                if(vesselPosition.name().equals(lane.getLaneName())) {
+                    allLanes.add(lane.getLaneName());
+                    foundVesselPosition = true;
+                    break;
                 }
             }
-            assertThat(foundLabVessel, is(true));
+            assertThat(foundVesselPosition, is(true));
             assertThat(lane.getLoadingVesselLabel(), equalTo(""));
         }
         for(int i = 1; i <= 8; i++) {
