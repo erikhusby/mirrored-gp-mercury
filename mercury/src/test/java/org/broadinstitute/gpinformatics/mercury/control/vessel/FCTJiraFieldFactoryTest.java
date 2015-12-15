@@ -8,7 +8,6 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.mockito.MockitoAnnotations;
@@ -21,7 +20,6 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -47,10 +45,7 @@ public class FCTJiraFieldFactoryTest {
 
     @BeforeMethod
     public void startUp() throws IOException {
-        MockitoAnnotations.initMocks(this);
-
         jiraFieldDefs = JiraServiceProducer.stubInstance().getCustomFields();
-
     }
 
     public void testLCSetFieldGeneration() throws IOException {

@@ -27,7 +27,13 @@ public class FCTJiraFieldFactory extends AbstractBatchJiraFieldFactory {
     public Collection<CustomField> getCustomFields(Map<String, CustomFieldDefinition> submissionFields) {
         Set<CustomField> customFields = new HashSet<>();
 
-        //TODO not sure if true. At this point we can still by loading old batches
+        //Old FCT may not have vessel position set and won't have lane info
+        for (LabBatchStartingVessel startingVessel : batch.getLabBatchStartingVessels()) {
+            if (startingVessel.getVesselPosition() == null) {
+                return customFields;
+            }
+        }
+
         List<LabBatchStartingVessel> startingVessels = new ArrayList<>(batch.getLabBatchStartingVessels());
         Collections.sort(startingVessels, new Comparator<LabBatchStartingVessel>() {
             @Override
