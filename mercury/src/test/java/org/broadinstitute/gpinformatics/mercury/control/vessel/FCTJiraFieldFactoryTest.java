@@ -48,7 +48,7 @@ public class FCTJiraFieldFactoryTest {
         jiraFieldDefs = JiraServiceProducer.stubInstance().getCustomFields();
     }
 
-    public void testLCSetFieldGeneration() throws IOException {
+    public void testFCTSetFieldGeneration() throws IOException {
         VesselPosition[] hiseq4000VesselPositions =
                 IlluminaFlowcell.FlowcellType.HiSeq4000Flowcell.getVesselGeometry().getVesselPositions();
         List<VesselPosition> vesselPositionList = Arrays.asList(hiseq4000VesselPositions);

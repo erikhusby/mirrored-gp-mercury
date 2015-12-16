@@ -38,9 +38,6 @@ public class FCTJiraFieldFactory extends AbstractBatchJiraFieldFactory {
         Collections.sort(startingVessels, new Comparator<LabBatchStartingVessel>() {
             @Override
             public int compare(LabBatchStartingVessel startingVessel, LabBatchStartingVessel startingVessel2) {
-                if (startingVessel.getVesselPosition() == null || startingVessel2.getVesselPosition() == null) {
-                    throw new RuntimeException("VesselPosition not set on LabBatchStartingVessel");
-                }
                 return startingVessel.getVesselPosition().compareTo(startingVessel2.getVesselPosition());
             }
         });
