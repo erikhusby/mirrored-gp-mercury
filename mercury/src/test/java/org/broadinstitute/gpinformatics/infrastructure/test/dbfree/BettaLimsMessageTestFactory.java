@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.test.dbfree;
 
 import org.apache.commons.lang3.time.DateUtils;
+import org.apache.commons.lang3.tuple.Triple;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.CherryPickSourceType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
@@ -26,8 +27,11 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +46,7 @@ public class BettaLimsMessageTestFactory {
     public static final String MISEQ_SEQUENCING_STATION_MACHINE_NAME = "SL-MAA";
 
     private long time = System.currentTimeMillis();
+
     /**
      * True if the mode element in the messages should be set to Mercury. This causes all messages to bypass
      * routing logic and be processed by Mercury.
@@ -646,5 +651,21 @@ public class BettaLimsMessageTestFactory {
         public String getDestinationWell() {
             return destinationWell;
         }
+    }
+
+    /**
+     * Converts a list of triples to a list of ReagentDto.  Each triple consists of reagent type,
+     * reagent lot, and expiration year offset (added to current year to make an expiration date).
+     */
+    public static List<ReagentDto> reagentList(List<Triple<String, String, Integer>> reagentTypeLotYearOffset) {
+        List<ReagentDto> reagentDtos = new ArrayList<>();
+        for (Triple<String, String, Integer> typeLotYearOffset : reagentTypeLotYearOffset) {
+            GregorianCalendar gregorianCalendar = new GregorianCalendar();
+            gregorianCalendar.add(Calendar.YEAR, typeLotYearOffset.getRight());
+
+            reagentDtos.add(new BettaLimsMessageTestFactory.ReagentDto(typeLotYearOffset.getLeft(),
+                    typeLotYearOffset.getMiddle(), gregorianCalendar.getTime()));
+        }
+        return reagentDtos;
     }
 }
