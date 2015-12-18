@@ -114,7 +114,7 @@
                 }
                 showOrHideControls();
                 dialog.dialog("close");
-                addSuccessMessage(splitBarcodes.length + " bucket entries successfully chosen.");
+                addStripesMessage(splitBarcodes.length + " bucket entries successfully chosen.");
             }
             else {
                 if (hasAmbiguousBucketEntryErrors) {
@@ -126,10 +126,31 @@
             }
         }
 
-        function addSuccessMessage(message) {
-            var messageBoxJquery = $j("div.alert-success");
+        function addStripesMessageDiv(alertType, fieldSelector) {
+            var alertClass = 'alert-' + alertType;
+            var messageBox = $j(document.createElement("div"));
+            messageBox.css({"margin-left": "20%", "margin-right": "20%"});
+            messageBox.addClass("alert").addClass(alertClass);
+            if (fieldSelector != undefined) {
+                $j(fieldSelector).addClass(alertType);
+            }
+            messageBox.append('<button type="button" class="close" data-dismiss="alert">&times;</button>')
+            messageBox.append('<ul></ul>');
+
+
+                $j('.page-body').before(messageBox);
+            return messageBox;
+        }
+
+        function addStripesMessage(message, type, fieldSelector) {
+            if (type == undefined) {
+                type = "success";
+            }
+            var messageBoxJquery = $j("div.alert-" + type);
+            if (messageBoxJquery.length == 0) {
+                messageBoxJquery = addStripesMessageDiv(type, fieldSelector);
+            }
             messageBoxJquery.find("ul").append("<li>" + message + "</li>");
-            messageBoxJquery.show();
         }
 
         function hideBarcodeEntryDialog() {
@@ -153,7 +174,6 @@
                     Cancel: function() {
                         dialog.dialog( "close" );
                     }
-
                 }
             });
 
@@ -179,19 +199,46 @@
             }
         }
 
+        /**
+         *  Find the column index for supplied column header. Table columns are zero based.
+         */
+        function findColumnIndexForHeader(columnHeader) {
+            return $j("#bucketEntryView tr th").filter(function () {
+                return $(this).text() === columnHeader;
+            }).index();
+        }
+
+        function findWorkflowsFromSelectedRows() {
+            var selectedWorkflows = [];
+            var columnIndex = findColumnIndexForHeader("Workflow") + 1;
+            $j("#bucketEntryView tr td input[name='selectedEntryIds']:checked").closest("tr").each(function () {
+                var workflow = $j(this).find("td:nth-child(" + columnIndex + ")").text().trim();
+                if ($j.inArray(workflow, selectedWorkflows) == -1) {
+                    selectedWorkflows.push(workflow);
+                }
+            });
+            return selectedWorkflows;
+        }
+
         function setupBucketEvents() {
             var bucketFormJquery = $j("#bucketEntryForm");
 
             // record which button in the form was clicked. The click target will be used when the form is submitted.
             bucketFormJquery.click(function (event) {
                 if ($j(event.target).is('[type=submit')) {
+                    // Clear any errors that may be displayed.
+                    $j(".alert-error, .error").removeClass(function(index, className){
+                        if ($j(".alert") != undefined){
+                            $j(".alert").remove();
+                        }
+                        $j(this).removeClass(className);
+                    });
                     $j(this).data('clicked', $j(event.target));
                 }
             });
 
             // update view of data similar to a confirmation page.
             bucketFormJquery.submit(function (event) {
-
                 // retrieve the button that was clicked from the event's data object.
                 var clickedButton = $j(this).data('clicked');
                 if (clickedButton == undefined) {
@@ -204,6 +251,18 @@
                     $j(".batch-append").slideDown(200);
                 } else if (clickedButtonEvent == "createBatch") {
                     $j(".batch-create").slideDown(200);
+
+                    // automatically select a workflow, if you can.
+                    var selectedWorkflows = findWorkflowsFromSelectedRows();
+                    if (selectedWorkflows.length == 1) {
+                        $j("#workflowSelect option").filter(function () {
+                            return $(this).text() == selectedWorkflows[0];
+                        }).prop('selected', true);
+                    } else {
+                        var workflowErrorMessage = "Workflow could not be determined automatically, please choose one manually.";
+                        addStripesMessage(workflowErrorMessage, "error", "#workflowSelect");
+                        return false;
+                    }
                 }
 
                 // if the button starts with Confirm, we know they are on the confirmation page now, and the form
@@ -327,6 +386,7 @@
                     {"bSortable":true},
                     {"bSortable":true},
                     {"bSortable":true, "sType":"date"},
+                    {"bSortable": true, "sType": "date"},
                     {"bSortable":true},
                     {"bSortable": true, "sClass": "nowrap"},
                     {"bSortable":true},
@@ -367,10 +427,6 @@
 </stripes:layout-component>
 
 <stripes:layout-component name="content">
-    <div class="alert alert-success" style="margin-left:20%;margin-right:20%;display:none;">
-        <button type="button" class="close" data-dismiss="alert">&times;</button>
-        <ul></ul>
-    </div>
     <stripes:form style="margin-bottom: 10px" id="bucketForm" beanclass="${actionBean.class}">
         <div class="form-horizontal">
             <div class="control-group">
@@ -484,6 +540,7 @@
                 <th>Workflow</th>
                 <th>Product</th>
                 <th>Add-ons</th>
+                <th width="100">Receipt Date</th>
                 <th width="100">Created Date</th>
                 <th>Bucket Entry Type</th>
                 <th>Rework Reason</th>
@@ -542,7 +599,13 @@
                         </div>
                     </td>
                     <td class="ellipsis">
-                        <fmt:formatDate value="${entry.createdDate}" pattern="MM/dd/yyyy HH:mm:ss"/>
+                        <c:forEach items="${entry.labVessel.mercurySamples}" var="mercurySample" varStatus="stat">
+                            <fmt:formatDate value="${mercurySample.receiptDate}" pattern="MM/dd/yyyy HH:mm"/>
+                            <c:if test="${!stat.last}">&nbsp;</c:if>
+                        </c:forEach>
+                    </td>
+                    <td class="ellipsis">
+                        <fmt:formatDate value="${entry.createdDate}" pattern="MM/dd/yyyy HH:mm"/>
                     </td>
                     <td>
                             ${entry.entryType.name}

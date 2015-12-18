@@ -216,11 +216,6 @@ public class BucketViewActionBean extends CoreActionBean {
                 collectiveEntries.addAll(bucket.getBucketEntries());
                 collectiveEntries.addAll(bucket.getReworkEntries());
                 preFetchSampleData(collectiveEntries);
-
-                // preselect workflow if it is unambiguous.
-                if (possibleWorkflows.size() == 1 && StringUtils.isBlank(selectedWorkflow)) {
-                    selectedWorkflow = possibleWorkflows.iterator().next();
-                }
             }
         }
         return view();

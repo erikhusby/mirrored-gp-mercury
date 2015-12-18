@@ -111,6 +111,10 @@ public class MercurySample extends AbstractSample {
 
     }
 
+    public Date getReceiptDate() {
+        return getSampleData().getReceiptDate();
+    }
+
     public enum AccessioningCheckResult {
         CAN_BE_ACCESSIONED, TUBE_NOT_ASSOCIATED, TUBE_ACCESSIONED_PREVIOUSLY
     }
