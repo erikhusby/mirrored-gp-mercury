@@ -137,8 +137,7 @@
             messageBox.append('<button type="button" class="close" data-dismiss="alert">&times;</button>')
             messageBox.append('<ul></ul>');
 
-
-                $j('.page-body').before(messageBox);
+            $j('.page-body').before(messageBox);
             return messageBox;
         }
 
@@ -221,26 +220,19 @@
         }
 
         function setupBucketEvents() {
-            var bucketFormJquery = $j("#bucketEntryForm");
-
             // record which button in the form was clicked. The click target will be used when the form is submitted.
-            bucketFormJquery.click(function (event) {
-                if ($j(event.target).is('[type=submit')) {
-                    // Clear any errors that may be displayed.
-                    $j(".alert-error, .error").removeClass(function(index, className){
-                        if ($j(".alert") != undefined){
-                            $j(".alert").remove();
-                        }
-                        $j(this).removeClass(className);
-                    });
-                    $j(this).data('clicked', $j(event.target));
-                }
-            });
+            $j("input[name='addToBatch'],input[name='createBatch'],input[name='removeFromBucket']").click(function (event) {
 
-            // update view of data similar to a confirmation page.
-            bucketFormJquery.submit(function (event) {
-                // retrieve the button that was clicked from the event's data object.
-                var clickedButton = $j(this).data('clicked');
+                // Clear any errors that may be displayed.
+                $j(".alert-error, .error").each(function () {
+                    $j(this).removeClass("alert-error");
+                    $j(this).removeClass("error");
+                });
+                if ($j(".alert").length > 0) {
+                    $j(".alert").remove();
+                }
+
+                var clickedButton = $j(event.target);
                 if (clickedButton == undefined) {
                     return;
                 }
@@ -261,7 +253,8 @@
                     } else {
                         var workflowErrorMessage = "Workflow could not be determined automatically, please choose one manually.";
                         addStripesMessage(workflowErrorMessage, "error", "#workflowSelect");
-                        return false;
+                        event.preventDefault();
+                        return;
                     }
                 }
 
@@ -269,13 +262,14 @@
                 // should submit as usual.
                 var clickedButtonName = clickedButton.attr("value");
                 if (clickedButtonName.startsWith("Confirm")) {
-                    return true;
+                    return;
                 }
                 // The page is now being set up as a confirmation screen.
+                event.preventDefault();
 
                 // The bucket-control class is used to indicate which controls are visible when creating, updating
                 // or deleting bucket entries. Once we know which button was clicked, we hide the other ones.
-                var buttons = bucketFormJquery.find(".bucket-control");
+                var buttons = $j("#bucketEntryForm").find(".bucket-control");
                 for (var i = 0; i < buttons.length; i++) {
                     loopButton = buttons[i];
                     if (loopButton.value != clickedButtonName) {

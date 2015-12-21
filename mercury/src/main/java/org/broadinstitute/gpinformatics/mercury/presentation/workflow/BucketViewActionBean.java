@@ -6,6 +6,7 @@ import net.sourceforge.stripes.action.Before;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
+import net.sourceforge.stripes.action.RedirectResolution;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.StreamingResolution;
 import net.sourceforge.stripes.action.UrlBinding;
@@ -285,7 +286,8 @@ public class BucketViewActionBean extends CoreActionBean {
         String link = getLink(batchName);
         addMessage(MessageFormat.format("Lab batch ''{0}'' has been created.", link));
 
-        return viewBucket();
+        // go back to this page, with the same bucket selected.
+        return new RedirectResolution(getClass(), VIEW_BUCKET_ACTION).addParameter("selectedBucket", selectedBucket);
     }
 
     public String getLink(String batchName) {
