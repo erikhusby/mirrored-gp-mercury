@@ -287,4 +287,5 @@ public class BSPUserList extends AbstractCache implements Serializable {
 
     public static boolean isTestUser(BspUser user) {
         return user instanceof QADudeUser;
+    }
 }
