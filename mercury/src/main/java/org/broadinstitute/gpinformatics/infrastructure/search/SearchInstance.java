@@ -335,6 +335,7 @@ public class SearchInstance implements Serializable {
                     } else {
                         switch(getDataType()) {
                         case STRING:
+                        case NOT_NULL:
                             propertyValues.add(value);
                             break;
                         case TWO_PLACE_DECIMAL:
@@ -646,7 +647,8 @@ public class SearchInstance implements Serializable {
         GREATER_THAN,
         GREATER_THAN_EQUAL,
         BETWEEN,
-        LIKE;
+        LIKE,
+        NOT_NULL;
 
         public String getName() {
             return name();

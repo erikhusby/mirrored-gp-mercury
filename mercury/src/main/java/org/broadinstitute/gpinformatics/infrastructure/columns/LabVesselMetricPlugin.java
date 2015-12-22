@@ -61,7 +61,7 @@ public class LabVesselMetricPlugin implements ListPlugin {
         for( LabVessel labVessel : labVesselList ) {
             ConfigurableList.Row row = new ConfigurableList.Row( labVessel.getLabel() );
 
-            Map<String, Set<LabMetric>> metricGroups = labVessel.getMetricsForVesselAndRelatives();
+            Map<LabMetric.MetricType, Set<LabMetric>> metricGroups = labVessel.getMetricsForVesselAndRelatives();
             for(Set<LabMetric> metrics : metricGroups.values()) {
                 if( metrics != null && !metrics.isEmpty() ) {
                     addMetricsToRow(metrics, row);
