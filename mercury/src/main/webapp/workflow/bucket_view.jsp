@@ -5,7 +5,7 @@
 
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.BucketViewActionBean"/>
-
+<c:set var="addToBatchText" value="Enter if you are adding to an existing batch"/>
 <stripes:layout-render name="/layout.jsp" pageTitle="Bucket View" sectionTitle="Select Bucket">
 <stripes:layout-component name="extraHead">
     <style type="text/css">
@@ -409,6 +409,45 @@
             showOrHideControls();
             $j("input[name='selectedEntryIds'], .bucket-checkAll").change(showOrHideControls);
 
+            $j("#lcsetText").change(function () {
+                var jiraTicketId = $j("#lcsetText").val();
+                var projectType = $j("#projectType").val();
+                var hasDefaultTextChanged = jiraTicketId != "${addToBatchText}";
+                var lcsetErrorTextClasses = "alert alert-error";
+                var lcsetTextClasses = "error";
+
+                function clearErrorText() {
+                    $j("#lcsetErrorText").hide();
+                    $j("#lcsetErrorText").empty();
+                    $j("#lcsetErrorText").removeClass(lcsetErrorTextClasses);
+                    $j("#lcsetText").removeClass(lcsetTextClasses);
+                    $j("[name='addToBatch']").prop('disabled', false);
+                }
+
+                if (hasDefaultTextChanged) {
+                    $j.ajax({
+                        url: "${ctxpath}/workflow/bucketView.action?projectTypeMatches=",
+                        type: 'GET',
+                        data: {
+                            'jiraTicketId': jiraTicketId,
+                            'projectType': projectType
+                        }
+                    }).done(function (projectTypeMatches) {
+
+                        if (projectTypeMatches != "true") {
+                            $j("#lcsetText").addClass(lcsetTextClasses);
+                            $j("#lcsetErrorText").text("Bucket entries can not be added to '" + jiraTicketId + "'. It is not a '" + projectType + "'.");
+                            $j("#lcsetErrorText").addClass(lcsetErrorTextClasses);
+                            $j("#lcsetErrorText").show();
+                            $j("[name='addToBatch']").prop('disabled', true);
+                        } else {
+                            clearErrorText();
+                        }
+                    });
+                } else if ($j("#lcsetErrorText").is(":visible")){
+                    clearErrorText();
+                }
+            });
             $j("#watchers").tokenInput(
                     "${ctxpath}/workflow/bucketView.action?watchersAutoComplete=", {
                         prePopulate: ${actionBean.ensureStringResult(actionBean.jiraUserTokenInput.completeData)},
@@ -443,7 +482,8 @@
     </stripes:form>
     <stripes:form beanclass="${actionBean.class.name}" id="bucketEntryForm" class="form-horizontal">
         <div class="form-horizontal">
-                <stripes:hidden name="selectedBucket" value="${actionBean.selectedBucket}"/>
+            <stripes:hidden name="selectedBucket" value="${actionBean.selectedBucket}"/>
+            <stripes:hidden name="projectType" id="projectType" value="${actionBean.projectType}"/>
             <div class="control-group batch-create" style="display: none;">
                             <stripes:label for="workflowSelect" name="Select Workflow" class="control-label"/>
                             <div class="controls">
@@ -458,6 +498,7 @@
                             <div class="controls">
                                 <stripes:text id="lcsetText" class="defaultText" name="selectedLcset"
                                               title="Enter if you are adding to an existing batch"/>
+                                <span id="lcsetErrorText"></span>
                             </div>
                         </div>
             <div class="control-group batch-create" style="display: none;">

@@ -20,6 +20,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.JiraUserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
@@ -124,6 +125,7 @@ public class BucketViewActionBean extends CoreActionBean {
     private LabBatch batch;
     private String jiraUserQuery;
     private Map<String, BucketCount> mapBucketToBucketEntryCount;
+    private CreateFields.ProjectType projectType = null;
 
     @Before(stages = LifecycleStage.BindingAndValidation)
     public void init() {
@@ -480,6 +482,19 @@ public class BucketViewActionBean extends CoreActionBean {
         return mapBucketToBucketEntryCount;
     }
 
+    public Resolution projectTypeMatches() {
+        return new StreamingResolution("text/plain",
+                String.valueOf(projectType == CreateFields.ProjectType.fromIssueKey(jiraTicketId)));
+    }
+
+    public CreateFields.ProjectType getProjectType() {
+        return projectType;
+    }
+
+    public void setProjectType(
+            CreateFields.ProjectType projectType) {
+        this.projectType = projectType;
+    }
     public String getJiraUserQuery() {
         return jiraUserQuery;
     }

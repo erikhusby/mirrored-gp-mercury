@@ -83,7 +83,7 @@ public class SequencingRunEtlDbFreeTest {
 
     private void verifyRecord(String record) {
         int i = 0;
-        String[] parts = record.split(",");
+        String[] parts = record.split(",", 9);
         assertEquals(parts[i++], etlDateString);
         assertEquals(parts[i++], "F");
         assertEquals(parts[i++], String.valueOf(entityId));

@@ -23,6 +23,9 @@
     </xs:attributeGroup>
 
     <xs:complexType name="reagentType">
+        <xs:sequence>
+            <xs:element name="metadata" type="metadataType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
         <xs:attributeGroup ref="reagentGroup"/>
     </xs:complexType>
 
