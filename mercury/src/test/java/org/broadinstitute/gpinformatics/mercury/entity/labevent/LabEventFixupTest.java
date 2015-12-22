@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.labevent;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
@@ -479,7 +480,7 @@ public class LabEventFixupTest extends Arquillian {
         BarcodedTube dilutionTube = barcodedTubeDao.findByBarcode(dilutionTubeBarcode);
         Assert.assertNotNull(dilutionTube);
 
-        Collection<VesselContainer<?>> containers = dilutionTube.getContainers();
+        Collection<VesselContainer<?>> containers = dilutionTube.getVesselContainers();
         Assert.assertEquals(containers.size(), 1);
         VesselContainer<?> vesselContainer = containers.iterator().next();
         String vesselPositionName = null;
@@ -1261,4 +1262,31 @@ public class LabEventFixupTest extends Arquillian {
         utx.commit();
     }
 
+    @Test(enabled = false)
+    public void fixupSupport1369() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+        // Finds vessel transfers having source section ALL384 when the source is a Eppendorf96 plate.
+        Query queryVesselTransfer = labEventDao.getEntityManager().createNativeQuery(
+                "select vessel_transfer_id from vessel_transfer vt, lab_vessel src " +
+                "where vt.source_vessel = src.lab_vessel_id " +
+                "and src.plate_type = 'Eppendorf96' and source_section = 'ALL384'");
+        queryVesselTransfer.unwrap(SQLQuery.class).addScalar("vessel_transfer_id", LongType.INSTANCE);
+        List<Long> vesselTransferIds = queryVesselTransfer.getResultList();
+        Assert.assertTrue(CollectionUtils.isNotEmpty(vesselTransferIds));
+
+        // Updates the source section to ALL96.
+        List<SectionTransfer> transfers = labEventDao.findListByList(SectionTransfer.class,
+                SectionTransfer_.vesselTransferId, vesselTransferIds);
+        Assert.assertEquals(transfers.size(), vesselTransferIds.size());
+        for (SectionTransfer transfer : transfers) {
+            Assert.assertEquals(transfer.getSourceSection(), SBSSection.ALL384);
+            transfer.setSourceSection(SBSSection.ALL96);
+        }
+        System.out.println("Changed ALL384 to ALL96 for vessel transfers " + StringUtils.join(vesselTransferIds, ", "));
+
+        labEventDao.persist(new FixupCommentary("SUPPORT-1369 fixup Pico Microfluor transfers from Eppendorf96"));
+        labEventDao.flush();
+        utx.commit();
+    }
 }

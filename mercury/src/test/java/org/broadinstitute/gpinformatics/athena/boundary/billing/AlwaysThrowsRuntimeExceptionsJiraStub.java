@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.IssueFieldsResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraUser;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.Visibility;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionListResponse;
@@ -17,6 +18,7 @@ import javax.annotation.Nullable;
 import javax.enterprise.inject.Alternative;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -162,6 +164,11 @@ class AlwaysThrowsRuntimeExceptionsJiraStub implements JiraService {
     @Override
     public JiraIssue getIssueInfo(String key, String... fields) throws IOException {
         invocationCount++;
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public List<JiraUser> getJiraUsers(String key) {
         throw new NotImplementedException();
     }
 

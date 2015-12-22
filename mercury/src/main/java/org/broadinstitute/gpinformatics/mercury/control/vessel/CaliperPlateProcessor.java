@@ -44,7 +44,7 @@ public class CaliperPlateProcessor {
             put("RNA Quality Score", "rnaQualityScore");
             put("Instrument Name", "instrumentName");
             put("Lower Marker Time(sec)", "lowerMarkerTime");
-            put("Region[200-4000] % of Total Area", "dv200TotalArea");
+            put("Region[200-6000] % of Total Area", "dv200TotalArea");
         }
     };
 

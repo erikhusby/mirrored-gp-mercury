@@ -18,6 +18,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.JiraUserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
@@ -79,6 +80,8 @@ public class BucketViewActionBean extends CoreActionBean {
     public static final String VIEW_BUCKET_ACTION = "viewBucket";
 
     @Inject
+    JiraUserTokenInput jiraUserTokenInput;
+    @Inject
     private WorkflowLoader workflowLoader;
     @Inject
     private BucketDao bucketDao;
@@ -125,9 +128,9 @@ public class BucketViewActionBean extends CoreActionBean {
     private Date dueDate;
     private String selectedLcset;
     private LabBatch batch;
+    private String jiraUserQuery;
     private Map<String, BucketCount> mapBucketToBucketEntryCount;
     private CreateFields.ProjectType projectType = null;
-
 
     @Before(stages = LifecycleStage.BindingAndValidation)
     public void init() {
@@ -146,6 +149,11 @@ public class BucketViewActionBean extends CoreActionBean {
         }
         mapBucketToWorkflows = bucketWorkflows.asMap();
         mapBucketToBucketEntryCount = initBucketCountsMap(bucketEntryDao.getBucketCounts());
+    }
+
+    @HandlesEvent("watchersAutoComplete")
+    public Resolution watchersAutoComplete() throws JSONException {
+        return createTextResolution(jiraUserTokenInput.getJsonString(getJiraUserQuery()));
     }
 
     @DefaultHandler
@@ -265,7 +273,11 @@ public class BucketViewActionBean extends CoreActionBean {
     public Resolution reworkConfirmed() {
         separateEntriesByType();
         try {
-            labBatchEjb.addToLabBatch(selectedLcset, bucketEntryIds, reworkEntryIds, selectedBucket, this);
+            labBatchEjb.addToLabBatch(selectedLcset, bucketEntryIds, reworkEntryIds, selectedBucket, this,
+                    jiraUserTokenInput.getTokenBusinessKeys());
+
+            // clears tokenInput selections when the page returns
+            jiraUserTokenInput.setup();
         } catch (IOException e) {
             addGlobalValidationError("IOException contacting JIRA service." + e.getMessage());
             return new RedirectResolution(VIEW_PAGE);
@@ -288,7 +300,8 @@ public class BucketViewActionBean extends CoreActionBean {
         try {
             batch = labBatchEjb.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW, selectedWorkflow,
                     bucketEntryIds, reworkEntryIds, summary.trim(), description, dueDate, important,
-                    userBean.getBspUser().getUsername(), selectedBucket, this);
+                    userBean.getBspUser().getUsername(), selectedBucket, this,
+                    jiraUserTokenInput.getTokenBusinessKeys());
         } catch (ValidationException e) {
             addGlobalValidationError(e.getMessage());
             return view();
@@ -488,6 +501,10 @@ public class BucketViewActionBean extends CoreActionBean {
         this.selectedWorkflow = selectedWorkflow;
     }
 
+    public String getSelectedWorkflow() {
+        return selectedWorkflow;
+    }
+
     public Set<String> getPossibleWorkflows() {
         return possibleWorkflows;
     }
@@ -508,5 +525,20 @@ public class BucketViewActionBean extends CoreActionBean {
     public void setProjectType(
             CreateFields.ProjectType projectType) {
         this.projectType = projectType;
+    }
+    public String getJiraUserQuery() {
+        return jiraUserQuery;
+    }
+
+    public void setJiraUserQuery(String jiraUserQuery) {
+        this.jiraUserQuery = jiraUserQuery;
+    }
+
+    public JiraUserTokenInput getJiraUserTokenInput() {
+        return jiraUserTokenInput;
+    }
+
+    public void setJiraUserTokenInput(JiraUserTokenInput jiraUserTokenInput) {
+        this.jiraUserTokenInput = jiraUserTokenInput;
     }
 }

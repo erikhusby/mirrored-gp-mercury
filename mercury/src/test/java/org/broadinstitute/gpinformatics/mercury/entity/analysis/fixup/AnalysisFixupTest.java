@@ -1,22 +1,42 @@
 package org.broadinstitute.gpinformatics.mercury.entity.analysis.fixup;
 
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.analysis.AnalysisEjb;
+import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.AnalysisTypeDao;
+import org.broadinstitute.gpinformatics.mercury.entity.analysis.AnalysisType;
+import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.Test;
 import javax.inject.Inject;
 
+import java.util.List;
+
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 @Test(groups = TestGroups.FIXUP)
 public class AnalysisFixupTest extends Arquillian {
 
     @Inject
+    private UserBean userBean;
+
+    @Inject
     private AnalysisEjb analysisEjb;
+
+    @Inject
+    private ProductDao productDao;
+
+    @Inject
+    private AnalysisTypeDao analysisTypeDao;
 
     // Use (RC, "rc"), (PROD, "prod") to push the backfill to RC and production respectively.
     @Deployment
@@ -842,5 +862,43 @@ public class AnalysisFixupTest extends Arquillian {
         analysisEjb.addReferenceSequence("shRNA_EcoRI_LKOpool", "0", true);
         analysisEjb.addReferenceSequence("shRNA_XhoI_LKOpool_AA", "0", true);
         analysisEjb.addReferenceSequence("shRNA_XhoI_LKOpool_TT", "0", true);
+    }
+
+    /**
+     * Performs some analysis type maintenance to go along with Illumina run query changes:
+     *
+     * 1. Clear analysis types from products when they will not be used due to not having workflow set
+     * 2. Change products' analysis type from "Resequencing" to "HybridSelection.Resequencing"
+     */
+    @Test(enabled = false)
+    public void gplim3900FixAnalysisTypes() {
+        userBean.loginOSUser();
+        String oldAnalysisType = "Resequencing";
+        String newAnalysisType = "HybridSelection." + oldAnalysisType;
+
+        AnalysisType analysisType = analysisTypeDao.findByBusinessKey(newAnalysisType);
+        assertThat(analysisType, nullValue());
+
+        /*
+         * Calling into an EJB, this gets its own transaction and is therefore not saved along with the product updates
+         * and FixupCommentary below. This shouldn't be a concern, though, because the audit trail will look the same as
+         * if I had added the analysis type through the admin UI. The advantage to doing it here in the fixup is that it
+         * prevents HybridSelection.Resequencing from being selected before deploying the code change to not prepend
+         * "HybridSelection."
+         */
+        analysisEjb.addAnalysisType(newAnalysisType);
+
+        List<Product> products = productDao.findAllWithAnalysisType();
+        for (Product product : products) {
+            if (product.getWorkflow() == Workflow.NONE) {
+                product.setAnalysisTypeKey(null);
+            } else {
+                if (product.getAnalysisTypeKey().equals(oldAnalysisType)) {
+                    product.setAnalysisTypeKey(newAnalysisType);
+                }
+            }
+        }
+
+        productDao.persist(new FixupCommentary("GPLIM-3900 Update products to use real analysis types"));
     }
 }

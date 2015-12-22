@@ -111,6 +111,15 @@
                         ${actionBean.selectedBucket}
                 </div>
             </div>
+            <div class="control-group" style="margin-bottom: 0;">
+                <stripes:label name="Watchers" class="control-label"/>
+                <div class="controls" style="padding-top: 5px;">
+                    <stripes:hidden name="jiraUserTokenInput.listOfKeys"/>
+                    <c:forEach items="${actionBean.jiraUserTokenInput.tokenObjects}" var="jiraUser" varStatus="varStatus">
+                        ${jiraUser.displayName}<c:if test="${!varStatus.last}">, </c:if>
+                    </c:forEach>
+                </div>
+            </div>
             <stripes:submit name="reworkConfirmed" id="confirmBtn" value="Confirm" class="btn btn-primary"/>
         </stripes:form>
     </stripes:layout-component>

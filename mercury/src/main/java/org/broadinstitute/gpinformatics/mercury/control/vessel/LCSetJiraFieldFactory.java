@@ -12,7 +12,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -71,8 +71,8 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
                 pdoToVesselMap.get(pdoKey).add(bucketEntry.getLabVessel());
             }
             for (LabVessel rework : batch.getReworks()) {
-                for (SampleInstance sampleInstance : rework.getSampleInstances(LabVessel.SampleType.WITH_PDO, null)) {
-                    String pdoKey = sampleInstance.getProductOrderKey();
+                for (SampleInstanceV2 sampleInstance : rework.getSampleInstancesV2()) {
+                    String pdoKey = sampleInstance.getSingleProductOrderSample().getBusinessKey();
                     if (!pdoToVesselMap.containsKey(pdoKey)) {
                         pdoToVesselMap.put(pdoKey, new HashSet<LabVessel>());
                     }
@@ -165,7 +165,7 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
             int sampleCount = 0;
             Set<String> materialTypes = new HashSet<>();
             for (LabVessel currVessel : pdoKey.getValue()) {
-                sampleCount += currVessel.getSampleInstanceCount(LabVessel.SampleType.PREFER_PDO, null);
+                sampleCount += currVessel.getSampleInstanceCount();
                 MaterialType latestMaterialType = null;
                 try {
                     latestMaterialType = currVessel.getLatestMaterialType();

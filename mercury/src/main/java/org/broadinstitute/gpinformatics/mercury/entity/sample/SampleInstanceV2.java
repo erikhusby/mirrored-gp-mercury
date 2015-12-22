@@ -322,6 +322,7 @@ public class SampleInstanceV2 {
         return null;
     }
 
+    @Nullable
     public MolecularIndexingScheme getMolecularIndexingScheme() {
         return molecularIndexingScheme;
     }

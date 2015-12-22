@@ -25,7 +25,6 @@ import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import javax.inject.Inject;
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -36,10 +35,16 @@ import java.util.Set;
 public class CreateFCTActionBean extends CoreActionBean {
     private static String VIEW_PAGE = "/workflow/create_fct.jsp";
     public static final String LOAD_ACTION = "load";
-    public static final List<IlluminaFlowcell.FlowcellType> FLOWCELL_TYPES =
-            Arrays.asList(IlluminaFlowcell.FlowcellType.MiSeqFlowcell,
-                    IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell,
-                    IlluminaFlowcell.FlowcellType.HiSeqFlowcell);
+    public static final List<IlluminaFlowcell.FlowcellType> FLOWCELL_TYPES;
+    static {
+        List<IlluminaFlowcell.FlowcellType> createFct = new ArrayList<>();
+        for (IlluminaFlowcell.FlowcellType flowcellType : IlluminaFlowcell.FlowcellType.values()) {
+            if (flowcellType.getCreateFct() == IlluminaFlowcell.CreateFct.YES) {
+                createFct.add(flowcellType);
+            }
+        }
+        FLOWCELL_TYPES = createFct;
+    }
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject

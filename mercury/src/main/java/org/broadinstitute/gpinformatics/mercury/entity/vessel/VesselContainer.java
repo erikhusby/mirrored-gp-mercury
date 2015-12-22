@@ -165,7 +165,7 @@ public class VesselContainer<T extends LabVessel> {
         Set<LabEvent> transfersTo = getTransfersTo();
         // Need to follow Re-arrays, otherwise the chain of custody is broken.  Ignore re-arrays that add tubes
         for (LabVessel labVessel : mapPositionToVessel.values()) {
-            for (VesselContainer<?> vesselContainer : labVessel.getContainers()) {
+            for (VesselContainer<?> vesselContainer : labVessel.getVesselContainers()) {
                 Set<T> containedVessels = getContainedVessels();
                 Set<? extends LabVessel> containedVesselsOther = vesselContainer.getContainedVessels();
                 if (!vesselContainer.equals(this) && (containedVessels.containsAll(containedVesselsOther) ||
@@ -302,7 +302,7 @@ public class VesselContainer<T extends LabVessel> {
             // handle re-arrays of tubes - look in any other racks that the tube has been in
             if (getEmbedder() instanceof TubeFormation) {
                 TubeFormation thisTubeFormation = (TubeFormation) getEmbedder();
-                for (VesselContainer<?> vesselContainer : vesselAtPosition.getContainers()) {
+                for (VesselContainer<?> vesselContainer : vesselAtPosition.getVesselContainers()) {
                     if (OrmUtil.proxySafeIsInstance(vesselContainer.getEmbedder(), TubeFormation.class)) {
                         TubeFormation otherTubeFormation =
                                 OrmUtil.proxySafeCast(vesselContainer.getEmbedder(), TubeFormation.class);

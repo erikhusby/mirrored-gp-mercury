@@ -443,9 +443,7 @@ public class ZimsIlluminaRunFactory {
                     positiveControl = true;
                     if (analysisTypes.size() == 1 && referenceSequenceKeys.size() == 1 &&
                             aggregationDataTypes.size() == 1) {
-                        // horrible 7/25 hack.  todo fixme with workflow
-                        analysisType = "HybridSelection." + analysisTypes.iterator().next();
-
+                        analysisType = analysisTypes.iterator().next();
                         String[] referenceSequenceValues = referenceSequenceKeys.iterator().next().split("\\|");
                         referenceSequence = referenceSequenceValues[0];
                         referenceSequenceVersion = referenceSequenceValues[1];
@@ -484,11 +482,6 @@ public class ZimsIlluminaRunFactory {
                 String[] referenceSequenceValues = project.getReferenceSequenceKey().split("\\|");
                 referenceSequence = referenceSequenceValues[0];
                 referenceSequenceVersion = referenceSequenceValues[1];
-            }
-
-            // horrible 7/25 hack.  todo fixme with workflow
-            if (analysisType != null) {
-                analysisType = "HybridSelection." + analysisType;
             }
         }
         String libraryCreationDate = dateFormat.format(labVessel.getCreatedOn());

@@ -6,6 +6,7 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import java.util.Collections;
 import java.util.Date;
 import java.util.Set;
 
@@ -21,7 +22,8 @@ public class QuoteServiceTest {
 
     @BeforeClass(groups = EXTERNAL_INTEGRATION)
     private void setupLargeQuoteAndPriceItem() {
-        quote = new Quote("DNA4JC",new QuoteFunding(new FundingLevel("100",new Funding(Funding.FUNDS_RESERVATION,"NHGRI", "NHGRI"))), ApprovalStatus.FUNDED);
+        quote = new Quote("DNA4JC",new QuoteFunding(Collections.singleton(new FundingLevel("100",
+                new Funding(Funding.FUNDS_RESERVATION, "NHGRI", "NHGRI")))), ApprovalStatus.FUNDED);
         quotePriceItem = new QuotePriceItem("Illumina Sequencing","1","Illumina Custom Hybrid Selection Library (93 sample batch size)","15","bannanas","DNA Sequencing");
     }
 
@@ -46,22 +48,37 @@ public class QuoteServiceTest {
     }
 
     // test works but the method under test doesn't seem to be used so why slow down our builds
-    @Test(enabled = false)
+    @Test(enabled = true)
     public void test_get_a_quote() throws Exception {
 
         Quote quote = service.getQuoteByAlphaId("DNA23H");
 
         Assert.assertNotNull(quote);
         Assert.assertEquals("NIAID (CO 5035331)", quote.getName());
-        Assert.assertEquals("5035331", quote.getQuoteFunding().getFundingLevel().getFunding().getCostObject());
-        Assert.assertEquals("GENSEQCTR_(NIH)NIAID",quote.getQuoteFunding().getFundingLevel().getFunding().getGrantDescription());
-        Assert.assertEquals(Funding.FUNDS_RESERVATION,quote.getQuoteFunding().getFundingLevel().getFunding().getFundingType());
-        Assert.assertEquals("DNA23H",quote.getAlphanumericId());
+
+        for(FundingLevel level : quote.getQuoteFunding().getFundingLevel()) {
+            if(level.getFunding().getCostObject().equals("5035331")) {
+                Assert.assertEquals("GENSEQCTR_(NIH)NIAID",
+                        level.getFunding().getGrantDescription());
+                Assert.assertEquals(Funding.FUNDS_RESERVATION,
+                        level.getFunding().getFundingType());
+            } else if(level.getFunding().getCostObject().equals("5030300")) {
+                Assert.assertEquals("NIAIDSURVEILLANCEOPT",
+                        level.getFunding().getGrantDescription());
+                Assert.assertEquals(Funding.FUNDS_RESERVATION,
+                        level.getFunding().getFundingType());
+            } else {
+                Assert.fail("Encountered an unrecognized funding level");
+            }
+        }
+        Assert.assertEquals("DNA23H", quote.getAlphanumericId());
 
         quote = service.getQuoteByAlphaId("DNA3A9");
-        Assert.assertEquals("HARVARD UNIVERSITY",quote.getQuoteFunding().getFundingLevel().getFunding().getInstitute());
-        Assert.assertEquals(Funding.PURCHASE_ORDER,quote.getQuoteFunding().getFundingLevel().getFunding().getFundingType());
-        Assert.assertEquals("DNA3A9",quote.getAlphanumericId());
+        for(FundingLevel level : quote.getQuoteFunding().getFundingLevel()) {
+            Assert.assertEquals("HARVARD UNIVERSITY", level.getFunding().getInstitute());
+            Assert.assertEquals(Funding.PURCHASE_ORDER, level.getFunding().getFundingType());
+        }
+        Assert.assertEquals("DNA3A9", quote.getAlphanumericId());
 
     }
 
