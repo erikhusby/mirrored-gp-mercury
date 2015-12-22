@@ -243,17 +243,20 @@
                 } else if (clickedButtonEvent == "createBatch") {
                     $j(".batch-create").slideDown(200);
 
-                    // automatically select a workflow, if you can.
-                    var selectedWorkflows = findWorkflowsFromSelectedRows();
-                    if (selectedWorkflows.length == 1) {
-                        $j("#workflowSelect option").filter(function () {
-                            return $(this).text() == selectedWorkflows[0];
-                        }).prop('selected', true);
-                    } else {
-                        var workflowErrorMessage = "Workflow could not be determined automatically, please choose one manually.";
-                        addStripesMessage(workflowErrorMessage, "error", "#workflowSelect");
-                        event.preventDefault();
-                        return;
+                    // Test that a workflow is not already selected.
+                    if ($j("#workflowSelect option:selected").attr('value') == "") {
+                        // automatically select a workflow, if you can.
+                        var selectedWorkflows = findWorkflowsFromSelectedRows();
+                        if (selectedWorkflows.length == 1) {
+                            $j("#workflowSelect option").filter(function () {
+                                return $(this).text() == selectedWorkflows[0];
+                            }).prop('selected', true);
+                        } else {
+                            var workflowErrorMessage = "Workflow could not be determined automatically, please choose one manually.";
+                            addStripesMessage(workflowErrorMessage, "error", "#workflowSelect");
+                            event.preventDefault();
+                            return;
+                        }
                     }
                 }
 
