@@ -218,6 +218,8 @@ public class BucketViewActionBean extends CoreActionBean {
             if (bucket != null) {
                 collectiveEntries.addAll(bucket.getBucketEntries());
                 collectiveEntries.addAll(bucket.getReworkEntries());
+                WorkflowBucketDef bucketDef = mapBucketToBucketDef.get(selectedBucket);
+                projectType = CreateFields.ProjectType.fromKeyPrefix(bucketDef.getBatchJiraProjectType());
                 preFetchSampleData(collectiveEntries);
             }
         }
