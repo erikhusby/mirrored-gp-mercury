@@ -24,6 +24,7 @@
     <script src="${ctxpath}/resources/scripts/jquery.jeditable.mini.js" type="text/javascript"></script>
     <script type="text/javascript">
         function submitBucket() {
+            $j("#spinner").show();
             $j('#bucketForm').submit();
         }
 
@@ -457,6 +458,7 @@
                         autoSelectFirstResult: true
                     }
             );
+            $j("#spinner").hide();
         });
     </script>
 </stripes:layout-component>
@@ -476,6 +478,7 @@
                                             label="${bucketName} (${bucketCount.bucketEntryCount + bucketCount.reworkEntryCount} vessels)"/>
                         </c:forEach>
                     </stripes:select>
+                    <img id="spinner" src="${ctxpath}/images/spinner.gif" style="display: none;" alt=""/>
                 </div>
             </div>
         </div>
