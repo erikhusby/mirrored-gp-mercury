@@ -220,7 +220,6 @@
         }
 
         function setupBucketEvents() {
-            // record which button in the form was clicked. The click target will be used when the form is submitted.
             $j("input[name='addToBatch'],input[name='createBatch'],input[name='removeFromBucket']").click(function (event) {
 
                 // Clear any errors that may be displayed.
