@@ -11,13 +11,13 @@
 
 package org.broadinstitute.gpinformatics.athena.boundary.products;
 
-import com.lowagie.text.Chunk;
-import com.lowagie.text.Document;
-import com.lowagie.text.DocumentException;
-import com.lowagie.text.Element;
-import com.lowagie.text.Font;
-import com.lowagie.text.ListItem;
-import com.lowagie.text.pdf.PdfWriter;
+import com.itextpdf.text.Chunk;
+import com.itextpdf.text.Document;
+import com.itextpdf.text.DocumentException;
+import com.itextpdf.text.Element;
+import com.itextpdf.text.Font;
+import com.itextpdf.text.ListItem;
+import com.itextpdf.text.pdf.PdfWriter;
 import org.apache.commons.io.FileUtils;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -130,15 +130,15 @@ public class ProductPdfFactoryTest {
         String description = "foo\n* line";
         List<Element> elements = ProductPdfFactory.convertText(description, ProductPdfFactory.LIST_DELIMITER);
         Assert.assertEquals(elements.size(), 2);
-        Element element = elements.get(0);
-        Assert.assertEquals(element.type(), Element.CHUNK);
-        element = elements.get(1);
-        Assert.assertEquals(element.type(), Element.LIST);
-        Assert.assertEquals(element.getChunks().size(), 1);
-        List<com.lowagie.text.ListItem> listItems = ((com.lowagie.text.List) element).getItems();
-        ListItem listItem = listItems.get(0);
-        Assert.assertEquals(listItem.type(), Element.LISTITEM);
-        Assert.assertEquals(listItem.getContent(), "line");
+        Element chunk = elements.get(0);
+        Assert.assertEquals(chunk.type(), Element.CHUNK);
+        Element list = elements.get(1);
+        Assert.assertEquals(list.type(), Element.LIST);
+        Assert.assertEquals(list.getChunks().size(), 1);
+        Element elementListItem = ((com.itextpdf.text.List) list).getItems().get(0);
+        Assert.assertEquals(elementListItem.type(), Element.LISTITEM);
+        Assert.assertTrue(elementListItem.isContent());
+        Assert.assertEquals(((ListItem)elementListItem).getContent(), "line");
     }
 
     public void testConvertTextSecondLineWithNonListAsterisks() throws IOException, DocumentException {
@@ -148,14 +148,15 @@ public class ProductPdfFactoryTest {
         String description = String.format("%s\n*%s\n*%s", someText, isAList, listAndNonList);
         List<Element> elements = ProductPdfFactory.convertText(description, ProductPdfFactory.LIST_DELIMITER);
         Assert.assertEquals(elements.size(), 2);
-        Chunk element = (Chunk) elements.get(0);
-        Assert.assertEquals(element.type(), Element.CHUNK);
-        Assert.assertEquals(element.getContent(), someText);
-        com.lowagie.text.List list = (com.lowagie.text.List) elements.get(1);
+        Chunk chunk = (Chunk) elements.get(0);
+        Assert.assertEquals(chunk.type(), Element.CHUNK);
+        Assert.assertEquals(chunk.getContent(), someText);
+        com.itextpdf.text.List list = (com.itextpdf.text.List) elements.get(1);
         Assert.assertEquals(list.type(), Element.LIST);
-        List<com.lowagie.text.ListItem> listItems = list.getItems();
-        Assert.assertEquals(listItems.size(), 2);
-        Assert.assertEquals(listItems.get(0).getContent(), isAList);
-        Assert.assertEquals(listItems.get(1).getContent(), listAndNonList);
+        Assert.assertEquals(list.getItems().size(), 2);
+        Assert.assertTrue(list.getItems().get(0).isContent());
+        Assert.assertEquals(((ListItem) list.getItems().get(0)).getContent(), isAList);
+        Assert.assertTrue(list.getItems().get(1).isContent());
+        Assert.assertEquals(((ListItem)list.getItems().get(1)).getContent(), listAndNonList);
     }
 }
