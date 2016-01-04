@@ -1082,6 +1082,6 @@ public class LabEventFixupTest extends Arquillian {
         }
         illuminaFlowcellDao.persist(new FixupCommentary("GPLIM-3932 change 2500 ANXX flowcells to 8 lanes"));
         illuminaFlowcellDao.flush();
-        utx.rollback();
+        utx.commit();
     }
 }
