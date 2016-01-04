@@ -11,10 +11,10 @@
 
 package org.broadinstitute.gpinformatics.athena.boundary.products;
 
-import com.lowagie.text.DocumentException;
-import com.lowagie.text.pdf.PRTokeniser;
-import com.lowagie.text.pdf.PdfReader;
-import com.lowagie.text.pdf.RandomAccessFileOrArray;
+import com.itextpdf.text.DocumentException;
+import com.itextpdf.text.pdf.PRTokeniser;
+import com.itextpdf.text.pdf.PdfReader;
+import com.itextpdf.text.pdf.RandomAccessFileOrArray;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
@@ -44,7 +44,7 @@ public class ProductPdfFactoryUtils {
         PRTokeniser tokenizer = new PRTokeniser(new RandomAccessFileOrArray(streamBytes));
         List<String> pdfData = new CopyOnWriteArrayList<>();
         while (tokenizer.nextToken()) {
-            if (tokenizer.getTokenType() == PRTokeniser.TK_STRING) {
+            if (tokenizer.getTokenType() == PRTokeniser.TokenType.STRING) {
                 String stringValue = tokenizer.getStringValue().trim();
                 if (!stringValue.matches(ProductPdfFactoryTest.LIST_MATCHER) && StringUtils.isNotBlank(stringValue)) {
                     pdfData.add(stringValue);

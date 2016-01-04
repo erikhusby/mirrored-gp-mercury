@@ -11,20 +11,21 @@
 
 package org.broadinstitute.gpinformatics.athena.boundary.products;
 
-import com.lowagie.text.Chunk;
-import com.lowagie.text.Document;
-import com.lowagie.text.DocumentException;
-import com.lowagie.text.Element;
-import com.lowagie.text.Font;
-import com.lowagie.text.ListItem;
-import com.lowagie.text.PageSize;
-import com.lowagie.text.Paragraph;
-import com.lowagie.text.Phrase;
-import com.lowagie.text.Rectangle;
-import com.lowagie.text.pdf.BaseFont;
-import com.lowagie.text.pdf.ColumnText;
-import com.lowagie.text.pdf.PdfPageEventHelper;
-import com.lowagie.text.pdf.PdfWriter;
+import com.itextpdf.text.BaseColor;
+import com.itextpdf.text.Chunk;
+import com.itextpdf.text.Document;
+import com.itextpdf.text.DocumentException;
+import com.itextpdf.text.Element;
+import com.itextpdf.text.Font;
+import com.itextpdf.text.ListItem;
+import com.itextpdf.text.PageSize;
+import com.itextpdf.text.Paragraph;
+import com.itextpdf.text.Phrase;
+import com.itextpdf.text.Rectangle;
+import com.itextpdf.text.pdf.BaseFont;
+import com.itextpdf.text.pdf.ColumnText;
+import com.itextpdf.text.pdf.PdfPageEventHelper;
+import com.itextpdf.text.pdf.PdfWriter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.logging.Log;
@@ -83,7 +84,7 @@ public class ProductPdfFactory {
 
         Rectangle rect = new Rectangle(36, 54, 559, 788);
         rect.enableBorderSide(Rectangle.TOP);
-        rect.setBorderColor(new java.awt.Color(0, 0, 0, 0));
+        rect.setBorderColor(BaseColor.BLACK);
         writer.setBoxSize("art", rect);
         writer.setPageEvent(headerFooterEvent);
         writer.setPdfVersion(PdfWriter.VERSION_1_7);
@@ -139,7 +140,7 @@ public class ProductPdfFactory {
         }
         List<String> splitText = Arrays.asList(description.split(delimiter));
 
-        com.lowagie.text.List list = new com.lowagie.text.List(com.lowagie.text.List.UNORDERED, 10);
+        com.itextpdf.text.List list = new com.itextpdf.text.List(com.itextpdf.text.List.UNORDERED, 10);
 
         list.setListSymbol(BULLET);
         for (String text : splitText) {
