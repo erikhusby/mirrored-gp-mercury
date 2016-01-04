@@ -302,6 +302,7 @@ public class LabMetricSearchDefinition {
 
         SearchTerm searchTerm = new SearchTerm();
         searchTerm.setName("Metric Date");
+        searchTerm.setDbSortPath("createdDate");
         searchTerm.setValueType(ColumnValueType.DATE_TIME);
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
@@ -319,6 +320,8 @@ public class LabMetricSearchDefinition {
 
         searchTerm = new SearchTerm();
         searchTerm.setName("Metric Type");
+        // Not exact (enum type vs. enum display name)
+        searchTerm.setDbSortPath("metricType");
         searchTerm.setIsDefaultResultColumn(Boolean.TRUE);
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
@@ -359,6 +362,7 @@ public class LabMetricSearchDefinition {
 
         searchTerm = new SearchTerm();
         searchTerm.setName("Metric Value");
+        searchTerm.setDbSortPath("value");
         searchTerm.setIsDefaultResultColumn(Boolean.TRUE);
         searchTerm.setValueType(ColumnValueType.TWO_PLACE_DECIMAL);
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
@@ -372,6 +376,8 @@ public class LabMetricSearchDefinition {
 
         searchTerm = new SearchTerm();
         searchTerm.setName("Metric Units");
+        // Not exact (enum type vs. enum display name)
+        searchTerm.setDbSortPath("labUnit");
         searchTerm.setIsDefaultResultColumn(Boolean.TRUE);
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
@@ -384,6 +390,7 @@ public class LabMetricSearchDefinition {
 
         searchTerm = new SearchTerm();
         searchTerm.setName("Metric Run Name");
+        searchTerm.setDbSortPath("labMetricRun.runName");
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public String evaluate(Object entity, SearchContext context) {
