@@ -131,7 +131,7 @@ public class LabVesselSearchDefinition {
                 "inPlaceLabVesselId", LabEvent.class));
 
         ConfigurableSearchDefinition configurableSearchDefinition = new ConfigurableSearchDefinition(
-                ColumnEntity.LAB_VESSEL, 100, criteriaProjections, mapGroupSearchTerms);
+                ColumnEntity.LAB_VESSEL, criteriaProjections, mapGroupSearchTerms);
 
         configurableSearchDefinition.setAddRowsListenerFactory(
                 new ConfigurableSearchDefinition.AddRowsListenerFactory() {

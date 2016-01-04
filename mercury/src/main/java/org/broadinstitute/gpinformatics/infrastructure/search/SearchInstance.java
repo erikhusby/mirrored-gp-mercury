@@ -744,6 +744,8 @@ public class SearchInstance implements Serializable {
 
     private boolean isDbSortable = true;
 
+    private int pageSize;
+
     /**
      * Default constructor for Stripes.
      */
@@ -1101,4 +1103,18 @@ public class SearchInstance implements Serializable {
     public Map<String,Boolean> getTraversalEvaluatorValues(){
         return traversalEvaluatorValues;
     }
+
+    public void setPageSize( int pageSize ) {
+        this.pageSize = pageSize;
+    }
+
+    public int getPageSize(){
+        // Default to 100 if uninitialized
+        if( pageSize == 0 ) {
+            return 100;
+        } else {
+            return pageSize;
+        }
+    }
+
 }

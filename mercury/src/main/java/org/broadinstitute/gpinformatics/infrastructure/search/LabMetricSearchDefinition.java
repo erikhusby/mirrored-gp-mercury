@@ -99,7 +99,7 @@ public class LabMetricSearchDefinition {
                 "labMetrics", "metric", LabMetricRun.class));
 
         ConfigurableSearchDefinition configurableSearchDefinition = new ConfigurableSearchDefinition(
-                ColumnEntity.LAB_METRIC, 100, criteriaProjections, mapGroupSearchTerms);
+                ColumnEntity.LAB_METRIC, criteriaProjections, mapGroupSearchTerms);
 
         // Allow user to search ancestor and/or descendant metrics for initial metrics vessels
         configurableSearchDefinition.addTraversalEvaluator(TraversalEvaluatorName.ANCESTORS.getId()

@@ -51,7 +51,7 @@ public class MercurySampleSearchDefinition {
                 "mercurySampleId", "metadata", MercurySample.class));
 
         ConfigurableSearchDefinition configurableSearchDefinition = new ConfigurableSearchDefinition(
-                ColumnEntity.MERCURY_SAMPLE, 100, criteriaProjections, mapGroupSearchTerms);
+                ColumnEntity.MERCURY_SAMPLE, criteriaProjections, mapGroupSearchTerms);
 
         return configurableSearchDefinition;
     }

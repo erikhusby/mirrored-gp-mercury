@@ -151,7 +151,19 @@ buttons to move columns from one to the other --%>
             }
         };
 
-        $( document ).ready( syncChosenAvailable );
+        $j( document ).ready( syncChosenAvailable );
+        $j( document ).ready( function() {
+            $j( "#pageSizeSlider" ).slider({
+                value:${actionBean.searchInstance.pageSize},
+                min: 50,
+                max: 500,
+                step: 50,
+                slide: function( event, ui ) {
+                    $j( "#userPageSize" ).val( ui.value );
+                }
+            });
+            $j( "#userPageSize" ).val( $j( "#pageSizeSlider" ).slider( "value" ) );
+        } );
     </script>
     <br/>
     <!-- Allow user to choose individual result columns -->
@@ -230,9 +242,13 @@ buttons to move columns from one to the other --%>
                 </a>
             </td>
         </tr>
-        <tr style="padding-top: 4px">
-            <td colspan="2"><label>Filter: </label><input type="text" id="filterColumns" onkeyup="filterSelect($j('#sourceColumnDefNames')[0], this);">
-            </td>
+        <tr>
+            <td colspan="4" style="padding-top: 6px"><label>Filter: </label><input type="text" id="filterColumns" onkeyup="filterSelect($j('#sourceColumnDefNames')[0], this);"></td>
         </tr>
+    </table>
+    <table>
+    <tr>
+        <td><label>Page Size: </label><input type="text" readonly name="searchInstance.pageSize" id="userPageSize" value="${actionBean.searchInstance.pageSize}" style="border:0; background-color: transparent ;font-weight:bold; width: 40px"/></td><td width="320px"><div id="pageSizeSlider"></div></td>
+    </tr>
     </table>
 </stripes:layout-definition>
