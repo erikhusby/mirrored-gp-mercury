@@ -722,9 +722,9 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         Mockito.verify(mockJiraService, Mockito.times(2)).updateIssue(Mockito.anyString(), Mockito.anyCollection());
 
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
-                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1" + "ADXX", FLOWCELL_2500_TICKET_KEY,
+                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1" + "ANXX", FLOWCELL_2500_TICKET_KEY,
                                             ProductionFlowcellPath.STRIPTUBE_TO_FLOWCELL, null,
-                                            Workflow.AGILENT_EXOME_EXPRESS);
+                                            Workflow.ICE_EXOME_EXPRESS);
         Mockito.verify(mockEmailSender, Mockito.never())
                .sendHtmlEmail((AppConfig) Mockito.anyObject(), Mockito.anyString(), Mockito.anyString(),
                               Mockito.anyString());

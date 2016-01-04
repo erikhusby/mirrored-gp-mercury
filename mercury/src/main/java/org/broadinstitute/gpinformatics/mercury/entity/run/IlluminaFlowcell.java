@@ -64,7 +64,9 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
         HiSeqFlowcell("Flowcell8Lane", "HiSeq 2000 Flowcell", VesselGeometry.FLOWCELL1x8, "Illumina HiSeq 2000",
                 "^\\w+(ABXX|ACXX)$", "HiSeq", CreateFields.IssueType.FLOWCELL, LabBatch.LabBatchType.FCT, CreateFct.YES),
         HiSeq2500Flowcell("Flowcell2Lane", "HiSeq 2500 Flowcell", VesselGeometry.FLOWCELL1x2, "Illumina HiSeq 2500",
-                "^\\w+(ADXX|ANXX|ADXY|BCXX)$", "HiSeq", CreateFields.IssueType.FLOWCELL, LabBatch.LabBatchType.FCT, CreateFct.YES),
+                "^\\w+(ADXX|ADXY|BCXX)$", "HiSeq", CreateFields.IssueType.FLOWCELL, LabBatch.LabBatchType.FCT, CreateFct.YES),
+        HiSeq2500HighOutputFlowcell("Flowcell8Lane2500", "HiSeq 2500 High Output Flowcell", VesselGeometry.FLOWCELL1x8, "Illumina HiSeq 2500",
+                "^\\w+ANXX$", "HiSeq", CreateFields.IssueType.FLOWCELL, LabBatch.LabBatchType.FCT, CreateFct.YES),
         HiSeq4000Flowcell("Flowcell8Lane4000", "HiSeq 4000 Flowcell", VesselGeometry.FLOWCELL1x8, "Illumina HiSeq 4000",
                 "^\\w+BBXX$", "HiSeq", CreateFields.IssueType.FLOWCELL, LabBatch.LabBatchType.FCT, CreateFct.YES),
         OtherFlowcell("FlowcellUnknown", "Unknown Flowcell", VesselGeometry.FLOWCELL1x2, "Unknown Model", ".*", null,
@@ -225,6 +227,8 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
                 return MiSeqFlowcell;
             } else if (FlowcellType.HiSeq2500Flowcell.getFlowcellTypeRegex().matcher(barcode).matches()) {
                 return HiSeq2500Flowcell;
+            } else if (FlowcellType.HiSeq2500HighOutputFlowcell.getFlowcellTypeRegex().matcher(barcode).matches()) {
+                return HiSeq2500HighOutputFlowcell;
             } else if (FlowcellType.HiSeq4000Flowcell.getFlowcellTypeRegex().matcher(barcode).matches()) {
                 return HiSeq4000Flowcell;
             } else if (FlowcellType.HiSeqFlowcell.getFlowcellTypeRegex().matcher(barcode).matches()) {

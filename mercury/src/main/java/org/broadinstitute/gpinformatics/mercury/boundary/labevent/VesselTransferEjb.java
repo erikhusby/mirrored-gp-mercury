@@ -159,29 +159,4 @@ public class VesselTransferEjb {
         labEventDao.persist(labEvent);
         return labEvent;
     }
-
-    // todo jmt delete?
-    public ReceptaclePlateTransferEvent buildDenatureTubeToFlowcell(String eventType, String denatureTubeBarcode,
-                                                                    String flowcellBarcode, String username,
-                                                                    String eventStationName) {
-        ReceptaclePlateTransferEvent event = new ReceptaclePlateTransferEvent();
-        event.setEventType(eventType);
-        event.setStart(new Date());
-        event.setDisambiguator(1L);
-        event.setOperator(username);
-        event.setStation(eventStationName);
-
-        ReceptacleType denatureTube = new ReceptacleType();
-        denatureTube.setBarcode(denatureTubeBarcode);
-        denatureTube.setReceptacleType("tube");
-        event.setSourceReceptacle(denatureTube);
-
-        PlateType flowcell = new PlateType();
-        flowcell.setBarcode(flowcellBarcode);
-        flowcell.setPhysType(HiSeq2500Flowcell.getAutomationName());
-        flowcell.setSection(SBSSection.ALL2.getSectionName());
-        event.setDestinationPlate(flowcell);
-
-        return event;
-    }
 }
