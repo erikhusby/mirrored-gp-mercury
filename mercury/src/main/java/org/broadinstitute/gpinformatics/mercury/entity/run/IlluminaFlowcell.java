@@ -64,7 +64,7 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
         HiSeqFlowcell("Flowcell8Lane", "HiSeq 2000 Flowcell", VesselGeometry.FLOWCELL1x8, "Illumina HiSeq 2000",
                 "^\\w+(ABXX|ACXX)$", "HiSeq", CreateFields.IssueType.FLOWCELL, LabBatch.LabBatchType.FCT, CreateFct.YES),
         HiSeq2500Flowcell("Flowcell2Lane", "HiSeq 2500 Flowcell", VesselGeometry.FLOWCELL1x2, "Illumina HiSeq 2500",
-                "^\\w+(ADXX|ANXX|BCXX)$", "HiSeq", CreateFields.IssueType.FLOWCELL, LabBatch.LabBatchType.FCT, CreateFct.YES),
+                "^\\w+(ADXX|ANXX|ADXY|BCXX)$", "HiSeq", CreateFields.IssueType.FLOWCELL, LabBatch.LabBatchType.FCT, CreateFct.YES),
         HiSeq4000Flowcell("Flowcell8Lane4000", "HiSeq 4000 Flowcell", VesselGeometry.FLOWCELL1x8, "Illumina HiSeq 4000",
                 "^\\w+BBXX$", "HiSeq", CreateFields.IssueType.FLOWCELL, LabBatch.LabBatchType.FCT, CreateFct.YES),
         OtherFlowcell("FlowcellUnknown", "Unknown Flowcell", VesselGeometry.FLOWCELL1x2, "Unknown Model", ".*", null,

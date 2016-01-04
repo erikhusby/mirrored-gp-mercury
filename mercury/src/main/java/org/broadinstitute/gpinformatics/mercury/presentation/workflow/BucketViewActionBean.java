@@ -20,6 +20,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.JiraUserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
@@ -129,6 +130,7 @@ public class BucketViewActionBean extends CoreActionBean {
     private LabBatch batch;
     private String jiraUserQuery;
     private Map<String, BucketCount> mapBucketToBucketEntryCount;
+    private CreateFields.ProjectType projectType = null;
 
     @Before(stages = LifecycleStage.BindingAndValidation)
     public void init() {
@@ -221,6 +223,9 @@ public class BucketViewActionBean extends CoreActionBean {
 
                 // Doesn't show JIRA details if there are no bucket entries.
                 jiraEnabled = !collectiveEntries.isEmpty();
+                WorkflowBucketDef bucketDef = mapBucketToBucketDef.get(selectedBucket);
+                projectType = CreateFields.ProjectType.fromKeyPrefix(bucketDef.getBatchJiraProjectType());
+
                 preFetchSampleData(collectiveEntries);
             }
         }
@@ -233,6 +238,15 @@ public class BucketViewActionBean extends CoreActionBean {
             labVessels.add(entry.getLabVessel());
         }
         LabVessel.loadSampleDataForBuckets(labVessels);
+    }
+
+    public Set<String> getSampleNames(LabVessel vessel) {
+        Set<SampleInstance> allSamples = vessel.getAllSamples();
+        Set<String> sampleNames = new HashSet<>();
+        for (SampleInstance sampleInstance : allSamples) {
+            sampleNames.add(sampleInstance.getStartingSample().getSampleKey());
+        }
+        return sampleNames;
     }
 
     @HandlesEvent(ADD_TO_BATCH_ACTION)
@@ -499,6 +513,19 @@ public class BucketViewActionBean extends CoreActionBean {
         return mapBucketToBucketEntryCount;
     }
 
+    public Resolution projectTypeMatches() {
+        return new StreamingResolution("text/plain",
+                String.valueOf(projectType == CreateFields.ProjectType.fromIssueKey(jiraTicketId)));
+    }
+
+    public CreateFields.ProjectType getProjectType() {
+        return projectType;
+    }
+
+    public void setProjectType(
+            CreateFields.ProjectType projectType) {
+        this.projectType = projectType;
+    }
     public String getJiraUserQuery() {
         return jiraUserQuery;
     }
