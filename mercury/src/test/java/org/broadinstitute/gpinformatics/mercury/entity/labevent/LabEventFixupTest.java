@@ -6,10 +6,12 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.GenericReagentDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
@@ -68,6 +70,9 @@ public class LabEventFixupTest extends Arquillian {
 
     @Inject
     private StaticPlateDao staticPlateDao;
+
+    @Inject
+    private IlluminaFlowcellDao illuminaFlowcellDao;
 
     @Inject
     private UserBean userBean;
@@ -759,7 +764,7 @@ public class LabEventFixupTest extends Arquillian {
         VesselToVesselTransfer vesselToVesselTransfer = labEvent.getVesselToVesselTransfers().iterator().next();
         Assert.assertEquals(vesselToVesselTransfer.getTargetVessel().getLabel(), oldTargetBarcode);
         System.out.print("In " + labEvent.getLabEventId() + " changing " +
-                         vesselToVesselTransfer.getTargetVessel().getLabel() + " to ");
+                vesselToVesselTransfer.getTargetVessel().getLabel() + " to ");
         vesselToVesselTransfer.setTargetVessel(barcodedTubeDao.findByBarcode(newTargetBarcode));
         System.out.println(vesselToVesselTransfer.getTargetVessel().getLabel());
     }
@@ -1016,7 +1021,7 @@ public class LabEventFixupTest extends Arquillian {
         Assert.assertEquals(transfers.size(), 74);
 
         System.out.println("Removing " + transfers.size() + " cherry picks from tube formation " +
-                           source.getLabVesselId());
+                source.getLabVesselId());
 
         for (CherryPickTransfer transfer : transfers) {
             transfer.getAncillaryTargetVessel().getVesselToVesselTransfersThisAsTarget().remove(transfer);
@@ -1054,4 +1059,29 @@ public class LabEventFixupTest extends Arquillian {
         utx.commit();
     }
 
+    /**
+     * ANXX flowcells are 2500s with 8 lanes, not 2 lanes.
+     */
+    @Test(enabled = false)
+    public void fixupGplim3932() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+        List<IlluminaFlowcell> flowcells = illuminaFlowcellDao.findLikeBarcode("%ANXX");
+        for (IlluminaFlowcell flowcell : flowcells) {
+            for (LabEvent labEvent : flowcell.getTransfersTo()) {
+                if (labEvent.getLabEventType() == LabEventType.FLOWCELL_TRANSFER) {
+                    for (SectionTransfer sectionTransfer : labEvent.getSectionTransfers()) {
+                        if (sectionTransfer.getTargetSection() == SBSSection.ALL2) {
+                            sectionTransfer.setTargetSection(SBSSection.FLOWCELL8);
+                            flowcell.setFlowcellType(IlluminaFlowcell.FlowcellType.HiSeqFlowcell);
+                            System.out.println("Changing section in transfer to " + flowcell.getLabel());
+                        }
+                    }
+                }
+            }
+        }
+        illuminaFlowcellDao.persist(new FixupCommentary("GPLIM-3932 change 2500 ANXX flowcells to 8 lanes"));
+        illuminaFlowcellDao.flush();
+        utx.rollback();
+    }
 }
