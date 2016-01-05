@@ -41,7 +41,7 @@ import java.util.Set;
 
 @UrlBinding("/workflow/CreateFCT.action")
 public class CreateFCTActionBean extends CoreActionBean {
-    private static String VIEW_PAGE = "/workflow/create_fct.jsp";
+    private static final String VIEW_PAGE = "/workflow/create_fct.jsp";
     public static final String LOAD_DENATURE = "loadDenature";
     public static final String LOAD_NORM = "loadNorm";
     public static final String LOAD_POOLNORM = "loadPoolNorm";
@@ -80,7 +80,7 @@ public class CreateFCTActionBean extends CoreActionBean {
     private List<LabBatch> createdBatches;
     private IlluminaFlowcell.FlowcellType selectedFlowcellType;
     private LabEventType selectedEventType;
-    private static VesselPosition[] lanePositions = {VesselPosition.LANE1, VesselPosition.LANE2, VesselPosition.LANE3,
+    private static final VesselPosition[] lanePositions = {VesselPosition.LANE1, VesselPosition.LANE2, VesselPosition.LANE3,
             VesselPosition.LANE4, VesselPosition.LANE5, VesselPosition.LANE6, VesselPosition.LANE7};
 
     /**
@@ -150,7 +150,7 @@ public class CreateFCTActionBean extends CoreActionBean {
                                     bucketEntry.getProductOrder().getProduct() != null ?
                                             bucketEntry.getProductOrder().getProduct().getProductName() :
                                             "[No product for " +
-                                            bucketEntry.getProductOrder().getJiraTicketKey() + "]"));
+                                                    bucketEntry.getProductOrder().getJiraTicketKey() + "]"));
                         }
                     }
                 }
@@ -268,12 +268,12 @@ public class CreateFCTActionBean extends CoreActionBean {
         return new RedirectResolution(CreateFCTActionBean.class, VIEW_ACTION);
     }
 
-    class FlowcellMappingDto {
+    static class FlowcellMappingDto {
         private LabVessel labVessel;
         private RowDto rowDto;
         private List<VesselPosition> positions;
 
-        public FlowcellMappingDto(LabVessel labVessel, RowDto rowDto) {
+        FlowcellMappingDto(LabVessel labVessel, RowDto rowDto) {
             this.labVessel = labVessel;
             this.rowDto = rowDto;
             positions = new ArrayList<>();
@@ -342,7 +342,7 @@ public class CreateFCTActionBean extends CoreActionBean {
         return FLOWCELL_TYPES;
     }
 
-    public static int getFlowcellLaneCount(String flowcellType) {
+    public int getFlowcellLaneCount(String flowcellType) {
         for (IlluminaFlowcell.FlowcellType type : FLOWCELL_TYPES) {
             if (type.getDisplayName().equals(flowcellType)) {
                 return type.getVesselGeometry().getColumnCount();
@@ -351,7 +351,7 @@ public class CreateFCTActionBean extends CoreActionBean {
         return Integer.MAX_VALUE;
     }
 
-    class RowDto {
+    static class RowDto {
         private String barcode;
         private String lcset;
         private int numberLanes = 1;
@@ -360,7 +360,7 @@ public class CreateFCTActionBean extends CoreActionBean {
         private int readLength = 1;
         private String product;
 
-        public RowDto(@Nonnull String barcode, @Nonnull String lcset, @Nonnull Date eventDate,
+        RowDto(@Nonnull String barcode, @Nonnull String lcset, @Nonnull Date eventDate,
                       @Nonnull String product) {
             this.barcode = barcode;
             this.lcset = lcset;
