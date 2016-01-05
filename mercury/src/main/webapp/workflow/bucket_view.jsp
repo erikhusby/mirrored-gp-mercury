@@ -221,6 +221,8 @@
         }
 
         function setupBucketEvents() {
+            var CONFIRM_TEXT = "Confirm";
+
             $j("input[name='addToBatch'],input[name='createBatch'],input[name='removeFromBucket']").click(function (event) {
 
                 // Clear any errors that may be displayed.
@@ -261,26 +263,23 @@
                     }
                 }
 
-                // if the button starts with Confirm, we know they are on the confirmation page now, and the form
-                // should submit as usual.
+                // if the button starts with CONFIRM_TEXT, we know the user is on the confirmation page now, and the
+                // form should submit as usual. Otherwise we prepend CONFIRM_TEXT to the button name so the next time
+                // it is clicked it will submit.
                 var clickedButtonName = clickedButton.attr("value");
-                if (clickedButtonName.startsWith("Confirm")) {
+                if (clickedButtonName.startsWith(CONFIRM_TEXT)) {
                     return;
                 }
+                clickedButton.attr('value', CONFIRM_TEXT + " " + clickedButtonName);
+
                 // The page is now being set up as a confirmation screen.
                 event.preventDefault();
 
                 // The bucket-control class is used to indicate which controls are visible when creating, updating
-                // or deleting bucket entries. Once we know which button was clicked, we hide the other ones.
-                var buttons = $j("#bucketEntryForm").find(".bucket-control");
-                for (var i = 0; i < buttons.length; i++) {
-                    loopButton = buttons[i];
-                    if (loopButton.value != clickedButtonName) {
-                        $j(loopButton).hide();
-                    } else {
-                        $j(loopButton).show();
-                    }
-                }
+                // or deleting bucket entries. Hide the elements who's value does not start with CONFIRM_TEXT.
+                $j("#bucketEntryForm .bucket-control").filter(":not([value^='" + CONFIRM_TEXT + "'])").hide();
+
+                // Show the cancel button so the user has a way out if they change their mind.
                 $j("#cancel").show();
 
                 // hide dataTables filter
@@ -292,13 +291,7 @@
                 $(".icon-pencil").removeClass("icon-pencil");
 
                 // Hide the unchecked rows so the user knows what will be included in the request.
-                if ($j("input[type=checkbox]:checked").length > 0) {
-                    $j("input[type=checkbox]").not(":checked").closest("tbody tr").hide();
-                }
-                clickedButton.attr('value', "Confirm " + clickedButtonName);
-
-                // Since we are in 'Confirmation' mode, we want to prevent the form from submitting and return false.
-                return false;
+                $j("input[type=checkbox]").not(":checked").closest("tbody tr").hide();
             });
         }
 
@@ -640,7 +633,7 @@
                     </td>
                     <td class="ellipsis">
                         <c:forEach items="${entry.labVessel.mercurySamples}" var="mercurySample" varStatus="stat">
-                            <fmt:formatDate value="${mercurySample.receiptDate}" pattern="MM/dd/yyyy HH:mm"/>
+                            <fmt:formatDate value="${mercurySample.receivedDate}" pattern="MM/dd/yyyy HH:mm"/>
                             <c:if test="${!stat.last}">&nbsp;</c:if>
                         </c:forEach>
                     </td>
