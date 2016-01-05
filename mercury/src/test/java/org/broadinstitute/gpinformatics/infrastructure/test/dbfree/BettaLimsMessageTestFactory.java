@@ -511,44 +511,6 @@ public class BettaLimsMessageTestFactory {
         return plateTransferEvent;
     }
 
-    // todo jmt delete?
-    @SuppressWarnings("UnusedDeclaration")
-    public ReceptaclePlateTransferEvent buildDenatureTubeToFlowcell(String eventType, String denatureTubeBarcode,
-                                                                    String flowcellBarcode, String flowcellType,
-                                                                    String flowcellSection) {
-        ReceptaclePlateTransferEvent event = new ReceptaclePlateTransferEvent();
-        setStationEventData(eventType, event);
-
-        ReceptacleType denatureTube = new ReceptacleType();
-        denatureTube.setBarcode(denatureTubeBarcode);
-        denatureTube.setReceptacleType("tube");
-        event.setSourceReceptacle(denatureTube);
-
-        PlateType flowcell = new PlateType();
-        flowcell.setBarcode(flowcellBarcode);
-        flowcell.setPhysType(flowcellType);
-        flowcell.setSection(flowcellSection);
-        event.setDestinationPlate(flowcell);
-
-        return event;
-    }
-
-    // todo jmt delete?
-    @SuppressWarnings("UnusedDeclaration")
-    public PlateEventType buildFlowcellEvent(String eventType, String flowcellBarcode) {
-
-        PlateEventType flowcellEvent = new PlateEventType();
-        setStationEventData(eventType, flowcellEvent);
-
-        PlateType flowcell = new PlateType();
-        flowcell.setBarcode(flowcellBarcode);
-        flowcell.setPhysType(LabEventFactory.PHYS_TYPE_FLOWCELL);
-        flowcell.setSection(LabEventFactory.SECTION_ALL_96);
-        flowcellEvent.setPlate(flowcell);
-
-        return flowcellEvent;
-    }
-
     private void setStationEventData(String eventType, StationEventType plateTransferEvent) {
         plateTransferEvent.setEventType(eventType);
         plateTransferEvent.setStart(new Date(time));
