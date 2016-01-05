@@ -301,6 +301,12 @@ public class LabBatch {
         labVessel.addNonReworkLabBatchStartingVessel(labBatchStartingVessel);
     }
 
+    /**
+     * Adds a vessel to this batch.
+     * @param labVessel the vessel to be added.
+     * @param concentration the vessel's concentration (typically a flowcell loading concentration).
+     * @param positions the position that the vessel occupies in the batch (typically a flowcell lane).
+     */
     public void addLabVessel(@Nonnull LabVessel labVessel, @Nullable BigDecimal concentration,
                              @Nonnull List<VesselPosition> positions) {
         for (VesselPosition vesselPosition : positions) {
