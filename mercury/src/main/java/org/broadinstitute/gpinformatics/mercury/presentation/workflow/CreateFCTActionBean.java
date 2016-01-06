@@ -39,6 +39,7 @@ public class CreateFCTActionBean extends CoreActionBean {
     public static final List<IlluminaFlowcell.FlowcellType> FLOWCELL_TYPES =
             Arrays.asList(IlluminaFlowcell.FlowcellType.MiSeqFlowcell,
                     IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell,
+                    IlluminaFlowcell.FlowcellType.HiSeq2500HighOutputFlowcell,
                     IlluminaFlowcell.FlowcellType.HiSeqFlowcell);
 
     @SuppressWarnings("CdiInjectionPointsInspection")
