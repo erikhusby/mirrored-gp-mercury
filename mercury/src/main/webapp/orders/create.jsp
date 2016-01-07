@@ -553,10 +553,12 @@
                 selectDiv.hide();
                 selectDiv.append(multiSelectDiv);
 
-                if (size < maxSize) {
+                if (size > maxSize) {
                     size=maxSize;
                 }
-                $j(".multiselect").attr('style', 'height: ' + size + "em");
+                // Text height is somewhat taller than 1em. Estimate it at 1.7em.
+                // Add an extra 1.7em to account for the likelihood of one or more lines wrapping
+                $j(".multiselect").attr('style', 'height: ' + ((size + 1) * 1.7) + "em");
                 $j(function () {
                     $j(".multiselect").multiselect();
                 });
