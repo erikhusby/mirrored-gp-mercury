@@ -7,20 +7,15 @@
 <stripes:layout-render name="/layout.jsp" pageTitle="Create FCT Ticket" sectionTitle="Create FCT Ticket">
 
     <stripes:layout-component name="extraHead">
-        function flowcellTypeChanged() {
-            var numFlowcellLanes = ${actionBean.getFlowcellLaneCount($j('#flowcellSelect').val())});
-            var remainder = $j('#numberOfLanes').val())}) % numFlowcellLanes;
-            if (remainder == 0) {
-                $j('#createFctButton').enable();
-            }
-        }
-
         <script type="text/javascript">
+            var numFlowcellLanes = 0;
+            var laneCountIsExactMultiple = false;
+
             $j(document).ready(function () {
                 $j('#tubeList').dataTable({
                     "oTableTools":ttExportDefines,
                     "aaSorting":[
-                        [2, 'asc']
+                        [1, 'asc']
                     ],
                     "aoColumns":[
                         {"bSortable":false}, // barcode
@@ -28,15 +23,40 @@
                         {"bSortable":true},  // enter number lanes
                         {"bSortable":true},  // enter loading conc
                         {"bSortable":true, "sType":"date"},  // denature date
-                        {"bSortable":true},  // read length
                         {"bSortable":true},  // product
                     ]
                 });
-                $j('.tube-checkbox').enableCheckboxRangeSelection({
-                    checkAllClass:'tube-checkAll',
-                    countDisplayClass:'tube-checkedCount',
-                    checkboxClass:'tube-checkbox'});
+                updateSumOfLanes();
             });
+
+
+            function updateSumOfLanes() {
+                sumOfLanes = 0;
+                // Iterates on tubeList rows to sum up the number of lanes.
+                tubeListTable = $j('#tubeList').dataTable();
+                tubeListNodes = tubeListTable.fnGetNodes();
+                for (var i = 0; i < tubeListNodes.length; ++i) {
+                    laneCount = $(tubeListNodes[i]).find('#numLanesId').attr('value');
+                    if ($.isNumeric(laneCount)) {
+                        sumOfLanes += parseInt(laneCount, 10);
+                    } else {
+                        alert("Please change Number Lanes '" + laneCount + "' to a number");
+                    }
+                }
+                //var tubeListRows = tubeListTable.fnGetData();
+                //for (var i = 0; i < tubeListRows.length; ++i) {
+                //    sumOfLanes += Integer.parseInt($($(tubeListRows[i])[2]).attr("value"), 10);
+                //}
+                $('#sumOfLanesDisplayed').text(sumOfLanes);
+                // Determines if the sum of lanes is a multiple of the flowcell's lane count.
+                var flowcellType = $j('#flowcellSelect').val();
+                numFlowcellLanes = ${actionBean.getFlowcellLaneCount(flowcellType)};
+                laneCountIsExactMultiple = (sumOfLanes % numFlowcellLanes == 0);
+                if (sumOfLanes > 0 && laneCountIsExactMultiple) {
+                    $j('#createFctButton').enable();
+                }
+            }
+
         </script>
 
     </stripes:layout-component>
@@ -45,7 +65,7 @@
             <div class="control-group">
                 <stripes:label for="lcsetText" name="LCSet Names" class="control-label"/>
                 <div class="controls">
-                    <stripes:text id="lcsetText" name="lcsetName"/>
+                    <stripes:text id="lcsetText" name="lcsetNames"/>
                 </div>
             </div>
             <div class="control-group">
@@ -55,74 +75,64 @@
                     <stripes:submit id="loadPoolNormBtn" name="loadPoolNorm" value="Load Pooled Norm Tubes" class="btn btn-mini"/>
                 </div>
             </div>
-            <div class="control-group" style="margin-left: 50px">
+            <div class="control-group">
+                <stripes:label for="flowcellTypeSelect" name="Flowcell Type" class="control-label"/>
                 <div class="controls">
-                    <stripes:label for="flowcellTypeSelect" name="Flowcell Type" class="control-label"/>
-                    <stripes:select id="flowcellTypeSelect" name="selectedFlowcellType" onchange="flowcellTypeChanged()">
+                    <stripes:select id="flowcellTypeSelect" name="selectedFlowcellType" onchange="updateSumOfLanes()">
                         <stripes:options-collection label="displayName" collection="${actionBean.flowcellTypes}"/>
                     </stripes:select>
                 </div>
             </div>
-            <!--
-                    <stripes:label for="numLanesText" name="Number of Lanes" class="control-label"/>
-                    <div class="controls">
-                        <stripes:text id="numLanesText" name="numberOfLanes"/>
-                    </div>
-                    <stripes:label for="loadingConcText" name="Loading Concentration" class="control-label"/>
-                    <div class="controls" style="margin-bottom: 20px">
-                        <stripes:text id="loadingConcText" name="loadingConc"/>
-                    </div>
-            -->
-            <c:if test="${not empty actionBean.rowDtos}">
-                <div class="control-group">
-                    <h5 style="margin-left: 50px;">FCT Ticket Info</h5>
-                    <hr style="margin: 0; margin-left: 50px"/>
-                </div>
-                <div class="control-group" style="margin-left: 50px">
-                    <table id="tubeList" class="table simple">
-                        <thead>
+            <div class="control-group">
+                <h5 style="margin-left: 50px;">FCT Ticket Info</h5>
+                <hr style="margin: 0; margin-left: 50px"/>
+            </div>
+            <div class="control-group" style="margin-left: 50px">
+                <table id="tubeList" class="table simple">
+                    <thead>
+                    <tr>
+                        <th>Tube Barcode</th>
+                        <th>LCSET</th>
+                        <th>Number Lanes</th>
+                        <th>Loading Conc</th>
+                        <th>Tube Created On</th>
+                        <th>Product</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <c:forEach items="${actionBean.rowDtos}" var="rowDto" varStatus="item">
                         <tr>
-                            <th width="40">
-                                <input type="checkbox" class="tube-checkAll"/><span id="count" class="tube-checkedCount"></span>
-                            </th>
-                            <th>Tube Barcode</th>
-                            <th>LCSET</th>
-                            <th>Number Lanes</th>
-                            <th>Loading Conc</th>
-                            <th>Created On</th>
-                            <th>Read Length</th>
-                            <th>Product</th>
+                            <td>${rowDto.barcode}
+                                <input type="hidden" name="rowDtos[${item.index}].barcode" value="${rowDto.barcode}"/>
+                            </td>
+                            <td>${rowDto.lcset}
+                                <input type="hidden" name="rowDtos[${item.index}].lcset" value="${rowDto.lcset}"/>
+                            </td>
+                            <td><input id="numLanesId" name="rowDtos[${item.index}].numberLanes"
+                                       value="${rowDto.numberLanes}" onchange="updateSumOfLanes()"/></td>
+                            <td><input id="loadingConcId" name="rowDtos[${item.index}].loadingConc"
+                                       value="${rowDto.loadingConc}"/></td>
+                            <td><fmt:formatDate value="${rowDto.eventDate}"
+                                                pattern="${actionBean.dateTimePattern}"/>
+                                <input type="hidden" name="rowDtos[${item.index}].eventDate" value="${rowDto.eventDate}"/>
+                            </td>
+                            <td>${rowDto.product}
+                                <input type="hidden" name="rowDtos[${item.index}].product" value="${rowDto.product}"/>
+                            </td>
                         </tr>
-                        </thead>
-                        <tbody>
-                        <c:forEach items="${actionBean.rowDtos}" var="rowDto">
-                            <c:forEach items="${rowDto.value}" var="eventVessel">
-                                <tr>
-                                    <td>
-                                        <stripes:checkbox class="tube-checkbox" name="selectedVesselLabels"
-                                                          value="${rowDto.barcode}"/>
-                                    </td>
-                                    <td>${rowDto.barcode}</td>
-                                    <td>${rowDto.lcset}</td>
-                                    <td>${rowDto.numberLanes}</td>
-                                    <td>${rowDto.loadingConc}</td>
-                                    <td><fmt:formatDate value="${rowDto.eventDate}"
-                                                        pattern="${actionBean.dateTimePattern}"/></td>
-                                    <td>${rowDto.readLength}</td>
-                                    <td>${rowDto.product}</td>
-                                </tr>
-                            </c:forEach>
-                        </c:forEach>
-                        </tbody>
-                    </table>
+                    </c:forEach>
+                    </tbody>
+                </table>
+            </div>
+            <div class="control-group" style="margin-left: 200px">
+                <strong>Sum of Lanes: <span id="sumOfLanesDisplayed">0</span></strong>
+            </div>
+            <div class="control-group" style="margin-left: 50px">
+                <div class="controls actionButtons">
+                    <stripes:submit id="createFctBtn" name="save" value="Create FCT Tickets"
+                                    class="btn btn-primary"/>
                 </div>
-                <div class="control-group" style="margin-left: 50px">
-                    <div class="controls actionButtons">
-                        <stripes:submit id="createFctBtn" name="save" value="Create FCT Tickets"
-                                        class="btn btn-primary"/>
-                    </div>
-                </div>
-            </c:if>
+            </div>
         </stripes:form>
     </stripes:layout-component>
 </stripes:layout-render>
