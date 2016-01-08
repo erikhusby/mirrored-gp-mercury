@@ -9,8 +9,6 @@ import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
-import net.sourceforge.stripes.validation.ValidationMethod;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
@@ -77,7 +75,7 @@ public class CreateFCTActionBean extends CoreActionBean {
     private LabEventType selectedEventType;
     private List<RowDto> rowDtos = new ArrayList<>();
 
-    private static final VesselPosition[] lanePositions = {VesselPosition.LANE1, VesselPosition.LANE2,
+    private static final VesselPosition[] VESSEL_POSITIONS = {VesselPosition.LANE1, VesselPosition.LANE2,
             VesselPosition.LANE3, VesselPosition.LANE4, VesselPosition.LANE5, VesselPosition.LANE6,
             VesselPosition.LANE7, VesselPosition.LANE8};
 
@@ -134,7 +132,6 @@ public class CreateFCTActionBean extends CoreActionBean {
      * the lcsets and finding all descendant tubes for the event type selected in the UI.
      */
     private Resolution loadTubes() {
-        Set<RowDto> rowDtoSet = new HashSet<>();
         for (LabBatch labBatch : loadLcsets()) {
             boolean foundEligibleTube = false;
             for (LabVessel startingBatchVessel : labBatch.getStartingBatchLabVessels()) {
@@ -146,12 +143,16 @@ public class CreateFCTActionBean extends CoreActionBean {
                         // times it was bucketed, but all choices get displayed.
                         for (BucketEntry bucketEntry : bucketEntries) {
                             foundEligibleTube = true;
-                            rowDtoSet.add(new RowDto(eventVessel.getLabel(), labBatch.getBusinessKey(),
+                            RowDto rowDto = new RowDto(eventVessel.getLabel(), labBatch.getBusinessKey(),
                                     entry.getKey().getEventDate(),
                                     bucketEntry.getProductOrder().getProduct() != null ?
                                             bucketEntry.getProductOrder().getProduct().getProductName() :
                                             "[No product for " +
-                                                    bucketEntry.getProductOrder().getJiraTicketKey() + "]"));
+                                                    bucketEntry.getProductOrder().getJiraTicketKey() + "]");
+                            if (!rowDtos.contains(rowDto)) {
+                                rowDtos.add(rowDto);
+                            }
+
                         }
                     }
                 }
@@ -160,8 +161,6 @@ public class CreateFCTActionBean extends CoreActionBean {
                 addMessage("No " + selectedEventType.getName() + " tubes found for " + labBatch.getBatchName());
             }
         }
-        rowDtos.clear();
-        rowDtos.addAll(rowDtoSet);
         Collections.sort(rowDtos, RowDto.BY_BARCODE);
         return new ForwardResolution(VIEW_PAGE);
     }
@@ -199,7 +198,7 @@ public class CreateFCTActionBean extends CoreActionBean {
         LabBatch.LabBatchType batchType = selectedFlowcellType.getBatchType();
         CreateFields.IssueType issueType = selectedFlowcellType.getIssueType();
         int lanesPerFlowcell = selectedFlowcellType.getVesselGeometry().getVesselPositions().length;
-        if (lanesPerFlowcell < 1 || lanesPerFlowcell > lanePositions.length) {
+        if (lanesPerFlowcell < 1 || lanesPerFlowcell > VESSEL_POSITIONS.length) {
             addMessage("ActionBean must be updated to support a flowcell lane count of " + lanesPerFlowcell);
             return new RedirectResolution(CreateFCTActionBean.class, VIEW_ACTION);
         }
@@ -316,27 +315,12 @@ public class CreateFCTActionBean extends CoreActionBean {
                     laneVesselDto = new FlowcellMappingDto(labVessel, rowDto);
                     currentLaneVesselDtos.add(laneVesselDto);
                 }
-                laneVesselDto.getPositions().add(lanePositions[filledLaneCount % lanesPerFlowcell]);
+                laneVesselDto.getPositions().add(VESSEL_POSITIONS[filledLaneCount % lanesPerFlowcell]);
                 ++filledLaneCount;
             }
         }
         return flowcellMappings;
     }
-
-
-    public List<IlluminaFlowcell.FlowcellType> getFlowcellTypes() {
-        return FLOWCELL_TYPES;
-    }
-
-    public int getFlowcellLaneCount(String flowcellType) {
-        for (IlluminaFlowcell.FlowcellType type : FLOWCELL_TYPES) {
-            if (type.getDisplayName().equals(flowcellType)) {
-                return type.getVesselGeometry().getColumnCount();
-            }
-        }
-        return Integer.MAX_VALUE;
-    }
-
 
     /** Returns the row dto for the given tube barcode. */
     private RowDto rowDtoForBarcode(String barcode) {
@@ -384,5 +368,9 @@ public class CreateFCTActionBean extends CoreActionBean {
     public void setSelectedEventType(
             LabEventType selectedEventType) {
         this.selectedEventType = selectedEventType;
+    }
+
+    public List<IlluminaFlowcell.FlowcellType> getFlowcellTypes() {
+        return FLOWCELL_TYPES;
     }
 }

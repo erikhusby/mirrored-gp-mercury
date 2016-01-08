@@ -9,7 +9,6 @@
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
             var numFlowcellLanes = 0;
-            var laneCountIsExactMultiple = false;
 
             $j(document).ready(function () {
                 $j('#tubeList').dataTable({
@@ -26,34 +25,36 @@
                         {"bSortable":true},  // product
                     ]
                 });
-                updateSumOfLanes();
+                updateFlowcell();
             });
 
+            // Looks up the number of lanes from the hidden form attributes.
+            function updateFlowcell() {
+                var flowcellName = $j('#flowcellTypeSelect').val();
+                numFlowcellLanes = $j("input[name=" + flowcellName + "Count]").val();
+                $('#numFlowcellLanesDisplayed').text(numFlowcellLanes);
+                updateSumOfLanes();
+            }
 
+            // Iterates on tubeList rows to sum up the number of lanes, then determines
+            // if the sum of lanes is a multiple of the flowcell's lane count.
             function updateSumOfLanes() {
                 sumOfLanes = 0;
-                // Iterates on tubeList rows to sum up the number of lanes.
-                tubeListTable = $j('#tubeList').dataTable();
-                tubeListNodes = tubeListTable.fnGetNodes();
+                tubeListNodes = $j('#tubeList').dataTable().fnGetNodes();
                 for (var i = 0; i < tubeListNodes.length; ++i) {
                     laneCount = $(tubeListNodes[i]).find('#numLanesId').attr('value');
                     if ($.isNumeric(laneCount)) {
                         sumOfLanes += parseInt(laneCount, 10);
                     } else {
-                        alert("Please change Number Lanes '" + laneCount + "' to a number");
+                        alert("Number of Lanes must be a number");
                     }
                 }
-                //var tubeListRows = tubeListTable.fnGetData();
-                //for (var i = 0; i < tubeListRows.length; ++i) {
-                //    sumOfLanes += Integer.parseInt($($(tubeListRows[i])[2]).attr("value"), 10);
-                //}
                 $('#sumOfLanesDisplayed').text(sumOfLanes);
-                // Determines if the sum of lanes is a multiple of the flowcell's lane count.
-                var flowcellType = $j('#flowcellSelect').val();
-                numFlowcellLanes = ${actionBean.getFlowcellLaneCount(flowcellType)};
-                laneCountIsExactMultiple = (sumOfLanes % numFlowcellLanes == 0);
-                if (sumOfLanes > 0 && laneCountIsExactMultiple) {
-                    $j('#createFctButton').enable();
+
+                if (sumOfLanes > 0 && (sumOfLanes % numFlowcellLanes == 0)) {
+                    $j('#createFctButton').removeAttr("disabled");
+                } else {
+                    $j('#createFctButton').attr("disabled", "disabled");
                 }
             }
 
@@ -62,6 +63,12 @@
     </stripes:layout-component>
     <stripes:layout-component name="content">
         <stripes:form beanclass="${actionBean.class.name}" id="scanForm" class="form-horizontal">
+
+            <!-- These hidden inputs map flowcell name to lane count for javascript. -->
+            <c:forEach items="${actionBean.flowcellTypes}" var="flowcell" varStatus="loop">
+                <stripes:hidden name="${flowcell}Count" value="${flowcell.vesselGeometry.rowCount}"/>
+            </c:forEach>
+
             <div class="control-group">
                 <stripes:label for="lcsetText" name="LCSet Names" class="control-label"/>
                 <div class="controls">
@@ -78,9 +85,10 @@
             <div class="control-group">
                 <stripes:label for="flowcellTypeSelect" name="Flowcell Type" class="control-label"/>
                 <div class="controls">
-                    <stripes:select id="flowcellTypeSelect" name="selectedFlowcellType" onchange="updateSumOfLanes()">
+                    <stripes:select id="flowcellTypeSelect" name="selectedFlowcellType" onchange="updateFlowcell()">
                         <stripes:options-collection label="displayName" collection="${actionBean.flowcellTypes}"/>
-                    </stripes:select>
+                    </stripes:select>&nbsp;
+                    <span id="numFlowcellLanesDisplayed">0</span> lane
                 </div>
             </div>
             <div class="control-group">
@@ -93,7 +101,7 @@
                     <tr>
                         <th>Tube Barcode</th>
                         <th>LCSET</th>
-                        <th>Number Lanes</th>
+                        <th>Number of Lanes</th>
                         <th>Loading Conc</th>
                         <th>Tube Created On</th>
                         <th>Product</th>
@@ -125,13 +133,9 @@
                 </table>
             </div>
             <div class="control-group" style="margin-left: 200px">
-                <strong>Sum of Lanes: <span id="sumOfLanesDisplayed">0</span></strong>
-            </div>
-            <div class="control-group" style="margin-left: 50px">
-                <div class="controls actionButtons">
-                    <stripes:submit id="createFctBtn" name="save" value="Create FCT Tickets"
-                                    class="btn btn-primary"/>
-                </div>
+                <strong>Sum of Lanes: <span id="sumOfLanesDisplayed">0</span></strong>&nbsp; &nbsp; &nbsp;
+                <stripes:submit id="createFctButton" name="save" value="Create FCT Tickets"
+                                disabled="disabled" class="btn btn-primary"/>
             </div>
         </stripes:form>
     </stripes:layout-component>
