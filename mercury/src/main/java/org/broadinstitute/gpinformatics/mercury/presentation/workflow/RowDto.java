@@ -1,9 +1,15 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.workflow;
 
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+
 import javax.annotation.Nonnull;
 import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Represents a table row in Create FCT page.
@@ -16,15 +22,34 @@ public class RowDto {
     private Date eventDate = new Date();
     private int readLength = 1;
     private String product = "";
+    private String startingBatchVessel = "";
 
     public RowDto() {
     }
 
-    public RowDto(@Nonnull String barcode, @Nonnull String lcset, @Nonnull Date eventDate, @Nonnull String product) {
+    public RowDto(@Nonnull String barcode, @Nonnull String lcset, @Nonnull Date eventDate, @Nonnull String product,
+                  @Nonnull String startingBatchVessel) {
         this.barcode = barcode;
         this.lcset = lcset;
         this.eventDate = eventDate;
         this.product = product;
+        this.startingBatchVessel = startingBatchVessel;
+    }
+
+    public static Set<String> allLcsets(Collection<RowDto> rowDtos) {
+        Set<String> set = new HashSet<>();
+        for (RowDto rowDto : rowDtos) {
+            set.add(rowDto.getLcset());
+        }
+        return set;
+    }
+
+    public static Set<String> allStartingBatchVessels(Collection<RowDto> rowDtos) {
+        Set<String> set = new HashSet<>();
+        for (RowDto rowDto : rowDtos) {
+            set.add(rowDto.getStartingBatchVessel());
+        }
+        return set;
     }
 
     public String getBarcode() {
@@ -81,6 +106,14 @@ public class RowDto {
 
     public void setNumberLanes(int numberLanes) {
         this.numberLanes = numberLanes;
+    }
+
+    public String getStartingBatchVessel() {
+        return startingBatchVessel;
+    }
+
+    public void setStartingBatchVessel(String startingBatchVessel) {
+        this.startingBatchVessel = startingBatchVessel;
     }
 
     public static final Comparator BY_BARCODE = new Comparator() {

@@ -87,8 +87,8 @@
                 <div class="controls">
                     <stripes:select id="flowcellTypeSelect" name="selectedFlowcellType" onchange="updateFlowcell()">
                         <stripes:options-collection label="displayName" collection="${actionBean.flowcellTypes}"/>
-                    </stripes:select>&nbsp;
-                    <span id="numFlowcellLanesDisplayed">0</span> lane
+                    </stripes:select>
+                    &nbsp; <span id="numFlowcellLanesDisplayed">0</span> lane
                 </div>
             </div>
             <div class="control-group">
@@ -110,23 +110,19 @@
                     <tbody>
                     <c:forEach items="${actionBean.rowDtos}" var="rowDto" varStatus="item">
                         <tr>
-                            <td>${rowDto.barcode}
-                                <input type="hidden" name="rowDtos[${item.index}].barcode" value="${rowDto.barcode}"/>
-                            </td>
-                            <td>${rowDto.lcset}
-                                <input type="hidden" name="rowDtos[${item.index}].lcset" value="${rowDto.lcset}"/>
-                            </td>
+                            <td>${rowDto.barcode}</td>
+                            <td>${rowDto.lcset}</td>
                             <td><input id="numLanesId" name="rowDtos[${item.index}].numberLanes"
                                        value="${rowDto.numberLanes}" onchange="updateSumOfLanes()"/></td>
                             <td><input id="loadingConcId" name="rowDtos[${item.index}].loadingConc"
                                        value="${rowDto.loadingConc}"/></td>
-                            <td><fmt:formatDate value="${rowDto.eventDate}"
-                                                pattern="${actionBean.dateTimePattern}"/>
-                                <input type="hidden" name="rowDtos[${item.index}].eventDate" value="${rowDto.eventDate}"/>
-                            </td>
-                            <td>${rowDto.product}
-                                <input type="hidden" name="rowDtos[${item.index}].product" value="${rowDto.product}"/>
-                            </td>
+                            <td><fmt:formatDate value="${rowDto.eventDate}" pattern="${actionBean.dateTimePattern}"/></td>
+                            <td>${rowDto.product}</td>
+                            <input type="hidden" name="rowDtos[${item.index}].barcode" value="${rowDto.barcode}"/>
+                            <input type="hidden" name="rowDtos[${item.index}].lcset" value="${rowDto.lcset}"/>
+                            <input type="hidden" name="rowDtos[${item.index}].eventDate" value="${rowDto.eventDate}"/>
+                            <input type="hidden" name="rowDtos[${item.index}].product" value="${rowDto.product}"/>
+                            <input type="hidden" name="rowDtos[${item.index}].startingBatchVessel" value="${rowDto.startingBatchVessel}"/>
                         </tr>
                     </c:forEach>
                     </tbody>

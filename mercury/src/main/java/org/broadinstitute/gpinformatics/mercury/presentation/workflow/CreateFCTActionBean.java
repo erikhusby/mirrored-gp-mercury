@@ -132,42 +132,50 @@ public class CreateFCTActionBean extends CoreActionBean {
      * the lcsets and finding all descendant tubes for the event type selected in the UI.
      */
     private Resolution loadTubes() {
+        // Keeps any existing rowDtos (regardless of current lcset names) and only adds to them.
+        Set<String> existingStartingBatchVesselBarcodes = RowDto.allStartingBatchVessels(rowDtos);
+        Set<String> existingLcsets = RowDto.allLcsets(rowDtos);
         for (LabBatch labBatch : loadLcsets()) {
-            boolean foundEligibleTube = false;
-            for (LabVessel startingBatchVessel : labBatch.getStartingBatchLabVessels()) {
-                List<BucketEntry> bucketEntries = bucketEntryDao.findByVesselAndBatch(startingBatchVessel, labBatch);
-                for (Map.Entry<LabEvent, Set<LabVessel>> entry :
-                        startingBatchVessel.findVesselsForLabEventType(selectedEventType, true).entrySet()) {
-                    for (LabVessel eventVessel : entry.getValue()) {
-                        // Logically there can only be one tube added to the flowcell regardless of how many
-                        // times it was bucketed, but all choices get displayed.
-                        for (BucketEntry bucketEntry : bucketEntries) {
-                            foundEligibleTube = true;
-                            RowDto rowDto = new RowDto(eventVessel.getLabel(), labBatch.getBusinessKey(),
-                                    entry.getKey().getEventDate(),
-                                    bucketEntry.getProductOrder().getProduct() != null ?
+            // Skips this labBatch if already present in existing rowDtos.
+            if (!existingLcsets.contains(labBatch.getBatchName())) {
+                boolean foundEligibleTube = false;
+                for (LabVessel startingBatchVessel : labBatch.getStartingBatchLabVessels()) {
+                    // Skips this starting vessel if already present in existing rowDtos.
+                    if (!existingStartingBatchVesselBarcodes.contains(startingBatchVessel.getLabel())) {
+                        List<BucketEntry> bucketEntries = bucketEntryDao.findByVesselAndBatch(startingBatchVessel,
+                                labBatch);
+                        for (Map.Entry<LabEvent, Set<LabVessel>> entry :
+                                startingBatchVessel.findVesselsForLabEventType(selectedEventType, true).entrySet()) {
+                            for (LabVessel eventVessel : entry.getValue()) {
+                                // Logically there can only be one tube added to the flowcell regardless of how many
+                                // times it was bucketed, but all choices get displayed.
+                                for (BucketEntry bucketEntry : bucketEntries) {
+                                    foundEligibleTube = true;
+                                    String productName = bucketEntry.getProductOrder().getProduct() != null ?
                                             bucketEntry.getProductOrder().getProduct().getProductName() :
-                                            "[No product for " +
-                                                    bucketEntry.getProductOrder().getJiraTicketKey() + "]");
-                            if (!rowDtos.contains(rowDto)) {
-                                rowDtos.add(rowDto);
+                                            "[No product for " + bucketEntry.getProductOrder().getJiraTicketKey() + "]";
+                                    RowDto rowDto = new RowDto(eventVessel.getLabel(), labBatch.getBusinessKey(),
+                                            entry.getKey().getEventDate(), productName, startingBatchVessel.getLabel());
+                                    if (!rowDtos.contains(rowDto)) {
+                                        rowDtos.add(rowDto);
+                                    }
+                                }
                             }
-
                         }
                     }
                 }
-            }
-            if (!foundEligibleTube) {
-                addMessage("No " + selectedEventType.getName() + " tubes found for " + labBatch.getBatchName());
+                if (!foundEligibleTube) {
+                    addMessage("No " + selectedEventType.getName() + " tubes found for " + labBatch.getBatchName());
+                }
             }
         }
         Collections.sort(rowDtos, RowDto.BY_BARCODE);
         return new ForwardResolution(VIEW_PAGE);
     }
 
-    /** Cleans up and validates the list of lcset names, and returns the lab batches. */
-    private List<LabBatch> loadLcsets() {
-        List<LabBatch> labBatches = new ArrayList<>();
+    /** Validates the list of lcset names, and returns their lab batches. */
+    private Set<LabBatch> loadLcsets() {
+        Set<LabBatch> labBatches = new HashSet<>();
         // Keeps only the decimal digits, ascii letters, hyphen, and space delimiters.
         String[] batchNames = lcsetNames.replaceAll("[^\\p{Nd}\\p{Ll}\\p{Lu}\\p{Pd}]", " ").
                 replaceAll("[^\\x20-\\x7E]", "").toUpperCase().split(" ");
@@ -197,11 +205,7 @@ public class CreateFCTActionBean extends CoreActionBean {
         // Gets the flowcell parameters.
         LabBatch.LabBatchType batchType = selectedFlowcellType.getBatchType();
         CreateFields.IssueType issueType = selectedFlowcellType.getIssueType();
-        int lanesPerFlowcell = selectedFlowcellType.getVesselGeometry().getVesselPositions().length;
-        if (lanesPerFlowcell < 1 || lanesPerFlowcell > VESSEL_POSITIONS.length) {
-            addMessage("ActionBean must be updated to support a flowcell lane count of " + lanesPerFlowcell);
-            return new RedirectResolution(CreateFCTActionBean.class, VIEW_ACTION);
-        }
+        int lanesPerFlowcell = selectedFlowcellType.getVesselGeometry().getRowCount();
 
         // Iterates on table rows for those with non-zero lane count.
         Map<LabVessel, RowDto> mapVesselToDto = new HashMap<>();
@@ -217,7 +221,7 @@ public class CreateFCTActionBean extends CoreActionBean {
             // Musn't start any FCT until all flowcells have full lanes.
             addMessage(numberOfLanes + " is not an exact multiple of " + lanesPerFlowcell + " flowcell lanes");
         } else if (numberOfLanes == 0) {
-            addMessage("All tubes have zero lanes.");
+            addMessage("Sum of number of lanes is zero.");
         } else {
             List<LabBatch> createdFctBatches = new ArrayList<>();
             for (List<FlowcellMappingDto> laneDtos : makeFlowcellMappingList(mapVesselToDto, lanesPerFlowcell)) {
@@ -320,20 +324,6 @@ public class CreateFCTActionBean extends CoreActionBean {
             }
         }
         return flowcellMappings;
-    }
-
-    /** Returns the row dto for the given tube barcode. */
-    private RowDto rowDtoForBarcode(String barcode) {
-        for (RowDto rowDto : rowDtos) {
-            if (rowDto.getBarcode().equals(barcode)) {
-                return rowDto;
-            }
-        }
-        String barcodes = "";
-        for (RowDto rowDto : rowDtos) {
-            barcodes += rowDto.getBarcode() + " ";
-        }
-        throw new RuntimeException("Could not find barcode '" + barcode + "' among '" + barcodes + "'");
     }
 
     public List<RowDto> getRowDtos() {
