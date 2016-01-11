@@ -21,6 +21,7 @@ public class InfiniumJaxbBuilder {
     private final BettaLimsMessageTestFactory bettaLimsMessageTestFactory;
     private final String testPrefix;
     private final String sourcePlate;
+    private final int numSamples;
     private final List<BettaLIMSMessage> messageList = new ArrayList<>();
 
     private String ampPlate;
@@ -47,16 +48,18 @@ public class InfiniumJaxbBuilder {
     private List<Triple<String, String, Integer>> xstainReagents;
 
     public InfiniumJaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory, String testPrefix,
-                               String sourcePlate, List<Triple<String, String, Integer>> amplificationReagents,
-                               List<Triple<String, String, Integer>> amplificationReagentReagents,
-                               List<Triple<String, String, Integer>> fragmentationReagents,
-                               List<Triple<String, String, Integer>> precipitationReagents,
-                               List<Triple<String, String, Integer>> precipitationIsopropanolReagents,
-                               List<Triple<String, String, Integer>> resuspensionReagents,
-                               List<Triple<String, String, Integer>> xstainReagents) {
+            String sourcePlate, int numSamples,
+            List<Triple<String, String, Integer>> amplificationReagents,
+            List<Triple<String, String, Integer>> amplificationReagentReagents,
+            List<Triple<String, String, Integer>> fragmentationReagents,
+            List<Triple<String, String, Integer>> precipitationReagents,
+            List<Triple<String, String, Integer>> precipitationIsopropanolReagents,
+            List<Triple<String, String, Integer>> resuspensionReagents,
+            List<Triple<String, String, Integer>> xstainReagents) {
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
         this.testPrefix = testPrefix;
         this.sourcePlate = sourcePlate;
+        this.numSamples = numSamples;
         this.amplificationReagents = amplificationReagents;
         this.amplificationReagentReagents = amplificationReagentReagents;
         this.fragmentationReagents = fragmentationReagents;
@@ -129,7 +132,7 @@ public class InfiniumJaxbBuilder {
         bettaLIMSMessage.getPlateEvent().add(infiniumResuspensionJaxb);
         bettaLIMSMessage.getPlateEvent().add(infiniumPostResuspensionHybOvenJaxb);
 
-        for (int i = 0; i < 96 / 24; i++) {
+        for (int i = 0; i <= numSamples / 24; i++) {
             hybridizationChips.add(testPrefix + "HybridizationChip" + i);
         }
 
@@ -137,14 +140,14 @@ public class InfiniumJaxbBuilder {
         // 4 separate InfiniumHybridization, each followed by InfiniumHybChamberLoaded
         List<BettaLimsMessageTestFactory.CherryPick> cherryPicks = new ArrayList<>();
         bettaLIMSMessage = new BettaLIMSMessage();
-        for (int i = 0; i < 96; i++) {
+        for (int i = 0; i < numSamples; i++) {
             int chipIndex = i % 24;
             int chipNum = i / 24;
             cherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(ampPlate,
                     bettaLimsMessageTestFactory.buildWellName(i + 1, BettaLimsMessageTestFactory.WellNameType.LONG),
                     hybridizationChips.get(chipNum),
                     String.format("R%02dC%02d", (chipIndex % 12)  + 1, (chipIndex / 12) + 1)));
-            if (chipIndex == 23) {
+            if (chipIndex == 23 || i == numSamples - 1) {
                 PlateCherryPickEvent infiniumHybridization = bettaLimsMessageTestFactory.buildPlateToPlateCherryPick(
                         "InfiniumHybridization", ampPlate, Collections.singletonList(hybridizationChips.get(chipNum)),
                         cherryPicks);

@@ -43,7 +43,7 @@ public class InfiniumEntityBuilder {
 
     public InfiniumEntityBuilder invoke() {
         infiniumJaxbBuilder = new InfiniumJaxbBuilder(bettaLimsMessageTestFactory, testPrefix,
-                sourceplate.getLabCentricName(),
+                sourceplate.getLabCentricName(), sourceplate.getSampleInstanceCount(),
                 Arrays.asList(Triple.of("NaOH", "1234-NaOH", 1), Triple.of("MA1", "1234-MA1", 2)),
                 Arrays.asList(Triple.of("MA2", "1234-MA2", 3), Triple.of("MSM", "1234-MSM", 4)),
                 Arrays.asList(Triple.of("FMS", "1234-FMS", 5)),
