@@ -898,9 +898,9 @@ public class LabEventTest extends BaseEventTest {
                     qtpEntityBuilder2.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
             LabBatch fctBatch = new LabBatch(FCT_TICKET, Collections.singleton(denatureSource), LabBatch.LabBatchType.FCT);
             HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder2 =
-                    runHiSeq2500FlowcellProcess(qtpEntityBuilder2.getDenatureRack(), "2" + "ADXX", FCT_TICKET,
+                    runHiSeq2500FlowcellProcess(qtpEntityBuilder2.getDenatureRack(), "2" + "ANXX", FCT_TICKET,
                             ProductionFlowcellPath.STRIPTUBE_TO_FLOWCELL, "squidDesignationName",
-                            Workflow.AGILENT_EXOME_EXPRESS);
+                            Workflow.ICE_EXOME_EXPRESS);
 
             LibraryConstructionEntityBuilder libraryConstructionEntityBuilder =
                     runLibraryConstructionProcess(exomeExpressShearingEntityBuilder.getShearingCleanupPlate(),
@@ -918,9 +918,9 @@ public class LabEventTest extends BaseEventTest {
                     qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
             fctBatch = new LabBatch(FCT_TICKET, Collections.singleton(denatureSource), LabBatch.LabBatchType.FCT);
             HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
-                    runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1" + "ADXX", FCT_TICKET,
+                    runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1" + "ANXX", FCT_TICKET,
                                                 ProductionFlowcellPath.STRIPTUBE_TO_FLOWCELL, "squidDesignationName",
-                                                Workflow.AGILENT_EXOME_EXPRESS);
+                                                Workflow.ICE_EXOME_EXPRESS);
 
             SimpleDateFormat dateFormat = new SimpleDateFormat(IlluminaSequencingRun.RUN_FORMAT_PATTERN);
             File runPath = File.createTempFile("tempRun" + dateFormat.format(runDate), ".txt");
@@ -937,7 +937,7 @@ public class LabEventTest extends BaseEventTest {
                     runFactory.buildDbFree(runBean1, hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell());
 
             ZimsIlluminaRun zimsIlluminaRun1 = zimsIlluminaRunFactory.makeZimsIlluminaRun(run1);
-            Assert.assertEquals(zimsIlluminaRun1.getLanes().size(), 2, "Wrong number of lanes");
+            Assert.assertEquals(zimsIlluminaRun1.getLanes().size(), 8, "Wrong number of lanes");
             Assert.assertEquals(zimsIlluminaRun1.getSystemOfRecord(), SystemRouter.System.MERCURY);
             ZimsIlluminaChamber zimsIlluminaChamber1 = zimsIlluminaRun1.getLanes().iterator().next();
             for (LibraryBean libraryBean : zimsIlluminaChamber1.getLibraries()) {
@@ -954,7 +954,7 @@ public class LabEventTest extends BaseEventTest {
                     runFactory.buildDbFree(runBean2, hiSeq2500FlowcellEntityBuilder2.getIlluminaFlowcell());
 
             ZimsIlluminaRun zimsIlluminaRun2 = zimsIlluminaRunFactory.makeZimsIlluminaRun(run2);
-            Assert.assertEquals(zimsIlluminaRun2.getLanes().size(), 2, "Wrong number of lanes");
+            Assert.assertEquals(zimsIlluminaRun2.getLanes().size(), 8, "Wrong number of lanes");
 
             ZimsIlluminaChamber zimsIlluminaChamber2 = zimsIlluminaRun2.getLanes().iterator().next();
             for (LibraryBean libraryBean : zimsIlluminaChamber2.getLibraries()) {
