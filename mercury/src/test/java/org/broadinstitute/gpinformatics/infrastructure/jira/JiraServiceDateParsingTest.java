@@ -29,12 +29,13 @@ public class JiraServiceDateParsingTest {
         Calendar calendar = GregorianCalendar.getInstance();
         calendar.set(2016, Calendar.JANUARY, 11, 15, 28, 11);
 
-        final Date testDate = calendar.getTime();
+        Date testDate = calendar.getTime();
 
         return new Object[][]{
                 new Object[]{"2016-01-11", testDate, Calendar.DAY_OF_MONTH},
                 new Object[]{"11/Jan/16", testDate, Calendar.DAY_OF_MONTH},
-                new Object[]{"2016-01-11T15:28:11.445-0500", testDate, Calendar.SECOND}
+                new Object[]{"2016-01-11T15:28:11.445-0500", testDate, Calendar.SECOND},
+                new Object[]{"11/Jan/16 3:28 PM", testDate, Calendar.MINUTE}
         };
     }
 
@@ -46,7 +47,7 @@ public class JiraServiceDateParsingTest {
         } catch (ParseException e) {
             Assert.fail("Could not parse date", e);
         }
-        Assert.assertEquals(org.apache.commons.lang3.time.DateUtils.truncate(testDate, minimumFieldPrecision),
-                org.apache.commons.lang3.time.DateUtils.truncate(resultDate, minimumFieldPrecision));
+        Assert.assertEquals(org.apache.commons.lang3.time.DateUtils.truncate(resultDate, minimumFieldPrecision),
+                org.apache.commons.lang3.time.DateUtils.truncate(testDate, minimumFieldPrecision));
     }
 }

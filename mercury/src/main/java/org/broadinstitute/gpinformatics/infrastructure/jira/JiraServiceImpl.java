@@ -279,7 +279,8 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
      * @see org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils
      */
     public static Date parseJiraDate(String dateStringValue) throws ParseException {
-        List<String> dateFormats = Arrays.asList("yyyy-MM-dd'T'HH:mm:ss.SSSZ", "yyyy-MM-dd", "dd/MMM/yy");
+        List<String> dateFormats =
+                Arrays.asList("yyyy-MM-dd'T'HH:mm:ss.SSSZ", "dd/MMM/yy h:mm a", "yyyy-MM-dd", "dd/MMM/yy");
         Date date = null;
 
         ParseException parseException = null;
