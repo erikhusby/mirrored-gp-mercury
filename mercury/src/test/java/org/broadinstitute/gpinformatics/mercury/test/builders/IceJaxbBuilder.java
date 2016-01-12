@@ -1,19 +1,19 @@
 package org.broadinstitute.gpinformatics.mercury.test.builders;
 
+import org.apache.commons.lang3.tuple.Triple;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.MetadataType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReagentType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collections;
-import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.List;
 
 /**
@@ -73,10 +73,14 @@ public class IceJaxbBuilder {
     private PlateTransferEventType iceCatchPico1;
     private PlateTransferEventType iceCatchPico2;
     private PlateCherryPickEvent icePoolTest;
+    private List<Triple<String, String, Integer>> ice2ndHybReagents;
+    private List<Triple<String, String, Integer>> iceCatchEnrichmentSetupReagents;
 
     public IceJaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory, String testPrefix,
             List<String> pondRegRackBarcodes, List<List<String>> listPondRegTubeBarcodes, String baitTube1Barcode,
-            String baitTube2Barcode, LibraryConstructionJaxbBuilder.TargetSystem targetSystem, PlexType plexType) {
+            String baitTube2Barcode, LibraryConstructionJaxbBuilder.TargetSystem targetSystem, PlexType plexType,
+            List<Triple<String, String, Integer>> ice2ndHybReagentTypeLotYearOffset,
+            List<Triple<String, String, Integer>> iceCatchEnrichmentSetupReagentTypeLotOffset) {
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
         this.testPrefix = testPrefix;
         this.pondRegRackBarcodes = pondRegRackBarcodes;
@@ -85,6 +89,8 @@ public class IceJaxbBuilder {
         this.baitTube2Barcode = baitTube2Barcode;
         this.targetSystem = targetSystem;
         this.plexType = plexType;
+        this.ice2ndHybReagents = ice2ndHybReagentTypeLotYearOffset;
+        this.iceCatchEnrichmentSetupReagents = iceCatchEnrichmentSetupReagentTypeLotOffset;
     }
 
     public IceJaxbBuilder invoke() {
@@ -215,6 +221,14 @@ public class IceJaxbBuilder {
                 LabEventFactory.PHYS_TYPE_TUBE_RACK, Collections.singletonList(bait1RackBarcode),
                 Collections.singletonList(Collections.singletonList(baitTube1Barcode)),
                 Collections.singletonList(firstHybPlateBarcode), bait1CherryPicks);
+        ReagentType baitReagent = new ReagentType();
+        baitReagent.setBarcode("Bait" + Long.toString(System.currentTimeMillis()));
+        baitReagent.setKitType("Rapid Capture Kit Box 4 (Bait)");
+        MetadataType metadataType = new MetadataType();
+        metadataType.setName("Bait Well");
+        metadataType.setValue("A1");
+        baitReagent.getMetadata().add(metadataType);
+        ice1stBaitPick.getReagent().add(baitReagent);
         bettaLimsMessageTestFactory.addMessage(messageList, ice1stBaitPick);
 
         //PostIce1stHybridizationThermoCyclerLoaded
@@ -236,19 +250,11 @@ public class IceJaxbBuilder {
         bettaLimsMessageTestFactory.addMessage(messageList, postIce1stCaptureThermoCyclerLoaded);
 
         // Ice2ndHybridization
-        List<BettaLimsMessageTestFactory.ReagentDto> reagentDtos = new ArrayList<>();
-        GregorianCalendar gregorianCalendar = new GregorianCalendar();
-        gregorianCalendar.add(Calendar.MONTH, 6);
-        Date expiration = gregorianCalendar.getTime();
-        if (targetSystem == LibraryConstructionJaxbBuilder.TargetSystem.MERCURY_ONLY) {
-            reagentDtos.add(new BettaLimsMessageTestFactory.ReagentDto("CT3", "0009763452", expiration));
-            reagentDtos.add(new BettaLimsMessageTestFactory.ReagentDto("Rapid Capture Kit bait", "0009773452",
-                    expiration));
-            reagentDtos.add(new BettaLimsMessageTestFactory.ReagentDto("Rapid Capture Kit Resuspension Buffer",
-                    "0009783452", expiration));
-        }
+
         ice2ndHybridization = bettaLimsMessageTestFactory.buildPlateEvent("Ice2ndHybridization",
-                firstCapturePlateBarcode, reagentDtos);
+                firstCapturePlateBarcode,
+                targetSystem == LibraryConstructionJaxbBuilder.TargetSystem.MERCURY_ONLY ?
+                        BettaLimsMessageTestFactory.reagentList(ice2ndHybReagents) : Collections.EMPTY_LIST);
         bettaLimsMessageTestFactory.addMessage(messageList, ice2ndHybridization);
 
         // Ice2ndBaitPick
@@ -289,15 +295,12 @@ public class IceJaxbBuilder {
         bettaLimsMessageTestFactory.addMessage(messageList, iceCatchCleanup);
 
         // IceCatchEnrichmentSetup
-        reagentDtos.clear();
-        if (targetSystem == LibraryConstructionJaxbBuilder.TargetSystem.MERCURY_ONLY) {
-            reagentDtos.add(new BettaLimsMessageTestFactory.ReagentDto("Dual Index Primers Lot", "0009764452",
-                    expiration));
-            reagentDtos.add(new BettaLimsMessageTestFactory.ReagentDto("Rapid Capture Enrichment Amp Lot Barcode",
-                    "0009765452", expiration));
-        }
         iceCatchEnrichmentSetup = bettaLimsMessageTestFactory.buildPlateEvent("IceCatchEnrichmentSetup",
-                catchCleanupPlateBarcode, reagentDtos);
+                catchCleanupPlateBarcode,
+                targetSystem == LibraryConstructionJaxbBuilder.TargetSystem.MERCURY_ONLY ?
+                        BettaLimsMessageTestFactory.reagentList(iceCatchEnrichmentSetupReagents) :
+                        Collections.EMPTY_LIST);
+
         bettaLimsMessageTestFactory.addMessage(messageList, iceCatchEnrichmentSetup);
 
         postIceCatchEnrichmentSetupThermoCyclerLoaded = bettaLimsMessageTestFactory.buildPlateEvent(

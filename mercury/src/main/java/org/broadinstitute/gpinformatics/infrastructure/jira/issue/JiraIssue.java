@@ -194,6 +194,16 @@ public class JiraIssue implements Serializable {
     }
 
     /**
+     * Add List of jira users to the issue's watcher list.
+     * @see #addWatcher(String)
+     */
+    public void addWatchers(List<String> watchers) throws IOException {
+        for (String watcher : watchers) {
+            addWatcher(watcher);
+        }
+    }
+
+    /**
      * Return the value of a JIRA field by name.
      *
      * @param fieldName  the field to return

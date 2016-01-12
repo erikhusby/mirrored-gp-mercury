@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraUser;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.Visibility;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NoJiraTransitionException;
@@ -22,9 +23,14 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.emptyCollectionOf;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.is;
 
 @Test(groups = EXTERNAL_INTEGRATION, singleThreaded = true)
 public class JiraServiceTest {
@@ -63,6 +69,32 @@ public class JiraServiceTest {
 
 
         Assert.assertNotNull(jiraIssue.getKey());
+    }
+
+    public void testFindUser() {
+        List<JiraUser> jiraUsers = service.getJiraUsers("qadude");
+        boolean foundUser=false;
+
+        assertThat(jiraUsers.size(), is(greaterThan(1)));
+        String displayName = "QADude PDM";
+        for (JiraUser jiraUser : jiraUsers) {
+            if (jiraUser.getDisplayName().equals(displayName)) {
+                foundUser=true;
+                break;
+            }
+        }
+
+        assertThat(String.format("Could not find %s", displayName), foundUser, is(true));
+    }
+
+    public void testFindUserNoSuchUser() {
+        List<JiraUser> jiraUsers = service.getJiraUsers("noperdoodles!");
+        assertThat(jiraUsers, emptyCollectionOf(JiraUser.class));
+    }
+
+    public void testFindUserNullUser() {
+        List<JiraUser> jiraUsers = service.getJiraUsers(null);
+        assertThat(jiraUsers, emptyCollectionOf(JiraUser.class));
     }
 
     public void testCreatePdoTicket() throws IOException {

@@ -13,8 +13,6 @@ CREATE OR REPLACE PACKAGE BODY MERGE_ETL_IMPORT
 AS
 
   errmsg        VARCHAR2(255);
-  PDO_SAMPLE_NOT_IN_EVENT_FACT EXCEPTION;
-  INVALID_LAB_BATCH EXCEPTION;
   v_tmp  NUMBER;
 
   TYPE PK_ARR_TY IS TABLE OF NUMBER(19) INDEX BY BINARY_INTEGER;
@@ -1771,16 +1769,16 @@ AS
                 AND ROWNUM = 1;
 
           EXCEPTION WHEN NO_DATA_FOUND
-          THEN RAISE PDO_SAMPLE_NOT_IN_EVENT_FACT;
+          THEN RAISE_APPLICATION_ERROR( -20101, 'Sequencing Fact sample and product order not found in Event_Fact table' );
         END;
 
         BEGIN
-          -- Reports an invalid batch_name.
+          -- Reports an invalid batch_name (NULL, 'NONE', or 'MULTIPLE')
           SELECT 1 INTO v_tmp FROM DUAL
           WHERE NVL(new.batch_name, 'NONE') NOT IN ('NONE', 'MULTIPLE');
 
           EXCEPTION WHEN NO_DATA_FOUND
-          THEN RAISE INVALID_LAB_BATCH;
+          THEN RAISE_APPLICATION_ERROR( -20102, 'Sequencing Fact has invalid lab batch name: ' || NVL(new.batch_name, 'NONE') );
         END;
 
         INSERT INTO sequencing_sample_fact (
@@ -1820,16 +1818,6 @@ AS
 
         V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;
       EXCEPTION
-        WHEN PDO_SAMPLE_NOT_IN_EVENT_FACT THEN
-          DBMS_OUTPUT.PUT_LINE(
-              TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_sequencing_sample_fact.dat line ' || new.line_number || '  ' ||
-              'Sequencing Fact sample and product order not found in Event_Fact table');
-          CONTINUE;
-        WHEN INVALID_LAB_BATCH THEN
-          DBMS_OUTPUT.PUT_LINE(
-              TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_sequencing_sample_fact.dat line ' || new.line_number || '  ' ||
-              'Sequencing Fact has invalid lab batch name: ' || NVL(new.batch_name, 'NONE'));
-          CONTINUE;
         WHEN OTHERS THEN
           errmsg := SQLERRM;
           DBMS_OUTPUT.PUT_LINE(

@@ -20,6 +20,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -30,7 +31,10 @@ public class TransferVisualizerActionBean extends CoreActionBean {
     public static final String ACTION_BEAN_URL = "/labevent/transfervis.action";
     public static final String TRANSFER_VIS_PAGE = "/labevent/transfer_vis.jsp";
 
+    /** POSTed from form */
     private String barcodes;
+    /** POSTed from form */
+    private List<TransferVisualizerV2.AlternativeIds> alternativeIds = new ArrayList<>();
 
     @Inject
     private LabVesselDao labVesselDao;
@@ -48,7 +52,7 @@ public class TransferVisualizerActionBean extends CoreActionBean {
      */
     public Resolution visualize() {
         String[] splitBarcodes = barcodes.split("\\s");
-        final Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(Arrays.asList(splitBarcodes));
+        Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(Arrays.asList(splitBarcodes));
         for (Map.Entry<String, LabVessel> barcodeLabVesselEntry : mapBarcodeToVessel.entrySet()) {
             if (barcodeLabVesselEntry.getValue() == null) {
                 addValidationError("barcodes", barcodeLabVesselEntry.getKey() + " not found.");
@@ -72,8 +76,9 @@ public class TransferVisualizerActionBean extends CoreActionBean {
                         new ArrayList<>(mapBarcodeToVessel.values()),
                         Arrays.asList(TransferTraverserCriteria.TraversalDirection.Ancestors,
                                 TransferTraverserCriteria.TraversalDirection.Descendants),
-                        httpServletResponse.getWriter());
-
+                        httpServletResponse.getWriter(),
+                        alternativeIds);
+                labVesselDao.clear();
             }
         };
     }
@@ -87,7 +92,12 @@ public class TransferVisualizerActionBean extends CoreActionBean {
             if (hasErrors() || StringUtils.isEmpty(barcodes)) {
                 return null;
             }
-            return "/labevent/transfervis.action?getJson=&barcodes="+ URLEncoder.encode(barcodes, "UTF-8");
+            String url = "/labevent/transfervis.action?getJson=&barcodes=" + URLEncoder.encode(barcodes, "UTF-8");
+            for (TransferVisualizerV2.AlternativeIds alternativeId : alternativeIds) {
+                url += "&alternativeIds=" + alternativeId.toString();
+            }
+
+            return url;
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);
         }
@@ -95,5 +105,13 @@ public class TransferVisualizerActionBean extends CoreActionBean {
 
     public void setBarcodes(String barcodes) {
         this.barcodes = barcodes;
+    }
+
+    public List<TransferVisualizerV2.AlternativeIds> getAlternativeIds() {
+        return alternativeIds;
+    }
+
+    public void setAlternativeIds(List<TransferVisualizerV2.AlternativeIds> alternativeIds) {
+        this.alternativeIds = alternativeIds;
     }
 }

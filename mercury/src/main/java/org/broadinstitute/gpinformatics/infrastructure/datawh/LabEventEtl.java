@@ -634,64 +634,30 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
             try {
                 for (SampleInstanceV2 si : sampleInstances) {
 
-                    ProductOrder pdo = null;
-                    LabBatch labBatch = null;
-                    String batchName = NONE;
-                    String pdoSampleID = null;
-                    String workflowName = null;
-                    String molecularIndexingSchemeName = "";
-                    String lcsetSampleID = "";
+                    // Extract ETL data from sample instance
+                    SampleInstanceEtlData sampleInstanceEtlData = SampleInstanceEtlData.buildFromSampleInstance
+                            ( si, labEvent.getEventDate(), true );
 
-                    // Get latest PDO and the sample which matches it (the PDO and sample must match)
-                    for (ProductOrderSample pdoSample : si.getAllProductOrderSamples()) {
-                        // Get a valid PDO
-                        pdo = pdoSample.getProductOrder();
-                        if (pdoSample.getMercurySample() != null) {
-                            // And associate a sample with it if available
-                            pdoSampleID = pdoSample.getMercurySample().getSampleKey();
-                            // getAllProductOrderSamples() sorts by closest first so we're done at first hit
-                            break;
-                        }
-                    }
-
-                    // Batch logic
-                    //BucketEntry singleBucketEntry = si.getSingleBucketEntry();
-                    labBatch = si.getSingleBatch();
-
-                    if (labBatch == null) {
-                        // Use the newest non-extraction bucket which was created sometime before this event
-                        long eventTs = labEvent.getEventDate().getTime();
-                        long bucketTs = 0L;
-                        for (BucketEntry bucketEntry : si.getAllBucketEntries()) {
-                            if (bucketEntry.getLabBatch() != null
-                                && bucketEntry.getLabBatch().getBatchName().startsWith("LCSET")
-                                && bucketEntry.getCreatedDate().getTime() > bucketTs
-                                && bucketEntry.getCreatedDate().getTime() <= eventTs) {
-                                labBatch = bucketEntry.getLabBatch();
-                                bucketTs = bucketEntry.getCreatedDate().getTime();
-                                // Bucket entry meets the criteria, so hold onto newest sample ID
-                                if (!bucketEntry.getLabVessel().getMercurySamples().isEmpty()) {
-                                    lcsetSampleID =
-                                            bucketEntry.getLabVessel().getMercurySamples().iterator().next()
-                                                    .getSampleKey();
-                                }
-                            }
-                        }
-                    } else {
-                        // This will capture controls
-                        lcsetSampleID = si.getNearestMercurySampleName();
-                    }
-
+                    String pdoSampleID = sampleInstanceEtlData.getPdoSampleId();
+                    ProductOrder pdo = sampleInstanceEtlData.getPdo();
+                    LabBatch labBatch = sampleInstanceEtlData.getLabBatch();
+                    String molecularIndexingSchemeName = sampleInstanceEtlData.getMolecularIndexingSchemeName();
+                    String lcsetSampleID = sampleInstanceEtlData.getNearestSampleID();
 
                     // Pull workflow from lab batch
                     // Default to event date, overwritten if lab batch available
+                    String batchName;
                     Date workflowEffectiveDate;
+                    String workflowName;
+
                     if (labBatch != null) {
                         batchName = labBatch.getBatchName();
                         workflowEffectiveDate = labBatch.getCreatedOn();
                         workflowName = labBatch.getWorkflowName();
                     } else {
+                        batchName = null;
                         workflowEffectiveDate = labEvent.getEventDate();
+                        workflowName = null;
                     }
 
                     if (StringUtils.isBlank(workflowName) && pdo != null) {
@@ -700,9 +666,6 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
 
                     WorkflowConfigDenorm wfDenorm = workflowConfigLookup.lookupWorkflowConfig(
                             labEvent.getLabEventType().getName(), workflowName, workflowEffectiveDate);
-
-                    molecularIndexingSchemeName = si.getMolecularIndexingScheme() != null ?
-                            si.getMolecularIndexingScheme().getName() : null;
 
                     dtos.add(new EventFactDto(labEvent, vessel, targetPosition, molecularIndexingSchemeName,
                             batchName, workflowEffectiveDate, workflowName,

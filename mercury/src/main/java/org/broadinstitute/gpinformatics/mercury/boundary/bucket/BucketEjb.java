@@ -418,7 +418,7 @@ public class BucketEjb {
     }
 
 
-    private Collection<BucketEntry> applyBucketCriteria(List<LabVessel> vessels, ProductOrder productOrder, String username) {
+    Collection<BucketEntry> applyBucketCriteria(List<LabVessel> vessels, ProductOrder productOrder, String username) {
         Collection<BucketEntry> bucketEntries = new ArrayList<>(vessels.size());
         WorkflowConfig workflowConfig = workflowLoader.load();
         List<Product> possibleProducts = new ArrayList<>();
@@ -429,15 +429,17 @@ public class BucketEjb {
         }
         possibleProducts.add(productOrder.getProduct());
         for (Product product : possibleProducts) {
-            ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflow(product.getWorkflow());
-            ProductWorkflowDefVersion workflowDefVersion = productWorkflowDef.getEffectiveVersion();
-            Map<WorkflowBucketDef, Collection<LabVessel>> initialBucket =
-                    workflowDefVersion.getInitialBucket(productOrder, vessels);
+            if (product.getWorkflow() != Workflow.NONE) {
+                ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflow(product.getWorkflow());
+                ProductWorkflowDefVersion workflowDefVersion = productWorkflowDef.getEffectiveVersion();
+                Map<WorkflowBucketDef, Collection<LabVessel>> initialBucket =
+                        workflowDefVersion.getInitialBucket(productOrder, vessels);
 
-            if (!initialBucket.isEmpty()) {
-                Collection<BucketEntry> entries = add(initialBucket, BucketEntry.BucketEntryType.PDO_ENTRY,
-                        LabEvent.UI_PROGRAM_NAME, username, LabEvent.UI_EVENT_LOCATION, productOrder);
-                bucketEntries.addAll(entries);
+                if (!initialBucket.isEmpty()) {
+                    Collection<BucketEntry> entries = add(initialBucket, BucketEntry.BucketEntryType.PDO_ENTRY,
+                            LabEvent.UI_PROGRAM_NAME, username, LabEvent.UI_EVENT_LOCATION, productOrder);
+                    bucketEntries.addAll(entries);
+                }
             }
         }
         return bucketEntries;

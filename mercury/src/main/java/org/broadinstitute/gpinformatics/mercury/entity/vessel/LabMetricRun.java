@@ -80,6 +80,11 @@ public class LabMetricRun {
         return runDate;
     }
 
+    /** For fixups only. */
+    void setRunDate(Date runDate) {
+        this.runDate = runDate;
+    }
+
     public LabMetric.MetricType getMetricType() {
         return metricType;
     }
