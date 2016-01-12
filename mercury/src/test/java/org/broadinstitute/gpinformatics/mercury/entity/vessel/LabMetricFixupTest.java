@@ -291,6 +291,20 @@ public class LabMetricFixupTest extends Arquillian {
         }
     }
 
+    @Test(enabled = false)
+    public void fixupSupport1417() {
+        try {
+            utx.begin();
+            userBean.loginOSUser();
+            deleteRun("LCSET-8516_Shearing_Pico", "SUPPORT-1417 remove Varioskan run, so lab can do generic upload");
+            deleteRun("LCSET-8516_Shearing_Pico_3", "SUPPORT-1417 remove Varioskan run, so lab can do generic upload");
+            utx.commit();
+        } catch (NotSupportedException | SystemException | RollbackException | HeuristicMixedException |
+                HeuristicRollbackException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private void deleteRun(String runName, String reason) {
         LabMetricRun labMetricRun = dao.findByName(runName);
         for (LabMetric labMetric : labMetricRun.getLabMetrics()) {
