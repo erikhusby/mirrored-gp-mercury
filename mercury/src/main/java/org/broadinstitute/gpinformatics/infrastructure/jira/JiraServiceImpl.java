@@ -17,9 +17,9 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueReq
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.IssueFieldsResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.IssueResolutionResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraUser;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraUserResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.UpdateIssueRequest;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraUser;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.Visibility;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.comment.AddCommentRequest;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.comment.AddCommentResponse;
@@ -28,6 +28,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Iss
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionRequest;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NoJiraTransitionException;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
+import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJsonJerseyClientService;
 import org.codehaus.jackson.map.ObjectMapper;
 
@@ -230,8 +231,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         Map<?, ?> reporterValues = (Map<?, ?>) fields.get("reporter");
         try {
             if (StringUtils.isNotBlank(dueDateValue)) {
-                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
-                parsedResults.dueDate = dateFormat.parse(dueDateValue);
+                parsedResults.dueDate = parseJiraDate(dueDateValue);
             }
         } catch (ParseException pe) {
             log.error("Unable to parse the due date for Jira Issue " + parsedResults.getKey());
@@ -258,6 +258,56 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         }
 
         return parsedResults;
+    }
+
+    /**
+     * Jira uses a couple of different date formats. This method attempts to parse using several different formats.
+     * found in jira's rest api:
+     * "2016-01-11":                    "yyyy-MM-dd"
+     * "2016-01-11T15:28:11.445-0500":  "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
+     * "11/Jan/16":                     "dd/MMM/yy",
+     * <p/>
+     * if the dates can't be passed using those formats. It falls beck to DateUtils.parseISO8601DateTime() and finally
+     * DateUtils.parseISO8601Date().
+     *
+     * @param dateStringValue String representation of a date
+     *
+     * @return Date object parsed from input string.
+     *
+     * @throws ParseException if the string can't be parsed.
+     *
+     * @see org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils
+     */
+    public static Date parseJiraDate(String dateStringValue) throws ParseException {
+        List<String> dateFormats = Arrays.asList("yyyy-MM-dd'T'HH:mm:ss.SSSZ", "yyyy-MM-dd", "dd/MMM/yy");
+        Date date = null;
+
+        ParseException parseException = null;
+
+        for (String dateFormatString : dateFormats) {
+            SimpleDateFormat dateFormat = new SimpleDateFormat(dateFormatString);
+            try {
+                date = dateFormat.parse(dateStringValue);
+                if (date != null) {
+                    break;
+                }
+            } catch (ParseException e) {
+                parseException = e;
+            }
+        }
+
+        if (date==null) {
+            try {
+                date = DateUtils.parseISO8601DateTime(dateStringValue);
+            } catch (ParseException e) {
+                date = DateUtils.parseISO8601Date(dateStringValue);
+            }
+        }
+        if (parseException != null && date == null) {
+            throw parseException;
+        }
+
+        return date;
     }
 
     @Override
