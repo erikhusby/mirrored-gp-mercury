@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.test.builders;
 
+import org.apache.commons.lang3.tuple.Triple;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
@@ -29,6 +30,8 @@ public class CrspRiboPlatingEntityBuilder {
     private final Map<String, BarcodedTube> mapBarcodeToTube;
     private final String rackBarcode;
     private final String testPrefix;
+    private LabEvent initialRiboTransfer1;
+    private LabEvent initialRiboTransfer2;
     private LabEvent riboMicrofluorEntityA2;
     private LabEvent riboMicrofluorEntityB1;
     private StaticPlate riboMicrofluorPlate;
@@ -66,14 +69,38 @@ public class CrspRiboPlatingEntityBuilder {
         return polyAAliquotTubeFormation;
     }
 
+    public LabEvent getInitialRiboTransfer1() {
+        return initialRiboTransfer1;
+    }
+
+    public LabEvent getInitialRiboTransfer2() {
+        return initialRiboTransfer2;
+    }
+
     public CrspRiboPlatingEntityBuilder invoke() {
         CrspRiboPlatingJaxbBuilder crspRiboPlatingJaxbBuilder = new CrspRiboPlatingJaxbBuilder(rackBarcode,
-                new ArrayList<>(mapBarcodeToTube.keySet()), testPrefix, bettaLimsMessageTestFactory).invoke();
+                new ArrayList<>(mapBarcodeToTube.keySet()), testPrefix, bettaLimsMessageTestFactory,
+                Triple.of("RiboGreen", "1234-RiboGreen", 1)).invoke();
+
+        Map<String, LabVessel> mapBarcodeToVessel = new LinkedHashMap<>();
+        mapBarcodeToVessel.putAll(mapBarcodeToTube);
+
+        //RiboTransfer
+        LabEventTest.validateWorkflow("RiboTransfer", mapBarcodeToTube.values());
+        initialRiboTransfer1 = labEventFactory.buildFromBettaLims(crspRiboPlatingJaxbBuilder.getInitialRiboTransfer1(),
+                mapBarcodeToVessel);
+        StaticPlate initialRiboPlate1 = (StaticPlate) initialRiboTransfer1.getTargetLabVessels().iterator().next();
+        initialRiboTransfer2 = labEventFactory.buildFromBettaLims(crspRiboPlatingJaxbBuilder.getInitialRiboTransfer2(),
+                mapBarcodeToVessel);
+        StaticPlate initialRiboPlate2 = (StaticPlate) initialRiboTransfer2.getTargetLabVessels().iterator().next();
+
+        labEventFactory.buildFromBettaLimsPlateEventDbFree(crspRiboPlatingJaxbBuilder.getInitialRiboBufferAddition1(),
+                initialRiboPlate1);
+        labEventFactory.buildFromBettaLimsPlateEventDbFree(crspRiboPlatingJaxbBuilder.getInitialRiboBufferAddition2(),
+                initialRiboPlate2);
 
         //PolyATSAliquot
         LabEventTest.validateWorkflow(LabEventType.POLY_A_TS_ALIQUOT.getName(), mapBarcodeToTube.values());
-        Map<String, LabVessel> mapBarcodeToVessel = new LinkedHashMap<>();
-        mapBarcodeToVessel.putAll(mapBarcodeToTube);
         polyATSAliquot = labEventFactory.buildFromBettaLims(
                 crspRiboPlatingJaxbBuilder.getPolyATSAliquot(), mapBarcodeToVessel);
 

@@ -4,6 +4,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
@@ -325,8 +326,30 @@ public class LabEvent {
         labEventReagents.add(new LabEventReagent(this, reagent));
     }
 
+    /** Removes the corresponding lab event reagent. Intended only for data fixup use. */
+    public LabEventReagent removeLabEventReagent(Reagent reagent) {
+        LabEventReagent found = null;
+        for (LabEventReagent labEventReagent : labEventReagents) {
+            if (Reagent.BY_NAME_LOT_EXP.compare(reagent, labEventReagent.getReagent()) == 0) {
+                if (found != null) {
+                    throw new RuntimeException("Identical " + reagent.getName() + " reagents on LabEvent " +
+                                               getLabEventId());
+                }
+                found = labEventReagent;
+            }
+        }
+        if (found != null) {
+            labEventReagents.remove(found);
+        }
+        return found;
+    }
+
     public void addReagentVolume(Reagent reagent, BigDecimal volume) {
         labEventReagents.add(new LabEventReagent(this, reagent, volume));
+    }
+
+    public void addReagentMetadata(Reagent reagent, Set<Metadata> metadataSet) {
+        labEventReagents.add(new LabEventReagent(this, reagent, metadataSet));
     }
 
     public void addMetadata(LabEventMetadata labEventMetadata) {

@@ -1,12 +1,14 @@
 package org.broadinstitute.gpinformatics.infrastructure.quote;
 
 import com.sun.jersey.api.client.ClientResponse;
+import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -22,7 +24,7 @@ public class QuoteServiceDBFreeTest {
 
     @BeforeClass(groups = DATABASE_FREE)
     private void setupLargeQuoteAndPriceItem() {
-        quote = new Quote("DNA4JD",new QuoteFunding(new FundingLevel("100",new Funding(Funding.FUNDS_RESERVATION, "NHGRI", "NHGRI"))), ApprovalStatus.FUNDED);
+        quote = new Quote("DNA4JD",new QuoteFunding(Collections.singleton(new FundingLevel("100",new Funding(Funding.FUNDS_RESERVATION, "NHGRI", "NHGRI")))), ApprovalStatus.FUNDED);
         quotePriceItem = new QuotePriceItem("Illumina Sequencing","1","Illumina HiSeq Run 44 Base","15","bannan","DNA Sequencing");
     }
 
@@ -132,14 +134,18 @@ public class QuoteServiceDBFreeTest {
         Quote quote = service.getQuoteByAlphaId("DNA4AA");
         Assert.assertNotNull(quote);
         Assert.assertEquals("Regev Zebrafish RNASeq 2-6-12", quote.getName());
-        Assert.assertEquals("6820110", quote.getQuoteFunding().getFundingLevel().getFunding().getCostObject());
-        Assert.assertEquals("ZEBRAFISH_NIH_REGEV",quote.getQuoteFunding().getFundingLevel().getFunding().getGrantDescription());
-        Assert.assertEquals(Funding.FUNDS_RESERVATION,quote.getQuoteFunding().getFundingLevel().getFunding().getFundingType());
+        for(FundingLevel level : quote.getQuoteFunding().getFundingLevel()) {
+            Assert.assertEquals("6820110", level.getFunding().getCostObject());
+            Assert.assertEquals("ZEBRAFISH_NIH_REGEV", level.getFunding().getGrantDescription());
+            Assert.assertEquals(Funding.FUNDS_RESERVATION, level.getFunding().getFundingType());
+        }
         Assert.assertEquals("DNA4AA",quote.getAlphanumericId());
 
         quote = service.getQuoteByAlphaId("DNA3A9");
-        Assert.assertEquals("HARVARD UNIVERSITY",quote.getQuoteFunding().getFundingLevel().getFunding().getInstitute());
-        Assert.assertEquals(Funding.PURCHASE_ORDER,quote.getQuoteFunding().getFundingLevel().getFunding().getFundingType());
+        for(FundingLevel level : quote.getQuoteFunding().getFundingLevel()) {
+            Assert.assertEquals("HARVARD UNIVERSITY", level.getFunding().getInstitute());
+            Assert.assertEquals(Funding.PURCHASE_ORDER, level.getFunding().getFundingType());
+        }
         Assert.assertEquals("DNA3A9",quote.getAlphanumericId());
 
     }
@@ -164,13 +170,13 @@ public class QuoteServiceDBFreeTest {
         Set<String> fundingTypes = new HashSet<>();
         for (Quote quote : quotes.getQuotes()) {
             if (quote.getQuoteFunding() != null) {
-                if (quote.getQuoteFunding().getFundingLevel() != null) {
-                    if (quote.getQuoteFunding().getFundingLevel().getFunding() != null) {
-                        Funding funding = quote.getQuoteFunding().getFundingLevel().getFunding();
-                        fundingTypes.add(funding.getFundingType());
+                if (CollectionUtils.isNotEmpty(quote.getQuoteFunding().getFundingLevel())) {
+                    for(FundingLevel level : quote.getQuoteFunding().getFundingLevel()) {
+                        if (level.getFunding() != null) {
+                            fundingTypes.add(level.getFunding().getFundingType());
+                        }
                     }
                 }
-
             }
         }
 

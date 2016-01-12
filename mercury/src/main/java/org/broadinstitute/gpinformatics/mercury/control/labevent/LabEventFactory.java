@@ -38,6 +38,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.EventHandlerSelector;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.GapHandler;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.SamplesDaughterPlateHandler;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
@@ -716,11 +717,10 @@ public class LabEventFactory implements Serializable {
             } else {
                 LabVessel labVessel = mapBarcodeToVessel.get(plateType.getBarcode());
                 if (labVessel == null) {
-                    for (IlluminaFlowcell.FlowcellType flowcellType : IlluminaFlowcell.FlowcellType.values()) {
-                        if (plateType.getPhysType().equals(flowcellType.getAutomationName())) {
-                            labVessel = new IlluminaFlowcell(flowcellType, plateType.getBarcode());
-                            break;
-                        }
+                    IlluminaFlowcell.FlowcellType flowcellType = IlluminaFlowcell.FlowcellType.getTypeForPhysTypeAndBarcode(
+                            plateType.getPhysType(), plateType.getBarcode());
+                    if (flowcellType != null) {
+                        labVessel = new IlluminaFlowcell(flowcellType, plateType.getBarcode());
                     }
 
                     if (labVessel == null) {
@@ -1162,7 +1162,17 @@ public class LabEventFactory implements Serializable {
                 genericReagent = new GenericReagent(reagentType.getKitType(), reagentType.getBarcode(),
                         reagentType.getExpiration());
             }
-            labEvent.addReagent(genericReagent);
+            Set<Metadata> metadataSet = new HashSet<>();
+            for (MetadataType metadataType: reagentType.getMetadata()) {
+                Metadata.Key metadataKey = Metadata.Key.fromDisplayName(metadataType.getName());
+                if(metadataKey != null) {
+                    Metadata metadata = new Metadata(metadataKey, metadataType.getValue());
+                    metadataSet.add(metadata);
+                } else {
+                    throw new RuntimeException("Failed to find metadata " + metadataType.getName());
+                }
+            }
+            labEvent.addReagentMetadata(genericReagent, metadataSet);
         }
     }
 
@@ -1224,7 +1234,8 @@ public class LabEventFactory implements Serializable {
         }
         LabEvent labEvent = constructReferenceData(plateTransferEvent, labEventRefDataFetcher);
         String barcode = plateTransferEvent.getPlate().getBarcode();
-        IlluminaFlowcell.FlowcellType flowcellType = IlluminaFlowcell.FlowcellType.getTypeForBarcode(barcode);
+        IlluminaFlowcell.FlowcellType flowcellType = IlluminaFlowcell.FlowcellType.getTypeForPhysTypeAndBarcode(
+                plateTransferEvent.getPlate().getPhysType(), barcode);
 
         if (targetFlowcell == null) {
             targetFlowcell = new IlluminaFlowcell(flowcellType, barcode);
@@ -1265,14 +1276,17 @@ public class LabEventFactory implements Serializable {
             if (StaticPlate.PlateType.getByAutomationName(physType) != null) {
                 targetVessel = new StaticPlate(destinationBarcode,
                         StaticPlate.PlateType.getByAutomationName(physType));
-            } else if (IlluminaFlowcell.FlowcellType.getByAutomationName(physType) != null) {
-                targetVessel = new IlluminaFlowcell(IlluminaFlowcell.FlowcellType.getByAutomationName(physType),
-                        destinationBarcode);
-            } else if (physType.equals(PHYS_TYPE_FLOWCELL)) {
-                // Guard against the possibility that automation scripts send us bare "Flowcell" types.
-                targetVessel = new IlluminaFlowcell(destinationBarcode);
             } else {
-                throw new RuntimeException("Unexpected physical type: " + physType);
+                IlluminaFlowcell.FlowcellType flowcellType = IlluminaFlowcell.FlowcellType.getTypeForPhysTypeAndBarcode(
+                        physType, destinationBarcode);
+                if (flowcellType != null) {
+                    targetVessel = new IlluminaFlowcell(flowcellType, destinationBarcode);
+                } else if (physType.equals(PHYS_TYPE_FLOWCELL)) {
+                    // Guard against the possibility that automation scripts send us bare "Flowcell" types.
+                    targetVessel = new IlluminaFlowcell(destinationBarcode);
+                } else {
+                    throw new RuntimeException("Unexpected physical type: " + physType);
+                }
             }
         }
         labEvent.getVesselToSectionTransfers().add(new VesselToSectionTransfer(sourceTube,

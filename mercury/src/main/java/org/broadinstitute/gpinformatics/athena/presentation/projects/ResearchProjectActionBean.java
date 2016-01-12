@@ -798,8 +798,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
             List<RegulatoryInfo> infos = regulatoryInfoDao.findByName(regulatoryInfoAlias);
             for (RegulatoryInfo info : infos) {
                 if (!info.getRegulatoryInfoId().equals(regulatoryInfoId)) {
-                    result = String.format("Title is already in use by %s: %s.", info.getType().getName(),
-                            info.getIdentifier());
+                    result = String.format("Title is already in use. If you are adding an ORSP # to use in place of an IRB #, please try appending the ORSP # to the title.");
                     break;
                 }
             }

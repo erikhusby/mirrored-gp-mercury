@@ -18,7 +18,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.JiraUserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
@@ -30,7 +32,6 @@ import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketCount;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
@@ -64,19 +65,18 @@ import java.util.TreeSet;
 public class BucketViewActionBean extends CoreActionBean {
     private static final String VIEW_PAGE = "/workflow/bucket_view.jsp";
     private static final String ADD_TO_BATCH_ACTION = "addToBatch";
-    private static final String CONFIRMATION_PAGE = "/workflow/rework_confirmation.jsp";
-    private static final String BATCH_CONFIRM_PAGE = "/batch/batch_confirm.jsp";
+    private static final String CREATE_BATCH_ACTION = "createBatch";
     private static final String EXISTING_TICKET = "existingTicket";
     private static final String NEW_TICKET = "newTicket";
-    private static final String CREATE_BATCH_ACTION = "createBatch";
     private static final String REWORK_CONFIRMED_ACTION = "reworkConfirmed";
     private static final String REMOVE_FROM_BUCKET_ACTION = "removeFromBucket";
-    private static final String REMOVE_FROM_BUCKET_CONFIRM_PAGE = "/workflow/remove_from_bucket_confirm.jsp";
     private static final String CONFIRM_REMOVE_FROM_BUCKET_ACTION = "confirmRemoveFromBucket";
     private static final String CHANGE_PDO = "changePdo";
     private static final String FIND_PDO = "findPdo";
     public static final String VIEW_BUCKET_ACTION = "viewBucket";
 
+    @Inject
+    JiraUserTokenInput jiraUserTokenInput;
     @Inject
     private WorkflowLoader workflowLoader;
     @Inject
@@ -117,15 +117,15 @@ public class BucketViewActionBean extends CoreActionBean {
     private List<Long> selectedEntryIds = new ArrayList<>();
     private Set<String> possibleWorkflows = new TreeSet<>();
 
-    private boolean jiraEnabled = false;
     private String important;
     private String description;
     private String summary;
     private Date dueDate;
     private String selectedLcset;
     private LabBatch batch;
+    private String jiraUserQuery;
     private Map<String, BucketCount> mapBucketToBucketEntryCount;
-
+    private CreateFields.ProjectType projectType = null;
 
     @Before(stages = LifecycleStage.BindingAndValidation)
     public void init() {
@@ -143,7 +143,16 @@ public class BucketViewActionBean extends CoreActionBean {
             }
         }
         mapBucketToWorkflows = bucketWorkflows.asMap();
+    }
+
+    @Before(stages = LifecycleStage.ResolutionExecution)
+    public void updateBucketCounts() {
         mapBucketToBucketEntryCount = initBucketCountsMap(bucketEntryDao.getBucketCounts());
+    }
+
+    @HandlesEvent("watchersAutoComplete")
+    public Resolution watchersAutoComplete() throws JSONException {
+        return createTextResolution(jiraUserTokenInput.getJsonString(getJiraUserQuery()));
     }
 
     @DefaultHandler
@@ -193,7 +202,6 @@ public class BucketViewActionBean extends CoreActionBean {
 
     @ValidationMethod(on = REMOVE_FROM_BUCKET_ACTION)
     public void removeSampleFromBucketValidation() {
-
         if (CollectionUtils.isEmpty(selectedEntryIds)) {
             addValidationError("bucketEntryView", "At least one sample must be selected to remove from the bucket.");
             viewBucket();
@@ -210,9 +218,8 @@ public class BucketViewActionBean extends CoreActionBean {
             if (bucket != null) {
                 collectiveEntries.addAll(bucket.getBucketEntries());
                 collectiveEntries.addAll(bucket.getReworkEntries());
-
-                // Doesn't show JIRA details if there are no bucket entries.
-                jiraEnabled = !collectiveEntries.isEmpty();
+                WorkflowBucketDef bucketDef = mapBucketToBucketDef.get(selectedBucket);
+                projectType = CreateFields.ProjectType.fromKeyPrefix(bucketDef.getBatchJiraProjectType());
                 preFetchSampleData(collectiveEntries);
             }
         }
@@ -227,25 +234,6 @@ public class BucketViewActionBean extends CoreActionBean {
         LabVessel.loadSampleDataForBuckets(labVessels);
     }
 
-    public Set<String> getSampleNames(LabVessel vessel) {
-        Set<SampleInstance> allSamples = vessel.getAllSamples();
-        Set<String> sampleNames = new HashSet<>();
-        for (SampleInstance sampleInstance : allSamples) {
-            sampleNames.add(sampleInstance.getStartingSample().getSampleKey());
-        }
-        return sampleNames;
-    }
-
-    @HandlesEvent(ADD_TO_BATCH_ACTION)
-    public Resolution addToBatch() {
-        loadReworkVessels();
-        if (batch == null) {
-            addValidationError("selectedLcset", String.format("Could not find %s.", selectedLcset));
-            return viewBucket();
-        }
-        return new ForwardResolution(CONFIRMATION_PAGE);
-    }
-
     public String getConfirmationPageTitle() {
         return String.format("Confirm adding %d new and %d rework entries to %s.",
                 bucketEntryIds.size(), reworkEntryIds.size(), selectedBucket);
@@ -256,19 +244,28 @@ public class BucketViewActionBean extends CoreActionBean {
         separateEntriesByType();
     }
 
-    @HandlesEvent(REWORK_CONFIRMED_ACTION)
-    public Resolution reworkConfirmed() {
+    @HandlesEvent(ADD_TO_BATCH_ACTION)
+    public Resolution addToBatch() {
         separateEntriesByType();
+
         try {
-            labBatchEjb.addToLabBatch(selectedLcset, bucketEntryIds, reworkEntryIds, selectedBucket, this);
+            labBatchEjb.addToLabBatch(selectedLcset, bucketEntryIds, reworkEntryIds, selectedBucket, this,
+                    jiraUserTokenInput.getTokenBusinessKeys());
+
+            // clears tokenInput selections when the page returns
+            jiraUserTokenInput.setup();
         } catch (IOException e) {
             addGlobalValidationError("IOException contacting JIRA service." + e.getMessage());
-            return new RedirectResolution(VIEW_PAGE);
+            return new ForwardResolution(VIEW_PAGE);
+        } catch (ValidationException e) {
+            addGlobalValidationError(e.getMessage());
+            return viewBucket();
         }
+
         addMessage(String.format("Successfully added %d %s and %d %s to batch '%s' from bucket '%s'.",
                 bucketEntryIds.size(), Noun.pluralOf("sample", bucketEntryIds.size()),
                 reworkEntryIds.size(), Noun.pluralOf("rework", reworkEntryIds.size()),
-                selectedLcset, selectedBucket));
+                getLink(selectedLcset), selectedBucket));
         return viewBucket();
     }
 
@@ -283,35 +280,35 @@ public class BucketViewActionBean extends CoreActionBean {
         try {
             batch = labBatchEjb.createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW, selectedWorkflow,
                     bucketEntryIds, reworkEntryIds, summary.trim(), description, dueDate, important,
-                    userBean.getBspUser().getUsername(), selectedBucket, this);
+                    userBean.getBspUser().getUsername(), selectedBucket, this,
+                    jiraUserTokenInput.getTokenBusinessKeys());
         } catch (ValidationException e) {
             addGlobalValidationError(e.getMessage());
             return view();
         }
+        String batchName = batch.getJiraTicket().getTicketName();
+        String link = getLink(batchName);
+        addMessage(MessageFormat.format("Lab batch ''{0}'' has been created.", link));
 
-        addMessage(MessageFormat.format("Lab batch ''{0}'' has been created.", batch.getJiraTicket().getTicketName()));
+        // go back to this page, with the same bucket selected.
+        return new RedirectResolution(getClass(), VIEW_BUCKET_ACTION).addParameter("selectedBucket", selectedBucket);
+    }
 
-        return new ForwardResolution(BATCH_CONFIRM_PAGE);
+    public String getLink(String batchName) {
+        String jiraUrl = jiraUrl(batchName);;
+        return String.format("<a target='JIRA' title='%s' href='%s' class='external'>%s</a>", batchName, jiraUrl,
+                batchName);
     }
 
     @HandlesEvent(REMOVE_FROM_BUCKET_ACTION)
     public Resolution removeFromBucket() {
-
         separateEntriesByType();
-
-        return new ForwardResolution(REMOVE_FROM_BUCKET_CONFIRM_PAGE);
-    }
-
-    @HandlesEvent(CONFIRM_REMOVE_FROM_BUCKET_ACTION)
-    public Resolution confirmRemoveFromBucket() {
-        separateEntriesByType();
-
         bucketEjb.removeEntriesByIds(selectedEntryIds, "");
 
         addMessage(String.format("Successfully removed %d sample(s) and %d rework(s) from bucket '%s'.",
                                  bucketEntryIds.size(), reworkEntryIds.size(), selectedBucket));
 
-        return new RedirectResolution(BucketViewActionBean.class, VIEW_ACTION);
+        return viewBucket();
     }
 
     public Set<String> findPotentialPdos() {
@@ -381,14 +378,6 @@ public class BucketViewActionBean extends CoreActionBean {
 
     public void setSelectedBucket(String selectedBucket) {
         this.selectedBucket = selectedBucket;
-    }
-
-    public boolean isJiraEnabled() {
-        return jiraEnabled;
-    }
-
-    public void setJiraEnabled(boolean jiraEnabled) {
-        this.jiraEnabled = jiraEnabled;
     }
 
     public String getSelectedLcset() {
@@ -483,6 +472,10 @@ public class BucketViewActionBean extends CoreActionBean {
         this.selectedWorkflow = selectedWorkflow;
     }
 
+    public String getSelectedWorkflow() {
+        return selectedWorkflow;
+    }
+
     public Set<String> getPossibleWorkflows() {
         return possibleWorkflows;
     }
@@ -491,4 +484,32 @@ public class BucketViewActionBean extends CoreActionBean {
         return mapBucketToBucketEntryCount;
     }
 
+    public Resolution projectTypeMatches() {
+        return new StreamingResolution("text/plain",
+                String.valueOf(projectType == CreateFields.ProjectType.fromIssueKey(jiraTicketId)));
+    }
+
+    public CreateFields.ProjectType getProjectType() {
+        return projectType;
+    }
+
+    public void setProjectType(
+            CreateFields.ProjectType projectType) {
+        this.projectType = projectType;
+    }
+    public String getJiraUserQuery() {
+        return jiraUserQuery;
+    }
+
+    public void setJiraUserQuery(String jiraUserQuery) {
+        this.jiraUserQuery = jiraUserQuery;
+    }
+
+    public JiraUserTokenInput getJiraUserTokenInput() {
+        return jiraUserTokenInput;
+    }
+
+    public void setJiraUserTokenInput(JiraUserTokenInput jiraUserTokenInput) {
+        this.jiraUserTokenInput = jiraUserTokenInput;
+    }
 }

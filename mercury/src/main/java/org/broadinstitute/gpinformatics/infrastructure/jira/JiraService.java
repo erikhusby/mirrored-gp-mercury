@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.IssueFieldsResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraUser;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.Visibility;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionListResponse;
@@ -17,6 +18,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.text.Format;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 public interface JiraService extends Serializable {
@@ -200,4 +202,6 @@ public interface JiraService extends Serializable {
     boolean isValidUser(String username);
 
     JiraIssue getIssueInfo(String key, String... fields) throws IOException;
+
+    List<JiraUser> getJiraUsers(String key);
 }

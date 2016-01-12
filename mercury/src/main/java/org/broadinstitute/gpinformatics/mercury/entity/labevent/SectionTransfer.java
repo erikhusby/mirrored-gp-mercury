@@ -54,6 +54,10 @@ public class SectionTransfer extends VesselTransfer {
         // In case we're adding molecular indexes, clear the cached sample instances.
         targetVesselContainer.clearCaches();
         this.targetSection = targetSection;
+        if (sourceSection.getWells().size() != targetSection.getWells().size()) {
+            throw new RuntimeException("For transfer to " + targetVessel.getLabel() + ", " +
+                    sourceSection.getSectionName() + " is not the same size as " + targetSection.getSectionName());
+        }
     }
 
     protected SectionTransfer() {

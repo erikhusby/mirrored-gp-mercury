@@ -147,6 +147,15 @@ public class SampleMetadataFixupTest extends Arquillian {
         updateMetadataAndValidate(fixupItems, fixupComment);
     }
 
+    @Test(enabled = false)
+    public void testGPLIM_3913_manifest_date() throws Exception {
+        Map<String, MetaDataFixupItem> fixupItems = new HashMap<>();
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-74PDL", Metadata.Key.BUICK_COLLECTION_DATE, "41256", "12/13/2012"));
+        fixupItems.putAll(MetaDataFixupItem.mapOf("SM-74PCO", Metadata.Key.BUICK_COLLECTION_DATE, "41290", "01/16/2013"));
+
+        String fixupComment = "see https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-3913";
+        updateMetadataAndValidate(fixupItems, fixupComment);
+    }
 
     /**
      * Perform actual fixup and validate.
