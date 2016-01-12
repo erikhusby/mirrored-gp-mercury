@@ -140,14 +140,15 @@ public class InfiniumJaxbBuilder {
         // 4 separate InfiniumHybridization, each followed by InfiniumHybChamberLoaded
         List<BettaLimsMessageTestFactory.CherryPick> cherryPicks = new ArrayList<>();
         bettaLIMSMessage = new BettaLIMSMessage();
-        for (int i = 0; i < numSamples; i++) {
+        // The decks don't "know" that wells are empty, so do a cherry pick for every destination
+        for (int i = 0; i < Math.ceil(numSamples / 24.0) * 24; i++) {
             int chipIndex = i % 24;
             int chipNum = i / 24;
             cherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(ampPlate,
                     bettaLimsMessageTestFactory.buildWellName(i + 1, BettaLimsMessageTestFactory.WellNameType.LONG),
                     hybridizationChips.get(chipNum),
                     String.format("R%02dC%02d", (chipIndex % 12)  + 1, (chipIndex / 12) + 1)));
-            if (chipIndex == 23 || i == numSamples - 1) {
+            if (chipIndex == 23) {
                 PlateCherryPickEvent infiniumHybridization = bettaLimsMessageTestFactory.buildPlateToPlateCherryPick(
                         "InfiniumHybridization", ampPlate, Collections.singletonList(hybridizationChips.get(chipNum)),
                         cherryPicks);
