@@ -19,6 +19,7 @@
                     "aoColumns":[
                         {"bSortable":false}, // barcode
                         {"bSortable":true},  // lcset
+                        {"bSortable":true},  // event type
                         {"bSortable":true},  // enter number lanes
                         {"bSortable":true},  // enter loading conc
                         {"bSortable":true, "sType":"date"},  // denature date
@@ -26,9 +27,11 @@
                     ]
                 });
                 updateFlowcell();
+                // Clears previous lcset names to avoid unnecessary slow lcset lookups in the ActionBean.
+                $('#lcsetText').text("");
             });
 
-            // Looks up the number of lanes from the hidden form attributes.
+            // After the flowcell type is changed, looks up the number of lanes.
             function updateFlowcell() {
                 var flowcellName = $j('#flowcellTypeSelect').val();
                 numFlowcellLanes = $j("input[name=" + flowcellName + "Count]").val();
@@ -36,13 +39,13 @@
                 updateSumOfLanes();
             }
 
-            // Iterates on tubeList rows to sum up the number of lanes, then determines
-            // if the sum of lanes is a multiple of the flowcell's lane count.
+            // After a tube is selected, sums up the number of lanes to determine if
+            // the sum of number of lanes is a multiple of the flowcell's lane count.
             function updateSumOfLanes() {
-                sumOfLanes = 0;
-                tubeListNodes = $j('#tubeList').dataTable().fnGetNodes();
+                var sumOfLanes = 0;
+                var tubeListNodes = $j('#tubeList').dataTable().fnGetNodes();
                 for (var i = 0; i < tubeListNodes.length; ++i) {
-                    laneCount = $(tubeListNodes[i]).find('#numLanesId').attr('value');
+                    var laneCount = $(tubeListNodes[i]).find('#numLanesId').attr('value');
                     if ($.isNumeric(laneCount)) {
                         sumOfLanes += parseInt(laneCount, 10);
                     } else {
@@ -58,13 +61,29 @@
                 }
             }
 
+            // After the default loading conc is set, updates any existing rows having a
+            // zero (or blank) loading conc.
+            function updateLoadingConc() {
+                var defaultLoadingConc = $j('#defaultLoadingConcId');
+                if (!$.isNumeric(defaultLoadingConc)) {
+                    alert("Default Loading Conc must be a number.");
+                    $j('#defaultLoadingConcId').text('0');
+                }
+                tubeListNodes = $j('#tubeList').dataTable().fnGetNodes();
+                for (var i = 0; i < tubeListNodes.length; ++i) {
+                    conc = $(tubeListNodes[i]).find('#loadingConcId').attr('value');
+                    if (!$.isNumeric(conc) || conc == 0) {
+                        $('#concId').text(defaultLoadingConc);
+                    }
+                }
+            }
         </script>
 
     </stripes:layout-component>
     <stripes:layout-component name="content">
         <stripes:form beanclass="${actionBean.class.name}" id="scanForm" class="form-horizontal">
 
-            <!-- These hidden inputs map flowcell name to lane count for javascript. -->
+            <!-- These hidden inputs are populated by action bean so the javascript can get a map of flowcell name to lane count. -->
             <c:forEach items="${actionBean.flowcellTypes}" var="flowcell" varStatus="loop">
                 <stripes:hidden name="${flowcell}Count" value="${flowcell.vesselGeometry.rowCount}"/>
             </c:forEach>
@@ -92,6 +111,12 @@
                 </div>
             </div>
             <div class="control-group">
+                <stripes:label for="loadingConcSelect" name="Default Loading Conc" class="control-label"/>
+                <div class="controls">
+                    <stripes:text id="loadingConcSelect" name="defaultLoadingConc" onchange="updateLoadingConc()"/>
+                </div>
+            </div>
+            <div class="control-group">
                 <h5 style="margin-left: 50px;">FCT Ticket Info</h5>
                 <hr style="margin: 0; margin-left: 50px"/>
             </div>
@@ -101,6 +126,7 @@
                     <tr>
                         <th>Tube Barcode</th>
                         <th>LCSET</th>
+                        <th>Tube Type</th>
                         <th>Number of Lanes</th>
                         <th>Loading Conc</th>
                         <th>Tube Created On</th>
@@ -112,6 +138,7 @@
                         <tr>
                             <td>${rowDto.barcode}</td>
                             <td>${rowDto.lcset}</td>
+                            <td>${rowDto.eventType}</td>
                             <td><input id="numLanesId" name="rowDtos[${item.index}].numberLanes"
                                        value="${rowDto.numberLanes}" onchange="updateSumOfLanes()"/></td>
                             <td><input id="loadingConcId" name="rowDtos[${item.index}].loadingConc"

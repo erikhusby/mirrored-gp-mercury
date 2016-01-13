@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.workflow;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import net.sourceforge.stripes.action.After;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
@@ -10,8 +12,8 @@ import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -29,7 +31,6 @@ import javax.inject.Inject;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -74,6 +75,7 @@ public class CreateFCTActionBean extends CoreActionBean {
     private IlluminaFlowcell.FlowcellType selectedFlowcellType;
     private LabEventType selectedEventType;
     private List<RowDto> rowDtos = new ArrayList<>();
+    private BigDecimal defaultLoadingConc = BigDecimal.ZERO;
 
     private static final VesselPosition[] VESSEL_POSITIONS = {VesselPosition.LANE1, VesselPosition.LANE2,
             VesselPosition.LANE3, VesselPosition.LANE4, VesselPosition.LANE5, VesselPosition.LANE6,
@@ -134,10 +136,11 @@ public class CreateFCTActionBean extends CoreActionBean {
     private Resolution loadTubes() {
         // Keeps any existing rowDtos (regardless of current lcset names) and only adds to them.
         Set<String> existingStartingBatchVesselBarcodes = RowDto.allStartingBatchVessels(rowDtos);
-        Set<String> existingLcsets = RowDto.allLcsets(rowDtos);
+        Set<String> existingLcsetsAndEventTypes = RowDto.allLcsetsAndEventTypes(rowDtos);
         for (LabBatch labBatch : loadLcsets()) {
-            // Skips this labBatch if already present in existing rowDtos.
-            if (!existingLcsets.contains(labBatch.getBatchName())) {
+            // As a performace improvement, skips this labBatch if the batch was already
+            // loaded for this selected event type.
+            if (!existingLcsetsAndEventTypes.contains(labBatch.getBatchName() + selectedEventType.getName())) {
                 boolean foundEligibleTube = false;
                 for (LabVessel startingBatchVessel : labBatch.getStartingBatchLabVessels()) {
                     // Skips this starting vessel if already present in existing rowDtos.
@@ -155,7 +158,8 @@ public class CreateFCTActionBean extends CoreActionBean {
                                             bucketEntry.getProductOrder().getProduct().getProductName() :
                                             "[No product for " + bucketEntry.getProductOrder().getJiraTicketKey() + "]";
                                     RowDto rowDto = new RowDto(eventVessel.getLabel(), labBatch.getBusinessKey(),
-                                            entry.getKey().getEventDate(), productName, startingBatchVessel.getLabel());
+                                            entry.getKey().getEventDate(), productName, startingBatchVessel.getLabel(),
+                                            selectedEventType.getName(), defaultLoadingConc);
                                     if (!rowDtos.contains(rowDto)) {
                                         rowDtos.add(rowDto);
                                     }
@@ -202,128 +206,100 @@ public class CreateFCTActionBean extends CoreActionBean {
      */
     @HandlesEvent(SAVE_ACTION)
     public Resolution createFCTTicket() {
-        // Gets the flowcell parameters.
-        LabBatch.LabBatchType batchType = selectedFlowcellType.getBatchType();
-        CreateFields.IssueType issueType = selectedFlowcellType.getIssueType();
-        int lanesPerFlowcell = selectedFlowcellType.getVesselGeometry().getRowCount();
-
-        // Iterates on table rows for those with non-zero lane count.
-        Map<LabVessel, RowDto> mapVesselToDto = new HashMap<>();
-        int numberOfLanes = 0;
+        // Collects all the selected rowDtos and their loading tubes.
+        List<Pair<RowDto, LabVessel>> rowDtoLabVessels = new ArrayList<>();
         for (RowDto rowDto : rowDtos) {
             if (rowDto.getNumberLanes() > 0) {
                 LabVessel labVessel = labVesselDao.findByIdentifier(rowDto.getBarcode());
-                mapVesselToDto.put(labVessel, rowDto);
-                numberOfLanes += rowDto.getNumberLanes();
+                rowDtoLabVessels.add(Pair.of(rowDto, labVessel));
             }
         }
-        if (numberOfLanes % lanesPerFlowcell > 0) {
-            // Musn't start any FCT until all flowcells have full lanes.
-            addMessage(numberOfLanes + " is not an exact multiple of " + lanesPerFlowcell + " flowcell lanes");
-        } else if (numberOfLanes == 0) {
-            addMessage("Sum of number of lanes is zero.");
+        if (rowDtoLabVessels.size() == 0) {
+            addMessage("No lanes were selected.");
         } else {
-            List<LabBatch> createdFctBatches = new ArrayList<>();
-            for (List<FlowcellMappingDto> laneDtos : makeFlowcellMappingList(mapVesselToDto, lanesPerFlowcell)) {
-
-                Set<LabVessel> vesselSet = new HashSet<>();
-                Set<String> lcsetSet = new HashSet<>();
-                for (FlowcellMappingDto dto : laneDtos) {
-                    vesselSet.add(dto.getLabVessel());
-                    lcsetSet.add(dto.getRowDto().getLcset());
+            List<Pair<LabBatch, Set<String>>> fctBatches = makeFctDaoFree(rowDtoLabVessels, selectedFlowcellType);
+            if (fctBatches.size() == 0) {
+                addMessage("No FCTs were created.");
+            } else {
+                StringBuilder createdBatchLinks = new StringBuilder("<ol>");
+                // For each batch, pushes the FCT to JIRA, makes the parent-child JIRA links,
+                // and makes a UI message.
+                for (Pair<LabBatch, Set<String>> pair : fctBatches) {
+                    LabBatch fctBatch = pair.getLeft();
+                    labBatchEjb.createLabBatch(fctBatch, userBean.getLoginUserName(),
+                            selectedFlowcellType.getIssueType(), this);
+                    for (String lcset : pair.getRight()) {
+                        labBatchEjb.linkJiraBatchToTicket(lcset, fctBatch);
+                    }
+                    createdBatchLinks.append("<li><a target=\"JIRA\" href=\"");
+                    createdBatchLinks.append(fctBatch.getJiraTicket().getBrowserUrl());
+                    createdBatchLinks.append("\" class=\"external\" target=\"JIRA\">");
+                    createdBatchLinks.append(fctBatch.getBusinessKey());
+                    createdBatchLinks.append("</a></li>");
                 }
-
-
-                LabBatch fctBatch = new LabBatch(laneDtos.get(0).getLabVessel().getLabel() + " FCT ticket",
-                        vesselSet, batchType, BigDecimal.ZERO, selectedFlowcellType);
-                for (FlowcellMappingDto dto : laneDtos) {
-                    fctBatch.addLabVessel(dto.getLabVessel(), dto.getRowDto().getLoadingConc(), dto.getPositions());
-                }
-                fctBatch.setBatchDescription(fctBatch.getBatchName());
-                labBatchEjb.createLabBatch(fctBatch, userBean.getLoginUserName(), issueType, this);
-                createdFctBatches.add(fctBatch);
-                // Links LCSET tickets to FCT ticket.
-                for (String lcset : lcsetSet) {
-                    labBatchEjb.linkJiraBatchToTicket(lcset, fctBatch);
-                }
+                createdBatchLinks.append("</ol>");
+                addMessage("Created {0} FCT tickets: {1}", fctBatches.size(), createdBatchLinks.toString());
             }
-
-            StringBuilder createdBatchLinks = new StringBuilder("<ol>");
-            for (LabBatch fctBatch : createdFctBatches) {
-                createdBatchLinks.append("<li><a target=\"JIRA\" href=\"");
-                createdBatchLinks.append(fctBatch.getJiraTicket().getBrowserUrl());
-                createdBatchLinks.append("\" class=\"external\" target=\"JIRA\">");
-                createdBatchLinks.append(fctBatch.getBusinessKey());
-                createdBatchLinks.append("</a></li>");
-            }
-            createdBatchLinks.append("</ol>");
-            addMessage("Created {0} FCT tickets: {1}", createdFctBatches.size(), createdBatchLinks.toString());
         }
-
         return new RedirectResolution(CreateFCTActionBean.class, VIEW_ACTION);
     }
 
-    static class FlowcellMappingDto {
-        private LabVessel labVessel;
-        private RowDto rowDto;
-        private List<VesselPosition> positions;
-
-        FlowcellMappingDto(LabVessel labVessel, RowDto rowDto) {
-            this.labVessel = labVessel;
-            this.rowDto = rowDto;
-            positions = new ArrayList<>();
-        }
-
-        public LabVessel getLabVessel() {
-            return labVessel;
-        }
-
-        public RowDto getRowDto() {
-            return rowDto;
-        }
-
-        public List<VesselPosition> getPositions() {
-            return positions;
-        }
-    }
-
     /**
-     * Maps out the associations from vessels to flowcell lanes to flowcells. The rules are
-     * <br/> any given lane only has one vessel
-     * <br/> a flowcell may have lanes from multiple vessels
-     * <br/> a vessel may be on multiple lanes
-     * <br/> a vessel may span multiple flowcells
+     * Allocates the loading tubes to flowcells.  A given lane only contains material from one
+     * tube.  But a tube may span multiple lanes and multiple flowcells, depending on the
+     * number of lanes requested for the tube.
      *
-     * @return  a list representing the flowcells, each entry consisting of a list of
-     *          vessel dtos occupying one or more of the flowcell lanes. The FlowcellMappingDto
-     *          has a list of lane positions for each vessel on the flowcell.
+     * @param rowDtoLabVessels the loading tubes' RowDtos and corresponding lab vessels.
+     * @param flowcellType  the type of flowcells to create.
+     * @return  the fct batches to be persisted, plus the set of lcset names to be linked to it.
      */
-    public List<List<FlowcellMappingDto>> makeFlowcellMappingList(Map<LabVessel, RowDto> mapVesselToDto,
-                                                                  int lanesPerFlowcell) {
-        int filledLaneCount = 0;
-        List<List<FlowcellMappingDto>> flowcellMappings = new ArrayList<>();
-        List<FlowcellMappingDto> currentLaneVesselDtos = null;
+    public List<Pair<LabBatch, Set<String>>> makeFctDaoFree(List<Pair<RowDto, LabVessel>> rowDtoLabVessels,
+                                                            IlluminaFlowcell.FlowcellType flowcellType) {
+        final List<Pair<LabBatch, Set<String>>> fctBatches = new ArrayList<>();
+        final int lanesPerFlowcell = flowcellType.getVesselGeometry().getRowCount();
+        // These are per-flowcell accumulations, for one or more loading vessels.
+        int laneIndex = 0;
+        Set<String> linkedLcsets = new HashSet<>();
+        List<LabBatch.VesselToLanesInfo> fctVesselLaneInfo = new ArrayList<>();
 
-        for (LabVessel labVessel : mapVesselToDto.keySet()) {
-            RowDto rowDto = mapVesselToDto.get(labVessel);
-            FlowcellMappingDto laneVesselDto = null;
-            // Iterates until the the vessel's flowcell lane count is fulfilled.
+        // Iterates on the RowDtos which represent the loading tubes. For each one, keeps allocating
+        // lanes until the tube's requested Number of Lanes is fulfilled. When enough lanes exist an
+        // FCT is allocated and put in the return multimap.
+        for (Pair<RowDto, LabVessel> rowDtoLabVessel : rowDtoLabVessels) {
+            RowDto rowDto = rowDtoLabVessel.getLeft();
+            LabBatch.VesselToLanesInfo vesselLaneInfo = null;
+            linkedLcsets.add(rowDto.getLcset());
+
+            // Accumulates the lanes.
             for (int i = 0; i < rowDto.getNumberLanes(); ++i) {
-                // Initializes a new flowcell mapping when starting or when flowcell is full.
-                if (filledLaneCount % lanesPerFlowcell == 0) {
-                    currentLaneVesselDtos = new ArrayList<>();
-                    flowcellMappings.add(currentLaneVesselDtos);
+                if (vesselLaneInfo == null) {
+                    vesselLaneInfo = new LabBatch.VesselToLanesInfo(new ArrayList<VesselPosition>(),
+                            rowDto.getLoadingConc(), rowDtoLabVessel.getRight());
+                    fctVesselLaneInfo.add(vesselLaneInfo);
                 }
-                // Initializes a new lane vessel dto when starting a new vessel or when flowcell is full.
-                if (i == 0 || filledLaneCount % lanesPerFlowcell == 0) {
-                    laneVesselDto = new FlowcellMappingDto(labVessel, rowDto);
-                    currentLaneVesselDtos.add(laneVesselDto);
+                if (linkedLcsets.size() ==  0) {
+                    linkedLcsets.add(rowDto.getLcset());
                 }
-                laneVesselDto.getPositions().add(VESSEL_POSITIONS[filledLaneCount % lanesPerFlowcell]);
-                ++filledLaneCount;
+                vesselLaneInfo.getVesselPositions().add(VESSEL_POSITIONS[laneIndex++]);
+                // Are there are enough lanes to make a new FCT?
+                if (laneIndex == lanesPerFlowcell) {
+                    LabBatch fctBatch = new LabBatch(rowDto.getBarcode() + " FCT ticket", fctVesselLaneInfo,
+                            flowcellType.getBatchType(), flowcellType);
+                    fctBatch.setBatchDescription(fctBatch.getBatchName());
+                    fctBatches.add(Pair.of(fctBatch, linkedLcsets));
+                    // Resets the accumulations.
+                    laneIndex = 0;
+                    fctVesselLaneInfo = new ArrayList<>();
+                    linkedLcsets = new HashSet<>();
+                    vesselLaneInfo = null;
+                }
             }
         }
-        return flowcellMappings;
+
+        if (laneIndex != 0) {
+            throw new RuntimeException("A partially filled flowcell is not supported.");
+        }
+        return fctBatches;
     }
 
     public List<RowDto> getRowDtos() {
@@ -363,4 +339,13 @@ public class CreateFCTActionBean extends CoreActionBean {
     public List<IlluminaFlowcell.FlowcellType> getFlowcellTypes() {
         return FLOWCELL_TYPES;
     }
+
+    public BigDecimal getDefaultLoadingConc() {
+        return defaultLoadingConc;
+    }
+
+    public void setDefaultLoadingConc(BigDecimal defaultLoadingConc) {
+        this.defaultLoadingConc = defaultLoadingConc;
+    }
 }
+

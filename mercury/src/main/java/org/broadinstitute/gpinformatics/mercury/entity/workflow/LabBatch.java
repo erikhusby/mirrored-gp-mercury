@@ -618,26 +618,24 @@ public class LabBatch {
     }
 
     /**
-     * Future implementation of this method would get a starting vessel based on its specified position (Lane) defined
-     * during the creation of an FCT/MiSeq ticket.
-     * <p/>
-     * For now (Exome Express Launch) this method will return the one designated vessel for this batch.
+     * Returns the starting vessel designated for the specified flowcell lane.
+     * THIS METHOD IS UNRELIABLE AFTER THE FLOWCELL TRANSFER since the starting
+     * vessel may actually have been put on a different lane.
      *
-     * @param position position (lane) by which the targeted lab vessel is referenced
-     *
-     * @return Lab Vessel referenced by the given position.
+     * @param position the lane to examine.
+     * @return the lab vessel that was designated to be put at the given position.
      */
     public LabVessel getStartingVesselByPosition(VesselPosition position) {
         if (labBatchType != LabBatchType.FCT &&
             labBatchType != LabBatchType.MISEQ) {
             throw new RuntimeException("Vessel by Position is only supported for Flowcell Tickets");
         }
-
-        if (startingBatchLabVessels.size() > 1) {
-            throw new RuntimeException("more than one starting vessel for a flowcell is not currently supported");
+        for (LabBatchStartingVessel labBatchStartingVessel : startingBatchLabVessels) {
+            if (labBatchStartingVessel.getVesselPosition() == position) {
+                return labBatchStartingVessel.getLabVessel();
+            }
         }
-
-        return startingBatchLabVessels.iterator().next().getLabVessel();
+        return null;
     }
 
     @Override

@@ -15,35 +15,50 @@ import java.util.Set;
  * Represents a table row in Create FCT page.
  */
 public class RowDto {
-    private String barcode = "";
-    private String lcset = "";
+    private String barcode;
+    private String lcset;
     private int numberLanes = 0;
-    private BigDecimal loadingConc = new BigDecimal("7.0");
-    private Date eventDate = new Date();
+    private BigDecimal loadingConc;
+    private Date eventDate;
     private int readLength = 1;
-    private String product = "";
-    private String startingBatchVessel = "";
-
-    public RowDto() {
-    }
+    private String product;
+    private String startingBatchVessel;
+    private String eventType;
 
     public RowDto(@Nonnull String barcode, @Nonnull String lcset, @Nonnull Date eventDate, @Nonnull String product,
-                  @Nonnull String startingBatchVessel) {
+                  @Nonnull String startingBatchVessel, @Nonnull String eventType, @Nonnull BigDecimal loadingConc) {
         this.barcode = barcode;
         this.lcset = lcset;
         this.eventDate = eventDate;
         this.product = product;
         this.startingBatchVessel = startingBatchVessel;
+        this.eventType = eventType;
+        this.loadingConc = loadingConc;
     }
 
-    public static Set<String> allLcsets(Collection<RowDto> rowDtos) {
+    public RowDto(@Nonnull String barcode, @Nonnull String lcset, @Nonnull Date eventDate, @Nonnull String product,
+                  @Nonnull String startingBatchVessel, @Nonnull String eventType, @Nonnull BigDecimal loadingConc,
+                  int numberLanes) {
+        this.barcode = barcode;
+        this.lcset = lcset;
+        this.eventDate = eventDate;
+        this.product = product;
+        this.startingBatchVessel = startingBatchVessel;
+        this.eventType = eventType;
+        this.loadingConc = loadingConc;
+        this.numberLanes = numberLanes;
+    }
+
+    /** Returns the unique combinations of lcset and eventType which are just concatenated together. */
+    public static Set<String> allLcsetsAndEventTypes(Collection<RowDto> rowDtos) {
         Set<String> set = new HashSet<>();
         for (RowDto rowDto : rowDtos) {
-            set.add(rowDto.getLcset());
+            set.add(rowDto.getLcset() + rowDto.getEventType());
         }
         return set;
     }
 
+    /** Returns the starting batch vessel barcodes. */
     public static Set<String> allStartingBatchVessels(Collection<RowDto> rowDtos) {
         Set<String> set = new HashSet<>();
         for (RowDto rowDto : rowDtos) {
@@ -116,6 +131,14 @@ public class RowDto {
         this.startingBatchVessel = startingBatchVessel;
     }
 
+    public String getEventType() {
+        return eventType;
+    }
+
+    public void setEventType(String eventType) {
+        this.eventType = eventType;
+    }
+
     public static final Comparator BY_BARCODE = new Comparator() {
         @Override
         public int compare(Object o1, Object o2) {
@@ -143,6 +166,9 @@ public class RowDto {
         if (!eventDate.equals(rowDto.eventDate)) {
             return false;
         }
+        if (!eventType.equals(rowDto.eventType)) {
+            return false;
+        }
         return product.equals(rowDto.product);
 
     }
@@ -152,6 +178,7 @@ public class RowDto {
         int result = barcode.hashCode();
         result = 31 * result + lcset.hashCode();
         result = 31 * result + eventDate.hashCode();
+        result = 31 * result + eventType.hashCode();
         result = 31 * result + product.hashCode();
         return result;
     }
