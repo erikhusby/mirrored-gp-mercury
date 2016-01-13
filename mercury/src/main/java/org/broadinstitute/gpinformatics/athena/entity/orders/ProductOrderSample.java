@@ -137,7 +137,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     }
 
     @Enumerated(EnumType.STRING)
-    private ProceedIfOutOfSpec proceedIfOutOfSpec;
+    private ProceedIfOutOfSpec proceedIfOutOfSpec = ProceedIfOutOfSpec.NO;
 
     @Transient
     private MercurySample.MetadataSource metadataSource;
