@@ -533,52 +533,35 @@ AS
       BEGIN
 
         UPDATE lab_metric
-        SET
-          sample_name = new.sample_name,
-          lab_vessel_id = new.lab_vessel_id,
-          product_order_id = new.product_order_id,
-          batch_name = new.batch_name,
-          quant_type = new.quant_type,
-          quant_units = new.quant_units,
-          quant_value = new.quant_value,
-          run_name = new.run_name,
-          run_date = new.run_date,
-          vessel_position = new.vessel_position,
-          etl_date = new.etl_date
-        WHERE lab_metric_id = new.lab_metric_id;
+           SET quant_type    = new.quant_type,
+               quant_units   = new.quant_units,
+               quant_value   = new.quant_value,
+               run_name      = new.run_name,
+               run_date      = new.run_date,
+               lab_vessel_id = new.lab_vessel_id,
+               well          = new.well,
+               etl_date      = new.etl_date
+         WHERE lab_metric_id = new.lab_metric_id;
 
         V_UPD_COUNT := V_UPD_COUNT + SQL%ROWCOUNT;
 
-        INSERT INTO lab_metric (
-          lab_metric_id,
-          sample_name,
-          lab_vessel_id,
-          product_order_id,
-          batch_name,
-          quant_type,
-          quant_units,
-          quant_value,
-          run_name,
-          run_date,
-          vessel_position,
-          etl_date
-        )
-          SELECT
-            new.lab_metric_id,
-            new.sample_name,
-            new.lab_vessel_id,
-            new.product_order_id,
-            new.batch_name,
-            new.quant_type,
-            new.quant_units,
-            new.quant_value,
-            new.run_name,
-            new.run_date,
-            new.vessel_position,
-            new.etl_date
-          FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM lab_metric WHERE lab_metric_id = new.lab_metric_id);
+        IF SQL%ROWCOUNT = 0 THEN
+          INSERT INTO lab_metric (
+                lab_metric_id,
+                quant_type, quant_units, quant_value,
+                run_name, run_date,
+                lab_vessel_id, well,
+                etl_date )
+          VALUES (
+                new.lab_metric_id,
+                new.quant_type, new.quant_units, new.quant_value,
+                new.run_name, new.run_date,
+                new.lab_vessel_id, new.well,
+                new.etl_date );
 
-        V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;
+          V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;
+
+        END IF;
 
         EXCEPTION WHEN OTHERS THEN
         errmsg := SQLERRM;

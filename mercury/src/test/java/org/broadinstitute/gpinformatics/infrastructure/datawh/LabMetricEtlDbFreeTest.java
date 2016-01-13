@@ -39,30 +39,17 @@ public class LabMetricEtlDbFreeTest {
     private final BigDecimal value = new BigDecimal(3.14);
     private final String runName = "PicoGreen hydra";
     private final Date runDate = new Date(1373988504L);
-    private final String pdoKey = "PDO-0000";
-    private final long pdoId = 3344551122L;
-    private final String sampleKey = "SMID-000000";
-    private final String labBatchName = "LCSET-123";
     private final Set<LabVessel> vesselList = new HashSet<>();
-    private final Set<SampleInstanceV2> sampleInstList = new HashSet<>();
-    private final Set<ProductOrderSample> pdoSampleList = new HashSet<>();
     private final String vesselPosition = "D4";
     private LabMetricEtl tst;
 
     private final AuditReaderDao auditReader = EasyMock.createMock(AuditReaderDao.class);
     private final LabMetricRunDao dao = EasyMock.createMock(LabMetricRunDao.class);
-    private final ProductOrderDao pdoDao = EasyMock.createMock(ProductOrderDao.class);
     private final LabMetric obj = EasyMock.createMock(LabMetric.class);
     private final LabVessel labVessel = EasyMock.createMock(LabVessel.class);
     private final LabMetricRun run = EasyMock.createMock(LabMetricRun.class);
-    private final ProductOrder pdo = EasyMock.createMock(ProductOrder.class);
     private final LabVessel vessel = EasyMock.createMock(LabVessel.class);
-    private final SampleInstanceV2 sampleInst = EasyMock.createMock(SampleInstanceV2.class);
-    private final MercurySample sample = EasyMock.createMock(MercurySample.class);
-    private final ProductOrderSample pdoSample = EasyMock.createMock(ProductOrderSample.class);
-    private final LabBatch labBatch = EasyMock.createMock(LabBatch.class);
-    private final Object[] mocks = new Object[]{auditReader, dao, pdoDao, obj, labVessel, run, pdo, vessel,
-            sampleInst, sample, pdoSample, labBatch};
+    private final Object[] mocks = new Object[]{auditReader, dao, obj, labVessel, run, vessel};
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void beforeMethod() {
@@ -70,12 +57,8 @@ public class LabMetricEtlDbFreeTest {
 
         vesselList.clear();
         vesselList.add(vessel);
-        sampleInstList.clear();
-        sampleInstList.add(sampleInst);
-        pdoSampleList.clear();
-        pdoSampleList.add(pdoSample);
 
-        tst = new LabMetricEtl(dao, pdoDao);
+        tst = new LabMetricEtl(dao);
         tst.setAuditReaderDao(auditReader);
     }
 
@@ -106,84 +89,23 @@ public class LabMetricEtlDbFreeTest {
         EasyMock.verify(mocks);
     }
 
-    public void testNoSample() throws Exception {
+    public void testVesselNotTube() throws Exception {
         EasyMock.expect(dao.findById(LabMetric.class, entityId)).andReturn(obj);
         EasyMock.expect(obj.getLabVessel()).andReturn(labVessel).times(2);
-        EasyMock.expect(obj.getLabMetricRun()).andReturn(null);
-        sampleInstList.clear();
-        EasyMock.expect(labVessel.getSampleInstancesV2()).andReturn(sampleInstList);
-
+        EasyMock.expect(obj.getLabMetricId()).andReturn(entityId);
+        EasyMock.expect(labVessel.getType()).andReturn(LabVessel.ContainerType.PLATE_WELL);
         EasyMock.replay(mocks);
         Assert.assertEquals(tst.dataRecords(etlDateStr, false, entityId).size(), 0);
         EasyMock.verify(mocks);
     }
 
-    public void testNoPdo() throws Exception {
-        EasyMock.expect(dao.findById(LabMetric.class, entityId)).andReturn(obj);
-        EasyMock.expect(obj.getLabVessel()).andReturn(labVessel).times(2);
-        EasyMock.expect(obj.getLabMetricRun()).andReturn(null);
-        EasyMock.expect(labVessel.getSampleInstancesV2()).andReturn(sampleInstList);
-        EasyMock.expect(sampleInst.getRootOrEarliestMercurySample()).andReturn(sample);
-        pdoSampleList.clear();
-        EasyMock.expect(sample.getProductOrderSamples()).andReturn(pdoSampleList);
-        EasyMock.expect(sampleInst.getSingleBatch()).andReturn(labBatch);
-        EasyMock.expect(labBatch.getBatchName()).andReturn(labBatchName);
-
-        EasyMock.expect(obj.getLabMetricId()).andReturn(entityId);
-        EasyMock.expect(sample.getSampleKey()).andReturn(sampleKey);
-        EasyMock.expect(labVessel.getLabVesselId()).andReturn(labVesselId);
-        EasyMock.expect(obj.getName()).andReturn(type);
-        EasyMock.expect(obj.getUnits()).andReturn(units);
-        EasyMock.expect(obj.getValue()).andReturn(value);
-        EasyMock.expect(obj.getCreatedDate()).andReturn(new Date());
-        EasyMock.expect(obj.getVesselPosition()).andReturn(vesselPosition);
-
-        EasyMock.replay(mocks);
-        Assert.assertEquals(tst.dataRecords(etlDateStr, false, entityId).size(), 1);
-        EasyMock.verify(mocks);
-    }
-
-    public void testNoBatch() throws Exception {
-        EasyMock.expect(dao.findById(LabMetric.class, entityId)).andReturn(obj);
-        EasyMock.expect(obj.getLabVessel()).andReturn(labVessel).times(2);
-        EasyMock.expect(obj.getLabMetricRun()).andReturn(null);
-        EasyMock.expect(labVessel.getSampleInstancesV2()).andReturn(sampleInstList);
-        EasyMock.expect(sampleInst.getRootOrEarliestMercurySample()).andReturn(sample);
-        EasyMock.expect(sample.getProductOrderSamples()).andReturn(pdoSampleList);
-        EasyMock.expect(pdoSample.getProductOrder()).andReturn(pdo);
-        EasyMock.expect(sampleInst.getSingleBatch()).andReturn(null);
-        EasyMock.expect(sampleInst.getAllWorkflowBatches()).andReturn(new ArrayList<LabBatch>());
-
-        EasyMock.expect(obj.getLabMetricId()).andReturn(entityId);
-        EasyMock.expect(sample.getSampleKey()).andReturn(sampleKey);
-        EasyMock.expect(pdo.getProductOrderId()).andReturn(pdoId);
-        EasyMock.expect(labVessel.getLabVesselId()).andReturn(labVesselId);
-        EasyMock.expect(obj.getName()).andReturn(type);
-        EasyMock.expect(obj.getUnits()).andReturn(units);
-        EasyMock.expect(obj.getValue()).andReturn(value);
-        EasyMock.expect(obj.getCreatedDate()).andReturn(new Date());
-        EasyMock.expect(obj.getVesselPosition()).andReturn(vesselPosition);
-
-        EasyMock.replay(mocks);
-        Assert.assertEquals(tst.dataRecords(etlDateStr, false, entityId).size(), 1);
-        EasyMock.verify(mocks);
-    }
-
     public void testWithoutLabMetricRun() throws Exception {
         EasyMock.expect(dao.findById(LabMetric.class, entityId)).andReturn(obj);
-        EasyMock.expect(obj.getLabVessel()).andReturn(labVessel).times(2);
+        EasyMock.expect(obj.getLabVessel()).andReturn(labVessel).times(3);
         EasyMock.expect(obj.getLabMetricRun()).andReturn(null);
-        EasyMock.expect(labVessel.getSampleInstancesV2()).andReturn(sampleInstList);
-        EasyMock.expect(sampleInst.getRootOrEarliestMercurySample()).andReturn(sample);
-        EasyMock.expect(sample.getProductOrderSamples()).andReturn(pdoSampleList);
-        EasyMock.expect(pdoSample.getProductOrder()).andReturn(pdo);
-        EasyMock.expect(sampleInst.getSingleBatch()).andReturn(labBatch);
-        EasyMock.expect(labBatch.getBatchName()).andReturn(labBatchName);
-
         EasyMock.expect(obj.getLabMetricId()).andReturn(entityId);
-        EasyMock.expect(sample.getSampleKey()).andReturn(sampleKey);
-        EasyMock.expect(pdo.getProductOrderId()).andReturn(pdoId);
         EasyMock.expect(labVessel.getLabVesselId()).andReturn(labVesselId);
+        EasyMock.expect(labVessel.getType()).andReturn(LabVessel.ContainerType.TUBE);
         EasyMock.expect(obj.getName()).andReturn(type);
         EasyMock.expect(obj.getUnits()).andReturn(units);
         EasyMock.expect(obj.getValue()).andReturn(value);
@@ -200,19 +122,12 @@ public class LabMetricEtlDbFreeTest {
 
     public void testWithLabMetricRun() throws Exception {
         EasyMock.expect(dao.findById(LabMetric.class, entityId)).andReturn(obj);
-        EasyMock.expect(obj.getLabVessel()).andReturn(labVessel).times(2);
+        EasyMock.expect(obj.getLabVessel()).andReturn(labVessel).times(3);
         EasyMock.expect(obj.getLabMetricRun()).andReturn(run);
-        EasyMock.expect(labVessel.getSampleInstancesV2()).andReturn(sampleInstList);
-        EasyMock.expect(sampleInst.getRootOrEarliestMercurySample()).andReturn(sample);
-        EasyMock.expect(sample.getProductOrderSamples()).andReturn(pdoSampleList);
-        EasyMock.expect(pdoSample.getProductOrder()).andReturn(pdo);
-        EasyMock.expect(sampleInst.getSingleBatch()).andReturn(labBatch);
-        EasyMock.expect(labBatch.getBatchName()).andReturn(labBatchName);
 
         EasyMock.expect(obj.getLabMetricId()).andReturn(entityId);
-        EasyMock.expect(sample.getSampleKey()).andReturn(sampleKey);
-        EasyMock.expect(pdo.getProductOrderId()).andReturn(pdoId);
         EasyMock.expect(labVessel.getLabVesselId()).andReturn(labVesselId);
+        EasyMock.expect(labVessel.getType()).andReturn(LabVessel.ContainerType.TUBE);
         EasyMock.expect(obj.getName()).andReturn(type);
         EasyMock.expect(obj.getUnits()).andReturn(units);
         EasyMock.expect(obj.getValue()).andReturn(value);
@@ -234,15 +149,12 @@ public class LabMetricEtlDbFreeTest {
         Assert.assertEquals(parts[i++], etlDateStr);
         Assert.assertEquals(parts[i++], "F");
         Assert.assertEquals(parts[i++], String.valueOf(entityId));
-        Assert.assertEquals(parts[i++], sampleKey);
-        Assert.assertEquals(parts[i++], String.valueOf(labVesselId));
-        Assert.assertEquals(parts[i++], String.valueOf(pdoId));
-        Assert.assertEquals(parts[i++], labBatchName);
         Assert.assertEquals(parts[i++], String.valueOf(type));
         Assert.assertEquals(parts[i++], String.valueOf(units));
         Assert.assertEquals(parts[i++], String.valueOf(value));
         Assert.assertEquals(parts[i++], GenericEntityEtl.format(metricRunName));
         Assert.assertEquals(parts[i++], GenericEntityEtl.format(metricRunDate));
+        Assert.assertEquals(parts[i++], String.valueOf(labVesselId));
         Assert.assertEquals(parts[i++], vesselPosition);
         Assert.assertEquals(parts.length, i);
     }
