@@ -1112,4 +1112,75 @@ public class LabVesselFixupTest extends Arquillian {
         labVesselDao.persist(new FixupCommentary("GPLIM-3807 change barcodes to uppercase"));
         labVesselDao.flush();
     }
+
+    /** Delete fingerprinting controls that were uploaded without leading zero. */
+    @Test(enabled = false)
+    public void fixupGplim3953() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        Map<String, BarcodedTube> mapBarcodeToTube = barcodedTubeDao.findByBarcodes(Arrays.asList(
+                "183491135",
+                "183491112",
+                "183491111",
+                "183491088",
+                "183491087",
+                "183491064",
+                "183491063",
+                "183491040",
+                "183491134",
+                "183491113",
+                "183491110",
+                "183491089",
+                "183491086",
+                "183491065",
+                "183491062",
+                "183491041",
+                "183491133",
+                "183491114",
+                "183491109",
+                "183491090",
+                "183491085",
+                "183491066",
+                "183491061",
+                "183491042",
+                "183491132",
+                "183491115",
+                "183491108",
+                "183491091",
+                "183491084",
+                "183491067",
+                "183491060",
+                "183491043",
+                "183491131",
+                "183491116",
+                "183491107",
+                "183491092",
+                "183491083",
+                "183491068",
+                "183491059",
+                "183491044",
+                "183491130",
+                "183491117",
+                "183491106",
+                "183491093",
+                "183491082",
+                "183491069",
+                "183491058",
+                "183491045"));
+
+        for (Map.Entry<String, BarcodedTube> barcodeTubeEntry : mapBarcodeToTube.entrySet()) {
+            BarcodedTube barcodedTube = barcodeTubeEntry.getValue();
+            if (barcodedTube == null) {
+                throw new RuntimeException("Failed to find " + barcodeTubeEntry.getKey());
+            }
+            barcodedTube.getReagentContents().clear();
+            System.out.println("Deleting " + barcodedTube.getLabel());
+            labVesselDao.remove(barcodedTube);
+        }
+
+        labVesselDao.persist(new FixupCommentary("GPLIM-3953 delete fingerprinting controls with no leading zero"));
+        labVesselDao.flush();
+        utx.commit();
+    }
 }
