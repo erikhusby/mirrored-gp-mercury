@@ -2,16 +2,16 @@ package org.broadinstitute.gpinformatics.mercury.presentation.workflow;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
-import net.sourceforge.stripes.action.After;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.RedirectResolution;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
-import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
@@ -29,6 +29,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
 import java.math.BigDecimal;
+import java.text.Format;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -74,21 +75,15 @@ public class CreateFCTActionBean extends CoreActionBean {
     private String lcsetNames;
     private IlluminaFlowcell.FlowcellType selectedFlowcellType;
     private LabEventType selectedEventType;
+    private String selectedEventTypeDisplay;
     private List<RowDto> rowDtos = new ArrayList<>();
     private BigDecimal defaultLoadingConc = BigDecimal.ZERO;
+    private String hasCrsp = "none";
+    private Format dateFormat = FastDateFormat.getInstance("yyyy-MM-dd hh:mm a");
 
     private static final VesselPosition[] VESSEL_POSITIONS = {VesselPosition.LANE1, VesselPosition.LANE2,
             VesselPosition.LANE3, VesselPosition.LANE4, VesselPosition.LANE5, VesselPosition.LANE6,
             VesselPosition.LANE7, VesselPosition.LANE8};
-
-    /**
-     * This method reloads the LCSET after validation on the save action so that we have some fields to hang our
-     * validation errors on.
-     */
-    @After(stages = LifecycleStage.BindingAndValidation, on = SAVE_ACTION)
-    public void init() {
-// todo is this needed?        loadTubes();
-    }
 
     @HandlesEvent(VIEW_ACTION)
     @DefaultHandler
@@ -103,6 +98,7 @@ public class CreateFCTActionBean extends CoreActionBean {
     @HandlesEvent(LOAD_DENATURE)
     public Resolution loadDenature() {
         selectedEventType = LabEventType.DENATURE_TRANSFER;
+        selectedEventTypeDisplay = "Denature";
         clearValidationErrors();
         return loadTubes();
     }
@@ -114,6 +110,7 @@ public class CreateFCTActionBean extends CoreActionBean {
     @HandlesEvent(LOAD_NORM)
     public Resolution loadNorm() {
         selectedEventType = LabEventType.NORMALIZATION_TRANSFER;
+        selectedEventTypeDisplay = "Norm";
         clearValidationErrors();
         return loadTubes();
     }
@@ -125,6 +122,7 @@ public class CreateFCTActionBean extends CoreActionBean {
     @HandlesEvent(LOAD_POOLNORM)
     public Resolution loadPoolNorm() {
         selectedEventType = LabEventType.POOLING_TRANSFER;
+        selectedEventTypeDisplay = "Pooled Norm";
         clearValidationErrors();
         return loadTubes();
     }
@@ -136,40 +134,69 @@ public class CreateFCTActionBean extends CoreActionBean {
     private Resolution loadTubes() {
         // Keeps any existing rowDtos (regardless of current lcset names) and only adds to them.
         Set<String> existingStartingBatchVesselBarcodes = RowDto.allStartingBatchVessels(rowDtos);
-        Set<String> existingLcsetsAndEventTypes = RowDto.allLcsetsAndEventTypes(rowDtos);
+        Set<String> existingLcsetsAndEventTypes = RowDto.allLcsetsAndTubeTypes(rowDtos);
         for (LabBatch labBatch : loadLcsets()) {
-            // As a performace improvement, skips this labBatch if the batch was already
-            // loaded for this selected event type.
-            if (!existingLcsetsAndEventTypes.contains(labBatch.getBatchName() + selectedEventType.getName())) {
-                boolean foundEligibleTube = false;
+            // Skips tube lookup if this labBatch and tube type (event type) was already loaded.
+            if (!existingLcsetsAndEventTypes.contains(labBatch.getBatchName() + selectedEventTypeDisplay)) {
+                int previousRowDtoCount = rowDtos.size();
+
+                // Inverts the mappings to get event(s) and product(s) per loading tube, not per starting vessel.
+                Multimap<LabVessel, LabEvent> vesselToEvents = HashMultimap.create();
+                Multimap<LabVessel, BucketEntry> vesselToBucketEntries = HashMultimap.create();
                 for (LabVessel startingBatchVessel : labBatch.getStartingBatchLabVessels()) {
-                    // Skips this starting vessel if already present in existing rowDtos.
-                    if (!existingStartingBatchVesselBarcodes.contains(startingBatchVessel.getLabel())) {
-                        List<BucketEntry> bucketEntries = bucketEntryDao.findByVesselAndBatch(startingBatchVessel,
-                                labBatch);
-                        for (Map.Entry<LabEvent, Set<LabVessel>> entry :
-                                startingBatchVessel.findVesselsForLabEventType(selectedEventType, true).entrySet()) {
-                            for (LabVessel eventVessel : entry.getValue()) {
-                                // Logically there can only be one tube added to the flowcell regardless of how many
-                                // times it was bucketed, but all choices get displayed.
-                                for (BucketEntry bucketEntry : bucketEntries) {
-                                    foundEligibleTube = true;
-                                    String productName = bucketEntry.getProductOrder().getProduct() != null ?
-                                            bucketEntry.getProductOrder().getProduct().getProductName() :
-                                            "[No product for " + bucketEntry.getProductOrder().getJiraTicketKey() + "]";
-                                    RowDto rowDto = new RowDto(eventVessel.getLabel(), labBatch.getBusinessKey(),
-                                            entry.getKey().getEventDate(), productName, startingBatchVessel.getLabel(),
-                                            selectedEventType.getName(), defaultLoadingConc);
-                                    if (!rowDtos.contains(rowDto)) {
-                                        rowDtos.add(rowDto);
-                                    }
-                                }
+                    for (Map.Entry<LabEvent, Set<LabVessel>> entry :
+                            startingBatchVessel.findVesselsForLabEventType(selectedEventType, true).entrySet()) {
+                        for (LabVessel loadingTube : entry.getValue()) {
+                            vesselToEvents.put(loadingTube, entry.getKey());
+                            for (BucketEntry bucketEntry :
+                                    bucketEntryDao.findByVesselAndBatch(startingBatchVessel, labBatch)) {
+                                vesselToBucketEntries.put(loadingTube, bucketEntry);
                             }
                         }
                     }
                 }
-                if (!foundEligibleTube) {
-                    addMessage("No " + selectedEventType.getName() + " tubes found for " + labBatch.getBatchName());
+
+                // Disallows a mix of clinical and research samples.
+                for (BucketEntry bucketEntry : vesselToBucketEntries.values()) {
+                    String foundCrsp = String.valueOf(bucketEntry.getProductOrder().getResearchProject().
+                            getRegulatoryDesignation().isClinical());
+                    if (CollectionUtils.isEmpty(rowDtos)) {
+                        hasCrsp = foundCrsp;
+                    } else if (!hasCrsp.equals(foundCrsp)) {
+                        addValidationError(lcsetNames,
+                                "Cannot mix clinical and research samples (" + labBatch.getBatchName() + ")");
+                        return new ForwardResolution(VIEW_PAGE);
+                    }
+                }
+
+                for (LabVessel loadingTube : vesselToEvents.keySet()) {
+
+                    // Makes a line-break separated list of products and starting batch vessels.
+                    Set<String> productNames = new HashSet<>();
+                    Set<String> startingBatchVessels = new HashSet<>();
+                    for (BucketEntry bucketEntry : vesselToBucketEntries.get(loadingTube)) {
+                        productNames.add(bucketEntry.getProductOrder().getProduct() != null ?
+                                bucketEntry.getProductOrder().getProduct().getProductName() :
+                                "[No product for " + bucketEntry.getProductOrder().getJiraTicketKey() + "]");
+                        startingBatchVessels.add(bucketEntry.getLabVessel().getLabel());
+                    }
+
+                    // Makes a line-break separated list of event dates.
+                    Set<String> eventDates = new HashSet<>();
+                    for (LabEvent labEvent : vesselToEvents.get(loadingTube)) {
+                        eventDates.add(dateFormat.format(labEvent.getEventDate()));
+                    }
+
+                    RowDto rowDto = new RowDto(loadingTube.getLabel(), labBatch.getBusinessKey(),
+                            StringUtils.join(eventDates, "<br/>"), StringUtils.join(productNames, "<br/>"),
+                            StringUtils.join(startingBatchVessels, "<br/>"), selectedEventTypeDisplay,
+                            defaultLoadingConc);
+                    if (!rowDtos.contains(rowDto)) {
+                        rowDtos.add(rowDto);
+                    }
+                }
+                if (rowDtos.size() == previousRowDtoCount) {
+                    addMessage("No " + selectedEventTypeDisplay + " tubes found for " + labBatch.getBatchName());
                 }
             }
         }
@@ -221,6 +248,11 @@ public class CreateFCTActionBean extends CoreActionBean {
             if (fctBatches.size() == 0) {
                 addMessage("No FCTs were created.");
             } else {
+                // Checks that an FCT does not mix CRSP and non-CRSP samples.
+                for (Pair<LabBatch, Set<String>> pair : fctBatches) {
+                    LabBatch fctBatch = pair.getLeft();
+
+                }
                 StringBuilder createdBatchLinks = new StringBuilder("<ol>");
                 // For each batch, pushes the FCT to JIRA, makes the parent-child JIRA links,
                 // and makes a UI message.
@@ -346,6 +378,14 @@ public class CreateFCTActionBean extends CoreActionBean {
 
     public void setDefaultLoadingConc(BigDecimal defaultLoadingConc) {
         this.defaultLoadingConc = defaultLoadingConc;
+    }
+
+    public String getHasCrsp() {
+        return hasCrsp;
+    }
+
+    public void setHasCrsp(String hasCrsp) {
+        this.hasCrsp = hasCrsp;
     }
 }
 

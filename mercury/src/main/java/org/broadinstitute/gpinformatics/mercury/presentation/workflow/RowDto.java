@@ -1,13 +1,9 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.workflow;
 
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-
 import javax.annotation.Nonnull;
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -19,41 +15,44 @@ public class RowDto {
     private String lcset;
     private int numberLanes = 0;
     private BigDecimal loadingConc;
-    private Date eventDate;
+    private String eventDate;
     private int readLength = 1;
     private String product;
     private String startingBatchVessel;
-    private String eventType;
+    private String tubeType;
 
-    public RowDto(@Nonnull String barcode, @Nonnull String lcset, @Nonnull Date eventDate, @Nonnull String product,
-                  @Nonnull String startingBatchVessel, @Nonnull String eventType, @Nonnull BigDecimal loadingConc) {
+    public RowDto() {
+    }
+
+    public RowDto(@Nonnull String barcode, @Nonnull String lcset, @Nonnull String eventDate, @Nonnull String product,
+                  @Nonnull String startingBatchVessel, @Nonnull String tubeType, @Nonnull BigDecimal loadingConc) {
         this.barcode = barcode;
         this.lcset = lcset;
         this.eventDate = eventDate;
         this.product = product;
         this.startingBatchVessel = startingBatchVessel;
-        this.eventType = eventType;
+        this.tubeType = tubeType;
         this.loadingConc = loadingConc;
     }
 
-    public RowDto(@Nonnull String barcode, @Nonnull String lcset, @Nonnull Date eventDate, @Nonnull String product,
-                  @Nonnull String startingBatchVessel, @Nonnull String eventType, @Nonnull BigDecimal loadingConc,
+    public RowDto(@Nonnull String barcode, @Nonnull String lcset, @Nonnull String eventDate, @Nonnull String product,
+                  @Nonnull String startingBatchVessel, @Nonnull String tubeType, @Nonnull BigDecimal loadingConc,
                   int numberLanes) {
         this.barcode = barcode;
         this.lcset = lcset;
         this.eventDate = eventDate;
         this.product = product;
         this.startingBatchVessel = startingBatchVessel;
-        this.eventType = eventType;
+        this.tubeType = tubeType;
         this.loadingConc = loadingConc;
         this.numberLanes = numberLanes;
     }
 
-    /** Returns the unique combinations of lcset and eventType which are just concatenated together. */
-    public static Set<String> allLcsetsAndEventTypes(Collection<RowDto> rowDtos) {
+    /** Returns the unique combinations of lcset and tubeType which are just concatenated together. */
+    public static Set<String> allLcsetsAndTubeTypes(Collection<RowDto> rowDtos) {
         Set<String> set = new HashSet<>();
         for (RowDto rowDto : rowDtos) {
-            set.add(rowDto.getLcset() + rowDto.getEventType());
+            set.add(rowDto.getLcset() + rowDto.getTubeType());
         }
         return set;
     }
@@ -83,11 +82,11 @@ public class RowDto {
         this.lcset = lcset;
     }
 
-    public Date getEventDate() {
+    public String getEventDate() {
         return eventDate;
     }
 
-    public void setEventDate(Date eventDate) {
+    public void setEventDate(String eventDate) {
         this.eventDate = eventDate;
     }
 
@@ -131,12 +130,12 @@ public class RowDto {
         this.startingBatchVessel = startingBatchVessel;
     }
 
-    public String getEventType() {
-        return eventType;
+    public String getTubeType() {
+        return tubeType;
     }
 
-    public void setEventType(String eventType) {
-        this.eventType = eventType;
+    public void setTubeType(String tubeType) {
+        this.tubeType = tubeType;
     }
 
     public static final Comparator BY_BARCODE = new Comparator() {
@@ -166,7 +165,7 @@ public class RowDto {
         if (!eventDate.equals(rowDto.eventDate)) {
             return false;
         }
-        if (!eventType.equals(rowDto.eventType)) {
+        if (!tubeType.equals(rowDto.tubeType)) {
             return false;
         }
         return product.equals(rowDto.product);
@@ -178,7 +177,7 @@ public class RowDto {
         int result = barcode.hashCode();
         result = 31 * result + lcset.hashCode();
         result = 31 * result + eventDate.hashCode();
-        result = 31 * result + eventType.hashCode();
+        result = 31 * result + tubeType.hashCode();
         result = 31 * result + product.hashCode();
         return result;
     }

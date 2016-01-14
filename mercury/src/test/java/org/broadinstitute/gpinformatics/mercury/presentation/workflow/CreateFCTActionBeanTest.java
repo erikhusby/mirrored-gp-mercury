@@ -16,7 +16,6 @@ import org.testng.annotations.Test;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -25,7 +24,7 @@ import java.util.Set;
 public class CreateFCTActionBeanTest {
     private CreateFCTActionBean testBean = new CreateFCTActionBean();
     private List<LabVessel> stbTubes = new ArrayList<>();
-    private Date eventDate = new Date();
+    private String eventDate = "today";
     private BigDecimal conc = new BigDecimal("7.0");
 
     @BeforeTest
