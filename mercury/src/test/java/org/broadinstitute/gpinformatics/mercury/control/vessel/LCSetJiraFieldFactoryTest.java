@@ -11,6 +11,9 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderT
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToVesselTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -31,6 +34,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -218,6 +222,69 @@ public class LCSetJiraFieldFactoryTest {
         String actualText = AbstractBatchJiraFieldFactory.buildSamplesListString(batch, null);
 
         assertThat(actualText.trim(), equalTo(sampleKey.trim()));
+    }
+
+    @Test
+    public void test_sample_field_text_with_reworks_and_multiple_samples_per_tube() {
+        String expectedText = "SM-1\nSM-3\n\nSM-2 (rework)\nSM-4 (rework)";
+
+        Set<LabVessel> newTubes = new HashSet<>();
+        Set<LabVessel> reworks = new HashSet<>();
+        LabVessel tube1 = new BarcodedTube("000012");
+        LabVessel sourceTube11 = new BarcodedTube("0000121");
+        LabVessel sourceTube12 = new BarcodedTube("0000122");
+        sourceTube11.addSample(new MercurySample("SM-1", MercurySample.MetadataSource.BSP));
+        sourceTube12.addSample(new MercurySample("SM-3", MercurySample.MetadataSource.BSP));
+        new VesselToVesselTransfer(sourceTube11, tube1,
+                new LabEvent(LabEventType.EXTRACT_CELL_SUSP_TO_MATRIX, new Date(),"test", 1L, 1L,"Test"));
+        new VesselToVesselTransfer(sourceTube12, tube1,
+                new LabEvent(LabEventType.EXTRACT_CELL_SUSP_TO_MATRIX, new Date(),"test", 2L, 1L,"Test"));
+
+        LabVessel tube2 = new BarcodedTube("000033");
+        LabVessel sourceTube21 = new BarcodedTube("0000331");
+        LabVessel sourceTube22 = new BarcodedTube("0000332");
+        sourceTube21.addSample(new MercurySample("SM-2", MercurySample.MetadataSource.BSP));
+        sourceTube22.addSample(new MercurySample("SM-4", MercurySample.MetadataSource.BSP));
+        new VesselToVesselTransfer(sourceTube21, tube2,
+                new LabEvent(LabEventType.EXTRACT_CELL_SUSP_TO_MATRIX, new Date(),"test", 3L, 1L,"Test"));
+        new VesselToVesselTransfer(sourceTube22, tube2,
+                new LabEvent(LabEventType.EXTRACT_CELL_SUSP_TO_MATRIX, new Date(),"test", 4L, 1L,"Test"));
+
+        newTubes.add(tube1);
+        reworks.add(tube2);
+
+        LabBatch batch = new LabBatch("test", newTubes, LabBatch.LabBatchType.WORKFLOW);
+
+        batch.addReworks(reworks);
+
+        String actualText = AbstractBatchJiraFieldFactory.buildSamplesListString(batch, null);
+
+        assertThat(actualText.trim(), equalTo(expectedText.trim()));
+    }
+
+    @Test
+    public void test_sample_field_text_no_reworks_and_multiple_samples_per_tube() {
+        String sampleKey = "SM-123";
+        String sampleKey2 = "SM-1234";
+        String expectedText = sampleKey + "\n" + sampleKey2;
+
+        Set<LabVessel> newTubes = new HashSet<>();
+        LabVessel tube = new BarcodedTube("000012");
+        LabVessel sourceTube1 = new BarcodedTube("0000121");
+        LabVessel sourceTube2 = new BarcodedTube("0000122");
+        sourceTube1.addSample(new MercurySample(sampleKey, MercurySample.MetadataSource.BSP));
+        sourceTube2.addSample(new MercurySample(sampleKey2, MercurySample.MetadataSource.BSP));
+        new VesselToVesselTransfer(sourceTube1, tube,
+                new LabEvent(LabEventType.EXTRACT_CELL_SUSP_TO_MATRIX, new Date(),"test", 1L, 1L,"Test"));
+        new VesselToVesselTransfer(sourceTube2, tube,
+                new LabEvent(LabEventType.EXTRACT_CELL_SUSP_TO_MATRIX, new Date(),"test", 2L, 1L,"Test"));
+        newTubes.add(tube);
+
+        LabBatch batch = new LabBatch("test", newTubes, LabBatch.LabBatchType.WORKFLOW);
+
+        String actualText = AbstractBatchJiraFieldFactory.buildSamplesListString(batch, null);
+
+        assertThat(actualText.trim(), equalTo(expectedText.trim()));
     }
 
 }
