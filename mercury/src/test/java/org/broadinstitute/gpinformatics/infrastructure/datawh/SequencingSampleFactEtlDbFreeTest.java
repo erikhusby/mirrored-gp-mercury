@@ -185,6 +185,7 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         EasyMock.expect(denatureSource.getSampleInstancesV2()).andReturn(sampleInstances).anyTimes();
 
         EasyMock.expect(pdo.getProductOrderId()).andReturn(pdoId).anyTimes();
+        EasyMock.expect(pdo.getCreatedDate()).andReturn(runDate).anyTimes();
 
         EasyMock.expect(sample.getSampleKey()).andReturn(sampleName).anyTimes();
         EasyMock.expect(pdo.getResearchProject()).andReturn(researchProject).anyTimes();
