@@ -452,6 +452,14 @@
                     }
             );
             $j("#spinner").hide();
+
+            // prevent submit when hitting the return key in the lcsetText input so ajax validation can happen.
+            $(window).keydown(function (event) {
+                if (event.keyCode == 13 && $j(event.target).is($j('#lcsetText'))) {
+                    $j('#lcsetText').trigger("change");
+                    event.preventDefault();
+                }
+            });
         });
     </script>
 </stripes:layout-component>
