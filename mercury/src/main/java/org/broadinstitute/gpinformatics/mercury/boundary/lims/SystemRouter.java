@@ -28,6 +28,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -196,7 +197,39 @@ public class SystemRouter implements Serializable {
     private System routeForVessels(Collection<LabVessel> labVessels, Intent intent) {
         // If all samples have Mercury for their metadata source, then regardless of intent, the
         // relevant system is Mercury, because neither BSP nor Squid know about the samples.
-        if (isEntirelyMercuryMetadata(labVessels)) {
+        int nonNullCount = 0;
+        int sampleCount = 0;
+        int mercurySourceCount = 0;
+        Set<LabVessel> nonMercurySampleVesselsSet = new HashSet<>();
+        List<LabVessel> nonMercurySampleVesselsList = new ArrayList<>();
+        for (LabVessel labVessel : labVessels) {
+            if (labVessel != null) {
+                nonNullCount++;
+                boolean foundBsp = false;
+                Set<SampleInstanceV2> sampleInstancesV2 = labVessel.getSampleInstancesV2();
+                for (SampleInstanceV2 sampleInstanceV2 : sampleInstancesV2) {
+                    Set<MercurySample> rootMercurySamples = sampleInstanceV2.getRootMercurySamples();
+                    if (rootMercurySamples.isEmpty()) {
+                        foundBsp = true;
+                    } else {
+                        for (MercurySample mercurySample : rootMercurySamples) {
+                            sampleCount++;
+                            if (mercurySample.getMetadataSource() == MercurySample.MetadataSource.MERCURY) {
+                                mercurySourceCount++;
+                            } else if (mercurySample.getMetadataSource() == MercurySample.MetadataSource.BSP) {
+                                foundBsp = true;
+                            }
+                        }
+                    }
+                }
+                if (foundBsp) {
+                    if (nonMercurySampleVesselsSet.add(labVessel)) {
+                        nonMercurySampleVesselsList.add(labVessel);
+                    }
+                }
+            }
+        }
+        if (nonNullCount == labVessels.size() && mercurySourceCount > 0 && sampleCount == mercurySourceCount) {
             return System.MERCURY;
         }
 
@@ -222,7 +255,7 @@ public class SystemRouter implements Serializable {
                     return System.SQUID;
                 case MERCURY:
                     // If everything here has been exported to sequencing.
-                    return determineSystemOfRecordPerBspExports(labVessels);
+                    return determineSystemOfRecordPerBspExports(nonMercurySampleVesselsList);
                 case WORKFLOW_DEPENDENT:
                     // Fall through.
                 }
@@ -238,28 +271,6 @@ public class SystemRouter implements Serializable {
 
         return evaluateRoutingOption(routingOptions, intent);
     }
-
-    /** Determines if all sample metadata is sourced by Mercury. */
-    private boolean isEntirelyMercuryMetadata(Collection<LabVessel> labVessels) {
-        int nonNullCount = 0;
-        int sampleCount = 0;
-        int mercurySourceCount = 0;
-        for (LabVessel labVessel : labVessels) {
-            if (labVessel != null) {
-                nonNullCount++;
-                for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
-                    for (MercurySample mercurySample : sampleInstanceV2.getRootMercurySamples()) {
-                        sampleCount++;
-                        if (mercurySample.getMetadataSource() == MercurySample.MetadataSource.MERCURY) {
-                            mercurySourceCount++;
-                        }
-                    }
-                }
-            }
-        }
-        return (nonNullCount == labVessels.size() && mercurySourceCount > 0 && sampleCount == mercurySourceCount);
-    }
-
 
     /**
      * Determines the system to use for the specified intent (e.g. which system will process a vessel,
