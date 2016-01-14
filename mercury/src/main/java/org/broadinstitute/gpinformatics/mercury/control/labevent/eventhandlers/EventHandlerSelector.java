@@ -16,14 +16,17 @@ import javax.inject.Inject;
  */
 public class EventHandlerSelector {
 
+    private SonicAliquotHandler sonicAliquotHandler;
     private DenatureToDilutionTubeHandler denatureToDilutionTubeHandler;
     private FlowcellMessageHandler flowcellMessageHandler;
     private FlowcellLoadedHandler flowcellLoadedHandler;
 
     @Inject
-    public EventHandlerSelector(DenatureToDilutionTubeHandler denatureToDilutionTubeHandler,
+    public EventHandlerSelector(SonicAliquotHandler sonicAliquotHandler,
+            DenatureToDilutionTubeHandler denatureToDilutionTubeHandler,
             FlowcellMessageHandler flowcellMessageHandler,
             FlowcellLoadedHandler flowcellLoadedHandler) {
+        this.sonicAliquotHandler = sonicAliquotHandler;
         this.denatureToDilutionTubeHandler = denatureToDilutionTubeHandler;
         this.flowcellMessageHandler = flowcellMessageHandler;
         this.flowcellLoadedHandler = flowcellLoadedHandler;
@@ -60,6 +63,9 @@ public class EventHandlerSelector {
             break;
         case FLOWCELL_LOADED:
             flowcellLoadedHandler.handleEvent(targetEvent, stationEvent);
+            break;
+        case SONIC_DAUGHTER_PLATE_CREATION:
+            sonicAliquotHandler.handleEvent(targetEvent, stationEvent);
             break;
         }
     }
