@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.test.builders;
 
+import org.apache.commons.lang3.tuple.Triple;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
@@ -10,6 +11,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,8 +42,20 @@ public class InfiniumEntityBuilder {
     }
 
     public InfiniumEntityBuilder invoke() {
-        infiniumJaxbBuilder =
-                new InfiniumJaxbBuilder(bettaLimsMessageTestFactory, testPrefix, sourceplate.getLabCentricName());
+        infiniumJaxbBuilder = new InfiniumJaxbBuilder(bettaLimsMessageTestFactory, testPrefix,
+                sourceplate.getLabCentricName(), sourceplate.getSampleInstanceCount(),
+                Arrays.asList(Triple.of("NaOH", "1234-NaOH", 1), Triple.of("MA1", "1234-MA1", 2)),
+                Arrays.asList(Triple.of("MA2", "1234-MA2", 3), Triple.of("MSM", "1234-MSM", 4)),
+                Arrays.asList(Triple.of("FMS", "1234-FMS", 5)),
+                Arrays.asList(Triple.of("PM1", "1234-PM1", 6)),
+                Arrays.asList(Triple.of("Isopropanol", "2345", 7)),
+                Arrays.asList(Triple.of("RA1", "1234-RA1", 8)),
+                Arrays.asList(Triple.of("RA1", "1234-RA1", 9), Triple.of("LX1", "1234-LX1", 10),
+                        Triple.of("LX2", "1234-LX2", 11), Triple.of("XC3", "1234-XC3", 12),
+                        Triple.of("XC4", "1234-XC4", 13), Triple.of("SML", "1234-SML", 14),
+                        Triple.of("ATM", "1234-ATM", 15), Triple.of("EML", "1234-EML", 16),
+                        Triple.of("PB1", "1234-PB1", 17))
+        );
         infiniumJaxbBuilder.invoke();
 
         Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();

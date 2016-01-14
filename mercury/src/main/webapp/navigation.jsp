@@ -189,11 +189,6 @@
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.BatchWorkflowActionBean"
                                           event="view">Batch Workflow</stripes:link>
                         </li>
-                        <li>
-                            <stripes:link id="transferVisualizer"
-                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.labevent.TransferVisualizerActionBean"
-                                          event="view">Transfer Visualizer</stripes:link>
-                        </li>
                     </ul>
                 </li>
             </security:authorizeBlock>
@@ -263,6 +258,11 @@
                         <stripes:link id="auditTrailSearch"
                                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.audit.AuditTrailActionBean"
                                       event="view">Audit Trail</stripes:link>
+                    </li>
+                    <li>
+                        <stripes:link id="transferVisualizer"
+                                beanclass="org.broadinstitute.gpinformatics.mercury.presentation.labevent.TransferVisualizerActionBean"
+                                event="view">Transfer Visualizer</stripes:link>
                     </li>
                 </ul>
             </li>

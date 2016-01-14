@@ -112,8 +112,8 @@ public class ProjectPersonEtlDbFreeTest {
         assertEquals(records.size(), 1);
 
         String[] parts = records.iterator().next().split(",");
-        assertEquals(parts[3], "\"\"");
-        assertEquals(parts[4], "\"\"");
+        assertEquals(parts[3], "");
+        assertEquals(parts[4], "");
 
         verify(mocks);
     }

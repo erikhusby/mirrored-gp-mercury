@@ -99,6 +99,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -834,7 +835,9 @@ public class BaseEventTest {
                 transferVisualizerV2.jsonForVessels(
                         Collections.singletonList(labVessel),
                         Collections.singletonList(TransferTraverserCriteria.TraversalDirection.Descendants),
-                        fileWriter);
+                        fileWriter,
+                        Arrays.asList(TransferVisualizerV2.AlternativeIds.SAMPLE_ID,
+                                TransferVisualizerV2.AlternativeIds.LCSET));
                 fileWriter.flush();
             } catch (IOException e) {
                 throw new RuntimeException(e);

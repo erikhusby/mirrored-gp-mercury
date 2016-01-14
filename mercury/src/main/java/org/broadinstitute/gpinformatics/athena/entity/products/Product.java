@@ -3,7 +3,9 @@ package org.broadinstitute.gpinformatics.athena.entity.products;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
+import org.broadinstitute.gpinformatics.infrastructure.security.Role;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
 
@@ -28,6 +30,7 @@ import javax.persistence.UniqueConstraint;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
@@ -320,6 +323,24 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
 
     public Set<Product> getAddOns() {
         return addOns;
+    }
+
+    /**
+     * Retrieve AddOns which can be used by specified user
+     *
+     * @param user the user seeking AddOns
+     */
+    public Set<Product> getAddOns(UserBean user) {
+        Set<Product> filteredAddOns = new HashSet<>();
+        Collection<Role> roles = user.getRoles();
+        for (Product addOn : addOns) {
+            if (!addOn.isPdmOrderableOnly()) {
+                filteredAddOns.add(addOn);
+            } else if (roles.contains(Role.PDM) || roles.contains(Role.Developer)) {
+                filteredAddOns.add(addOn);
+            }
+        }
+        return filteredAddOns;
     }
 
     public void addAddOn(Product addOn) {

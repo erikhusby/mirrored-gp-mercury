@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.test.builders;
 
+import org.apache.commons.lang3.tuple.Triple;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
@@ -9,9 +10,7 @@ import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.GregorianCalendar;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -48,6 +47,9 @@ public class LibraryConstructionJaxbBuilder {
     private PlateEventType postIdxAdapterLigationThermoCyclerLoadedJaxb;
     private PlateEventType postPondEnrichmentThermoCyclerLoadedJaxb;
     private final List<BettaLIMSMessage> messageList = new ArrayList<>();
+    private final List<Triple<String, String, Integer>> endRepairReagents;
+    private final List<Triple<String, String, Integer>> endRepairCleanupReagents;
+    private final List<Triple<String, String, Integer>> pondEnrichmentReagents;
 
     public enum TargetSystem {
         /** Messages that might be routed to Squid must have pre-registered lab machines and reagent kit types. */
@@ -55,9 +57,13 @@ public class LibraryConstructionJaxbBuilder {
         /** Mercury doesn't pre-register machines and reagent types, so the messages have fewer constraints. */
         MERCURY_ONLY
     }
+
     public LibraryConstructionJaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory, String testPrefix,
                                           String shearCleanPlateBarcode, String p7IndexPlateBarcode,
-                                          String p5IndexPlateBarcode, int numSamples, TargetSystem targetSystem) {
+                                          String p5IndexPlateBarcode, int numSamples, TargetSystem targetSystem,
+                                          List<Triple<String, String, Integer>> endRepairReagents,
+                                          List<Triple<String, String, Integer>> endRepairCleanupReagents,
+                                          List<Triple<String, String, Integer>> pondEnrichmentReagents) {
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
         this.testPrefix = testPrefix;
         this.shearCleanPlateBarcode = shearCleanPlateBarcode;
@@ -65,6 +71,9 @@ public class LibraryConstructionJaxbBuilder {
         this.p5IndexPlateBarcode = p5IndexPlateBarcode;
         this.numSamples = numSamples;
         this.targetSystem = targetSystem;
+        this.endRepairReagents = endRepairReagents;
+        this.endRepairCleanupReagents = endRepairCleanupReagents;
+        this.pondEnrichmentReagents = pondEnrichmentReagents;
     }
 
     public PlateEventType getEndRepairJaxb() {
@@ -148,25 +157,14 @@ public class LibraryConstructionJaxbBuilder {
     }
 
     public LibraryConstructionJaxbBuilder invoke() {
-        List<BettaLimsMessageTestFactory.ReagentDto> reagentDtos = new ArrayList<>();
-        GregorianCalendar gregorianCalendar = new GregorianCalendar();
-        gregorianCalendar.add(Calendar.MONTH, 6);
-        Date expiration = gregorianCalendar.getTime();
-        if (targetSystem == TargetSystem.MERCURY_ONLY) {
-            reagentDtos.add(new BettaLimsMessageTestFactory.ReagentDto("KAPA Reagent Box", "0009753252", expiration));
-        }
-        endRepairJaxb = bettaLimsMessageTestFactory.buildPlateEvent("EndRepair", shearCleanPlateBarcode, reagentDtos);
+        endRepairJaxb = bettaLimsMessageTestFactory.buildPlateEvent("EndRepair", shearCleanPlateBarcode,
+                targetSystem == TargetSystem.MERCURY_ONLY ?
+                        BettaLimsMessageTestFactory.reagentList(endRepairReagents) : Collections.EMPTY_LIST);
         bettaLimsMessageTestFactory.addMessage(messageList, endRepairJaxb);
 
-        reagentDtos.clear();
-        if (targetSystem == TargetSystem.MERCURY_ONLY) {
-            reagentDtos.add(new BettaLimsMessageTestFactory.ReagentDto("PEG", "0009753352", expiration));
-            reagentDtos.add(new BettaLimsMessageTestFactory.ReagentDto("70% Ethanol", "LCEtohTest", expiration));
-            reagentDtos.add(new BettaLimsMessageTestFactory.ReagentDto("EB", "0009753452", expiration));
-            reagentDtos.add(new BettaLimsMessageTestFactory.ReagentDto("SPRI", "LCSpriTest", expiration));
-        }
         endRepairCleanupJaxb = bettaLimsMessageTestFactory.buildPlateEvent("EndRepairCleanup", shearCleanPlateBarcode,
-                reagentDtos);
+                targetSystem == TargetSystem.MERCURY_ONLY ?
+                        BettaLimsMessageTestFactory.reagentList(endRepairCleanupReagents) : Collections.EMPTY_LIST);
         bettaLimsMessageTestFactory.addMessage(messageList, endRepairCleanupJaxb);
 
         aBaseJaxb = bettaLimsMessageTestFactory.buildPlateEvent("ABase", shearCleanPlateBarcode);
@@ -196,13 +194,11 @@ public class LibraryConstructionJaxbBuilder {
                 ligationCleanupBarcode);
         bettaLimsMessageTestFactory.addMessage(messageList, ligationCleanupJaxb);
 
-        reagentDtos.clear();
         if (p5IndexPlateBarcode == null) {
-            if (targetSystem == TargetSystem.MERCURY_ONLY) {
-                reagentDtos.add(new BettaLimsMessageTestFactory.ReagentDto("KAPA Amp Kit", "0009753250", expiration));
-            }
             pondEnrichmentJaxb = bettaLimsMessageTestFactory.buildPlateEvent("PondEnrichment", ligationCleanupBarcode,
-                    reagentDtos);
+                    targetSystem == TargetSystem.MERCURY_ONLY ?
+                            BettaLimsMessageTestFactory.reagentList(pondEnrichmentReagents) : Collections.EMPTY_LIST);
+
             bettaLimsMessageTestFactory.addMessage(messageList, pondEnrichmentJaxb);
         } else {
             indexP5PondEnrichmentJaxb = bettaLimsMessageTestFactory.buildPlateToPlate("IndexP5PondEnrichment",

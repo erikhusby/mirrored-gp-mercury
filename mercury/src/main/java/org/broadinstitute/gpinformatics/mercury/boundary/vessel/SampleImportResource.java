@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
@@ -72,7 +71,7 @@ public class SampleImportResource {
         LabEvent labEvent = firstLabVessel.getInPlaceEventsWithContainers().iterator().next();
 
         List<ChildVesselBean> childVesselBeans = new ArrayList<>();
-        TubeFormation tubeFormation = (TubeFormation) firstLabVessel.getContainers().iterator().next().getEmbedder();
+        TubeFormation tubeFormation = (TubeFormation) firstLabVessel.getVesselContainers().iterator().next().getEmbedder();
         for (LabVessel startingLabVessel : startingLabVessels) {
             childVesselBeans.add(new ChildVesselBean(
                     startingLabVessel.getLabel(),
