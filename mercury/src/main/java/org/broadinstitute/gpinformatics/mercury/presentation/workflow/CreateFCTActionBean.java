@@ -27,6 +27,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
+import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.math.BigDecimal;
 import java.text.Format;
@@ -85,6 +86,34 @@ public class CreateFCTActionBean extends CoreActionBean {
             VesselPosition.LANE3, VesselPosition.LANE4, VesselPosition.LANE5, VesselPosition.LANE6,
             VesselPosition.LANE7, VesselPosition.LANE8};
 
+    public enum LoadingTubeType {
+        // These names are also used in GPUITEST FCTCreationPage.
+        DENATURE("Denature", LabEventType.DENATURE_TRANSFER.getName()),
+        NORM("Norm", LabEventType.NORMALIZATION_TRANSFER.getName()),
+        POOLED_NORM("Pooled norm", LabEventType.POOLING_TRANSFER.getName());
+
+        private String displayName;
+        private String eventName;
+
+        LoadingTubeType(@Nonnull String displayName, @Nonnull String eventName) {
+            this.displayName = displayName;
+            this.eventName = eventName;
+        }
+
+        public String getDisplayName() {
+            return displayName;
+        }
+
+        public static LoadingTubeType getLoadingTubeTypeForEvent (String eventName) {
+            for (LoadingTubeType loadingTubeType : LoadingTubeType.values()) {
+                if (loadingTubeType.eventName.equals(eventName)) {
+                    return loadingTubeType;
+                }
+            }
+            throw new RuntimeException("No LoadingTypeType found for '" + eventName + "'");
+        }
+    }
+
     @HandlesEvent(VIEW_ACTION)
     @DefaultHandler
     public Resolution view() {
@@ -98,7 +127,8 @@ public class CreateFCTActionBean extends CoreActionBean {
     @HandlesEvent(LOAD_DENATURE)
     public Resolution loadDenature() {
         selectedEventType = LabEventType.DENATURE_TRANSFER;
-        selectedEventTypeDisplay = "Denature";
+        selectedEventTypeDisplay =
+                LoadingTubeType.getLoadingTubeTypeForEvent(selectedEventType.getName()).getDisplayName();
         clearValidationErrors();
         return loadTubes();
     }
@@ -110,7 +140,8 @@ public class CreateFCTActionBean extends CoreActionBean {
     @HandlesEvent(LOAD_NORM)
     public Resolution loadNorm() {
         selectedEventType = LabEventType.NORMALIZATION_TRANSFER;
-        selectedEventTypeDisplay = "Norm";
+        selectedEventTypeDisplay =
+                LoadingTubeType.getLoadingTubeTypeForEvent(selectedEventType.getName()).getDisplayName();
         clearValidationErrors();
         return loadTubes();
     }
@@ -122,7 +153,8 @@ public class CreateFCTActionBean extends CoreActionBean {
     @HandlesEvent(LOAD_POOLNORM)
     public Resolution loadPoolNorm() {
         selectedEventType = LabEventType.POOLING_TRANSFER;
-        selectedEventTypeDisplay = "Pooled Norm";
+        selectedEventTypeDisplay =
+                LoadingTubeType.getLoadingTubeTypeForEvent(selectedEventType.getName()).getDisplayName();
         clearValidationErrors();
         return loadTubes();
     }
