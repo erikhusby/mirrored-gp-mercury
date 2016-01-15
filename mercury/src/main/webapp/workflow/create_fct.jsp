@@ -27,6 +27,8 @@
                     ]
                 });
                 updateFlowcell();
+                // Clears the lcset names field.
+                $j('#lcsetText').removeAttr('value');
             });
 
             // After the flowcell type is changed, looks up the number of lanes.
@@ -125,8 +127,8 @@
                         <th>Tube Barcode</th>
                         <th>LCSET</th>
                         <th>Tube Type</th>
-                        <th width="10%">Number of Lanes</th>
-                        <th width="10%">Loading Conc</th>
+                        <th>Number of Lanes</th>
+                        <th>Loading Conc</th>
                         <th>Tube Created On</th>
                         <th>Product</th>
                     </tr>
