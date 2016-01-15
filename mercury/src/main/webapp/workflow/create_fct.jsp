@@ -55,8 +55,10 @@
 
                 if (sumOfLanes > 0 && (sumOfLanes % numFlowcellLanes == 0)) {
                     $j('#createFctButton').removeAttr("disabled");
+                    $j('#createFctButton').removeAttr("style");
                 } else {
                     $j('#createFctButton').attr("disabled", "disabled");
+                    $j('#createFctButton').attr("style", "background-color: #C0C0F0");
                 }
             }
 
@@ -78,6 +80,12 @@
                 }
             }
         </script>
+        <style type="text/css">
+            /* Fixed width columns except for product name. */
+            #tubeList { table-layout: fixed; }
+            .fixedWidthColumn { width: 8em; }
+            .widerFixedWidthColumn { width: 10em; }
+        </style>
 
     </stripes:layout-component>
     <stripes:layout-component name="content">
@@ -124,12 +132,12 @@
                 <table id="tubeList" class="table simple">
                     <thead>
                     <tr>
-                        <th>Tube Barcode</th>
-                        <th>LCSET</th>
-                        <th>Tube Type</th>
-                        <th>Number of Lanes</th>
-                        <th>Loading Conc</th>
-                        <th>Tube Created On</th>
+                        <th class="fixedWidthColumn">Tube Barcode</th>
+                        <th class="fixedWidthColumn">LCSET</th>
+                        <th class="fixedWidthColumn">Tube Type</th>
+                        <th class="fixedWidthColumn">Number of Lanes</th>
+                        <th class="fixedWidthColumn">Loading Conc</th>
+                        <th class="widerFixedWidthColumn">Tube Created On</th>
                         <th>Product</th>
                     </tr>
                     </thead>
@@ -139,9 +147,9 @@
                             <td>${rowDto.barcode}</td>
                             <td>${rowDto.lcset}</td>
                             <td>${rowDto.tubeType}</td>
-                            <td><input id="numLanesId" name="rowDtos[${item.index}].numberLanes"
+                            <td><input style='width:8em' id="numLanesId" name="rowDtos[${item.index}].numberLanes"
                                        value="${rowDto.numberLanes}" onchange="updateSumOfLanes()"/></td>
-                            <td><input id="loadingConcId" name="rowDtos[${item.index}].loadingConc"
+                            <td><input style='width:8em' id="loadingConcId" name="rowDtos[${item.index}].loadingConc"
                                        value="${rowDto.loadingConc}"/></td>
                             <td>${rowDto.eventDate}</td>
                             <td>${rowDto.product}</td>
