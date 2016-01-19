@@ -145,14 +145,14 @@
                     <c:forEach items="${actionBean.rowDtos}" var="rowDto" varStatus="item">
                         <tr>
                             <td>
-                                <stripes:link id="transferVisualizer" event="view"
+                                <stripes:link id="transferVisualizer" event="view" target="_blank"
                                               beanclass="org.broadinstitute.gpinformatics.mercury.presentation.labevent.TransferVisualizerActionBean">
                                     <stripes:param name="barcodes" value="${rowDto.barcode}"/>
                                     ${rowDto.barcode}
                                 </stripes:link>
                             </td>
                             <td>
-                                <a target="JIRA" href="${rowDto.lcsetUrl}" class="external" target="JIRA">${rowDto.lcset}</a>
+                                <a href="${rowDto.lcsetUrl}" target="JIRA">${rowDto.lcset}</a>
                             </td>
                             <td>${rowDto.tubeType}</td>
                             <td><input style='width:8em' class="numLanes" name="rowDtos[${item.index}].numberLanes"
