@@ -165,7 +165,6 @@ public class CreateFCTActionBean extends CoreActionBean {
      */
     private Resolution loadTubes() {
         // Keeps any existing rowDtos (regardless of current lcset names) and only adds to them.
-        Set<String> existingStartingBatchVesselBarcodes = RowDto.allStartingBatchVessels(rowDtos);
         Set<String> existingLcsetsAndEventTypes = RowDto.allLcsetsAndTubeTypes(rowDtos);
         for (LabBatch labBatch : loadLcsets()) {
             // Skips tube lookup if this labBatch and tube type (event type) was already loaded.
@@ -280,11 +279,6 @@ public class CreateFCTActionBean extends CoreActionBean {
             if (fctBatches.size() == 0) {
                 addMessage("No FCTs were created.");
             } else {
-                // Checks that an FCT does not mix CRSP and non-CRSP samples.
-                for (Pair<LabBatch, Set<String>> pair : fctBatches) {
-                    LabBatch fctBatch = pair.getLeft();
-
-                }
                 StringBuilder createdBatchLinks = new StringBuilder("<ol>");
                 // For each batch, pushes the FCT to JIRA, makes the parent-child JIRA links,
                 // and makes a UI message.

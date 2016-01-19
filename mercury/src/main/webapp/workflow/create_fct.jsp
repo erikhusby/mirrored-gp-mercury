@@ -42,15 +42,16 @@
             // the sum of number of lanes is a multiple of the flowcell's lane count.
             function updateSumOfLanes() {
                 var sumOfLanes = 0;
-                var tubeListNodes = $j('#tubeList').dataTable().fnGetNodes();
-                for (var i = 0; i < tubeListNodes.length; ++i) {
-                    var laneCount = $(tubeListNodes[i]).find('#numLanesId').attr('value');
+                var dTable = $j('#tubeList').dataTable();
+                $j('.numLanes', dTable.fnGetNodes()).each(function() {
+                    var laneCount = $j(this).val();
                     if ($.isNumeric(laneCount)) {
                         sumOfLanes += parseInt(laneCount, 10);
                     } else {
                         alert("Number of Lanes must be a number");
+                        $j(this).val("0");
                     }
-                }
+                });
                 $('#sumOfLanesDisplayed').text(sumOfLanes);
 
                 if (sumOfLanes > 0 && (sumOfLanes % numFlowcellLanes == 0)) {
@@ -72,12 +73,11 @@
                     defaultLoadingConc = 0;
                 }
                 tubeListNodes = $j('#tubeList').dataTable().fnGetNodes();
-                for (var i = 0; i < tubeListNodes.length; ++i) {
-                    var conc = $(tubeListNodes[i]).find('#loadingConcId').attr('value');
-                    if (!$.isNumeric(conc) || conc == 0) {
-                        $(tubeListNodes[i]).find('#loadingConcId').val(defaultLoadingConc);
+                $j('.loadConc').each(function() {
+                    if (! $.isNumeric($j(this).val()) || $j(this).val() == 0) {
+                        $j(this).val(defaultLoadingConc);
                     }
-                }
+                });
             }
         </script>
         <style type="text/css">
@@ -147,9 +147,9 @@
                             <td>${rowDto.barcode}</td>
                             <td>${rowDto.lcset}</td>
                             <td>${rowDto.tubeType}</td>
-                            <td><input style='width:8em' id="numLanesId" name="rowDtos[${item.index}].numberLanes"
+                            <td><input style='width:8em' class="numLanes" name="rowDtos[${item.index}].numberLanes"
                                        value="${rowDto.numberLanes}" onchange="updateSumOfLanes()"/></td>
-                            <td><input style='width:8em' id="loadingConcId" name="rowDtos[${item.index}].loadingConc"
+                            <td><input style='width:8em' class="loadConc" name="rowDtos[${item.index}].loadingConc"
                                        value="${rowDto.loadingConc}"/></td>
                             <td>${rowDto.eventDate}</td>
                             <td>${rowDto.product}</td>
