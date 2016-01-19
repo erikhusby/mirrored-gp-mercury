@@ -213,6 +213,18 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="view-control-group control-group">
+                    <label class="control-label label-form">Positive Controls Project</label>
+                    <div class="controls">
+                        <div class="form-value">
+                            <c:if test="${!empty actionBean.editProduct.positiveControlResearchProject}">
+                                ${actionBean.editProduct.positiveControlResearchProject.businessKey} -
+                                ${actionBean.editProduct.positiveControlResearchProject.title}
+                            </c:if>
+                        </div>
+                    </div>
+                </div>
             </fieldset>
         </div>
 

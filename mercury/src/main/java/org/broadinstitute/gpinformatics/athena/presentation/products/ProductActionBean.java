@@ -21,14 +21,17 @@ import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductPdfFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.DisplayableItem;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.PriceItemTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProductTokenInput;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.AnalysisTypeDao;
@@ -42,6 +45,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -94,6 +98,9 @@ public class ProductActionBean extends CoreActionBean {
     @Inject
     private ReagentDesignDao reagentDesignDao;
 
+    @Inject
+    private ResearchProjectDao researchProjectDao;
+
     // Data needed for displaying the view.
     private List<ProductFamily> productFamilies;
     private List<Product> allProducts;
@@ -107,6 +114,8 @@ public class ProductActionBean extends CoreActionBean {
 
     @Validate(required = true, on = {SAVE_ACTION})
     private Long productFamilyId;
+
+    private String controlsProject;
 
     @ValidateNestedProperties({
             @Validate(field = "productName", required = true, maxlength = 255, on = {SAVE_ACTION},
@@ -167,6 +176,11 @@ public class ProductActionBean extends CoreActionBean {
         if ((editProduct.getProductFamily() == null) || !productFamilyId.equals(
                 editProduct.getProductFamily().getProductFamilyId())) {
             editProduct.setProductFamily(productFamilyDao.find(productFamilyId));
+        }
+
+        if (controlsProject != null && (editProduct.getPositiveControlResearchProject() == null ||
+                !editProduct.getPositiveControlResearchProject().getBusinessKey().equals(controlsProject))) {
+            editProduct.setPositiveControlResearchProject(researchProjectDao.findByBusinessKey(controlsProject));
         }
     }
 
@@ -523,6 +537,22 @@ public class ProductActionBean extends CoreActionBean {
     }
 
     /**
+     * Get the list of available analysis types.
+     *
+     * @return List of strings representing the analysis types
+     */
+    public Collection<DisplayableItem> getControlsProjects() {
+        List<ResearchProject> researchProjects = researchProjectDao.findLikeTitle("Control");
+        Collection<DisplayableItem> displayableItems = new ArrayList<>(researchProjects.size());
+
+        for (BusinessObject item : researchProjects) {
+            displayableItems.add(new DisplayableItem(item.getBusinessKey(),
+                    item.getBusinessKey() + " - " + item.getName()));
+        }
+        return displayableItems;
+    }
+
+    /**
      * Get the list of workflows.
      *
      * @return all workflows
@@ -542,5 +572,13 @@ public class ProductActionBean extends CoreActionBean {
 
     public void setAvailability(ProductDao.Availability availability) {
         this.availability = availability;
+    }
+
+    public String getControlsProject() {
+        return controlsProject;
+    }
+
+    public void setControlsProject(String controlsProject) {
+        this.controlsProject = controlsProject;
     }
 }

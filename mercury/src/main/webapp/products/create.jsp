@@ -430,6 +430,16 @@
                                 </stripes:select>
                             </div>
                         </div>
+
+                        <div class="control-group">
+                            <stripes:label for="controlsProject" name="Positive Controls Project" class="control-label"/>
+                            <div class="controls">
+                                <stripes:select id="controlsProject" name="controlsProject">
+                                    <stripes:option value="">Select One</stripes:option>
+                                    <stripes:options-collection collection="${actionBean.controlsProjects}" label="businessKey" value="businessKey"/>
+                                </stripes:select>
+                            </div>
+                        </div>
                     </fieldset>
                 </div>
             </div>

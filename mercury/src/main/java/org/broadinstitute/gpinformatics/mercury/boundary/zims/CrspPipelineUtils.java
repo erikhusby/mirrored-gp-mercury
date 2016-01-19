@@ -56,27 +56,13 @@ public class CrspPipelineUtils {
      */
     public void setFieldsForCrsp(
             LibraryBean libraryBean,
-            SampleData sampleData,
-            ResearchProject positiveControlsProject,
-            String lcSet,
-            String controlProductPartNumber) {
+            SampleData sampleData) {
         throwExceptionIfInProductionAndSampleIsNotABSPSample(sampleData.getSampleId());
         setBuickVisitAndCollectionDate(libraryBean, sampleData);
 
         libraryBean.setLsid(getCrspLSIDForBSPSampleId(sampleData.getSampleId()));
         libraryBean.setRootSample(libraryBean.getSampleId());
         libraryBean.setTestType(LibraryBean.CRSP_SOMATIC_TEST_TYPE);
-
-        if (Boolean.TRUE.equals(libraryBean.isPositiveControl())) {
-            String participantWithLcSetName = libraryBean.getCollaboratorParticipantId() + "_" + lcSet;
-            libraryBean.setCollaboratorSampleId(participantWithLcSetName);
-            libraryBean.setCollaboratorParticipantId(participantWithLcSetName);
-
-            libraryBean.setResearchProjectId(positiveControlsProject.getBusinessKey());
-            libraryBean.setResearchProjectName(positiveControlsProject.getTitle());
-            libraryBean.setRegulatoryDesignation(positiveControlsProject.getRegulatoryDesignationCodeForPipeline());
-            libraryBean.setProductPartNumber(controlProductPartNumber);
-        }
     }
 
     private void setBuickVisitAndCollectionDate(LibraryBean libraryBean, SampleData sampleData) {
@@ -108,11 +94,4 @@ public class CrspPipelineUtils {
         return bspSampleId.replaceFirst("S[MP]-", "org.broadinstitute:crsp:");
     }
 
-    /**
-     * Returns the hardcoded research project id (RP-XYZ)
-     * used for aggregating positive controls for CRSP
-     */
-    public static String getResearchProjectForCrspPositiveControls() {
-        return "RP-805";
-    }
 }

@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.entity.products;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.broadinstitute.gpinformatics.infrastructure.security.Role;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
@@ -152,6 +153,10 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     @JoinColumn(name = "product", nullable = true)
     @AuditJoinTable(name = "product_risk_criteria_join_aud")
     private List<RiskCriterion> riskCriteria = new ArrayList<>();
+
+    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST})
+    @JoinColumn(name = "POSITIVE_CONTROL_RP_ID")
+    private ResearchProject positiveControlResearchProject;
 
     /**
      * Default no-arg constructor, also used when creating a new Product.
@@ -558,6 +563,14 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
 
     public boolean isSampleInitiationProduct() {
         return partNumber.equals(SAMPLE_INITIATION_PART_NUMBER);
+    }
+
+    public ResearchProject getPositiveControlResearchProject() {
+        return positiveControlResearchProject;
+    }
+
+    public void setPositiveControlResearchProject(ResearchProject positiveControlResearchProject) {
+        this.positiveControlResearchProject = positiveControlResearchProject;
     }
 
     /**

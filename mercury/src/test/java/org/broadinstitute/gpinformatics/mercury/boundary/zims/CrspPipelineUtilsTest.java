@@ -134,8 +134,7 @@ public class CrspPipelineUtilsTest {
 
     public void testSetFieldsForCrspThrowsExceptionForNonBspSampleInProduction() {
         try {
-            new CrspPipelineUtils(Deployment.PROD).setFieldsForCrsp(new LibraryBean(), sampleDataWithNonBspSample,
-                    null, null, null);
+            new CrspPipelineUtils(Deployment.PROD).setFieldsForCrsp(new LibraryBean(), sampleDataWithNonBspSample);
             Assert.fail("Should have thrown an exception because " + sampleDataWithNonBspSample.getSampleId() + " is not a bsp sample");
         }
         catch(RuntimeException ignored){}
@@ -145,23 +144,18 @@ public class CrspPipelineUtilsTest {
         LibraryBean libraryBean = new LibraryBean();
         SampleData sampleData = new MercurySampleData("sampleId", Collections.<Metadata>emptySet());
 
-        crspPipelineAPIUtils.setFieldsForCrsp(libraryBean,sampleData,null,null,null);
+        crspPipelineAPIUtils.setFieldsForCrsp(libraryBean,sampleData);
 
         Assert.assertEquals(libraryBean.getTestType(),"Somatic");
     }
 
-    public void testControlsProjectIsRP805() {
-        Assert.assertEquals(crspPipelineAPIUtils.getResearchProjectForCrspPositiveControls(),"RP-805");
-    }
-
     public void testSetFieldsForCrspDoesNotThrowExceptionForNonBspSampleInDevelopment() {
-        new CrspPipelineUtils(Deployment.DEV).setFieldsForCrsp(new LibraryBean(),sampleDataWithNonBspSample,null,null,
-                null);
+        new CrspPipelineUtils(Deployment.DEV).setFieldsForCrsp(new LibraryBean(),sampleDataWithNonBspSample);
     }
 
     public void testBuickCollectionAndVisitDateFields() {
         LibraryBean libraryBean = new LibraryBean();
-        new CrspPipelineUtils(Deployment.DEV).setFieldsForCrsp(libraryBean,crspSample.getSampleData(),null,null,null);
+        new CrspPipelineUtils(Deployment.DEV).setFieldsForCrsp(libraryBean,crspSample.getSampleData());
 
         Assert.assertEquals(libraryBean.getBuickVisit(),BUICK_VISIT);
         Assert.assertEquals(libraryBean.getBuickCollectionDate(),BUICK_COLLECTION_DATE);

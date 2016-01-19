@@ -135,9 +135,6 @@ public class ZimsIlluminaRunFactory {
 
     public ZimsIlluminaRun makeZimsIlluminaRun(IlluminaSequencingRun illuminaRun) {
         RunCartridge flowcell = illuminaRun.getSampleCartridge();
-        ResearchProject crspPositiveControlsProject = researchProjectDao.findByBusinessKey(
-                crspPipelineUtils.getResearchProjectForCrspPositiveControls()
-        );
 
         List<List<SampleInstanceDto>> perLaneSampleInstanceDtos = new ArrayList<>();
         Set<String> sampleIds = new HashSet<>();
@@ -255,7 +252,7 @@ public class ZimsIlluminaRunFactory {
                 SampleInstanceDto sampleInstanceDto = sampleInstanceDtos.get(0);
                 short laneNumber = sampleInstanceDto.getLaneNumber();
                 libraryBeans.addAll(
-                        makeLibraryBeans(sampleInstanceDtos, mapSampleIdToDto, mapKeyToProductOrder, mapNameToControl,crspPositiveControlsProject));
+                        makeLibraryBeans(sampleInstanceDtos, mapSampleIdToDto, mapKeyToProductOrder, mapNameToControl));
                 String sequencedLibraryName = sampleInstanceDto.getSequencedLibraryName();
                 Date sequencedLibraryDate = sampleInstanceDto.getSequencedLibraryDate();
 
@@ -284,8 +281,7 @@ public class ZimsIlluminaRunFactory {
     public List<LibraryBean> makeLibraryBeans(List<SampleInstanceDto> sampleInstanceDtos,
                                               Map<String, SampleData> mapSampleIdToDto,
                                               Map<String, ProductOrder> mapKeyToProductOrder,
-                                              Map<String, Control> mapNameToControl,
-                                              ResearchProject crspPositiveControlProject) {
+                                              Map<String, Control> mapNameToControl) {
         List<LibraryBean> libraryBeans = new ArrayList<>();
 
         // Get distinct analysis types and reference sequences.  If there's only one distinct, it's used for the
@@ -294,6 +290,7 @@ public class ZimsIlluminaRunFactory {
         Set<String> referenceSequenceKeys = new HashSet<>();
         Set<String> aggregationDataTypes = new HashSet<>();
         Set<String> productPartNumbers = new HashSet<>();
+        Set<ResearchProject> positiveControlResearchProjects = new HashSet<>();
         for (SampleInstanceDto sampleInstanceDto : sampleInstanceDtos) {
             ProductOrder productOrder = (sampleInstanceDto.getProductOrderKey() != null) ?
                     mapKeyToProductOrder.get(sampleInstanceDto.getProductOrderKey()) : null;
@@ -306,6 +303,10 @@ public class ZimsIlluminaRunFactory {
                     referenceSequenceKeys.add(project.getReferenceSequenceKey());
                 }
                 productPartNumbers.add(product.getPartNumber());
+                ResearchProject positiveControlResearchProject = product.getPositiveControlResearchProject();
+                if (positiveControlResearchProject != null) {
+                    positiveControlResearchProjects.add(positiveControlResearchProject);
+                }
             }
         }
 
@@ -374,9 +375,8 @@ public class ZimsIlluminaRunFactory {
             libraryBeans.add(createLibraryBean(sampleInstanceDto.getLabVessel(), productOrder, sampleData, lcSet,
                     baitName, indexingSchemeEntity, catNames, sampleInstanceDto.getSampleInstance().getWorkflowName(),
                     indexingSchemeDto, mapNameToControl, sampleInstanceDto.getPdoSampleName(),
-                    sampleInstanceDto.isCrspLane(), crspPositiveControlProject,
-                    sampleInstanceDto.getMetadataSourceForPipelineAPI(), analysisTypes, referenceSequenceKeys,
-                    aggregationDataTypes, productPartNumbers));
+                    sampleInstanceDto.isCrspLane(), sampleInstanceDto.getMetadataSourceForPipelineAPI(), analysisTypes,
+                    referenceSequenceKeys, aggregationDataTypes, productPartNumbers, positiveControlResearchProjects));
         }
 
         // Make order predictable.  Include library name because for ICE there are 8 ancestor catch tubes, all with
@@ -405,9 +405,9 @@ public class ZimsIlluminaRunFactory {
             MolecularIndexingScheme indexingSchemeEntity, List<String> catNames, String labWorkflow,
             edu.mit.broad.prodinfo.thrift.lims.MolecularIndexingScheme indexingSchemeDto,
             Map<String, Control> mapNameToControl, String pdoSampleName,
-            boolean isCrspLane, ResearchProject crspPositiveControlsProject,
-            String metadataSourceForPipelineAPI, Set<String> analysisTypes, Set<String> referenceSequenceKeys,
-            Set<String> aggregationDataTypes, Set<String> productPartNumbers) {
+            boolean isCrspLane, String metadataSourceForPipelineAPI, Set<String> analysisTypes,
+            Set<String> referenceSequenceKeys, Set<String> aggregationDataTypes, Set<String> productPartNumbers,
+            Set<ResearchProject> positiveControlProjects) {
 
         Format dateFormat = FastDateFormat.getInstance(ZimsIlluminaRun.DATE_FORMAT);
 
@@ -430,6 +430,7 @@ public class ZimsIlluminaRunFactory {
         String gssrSampleType = null;
         Boolean doAggregation = Boolean.TRUE;
         String controlProductPartNumber = null;
+        ResearchProject positiveControlProject = null;
 
         String analysisType = null;
         String referenceSequence = null;
@@ -442,13 +443,14 @@ public class ZimsIlluminaRunFactory {
                 case POSITIVE:
                     positiveControl = true;
                     if (analysisTypes.size() == 1 && referenceSequenceKeys.size() == 1 &&
-                            aggregationDataTypes.size() == 1) {
+                            aggregationDataTypes.size() == 1 && positiveControlProjects.size() == 1) {
                         analysisType = analysisTypes.iterator().next();
                         String[] referenceSequenceValues = referenceSequenceKeys.iterator().next().split("\\|");
                         referenceSequence = referenceSequenceValues[0];
                         referenceSequenceVersion = referenceSequenceValues[1];
                         aggregationDataType = aggregationDataTypes.iterator().next();
                         controlProductPartNumber = getControlProductPartNumber(productPartNumbers);
+                        positiveControlProject = positiveControlProjects.iterator().next();
                     }
                     break;
                 case NEGATIVE:
@@ -494,10 +496,22 @@ public class ZimsIlluminaRunFactory {
                 catNames, productOrder, lcSet, sampleData, labWorkflow, libraryCreationDate, pdoSampleName,
                 metadataSourceForPipelineAPI, aggregationDataType);
         if (isCrspLane) {
-            crspPipelineUtils.setFieldsForCrsp(libraryBean, sampleData, crspPositiveControlsProject, lcSet,
-                    controlProductPartNumber);
+            crspPipelineUtils.setFieldsForCrsp(libraryBean, sampleData);
         }
-        return libraryBean;        
+        if (Boolean.TRUE.equals(libraryBean.isPositiveControl())) {
+            String participantWithLcSetName = libraryBean.getCollaboratorParticipantId() + "_" + lcSet;
+            libraryBean.setCollaboratorSampleId(participantWithLcSetName);
+            libraryBean.setCollaboratorParticipantId(participantWithLcSetName);
+
+            if (positiveControlProject != null) {
+                libraryBean.setResearchProjectId(positiveControlProject.getBusinessKey());
+                libraryBean.setResearchProjectName(positiveControlProject.getTitle());
+                libraryBean.setRegulatoryDesignation(positiveControlProject.getRegulatoryDesignationCodeForPipeline());
+            }
+            libraryBean.setProductPartNumber(controlProductPartNumber);
+        }
+
+        return libraryBean;
     }
 
     /**
