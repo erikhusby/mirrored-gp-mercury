@@ -155,14 +155,16 @@ buttons to move columns from one to the other --%>
         $j( document ).ready( function() {
             $j( "#pageSizeSlider" ).slider({
                 value:${actionBean.searchInstance.pageSize},
-                min: 50,
-                max: 500,
-                step: 50,
+                min: 100,
+                max: 3000,
+                step: 100,
                 slide: function( event, ui ) {
                     $j( "#userPageSize" ).val( ui.value );
+                    $j( "#userPageSizeDisplay" ).html(ui.value);
                 }
             });
             $j( "#userPageSize" ).val( $j( "#pageSizeSlider" ).slider( "value" ) );
+            $j( "#userPageSizeDisplay" ).html( $j( "#pageSizeSlider" ).slider( "value" ) );
         } );
     </script>
     <br/>
@@ -246,9 +248,11 @@ buttons to move columns from one to the other --%>
             <td colspan="4" style="padding-top: 6px"><label>Filter: </label><input type="text" id="filterColumns" onkeyup="filterSelect($j('#sourceColumnDefNames')[0], this);"></td>
         </tr>
     </table>
-    <table>
+    <table style="margin-top: 6px">
     <tr>
-        <td><label>Page Size: </label><input type="text" readonly name="searchInstance.pageSize" id="userPageSize" value="${actionBean.searchInstance.pageSize}" style="border:0; background-color: transparent ;font-weight:bold; width: 40px"/></td><td width="320px"><div id="pageSizeSlider"></div></td>
+        <td><label>Page size: </label></td>
+        <td style="font-weight:bold; width: 40px; padding-right: 10px"><div id="userPageSizeDisplay"></div><input type="hidden" name="searchInstance.pageSize" id="userPageSize" value="${actionBean.searchInstance.pageSize}"/></td>
+        <td style="width: 500px"><div id="pageSizeSlider"></div></td>
     </tr>
     </table>
 </stripes:layout-definition>
