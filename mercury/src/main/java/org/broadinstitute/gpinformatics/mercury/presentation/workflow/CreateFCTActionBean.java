@@ -179,9 +179,10 @@ public class CreateFCTActionBean extends CoreActionBean {
                             startingBatchVessel.findVesselsForLabEventType(selectedEventType, true).entrySet()) {
                         for (LabVessel loadingTube : entry.getValue()) {
                             vesselToEvents.put(loadingTube, entry.getKey());
-                            for (BucketEntry bucketEntry :
-                                    bucketEntryDao.findByVesselAndBatch(startingBatchVessel, labBatch)) {
-                                vesselToBucketEntries.put(loadingTube, bucketEntry);
+                            for (BucketEntry bucketEntry : labBatch.getBucketEntries()) {
+                                if (bucketEntry.getLabVessel().equals(startingBatchVessel)) {
+                                    vesselToBucketEntries.put(loadingTube, bucketEntry);
+                                }
                             }
                         }
                     }
