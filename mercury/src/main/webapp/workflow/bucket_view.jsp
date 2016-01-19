@@ -452,6 +452,11 @@
                     }
             );
             $j("#spinner").hide();
+
+            // prevent submit when hitting the return key in an input so ajax validation can happen.
+            $j(document).keypress("#bucketEntryForm:input:not(textarea)", function (event) {
+                return event.keyCode != 13;
+            });
         });
     </script>
 </stripes:layout-component>
