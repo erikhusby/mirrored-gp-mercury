@@ -20,12 +20,14 @@ public class RowDto {
     private String product;
     private String startingBatchVessel;
     private String tubeType;
+    private String lcsetUrl;
 
     public RowDto() {
     }
 
     public RowDto(@Nonnull String barcode, @Nonnull String lcset, @Nonnull String eventDate, @Nonnull String product,
-                  @Nonnull String startingBatchVessel, @Nonnull String tubeType, @Nonnull BigDecimal loadingConc) {
+                  @Nonnull String startingBatchVessel, @Nonnull String tubeType, @Nonnull BigDecimal loadingConc,
+                  String lcsetUrl) {
         this.barcode = barcode;
         this.lcset = lcset;
         this.eventDate = eventDate;
@@ -33,19 +35,14 @@ public class RowDto {
         this.startingBatchVessel = startingBatchVessel;
         this.tubeType = tubeType;
         this.loadingConc = loadingConc;
+        this.lcsetUrl = lcsetUrl;
     }
 
     public RowDto(@Nonnull String barcode, @Nonnull String lcset, @Nonnull String eventDate, @Nonnull String product,
                   @Nonnull String startingBatchVessel, @Nonnull String tubeType, @Nonnull BigDecimal loadingConc,
                   int numberLanes) {
-        this.barcode = barcode;
-        this.lcset = lcset;
-        this.eventDate = eventDate;
-        this.product = product;
-        this.startingBatchVessel = startingBatchVessel;
-        this.tubeType = tubeType;
-        this.loadingConc = loadingConc;
-        this.numberLanes = numberLanes;
+        this(barcode, lcset, eventDate, product, startingBatchVessel, tubeType, loadingConc, null);
+        setNumberLanes(numberLanes);
     }
 
     /** Returns the unique combinations of lcset and tubeType which are just concatenated together. */
@@ -136,6 +133,14 @@ public class RowDto {
 
     public void setTubeType(String tubeType) {
         this.tubeType = tubeType;
+    }
+
+    public String getLcsetUrl() {
+        return lcsetUrl;
+    }
+
+    public void setLcsetUrl(String lcsetUrl) {
+        this.lcsetUrl = lcsetUrl;
     }
 
     public static final Comparator BY_BARCODE = new Comparator() {

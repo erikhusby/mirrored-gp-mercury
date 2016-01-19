@@ -201,6 +201,8 @@ public class CreateFCTActionBean extends CoreActionBean {
                     }
                 }
 
+                String lcsetUrl = labBatch.getJiraTicket().getBrowserUrl();
+
                 for (LabVessel loadingTube : vesselToEvents.keySet()) {
 
                     // Makes a line-break separated list of products and starting batch vessels.
@@ -222,7 +224,7 @@ public class CreateFCTActionBean extends CoreActionBean {
                     RowDto rowDto = new RowDto(loadingTube.getLabel(), labBatch.getBusinessKey(),
                             StringUtils.join(eventDates, "<br/>"), StringUtils.join(productNames, "<br/>"),
                             StringUtils.join(startingBatchVessels, "<br/>"), selectedEventTypeDisplay,
-                            defaultLoadingConc);
+                            defaultLoadingConc, lcsetUrl);
                     if (!rowDtos.contains(rowDto)) {
                         rowDtos.add(rowDto);
                     }

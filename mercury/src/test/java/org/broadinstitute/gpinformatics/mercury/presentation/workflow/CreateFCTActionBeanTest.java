@@ -38,15 +38,8 @@ public class CreateFCTActionBeanTest {
     public void testAllocationOf32x1() {
         List<Pair<RowDto, LabVessel>> rowDtoLabVessels = new ArrayList<>();
         for (int i = 0; i < 32; ++i) {
-            RowDto rowDto = new RowDto(stbTubes.get(i).getLabel(),
-                    "lcset" + i,
-                    eventDate,
-                    "product" + i,
-                    "startTube" + i,
-                    "Denature",
-                    conc);
-            rowDto.setNumberLanes(1);
-            rowDtoLabVessels.add(Pair.of(rowDto, stbTubes.get(i)));
+            rowDtoLabVessels.add(Pair.of(new RowDto(stbTubes.get(i).getLabel(), "lcset" + i, eventDate,
+                    "product" + i, "startTube" + i, "Denature", conc, 1),  stbTubes.get(i)));
         }
         for (IlluminaFlowcell.FlowcellType flowcellType : IlluminaFlowcell.FlowcellType.values()) {
             if (flowcellType.getCreateFct() == IlluminaFlowcell.CreateFct.NO) {
@@ -61,15 +54,8 @@ public class CreateFCTActionBeanTest {
     public void testAllocationOf32x8() {
         List<Pair<RowDto, LabVessel>> rowDtoLabVessels = new ArrayList<>();
         for (int i = 0; i < 32; ++i) {
-            RowDto rowDto = new RowDto(stbTubes.get(i).getLabel(),
-                    "lcset" + i,
-                    eventDate,
-                    "product" + i,
-                    "startTube" + i,
-                    "Denature",
-                    conc);
-            rowDto.setNumberLanes(8);
-            rowDtoLabVessels.add(Pair.of(rowDto, stbTubes.get(i)));
+            rowDtoLabVessels.add(Pair.of(new RowDto(stbTubes.get(i).getLabel(), "lcset" + i, eventDate,
+                    "product" + i, "startTube" + i, "Denature", conc, 8),  stbTubes.get(i)));
         }
         for (IlluminaFlowcell.FlowcellType flowcellType : IlluminaFlowcell.FlowcellType.values()) {
             if (flowcellType.getCreateFct() == IlluminaFlowcell.CreateFct.NO) {
@@ -84,15 +70,8 @@ public class CreateFCTActionBeanTest {
     public void testAllocationOf2x2OneLane() {
         List<Pair<RowDto, LabVessel>> rowDtoLabVessels = new ArrayList<>();
         for (int i = 0; i < 2; ++i) {
-            RowDto rowDto = new RowDto(stbTubes.get(i).getLabel(),
-                    "lcset" + i,
-                    eventDate,
-                    "product" + i,
-                    "startTube" + i,
-                    "Denature",
-                    conc);
-            rowDto.setNumberLanes(2);
-            rowDtoLabVessels.add(Pair.of(rowDto, stbTubes.get(i)));
+            rowDtoLabVessels.add(Pair.of(new RowDto(stbTubes.get(i).getLabel(), "lcset" + i, eventDate,
+                    "product" + i, "startTube" + i, "Denature", conc, 2),  stbTubes.get(i)));
         }
         List<Pair<LabBatch, Set<String>>> fctBatches = allocateAndTest(rowDtoLabVessels,
                 IlluminaFlowcell.FlowcellType.MiSeqFlowcell);

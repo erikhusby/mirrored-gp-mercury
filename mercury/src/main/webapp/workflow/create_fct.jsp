@@ -144,8 +144,16 @@
                     <tbody>
                     <c:forEach items="${actionBean.rowDtos}" var="rowDto" varStatus="item">
                         <tr>
-                            <td>${rowDto.barcode}</td>
-                            <td>${rowDto.lcset}</td>
+                            <td>
+                                <stripes:link id="transferVisualizer" event="view"
+                                              beanclass="org.broadinstitute.gpinformatics.mercury.presentation.labevent.TransferVisualizerActionBean">
+                                    <stripes:param name="barcodes" value="${rowDto.barcode}"/>
+                                    ${rowDto.barcode}
+                                </stripes:link>
+                            </td>
+                            <td>
+                                <a target="JIRA" href="${rowDto.lcsetUrl}" class="external" target="JIRA">${rowDto.lcset}</a>
+                            </td>
                             <td>${rowDto.tubeType}</td>
                             <td><input style='width:8em' class="numLanes" name="rowDtos[${item.index}].numberLanes"
                                        value="${rowDto.numberLanes}" onchange="updateSumOfLanes()"/></td>
@@ -159,6 +167,7 @@
                             <input type="hidden" name="rowDtos[${item.index}].eventDate" value="${rowDto.eventDate}"/>
                             <input type="hidden" name="rowDtos[${item.index}].product" value="${rowDto.product}"/>
                             <input type="hidden" name="rowDtos[${item.index}].startingBatchVessel" value="${rowDto.startingBatchVessel}"/>
+                            <input type="hidden" name="rowDtos[${item.index}].lcsetUrl" value="${rowDto.lcsetUrl}"/>
                     </c:forEach>
                     </tbody>
                 </table>
