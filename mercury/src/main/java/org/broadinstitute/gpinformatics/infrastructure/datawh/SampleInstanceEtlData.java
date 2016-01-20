@@ -49,8 +49,11 @@ public class SampleInstanceEtlData {
                 // And associate a sample with it if available
                 sampleInstanceData.pdoSample = pdoSample;
                 sampleInstanceData.pdoSampleId = pdoSample.getMercurySample().getSampleKey();
-                // getAllProductOrderSamples() sorts by closest first so we're done at first hit
-                break;
+                // getAllProductOrderSamples() sorts by closest first
+                // We've got the correct PDO data on the first PDO created before context date
+                if( sampleInstanceData.pdo.getCreatedDate().compareTo(contextDate) < 1 ) {
+                    break;
+                }
             }
         }
 
