@@ -52,6 +52,44 @@ import java.util.TreeMap;
 @Table(schema = "mercury", uniqueConstraints = @UniqueConstraint(columnNames = {"batchName"}))
 public class LabBatch {
 
+    public static class VesselToLanesInfo {
+        private List<VesselPosition> vesselPositions;
+        private BigDecimal concentration;
+        private LabVessel labVessel;
+
+        public VesselToLanesInfo(List<VesselPosition> vesselPositions, BigDecimal concentration,
+                                 LabVessel labVessel) {
+            this.vesselPositions = vesselPositions;
+            this.concentration = concentration;
+            this.labVessel = labVessel;
+        }
+
+        public List<VesselPosition> getVesselPositions() {
+            return vesselPositions;
+        }
+
+        public void setVesselPositions(
+                List<VesselPosition> vesselPositions) {
+            this.vesselPositions = vesselPositions;
+        }
+
+        public BigDecimal getConcentration() {
+            return concentration;
+        }
+
+        public void setConcentration(BigDecimal concentration) {
+            this.concentration = concentration;
+        }
+
+        public LabVessel getLabVessel() {
+            return labVessel;
+        }
+
+        public void setLabVessel(LabVessel labVessel) {
+            this.labVessel = labVessel;
+        }
+    }
+
     public static final Comparator<LabBatch> byDate = new Comparator<LabBatch>() {
         @Override
         public int compare(LabBatch bucketEntryPrime, LabBatch bucketEntrySecond) {
@@ -182,6 +220,18 @@ public class LabBatch {
         createdOn = new Date();
     }
 
+    public LabBatch(@Nonnull String batchName, @Nonnull List<VesselToLanesInfo> vesselToLanesInfos,
+                    @Nonnull LabBatchType labBatchType,
+                    @Nullable IlluminaFlowcell.FlowcellType flowcellType) {
+        this.batchName = batchName;
+        this.labBatchType = labBatchType;
+        this.flowcellType = flowcellType;
+        for (VesselToLanesInfo vesselToLanesInfo : vesselToLanesInfos) {
+            addLabVessel(vesselToLanesInfo.getLabVessel(), vesselToLanesInfo.getConcentration(), vesselToLanesInfo.getVesselPositions());
+        }
+        createdOn = new Date();
+    }
+
     public LabBatch(@Nonnull String batchName, @Nonnull Set<LabVessel> startingBatchLabVessels,
                     @Nonnull LabBatchType labBatchType,
                     String batchDescription, Date dueDate, String important) {
@@ -249,6 +299,22 @@ public class LabBatch {
         LabBatchStartingVessel labBatchStartingVessel = new LabBatchStartingVessel(labVessel, this, concentration);
         startingBatchLabVessels.add(labBatchStartingVessel);
         labVessel.addNonReworkLabBatchStartingVessel(labBatchStartingVessel);
+    }
+
+    /**
+     * Adds a vessel to this batch.
+     * @param labVessel the vessel to be added.
+     * @param concentration the vessel's concentration (typically a flowcell loading concentration).
+     * @param positions the position that the vessel occupies in the batch (typically a flowcell lane).
+     */
+    public void addLabVessel(@Nonnull LabVessel labVessel, @Nullable BigDecimal concentration,
+                             @Nonnull List<VesselPosition> positions) {
+        for (VesselPosition vesselPosition : positions) {
+            LabBatchStartingVessel labBatchStartingVessel =
+                    new LabBatchStartingVessel(labVessel, this, concentration, vesselPosition);
+            startingBatchLabVessels.add(labBatchStartingVessel);
+            labVessel.addNonReworkLabBatchStartingVessel(labBatchStartingVessel);
+        }
     }
 
     public void addLabVessels(@Nonnull Collection<LabVessel> vessels) {
@@ -453,7 +519,8 @@ public class LabBatch {
         LIMS_ACTIVITY_STREAM("LIMS Activity Stream", true),
         SUMMARY("Summary", false),
         SEQUENCING_STATION("Sequencing Station", true),
-        MATERIAL_TYPE("BATCH_TYPE", true);
+        MATERIAL_TYPE("BATCH_TYPE", true),
+        LANE_INFO("Lane Info", true);
 
 
         private final String fieldName;
@@ -551,26 +618,24 @@ public class LabBatch {
     }
 
     /**
-     * Future implementation of this method would get a starting vessel based on its specified position (Lane) defined
-     * during the creation of an FCT/MiSeq ticket.
-     * <p/>
-     * For now (Exome Express Launch) this method will return the one designated vessel for this batch.
+     * Returns the starting vessel designated for the specified flowcell lane.
+     * THIS METHOD IS UNRELIABLE AFTER THE FLOWCELL TRANSFER since the starting
+     * vessel may actually have been put on a different lane.
      *
-     * @param position position (lane) by which the targeted lab vessel is referenced
-     *
-     * @return Lab Vessel referenced by the given position.
+     * @param position the lane to examine.
+     * @return the lab vessel that was designated to be put at the given position.
      */
     public LabVessel getStartingVesselByPosition(VesselPosition position) {
         if (labBatchType != LabBatchType.FCT &&
             labBatchType != LabBatchType.MISEQ) {
             throw new RuntimeException("Vessel by Position is only supported for Flowcell Tickets");
         }
-
-        if (startingBatchLabVessels.size() > 1) {
-            throw new RuntimeException("more than one starting vessel for a flowcell is not currently supported");
+        for (LabBatchStartingVessel labBatchStartingVessel : startingBatchLabVessels) {
+            if (labBatchStartingVessel.getVesselPosition() == position) {
+                return labBatchStartingVessel.getLabVessel();
+            }
         }
-
-        return startingBatchLabVessels.iterator().next().getLabVessel();
+        return null;
     }
 
     @Override

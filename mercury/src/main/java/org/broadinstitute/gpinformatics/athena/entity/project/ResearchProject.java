@@ -69,21 +69,25 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
     public enum RegulatoryDesignation {
         // changing enum names requires integration testing with the pipeline,
         // but descriptions can change without impacting the pipeline
-        RESEARCH_ONLY("Research Grade"),
-        CLINICAL_DIAGNOSTICS("Clinical Diagnostics"),
-        GENERAL_CLIA_CAP("General CLIA/CAP Quality System");
+        RESEARCH_ONLY("Research Grade", false),
+        CLINICAL_DIAGNOSTICS("Clinical Diagnostics", true),
+        GENERAL_CLIA_CAP("General CLIA/CAP Quality System", true);
 
-        // this field is what is stored in the database
         private final String description;
+        private final boolean isClinical;
 
-        private RegulatoryDesignation(String description) {
+        private RegulatoryDesignation(String description, boolean isClinical) {
             this.description = description;
+            this.isClinical = isClinical;
         }
 
         public String getDescription() {
             return description;
         }
 
+        public boolean isClinical() {
+            return isClinical;
+        }
     }
 
     public static final boolean IRB_ENGAGED = false;
