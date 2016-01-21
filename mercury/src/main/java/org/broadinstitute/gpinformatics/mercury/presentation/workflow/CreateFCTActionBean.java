@@ -341,7 +341,7 @@ public class CreateFCTActionBean extends CoreActionBean {
                 if (linkedLcsets.size() ==  0) {
                     linkedLcsets.add(rowDto.getLcset());
                 }
-                vesselLaneInfo.getVesselPositions().add(VESSEL_POSITIONS[laneIndex++]);
+                vesselLaneInfo.getLanes().add(VESSEL_POSITIONS[laneIndex++]);
                 // Are there are enough lanes to make a new FCT?
                 if (laneIndex == lanesPerFlowcell) {
                     LabBatch fctBatch = new LabBatch(rowDto.getBarcode() + " FCT ticket", fctVesselLaneInfo,

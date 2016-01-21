@@ -41,6 +41,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -538,18 +539,25 @@ public class LabBatchFixUpTest extends Arquillian {
             userTransaction.begin();
             List<LabBatch> createdBatches = new ArrayList<>();
             for (String denatureTubeBarcode : selectedVesselLabels) {
-                Set<LabVessel> vesselSet = new HashSet<>(labVesselDao.findByListIdentifiers(selectedVesselLabels));
-
                 LabBatch.LabBatchType batchType = selectedType.getBatchType();
-                int lanesPerFlowcell = selectedType.getVesselGeometry().getVesselPositions().length;
                 CreateFields.IssueType issueType = selectedType.getIssueType();
-                for (int i = 0; i < numberOfLanes; i += lanesPerFlowcell) {
-                    LabBatch batch = new LabBatch(denatureTubeBarcode + " FCT ticket", vesselSet, batchType,
-                            loadingConc, selectedType);
-                    batch.setBatchDescription(batch.getBatchName());
-                    labBatchEjb.createLabBatch(batch, userBean.getLoginUserName(), issueType);
-                    createdBatches.add(batch);
+
+                // Puts all vessels on all flowcell lanes.
+                List<VesselPosition> lanes = new ArrayList<>();
+                for (VesselPosition vesselPosition : selectedType.getVesselGeometry().getVesselPositions()) {
+                    lanes.add(vesselPosition);
                 }
+                List<String> uniqueLabels = new ArrayList<String>(new HashSet<String>(selectedVesselLabels));
+                List<LabBatch.VesselToLanesInfo> vesselToLanesInfos = new ArrayList<>();
+                for (LabVessel vessel : labVesselDao.findByListIdentifiers(uniqueLabels)) {
+                    vesselToLanesInfos.add(new LabBatch.VesselToLanesInfo(lanes, loadingConc, vessel));
+                }
+
+                LabBatch batch = new LabBatch(denatureTubeBarcode + " FCT ticket", vesselToLanesInfos, batchType,
+                        selectedType);
+                batch.setBatchDescription(batch.getBatchName());
+                labBatchEjb.createLabBatch(batch, userBean.getLoginUserName(), issueType);
+                createdBatches.add(batch);
             }
             labBatchDao.persist(new FixupCommentary(reason));
             labBatchDao.flush();

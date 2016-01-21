@@ -33,6 +33,7 @@ import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Date;
@@ -53,24 +54,22 @@ import java.util.TreeMap;
 public class LabBatch {
 
     public static class VesselToLanesInfo {
-        private List<VesselPosition> vesselPositions;
+        private List<VesselPosition> lanes;
         private BigDecimal concentration;
         private LabVessel labVessel;
 
-        public VesselToLanesInfo(List<VesselPosition> vesselPositions, BigDecimal concentration,
-                                 LabVessel labVessel) {
-            this.vesselPositions = vesselPositions;
+        public VesselToLanesInfo(List<VesselPosition> lanes, BigDecimal concentration, LabVessel labVessel) {
+            this.lanes = lanes;
             this.concentration = concentration;
             this.labVessel = labVessel;
         }
 
-        public List<VesselPosition> getVesselPositions() {
-            return vesselPositions;
+        public List<VesselPosition> getLanes() {
+            return lanes;
         }
 
-        public void setVesselPositions(
-                List<VesselPosition> vesselPositions) {
-            this.vesselPositions = vesselPositions;
+        public void setLanes(List<VesselPosition> lanes) {
+            this.lanes = this.lanes;
         }
 
         public BigDecimal getConcentration() {
@@ -193,33 +192,26 @@ public class LabBatch {
     protected LabBatch() {
     }
 
+    /** Not for creating an FCT that has per-lane vessel info. */
     public LabBatch(@Nonnull String batchName, @Nonnull Set<LabVessel> starterVessels,
                     @Nonnull LabBatchType labBatchType) {
-        this(batchName, starterVessels, labBatchType, null);
-    }
-
-    public LabBatch(@Nonnull String batchName, @Nonnull Set<LabVessel> starterVessels,
-                    @Nonnull LabBatchType labBatchType, @Nullable BigDecimal concentration) {
         this.batchName = batchName;
         this.labBatchType = labBatchType;
-        for (LabVessel starter : starterVessels) {
-            addLabVessel(starter, concentration);
-        }
         createdOn = new Date();
     }
 
-    public LabBatch(@Nonnull String batchName, @Nonnull Set<LabVessel> starterVessels,
-                    @Nonnull LabBatchType labBatchType, @Nullable BigDecimal concentration,
-                    @Nullable IlluminaFlowcell.FlowcellType flowcellType) {
+    /** Unit test FCT or MISEQ constructor. Puts the starter vessel on all flowcell lanes. */
+    public LabBatch(@Nonnull String batchName, @Nonnull LabBatchType labBatchType,
+                    IlluminaFlowcell.FlowcellType flowcellType, @Nonnull LabVessel starterVessel,
+                    @Nullable BigDecimal concentration) {
         this.batchName = batchName;
         this.labBatchType = labBatchType;
-        this.flowcellType = flowcellType;
-        for (LabVessel starter : starterVessels) {
-            addLabVessel(starter, concentration);
-        }
+        addLabVessel(starterVessel, concentration,
+                Arrays.asList(flowcellType.getVesselGeometry().getVesselPositions()));
         createdOn = new Date();
     }
 
+    /** General FCT or MISEQ constructor. */
     public LabBatch(@Nonnull String batchName, @Nonnull List<VesselToLanesInfo> vesselToLanesInfos,
                     @Nonnull LabBatchType labBatchType,
                     @Nullable IlluminaFlowcell.FlowcellType flowcellType) {
@@ -227,7 +219,8 @@ public class LabBatch {
         this.labBatchType = labBatchType;
         this.flowcellType = flowcellType;
         for (VesselToLanesInfo vesselToLanesInfo : vesselToLanesInfos) {
-            addLabVessel(vesselToLanesInfo.getLabVessel(), vesselToLanesInfo.getConcentration(), vesselToLanesInfo.getVesselPositions());
+            addLabVessel(vesselToLanesInfo.getLabVessel(), vesselToLanesInfo.getConcentration(),
+                    vesselToLanesInfo.getLanes());
         }
         createdOn = new Date();
     }

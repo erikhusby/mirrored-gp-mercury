@@ -11,9 +11,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MiSeqReagentKit;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselAndPosition;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
@@ -38,7 +36,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -138,11 +135,12 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
 
 
         Set<LabVessel> starterVessels = Collections.singleton((LabVessel) denatureTube);
-        //create a couple Miseq batches then one FCT (2500) batch
-        miseqBatch1 = new LabBatch("FCT-1", starterVessels, LabBatch.LabBatchType.MISEQ, BigDecimal.valueOf(7f));
-//        miseqBatch2 = new LabBatch("FCT-2", starterVessels, LabBatch.LabBatchType.MISEQ, 7f);
-        fctBatch = new LabBatch(FLOWCELL_2500_TICKET, starterVessels, LabBatch.LabBatchType.FCT, BigDecimal.valueOf(
-                12.33f));
+        //create a Miseq batch then one FCT (2500) batch
+        miseqBatch1 = new LabBatch("FCT-1", LabBatch.LabBatchType.MISEQ,
+                IlluminaFlowcell.FlowcellType.MiSeqFlowcell, denatureTube, BigDecimal.valueOf(7f));
+
+        LabBatch fctBatch = new LabBatch("FCT-3", LabBatch.LabBatchType.FCT,
+                    IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell, denatureTube, BigDecimal.valueOf(12.33f));
 
         HiSeq2500FlowcellEntityBuilder flowcellEntityBuilder =
                 runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), BARCODE_SUFFIX + "ADXX",
@@ -162,10 +160,10 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
                 "1");
 
         denatureTube2000 = qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
-        starterVessels = Collections.singleton((LabVessel) denatureTube2000);
 
-        fctBatchHiSeq2000 = new LabBatch(FLOWCELL_2000_TICKET, starterVessels, LabBatch.LabBatchType.FCT, BigDecimal.valueOf(
-                12.33f), IlluminaFlowcell.FlowcellType.HiSeqFlowcell);
+        fctBatchHiSeq2000 = new LabBatch(FLOWCELL_2000_TICKET, Collections.singletonList(new LabBatch.VesselToLanesInfo(
+                Collections.singletonList(VesselPosition.LANE1), new BigDecimal("12.33"), denatureTube)),
+                LabBatch.LabBatchType.FCT, IlluminaFlowcell.FlowcellType.HiSeqFlowcell);
 
         template = null;
 
@@ -396,7 +394,7 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
             }
             assertThat(laneInfo, not(nullValue()));
             boolean foundVesselPosition = false;
-            for (VesselPosition vesselPosition : laneInfo.getVesselPositions()) {
+            for (VesselPosition vesselPosition : laneInfo.getLanes()) {
                 if(vesselPosition.name().equals(lane.getLaneName())) {
                     allLanes.add(lane.getLaneName());
                     foundVesselPosition = true;

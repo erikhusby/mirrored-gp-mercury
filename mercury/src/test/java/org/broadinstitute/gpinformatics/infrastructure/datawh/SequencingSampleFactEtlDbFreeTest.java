@@ -49,6 +49,7 @@ import org.testng.annotations.Test;
 
 import java.io.File;
 import java.lang.reflect.Field;
+import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -333,29 +334,29 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, "1");
 
         PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube,
-                                                                                  String.valueOf(runDate.getTime()),
-                                                                                  "1", true);
+                String.valueOf(runDate.getTime()),
+                "1", true);
         ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder =
                 runExomeExpressShearingProcess(picoPlatingEntityBuilder.getNormBarcodeToTubeMap(),
-                                               picoPlatingEntityBuilder.getNormTubeFormation(),
-                                               picoPlatingEntityBuilder.getNormalizationBarcode(), "1");
+                        picoPlatingEntityBuilder.getNormTubeFormation(),
+                        picoPlatingEntityBuilder.getNormalizationBarcode(), "1");
         LibraryConstructionEntityBuilder libraryConstructionEntityBuilder =
                 runLibraryConstructionProcess(exomeExpressShearingEntityBuilder.getShearingCleanupPlate(),
-                                              exomeExpressShearingEntityBuilder.getShearCleanPlateBarcode(),
-                                              exomeExpressShearingEntityBuilder.getShearingPlate(), "1");
+                        exomeExpressShearingEntityBuilder.getShearCleanPlateBarcode(),
+                        exomeExpressShearingEntityBuilder.getShearingPlate(), "1");
         HybridSelectionEntityBuilder hybridSelectionEntityBuilder =
                 runHybridSelectionProcess(libraryConstructionEntityBuilder.getPondRegRack(),
-                                          libraryConstructionEntityBuilder.getPondRegRackBarcode(),
-                                          libraryConstructionEntityBuilder.getPondRegTubeBarcodes(), "1");
+                        libraryConstructionEntityBuilder.getPondRegRackBarcode(),
+                        libraryConstructionEntityBuilder.getPondRegTubeBarcodes(), "1");
         QtpEntityBuilder qtpEntityBuilder = runQtpProcess(hybridSelectionEntityBuilder.getNormCatchRack(),
-                                                          hybridSelectionEntityBuilder.getNormCatchBarcodes(),
-                                                          hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(),
-                                                          "1");
+                hybridSelectionEntityBuilder.getNormCatchBarcodes(),
+                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(),
+                "1");
 
-        LabVessel denatureSource =
-                qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
+        LabVessel denatureSource = qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
 
-        LabBatch fct = new LabBatch(FCT_TICKET, Collections.singleton(denatureSource), LabBatch.LabBatchType.FCT);
+        new LabBatch(FCT_TICKET, LabBatch.LabBatchType.FCT, IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell,
+                denatureSource, new BigDecimal("7.9"));
 
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
                 runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1" + "ADXX", FCT_TICKET,
