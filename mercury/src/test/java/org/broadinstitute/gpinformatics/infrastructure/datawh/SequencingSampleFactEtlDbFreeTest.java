@@ -143,7 +143,8 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         laneVesselsAndPositions.put(VesselPosition.LANE1, denatureSource);
         laneVesselsAndPositions.put(VesselPosition.LANE2, denatureSource);
 
-        fctBatch = new LabBatch("FCT1", Collections.singleton(denatureSource), LabBatch.LabBatchType.FCT);
+        fctBatch = new LabBatch("FCT1", LabBatch.LabBatchType.FCT, IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell,
+                denatureSource, BigDecimal.TEN);
         EasyMock.reset(mocks);
     }
 
@@ -198,6 +199,8 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
             EasyMock.expect(si.getAllProductOrderSamples()).andReturn(pdoSampleList).anyTimes();
             EasyMock.expect(si.getSingleBatch()).andReturn(labBatch).anyTimes();
             EasyMock.expect(si.getMolecularIndexingScheme()).andReturn(indexingScheme).anyTimes();
+            EasyMock.expect(si.getSingleBatchVessel(LabBatch.LabBatchType.FCT)).andReturn(
+                    fctBatch.getLabBatchStartingVessels().iterator().next()).anyTimes();
         }
 
         EasyMock.expect(pdoSample1.getProductOrder()).andReturn(pdo).anyTimes();
@@ -281,6 +284,8 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
             EasyMock.expect(si.getAllProductOrderSamples()).andReturn(pdoSampleList).anyTimes();
             EasyMock.expect(si.getSingleBatch()).andReturn(labBatch).anyTimes();
             EasyMock.expect(si.getMolecularIndexingScheme()).andReturn(null).anyTimes();
+            EasyMock.expect(si.getSingleBatchVessel(LabBatch.LabBatchType.FCT)).andReturn(
+                    fctBatch.getLabBatchStartingVessels().iterator().next()).anyTimes();
         }
 
         EasyMock.replay(mocks);
@@ -355,6 +360,7 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
                 "1");
 
         LabVessel denatureSource = qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
+        denatureSource.clearCaches();
 
         new LabBatch(FCT_TICKET, LabBatch.LabBatchType.FCT, IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell,
                 denatureSource, new BigDecimal("7.9"));

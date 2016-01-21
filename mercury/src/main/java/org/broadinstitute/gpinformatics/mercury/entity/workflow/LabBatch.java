@@ -35,6 +35,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
@@ -197,21 +198,22 @@ public class LabBatch {
                     @Nonnull LabBatchType labBatchType) {
         this.batchName = batchName;
         this.labBatchType = labBatchType;
+        for (LabVessel starter : starterVessels) {
+            addLabVessel(starter);
+        }
         createdOn = new Date();
     }
 
-    /** Unit test FCT or MISEQ constructor. Puts the starter vessel on all flowcell lanes. */
+    /** Specialized FCT or MISEQ constructor for test purposes. Puts the starter vessel on all flowcell lanes. */
     public LabBatch(@Nonnull String batchName, @Nonnull LabBatchType labBatchType,
                     IlluminaFlowcell.FlowcellType flowcellType, @Nonnull LabVessel starterVessel,
                     @Nullable BigDecimal concentration) {
-        this.batchName = batchName;
-        this.labBatchType = labBatchType;
-        addLabVessel(starterVessel, concentration,
-                Arrays.asList(flowcellType.getVesselGeometry().getVesselPositions()));
-        createdOn = new Date();
+        this(batchName, Collections.singletonList(
+                new VesselToLanesInfo(Arrays.asList(flowcellType.getVesselGeometry().getVesselPositions()),
+                        concentration, starterVessel)), labBatchType, flowcellType);
     }
 
-    /** General FCT or MISEQ constructor. */
+    /** Constructor for FCT or MISEQ where each vessel must be designated to specific lanes. */
     public LabBatch(@Nonnull String batchName, @Nonnull List<VesselToLanesInfo> vesselToLanesInfos,
                     @Nonnull LabBatchType labBatchType,
                     @Nullable IlluminaFlowcell.FlowcellType flowcellType) {
@@ -225,21 +227,13 @@ public class LabBatch {
         createdOn = new Date();
     }
 
-    public LabBatch(@Nonnull String batchName, @Nonnull Set<LabVessel> startingBatchLabVessels,
-                    @Nonnull LabBatchType labBatchType,
+    public LabBatch(@Nonnull String batchName, @Nonnull Set<LabVessel> startingLabVessels,
+                    Set<LabVessel> reworkLabVessels, @Nonnull LabBatchType labBatchType, String workflowName,
                     String batchDescription, Date dueDate, String important) {
-
-        this(batchName, startingBatchLabVessels, labBatchType);
+        this(batchName, startingLabVessels, labBatchType);
         this.batchDescription = batchDescription;
         this.dueDate = dueDate;
         this.important = important;
-    }
-
-    public LabBatch(@Nonnull String batchName, @Nonnull Set<LabVessel> startingLabVessels,
-                    Set<LabVessel> reworkLabVessels,
-                    @Nonnull LabBatchType labBatchType, String workflowName, String batchDescription, Date dueDate,
-                    String important) {
-        this(batchName, startingLabVessels, labBatchType, batchDescription, dueDate, important);
         this.workflowName = workflowName;
         addReworks(reworkLabVessels);
     }

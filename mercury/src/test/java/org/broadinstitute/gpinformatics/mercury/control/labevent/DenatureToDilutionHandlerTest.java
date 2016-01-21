@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderT
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
@@ -25,6 +26,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -93,8 +95,8 @@ public class DenatureToDilutionHandlerTest extends BaseEventTest {
     public void testSuccessfulDenatureTransfer() throws Exception {
 
         final String fctBatchName = "FCT-Test1";
-        LabBatch fctBatch =
-                new LabBatch(fctBatchName, Collections.singleton(denatureSource), LabBatch.LabBatchType.FCT);
+        LabBatch fctBatch = new LabBatch(fctBatchName, LabBatch.LabBatchType.FCT,
+                IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell, denatureSource, BigDecimal.TEN);
 
         Dilution dilution = new Dilution(fctBatchName).invoke();
         LabEvent dilutionTransferEntity = dilution.getDilutionTransferEntity();
@@ -107,8 +109,8 @@ public class DenatureToDilutionHandlerTest extends BaseEventTest {
     @Test(groups = {TestGroups.DATABASE_FREE})
     public void testDifferentFctTickets() throws Exception {
         final String fctBatchName = "FCT-Test2";
-        LabBatch fctBatch =
-                new LabBatch(fctBatchName, Collections.singleton(denatureSource), LabBatch.LabBatchType.FCT);
+        LabBatch fctBatch = new LabBatch(fctBatchName, LabBatch.LabBatchType.FCT,
+                IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell, denatureSource, BigDecimal.TEN);
 
         Dilution dilution = new Dilution(fctBatchName+"bad").invoke();
         LabEvent dilutionTransferEntity = dilution.getDilutionTransferEntity();
@@ -126,8 +128,8 @@ public class DenatureToDilutionHandlerTest extends BaseEventTest {
     @Test(groups = {TestGroups.DATABASE_FREE})
     public void testFctTicketWithDIfferentDilutionTube() throws Exception {
         final String fctBatchName = "FCT-Test3";
-        LabBatch fctBatch =
-                new LabBatch(fctBatchName, Collections.singleton(denatureSource), LabBatch.LabBatchType.FCT);
+        LabBatch fctBatch = new LabBatch(fctBatchName, LabBatch.LabBatchType.FCT,
+                IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell, denatureSource, BigDecimal.TEN);
 
         for (LabBatchStartingVessel startingVessel : fctBatch.getLabBatchStartingVessels()) {
             startingVessel.setDilutionVessel(new BarcodedTube("PreviousDilutionTube" + runDate.getTime()));
@@ -149,8 +151,8 @@ public class DenatureToDilutionHandlerTest extends BaseEventTest {
     @Test(groups = {TestGroups.DATABASE_FREE})
     public void testDilutionInDifferentFctTicket() throws Exception {
         final String fctBatchName = "FCT-Test4";
-        LabBatch fctBatch =
-                new LabBatch(fctBatchName, Collections.singleton(denatureSource), LabBatch.LabBatchType.FCT);
+        LabBatch fctBatch = new LabBatch(fctBatchName, LabBatch.LabBatchType.FCT,
+                IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell, denatureSource, BigDecimal.TEN);
 
         final String altFctTicketName = fctBatchName + "ALT";
 
@@ -158,10 +160,10 @@ public class DenatureToDilutionHandlerTest extends BaseEventTest {
         LabEvent dilutionTransferEntity = dilution.getDilutionTransferEntity();
         PlateCherryPickEvent dilutionEvent = dilution.getDilutionEvent();
 
-        LabBatch fctBatch2 =
-                new LabBatch(altFctTicketName,
-                        Collections.singleton((LabVessel) new BarcodedTube(denatureSource.getLabel() + "ALT")),
-                        LabBatch.LabBatchType.FCT);
+        LabBatch fctBatch2 = new LabBatch(altFctTicketName, LabBatch.LabBatchType.FCT,
+                IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell,
+                new BarcodedTube(denatureSource.getLabel() + "ALT"), BigDecimal.TEN);
+
         fctBatch2.getLabBatchStartingVessels().iterator().next().setDilutionVessel(
                 dilutionTransferEntity.getTargetVesselTubes().iterator().next());
 
