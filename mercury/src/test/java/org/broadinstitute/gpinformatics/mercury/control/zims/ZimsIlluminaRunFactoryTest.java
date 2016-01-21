@@ -30,9 +30,11 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.DesignedReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
@@ -221,6 +223,8 @@ public class ZimsIlluminaRunFactoryTest {
             metadataSourceForPipeline = MercurySample.MERCURY_METADATA_SOURCE;
         }
 
+        DesignedReagent designedReagent = new DesignedReagent(new ReagentDesign("Buick_v6_0_2014",
+                ReagentDesign.ReagentType.BAIT));
         for (int sampleIdx = 0; sampleIdx < testSampleIds.size(); ++sampleIdx) {
             String sourceTubeBarcode = "testTube" + sampleIdx;
             BarcodedTube testTube = new BarcodedTube(sourceTubeBarcode);
@@ -245,6 +249,7 @@ public class ZimsIlluminaRunFactoryTest {
 
                     SampleInstanceV2 instance = new SampleInstanceV2(testTube);
                     instance.addReagent(reagents.get(sampleIdx));
+                    instance.addReagent(designedReagent);
 
                     if (testLabBatchType == LabBatch.LabBatchType.WORKFLOW) {
                         JiraTicket lcSetTicket = new JiraTicket(mockJiraService, batchName);
@@ -261,6 +266,7 @@ public class ZimsIlluminaRunFactoryTest {
             else {
                 SampleInstanceV2 instance = new SampleInstanceV2(testTube);
                 instance.addReagent(reagents.get(sampleIdx));
+                instance.addReagent(designedReagent);
                 sampleInstanceDtoList.add(new ZimsIlluminaRunFactory.SampleInstanceDto(LANE_NUMBER, testTube, instance,
                         sampleId, getPdoKeyForSample(sampleId), null, null, mercurySample.getSampleKey(),
                         areCrspSamples,metadataSourceForPipeline));
@@ -653,27 +659,6 @@ public class ZimsIlluminaRunFactoryTest {
         List<LibraryBean> consolidatedBeans = zimsIlluminaRunFactory.makeLibraryBeans(dtoList2,
                 mapSampleIdToDto, mapKeyToProductOrder, Collections.EMPTY_MAP, crspPositiveControlsResearchProject);
         assertThat(consolidatedBeans.size(), equalTo(testSampleIds.size() - 1));
-    }
-
-    @Test
-    public void testControlPartNumber() {
-        Assert.assertEquals(zimsIlluminaRunFactory.getControlProductPartNumber(
-                Collections.singleton(ZimsIlluminaRunFactory.AGILENT_SOMATIC_PART_NUMBER)),
-                ZimsIlluminaRunFactory.AGILENT_GERMLINE_PART_NUMBER);
-
-        Assert.assertEquals(zimsIlluminaRunFactory.getControlProductPartNumber(
-                new HashSet<String>() {{
-                    add(ZimsIlluminaRunFactory.AGILENT_SOMATIC_PART_NUMBER);
-                    add(ZimsIlluminaRunFactory.AGILENT_GERMLINE_PART_NUMBER);
-                }}),
-                ZimsIlluminaRunFactory.AGILENT_GERMLINE_PART_NUMBER);
-
-        Assert.assertEquals(zimsIlluminaRunFactory.getControlProductPartNumber(
-                new HashSet<String>() {{
-                    add(ZimsIlluminaRunFactory.AGILENT_SOMATIC_PART_NUMBER);
-                    add(ZimsIlluminaRunFactory.ICE_GERMLINE_PART_NUMBER);
-                }}),
-                null);
     }
 
     /** Creates some reagents having molecular barcodes for test purposes. */
