@@ -2,8 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.control.zims;
 
 import edu.mit.broad.prodinfo.thrift.lims.IndexPosition;
 import edu.mit.broad.prodinfo.thrift.lims.TZDevExperimentData;
-import org.apache.commons.collections4.Factory;
-import org.apache.commons.collections4.map.LazyMap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -25,8 +23,6 @@ import org.broadinstitute.gpinformatics.mercury.boundary.zims.CrspPipelineUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.DesignedReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
@@ -41,11 +37,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWellTransient;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselAndPosition;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
@@ -65,12 +57,10 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
-import java.util.TreeMap;
 import java.util.TreeSet;
 
 /**
@@ -87,35 +77,6 @@ public class ZimsIlluminaRunFactory {
     private ProductOrderDao productOrderDao;
     private ResearchProjectDao researchProjectDao;
     private final CrspPipelineUtils crspPipelineUtils;
-
-    // Positive controls must have a product part number in order to go through variant calling.  Controls aren't
-    // entered into product orders, so the part number must be determined by looking at the other samples in the lane.
-    // If all samples are in one of the following sets, use the first entry in the set (germline) for the positive
-    // control.
-    static final String AGILENT_GERMLINE_PART_NUMBER = "P-CLA-0001";
-    static final String AGILENT_SOMATIC_PART_NUMBER = "P-CLA-0002";
-    private static final Set<String> AGILENT_PART_NUMBERS = new LinkedHashSet<String>() {{
-        add(AGILENT_GERMLINE_PART_NUMBER);
-        add(AGILENT_SOMATIC_PART_NUMBER);
-    }};
-
-    static final String ICE_GERMLINE_PART_NUMBER = "P-CLA-0003";
-    static final String ICE_SOMATIC_PART_NUMBER = "P-CLA-0004";
-    private static final Set<String> ICE_PART_NUMBERS = new LinkedHashSet<String>() {{
-        add(ICE_GERMLINE_PART_NUMBER);
-        add(ICE_SOMATIC_PART_NUMBER);
-    }};
-
-    static final String BUICK_PART_NUMBER = "P-EX-0011";
-    private static final Set<String> BUICK_PART_NUMBERS = new LinkedHashSet<String>() {{
-        add(BUICK_PART_NUMBER);
-    }};
-
-    private static final List<Set<String>> PART_NUMBER_SETS = new ArrayList<Set<String>>() {{
-        add(AGILENT_PART_NUMBERS);
-        add(ICE_PART_NUMBERS);
-        add(BUICK_PART_NUMBERS);
-    }};
 
     private static final Log log = LogFactory.getLog(ZimsIlluminaRunFactory.class);
 
@@ -293,7 +254,6 @@ public class ZimsIlluminaRunFactory {
         Set<String> analysisTypes = new HashSet<>();
         Set<String> referenceSequenceKeys = new HashSet<>();
         Set<String> aggregationDataTypes = new HashSet<>();
-        Set<String> productPartNumbers = new HashSet<>();
         for (SampleInstanceDto sampleInstanceDto : sampleInstanceDtos) {
             ProductOrder productOrder = (sampleInstanceDto.getProductOrderKey() != null) ?
                     mapKeyToProductOrder.get(sampleInstanceDto.getProductOrderKey()) : null;
@@ -305,7 +265,6 @@ public class ZimsIlluminaRunFactory {
                 if (!StringUtils.isBlank(project.getReferenceSequenceKey())) {
                     referenceSequenceKeys.add(project.getReferenceSequenceKey());
                 }
-                productPartNumbers.add(product.getPartNumber());
             }
         }
 
@@ -376,7 +335,7 @@ public class ZimsIlluminaRunFactory {
                     indexingSchemeDto, mapNameToControl, sampleInstanceDto.getPdoSampleName(),
                     sampleInstanceDto.isCrspLane(), crspPositiveControlProject,
                     sampleInstanceDto.getMetadataSourceForPipelineAPI(), analysisTypes, referenceSequenceKeys,
-                    aggregationDataTypes, productPartNumbers));
+                    aggregationDataTypes));
         }
 
         // Make order predictable.  Include library name because for ICE there are 8 ancestor catch tubes, all with
@@ -407,7 +366,7 @@ public class ZimsIlluminaRunFactory {
             Map<String, Control> mapNameToControl, String pdoSampleName,
             boolean isCrspLane, ResearchProject crspPositiveControlsProject,
             String metadataSourceForPipelineAPI, Set<String> analysisTypes, Set<String> referenceSequenceKeys,
-            Set<String> aggregationDataTypes, Set<String> productPartNumbers) {
+            Set<String> aggregationDataTypes) {
 
         Format dateFormat = FastDateFormat.getInstance(ZimsIlluminaRun.DATE_FORMAT);
 
@@ -429,7 +388,6 @@ public class ZimsIlluminaRunFactory {
         Collection<String> gssrBarcodes = null;
         String gssrSampleType = null;
         Boolean doAggregation = Boolean.TRUE;
-        String controlProductPartNumber = null;
 
         String analysisType = null;
         String referenceSequence = null;
@@ -461,7 +419,6 @@ public class ZimsIlluminaRunFactory {
                         referenceSequence = referenceSequenceValues[0];
                         referenceSequenceVersion = referenceSequenceValues[1];
                         aggregationDataType = aggregationDataTypes.iterator().next();
-                        controlProductPartNumber = getControlProductPartNumber(productPartNumbers);
                     }
                     break;
                 case NEGATIVE:
@@ -523,26 +480,9 @@ public class ZimsIlluminaRunFactory {
                 metadataSourceForPipelineAPI, aggregationDataType);
         if (isCrspLane) {
             crspPipelineUtils.setFieldsForCrsp(libraryBean, sampleData, crspPositiveControlsProject, lcSet,
-                    controlProductPartNumber);
+                    bait);
         }
         return libraryBean;        
-    }
-
-    /**
-     * Determines the product part number for a control, depending on the part numbers of other samples in the same
-     * lane.
-     */
-    String getControlProductPartNumber(Set<String> productPartNumbers) {
-        String controlProductPartNumber = null;
-        for (Set<String> partNumberSet : PART_NUMBER_SETS) {
-            Set<String> intersection = new HashSet<>(productPartNumbers);
-            intersection.retainAll(partNumberSet);
-            if (intersection.size() == productPartNumbers.size()) {
-                controlProductPartNumber = partNumberSet.iterator().next();
-                break;
-            }
-        }
-        return controlProductPartNumber;
     }
 
     /**
