@@ -617,6 +617,9 @@ public class LabBatch {
             labBatchType != LabBatchType.MISEQ) {
             throw new RuntimeException("Vessel by Position is only supported for Flowcell Tickets");
         }
+        if (startingBatchLabVessels.size() == 1) {
+            return startingBatchLabVessels.iterator().next().getLabVessel();
+        }
         for (LabBatchStartingVessel labBatchStartingVessel : startingBatchLabVessels) {
             if (labBatchStartingVessel.getVesselPosition() == position) {
                 return labBatchStartingVessel.getLabVessel();
