@@ -524,47 +524,36 @@ public class LabBatchFixUpTest extends Arquillian {
 
     @Test(enabled = false)
     public void fixupQual680(){
-        createFctsWithoutLcset(Collections.singletonList("AB56073486"), IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell,
-                8, new BigDecimal("15"), "QUAL-680 create FCT tickets without LCSET");
+        createFctsWithoutLcset("AB56073486", IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell, new BigDecimal("15"),
+                IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell.getVesselGeometry().getVesselPositions(),
+                "QUAL-680 create FCT tickets without LCSET");
     }
 
     /**
      * If a denature tube contains only positive controls, it doesn't have an LCSET (until control inference is
      * removed), so the Create FCT Ticket page can't be used.  This method is adapted from that ActionBean.
      */
-    private void createFctsWithoutLcset(List<String> selectedVesselLabels,
-            IlluminaFlowcell.FlowcellType selectedType, int numberOfLanes, BigDecimal loadingConc, String reason) {
+    private void createFctsWithoutLcset(String startingTubeLabel, IlluminaFlowcell.FlowcellType selectedType,
+                                        BigDecimal loadingConc, VesselPosition[] lanes, String reason) {
         try {
             userBean.loginOSUser();
             userTransaction.begin();
-            List<LabBatch> createdBatches = new ArrayList<>();
-            for (String denatureTubeBarcode : selectedVesselLabels) {
-                LabBatch.LabBatchType batchType = selectedType.getBatchType();
-                CreateFields.IssueType issueType = selectedType.getIssueType();
 
-                // Puts all vessels on all flowcell lanes.
-                List<VesselPosition> lanes = new ArrayList<>();
-                for (VesselPosition vesselPosition : selectedType.getVesselGeometry().getVesselPositions()) {
-                    lanes.add(vesselPosition);
-                }
-                List<String> uniqueLabels = new ArrayList<String>(new HashSet<String>(selectedVesselLabels));
-                List<LabBatch.VesselToLanesInfo> vesselToLanesInfos = new ArrayList<>();
-                for (LabVessel vessel : labVesselDao.findByListIdentifiers(uniqueLabels)) {
-                    vesselToLanesInfos.add(new LabBatch.VesselToLanesInfo(lanes, loadingConc, vessel));
-                }
+            LabBatch.LabBatchType batchType = selectedType.getBatchType();
+            CreateFields.IssueType issueType = selectedType.getIssueType();
 
-                LabBatch batch = new LabBatch(denatureTubeBarcode + " FCT ticket", vesselToLanesInfos, batchType,
-                        selectedType);
-                batch.setBatchDescription(batch.getBatchName());
-                labBatchEjb.createLabBatch(batch, userBean.getLoginUserName(), issueType);
-                createdBatches.add(batch);
-            }
+            LabVessel startingTube = labVesselDao.findByIdentifier(startingTubeLabel);
+            LabBatch batch = new LabBatch(startingTubeLabel + " FCT ticket", Collections.singletonList(
+                    new LabBatch.VesselToLanesInfo(Arrays.asList(lanes), loadingConc, startingTube)),
+                    batchType, selectedType);
+            batch.setBatchDescription(batch.getBatchName());
+            labBatchEjb.createLabBatch(batch, userBean.getLoginUserName(), issueType);
+
             labBatchDao.persist(new FixupCommentary(reason));
             labBatchDao.flush();
             userTransaction.commit();
-            for (LabBatch createdBatch : createdBatches) {
-                System.out.println("Created " + createdBatch.getBatchName());
-            }
+            System.out.println("Created " + batch.getBatchName());
+
         } catch (NotSupportedException | SystemException | HeuristicMixedException | HeuristicRollbackException |
                 RollbackException e) {
             throw new RuntimeException(e);
