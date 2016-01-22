@@ -187,6 +187,9 @@ public abstract class RackScanActionBean extends CoreActionBean {
 
     public void setLabToFilterBy(RackScanner.RackScannerLab labToFilterBy) {
         this.labToFilterBy = labToFilterBy;
+        if( this.labToFilterBy == RackScanner.RackScannerLab.RACK_SCAN_SIMULATOR_LAB ){
+            setRackScanner(RackScanner.RACK_SCAN_SIMULATOR);
+        }
     }
 
     public LinkedHashMap<String, String> getRackScan() {

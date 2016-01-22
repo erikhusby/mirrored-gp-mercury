@@ -7,7 +7,7 @@
 <%--@elvariable id="actionBean" type="org.broadinstitute.gpinformatics.mercury.presentation.search.ConfigurableSearchActionBean"--%>
 <c:forEach items="${searchValues}" var="searchValue" varStatus="varSatatus">
     <c:set var="uniqueId" value="${searchValue.uniqueId}"/>
-    <div class="searchterm" id="${uniqueId}">
+    <div class="searchterm" id="${uniqueId}"<c:if test="${searchValue.searchTerm.isRackScanSupported()}"> rackScanSupported="true"</c:if>>
         <%-- Link to remove term--%>
         <c:choose>
             <c:when test="${not actionBean.readOnly and not searchValue.searchTerm.required}">
@@ -134,6 +134,7 @@
                         <!-- IN = list of text values -->
                         <textarea rows="4" cols="10" class="termvalue"><c:forEach items="${searchValue.values}"
                                                                                   var="value">${value}<%= '\n' %></c:forEach></textarea>
+                        &nbsp;<c:if test="${searchValue.searchTerm.isRackScanSupported()}"><input id="rackScanBtn" name="rackScanBtn" value="Rack Scan" class="btn btn-primary" onclick="startRackScan(this);" type="button"></c:if>
                     </c:when>
                     <c:when test="${not empty searchValue.operator && searchValue.operator.name == 'BETWEEN'}">
                         <!-- BETWEEN = Pair of text boxes. Add invented attributes, between1 and between2,

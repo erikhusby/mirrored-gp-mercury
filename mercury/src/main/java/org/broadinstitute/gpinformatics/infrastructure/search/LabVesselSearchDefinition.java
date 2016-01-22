@@ -190,6 +190,7 @@ public class LabVesselSearchDefinition {
         searchTerm = new SearchTerm();
         searchTerm.setName("Barcode");
         searchTerm.setIsDefaultResultColumn(Boolean.TRUE);
+        searchTerm.setRackScanSupported(Boolean.TRUE);
         searchTerm.setDbSortPath("label");
         criteriaPaths = new ArrayList<>();
         criteriaPath = new SearchTerm.CriteriaPath();

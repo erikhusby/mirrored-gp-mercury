@@ -9,13 +9,10 @@
  */
 package org.broadinstitute.gpinformatics.mercury.presentation.search;
 
-import net.sourceforge.stripes.action.DefaultHandler;
-import net.sourceforge.stripes.action.ForwardResolution;
-import net.sourceforge.stripes.action.HandlesEvent;
-import net.sourceforge.stripes.action.Resolution;
-import net.sourceforge.stripes.action.UrlBinding;
+import net.sourceforge.stripes.action.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.bsp.client.rackscan.ScannerException;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceEjb;
@@ -35,10 +32,15 @@ import org.broadinstitute.gpinformatics.infrastructure.search.PaginationUtil;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstanceEjb;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.*;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.BSPLookupException;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.vessel.RackScanActionBean;
 
 import javax.inject.Inject;
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletResponse;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -53,7 +55,7 @@ import java.util.Random;
  */
 @SuppressWarnings("UnusedDeclaration")
 @UrlBinding("/search/ConfigurableSearch.action")
-public class ConfigurableSearchActionBean extends CoreActionBean {
+public class ConfigurableSearchActionBean extends RackScanActionBean {
 
     private static final Log log = LogFactory.getLog(ConfigurableSearchActionBean.class);
 
@@ -66,6 +68,55 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
      * Prefix for pagination session key
      */
     public static final String PAGINATION_PREFIX = "pagination_";
+
+    public static final String AJAX_SELECT_LAB_EVENT = "ajaxLabSelect";
+    public static final String AJAX_SCAN_EVENT = "ajaxScan";
+    public static final String RACK_SCAN_PAGE_TITLE = "Rack Scan Barcodes";
+    @HandlesEvent(AJAX_SELECT_LAB_EVENT)
+    public Resolution selectLab() {
+        return new ForwardResolution("/vessel/ajax_div_rack_scanner.jsp");
+    }
+
+    /**
+     * Utilizes a rack scanner to preform the receipt and find out which samples are being received.
+     * @throws ScannerException
+     */
+    @Override
+    @HandlesEvent(AJAX_SCAN_EVENT)
+    public Resolution scan() throws ScannerException {
+        final StringBuilder results = new StringBuilder();
+        final StringBuilder errors = new StringBuilder();
+        try {
+            // Run the rack scanner, ignore the returned Resolution.
+            super.scan();
+            if( rackScan == null || rackScan.isEmpty() ){
+                errors.append("No results from rack scan");
+            } else {
+                for (Map.Entry<String, String> barcodeScan : rackScan.entrySet()) {
+                    String barcode = barcodeScan.getValue();
+                    if (barcode != null && !barcode.isEmpty()) {
+                        results.append(barcode);
+                        results.append("\n");
+                    }
+                }
+            }
+        } catch (Exception ex){
+            errors.append(ex.getMessage());
+        }
+
+        return new StreamingResolution("text/plain") {
+            @Override
+            public void stream(HttpServletResponse response) throws Exception {
+                if(errors.length() > 0 ) {
+                    response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, errors.toString());
+                } else {
+                    ServletOutputStream out = response.getOutputStream();
+                    out.write(results.toString().getBytes());
+                    out.close();
+                }
+            }
+        };
+    }
 
     /**
      * The definition from which the user will create the search
@@ -710,6 +761,24 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
 
     public ColumnEntity[] getAvailableEntityTypes(){
         return ColumnEntity.values();
+    }
+
+    @Override
+    public String getRackScanPageUrl() {
+        return "/search/ConfigurableSearch.action";
+    }
+
+    @Override
+    public String getPageTitle() {
+        return RACK_SCAN_PAGE_TITLE;
+    }
+
+    /**
+     * Flags as an ajax call to simply append the results of a scan to the output element
+     * @return true use-case is only ajax
+     */
+    public boolean isAppendScanResults(){
+        return true;
     }
 
 }

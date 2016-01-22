@@ -1,4 +1,5 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java"
+         import="org.broadinstitute.gpinformatics.mercury.presentation.search.ConfigurableSearchActionBean"%>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <%-- This page allows the user to construct a user-defined search.  It is also used to display
@@ -45,7 +46,6 @@
        .help-option { background-image: url("${ctxpath}/images/help.png");
            background-repeat: no-repeat;
            background-position: right; }
-
     </style>
 </stripes:layout-component>
 <stripes:layout-component name="content">
@@ -310,6 +310,7 @@ function changeOperator(operatorSelect) {
     var textInput2;
     var andText;
     var textarea;
+    var rackScanButton;
     // Find the value element (could be text, textarea or select)
     while (valueElement != null) {
         if (valueElement.nodeType == 1) {
@@ -371,6 +372,19 @@ function changeOperator(operatorSelect) {
                     andText.parentNode.removeChild(andText);
                     textInput2 = valueElement.nextSibling;
                     textInput2.parentNode.removeChild(textInput2);
+                }
+                if( valueElement.parentNode.getAttribute("rackScanSupported")){
+                    rackScanButton = valueElement.nextSibling;
+                    if( rackScanButton.nodeName != "INPUT" || rackScanButton.getAttribute("name") != "rackScanBtn" ) {
+                        rackScanButton = document.createElement("INPUT");
+                        rackScanButton.setAttribute("id", "rackScanBtn");
+                        rackScanButton.setAttribute("name", "rackScanBtn");
+                        rackScanButton.setAttribute("value", "Rack Scan");
+                        rackScanButton.setAttribute("class", "btn btn-primary");
+                        rackScanButton.setAttribute("onclick", "startRackScan(this);");
+                        rackScanButton.setAttribute("type", "button");
+                        valueElement.parentNode.appendChild(rackScanButton);
+                    }
                 }
                 valueElement.parentNode.replaceChild(textarea, valueElement);
             } else if (operator == "BETWEEN") {
@@ -451,6 +465,31 @@ function removeTerm(link) {
 
     searchTerm.parentNode.removeChild(searchTerm);
 
+}
+
+function startRackScan(sourceButton){
+    //$j("#rack_scan_overlay").removeData();
+    $j.ajax({
+        url: '${ctxpath}/search/ConfigurableSearch.action?ajaxLabSelect=',
+        type: 'get',
+        dataType: 'html',
+        success: function (returnData) {
+            $j("#rack_scan_overlay").html(returnData);
+            $j("#rack_scan_overlay").css("display", "block");
+        }
+    });
+}
+
+function cancelRackScan(){
+    $j("#rack_scan_overlay").html("");
+    $j("#rack_scan_overlay").css("display", "none");
+    $j("#rack_scan_overlay").removeData();
+}
+
+function rackScanComplete() {
+    $j("#rack_scan_overlay").html("");
+    $j("#rack_scan_overlay").css("display", "none");
+    alert($("#rack_scan_overlay").data("results"));
 }
 
 /**
@@ -676,5 +715,9 @@ function chooseColumnSet() {
         selectList.outerWidth( selectList.outerWidth() + 40 );
     });
 </script>
+
+        <!-- Adds the dropdowns for lab and scanner, and possibly a file chooser. -->
+    <div id="rack_scan_overlay" style="display: none"></div>
+
 </stripes:layout-component>
 </stripes:layout-render>
