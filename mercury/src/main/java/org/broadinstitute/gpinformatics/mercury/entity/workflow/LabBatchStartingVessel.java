@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
@@ -8,6 +9,8 @@ import javax.annotation.Nullable;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -40,6 +43,9 @@ public class LabBatchStartingVessel {
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private LabVessel dilutionVessel;
 
+    @Enumerated(EnumType.STRING)
+    private VesselPosition vesselPosition;
+
     public LabBatchStartingVessel() {
     }
 
@@ -49,9 +55,15 @@ public class LabBatchStartingVessel {
 
     public LabBatchStartingVessel(@Nonnull LabVessel labVessel, @Nonnull LabBatch labBatch,
                                   @Nullable BigDecimal concentration) {
+        this(labVessel, labBatch, concentration, null);
+    }
+
+    public LabBatchStartingVessel(@Nonnull LabVessel labVessel, @Nonnull LabBatch labBatch,
+                                  @Nullable BigDecimal concentration, VesselPosition vesselPosition) {
         this.labVessel = labVessel;
         this.labBatch = labBatch;
         this.concentration = concentration;
+        this.vesselPosition = vesselPosition;
     }
 
     public Long getBatchStartingVesselId() {
@@ -93,5 +105,13 @@ public class LabBatchStartingVessel {
     public void setDilutionVessel(LabVessel dilutionVessel) {
         this.dilutionVessel = dilutionVessel;
         this.dilutionVessel.addDilutionReferences(this);
+    }
+
+    public VesselPosition getVesselPosition() {
+        return vesselPosition;
+    }
+
+    public void setVesselPosition(VesselPosition vesselPosition) {
+        this.vesselPosition = vesselPosition;
     }
 }

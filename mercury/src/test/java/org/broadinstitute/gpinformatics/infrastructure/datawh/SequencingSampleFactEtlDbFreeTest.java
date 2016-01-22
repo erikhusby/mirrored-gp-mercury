@@ -49,6 +49,7 @@ import org.testng.annotations.Test;
 
 import java.io.File;
 import java.lang.reflect.Field;
+import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -142,7 +143,8 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         laneVesselsAndPositions.put(VesselPosition.LANE1, denatureSource);
         laneVesselsAndPositions.put(VesselPosition.LANE2, denatureSource);
 
-        fctBatch = new LabBatch("FCT1", Collections.singleton(denatureSource), LabBatch.LabBatchType.FCT);
+        fctBatch = new LabBatch("FCT1", LabBatch.LabBatchType.FCT, IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell,
+                denatureSource, BigDecimal.TEN);
         EasyMock.reset(mocks);
     }
 
@@ -185,6 +187,7 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         EasyMock.expect(denatureSource.getSampleInstancesV2()).andReturn(sampleInstances).anyTimes();
 
         EasyMock.expect(pdo.getProductOrderId()).andReturn(pdoId).anyTimes();
+        EasyMock.expect(pdo.getCreatedDate()).andReturn(runDate).anyTimes();
 
         EasyMock.expect(sample.getSampleKey()).andReturn(sampleName).anyTimes();
         EasyMock.expect(pdo.getResearchProject()).andReturn(researchProject).anyTimes();
@@ -196,6 +199,8 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
             EasyMock.expect(si.getAllProductOrderSamples()).andReturn(pdoSampleList).anyTimes();
             EasyMock.expect(si.getSingleBatch()).andReturn(labBatch).anyTimes();
             EasyMock.expect(si.getMolecularIndexingScheme()).andReturn(indexingScheme).anyTimes();
+            EasyMock.expect(si.getSingleBatchVessel(LabBatch.LabBatchType.FCT)).andReturn(
+                    fctBatch.getLabBatchStartingVessels().iterator().next()).anyTimes();
         }
 
         EasyMock.expect(pdoSample1.getProductOrder()).andReturn(pdo).anyTimes();
@@ -279,6 +284,8 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
             EasyMock.expect(si.getAllProductOrderSamples()).andReturn(pdoSampleList).anyTimes();
             EasyMock.expect(si.getSingleBatch()).andReturn(labBatch).anyTimes();
             EasyMock.expect(si.getMolecularIndexingScheme()).andReturn(null).anyTimes();
+            EasyMock.expect(si.getSingleBatchVessel(LabBatch.LabBatchType.FCT)).andReturn(
+                    fctBatch.getLabBatchStartingVessels().iterator().next()).anyTimes();
         }
 
         EasyMock.replay(mocks);
@@ -333,29 +340,30 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, "1");
 
         PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube,
-                                                                                  String.valueOf(runDate.getTime()),
-                                                                                  "1", true);
+                String.valueOf(runDate.getTime()),
+                "1", true);
         ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder =
                 runExomeExpressShearingProcess(picoPlatingEntityBuilder.getNormBarcodeToTubeMap(),
-                                               picoPlatingEntityBuilder.getNormTubeFormation(),
-                                               picoPlatingEntityBuilder.getNormalizationBarcode(), "1");
+                        picoPlatingEntityBuilder.getNormTubeFormation(),
+                        picoPlatingEntityBuilder.getNormalizationBarcode(), "1");
         LibraryConstructionEntityBuilder libraryConstructionEntityBuilder =
                 runLibraryConstructionProcess(exomeExpressShearingEntityBuilder.getShearingCleanupPlate(),
-                                              exomeExpressShearingEntityBuilder.getShearCleanPlateBarcode(),
-                                              exomeExpressShearingEntityBuilder.getShearingPlate(), "1");
+                        exomeExpressShearingEntityBuilder.getShearCleanPlateBarcode(),
+                        exomeExpressShearingEntityBuilder.getShearingPlate(), "1");
         HybridSelectionEntityBuilder hybridSelectionEntityBuilder =
                 runHybridSelectionProcess(libraryConstructionEntityBuilder.getPondRegRack(),
-                                          libraryConstructionEntityBuilder.getPondRegRackBarcode(),
-                                          libraryConstructionEntityBuilder.getPondRegTubeBarcodes(), "1");
+                        libraryConstructionEntityBuilder.getPondRegRackBarcode(),
+                        libraryConstructionEntityBuilder.getPondRegTubeBarcodes(), "1");
         QtpEntityBuilder qtpEntityBuilder = runQtpProcess(hybridSelectionEntityBuilder.getNormCatchRack(),
-                                                          hybridSelectionEntityBuilder.getNormCatchBarcodes(),
-                                                          hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(),
-                                                          "1");
+                hybridSelectionEntityBuilder.getNormCatchBarcodes(),
+                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(),
+                "1");
 
-        LabVessel denatureSource =
-                qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
+        LabVessel denatureSource = qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
+        denatureSource.clearCaches();
 
-        LabBatch fct = new LabBatch(FCT_TICKET, Collections.singleton(denatureSource), LabBatch.LabBatchType.FCT);
+        new LabBatch(FCT_TICKET, LabBatch.LabBatchType.FCT, IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell,
+                denatureSource, new BigDecimal("7.9"));
 
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
                 runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1" + "ADXX", FCT_TICKET,
