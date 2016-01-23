@@ -48,6 +48,7 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -100,7 +101,7 @@ public class LabBatchEjb {
      *
      * @return The lab batch that was created.
      *
-     * @see #createLabBatch(LabBatch.LabBatchType, String, String, Date, String, String, Set, Set)
+     * @see #createLabBatch(LabBatch, String, CreateFields.IssueType, MessageReporter)
      */
     public LabBatch createLabBatch(@Nonnull LabBatch batchObject, String reporter,
                                    @Nonnull CreateFields.IssueType issueType, MessageReporter messageReporter) {
@@ -120,7 +121,7 @@ public class LabBatchEjb {
      *
      * @return The lab batch that was created.
      *
-     * @see #createLabBatch(LabBatch.LabBatchType, String, String, Date, String, String, Set, Set)
+     * @see #createLabBatch(LabBatch, String, CreateFields.IssueType, MessageReporter)
      */
     public LabBatch createLabBatch(@Nonnull LabBatch batchObject, String reporter,
                                    @Nonnull CreateFields.IssueType issueType) {
@@ -193,7 +194,8 @@ public class LabBatchEjb {
                                                       @Nonnull Date dueDate, @Nonnull String important,
                                                       @Nonnull String username, String bucketName) throws ValidationException {
         return createLabBatchAndRemoveFromBucket(labBatchType, workflowName, bucketEntryIds, reworkBucketEntryIds,
-                batchName, description, dueDate, important, username, bucketName, MessageReporter.UNUSED);
+                batchName, description, dueDate, important, username, bucketName, MessageReporter.UNUSED,
+                Collections.<String>emptyList());
     }
     /**
      * Creates a new lab batch and archives the bucket entries used to create the batch.
@@ -217,7 +219,8 @@ public class LabBatchEjb {
                                                       @Nonnull String batchName, @Nonnull String description,
                                                       @Nonnull Date dueDate, @Nonnull String important,
                                                       @Nonnull String username, String bucketName,
-                                                      @Nonnull MessageReporter reporter) throws ValidationException {
+                                                      @Nonnull MessageReporter reporter, List<String> watchers)
+            throws ValidationException {
         List<BucketEntry> bucketEntries = bucketEntryDao.findByIds(bucketEntryIds);
         List<BucketEntry> reworkBucketEntries = bucketEntryDao.findByIds(reworkBucketEntryIds);
         Set<String> pdoKeys = new HashSet<>();
@@ -275,7 +278,7 @@ public class LabBatchEjb {
         CreateFields.IssueType issueType = CreateFields.IssueType.valueOf(bucketDef.getBatchJiraIssueType());
 
         batchToJira(username, null, batch, issueType,
-                CreateFields.ProjectType.fromKeyPrefix(bucketDef.getBatchJiraProjectType()), reporter);
+                CreateFields.ProjectType.fromKeyPrefix(bucketDef.getBatchJiraProjectType()), reporter, watchers);
 
         //link the JIRA tickets for the batch created to the pdo batches.
         for (String pdoKey : pdoKeys) {
@@ -316,6 +319,12 @@ public class LabBatchEjb {
         batchToJira(reporter, jiraTicket, newBatch, issueType, projectType, MessageReporter.UNUSED);
     }
 
+    private void batchToJira(String reporter, String jiraTicket, LabBatch newBatch, CreateFields.IssueType issueType,
+                             CreateFields.ProjectType projectType, MessageReporter messageReporter) {
+        batchToJira(reporter, jiraTicket, newBatch, issueType, projectType, messageReporter,
+                Collections.<String>emptyList());
+    }
+
     /**
      * This method extracts all necessary information from the given batch object and creates (if necessary) and
      * associates a JIRA ticket that will represent this batch.
@@ -328,7 +337,7 @@ public class LabBatchEjb {
      */
     public void batchToJira(String reporter, @Nullable String jiraTicket, LabBatch newBatch,
                             @Nonnull CreateFields.IssueType issueType, CreateFields.ProjectType projectType,
-                            @Nonnull MessageReporter messageReporter) {
+                            @Nonnull MessageReporter messageReporter, List<String> watchers) {
         try {
             if (issueType == null) {
                 throw new InformaticsServiceException("JIRA issue type must be specified");
@@ -358,7 +367,7 @@ public class LabBatchEjb {
                 JiraIssue jiraIssue = jiraService
                         .createIssue(fieldBuilder.getProjectType(), reporter, issueType, fieldBuilder.getSummary(),
                                 batchJiraTicketFields);
-
+                jiraIssue.addWatchers(watchers);
                 JiraTicket ticket = new JiraTicket(jiraService, jiraIssue.getKey());
 
                 newBatch.setJiraTicket(ticket);
@@ -412,25 +421,6 @@ public class LabBatchEjb {
     /**
      * This method links two batch JIRA tickets together in a parent to child relationship.
      *
-     * @param parentBatch The parent batch to link
-     * @param childBatch  The child batch to link
-     */
-    public void linkJiraBatches(LabBatch parentBatch, LabBatch childBatch) {
-        try {
-            if (childBatch.getJiraTicket() != null) {
-                jiraService.addLink(AddIssueLinkRequest.LinkType.Parentage, parentBatch.getJiraTicket().getTicketName(),
-                        childBatch.getJiraTicket().getTicketName());
-            }
-        } catch (Exception ioe) {
-            logger.error("Error attempting to link batch " + childBatch.getJiraTicket().getTicketName()
-                         + " to product order " + parentBatch,
-                         ioe);
-        }
-    }
-
-    /**
-     * This method links two batch JIRA tickets together in a parent to child relationship.
-     *
      * @param parentTicket The parent ticket key to link
      * @param childBatch   The child batch to link
      */
@@ -443,7 +433,7 @@ public class LabBatchEjb {
             }
         } catch (Exception ioe) {
             logger.error("Error attempting to link batch " + childBatch.getJiraTicket().getTicketName()
-                         + " to product order " + parentTicket,
+                         + " to parent batch " + parentTicket,
                          ioe);
         }
     }
@@ -460,9 +450,12 @@ public class LabBatchEjb {
      * @throws IOException This exception is thrown when the JIRA service can not be contacted.
      */
     public void addToLabBatch(String businessKey, List<Long> bucketEntryIds, List<Long> reworkEntries,
-                              String bucketName, MessageReporter messageReporter)
-            throws IOException {
+                              String bucketName, MessageReporter messageReporter, List<String> watchers)
+            throws IOException, ValidationException {
         LabBatch batch = labBatchDao.findByBusinessKey(businessKey);
+        if (batch == null) {
+            throw new ValidationException(String.format("Batch '%s' does not exist.", businessKey));
+        }
         Set<String> pdoKeys = new HashSet<>();
         StringBuilder commentString = new StringBuilder();
         Set<String> bucketDefNames = new HashSet<>();
@@ -530,6 +523,7 @@ public class LabBatchEjb {
 
         verifyAllowedValues(batchJiraTicketFields, messageReporter);
         JiraIssue jiraIssue = jiraService.getIssue(batch.getJiraTicket().getTicketName());
+        jiraIssue.addWatchers(watchers);
         jiraIssue.addComment(commentString.toString());
         jiraIssue.updateIssue(batchJiraTicketFields);
 

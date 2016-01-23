@@ -15,6 +15,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * AbstractBatchJiraFieldFactory sets the stage for factory methods to assist in the creation of JIRA tickets related
@@ -44,10 +45,6 @@ public abstract class AbstractBatchJiraFieldFactory {
         Set<String> sampleNames = new HashSet<>();
         for (LabVessel labVessel : labVessels) {
             Collection<String> sampleNamesForVessel = labVessel.getSampleNames();
-            if (sampleNamesForVessel.size() > 1) {
-                throw new RuntimeException("Cannot build samples list for " + labVessel.getLabel()
-                                           + " because we're expecting only a single sample within the vessel.");
-            }
             sampleNames.addAll(labVessel.getSampleNames());
         }
         return sampleNames;
@@ -64,8 +61,8 @@ public abstract class AbstractBatchJiraFieldFactory {
      */
     public static String buildSamplesListString(LabBatch labBatch, @Nullable Bucket bucket) {
         StringBuilder samplesText = new StringBuilder();
-        Set<String> newSamples = new HashSet<>();
-        Set<String> reworkSamples = new HashSet<>();
+        Set<String> newSamples = new TreeSet<>();
+        Set<String> reworkSamples = new TreeSet<>();
         newSamples.addAll(getUniqueSampleNames(labBatch.getNonReworkStartingLabVessels()));
         reworkSamples.addAll(getUniqueSampleNames(labBatch.getReworks()));
 

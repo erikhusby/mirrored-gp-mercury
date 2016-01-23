@@ -1,15 +1,18 @@
 package org.broadinstitute.gpinformatics.mercury.entity.labevent;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.GenericReagentDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
@@ -91,6 +94,9 @@ public class LabEventFixupTest extends Arquillian {
 
     @Inject
     private StaticPlateDao staticPlateDao;
+
+    @Inject
+    private IlluminaFlowcellDao illuminaFlowcellDao;
 
     @Inject
     private GenericReagentDao genericReagentDao;
@@ -479,7 +485,7 @@ public class LabEventFixupTest extends Arquillian {
         BarcodedTube dilutionTube = barcodedTubeDao.findByBarcode(dilutionTubeBarcode);
         Assert.assertNotNull(dilutionTube);
 
-        Collection<VesselContainer<?>> containers = dilutionTube.getContainers();
+        Collection<VesselContainer<?>> containers = dilutionTube.getVesselContainers();
         Assert.assertEquals(containers.size(), 1);
         VesselContainer<?> vesselContainer = containers.iterator().next();
         String vesselPositionName = null;
@@ -785,7 +791,7 @@ public class LabEventFixupTest extends Arquillian {
         VesselToVesselTransfer vesselToVesselTransfer = labEvent.getVesselToVesselTransfers().iterator().next();
         Assert.assertEquals(vesselToVesselTransfer.getTargetVessel().getLabel(), oldTargetBarcode);
         System.out.print("In " + labEvent.getLabEventId() + " changing " +
-                         vesselToVesselTransfer.getTargetVessel().getLabel() + " to ");
+                vesselToVesselTransfer.getTargetVessel().getLabel() + " to ");
         vesselToVesselTransfer.setTargetVessel(barcodedTubeDao.findByBarcode(newTargetBarcode));
         System.out.println(vesselToVesselTransfer.getTargetVessel().getLabel());
     }
@@ -1223,7 +1229,7 @@ public class LabEventFixupTest extends Arquillian {
         Assert.assertEquals(transfers.size(), 74);
 
         System.out.println("Removing " + transfers.size() + " cherry picks from tube formation " +
-                           source.getLabVesselId());
+                source.getLabVesselId());
 
         for (CherryPickTransfer transfer : transfers) {
             transfer.getAncillaryTargetVessel().getVesselToVesselTransfersThisAsTarget().remove(transfer);
@@ -1261,4 +1267,56 @@ public class LabEventFixupTest extends Arquillian {
         utx.commit();
     }
 
+    @Test(enabled = false)
+    public void fixupSupport1369() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+        // Finds vessel transfers having source section ALL384 when the source is a Eppendorf96 plate.
+        Query queryVesselTransfer = labEventDao.getEntityManager().createNativeQuery(
+                "select vessel_transfer_id from vessel_transfer vt, lab_vessel src " +
+                "where vt.source_vessel = src.lab_vessel_id " +
+                "and src.plate_type = 'Eppendorf96' and source_section = 'ALL384'");
+        queryVesselTransfer.unwrap(SQLQuery.class).addScalar("vessel_transfer_id", LongType.INSTANCE);
+        List<Long> vesselTransferIds = queryVesselTransfer.getResultList();
+        Assert.assertTrue(CollectionUtils.isNotEmpty(vesselTransferIds));
+
+        // Updates the source section to ALL96.
+        List<SectionTransfer> transfers = labEventDao.findListByList(SectionTransfer.class,
+                SectionTransfer_.vesselTransferId, vesselTransferIds);
+        Assert.assertEquals(transfers.size(), vesselTransferIds.size());
+        for (SectionTransfer transfer : transfers) {
+            Assert.assertEquals(transfer.getSourceSection(), SBSSection.ALL384);
+            transfer.setSourceSection(SBSSection.ALL96);
+        }
+        System.out.println("Changed ALL384 to ALL96 for vessel transfers " + StringUtils.join(vesselTransferIds, ", "));
+
+        labEventDao.persist(new FixupCommentary("SUPPORT-1369 fixup Pico Microfluor transfers from Eppendorf96"));
+        labEventDao.flush();
+        utx.commit();
+    }
+    /**
+     * ANXX flowcells are 2500s with 8 lanes, not 2 lanes.
+     */
+    @Test(enabled = false)
+    public void fixupGplim3932() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+        List<IlluminaFlowcell> flowcells = illuminaFlowcellDao.findLikeBarcode("%ANXX");
+        for (IlluminaFlowcell flowcell : flowcells) {
+            for (LabEvent labEvent : flowcell.getTransfersTo()) {
+                if (labEvent.getLabEventType() == LabEventType.FLOWCELL_TRANSFER) {
+                    for (SectionTransfer sectionTransfer : labEvent.getSectionTransfers()) {
+                        if (sectionTransfer.getTargetSection() == SBSSection.ALL2) {
+                            sectionTransfer.setTargetSection(SBSSection.FLOWCELL8);
+                            flowcell.setFlowcellType(IlluminaFlowcell.FlowcellType.HiSeqFlowcell);
+                            System.out.println("Changing section in transfer to " + flowcell.getLabel());
+                        }
+                    }
+                }
+            }
+        }
+        illuminaFlowcellDao.persist(new FixupCommentary("GPLIM-3932 change 2500 ANXX flowcells to 8 lanes"));
+        illuminaFlowcellDao.flush();
+        utx.commit();
+    }
 }

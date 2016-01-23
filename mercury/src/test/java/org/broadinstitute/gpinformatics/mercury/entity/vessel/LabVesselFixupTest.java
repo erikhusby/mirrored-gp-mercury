@@ -125,8 +125,8 @@ public class LabVesselFixupTest extends Arquillian {
 
         for (int i = 0; i < tubeList.size(); i++) {
             LabVessel tube = labVesselDao.findByIdentifier(tubeList.get(i));
-            Assert.assertEquals(tube.getContainers().size(), 1, "Wrong number of containers");
-            TubeFormation tubeFormation = (TubeFormation) (tube.getContainers().iterator().next().getEmbedder());
+            Assert.assertEquals(tube.getVesselContainers().size(), 1, "Wrong number of containers");
+            TubeFormation tubeFormation = (TubeFormation) (tube.getVesselContainers().iterator().next().getEmbedder());
             Set<RackOfTubes> racksOfTubes = tubeFormation.getRacksOfTubes();
             Assert.assertEquals(racksOfTubes.size(), 1, "Wrong number of racks");
             if (racksOfTubes.iterator().next().getLabel().equals("0")) {
@@ -394,7 +394,7 @@ public class LabVesselFixupTest extends Arquillian {
         // so it can be altered
         BarcodedTube barcodedTube = barcodedTubeDao.findByBarcode("0159873624");
         boolean found = false;
-        for (VesselContainer<?> vesselContainer : barcodedTube.getContainers()) {
+        for (VesselContainer<?> vesselContainer : barcodedTube.getVesselContainers()) {
             for (LabEvent labEvent : vesselContainer.getTransfersFrom()) {
                 if (labEvent.getLabEventType() == LabEventType.SHEARING_TRANSFER) {
                     found = true;
@@ -458,7 +458,7 @@ public class LabVesselFixupTest extends Arquillian {
     public void fixupGplim2367Part2() {
         BarcodedTube barcodedTube = barcodedTubeDao.findByBarcode("0156349661");
         boolean found = false;
-        for (VesselContainer<?> vesselContainer : barcodedTube.getContainers()) {
+        for (VesselContainer<?> vesselContainer : barcodedTube.getVesselContainers()) {
             for (LabEvent labEvent : vesselContainer.getTransfersTo()) {
                 if (labEvent.getLabEventType() == LabEventType.SAMPLES_DAUGHTER_PLATE_CREATION) {
                     found = true;
@@ -554,7 +554,7 @@ public class LabVesselFixupTest extends Arquillian {
     }
 
     private VesselContainer<?> getContainerForTube(BarcodedTube barcodedTube, Long tubeFormationId) {
-        for (VesselContainer<?> container : barcodedTube.getContainers()) {
+        for (VesselContainer<?> container : barcodedTube.getVesselContainers()) {
             if (container.getEmbedder().getLabVesselId().equals(tubeFormationId)) {
                 return container;
             }
@@ -1151,5 +1151,76 @@ public class LabVesselFixupTest extends Arquillian {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    /** Delete fingerprinting controls that were uploaded without leading zero. */
+    @Test(enabled = false)
+    public void fixupGplim3953() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        Map<String, BarcodedTube> mapBarcodeToTube = barcodedTubeDao.findByBarcodes(Arrays.asList(
+                "183491135",
+                "183491112",
+                "183491111",
+                "183491088",
+                "183491087",
+                "183491064",
+                "183491063",
+                "183491040",
+                "183491134",
+                "183491113",
+                "183491110",
+                "183491089",
+                "183491086",
+                "183491065",
+                "183491062",
+                "183491041",
+                "183491133",
+                "183491114",
+                "183491109",
+                "183491090",
+                "183491085",
+                "183491066",
+                "183491061",
+                "183491042",
+                "183491132",
+                "183491115",
+                "183491108",
+                "183491091",
+                "183491084",
+                "183491067",
+                "183491060",
+                "183491043",
+                "183491131",
+                "183491116",
+                "183491107",
+                "183491092",
+                "183491083",
+                "183491068",
+                "183491059",
+                "183491044",
+                "183491130",
+                "183491117",
+                "183491106",
+                "183491093",
+                "183491082",
+                "183491069",
+                "183491058",
+                "183491045"));
+
+        for (Map.Entry<String, BarcodedTube> barcodeTubeEntry : mapBarcodeToTube.entrySet()) {
+            BarcodedTube barcodedTube = barcodeTubeEntry.getValue();
+            if (barcodedTube == null) {
+                throw new RuntimeException("Failed to find " + barcodeTubeEntry.getKey());
+            }
+            barcodedTube.getReagentContents().clear();
+            System.out.println("Deleting " + barcodedTube.getLabel());
+            labVesselDao.remove(barcodedTube);
+        }
+
+        labVesselDao.persist(new FixupCommentary("GPLIM-3953 delete fingerprinting controls with no leading zero"));
+        labVesselDao.flush();
+        utx.commit();
     }
 }

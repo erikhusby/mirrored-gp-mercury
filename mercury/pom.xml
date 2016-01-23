@@ -11,7 +11,7 @@
     <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
     <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
     <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
-    <version>1.67-SNAPSHOT</version>
+    <version>1.68-SNAPSHOT</version>
     <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
     <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
     <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
@@ -1324,9 +1324,9 @@ nodePrinter.print(webapp)
         </dependency>
 
         <dependency>
-            <groupId>com.lowagie</groupId>
-            <artifactId>itext</artifactId>
-            <version>4.2.0</version>
+            <groupId>com.itextpdf</groupId>
+            <artifactId>itextpdf</artifactId>
+            <version>5.5.6</version>
         </dependency>
 
         <dependency>
@@ -1352,7 +1352,7 @@ nodePrinter.print(webapp)
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
-            <version>3.1</version>
+            <version>3.2</version>
         </dependency>
 
         <dependency>
@@ -1796,7 +1796,7 @@ nodePrinter.print(webapp)
                 <plugin>
                      <groupId>external.atlassian.jgitflow</groupId>
                      <artifactId>jgitflow-maven-plugin</artifactId>
-                     <version>1.0-m4.3</version>
+                     <version>1.0-m5.1</version>
                  </plugin>
 
                 <!--
@@ -2292,8 +2292,6 @@ nodePrinter.print(webapp)
                     <!-- Do push the hotfix branches to the remote upstream --> 
                     <pushHotfixes>true</pushHotfixes>
                     <noHotfixBuild>true</noHotfixBuild>
-		    <!-- Keep the hot fix branch to avoid the error https://ecosystem.atlassian.net/browse/MJF-207	    -->
-		    <keepBranch>true</keepBranch>
                 </configuration>
             </plugin>
 

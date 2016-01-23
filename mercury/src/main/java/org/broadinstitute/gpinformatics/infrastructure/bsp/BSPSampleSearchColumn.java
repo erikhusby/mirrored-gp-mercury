@@ -76,7 +76,7 @@ public enum BSPSampleSearchColumn {
     };
 
     public static final BSPSampleSearchColumn[] BUCKET_PAGE_COLUMNS = {
-            COLLABORATOR_SAMPLE_ID, MATERIAL_TYPE
+            COLLABORATOR_SAMPLE_ID, MATERIAL_TYPE, RECEIPT_DATE
     };
 
 
