@@ -454,7 +454,9 @@
             $j("#spinner").hide();
 
             // prevent submit when hitting the return key in an input so ajax validation can happen.
-            $j(document).keypress("#bucketEntryForm:input:not(textarea)", function (event) {
+            $j("#bucketEntryForm").keypress(":input:not(textarea)", function (event) {
+                console.log("beep " + this.target);
+
                 return event.keyCode != 13;
             });
         });
