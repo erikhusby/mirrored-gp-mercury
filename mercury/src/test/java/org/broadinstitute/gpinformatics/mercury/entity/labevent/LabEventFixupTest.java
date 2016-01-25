@@ -791,7 +791,7 @@ public class LabEventFixupTest extends Arquillian {
         VesselToVesselTransfer vesselToVesselTransfer = labEvent.getVesselToVesselTransfers().iterator().next();
         Assert.assertEquals(vesselToVesselTransfer.getTargetVessel().getLabel(), oldTargetBarcode);
         System.out.print("In " + labEvent.getLabEventId() + " changing " +
-                vesselToVesselTransfer.getTargetVessel().getLabel() + " to ");
+                         vesselToVesselTransfer.getTargetVessel().getLabel() + " to ");
         vesselToVesselTransfer.setTargetVessel(barcodedTubeDao.findByBarcode(newTargetBarcode));
         System.out.println(vesselToVesselTransfer.getTargetVessel().getLabel());
     }
@@ -1229,7 +1229,7 @@ public class LabEventFixupTest extends Arquillian {
         Assert.assertEquals(transfers.size(), 74);
 
         System.out.println("Removing " + transfers.size() + " cherry picks from tube formation " +
-                source.getLabVesselId());
+                           source.getLabVesselId());
 
         for (CherryPickTransfer transfer : transfers) {
             transfer.getAncillaryTargetVessel().getVesselToVesselTransfersThisAsTarget().remove(transfer);
@@ -1319,4 +1319,24 @@ public class LabEventFixupTest extends Arquillian {
         illuminaFlowcellDao.flush();
         utx.commit();
     }
+
+    @Test(enabled = false)
+    public void fixupGplim3967() throws Exception {
+        // Deletes duplicate thermocycler event id=1170398.
+        userBean.loginOSUser();
+        utx.begin();
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, 1170398L);
+        Assert.assertTrue(CollectionUtils.isEmpty(labEvent.getReagents()));
+        Assert.assertTrue(CollectionUtils.isEmpty(labEvent.getLabEventReagents()));
+        Assert.assertTrue(CollectionUtils.isEmpty(labEvent.getCherryPickTransfers()));
+        Assert.assertTrue(CollectionUtils.isEmpty(labEvent.getSectionTransfers()));
+        Assert.assertTrue(CollectionUtils.isEmpty(labEvent.getVesselToSectionTransfers()));
+        Assert.assertTrue(CollectionUtils.isEmpty(labEvent.getVesselToVesselTransfers()));
+        System.out.println("Deleting " + labEvent.getLabEventType() + " " + labEvent.getLabEventId());
+        labEventDao.remove(labEvent);
+        labEventDao.persist(new FixupCommentary("GPLIM-3967 delete thermocycler event"));
+        labEventDao.flush();
+        utx.commit();
+    }
+
 }
