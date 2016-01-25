@@ -467,4 +467,23 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
         index = result2.indexOf("\"wasFound\":false", index + 1);
         assertThat(index, equalTo(-1));
     }
+
+    @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testFetchIlluminaSeqTemplateByDilutionTube(@ArquillianResource URL baseUrl)
+            throws Exception {
+        WebResource resource =
+                makeWebResource(baseUrl, "fetchIlluminaSeqTemplate").queryParam("id", "0115229204")
+                        .queryParam("idType",
+                                "TUBE").queryParam("isPoolTest", "false");
+        String result = get(resource);
+        assertThat(result, containsString("\"readStructure\":\"76T8B8B76T\""));
+        assertThat(result, containsString("\"derivedVesselLabel\":\"AB56835527\""));
+        assertThat(result, containsString("\"name\":\"Express Human WES (Deep Coverage) v1\""));
+        assertThat(result, containsString("\"regulatoryDesignation\":\"RESEARCH_ONLY\""));
+        for (String varToTest : Arrays
+                .asList("barcode", "name", "onRigWorkflow", "onRigChemistry")) {
+            assertThat(result, containsString(String.format("\"%s\":null,", varToTest)));
+        }
+    }
 }

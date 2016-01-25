@@ -89,15 +89,15 @@ public class ResearchProjectCohortEtlDbFreeTest {
         Collection<String> records = tst.dataRecords(etlDateString, false, entityId);
         assertEquals(records.size(), 1);
 
-        String[] parts = records.iterator().next().split(",");
-        assertEquals(parts[3], "\"\"");
+        String[] parts = records.iterator().next().split(",", 4);
+        assertEquals(parts[3], "");
 
         verify(mocks);
     }
 
     private void verifyRecord(String record) {
         int i = 0;
-        String[] parts = record.split(",");
+        String[] parts = record.split(",", 4);
         assertEquals(parts[i++], etlDateString);
         assertEquals(parts[i++], "F");
         assertEquals(parts[i++], String.valueOf(entityId));

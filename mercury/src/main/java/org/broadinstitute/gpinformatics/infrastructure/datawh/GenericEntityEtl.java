@@ -47,7 +47,7 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
     private static final String QUOTE = "\"";
 
     /** The empty formatted value. */
-    private static final String EMPTY_VALUE = QUOTE + QUOTE;
+    private static final String EMPTY_VALUE = "";
 
     protected final Set<Long> errorIds = new HashSet<>();
     protected Exception errorException = null;

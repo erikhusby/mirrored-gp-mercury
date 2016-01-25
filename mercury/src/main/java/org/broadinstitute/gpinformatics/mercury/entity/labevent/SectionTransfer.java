@@ -55,8 +55,8 @@ public class SectionTransfer extends VesselTransfer {
         targetVesselContainer.clearCaches();
         this.targetSection = targetSection;
         if (sourceSection.getWells().size() != targetSection.getWells().size()) {
-            throw new RuntimeException(sourceSection.getSectionName() + " is not the same size as " +
-                    targetSection.getSectionName());
+            throw new RuntimeException("For transfer to " + targetVessel.getLabel() + ", " +
+                    sourceSection.getSectionName() + " is not the same size as " + targetSection.getSectionName());
         }
     }
 

@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.test.builders;
 
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.LimsQueries;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
@@ -17,6 +19,7 @@ import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import org.testng.Assert;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -75,7 +78,12 @@ public class LibraryConstructionEntityBuilder {
     public LibraryConstructionEntityBuilder invoke() {
         final LibraryConstructionJaxbBuilder libraryConstructionJaxbBuilder = new LibraryConstructionJaxbBuilder(
                 bettaLimsMessageTestFactory, testPrefix, shearCleanPlateBarcode, "IndexPlateP7", "IndexPlateP5",
-                numSamples, LibraryConstructionJaxbBuilder.TargetSystem.SQUID_VIA_MERCURY).invoke();
+                numSamples, LibraryConstructionJaxbBuilder.TargetSystem.SQUID_VIA_MERCURY,
+                Arrays.asList(Triple.of("KAPA Reagent Box", "0009753252", 1)),
+                Arrays.asList(Triple.of("PEG", "0009753352", 2), Triple.of("70% Ethanol", "LCEtohTest", 3),
+                        Triple.of("EB", "0009753452", 4), Triple.of("SPRI", "LCSpriTest", 5)),
+                Arrays.asList(Triple.of("KAPA Amp Kit", "0009753250", 6))
+        ).invoke();
         pondRegRackBarcode = libraryConstructionJaxbBuilder.getPondRegRackBarcode();
         pondRegTubeBarcodes = libraryConstructionJaxbBuilder.getPondRegTubeBarcodes();
 

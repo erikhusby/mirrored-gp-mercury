@@ -114,6 +114,17 @@ public class ProductOrderSampleRiskTest {
         if (expectRinRiskItem) {
             assertThat(String.format("\"%s\": Expected RIN risk item", testCase),
                     riskItems, hasItem(forCriteriaType(RiskCriterion.RiskCriteriaType.RIN)));
+
+            // Formatting test for multiple
+            if (expectRqsRiskItem) {
+                productOrderSample.getRiskString().equals(
+                        RiskCriterion.RiskCriteriaType.RIN.getLabel() +
+                        " AND " +
+                        RiskCriterion.RiskCriteriaType.RQS.getLabel() );
+            } else {
+                // Formatting test for single
+                productOrderSample.getRiskString().equals(RiskCriterion.RiskCriteriaType.RIN.getLabel());
+            }
         } else {
             assertThat(String.format("\"%s\": Expected no RIN risk item", testCase),
                     riskItems, not(hasItem(forCriteriaType(RiskCriterion.RiskCriteriaType.RIN))));
@@ -121,6 +132,17 @@ public class ProductOrderSampleRiskTest {
         if (expectRqsRiskItem) {
             assertThat(String.format("\"%s\": Expected RQS risk item", testCase),
                     riskItems, hasItem(forCriteriaType(RiskCriterion.RiskCriteriaType.RQS)));
+
+            // Formatting test for multiple
+            if (expectRinRiskItem) {
+                productOrderSample.getRiskString().equals(
+                        RiskCriterion.RiskCriteriaType.RIN.getLabel() +
+                        " AND " +
+                        RiskCriterion.RiskCriteriaType.RQS.getLabel() );
+            } else {
+                // Formatting test for single
+                productOrderSample.getRiskString().equals(RiskCriterion.RiskCriteriaType.RQS.getLabel());
+            }
         } else {
             assertThat(String.format("\"%s\": Expected no RQS risk item", testCase),
                     riskItems, not(hasItem(forCriteriaType(RiskCriterion.RiskCriteriaType.RQS))));

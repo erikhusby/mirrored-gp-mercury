@@ -146,7 +146,7 @@ public class ProductOrderSampleEtlDbFreeTest {
 
     private void verifyRecord(String record) {
         int i = 0;
-        String[] parts = record.split(",");
+        String[] parts = record.split(",", 11);
         assertEquals(parts[i++], etlDateString);
         assertEquals(parts[i++], "F");
         assertEquals(parts[i++], String.valueOf(entityId));

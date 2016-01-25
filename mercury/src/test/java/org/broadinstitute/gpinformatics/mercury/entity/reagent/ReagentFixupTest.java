@@ -43,6 +43,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -667,15 +668,13 @@ public class ReagentFixupTest extends Arquillian {
     @Test(enabled = false)
     public void gplim3791backfill() throws Exception {
         userBean.loginOSUser();
+        utx.begin();
+
         final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-        final SimpleDateFormat expDateFormat = new SimpleDateFormat("MM-dd-yyyy");
         // All existing RapCap4 bait reagents verified that they have exactly this name.
         final String reagentName = "Rapid Capture Kit Box 4 (Bait)";
 
-        // A mapping of the newly created reagents so that duplicate creation is not attempted (causes unique key fail).
-        Map<String, Reagent> mapExpLotToNewReagent = new HashMap<>();
-
-        final String[] bravoLogData = {
+        addReagentsToEvents(new String[]{
                 "2015-08-26T10:37:10", "Ice1stBaitPick", "03-17-2018", "15F24A0005",
                 "2015-08-26T15:45:07", "Ice2ndBaitPick", "03-17-2018", "15F24A0005",
                 "2015-09-02T08:15:19", "Ice1stBaitPick", "03-17-2018", "010066231",
@@ -692,52 +691,8 @@ public class ReagentFixupTest extends Arquillian {
                 //"2015-10-07T13:22:53", "Ice2ndBaitPick", "03-17-2018", "010066231", // fixed up in GPLIM-3787
                 "2015-10-14T11:13:25", "Ice1stBaitPick", "03-17-2018", "15F24A0005",
                 "2015-10-14T16:19:01", "Ice2ndBaitPick", "03-17-2018", "15F24A0005",
-        };
-        Assert.assertEquals(bravoLogData.length % 4, 0, "Bad input array length");
-        utx.begin();
-        // Reads in the Bravo data and adds reagents.
-        int index = 0;
-        while (index < bravoLogData.length) {
-            String eventStart = bravoLogData[index++];
-            String pickEventType = bravoLogData[index++];
-            String baitLotExpiration = bravoLogData[index++];
-            String baitLot = bravoLogData[index++];
+        }, reagentName);
 
-            Date eventDate = dateFormat.parse(eventStart);
-            Date expirationDate = expDateFormat.parse(baitLotExpiration);
-
-            LabEvent pickEvent = null;
-            for (LabEvent event : labEventDao.findByDate(eventDate, eventDate)) {
-                if (event.getLabEventType().getName().equals(pickEventType)) {
-                    Assert.assertNull(pickEvent, "Multiple ice bait pick events on " + eventStart);
-                    pickEvent = event;
-                }
-            }
-            // Sanity checks the event and its reagents.
-            Assert.assertNotNull(pickEvent, "Missing " + pickEventType + " event on " + eventStart);
-            for (Reagent reagent : pickEvent.getReagents()) {
-                Assert.assertFalse(reagentName.equals(reagent.getName()),
-                        reagentName + " is already on pick event " + pickEvent.getLabEventId());
-            }
-
-            // Gets or makes the reagent to use.
-            Reagent baitReagent = mapExpLotToNewReagent.get(baitLot + baitLotExpiration);
-            if (baitReagent == null) {
-                baitReagent = genericReagentDao.findByReagentNameLotExpiration(reagentName, baitLot, expirationDate);
-            }
-            if (baitReagent == null) {
-                System.out.println("Making new instance of " + reagentName + " lot " + baitLot +
-                                   " exp " + baitLotExpiration);
-                baitReagent = new GenericReagent(reagentName, baitLot, expirationDate);
-                mapExpLotToNewReagent.put(baitLot + baitLotExpiration, baitReagent);
-            }
-
-            // Adds bait reagent to the pick event.
-            System.out.println("Adding " + baitReagent.getName() + " lot " + baitReagent.getLot() + " exp " +
-                               dateFormat.format(baitReagent.getExpiration()) + " to " + pickEventType +
-                               " on " + eventStart + " eventId " + pickEvent.getLabEventId());
-            pickEvent.addReagent(baitReagent);
-        }
 
         // Finds all the bait reagents that are on hybridization events
         Query query = labEventDao.getEntityManager().createNativeQuery(
@@ -776,8 +731,314 @@ public class ReagentFixupTest extends Arquillian {
             hybEvent.getLabEventReagents().remove(labEventReagent);
             labEventDao.remove(labEventReagent);
         }
+
         genericReagentDao.persist(new FixupCommentary("GPLIM-3791 backfill missing bait reagents."));
         genericReagentDao.flush();
         utx.commit();
+
     }
+
+    @Test(enabled = false)
+    public void fixupGplim3917date() throws Exception {
+        userBean.loginOSUser();
+
+        // Replaces wrong expiration for P5 Indexed Adapter Plate reagent on event 1121392
+        LabEvent labEvent = genericReagentDao.findById(LabEvent.class, 1121392L);
+        Assert.assertNotNull(labEvent);
+
+        String kitType = "P5 Indexed Adapter Plate";
+        String barcode = "000001818323";
+        Date expiration = new GregorianCalendar(2016, Calendar.MAY, 21).getTime();
+
+        Reagent reagent = null;
+        for (LabEventReagent labEventReagent : labEvent.getLabEventReagents()) {
+            if (labEventReagent.getReagent().getName().equals(kitType)) {
+                Assert.assertNull(reagent);
+                reagent = labEventReagent.getReagent();
+            }
+        }
+        Assert.assertNotNull(reagent);
+        Assert.assertEquals(barcode, reagent.getLot());
+        Assert.assertNull(genericReagentDao.findByReagentNameLotExpiration(kitType, barcode, expiration));
+        System.out.println("Changing expiration date on reagent id " + reagent.getReagentId() + " to " + expiration);
+        reagent.setExpiration(expiration);
+        genericReagentDao.persist(new FixupCommentary("GPLIM-3917 fixup incorrect P5 adapter expiration"));
+        genericReagentDao.flush();
+    }
+
+    private void addReagentsToEvents(String[] bravoLogData, String reagentName) throws Exception {
+        final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+        final SimpleDateFormat expDateFormat = new SimpleDateFormat("MM-dd-yyyy");
+
+        // A mapping of the newly created reagents so that duplicate creation is not attempted (causes unique key fail).
+        Map<String, Reagent> mapExpLotToNewReagent = new HashMap<>();
+
+        Assert.assertEquals(bravoLogData.length % 4, 0, "Bad input array length");
+
+        // Reads in the Bravo data and adds reagents.
+        int index = 0;
+        while (index < bravoLogData.length) {
+            String eventStart = bravoLogData[index++];
+            String eventType = bravoLogData[index++];
+            String expiration = bravoLogData[index++];
+            String lot = bravoLogData[index++];
+
+            Date eventDate = dateFormat.parse(eventStart);
+            Date expirationDate = expDateFormat.parse(expiration);
+
+            LabEvent labEvent = null;
+            for (LabEvent event : labEventDao.findByDate(eventDate, eventDate)) {
+                if (event.getLabEventType().getName().equals(eventType)) {
+                    Assert.assertNull(labEvent, "Multiple " + eventType + " events on " + eventStart);
+                    labEvent = event;
+                }
+            }
+            if (labEvent == null) {
+                // For some reason the bravo log has an event that did not make it to Mercury, or at least
+                // not with the expected timestamp. If these occur they should be investigated.
+                System.out.println("Mercury does not have " + eventType + " event on " + eventStart);
+            } else {
+                // Finds any existing reagent of the same type on the lab event.
+                Reagent existingReagent = null;
+                for (Reagent reagent : labEvent.getReagents()) {
+                    if (reagentName.equals(reagent.getName())) {
+                        Assert.assertNull(existingReagent, "Found multiple " + reagentName + " reagents on " +
+                                                           labEvent.getLabEventId());
+                        existingReagent = reagent;
+                    }
+                }
+
+                // Accepts an existing reagent if it's correct. If existing reagent
+                // has incorrect lot or expiration, deletes the reagent from the event.
+                // Adds the missing reagent.
+                if (existingReagent != null &&
+                    lot.equals(existingReagent.getLot()) &&
+                    existingReagent.getExpiration() != null &&
+                    expirationDate.compareTo(existingReagent.getExpiration()) == 0) {
+
+                    System.out.println("Correct reagent is already on event " + labEvent.getLabEventId());
+                } else {
+
+                    // Gets or makes the reagent to use.
+                    Reagent reagent = mapExpLotToNewReagent.get(lot + expiration);
+                    if (reagent == null) {
+                        reagent = genericReagentDao.findByReagentNameLotExpiration(reagentName, lot, expirationDate);
+                    }
+                    if (reagent == null) {
+                        System.out.println("Making new instance of " + reagentName + " lot " + lot +
+                                           " exp " + expiration);
+                        reagent = new GenericReagent(reagentName, lot, expirationDate);
+                        mapExpLotToNewReagent.put(lot + expiration, reagent);
+                    }
+
+                    // Removes reagent with incorrect lot or date.
+                    if (existingReagent != null) {
+                        System.out.println("Removing " + existingReagent.getName() +
+                                           " lot " + existingReagent.getLot() +
+                                           " exp " + (existingReagent.getExpiration() == null ? "null" :
+                                dateFormat.format(reagent.getExpiration())) +
+                                           " from " + eventType + " on " + eventStart +
+                                           " eventId " + labEvent.getLabEventId());
+                        LabEventReagent labEventReagent = labEvent.removeLabEventReagent(existingReagent);
+                        genericReagentDao.remove(labEventReagent);
+                    }
+
+                    // Adds reagent to the event.
+                    System.out.println("Adding " + reagent.getName() + " lot " + reagent.getLot() +
+                                       " exp " + dateFormat.format(reagent.getExpiration()) + " to " + eventType +
+                                       " on " + eventStart + " eventId " + labEvent.getLabEventId());
+                    labEvent.addReagent(reagent);
+                }
+            }
+        }
+    }
+
+    @Test(enabled = false)
+    public void gplim3791addMissingBaits() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        addReagentsToEvents(new String[]{
+                "2015-10-19T10:24:08", "Ice1stBaitPick", "03-17-2018", "15F24A0005",
+                "2015-10-19T15:29:25", "Ice2ndBaitPick", "03-17-2018", "15F24A0005",
+                "2015-10-22T08:42:39", "Ice1stBaitPick", "03-17-2018", "10066231",
+                "2015-10-22T14:01:01", "Ice2ndBaitPick", "03-17-2018", "10066231",
+                "2015-10-27T11:27:52", "Ice1stBaitPick", "03-17-2018", "15F24A0005",
+                "2015-10-27T16:29:06", "Ice2ndBaitPick", "02-20-2016", "15F24A0005",
+                "2015-11-05T07:49:34", "Ice1stBaitPick", "03-17-2018", "10066231",
+                "2015-11-05T13:00:51", "Ice2ndBaitPick", "03-17-2017", "10066231",
+                "2015-11-09T10:25:23", "Ice1stBaitPick", "03-17-2018", "15F24A0005",
+                "2015-11-09T15:36:39", "Ice2ndBaitPick", "03-17-2018", "15F24A0005",
+                //"2015-11-12T07:50:34", "Ice1stBaitPick", "03-17-2018", "10066231",  //missing; no 1stBaitPick done on source
+                "2015-11-12T12:52:23", "Ice2ndBaitPick", "03-17-2018", "15F24A0005",
+        }, "Rapid Capture Kit Box 4 (Bait)");
+
+        genericReagentDao.persist(new FixupCommentary("GPLIM-3791 add missing bait reagents using the Bravo log records."));
+        genericReagentDao.flush();
+        utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void gplim3850addOrFixQpcrStandards() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        addReagentsToEvents(new String[]{
+                "2014-10-29T15:43:08", "EcoTransfer", "10-24-2016", "000006728401",
+                "2014-11-26T09:27:29", "EcoTransfer", "10-24-2016", "000006728401",
+                //"2014-12-01T10:26:44", "EcoTransfer", "12-01-2014", "1234567098", //missing; bogus plate barcodes
+                "2014-12-03T10:56:02", "EcoTransfer", "12-26-2014", "14I03A0027",
+                "2014-12-08T17:18:05", "EcoTransfer", "12-26-2014", "000006725901",
+                "2014-12-11T15:07:16", "EcoTransfer", "10-24-2016", "000006728401",
+                "2014-12-12T10:35:23", "EcoTransfer", "10-24-2016", "6728401",
+                //"2014-12-19T18:29:10", "EcoTransfer", "10-24-2016", "000006728401", //missing; eco was done in source (next line)
+                "2014-12-19T19:15:56", "EcoTransfer", "10-24-2016", "6728401",
+                "2015-01-15T13:38:58", "EcoTransfer", "10-24-2016", "000006759501",
+                //"2015-01-15T15:17:44", "EcoTransfer", "01-16-2015", "9865983265", //missing; bogus plate barcodes
+                "2015-01-23T11:53:35", "EcoTransfer", "01-24-2015", "000006759501",
+                "2015-01-23T14:26:51", "EcoTransfer", "01-24-2015", "000006759501",
+                "2015-01-26T08:34:14", "EcoTransfer", "10-26-2016", "000006759501",
+                "2015-01-30T11:10:39", "EcoTransfer", "07-20-2015", "14G31A0012",
+                "2015-02-05T10:02:45", "EcoTransfer", "10-24-2016", "6728401",
+                "2015-02-11T08:50:59", "EcoTransfer", "10-23-2015", "000006759501",
+                "2015-02-13T12:01:12", "EcoTransfer", "10-23-2015", "000006759501",
+                "2015-02-17T10:24:34", "EcoTransfer", "10-23-2015", "000006759501",
+                "2015-02-17T12:18:33", "EcoTransfer", "10-23-2015", "6759501",
+                "2015-02-18T07:52:52", "EcoTransfer", "10-23-2015", "000006759501",
+                "2015-02-19T10:10:27", "EcoTransfer", "11-19-2016", "000006759501",
+                "2015-02-23T11:42:39", "EcoTransfer", "10-23-2015", "000006759501",
+                //"2015-02-26T14:11:58", "EcoTransfer", "02-27-2015", "12345",  //missing; bogus plate barcodes
+                //"2015-02-26T17:28:00", "EcoTransfer", "02-27-2015", "12345",  //missing; bogus plate barcodes
+                "2015-03-04T10:02:04", "EcoTransfer", "10-15-2015", "000006759501",
+                "2015-03-04T13:14:49", "EcoTransfer", "08-13-2015", "000006759501",
+                "2015-03-05T07:20:14", "EcoTransfer", "10-23-2015", "6759501",
+                //"2015-03-09T10:16:55", "EcoTransfer", "10-23-2015", "000006759501", //missing; eco was done on source (next line)
+                "2015-03-11T08:26:54", "EcoTransfer", "07-20-2015", "000006759501",
+                //"2015-03-13T08:59:34", "EcoTransfer", "03-14-2015", "789789789",  //missing; bogus plate barcodes
+                "2015-03-18T09:44:28", "EcoTransfer", "10-23-2015", "000006759501",
+                "2015-03-23T08:43:54", "EcoTransfer", "10-23-2015", "6759501",
+                "2015-03-25T11:49:51", "EcoTransfer", "11-26-2015", "000006759501",
+                "2015-03-26T08:07:52", "EcoTransfer", "11-26-2015", "0154840394",
+                "2015-03-30T11:50:47", "EcoTransfer", "06-30-2015", "0154839741",
+                "2015-04-01T09:47:34", "EcoTransfer", "09-24-2016", "000006728401",
+                "2015-04-06T08:02:17", "EcoTransfer", "10-23-2015", "000006759501",
+                "2015-04-09T15:10:52", "EcoTransfer", "10-24-2016", "00BATCH003",
+                "2015-04-13T11:01:29", "EcoTransfer", "11-14-2015", "000006759501",
+                "2015-04-13T13:37:43", "EcoTransfer", "10-23-2015", "000006759501",
+                "2015-04-14T09:32:55", "EcoTransfer", "10-24-2016", "000006728401",
+                "2015-04-15T10:58:39", "EcoTransfer", "06-30-2015", "154840366",
+                "2015-04-15T13:18:30", "EcoTransfer", "06-30-2015", "154840366",
+                "2015-04-16T13:39:38", "EcoTransfer", "10-24-2016", "000006728401",
+                "2015-04-21T09:05:28", "EcoTransfer", "04-21-2015", "0154839691",
+                "2015-04-28T16:01:47", "EcoTransfer", "10-24-2016", "000006728401",
+                "2015-05-01T09:50:02", "EcoTransfer", "05-01-2015", "0154839666",
+                "2015-05-05T11:14:14", "EcoTransfer", "10-23-2015", "000006759501",
+                "2015-05-06T09:36:47", "EcoTransfer", "10-24-2016", "000006728401",
+                "2015-05-11T09:49:46", "EcoTransfer", "10-24-2016", "6728401",
+                "2015-05-13T16:10:55", "EcoTransfer", "05-14-2015", "000006759501",
+                "2015-05-18T12:16:48", "EcoTransfer", "10-23-2015", "000006759501",
+                "2015-05-20T08:58:16", "EcoTransfer", "10-24-2016", "000006728401",
+                "2015-05-22T07:47:49", "EcoTransfer", "10-23-2015", "000006759501",
+                "2015-05-26T09:58:09", "EcoTransfer", "11-26-2015", "000006759501",
+                "2015-05-27T15:00:19", "EcoTransfer", "10-24-2016", "000006728401",
+                "2015-06-01T11:09:19", "EcoTransfer", "11-30-2015", "000006759501",
+                "2015-06-04T07:55:23", "EcoTransfer", "10-23-2015", "000006759501",
+                "2015-06-05T08:54:49", "EcoTransfer", "10-24-2016", "Batch3",
+                "2015-06-09T10:56:13", "EcoTransfer", "12-31-2015", "000006759501",
+                "2015-06-11T14:56:33", "EcoTransfer", "10-24-2016", "6728401",
+                "2015-06-15T08:44:56", "EcoTransfer", "10-24-2016", "6728401",
+                "2015-06-15T11:04:35", "EcoTransfer", "10-24-2016", "6728401",
+                "2015-06-18T09:53:59", "EcoTransfer", "12-31-2015", "0154840370",
+                "2015-06-19T14:45:46", "EcoTransfer", "10-24-2016", "000006728401",
+                "2015-06-25T16:20:15", "EcoTransfer", "10-24-2016", "0006728401",
+                //"2015-06-30T12:32:10", "EcoTransfer", "06-30-2016", "000006808101", //missing; eco done on source in next line
+                "2015-06-30T14:47:35", "EcoTransfer", "06-30-2016", "6808101",
+                "2015-07-01T08:21:24", "EcoTransfer", "10-23-2015", "6759501",
+                "2015-07-07T15:45:06", "EcoTransfer", "07-07-2015", "6809201",
+                "2015-07-15T11:02:26", "EcoTransfer", "11-30-2015", "000006759501",
+                "2015-07-15T13:27:01", "EcoTransfer", "07-01-2017", "000006809201",
+                "2015-07-21T10:09:43", "EcoTransfer", "07-01-2017", "000006809201",
+                //"2015-07-22T11:09:38", "EcoTransfer", "07-01-2017", "000006809201", //missing; no eco done on source
+                "2015-07-23T13:34:20", "EcoTransfer", "10-24-2016", "000006728401",
+                "2015-07-30T14:02:47", "EcoTransfer", "10-24-2016", "000006728401",
+                "2015-08-06T11:59:03", "EcoTransfer", "10-24-2016", "000006728401",
+                "2015-08-06T13:45:18", "EcoTransfer", "10-24-2016", "6728401",
+                "2015-08-11T10:38:36", "EcoTransfer", "07-01-2017", "000006809201",
+                "2015-08-13T09:59:42", "EcoTransfer", "07-01-2017", "000006809201",
+                "2015-08-13T15:32:13", "EcoTransfer", "10-24-2016", "000006728401",
+                "2015-08-18T11:44:30", "EcoTransfer", "07-01-2017", "000006809201",
+                "2015-08-18T14:29:47", "EcoTransfer", "07-01-2017", "6809201",
+                "2015-08-19T07:34:27", "EcoTransfer", "07-01-2017", "000006809201",
+                "2015-08-20T14:02:01", "EcoTransfer", "10-24-2016", "000006728401",
+                "2015-08-25T10:29:17", "EcoTransfer", "07-01-2017", "6809201",
+                "2015-08-25T12:59:30", "EcoTransfer", "07-01-2017", "6809201",
+                "2015-08-27T15:22:06", "EcoTransfer", "10-24-2015", "000006728401",
+                "2015-09-01T08:19:45", "EcoTransfer", "07-01-2017", "000006809201",
+                "2015-09-03T12:37:39", "EcoTransfer", "10-23-2015", "6728401",
+                "2015-09-09T10:53:49", "EcoTransfer", "07-01-2017", "000006809201",
+                "2015-09-11T12:35:39", "EcoTransfer", "10-24-2016", "000006728401",
+                "2015-09-17T14:23:33", "EcoTransfer", "07-01-2017", "000006809201",
+                "2015-09-22T13:42:58", "EcoTransfer", "07-01-2017", "6809201",
+                "2015-09-23T09:20:29", "EcoTransfer", "07-01-2017", "000006809201",
+                "2015-09-30T15:20:07", "EcoTransfer", "10-24-2016", "6728401",
+                "2015-10-08T12:46:55", "EcoTransfer", "10-24-2016", "000006728401",
+                "2015-10-15T15:29:44", "EcoTransfer", "10-24-2016", "000006728401",
+                "2015-10-20T13:13:31", "EcoTransfer", "10-20-2015", "000006809201",
+                "2015-10-23T13:20:08", "EcoTransfer", "07-01-2017", "000006809201",
+                "2015-10-28T14:50:53", "EcoTransfer", "10-24-2016", "000006728401",
+                "2015-11-02T08:28:35", "EcoTransfer", "07-01-2017", "000006809201",
+                "2015-11-06T12:09:44", "EcoTransfer", "07-01-2017", "000006809201",
+                "2015-11-09T10:42:15", "EcoTransfer", "07-01-2017", "6809201",
+                "2015-11-12T09:39:03", "EcoTransfer", "07-01-2017", "000006809201",
+        }, "QpcrStandards");
+
+        genericReagentDao.persist(new FixupCommentary(
+                "GPLIM-3850 add missing qPCR Standards reagents or fix incorrect ones using the Bravo log records."));
+        genericReagentDao.flush();
+        utx.commit();
+    }
+
+
+    @Test(enabled = false)
+    public void gplim3849addMissingEEW() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        addReagentsToEvents(new String[]{
+                "2015-08-26T13:03:32", "Ice1stCapture", "05-04-2016", "050415SS",
+                "2015-08-27T08:45:32", "Ice2ndCapture", "05-04-2016", "050415SS",
+                "2015-09-02T10:42:12", "Ice1stCapture", "05-04-2016", "050415SS",
+                "2015-09-03T07:03:55", "Ice2ndCapture", "05-04-2016", "050415SS",
+                "2015-09-10T11:48:42", "Ice1stCapture", "05-04-2016", "050415SS",
+                "2015-09-11T07:04:32", "Ice2ndCapture", "05-04-2016", "050415SS",
+                "2015-09-16T11:15:58", "Ice1stCapture", "05-04-2016", "050415SS",
+                "2015-09-17T08:17:10", "Ice2ndCapture", "05-04-2016", "050415SS",
+                "2015-09-21T11:34:32", "Ice1stCapture", "05-04-2016", "050415SS",
+                "2015-09-22T07:48:47", "Ice2ndCapture", "05-04-2016", "050415SS",
+                "2015-09-29T11:30:57", "Ice1stCapture", "05-04-2016", "0540415SS",
+                "2015-09-30T07:02:48", "Ice2ndCapture", "05-04-2016", "0540415SS",
+                "2015-10-07T10:42:37", "Ice1stCapture", "05-04-2016", "050415SS",
+                "2015-10-08T07:00:51", "Ice2ndCapture", "05-04-2016", "050415SS",
+                "2015-10-14T13:34:11", "Ice1stCapture", "05-04-2016", "050415SS",
+                "2015-10-15T09:17:15", "Ice2ndCapture", "05-04-2016", "05041SS",
+                "2015-10-19T12:49:58", "Ice1stCapture", "05-04-2016", "050415SS",
+                "2015-10-20T07:58:54", "Ice2ndCapture", "05-04-2016", "050415SS",
+                "2015-10-22T11:09:47", "Ice1stCapture", "05-04-2016", "050415SS",
+                "2015-10-23T06:55:32", "Ice2ndCapture", "05-04-2016", "050415SS",
+                "2015-10-27T13:51:34", "Ice1stCapture", "05-04-2016", "050415SS",
+                "2015-10-28T09:38:05", "Ice2ndCapture", "05-04-2016", "050415SS",
+                //"2015-11-05T09:53:50", "Ice1stCapture", "05-04-2016", "050415SS", //missing; bogus plate barcodes
+                "2015-11-05T12:58:40", "Ice1stCapture", "05-04-2016", "050415SS",
+                "2015-11-06T06:31:32", "Ice2ndCapture", "05-04-2016", "050415SS",
+                "2015-11-09T12:51:28", "Ice1stCapture", "05-04-2016", "050415SS",
+                "2015-11-10T08:47:50", "Ice2ndCapture", "05-04-2016", "050415SS",
+                "2015-11-12T10:15:37", "Ice1stCapture", "05-04-2016", "050415SS",
+        }, "EEW");
+
+        genericReagentDao.persist(new FixupCommentary(
+                "GPLIM-3849 add missing EEW reagents using the Bravo log records."));
+        genericReagentDao.flush();
+        utx.commit();
+    }
+
 }

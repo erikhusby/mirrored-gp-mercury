@@ -144,7 +144,7 @@ public class TransferEntityGrapher implements TransferVisualizer {
         } else {
             Queue<VesselVertex> vesselVertexQueue = new LinkedList<>();
 
-            for (VesselContainer<?> vesselContainer : receptacle.getContainers()) {
+            for (VesselContainer<?> vesselContainer : receptacle.getVesselContainers()) {
                 vesselVertexQueue.add(new ContainerVertex(vesselContainer));
             }
             vesselVertexQueue.add(new ReceptacleVesselVertex(receptacle));
@@ -385,8 +385,8 @@ public class TransferEntityGrapher implements TransferVisualizer {
 //            }
 //        }
         // if a receptacle appears in two different well maps, that's an implied re-array
-        if (receptacle.getContainers().size() > 1) {
-            Iterator<VesselContainer<?>> iterator = receptacle.getContainers().iterator();
+        if (receptacle.getVesselContainers().size() > 1) {
+            Iterator<VesselContainer<?>> iterator = receptacle.getVesselContainers().iterator();
             VesselContainer<?> sourceContainer = iterator.next();
             ContainerVertex sourceContainerVertex = new ContainerVertex(sourceContainer);
             if (sourceContainerVertex.render(graph, alternativeIds)) {

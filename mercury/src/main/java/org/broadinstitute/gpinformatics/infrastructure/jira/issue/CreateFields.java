@@ -1,10 +1,12 @@
 package org.broadinstitute.gpinformatics.infrastructure.jira.issue;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.jira.NameableTypeJsonSerializer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CreateJiraIssueFieldsSerializer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.Nameable;
 import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
+import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.map.JsonSerializer;
@@ -17,6 +19,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
 
 /**
  * We use a custom serializer here because custom fields are not
@@ -131,6 +134,27 @@ public class CreateFields extends UpdateFields {
             }
 
             return foundValue;
+        }
+
+        /**
+         * Find the ProjectType for a given issueKey. The issueKey must be valid jira id.
+         *
+         * @return ProjectType for the issueKey. If the ProjectType can not be determined null is returned.
+         *
+         * @see JiraTicket#PATTERN
+         */
+        public static CreateFields.ProjectType fromIssueKey(String issueKey) {
+            CreateFields.ProjectType projectType = null;
+            if (StringUtils.isNotBlank(issueKey)) {
+                Matcher matcher = JiraTicket.PATTERN.matcher(issueKey);
+                if (matcher.matches()) {
+                    String issuePrefix = matcher.group(JiraTicket.PATTERN_GROUP_PREFIX);
+                    if (StringUtils.isNotBlank(issuePrefix)) {
+                        projectType = ProjectType.fromKeyPrefix(issuePrefix);
+                    }
+                }
+            }
+            return projectType;
         }
     }
 
