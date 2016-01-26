@@ -1,19 +1,27 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.columns.AncestorLabMetricPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricRun;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -118,7 +126,7 @@ public class LabMetricSearchDefinition {
         searchTerm.setDbSortPath("labVessel.label");
         List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
         SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
-        criteriaPath.setCriteria(Arrays.asList("metricsVessel"));
+        criteriaPath.setCriteria(Collections.singletonList("metricsVessel"));
         criteriaPath.setPropertyName("label");
         criteriaPaths.add(criteriaPath);
         searchTerm.setCriteriaPaths(criteriaPaths);
@@ -142,7 +150,7 @@ public class LabMetricSearchDefinition {
         criteriaPaths.add(criteriaPath);
         // Reworks
         SearchTerm.CriteriaPath nestedCriteriaPath = new SearchTerm.CriteriaPath();
-        nestedCriteriaPath.setCriteria(Arrays.asList("reworkLabBatches"));
+        nestedCriteriaPath.setCriteria(Collections.singletonList("reworkLabBatches"));
 
         criteriaPath = new SearchTerm.CriteriaPath();
         criteriaPath.setCriteria(Arrays.asList("metricsVessel", "labMetrics"));
@@ -196,7 +204,7 @@ public class LabMetricSearchDefinition {
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
-        searchTerm.setName("Mercury Sample ID");
+        searchTerm.setName("Nearest Sample ID");
         criteriaPaths = new ArrayList<>();
 
         criteriaPath = new SearchTerm.CriteriaPath();
@@ -211,9 +219,7 @@ public class LabMetricSearchDefinition {
                 Set<String> results = new HashSet<>();
                 LabMetric labMetric = (LabMetric) entity;
                 for (SampleInstanceV2 sampleInstanceV2 : labMetric.getLabVessel().getSampleInstancesV2()) {
-                    for (MercurySample mercurySample: sampleInstanceV2.getRootMercurySamples() ) {
-                        results.add(mercurySample.getSampleKey());
-                    }
+                    results.add(sampleInstanceV2.getNearestMercurySampleName());
                 }
                 return results;
             }
@@ -228,7 +234,7 @@ public class LabMetricSearchDefinition {
         searchTerm.setValueType(ColumnValueType.NOT_NULL);
         criteriaPaths = new ArrayList<>();
         criteriaPath = new SearchTerm.CriteriaPath();
-        criteriaPath.setCriteria(Arrays.asList("metricsVessel"));
+        criteriaPath.setCriteria(Collections.singletonList("metricsVessel"));
         criteriaPath.setPropertyName("tubeType");
         criteriaPaths.add(criteriaPath);
         searchTerm.setCriteriaPaths(criteriaPaths);
@@ -241,7 +247,6 @@ public class LabMetricSearchDefinition {
             public Set<String> evaluate(Object entity, SearchContext context) {
 
                 LabMetric labMetric = (LabMetric) entity;
-                Set<String> barcodes = null;
 
                 List<LabEventType> labEventTypes = new ArrayList<>();
                 labEventTypes.add(LabEventType.FLOWCELL_TRANSFER);
@@ -252,6 +257,7 @@ public class LabMetricSearchDefinition {
                         = new LabVesselSearchDefinition.VesselDescendantTraverserCriteria(labEventTypes );
                 labMetric.getLabVessel().evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
 
+                Set<String> barcodes = null;
                 if (!eval.getPositions().isEmpty()) {
                     barcodes = new HashSet<>();
                     for( Pair<String,VesselPosition> positionPair : eval.getPositions() ) {
@@ -269,9 +275,8 @@ public class LabMetricSearchDefinition {
     private List<SearchTerm> buildLabMetricMetadata() {
         List<SearchTerm> searchTerms = new ArrayList<>();
 
-        SearchTerm searchTerm;
         for( Metadata.Key key : metadataDisplayKeyMap.values() ) {
-            searchTerm  = new SearchTerm();
+            SearchTerm searchTerm = new SearchTerm();
             searchTerm.setName(key.getDisplayName());
             searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
                 @Override
@@ -401,11 +406,11 @@ public class LabMetricSearchDefinition {
         criteriaPaths = new ArrayList<>();
 
         SearchTerm.CriteriaPath nestedCriteriaPath = new SearchTerm.CriteriaPath();
-        nestedCriteriaPath.setCriteria(Arrays.asList("metricsRun"));
+        nestedCriteriaPath.setCriteria(Collections.singletonList("metricsRun"));
 
         criteriaPath = new SearchTerm.CriteriaPath();
         // Projected property of nested subquery
-        criteriaPath.setCriteria(Arrays.asList("labMetricId"));
+        criteriaPath.setCriteria(Collections.singletonList("labMetricId"));
         criteriaPath.setNestedCriteriaPath(nestedCriteriaPath);
 
         criteriaPath.setPropertyName("runName");
@@ -413,6 +418,184 @@ public class LabMetricSearchDefinition {
         searchTerm.setCriteriaPaths(criteriaPaths);
         searchTerms.add(searchTerm);
 
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Position");
+        searchTerm.setDbSortPath("vesselPosition");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public String evaluate(Object entity, SearchContext context) {
+                LabMetric labMetric = (LabMetric) entity;
+                return labMetric.getVesselPosition();
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Collaborator Patient ID");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public List<String> evaluate(Object entity, SearchContext context) {
+                LabMetric labMetric = (LabMetric) entity;
+                // todo jmt BSP too
+                List<String> patientIds = new ArrayList<>();
+                Collections.addAll(patientIds, labMetric.getLabVessel().getMetadataValues(Metadata.Key.PATIENT_ID));
+                return patientIds;
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Volume");
+        searchTerm.setValueType(ColumnValueType.TWO_PLACE_DECIMAL);
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public BigDecimal evaluate(Object entity, SearchContext context) {
+                LabMetric labMetric = (LabMetric) entity;
+                return labMetric.getLabVessel().getVolume();
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        // todo jmt why doesn't Total ng metadata search term work?
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Metric Total ng");
+        searchTerm.setValueType(ColumnValueType.TWO_PLACE_DECIMAL);
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public BigDecimal evaluate(Object entity, SearchContext context) {
+                LabMetric labMetric = (LabMetric) entity;
+                return labMetric.getTotalNg();
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Decision");
+        searchTerm.setDbSortPath("labMetricDecision.decision");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public String evaluate(Object entity, SearchContext context) {
+                LabMetric labMetric = (LabMetric) entity;
+                return labMetric.getLabMetricDecision().getDecision().toString();
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Note");
+        searchTerm.setDbSortPath("labMetricDecision.note");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public String evaluate(Object entity, SearchContext context) {
+                LabMetric labMetric = (LabMetric) entity;
+                return labMetric.getLabMetricDecision().getNote();
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("User");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public String evaluate(Object entity, SearchContext context) {
+                LabMetric labMetric = (LabMetric) entity;
+                BSPUserList bspUserList = context.getBspUserList();
+                Long userId = labMetric.getLabMetricDecision().getDeciderUserId();
+                BspUser bspUser = bspUserList.getById(userId);
+                if (bspUser == null) {
+                    return "Unknown user - ID: " + userId;
+                }
+                return bspUser.getFullName();
+            }
+        });
+        searchTerms.add(searchTerm);
+
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Reason");
+        searchTerm.setDbSortPath("labMetricDecision.overrideReason");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public String evaluate(Object entity, SearchContext context) {
+                LabMetric labMetric = (LabMetric) entity;
+                return labMetric.getLabMetricDecision().getOverrideReason();
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Root Sample ID");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public List<String> evaluate(Object entity, SearchContext context) {
+                List<String> rootSampleIds = new ArrayList<>();
+                LabMetric labMetric = (LabMetric) entity;
+                for (SampleInstanceV2 sampleInstanceV2 : labMetric.getLabVessel().getSampleInstancesV2()) {
+                    rootSampleIds.add(sampleInstanceV2.getMercuryRootSampleName());
+                }
+
+                return rootSampleIds;
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Product");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public List<String> evaluate(Object entity, SearchContext context) {
+                List<String> products = new ArrayList<>();
+                LabMetric labMetric = (LabMetric) entity;
+                for (SampleInstanceV2 sampleInstanceV2 : labMetric.getLabVessel().getSampleInstancesV2()) {
+                    BucketEntry singleBucketEntry = sampleInstanceV2.getSingleBucketEntry();
+                    if (singleBucketEntry != null) {
+                        products.add(singleBucketEntry.getProductOrder().getProduct().getName());
+                    }
+                }
+
+                return products;
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Ancestor Quants");
+        searchTerm.setPluginClass(AncestorLabMetricPlugin.class);
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Sample Count");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Integer evaluate(Object entity, SearchContext context) {
+                int sampleCount = 0;
+                LabMetric labMetric = (LabMetric) entity;
+                for (SampleInstanceV2 sampleInstanceV2 : labMetric.getLabVessel().getSampleInstancesV2()) {
+                    sampleCount++;
+                }
+
+                return sampleCount;
+            }
+        });
+        searchTerms.add(searchTerm);
+
+
+        // x Collaborator Patient ID (including research)
+        // x Volume
+        // x Total ng
+        // x Decision
+        // x Note
+        // x User
+        // x Reason
+        // Conditional Checkbox
+        // Conditional row class
+        // x Stock SM-ID (Root)
+        // x Product
+        // Proceed if OOS
+        // Original Material Type
+        // Initial Total ng of stock
+        // x Ancestor Quants
+        // x Number of samples in tube
         return searchTerms;
     }
 

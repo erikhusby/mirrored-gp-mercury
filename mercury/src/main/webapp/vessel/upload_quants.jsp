@@ -201,6 +201,17 @@
                 </stripes:form>
             </c:if>
 
+            <stripes:layout-render name="/columns/configurable_list.jsp"
+                    entityName="${actionBean.entityName}"
+                    sessionKey="${actionBean.sessionKey}"
+                    columnSetName="${actionBean.columnSetName}"
+                    downloadColumnSets="${actionBean.downloadColumnSets}"
+                    resultList="${actionBean.resultList}"
+                    action="${ctxpath}/search/ConfigurableSearch.action"
+                    downloadViewedColumns="True"
+                    isDbSortAllowed="True"
+                    dbSortPath=""/>
+
         </c:if>
     </stripes:layout-component>
 </stripes:layout-render>

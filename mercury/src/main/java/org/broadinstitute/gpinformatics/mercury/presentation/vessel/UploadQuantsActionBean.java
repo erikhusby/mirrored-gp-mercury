@@ -15,6 +15,11 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
+import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
+import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableListFactory;
+import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.mercury.boundary.sample.QuantificationEJB;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabMetricDao;
@@ -36,6 +41,8 @@ import java.util.Set;
 
 @UrlBinding(value = "/view/uploadQuants.action")
 public class UploadQuantsActionBean extends CoreActionBean {
+
+    public static final String ENTITY_NAME = "Lab Metric";
 
     public enum QuantFormat {
         VARIOSKAN("Varioskan"),
@@ -65,6 +72,10 @@ public class UploadQuantsActionBean extends CoreActionBean {
     private LabMetricRunDao labMetricRunDao;
     @Inject
     private LabMetricDao labMetricDao;
+    @Inject
+    private ConfigurableListFactory configurableListFactory;
+    @Inject
+    private BSPUserList bspUserList;
 
     @Validate(required = true, on = UPLOAD_QUANT)
     private FileBean quantSpreadsheet;
@@ -80,12 +91,14 @@ public class UploadQuantsActionBean extends CoreActionBean {
     /** acceptRePico indicates the user wishes to process the new pico regardless of existing quants. */
     private boolean acceptRePico;
     private final int STRING_LIMIT = 255;
+    private ConfigurableList configurableList;
 
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
     public Resolution view() {
         if (labMetricRunId != null) {
             labMetricRun = labMetricRunDao.findById(LabMetricRun.class, labMetricRunId);
+            buildColumns();
         }
         return new ForwardResolution(VIEW_PAGE);
     }
@@ -196,6 +209,20 @@ public class UploadQuantsActionBean extends CoreActionBean {
         return new ForwardResolution(VIEW_PAGE);
     }
 
+    private void buildColumns() {
+        List<LabMetric> labMetrics = new ArrayList<>();
+        for (LabMetric labMetric : labMetricRun.getLabMetrics()) {
+            if (labMetric.getLabMetricDecision() != null) {
+                labMetrics.add(labMetric);
+            }
+        }
+
+        SearchContext searchContext = new SearchContext();
+        searchContext.setBspUserList(bspUserList);
+        configurableList = configurableListFactory.create(labMetrics,
+                "Default", ColumnEntity.LAB_METRIC, searchContext);
+    }
+
     public FileBean getQuantSpreadsheet() {
         return quantSpreadsheet;
     }
@@ -283,4 +310,25 @@ public class UploadQuantsActionBean extends CoreActionBean {
     public void setAcceptRePico(boolean acceptRePico) {
         this.acceptRePico = acceptRePico;
     }
+
+    public ConfigurableList.ResultList getResultList() {
+        return configurableList.getResultList();
+    }
+
+    public String getEntityName() {
+        return ENTITY_NAME;
+    }
+
+    public String getSessionKey() {
+        return null;
+    }
+
+    public String getColumnSetName() {
+        return null;
+    }
+
+    public String getDownloadColumnSets() {
+        return null;
+    }
+
 }

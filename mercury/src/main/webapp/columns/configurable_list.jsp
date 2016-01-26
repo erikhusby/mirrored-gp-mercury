@@ -27,6 +27,12 @@
 <%-- The name of the entity being listed --%>
 <%--@elvariable id="entityName" type="java.lang.String"--%>
 
+<%-- Whether to render sort links in headers --%>
+<%--@elvariable id="isDbSortAllowed" type="java.lang.Boolean"--%>
+
+<%-- Which header to mark as currently sorted --%>
+<%--@elvariable id="dbSortPath" type="java.lang.String"--%>
+
 <script type="text/javascript">
     atLeastOneChecked = function (name, form) {
         var checkboxes = form.getInputs("checkbox", name);
@@ -85,7 +91,6 @@
 <input type="hidden" name="entityName" value="${entityName}"/>
 
 <div id="${entityName}ResultsDiv" class="form-inline">
-    <c:set var="isDbSortAllowed" value="${actionBean.searchInstance.isDbSortable}"/>
 <table width="100%" class="table simple dataTable" id="${entityName}ResultsTable">
     <c:forEach items="${resultList.resultRows}" var="resultRow" varStatus="status">
         <%--@elvariable id="resultRow" type="edu.mit.broad.bsp.core.util.columns.ConfigurableListUtils.ResultRow"--%>
@@ -112,11 +117,11 @@
                             <c:choose>
                                 <c:when test="${ ( not empty resultListHeader.sortPath ) and isDbSortAllowed}">
                                     <%-- Multi-page results are sortable in the database, if the column has a sort path --%>
-                                    <th class="sorting ${resultListHeader.sortPath == actionBean.dbSortPath ?
+                                    <th class="sorting ${resultListHeader.sortPath == dbSortPath ?
                                     (resultList.resultSortDirection == 'ASC' ? 'sorting_asc' : 'sorting_desc' ) : ''}"
                                             >
                                         <stripes:link
-                                                href="${action}?search=&entityName=${entityName}&sessionKey=${sessionKey}&columnSetName=${columnSetName}&dbSortPath=${resultListHeader.sortPath}&sortDirection=${resultListHeader.sortPath == actionBean.dbSortPath && resultList.resultSortDirection == 'ASC' ? 'DSC' : 'ASC'}">
+                                                href="${action}?search=&entityName=${entityName}&sessionKey=${sessionKey}&columnSetName=${columnSetName}&dbSortPath=${resultListHeader.sortPath}&sortDirection=${resultListHeader.sortPath == dbSortPath && resultList.resultSortDirection == 'ASC' ? 'DSC' : 'ASC'}">
                                             ${resultListHeader.viewHeader}</stripes:link>
                                     </th>
                                 </c:when>
@@ -256,13 +261,6 @@
                     <ul>
                         <li>Column download set: Choose the set of columns you want to download to Excel</li>
                         <li>Download Checked: Download checked rows to Excel</li>
-                        <li>Plating Request For Checked: Take the checked samples to the Plating Request Filter
-                            page
-                        </li>
-                        <li>Add checked to Basket: Add the checked samples to the sample basket (check the
-                            contents of your basket first, by clicking the basket icon in the top right
-                            corner of the page)
-                        </li>
                     </ul>
                 </div>">
 

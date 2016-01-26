@@ -131,7 +131,8 @@ public class ConfigurableListActionBean extends CoreActionBean {
         if (downloadColumnSetName.equals("Viewed Columns")) {
             columnTabulations = buildViewedColumnTabulations();
         } else {
-            columnTabulations = configurableListFactory.buildColumnSetTabulations(downloadColumnSetName, entityName);
+            columnTabulations = configurableListFactory.buildColumnSetTabulations(downloadColumnSetName,
+                    ColumnEntity.getByName(entityName));
         }
         PaginationUtil.Pagination pagination = (PaginationUtil.Pagination) getContext().getRequest().getSession()
                 .getAttribute(ConfigurableSearchActionBean.PAGINATION_PREFIX + sessionKey);
@@ -187,7 +188,7 @@ public class ConfigurableListActionBean extends CoreActionBean {
             CoreActionBeanContext context, String entityName, String entityId) {
 
         ConfigurableList configurableListUtils = configurableListFactory.create(entityList, downloadColumnSetName,
-                entityName, ColumnEntity.getByName(entityName), buildSearchContext() );
+                ColumnEntity.getByName(entityName), buildSearchContext() );
 
         Object[][] data = configurableListUtils.getResultList(false).getAsArray();
         return StreamCreatedSpreadsheetUtil.streamSpreadsheet(data, SPREADSHEET_FILENAME);
