@@ -93,13 +93,14 @@
 <div id="${entityName}ResultsDiv" class="form-inline">
 <table width="100%" class="table simple dataTable" id="${entityName}ResultsTable">
     <c:forEach items="${resultList.resultRows}" var="resultRow" varStatus="status">
-        <%--@elvariable id="resultRow" type="edu.mit.broad.bsp.core.util.columns.ConfigurableListUtils.ResultRow"--%>
+        <%--@elvariable id="resultRow" type="org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList.ResultRow"--%>
         <%-- Break up the table every few hundred rows, because the browser uses unreasonable amounts of
         CPU to render large tables --%>
         <c:if test="${status.index % 500 == 0}">
             <thead>
             <tr>
                 <th><input for="count" type="checkbox" class="checkAll" id="checkAllTop" onclick="checkOtherAllBox('#checkAllBottom', this.checked );"><span id="count" class="checkedCount">0</span></th>
+                <th></th>
                 <c:forEach items="${resultList.headers}" var="resultListHeader" varStatus="status">
                     <%-- Render headers, and links for sorting by column --%>
                     <c:choose>
@@ -140,9 +141,14 @@
             <tbody>
         </c:if>
         <%-- Render data rows and cells --%>
-        <tr ${status.index%2==0 ? "class=\"even\"" : "class=\"odd\""}>
+        <tr class="${status.index%2==0 ? "even" : "odd"}${empty resultRow.cssStyles ? "" : " " + "resultRow.cssStyles"}">
             <td>
                 <input name="selectedIds" value="${resultRow.resultId}" class="shiftCheckbox" type="checkbox">
+            </td>
+            <td>
+                <c:if test="${resultRow.hasConditionalCheckbox()}">
+                    <input name="selectedMetrics" value="${resultRow.resultId}" class="overrideCheckboxClass" type="checkbox">
+                </c:if>
             </td>
             <c:forEach items="${resultRow.renderableCells}" var="cell">
                 <td>${fn:replace( cell, CRLF, "<br>" )}</td>

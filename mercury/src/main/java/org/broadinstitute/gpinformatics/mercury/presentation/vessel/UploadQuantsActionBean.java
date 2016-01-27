@@ -36,7 +36,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @UrlBinding(value = "/view/uploadQuants.action")
@@ -90,8 +92,9 @@ public class UploadQuantsActionBean extends CoreActionBean {
     private String tubeFormationLabel;
     /** acceptRePico indicates the user wishes to process the new pico regardless of existing quants. */
     private boolean acceptRePico;
-    private final int STRING_LIMIT = 255;
-    private ConfigurableList configurableList;
+    private ConfigurableList.ResultList resultList;
+
+    private static final int STRING_LIMIT = 255;
 
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
@@ -173,7 +176,7 @@ public class UploadQuantsActionBean extends CoreActionBean {
 
             try {
                 quantSpreadsheet.delete();
-            } catch (IOException ex) {
+            } catch (IOException ignored) {
                 // If cannot delete, oh well.
             }
         }
@@ -210,17 +213,31 @@ public class UploadQuantsActionBean extends CoreActionBean {
     }
 
     private void buildColumns() {
-        List<LabMetric> labMetrics = new ArrayList<>();
+        List<LabMetric> labMetricList = new ArrayList<>();
+        Map<String, LabMetric> mapIdToMetric = new HashMap<>();
         for (LabMetric labMetric : labMetricRun.getLabMetrics()) {
             if (labMetric.getLabMetricDecision() != null) {
-                labMetrics.add(labMetric);
+                // todo jmt linked set?
+                labMetricList.add(labMetric);
+                mapIdToMetric.put(labMetric.getLabMetricId().toString(), labMetric);
             }
         }
 
         SearchContext searchContext = new SearchContext();
         searchContext.setBspUserList(bspUserList);
-        configurableList = configurableListFactory.create(labMetrics,
+        ConfigurableList configurableList = configurableListFactory.create(labMetricList,
                 "Default", ColumnEntity.LAB_METRIC, searchContext);
+
+        resultList = configurableList.getResultList();
+        for (ConfigurableList.ResultRow resultRow : resultList.getResultRows()) {
+            LabMetric labMetric = mapIdToMetric.get(resultRow.getResultId());
+            if (labMetric.getLabMetricDecision().isNeedsReview()) {
+                resultRow.setCssStyles("warning");
+            }
+            if (labMetric.getLabMetricDecision().getDecision().isEditable()) {
+                resultRow.setConditionalCheckbox(true);
+            }
+        }
     }
 
     public FileBean getQuantSpreadsheet() {
@@ -312,7 +329,7 @@ public class UploadQuantsActionBean extends CoreActionBean {
     }
 
     public ConfigurableList.ResultList getResultList() {
-        return configurableList.getResultList();
+        return resultList;
     }
 
     public String getEntityName() {

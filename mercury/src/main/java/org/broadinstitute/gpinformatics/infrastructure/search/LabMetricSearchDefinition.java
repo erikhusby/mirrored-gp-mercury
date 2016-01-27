@@ -558,6 +558,40 @@ public class LabMetricSearchDefinition {
         });
         searchTerms.add(searchTerm);
 
+        // todo jmt Proceed if OOS
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Original Material Type");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public List<String> evaluate(Object entity, SearchContext context) {
+                LabMetric labMetric = (LabMetric) entity;
+                List<String> materialTypes = new ArrayList<>();
+                Collections.addAll(materialTypes, labMetric.getLabVessel().getMetadataValues(
+                        Metadata.Key.ORIGINAL_MATERIAL_TYPE));
+                // todo BSP too
+                return materialTypes;
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Initial Total ng of stock");
+        searchTerm.setValueType(ColumnValueType.TWO_PLACE_DECIMAL);
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public BigDecimal evaluate(Object entity, SearchContext context) {
+                LabMetric labMetric = (LabMetric) entity;
+                Map<LabMetric.MetricType, Set<LabMetric>> mapTypeToMetrics =
+                        labMetric.getLabVessel().getMetricsForVesselAndAncestors();
+                Set<LabMetric> labMetrics = mapTypeToMetrics.get(LabMetric.MetricType.INITIAL_PICO);
+                // todo jmt most recent
+                LabMetric pico = labMetrics.iterator().next();
+                return pico.getTotalNg();
+            }
+        });
+        searchTerms.add(searchTerm);
+
         searchTerm = new SearchTerm();
         searchTerm.setName("Ancestor Quants");
         searchTerm.setPluginClass(AncestorLabMetricPlugin.class);
@@ -568,34 +602,12 @@ public class LabMetricSearchDefinition {
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Integer evaluate(Object entity, SearchContext context) {
-                int sampleCount = 0;
                 LabMetric labMetric = (LabMetric) entity;
-                for (SampleInstanceV2 sampleInstanceV2 : labMetric.getLabVessel().getSampleInstancesV2()) {
-                    sampleCount++;
-                }
-
-                return sampleCount;
+                return labMetric.getLabVessel().getSampleInstancesV2().size();
             }
         });
         searchTerms.add(searchTerm);
 
-
-        // x Collaborator Patient ID (including research)
-        // x Volume
-        // x Total ng
-        // x Decision
-        // x Note
-        // x User
-        // x Reason
-        // Conditional Checkbox
-        // Conditional row class
-        // x Stock SM-ID (Root)
-        // x Product
-        // Proceed if OOS
-        // Original Material Type
-        // Initial Total ng of stock
-        // x Ancestor Quants
-        // x Number of samples in tube
         return searchTerms;
     }
 
