@@ -626,12 +626,24 @@ public abstract class LabVessel implements Serializable {
      * @return A list of the closest metrics of the type specified, ordered by ascending date
      */
     public List<LabMetric> getNearestMetricsOfType(LabMetric.MetricType metricType) {
+        return getNearestMetricsOfType(metricType, TransferTraverserCriteria.TraversalDirection.Ancestors);
+    }
+
+    /**
+     * This method gets a collection of the nearest lab metrics of the specified type.
+     *
+     * @param metricType The type of metric to search for during the traversal.
+     *
+     * @return A list of the closest metrics of the type specified, ordered by ascending date
+     */
+    public List<LabMetric> getNearestMetricsOfType(LabMetric.MetricType metricType,
+            TransferTraverserCriteria.TraversalDirection traversalDirection) {
         if (getContainerRole() != null) {
             return getContainerRole().getNearestMetricOfType(metricType);
         } else {
             TransferTraverserCriteria.NearestLabMetricOfTypeCriteria metricOfTypeCriteria =
                     new TransferTraverserCriteria.NearestLabMetricOfTypeCriteria(metricType);
-            evaluateCriteria(metricOfTypeCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
+            evaluateCriteria(metricOfTypeCriteria, traversalDirection);
             return metricOfTypeCriteria.getNearestMetrics();
         }
     }

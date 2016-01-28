@@ -14,11 +14,13 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.mercury.boundary.sample.QuantificationEJB;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabMetricDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabMetricRunDao;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricDecision;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricRun;
@@ -31,6 +33,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -102,6 +105,32 @@ public class UploadQuantsActionBean extends CoreActionBean {
             break;
         }
         if (getValidationErrors().isEmpty()) {
+            // todo jmt need to fold this into same transaction?
+            if (quantType == LabMetric.MetricType.INITIAL_PICO) {
+                // Update risk
+                Set<LabMetric> localLabMetrics = new HashSet<>();
+                if (labMetricRun == null) {
+                    localLabMetrics = labMetrics;
+                } else {
+                    for (LabMetric labMetric : labMetricRun.getLabMetrics()) {
+                        if (labMetric.getLabMetricDecision() != null) {
+                            localLabMetrics.add(labMetric);
+                        }
+                    }
+                }
+                int calcRiskCount = 0;
+                for (LabMetric localLabMetric : localLabMetrics) {
+                    for (SampleInstanceV2 sampleInstanceV2 : localLabMetric.getLabVessel().getSampleInstancesV2()) {
+                        ProductOrderSample singleProductOrderSample = sampleInstanceV2.getSingleProductOrderSample();
+                        if (singleProductOrderSample != null) {
+                            singleProductOrderSample.calculateRisk();
+                            calcRiskCount++;
+                        }
+                    }
+                }
+                addMessage("Calculated risk for " + calcRiskCount + " samples.");
+            }
+
             addMessage("Successfully uploaded quant.");
         }
         return new ForwardResolution(VIEW_PAGE);

@@ -2,6 +2,10 @@ package org.broadinstitute.gpinformatics.athena.entity.products;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
@@ -16,6 +20,7 @@ import javax.persistence.Id;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.text.MessageFormat;
 import java.util.List;
 
@@ -149,6 +154,14 @@ public class RiskCriterion implements Serializable {
 
             @Override
             public String getValue(ProductOrderSample sample) {
+                // todo jmt consider performance
+                MercurySample mercurySample = sample.getMercurySample();
+                if (mercurySample != null) {
+                    BigDecimal volume = mercurySample.getLabVessel().iterator().next().getVolume();
+                    if (volume != null) {
+                        return volume.toString();
+                    }
+                }
                 return String.valueOf(sample.getSampleData().getVolume());
             }
         }),
@@ -157,7 +170,17 @@ public class RiskCriterion implements Serializable {
 
             @Override
             public String getValue(ProductOrderSample sample) {
-                return String.valueOf(sample.getSampleData().getConcentration());
+                Double concentration = sample.getSampleData().getConcentration();
+                if (concentration == null) {
+                    MercurySample mercurySample = sample.getMercurySample();
+                    if (mercurySample != null) {
+                        LabVessel labVessel = mercurySample.getLabVessel().iterator().next();
+                        // todo jmt stop at first
+                        labVessel.getNearestMetricsOfType(LabMetric.MetricType.INITIAL_PICO,
+                                TransferTraverserCriteria.TraversalDirection.Descendants);
+                    }
+                }
+                return String.valueOf(concentration);
             }
         }),
         WGA("Is WGA", Operator.OperatorType.BOOLEAN, new ValueProvider() {
@@ -196,6 +219,7 @@ public class RiskCriterion implements Serializable {
 
             @Override
             public String getValue(ProductOrderSample sample) {
+                // todo jmt also look at LabMetrics
                 return String.valueOf(sample.getSampleData().getTotal());
             }
         }),
@@ -204,6 +228,7 @@ public class RiskCriterion implements Serializable {
 
             @Override
             public String getValue(ProductOrderSample sample) {
+                // todo jmt also look at LabMetrics
                 SampleData sampleDTO = sample.getSampleData();
 
                 // On risk if there is no pico date or if the run date is older than one year ago.
