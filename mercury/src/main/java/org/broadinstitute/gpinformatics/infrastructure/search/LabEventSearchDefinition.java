@@ -662,6 +662,7 @@ public class LabEventSearchDefinition {
         searchTerm.setName("Event Vessel Barcode");
         // Do not show in output - redundant with source/target layouts
         searchTerm.setIsExcludedFromResultColumns(Boolean.TRUE);
+        searchTerm.setRackScanSupported(Boolean.TRUE);
         searchTerm.setAlternateSearchDefinition(eventByVesselSearchDefinition);
         // Need a non-functional criteria path to make terms with alternate definitions visible in selection list
         List<SearchTerm.CriteriaPath> blankCriteriaPaths = new ArrayList<>();
