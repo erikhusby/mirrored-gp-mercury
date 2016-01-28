@@ -219,8 +219,10 @@ public class CreateFCTActionBean extends CoreActionBean {
                     Collections.sort(productNameList);
                     List<String> startingVesselList = new ArrayList<>();
                     for (String productName : productNameList) {
+                        List<String> startingVessels = new ArrayList<>(productToStartingVessel.get(productName));
+                        Collections.sort(startingVessels);
                         startingVesselList.add("Bucketed tubes for " + productName + ": " +
-                                               StringUtils.join(productToStartingVessel.get(productName), ", "));
+                                               StringUtils.join(startingVessels, ", "));
                     }
 
 
@@ -233,7 +235,7 @@ public class CreateFCTActionBean extends CoreActionBean {
                     RowDto rowDto = new RowDto(loadingTube.getLabel(), labBatch.getBusinessKey(),
                             StringUtils.join(eventDates, "<br/>"),
                             StringUtils.join(productNameList, "<br/>"),
-                            StringUtils.join(startingVesselList, "; "),
+                            StringUtils.join(startingVesselList, "\n"),
                             selectedEventTypeDisplay, defaultLoadingConc, lcsetUrl);
                     if (!rowDtos.contains(rowDto)) {
                         rowDtos.add(rowDto);
