@@ -131,7 +131,7 @@ public class LabVesselSearchDefinition {
                 "inPlaceLabVesselId", LabEvent.class));
 
         ConfigurableSearchDefinition configurableSearchDefinition = new ConfigurableSearchDefinition(
-                ColumnEntity.LAB_VESSEL, 100, criteriaProjections, mapGroupSearchTerms);
+                ColumnEntity.LAB_VESSEL, criteriaProjections, mapGroupSearchTerms);
 
         configurableSearchDefinition.setAddRowsListenerFactory(
                 new ConfigurableSearchDefinition.AddRowsListenerFactory() {
@@ -952,7 +952,7 @@ public class LabVesselSearchDefinition {
      *   Stop at first descendant event found (default is to continue on to all descendant events)
      *   Use source vessels (default is to use target vessels)
      */
-    private class VesselDescendantTraverserCriteria extends TransferTraverserCriteria {
+    public static class VesselDescendantTraverserCriteria extends TransferTraverserCriteria {
 
         // Optional flags
         private boolean stopTraverseAtFirstFind = false;
