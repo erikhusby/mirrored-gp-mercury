@@ -161,14 +161,15 @@
                             <td><input style='width:8em' class="loadConc" name="rowDtos[${item.index}].loadingConc"
                                        value="${rowDto.loadingConc}"/></td>
                             <td>${rowDto.eventDate}</td>
-                            <td>${rowDto.product}</td>
+                            <td><span title="${rowDto.startingBatchVessels}">${rowDto.product}</span></td>
                             <input type="hidden" name="rowDtos[${item.index}].barcode" value="${rowDto.barcode}"/>
                             <input type="hidden" name="rowDtos[${item.index}].lcset" value="${rowDto.lcset}"/>
                             <input type="hidden" name="rowDtos[${item.index}].tubeType" value="${rowDto.tubeType}"/>
                             <input type="hidden" name="rowDtos[${item.index}].eventDate" value="${rowDto.eventDate}"/>
                             <input type="hidden" name="rowDtos[${item.index}].product" value="${rowDto.product}"/>
-                            <input type="hidden" name="rowDtos[${item.index}].startingBatchVessel" value="${rowDto.startingBatchVessel}"/>
+                            <input type="hidden" name="rowDtos[${item.index}].startingBatchVessels" value="${rowDto.startingBatchVessels}"/>
                             <input type="hidden" name="rowDtos[${item.index}].lcsetUrl" value="${rowDto.lcsetUrl}"/>
+                            </tr>
                     </c:forEach>
                     </tbody>
                 </table>
