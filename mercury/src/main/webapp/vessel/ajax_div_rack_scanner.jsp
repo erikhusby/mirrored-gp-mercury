@@ -1,12 +1,11 @@
-<%@ page import="org.broadinstitute.bsp.client.rackscan.RackScanner" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 <%@ taglib prefix='fn' uri='http://java.sun.com/jsp/jstl/functions' %>
 
-<%-- Reusable layout-definition used for ajax overlay rack scan functionality.
-     See AjaxRackScanActionBean --%>
+<%-- Reusable layout-definition used for ajax overlay rack scan functionality. --%>
 
     <script language="JavaScript">
 
+        // Basically avoids server round trip when un-selecting lab at any stage
         function hideDependentControls() {
             $j('#selectScanner').css('display','none');
             $j('#selectScannerLabel').css('display','none');
@@ -23,7 +22,7 @@
                 actionBeanParams = { ajaxLabSelect : '', labToFilterBy : $j('#selectLab').val() };
                 $j.post("${ctxpath}/search/ConfigurableSearch.action", actionBeanParams, function (data) {
                     // Overwrites the option tags in the selectScanner dropdown.
-                    $j('#rack_scan_overlay').html(data);
+                    $j('#rack_scan_inputs').html(data);
                 });
             }
         }
@@ -36,7 +35,7 @@
                 actionBeanParams = { ajaxLabSelect : '', labToFilterBy : $j('#selectLab').val(), rackScanner : $j('#selectScanner').val() };
                 $j.post("${ctxpath}/search/ConfigurableSearch.action", actionBeanParams, function (data) {
                     // Overwrites the option tags in the selectScanner dropdown.
-                    $j('#rack_scan_overlay').html(data);
+                    $j('#rack_scan_inputs').html(data);
                 });
             }
         }
@@ -50,7 +49,7 @@
                 if($j('#simulationFile')[0].files[0]){
                     formData.append("simulatedScanCsv", $j('#simulationFile')[0].files[0]);
                 } else {
-                    alert("Choose a simulator file");
+                    $j("#rackScanError").text("Choose a simulator file");
                     return;
                 }
             }
@@ -58,18 +57,20 @@
 
             $j("#doScanBtn").attr("disabled","disabled");
 
+            $j("#rack_scan_overlay").removeData("results");
+
             $j.ajax({
                 url: "${ctxpath}/search/ConfigurableSearch.action",
                 type: 'POST',
                 data: formData,
                 async: true,
                 success: function (results) {
-                    $("#rack_scan_overlay").data("results",results);
+                    $j("#rack_scan_overlay").data("results",results);
                     $j("#doScanBtn").removeAttr("disabled");
                     rackScanComplete();
                 },
                 error: function(results){
-                    $j('#rackScanError').error("A server error occurred");
+                    $j("#rackScanError").text("A server error occurred");
                     $j("#doScanBtn").removeAttr("disabled");
                 },
                 cache: false,
@@ -80,7 +81,7 @@
         });
 
     </script>
-
+    <div id="rackScanError" style="color:red"/>
     <stripes:form method="post" id="ajaxScanForm" beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.ConfigurableSearchActionBean">
     <!-- Selects the lab, which then populates the scanner device list. -->
     <div class="control-group">
@@ -122,12 +123,13 @@
     </div>
 </c:if>
 
-<c:if test="${not empty actionBean.labToFilterBy and not empty actionBean.rackScanner}">
+
 <div class="control-group">
-    <input type="button" value="Cancel" name="scanCancelBtn" id="scanCancelBtn" class="btn btn-primary" onclick="cancelRackScan();"/>&nbsp;&nbsp;
-    <input type="submit" value="Scan" name="ajaxScan" id="doScanBtn" class="btn btn-primary"/>
+    <input type="button" value="Cancel" name="scanCancelBtn" id="scanCancelBtn" class="btn btn-primary" onclick="$j('#rack_scan_overlay').dialog('close');"/>&nbsp;&nbsp;
+        <c:if test="${not empty actionBean.labToFilterBy and not empty actionBean.rackScanner}">
+            <input type="submit" value="Scan" name="ajaxScan" id="doScanBtn" class="btn btn-primary"/>
+        </c:if>
 </div>
-</c:if>
 </stripes:form>
-<div id="rackScanError" style="color:red"></div>
+
 

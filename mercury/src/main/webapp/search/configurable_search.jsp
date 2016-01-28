@@ -34,6 +34,30 @@
                 div.style.display = "block";
             }
         }
+
+        // Rack scan dialog functionality
+        var rackScanSrcBtn = null;
+        $j(document).ready( function(){
+            $j( "#rack_scan_overlay" ).dialog({
+                title: "Rack Scan Barcodes",
+                autoOpen: false,
+                height: 350,
+                width: 350,
+                modal: true,
+                close: cancelRackScan,
+                open: function(){
+                    $j.ajax({
+                        url: '${ctxpath}/search/ConfigurableSearch.action?ajaxLabSelect=',
+                        type: 'get',
+                        dataType: 'html',
+                        success: function (returnData) {
+                            $j("#rack_scan_inputs").html(returnData);
+                        }
+                    })
+                }
+            });
+        });
+
     </script>
     <%-- Need to stomp some global layout settings:
          label html5 tag in search terms consumes entire horizontal layout area (Chrome only?), remove padding
@@ -322,11 +346,21 @@ function changeOperator(operatorSelect) {
         valueElement = valueElement.nextSibling;
     }
 
+    // Remove rack scan button if one exists
+    rackScanButton = valueElement.nextSibling;
+    while( rackScanButton != null ) {
+        if( rackScanButton.nodeName == "INPUT" && rackScanButton.getAttribute("name") == "rackScanBtn" ) {
+            valueElement.parentNode.removeChild(rackScanButton);
+            rackScanButton = null;
+            break;
+        }
+        rackScanButton = rackScanButton.nextSibling;
+    }
+
     // indexOf because jQuery date picker adds hasDatepicker to class
     if (valueElement.className.indexOf("termvalue") >= 0) {
 
         if (valueElement.tagName == "SELECT") {
-
             if (operator == "IN" || operator == "NOT_IN") {
 
                 // Change single select to multiple, remove "(Choose one)"
@@ -373,18 +407,16 @@ function changeOperator(operatorSelect) {
                     textInput2 = valueElement.nextSibling;
                     textInput2.parentNode.removeChild(textInput2);
                 }
+                // Create a rack scan button if input is configured to support one
                 if( valueElement.parentNode.getAttribute("rackScanSupported")){
-                    rackScanButton = valueElement.nextSibling;
-                    if( rackScanButton.nodeName != "INPUT" || rackScanButton.getAttribute("name") != "rackScanBtn" ) {
-                        rackScanButton = document.createElement("INPUT");
-                        rackScanButton.setAttribute("id", "rackScanBtn");
-                        rackScanButton.setAttribute("name", "rackScanBtn");
-                        rackScanButton.setAttribute("value", "Rack Scan");
-                        rackScanButton.setAttribute("class", "btn btn-primary");
-                        rackScanButton.setAttribute("onclick", "startRackScan(this);");
-                        rackScanButton.setAttribute("type", "button");
-                        valueElement.parentNode.appendChild(rackScanButton);
-                    }
+                    rackScanButton = document.createElement("INPUT");
+                    rackScanButton.setAttribute("id", "rackScanBtn");
+                    rackScanButton.setAttribute("name", "rackScanBtn");
+                    rackScanButton.setAttribute("value", "Rack Scan");
+                    rackScanButton.setAttribute("class", "btn btn-primary");
+                    rackScanButton.setAttribute("onclick", "startRackScan(this);");
+                    rackScanButton.setAttribute("type", "button");
+                    valueElement.parentNode.appendChild(rackScanButton);
                 }
                 valueElement.parentNode.replaceChild(textarea, valueElement);
             } else if (operator == "BETWEEN") {
@@ -468,28 +500,33 @@ function removeTerm(link) {
 }
 
 function startRackScan(sourceButton){
-    //$j("#rack_scan_overlay").removeData();
-    $j.ajax({
-        url: '${ctxpath}/search/ConfigurableSearch.action?ajaxLabSelect=',
-        type: 'get',
-        dataType: 'html',
-        success: function (returnData) {
-            $j("#rack_scan_overlay").html(returnData);
-            $j("#rack_scan_overlay").css("display", "block");
-        }
-    });
+    window.rackScanSrcBtn = sourceButton;
+    $j("#rack_scan_overlay").dialog( "open" );
 }
 
 function cancelRackScan(){
-    $j("#rack_scan_overlay").html("");
-    $j("#rack_scan_overlay").css("display", "none");
-    $j("#rack_scan_overlay").removeData();
+    window.rackScanSrcBtn = null;
+    $j("#rack_scan_inputs").html("");
+    $j("#rack_scan_overlay").removeData("results");
 }
 
 function rackScanComplete() {
-    $j("#rack_scan_overlay").html("");
-    $j("#rack_scan_overlay").css("display", "none");
-    alert($("#rack_scan_overlay").data("results"));
+    var barcodes = $j("#rack_scan_overlay").data("results");
+    var textarea;
+    if( barcodes != null && window.rackScanSrcBtn != null ) {
+        //alert($("#rack_scan_overlay").data("results"));
+        textarea = window.rackScanSrcBtn.previousSibling;
+        while( textarea != null ) {
+            if( textarea.className == "termvalue" ) {
+                textarea.textContent = barcodes;
+                break;
+            }
+            textarea = textarea.previousSibling;
+        }
+    }
+    $j("#rack_scan_overlay").dialog("close");
+    window.rackScanSrcBtn = null;
+    $j("#rack_scan_inputs").html("");
 }
 
 /**
@@ -717,7 +754,9 @@ function chooseColumnSet() {
 </script>
 
         <!-- Adds the dropdowns for lab and scanner, and possibly a file chooser. -->
-    <div id="rack_scan_overlay" style="display: none"></div>
+    <div id="rack_scan_overlay">
+        <div id="rack_scan_inputs"/>
+    </div>
 
 </stripes:layout-component>
 </stripes:layout-render>
