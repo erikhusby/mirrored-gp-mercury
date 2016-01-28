@@ -90,7 +90,7 @@
             <select name="labToFilterBy" id="selectLab" onchange="labChanged()">
                 <option value="" label="Select One" />
                 <c:forEach items="${actionBean.allLabs}" var="lab">
-                    <option value="${lab.name}" <c:if test="${lab.name == actionBean.labToFilterBy}"> selected</c:if>>${lab.labName}</option>
+                    <option value="${lab.name}"${lab.name == actionBean.labToFilterBy?" selected":""}>${lab.labName}</option>
                 </c:forEach>
             </select>
         </div>
@@ -104,7 +104,7 @@
             <select name="rackScanner" id="selectScanner" onchange="scannerChanged();">
                 <option value="" label="Select One" />
                 <c:forEach items="${actionBean.rackScanners}" var="scanner">
-                    <option value="${scanner.name}" <c:if test="${scanner.name == actionBean.rackScanner}"> selected</c:if>>${scanner.scannerName}</option>
+                    <option value="${scanner.name}"${scanner.name == actionBean.rackScanner?" selected":""}>${scanner.scannerName}</option>
                     <c:if test="${not empty actionBean.labToFilterBy and actionBean.labToFilterBy eq 'RACK_SCAN_SIMULATOR_LAB'}">
                         <option value="${scanner.name}" selected>${scanner.scannerName}</option>
                     </c:if>
