@@ -614,6 +614,7 @@ public class LabBatchFixUpTest extends Arquillian {
         // From database queries, found that there were batch_starting_vessels for this LCSET, but no bucket entries.
         // Ran the test with rollback, and verified with SQL logging that batch_starting_vessels orphans were removed.
         LabBatch labBatch = labBatchDao.findByName("LCSET-8578");
+        System.out.println("Deleting " + labBatch.getBatchName());
         labBatchDao.remove(labBatch.getJiraTicket());
         labBatchDao.remove(labBatch);
 
