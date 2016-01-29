@@ -627,5 +627,25 @@ public class LabBatchFixUpTest extends Arquillian {
         labBatchDao.flush();
         userTransaction.commit();
     }
+    /**
+     * LCSET-8578 & LCSET-8579 were created by an apparent button double click.  Delete LCSET-8578, to
+     * avoid problems with LCSET inference in the future.
+     */
+    @Test(enabled = false)
+    public void fixupSupport1456() throws Exception {
+        userBean.loginOSUser();
+        userTransaction.begin();
+
+        // From database queries, found that there were batch_starting_vessels for this LCSET, but no bucket entries.
+        // Ran the test with rollback, and verified with SQL logging that batch_starting_vessels orphans were removed.
+        LabBatch labBatch = labBatchDao.findByName("LCSET-8578");
+        System.out.println("Deleting " + labBatch.getBatchName());
+        labBatchDao.remove(labBatch.getJiraTicket());
+        labBatchDao.remove(labBatch);
+
+        labBatchDao.persist(new FixupCommentary("SUPPORT-1456 delete duplicate LCSET"));
+        labBatchDao.flush();
+        userTransaction.commit();
+    }
 
 }
