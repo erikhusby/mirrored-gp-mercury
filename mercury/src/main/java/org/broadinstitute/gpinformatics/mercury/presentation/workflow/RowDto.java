@@ -18,7 +18,7 @@ public class RowDto {
     private String eventDate;
     private int readLength = 1;
     private String product;
-    private String startingBatchVessel;
+    private String startingBatchVessels;
     private String tubeType;
     private String lcsetUrl;
 
@@ -26,22 +26,22 @@ public class RowDto {
     }
 
     public RowDto(@Nonnull String barcode, @Nonnull String lcset, @Nonnull String eventDate, @Nonnull String product,
-                  @Nonnull String startingBatchVessel, @Nonnull String tubeType, @Nonnull BigDecimal loadingConc,
+                  @Nonnull String startingBatchVessels, @Nonnull String tubeType, @Nonnull BigDecimal loadingConc,
                   String lcsetUrl) {
         this.barcode = barcode;
         this.lcset = lcset;
         this.eventDate = eventDate;
         this.product = product;
-        this.startingBatchVessel = startingBatchVessel;
+        this.startingBatchVessels = startingBatchVessels;
         this.tubeType = tubeType;
         this.loadingConc = loadingConc;
         this.lcsetUrl = lcsetUrl;
     }
 
     public RowDto(@Nonnull String barcode, @Nonnull String lcset, @Nonnull String eventDate, @Nonnull String product,
-                  @Nonnull String startingBatchVessel, @Nonnull String tubeType, @Nonnull BigDecimal loadingConc,
+                  @Nonnull String startingBatchVessels, @Nonnull String tubeType, @Nonnull BigDecimal loadingConc,
                   int numberLanes) {
-        this(barcode, lcset, eventDate, product, startingBatchVessel, tubeType, loadingConc, null);
+        this(barcode, lcset, eventDate, product, startingBatchVessels, tubeType, loadingConc, null);
         setNumberLanes(numberLanes);
     }
 
@@ -58,7 +58,7 @@ public class RowDto {
     public static Set<String> allStartingBatchVessels(Collection<RowDto> rowDtos) {
         Set<String> set = new HashSet<>();
         for (RowDto rowDto : rowDtos) {
-            set.add(rowDto.getStartingBatchVessel());
+            set.add(rowDto.getStartingBatchVessels());
         }
         return set;
     }
@@ -119,12 +119,12 @@ public class RowDto {
         this.numberLanes = numberLanes;
     }
 
-    public String getStartingBatchVessel() {
-        return startingBatchVessel;
+    public String getStartingBatchVessels() {
+        return startingBatchVessels;
     }
 
-    public void setStartingBatchVessel(String startingBatchVessel) {
-        this.startingBatchVessel = startingBatchVessel;
+    public void setStartingBatchVessels(String startingBatchVessels) {
+        this.startingBatchVessels = startingBatchVessels;
     }
 
     public String getTubeType() {
