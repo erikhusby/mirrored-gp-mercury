@@ -189,37 +189,45 @@ public class SequencingTemplateFactory {
                 sequencingTemplateName, null, isPoolTest, sequencingConfig.getInstrumentWorkflow().getValue(),
                 sequencingConfig.getChemistry().getValue(), sequencingConfig.getReadStructure().getValue());
         Set<LabBatchStartingVessel> startingFCTVessels = fctBatch.getLabBatchStartingVessels();
-        if (startingFCTVessels.size() != 1) {
-            throw new InformaticsServiceException(
-                    String.format("More than one starting denature tube for FCT ticket %s",
-                            fctBatch.getBatchName()));
-        } else {
-            LabBatchStartingVessel startingVessel = startingFCTVessels.iterator().next();
-            List<SequencingTemplateLaneType> lanes = new ArrayList<>();
+        List<SequencingTemplateLaneType> lanes = new ArrayList<>();
+        for (LabBatchStartingVessel startingVessel: startingFCTVessels) {
             Iterator<String> positionNames;
             sequencingTemplate.setConcentration(startingVessel.getConcentration());
             Set<SampleInstanceV2> sampleInstances = startingVessel.getLabVessel().getSampleInstancesV2();
             attachRegulatoryDesignationAndProductOrder(sampleInstances, sequencingTemplate);
-            if(fctBatch.getFlowcellType() != null) {
-                positionNames = fctBatch.getFlowcellType().getVesselGeometry().getPositionNames();
-            }
-            else if (isPoolTest) {
-                positionNames = IlluminaFlowcell.FlowcellType.MiSeqFlowcell.getVesselGeometry().getPositionNames();
-            } else {
-                positionNames =
-                        IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell.getVesselGeometry().getPositionNames();
-            }
-            while (positionNames.hasNext()) {
-                String vesselPosition = positionNames.next();
+            if (startingVessel.getVesselPosition() != null) {
                 SequencingTemplateLaneType lane =
-                        LimsQueryObjectFactory.createSequencingTemplateLaneType(vesselPosition,
+                        LimsQueryObjectFactory.createSequencingTemplateLaneType(
+                                startingVessel.getVesselPosition().name(),
                                 startingVessel.getConcentration(), "",
                                 startingVessel.getLabVessel().getLabel());
                 lanes.add(lane);
+            } else {
+                if (startingFCTVessels.size() != 1) {
+                    throw new InformaticsServiceException(
+                            String.format("More than one starting denature tube for FCT ticket %s",
+                                    fctBatch.getBatchName()));
+                }
+                if (fctBatch.getFlowcellType() != null) {
+                    positionNames = fctBatch.getFlowcellType().getVesselGeometry().getPositionNames();
+                } else if (isPoolTest) {
+                    positionNames = IlluminaFlowcell.FlowcellType.MiSeqFlowcell.getVesselGeometry().getPositionNames();
+                } else {
+                    positionNames =
+                            IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell.getVesselGeometry().getPositionNames();
+                }
+                while (positionNames.hasNext()) {
+                    String vesselPosition = positionNames.next();
+                    SequencingTemplateLaneType lane =
+                            LimsQueryObjectFactory.createSequencingTemplateLaneType(vesselPosition,
+                                    startingVessel.getConcentration(), "",
+                                    startingVessel.getLabVessel().getLabel());
+                    lanes.add(lane);
+                }
             }
-            sequencingTemplate.getLanes().addAll(lanes);
-            return sequencingTemplate;
         }
+        sequencingTemplate.getLanes().addAll(lanes);
+        return sequencingTemplate;
     }
 
     /**

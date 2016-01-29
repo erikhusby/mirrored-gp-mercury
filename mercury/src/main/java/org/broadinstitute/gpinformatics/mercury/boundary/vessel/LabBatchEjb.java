@@ -421,25 +421,6 @@ public class LabBatchEjb {
     /**
      * This method links two batch JIRA tickets together in a parent to child relationship.
      *
-     * @param parentBatch The parent batch to link
-     * @param childBatch  The child batch to link
-     */
-    public void linkJiraBatches(LabBatch parentBatch, LabBatch childBatch) {
-        try {
-            if (childBatch.getJiraTicket() != null) {
-                jiraService.addLink(AddIssueLinkRequest.LinkType.Parentage, parentBatch.getJiraTicket().getTicketName(),
-                        childBatch.getJiraTicket().getTicketName());
-            }
-        } catch (Exception ioe) {
-            logger.error("Error attempting to link batch " + childBatch.getJiraTicket().getTicketName()
-                         + " to product order " + parentBatch,
-                         ioe);
-        }
-    }
-
-    /**
-     * This method links two batch JIRA tickets together in a parent to child relationship.
-     *
      * @param parentTicket The parent ticket key to link
      * @param childBatch   The child batch to link
      */
@@ -452,7 +433,7 @@ public class LabBatchEjb {
             }
         } catch (Exception ioe) {
             logger.error("Error attempting to link batch " + childBatch.getJiraTicket().getTicketName()
-                         + " to product order " + parentTicket,
+                         + " to parent batch " + parentTicket,
                          ioe);
         }
     }

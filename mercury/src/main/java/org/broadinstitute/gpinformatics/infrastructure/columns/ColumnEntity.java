@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.columns;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 /**
@@ -31,6 +32,12 @@ public enum ColumnEntity {
         @Override
         public String getId(Object entity) {
             return ((Reagent) entity).getReagentId().toString();
+        }
+    }),
+    LAB_METRIC("LabMetric", "Lab Metric", "labMetricId", LabMetric.class, new IdGetter() {
+        @Override
+        public String getId(Object entity) {
+            return ((LabMetric) entity).getLabMetricId().toString();
         }
     });
 

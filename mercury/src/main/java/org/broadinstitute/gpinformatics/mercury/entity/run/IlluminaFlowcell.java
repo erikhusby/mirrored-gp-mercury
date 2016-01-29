@@ -380,7 +380,7 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
     }
 
     /** Should only be used by a data fixup test. */
-    void setFlowcellType(FlowcellType flowcellType) {
+    public void setFlowcellType(FlowcellType flowcellType) {
         this.flowcellType = flowcellType;
     }
 
