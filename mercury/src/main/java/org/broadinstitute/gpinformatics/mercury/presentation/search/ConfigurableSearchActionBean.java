@@ -9,7 +9,12 @@
  */
 package org.broadinstitute.gpinformatics.mercury.presentation.search;
 
-import net.sourceforge.stripes.action.*;
+import net.sourceforge.stripes.action.DefaultHandler;
+import net.sourceforge.stripes.action.ForwardResolution;
+import net.sourceforge.stripes.action.HandlesEvent;
+import net.sourceforge.stripes.action.Resolution;
+import net.sourceforge.stripes.action.StreamingResolution;
+import net.sourceforge.stripes.action.UrlBinding;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.rackscan.ScannerException;
@@ -32,15 +37,12 @@ import org.broadinstitute.gpinformatics.infrastructure.search.PaginationUtil;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstanceEjb;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.*;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.BSPLookupException;
-import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.vessel.RackScanActionBean;
 
 import javax.inject.Inject;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -72,13 +74,15 @@ public class ConfigurableSearchActionBean extends RackScanActionBean {
     public static final String AJAX_SELECT_LAB_EVENT = "ajaxLabSelect";
     public static final String AJAX_SCAN_EVENT = "ajaxScan";
     public static final String RACK_SCAN_PAGE_TITLE = "Rack Scan Barcodes";
+
     @HandlesEvent(AJAX_SELECT_LAB_EVENT)
     public Resolution selectLab() {
         return new ForwardResolution("/vessel/ajax_div_rack_scanner.jsp");
     }
 
     /**
-     * Utilizes a rack scanner to preform the receipt and find out which samples are being received.
+     * Utilizes a rack scanner to return a line delimited list of tube barcodes to a client side ajax function
+     * callback which transfers value directly to a text area field.
      * @throws ScannerException
      */
     @Override

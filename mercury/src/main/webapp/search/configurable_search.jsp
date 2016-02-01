@@ -35,29 +35,6 @@
             }
         }
 
-        // Rack scan dialog functionality
-        var rackScanSrcBtn = null;
-        $j(document).ready( function(){
-            $j( "#rack_scan_overlay" ).dialog({
-                title: "Rack Scan Barcodes",
-                autoOpen: false,
-                height: 350,
-                width: 350,
-                modal: true,
-                close: cancelRackScan,
-                open: function(){
-                    $j.ajax({
-                        url: '${ctxpath}/search/ConfigurableSearch.action?ajaxLabSelect=',
-                        type: 'get',
-                        dataType: 'html',
-                        success: function (returnData) {
-                            $j("#rack_scan_inputs").html(returnData);
-                        }
-                    })
-                }
-            });
-        });
-
     </script>
     <%-- Need to stomp some global layout settings:
          label html5 tag in search terms consumes entire horizontal layout area (Chrome only?), remove padding
@@ -499,23 +476,14 @@ function removeTerm(link) {
 
 }
 
-function startRackScan(sourceButton){
-    window.rackScanSrcBtn = sourceButton;
-    $j("#rack_scan_overlay").dialog( "open" );
-}
-
-function cancelRackScan(){
-    window.rackScanSrcBtn = null;
-    $j("#rack_scan_inputs").html("");
-    $j("#rack_scan_overlay").removeData("results");
-}
-
+<%-- Ajax rack scanner implementation: See /vessel/ajax_div_rack_scanner.jsp for dependent functionality --%>
+var rackScanSrcBtn = null;
 function rackScanComplete() {
     var barcodes = $j("#rack_scan_overlay").data("results");
+    //alert(barcodes);
     var textarea;
-    if( barcodes != null && window.rackScanSrcBtn != null ) {
-        //alert($("#rack_scan_overlay").data("results"));
-        textarea = window.rackScanSrcBtn.previousSibling;
+    if( barcodes != null && rackScanSrcBtn != null ) {
+        textarea = rackScanSrcBtn.previousSibling;
         while( textarea != null ) {
             if( textarea.className == "termvalue" ) {
                 textarea.textContent = barcodes;
@@ -525,7 +493,7 @@ function rackScanComplete() {
         }
     }
     $j("#rack_scan_overlay").dialog("close");
-    window.rackScanSrcBtn = null;
+    rackScanSrcBtn = null;
     $j("#rack_scan_inputs").html("");
 }
 
@@ -753,10 +721,10 @@ function chooseColumnSet() {
     });
 </script>
 
-        <!-- Adds the dropdowns for lab and scanner, and possibly a file chooser. -->
-    <div id="rack_scan_overlay">
-        <div id="rack_scan_inputs"/>
-    </div>
+<%-- Adds the overlay elements for ajax rack scanner See: /vessel/ajax_div_rack_scanner.jsp --%>
+<div id="rack_scan_overlay">
+    <%@include file="/vessel/ajax_div_rack_scanner.jsp"%>
+</div>
 
 </stripes:layout-component>
 </stripes:layout-render>
