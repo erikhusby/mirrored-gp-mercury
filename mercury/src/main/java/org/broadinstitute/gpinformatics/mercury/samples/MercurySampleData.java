@@ -168,21 +168,25 @@ public class MercurySampleData implements SampleData {
         private double totalDna;
 
         public QuantData(MercurySample mercurySample) {
-            LabVessel labVessel = mercurySample.getLabVessel().iterator().next();
-            volume = labVessel.getVolume().doubleValue();
-            // todo jmt stop at first
-            List<LabMetric> labMetrics = labVessel.getNearestMetricsOfType(LabMetric.MetricType.INITIAL_PICO,
-                    TransferTraverserCriteria.TraversalDirection.Descendants);
-            if (labMetrics != null && !labMetrics.isEmpty()) {
-                // todo jmt most recent
-                LabMetric labMetric = labMetrics.get(0);
-                concentration = labMetric.getValue().doubleValue();
-                totalDna = labMetric.getTotalNg().doubleValue();
-                LabMetricRun labMetricRun = labMetric.getLabMetricRun();
-                if (labMetricRun == null) {
-                    picoRunDate = labMetric.getCreatedDate();
-                } else {
-                    picoRunDate = labMetricRun.getRunDate();
+            if (!mercurySample.getLabVessel().isEmpty()) {
+                LabVessel labVessel = mercurySample.getLabVessel().iterator().next();
+                volume = labVessel.getVolume().doubleValue();
+
+                List<LabMetric> labMetrics = labVessel.getNearestMetricsOfType(LabMetric.MetricType.INITIAL_PICO,
+                        TransferTraverserCriteria.TraversalDirection.Descendants);
+                if (labMetrics != null && !labMetrics.isEmpty()) {
+                    // Use most recent
+                    LabMetric labMetric = labMetrics.get(labMetrics.size() - 1);
+                    concentration = labMetric.getValue().doubleValue();
+                    totalDna = labMetric.getTotalNg().doubleValue();
+                    LabMetricRun labMetricRun = labMetric.getLabMetricRun();
+
+                    // Generic uploads don't have runs
+                    if (labMetricRun == null) {
+                        picoRunDate = labMetric.getCreatedDate();
+                    } else {
+                        picoRunDate = labMetricRun.getRunDate();
+                    }
                 }
             }
         }
