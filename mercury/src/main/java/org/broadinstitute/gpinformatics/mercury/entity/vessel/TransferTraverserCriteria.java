@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -404,6 +405,7 @@ public abstract class TransferTraverserCriteria {
         public void evaluateVesselPostOrder(Context context) {
         }
 
+        @Nullable
         public List<LabMetric> getNearestMetrics() {
             int nearest = Integer.MAX_VALUE;
             for (Map.Entry<Integer, List<LabMetric>> labMetricsForHopCount : labMetricsAtHop.entrySet()) {

@@ -636,6 +636,7 @@ public abstract class LabVessel implements Serializable {
      *
      * @return A list of the closest metrics of the type specified, ordered by ascending date
      */
+    @Nullable
     public List<LabMetric> getNearestMetricsOfType(LabMetric.MetricType metricType,
             TransferTraverserCriteria.TraversalDirection traversalDirection) {
         if (getContainerRole() != null) {

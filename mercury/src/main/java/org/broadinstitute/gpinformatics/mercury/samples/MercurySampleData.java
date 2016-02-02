@@ -6,10 +6,15 @@ import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricRun;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -27,15 +32,32 @@ public class MercurySampleData implements SampleData {
     private final boolean hasData;
     private Date receiptDate;
     private String materialType;
+    private Date picoRunDate;
+    private double volume;
+    private Double concentration;
+    private double totalDna;
 
     public MercurySampleData(@Nonnull String sampleId, @Nonnull Set<Metadata> metadata) {
         this(sampleId, metadata, null);
     }
+
     public MercurySampleData(@Nonnull String sampleId, @Nonnull Set<Metadata> metadata, @Nullable Date receiptDate) {
         this.sampleId = sampleId;
         hasData = !metadata.isEmpty();
         this.receiptDate = receiptDate;
         extractSampleDataFromMetadata(metadata);
+    }
+
+    public MercurySampleData(@Nonnull MercurySample mercurySample) {
+        sampleId = mercurySample.getSampleKey();
+        hasData = !mercurySample.getMetadata().isEmpty();
+        receiptDate = mercurySample.getReceivedDate();
+        QuantData quantData = new QuantData(mercurySample);
+        picoRunDate = quantData.getPicoRunDate();
+        volume = quantData.getVolume();
+        concentration = quantData.getConcentration();
+        totalDna = quantData.getTotalDna();
+        extractSampleDataFromMetadata(mercurySample.getMetadata());
     }
 
     private void extractSampleDataFromMetadata(Set<Metadata> metadata) {
@@ -92,7 +114,7 @@ public class MercurySampleData implements SampleData {
 
     @Override
     public Date getPicoRunDate() {
-        return null;
+        return picoRunDate;
     }
 
     /**
@@ -127,12 +149,59 @@ public class MercurySampleData implements SampleData {
 
     @Override
     public double getVolume() {
-        return 0;
+        return volume;
     }
 
     @Override
     public Double getConcentration() {
-        return null;
+        return concentration;
+    }
+
+    /**
+     * A sample may have a root MetadataSource of BSP (i.e. BspSampleData), but have aliquots that are managed by
+     * Mercury.  This class returns Mercury quant information.
+     */
+    public static class QuantData {
+        private Date picoRunDate;
+        private double volume;
+        private Double concentration;
+        private double totalDna;
+
+        public QuantData(MercurySample mercurySample) {
+            LabVessel labVessel = mercurySample.getLabVessel().iterator().next();
+            volume = labVessel.getVolume().doubleValue();
+            // todo jmt stop at first
+            List<LabMetric> labMetrics = labVessel.getNearestMetricsOfType(LabMetric.MetricType.INITIAL_PICO,
+                    TransferTraverserCriteria.TraversalDirection.Descendants);
+            if (labMetrics != null && !labMetrics.isEmpty()) {
+                // todo jmt most recent
+                LabMetric labMetric = labMetrics.get(0);
+                concentration = labMetric.getValue().doubleValue();
+                totalDna = labMetric.getTotalNg().doubleValue();
+                LabMetricRun labMetricRun = labMetric.getLabMetricRun();
+                if (labMetricRun == null) {
+                    picoRunDate = labMetric.getCreatedDate();
+                } else {
+                    picoRunDate = labMetricRun.getRunDate();
+                }
+            }
+        }
+
+        public Date getPicoRunDate() {
+            return picoRunDate;
+        }
+
+        public double getVolume() {
+            return volume;
+        }
+
+        public Double getConcentration() {
+            return concentration;
+        }
+
+        public double getTotalDna() {
+            return totalDna;
+        }
     }
 
     /**
@@ -205,7 +274,7 @@ public class MercurySampleData implements SampleData {
 
     @Override
     public double getTotal() {
-        return 0;
+        return totalDna;
     }
 
     @Override
