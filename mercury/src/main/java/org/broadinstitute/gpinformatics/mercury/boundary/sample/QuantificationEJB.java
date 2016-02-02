@@ -1,10 +1,13 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.sample;
 
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LabMetricProcessor;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
@@ -64,12 +67,36 @@ public class QuantificationEJB {
         }
     }
 
-    public void storeQuants(Set<LabMetric> labMetrics) {
+    public void storeQuants(Set<LabMetric> labMetrics, LabMetric.MetricType quantType,
+            MessageCollection messageCollection) {
         List<LabVessel> vessels = new ArrayList<>();
         for (LabMetric labMetric : labMetrics) {
             labMetric.getLabVessel().addMetric(labMetric);
             vessels.add(labMetric.getLabVessel());
         }
+        updateRisk(labMetrics, quantType, messageCollection);
         labVesselDao.persistAll(vessels);
+    }
+
+    /**
+     * Update the risk associated with the ProductOrderSamples.
+     */
+    public void updateRisk(Set<LabMetric> labMetrics, LabMetric.MetricType quantType,
+            MessageCollection messageCollection) {
+        if (quantType == LabMetric.MetricType.INITIAL_PICO) {
+            int calcRiskCount = 0;
+            for (LabMetric localLabMetric : labMetrics) {
+                if (localLabMetric.getLabMetricDecision() != null) {
+                    for (SampleInstanceV2 sampleInstanceV2 : localLabMetric.getLabVessel().getSampleInstancesV2()) {
+                        ProductOrderSample singleProductOrderSample = sampleInstanceV2.getSingleProductOrderSample();
+                        if (singleProductOrderSample != null) {
+                            singleProductOrderSample.calculateRisk();
+                            calcRiskCount++;
+                        }
+                    }
+                }
+            }
+            messageCollection.addInfo("Calculated risk for " + calcRiskCount + " samples.");
+        }
     }
 }
