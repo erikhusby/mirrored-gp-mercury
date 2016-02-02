@@ -164,6 +164,17 @@
                 </c:if>
             </security:authorizeBlock>
 
+            <security:authorizeBlock roles="<%= roles(PDM, Developer) %>">
+                <div class="view-control-group control-group">
+                    <label class="control-label label-form">Initial Quant In Mercury</label>
+                    <div class="controls">
+                        <div class="form-value">
+                                ${actionBean.editProduct.hasInitialQuantInMercury() ? "Yes" : "No"}
+                        </div>
+                    </div>
+                </div>
+            </security:authorizeBlock>
+
             <security:authorizeBlock roles="<%= roles(PDM, LabManager, Developer) %>">
                 <div class="view-control-group control-group">
                     <label class="control-label label-form">Workflow</label>

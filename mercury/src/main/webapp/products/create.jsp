@@ -385,6 +385,17 @@
 
                 <security:authorizeBlock roles="<%= roles(PDM, Developer) %>">
                     <div class="control-group">
+                        <stripes:label for="initialQuantInMercury" class="control-label">
+                            Initial Quant in Mercury
+                        </stripes:label>
+                        <div class="controls">
+                            <stripes:checkbox id="initialQuantInMercury" name="editProduct.initialQuantInMercury" style="margin-top: 10px;"/>
+                        </div>
+                    </div>
+                </security:authorizeBlock>
+
+                <security:authorizeBlock roles="<%= roles(PDM, Developer) %>">
+                    <div class="control-group">
                         <stripes:label for="workflow" class="control-label">
                             Workflow
                         </stripes:label>
