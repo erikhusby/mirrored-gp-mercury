@@ -52,6 +52,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventName;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.AliquotParameters;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
@@ -91,6 +92,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
 
@@ -445,8 +447,9 @@ public class ExomeExpressEndToEndTest {
                     qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
 
 
-            LabBatch fctBatch = new LabBatch("FCT-3", Collections.singleton((LabVessel) denatureTube),
-                                             LabBatch.LabBatchType.FCT, BigDecimal.valueOf(12.33f));
+            LabBatch fctBatch = new LabBatch("FCT-3", LabBatch.LabBatchType.FCT,
+                    IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell, denatureTube, BigDecimal.valueOf(12.33f));
+
 
             HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
                     new HiSeq2500FlowcellEntityBuilder(bettaLimsMessageTestFactory,

@@ -41,6 +41,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -523,40 +524,36 @@ public class LabBatchFixUpTest extends Arquillian {
 
     @Test(enabled = false)
     public void fixupQual680(){
-        createFctsWithoutLcset(Collections.singletonList("AB56073486"), IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell,
-                8, new BigDecimal("15"), "QUAL-680 create FCT tickets without LCSET");
+        createFctsWithoutLcset("AB56073486", IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell, new BigDecimal("15"),
+                IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell.getVesselGeometry().getVesselPositions(),
+                "QUAL-680 create FCT tickets without LCSET");
     }
 
     /**
      * If a denature tube contains only positive controls, it doesn't have an LCSET (until control inference is
      * removed), so the Create FCT Ticket page can't be used.  This method is adapted from that ActionBean.
      */
-    private void createFctsWithoutLcset(List<String> selectedVesselLabels,
-            IlluminaFlowcell.FlowcellType selectedType, int numberOfLanes, BigDecimal loadingConc, String reason) {
+    private void createFctsWithoutLcset(String startingTubeLabel, IlluminaFlowcell.FlowcellType selectedType,
+                                        BigDecimal loadingConc, VesselPosition[] lanes, String reason) {
         try {
             userBean.loginOSUser();
             userTransaction.begin();
-            List<LabBatch> createdBatches = new ArrayList<>();
-            for (String denatureTubeBarcode : selectedVesselLabels) {
-                Set<LabVessel> vesselSet = new HashSet<>(labVesselDao.findByListIdentifiers(selectedVesselLabels));
 
-                LabBatch.LabBatchType batchType = selectedType.getBatchType();
-                int lanesPerFlowcell = selectedType.getVesselGeometry().getVesselPositions().length;
-                CreateFields.IssueType issueType = selectedType.getIssueType();
-                for (int i = 0; i < numberOfLanes; i += lanesPerFlowcell) {
-                    LabBatch batch = new LabBatch(denatureTubeBarcode + " FCT ticket", vesselSet, batchType,
-                            loadingConc, selectedType);
-                    batch.setBatchDescription(batch.getBatchName());
-                    labBatchEjb.createLabBatch(batch, userBean.getLoginUserName(), issueType);
-                    createdBatches.add(batch);
-                }
-            }
+            LabBatch.LabBatchType batchType = selectedType.getBatchType();
+            CreateFields.IssueType issueType = selectedType.getIssueType();
+
+            LabVessel startingTube = labVesselDao.findByIdentifier(startingTubeLabel);
+            LabBatch batch = new LabBatch(startingTubeLabel + " FCT ticket", Collections.singletonList(
+                    new LabBatch.VesselToLanesInfo(Arrays.asList(lanes), loadingConc, startingTube)),
+                    batchType, selectedType);
+            batch.setBatchDescription(batch.getBatchName());
+            labBatchEjb.createLabBatch(batch, userBean.getLoginUserName(), issueType);
+
             labBatchDao.persist(new FixupCommentary(reason));
             labBatchDao.flush();
             userTransaction.commit();
-            for (LabBatch createdBatch : createdBatches) {
-                System.out.println("Created " + createdBatch.getBatchName());
-            }
+            System.out.println("Created " + batch.getBatchName());
+
         } catch (NotSupportedException | SystemException | HeuristicMixedException | HeuristicRollbackException |
                 RollbackException e) {
             throw new RuntimeException(e);

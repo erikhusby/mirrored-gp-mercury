@@ -7,10 +7,12 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.GenericReagentDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
@@ -92,6 +94,9 @@ public class LabEventFixupTest extends Arquillian {
 
     @Inject
     private StaticPlateDao staticPlateDao;
+
+    @Inject
+    private IlluminaFlowcellDao illuminaFlowcellDao;
 
     @Inject
     private GenericReagentDao genericReagentDao;
@@ -1289,4 +1294,49 @@ public class LabEventFixupTest extends Arquillian {
         labEventDao.flush();
         utx.commit();
     }
+    /**
+     * ANXX flowcells are 2500s with 8 lanes, not 2 lanes.
+     */
+    @Test(enabled = false)
+    public void fixupGplim3932() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+        List<IlluminaFlowcell> flowcells = illuminaFlowcellDao.findLikeBarcode("%ANXX");
+        for (IlluminaFlowcell flowcell : flowcells) {
+            for (LabEvent labEvent : flowcell.getTransfersTo()) {
+                if (labEvent.getLabEventType() == LabEventType.FLOWCELL_TRANSFER) {
+                    for (SectionTransfer sectionTransfer : labEvent.getSectionTransfers()) {
+                        if (sectionTransfer.getTargetSection() == SBSSection.ALL2) {
+                            sectionTransfer.setTargetSection(SBSSection.FLOWCELL8);
+                            flowcell.setFlowcellType(IlluminaFlowcell.FlowcellType.HiSeqFlowcell);
+                            System.out.println("Changing section in transfer to " + flowcell.getLabel());
+                        }
+                    }
+                }
+            }
+        }
+        illuminaFlowcellDao.persist(new FixupCommentary("GPLIM-3932 change 2500 ANXX flowcells to 8 lanes"));
+        illuminaFlowcellDao.flush();
+        utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim3967() throws Exception {
+        // Deletes duplicate thermocycler event id=1170398.
+        userBean.loginOSUser();
+        utx.begin();
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, 1170398L);
+        Assert.assertTrue(CollectionUtils.isEmpty(labEvent.getReagents()));
+        Assert.assertTrue(CollectionUtils.isEmpty(labEvent.getLabEventReagents()));
+        Assert.assertTrue(CollectionUtils.isEmpty(labEvent.getCherryPickTransfers()));
+        Assert.assertTrue(CollectionUtils.isEmpty(labEvent.getSectionTransfers()));
+        Assert.assertTrue(CollectionUtils.isEmpty(labEvent.getVesselToSectionTransfers()));
+        Assert.assertTrue(CollectionUtils.isEmpty(labEvent.getVesselToVesselTransfers()));
+        System.out.println("Deleting " + labEvent.getLabEventType() + " " + labEvent.getLabEventId());
+        labEventDao.remove(labEvent);
+        labEventDao.persist(new FixupCommentary("GPLIM-3967 delete thermocycler event"));
+        labEventDao.flush();
+        utx.commit();
+    }
+
 }

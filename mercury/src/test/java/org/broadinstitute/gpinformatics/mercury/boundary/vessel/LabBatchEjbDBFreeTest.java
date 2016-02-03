@@ -13,9 +13,11 @@ import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
@@ -29,10 +31,12 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -172,8 +176,16 @@ public class LabBatchEjbDBFreeTest {
     @Test
     void testCreateFCTBatch() throws Exception {
 
-        LabBatch testBatch = new LabBatch(testFCTKey, new HashSet<>(mapBarcodeToTube.values()),
-                LabBatch.LabBatchType.FCT);
+        List<LabBatch.VesselToLanesInfo> vesselToLanesInfo = new ArrayList<>();
+        int idx = 0;
+        for (LabVessel tube : mapBarcodeToTube.values()) {
+            VesselPosition lane =
+                    IlluminaFlowcell.FlowcellType.HiSeqFlowcell.getVesselGeometry().getVesselPositions()[idx++];
+            vesselToLanesInfo.add(
+                    new LabBatch.VesselToLanesInfo(Collections.singletonList(lane), BigDecimal.TEN, tube));
+        }
+        LabBatch testBatch = new LabBatch(testFCTKey, vesselToLanesInfo, LabBatch.LabBatchType.FCT,
+                IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell);
         labBatchEJB.createLabBatch(testBatch, "scottmat", CreateFields.IssueType.FLOWCELL);
         EasyMock.verify(mockJira);
 

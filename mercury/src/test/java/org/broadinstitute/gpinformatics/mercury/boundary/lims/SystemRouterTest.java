@@ -1062,11 +1062,8 @@ public class SystemRouterTest extends BaseEventTest {
                    is(SystemRouter.System.MERCURY));
 
 
-        Set<LabVessel> starterVessels = Collections.singleton((LabVessel) denatureTube);
-        //create a couple Miseq batches then one FCT (2500) batch
-        LabBatch fctBatch = new LabBatch(FLOWCELL_2500_TICKET, starterVessels, LabBatch.LabBatchType.FCT,
-                                         BigDecimal.valueOf(
-                                                 12.33f));
+        LabBatch fctBatch = new LabBatch(FLOWCELL_2500_TICKET, LabBatch.LabBatchType.FCT,
+                IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell, denatureTube, BigDecimal.valueOf(12.33f));
 
         HiSeq2500FlowcellEntityBuilder flowcellEntityBuilder =
                 runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), BARCODE_SUFFIX + "ADXX",
@@ -1204,11 +1201,8 @@ public class SystemRouterTest extends BaseEventTest {
                 (reagentKit)),
                    is(SystemRouter.System.BOTH));
 
-
-        Set<LabVessel> starterVessels = Collections.singleton((LabVessel) denatureTube);
-        //create a couple Miseq batches then one FCT (2500) batch
-        LabBatch fctBatch = new LabBatch(FLOWCELL_2500_TICKET, starterVessels, LabBatch.LabBatchType.FCT, BigDecimal
-                .valueOf(12.33f));
+        LabBatch fctBatch = new LabBatch(FLOWCELL_2500_TICKET, LabBatch.LabBatchType.FCT,
+                IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell, denatureTube, BigDecimal.valueOf(12.33f));
 
         HiSeq2500FlowcellEntityBuilder flowcellEntityBuilder =
                 runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), BARCODE_SUFFIX + "ADXX",
