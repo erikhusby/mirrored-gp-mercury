@@ -29,7 +29,10 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
 import org.mockito.Mockito;
@@ -259,6 +262,34 @@ public class BucketEjbDbFreeTest {
         pdo.getProduct().setWorkflow(Workflow.NONE);
 
         Collection<BucketEntry> bucketEntries = bucketEjb.applyBucketCriteria(mockVessels, pdo, "whatever");
+        Assert.assertTrue(bucketEntries.isEmpty());
+    }
+
+    public void testDuplicateSamplesToPicoBucket() throws Exception {
+        Workflow workflow = Workflow.AGILENT_EXOME_EXPRESS;
+        setupCoreMocks(workflow, true);
+
+        expect(bspSampleDataFetcher.fetchSampleData(EasyMock.<Collection<String>>anyObject()))
+                .andReturn(bspSampleDataMap);
+
+        replay(mocks);
+        WorkflowConfig workflowConfig = workflowLoader.load();
+        ProductWorkflowDef workflowDef = workflowConfig.getWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
+
+        WorkflowBucketDef picoBucket = workflowDef.getEffectiveVersion().findBucketDefByName("Pico/Plating Bucket");
+
+        Map<WorkflowBucketDef, Collection<LabVessel>> newBucketEntry = new HashMap<>();
+        LabVessel labVessel = mockVessels.get(1);
+        newBucketEntry.put(picoBucket, Collections.singleton(labVessel));
+
+        Collection<BucketEntry> bucketEntries = bucketEjb
+                .add(newBucketEntry, BucketEntry.BucketEntryType.PDO_ENTRY, LabEvent.UI_PROGRAM_NAME, "seinfeld",
+                        LabEvent.UI_EVENT_LOCATION, pdo);
+        Assert.assertEquals(bucketEntries.size(), 1);
+
+        bucketEntries = bucketEjb
+                .add(newBucketEntry, BucketEntry.BucketEntryType.PDO_ENTRY, LabEvent.UI_PROGRAM_NAME, "seinfeld",
+                        LabEvent.UI_EVENT_LOCATION, pdo);
         Assert.assertTrue(bucketEntries.isEmpty());
     }
 

@@ -204,7 +204,9 @@ public abstract class LabVessel implements Serializable {
     private Set<LabMetric> labMetrics = new HashSet<>();
 
     @Transient
-    private Map<String, Set<LabMetric>> metricMap;
+    private Map<LabMetric.MetricType, Set<LabMetric>> ancestorMetricMap;
+    @Transient
+    private Map<LabMetric.MetricType, Set<LabMetric>> descendantMetricMap;
 
     @Transient
     private MaterialType latestMaterialType=null;
@@ -1821,27 +1823,65 @@ public abstract class LabVessel implements Serializable {
     }
 
     /**
-     * This method gets a map of all of the metrics from this vessel and all ancestor/descendant vessels.
+     * This method gets a map of all of the metrics from this vessel and all descendant vessels.
+     *
+     * @return Returns a map of lab metrics keyed by the metric type.
+     */
+    public Map<LabMetric.MetricType, Set<LabMetric>> getMetricsForVesselAndDescendants() {
+        if (descendantMetricMap == null) {
+            descendantMetricMap = buildMetricMap(getDescendantVessels());
+        }
+        return descendantMetricMap;
+    }
+
+    /**
+     * This method gets a map of all of the metrics from this vessel and all ancestor vessels.
      *
      * @return Returns a map of lab metrics keyed by the metric display name.
      */
-    public Map<String, Set<LabMetric>> getMetricsForVesselAndRelatives() {
+    public Map<LabMetric.MetricType, Set<LabMetric>> getMetricsForVesselAndAncestors() {
+        if (ancestorMetricMap == null) {
+            ancestorMetricMap = buildMetricMap(getAncestorVessels());
+        }
+        return ancestorMetricMap;
+    }
+
+    /**
+     * Gets a map of all metrics for both ancestor and descendant vessels
+     * @return Returns a map of lab metrics keyed by the metric display name.
+     */
+    public Map<LabMetric.MetricType, Set<LabMetric>> getMetricsForVesselAndRelatives(){
+        Map<LabMetric.MetricType, Set<LabMetric>> allMetricMap = new HashMap<>();
+
+        Map<LabMetric.MetricType, Set<LabMetric>> ancestorMetricMap = getMetricsForVesselAndAncestors();
+        Map<LabMetric.MetricType, Set<LabMetric>> descendantMetricMap = getMetricsForVesselAndDescendants();
+
+        allMetricMap.putAll(ancestorMetricMap);
+        for ( Map.Entry<LabMetric.MetricType, Set<LabMetric>> mapEntry : descendantMetricMap.entrySet() ) {
+            if( allMetricMap.containsKey( mapEntry.getKey() ) ) {
+                allMetricMap.get(mapEntry.getKey()).addAll(mapEntry.getValue());
+            } else {
+                allMetricMap.put(mapEntry.getKey(), mapEntry.getValue());
+            }
+        }
+        return allMetricMap;
+    }
+
+    private Map<LabMetric.MetricType, Set<LabMetric>> buildMetricMap(Collection<LabVessel> labVessels){
         Set<LabMetric> allMetrics = new HashSet<>();
-        if (metricMap == null) {
-            metricMap = new HashMap<>();
-            allMetrics.addAll(getMetrics());
-            for (LabVessel curVessel : getAncestorAndDescendantVessels()) {
-                allMetrics.addAll(curVessel.getMetrics());
+        Map<LabMetric.MetricType, Set<LabMetric>> metricMap = new HashMap<>();
+        allMetrics.addAll(getMetrics());
+        for (LabVessel curVessel : labVessels) {
+            allMetrics.addAll(curVessel.getMetrics());
+        }
+        Set<LabMetric> metricSet;
+        for (LabMetric metric : allMetrics) {
+            metricSet = metricMap.get(metric.getName());
+            if (metricSet == null) {
+                metricSet = new TreeSet<>();
+                metricMap.put(metric.getName(), metricSet);
             }
-            Set<LabMetric> metricSet;
-            for (LabMetric metric : allMetrics) {
-                metricSet = metricMap.get(metric.getName().getDisplayName());
-                if (metricSet == null) {
-                    metricSet = new TreeSet<>();
-                    metricMap.put(metric.getName().getDisplayName(), metricSet);
-                }
-                metricSet.add(metric);
-            }
+            metricSet.add(metric);
         }
         return metricMap;
     }

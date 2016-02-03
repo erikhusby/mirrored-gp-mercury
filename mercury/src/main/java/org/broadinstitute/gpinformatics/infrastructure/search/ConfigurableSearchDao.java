@@ -391,6 +391,8 @@ public class ConfigurableSearchDao extends GenericDao {
             criterion = Restrictions.gt(searchValue.getPropertyName(), propertyValues.get(0));
         } else if (searchValue.getOperator() == SearchInstance.Operator.LESS_THAN) {
             criterion = Restrictions.lt(searchValue.getPropertyName(), propertyValues.get(0));
+        } else if (searchValue.getOperator() == SearchInstance.Operator.NOT_NULL ) {
+            criterion = Restrictions.isNotNull(searchValue.getPropertyName());
         } else {
             throw new RuntimeException("Unknown operator " + searchValue.getOperator());
         }

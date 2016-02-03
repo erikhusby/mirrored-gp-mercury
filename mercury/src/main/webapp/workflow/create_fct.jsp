@@ -45,11 +45,12 @@
                 var dTable = $j('#tubeList').dataTable();
                 $j('.numLanes', dTable.fnGetNodes()).each(function() {
                     var laneCount = $j(this).val();
-                    if ($.isNumeric(laneCount)) {
-                        sumOfLanes += parseInt(laneCount, 10);
-                    } else {
-                        alert("Number of Lanes must be a number");
-                        $j(this).val("0");
+                    if (laneCount != "") {
+                        if (laneCount.toString().search(/^[0-9]+$/) == 0) {
+                            sumOfLanes += parseInt(laneCount, 10);
+                        } else {
+                            alert("Number of Lanes must be a positive integer");
+                        }
                     }
                 });
                 $('#sumOfLanesDisplayed').text(sumOfLanes);
@@ -156,18 +157,19 @@
                             </td>
                             <td>${rowDto.tubeType}</td>
                             <td><input style='width:8em' class="numLanes" name="rowDtos[${item.index}].numberLanes"
-                                       value="${rowDto.numberLanes}" onchange="updateSumOfLanes()"/></td>
+                                       value="${rowDto.numberLanes}" onkeyup="updateSumOfLanes()"/></td>
                             <td><input style='width:8em' class="loadConc" name="rowDtos[${item.index}].loadingConc"
                                        value="${rowDto.loadingConc}"/></td>
                             <td>${rowDto.eventDate}</td>
-                            <td>${rowDto.product}</td>
+                            <td><span title="${rowDto.startingBatchVessels}">${rowDto.product}</span></td>
                             <input type="hidden" name="rowDtos[${item.index}].barcode" value="${rowDto.barcode}"/>
                             <input type="hidden" name="rowDtos[${item.index}].lcset" value="${rowDto.lcset}"/>
                             <input type="hidden" name="rowDtos[${item.index}].tubeType" value="${rowDto.tubeType}"/>
                             <input type="hidden" name="rowDtos[${item.index}].eventDate" value="${rowDto.eventDate}"/>
                             <input type="hidden" name="rowDtos[${item.index}].product" value="${rowDto.product}"/>
-                            <input type="hidden" name="rowDtos[${item.index}].startingBatchVessel" value="${rowDto.startingBatchVessel}"/>
+                            <input type="hidden" name="rowDtos[${item.index}].startingBatchVessels" value="${rowDto.startingBatchVessels}"/>
                             <input type="hidden" name="rowDtos[${item.index}].lcsetUrl" value="${rowDto.lcsetUrl}"/>
+                            </tr>
                     </c:forEach>
                     </tbody>
                 </table>

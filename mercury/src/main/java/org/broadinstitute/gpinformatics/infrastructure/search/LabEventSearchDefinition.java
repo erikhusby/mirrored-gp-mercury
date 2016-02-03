@@ -104,7 +104,7 @@ public class LabEventSearchDefinition {
                 "reagents", LabEvent.class));
 
         ConfigurableSearchDefinition configurableSearchDefinition = new ConfigurableSearchDefinition(
-                ColumnEntity.LAB_EVENT, 100, criteriaProjections, mapGroupSearchTerms);
+                ColumnEntity.LAB_EVENT, criteriaProjections, mapGroupSearchTerms);
 
         // Allow user to search ancestor and/or descendant events
         // Note:  Terms with alternate search definitions ignore these evaluators and contain logic
@@ -863,7 +863,7 @@ public class LabEventSearchDefinition {
         mapGroupSearchTerms.put("Never Seen", searchTerms);
 
         ConfigurableSearchDefinition configurableSearchDefinition = new ConfigurableSearchDefinition(
-                ColumnEntity.LAB_VESSEL, 100, criteriaProjections, mapGroupSearchTerms);
+                ColumnEntity.LAB_VESSEL, criteriaProjections, mapGroupSearchTerms);
 
         configurableSearchDefinition.addTraversalEvaluator(ConfigurableSearchDefinition.ALTERNATE_DEFINITION_ID
                 , new LabEventVesselTraversalEvaluator() );

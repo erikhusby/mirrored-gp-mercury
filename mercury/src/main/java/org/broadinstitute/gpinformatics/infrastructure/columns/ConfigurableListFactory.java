@@ -333,7 +333,7 @@ public class ConfigurableListFactory {
         }
         columnTabulations.addAll(searchInstance.findTopLevelColumnTabulations());
 
-        PaginationUtil.Pagination pagination = new PaginationUtil.Pagination( configurableSearchDef.getPageSize() );
+        PaginationUtil.Pagination pagination = new PaginationUtil.Pagination( searchInstance.getPageSize() );
 
         configurableSearchDao.startPagination(pagination, criteria, searchInstance, configurableSearchDef );
 
