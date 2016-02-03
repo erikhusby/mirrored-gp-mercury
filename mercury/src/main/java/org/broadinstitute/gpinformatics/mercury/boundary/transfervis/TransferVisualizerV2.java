@@ -27,7 +27,9 @@ import org.json.JSONWriter;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
-import java.awt.*;
+
+import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.Writer;
