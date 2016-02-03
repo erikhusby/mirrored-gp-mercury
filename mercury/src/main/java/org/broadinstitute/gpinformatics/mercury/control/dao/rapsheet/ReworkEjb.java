@@ -405,8 +405,9 @@ public class ReworkEjb {
             String error = e.getLocalizedMessage();
             if (error.startsWith(COULD_NOT_FIND_BUCKET_DEFINITION)) {
                 error = String.format(
-                        "%s cannot be added to '%s' because the product workflow of the sample does not include this bucket.",
-                        bucketCandidate.getSampleKey(), bucket.getBucketDefinitionName());
+                        "%s cannot be added to '%s' because this bucket is invalid for the product '%s'",
+                        bucketCandidate.getSampleKey(), bucket.getBucketDefinitionName(),
+                        bucketCandidate.getProductOrder().getProduct().getProductName());
             }
 
             throw new ValidationException(error);
