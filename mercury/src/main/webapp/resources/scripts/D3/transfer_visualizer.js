@@ -112,7 +112,15 @@ function renderJson(json) {
     // Render tubes.
     var nodeChild = nodeChildEnter.append("rect")
         .attr("class", function (d) {
-            return "nodeChild" + (d.hasOwnProperty('highlight') ? " nodeHighlight" : "");
+            // Finds if barcode is to be highlighted.
+            var doHighlight = false;
+            for (i = 0; i < json.highlights.length; i++) {
+                if ((d.label ? d.label : d.name) == json.highlights[i].barcode) {
+                    doHighlight = true;
+                    break;
+                }
+            }
+            return "nodeChild" + (doHighlight ? " nodeHighlight" : "");
         })
         .attr("x", function (d) {
             return d.x;
