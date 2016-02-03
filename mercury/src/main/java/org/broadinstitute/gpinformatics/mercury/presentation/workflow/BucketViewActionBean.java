@@ -32,6 +32,7 @@ import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketCount;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry_;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
@@ -105,9 +106,9 @@ public class BucketViewActionBean extends CoreActionBean {
     private Bucket bucket;
     private String jiraTicketId;
     private final Set<String> buckets = new HashSet<>();
-    private final List<Long> bucketEntryIds = new ArrayList<>();
+    private List<Long> bucketEntryIds = new ArrayList<>();
     private final List<Long> reworkEntryIds = new ArrayList<>();
-    private final Set<BucketEntry> collectiveEntries = new HashSet<>();
+    private Set<BucketEntry> collectiveEntries = new HashSet<>();
     private final Map<String, WorkflowBucketDef> mapBucketToBucketDef = new HashMap<>();
     private Map<String, Collection<String>> mapBucketToWorkflows;
     private List<BucketEntry> selectedEntries = new ArrayList<>();
@@ -232,6 +233,22 @@ public class BucketViewActionBean extends CoreActionBean {
             labVessels.add(entry.getLabVessel());
         }
         LabVessel.loadSampleDataForBuckets(labVessels);
+    }
+
+    public Resolution fetchSampleData() throws JSONException {
+        collectiveEntries.clear();
+        collectiveEntries
+                .addAll(bucketDao.findListByList(BucketEntry.class, BucketEntry_.bucketEntryId, bucketEntryIds));
+        preFetchSampleData(collectiveEntries);
+
+        Map<Long, JSONObject> sampleData=new HashMap<>(collectiveEntries.size());
+        for (BucketEntry entry : collectiveEntries) {
+            JSONObject item = BucketEntryJsonFactory.toJson(entry, this);
+            sampleData.put(entry.getBucketEntryId(), item);
+        }
+
+        JSONObject tableData = new JSONObject(sampleData);
+        return createTextResolution(tableData.toString());
     }
 
     public String getConfirmationPageTitle() {
@@ -454,6 +471,10 @@ public class BucketViewActionBean extends CoreActionBean {
 
     public List<Long> getBucketEntryIds() {
         return bucketEntryIds;
+    }
+
+    public void setBucketEntryIds(List<Long> bucketEntryIds) {
+        this.bucketEntryIds = bucketEntryIds;
     }
 
     public List<Long> getReworkEntryIds() {

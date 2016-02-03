@@ -295,6 +295,62 @@
             });
         }
 
+        function split(inputArray, size) {
+            var array=inputArray;
+            var out = [];
+            for (arrayItem in array){
+                var subList=[];
+                while (subList.length<=size && array.length!=0) {
+                    subList.push(array.shift());
+                }
+                out.push(subList);
+            }
+            return out;
+        }
+
+        function loadSampleData() {
+            var bucketEntryIds = $j("#bucketEntryForm").find("tr[data-vessel-label]").map(function () {
+                return this.id;
+            }).get();
+
+            if (bucketEntryIds.length != 0) {
+                var splitEntries = split(bucketEntryIds, 100);
+                for (var i = 0; i <= splitEntries.length; i++) {
+                    var dataMap = {};
+                    var subList = splitEntries[i];
+                    dataMap["bucketEntryIds"] = subList;
+                    $j.ajax({
+                        url: "${ctxpath}/workflow/bucketView.action?fetchSampleData",
+                        dataType: 'json',
+                        data: dataMap,
+                        type: "POST",
+                        success: loadTableData
+                    });
+                }
+            }
+        }
+
+        function loadTableData(jsonData) {
+            for (var rowId in jsonData){
+                    if (rowId != undefined) {
+                        rowData = jsonData[rowId];
+                        var parentRow = $j("#" + rowId);
+                        for (var key in rowData) {
+                            var selector = "#" + rowId + "-"+ key;
+                            var cell = $j(selector);
+                            var columnIndex = $j(parentRow).children().index(cell);
+                            var rowIndex = $j(parentRow).parent().children().index($j(parentRow));
+
+                            if (rowIndex >= 0 && columnIndex >= 0) {
+                                oTable.fnUpdate(rowData[key], rowIndex, columnIndex, false, false);
+                            }
+                        }
+                }
+            }
+//            oTable.fnDraw();
+        }
+
+
         $j(document).ready(function () {
             initializeBarcodeEntryDialog();
             setupBucketEvents();
@@ -311,10 +367,8 @@
             <security:authorizeBlock roles="<%= roles(LabManager, PDM, PM, Developer) %>">
                 columnsEditable=true;
             </security:authorizeBlock>
-
-                var editablePdo = function()  {
+            function editablePdo() {
                 if (columnsEditable) {
-                    var oTable = $j('#bucketEntryView').dataTable();
                     $j("td.editable").editable('${ctxpath}/workflow/bucketView.action?changePdo', {
                         'loadurl': '${ctxpath}/workflow/bucketView.action?findPdo',
                         'callback': function (sValue, y) {
@@ -343,7 +397,7 @@
                             };
                         },
 //                        If you need to debug the generated html you need to ignore onblur events
-                        "onblur" : "ignore",
+                        "onblur": "ignore",
                         cssclass: "editable",
                         tooltip: 'Click the value in this field to edit',
                         type: "select",
@@ -359,30 +413,30 @@
                     $j(".editable").removeClass("editable")
                 }
 
-            };
+            }
 
             oTable = $j('#bucketEntryView').dataTable({
                 "oTableTools":ttExportDefines,
-                "aaSorting": [[1,'asc'], [7,'asc']],
-                "aoColumns":[
-                    {"bSortable":false},
-                    {"bSortable": true, "sClass": "nowrap"},
-                    {"bSortable": true, "sClass": "nowrap"},
-                    {"bSortable":true},
-                    {"bSortable":true},
-                    {"bSortable":true},
-                    {"bSortable":true},
-                    {"bSortable":true},
-                    {"bSortable":true},
-                    {"bSortable":true},
-                    {"bSortable":true, "sType":"date"},
-                    {"bSortable": true, "sType": "date"},
-                    {"bSortable":true},
-                    {"bSortable": true, "sClass": "nowrap"},
-                    {"bSortable":true},
-                    {"bSortable":true},
-                    {"bSortable":true},
-                    {"bSortable":true}
+                "aaSorting": [[1,'asc'], [9,'asc']],
+                "aoColumns": [
+                    {"bSortable": false},                       /*checkbox*/
+                    {"bSortable": true, "sClass": "nowrap"},    /*vessel name*/
+                    {"bSortable": true, "sClass": "nowrap"},    /*sample name*/
+                    {"bSortable": true},                        /*material type*/
+                    {"bSortable": true},                        /*pdo*/
+                    {"bSortable": true},                        /*pdo name*/
+                    {"bSortable": true},                        /*pdo owner*/
+                    {"bSortable": true},                        /*batch name*/
+                    {"bSortable": true},                        /*workflow*/
+                    {"bSortable": true},                        /*product*/
+                    {"bSortable": true},                        /*add-ons*/
+                    {"bSortable": true, "sType": "date"},       /*receipt date*/
+                    {"bSortable": true, "sType": "date"},       /*created date*/
+                    {"bSortable": true, "sClass": "nowrap"},    /*entry type*/
+                    {"bSortable": true},                        /*rework reason*/
+                    {"bSortable": true},                        /*rework comment*/
+                    {"bSortable": true},                        /*rework user*/
+                    {"bSortable": true, "sType": "date"}        /*rework date*/
                 ],
                 "fnDrawCallback": editablePdo
             });
@@ -606,9 +660,7 @@
                             <c:if test="${!stat.last}">&nbsp;</c:if>
                         </c:forEach>
                     </td>
-                    <td class="ellipsis">
-                            ${entry.labVessel.latestMaterialType.displayName}
-                    </td>
+                    <td id="${entry.bucketEntryId}-MATERIAL_TYPE" class="ellipsis"></td>
                     <td class="editable"><span class="ellipsis">${entry.productOrder.businessKey}</span><span
                             style="display: none;"
                             class="icon-pencil"></span>
@@ -619,29 +671,17 @@
                     <td class="ellipsis">
                             ${actionBean.getUserFullName(entry.productOrder.createdBy)}
                     </td>
+                    <td id="${entry.bucketEntryId}-BATCHES"></td>
+                    <td id="${entry.bucketEntryId}-WORKFLOW" class="ellipsis" style="max-width: 250px;"></td>
                     <td>
-                        <c:forEach items="${entry.labVessel.nearestWorkflowLabBatches}" var="batch" varStatus="stat">
-                            ${actionBean.getLink(batch.businessKey)} <c:if test="${!stat.last}">&nbsp;</c:if></c:forEach>
-                    </td>
-                    <td>
-                        <div class="ellipsis" style="max-width: 250px;">
-                                ${mercuryStatic:join(entry.workflowNames, "<br/>")}
-                        </div>
-                    </td>
-                    <td>
-                        <div class="ellipsis" style="max-width: 250px;">${entry.productOrder.product.name}</div>
+                    <div class="ellipsis" style="max-width: 250px;">${entry.productOrder.product.name}</div>
                     </td>
                     <td>
                         <div class="ellipsis" style="max-width: 250px;">
                                 ${entry.productOrder.getAddOnList("<br/>")}
                         </div>
                     </td>
-                    <td class="ellipsis">
-                        <c:forEach items="${entry.labVessel.mercurySamples}" var="mercurySample" varStatus="stat">
-                            <fmt:formatDate value="${mercurySample.receivedDate}" pattern="MM/dd/yyyy HH:mm"/>
-                            <c:if test="${!stat.last}">&nbsp;</c:if>
-                        </c:forEach>
-                    </td>
+                    <td id="${entry.bucketEntryId}-RECEIPT_DATE" class="ellipsis"></td>
                     <td class="ellipsis">
                         <fmt:formatDate value="${entry.createdDate}" pattern="MM/dd/yyyy HH:mm"/>
                     </td>
