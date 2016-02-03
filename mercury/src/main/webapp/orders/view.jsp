@@ -640,7 +640,7 @@ function formatInput(item) {
 
     <p><span style="float:left; width:185px;">Update status to:</span>
         <c:forEach items="<%=ProductOrderSample.ProceedIfOutOfSpec.values()%>" var="pOos">
-            <label style="float:left;width:60px;" for="onRiskDialogId">
+            <label style="float:left;width:60px;">
                 <input type="radio" name="pOosRadio" value="${pOos.toString()}" style="float:left;margin-right:5px;">
                 ${pOos.displayName}
             </label>
