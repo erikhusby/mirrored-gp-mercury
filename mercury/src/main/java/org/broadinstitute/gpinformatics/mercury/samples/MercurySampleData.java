@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserC
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -170,7 +171,10 @@ public class MercurySampleData implements SampleData {
         public QuantData(MercurySample mercurySample) {
             if (!mercurySample.getLabVessel().isEmpty()) {
                 LabVessel labVessel = mercurySample.getLabVessel().iterator().next();
-                volume = labVessel.getVolume().doubleValue();
+                BigDecimal vesselVolume = labVessel.getVolume();
+                if (vesselVolume != null) {
+                    volume = vesselVolume.doubleValue();
+                }
 
                 List<LabMetric> labMetrics = labVessel.getNearestMetricsOfType(LabMetric.MetricType.INITIAL_PICO,
                         TransferTraverserCriteria.TraversalDirection.Descendants);

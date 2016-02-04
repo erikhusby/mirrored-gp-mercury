@@ -211,13 +211,15 @@ public class SampleDataFetcher implements Serializable {
             if (sample.needsBspMetaData()) {
                 MercurySample mercurySample;
                 String sampleName;
-                Product product;
-                ProductOrderSample productOrderSample;
+                Product product = null;
+                ProductOrderSample productOrderSample = null;
                 if (OrmUtil.proxySafeIsInstance(sample, MercurySample.class)) {
                     mercurySample = OrmUtil.proxySafeCast(sample, MercurySample.class);
                     sampleName = mercurySample.getSampleKey();
-                    productOrderSample = mercurySample.getProductOrderSamples().iterator().next();
-                    product = productOrderSample.getProductOrder().getProduct();
+                    if (!mercurySample.getProductOrderSamples().isEmpty()) {
+                        productOrderSample = mercurySample.getProductOrderSamples().iterator().next();
+                        product = productOrderSample.getProductOrder().getProduct();
+                    }
                 } else {
                     productOrderSample = OrmUtil.proxySafeCast(sample, ProductOrderSample.class);
                     product = productOrderSample.getProductOrder().getProduct();
@@ -229,7 +231,7 @@ public class SampleDataFetcher implements Serializable {
                     mercurySamplesWithMercurySource.add(mercurySample);
                 } else {
                     sampleNames.add(sampleName);
-                    if (product.hasInitialQuantInMercury()) {
+                    if (product != null && product.hasInitialQuantInMercury()) {
                         mapMercuryQuantIdToPdoSample.put(sampleName, productOrderSample);
                     }
                 }

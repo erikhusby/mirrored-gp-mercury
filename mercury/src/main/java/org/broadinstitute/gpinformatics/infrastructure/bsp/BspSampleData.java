@@ -489,8 +489,10 @@ public class BspSampleData implements SampleData {
             MercurySampleData.QuantData quantData = new MercurySampleData.QuantData(mercurySample);
             columnToValue.put(BSPSampleSearchColumn.VOLUME, String.valueOf(quantData.getVolume()));
             columnToValue.put(BSPSampleSearchColumn.CONCENTRATION, String.valueOf(quantData.getConcentration()));
-            columnToValue.put(BSPSampleSearchColumn.PICO_RUN_DATE,
-                    FastDateFormat.getInstance(BSP_DATE_FORMAT_STRING).format(quantData.getPicoRunDate()));
+            if (quantData.getPicoRunDate() != null) {
+                columnToValue.put(BSPSampleSearchColumn.PICO_RUN_DATE,
+                        FastDateFormat.getInstance(BSP_DATE_FORMAT_STRING).format(quantData.getPicoRunDate()));
+            }
             columnToValue.put(BSPSampleSearchColumn.TOTAL_DNA, String.valueOf(quantData.getTotalDna()));
         }
     }

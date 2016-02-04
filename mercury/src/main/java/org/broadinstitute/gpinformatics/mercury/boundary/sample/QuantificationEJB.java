@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.sample;
 
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
@@ -17,7 +18,9 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Stateful
@@ -83,20 +86,31 @@ public class QuantificationEJB {
      */
     public void updateRisk(Set<LabMetric> labMetrics, LabMetric.MetricType quantType,
             MessageCollection messageCollection) {
+        Map<ProductOrder, List<ProductOrderSample>> mapPdoToListPdoSamples = new HashMap<>();
         if (quantType == LabMetric.MetricType.INITIAL_PICO) {
-            int calcRiskCount = 0;
             for (LabMetric localLabMetric : labMetrics) {
                 if (localLabMetric.getLabMetricDecision() != null) {
                     for (SampleInstanceV2 sampleInstanceV2 : localLabMetric.getLabVessel().getSampleInstancesV2()) {
                         ProductOrderSample singleProductOrderSample = sampleInstanceV2.getSingleProductOrderSample();
                         if (singleProductOrderSample != null) {
-                            singleProductOrderSample.calculateRisk();
-                            calcRiskCount++;
+                            ProductOrder productOrder = singleProductOrderSample.getProductOrder();
+                            List<ProductOrderSample> productOrderSamples =
+                                    mapPdoToListPdoSamples.get(productOrder);
+                            if (productOrderSamples == null) {
+                                productOrderSamples = new ArrayList<>();
+                                mapPdoToListPdoSamples.put(productOrder, productOrderSamples);
+                            }
+                            productOrderSamples.add(singleProductOrderSample);
                         }
                     }
                 }
             }
-            messageCollection.addInfo("Calculated risk for " + calcRiskCount + " samples.");
+            int calcRiskCount = 0;
+            for (Map.Entry<ProductOrder, List<ProductOrderSample>> pdoListPdoSamplesEntry :
+                    mapPdoToListPdoSamples.entrySet()) {
+                calcRiskCount += pdoListPdoSamplesEntry.getKey().calculateRisk(pdoListPdoSamplesEntry.getValue());
+            }
+            messageCollection.addInfo(calcRiskCount + " samples are on risk.");
         }
     }
 }
