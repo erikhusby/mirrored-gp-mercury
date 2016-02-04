@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabMetricRunDao;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricRun;
@@ -20,13 +20,16 @@ public class LabMetricEtl extends GenericEntityEtl<LabMetric, LabMetric> {
     private final String nullVesselKey = "No lab vessel for metric";
     private final String vesselNotTubeKey = "Metric vessel is not a tube";
 
+    private BSPUserList userList;
+
     public LabMetricEtl() {
         initLogging();
     }
 
     @Inject
-    public LabMetricEtl(LabMetricRunDao labMetricDao) {
+    public LabMetricEtl(LabMetricRunDao labMetricDao, BSPUserList userList) {
         super(LabMetric.class, "lab_metric", "lab_metric_aud", "lab_metric_id", labMetricDao);
+        this.userList = userList;
         initLogging();
     }
 
@@ -71,15 +74,28 @@ public class LabMetricEtl extends GenericEntityEtl<LabMetric, LabMetric> {
             LabVessel labVessel = entity.getLabVessel();
             LabMetricRun run = entity.getLabMetricRun();
 
-            records.add(genericRecord(etlDateStr, isDelete,
-                entity.getLabMetricId(),
-                format(entity.getName().name()),
-                format(entity.getUnits().name()),
-                format(entity.getValue()),
-                format(run != null ? run.getRunName() : null),
-                format(run != null ? run.getRunDate() : entity.getCreatedDate()),
-                format(labVessel != null ? labVessel.getLabVesselId() : null),
-                format(entity.getVesselPosition())));
+            String decider = null;
+            if( entity.getLabMetricDecision() != null ) {
+                Long userId = entity.getLabMetricDecision().getDeciderUserId();
+                decider = this.userList.getUserFullName(userId);
+            }
+
+            records.add(
+                    genericRecord(etlDateStr, isDelete,
+                            entity.getLabMetricId(),
+                            format(entity.getName().name()),
+                            format(entity.getUnits().name()),
+                            format(entity.getValue()),
+                            format(run != null ? run.getRunName() : null),
+                            format(run != null ? run.getRunDate() : entity.getCreatedDate()),
+                            format(labVessel != null ? labVessel.getLabel() : null),
+                            format(entity.getVesselPosition()),
+                            format(entity.getLabMetricDecision() != null ? entity.getLabMetricDecision().getDecision().toString() : null),
+                            format(entity.getLabMetricDecision() != null ? entity.getLabMetricDecision().getDecidedDate() : null),
+                            format(decider),
+                            format(entity.getLabMetricDecision() != null ? entity.getLabMetricDecision().getOverrideReason() : null)
+                            )
+            );
 
         } catch(Exception e) {
             // Uncaught RuntimeExceptions kill the injected LabMetricEtl in ExtractTransform.

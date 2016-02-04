@@ -278,8 +278,12 @@ CREATE TABLE lab_metric (
   quant_value      NUMBER(19,2),
   run_name         VARCHAR2(255),
   run_date         DATE,
-  lab_vessel_id    NUMERIC(19) NOT NULL,
-  well             VARCHAR2(255),
+  vessel_barcode   VARCHAR2(40) NOT NULL,
+  rack_position    VARCHAR2(255),
+  decision         VARCHAR2(12),
+  decision_date    DATE,
+  decider          VARCHAR2(255),
+  override_reason  VARCHAR2(255),
   etl_date         DATE NOT NULL
 );
 
@@ -609,10 +613,13 @@ CREATE TABLE im_lab_metric (
   quant_value      NUMBER(19,2),
   run_name         VARCHAR2(255),
   run_date         DATE,
-  lab_vessel_id    NUMERIC(19),
-  well             VARCHAR2(255)
+  vessel_barcode   VARCHAR2(40),
+  rack_position    VARCHAR2(255),
+  decision         VARCHAR2(12),
+  decision_date    DATE,
+  decider          VARCHAR2(255),
+  override_reason  VARCHAR2(255)
 );
-
 
 
 CREATE SEQUENCE event_fact_id_seq START WITH 1;
@@ -669,9 +676,6 @@ REFERENCES product_order (product_order_id) ON DELETE CASCADE;
 ALTER TABLE sequencing_sample_fact ADD CONSTRAINT fk_seq_sample_rpid FOREIGN KEY (research_project_id)
 REFERENCES research_project (research_project_id) ON DELETE CASCADE;
 
-ALTER TABLE lab_metric ADD CONSTRAINT fk_lab_metric_vessel_id FOREIGN KEY (lab_vessel_id)
-REFERENCES lab_vessel (lab_vessel_id) ON DELETE CASCADE;
-
 alter table pdo_regulatory_infos
 add constraint FK_PDO_REGINFO
 foreign key(product_order)
@@ -688,6 +692,7 @@ CREATE INDEX research_project_status_idx1 ON research_project_status (research_p
 CREATE INDEX research_project_person_idx1 ON research_project_person (research_project_id);
 CREATE INDEX research_project_fund_idx1 ON research_project_funding (research_project_id);
 CREATE INDEX research_project_cohort_idx1 ON research_project_cohort (research_project_id);
+CREATE INDEX lab_metric_vessel_idx1 ON lab_metric (vessel_barcode);
 CREATE INDEX research_project_irb_idx1 ON research_project_irb (research_project_id);
 CREATE INDEX product_order_idx1 ON product_order (research_project_id);
 CREATE INDEX product_order_idx2 ON product_order (product_id);

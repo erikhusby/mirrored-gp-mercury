@@ -529,19 +529,30 @@ AS
   BEGIN
     V_INS_COUNT := 0;
     V_UPD_COUNT := 0;
+
     FOR new IN (SELECT * FROM im_lab_metric WHERE is_delete = 'F') LOOP
       BEGIN
 
+        -- RPT-3131 - Delete any older metrics for same vessel
+        DELETE FROM lab_metric
+        WHERE vessel_barcode = new.vessel_barcode
+          AND quant_type     = new.quant_type
+          AND run_date       < new.run_date;
+
         UPDATE lab_metric
-           SET quant_type    = new.quant_type,
-               quant_units   = new.quant_units,
-               quant_value   = new.quant_value,
-               run_name      = new.run_name,
-               run_date      = new.run_date,
-               lab_vessel_id = new.lab_vessel_id,
-               well          = new.well,
-               etl_date      = new.etl_date
-         WHERE lab_metric_id = new.lab_metric_id;
+           SET quant_type      = new.quant_type,
+               quant_units     = new.quant_units,
+               quant_value     = new.quant_value,
+               run_name        = new.run_name,
+               run_date        = new.run_date,
+               vessel_barcode  = new.vessel_barcode,
+               rack_position   = new.rack_position,
+               decision        = new.decision,
+               decision_date   = new.decision_date,
+               decider         = new.decider,
+               override_reason = new.override_reason,
+               etl_date        = new.etl_date
+         WHERE lab_metric_id   = new.lab_metric_id;
 
         V_UPD_COUNT := V_UPD_COUNT + SQL%ROWCOUNT;
 
@@ -550,14 +561,16 @@ AS
                 lab_metric_id,
                 quant_type, quant_units, quant_value,
                 run_name, run_date,
-                lab_vessel_id, well,
-                etl_date )
+                vessel_barcode, rack_position,
+                decision, decision_date, decider,
+                override_reason, etl_date )
           VALUES (
                 new.lab_metric_id,
                 new.quant_type, new.quant_units, new.quant_value,
                 new.run_name, new.run_date,
-                new.lab_vessel_id, new.well,
-                new.etl_date );
+                new.vessel_barcode, new.rack_position,
+                new.decision, new.decision_date, new.decider,
+                new.override_reason, new.etl_date );
 
           V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;
 
