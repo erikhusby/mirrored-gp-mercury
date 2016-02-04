@@ -697,6 +697,9 @@ public class ConfigurableList {
 
         private List<Header> headers;
 
+        /** The header for the conditional checkboxes, if any. */
+        private String conditionalCheckboxHeader;
+
         /**
          * For in-memory sorts, which column the user is sorting on.
          */
@@ -816,6 +819,13 @@ public class ConfigurableList {
             return resultSortDirection;
         }
 
+        public String getConditionalCheckboxHeader() {
+            return conditionalCheckboxHeader;
+        }
+
+        public void setConditionalCheckboxHeader(String conditionalCheckboxHeader) {
+            this.conditionalCheckboxHeader = conditionalCheckboxHeader;
+        }
     }
 
     /**

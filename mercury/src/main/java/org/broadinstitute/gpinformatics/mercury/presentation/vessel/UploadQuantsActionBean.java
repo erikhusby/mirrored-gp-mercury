@@ -44,7 +44,7 @@ import java.util.Set;
 @UrlBinding(value = "/view/uploadQuants.action")
 public class UploadQuantsActionBean extends CoreActionBean {
 
-    public static final String ENTITY_NAME = "Lab Metric";
+    public static final String ENTITY_NAME = "LabMetric";
 
     public enum QuantFormat {
         VARIOSKAN("Varioskan"),
@@ -86,7 +86,7 @@ public class UploadQuantsActionBean extends CoreActionBean {
     private QuantFormat quantFormat;
     private LabMetricRun labMetricRun;
     private Long labMetricRunId;
-    private List<Long> selectedMetrics = new ArrayList<>();
+    private List<Long> selectedConditionalIds = new ArrayList<>();
     private String overrideReason;
     private LabMetricDecision.Decision overrideDecision;
     private String tubeFormationLabel;
@@ -184,7 +184,7 @@ public class UploadQuantsActionBean extends CoreActionBean {
 
     @HandlesEvent(SAVE_METRICS)
     public Resolution saveMetrics() {
-        if (selectedMetrics.isEmpty()) {
+        if (selectedConditionalIds.isEmpty()) {
             addGlobalValidationError("Check at least one box.");
         } else if (overrideReason == null || overrideReason.trim().isEmpty()) {
             addValidationError("overrideReason", "Override reason is required");
@@ -192,7 +192,7 @@ public class UploadQuantsActionBean extends CoreActionBean {
             addValidationError("overrideReason", "Override reason is too long. Limit is 255 characters.");
         } else {
             List<LabMetric> selectedLabMetrics = labMetricDao.findListByList(LabMetric.class, LabMetric_.labMetricId,
-                    selectedMetrics);
+                    selectedConditionalIds);
             Date now = new Date();
             for (LabMetric selectedLabMetric : selectedLabMetrics) {
                 LabMetricDecision labMetricDecision = selectedLabMetric.getLabMetricDecision();
@@ -229,6 +229,7 @@ public class UploadQuantsActionBean extends CoreActionBean {
                 "Default", ColumnEntity.LAB_METRIC, searchContext);
 
         resultList = configurableList.getResultList();
+        resultList.setConditionalCheckboxHeader("Override");
         for (ConfigurableList.ResultRow resultRow : resultList.getResultRows()) {
             LabMetric labMetric = mapIdToMetric.get(resultRow.getResultId());
             if (labMetric.getLabMetricDecision().isNeedsReview()) {
@@ -280,12 +281,12 @@ public class UploadQuantsActionBean extends CoreActionBean {
         this.labMetricRunId = labMetricRunId;
     }
 
-    public List<Long> getSelectedMetrics() {
-        return selectedMetrics;
+    public List<Long> getSelectedConditionalIds() {
+        return selectedConditionalIds;
     }
 
-    public void setSelectedMetrics(List<Long> selectedMetrics) {
-        this.selectedMetrics = selectedMetrics;
+    public void setSelectedConditionalIds(List<Long> selectedConditionalIds) {
+        this.selectedConditionalIds = selectedConditionalIds;
     }
 
     public String getOverrideReason() {

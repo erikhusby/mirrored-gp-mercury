@@ -33,6 +33,9 @@
 <%-- Which header to mark as currently sorted --%>
 <%--@elvariable id="dbSortPath" type="java.lang.String"--%>
 
+<%-- Render a DataTable (only useful if there is only one page, disables server-side Excel and paging) --%>
+<%--@elvariable id="dataTable" type="java.lang.Boolean"--%>
+
 <script type="text/javascript">
     atLeastOneChecked = function (name, form) {
         var checkboxes = form.getInputs("checkbox", name);
@@ -51,6 +54,7 @@
         return true;
     };
 
+    <%-- todo jmt move this to configurable_search.jsp? --%>
     function getWorkRequestSearchFormData() {
 
         assignSearchNames(document.getElementById('searchForm'));
@@ -86,6 +90,8 @@
 <c:if test="${fn:length(resultList.resultRows) > 0}">
     <div class="control-group"><a href="#search${entityName}ListEnd">Jump to end</a></div>
 </c:if>
+
+
 <stripes:form action="/util/ConfigurableList.action" id="searchResultsForm${entityName}">
 <input type="hidden" name="sessionKey" value="${sessionKey}"/>
 <input type="hidden" name="entityName" value="${entityName}"/>
@@ -100,7 +106,9 @@
             <thead>
             <tr>
                 <th><input for="count" type="checkbox" class="checkAll" id="checkAllTop" onclick="checkOtherAllBox('#checkAllBottom', this.checked );"><span id="count" class="checkedCount">0</span></th>
-                <th></th>
+                <c:if test="${not empty resultList.conditionalCheckboxHeader}">
+                    <th>${resultList.conditionalCheckboxHeader}</th>
+                </c:if>
                 <c:forEach items="${resultList.headers}" var="resultListHeader" varStatus="status">
                     <%-- Render headers, and links for sorting by column --%>
                     <c:choose>
@@ -145,11 +153,13 @@
             <td>
                 <input name="selectedIds" value="${resultRow.resultId}" class="shiftCheckbox" type="checkbox">
             </td>
-            <td>
-                <c:if test="${resultRow.hasConditionalCheckbox()}">
-                    <input name="selectedMetrics" value="${resultRow.resultId}" class="overrideCheckboxClass" type="checkbox">
-                </c:if>
-            </td>
+            <c:if test="${not empty resultList.conditionalCheckboxHeader}">
+                <td>
+                    <c:if test="${resultRow.hasConditionalCheckbox()}">
+                        <input name="selectedConditionalIds" value="${resultRow.resultId}" class="overrideCheckboxClass" type="checkbox">
+                    </c:if>
+                </td>
+            </c:if>
             <c:forEach items="${resultRow.renderableCells}" var="cell">
                 <td>${fn:replace( cell, CRLF, "<br>" )}</td>
             </c:forEach>
@@ -278,4 +288,13 @@
 </c:otherwise>
 </c:choose>
 
+    <script type="text/javascript">
+        $j('#${entityName}ResultsTable').dataTable({
+            "oTableTools": ttExportDefines,
+            "aoColumnDefs" : [
+                { "bSortable": false, "aTargets": "no-sort" },
+                { "bSortable": true, "sType": "numeric", "aTargets": "sort-numeric" }
+            ]
+        });
+    </script>
 </stripes:layout-definition>

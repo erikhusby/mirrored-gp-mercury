@@ -168,7 +168,7 @@
                                 </td>
                                 <td>
                                     <c:if test="${labMetric.labMetricDecision.decision.editable}">
-                                        <stripes:checkbox name="selectedMetrics" value="${labMetric.labMetricId}"
+                                        <stripes:checkbox name="selectedConditionalIds" value="${labMetric.labMetricId}"
                                                 class="overrideCheckboxClass"/>
                                     </c:if>
                                 </td>
@@ -177,6 +177,18 @@
                     </c:forEach>
                     </tbody>
                 </table>
+
+                <stripes:layout-render name="/columns/configurable_list.jsp"
+                        entityName="${actionBean.entityName}"
+                        sessionKey="${actionBean.sessionKey}"
+                        columnSetName="${actionBean.columnSetName}"
+                        downloadColumnSets="${actionBean.downloadColumnSets}"
+                        resultList="${actionBean.resultList}"
+                        action="${ctxpath}/search/ConfigurableSearch.action"
+                        downloadViewedColumns="False"
+                        isDbSortAllowed="False"
+                        dbSortPath=""/>
+
                 <stripes:hidden name="labMetricRunId" value="${actionBean.labMetricRun.labMetricRunId}"/>
                 <stripes:hidden name="tubeFormationLabel" value="${actionBean.tubeFormationLabel}"/>
                 <stripes:hidden name="quantType" value="${actionBean.quantType}"/>
@@ -200,17 +212,6 @@
                     <stripes:submit name="view" value="View Next Steps" class="btn btn-primary" id="viewNextStepsBtn"/>
                 </stripes:form>
             </c:if>
-
-            <stripes:layout-render name="/columns/configurable_list.jsp"
-                    entityName="${actionBean.entityName}"
-                    sessionKey="${actionBean.sessionKey}"
-                    columnSetName="${actionBean.columnSetName}"
-                    downloadColumnSets="${actionBean.downloadColumnSets}"
-                    resultList="${actionBean.resultList}"
-                    action="${ctxpath}/search/ConfigurableSearch.action"
-                    downloadViewedColumns="True"
-                    isDbSortAllowed="True"
-                    dbSortPath=""/>
 
         </c:if>
     </stripes:layout-component>
