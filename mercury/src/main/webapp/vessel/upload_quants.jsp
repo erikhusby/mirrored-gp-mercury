@@ -187,7 +187,8 @@
                         action="${ctxpath}/search/ConfigurableSearch.action"
                         downloadViewedColumns="False"
                         isDbSortAllowed="False"
-                        dbSortPath=""/>
+                        dbSortPath=""
+                        dataTable="true"/>
 
                 <stripes:hidden name="labMetricRunId" value="${actionBean.labMetricRun.labMetricRunId}"/>
                 <stripes:hidden name="tubeFormationLabel" value="${actionBean.tubeFormationLabel}"/>

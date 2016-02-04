@@ -91,10 +91,11 @@
     <div class="control-group"><a href="#search${entityName}ListEnd">Jump to end</a></div>
 </c:if>
 
-
-<stripes:form action="/util/ConfigurableList.action" id="searchResultsForm${entityName}">
-<input type="hidden" name="sessionKey" value="${sessionKey}"/>
-<input type="hidden" name="entityName" value="${entityName}"/>
+<c:if test="${!dataTable}">
+    <form action="/Mercury/util/ConfigurableList.action" id="searchResultsForm${entityName}">
+    <input type="hidden" name="sessionKey" value="${sessionKey}"/>
+    <input type="hidden" name="entityName" value="${entityName}"/>
+</c:if>
 
 <div id="${entityName}ResultsDiv" class="form-inline">
 <table width="100%" class="table simple dataTable" id="${entityName}ResultsTable">
@@ -105,7 +106,9 @@
         <c:if test="${status.index % 500 == 0}">
             <thead>
             <tr>
+                <c:if test="${!dataTable}">
                 <th><input for="count" type="checkbox" class="checkAll" id="checkAllTop" onclick="checkOtherAllBox('#checkAllBottom', this.checked );"><span id="count" class="checkedCount">0</span></th>
+                </c:if>
                 <c:if test="${not empty resultList.conditionalCheckboxHeader}">
                     <th>${resultList.conditionalCheckboxHeader}</th>
                 </c:if>
@@ -150,9 +153,11 @@
         </c:if>
         <%-- Render data rows and cells --%>
         <tr class="${status.index%2==0 ? "even" : "odd"}${empty resultRow.cssStyles ? "" : " " + "resultRow.cssStyles"}">
-            <td>
-                <input name="selectedIds" value="${resultRow.resultId}" class="shiftCheckbox" type="checkbox">
-            </td>
+            <c:if test="${!dataTable}">
+                <td>
+                    <input name="selectedIds" value="${resultRow.resultId}" class="shiftCheckbox" type="checkbox">
+                </td>
+            </c:if>
             <c:if test="${not empty resultList.conditionalCheckboxHeader}">
                 <td>
                     <c:if test="${resultRow.hasConditionalCheckbox()}">
@@ -204,6 +209,7 @@
     </c:forEach>
 </table>
 </div>
+<c:if test="${!dataTable}">
 <table class="table">
     <tr>
         <c:if test="${fn:length(resultList.resultRows) > 0}">
@@ -284,7 +290,8 @@
         </td>
     </tr>
 </table>
-</stripes:form>
+</form>
+</c:if>
 </c:otherwise>
 </c:choose>
 

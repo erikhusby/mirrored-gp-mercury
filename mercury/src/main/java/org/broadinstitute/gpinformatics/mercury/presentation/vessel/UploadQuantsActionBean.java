@@ -120,6 +120,7 @@ public class UploadQuantsActionBean extends CoreActionBean {
         if (getValidationErrors().isEmpty()) {
             addMessage("Successfully uploaded quant.");
         }
+        buildColumns();
         return new ForwardResolution(VIEW_PAGE);
     }
 
@@ -209,6 +210,7 @@ public class UploadQuantsActionBean extends CoreActionBean {
             addMessage("Successfully saved metrics.");
         }
         labMetricRun = labMetricRunDao.findById(LabMetricRun.class, labMetricRunId);
+        buildColumns();
         return new ForwardResolution(VIEW_PAGE);
     }
 
