@@ -420,7 +420,7 @@ public class BucketEjb {
     }
 
 
-    Collection<BucketEntry> applyBucketCriteria(List<LabVessel> vessels, ProductOrder productOrder, String username) {
+    public Collection<BucketEntry> applyBucketCriteria(List<LabVessel> vessels, ProductOrder productOrder, String username) {
         Collection<BucketEntry> bucketEntries = new ArrayList<>(vessels.size());
         WorkflowConfig workflowConfig = workflowLoader.load();
         List<Product> possibleProducts = new ArrayList<>();
