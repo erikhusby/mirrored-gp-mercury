@@ -735,6 +735,7 @@ public class LabVesselSearchDefinition {
 
         SearchTerm searchTerm = new SearchTerm();
         searchTerm.setName("Mercury Sample ID");
+        searchTerm.setIsExcludedFromResultColumns(Boolean.TRUE);
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public List<String> evaluate(Object entity, SearchContext context) {
@@ -753,6 +754,36 @@ public class LabVesselSearchDefinition {
         criteriaPath.setJoinFetch(Boolean.TRUE);
         criteriaPaths.add(criteriaPath);
         searchTerm.setCriteriaPaths(criteriaPaths);
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Nearest Sample ID");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public List<String> evaluate(Object entity, SearchContext context) {
+                List<String> values = new ArrayList<String>();
+                LabVessel labVessel = (LabVessel) entity;
+                for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+                    values.add(sampleInstanceV2.getNearestMercurySampleName());
+                }
+                return values;
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Root Sample ID");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public List<String> evaluate(Object entity, SearchContext context) {
+                List<String> values = new ArrayList<String>();
+                LabVessel labVessel = (LabVessel) entity;
+                for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+                    values.add(sampleInstanceV2.getRootOrEarliestMercurySampleName());
+                }
+                return values;
+            }
+        });
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
