@@ -280,11 +280,10 @@ public class VesselEjb {
                                     ejbContext.setRollbackOnly();
                                 } else {
                                     labMetricRunDao.persist(pair.getLeft());
+                                    quantificationEjb.updateRisk(pair.getLeft().getLabMetrics(), metricType,
+                                            messageCollection);
                                 }
                             }
-                        }
-                        if (pair != null && messageCollection.getErrors().isEmpty()) {
-                            quantificationEjb.updateRisk(pair.getLeft().getLabMetrics(), metricType, messageCollection);
                         }
                     }
                 }

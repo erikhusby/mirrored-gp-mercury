@@ -50,15 +50,12 @@ public class MercurySampleData implements SampleData {
     }
 
     public MercurySampleData(@Nonnull MercurySample mercurySample) {
-        sampleId = mercurySample.getSampleKey();
-        hasData = !mercurySample.getMetadata().isEmpty();
-        receiptDate = mercurySample.getReceivedDate();
+        this(mercurySample.getSampleKey(), mercurySample.getMetadata(), mercurySample.getReceivedDate());
         QuantData quantData = new QuantData(mercurySample);
         picoRunDate = quantData.getPicoRunDate();
         volume = quantData.getVolume();
         concentration = quantData.getConcentration();
         totalDna = quantData.getTotalDna();
-        extractSampleDataFromMetadata(mercurySample.getMetadata());
     }
 
     private void extractSampleDataFromMetadata(Set<Metadata> metadata) {
@@ -170,6 +167,7 @@ public class MercurySampleData implements SampleData {
 
         public QuantData(MercurySample mercurySample) {
             if (!mercurySample.getLabVessel().isEmpty()) {
+                // A sample with multiple vessels is a data inconsistency that should be fixed before quanting.
                 LabVessel labVessel = mercurySample.getLabVessel().iterator().next();
                 BigDecimal vesselVolume = labVessel.getVolume();
                 if (vesselVolume != null) {

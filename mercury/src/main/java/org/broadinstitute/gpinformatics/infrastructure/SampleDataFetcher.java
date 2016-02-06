@@ -231,9 +231,10 @@ public class SampleDataFetcher implements Serializable {
                     mercurySamplesWithMercurySource.add(mercurySample);
                 } else {
                     sampleNames.add(sampleName);
-                    if (product != null && product.hasInitialQuantInMercury()) {
-                        mapMercuryQuantIdToPdoSample.put(sampleName, productOrderSample);
-                    }
+                }
+                // To improve performance, check for Mercury quants only if the product indicates that they're there.
+                if (product != null && product.hasInitialQuantInMercury()) {
+                    mapMercuryQuantIdToPdoSample.put(sampleName, productOrderSample);
                 }
             }
         }
