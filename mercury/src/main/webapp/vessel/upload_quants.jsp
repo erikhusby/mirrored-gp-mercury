@@ -24,11 +24,11 @@
                     ]
                 });
                 <%-- Clears all checkboxes. --%>
-                $j('input.overrideCheckboxClass').prop('checked',false);
+                $j('input.conditionalCheckboxClass').prop('checked',false);
 
                 <%-- Hooks any override checkbox change and hides/shows the NextSteps button. --%>
-                $j('input.overrideCheckboxClass').change(function() {
-                    var isChecked = $j('input.overrideCheckboxClass:checked');
+                $j('input.conditionalCheckboxClass').change(function() {
+                    var isChecked = $j('input.conditionalCheckboxClass:checked');
                     if (isChecked.length) {
                         $j("#viewNextStepsBtn").attr("disabled", "disabled");
                     } else {
@@ -69,7 +69,7 @@
                     <stripes:label for="allowRePico" class="control-label">Redo existing quants</stripes:label>
                     <div class="controls">
                         <stripes:checkbox id="allowRePico" name="acceptRePico"
-                                          style="margin-top: 10px;" class="overrideCheckboxClass"
+                                          style="margin-top: 10px;"
                                           title="Check this to upload a spreadsheet of quants when tubes already have quants of the same Quant Type and a new pico run was done.  If left unchecked, Mercury will error the upload if it finds existing quants."/>
                     </div>
                 </div>
@@ -101,6 +101,7 @@
                 </c:forEach>
             </table>
             <stripes:form beanclass="${actionBean.class.name}" id="metricsForm" class="form-horizontal">
+<%--
                 <table class="table simple" id="metricsTable">
                     <thead>
                     <tr>
@@ -119,7 +120,7 @@
                         <th>Date</th>
                         <th>Reason</th>
                         <th class="no-sort"></th>
-                        <%--<th class="no-show"></th>--%>
+                        &lt;%&ndash;<th class="no-show"></th>&ndash;%&gt;
                     </tr>
                     </thead>
                     <tbody>
@@ -169,7 +170,7 @@
                                 <td>
                                     <c:if test="${labMetric.labMetricDecision.decision.editable}">
                                         <stripes:checkbox name="selectedConditionalIds" value="${labMetric.labMetricId}"
-                                                class="overrideCheckboxClass"/>
+                                                class="conditionalCheckboxClass"/>
                                     </c:if>
                                 </td>
                             </tr>
@@ -177,6 +178,7 @@
                     </c:forEach>
                     </tbody>
                 </table>
+--%>
 
                 <stripes:layout-render name="/columns/configurable_list.jsp"
                         entityName="${actionBean.entityName}"

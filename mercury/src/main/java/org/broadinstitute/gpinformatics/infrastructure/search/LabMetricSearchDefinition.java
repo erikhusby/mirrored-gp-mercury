@@ -585,9 +585,8 @@ public class LabMetricSearchDefinition {
                 Map<LabMetric.MetricType, Set<LabMetric>> mapTypeToMetrics =
                         labMetric.getLabVessel().getMetricsForVesselAndAncestors();
                 Set<LabMetric> labMetrics = mapTypeToMetrics.get(LabMetric.MetricType.INITIAL_PICO);
-                // todo jmt most recent
-                LabMetric pico = labMetrics.iterator().next();
-                return pico.getTotalNg();
+                LabMetric mostRecentLabMetric = AncestorLabMetricPlugin.findMostRecentLabMetric(labMetrics);
+                return mostRecentLabMetric.getTotalNg();
             }
         });
         searchTerms.add(searchTerm);

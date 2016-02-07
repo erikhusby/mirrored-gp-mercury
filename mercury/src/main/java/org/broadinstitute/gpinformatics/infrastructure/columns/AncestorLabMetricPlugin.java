@@ -6,6 +6,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import javax.annotation.Nonnull;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,7 +20,7 @@ public class AncestorLabMetricPlugin implements ListPlugin {
     @Override
     public List<ConfigurableList.Row> getData(List<?> entityList, ConfigurableList.HeaderGroup headerGroup,
             @Nonnull SearchContext context) {
-        List<LabMetric> labMetricList = (List<LabMetric>) entityList;
+        List<LabMetric> labMetricParamList = (List<LabMetric>) entityList;
         List<ConfigurableList.Row> metricRows = new ArrayList<>();
 
         List<LabMetric.MetricType> concMetricTypes = new ArrayList<>();
@@ -31,26 +33,42 @@ public class AncestorLabMetricPlugin implements ListPlugin {
             }
         }
 
-        for (LabMetric labMetric : labMetricList) {
+        for (LabMetric labMetric : labMetricParamList) {
             Map<LabMetric.MetricType, Set<LabMetric>> mapTypeToMetrics =
                     labMetric.getLabVessel().getMetricsForVesselAndAncestors();
             ConfigurableList.Row row = new ConfigurableList.Row(labMetric.getLabMetricId().toString());
             for (LabMetric.MetricType concMetricType : concMetricTypes) {
-                Set<LabMetric> labMetrics = mapTypeToMetrics.get(concMetricType);
-                if (labMetrics != null && !labMetrics.isEmpty()) {
+                Set<LabMetric> ancestorLabMetrics = mapTypeToMetrics.get(concMetricType);
+                if (ancestorLabMetrics != null && !ancestorLabMetrics.isEmpty()) {
                     ConfigurableList.Header header = mapNameToHeader.get(concMetricType.getDisplayName());
                     if (!headerGroup.getHeaderMap().containsKey(concMetricType.getDisplayName())) {
                         headerGroup.addHeader(header);
                     }
-                    // todo jmt most recent
-                    LabMetric next = labMetrics.iterator().next();
-                    BigDecimal value = next.getValue();
+                    LabMetric mostRecentLabMetric = findMostRecentLabMetric(ancestorLabMetrics);
+                    BigDecimal value = mostRecentLabMetric.getValue();
                     row.addCell(new ConfigurableList.Cell(header, value, value.toString()));
                 }
             }
             metricRows.add(row);
         }
         return metricRows;
+    }
+
+    public static LabMetric findMostRecentLabMetric(Set<LabMetric> ancestorLabMetrics) {
+        LabMetric mostRecentLabMetric;
+        if (ancestorLabMetrics.size() > 1) {
+            List<LabMetric> ancestorLabMetricsList = new ArrayList<>(ancestorLabMetrics);
+            Collections.sort(ancestorLabMetricsList, new Comparator<LabMetric>() {
+                @Override
+                public int compare(LabMetric o1, LabMetric o2) {
+                    return o2.getCreatedDate().compareTo(o1.getCreatedDate());
+                }
+            });
+            mostRecentLabMetric = ancestorLabMetricsList.get(0);
+        } else {
+            mostRecentLabMetric = ancestorLabMetrics.iterator().next();
+        }
+        return mostRecentLabMetric;
     }
 
     @Override

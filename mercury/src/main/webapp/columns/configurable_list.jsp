@@ -53,26 +53,6 @@
         $j(otherID)[0].checked = cbState;
         return true;
     };
-
-    <%-- todo jmt move this to configurable_search.jsp? --%>
-    function getWorkRequestSearchFormData() {
-
-        assignSearchNames(document.getElementById('searchForm'));
-        $j("#searchResultsForm${entityName} :input[isacopy]").remove();  // This is in case they hit submit twice after a validation problem.
-
-        // Have to handle the multi-selects separately.
-        var theSelect = $j("#selectedColumnDefNames").clone();
-        theSelect.attr("id", "selectedColumnDefNamesClone");
-        theSelect.hide().attr("isacopy", "y").appendTo("#searchResultsForm${entityName}");
-
-        var htmlSelectVar = document.getElementById("selectedColumnDefNamesClone");
-        for (var j = 0; j < htmlSelectVar.options.length; j++) {
-            htmlSelectVar.options[j].selected = true;
-        }
-
-        // Add all the searchInstance form fields.
-        $j("#searchForm :input[name^='searchInstance']").clone().hide().attr("isacopy", "y").appendTo("#searchResultsForm${entityName}");
-    }
 </script>
 
 <%
@@ -161,7 +141,7 @@
             <c:if test="${not empty resultList.conditionalCheckboxHeader}">
                 <td>
                     <c:if test="${resultRow.hasConditionalCheckbox()}">
-                        <input name="selectedConditionalIds" value="${resultRow.resultId}" class="overrideCheckboxClass" type="checkbox">
+                        <input name="selectedConditionalIds" value="${resultRow.resultId}" class="conditionalCheckboxClass" type="checkbox">
                     </c:if>
                 </td>
             </c:if>
