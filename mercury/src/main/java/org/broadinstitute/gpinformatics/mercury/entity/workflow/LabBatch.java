@@ -70,7 +70,7 @@ public class LabBatch {
         }
 
         public void setLanes(List<VesselPosition> lanes) {
-            this.lanes = this.lanes;
+            this.lanes = lanes;
         }
 
         public BigDecimal getConcentration() {

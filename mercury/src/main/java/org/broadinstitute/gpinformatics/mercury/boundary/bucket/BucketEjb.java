@@ -125,7 +125,9 @@ public class BucketEjb {
             LabEventType bucketEventType = bucketDef.getBucketEventType();
 
             for (LabVessel currVessel : bucketVessels) {
-                listOfNewEntries.add(bucket.addEntry(pdo, currVessel, entryType, workflow));
+                if (!currVessel.checkCurrentBucketStatus(pdo, bucketDef.getName(), BucketEntry.Status.Active)) {
+                    listOfNewEntries.add(bucket.addEntry(pdo, currVessel, entryType, workflow));
+                }
             }
             labEventFactory.buildFromBatchRequests(listOfNewEntries, operator, null, eventLocation, programName,
                     bucketEventType);

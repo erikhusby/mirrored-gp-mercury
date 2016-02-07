@@ -467,7 +467,7 @@ public class LabBatchEjb {
             labVessels.add(bucketEntry.getLabVessel());
             pdoKeys.add(bucketEntry.getProductOrder().getBusinessKey());
             bucketEntry.getBucket().removeEntry(bucketEntry);
-            commentString.append(String.format("Added vessel *%s* with material type *%s* to *%s*.\n", bucketEntry.getLabVessel().getLabel(),
+            commentString.append(String.format("Added vessel *%s* with material type *%s* from *%s*.\n", bucketEntry.getLabVessel().getLabel(),
                     bucketEntry.getLabVessel().getLatestMaterialType().getDisplayName(), bucketName));
         }
 

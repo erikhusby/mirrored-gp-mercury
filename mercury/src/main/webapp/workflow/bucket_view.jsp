@@ -223,7 +223,7 @@
         function setupBucketEvents() {
             var CONFIRM_TEXT = "Confirm";
 
-            $j("input[name='addToBatch'],input[name='createBatch'],input[name='removeFromBucket']").click(function (event) {
+            $j("input[name='addToBatch'],input[name='createBatch'],input[name='removeFromBucket']").on("click dblclick", function (event) {
 
                 // Clear any errors that may be displayed.
                 $j(".alert-error, .error").each(function () {
@@ -452,6 +452,11 @@
                     }
             );
             $j("#spinner").hide();
+
+            // prevent submit when hitting the return key in an input so ajax validation can happen.
+            $j("#bucketEntryForm :input:not(textarea)").keypress(function (event) {
+                return event.keyCode != 13;
+            });
         });
     </script>
 </stripes:layout-component>

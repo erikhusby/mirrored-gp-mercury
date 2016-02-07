@@ -205,26 +205,38 @@ public class CreateFCTActionBean extends CoreActionBean {
 
                 for (LabVessel loadingTube : vesselToEvents.keySet()) {
 
-                    // Makes a line-break separated list of products and starting batch vessels.
-                    Set<String> productNames = new HashSet<>();
-                    Set<String> startingBatchVessels = new HashSet<>();
+                    // Gets products and starting batch vessels for each loading tube.
+                    Multimap<String, String> productToStartingVessel = HashMultimap.create();
                     for (BucketEntry bucketEntry : vesselToBucketEntries.get(loadingTube)) {
-                        productNames.add(bucketEntry.getProductOrder().getProduct() != null ?
+                        String productName = bucketEntry.getProductOrder().getProduct() != null ?
                                 bucketEntry.getProductOrder().getProduct().getProductName() :
-                                "[No product for " + bucketEntry.getProductOrder().getJiraTicketKey() + "]");
-                        startingBatchVessels.add(bucketEntry.getLabVessel().getLabel());
+                                "[No product for " + bucketEntry.getProductOrder().getJiraTicketKey() + "]";
+                        productToStartingVessel.put(productName, bucketEntry.getLabVessel().getLabel());
+                    }
+                    // Coordinate the display so for each loading tube, the list of products shown corresponds
+                    // to a list of starting vessels. The UI will show the starting tubes for each product.
+                    List<String> productNameList = new ArrayList<>(productToStartingVessel.keySet());
+                    Collections.sort(productNameList);
+                    List<String> startingVesselList = new ArrayList<>();
+                    for (String productName : productNameList) {
+                        List<String> startingVessels = new ArrayList<>(productToStartingVessel.get(productName));
+                        Collections.sort(startingVessels);
+                        startingVesselList.add("Bucketed tubes for " + productName + ": " +
+                                               StringUtils.join(startingVessels, ", "));
                     }
 
-                    // Makes a line-break separated list of event dates.
+
+                    // Gets event dates.
                     Set<String> eventDates = new HashSet<>();
                     for (LabEvent labEvent : vesselToEvents.get(loadingTube)) {
                         eventDates.add(dateFormat.format(labEvent.getEventDate()));
                     }
 
                     RowDto rowDto = new RowDto(loadingTube.getLabel(), labBatch.getBusinessKey(),
-                            StringUtils.join(eventDates, "<br/>"), StringUtils.join(productNames, "<br/>"),
-                            StringUtils.join(startingBatchVessels, "<br/>"), selectedEventTypeDisplay,
-                            defaultLoadingConc, lcsetUrl);
+                            StringUtils.join(eventDates, "<br/>"),
+                            StringUtils.join(productNameList, "<br/>"),
+                            StringUtils.join(startingVesselList, "\n"),
+                            selectedEventTypeDisplay, defaultLoadingConc, lcsetUrl);
                     if (!rowDtos.contains(rowDto)) {
                         rowDtos.add(rowDto);
                     }
