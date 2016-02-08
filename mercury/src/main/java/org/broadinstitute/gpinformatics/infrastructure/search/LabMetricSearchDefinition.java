@@ -7,9 +7,12 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.AncestorLabMetricPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
+import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
+import org.broadinstitute.gpinformatics.infrastructure.columns.LabMetricSampleDataAddRowsListener;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricRun;
@@ -114,6 +117,17 @@ public class LabMetricSearchDefinition {
                 , new LabMetricTraversalEvaluator.AncestorTraversalEvaluator());
         configurableSearchDefinition.addTraversalEvaluator(TraversalEvaluatorName.DESCENDANTS.getId()
                 , new LabMetricTraversalEvaluator.DescendantTraversalEvaluator());
+
+        configurableSearchDefinition.setAddRowsListenerFactory(
+                new ConfigurableSearchDefinition.AddRowsListenerFactory() {
+                    @Override
+                    public Map<String, ConfigurableList.AddRowsListener> getAddRowsListeners() {
+                        Map<String, ConfigurableList.AddRowsListener> listeners = new HashMap<>();
+                        listeners.put(LabMetricSampleDataAddRowsListener.class.getSimpleName(),
+                                new LabMetricSampleDataAddRowsListener());
+                        return listeners;
+                    }
+                });
 
         return configurableSearchDefinition;
     }
@@ -436,9 +450,16 @@ public class LabMetricSearchDefinition {
             @Override
             public List<String> evaluate(Object entity, SearchContext context) {
                 LabMetric labMetric = (LabMetric) entity;
-                // todo jmt BSP too
                 List<String> patientIds = new ArrayList<>();
-                Collections.addAll(patientIds, labMetric.getLabVessel().getMetadataValues(Metadata.Key.PATIENT_ID));
+                LabMetricSampleDataAddRowsListener rowsListener = (LabMetricSampleDataAddRowsListener) context.
+                        getRowsListener(LabMetricSampleDataAddRowsListener.class.getSimpleName());
+
+                for (SampleInstanceV2 sampleInstanceV2 : labMetric.getLabVessel().getSampleInstancesV2()) {
+                    for (MercurySample mercurySample : sampleInstanceV2.getRootMercurySamples()) {
+                        patientIds.add(rowsListener.getMapSampleIdToData().get(mercurySample.getSampleKey()).
+                                getCollaboratorParticipantId());
+                    }
+                }
                 return patientIds;
             }
         });
@@ -567,9 +588,15 @@ public class LabMetricSearchDefinition {
             public List<String> evaluate(Object entity, SearchContext context) {
                 LabMetric labMetric = (LabMetric) entity;
                 List<String> materialTypes = new ArrayList<>();
-                Collections.addAll(materialTypes, labMetric.getLabVessel().getMetadataValues(
-                        Metadata.Key.ORIGINAL_MATERIAL_TYPE));
-                // todo BSP too
+                LabMetricSampleDataAddRowsListener rowsListener = (LabMetricSampleDataAddRowsListener) context.
+                        getRowsListener(LabMetricSampleDataAddRowsListener.class.getSimpleName());
+
+                for (SampleInstanceV2 sampleInstanceV2 : labMetric.getLabVessel().getSampleInstancesV2()) {
+                    for (MercurySample mercurySample : sampleInstanceV2.getRootMercurySamples()) {
+                        materialTypes.add(rowsListener.getMapSampleIdToData().get(mercurySample.getSampleKey()).
+                                getOriginalMaterialType());
+                    }
+                }
                 return materialTypes;
             }
         });

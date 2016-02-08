@@ -100,13 +100,7 @@ public class ConfigurableListActionBean extends CoreActionBean {
                     ColumnEntity.getByName(entityName));
 
             // Add any row listeners
-            ConfigurableSearchDefinition configurableSearchDef = SearchDefinitionFactory.getForEntity(entityName);
-            ConfigurableSearchDefinition.AddRowsListenerFactory addRowsListenerFactory = configurableSearchDef.getAddRowsListenerFactory();
-            if( addRowsListenerFactory != null ) {
-                for( Map.Entry<String,ConfigurableList.AddRowsListener> entry : addRowsListenerFactory.getAddRowsListeners().entrySet() ) {
-                    configurableList.addAddRowsListener(entry.getKey(), entry.getValue());
-                }
-            }
+            configurableList.addAddRowsListeners(SearchDefinitionFactory.getForEntity(entityName));
 
             configurableList.addRows(entityList, buildSearchContext());
             ConfigurableList.ResultList resultList = configurableList.getResultList(false);
@@ -140,13 +134,7 @@ public class ConfigurableListActionBean extends CoreActionBean {
                 ColumnEntity.getByName(entityName));
 
         // Add any row listeners
-        ConfigurableSearchDefinition configurableSearchDef = SearchDefinitionFactory.getForEntity(entityName);
-        ConfigurableSearchDefinition.AddRowsListenerFactory addRowsListenerFactory = configurableSearchDef.getAddRowsListenerFactory();
-        if( addRowsListenerFactory != null ) {
-            for( Map.Entry<String,ConfigurableList.AddRowsListener> entry : addRowsListenerFactory.getAddRowsListeners().entrySet() ) {
-                configurableList.addAddRowsListener(entry.getKey(), entry.getValue());
-            }
-        }
+        configurableList.addAddRowsListeners(SearchDefinitionFactory.getForEntity(entityName));
 
         // Get each page and add it to the configurable list
         SearchContext context = buildSearchContext();
@@ -188,7 +176,8 @@ public class ConfigurableListActionBean extends CoreActionBean {
             CoreActionBeanContext context, String entityName, String entityId) {
 
         ConfigurableList configurableListUtils = configurableListFactory.create(entityList, downloadColumnSetName,
-                ColumnEntity.getByName(entityName), buildSearchContext() );
+                ColumnEntity.getByName(entityName), buildSearchContext(),
+                SearchDefinitionFactory.getForEntity(entityName));
 
         Object[][] data = configurableListUtils.getResultList(false).getAsArray();
         return StreamCreatedSpreadsheetUtil.streamSpreadsheet(data, SPREADSHEET_FILENAME);

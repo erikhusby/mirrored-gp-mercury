@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.columns;
 
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.broadinstitute.gpinformatics.athena.entity.preference.ColumnSetsPreference;
+import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchTerm;
@@ -1075,8 +1076,14 @@ public class ConfigurableList {
         return finalString.toString();
     }
 
-    public void addAddRowsListener(String name, AddRowsListener addRowsListener) {
-        addRowsListeners.put(name, addRowsListener);
+    public void addAddRowsListeners(ConfigurableSearchDefinition configurableSearchDef) {
+        ConfigurableSearchDefinition.AddRowsListenerFactory addRowsListenerFactory =
+                configurableSearchDef.getAddRowsListenerFactory();
+        if (addRowsListenerFactory != null ) {
+            for (Map.Entry<String, AddRowsListener> entry : addRowsListenerFactory.getAddRowsListeners().entrySet()) {
+                addRowsListeners.put(entry.getKey(), entry.getValue());
+            }
+        }
     }
 
     /**

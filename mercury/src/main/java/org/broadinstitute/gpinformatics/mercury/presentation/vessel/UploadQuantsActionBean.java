@@ -20,6 +20,7 @@ import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableListFactory;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
+import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.sample.QuantificationEJB;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabMetricDao;
@@ -227,8 +228,9 @@ public class UploadQuantsActionBean extends CoreActionBean {
 
         SearchContext searchContext = new SearchContext();
         searchContext.setBspUserList(bspUserList);
-        ConfigurableList configurableList = configurableListFactory.create(labMetricList,
-                "Default", ColumnEntity.LAB_METRIC, searchContext);
+        ConfigurableList configurableList = configurableListFactory.create(labMetricList, "Default",
+                ColumnEntity.LAB_METRIC, searchContext,
+                SearchDefinitionFactory.getForEntity(ColumnEntity.LAB_METRIC.getEntityName()));
 
         resultList = configurableList.getResultList();
         resultList.setConditionalCheckboxHeader("Override");

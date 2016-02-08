@@ -204,9 +204,9 @@ public class SampleDataFetcher implements Serializable {
         Collection<MercurySample> mercurySamplesWithMercurySource = new ArrayList<>();
         Collection<String> sampleIdsWithBspSource = new ArrayList<>();
 
-        Set<String> sampleNames = new HashSet<>(samples.size());
+        Set<String> bspSourceSampleNames = new HashSet<>(samples.size());
         for (AbstractSample sample : samples) {
-            if (sample.needsBspMetaData()) {
+            if (!sample.isHasBspSampleDataBeenInitialized()) {
                 MercurySample mercurySample;
                 String sampleName;
                 if (OrmUtil.proxySafeIsInstance(sample, MercurySample.class)) {
@@ -221,13 +221,13 @@ public class SampleDataFetcher implements Serializable {
                     mercurySample.getMetadataSource() == MercurySample.MetadataSource.MERCURY) {
                     mercurySamplesWithMercurySource.add(mercurySample);
                 } else {
-                    sampleNames.add(sampleName);
+                    bspSourceSampleNames.add(sampleName);
                 }
             }
         }
-        if (!sampleNames.isEmpty()) {
+        if (!bspSourceSampleNames.isEmpty() || !mercurySamplesWithMercurySource.isEmpty()) {
 
-            buildSampleCollectionsBySource(sampleNames, mercurySamplesWithMercurySource, sampleIdsWithBspSource);
+            buildSampleCollectionsBySource(bspSourceSampleNames, mercurySamplesWithMercurySource, sampleIdsWithBspSource);
 
             if (!sampleIdsWithBspSource.isEmpty()) {
                 Map<String, BspSampleData> bspSampleData =
