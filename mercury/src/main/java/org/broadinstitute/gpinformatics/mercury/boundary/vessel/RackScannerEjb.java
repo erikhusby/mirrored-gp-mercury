@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
 import org.broadinstitute.bsp.client.rackscan.NetworkRackScanner;
+import org.broadinstitute.bsp.client.rackscan.RackScan;
 import org.broadinstitute.bsp.client.rackscan.RackScanner;
 import org.broadinstitute.bsp.client.rackscan.RackScannerConfig;
 import org.broadinstitute.bsp.client.rackscan.ScannerException;
@@ -29,32 +30,50 @@ public class RackScannerEjb {
     private BSPSampleDataFetcher sampleDataFetcherService;
 
     /**
-     * Scans a rack.
+     * Scans a rack, does NOT include rack barcode in results
      *
      * @param rackScanner RackScanner to connect to and run.
      * @return Linked HashMap of position to scanned barcode.
      * @throws ScannerException
      */
     public LinkedHashMap<String, String> runRackScanner(RackScanner rackScanner) throws ScannerException {
-        return runRackScanner(rackScanner, null);
+        return runRackScanner(rackScanner, null, false);
     }
 
     /**
-     * Scans a rack or runs a rack scan simulation using the data from specified file.
+     * Scans a rack or runs a rack scan simulation using the data from specified file and excludes rack barcode
      *
      * @param rackScanner RackScanner to connect to and run.
      * @param simulationContent For a rack scan simulation, gets positions and barcodes from this reader.
      * @return Linked HashMap of position to scanned barcode.
      * @throws ScannerException
      */
-    public LinkedHashMap<String, String> runRackScanner(RackScanner rackScanner, Reader simulationContent)
+    public LinkedHashMap<String, String> runRackScanner(RackScanner rackScanner, Reader simulationContent )
+            throws ScannerException {
+        return runRackScanner(rackScanner, simulationContent, false);
+    }
+
+    /**
+     * Scans a rack or runs a rack scan simulation using the data from specified file and optionally includes rack barcode
+     *
+     * @param rackScanner RackScanner to connect to and run.
+     * @param simulationContent For a rack scan simulation, gets positions and barcodes from this reader.
+     * @param includeRackBarcode Optionally include rack barcode in result map, key = "rack"
+     * @return Linked HashMap of position to scanned barcode.
+     * @throws ScannerException
+     */
+    public LinkedHashMap<String, String> runRackScanner(RackScanner rackScanner, Reader simulationContent, boolean includeRackBarcode )
             throws ScannerException {
         RackScannerConfig config = rackScanner.getRackScannerConfig();
         NetworkRackScanner networkRackScanner = NetworkRackScanner.createNetworkRackScanner(config);
         if (networkRackScanner instanceof SimulatorRackScanner) {
             ((SimulatorRackScanner)networkRackScanner).setSimulationContent(simulationContent);
         }
-        return networkRackScanner.readRackScan().getPositionData();
+        RackScan scanData = networkRackScanner.readRackScan();
+        if( includeRackBarcode ) {
+            scanData.getPositionData().put("rack", scanData.getLinearBarcode());
+        }
+        return scanData.getPositionData();
     }
 
     /**
