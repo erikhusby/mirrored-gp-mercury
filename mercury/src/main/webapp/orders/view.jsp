@@ -1221,9 +1221,6 @@ function formatInput(item) {
                     <stripes:button name="setRisk" value="Set Risk" class="btn"
                                     style="margin-left:5px;" onclick="showRiskDialog()"/>
 
-                    <stripes:button name="setProceedOos" value="Set Proceed OOS" class="btn"
-                                    style="margin-left:5px;" onclick="showProceedOosDialog()"/>
-
                     <security:authorizeBlock roles="<%= roles(All) %>"
                                              context="<%= ApplicationInstance.CRSP %>">
                         <stripes:button name="addSamplesToBucket" value="Add Samples to Bucket" class="btn"
@@ -1249,6 +1246,12 @@ function formatInput(item) {
             </security:authorizeBlock>
 
         </c:if>
+
+        <security:authorizeBlock roles="<%= roles(Developer, PDM, PM) %>">
+            <stripes:button name="setProceedOos" value="Set Proceed OOS" class="btn"
+                    style="margin-left:5px;" onclick="showProceedOosDialog()"/>
+        </security:authorizeBlock>
+
     </div>
 
     <div id="summaryId" class="fourcolumn" style="margin-bottom:5px;">
@@ -1260,10 +1263,8 @@ function formatInput(item) {
             <thead>
             <tr>
                 <th width="20">
-                    <c:if test="${!actionBean.editOrder.draft}">
-                        <input id="checkAllSamples" for="count" type="checkbox" class="checkAll"/><span id="count"
-                                                                                                        class="checkedCount"></span>
-                    </c:if>
+                    <input id="checkAllSamples" for="count" type="checkbox" class="checkAll"/><span id="count"
+                                                                                                    class="checkedCount"></span>
                 </th>
                 <th width="10">#</th>
                 <th width="90">ID</th>
@@ -1300,11 +1301,9 @@ function formatInput(item) {
             <c:forEach items="${actionBean.editOrder.samples}" var="sample">
                 <tr>
                     <td>
-                        <c:if test="${!actionBean.editOrder.draft}">
-                            <stripes:checkbox title="${sample.samplePosition}" class="shiftCheckbox"
-                                              name="selectedProductOrderSampleIds"
-                                              value="${sample.productOrderSampleId}"/>
-                        </c:if>
+                        <stripes:checkbox title="${sample.samplePosition}" class="shiftCheckbox"
+                                          name="selectedProductOrderSampleIds"
+                                          value="${sample.productOrderSampleId}"/>
                     </td>
                     <td>
                             ${sample.samplePosition + 1}
