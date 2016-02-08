@@ -42,7 +42,7 @@
      --%>
     <style>
         label {display:inline; margin-left: 5px;}
-        input.displayTerm, input.termoperator, input.termvalue { margin: 3px; }
+        input.displayTerm, input.termoperator, input.termvalue, input.rackScanData { margin: 3px; }
         <%-- Firefox select options allow this, Chrome quietly ignores --%>
        .help-option { background-image: url("${ctxpath}/images/help.png");
            background-repeat: no-repeat;
@@ -312,6 +312,7 @@ function changeOperator(operatorSelect) {
     var andText;
     var textarea;
     var rackScanButton;
+    var rackScanData;
     // Find the value element (could be text, textarea or select)
     while (valueElement != null) {
         if (valueElement.nodeType == 1) {
@@ -327,6 +328,11 @@ function changeOperator(operatorSelect) {
     rackScanButton = valueElement.nextSibling;
     while( rackScanButton != null ) {
         if( rackScanButton.nodeName == "INPUT" && rackScanButton.getAttribute("name") == "rackScanBtn" ) {
+            // Remove scan JSON hidden field if exists
+            var hiddenJSON = rackScanButton.nextSibling;
+            if( hiddenJSON != null && hiddenJSON.nodeName == "INPUT" && hiddenJSON.getAttribute("name") == "rackScanData" ) {
+                valueElement.parentNode.removeChild(hiddenJSON);
+            }
             valueElement.parentNode.removeChild(rackScanButton);
             rackScanButton = null;
             break;
@@ -394,6 +400,13 @@ function changeOperator(operatorSelect) {
                     rackScanButton.setAttribute("onclick", "startRackScan(this);");
                     rackScanButton.setAttribute("type", "button");
                     valueElement.parentNode.appendChild(rackScanButton);
+                    rackScanData = document.createElement("INPUT");
+                    rackScanData.setAttribute("id", "rackScanData_" + valueElementId );
+                    rackScanData.setAttribute("name", "rackScanData");
+                    rackScanData.setAttribute("value", "");
+                    rackScanData.setAttribute("class", "rackScanData");
+                    rackScanData.setAttribute("type", "hidden");
+                    valueElement.parentNode.appendChild(rackScanData);
                 }
                 valueElement.parentNode.replaceChild(textarea, valueElement);
             } else if (operator == "BETWEEN") {
@@ -483,16 +496,27 @@ function rackScanComplete() {
     //alert(barcodes);
     var textarea;
     if( barcodes != null && rackScanSrcBtn != null ) {
+        // Store rack scan raw JSON in hidden form field
+        var rackScanDataElement = rackScanSrcBtn.nextSibling;
+        rackScanDataElement.setAttribute("value", barcodes);
+
+        // Extract barcodes from JSON and enter in text field
+        var scanJSON = $j.parseJSON(barcodes);
         textarea = rackScanSrcBtn.previousSibling;
         while( textarea != null ) {
             if( textarea.className == "termvalue" ) {
-                textarea.textContent = barcodes;
+                var multiText = "";
+                $j.each( scanJSON.scans, function(index){
+                    multiText = multiText + this.barcode + "\n";
+                });
+                textarea.textContent = multiText;
                 break;
             }
             textarea = textarea.previousSibling;
         }
     }
     $j("#rack_scan_overlay").dialog("close");
+    $j("#rack_scan_overlay").removeData("results");
     rackScanSrcBtn = null;
     $j("#rack_scan_inputs").html("");
 }

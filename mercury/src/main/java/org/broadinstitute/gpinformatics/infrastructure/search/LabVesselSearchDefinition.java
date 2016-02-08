@@ -24,6 +24,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserC
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -68,6 +71,12 @@ public class LabVesselSearchDefinition {
 
         searchTerms = srchDef.buildLabVesselEvent();
         mapGroupSearchTerms.put("Events", searchTerms);
+
+        searchTerms = srchDef.buildRackScanTerms();
+        mapGroupSearchTerms.put("Rack Scan Data", searchTerms);
+
+        searchTerms = srchDef.buildMetricsTerms();
+        mapGroupSearchTerms.put("Metrics", searchTerms);
 
         searchTerms = srchDef.buildLabVesselMultiCols();
         mapGroupSearchTerms.put("Multi-Columns", searchTerms);
@@ -726,6 +735,7 @@ public class LabVesselSearchDefinition {
 
         SearchTerm searchTerm = new SearchTerm();
         searchTerm.setName("Mercury Sample ID");
+        searchTerm.setIsExcludedFromResultColumns(Boolean.TRUE);
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public List<String> evaluate(Object entity, SearchContext context) {
@@ -744,6 +754,36 @@ public class LabVesselSearchDefinition {
         criteriaPath.setJoinFetch(Boolean.TRUE);
         criteriaPaths.add(criteriaPath);
         searchTerm.setCriteriaPaths(criteriaPaths);
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Nearest Sample ID");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public List<String> evaluate(Object entity, SearchContext context) {
+                List<String> values = new ArrayList<String>();
+                LabVessel labVessel = (LabVessel) entity;
+                for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+                    values.add(sampleInstanceV2.getNearestMercurySampleName());
+                }
+                return values;
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Root Sample ID");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public List<String> evaluate(Object entity, SearchContext context) {
+                List<String> values = new ArrayList<String>();
+                LabVessel labVessel = (LabVessel) entity;
+                for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+                    values.add(sampleInstanceV2.getRootOrEarliestMercurySampleName());
+                }
+                return values;
+            }
+        });
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
@@ -917,6 +957,146 @@ public class LabVesselSearchDefinition {
                 searchTerms.add(searchTerm);
             }
         }
+
+        return searchTerms;
+    }
+
+    /**
+     * Build search terms to display details about a rack scan term
+     * @return List of search terms/column definitions for lab vessel rack scan
+     */
+    private List<SearchTerm> buildRackScanTerms() {
+        List<SearchTerm> searchTerms = new ArrayList<>();
+
+        SearchTerm searchTerm = new SearchTerm();
+        searchTerm.setName("Scan Date");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public String evaluate(Object entity, SearchContext context) {
+                JSONObject scanData = context.getScanData();
+                if( scanData == null ) {
+                    return null;
+                }
+                try {
+                    return scanData.getString("scanDate");
+                } catch (JSONException e) {
+                    throw new RuntimeException("Failure getting Scan Date from rack scan data");
+                }
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Scanner Name");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public String evaluate(Object entity, SearchContext context) {
+                JSONObject scanData = context.getScanData();
+                if( scanData == null ) {
+                    return null;
+                }
+                try {
+                    return scanData.getString("scannerName");
+                } catch (JSONException e) {
+                    throw new RuntimeException("Failure getting Scanner Name from rack scan data");
+                }
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Scan User");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public String evaluate(Object entity, SearchContext context) {
+                JSONObject scanData = context.getScanData();
+                if( scanData == null ) {
+                    return null;
+                }
+                try {
+                    return scanData.getString("scanUser");
+                } catch (JSONException e) {
+                    throw new RuntimeException("Failure getting Scan User from rack scan data");
+                }
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Scan Rack Barcode");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public String evaluate(Object entity, SearchContext context) {
+                JSONObject scanData = context.getScanData();
+                if( scanData == null ) {
+                    return null;
+                }
+                try {
+                    String rackBarcode = scanData.getString("rackBarcode");
+                    return rackBarcode == null? "(Not Scanned)": rackBarcode;
+                } catch (JSONException e) {
+                    throw new RuntimeException("Failure getting Scan Rack Barcode from rack scan data");
+                }
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Scan Position");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public String evaluate(Object entity, SearchContext context) {
+                JSONObject scanData = context.getScanData();
+                if( scanData == null ) {
+                    return null;
+                }
+                String vesselBarcode = ((LabVessel)entity).getLabel();
+                try {
+                    JSONArray scans = scanData.getJSONArray("scans");
+                    JSONObject barcodeAndPosition;
+                    for( int i = 0; i < scans.length(); i++ ){
+                        barcodeAndPosition = (JSONObject) scans.get(i);
+                        if( vesselBarcode.equals(barcodeAndPosition.getString("barcode")) ){
+                            return barcodeAndPosition.getString("position");
+                        }
+                    }
+                } catch (JSONException e) {
+                    throw new RuntimeException("Failure getting Scan Position from rack scan data");
+                }
+                return null;
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        return searchTerms;
+    }
+
+    /**
+     * Build search terms to display details about a rack scan term
+     * @return List of search terms/column definitions for lab vessel rack scan
+     */
+    private List<SearchTerm> buildMetricsTerms(){
+        List<SearchTerm> searchTerms = new ArrayList<>();
+
+        SearchTerm searchTerm = new SearchTerm();
+        searchTerm.setName("Initial Pico");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public String evaluate(Object entity, SearchContext context) {
+                String value = "";
+
+                LabVessel labVessel = (LabVessel)entity;
+                // Pico is always ancestry?
+                List<LabMetric> metrics = labVessel.getNearestMetricsOfType(LabMetric.MetricType.INITIAL_PICO);
+                if( metrics != null && !metrics.isEmpty() ) {
+                    LabMetric latestMetric = metrics.get(metrics.size()-1);
+                    value = ColumnValueType.TWO_PLACE_DECIMAL.format(latestMetric.getValue(),"") + " " + latestMetric.getUnits().getDisplayName();
+                }
+
+                return value;
+            }
+        });
+        searchTerms.add(searchTerm);
 
         return searchTerms;
     }

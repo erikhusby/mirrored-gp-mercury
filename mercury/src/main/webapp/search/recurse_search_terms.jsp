@@ -134,7 +134,7 @@
                         <!-- IN = list of text values -->
                         <textarea rows="4" cols="10" class="termvalue"><c:forEach items="${searchValue.values}"
                                                                                   var="value">${value}<%= '\n' %></c:forEach></textarea>
-                        &nbsp;<c:if test="${searchValue.searchTerm.isRackScanSupported()}"><input id="rackScanBtn" name="rackScanBtn" value="Rack Scan" class="btn btn-primary" onclick="startRackScan(this);" type="button"></c:if>
+                        &nbsp;<c:if test="${searchValue.searchTerm.isRackScanSupported()}"><input id="rackScanBtn" name="rackScanBtn" value="Rack Scan" class="btn btn-primary" onclick="startRackScan(this);" type="button"><input type="hidden" id="rackScanData_${uniqueId}" name="rackScanData" value='${searchValue.rackScanData}' class="rackScanData"/></c:if>
                     </c:when>
                     <c:when test="${not empty searchValue.operator && searchValue.operator.name == 'BETWEEN'}">
                         <!-- BETWEEN = Pair of text boxes. Add invented attributes, between1 and between2,

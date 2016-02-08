@@ -106,16 +106,24 @@ public abstract class RackScanActionBean extends CoreActionBean {
         return new ForwardResolution(SHOW_SCANNER_SELECTION_JSP);
     }
 
-    /** Does a rack scan and sets the rackScan variable. Returns a default results jsp. */
+    /** Does a rack scan and sets the rackScan variable, rack barcode is excluded. Returns a default results jsp. */
     @HandlesEvent(SCAN_EVENT)
     public Resolution scan() throws ScannerException {
+        runRackScan( false );
+        return new ForwardResolution(SCAN_RESULTS_JSP);
+    }
+
+    /**
+     * Allow a sub-class to override scan logic to optionally include the rack barcode in the rackScan variable.
+     * */
+    protected void runRackScan( boolean includeRackBarcode ) throws ScannerException {
         Reader reader = null;
         try {
             if (simulatedScanCsv == null) {
-                rackScan = rackScannerEjb.runRackScanner(rackScanner, null);
+                rackScan = rackScannerEjb.runRackScanner(rackScanner, null, includeRackBarcode);
             } else {
                 reader = simulatedScanCsv.getReader();
-                rackScan = rackScannerEjb.runRackScanner(rackScanner, reader);
+                rackScan = rackScannerEjb.runRackScanner(rackScanner, reader, includeRackBarcode);
             }
         } catch (Exception e) {
             log.error(e);
@@ -135,8 +143,6 @@ public abstract class RackScanActionBean extends CoreActionBean {
                 }
             }
         }
-
-        return new ForwardResolution(SCAN_RESULTS_JSP);
     }
 
     /** Shows the possible labs rack scanners are in. */

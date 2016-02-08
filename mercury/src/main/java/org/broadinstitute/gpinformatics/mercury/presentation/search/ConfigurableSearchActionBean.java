@@ -28,6 +28,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServic
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation;
+import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableListFactory;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDao;
@@ -39,11 +40,14 @@ import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstanceEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.BSPLookupException;
 import org.broadinstitute.gpinformatics.mercury.presentation.vessel.RackScanActionBean;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import javax.inject.Inject;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -88,20 +92,30 @@ public class ConfigurableSearchActionBean extends RackScanActionBean {
     @Override
     @HandlesEvent(AJAX_SCAN_EVENT)
     public Resolution scan() throws ScannerException {
-        final StringBuilder results = new StringBuilder();
+        final JSONObject scannerData = new JSONObject();
         final StringBuilder errors = new StringBuilder();
         try {
-            // Run the rack scanner, ignore the returned Resolution.
-            super.scan();
+            // Run the rack scanner and include the rack barcode in position map
+            super.runRackScan(true);
             if( rackScan == null || rackScan.isEmpty() ){
                 errors.append("No results from rack scan");
             } else {
-                for (Map.Entry<String, String> barcodeScan : rackScan.entrySet()) {
-                    String barcode = barcodeScan.getValue();
-                    if (barcode != null && !barcode.isEmpty()) {
-                        results.append(barcode);
-                        results.append("\n");
+                // Scan data can be persisted with a SearchInstance, keep track of who ran it and when
+                scannerData.put("scanDate", ColumnValueType.DATE_TIME.format(new Date(),""));
+                scannerData.put("scanUser", getUserBean().getLoginUserName());
+                scannerData.put("scannerName", getRackScanner().getScannerName());
+                JSONArray scan = new JSONArray();
+                scannerData.put("scans", scan);
+                for( Map.Entry<String,String> positionAndBarcode : rackScan.entrySet() ) {
+                    if( positionAndBarcode.getKey().equals("rack")) {
+                        scannerData.put("rackBarcode", positionAndBarcode.getValue());
+                        continue;
                     }
+
+                    scan.put( new JSONObject()
+                            .put("position", positionAndBarcode.getKey())
+                            .put("barcode",positionAndBarcode.getValue())
+                    );
                 }
             }
         } catch (Exception ex){
@@ -115,7 +129,7 @@ public class ConfigurableSearchActionBean extends RackScanActionBean {
                     response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, errors.toString());
                 } else {
                     ServletOutputStream out = response.getOutputStream();
-                    out.write(results.toString().getBytes());
+                    out.write(scannerData.toString().getBytes());
                     out.close();
                 }
             }
