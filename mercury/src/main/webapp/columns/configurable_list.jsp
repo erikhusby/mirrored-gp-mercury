@@ -89,9 +89,6 @@
                 <c:if test="${!dataTable}">
                 <th><input for="count" type="checkbox" class="checkAll" id="checkAllTop" onclick="checkOtherAllBox('#checkAllBottom', this.checked );"><span id="count" class="checkedCount">0</span></th>
                 </c:if>
-                <c:if test="${not empty resultList.conditionalCheckboxHeader}">
-                    <th>${resultList.conditionalCheckboxHeader}</th>
-                </c:if>
                 <c:forEach items="${resultList.headers}" var="resultListHeader" varStatus="status">
                     <%-- Render headers, and links for sorting by column --%>
                     <c:choose>
@@ -127,6 +124,9 @@
                         </c:otherwise>
                     </c:choose>
                 </c:forEach>
+                <c:if test="${not empty resultList.conditionalCheckboxHeader}">
+                    <th>${resultList.conditionalCheckboxHeader}</th>
+                </c:if>
             </tr>
             </thead>
             <tbody>
@@ -138,6 +138,9 @@
                     <input name="selectedIds" value="${resultRow.resultId}" class="shiftCheckbox" type="checkbox">
                 </td>
             </c:if>
+            <c:forEach items="${resultRow.renderableCells}" var="cell">
+                <td>${fn:replace( cell, CRLF, "<br>" )}</td>
+            </c:forEach>
             <c:if test="${not empty resultList.conditionalCheckboxHeader}">
                 <td>
                     <c:if test="${resultRow.hasConditionalCheckbox()}">
@@ -145,9 +148,6 @@
                     </c:if>
                 </td>
             </c:if>
-            <c:forEach items="${resultRow.renderableCells}" var="cell">
-                <td>${fn:replace( cell, CRLF, "<br>" )}</td>
-            </c:forEach>
         </tr>
 
         <%-- *** Start nested table *** --%>
