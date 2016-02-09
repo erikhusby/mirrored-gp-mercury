@@ -4,6 +4,9 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServic
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.json.JSONTokener;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -25,6 +28,7 @@ public class SearchContext {
     private String searchValueString;
     private String multiValueDelimiter = " ";
     private Map<String,ConfigurableList.AddRowsListener> addRowsListeners;
+    private JSONObject rackScanData;
 
     /**
      * Avoid having to access EJB or web application context to get user data for display
@@ -135,6 +139,26 @@ public class SearchContext {
             return null;
         }
         return addRowsListeners.get(name);
+    }
+
+    /**
+     * Rack scan data (if used as search term input for multiple vessel barcodes) is passed from browser as JSON.
+     * This method avoids having to re-parse JSON for every required result column and row.
+     * @return
+     */
+    public JSONObject getScanData(){
+        if( getSearchValue() == null || getSearchValue().getRackScanData() == null ) {
+            return null;
+        }
+        if( rackScanData != null ) {
+            return rackScanData;
+        }
+        try {
+            rackScanData = new JSONObject(new JSONTokener(getSearchValue().getRackScanData()));
+        } catch (JSONException jse) {
+            throw new RuntimeException("Unable to parse JSON rack scan data", jse);
+        }
+        return rackScanData;
     }
 
 

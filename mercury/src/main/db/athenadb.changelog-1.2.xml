@@ -203,4 +203,20 @@
         </preConditions>
         <dropTable schemaName="ATHENA" tableName="MATERIAL_TYPE_AUD"/>
     </changeSet>
+
+    <changeSet id="GPLIM-3939-1" author="thompson">
+        <addColumn schemaName="ATHENA" tableName="PRODUCT_ORDER_SAMPLE">
+            <column name="PROCEED_IF_OUT_OF_SPEC" type="varchar2(255)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-3939-2" author="thompson">
+        <addColumn schemaName="ATHENA" tableName="PRODUCT_ORDER_SAMPLE_AUD">
+            <column name="PROCEED_IF_OUT_OF_SPEC" type="varchar2(255)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-3939-3" author="thompson">
+        <createIndex tableName="billing_ledger_aud" indexName="ID_BLA_PDO_SAMPLE">
+            <column name="product_order_sample_id"/>
+        </createIndex>
+    </changeSet>
 </databaseChangeLog>
