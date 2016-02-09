@@ -579,7 +579,29 @@ public class LabMetricSearchDefinition {
         });
         searchTerms.add(searchTerm);
 
-        // todo jmt Proceed if OOS
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Proceed if OOS");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public List<String> evaluate(Object entity, SearchContext context) {
+                List<String> results = new ArrayList<>();
+                LabMetric labMetric = (LabMetric) entity;
+                for (SampleInstanceV2 sampleInstanceV2 : labMetric.getLabVessel().getSampleInstancesV2()) {
+                    List<ProductOrderSample> allProductOrderSamples = sampleInstanceV2.getAllProductOrderSamples();
+                    if (!allProductOrderSamples.isEmpty()) {
+                        ProductOrderSample productOrderSample = allProductOrderSamples.get(
+                                allProductOrderSamples.size() - 1);
+                        ProductOrderSample.ProceedIfOutOfSpec proceedIfOutOfSpec =
+                                productOrderSample.getProceedIfOutOfSpec();
+                        if (proceedIfOutOfSpec != null) {
+                            results.add(proceedIfOutOfSpec.getDisplayName());
+                        }
+                    }
+                }
+                return results;
+            }
+        });
+        searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
         searchTerm.setName("Original Material Type");
