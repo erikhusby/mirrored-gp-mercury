@@ -2,7 +2,9 @@ package org.broadinstitute.gpinformatics.infrastructure;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
@@ -510,7 +512,11 @@ public class SampleDataFetcherTest {
 
     private ProductOrderSample build_product_order_sample_without_mercury_sample_bound(String sampleId) {
 
-        return new ProductOrderSample(sampleId);
+        ProductOrderSample productOrderSample = new ProductOrderSample(sampleId);
+        ProductOrder productOrder = new ProductOrder();
+        productOrder.setProduct(new Product());
+        productOrderSample.setProductOrder(productOrder);
+        return productOrderSample;
     }
 
     private ProductOrderSample build_product_order_sample_with_mercury_sample_bound(
@@ -518,6 +524,9 @@ public class SampleDataFetcherTest {
             String sampleId) {
 
         ProductOrderSample productOrderSample = new ProductOrderSample(sampleId);
+        ProductOrder productOrder = new ProductOrder();
+        productOrder.setProduct(new Product());
+        productOrderSample.setProductOrder(productOrder);
         MercurySample mercurySample = presetSampleToMercurySampleMap.get(sampleId);
         if(mercurySample == null) {
             mercurySample = new MercurySample(sampleId, metadataSource);

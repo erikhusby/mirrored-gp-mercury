@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -367,8 +368,7 @@ public abstract class TransferTraverserCriteria {
     }
 
     /**
-     * Searches for nearest metric of specified type <br />
-     * Despite class name, all metrics are located, method getNearestMetrics returns the nearest.
+     * Searches for nearest metric of specified type.
      */
     public static class NearestLabMetricOfTypeCriteria extends TransferTraverserCriteria {
         private LabMetric.MetricType metricType;
@@ -380,15 +380,14 @@ public abstract class TransferTraverserCriteria {
 
         @Override
         public TraversalControl evaluateVesselPreOrder(Context context) {
+            TraversalControl traversalControl = TraversalControl.ContinueTraversing;
             LabVessel contextVessel = context.getContextVessel();
-
-
 
             if (contextVessel != null) {
                 for (LabMetric metric : contextVessel.getMetrics()) {
-                    if (metric.getName().equals(metricType)) {
-                        List<LabMetric> metricsAtHop;
-                        metricsAtHop = labMetricsAtHop.get(context.getHopCount());
+                    if (metric.getName() == metricType) {
+                        traversalControl = TraversalControl.StopTraversing;
+                        List<LabMetric> metricsAtHop = labMetricsAtHop.get(context.getHopCount());
                         if (metricsAtHop == null) {
                             metricsAtHop = new ArrayList<>();
                             labMetricsAtHop.put(context.getHopCount(), metricsAtHop);
@@ -397,13 +396,14 @@ public abstract class TransferTraverserCriteria {
                     }
                 }
             }
-            return TraversalControl.ContinueTraversing;
+            return traversalControl;
         }
 
         @Override
         public void evaluateVesselPostOrder(Context context) {
         }
 
+        @Nullable
         public List<LabMetric> getNearestMetrics() {
             int nearest = Integer.MAX_VALUE;
             for (Map.Entry<Integer, List<LabMetric>> labMetricsForHopCount : labMetricsAtHop.entrySet()) {
