@@ -16,13 +16,6 @@
                         {"bSortable": true} // value
                     ]
                 });
-                $j('#metricsTable').dataTable({
-                    "oTableTools": ttExportDefines,
-                    "aoColumnDefs" : [
-                        { "bSortable": false, "aTargets": "no-sort" },
-                        { "bSortable": true, "sType": "numeric", "aTargets": "sort-numeric" }
-                    ]
-                });
                 <%-- Clears all checkboxes. --%>
                 $j('input.conditionalCheckboxClass').prop('checked',false);
 
@@ -101,84 +94,6 @@
                 </c:forEach>
             </table>
             <stripes:form beanclass="${actionBean.class.name}" id="metricsForm" class="form-horizontal">
-<%--
-                <table class="table simple" id="metricsTable">
-                    <thead>
-                    <tr>
-                        <th>Position</th>
-                        <th>Barcode</th>
-                        <th>Sample ID</th>
-                        <th>Collaborator Patient ID</th>
-                        <th>Value</th>
-                        <c:if test="${actionBean.labMetricRun.metricType.category != 'QUALITY'}">
-                            <th class="sort-numeric">Volume</th>
-                            <th class="sort-numeric">Total ng</th>
-                        </c:if>
-                        <th>Decision</th>
-                        <th>Note</th>
-                        <th>User</th>
-                        <th>Date</th>
-                        <th>Reason</th>
-                        <th class="no-sort"></th>
-                        &lt;%&ndash;<th class="no-show"></th>&ndash;%&gt;
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <c:forEach items="${actionBean.labMetricRun.labMetrics}" var="labMetric">
-                        <c:if test="${labMetric.labMetricDecision != null}">
-                            <tr <c:if test="${labMetric.labMetricDecision.needsReview}">
-                                    class="warning"
-                                </c:if>>
-                                <td>
-                                    ${labMetric.vesselPosition}
-                                </td>
-                                <td>
-                                    ${labMetric.labVessel.label}
-                                </td>
-                                <td>
-                                    ${fn:join(labMetric.labVessel.sampleNamesArray, " ")}
-                                </td>
-                                <td>
-                                    ${fn:join(labMetric.labVessel.getMetadataValues("PATIENT_ID"), " ")}
-                                </td>
-                                <td>
-                                    ${labMetric.value}
-                                </td>
-                                <c:if test="${labMetric.name.category != 'QUALITY'}">
-                                    <td>
-                                        ${labMetric.labVessel.volume}
-                                    </td>
-                                    <td>
-                                        ${labMetric.totalNg}
-                                    </td>
-                                </c:if>
-                                <td>
-                                    ${labMetric.labMetricDecision.decision}
-                                </td>
-                                <td>
-                                    ${labMetric.labMetricDecision.note}
-                                </td>
-                                <td>
-                                    ${actionBean.getUserFullName(labMetric.labMetricDecision.deciderUserId)}
-                                </td>
-                                <td>
-                                    <fmt:formatDate value="${labMetric.labMetricDecision.decidedDate}" pattern="${actionBean.dateTimePattern}"/>
-                                </td>
-                                <td>
-                                    ${labMetric.labMetricDecision.overrideReason}
-                                </td>
-                                <td>
-                                    <c:if test="${labMetric.labMetricDecision.decision.editable}">
-                                        <stripes:checkbox name="selectedConditionalIds" value="${labMetric.labMetricId}"
-                                                class="conditionalCheckboxClass"/>
-                                    </c:if>
-                                </td>
-                            </tr>
-                        </c:if>
-                    </c:forEach>
-                    </tbody>
-                </table>
---%>
 
                 <stripes:layout-render name="/columns/configurable_list.jsp"
                         entityName="${actionBean.entityName}"

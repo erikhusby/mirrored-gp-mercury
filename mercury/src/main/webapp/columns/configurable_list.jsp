@@ -272,9 +272,7 @@
 </table>
 </form>
 </c:if>
-</c:otherwise>
-</c:choose>
-
+<c:if test="${dataTable}">
     <script type="text/javascript">
         $j('#${entityName}ResultsTable').dataTable({
             "oTableTools": ttExportDefines,
@@ -284,4 +282,8 @@
             ]
         });
     </script>
+</c:if>
+</c:otherwise>
+</c:choose>
+
 </stripes:layout-definition>
