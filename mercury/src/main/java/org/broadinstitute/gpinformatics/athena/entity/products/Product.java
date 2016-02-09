@@ -102,6 +102,13 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     private String deliverables;
 
     /**
+     * A sample with MetadataSource.BSP can have its initial quant in Mercury, e.g. SONIC.  This flag avoids the
+     * performance hit of looking for Mercury quants in Products that don't have them.
+     */
+    @Column(name = "EXPECT_INIT_QUANT_IN_MERCURY")
+    private Boolean expectInitialQuantInMercury = false;
+
+    /**
      * Whether this Product should show as a top-level product in the Product list or for Product Order creation/edit.
      **/
     private boolean topLevelProduct;
@@ -680,5 +687,13 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
      */
     public boolean isExomeExpress() {
         return productFamily.getName().equals(ProductFamily.ProductFamilyName.EXOME.getFamilyName()) && productName.startsWith(EXOME_EXPRESS);
+    }
+
+    public Boolean getExpectInitialQuantInMercury() {
+        return expectInitialQuantInMercury == null ? false : expectInitialQuantInMercury;
+    }
+
+    public void setExpectInitialQuantInMercury(Boolean expectInitialQuantInMercury) {
+        this.expectInitialQuantInMercury = expectInitialQuantInMercury;
     }
 }

@@ -115,7 +115,9 @@ public class UploadQuantsActionBean extends CoreActionBean {
         case CALIPER:
             break;
         case GENERIC:
-            quantEJB.storeQuants(labMetrics);
+            MessageCollection messageCollection = new MessageCollection();
+            quantEJB.storeQuants(labMetrics, quantType, messageCollection);
+            addMessages(messageCollection);
             break;
         }
         if (getValidationErrors().isEmpty()) {
