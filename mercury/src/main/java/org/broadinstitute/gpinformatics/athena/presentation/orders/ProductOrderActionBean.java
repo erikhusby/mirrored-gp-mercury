@@ -146,6 +146,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private static final String DELETE_SAMPLES_ACTION = "deleteSamples";
     public static final String SQUID_COMPONENTS_ACTION = "createSquidComponents";
     private static final String SET_RISK = "setRisk";
+    private static final String SET_PROCEED_OOS = "setProceedOos";
     private static final String RECALCULATE_RISK = "recalculateRisk";
     protected static final String PLACE_ORDER_ACTION = "placeOrder";
     protected static final String VALIDATE_ORDER = "validate";
@@ -301,6 +302,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @Validate(required = true, on = SET_RISK)
     private String riskComment;
+
+    @Validate(required = true, on = SET_PROCEED_OOS)
+    private ProductOrderSample.ProceedIfOutOfSpec proceedOos;
 
     private String abandonComment;
     private String unAbandonComment;
@@ -1445,7 +1449,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @ValidationMethod(
             on = {DELETE_SAMPLES_ACTION, ABANDON_SAMPLES_ACTION, SET_RISK, RECALCULATE_RISK, ADD_SAMPLES_TO_BUCKET,
-                    UNABANDON_SAMPLES_ACTION},
+                    UNABANDON_SAMPLES_ACTION, SET_PROCEED_OOS},
             priority = 0)
     public void validateSampleListOperation() {
         if (selectedProductOrderSampleIds != null) {
@@ -1504,6 +1508,12 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         addMessage("Set manual on risk to {0} for {1} samples.", riskStatus, selectedProductOrderSampleIds.size());
 
+        return createViewResolution(editOrder.getBusinessKey());
+    }
+
+    @HandlesEvent(SET_PROCEED_OOS)
+    public Resolution proceedOos() {
+        productOrderEjb.proceedOos(userBean.getBspUser(), selectedProductOrderSamples, editOrder, proceedOos);
         return createViewResolution(editOrder.getBusinessKey());
     }
 
@@ -1871,6 +1881,14 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void setRiskComment(String riskComment) {
         this.riskComment = riskComment;
+    }
+
+    public ProductOrderSample.ProceedIfOutOfSpec getProceedOos() {
+        return proceedOos;
+    }
+
+    public void setProceedOos(ProductOrderSample.ProceedIfOutOfSpec proceedOos) {
+        this.proceedOos = proceedOos;
     }
 
     public String getAbandonComment() {
