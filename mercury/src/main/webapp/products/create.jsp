@@ -385,11 +385,11 @@
 
                 <security:authorizeBlock roles="<%= roles(PDM, Developer) %>">
                     <div class="control-group">
-                        <stripes:label for="initialQuantInMercury" class="control-label">
-                            Initial Quant in Mercury
+                        <stripes:label for="expectInitialQuantInMercury" class="control-label">
+                            Expect Initial Quant in Mercury
                         </stripes:label>
                         <div class="controls">
-                            <stripes:checkbox id="initialQuantInMercury" name="editProduct.initialQuantInMercury" style="margin-top: 10px;"/>
+                            <stripes:checkbox id="expectInitialQuantInMercury" name="editProduct.expectInitialQuantInMercury" style="margin-top: 10px;"/>
                         </div>
                     </div>
                 </security:authorizeBlock>

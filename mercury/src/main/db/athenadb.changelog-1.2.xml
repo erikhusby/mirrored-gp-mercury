@@ -206,12 +206,12 @@
 
     <changeSet id="GPLIM-3976-1" author="thompson">
         <addColumn schemaName="ATHENA" tableName="PRODUCT">
-            <column name="INITIAL_QUANT_IN_MERCURY" type="number(1,0)"/>
+            <column name="EXPECT_INIT_QUANT_IN_MERCURY" type="number(1,0)"/>
         </addColumn>
     </changeSet>
     <changeSet id="GPLIM-3976-2" author="thompson">
         <addColumn schemaName="ATHENA" tableName="PRODUCT_AUD">
-            <column name="INITIAL_QUANT_IN_MERCURY" type="number(1,0)"/>
+            <column name="EXPECT_INIT_QUANT_IN_MERCURY" type="number(1,0)"/>
         </addColumn>
     </changeSet>
 </databaseChangeLog>
