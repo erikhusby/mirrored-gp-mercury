@@ -171,6 +171,23 @@ public class MercurySampleSearchDefinition {
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
+        searchTerm.setName("Root Sample ID");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Set<String> evaluate(Object entity, SearchContext context) {
+                Set<String> values = new HashSet<>();
+                MercurySample sample = (MercurySample) entity;
+                for( LabVessel sampleVessel : sample.getLabVessel() ){
+                    for( SampleInstanceV2 sampleInstance : sampleVessel.getSampleInstancesV2()) {
+                        values.add(sampleInstance.getRootOrEarliestMercurySampleName());
+                    }
+                }
+                return values;
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
         searchTerm.setName("Mercury Sample Tube Barcode");
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override

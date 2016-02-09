@@ -70,6 +70,12 @@ public class SearchInstance implements Serializable {
         private List<SearchValue> children = new ArrayList<>();
 
         /**
+         * When a rack scan is used as a source of barcodes, persist it so additional data is available in results
+         * Stored as JSON text
+         */
+        private String rackScanData;
+
+        /**
          * The list of valid values
          */
         @XmlTransient
@@ -469,6 +475,14 @@ public class SearchInstance implements Serializable {
 
         public void setAddToCriteria(Boolean addToCriteria) {
             this.addToCriteria = addToCriteria;
+        }
+
+        public void setRackScanData( String rackScanData ) {
+            this.rackScanData = rackScanData;
+        }
+
+        public String getRackScanData() {
+            return rackScanData;
         }
 
         @Override
