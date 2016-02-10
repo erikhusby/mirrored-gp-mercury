@@ -27,6 +27,7 @@ import org.json.JSONWriter;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
+
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.image.BufferedImage;
@@ -55,7 +56,6 @@ import java.util.Set;
  *          <li>name - for in-place events</li>
  *          <li>x, y - relative to the parent</li>
  *          <li>w, h - usually small, for a tube, but can be wide for an in-place event</li>
- *          <li>highlight - 1 if the child is a direct ancestor or descendant of the searched tube</li>
  *          <li>array of altIds, each has:</li>
  *              <ul>
  *              <li>altId - an alternative ID, e.g. SM- or LCSET-</li>
@@ -73,6 +73,11 @@ import java.util.Set;
  *      <li>target - rack or plate id</li>
  *      <li>targetChild - tube label</li>
  *      <li>class - to make re-arrays dashed</li>
+ *      </ul>
+ * </li>
+ * <li>array of highlights, each has
+ *      <ul>
+ *      <li>barcode - barcode of vessel to highlight</li>
  *      </ul>
  * </li>
  * </ul>
@@ -118,6 +123,8 @@ public class TransferVisualizerV2 {
         private final Set<String> renderedEvents = new HashSet<>();
         /** Prevents multiple edge labels for a pool. */
         private final Set<String> renderedEdgeLabels = new HashSet<>();
+        /** Ancestor and descendant barcodes to be highlighted. */
+        private JSONArray highlightBarcodeJson = new JSONArray();
         /** The ID to scroll to when the page is rendered.  If the starting barcode was a tube, this is one of the
          * enclosing racks (the tube may appear in multiple racks, so it can't be used as the start). */
         private String startId;
@@ -144,6 +151,9 @@ public class TransferVisualizerV2 {
                 }
                 if (context.getVesselEvent() != null && context.getVesselEvent().getLabEvent() != null) {
                     renderEvent(context.getVesselEvent().getLabEvent(), context.getContextVessel());
+                }
+                if (context.getContextVessel() != null && context.getContextVessel().getLabel() != null) {
+                    highlightBarcode(context.getContextVessel().getLabel());
                 }
                 return TraversalControl.ContinueTraversing;
             } catch (JSONException e) {
@@ -282,6 +292,12 @@ public class TransferVisualizerV2 {
             for (VesselContainer<?> vesselContainer : labVessel.getVesselContainers()) {
                 renderContainer(vesselContainer, null, labVessel, true);
             }
+        }
+
+        private void highlightBarcode(String barcode) throws JSONException {
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("barcode", barcode);
+            highlightBarcodeJson.put(jsonObject);
         }
 
         @Override
@@ -522,9 +538,6 @@ public class TransferVisualizerV2 {
                 }
             }
             jsonWriter.endArray();
-            if (child.equals(labVessel)) {
-                jsonWriter.key("highlight").value(1L);
-            }
             jsonWriter.endObject();
         }
         /**
@@ -552,9 +565,11 @@ public class TransferVisualizerV2 {
          */
         public void completeJson() {
             try {
-                jsonWriter.endArray().key("startId").value(startId).key("links");
-                edgesJson.write(writer);
-                writer.write(" }");
+                jsonWriter.endArray()
+                        .key("startId").value(startId)
+                        .key("links").value(edgesJson)
+                        .key("highlights").value(highlightBarcodeJson)
+                        .endObject();
                 writer.flush();
             } catch (JSONException | IOException e) {
                 throw new RuntimeException(e);
