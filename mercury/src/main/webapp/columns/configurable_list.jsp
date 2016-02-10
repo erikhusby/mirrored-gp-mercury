@@ -27,6 +27,15 @@
 <%-- The name of the entity being listed --%>
 <%--@elvariable id="entityName" type="java.lang.String"--%>
 
+<%-- Whether to render sort links in headers --%>
+<%--@elvariable id="isDbSortAllowed" type="java.lang.Boolean"--%>
+
+<%-- Which header to mark as currently sorted --%>
+<%--@elvariable id="dbSortPath" type="java.lang.String"--%>
+
+<%-- Render a DataTable (only useful if there is only one page, disables server-side Excel and paging) --%>
+<%--@elvariable id="dataTable" type="java.lang.Boolean"--%>
+
 <script type="text/javascript">
     atLeastOneChecked = function (name, form) {
         var checkboxes = form.getInputs("checkbox", name);
@@ -44,25 +53,6 @@
         $j(otherID)[0].checked = cbState;
         return true;
     };
-
-    function getWorkRequestSearchFormData() {
-
-        assignSearchNames(document.getElementById('searchForm'));
-        $j("#searchResultsForm${entityName} :input[isacopy]").remove();  // This is in case they hit submit twice after a validation problem.
-
-        // Have to handle the multi-selects separately.
-        var theSelect = $j("#selectedColumnDefNames").clone();
-        theSelect.attr("id", "selectedColumnDefNamesClone");
-        theSelect.hide().attr("isacopy", "y").appendTo("#searchResultsForm${entityName}");
-
-        var htmlSelectVar = document.getElementById("selectedColumnDefNamesClone");
-        for (var j = 0; j < htmlSelectVar.options.length; j++) {
-            htmlSelectVar.options[j].selected = true;
-        }
-
-        // Add all the searchInstance form fields.
-        $j("#searchForm :input[name^='searchInstance']").clone().hide().attr("isacopy", "y").appendTo("#searchResultsForm${entityName}");
-    }
 </script>
 
 <%
@@ -80,21 +70,25 @@
 <c:if test="${fn:length(resultList.resultRows) > 0}">
     <div class="control-group"><a href="#search${entityName}ListEnd">Jump to end</a></div>
 </c:if>
-<stripes:form action="/util/ConfigurableList.action" id="searchResultsForm${entityName}">
-<input type="hidden" name="sessionKey" value="${sessionKey}"/>
-<input type="hidden" name="entityName" value="${entityName}"/>
+
+<c:if test="${!dataTable}">
+    <form action="/Mercury/util/ConfigurableList.action" id="searchResultsForm${entityName}">
+    <input type="hidden" name="sessionKey" value="${sessionKey}"/>
+    <input type="hidden" name="entityName" value="${entityName}"/>
+</c:if>
 
 <div id="${entityName}ResultsDiv" class="form-inline">
-    <c:set var="isDbSortAllowed" value="${actionBean.searchInstance.isDbSortable}"/>
 <table width="100%" class="table simple dataTable" id="${entityName}ResultsTable">
     <c:forEach items="${resultList.resultRows}" var="resultRow" varStatus="status">
-        <%--@elvariable id="resultRow" type="edu.mit.broad.bsp.core.util.columns.ConfigurableListUtils.ResultRow"--%>
+        <%--@elvariable id="resultRow" type="org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList.ResultRow"--%>
         <%-- Break up the table every few hundred rows, because the browser uses unreasonable amounts of
         CPU to render large tables --%>
         <c:if test="${status.index % 500 == 0}">
             <thead>
             <tr>
+                <c:if test="${!dataTable}">
                 <th><input for="count" type="checkbox" class="checkAll" id="checkAllTop" onclick="checkOtherAllBox('#checkAllBottom', this.checked );"><span id="count" class="checkedCount">0</span></th>
+                </c:if>
                 <c:forEach items="${resultList.headers}" var="resultListHeader" varStatus="status">
                     <%-- Render headers, and links for sorting by column --%>
                     <c:choose>
@@ -112,11 +106,11 @@
                             <c:choose>
                                 <c:when test="${ ( not empty resultListHeader.sortPath ) and isDbSortAllowed}">
                                     <%-- Multi-page results are sortable in the database, if the column has a sort path --%>
-                                    <th class="sorting ${resultListHeader.sortPath == actionBean.dbSortPath ?
+                                    <th class="sorting ${resultListHeader.sortPath == dbSortPath ?
                                     (resultList.resultSortDirection == 'ASC' ? 'sorting_asc' : 'sorting_desc' ) : ''}"
                                             >
                                         <stripes:link
-                                                href="${action}?search=&entityName=${entityName}&sessionKey=${sessionKey}&columnSetName=${columnSetName}&dbSortPath=${resultListHeader.sortPath}&sortDirection=${resultListHeader.sortPath == actionBean.dbSortPath && resultList.resultSortDirection == 'ASC' ? 'DSC' : 'ASC'}">
+                                                href="${action}?search=&entityName=${entityName}&sessionKey=${sessionKey}&columnSetName=${columnSetName}&dbSortPath=${resultListHeader.sortPath}&sortDirection=${resultListHeader.sortPath == dbSortPath && resultList.resultSortDirection == 'ASC' ? 'DSC' : 'ASC'}">
                                             ${resultListHeader.viewHeader}</stripes:link>
                                     </th>
                                 </c:when>
@@ -130,18 +124,30 @@
                         </c:otherwise>
                     </c:choose>
                 </c:forEach>
+                <c:if test="${not empty resultList.conditionalCheckboxHeader}">
+                    <th>${resultList.conditionalCheckboxHeader}</th>
+                </c:if>
             </tr>
             </thead>
             <tbody>
         </c:if>
         <%-- Render data rows and cells --%>
-        <tr ${status.index%2==0 ? "class=\"even\"" : "class=\"odd\""}>
-            <td>
-                <input name="selectedIds" value="${resultRow.resultId}" class="shiftCheckbox" type="checkbox">
-            </td>
+        <tr class="${status.index%2==0 ? "even" : "odd"}${empty resultRow.cssStyles ? "" : " " + "resultRow.cssStyles"}">
+            <c:if test="${!dataTable}">
+                <td>
+                    <input name="selectedIds" value="${resultRow.resultId}" class="shiftCheckbox" type="checkbox">
+                </td>
+            </c:if>
             <c:forEach items="${resultRow.renderableCells}" var="cell">
                 <td>${fn:replace( cell, CRLF, "<br>" )}</td>
             </c:forEach>
+            <c:if test="${not empty resultList.conditionalCheckboxHeader}">
+                <td>
+                    <c:if test="${resultRow.hasConditionalCheckbox()}">
+                        <input name="selectedConditionalIds" value="${resultRow.resultId}" class="conditionalCheckboxClass" type="checkbox">
+                    </c:if>
+                </td>
+            </c:if>
         </tr>
 
         <%-- *** Start nested table *** --%>
@@ -183,6 +189,7 @@
     </c:forEach>
 </table>
 </div>
+<c:if test="${!dataTable}">
 <table class="table">
     <tr>
         <c:if test="${fn:length(resultList.resultRows) > 0}">
@@ -256,13 +263,6 @@
                     <ul>
                         <li>Column download set: Choose the set of columns you want to download to Excel</li>
                         <li>Download Checked: Download checked rows to Excel</li>
-                        <li>Plating Request For Checked: Take the checked samples to the Plating Request Filter
-                            page
-                        </li>
-                        <li>Add checked to Basket: Add the checked samples to the sample basket (check the
-                            contents of your basket first, by clicking the basket icon in the top right
-                            corner of the page)
-                        </li>
                     </ul>
                 </div>">
 
@@ -270,7 +270,19 @@
         </td>
     </tr>
 </table>
-</stripes:form>
+</form>
+</c:if>
+<c:if test="${dataTable}">
+    <script type="text/javascript">
+        $j('#${entityName}ResultsTable').dataTable({
+            "oTableTools": ttExportDefines,
+            "aoColumnDefs" : [
+                { "bSortable": false, "aTargets": "no-sort" },
+                { "bSortable": true, "sType": "numeric", "aTargets": "sort-numeric" }
+            ]
+        });
+    </script>
+</c:if>
 </c:otherwise>
 </c:choose>
 

@@ -205,10 +205,10 @@ public class SampleDataFetcher implements Serializable {
         Collection<MercurySample> mercurySamplesWithMercurySource = new ArrayList<>();
         Collection<String> sampleIdsWithBspSource = new ArrayList<>();
 
-        Set<String> sampleNames = new HashSet<>(samples.size());
+        Set<String> bspSourceSampleNames = new HashSet<>(samples.size());
         Map<String, ProductOrderSample> mapMercuryQuantIdToPdoSample = new HashMap<>();
         for (AbstractSample sample : samples) {
-            if (sample.needsBspMetaData()) {
+            if (!sample.isHasBspSampleDataBeenInitialized()) {
                 MercurySample mercurySample;
                 String sampleName;
                 Product product = null;
@@ -230,7 +230,7 @@ public class SampleDataFetcher implements Serializable {
                         mercurySample.getMetadataSource() == MercurySample.MetadataSource.MERCURY) {
                     mercurySamplesWithMercurySource.add(mercurySample);
                 } else {
-                    sampleNames.add(sampleName);
+                    bspSourceSampleNames.add(sampleName);
                 }
                 // To improve performance, check for Mercury quants only if the product indicates that they're there.
                 if (product != null && product.getExpectInitialQuantInMercury()) {
@@ -238,9 +238,9 @@ public class SampleDataFetcher implements Serializable {
                 }
             }
         }
-        if (!sampleNames.isEmpty()) {
+        if (!bspSourceSampleNames.isEmpty() || !mercurySamplesWithMercurySource.isEmpty()) {
 
-            buildSampleCollectionsBySource(sampleNames, mercurySamplesWithMercurySource, sampleIdsWithBspSource);
+            buildSampleCollectionsBySource(bspSourceSampleNames, mercurySamplesWithMercurySource, sampleIdsWithBspSource);
 
             if (!sampleIdsWithBspSource.isEmpty()) {
                 Map<String, BspSampleData> bspSampleData =

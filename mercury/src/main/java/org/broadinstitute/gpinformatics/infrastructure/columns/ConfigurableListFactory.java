@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.infrastructure.search.SearchTerm;
 import org.hibernate.Criteria;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,19 +37,22 @@ public class ConfigurableListFactory {
      *
      * @param entityList  Entities for which to display data
      * @param downloadColumnSetName Name of the column set to display
-     * @param entityName Name of the entity
-     * @param entityId ID of the entity
+     * @param columnEntity ID of the entity
+     * @param configurableSearchDefinition for add rows listeners
      *
      * @return ConfigurableList instance
      */
     public ConfigurableList create(@Nonnull List<?> entityList,
             @Nonnull String downloadColumnSetName,
-            @Nonnull String entityName,
-            @Nonnull ColumnEntity entityId,
-            @Nonnull SearchContext evalContext) {
+            @Nonnull ColumnEntity columnEntity,
+            @Nonnull SearchContext evalContext,
+            @Nullable ConfigurableSearchDefinition configurableSearchDefinition) {
 
-        List<ColumnTabulation> columnTabulations = buildColumnSetTabulations(downloadColumnSetName, entityName);
-        ConfigurableList configurableList = new ConfigurableList(columnTabulations, 0, "ASC", entityId);
+        List<ColumnTabulation> columnTabulations = buildColumnSetTabulations(downloadColumnSetName, columnEntity);
+        ConfigurableList configurableList = new ConfigurableList(columnTabulations, 0, "ASC", columnEntity);
+        if (configurableSearchDefinition != null) {
+            configurableList.addAddRowsListeners(configurableSearchDefinition);
+        }
         configurableList.addRows(entityList, evalContext);
         return configurableList;
     }
@@ -57,11 +61,11 @@ public class ConfigurableListFactory {
      * Build Column definitions for a column set name
      *
      * @param downloadColumnSetName name of column set that the user wants to download
-     * @param entityName            e.g. "Sample"
+     * @param columnEntity            e.g. "Sample"
      * @return list of column definitions
      */
     public List<ColumnTabulation> buildColumnSetTabulations(@Nonnull String downloadColumnSetName,
-            @Nonnull String entityName) {
+            @Nonnull ColumnEntity columnEntity) {
         // Determine which set of columns to use
 /*
         PreferenceDomain.domain columnSetDomain = null;
@@ -80,8 +84,7 @@ public class ConfigurableListFactory {
 //        EntityPreferenceFactory entityPreferenceFactory = new EntityPreferenceFactory();
 //        PreferenceDefinitionListNameListString columnSets = entityPreferenceFactory.getColumnSets(columnSetDomain,
 //                domainUser, sampleCollection.getGroup(), sampleCollection, entityName);
-        // todo jmt other entities
-        Preference globalPreference = preferenceDao.getGlobalPreference(PreferenceType.GLOBAL_LAB_VESSEL_COLUMN_SETS);
+        Preference globalPreference = preferenceDao.getGlobalPreference(columnEntity.getGlobalColumnSets());
         ColumnSetsPreference columnSetsPreference;
         try {
             columnSetsPreference =
@@ -95,7 +98,7 @@ public class ConfigurableListFactory {
                 ConfigurableList.ColumnSetType.DOWNLOAD, columnSetsPreference);
 //        ListConfig listConfig = entityPreferenceFactory.loadListConfig(entityName);
         ConfigurableSearchDefinition configurableSearchDefinition = SearchDefinitionFactory.getForEntity(
-                entityName);
+                columnEntity.getEntityName());
         List<ColumnTabulation> columnTabulations = new ArrayList<>();
         for (String columnName : columnSet.getColumnDefinitions()) {
             SearchTerm searchTerm = configurableSearchDefinition.getSearchTerm(columnName);
@@ -346,12 +349,7 @@ public class ConfigurableListFactory {
                 ColumnEntity.getByName(entityName));
 
         // Add any row listeners
-        ConfigurableSearchDefinition.AddRowsListenerFactory addRowsListenerFactory = configurableSearchDef.getAddRowsListenerFactory();
-        if( addRowsListenerFactory != null ) {
-            for( Map.Entry<String,ConfigurableList.AddRowsListener> entry : addRowsListenerFactory.getAddRowsListeners().entrySet() ) {
-                configurableList.addAddRowsListener(entry.getKey(), entry.getValue());
-            }
-        }
+        configurableList.addAddRowsListeners(configurableSearchDef);
 
         configurableList.addRows( entityList, searchInstance.getEvalContext() );
 
@@ -394,12 +392,7 @@ public class ConfigurableListFactory {
                 ColumnEntity.getByName(entityName));
 
         // Add any row listeners
-        ConfigurableSearchDefinition.AddRowsListenerFactory addRowsListenerFactory = configurableSearchDef.getAddRowsListenerFactory();
-        if( addRowsListenerFactory != null ) {
-            for( Map.Entry<String,ConfigurableList.AddRowsListener> entry : addRowsListenerFactory.getAddRowsListeners().entrySet() ) {
-                configurableList.addAddRowsListener(entry.getKey(), entry.getValue());
-            }
-        }
+        configurableList.addAddRowsListeners(configurableSearchDef);
 
         configurableList.addRows( entityList,searchInstance.getEvalContext() );
 

@@ -73,6 +73,8 @@ public interface SampleData {
 
     String getMaterialType();
 
+    String getOriginalMaterialType();
+
     double getTotal();
 
     String getSampleType();
