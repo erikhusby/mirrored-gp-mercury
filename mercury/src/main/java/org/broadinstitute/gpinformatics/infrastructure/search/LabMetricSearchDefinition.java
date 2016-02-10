@@ -218,7 +218,8 @@ public class LabMetricSearchDefinition {
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
-        searchTerm.setName("Nearest Sample ID");
+        searchTerm.setName("Mercury Sample ID");
+        searchTerm.setIsExcludedFromResultColumns(Boolean.TRUE);
         criteriaPaths = new ArrayList<>();
 
         criteriaPath = new SearchTerm.CriteriaPath();
@@ -233,7 +234,9 @@ public class LabMetricSearchDefinition {
                 Set<String> results = new HashSet<>();
                 LabMetric labMetric = (LabMetric) entity;
                 for (SampleInstanceV2 sampleInstanceV2 : labMetric.getLabVessel().getSampleInstancesV2()) {
-                    results.add(sampleInstanceV2.getNearestMercurySampleName());
+                    for (MercurySample mercurySample: sampleInstanceV2.getRootMercurySamples() ) {
+                        results.add(mercurySample.getSampleKey());
+                    }
                 }
                 return results;
             }
@@ -556,6 +559,22 @@ public class LabMetricSearchDefinition {
                 }
 
                 return rootSampleIds;
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Nearest Sample ID");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public List<String> evaluate(Object entity, SearchContext context) {
+                List<String> results = new ArrayList<>();
+                LabMetric labMetric = (LabMetric) entity;
+                for (SampleInstanceV2 sampleInstanceV2 : labMetric.getLabVessel().getSampleInstancesV2()) {
+                    results.add(sampleInstanceV2.getNearestMercurySampleName());
+                }
+
+                return results;
             }
         });
         searchTerms.add(searchTerm);
