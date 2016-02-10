@@ -6,9 +6,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import javax.annotation.Nonnull;
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -17,14 +16,10 @@ import java.util.Set;
  * A multi-column configurable list plugin that displays ancestor LabMetrics
  */
 public class AncestorLabMetricPlugin implements ListPlugin {
-    @Override
-    public List<ConfigurableList.Row> getData(List<?> entityList, ConfigurableList.HeaderGroup headerGroup,
-            @Nonnull SearchContext context) {
-        List<LabMetric> labMetricParamList = (List<LabMetric>) entityList;
-        List<ConfigurableList.Row> metricRows = new ArrayList<>();
 
-        List<LabMetric.MetricType> concMetricTypes = new ArrayList<>();
-        Map<String, ConfigurableList.Header> mapNameToHeader = new HashMap<>();
+    private static final List<LabMetric.MetricType> concMetricTypes = new ArrayList<>();
+    private static final Map<String, ConfigurableList.Header> mapNameToHeader = new HashMap<>();
+    static {
         for( LabMetric.MetricType metricType : LabMetric.MetricType.values() ) {
             if (metricType.getCategory() == LabMetric.MetricType.Category.CONCENTRATION) {
                 mapNameToHeader.put(metricType.getDisplayName(), new ConfigurableList.Header(metricType.getDisplayName(),
@@ -32,6 +27,13 @@ public class AncestorLabMetricPlugin implements ListPlugin {
                 concMetricTypes.add(metricType);
             }
         }
+    }
+
+    @Override
+    public List<ConfigurableList.Row> getData(List<?> entityList, ConfigurableList.HeaderGroup headerGroup,
+            @Nonnull SearchContext context) {
+        List<LabMetric> labMetricParamList = (List<LabMetric>) entityList;
+        List<ConfigurableList.Row> metricRows = new ArrayList<>();
 
         for (LabMetric labMetric : labMetricParamList) {
             Map<LabMetric.MetricType, Set<LabMetric>> mapTypeToMetrics =
@@ -54,21 +56,16 @@ public class AncestorLabMetricPlugin implements ListPlugin {
         return metricRows;
     }
 
+    /**
+     * Find the most recent metric in a TreeSet returned by LabVessel.getMetricsFor*
+     */
     public static LabMetric findMostRecentLabMetric(Set<LabMetric> ancestorLabMetrics) {
-        LabMetric mostRecentLabMetric;
-        if (ancestorLabMetrics.size() > 1) {
-            List<LabMetric> ancestorLabMetricsList = new ArrayList<>(ancestorLabMetrics);
-            Collections.sort(ancestorLabMetricsList, new Comparator<LabMetric>() {
-                @Override
-                public int compare(LabMetric o1, LabMetric o2) {
-                    return o2.getCreatedDate().compareTo(o1.getCreatedDate());
-                }
-            });
-            mostRecentLabMetric = ancestorLabMetricsList.get(0);
-        } else {
-            mostRecentLabMetric = ancestorLabMetrics.iterator().next();
+        Iterator<LabMetric> iterator = ancestorLabMetrics.iterator();
+        LabMetric labMetric = null;
+        while (iterator.hasNext()) {
+            labMetric = iterator.next();
         }
-        return mostRecentLabMetric;
+        return labMetric;
     }
 
     @Override
