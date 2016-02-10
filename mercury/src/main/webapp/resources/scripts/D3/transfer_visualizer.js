@@ -66,6 +66,11 @@ function renderJson(json) {
         dagreGraph.setEdge(json.links[i].source, json.links[i].target);
     }
 
+    var highlightBarcodes = new Object;
+    for (i = 0; i < json.highlights.length; i++) {
+        highlightBarcodes[json.highlights[i].barcode] = true;
+    }
+
     // Assign x / y coordinates.
     dagre.layout(dagreGraph);
 
@@ -80,7 +85,9 @@ function renderJson(json) {
             return "translate(" + x + "," + y + ")";
         });
     node.append("rect")
-        .attr("class", "graphNodeRect")
+        .attr("class", function (d) {
+            return "graphNodeRect" + (highlightBarcodes[ d.label ] ? " nodeHighlight" : "");
+        })
         .attr("width", function (d) {
             return d.width;
         })
@@ -112,15 +119,9 @@ function renderJson(json) {
     // Render tubes.
     var nodeChild = nodeChildEnter.append("rect")
         .attr("class", function (d) {
-            // Finds if barcode is to be highlighted.
-            var doHighlight = false;
-            for (i = 0; i < json.highlights.length; i++) {
-                if ((d.label ? d.label : d.name) == json.highlights[i].barcode) {
-                    doHighlight = true;
-                    break;
-                }
-            }
-            return "nodeChild" + (doHighlight ? " nodeHighlight" : "");
+            var barcode = d.label ? d.label : d.name;
+
+            return "nodeChild" + (highlightBarcodes[ barcode ] ? " nodeHighlight" : "");
         })
         .attr("x", function (d) {
             return d.x;
