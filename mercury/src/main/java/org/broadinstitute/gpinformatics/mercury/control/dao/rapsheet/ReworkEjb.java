@@ -405,7 +405,7 @@ public class ReworkEjb {
             String error = e.getLocalizedMessage();
             if (error.startsWith(COULD_NOT_FIND_BUCKET_DEFINITION)) {
                 error = String.format(
-                        "%s cannot be added to the '%s' because this bucket is invalid for the product '%s'",
+                        "%s cannot be added to '%s' because that bucket is invalid for the product '%s'",
                         bucketCandidate.getSampleKey(), bucket.getBucketDefinitionName(),
                         bucketCandidate.getProductOrder().getProduct().getProductName());
             }
