@@ -20,8 +20,7 @@ public class MercurySampleDataFetcher {
     public Map<String, MercurySampleData> fetchSampleData(@Nonnull Collection<MercurySample> mercurySamples) {
         Map<String, MercurySampleData> results = new HashMap<>();
         for (MercurySample mercurySample : mercurySamples) {
-            results.put(mercurySample.getSampleKey(),
-                    new MercurySampleData(mercurySample.getSampleKey(), mercurySample.getMetadata(),mercurySample.getReceivedDate()));
+            results.put(mercurySample.getSampleKey(), new MercurySampleData(mercurySample));
         }
         return results;
     }

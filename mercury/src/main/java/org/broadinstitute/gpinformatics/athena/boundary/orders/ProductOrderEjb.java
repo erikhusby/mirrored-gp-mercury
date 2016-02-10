@@ -306,6 +306,20 @@ public class ProductOrderEjb {
     }
 
     /**
+     * Set the Proceed if Out of Spec indicator.
+     */
+    public void proceedOos(@Nonnull BspUser user, @Nonnull List<ProductOrderSample> orderSamples,
+            @Nonnull ProductOrder productOrder, @Nonnull ProductOrderSample.ProceedIfOutOfSpec proceedIfOutOfSpec) {
+
+        for (ProductOrderSample orderSample : orderSamples) {
+            orderSample.setProceedIfOutOfSpec(proceedIfOutOfSpec);
+        }
+        productOrder.prepareToSave(user);
+        // Recruit the persistence context into the transaction
+        productOrderDao.flush();
+    }
+
+    /**
      * Post a comment in jira about risk.
      *
      * @param jiraKey     Key of jira issue to add comment to.
