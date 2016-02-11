@@ -33,6 +33,7 @@ public class MercurySampleData implements SampleData {
     private final boolean hasData;
     private Date receiptDate;
     private String materialType;
+    private String originalMaterialType;
     private Date picoRunDate;
     private double volume;
     private Double concentration;
@@ -82,6 +83,9 @@ public class MercurySampleData implements SampleData {
                 break;
             case MATERIAL_TYPE:
                 this.materialType = value;
+                break;
+            case ORIGINAL_MATERIAL_TYPE:
+                this.originalMaterialType = value;
                 break;
             }
         }
@@ -276,6 +280,14 @@ public class MercurySampleData implements SampleData {
             return "";
         }
         return materialType;
+    }
+
+    @Override
+    public String getOriginalMaterialType() {
+        if (StringUtils.isBlank(originalMaterialType)) {
+            return "";
+        }
+        return originalMaterialType;
     }
 
     @Override

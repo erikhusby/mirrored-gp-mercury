@@ -75,6 +75,7 @@ public class SearchInstanceEjb {
     }
 
     static {
+        // todo jmt move preferences to ColumnEntity?
         mapEntityTypeToPrefType.put(ColumnEntity.LAB_VESSEL,
                 new PreferenceType[]{PreferenceType.GLOBAL_LAB_VESSEL_SEARCH_INSTANCES,
                         PreferenceType.USER_LAB_VESSEL_SEARCH_INSTANCES});

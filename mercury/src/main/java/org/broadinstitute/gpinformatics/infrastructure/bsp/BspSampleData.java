@@ -330,6 +330,11 @@ public class BspSampleData implements SampleData {
     }
 
     @Override
+    public String getOriginalMaterialType() {
+        return getValue(BSPSampleSearchColumn.ORIGINAL_MATERIAL_TYPE);
+    }
+
+    @Override
     public double getTotal() {
         return getDouble(BSPSampleSearchColumn.TOTAL_DNA);
     }

@@ -75,6 +75,11 @@ public enum BSPSampleSearchColumn {
             COLLABORATOR_SAMPLE_ID
     };
 
+    public static final BSPSampleSearchColumn[] QUANT_UPLOAD_COLUMNS = {
+            COLLABORATOR_PARTICIPANT_ID,
+            ORIGINAL_MATERIAL_TYPE
+    };
+
     public static final BSPSampleSearchColumn[] BUCKET_PAGE_COLUMNS = {
             COLLABORATOR_SAMPLE_ID, MATERIAL_TYPE, RECEIPT_DATE
     };

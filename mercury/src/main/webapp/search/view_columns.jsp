@@ -4,7 +4,7 @@
 buttons to move columns from one to the other --%>
 
 <%-- map from column group name to list of columns in that group --%>
-<%--@elvariable id="availableMapGroupToColumnNames" type="java.util.Map<java.lang.String, java.util.List<edu.mit.broad.bsp.core.datavo.preference.ListConfig.ColumnConfig>>"--%>
+<%--@elvariable id="availableMapGroupToColumnNames" type="java.util.Map<java.lang.String, java.util.List<org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation>>"--%>
 <%-- list of columns that have already been chosen --%>
 <%--@elvariable id="predefinedViewColumns" type="java.util.List"--%>
 <stripes:layout-definition>
