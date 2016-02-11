@@ -1026,6 +1026,29 @@ public class SearchInstance implements Serializable {
         }
     }
 
+    /**
+     * For result columns, a configurable search can combine column sets, individual
+     * columns, and search terms. This method builds a list of columns that match what the
+     * user is viewing, to allow the same columns to be downloaded.
+     *
+     * @return list of columns
+     */
+    public List<ColumnTabulation> buildViewedColumnTabulations(String entityName) {
+        List<String> columnNameList;
+        if (getPredefinedViewColumns() != null && !getPredefinedViewColumns().isEmpty()) {
+            columnNameList = getPredefinedViewColumns();
+        } else {
+            columnNameList = getColumnSetColumnNameList();
+        }
+        ConfigurableSearchDefinition configurableSearchDef = SearchDefinitionFactory.getForEntity(entityName);
+        List<ColumnTabulation> columnTabulations = new ArrayList<>();
+        for (String columnName : columnNameList) {
+            columnTabulations.add(configurableSearchDef.getSearchTerm(columnName));
+        }
+        columnTabulations.addAll(findTopLevelColumnTabulations());
+        return columnTabulations;
+    }
+
     public List<SearchValue> getSearchValues() {
         return searchValues;
     }

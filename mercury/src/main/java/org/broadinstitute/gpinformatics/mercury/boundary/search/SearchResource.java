@@ -1,13 +1,27 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.search;
 
+import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableListFactory;
+import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
+import org.broadinstitute.gpinformatics.infrastructure.search.PaginationUtil;
+import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 
-import java.util.List;
+import javax.ejb.Stateful;
+import javax.enterprise.context.RequestScoped;
+import javax.inject.Inject;
+import javax.ws.rs.Path;
 
 /**
  * A web service front-end to Configurable Search.
  */
+@Path("/search")
+@Stateful
+@RequestScoped
 public class SearchResource {
+
+    @Inject
+    private ConfigurableListFactory configurableListFactory;
+
     // runSearch(name, params)
     // SearchRequest/Param object?
     // alternative is List<Pair<String,List>>
@@ -15,34 +29,13 @@ public class SearchResource {
     // List<String termName, Operator operator, List<String> values>
     // Return ResultList?
 
-    public static class SearchValue {
-        private String termName;
-        private SearchInstance.Operator operator;
-        private List<String> values;
-    }
-
-    public static class SearchRequest {
-        private String entityName;
-        private String searchName;
-        private List<SearchValue> searchValueList;
-    }
-
-    public static class Row {
-        List<String> fields;
-        List<SearchResponse> nestedTables;
-    }
-
-    public static class SearchResponse {
-        private List<String> headers;
-        private List<Row> rows;
-
-        public SearchResponse(List<String> headers, List<Row> rows) {
-            this.headers = headers;
-            this.rows = rows;
-        }
-    }
-
-    public SearchResponse runSearch(SearchInstance searchInstance) {
+    public SearchResponse runSearch(SearchRequest searchRequest) {
+        ConfigurableSearchDefinition configurableSearchDef = SearchDefinitionFactory.getForEntity(
+                searchRequest.getEntityName());
+        SearchInstance searchInstance = null;
+        PaginationUtil.Pagination pagination = configurableListFactory.getPagination(searchInstance,
+                configurableSearchDef, null, null);
+        configurableListFactory.fetchAllPages(pagination, searchInstance, "", "");
         return new SearchResponse(null, null);
     }
 }
