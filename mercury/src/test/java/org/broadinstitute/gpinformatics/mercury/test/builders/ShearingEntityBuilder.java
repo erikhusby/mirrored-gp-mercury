@@ -4,7 +4,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMess
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
@@ -76,7 +76,7 @@ public class ShearingEntityBuilder {
         labEventHandler.processEvent(shearingTransferEventEntity);
         // asserts
         shearingPlate = (StaticPlate) shearingTransferEventEntity.getTargetLabVessels().iterator().next();
-        Assert.assertEquals(shearingPlate.getSampleInstances().size(), mapBarcodeToTube.size(),
+        Assert.assertEquals(shearingPlate.getSampleInstancesV2().size(), mapBarcodeToTube.size(),
                                    "Wrong number of sample instances");
 
         // PostShearingTransferCleanup
@@ -89,14 +89,14 @@ public class ShearingEntityBuilder {
         // asserts
         shearingCleanupPlate =
                 (StaticPlate) postShearingTransferCleanupEntity.getTargetLabVessels().iterator().next();
-        Assert.assertEquals(shearingCleanupPlate.getSampleInstances().size(), mapBarcodeToTube.size(),
+        Assert.assertEquals(shearingCleanupPlate.getSampleInstancesV2().size(), mapBarcodeToTube.size(),
                 "Wrong number of sample instances");
-        Set<SampleInstance> sampleInstancesInWell =
-                shearingCleanupPlate.getContainerRole().getSampleInstancesAtPosition(VesselPosition.A01);
+        Set<SampleInstanceV2> sampleInstancesInWell =
+                shearingCleanupPlate.getContainerRole().getSampleInstancesAtPositionV2(VesselPosition.A01);
         Assert.assertEquals(sampleInstancesInWell.size(), 1, "Wrong number of sample instances in well");
-        Assert.assertEquals(sampleInstancesInWell.iterator().next().getStartingSample().getSampleKey(),
-                mapBarcodeToTube.values().iterator().next().getSampleInstances().iterator().next()
-                        .getStartingSample().getSampleKey(), "Wrong sample");
+        Assert.assertEquals(sampleInstancesInWell.iterator().next().getRootOrEarliestMercurySampleName(),
+                mapBarcodeToTube.values().iterator().next().getSampleInstancesV2().iterator().next()
+                        .getRootOrEarliestMercurySampleName(), "Wrong sample");
 
         // ShearingQC
         LabEventTest.validateWorkflow("ShearingQC", shearingCleanupPlate);

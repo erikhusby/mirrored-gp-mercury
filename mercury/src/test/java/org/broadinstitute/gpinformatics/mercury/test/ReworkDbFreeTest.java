@@ -6,7 +6,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.LabEventTestF
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabBatchComposition;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
@@ -312,9 +312,9 @@ public class ReworkDbFreeTest extends BaseEventTest {
 
         runTransferVisualizer(stringBarcodedTubeEntry.getValue());
 
-        for (SampleInstance sampleInstance : exomeExpressShearingEntityBuilder2.getShearingCleanupPlate()
-                                                                               .getSampleInstances()) {
-            Assert.assertEquals(sampleInstance.getLabBatch(), workflowBatch2);
+        for (SampleInstanceV2 sampleInstance : exomeExpressShearingEntityBuilder2.getShearingCleanupPlate()
+                                                                               .getSampleInstancesV2()) {
+            Assert.assertEquals(sampleInstance.getSingleBatch(), workflowBatch2);
         }
     }
 

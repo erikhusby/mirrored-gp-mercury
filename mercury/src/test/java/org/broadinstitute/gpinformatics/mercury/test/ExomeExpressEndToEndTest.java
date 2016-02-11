@@ -45,7 +45,6 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventRefDataFetcher;
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.control.zims.ZimsIlluminaRunFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingReceipt;
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingRequest;
@@ -55,7 +54,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.queue.AliquotParameters;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
@@ -92,7 +91,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
 
@@ -400,7 +398,7 @@ public class ExomeExpressEndToEndTest {
                                                              .getPondRegTubeBarcodes(), "testPrefix").invoke(false);
 
             TubeFormation pondRack = libraryConstructionEntityBuilder.getPondRegRack();
-            Assert.assertEquals(pondRack.getSampleInstances().size(), 2);
+            Assert.assertEquals(pondRack.getSampleInstancesV2().size(), 2);
 
             // make sure that the pond sample instances contain the starters from the project plan.
             //            for (Starter starter : projectPlan.getStarters()) {
@@ -475,8 +473,8 @@ public class ExomeExpressEndToEndTest {
             //                    aliquotsFromProjectPlan.add(sampleInstance.getStartingSample().getLabel());
             //                }
             //            }
-            for (SampleInstance sampleInstance : currEntry.getSampleInstances()) {
-                Assert.assertTrue(aliquotsFromProjectPlan.contains(sampleInstance.getStartingSample().getSampleKey()));
+            for (SampleInstanceV2 sampleInstance : currEntry.getSampleInstancesV2()) {
+                Assert.assertTrue(aliquotsFromProjectPlan.contains(sampleInstance.getEarliestMercurySampleName()));
                 numStartersFromSampleInstances++;
                 //                Assert.assertEquals(projectPlan, sampleInstance.getSingleProjectPlan());
             }

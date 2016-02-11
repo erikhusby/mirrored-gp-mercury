@@ -6,7 +6,6 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransfe
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
@@ -86,9 +85,9 @@ public class QtpEntityBuilder {
                 poolingRacks.add(poolingRack);
                 poolTubes.add(poolingRack.getContainerRole().getVesselAtPosition(VesselPosition.A01));
                 // asserts
-                Set<SampleInstance> pooledSampleInstances =
-                        poolingRack.getContainerRole().getSampleInstancesAtPosition(VesselPosition.A01);
-                Assert.assertEquals(pooledSampleInstances.size(), normCatchRack.getSampleInstances().size(),
+                Set<SampleInstanceV2> pooledSampleInstances =
+                        poolingRack.getContainerRole().getSampleInstancesAtPositionV2(VesselPosition.A01);
+                Assert.assertEquals(pooledSampleInstances.size(), normCatchRack.getSampleInstancesV2().size(),
                         "Wrong number of pooled samples");
             }
         } else {
@@ -198,7 +197,7 @@ public class QtpEntityBuilder {
                 LabEvent viia7TransferEventEntity = labEventFactory.buildFromBettaLims(viia7Event, mapBarcodeToVessel);
                 labEventHandler.processEvent(viia7TransferEventEntity);
                 StaticPlate viiaPlate = (StaticPlate) viia7TransferEventEntity.getTargetLabVessels().iterator().next();
-                Assert.assertEquals(viiaPlate.getSampleInstances().size(), totalSampleInstanceCount,
+                Assert.assertEquals(viiaPlate.getSampleInstancesV2().size(), totalSampleInstanceCount,
                         "Wrong number of sample instances");
                 break;
         }
