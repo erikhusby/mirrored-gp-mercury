@@ -10,6 +10,9 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
+import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
+import org.broadinstitute.gpinformatics.athena.entity.preference.SearchInstanceList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
 
@@ -1079,6 +1082,32 @@ public class SearchInstance implements Serializable {
         } else {
             return null;
         }
+    }
+
+    public static SearchInstance findSearchInstance(PreferenceType type, String searchName,
+            ConfigurableSearchDefinition configurableSearchDef, Map<PreferenceType, Preference> preferenceMap) {
+        SearchInstanceList searchInstanceList = null;
+        if( preferenceMap.containsKey(type)){
+            try {
+                searchInstanceList =
+                        (SearchInstanceList) preferenceMap.get(type).getPreferenceDefinition().getDefinitionValue();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+        assert searchInstanceList != null;
+
+        SearchInstance searchInstance = null;
+        for (SearchInstance searchInstanceLocal : searchInstanceList.getSearchInstances()) {
+            if (searchInstanceLocal.getName().equals(searchName)) {
+                searchInstance = searchInstanceLocal;
+                break;
+            }
+        }
+        assert searchInstance != null;
+        searchInstance.establishRelationships(configurableSearchDef);
+        searchInstance.postLoad();
+        return searchInstance;
     }
 
     public void setSearchValues(List<SearchValue> searchValues) {

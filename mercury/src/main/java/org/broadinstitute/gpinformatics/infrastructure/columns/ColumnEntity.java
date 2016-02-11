@@ -11,42 +11,56 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
  * Enumeration of the entities for which configurable columns have been created.
  */
 public enum ColumnEntity {
-    // todo jmt add preferences for search instances?
     LAB_VESSEL("LabVessel", "Lab Vessel", "label", LabVessel.class,
             new IdGetter() {
                 @Override
                 public String getId(Object entity) {
                     return ((LabVessel) entity).getLabel();
                 }
-            }, PreferenceType.GLOBAL_LAB_VESSEL_COLUMN_SETS, PreferenceType.USER_LAB_VESSEL_COLUMN_SETS),
+            },
+            PreferenceType.GLOBAL_LAB_VESSEL_COLUMN_SETS, PreferenceType.USER_LAB_VESSEL_COLUMN_SETS,
+            new PreferenceType[]{PreferenceType.GLOBAL_LAB_VESSEL_SEARCH_INSTANCES,
+                    PreferenceType.USER_LAB_VESSEL_SEARCH_INSTANCES}),
     LAB_EVENT("LabEvent", "Lab Event", "labEventId", LabEvent.class,
             new IdGetter() {
                 @Override
                 public String getId(Object entity) {
                     return ((LabEvent) entity).getLabEventId().toString();
                 }
-            }, PreferenceType.GLOBAL_LAB_EVENT_COLUMN_SETS, PreferenceType.USER_LAB_EVENT_COLUMN_SETS),
+            },
+            PreferenceType.GLOBAL_LAB_EVENT_COLUMN_SETS, PreferenceType.USER_LAB_EVENT_COLUMN_SETS,
+            new PreferenceType[]{PreferenceType.GLOBAL_LAB_EVENT_SEARCH_INSTANCES,
+                    PreferenceType.USER_LAB_EVENT_SEARCH_INSTANCES}),
     MERCURY_SAMPLE("MercurySample", "Mercury Sample", "mercurySampleId", MercurySample.class,
             new IdGetter() {
                 @Override
                 public String getId(Object entity) {
                     return ((MercurySample) entity).getMercurySampleId().toString();
                 }
-            }, PreferenceType.GLOBAL_MERCURY_SAMPLE_COLUMN_SETS, PreferenceType.USER_MERCURY_SAMPLE_COLUMN_SETS),
+            },
+            PreferenceType.GLOBAL_MERCURY_SAMPLE_COLUMN_SETS, PreferenceType.USER_MERCURY_SAMPLE_COLUMN_SETS,
+            new PreferenceType[]{PreferenceType.GLOBAL_MERCURY_SAMPLE_SEARCH_INSTANCES,
+                    PreferenceType.USER_MERCURY_SAMPLE_SEARCH_INSTANCES}),
     REAGENT("Reagent", "Reagent", "reagentId", Reagent.class,
             new IdGetter() {
                 @Override
                 public String getId(Object entity) {
                     return ((Reagent) entity).getReagentId().toString();
                 }
-            }, PreferenceType.GLOBAL_REAGENT_COLUMN_SETS, PreferenceType.USER_REAGENT_COLUMN_SETS),
+            },
+            PreferenceType.GLOBAL_REAGENT_COLUMN_SETS, PreferenceType.USER_REAGENT_COLUMN_SETS,
+            new PreferenceType[]{PreferenceType.GLOBAL_REAGENT_SEARCH_INSTANCES,
+                    PreferenceType.USER_REAGENT_SEARCH_INSTANCES}),
     LAB_METRIC("LabMetric", "Lab Metric", "labMetricId", LabMetric.class,
             new IdGetter() {
                 @Override
                 public String getId(Object entity) {
                     return ((LabMetric) entity).getLabMetricId().toString();
                 }
-            }, PreferenceType.GLOBAL_LAB_METRIC_COLUMN_SETS, PreferenceType.USER_LAB_METRIC_COLUMN_SETS);
+            },
+            PreferenceType.GLOBAL_LAB_METRIC_COLUMN_SETS, PreferenceType.USER_LAB_METRIC_COLUMN_SETS,
+            new PreferenceType[]{PreferenceType.GLOBAL_LAB_METRIC_SEARCH_INSTANCES,
+                    PreferenceType.USER_LAB_METRIC_SEARCH_INSTANCES});
 
     private IdGetter idGetter;
     private String entityName;
@@ -55,9 +69,10 @@ public enum ColumnEntity {
     private Class entityClass;
     private PreferenceType globalColumnSets;
     private PreferenceType userColumnSets;
+    private PreferenceType[] searchInstancePrefs;
 
     ColumnEntity(String entityName, String displayName, String entityIdProperty, Class clazz, IdGetter idGetter,
-            PreferenceType globalColumnSets, PreferenceType userColumnSets) {
+            PreferenceType globalColumnSets, PreferenceType userColumnSets, PreferenceType[] searchInstancePrefs) {
         this.entityName = entityName;
         this.entityIdProperty = entityIdProperty;
         this.entityClass = clazz;
@@ -65,6 +80,7 @@ public enum ColumnEntity {
         this.displayName = displayName;
         this.globalColumnSets = globalColumnSets;
         this.userColumnSets = userColumnSets;
+        this.searchInstancePrefs = searchInstancePrefs;
     }
 
     public interface IdGetter {
@@ -97,6 +113,10 @@ public enum ColumnEntity {
 
     public PreferenceType getUserColumnSets() {
         return userColumnSets;
+    }
+
+    public PreferenceType[] getSearchInstancePrefs() {
+        return searchInstancePrefs;
     }
 
     public static ColumnEntity getByName(String entityName) {
