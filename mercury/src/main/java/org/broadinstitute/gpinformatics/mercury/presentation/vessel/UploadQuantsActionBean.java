@@ -218,6 +218,9 @@ public class UploadQuantsActionBean extends CoreActionBean {
     }
 
     private void buildColumns() {
+        if (labMetricRun == null) {
+            return;
+        }
         List<LabMetric> labMetricList = new ArrayList<>();
         Map<String, LabMetric> mapIdToMetric = new HashMap<>();
         for (LabMetric labMetric : labMetricRun.getLabMetrics()) {
