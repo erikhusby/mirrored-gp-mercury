@@ -789,6 +789,20 @@ public class    ProductOrderFixupTest extends Arquillian {
                 "GPLIM-3765 Cleaning up regulatory designation records (not changing effective IRBs)"));
     }
 
+    @Test(enabled = false)
+    public void gplim4009UnabandonPDOsToPending() {
+        userBean.loginOSUser();
+
+        List<String> pdoIds = Arrays.asList("PDO-8013", "PDO-8045");
+        for (String pdoId : pdoIds) {
+            ProductOrder productOrder = productOrderDao.findByBusinessKey(pdoId);
+            productOrder.setOrderStatus(ProductOrder.OrderStatus.Pending);
+            System.out.println("Updated " + pdoId + " status to pending.");
+        }
+
+        productOrderDao.persist(new FixupCommentary("Unabandoning PDO-8013 and PDO-8045 to pending state"));
+    }
+
     private static class RegulatoryInfoSelection {
         private String productOrderKey;
         private String regulatoryInfoIdentifier;
