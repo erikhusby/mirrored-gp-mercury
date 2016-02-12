@@ -42,6 +42,11 @@ public class SearchResourceTest extends RestServiceContainerTest {
         Assert.assertEquals(response.getSearchRows().size(), 95);
     }
 
+    public void testEmerge() {
+        // eMERGE Aliqouts Web Service
+        // eMERGE Manifest Web Service
+    }
+
     @Override
     protected String getResourcePath() {
         return "search";
