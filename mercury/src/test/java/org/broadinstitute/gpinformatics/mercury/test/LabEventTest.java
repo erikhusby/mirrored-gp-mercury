@@ -1574,9 +1574,6 @@ public class LabEventTest extends BaseEventTest {
         LabVesselDao tubeDao = EasyMock.createNiceMock(LabVesselDao.class);
         labBatchEJB.setTubeDao(tubeDao);
 
-        JiraTicketDao mockJira = EasyMock.createNiceMock(JiraTicketDao.class);
-        labBatchEJB.setJiraTicketDao(mockJira);
-
         LabBatchDao labBatchDao = EasyMock.createNiceMock(LabBatchDao.class);
         labBatchEJB.setLabBatchDao(labBatchDao);
 
@@ -1594,7 +1591,7 @@ public class LabEventTest extends BaseEventTest {
 
         BucketDao mockBucketDao = EasyMock.createNiceMock(BucketDao.class);
 
-        EasyMock.replay(mockBucketDao, tubeDao, mockJira, labBatchDao);
+        EasyMock.replay(mockBucketDao, tubeDao, labBatchDao);
 
         LabEventHandler labEventHandler = getLabEventHandler();
         StaticPlate indexPlate = buildIndexPlate(null, null,

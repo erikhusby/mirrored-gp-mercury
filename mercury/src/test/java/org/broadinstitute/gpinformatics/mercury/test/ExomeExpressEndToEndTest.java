@@ -333,9 +333,6 @@ public class ExomeExpressEndToEndTest {
             LabVesselDao tubeDao = EasyMock.createNiceMock(LabVesselDao.class);
             labBatchEJB.setTubeDao(tubeDao);
 
-            JiraTicketDao mockJira = EasyMock.createNiceMock(JiraTicketDao.class);
-            labBatchEJB.setJiraTicketDao(mockJira);
-
             LabBatchDao labBatchDao = EasyMock.createNiceMock(LabBatchDao.class);
             labBatchEJB.setLabBatchDao(labBatchDao);
 
@@ -358,7 +355,7 @@ public class ExomeExpressEndToEndTest {
 //                    .andReturn(new LabEventTest.MockBucket(new WorkflowStepDef(LabEventType.SHEARING_BUCKET
 //                            .getName()), jiraTicket.getTicketName()));
 
-            EasyMock.replay(mockBucketDao, mockJira, labBatchDao, tubeDao, reworkEjb, bucketDao);
+            EasyMock.replay(mockBucketDao, labBatchDao, tubeDao, reworkEjb, bucketDao);
 
 
             TemplateEngine templateEngine = new TemplateEngine();

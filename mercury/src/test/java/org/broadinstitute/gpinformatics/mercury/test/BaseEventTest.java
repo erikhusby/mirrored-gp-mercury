@@ -186,9 +186,6 @@ public class BaseEventTest {
         labBatchEJB.setJiraService(jiraService);
         labBatchEJB.setLabBatchDao(EasyMock.createMock(LabBatchDao.class));
 
-        JiraTicketDao mockJira = EasyMock.createNiceMock(JiraTicketDao.class);
-        labBatchEJB.setJiraTicketDao(mockJira);
-
         ProductOrderDao mockProductOrderDao = Mockito.mock(ProductOrderDao.class);
         Mockito.when(mockProductOrderDao.findByBusinessKey(Mockito.anyString())).thenAnswer(new Answer<Object>() {
             @Override

@@ -113,7 +113,6 @@ public class LabBatchEjbDBFreeTest {
                 .andReturn(new JiraTicket(JiraServiceProducer.stubInstance(), testLCSetKey)).times(0, 1);
         EasyMock.expect(mockJira.fetchByName(testFCTKey))
                 .andReturn(new JiraTicket(JiraServiceProducer.stubInstance(), testFCTKey)).times(0, 1);
-        labBatchEJB.setJiraTicketDao(mockJira);
 
         labBatchDao = EasyMock.createNiceMock(LabBatchDao.class);
         labBatchEJB.setLabBatchDao(labBatchDao);
