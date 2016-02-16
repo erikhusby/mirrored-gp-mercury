@@ -1078,24 +1078,6 @@ public abstract class LabVessel implements Serializable {
         }
     }
 
-    /**
-     * Returns the lab batch for a vessel based on the most frequently occurring lab batch in the given container.
-     *
-     * @param container contains the vessel
-     *
-     * @return the batch
-     */
-    @SuppressWarnings("unchecked")
-    public LabBatch getPluralityLabBatch(VesselContainer container) {
-        Collection<LabBatch> vesselBatches = getAllLabBatches();
-        for (LabBatchComposition labBatchComposition : (List<LabBatchComposition>) container.getLabBatchCompositions()) {
-            if (vesselBatches.contains(labBatchComposition.getLabBatch())) {
-                return labBatchComposition.getLabBatch();
-            }
-        }
-        return null;
-    }
-
     public Collection<LabBatch> getAllLabBatches() {
         if (getContainerRole() != null) {
             return getContainerRole().getAllLabBatches();

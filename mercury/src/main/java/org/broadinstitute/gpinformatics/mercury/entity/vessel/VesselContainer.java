@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Parent;
 
@@ -638,31 +639,6 @@ public class VesselContainer<T extends LabVessel> {
         applyCriteriaToAllPositions(productOrderCriteria,
                 TransferTraverserCriteria.TraversalDirection.Ancestors);
         return productOrderCriteria.getNearestProductOrders();
-    }
-
-    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
-    public List<LabBatchComposition> getLabBatchCompositions() {
-        List<SampleInstanceV2> sampleInstances = new ArrayList<>();
-        for (VesselPosition position : getEmbedder().getVesselGeometry().getVesselPositions()) {
-            sampleInstances.addAll(getSampleInstancesAtPositionV2(position));
-        }
-
-        Map<LabBatch, LabBatchComposition> batchMap = new HashMap<>();
-        for (SampleInstanceV2 sampleInstance : sampleInstances) {
-            for (LabBatch labBatch : sampleInstance.getAllWorkflowBatches()) {
-                LabBatchComposition batchComposition = batchMap.get(labBatch);
-                if (batchComposition == null) {
-                    batchMap.put(labBatch, new LabBatchComposition(labBatch, 1, sampleInstances.size()));
-                } else {
-                    batchComposition.addCount();
-                }
-            }
-        }
-
-        List<LabBatchComposition> batchList = new ArrayList<>(batchMap.values());
-        Collections.sort(batchList, LabBatchComposition.HIGHEST_COUNT_FIRST);
-
-        return batchList;
     }
 
     /**

@@ -7,7 +7,6 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderT
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabBatchComposition;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
@@ -74,7 +73,8 @@ public class ReworkDbFreeTest extends BaseEventTest {
                 shearingEntityBuilder1.getShearingCleanupPlate(),
                 shearingEntityBuilder1.getShearCleanPlateBarcode(),
                 shearingEntityBuilder1.getShearingPlate(),
-                "1");
+                "1",
+                startingSampleSize);
 
         Map<String, BarcodedTube> reworkRackMap = createInitialRack(productOrder, reworkTubePrefix);
 
@@ -131,25 +131,9 @@ public class ReworkDbFreeTest extends BaseEventTest {
                 "2");
 
         VesselContainer<PlateWell> reworkContainer = shearingEntityBuilder2.getShearingPlate().getContainerRole();
-        // Checks the lab batch composition of the non-rework and rework containers.
-        Assert.assertEquals(origContainer.getAllLabBatches().size(), 1);
-        validateLabBatchComposition(origContainer.getLabBatchCompositions(),
-                                    startingSampleSize,
-                                    new int[]{startingSampleSize},
-                                    new String[]{origLcsetSuffix, reworkLcsetSuffix});
-
-        Assert.assertEquals(reworkContainer.getAllLabBatches().size(), 2);
-        validateLabBatchComposition(reworkContainer.getLabBatchCompositions(),
-                                    startingSampleSize + numberOfReworks,
-                                    new int[]{startingSampleSize + numberOfReworks, numberOfReworks},
-                                    new String[]{reworkLcsetSuffix, origLcsetSuffix});
 
         // Rework tube should be in two lcsets.
         Assert.assertEquals(tube1.getAllLabBatches().size(), 2);
-
-        // Checks the correct batch identifier for the rework tube, which depends on the end container.
-        Assert.assertTrue(tube1.getPluralityLabBatch(origContainer).getBatchName().endsWith(origLcsetSuffix));
-        Assert.assertTrue(tube1.getPluralityLabBatch(reworkContainer).getBatchName().endsWith(reworkLcsetSuffix));
     }
 
     // Advance to Pond Pico, rework a sample from the start
@@ -238,26 +222,8 @@ public class ReworkDbFreeTest extends BaseEventTest {
             }
         */
 
-
-        // Checks the lab batch composition of the non-rework and rework containers.
-        Assert.assertEquals(origContainer.getAllLabBatches().size(), 2);
-        validateLabBatchComposition(origContainer.getLabBatchCompositions(),
-                                    NUM_POSITIONS_IN_RACK,
-                                    new int[]{NUM_POSITIONS_IN_RACK, 1},
-                                    new String[]{origLcsetSuffix, reworkLcsetSuffix});
-
-        Assert.assertEquals(reworkContainer.getAllLabBatches().size(), 2);
-        validateLabBatchComposition(reworkContainer.getLabBatchCompositions(),
-                                    NUM_POSITIONS_IN_RACK,
-                                    new int[]{NUM_POSITIONS_IN_RACK, 1},
-                                    new String[]{reworkLcsetSuffix, origLcsetSuffix});
-
         // Rework tube should be in two lcsets.
         Assert.assertEquals(reworkTube.getAllLabBatches().size(), 2);
-
-        // Checks the correct batch identifier for the rework tube, which depends on the end container.
-        Assert.assertTrue(reworkTube.getPluralityLabBatch(origContainer).getBatchName().endsWith(origLcsetSuffix));
-        Assert.assertTrue(reworkTube.getPluralityLabBatch(reworkContainer).getBatchName().endsWith(reworkLcsetSuffix));
     }
 
     @Test(enabled = true)
@@ -315,19 +281,6 @@ public class ReworkDbFreeTest extends BaseEventTest {
         for (SampleInstanceV2 sampleInstance : exomeExpressShearingEntityBuilder2.getShearingCleanupPlate()
                                                                                .getSampleInstancesV2()) {
             Assert.assertEquals(sampleInstance.getSingleBatch(), workflowBatch2);
-        }
-    }
-
-    private void validateLabBatchComposition(List<LabBatchComposition> composition, int denominator, int[] counts,
-                                             String[] lcsetSuffixes) {
-        Assert.assertEquals(composition.size(), counts.length);
-        for (int idx = 0; idx < composition.size(); ++idx) {
-            LabBatchComposition origComposition = composition.get(idx);
-            Assert.assertEquals(origComposition.getDenominator(), denominator);
-            Assert.assertEquals(origComposition.getCount(), counts[idx]);
-            Assert.assertTrue(origComposition.getLabBatch().getBatchName().endsWith(lcsetSuffixes[idx]),
-                              "Expected suffix " + lcsetSuffixes[idx] + " but got " + origComposition.getLabBatch()
-                                                                                                     .getBatchName());
         }
     }
 }
