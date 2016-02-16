@@ -35,7 +35,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -236,9 +235,10 @@ public class LabBatchFixUpTest extends Arquillian {
         samplesToRemove.add("SM-5U3X9");
 
         for (LabBatchStartingVessel startingVessel : lcset.getLabBatchStartingVessels()) {
-            Set<SampleInstance> sampleInstances = startingVessel.getLabVessel().getSampleInstances();
-            for (SampleInstance sampleInstance : sampleInstances) {
-                String sample = sampleInstance.getStartingSample().getSampleKey();
+            // Originally run using SampleInstance V1 but changed after its removal
+            Set<SampleInstanceV2> sampleInstances = startingVessel.getLabVessel().getSampleInstancesV2();
+            for (SampleInstanceV2 sampleInstance : sampleInstances) {
+                String sample = sampleInstance.getRootOrEarliestMercurySampleName();
                 if (samplesToRemove.contains(sample)) {
                     vesselsToRemoveFromBatch.add(startingVessel);
                 }

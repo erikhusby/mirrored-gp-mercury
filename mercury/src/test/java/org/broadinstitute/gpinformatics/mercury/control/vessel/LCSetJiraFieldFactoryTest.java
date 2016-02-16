@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
@@ -99,11 +100,14 @@ public class LCSetJiraFieldFactoryTest {
         Bucket bucket = new Bucket("Pico/Plating Bucket");
         // starting rack
         for (int sampleIndex = 1; sampleIndex <= vesselSampleList.size(); sampleIndex++) {
+            ProductOrder productOrder = sampleIndex == 1 ? singleSampleOrder : testProductOrder;
+            List<ProductOrderSample> samples = productOrder.getSamples();
             String barcode = "R" + sampleIndex + sampleIndex + sampleIndex + sampleIndex + sampleIndex + sampleIndex;
             String bspStock = vesselSampleList.get(sampleIndex - 1);
             BarcodedTube bspAliquot = new BarcodedTube(barcode);
-            bspAliquot.addSample(new MercurySample(bspStock, MercurySample.MetadataSource.BSP));
-            ProductOrder productOrder = sampleIndex == 1 ? singleSampleOrder : testProductOrder;
+            MercurySample mercurySample = new MercurySample(bspStock, MercurySample.MetadataSource.BSP);
+            mercurySample.addProductOrderSample(samples.get(0));
+            bspAliquot.addSample(mercurySample);
             bucket.addEntry(productOrder, bspAliquot, BucketEntry.BucketEntryType.PDO_ENTRY,
                     Workflow.AGILENT_EXOME_EXPRESS);
             mapBarcodeToTube.put(barcode, bspAliquot);

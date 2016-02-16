@@ -13,7 +13,7 @@
         <div>Event Location: ${vessel.latestEvent.eventLocation}</div>
         <div>Script: ${vessel.latestEvent.programName}</div>
         <div>Event Operator: ${bean.getUserFullName(vessel.latestEvent.eventOperator)}</div>
-        <div>Sample Instance Count: ${vessel.getSampleInstances('PREFER_PDO', null).size()}</div>
+        <div>Sample Instance Count: ${vessel.sampleInstancesV2.size()}</div>
         <div>Unique Index Count: ${vessel.uniqueIndexesCount}</div>
     </div>
 </stripes:layout-definition>

@@ -56,7 +56,7 @@ public class PreFlightEntityBuilder {
         // asserts
         tubeFormation = (TubeFormation) preflightPicoSetup1Entity.getSourceLabVessels().iterator().next();
         StaticPlate preflightPicoSetup1Plate = (StaticPlate) preflightPicoSetup1Entity.getTargetLabVessels().iterator().next();
-        Assert.assertEquals(preflightPicoSetup1Plate.getSampleInstances().size(),
+        Assert.assertEquals(preflightPicoSetup1Plate.getSampleInstancesV2().size(),
                                    LabEventTest.NUM_POSITIONS_IN_RACK, "Wrong number of sample instances");
 
         // PreflightPicoSetup 2
@@ -72,7 +72,7 @@ public class PreFlightEntityBuilder {
         // asserts
         StaticPlate preflightPicoSetup2Plate =
                 (StaticPlate) preflightPicoSetup2Entity.getTargetLabVessels().iterator().next();
-        Assert.assertEquals(preflightPicoSetup2Plate.getSampleInstances().size(), LabEventTest.NUM_POSITIONS_IN_RACK,
+        Assert.assertEquals(preflightPicoSetup2Plate.getSampleInstancesV2().size(), LabEventTest.NUM_POSITIONS_IN_RACK,
                 "Wrong number of sample instances");
 
         // PreflightNormalization
@@ -81,7 +81,7 @@ public class PreFlightEntityBuilder {
                 preFlightJaxbBuilder.getPreflightNormalization(), tubeFormation, mapBarcodeToTube, null);
         labEventHandler.processEvent(preflightNormalization);
         // asserts
-        Assert.assertEquals(tubeFormation.getSampleInstances().size(),
+        Assert.assertEquals(tubeFormation.getSampleInstancesV2().size(),
                 LabEventTest.NUM_POSITIONS_IN_RACK, "Wrong number of sample instances");
 
         // PreflightPostNormPicoSetup 1
@@ -98,7 +98,7 @@ public class PreFlightEntityBuilder {
         // asserts
         StaticPlate preflightPostNormPicoSetup1Plate =
                 (StaticPlate) preflightPostNormPicoSetup1Entity.getTargetLabVessels().iterator().next();
-        Assert.assertEquals(preflightPostNormPicoSetup1Plate.getSampleInstances().size(), LabEventTest.NUM_POSITIONS_IN_RACK,
+        Assert.assertEquals(preflightPostNormPicoSetup1Plate.getSampleInstancesV2().size(), LabEventTest.NUM_POSITIONS_IN_RACK,
                 "Wrong number of sample instances");
 
         // PreflightPostNormPicoSetup 2
@@ -115,7 +115,7 @@ public class PreFlightEntityBuilder {
         // asserts
         StaticPlate preflightPostNormPicoSetup2Plate =
                 (StaticPlate) preflightPostNormPicoSetup2Entity.getTargetLabVessels().iterator().next();
-        Assert.assertEquals(preflightPostNormPicoSetup2Plate.getSampleInstances().size(), LabEventTest.NUM_POSITIONS_IN_RACK,
+        Assert.assertEquals(preflightPostNormPicoSetup2Plate.getSampleInstancesV2().size(), LabEventTest.NUM_POSITIONS_IN_RACK,
                 "Wrong number of sample instances");
 
         return this;
