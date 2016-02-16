@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 import org.apache.commons.collections4.Factory;
 import org.apache.commons.collections4.map.LazyMap;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
@@ -18,20 +19,19 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
-import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.AbstractBatchJiraFieldFactory;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
-import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
@@ -39,6 +39,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
+import org.broadinstitute.gpinformatics.mercury.presentation.workflow.RowDto;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -65,17 +66,13 @@ import java.util.Set;
 @RequestScoped
 public class LabBatchEjb {
 
-    private final static Log logger = LogFactory.getLog(LabBatchEjb.class);
+    private static final Log logger = LogFactory.getLog(LabBatchEjb.class);
 
     private LabBatchDao labBatchDao;
 
     private JiraService jiraService;
 
-    private JiraTicketDao jiraTicketDao;
-
     private LabVesselDao tubeDao;
-
-    private BucketDao bucketDao;
 
     private BucketEntryDao bucketEntryDao;
 
@@ -88,6 +85,12 @@ public class LabBatchEjb {
     private ControlDao controlDao;
 
     private WorkflowLoader workflowLoader;
+
+    private LabVesselDao labVesselDao;
+
+    private static final VesselPosition[] VESSEL_POSITIONS = {VesselPosition.LANE1, VesselPosition.LANE2,
+            VesselPosition.LANE3, VesselPosition.LANE4, VesselPosition.LANE5, VesselPosition.LANE6,
+            VesselPosition.LANE7, VesselPosition.LANE8};
 
     /**
      * This method will create a batch entity and a new JIRA Ticket for that entity.
@@ -183,8 +186,7 @@ public class LabBatchEjb {
      * @param dueDate              the due date for the batch (for JIRA)
      * @param important            the important notes for the batch (for JIRA)
      * @param username             the user creating the batch (for JIRA)
-     *
-     * @param bucketName
+     * @param bucketName           the bucket from which to remove
      * @return The lab batch that was created.
      */
     public LabBatch createLabBatchAndRemoveFromBucket(@Nonnull LabBatch.LabBatchType labBatchType,
@@ -209,8 +211,7 @@ public class LabBatchEjb {
      * @param dueDate              the due date for the batch (for JIRA)
      * @param important            the important notes for the batch (for JIRA)
      * @param username             the user creating the batch (for JIRA)
-     *
-     * @param bucketName
+     * @param bucketName           the bucket from which to remove
      * @return The lab batch that was created.
      */
     public LabBatch createLabBatchAndRemoveFromBucket(@Nonnull LabBatch.LabBatchType labBatchType,
@@ -234,14 +235,11 @@ public class LabBatchEjb {
                 });
         Set<LabVessel> vessels = new HashSet<>();
 
-        List<String> bucketDefNames = new ArrayList<>();
-
         for (BucketEntry bucketEntry : bucketEntries) {
             vessels.add(bucketEntry.getLabVessel());
             String tubeBarcode = bucketEntry.getLabVessel().getLabel();
             tubeBarcodeCounts.put(tubeBarcode, tubeBarcodeCounts.get(tubeBarcode) + 1);
             pdoKeys.add(bucketEntry.getProductOrder().getBusinessKey());
-            bucketDefNames.add(bucketEntry.getBucket().getBucketDefinitionName());
         }
 
         Set<LabVessel> reworkVessels = new HashSet<>();
@@ -312,7 +310,7 @@ public class LabBatchEjb {
      * @param jiraTicket  Optional parameter that represents an existing Jira Ticket that refers to this batch
      * @param newBatch    The source of the Batch information that will assist in populating the Jira Ticket
      * @param issueType   The type of issue to create in JIRA for this lab batch
-     * @param projectType
+     * @param projectType JIRA project
      */
     public void batchToJira(String reporter, @Nullable String jiraTicket, LabBatch newBatch,
                             @Nonnull CreateFields.IssueType issueType, CreateFields.ProjectType projectType) {
@@ -333,7 +331,7 @@ public class LabBatchEjb {
      * @param jiraTicket  Optional parameter that represents an existing Jira Ticket that refers to this batch
      * @param newBatch    The source of the Batch information that will assist in populating the Jira Ticket
      * @param issueType   The type of issue to create in JIRA for this lab batch
-     * @param projectType
+     * @param projectType JIRA project
      */
     public void batchToJira(String reporter, @Nullable String jiraTicket, LabBatch newBatch,
                             @Nonnull CreateFields.IssueType issueType, CreateFields.ProjectType projectType,
@@ -444,9 +442,8 @@ public class LabBatchEjb {
      * @param businessKey    the business key for the lab batch we are adding samples to
      * @param bucketEntryIds the bucket entries whose vessel are being added to the batch
      * @param reworkEntries  the rework bucket entries whose vessels are being added to the batch
-     *
-     * @param bucketName
-     * @param messageReporter
+     * @param bucketName     bucket to add to
+     * @param messageReporter reference to action bean
      * @throws IOException This exception is thrown when the JIRA service can not be contacted.
      */
     public void addToLabBatch(String businessKey, List<Long> bucketEntryIds, List<Long> reworkEntries,
@@ -458,12 +455,10 @@ public class LabBatchEjb {
         }
         Set<String> pdoKeys = new HashSet<>();
         StringBuilder commentString = new StringBuilder();
-        Set<String> bucketDefNames = new HashSet<>();
         List<BucketEntry> bucketEntries = bucketEntryDao.findByIds(bucketEntryIds);
         Set<LabVessel> labVessels = new HashSet<>();
 
         for (BucketEntry bucketEntry : bucketEntries) {
-            bucketDefNames.add(bucketEntry.getBucket().getBucketDefinitionName());
             labVessels.add(bucketEntry.getLabVessel());
             pdoKeys.add(bucketEntry.getProductOrder().getBusinessKey());
             bucketEntry.getBucket().removeEntry(bucketEntry);
@@ -476,7 +471,6 @@ public class LabBatchEjb {
 
         List<BucketEntry> reworkBucketEntries = bucketEntryDao.findByIds(reworkEntries);
         Set<LabVessel> reworkVessels = new HashSet<>();
-        Bucket reworkFromBucket = null;
 
         if (!reworkBucketEntries.isEmpty()) {
             commentString.append("\n\n");
@@ -485,7 +479,6 @@ public class LabBatchEjb {
             reworkVessels.add(entry.getLabVessel());
             pdoKeys.add(entry.getProductOrder().getBusinessKey());
             entry.getBucket().removeEntry(entry);
-            reworkFromBucket = entry.getBucket();
             commentString.append(String.format("Added rework for vessel %s with material type %s to %s.\n",
                     entry.getLabVessel().getLabel(), entry.getLabVessel().getLatestMaterialType().getDisplayName(),
                     bucketName));
@@ -613,6 +606,113 @@ public class LabBatchEjb {
         }
     }
 
+    /**
+     * Make FCT LabBatches and tickets, based on DTOs from the web page.
+     * @param rowDtos information from web page
+     * @param selectedFlowcellType holds number of lanes
+     * @param userName for audit trail
+     * @param messageReporter reference to the action bean
+     */
+    public void makeFcts(List<RowDto> rowDtos, IlluminaFlowcell.FlowcellType selectedFlowcellType, String userName,
+            MessageReporter messageReporter) {
+        // Collects all the selected rowDtos and their loading tubes.
+        List<Pair<RowDto, LabVessel>> rowDtoLabVessels = new ArrayList<>();
+        for (RowDto rowDto : rowDtos) {
+            if (rowDto.getNumberLanes() > 0) {
+                LabVessel labVessel = labVesselDao.findByIdentifier(rowDto.getBarcode());
+                rowDtoLabVessels.add(Pair.of(rowDto, labVessel));
+            }
+        }
+        if (rowDtoLabVessels.isEmpty()) {
+            messageReporter.addMessage("No lanes were selected.");
+        } else {
+            List<Pair<LabBatch, Set<String>>> fctBatches = makeFctDaoFree(rowDtoLabVessels, selectedFlowcellType);
+            if (fctBatches.isEmpty()) {
+                messageReporter.addMessage("No FCTs were created.");
+            } else {
+                StringBuilder createdBatchLinks = new StringBuilder("<ol>");
+                // For each batch, pushes the FCT to JIRA, makes the parent-child JIRA links,
+                // and makes a UI message.
+                for (Pair<LabBatch, Set<String>> pair : fctBatches) {
+                    LabBatch fctBatch = pair.getLeft();
+                    createLabBatch(fctBatch, userName, selectedFlowcellType.getIssueType(), messageReporter);
+                    for (String lcset : pair.getRight()) {
+                        linkJiraBatchToTicket(lcset, fctBatch);
+                    }
+                    createdBatchLinks.append("<li><a target=\"JIRA\" href=\"");
+                    createdBatchLinks.append(fctBatch.getJiraTicket().getBrowserUrl());
+                    createdBatchLinks.append("\" class=\"external\" target=\"JIRA\">");
+                    createdBatchLinks.append(fctBatch.getBusinessKey());
+                    createdBatchLinks.append("</a></li>");
+                }
+                createdBatchLinks.append("</ol>");
+                messageReporter.addMessage("Created {0} FCT tickets: {1}", fctBatches.size(),
+                        createdBatchLinks.toString());
+            }
+        }
+    }
+
+    /**
+     * Allocates the loading tubes to flowcells.  A given lane only contains material from one
+     * tube.  But a tube may span multiple lanes and multiple flowcells, depending on the
+     * number of lanes requested for the tube.
+     *
+     * @param rowDtoLabVessels the loading tubes' RowDtos and corresponding lab vessels.
+     * @param flowcellType  the type of flowcells to create.
+     * @return  the fct batches to be persisted, plus the set of lcset names to be linked to it.
+     */
+    public List<Pair<LabBatch, Set<String>>> makeFctDaoFree(List<Pair<RowDto, LabVessel>> rowDtoLabVessels,
+            IlluminaFlowcell.FlowcellType flowcellType) {
+        List<Pair<LabBatch, Set<String>>> fctBatches = new ArrayList<>();
+        int lanesPerFlowcell = flowcellType.getVesselGeometry().getRowCount();
+        // These are per-flowcell accumulations, for one or more loading vessels.
+        int laneIndex = 0;
+        Set<String> linkedLcsets = new HashSet<>();
+        List<LabBatch.VesselToLanesInfo> fctVesselLaneInfo = new ArrayList<>();
+
+        // Iterates on the RowDtos which represent the loading tubes. For each one, keeps allocating
+        // lanes until the tube's requested Number of Lanes is fulfilled. When enough lanes exist an
+        // FCT is allocated and put in the return multimap.
+        for (Pair<RowDto, LabVessel> rowDtoLabVessel : rowDtoLabVessels) {
+            RowDto rowDto = rowDtoLabVessel.getLeft();
+            LabBatch.VesselToLanesInfo vesselLaneInfo = null;
+            linkedLcsets.add(rowDto.getLcset());
+
+            // Accumulates the lanes.
+            for (int i = 0; i < rowDto.getNumberLanes(); ++i) {
+                if (vesselLaneInfo == null) {
+                    vesselLaneInfo = new LabBatch.VesselToLanesInfo(new ArrayList<VesselPosition>(),
+                            rowDto.getLoadingConc(), rowDtoLabVessel.getRight());
+                    fctVesselLaneInfo.add(vesselLaneInfo);
+                }
+                if (linkedLcsets.isEmpty()) {
+                    linkedLcsets.add(rowDto.getLcset());
+                }
+                vesselLaneInfo.getLanes().add(VESSEL_POSITIONS[laneIndex++]);
+                // Are there are enough lanes to make a new FCT?
+                if (laneIndex == lanesPerFlowcell) {
+                    // The batch name will be overwritten by the FCT-ID from JIRA, but if it's not made unique at
+                    // this point then there is a unique constraint violation.  Perhaps Hibernate does an insert then an
+                    // update, it's not clear why.
+                    LabBatch fctBatch = new LabBatch(rowDto.getBarcode() + " FCT ticket " + i, fctVesselLaneInfo,
+                            flowcellType.getBatchType(), flowcellType);
+                    fctBatch.setBatchDescription(rowDto.getBarcode() + " FCT ticket ");
+                    fctBatches.add(Pair.of(fctBatch, linkedLcsets));
+                    // Resets the accumulations.
+                    laneIndex = 0;
+                    fctVesselLaneInfo = new ArrayList<>();
+                    linkedLcsets = new HashSet<>();
+                    vesselLaneInfo = null;
+                }
+            }
+        }
+
+        if (laneIndex != 0) {
+            throw new RuntimeException("A partially filled flowcell is not supported.");
+        }
+        return fctBatches;
+    }
+
     /*
        To Support DBFree Tests
     */
@@ -627,18 +727,8 @@ public class LabBatchEjb {
     }
 
     @Inject
-    public void setJiraTicketDao(JiraTicketDao jiraTicketDao) {
-        this.jiraTicketDao = jiraTicketDao;
-    }
-
-    @Inject
     public void setTubeDao(LabVesselDao tubeDao) {
         this.tubeDao = tubeDao;
-    }
-
-    @Inject
-    public void setBucketDao(BucketDao bucketDao) {
-        this.bucketDao = bucketDao;
     }
 
     @Inject
@@ -671,4 +761,8 @@ public class LabBatchEjb {
         this.workflowLoader = workflowLoader;
     }
 
+    @Inject
+    public void setLabVesselDao(LabVesselDao labVesselDao) {
+        this.labVesselDao = labVesselDao;
+    }
 }
