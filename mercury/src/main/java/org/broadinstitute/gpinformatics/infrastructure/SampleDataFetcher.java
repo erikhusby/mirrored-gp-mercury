@@ -233,7 +233,7 @@ public class SampleDataFetcher implements Serializable {
                     bspSourceSampleNames.add(sampleName);
                 }
                 // To improve performance, check for Mercury quants only if the product indicates that they're there.
-                if (product != null && product.getExpectInitialQuantInMercury()) {
+                if (product != null && product.getExpectInitialQuantInMercury() && quantColumnRequested(bspSampleSearchColumns)) {
                     mapMercuryQuantIdToPdoSample.put(sampleName, productOrderSample);
                 }
             }
@@ -255,5 +255,14 @@ public class SampleDataFetcher implements Serializable {
         sampleData.putAll(mercurySampleDataFetcher.fetchSampleData(mercurySamplesWithMercurySource));
 
         return sampleData;
+    }
+
+    private boolean quantColumnRequested(BSPSampleSearchColumn[] bspSampleSearchColumns) {
+        for (BSPSampleSearchColumn bspSampleSearchColumn : bspSampleSearchColumns) {
+            if (BSPSampleSearchColumn.isQuantColumn(bspSampleSearchColumn)) {
+                return true;
+            }
+        }
+        return false;
     }
 }
