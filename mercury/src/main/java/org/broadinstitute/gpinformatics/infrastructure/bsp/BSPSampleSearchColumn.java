@@ -80,9 +80,20 @@ public enum BSPSampleSearchColumn {
             ORIGINAL_MATERIAL_TYPE
     };
 
+    public static final BSPSampleSearchColumn[] QUANT_DATA_COLUMNS = {
+            VOLUME, PICO_RUN_DATE, CONCENTRATION, TOTAL_DNA
+    };
+
     public static final BSPSampleSearchColumn[] BUCKET_PAGE_COLUMNS = {
             COLLABORATOR_SAMPLE_ID, MATERIAL_TYPE, RECEIPT_DATE
     };
 
-
+    public static boolean isQuantColumn(BSPSampleSearchColumn bspSampleSearchColumn) {
+        for (BSPSampleSearchColumn quantDataColumn : QUANT_DATA_COLUMNS) {
+            if (quantDataColumn.equals(bspSampleSearchColumn)) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

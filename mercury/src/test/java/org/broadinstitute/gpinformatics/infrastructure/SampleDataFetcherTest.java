@@ -25,6 +25,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -35,6 +36,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.mockito.Matchers.anyVararg;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
@@ -480,6 +482,36 @@ public class SampleDataFetcherTest {
         assertThat(stockIdByAliquotId.size(), equalTo(1));
         assertThat(stockIdByAliquotId.get(CLINICAL_SAMPLE_ID), equalTo(CLINICAL_SAMPLE_ID));
         verifyZeroInteractions(mockBspSampleDataFetcher);
+    }
+
+    @DataProvider(name = "fetchSampleDataWithColumns")
+    public Iterator<Object[]> fetchSampleDataWithColumns() {
+
+        List<Object[]> testCases = new ArrayList<>();
+        testCases.add(new Object[]{BSPSampleSearchColumn.PDO_SEARCH_COLUMNS, true});
+        testCases.add(new Object[]{BSPSampleSearchColumn.BILLING_TRACKER_COLUMNS, false});
+
+        return testCases.iterator();
+    }
+
+    @Test(dataProvider = "fetchSampleDataWithColumns")
+    public void test_fetchSampleData_for_BSP_sample_should_call_overrideWithMercuryQuants_when_Quants_are_requested(
+            BSPSampleSearchColumn[] searchColumns, boolean quantDataExpected) {
+        BspSampleData mockBspSampleData = Mockito.mock(BspSampleData.class);
+        configureBspFetcher(BSP_SAMPLE_ID, mockBspSampleData);
+        configureMercurySampleDao(bspMercurySample);
+        ProductOrderSample productOrderSample =
+                build_product_order_sample_without_mercury_sample_bound(BSP_SAMPLE_ID);
+        productOrderSample.getProductOrder().getProduct().setExpectInitialQuantInMercury(quantDataExpected);
+
+        bspMercurySample.addProductOrderSample(productOrderSample);
+        sampleDataFetcher.fetchSampleDataForSamples(Collections.singletonList(productOrderSample), searchColumns);
+
+        when(mockBspSampleDataFetcher.fetchSampleData(argThat(contains(BSP_SAMPLE_ID))))
+                .thenReturn(ImmutableMap.of(BSP_SAMPLE_ID, mockBspSampleData));
+
+        int invocationCount = quantDataExpected ? 1 : 0;
+        verify(mockBspSampleData, times(invocationCount)).overrideWithMercuryQuants(productOrderSample);
     }
 
     /*
