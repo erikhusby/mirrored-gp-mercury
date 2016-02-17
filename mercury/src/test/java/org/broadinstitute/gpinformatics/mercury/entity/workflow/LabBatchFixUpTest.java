@@ -648,4 +648,33 @@ public class LabBatchFixUpTest extends Arquillian {
         userTransaction.commit();
     }
 
+    /**
+     * Samples were changed in BSP from Eppendorf 1.5 (no 2D barcode) to Matrix tubes.  Previously fixed
+     * LabBatchStartingVessels, now need to fix BucketEntries too.
+     */
+    @Test(enabled = false)
+    public void fixupSupport1455Part2() throws Exception {
+        userBean.loginOSUser();
+        userTransaction.begin();
+        LabBatch labBatch = labBatchDao.findByName("LCSET-8579");
+        Map<String, String> mapOldBarcodeToNew = new HashMap<String, String>(){{
+            put("SM-ATXQU", "1113558682");
+            put("SM-ATXQV", "1113558673");
+            put("SM-ATXQW", "1113558664");
+            put("SM-ATXQX", "1113559211");
+        }};
+        for (BucketEntry bucketEntry : labBatch.getBucketEntries()) {
+            String newBarcode = mapOldBarcodeToNew.get(bucketEntry.getLabVessel().getLabel());
+            if (newBarcode != null) {
+                LabVessel newLabVessel = labVesselDao.findByIdentifier(newBarcode);
+                System.out.println("Replacing " + bucketEntry.getLabVessel().getLabel() + " with " +
+                        newLabVessel.getLabel());
+                bucketEntry.setLabVessel(newLabVessel);
+            }
+        }
+
+        labBatchDao.persist(new FixupCommentary("SUPPORT-1455 replace vessels in batch"));
+        labBatchDao.flush();
+        userTransaction.commit();
+    }
 }
