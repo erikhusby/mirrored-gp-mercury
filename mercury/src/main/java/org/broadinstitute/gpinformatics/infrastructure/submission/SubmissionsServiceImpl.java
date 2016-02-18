@@ -48,9 +48,13 @@ public class SubmissionsServiceImpl implements SubmissionsService {
 
         submissionParameters.put("uuid", Arrays.asList(submissionIdentifiers));
 
-        ClientResponse response =
-                JerseyUtils.getWebResource(submissionsConfig.getWSUrl(SubmissionConfig.SUBMISSIONS_STATUS_URI), MediaType.APPLICATION_JSON_TYPE,
-                        submissionParameters).accept(MediaType.APPLICATION_JSON).get(ClientResponse.class);
+        ClientResponse response = JerseyUtils
+                .getWebResource(submissionsConfig.getWSUrl(SubmissionConfig.SUBMISSIONS_STATUS_URI),
+                        MediaType.APPLICATION_JSON_TYPE, submissionParameters).accept(MediaType.APPLICATION_JSON_TYPE)
+                .get(ClientResponse.class);
+
+        handleErrorResponse(response, "Error while querying submission status");
+
         SubmissionStatusResultBean submissionStatusResultBean = response.getEntity(SubmissionStatusResultBean.class);
         return submissionStatusResultBean.getSubmissionStatuses();
     }
@@ -61,11 +65,13 @@ public class SubmissionsServiceImpl implements SubmissionsService {
      */
     @Override
     public Collection<BioProject> getAllBioProjects() {
-        BioProjects bioProjects;
-        ClientResponse response =
-                JerseyUtils.getWebResource(submissionsConfig.getWSUrl(SubmissionConfig.LIST_BIOPROJECTS_ACTION), MediaType.APPLICATION_JSON_TYPE)
-                        .accept(MediaType.APPLICATION_JSON).get(ClientResponse.class);
-        bioProjects = response.getEntity(BioProjects.class);
+        ClientResponse response = JerseyUtils
+                .getWebResource(submissionsConfig.getWSUrl(SubmissionConfig.LIST_BIOPROJECTS_ACTION),
+                        MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).get(ClientResponse.class);
+
+        handleErrorResponse(response, "Error while querying submission status");
+
+        BioProjects bioProjects = response.getEntity(BioProjects.class);
         return bioProjects.getBioprojects();
     }
 
@@ -82,11 +88,7 @@ public class SubmissionsServiceImpl implements SubmissionsService {
                         MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).entity(submissions)
                            .post(ClientResponse.class);
 
-        if(response.getStatus() != Response.Status.OK.getStatusCode()) {
-            String errorResponse = response.getEntity(String.class);
-            log.error("Error received while posting submissions: " + errorResponse);
-            throw new InformaticsServiceException(errorResponse);
-        }
+        handleErrorResponse(response, "Error received while posting submissions");
 
         return response.getEntity(SubmissionStatusResultBean.class).getSubmissionStatuses();
     }
@@ -99,12 +101,16 @@ public class SubmissionsServiceImpl implements SubmissionsService {
                 JerseyUtils.getWebResource(submissionsConfig.getWSUrl(SubmissionConfig.SUBMISSION_SAMPLES_ACTION),
                         MediaType.APPLICATION_JSON_TYPE, parameterMap).get(ClientResponse.class);
 
-        if(response.getStatus() != Response.Status.OK.getStatusCode()) {
-            String errorResponse = response.getEntity(String.class);
-            log.error("Error received while posting submissions: " + errorResponse);
-            throw new InformaticsServiceException(errorResponse);
-        }
+        handleErrorResponse(response, "Error received while getting bio project samples");
 
         return response.getEntity(SubmissionSampleResultBean.class).getSubmittedSampleIds();
+    }
+
+    private void handleErrorResponse(ClientResponse response, String contextMessage) {
+        if(response.getStatus() != Response.Status.OK.getStatusCode()) {
+            String message = contextMessage + ": " + response.getEntity(String.class);
+            log.error(message);
+            throw new InformaticsServiceException(message);
+        }
     }
 }
