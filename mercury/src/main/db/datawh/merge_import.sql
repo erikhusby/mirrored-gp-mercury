@@ -73,18 +73,27 @@ AS
   AS
   BEGIN
 
-    -- For event fact table, a re-export of audited entity ids should replace existing ones.
-    DELETE FROM LIBRARY_ANCESTRY
-     WHERE CHILD_EVENT_ID IN (
-       SELECT DISTINCT LAB_EVENT_ID
-         FROM IM_EVENT_FACT );
-    DBMS_OUTPUT.PUT_LINE( 'Deleted ' || SQL%ROWCOUNT || ' library_ancestry child rows' );
+    -- For event fact table, a (newer) re-export of audited entity ids should replace existing ones.
+    SELECT DISTINCT IEF.LAB_EVENT_ID
+    BULK COLLECT INTO V_PK_ARR
+    FROM IM_EVENT_FACT IEF
+      , EVENT_FACT    EF
+    WHERE EF.LAB_EVENT_ID = IEF.LAB_EVENT_ID
+          AND EF.ETL_DATE     < IEF.ETL_DATE;
 
-    DELETE FROM event_fact
-    WHERE lab_event_id IN (SELECT
-                             DISTINCT lab_event_id
-                           FROM im_event_fact);
-    DBMS_OUTPUT.PUT_LINE( 'Deleted ' || SQL%ROWCOUNT || ' event_fact rows' );
+    IF V_PK_ARR.COUNT > 0 THEN
+      FORALL IDX IN V_PK_ARR.FIRST .. V_PK_ARR.LAST
+      DELETE FROM LIBRARY_ANCESTRY
+      WHERE CHILD_EVENT_ID = V_PK_ARR( IDX );
+
+      DBMS_OUTPUT.PUT_LINE( 'Deleted ' || SQL%ROWCOUNT || ' library_ancestry child rows' );
+
+      FORALL IDX IN V_PK_ARR.FIRST .. V_PK_ARR.LAST
+      DELETE FROM EVENT_FACT
+      WHERE LAB_EVENT_ID = V_PK_ARR( IDX );
+
+      DBMS_OUTPUT.PUT_LINE( 'Deleted ' || SQL%ROWCOUNT || ' event_fact rows' );
+    END IF;
 
     DELETE FROM product_order_sample
     WHERE product_order_sample_id IN (
