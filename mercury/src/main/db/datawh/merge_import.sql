@@ -74,17 +74,17 @@ AS
   BEGIN
 
     -- For event fact table, a re-export of audited entity ids should replace existing ones.
-    DELETE FROM LIBRARY_ANCESTRY
+      DELETE FROM LIBRARY_ANCESTRY
      WHERE CHILD_EVENT_ID IN (
        SELECT DISTINCT LAB_EVENT_ID
          FROM IM_EVENT_FACT );
-    DBMS_OUTPUT.PUT_LINE( 'Deleted ' || SQL%ROWCOUNT || ' library_ancestry child rows' );
+      DBMS_OUTPUT.PUT_LINE( 'Deleted ' || SQL%ROWCOUNT || ' library_ancestry child rows' );
 
     DELETE FROM event_fact
     WHERE lab_event_id IN (SELECT
                              DISTINCT lab_event_id
                            FROM im_event_fact);
-    DBMS_OUTPUT.PUT_LINE( 'Deleted ' || SQL%ROWCOUNT || ' event_fact rows' );
+      DBMS_OUTPUT.PUT_LINE( 'Deleted ' || SQL%ROWCOUNT || ' event_fact rows' );
 
     DELETE FROM product_order_sample
     WHERE product_order_sample_id IN (
@@ -535,8 +535,8 @@ AS
 
         -- RPT-3131 - Delete any older metrics for same vessel
         DELETE FROM lab_metric
-        WHERE vessel_barcode = new.vessel_barcode
-          AND quant_type     = new.quant_type
+        WHERE vessel_barcode =  new.vessel_barcode
+          AND quant_type     =  new.quant_type
           AND run_date       < new.run_date;
 
         UPDATE lab_metric
@@ -564,13 +564,19 @@ AS
                 vessel_barcode, rack_position,
                 decision, decision_date, decider,
                 override_reason, etl_date )
-          VALUES (
-                new.lab_metric_id,
-                new.quant_type, new.quant_units, new.quant_value,
-                new.run_name, new.run_date,
-                new.vessel_barcode, new.rack_position,
-                new.decision, new.decision_date, new.decider,
-                new.override_reason, new.etl_date );
+          SELECT new.lab_metric_id,
+                 new.quant_type, new.quant_units, new.quant_value,
+                 new.run_name, new.run_date,
+                 new.vessel_barcode, new.rack_position,
+                 new.decision, new.decision_date, new.decider,
+                 new.override_reason, new.etl_date
+            FROM dual
+           WHERE NOT EXISTS (
+               SELECT 'Y'
+                 FROM lab_metric
+                WHERE vessel_barcode =  new.vessel_barcode
+                  AND quant_type     =  new.quant_type
+                  AND run_date       > new.run_date );
 
           V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;
 
