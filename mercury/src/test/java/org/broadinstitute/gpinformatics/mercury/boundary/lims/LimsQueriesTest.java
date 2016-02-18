@@ -1,14 +1,18 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ConcentrationAndVolumeAndWeightType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.LibraryDataType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.PlateTransferType;
@@ -22,9 +26,11 @@ import org.testng.annotations.Test;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -76,18 +82,55 @@ public class LimsQueriesTest {
     public void testFetchLibraryDetailsByTubeBarcode() {
         Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
         String barcode = "1234";
-        BarcodedTube barcodedTube = new BarcodedTube(barcode);
         String sampleKey = "SM-1234";
-        barcodedTube.addSample(new MercurySample(sampleKey, MercurySample.MetadataSource.BSP));
-        mapBarcodeToVessel.put(barcode, barcodedTube);
+        MercurySample mercurySample = new MercurySample(sampleKey, MercurySample.MetadataSource.BSP);
+
+        // Mock tube contains a pool of two pdo samples from two different research projects.
+        ProductOrder[] productOrders = new ProductOrder[]{new ProductOrder(), new ProductOrder()};
+        productOrders[0].setResearchProject(new ResearchProject(0L, "", "", true,
+                ResearchProject.RegulatoryDesignation.CLINICAL_DIAGNOSTICS));
+        productOrders[1].setResearchProject(new ResearchProject(0L, "", "", true,
+                ResearchProject.RegulatoryDesignation.RESEARCH_ONLY));
+        ProductOrderSample[] productOrderSamples = new ProductOrderSample[]{
+                new ProductOrderSample(sampleKey), new ProductOrderSample(sampleKey + "1")};
+        productOrderSamples[0].setProductOrder(productOrders[0]);
+        productOrderSamples[1].setProductOrder(productOrders[1]);
+
+        final BarcodedTube mockTube = createMock(BarcodedTube.class);
+        final SampleInstanceV2[] mockSampleInstances = new SampleInstanceV2[]{
+                createMock(SampleInstanceV2.class), createMock(SampleInstanceV2.class)};
+
+        expect(mockTube.getSampleInstancesV2()).andReturn(
+                new HashSet<SampleInstanceV2>() {{
+                    add(mockSampleInstances[0]);
+                    add(mockSampleInstances[1]);
+                }});
+        replay(mockTube);
+
+        for (int i = 0; i < mockSampleInstances.length; ++i) {
+            expect(mockSampleInstances[i].getRootOrEarliestMercurySample()).andReturn(mercurySample);
+            expect(mockSampleInstances[i].getMolecularIndexingScheme()).andReturn(null);
+            expect(mockSampleInstances[i].getAllProductOrderSamples()).andReturn(
+                    Collections.singletonList(productOrderSamples[i]));
+            replay(mockSampleInstances[i]);
+        }
+
+        mapBarcodeToVessel.put(barcode, mockTube);
         List<LibraryDataType> libraryDataTypes = limsQueries.fetchLibraryDetailsByTubeBarcode(mapBarcodeToVessel);
         assertThat(libraryDataTypes.size(), equalTo(1));
         LibraryDataType libraryDataType = libraryDataTypes.get(0);
         assertThat(libraryDataType.getLibraryName(), Matchers.equalTo(barcode));
         assertThat(libraryDataType.getTubeBarcode(), Matchers.equalTo(barcode));
-        assertThat(libraryDataType.getSampleDetails().size(), equalTo(1));
+        assertThat(libraryDataType.getSampleDetails().size(), equalTo(2));
         SampleInfoType sampleInfoType = libraryDataType.getSampleDetails().get(0);
         assertThat(sampleInfoType.getSampleName(), Matchers.equalTo(sampleKey));
+        assertThat(libraryDataType.getRegulatoryType().size(), Matchers.equalTo(2));
+        assertThat(libraryDataType.getRegulatoryType(), Matchers.hasItem("CLINICAL_DIAGNOSTICS"));
+        assertThat(libraryDataType.getRegulatoryType(), Matchers.hasItem("RESEARCH_ONLY"));
+
+        verify(mockTube);
+        verify(mockSampleInstances[0]);
+        verify(mockSampleInstances[1]);
     }
 
     @Test(groups = DATABASE_FREE)
