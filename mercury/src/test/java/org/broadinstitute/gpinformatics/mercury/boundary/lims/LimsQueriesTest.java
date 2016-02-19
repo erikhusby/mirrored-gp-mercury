@@ -8,7 +8,6 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeD
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -30,7 +29,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -80,57 +78,38 @@ public class LimsQueriesTest {
 
     @Test(groups = DATABASE_FREE)
     public void testFetchLibraryDetailsByTubeBarcode() {
-        Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
-        String barcode = "1234";
-        String sampleKey = "SM-1234";
-        MercurySample mercurySample = new MercurySample(sampleKey, MercurySample.MetadataSource.BSP);
+        String[] sampleKey = {"SM-1111", "SM-2222"};
+        String barcode = "3333";
 
-        // Mock tube contains a pool of two pdo samples from two different research projects.
-        ProductOrder[] productOrders = new ProductOrder[]{new ProductOrder(), new ProductOrder()};
-        productOrders[0].setResearchProject(new ResearchProject(0L, "", "", true,
-                ResearchProject.RegulatoryDesignation.CLINICAL_DIAGNOSTICS));
-        productOrders[1].setResearchProject(new ResearchProject(0L, "", "", true,
-                ResearchProject.RegulatoryDesignation.RESEARCH_ONLY));
-        ProductOrderSample[] productOrderSamples = new ProductOrderSample[]{
-                new ProductOrderSample(sampleKey), new ProductOrderSample(sampleKey + "1")};
-        productOrderSamples[0].setProductOrder(productOrders[0]);
-        productOrderSamples[1].setProductOrder(productOrders[1]);
+        // Make a tube that contains a pool of two pdo samples from two different research projects.
+        BarcodedTube poolTube = new BarcodedTube(barcode);
+        for (int i = 0; i < sampleKey.length; ++i) {
+            ProductOrderSample productOrderSample = new ProductOrderSample(sampleKey[i]);
+            new ProductOrder(0L, "PDO-" + i, Collections.singletonList(productOrderSample),
+                    "", null, new ResearchProject(0L, "", "", true, i == 0 ?
+                    ResearchProject.RegulatoryDesignation.CLINICAL_DIAGNOSTICS :
+                    ResearchProject.RegulatoryDesignation.RESEARCH_ONLY)
+            );
+            MercurySample mercurySample = new MercurySample(sampleKey[i], MercurySample.MetadataSource.BSP);
+            productOrderSample.setMercurySample(mercurySample);
+            mercurySample.getProductOrderSamples().add(productOrderSample);
 
-        final BarcodedTube mockTube = createMock(BarcodedTube.class);
-        final SampleInstanceV2[] mockSampleInstances = new SampleInstanceV2[]{
-                createMock(SampleInstanceV2.class), createMock(SampleInstanceV2.class)};
-
-        expect(mockTube.getSampleInstancesV2()).andReturn(
-                new HashSet<SampleInstanceV2>() {{
-                    add(mockSampleInstances[0]);
-                    add(mockSampleInstances[1]);
-                }});
-        replay(mockTube);
-
-        for (int i = 0; i < mockSampleInstances.length; ++i) {
-            expect(mockSampleInstances[i].getRootOrEarliestMercurySample()).andReturn(mercurySample);
-            expect(mockSampleInstances[i].getMolecularIndexingScheme()).andReturn(null);
-            expect(mockSampleInstances[i].getAllProductOrderSamples()).andReturn(
-                    Collections.singletonList(productOrderSamples[i]));
-            replay(mockSampleInstances[i]);
+            poolTube.getMercurySamples().add(mercurySample);
         }
 
-        mapBarcodeToVessel.put(barcode, mockTube);
+        Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
+        mapBarcodeToVessel.put(barcode, poolTube);
         List<LibraryDataType> libraryDataTypes = limsQueries.fetchLibraryDetailsByTubeBarcode(mapBarcodeToVessel);
-        assertThat(libraryDataTypes.size(), equalTo(1));
+        assertThat(libraryDataTypes, Matchers.hasSize(1));
         LibraryDataType libraryDataType = libraryDataTypes.get(0);
         assertThat(libraryDataType.getLibraryName(), Matchers.equalTo(barcode));
         assertThat(libraryDataType.getTubeBarcode(), Matchers.equalTo(barcode));
-        assertThat(libraryDataType.getSampleDetails().size(), equalTo(2));
+        assertThat(libraryDataType.getSampleDetails(), Matchers.hasSize(1));
         SampleInfoType sampleInfoType = libraryDataType.getSampleDetails().get(0);
-        assertThat(sampleInfoType.getSampleName(), Matchers.equalTo(sampleKey));
-        assertThat(libraryDataType.getRegulatoryType().size(), Matchers.equalTo(2));
-        assertThat(libraryDataType.getRegulatoryType(), Matchers.hasItem("CLINICAL_DIAGNOSTICS"));
-        assertThat(libraryDataType.getRegulatoryType(), Matchers.hasItem("RESEARCH_ONLY"));
-
-        verify(mockTube);
-        verify(mockSampleInstances[0]);
-        verify(mockSampleInstances[1]);
+        assertThat(sampleInfoType.getSampleName(), Matchers.equalTo(sampleKey[0]));
+        assertThat(libraryDataType.getRegulatoryDesignation(), Matchers.hasSize(2));
+        assertThat(libraryDataType.getRegulatoryDesignation(), Matchers.hasItem("CLINICAL_DIAGNOSTICS"));
+        assertThat(libraryDataType.getRegulatoryDesignation(), Matchers.hasItem("RESEARCH_ONLY"));
     }
 
     @Test(groups = DATABASE_FREE)

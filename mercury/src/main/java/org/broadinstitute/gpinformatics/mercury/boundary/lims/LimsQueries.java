@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
@@ -110,16 +109,12 @@ public class LimsQueries {
                         sampleInfoType.setIndexSequence(indexSequence);
                     }
                     libraryDataType.getSampleDetails().add(sampleInfoType);
-
-                    Set<ProductOrder> productOrders = new HashSet<>();
-                    for (ProductOrderSample sample : sampleInstance.getAllProductOrderSamples()) {
-                        productOrders.add(sample.getProductOrder());
-                    }
                     Set<String> regulatoryDesignations = new HashSet<>();
-                    for (ProductOrder productOrder : productOrders) {
-                        regulatoryDesignations.add(productOrder.getResearchProject().getRegulatoryDesignation().name());
+                    for (ProductOrderSample sample : sampleInstance.getAllProductOrderSamples()) {
+                        regulatoryDesignations.add(
+                                sample.getProductOrder().getResearchProject().getRegulatoryDesignation().name());
                     }
-                    libraryDataType.getRegulatoryType().addAll(regulatoryDesignations);
+                    libraryDataType.getRegulatoryDesignation().addAll(regulatoryDesignations);
                 }
             }
         }
