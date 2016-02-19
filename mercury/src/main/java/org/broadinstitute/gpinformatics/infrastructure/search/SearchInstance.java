@@ -70,6 +70,12 @@ public class SearchInstance implements Serializable {
         private List<SearchValue> children = new ArrayList<>();
 
         /**
+         * When a rack scan is used as a source of barcodes, persist it so additional data is available in results
+         * Stored as JSON text
+         */
+        private String rackScanData;
+
+        /**
          * The list of valid values
          */
         @XmlTransient
@@ -335,6 +341,7 @@ public class SearchInstance implements Serializable {
                     } else {
                         switch(getDataType()) {
                         case STRING:
+                        case NOT_NULL:
                             propertyValues.add(value);
                             break;
                         case TWO_PLACE_DECIMAL:
@@ -468,6 +475,14 @@ public class SearchInstance implements Serializable {
 
         public void setAddToCriteria(Boolean addToCriteria) {
             this.addToCriteria = addToCriteria;
+        }
+
+        public void setRackScanData( String rackScanData ) {
+            this.rackScanData = rackScanData;
+        }
+
+        public String getRackScanData() {
+            return rackScanData;
         }
 
         @Override
@@ -646,7 +661,8 @@ public class SearchInstance implements Serializable {
         GREATER_THAN,
         GREATER_THAN_EQUAL,
         BETWEEN,
-        LIKE;
+        LIKE,
+        NOT_NULL;
 
         public String getName() {
             return name();
@@ -741,6 +757,8 @@ public class SearchInstance implements Serializable {
     private Map<String,Boolean> traversalEvaluatorValues = new HashMap<>();
 
     private boolean isDbSortable = true;
+
+    private int pageSize;
 
     /**
      * Default constructor for Stripes.
@@ -1099,4 +1117,18 @@ public class SearchInstance implements Serializable {
     public Map<String,Boolean> getTraversalEvaluatorValues(){
         return traversalEvaluatorValues;
     }
+
+    public void setPageSize( int pageSize ) {
+        this.pageSize = pageSize;
+    }
+
+    public int getPageSize(){
+        // Default to 100 if uninitialized
+        if( pageSize == 0 ) {
+            return 100;
+        } else {
+            return pageSize;
+        }
+    }
+
 }

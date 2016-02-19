@@ -421,5 +421,16 @@
                                  baseTableName="le_reagent_metadata_aud" baseColumnNames="rev"
                                  referencedTableName="rev_info" referencedColumnNames="rev_info_id"/>
     </changeSet>
+    <changeSet id="GPLIM-3911-1" author="jowalsh">
+        <addColumn tableName="batch_starting_vessels" schemaName="mercury">
+            <column name="vessel_position" type="varchar2(255)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-3911-2" author="jowalsh">
+        <addColumn tableName="batch_starting_vessels_aud" schemaName="mercury">
+            <column name="vessel_position" type="varchar2(255)"/>
+        </addColumn>
+    </changeSet>
+
 
 </databaseChangeLog>

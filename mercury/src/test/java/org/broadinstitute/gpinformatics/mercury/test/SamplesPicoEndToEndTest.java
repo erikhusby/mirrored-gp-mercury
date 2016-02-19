@@ -186,9 +186,6 @@ public class SamplesPicoEndToEndTest {
             LabVesselDao tubeDao = EasyMock.createNiceMock(LabVesselDao.class);
             labBatchEJB.setTubeDao(tubeDao);
 
-            JiraTicketDao mockJira = EasyMock.createNiceMock(JiraTicketDao.class);
-            labBatchEJB.setJiraTicketDao(mockJira);
-
             LabBatchDao labBatchDao = EasyMock.createNiceMock(LabBatchDao.class);
             labBatchEJB.setLabBatchDao(labBatchDao);
 
@@ -207,7 +204,7 @@ public class SamplesPicoEndToEndTest {
 
 
             BucketDao mockBucketDao = EasyMock.createNiceMock(BucketDao.class);
-            EasyMock.replay(mockBucketDao, tubeDao, mockJira, labBatchDao, bucketDao);
+            EasyMock.replay(mockBucketDao, tubeDao, labBatchDao, bucketDao);
 
             TemplateEngine templateEngine = new TemplateEngine();
             templateEngine.postConstruct();

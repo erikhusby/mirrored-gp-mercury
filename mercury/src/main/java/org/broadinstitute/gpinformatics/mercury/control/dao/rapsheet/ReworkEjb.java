@@ -73,6 +73,7 @@ import java.util.Set;
 @RequestScoped
 public class ReworkEjb {
     private static final Log logger = LogFactory.getLog(ReworkEjb.class);
+    private static final String COULD_NOT_FIND_BUCKET_DEFINITION = "Could not find bucket definition for";
 
     @Inject
     private MercurySampleDao mercurySampleDao;
@@ -401,7 +402,15 @@ public class ReworkEjb {
         try {
             bucketDef = findWorkflowBucketDef(bucketCandidate.getProductOrder(), bucket.getBucketDefinitionName());
         } catch (RuntimeException e) {
-            throw new ValidationException(e);
+            String error = e.getLocalizedMessage();
+            if (error.startsWith(COULD_NOT_FIND_BUCKET_DEFINITION)) {
+                error = String.format(
+                        "%s cannot be added to '%s' because that bucket is invalid for the product '%s'",
+                        bucketCandidate.getSampleKey(), bucket.getBucketDefinitionName(),
+                        bucketCandidate.getProductOrder().getProduct().getProductName());
+            }
+
+            throw new ValidationException(error);
         }
         LabEventType reworkFromStep = bucketDef.getBucketEventType();
 
@@ -417,7 +426,7 @@ public class ReworkEjb {
 
     private WorkflowBucketDef findWorkflowBucketDef(@Nonnull ProductOrder productOrder, String bucketName) {
         WorkflowConfig workflowConfig = workflowLoader.load();
-        WorkflowBucketDef bucketDef=null;
+        WorkflowBucketDef bucketDef = null;
         for (Workflow productWorkflow : productOrder.getProductWorkflows()) {
             ProductWorkflowDefVersion workflowDefVersion = workflowConfig.getWorkflow(productWorkflow)
                     .getEffectiveVersion();
@@ -426,7 +435,7 @@ public class ReworkEjb {
                 return bucketDef;
             }
         }
-        throw new RuntimeException("Could not find bucket definition for: " + bucketName);
+        throw new RuntimeException(String.format("%s: %s",COULD_NOT_FIND_BUCKET_DEFINITION, bucketName));
     }
 
     /**
@@ -442,9 +451,9 @@ public class ReworkEjb {
      * @return Collection of validation messages
      */
     public void validateBucketItem(@Nonnull LabVessel candidateVessel,
-                                                 @Nonnull WorkflowBucketDef bucketDef,
-                                                 @Nonnull ProductOrder productOrder, @Nonnull String sampleKey,
-                                                 boolean reworkItem)
+                                   @Nonnull WorkflowBucketDef bucketDef,
+                                   @Nonnull ProductOrder productOrder, @Nonnull String sampleKey,
+                                   boolean reworkItem)
             throws ValidationException {
         if (candidateVessel.checkCurrentBucketStatus(productOrder, bucketDef.getName(), BucketEntry.Status.Active)) {
             String error =

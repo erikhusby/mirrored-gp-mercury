@@ -31,6 +31,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
@@ -58,6 +59,7 @@ import org.testng.annotations.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -114,9 +116,6 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
 
         LabVesselDao tubeDao = EasyMock.createNiceMock(LabVesselDao.class);
         labBatchEJB.setTubeDao(tubeDao);
-
-        JiraTicketDao mockJira = EasyMock.createNiceMock(JiraTicketDao.class);
-        labBatchEJB.setJiraTicketDao(mockJira);
 
         LabBatchDao labBatchDao = EasyMock.createNiceMock(LabBatchDao.class);
         labBatchEJB.setLabBatchDao(labBatchDao);
@@ -330,10 +329,8 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
 
         final LabVessel denatureSource =
                 qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
-        LabBatch fctBatch =
-                new LabBatch(FCT_TICKET,
-                             Collections.singleton(denatureSource),
-                             LabBatch.LabBatchType.FCT);
+        LabBatch fctBatch = new LabBatch(FCT_TICKET, LabBatch.LabBatchType.FCT,
+                IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell, denatureSource, BigDecimal.TEN);
 
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
                 new HiSeq2500FlowcellEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, leHandler,

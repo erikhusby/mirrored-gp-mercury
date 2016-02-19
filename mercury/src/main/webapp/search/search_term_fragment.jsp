@@ -3,7 +3,7 @@
 
 <%-- This page renders an HTML fragment for a new search term in a user-defined search, it is
  the result of an AJAX call --%>
-<%--@elvariable id="actionBean" type="edu.mit.broad.bsp.web.stripes.action.search.ConfigurableSearchActionBean"--%>
+<%--@elvariable id="actionBean" type="org.broadinstitute.gpinformatics.mercury.presentation.search.ConfigurableSearchActionBean"--%>
 
 <c:set var="searchValues" value="${actionBean.searchValueList}" scope="request"/>
 <jsp:include page="recurse_search_terms.jsp"/>

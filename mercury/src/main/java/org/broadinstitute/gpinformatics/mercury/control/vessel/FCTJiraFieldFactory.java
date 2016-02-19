@@ -5,11 +5,17 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 
 import javax.annotation.Nonnull;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class FCTJiraFieldFactory extends AbstractBatchJiraFieldFactory {
 
@@ -19,7 +25,38 @@ public class FCTJiraFieldFactory extends AbstractBatchJiraFieldFactory {
 
     @Override
     public Collection<CustomField> getCustomFields(Map<String, CustomFieldDefinition> submissionFields) {
-        return Collections.emptySet();
+        Set<CustomField> customFields = new HashSet<>();
+
+        //Old FCT may not have vessel position set and won't have lane info
+        for (LabBatchStartingVessel startingVessel : batch.getLabBatchStartingVessels()) {
+            if (startingVessel.getVesselPosition() == null) {
+                return customFields;
+            }
+        }
+
+        List<LabBatchStartingVessel> startingVessels = new ArrayList<>(batch.getLabBatchStartingVessels());
+        Collections.sort(startingVessels, new Comparator<LabBatchStartingVessel>() {
+            @Override
+            public int compare(LabBatchStartingVessel startingVessel, LabBatchStartingVessel startingVessel2) {
+                return startingVessel.getVesselPosition().compareTo(startingVessel2.getVesselPosition());
+            }
+        });
+        StringBuilder laneInfoBuilder = new StringBuilder();
+        laneInfoBuilder.append("||Lane||Loading Vessel||Loading Concentration||\n");
+        for (LabBatchStartingVessel startingVessel : startingVessels) {
+            laneInfoBuilder.append("|");
+            laneInfoBuilder.append(startingVessel.getVesselPosition().name());
+            laneInfoBuilder.append("|");
+            laneInfoBuilder.append(startingVessel.getLabVessel().getLabel());
+            laneInfoBuilder.append("|");
+            laneInfoBuilder.append(startingVessel.getConcentration());
+            laneInfoBuilder.append("|");
+            laneInfoBuilder.append("\n");
+        }
+        customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.LANE_INFO,
+                laneInfoBuilder.toString()));
+
+        return customFields;
     }
 
     @Override

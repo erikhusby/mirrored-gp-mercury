@@ -75,6 +75,7 @@ public class SearchInstanceEjb {
     }
 
     static {
+        // todo jmt move preferences to ColumnEntity?
         mapEntityTypeToPrefType.put(ColumnEntity.LAB_VESSEL,
                 new PreferenceType[]{PreferenceType.GLOBAL_LAB_VESSEL_SEARCH_INSTANCES,
                         PreferenceType.USER_LAB_VESSEL_SEARCH_INSTANCES});
@@ -87,6 +88,9 @@ public class SearchInstanceEjb {
         mapEntityTypeToPrefType.put(ColumnEntity.REAGENT,
                 new PreferenceType[]{PreferenceType.GLOBAL_REAGENT_SEARCH_INSTANCES,
                         PreferenceType.USER_REAGENT_SEARCH_INSTANCES});
+        mapEntityTypeToPrefType.put(ColumnEntity.LAB_METRIC,
+                new PreferenceType[]{PreferenceType.GLOBAL_LAB_METRIC_SEARCH_INSTANCES,
+                        PreferenceType.USER_LAB_METRIC_SEARCH_INSTANCES});
     }
 
     static {
@@ -210,6 +214,36 @@ public class SearchInstanceEjb {
             ;
         });
 
+        mapTypeToPreferenceAccess.put(PreferenceType.GLOBAL_LAB_METRIC_SEARCH_INSTANCES, new PreferenceAccess() {
+            @Override
+            public List<Preference> getPreferences(Long userID,
+                                                   PreferenceDao preferenceDao) {
+                List<Preference> preferences = new ArrayList<Preference>();
+                Preference preference =  preferenceDao.getGlobalPreference(PreferenceType.GLOBAL_LAB_METRIC_SEARCH_INSTANCES);
+                if( preference != null ) {
+                    preferences.add(preference);
+                }
+                return preferences;
+            }
+
+            @Override
+            public Preference createNewPreference(Long userID) {
+                return new Preference(userID, PreferenceType.GLOBAL_LAB_METRIC_SEARCH_INSTANCES, "");
+            }
+
+            @Override
+            public boolean canModifyPreference(Long userID) {
+                return true;
+            }
+
+            @Override
+            public PreferenceType.PreferenceScope getScope() {
+                return PreferenceType.PreferenceScope.GLOBAL;
+            }
+
+            ;
+        });
+
         mapTypeToPreferenceAccess.put(PreferenceType.USER_LAB_VESSEL_SEARCH_INSTANCES, new PreferenceAccess() {
             @Override
             public List<Preference> getPreferences(Long userID,
@@ -295,6 +329,31 @@ public class SearchInstanceEjb {
             @Override
             public Preference createNewPreference(Long userID) {
                 return new Preference(userID, PreferenceType.USER_REAGENT_SEARCH_INSTANCES, "");
+            }
+
+            @Override
+            public boolean canModifyPreference(Long userID) {
+                return true;
+            }
+
+            @Override
+            public PreferenceType.PreferenceScope getScope() {
+                return PreferenceType.PreferenceScope.USER;
+            }
+
+            ;
+        });
+
+        mapTypeToPreferenceAccess.put(PreferenceType.USER_LAB_METRIC_SEARCH_INSTANCES, new PreferenceAccess() {
+            @Override
+            public List<Preference> getPreferences(Long userID,
+                                                   PreferenceDao preferenceDao) throws Exception {
+                return preferenceDao.getPreferences(userID, PreferenceType.USER_LAB_METRIC_SEARCH_INSTANCES);
+            }
+
+            @Override
+            public Preference createNewPreference(Long userID) {
+                return new Preference(userID, PreferenceType.USER_LAB_METRIC_SEARCH_INSTANCES, "");
             }
 
             @Override
