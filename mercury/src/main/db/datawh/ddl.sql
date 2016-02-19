@@ -272,19 +272,21 @@ CREATE TABLE billing_session (
 );
 
 CREATE TABLE lab_metric (
-  lab_metric_id    NUMERIC(19) NOT NULL PRIMARY KEY,
+  lab_metric_id    NUMERIC(19) NOT NULL,
   quant_type       VARCHAR2(255),
   quant_units      VARCHAR2(255),
   quant_value      NUMBER(19,2),
   run_name         VARCHAR2(255),
   run_date         DATE,
+  lab_vessel_id    NUMERIC(19),
   vessel_barcode   VARCHAR2(40) NOT NULL,
   rack_position    VARCHAR2(255),
   decision         VARCHAR2(12),
   decision_date    DATE,
   decider          VARCHAR2(255),
   override_reason  VARCHAR2(255),
-  etl_date         DATE NOT NULL
+  etl_date         DATE NOT NULL,
+  constraint PK_LAB_METRIC PRIMARY KEY ( lab_metric_id )
 );
 
 --   Creates the import tables
@@ -613,6 +615,7 @@ CREATE TABLE im_lab_metric (
   quant_value      NUMBER(19,2),
   run_name         VARCHAR2(255),
   run_date         DATE,
+  lab_vessel_id    NUMERIC(19),
   vessel_barcode   VARCHAR2(40),
   rack_position    VARCHAR2(255),
   decision         VARCHAR2(12),

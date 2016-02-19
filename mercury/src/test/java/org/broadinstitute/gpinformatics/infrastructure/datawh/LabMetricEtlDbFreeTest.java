@@ -36,6 +36,7 @@ public class LabMetricEtlDbFreeTest {
     private final String etlDateStr = ExtractTransform.formatTimestamp(new Date());
     private final long entityId = 1122334455L;
     private final String vesselBarcode = "BARCODE4TEST";
+    private final Long vesselID = new Long(99999);
     private final LabMetric.MetricType type = LabMetric.MetricType.POND_PICO;
     private final LabMetric.LabUnit units = LabMetric.LabUnit.UG_PER_ML;
     private final BigDecimal value = new BigDecimal(3.14);
@@ -115,6 +116,7 @@ public class LabMetricEtlDbFreeTest {
         EasyMock.expect(obj.getLabMetricRun()).andReturn(null);
         EasyMock.expect(obj.getLabMetricId()).andReturn(entityId);
         EasyMock.expect(labVessel.getLabel()).andReturn(vesselBarcode);
+        EasyMock.expect(labVessel.getLabVesselId()).andReturn(vesselID);
         EasyMock.expect(labVessel.getType()).andReturn(LabVessel.ContainerType.TUBE);
         EasyMock.expect(obj.getName()).andReturn(type);
         EasyMock.expect(obj.getUnits()).andReturn(units);
@@ -139,6 +141,7 @@ public class LabMetricEtlDbFreeTest {
 
         EasyMock.expect(obj.getLabMetricId()).andReturn(entityId);
         EasyMock.expect(labVessel.getLabel()).andReturn(vesselBarcode);
+        EasyMock.expect(labVessel.getLabVesselId()).andReturn(vesselID);
         EasyMock.expect(labVessel.getType()).andReturn(LabVessel.ContainerType.TUBE);
         EasyMock.expect(obj.getName()).andReturn(type);
         EasyMock.expect(obj.getUnits()).andReturn(units);
@@ -163,6 +166,7 @@ public class LabMetricEtlDbFreeTest {
 
         EasyMock.expect(obj.getLabMetricId()).andReturn(entityId);
         EasyMock.expect(labVessel.getLabel()).andReturn(vesselBarcode);
+        EasyMock.expect(labVessel.getLabVesselId()).andReturn(vesselID);
         EasyMock.expect(labVessel.getType()).andReturn(LabVessel.ContainerType.TUBE);
         EasyMock.expect(obj.getName()).andReturn(type);
         EasyMock.expect(obj.getUnits()).andReturn(units);
@@ -190,7 +194,7 @@ public class LabMetricEtlDbFreeTest {
 
     private void verifyRecord(String record, String metricRunName, Date metricRunDate, boolean withDecision) {
         int i = 0;
-        String[] parts = record.split(",",14);
+        String[] parts = record.split(",",15);
         Assert.assertEquals(parts[i++], etlDateStr);
         Assert.assertEquals(parts[i++], "F");
         Assert.assertEquals(parts[i++], String.valueOf(entityId));
@@ -199,6 +203,7 @@ public class LabMetricEtlDbFreeTest {
         Assert.assertEquals(parts[i++], String.valueOf(value));
         Assert.assertEquals(parts[i++], GenericEntityEtl.format(metricRunName));
         Assert.assertEquals(parts[i++], GenericEntityEtl.format(metricRunDate));
+        Assert.assertEquals(parts[i++], String.valueOf(vesselID));
         Assert.assertEquals(parts[i++], String.valueOf(vesselBarcode));
         Assert.assertEquals(parts[i++], vesselPosition);
         Assert.assertEquals(parts[i++], withDecision?decision.toString():"");

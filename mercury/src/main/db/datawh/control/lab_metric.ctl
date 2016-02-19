@@ -13,6 +13,7 @@ TRAILING NULLCOLS
   quant_value,
   run_name,
   run_date DATE "YYYYMMDDHH24MISS",
+  lab_vessel_id,
   vessel_barcode,
   rack_position,
   decision,
