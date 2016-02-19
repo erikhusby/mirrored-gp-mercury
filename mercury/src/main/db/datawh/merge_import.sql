@@ -545,6 +545,7 @@ AS
                quant_value     = new.quant_value,
                run_name        = new.run_name,
                run_date        = new.run_date,
+               lab_vessel_id   = new.lab_vessel_id,
                vessel_barcode  = new.vessel_barcode,
                rack_position   = new.rack_position,
                decision        = new.decision,
@@ -561,13 +562,13 @@ AS
                 lab_metric_id,
                 quant_type, quant_units, quant_value,
                 run_name, run_date,
-                vessel_barcode, rack_position,
+                lab_vessel_id, vessel_barcode, rack_position,
                 decision, decision_date, decider,
                 override_reason, etl_date )
           SELECT new.lab_metric_id,
                  new.quant_type, new.quant_units, new.quant_value,
                  new.run_name, new.run_date,
-                 new.vessel_barcode, new.rack_position,
+                 new.lab_vessel_id, new.vessel_barcode, new.rack_position,
                  new.decision, new.decision_date, new.decider,
                  new.override_reason, new.etl_date
             FROM dual
