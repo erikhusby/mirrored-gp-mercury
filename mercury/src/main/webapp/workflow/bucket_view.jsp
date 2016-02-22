@@ -210,9 +210,12 @@
          *  Find the column index for supplied column header. Table columns are zero based.
          */
         function findColumnIndexForHeader(columnHeader) {
-            return $j("#bucketEntryView tr th").filter(function () {
-                return $(this).text() === columnHeader;
-            }).index();
+            var totalColumns = oTable.fnSettings().aoColumns.length;
+            for (var columnIndex = 0; columnIndex <= totalColumns; columnIndex++) {
+                if (oTable.fnSettings().aoColumns[columnIndex].sTitle === columnHeader) {
+                    return columnIndex;
+                }
+            }
         }
 
         function findWorkflowsFromSelectedRows() {
@@ -379,10 +382,9 @@
             oTable = $j('#bucketEntryView').dataTable({
                 "bStateSave": false,
                         "oTableTools": ttExportDefines,
-                        "bProcessing": true, "bInfo": true,
-                        "bLengthChange": true,
+                        "bProcessing": true,
                         "bPaginate": true,
-                        "iDisplayLength": 20,
+                        "iDisplayLength": 25,
                         "sScrollX": "100%",
                         "aaSorting": [[9, 'asc'], [1, 'asc']],
                         "sAjaxSource": "${ctxpath}/workflow/bucketView.action?fetchSampleData=",

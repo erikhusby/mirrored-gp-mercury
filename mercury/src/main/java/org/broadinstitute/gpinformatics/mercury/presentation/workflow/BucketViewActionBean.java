@@ -207,6 +207,9 @@ public class BucketViewActionBean extends CoreActionBean {
     @DefaultHandler
     @HandlesEvent(VIEW_PAGE)
     public Resolution viewBucket() {
+        if (StringUtils.isNotBlank(selectedBucket)) {
+            possibleWorkflows.addAll(mapBucketToWorkflows.get(selectedBucket));
+        }
         return new ForwardResolution(VIEW_PAGE);
     }
 
@@ -226,8 +229,8 @@ public class BucketViewActionBean extends CoreActionBean {
         if (bucket != null) {
             collectiveEntries.addAll(bucket.getBucketEntries());
             collectiveEntries.addAll(bucket.getReworkEntries());
+            preFetchSampleData(collectiveEntries);
         }
-        preFetchSampleData(collectiveEntries);
         List<JSONObject> sampleData = new ArrayList<>(collectiveEntries.size());
 
         for (BucketEntry entry : collectiveEntries) {
