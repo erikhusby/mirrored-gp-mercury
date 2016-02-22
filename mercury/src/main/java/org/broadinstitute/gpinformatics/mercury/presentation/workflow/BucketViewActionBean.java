@@ -32,7 +32,6 @@ import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketCount;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
-import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry_;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
@@ -62,6 +61,8 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import static org.broadinstitute.gpinformatics.mercury.presentation.workflow.BucketEntryJsonFactory.toJson;
+
 @UrlBinding(value = "/workflow/bucketView.action")
 public class BucketViewActionBean extends CoreActionBean {
     private static final String VIEW_PAGE = "/workflow/bucket_view.jsp";
@@ -74,7 +75,6 @@ public class BucketViewActionBean extends CoreActionBean {
     private static final String CONFIRM_REMOVE_FROM_BUCKET_ACTION = "confirmRemoveFromBucket";
     private static final String CHANGE_PDO = "changePdo";
     private static final String FIND_PDO = "findPdo";
-    public static final String VIEW_BUCKET_ACTION = "viewBucket";
 
     @Inject
     JiraUserTokenInput jiraUserTokenInput;
@@ -156,11 +156,6 @@ public class BucketViewActionBean extends CoreActionBean {
         return createTextResolution(jiraUserTokenInput.getJsonString(getJiraUserQuery()));
     }
 
-    @DefaultHandler
-    public Resolution view() {
-        return new ForwardResolution(VIEW_PAGE);
-    }
-
     @ValidationMethod(on = CREATE_BATCH_ACTION)
     public void createBatchValidation() {
         if (StringUtils.isBlank(selectedWorkflow)) {
@@ -209,22 +204,10 @@ public class BucketViewActionBean extends CoreActionBean {
         }
     }
 
-    @HandlesEvent(VIEW_BUCKET_ACTION)
+    @DefaultHandler
+    @HandlesEvent(VIEW_PAGE)
     public Resolution viewBucket() {
-        if (selectedBucket != null) {
-            bucket = bucketDao.findByName(selectedBucket);
-            possibleWorkflows.addAll(mapBucketToWorkflows.get(selectedBucket));
-
-            // Gets the bucket entries that are in the selected bucket.
-            if (bucket != null) {
-                collectiveEntries.addAll(bucket.getBucketEntries());
-                collectiveEntries.addAll(bucket.getReworkEntries());
-                WorkflowBucketDef bucketDef = mapBucketToBucketDef.get(selectedBucket);
-                projectType = CreateFields.ProjectType.fromKeyPrefix(bucketDef.getBatchJiraProjectType());
-                preFetchSampleData(collectiveEntries);
-            }
-        }
-        return view();
+        return new ForwardResolution(VIEW_PAGE);
     }
 
     private void preFetchSampleData(Set<BucketEntry> collectiveEntries) {
@@ -236,18 +219,25 @@ public class BucketViewActionBean extends CoreActionBean {
     }
 
     public Resolution fetchSampleData() throws JSONException {
+        if (selectedBucket != null) {
+            bucket = bucketDao.findByName(selectedBucket);
+        }
         collectiveEntries.clear();
-        collectiveEntries
-                .addAll(bucketDao.findListByList(BucketEntry.class, BucketEntry_.bucketEntryId, bucketEntryIds));
+        if (bucket != null) {
+            collectiveEntries.addAll(bucket.getBucketEntries());
+            collectiveEntries.addAll(bucket.getReworkEntries());
+        }
         preFetchSampleData(collectiveEntries);
+        List<JSONObject> sampleData = new ArrayList<>(collectiveEntries.size());
 
-        Map<Long, JSONObject> sampleData=new HashMap<>(collectiveEntries.size());
         for (BucketEntry entry : collectiveEntries) {
-            JSONObject item = BucketEntryJsonFactory.toJson(entry, this);
-            sampleData.put(entry.getBucketEntryId(), item);
+            JSONObject item = toJson(entry, this);
+            sampleData.add(item);
         }
 
-        JSONObject tableData = new JSONObject(sampleData);
+        JSONObject tableData = new JSONObject();
+        tableData.put("aaData", sampleData);
+
         return createTextResolution(tableData.toString());
     }
 
@@ -301,18 +291,18 @@ public class BucketViewActionBean extends CoreActionBean {
                     jiraUserTokenInput.getTokenBusinessKeys());
         } catch (ValidationException e) {
             addGlobalValidationError(e.getMessage());
-            return view();
+            return viewBucket();
         }
         String batchName = batch.getJiraTicket().getTicketName();
         String link = getLink(batchName);
         addMessage(MessageFormat.format("Lab batch ''{0}'' has been created.", link));
 
         // go back to this page, with the same bucket selected.
-        return new RedirectResolution(getClass(), VIEW_BUCKET_ACTION).addParameter("selectedBucket", selectedBucket);
+        return new RedirectResolution(getClass(), VIEW_PAGE).addParameter("selectedBucket", selectedBucket);
     }
 
     public String getLink(String batchName) {
-        String jiraUrl = jiraUrl(batchName);;
+        String jiraUrl = jiraUrl(batchName);
         return String.format("<a target='JIRA' title='%s' href='%s' class='external'>%s</a>", batchName, jiraUrl,
                 batchName);
     }

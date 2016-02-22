@@ -50,8 +50,8 @@ table.table thead .sorting { background: url('/Mercury/images/arrow_off.gif') no
 table.table thead .sorting_asc { background: url('/Mercury/images/arrow_down.gif') no-repeat center right; }
 table.table thead .sorting_desc { background: url('/Mercury/images/arrow_up.gif') no-repeat center right; }
 
-table.table thead .sorting_asc_disabled { background: url('/Mercury/images/sort_asc_disabled.png') no-repeat center right; }
-table.table thead .sorting_desc_disabled { background: url('/Mercury/images/sort_desc_disabled.png') no-repeat center right; }
+table.table thead .sorting_asc_disabled { background: url('/Mercury/resources/scripts/DataTables-1.9.4/media/images/sort_asc_disabled.png') no-repeat center right; }
+table.table thead .sorting_desc_disabled { background: url('/Mercury/resources/scripts/DataTables-1.9.4/media/images/sort_desc_disabled.png') no-repeat center right; }
 
 /* highlight error */
 input.error, select.error, textarea.error { background-color: #F2DEDE; border: 1px #8b0000 solid; }

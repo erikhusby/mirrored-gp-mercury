@@ -2,6 +2,8 @@
 <%@ taglib uri="http://mercury.broadinstitute.org/Mercury/security" prefix="security" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
+<%@ page import="org.broadinstitute.gpinformatics.mercury.presentation.workflow.BucketEntryJsonFactory" %>
+<%@ page import="static org.broadinstitute.gpinformatics.mercury.presentation.workflow.BucketEntryJsonFactory.*" %>
 
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.BucketViewActionBean"/>
@@ -18,6 +20,11 @@
         }
 
         td.nowrap {
+            white-space: nowrap;
+        }
+
+        td.ellipsis-max {
+            max-width: 250px;
             white-space: nowrap;
         }
     </style>
@@ -135,7 +142,7 @@
             if (fieldSelector != undefined) {
                 $j(fieldSelector).addClass(alertType);
             }
-            messageBox.append('<button type="button" class="close" data-dismiss="alert">&times;</button>')
+            messageBox.append('<button type="button" class="close" data-dismiss="alert">&times;</button>');
             messageBox.append('<ul></ul>');
 
             $j('.page-body').before(messageBox);
@@ -284,7 +291,9 @@
 
                 // hide dataTables filter
                 $j('.dataTables_filter').closest('.row-fluid').hide();
-
+                if ($j(".prev, .next").not(".disabled").length>0) {
+                    $j('.dataTables_paginate').hide();
+                }
                 // hide pdo editable stuff
                 $j('#editable-text').hide();
                 $(".editable").removeClass("editable");
@@ -295,73 +304,8 @@
             });
         }
 
-        function split(inputArray, size) {
-            var array=inputArray;
-            var out = [];
-            for (arrayItem in array){
-                var subList=[];
-                while (subList.length<=size && array.length!=0) {
-                    subList.push(array.shift());
-                }
-                out.push(subList);
-            }
-            return out;
-        }
-
-        function loadSampleData() {
-            var bucketEntryIds = $j("#bucketEntryForm").find("tr[data-vessel-label]").map(function () {
-                return this.id;
-            }).get();
-
-            if (bucketEntryIds.length != 0) {
-                var splitEntries = split(bucketEntryIds, 100);
-                for (var i = 0; i <= splitEntries.length; i++) {
-                    var dataMap = {};
-                    var subList = splitEntries[i];
-                    dataMap["bucketEntryIds"] = subList;
-                    $j.ajax({
-                        url: "${ctxpath}/workflow/bucketView.action?fetchSampleData",
-                        dataType: 'json',
-                        data: dataMap,
-                        type: "POST",
-                        success: loadTableData
-                    });
-                }
-            }
-        }
-
-        function loadTableData(jsonData) {
-            for (var rowId in jsonData){
-                    if (rowId != undefined) {
-                        rowData = jsonData[rowId];
-                        var parentRow = $j("#" + rowId);
-                        for (var key in rowData) {
-                            var selector = "#" + rowId + "-"+ key;
-                            var cell = $j(selector);
-                            var columnIndex = $j(parentRow).children().index(cell);
-                            var rowIndex = $j(parentRow).parent().children().index($j(parentRow));
-
-                            if (rowIndex >= 0 && columnIndex >= 0) {
-                                oTable.fnUpdate(rowData[key], rowIndex, columnIndex, false, false);
-                            }
-                        }
-                }
-            }
-//            oTable.fnDraw();
-        }
-
-
         $j(document).ready(function () {
             initializeBarcodeEntryDialog();
-            setupBucketEvents();
-
-            // Hide the input form when there are no bucket entries.
-            if (isBucketEmpty()) {
-                $j("bucketEntryForm").hide();
-                $j(".actionControls").hide();
-            } else {
-                $j(".actionControls").show();
-            }
 
             var columnsEditable=false;
             <security:authorizeBlock roles="<%= roles(LabManager, PDM, PM, Developer) %>">
@@ -415,47 +359,100 @@
 
             }
 
-            oTable = $j('#bucketEntryView').dataTable({
-                "oTableTools":ttExportDefines,
-                "aaSorting": [[1,'asc'], [9,'asc']],
-                "aoColumns": [
-                    {"bSortable": false},                       /*checkbox*/
-                    {"bSortable": true, "sClass": "nowrap"},    /*vessel name*/
-                    {"bSortable": true, "sClass": "nowrap"},    /*sample name*/
-                    {"bSortable": true},                        /*material type*/
-                    {"bSortable": true},                        /*pdo*/
-                    {"bSortable": true},                        /*pdo name*/
-                    {"bSortable": true},                        /*pdo owner*/
-                    {"bSortable": true},                        /*batch name*/
-                    {"bSortable": true},                        /*workflow*/
-                    {"bSortable": true},                        /*product*/
-                    {"bSortable": true},                        /*add-ons*/
-                    {"bSortable": true, "sType": "date"},       /*receipt date*/
-                    {"bSortable": true, "sType": "date"},       /*created date*/
-                    {"bSortable": true, "sClass": "nowrap"},    /*entry type*/
-                    {"bSortable": true},                        /*rework reason*/
-                    {"bSortable": true},                        /*rework comment*/
-                    {"bSortable": true},                        /*rework user*/
-                    {"bSortable": true, "sType": "date"}        /*rework date*/
-                ],
-                "fnDrawCallback": editablePdo
-            });
-            includeAdvancedFilter(oTable, "#bucketEntryView");
-            if ($j(".bucket-checkbox").is("visible")) {
-                $j("bucketEntryView_filter").hide();
-            } else {
-                $j("bucketEntryView_filter").show();
+            function renderInDiv(data, type, row, width) {
+                if (width===undefined){
+                    width = "250px";
+                }
+                if (type === 'display') {
+                    return '<div style="max-width: '+width+';" class="ellipsis">' + data + '</div>';
+                }
+                return data;
             }
 
-            $j('.bucket-checkbox').enableCheckboxRangeSelection({
-                checkAllClass:'bucket-checkAll',
-                countDisplayClass:'bucket-checkedCount',
-                checkboxClass:'bucket-checkbox'});
+            function renderCheckbox(data, type, row) {
+                if (type === 'display') {
+                    return '<input name="selectedEntryIds" value="' + data + '" type="checkbox" class="bucket-checkbox">';
+                }
+                return data;
+            }
 
+            oTable = $j('#bucketEntryView').dataTable({
+                "bStateSave": false,
+                        "oTableTools": ttExportDefines,
+                        "bProcessing": true, "bInfo": true,
+                        "bLengthChange": true,
+                        "bPaginate": true,
+                        "iDisplayLength": 20,
+                        "sScrollX": "100%",
+                        "aaSorting": [[9, 'asc'], [1, 'asc']],
+                        "sAjaxSource": "${ctxpath}/workflow/bucketView.action?fetchSampleData=",
+                        "fnServerData": function (sSource, aoData, fnCallback, oSettings) {
+                            aoData.push({"name": "selectedBucket", "value": "${actionBean.selectedBucket}"});
+
+                            oSettings.jqXHR = $.ajax({
+                                "dataType": 'json',
+                                "type": "POST",
+                                "url": sSource,
+                                "data": aoData,
+                                "success": fnCallback
+                            })
+                        },
+                        "aoColumnDefs": [
+                            {"sDefaultContent": "", "bSortable": "true", "sClass": "nowrap", "aTargets": ["_all"]}
+                        ],
+                        "aoColumns": [
+                            { "mData": "<%= ENTRY_ID %>", "bSortable": false, "sClass": "bucket-control",
+                                "mRender": renderCheckbox},
+                            {"mData": "<%= LAB_VESSEL %>"},
+                            {"mData": "<%= SAMPLE_ID %>"},
+                            {"mData": "<%= MATERIAL_TYPE %>"},
+                            {"mData": "<%= PDO %>", "sClass": "editable"},
+                            {"mData": "<%= PDO_NAME %>", "mRender": renderInDiv},
+                            {"mData": "<%= PDO_OWNER %>"},
+                            {"mData": "<%= BATCH_NAME %>"},
+                            {"mData": "<%= WORKFLOW %>"},
+                            {"mData": "<%= PRODUCT %>", "mRender": renderInDiv},
+                            { "mData": "<%= PRODUCT_ADDONS %>", "mRender": function (data, type, row) {
+                                return renderInDiv(data, type, row, "100px") }},
+                            {"mData": "<%= RECEIPT_DATE %>", "sType": "date"},
+                            {"mData": "<%= CREATED_DATE %>", "sType": "date"},
+                            {"mData": "<%= ENTRY_TYPE %>"},
+                            {"mData": "<%= REWORK_REASON %>"},
+                            {"mData": "<%= REWORK_COMMENT %>"},
+                            {"mData": "<%= REWORK_USER %>", "mRender": renderInDiv},
+                            {"mData": "<%= REWORK_DATE %>", "sType": "date"}
+                        ],
+
+                        "fnDrawCallback": function () {
+                            editablePdo();
+                            setupBucketEvents();
+
+                            // Hide the input form when there are no bucket entries.
+                            if (isBucketEmpty()) {
+                                $j("bucketEntryForm").hide();
+                                $j(".actionControls").hide();
+                            } else {
+                                $j(".actionControls").show();
+                            }
+                            if ($j(".bucket-checkbox").is("visible")) {
+                                $j("bucketEntryView_filter").hide();
+                            } else {
+                                $j("bucketEntryView_filter").show();
+                            }
+
+                            $j('.bucket-checkbox').enableCheckboxRangeSelection({
+                                checkAllClass: 'bucket-checkAll',
+                                countDisplayClass: 'bucket-checkedCount', checkboxClass: 'bucket-checkbox'
+                            });
+                            showOrHideControls();
+
+                            $j("input[name='selectedEntryIds'], .bucket-checkAll").change(showOrHideControls);
+                        }
+                    }
+            );
+
+            includeAdvancedFilter(oTable, "#bucketEntryView");
             $j("#dueDate").datepicker();
-
-            showOrHideControls();
-            $j("input[name='selectedEntryIds'], .bucket-checkAll").change(showOrHideControls);
 
             $j("#lcsetText").change(function () {
                 var jiraTicketId = $j("#lcsetText").val();
@@ -522,7 +519,6 @@
                 <stripes:label for="bucketselect" name="Select Bucket" class="control-label"/>
                 <div class="controls">
                     <stripes:select id="bucketSelect" name="selectedBucket" onchange="submitBucket()">
-                        <stripes:param name="viewBucket"/>
                         <stripes:option value="">Select a Bucket</stripes:option>
                         <c:forEach items="${actionBean.mapBucketToBucketEntryCount.keySet()}" var="bucketName">
                             <c:set var="bucketCount" value="${actionBean.mapBucketToBucketEntryCount.get(bucketName)}"/>
@@ -641,71 +637,6 @@
                 <th>Rework Date</th>
             </tr>
             </thead>
-            <tbody>
-            <c:forEach items="${actionBean.collectiveEntries}" var="entry">
-                <tr id="${entry.bucketEntryId}" data-vessel-label="${entry.labVessel.label}">
-                    <td class="bucket-control">
-                        <stripes:checkbox class="bucket-checkbox" name="selectedEntryIds"
-                                          value="${entry.bucketEntryId}"/>
-                    </td>
-                    <td>
-                        <a href="${ctxpath}/search/vessel.action?vesselSearch=&searchKey=${entry.labVessel.label}">
-                                ${entry.labVessel.label}
-                        </a></td>
-
-                    <td>
-                        <c:forEach items="${entry.labVessel.mercurySamples}" var="mercurySample" varStatus="stat">
-                            <a href="${ctxpath}/search/sample.action?sampleSearch=&searchKey=${mercurySample.sampleKey}">
-                                    ${mercurySample.sampleKey}</a>
-                            <c:if test="${!stat.last}">&nbsp;</c:if>
-                        </c:forEach>
-                    </td>
-                    <td id="${entry.bucketEntryId}-MATERIAL_TYPE" class="ellipsis"></td>
-                    <td class="editable"><span class="ellipsis">${entry.productOrder.businessKey}</span><span
-                            style="display: none;"
-                            class="icon-pencil"></span>
-                    </td>
-                    <td>
-                        <div class="ellipsis" style="width: 300px">${entry.productOrder.title}</div>
-                    </td>
-                    <td class="ellipsis">
-                            ${actionBean.getUserFullName(entry.productOrder.createdBy)}
-                    </td>
-                    <td id="${entry.bucketEntryId}-BATCHES"></td>
-                    <td id="${entry.bucketEntryId}-WORKFLOW" class="ellipsis" style="max-width: 250px;"></td>
-                    <td>
-                    <div class="ellipsis" style="max-width: 250px;">${entry.productOrder.product.name}</div>
-                    </td>
-                    <td>
-                        <div class="ellipsis" style="max-width: 250px;">
-                                ${entry.productOrder.getAddOnList("<br/>")}
-                        </div>
-                    </td>
-                    <td id="${entry.bucketEntryId}-RECEIPT_DATE" class="ellipsis"></td>
-                    <td class="ellipsis">
-                        <fmt:formatDate value="${entry.createdDate}" pattern="MM/dd/yyyy HH:mm"/>
-                    </td>
-                    <td>
-                            ${entry.entryType.name}
-                    </td>
-                    <td>
-                            ${entry.reworkDetail.reason.reason}
-                    </td>
-                    <td>
-                            ${entry.reworkDetail.comment}
-                    </td>
-                    <td>
-                        <c:if test="${entry.reworkDetail != null}">
-                            ${actionBean.getUserFullName(entry.reworkDetail.addToReworkBucketEvent.eventOperator)}
-                        </c:if>
-                    </td>
-                    <td>
-                        <fmt:formatDate value="${entry.reworkDetail.addToReworkBucketEvent.eventDate}"
-                                        pattern="MM/dd/yyyy HH:mm:ss"/>
-                    </td>
-                </tr>
-            </c:forEach>
-            </tbody>
         </table>
     </stripes:form>
 
