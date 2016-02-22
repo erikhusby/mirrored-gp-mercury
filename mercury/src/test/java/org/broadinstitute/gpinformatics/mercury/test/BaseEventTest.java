@@ -73,6 +73,7 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.ArrayPlatingEntity
 import org.broadinstitute.gpinformatics.mercury.test.builders.CrspRiboPlatingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq4000FlowcellEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.IceEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.IceJaxbBuilder;
@@ -546,6 +547,26 @@ public class BaseEventTest {
                                                   productionFlowcellPath,
                                                   designationName, flowcellLanes).invoke();
     }
+
+    /**
+     * This method runs the entities through the HiSeq4000 process.
+     *
+     * @param denatureRack           The denature tube rack.
+     * @param barcodeSuffix          Uniquifies the generated vessel barcodes. NOT date if test quickly invokes twice.
+     * @param fctTicket
+     * @param designationName        Name of the designation created in Squid to support testing the systems running in
+ *                               parallel
+*    @return Returns the entity builder that contains the entities after this process has been invoked.
+     */
+    public HiSeq4000FlowcellEntityBuilder runHiSeq4000FlowcellProcess(TubeFormation denatureRack, String barcodeSuffix,
+                                                                      LabBatch fctTicket,
+                                                                      String designationName) {
+        String flowcellBarcode = "flowcell" + new Date().getTime() + "BBXX";
+        return new HiSeq4000FlowcellEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
+                denatureRack, flowcellBarcode, barcodeSuffix, fctTicket,
+                designationName, 8).invoke();
+    }
+
 
     public MiSeqReagentKitEntityBuilder runMiSeqReagentEntityBuilder(TubeFormation denatureRack, String barcodeSuffix,
                                                                      String reagentBlockBarcode) {
