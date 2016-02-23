@@ -1339,4 +1339,17 @@ public class LabEventFixupTest extends Arquillian {
         utx.commit();
     }
 
+    @Test(enabled = false)
+    public void fixupGplim4019() throws Exception {
+        // Deletes wrong striptube to flowcell event id=1201592.
+        userBean.loginOSUser();
+        utx.begin();
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, 1201592L);
+        System.out.println("Deleting " + labEvent.getLabEventType() + " " + labEvent.getLabEventId());
+        labEventDao.remove(labEvent);
+        labEventDao.persist(new FixupCommentary("GPLIM-4019 delete wrong flowcell association event"));
+        labEventDao.flush();
+        utx.commit();
+    }
+
 }
