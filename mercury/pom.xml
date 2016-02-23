@@ -2063,6 +2063,9 @@ nodePrinter.print(webapp)
                 <artifactId>maven-pmd-plugin</artifactId>
                 <configuration>
                     <targetJdk>1.7</targetJdk>
+<!--
+                    <includeTests>true</includeTests>
+-->
                 </configuration>
             </plugin>
 

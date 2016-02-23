@@ -23,7 +23,6 @@ import org.broadinstitute.gpinformatics.athena.control.dao.preference.Preference
 import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceEjb;
 import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
-import org.broadinstitute.gpinformatics.athena.entity.preference.SearchInstanceList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
@@ -340,26 +339,8 @@ public class ConfigurableSearchActionBean extends RackScanActionBean {
         PreferenceType type = PreferenceType.valueOf(searchValues[1]);
         String searchName = searchValues[2];
 
-        SearchInstanceList searchInstanceList = null;
-        if( preferenceMap.containsKey(type)){
-            try {
-                searchInstanceList =
-                        (SearchInstanceList) preferenceMap.get(type).getPreferenceDefinition().getDefinitionValue();
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        }
-        assert searchInstanceList != null;
-
-        for (SearchInstance searchInstanceLocal : searchInstanceList.getSearchInstances()) {
-            if (searchInstanceLocal.getName().equals(searchName)) {
-                searchInstance = searchInstanceLocal;
-                break;
-            }
-        }
+        searchInstance = SearchInstance.findSearchInstance(type, searchName, configurableSearchDef, preferenceMap);
         buildSearchContext();
-        searchInstance.establishRelationships(configurableSearchDef);
-        searchInstance.postLoad();
         return new ForwardResolution("/search/configurable_search.jsp");
     }
 
