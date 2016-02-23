@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.infrastructure.search.PaginationUtil;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstanceEjb;
+import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
@@ -20,6 +21,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -96,7 +98,7 @@ public class SearchResource {
 
             return new SearchResponse(headers, searchRows);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new ResourceException(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR, e);
         }
     }
 }

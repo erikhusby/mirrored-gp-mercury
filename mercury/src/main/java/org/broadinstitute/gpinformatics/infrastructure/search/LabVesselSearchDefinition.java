@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselLatestEv
 import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselMetadataPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselMetricPlugin;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -778,8 +779,11 @@ public class LabVesselSearchDefinition {
                 List<String> results = new ArrayList<>();
 
                 for (LabVessel vessel : labVessel.getContainers()) {
-                    for (RackOfTubes rackOfTubes : ((TubeFormation) vessel).getRacksOfTubes()) {
-                        results.add(rackOfTubes.getLabel());
+                    if (OrmUtil.proxySafeIsInstance(vessel, TubeFormation.class)) {
+                        TubeFormation tubeFormation = OrmUtil.proxySafeCast(vessel, TubeFormation.class);
+                        for (RackOfTubes rackOfTubes : tubeFormation.getRacksOfTubes()) {
+                            results.add(rackOfTubes.getLabel());
+                        }
                     }
                 }
                 return results;
