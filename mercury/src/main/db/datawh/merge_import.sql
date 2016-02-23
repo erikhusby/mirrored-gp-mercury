@@ -86,6 +86,13 @@ AS
                            FROM im_event_fact);
     DBMS_OUTPUT.PUT_LINE( 'Deleted ' || SQL%ROWCOUNT || ' event_fact rows' );
 
+    -- Wipe out any ancestry links in LIBRARY_LCSET_SAMPLE
+    DELETE FROM LIBRARY_LCSET_SAMPLE
+    WHERE ( library_event_id, library_type ) IN (SELECT ancestor_event_id, ancestor_library_type FROM im_library_ancestry
+                               UNION
+                               SELECT child_event_id, child_library_type FROM im_library_ancestry );
+    DBMS_OUTPUT.PUT_LINE( 'Deleted ' || SQL%ROWCOUNT || ' library_lcset_sample rows' );
+
     DELETE FROM product_order_sample
     WHERE product_order_sample_id IN (
       SELECT
@@ -532,53 +539,55 @@ AS
     FOR new IN (SELECT * FROM im_lab_metric WHERE is_delete = 'F') LOOP
       BEGIN
 
+        -- RPT-3131 - Delete any older metrics for same vessel
+        DELETE FROM lab_metric
+        WHERE vessel_barcode =  new.vessel_barcode
+          AND quant_type     =  new.quant_type
+          AND run_date       < new.run_date;
+
         UPDATE lab_metric
-        SET
-          sample_name = new.sample_name,
-          lab_vessel_id = new.lab_vessel_id,
-          product_order_id = new.product_order_id,
-          batch_name = new.batch_name,
-          quant_type = new.quant_type,
-          quant_units = new.quant_units,
-          quant_value = new.quant_value,
-          run_name = new.run_name,
-          run_date = new.run_date,
-          vessel_position = new.vessel_position,
-          etl_date = new.etl_date
-        WHERE lab_metric_id = new.lab_metric_id;
+           SET quant_type      = new.quant_type,
+               quant_units = new.quant_units,
+               quant_value = new.quant_value,
+               run_name = new.run_name,
+               run_date = new.run_date,
+               lab_vessel_id   = new.lab_vessel_id,
+               vessel_barcode  = new.vessel_barcode,
+               rack_position   = new.rack_position,
+               decision        = new.decision,
+               decision_date   = new.decision_date,
+               decider         = new.decider,
+               override_reason = new.override_reason,
+               etl_date = new.etl_date
+         WHERE lab_metric_id = new.lab_metric_id;
 
         V_UPD_COUNT := V_UPD_COUNT + SQL%ROWCOUNT;
 
-        INSERT INTO lab_metric (
-          lab_metric_id,
-          sample_name,
-          lab_vessel_id,
-          product_order_id,
-          batch_name,
-          quant_type,
-          quant_units,
-          quant_value,
-          run_name,
-          run_date,
-          vessel_position,
-          etl_date
-        )
-          SELECT
-            new.lab_metric_id,
-            new.sample_name,
-            new.lab_vessel_id,
-            new.product_order_id,
-            new.batch_name,
-            new.quant_type,
-            new.quant_units,
-            new.quant_value,
-            new.run_name,
-            new.run_date,
-            new.vessel_position,
-            new.etl_date
-          FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM lab_metric WHERE lab_metric_id = new.lab_metric_id);
+        IF SQL%ROWCOUNT = 0 THEN
+          INSERT INTO lab_metric (
+                  lab_metric_id,
+                  quant_type, quant_units, quant_value,
+                  run_name, run_date,
+                  lab_vessel_id, vessel_barcode, rack_position,
+                  decision, decision_date, decider,
+                  override_reason, etl_date )
+           SELECT new.lab_metric_id,
+                  new.quant_type, new.quant_units, new.quant_value,
+                  new.run_name, new.run_date,
+                  new.lab_vessel_id, new.vessel_barcode, new.rack_position,
+                  new.decision, new.decision_date, new.decider,
+                  new.override_reason, new.etl_date
+             FROM dual
+            WHERE NOT EXISTS (
+                 SELECT 'Y'
+                   FROM lab_metric
+                  WHERE vessel_barcode =  new.vessel_barcode
+                    AND quant_type     =  new.quant_type
+                    AND run_date       > new.run_date );
 
-        V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;
+          V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;
+
+        END IF;
 
         EXCEPTION WHEN OTHERS THEN
         errmsg := SQLERRM;
@@ -1385,11 +1394,13 @@ AS
 
   PROCEDURE MERGE_ANCESTRY
   IS
-    V_INS_COUNT PLS_INTEGER;
-    V_UPD_COUNT PLS_INTEGER;
+    V_ANCEST_INS_COUNT PLS_INTEGER;
+    V_SAMP_INS_COUNT PLS_INTEGER;
+    -- Nothing ever updated
+    V_UPD_COUNT CONSTANT PLS_INTEGER := 0;
   BEGIN
-    V_INS_COUNT := 0;
-    V_UPD_COUNT := 0;
+    V_ANCEST_INS_COUNT := 0;
+    V_SAMP_INS_COUNT := 0;
     FOR new IN (SELECT *
                   FROM im_library_ancestry
                  WHERE is_delete = 'F') LOOP
@@ -1415,7 +1426,38 @@ AS
           new.child_library_creation,
           new.etl_date
         );
-        V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;
+        V_ANCEST_INS_COUNT := V_ANCEST_INS_COUNT + SQL%ROWCOUNT;
+
+        -- Rows for library child
+        INSERT INTO LIBRARY_LCSET_SAMPLE (
+          LIBRARY_LABEL, LIBRARY_ID,
+          LIBRARY_TYPE, LIBRARY_EVENT_ID )
+        SELECT LV.LABEL, new.child_library_id,
+               new.child_library_type, new.child_event_id
+          FROM LAB_VESSEL LV
+             , DUAL
+         WHERE LV.LAB_VESSEL_ID = new.child_library_id
+           AND NOT EXISTS ( SELECT LIBRARY_ID
+                              FROM LIBRARY_LCSET_SAMPLE
+                             WHERE LIBRARY_ID = new.child_library_id
+                               AND LIBRARY_EVENT_ID = new.child_event_id );
+        V_SAMP_INS_COUNT := V_SAMP_INS_COUNT + SQL%ROWCOUNT;
+
+        -- Rows for library ancestor
+        INSERT INTO LIBRARY_LCSET_SAMPLE (
+          LIBRARY_LABEL, LIBRARY_ID,
+          LIBRARY_TYPE, LIBRARY_EVENT_ID )
+          SELECT LV.LABEL, new.ancestor_library_id,
+            new.ancestor_library_type, new.ancestor_event_id
+          FROM LAB_VESSEL LV
+            , DUAL
+          WHERE LV.LAB_VESSEL_ID = new.ancestor_library_id
+                AND NOT EXISTS ( SELECT LIBRARY_ID
+                                 FROM LIBRARY_LCSET_SAMPLE
+                                 WHERE LIBRARY_ID = new.ancestor_library_id
+                                       AND LIBRARY_EVENT_ID = new.ancestor_event_id );
+        V_SAMP_INS_COUNT := V_SAMP_INS_COUNT + SQL%ROWCOUNT;
+
       EXCEPTION WHEN OTHERS THEN
         errmsg := SQLERRM;
         DBMS_OUTPUT.PUT_LINE(
@@ -1423,8 +1465,62 @@ AS
         CONTINUE;
       END;
     END LOOP;
-    SHOW_ETL_STATS(  V_UPD_COUNT, V_INS_COUNT, 'library_ancestry' );
+    SHOW_ETL_STATS(  V_UPD_COUNT, V_ANCEST_INS_COUNT, 'library_ancestry' );
+    SHOW_ETL_STATS(  V_UPD_COUNT, V_SAMP_INS_COUNT, 'library_lcset_sample (from library ancestry)' );
   END MERGE_ANCESTRY;
+
+  /*
+   * First priority is to link vessel barcodes (libraries) in the library ancestry table to samples in event_fact table
+   * Second priority is to link vessel barcodes (no library type) to event_fact table and lab_metric
+   */
+  PROCEDURE MERGE_LIBRARY_SAMPLE
+  IS
+    V_LIBRARY_INS_COUNT PLS_INTEGER;
+    -- Nothing ever updated
+    V_UPD_COUNT CONSTANT PLS_INTEGER := 0;
+    BEGIN
+      V_LIBRARY_INS_COUNT := 0;
+      FOR new IN (SELECT child_library_id AS library_id,
+                         max(child_event_id) AS event_id,
+                         child_library_type as library_type,
+                         etl_date,
+                         min(line_number) as line_number
+                    FROM im_library_ancestry
+                   WHERE is_delete = 'F'
+                  GROUP BY child_library_id, child_library_type, etl_date
+                  UNION
+                  SELECT ancestor_library_id,
+                         max(ancestor_event_id),
+                         ancestor_library_type,
+                         etl_date,
+                         min(line_number) as line_number
+                    FROM im_library_ancestry
+                   WHERE is_delete = 'F'
+                  GROUP BY ancestor_library_id, ancestor_library_type, etl_date
+          ) LOOP
+        BEGIN
+          -- Rows for libraries - we've already deleted any rows related to libraries
+
+          INSERT INTO LIBRARY_LCSET_SAMPLE (
+            LIBRARY_LABEL, LIBRARY_ID,
+            LIBRARY_TYPE, LIBRARY_EVENT_ID )
+            SELECT LV.LABEL, new.library_id,
+              new.library_type, new.event_id
+            FROM LAB_VESSEL LV
+              , DUAL
+            WHERE LV.LAB_VESSEL_ID = new.library_id;
+
+          V_LIBRARY_INS_COUNT := V_LIBRARY_INS_COUNT + SQL%ROWCOUNT;
+
+          EXCEPTION WHEN OTHERS THEN
+          errmsg := SQLERRM;
+          DBMS_OUTPUT.PUT_LINE(
+              TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_library_ancestry.dat line ' || new.line_number || '  ' || errmsg);
+          CONTINUE;
+        END;
+      END LOOP;
+      SHOW_ETL_STATS(  V_UPD_COUNT, V_LIBRARY_INS_COUNT, 'library_lcset_sample (from library ancestry)' );
+    END MERGE_LIBRARY_SAMPLE;
 
   PROCEDURE MERGE_PRODUCT_ORDER_STATUS
   IS
@@ -1862,6 +1958,7 @@ AS
     MERGE_PDO_SAMPLE_STATUS();
     MERGE_EVENT_FACT();
     MERGE_ANCESTRY();
+    MERGE_LIBRARY_SAMPLE();
 
     -- Level 3 (depends on level 2 tables)
     MERGE_PDO_SAMPLE_RISK();

@@ -525,11 +525,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
         }
 
         Collection<LabVessel> vessels;
-        if( entity.getLabEventType().getPlasticToValidate() == LabEventType.PlasticToValidate.TARGET ) {
-            vessels = entity.getTargetLabVessels();
-        } else {
-            vessels = entity.getSourceLabVessels();
-        }
+        vessels = entity.getTargetLabVessels();
 
         if (vessels.isEmpty() && entity.getInPlaceLabVessel() != null) {
             vessels.add(entity.getInPlaceLabVessel());
