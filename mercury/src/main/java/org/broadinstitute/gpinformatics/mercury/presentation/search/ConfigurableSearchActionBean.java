@@ -37,6 +37,7 @@ import org.broadinstitute.gpinformatics.infrastructure.search.PaginationUtil;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstanceEjb;
+import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.BSPLookupException;
 import org.broadinstitute.gpinformatics.mercury.presentation.vessel.RackScanActionBean;
 import org.json.JSONArray;
@@ -452,9 +453,9 @@ public class ConfigurableSearchActionBean extends RackScanActionBean {
                 configurableResultList = firstPageResults.getResultList();
                 getContext().getRequest().getSession().setAttribute(PAGINATION_PREFIX + sessionKey,
                         firstPageResults.getPagination());
-            } catch (IllegalArgumentException e) {
-                log.error(e.getMessage(), e);
-                addGlobalValidationError(e.getMessage());
+            } catch (InformaticsServiceException ve) {
+                log.error(ve.getMessage(), ve);
+                addGlobalValidationError(ve.getMessage());
             } catch (BSPLookupException bspse) {
                 handleRemoteServiceFailure(bspse);
             }
