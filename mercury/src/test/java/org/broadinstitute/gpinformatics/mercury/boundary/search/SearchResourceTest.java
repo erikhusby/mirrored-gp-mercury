@@ -15,7 +15,9 @@ import org.testng.annotations.Test;
 import javax.ws.rs.core.MediaType;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
@@ -33,13 +35,41 @@ public class SearchResourceTest extends RestServiceContainerTest {
     @RunAsClient
     @Test(dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     public void testLcsetSearch(@ArquillianResource URL baseUrl) throws MalformedURLException {
-        SearchRequest searchRequest = new SearchRequest("LabVessel", "LCSET Data", Collections.singletonList(
-                new SearchValue("LCSET", Collections.singletonList("LCSET-8333"))));
+        SearchRequestBean searchRequestBean = new SearchRequestBean("LabVessel", "LCSET Data", Collections.singletonList(
+                new SearchValueBean("LCSET", Collections.singletonList("LCSET-8333"))));
         WebResource resource = makeWebResource(baseUrl, "run");
-        SearchResponse response = resource.type(MediaType.APPLICATION_XML_TYPE)
-                .accept(MediaType.APPLICATION_XML_TYPE).entity(searchRequest)
-                .post(SearchResponse.class);
-        Assert.assertEquals(response.getSearchRows().size(), 95);
+        SearchResponseBean response = resource.type(MediaType.APPLICATION_XML_TYPE)
+                .accept(MediaType.APPLICATION_XML_TYPE).entity(searchRequestBean)
+                .post(SearchResponseBean.class);
+        Assert.assertEquals(response.getSearchRowBeans().size(), 95);
+    }
+
+    // todo jmt enable and change PDO after there are some real transfers.
+    @RunAsClient
+    @Test(dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, enabled = false)
+    public void testEmerge(@ArquillianResource URL baseUrl) throws MalformedURLException {
+        SearchRequestBean aliquotsSearchRequestBean = new SearchRequestBean("LabVessel", "eMERGE Aliqouts Web Service",
+                Collections.singletonList(new SearchValueBean("PDO", Collections.singletonList("PDO-8554"))));
+        WebResource resource = makeWebResource(baseUrl, "run");
+        SearchResponseBean aliquotsResponse = resource.type(MediaType.APPLICATION_XML_TYPE).
+                accept(MediaType.APPLICATION_XML_TYPE).entity(aliquotsSearchRequestBean).
+                post(SearchResponseBean.class);
+
+        Assert.assertEquals(aliquotsResponse.getSearchRowBeans().size(), 16);
+        Assert.assertEquals(aliquotsResponse.getHeaders().size(), 3);
+        Assert.assertEquals(aliquotsResponse.getHeaders().get(0), "Root Sample ID");
+        Assert.assertEquals(aliquotsResponse.getHeaders().get(1), "EmergeVolumeTransfer SM-ID");
+        List<String> aliquotIds = new ArrayList<>();
+        for (SearchRowBean searchRowBean : aliquotsResponse.getSearchRowBeans()) {
+            aliquotIds.add(searchRowBean.getFields().get(1));
+        }
+
+        SearchRequestBean manifestSearchRequestBean = new SearchRequestBean("LabVessel", "eMERGE Manifest Web Service",
+                Collections.singletonList(new SearchValueBean("Mercury Sample ID", aliquotIds)));
+        SearchResponseBean manifestResponse = resource.type(MediaType.APPLICATION_XML_TYPE).
+                accept(MediaType.APPLICATION_XML_TYPE).entity(manifestSearchRequestBean).
+                post(SearchResponseBean.class);
+        Assert.assertEquals(manifestResponse.getSearchRowBeans().size(), 16);
     }
 
     @Override

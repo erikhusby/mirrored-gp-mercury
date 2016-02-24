@@ -1,25 +1,29 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.search;
 
+import org.broadinstitute.gpinformatics.mercury.boundary.Namespaces;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlType;
 import java.util.List;
 
 /**
  * A term and value in a Configurable Search.
  */
-@XmlRootElement
+@XmlRootElement(namespace = Namespaces.SEARCH)
+@XmlType(namespace = Namespaces.SEARCH)
 @XmlAccessorType(XmlAccessType.FIELD)
-public class SearchValue {
+public class SearchValueBean {
     private String termName;
 //    private SearchInstance.Operator operator;
     private List<String> values;
 
     /** For JAXB. */
-    public SearchValue() {
+    public SearchValueBean() {
     }
 
-    public SearchValue(String termName, List<String> values) {
+    public SearchValueBean(String termName, List<String> values) {
         this.termName = termName;
         this.values = values;
     }

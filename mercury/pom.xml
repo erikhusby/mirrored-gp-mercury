@@ -447,9 +447,9 @@
                                         </include>
                                     </includes>
                                     <excludes>
-                                        <exclude>
-                                            org/broadinstitute/gpinformatics/mercury/boundary/vessel/SampleReceiptMessageBean.java
-                                        </exclude>
+                                        <exclude>org/broadinstitute/gpinformatics/mercury/boundary/vessel/SampleReceiptMessageBean.java</exclude>
+                                        <exclude>org/broadinstitute/gpinformatics/mercury/boundary/vessel/RegisterTubeBean.java</exclude>
+                                        <exclude>org/broadinstitute/gpinformatics/mercury/boundary/vessel/RegisterTubesBean.java</exclude>
                                     </excludes>
                                     <transformSchemas>
                                         <transformSchema>
@@ -458,6 +458,26 @@
                                             <toPrefix>labevent</toPrefix>
                                             -->
                                             <toFile>vessel.xsd</toFile>
+                                        </transformSchema>
+                                    </transformSchemas>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>SearchSchemaGen</id>
+                                <goals>
+                                    <goal>schemagen</goal>
+                                </goals>
+                                <configuration>
+                                    <includes>
+                                        <include>org/broadinstitute/gpinformatics/mercury/boundary/Namespaces.java
+                                        </include>
+                                        <include>org/broadinstitute/gpinformatics/mercury/boundary/search/*Bean.java
+                                        </include>
+                                    </includes>
+                                    <transformSchemas>
+                                        <transformSchema>
+                                            <uri>http://broadinstitute.org/gpinformatics/mercury/search</uri>
+                                            <toFile>search.xsd</toFile>
                                         </transformSchema>
                                     </transformSchemas>
                                 </configuration>
