@@ -807,8 +807,6 @@ public class LabVesselSearchDefinition {
         });
         searchTerms.add(searchTerm);
 
-        // todo jmt initial pico
-
         return searchTerms;
     }
 
