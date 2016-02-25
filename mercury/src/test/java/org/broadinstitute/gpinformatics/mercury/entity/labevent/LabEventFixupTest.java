@@ -1352,4 +1352,33 @@ public class LabEventFixupTest extends Arquillian {
         utx.commit();
     }
 
+    /**
+     * Change source in PicoMicrofluorTransfers, a white plate was used twice.
+     */
+    @Test(enabled = false)
+    public void fixupSupport1531() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+        // Currently 000009496969 -> 000002543920
+        // Change to 000009497369 -> 000002543920
+        long[] eventIds = {1202826L, 1202827L, 1202828L};
+        StaticPlate staticPlate = staticPlateDao.findByBarcode("000009497369");
+        for (long eventId : eventIds) {
+            LabEvent labEvent = labEventDao.findById(LabEvent.class, eventId);
+            Assert.assertEquals(labEvent.getLabEventType(), LabEventType.PICO_MICROFLUOR_TRANSFER);
+
+            SectionTransfer sectionTransfer = labEvent.getSectionTransfers().iterator().next();
+            String sourceLabel = sectionTransfer.getSourceVesselContainer().getEmbedder().getLabel();
+            Assert.assertEquals(sourceLabel, "000009496969");
+            Assert.assertEquals(sectionTransfer.getTargetVesselContainer().getEmbedder().getLabel(), "000002543920");
+
+            sectionTransfer.setSourceVesselContainer(staticPlate.getContainerRole());
+            System.out.println("In " + labEvent.getLabEventId() + ", changing " + sourceLabel + " to " +
+                    staticPlate.getLabel());
+        }
+        labEventDao.persist(new FixupCommentary("SUPPORT-1531 change source of PicoMicrofluorTransfer"));
+        labEventDao.flush();
+        utx.commit();
+    }
+
 }
