@@ -524,8 +524,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
             return dtos;
         }
 
-        Collection<LabVessel> vessels;
-        vessels = entity.getTargetLabVessels();
+        Collection<LabVessel> vessels = entity.getTargetLabVessels();
 
         if (vessels.isEmpty() && entity.getInPlaceLabVessel() != null) {
             vessels.add(entity.getInPlaceLabVessel());
