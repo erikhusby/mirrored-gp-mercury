@@ -15,6 +15,12 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
+import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
+import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableListFactory;
+import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
+import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.sample.QuantificationEJB;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabMetricDao;
@@ -31,11 +37,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @UrlBinding(value = "/view/uploadQuants.action")
 public class UploadQuantsActionBean extends CoreActionBean {
+
+    public static final String ENTITY_NAME = "LabMetric";
 
     public enum QuantFormat {
         VARIOSKAN("Varioskan"),
@@ -65,6 +75,10 @@ public class UploadQuantsActionBean extends CoreActionBean {
     private LabMetricRunDao labMetricRunDao;
     @Inject
     private LabMetricDao labMetricDao;
+    @Inject
+    private ConfigurableListFactory configurableListFactory;
+    @Inject
+    private BSPUserList bspUserList;
 
     @Validate(required = true, on = UPLOAD_QUANT)
     private FileBean quantSpreadsheet;
@@ -73,19 +87,22 @@ public class UploadQuantsActionBean extends CoreActionBean {
     private QuantFormat quantFormat;
     private LabMetricRun labMetricRun;
     private Long labMetricRunId;
-    private List<Long> selectedMetrics = new ArrayList<>();
+    private List<Long> selectedConditionalIds = new ArrayList<>();
     private String overrideReason;
     private LabMetricDecision.Decision overrideDecision;
     private String tubeFormationLabel;
     /** acceptRePico indicates the user wishes to process the new pico regardless of existing quants. */
     private boolean acceptRePico;
-    private final int STRING_LIMIT = 255;
+    private ConfigurableList.ResultList resultList;
+
+    private static final int STRING_LIMIT = 255;
 
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
     public Resolution view() {
         if (labMetricRunId != null) {
             labMetricRun = labMetricRunDao.findById(LabMetricRun.class, labMetricRunId);
+            buildColumns();
         }
         return new ForwardResolution(VIEW_PAGE);
     }
@@ -98,12 +115,15 @@ public class UploadQuantsActionBean extends CoreActionBean {
         case CALIPER:
             break;
         case GENERIC:
-            quantEJB.storeQuants(labMetrics);
+            MessageCollection messageCollection = new MessageCollection();
+            quantEJB.storeQuants(labMetrics, quantType, messageCollection);
+            addMessages(messageCollection);
             break;
         }
         if (getValidationErrors().isEmpty()) {
             addMessage("Successfully uploaded quant.");
         }
+        buildColumns();
         return new ForwardResolution(VIEW_PAGE);
     }
 
@@ -160,7 +180,7 @@ public class UploadQuantsActionBean extends CoreActionBean {
 
             try {
                 quantSpreadsheet.delete();
-            } catch (IOException ex) {
+            } catch (IOException ignored) {
                 // If cannot delete, oh well.
             }
         }
@@ -168,7 +188,7 @@ public class UploadQuantsActionBean extends CoreActionBean {
 
     @HandlesEvent(SAVE_METRICS)
     public Resolution saveMetrics() {
-        if (selectedMetrics.isEmpty()) {
+        if (selectedConditionalIds.isEmpty()) {
             addGlobalValidationError("Check at least one box.");
         } else if (overrideReason == null || overrideReason.trim().isEmpty()) {
             addValidationError("overrideReason", "Override reason is required");
@@ -176,7 +196,7 @@ public class UploadQuantsActionBean extends CoreActionBean {
             addValidationError("overrideReason", "Override reason is too long. Limit is 255 characters.");
         } else {
             List<LabMetric> selectedLabMetrics = labMetricDao.findListByList(LabMetric.class, LabMetric_.labMetricId,
-                    selectedMetrics);
+                    selectedConditionalIds);
             Date now = new Date();
             for (LabMetric selectedLabMetric : selectedLabMetrics) {
                 LabMetricDecision labMetricDecision = selectedLabMetric.getLabMetricDecision();
@@ -193,7 +213,41 @@ public class UploadQuantsActionBean extends CoreActionBean {
             addMessage("Successfully saved metrics.");
         }
         labMetricRun = labMetricRunDao.findById(LabMetricRun.class, labMetricRunId);
+        buildColumns();
         return new ForwardResolution(VIEW_PAGE);
+    }
+
+    private void buildColumns() {
+        if (labMetricRun == null) {
+            return;
+        }
+        List<LabMetric> labMetricList = new ArrayList<>();
+        Map<String, LabMetric> mapIdToMetric = new HashMap<>();
+        for (LabMetric labMetric : labMetricRun.getLabMetrics()) {
+            if (labMetric.getLabMetricDecision() != null) {
+                // todo jmt linked set?
+                labMetricList.add(labMetric);
+                mapIdToMetric.put(labMetric.getLabMetricId().toString(), labMetric);
+            }
+        }
+
+        SearchContext searchContext = new SearchContext();
+        searchContext.setBspUserList(bspUserList);
+        ConfigurableList configurableList = configurableListFactory.create(labMetricList, "Default",
+                ColumnEntity.LAB_METRIC, searchContext,
+                SearchDefinitionFactory.getForEntity(ColumnEntity.LAB_METRIC.getEntityName()));
+
+        resultList = configurableList.getResultList();
+        resultList.setConditionalCheckboxHeader("Override");
+        for (ConfigurableList.ResultRow resultRow : resultList.getResultRows()) {
+            LabMetric labMetric = mapIdToMetric.get(resultRow.getResultId());
+            if (labMetric.getLabMetricDecision().isNeedsReview()) {
+                resultRow.setCssStyles("warning");
+            }
+            if (labMetric.getLabMetricDecision().getDecision().isEditable()) {
+                resultRow.setConditionalCheckbox(true);
+            }
+        }
     }
 
     public FileBean getQuantSpreadsheet() {
@@ -236,12 +290,12 @@ public class UploadQuantsActionBean extends CoreActionBean {
         this.labMetricRunId = labMetricRunId;
     }
 
-    public List<Long> getSelectedMetrics() {
-        return selectedMetrics;
+    public List<Long> getSelectedConditionalIds() {
+        return selectedConditionalIds;
     }
 
-    public void setSelectedMetrics(List<Long> selectedMetrics) {
-        this.selectedMetrics = selectedMetrics;
+    public void setSelectedConditionalIds(List<Long> selectedConditionalIds) {
+        this.selectedConditionalIds = selectedConditionalIds;
     }
 
     public String getOverrideReason() {
@@ -283,4 +337,25 @@ public class UploadQuantsActionBean extends CoreActionBean {
     public void setAcceptRePico(boolean acceptRePico) {
         this.acceptRePico = acceptRePico;
     }
+
+    public ConfigurableList.ResultList getResultList() {
+        return resultList;
+    }
+
+    public String getEntityName() {
+        return ENTITY_NAME;
+    }
+
+    public String getSessionKey() {
+        return null;
+    }
+
+    public String getColumnSetName() {
+        return null;
+    }
+
+    public String getDownloadColumnSets() {
+        return null;
+    }
+
 }

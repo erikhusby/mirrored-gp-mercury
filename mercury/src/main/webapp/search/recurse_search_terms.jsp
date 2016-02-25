@@ -1,4 +1,4 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java" import="org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 <%-- This JSP fragment recurses over a user-defined search instance, rendering form fields.
  The field names will be set by JavaScript in configurable_search.jsp, when the user submits the form --%>
@@ -7,7 +7,7 @@
 <%--@elvariable id="actionBean" type="org.broadinstitute.gpinformatics.mercury.presentation.search.ConfigurableSearchActionBean"--%>
 <c:forEach items="${searchValues}" var="searchValue" varStatus="varSatatus">
     <c:set var="uniqueId" value="${searchValue.uniqueId}"/>
-    <div class="searchterm" id="${uniqueId}">
+    <div class="searchterm" id="${uniqueId}"<c:if test="${searchValue.searchTerm.isRackScanSupported()}"> rackScanSupported="true"</c:if>>
         <%-- Link to remove term--%>
         <c:choose>
             <c:when test="${not actionBean.readOnly and not searchValue.searchTerm.required}">
@@ -47,10 +47,14 @@
             <c:when test="${not empty searchValue.searchTerm.sqlRestriction}">
                 <%-- Don't display operator for SQL search terms--%>
             </c:when>
-            <c:when test="${searchValue.dataType == ColumnValueType.BOOLEAN}">
+            <c:when test="${searchValue.dataType == 'BOOLEAN'}">
                 <%-- Only equals is meaningful for booleans --%>
                 <span class="termoperatortext">=</span>
                 <input type="hidden" name="tbd" value="EQUALS" class="termoperator"/>
+            </c:when>
+            <c:when test="${searchValue.dataType == 'NOT_NULL'}">
+                <span class="termoperatortext">&nbsp;</span>
+                <%-- Invisible placeholder --%><input type="hidden" name="tbd" value="NOT_NULL" class="termoperator"/>
             </c:when>
             <c:when test="${not empty searchValue.searchTerm.dependentSearchTerms}">
                 <%-- Nodes with children only allow the equals operator --%>
@@ -70,7 +74,7 @@
                         =
                     </option>
                     <%-- IN (because of implied midnight) and LIKE are not meaningful for dates --%>
-                    <c:if test="${ searchValue.dataType ne ColumnValueType.DATE and searchValue.dataType ne ColumnValueType.DATE_TIME}">
+                    <c:if test="${ searchValue.dataType ne 'DATE' and searchValue.dataType ne 'DATE_TIME'}">
                         <option value="IN" ${not empty searchValue.operator && searchValue.operator.name == 'IN' ? 'selected' : ''}>
                             from list
                         </option>
@@ -97,6 +101,9 @@
         <c:choose>
             <c:when test="${not empty searchValue.searchTerm.sqlRestriction}">
                 <%-- Don't display value for SQL search terms --%>
+            </c:when>
+            <c:when test="${searchValue.dataType == 'NOT_NULL'}">
+                <%-- Supply a non-null value (ignored) --%><input type="hidden" name="tbd" value="N/A" id="${uniqueId}_value" class="termvalue"/>
             </c:when>
             <c:when test="${not empty searchValue.children and (not searchValue.constrainedValuesListDisplayed or
                 (actionBean.readOnly and searchValue.valueSetWhenLoaded))}">
@@ -134,6 +141,7 @@
                         <!-- IN = list of text values -->
                         <textarea rows="4" cols="10" class="termvalue"><c:forEach items="${searchValue.values}"
                                                                                   var="value">${value}<%= '\n' %></c:forEach></textarea>
+                        &nbsp;<c:if test="${searchValue.searchTerm.isRackScanSupported()}"><input id="rackScanBtn" name="rackScanBtn" value="Rack Scan" class="btn btn-primary" onclick="startRackScan(this);" type="button"><input type="hidden" id="rackScanData_${uniqueId}" name="rackScanData" value='${searchValue.rackScanData}' class="rackScanData"/></c:if>
                     </c:when>
                     <c:when test="${not empty searchValue.operator && searchValue.operator.name == 'BETWEEN'}">
                         <!-- BETWEEN = Pair of text boxes. Add invented attributes, between1 and between2,

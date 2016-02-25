@@ -42,11 +42,11 @@ umask 0111
 DB_PARAMS_FILE="$1"
 
 if [ -z "${DB_PARAMS_FILE}" ]; then
-    echo "Missing db params filename parameter" | tee /dev/stderr
+    echo "Missing db params filename parameter" >&2
     exit 1
 fi
 if [ ! -f ${DB_PARAMS_FILE} ]; then
-    echo "Cannot find ${DB_PARAMS_FILE}" | tee /dev/stderr
+    echo "Cannot find ${DB_PARAMS_FILE}" >&2
     exit 1
 fi
 USERNAME=`grep -Ei '^username:' ${DB_PARAMS_FILE} | sed -e 's/^username://' | tr -d ' '`
@@ -71,33 +71,33 @@ LOCKFILE=${NEW_DIR}/.lockfile
 for fsobj in $ROOT_DIR $NEW_DIR $LOG_DIR $ERROR_DIR $DONE_DIR $CONTROL_DIR
 do
   if [ ! -e $fsobj ]; then
-      echo "Cannot find $fsobj" | tee /dev/stderr
+      echo "Cannot find $fsobj" >&2
       exit 1
   fi
 done
 
 if [ -z "${USERNAME}" ]; then
-    echo "No username in ${DB_PARAMS_FILE}" | tee /dev/stderr
+    echo "No username in ${DB_PARAMS_FILE}" >&2
     exit 1
 fi
 if [ -z "${PASSWORD}" ]; then
-    echo "No password in ${DB_PARAMS_FILE}" | tee /dev/stderr
+    echo "No password in ${DB_PARAMS_FILE}" >&2
     exit 1
 fi
 if [ -z "${DB_SERVER}" ]; then
-    echo "No servername in ${DB_PARAMS_FILE}" | tee /dev/stderr
+    echo "No servername in ${DB_PARAMS_FILE}" >&2
     exit 1
 fi
 if [ -z "${DB_PORT}" ]; then
-    echo "No port in ${DB_PARAMS_FILE}" | tee /dev/stderr
+    echo "No port in ${DB_PARAMS_FILE}" >&2
     exit 1
 fi
 if [ -z "${DB_SID}" ]; then
-    echo "No sid in ${DB_PARAMS_FILE}" | tee /dev/stderr
+    echo "No sid in ${DB_PARAMS_FILE}" >&2
     exit 1
 fi
 if [ -z "${ROOT_DIR}" ]; then
-    echo "No rootDir in ${DB_PARAMS_FILE}" | tee /dev/stderr
+    echo "No rootDir in ${DB_PARAMS_FILE}" >&2
     exit 1
 fi
 
@@ -109,7 +109,7 @@ fi
 # Creates a lock file, atomically.  Quits if lock file already exists.
 (set -C; : > ${LOCKFILE}) 2> /dev/null
 if [ $? != "0" ]; then
-   echo "Previous ETL job is still running (${LOCKFILE} exists)" | tee /dev/stderr
+   echo "Previous ETL job is still running (${LOCKFILE} exists)" >&2
    exit 1
 fi
 # Removes lockfile on <ctrl>C termination.
@@ -162,15 +162,15 @@ do
 
     # Uses "sqlplus_prep.start" file to know if sqlplus actually ran because sqlplus return code is unreliable.
     if [ ! -e ${NEW_DIR}/${TIMESTAMP}_sqlplus_prep.start ]; then
-	echo "SqlPlus prep_import failed to run.  Will retry in the next ETL run." | tee /dev/stderr
+	echo "SqlPlus prep_import failed to run.  Will retry in the next ETL run." >&2
 	exit 1
     fi
     rm ${NEW_DIR}/${TIMESTAMP}_sqlplus_prep.start
 
     if [ -s ${ERROR_DIR}/${TIMESTAMP}_sqlplus_prep.log ]; then
-            echo "Encountered errors running prep_import stored procedure.  ETL processing stops.  Will retry in the next ETL run."
-            echo "${ERROR_DIR}/${TIMESTAMP}_sqlplus_prep.log contents:" | tee /dev/stderr
-            head -15 ${ERROR_DIR}/${TIMESTAMP}_sqlplus_prep.log | tee /dev/stderr
+            echo "Encountered errors running prep_import stored procedure.  ETL processing stops.  Will retry in the next ETL run." >&2
+            echo "${ERROR_DIR}/${TIMESTAMP}_sqlplus_prep.log contents:" >&2
+            head -15 ${ERROR_DIR}/${TIMESTAMP}_sqlplus_prep.log >&2
             exit 1
     else
 	# removes the zero-length file
@@ -190,7 +190,7 @@ do
 	CTL_FILE=${CONTROL_DIR}/${TABLE_NAME}.ctl
 	# Control file for the load table must exist.
 	if [ ! -f ${CTL_FILE} ]; then
-	    echo "Cannot find ${CTL_FILE}" | tee /dev/stderr
+	    echo "Cannot find ${CTL_FILE}" >&2
 	    exit 1
 	fi
 
@@ -202,16 +202,16 @@ do
 	sqlldr silent="(HEADER)" control=${CTL_FILE} log=${LOG_FILE} bad=${BAD_FILE} data=${DAT_FILE} discard=${DSC_FILE} direct=true userid="${USERNAME}/${PASSWORD}@\"(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST=${DB_SERVER})(PORT=${DB_PORT})))(CONNECT_DATA=(SERVER=DEDICATED)(SID=${DB_SID})))\""
 
 	case $? in
-        1|3) echo "** Manual intervention is needed **" | tee /dev/stderr
-             echo "SqlLoader had fatal error loading ${DAT_FILE}" | tee /dev/stderr
+        1|3) echo "** Manual intervention is needed **" >&2
+             echo "SqlLoader had fatal error loading ${DAT_FILE}" >&2
              exit 1
 	     ;;
-        2)   echo "** Manual intervention is needed **" | tee /dev/stderr
+        2)   echo "** Manual intervention is needed **" >&2
              if [ -n "`hexdump -n 500 ${BAD_FILE} | cut -c 8- | grep -m 1 -q 0d && echo Y`" ]; then
-               echo "${BAD_FILE}  has DOS line termination.  Cannot process it." | tee /dev/stderr
+               echo "${BAD_FILE}  has DOS line termination.  Cannot process it." >&2
              else
-               echo "SqlLoader could not load records in ${BAD_FILE}:" | tee /dev/stderr
-               head -10 ${BAD_FILE} | tee /dev/stderr
+               echo "SqlLoader could not load records in ${BAD_FILE}:" >&2
+               head -10 ${BAD_FILE} >&2
                echo "Check for mismatch with control file, and import table column definition (number of fields, "
                echo "field datatype, field width, control names match import table column names)."
              fi
@@ -226,14 +226,14 @@ do
     # Moves the files to DONE but abandons them.  Also abandons the import table data.
 
     if [ -n "`find ${NEW_DIR}/ -maxdepth 1 -name ${TIMESTAMP}\*.dat`" ]; then
-	echo "Unprocessed files were found:" | tee /dev/stderr
-        ls -1 ${NEW_DIR}/${TIMESTAMP}*.dat | tee /dev/stderr
+	echo "Unprocessed files were found:" >&2
+        ls -1 ${NEW_DIR}/${TIMESTAMP}*.dat >&2
 	mv ${NEW_DIR}/${TIMESTAMP}_* ${DONE_DIR}
 
         if [ -n "`find ${DONE_DIR}/ -maxdepth 1 -name ${TIMESTAMP}\*.dat`" ]; then
-           echo "** Manual intervention is needed **" | tee /dev/stderr
-	   echo "Data from these files will neither be in the warehouse nor get picked up by a later ETL:" | tee /dev/stderr
-           ls -1 ${DONE_DIR}/${TIMESTAMP}*.dat | tee /dev/stderr
+           echo "** Manual intervention is needed **" >&2
+	   echo "Data from these files will neither be in the warehouse nor get picked up by a later ETL:" >&2
+           ls -1 ${DONE_DIR}/${TIMESTAMP}*.dat >&2
         fi
         exit 1
     fi
@@ -251,7 +251,7 @@ do
 !
 
     if [ ! -e ${NEW_DIR}/${TIMESTAMP}_sqlplus.start ]; then
-        echo "SqlPlus failed to run, but will retry automatically in the next ETL run." | tee /dev/stderr
+        echo "SqlPlus failed to run, but will retry automatically in the next ETL run." >&2
 	mv -f ${DONE_DIR}/${TIMESTAMP}*.dat ${NEW_DIR}
         exit 1
     fi
@@ -260,10 +260,10 @@ do
     if [ -s ${ERROR_DIR}/${TIMESTAMP}_sqlplus.log ]; then
         grep -Fq "ORA-" ${ERROR_DIR}/${TIMESTAMP}_sqlplus.log
         if [ $? -eq 0 ]; then
-            echo "** Manual intervention is needed **" | tee /dev/stderr
-            echo "There were data problems running the merge stored procedure." | tee /dev/stderr
-            echo "${ERROR_DIR}/${TIMESTAMP}_sqlplus.log shows these errors:" | tee /dev/stderr
-            ~/dw_etl_parse_merge_errors.pl ${ERROR_DIR}/${TIMESTAMP}_sqlplus.log ${DONE_DIR}/ | tee /dev/stderr
+            echo "** Manual intervention is needed **" >&2
+            echo "There were data problems running the merge stored procedure." >&2
+            echo "${ERROR_DIR}/${TIMESTAMP}_sqlplus.log shows these errors:" >&2
+            ~/dw_etl_parse_merge_errors.pl ${ERROR_DIR}/${TIMESTAMP}_sqlplus.log ${DONE_DIR}/ >&2
         fi
     else
         # removes the zero-length file

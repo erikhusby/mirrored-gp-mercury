@@ -22,11 +22,11 @@ let hourThresholdForWarning=6
 DB_PARAMS_FILE="$1"
 
 if [ -z "${DB_PARAMS_FILE}" ]; then
-    echo "Missing db params filename parameter" | tee /dev/stderr
+    echo "Missing db params filename parameter" >&2
     exit 1
 fi
 if [ ! -f ${DB_PARAMS_FILE} ]; then
-    echo "Cannot find ${DB_PARAMS_FILE}" | tee /dev/stderr
+    echo "Cannot find ${DB_PARAMS_FILE}" >&2
     exit 1
 fi
 ROOT_DIR=`grep -Ei '^rootDir:' ${DB_PARAMS_FILE} | sed -e 's/^rootDir://' | tr -d ' '`
@@ -39,15 +39,15 @@ LAST_ETL_RUN_FILE=${NEW_DIR}/last_etl_run
 LAST_CRON_RUN_FILE=~/dw_etl.log
 
 if [ ! -e ${LAST_ETL_RUN_FILE} ]; then
-   echo "Cannot check time of last ExtractTransform.  File is missing: ${LAST_ETL_RUN_FILE}" | tee /dev/stderr
+   echo "Cannot check time of last ExtractTransform.  File is missing: ${LAST_ETL_RUN_FILE}" >&2
    exit 1
 fi
 if [ ! -e ${LAST_CRON_RUN_FILE} ]; then
-   echo "Cannot check time of last ExtractTransform.  File is missing: ${LAST_CRON_RUN_FILE}" | tee /dev/stderr
+   echo "Cannot check time of last ExtractTransform.  File is missing: ${LAST_CRON_RUN_FILE}" >&2
    exit 1
 fi
 if [ -z "${SERVERLOG_DIR}" -o ! -d "${SERVERLOG_DIR}" ]; then
-   echo "Cannot check ETL errors in server.log.  Cannot find directory: \"${SERVERLOG_DIR}\"" | tee /dev/stderr
+   echo "Cannot check ETL errors in server.log.  Cannot find directory: \"${SERVERLOG_DIR}\"" >&2
    exit 1
 fi
 
@@ -59,12 +59,12 @@ let now=`date +%s`
 
 let "hourDiff = (now-lastExtractTransform)/(60*60)"
 if (( ${hourDiff} > ${hourThresholdForWarning} )); then
-   echo "Incremental ETL has not run in ${hourDiff} hours (i.e. extracting any data changes from Mercury application)."
+   echo "Mercury ETL has not run in ${hourDiff} hours (extracting data from Mercury)." >&2
 fi
 
 let "hourDiff = (now-lastCronRun)/(60*60)"
 if (( ${hourDiff} > ${hourThresholdForWarning} )); then
-   echo "ETL has not run in ${hourDiff} hours (i.e. loading any data changes into the warehouse database)."
+   echo "Database ETL script has not run in ${hourDiff} hours (loading data into database)." >&2
 fi
 
 
@@ -97,7 +97,7 @@ do
   fi
 
   if [ ! -e ${logfile} ]; then
-    echo "Cannot find logfile: ${logfile}" | tee /dev/stderr
+    echo "Cannot check the Mercury logfile for ETL errors. Expected logfile is missing: ${logfile}" >&2
     break
   else
     grep -E "^${zeropadHour}" ${logfile} | grep datawh | grep -E ' ERROR '\|' WARN  ' >> ${TMPFILE}
@@ -106,9 +106,9 @@ do
 done
 
 if [ -s ${TMPFILE} ]; then
-  echo ' '
-  echo ' '
-  echo 'The server log shows these recent ETL messages:'
-  echo ' '
-  cat ${TMPFILE} | cut -c 13- | sort -u | sed -e 's/$/\n/'
+  echo ' ' >&2
+  echo ' ' >&2
+  echo 'The server log shows these recent ETL messages:' >&2
+  echo ' ' >&2
+  cat ${TMPFILE} | cut -c 13- | sort -u | sed -e 's/$/\n/' >&2
 fi

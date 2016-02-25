@@ -117,9 +117,6 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
         LabVesselDao tubeDao = EasyMock.createNiceMock(LabVesselDao.class);
         labBatchEJB.setTubeDao(tubeDao);
 
-        JiraTicketDao mockJira = EasyMock.createNiceMock(JiraTicketDao.class);
-        labBatchEJB.setJiraTicketDao(mockJira);
-
         LabBatchDao labBatchDao = EasyMock.createNiceMock(LabBatchDao.class);
         labBatchEJB.setLabBatchDao(labBatchDao);
 

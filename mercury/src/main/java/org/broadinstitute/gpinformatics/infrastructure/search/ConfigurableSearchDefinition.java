@@ -38,11 +38,6 @@ public class ConfigurableSearchDefinition /*extends PreferenceDefinition*/ {
     private ColumnEntity resultColumnEntity;
 
     /**
-     * How many entities on each page of results
-     */
-    private Integer pageSize;
-
-    /**
      * List of information to created DetachedCriteria
      */
     private List<CriteriaProjection> criteriaProjections = new ArrayList<>();
@@ -77,11 +72,10 @@ public class ConfigurableSearchDefinition /*extends PreferenceDefinition*/ {
      */
     private AddRowsListenerFactory addRowsListenerFactory;
 
-    public ConfigurableSearchDefinition(ColumnEntity resultColumnEntity, Integer pageSize,
+    public ConfigurableSearchDefinition(ColumnEntity resultColumnEntity,
             List<CriteriaProjection> criteriaProjections,
             Map<String, List<SearchTerm>> mapGroupSearchTerms) {
         this.resultColumnEntity = resultColumnEntity;
-        this.pageSize = pageSize;
         this.criteriaProjections = criteriaProjections;
         this.mapGroupSearchTerms = mapGroupSearchTerms;
         buildNameMap();
@@ -282,10 +276,6 @@ public class ConfigurableSearchDefinition /*extends PreferenceDefinition*/ {
 
     public ColumnEntity getResultEntity() {
         return resultColumnEntity;
-    }
-
-    public Integer getPageSize() {
-        return pageSize;
     }
 
     public SearchTerm getSearchTerm(String name) {

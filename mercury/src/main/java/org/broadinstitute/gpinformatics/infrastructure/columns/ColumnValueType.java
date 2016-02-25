@@ -108,6 +108,23 @@ public enum ColumnValueType {
             }
     ),
     /**
+     * Type to add a not null restriction to criteria
+     */
+    NOT_NULL(
+            new Formatter<Object>(){
+                @Override
+                public String format( Object value ){
+                    return "Not Null";
+                }
+            },
+            new SearchTerm.Evaluator<ColumnValueType>() {
+                @Override
+                public ColumnValueType evaluate(Object entity, SearchContext context) {
+                    return ColumnValueType.NOT_NULL;
+                }
+            }
+    ),
+    /**
      * A java.lang.Boolean value (legacy type - not used as of 2015/04)
      */
     BOOLEAN(
