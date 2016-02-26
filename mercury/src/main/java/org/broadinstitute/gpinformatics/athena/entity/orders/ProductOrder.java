@@ -1663,6 +1663,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     static {
         mapProductPartToGenoChip.put("P-EX-0017", "Broad_GWAS_supplemental_15061359_A1");
         mapProductPartToGenoChip.put("P-WG-0022", "HumanOmni2.5-8v1_A");
+        mapProductPartToGenoChip.put("P-WG-0023", "HumanOmniExpressExome-8v1_B");
         mapProductPartToGenoChip.put("P-WG-0023", "HumanOmniExpressExome-8v1-3_A");
         mapProductPartToGenoChip.put("P-WG-0025", "HumanExome-12v1-2_A");
         mapProductPartToGenoChip.put("P-WG-0028", "HumanOmniExpress-24v1-1_A");
