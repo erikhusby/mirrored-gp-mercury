@@ -14,7 +14,6 @@ import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableListFactory;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.ThreadEntityManager;
-import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.search.PaginationUtil;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
@@ -29,9 +28,7 @@ import javax.servlet.RequestDispatcher;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * For actions invoked by configurableList.jsp
@@ -71,30 +68,28 @@ public class ConfigurableListActionBean extends CoreActionBean {
     public Resolution downloadFromIdList() {
         PaginationUtil.Pagination pagination = (PaginationUtil.Pagination) getContext().getRequest().getSession()
                 .getAttribute(ConfigurableSearchActionBean.PAGINATION_PREFIX + sessionKey);
+        SearchInstance searchInstance = (SearchInstance) getContext().getRequest().getSession()
+                .getAttribute(ConfigurableSearchActionBean.SEARCH_INSTANCE_PREFIX + sessionKey);
 
-        List<?> entityList;
-
-        if( selectedIds == null || selectedIds.size() == 0 ) {
+        if( selectedIds == null || selectedIds.isEmpty()) {
             addGlobalValidationError("You must select one or more rows to download.");
             return new ForwardResolution("/error.jsp");
         }
 
-
+        List<?> entityList;
         try {
-
             List<?> typeSafeIds = PaginationUtil.convertStringIdsToEntityType(pagination, selectedIds);
             entityList = PaginationUtil.getByIds(threadEntityManager.getEntityManager(), pagination, typeSafeIds);
-
         } catch (Exception e) {
             log.error("Search failed: ", e);
             getContext().getRequest().setAttribute(RequestDispatcher.ERROR_EXCEPTION, e);
             getContext().getValidationErrors().addGlobalError(new SimpleError(
-                    "Search encountered an unexpected problem. Please email bsp-support."));
+                    "Search encountered an unexpected problem."));
             return new ForwardResolution("/error.jsp");
         }
 
         if (downloadColumnSetName.equals("Viewed Columns")) {
-            List<ColumnTabulation> columnTabulations = buildViewedColumnTabulations();
+            List<ColumnTabulation> columnTabulations = searchInstance.buildViewedColumnTabulations(entityName);
 
             ConfigurableList configurableList = new ConfigurableList(columnTabulations, 0, "ASC",
                     ColumnEntity.getByName(entityName));
@@ -102,7 +97,7 @@ public class ConfigurableListActionBean extends CoreActionBean {
             // Add any row listeners
             configurableList.addAddRowsListeners(SearchDefinitionFactory.getForEntity(entityName));
 
-            configurableList.addRows(entityList, buildSearchContext());
+            configurableList.addRows(entityList, buildSearchContext(searchInstance));
             ConfigurableList.ResultList resultList = configurableList.getResultList(false);
             return streamResultList(resultList);
         }
@@ -117,44 +112,24 @@ public class ConfigurableListActionBean extends CoreActionBean {
      *
      * @return streamed Excel spreadsheet
      */
-    // TODO move to PaginationDao or ConfigurableList?
-    @SuppressWarnings({"unchecked", "rawtypes"})
     public Resolution downloadAllPages() {
-        // Determine which columns the user wants to download
-        List<ColumnTabulation> columnTabulations;
-        if (downloadColumnSetName.equals("Viewed Columns")) {
-            columnTabulations = buildViewedColumnTabulations();
-        } else {
-            columnTabulations = configurableListFactory.buildColumnSetTabulations(downloadColumnSetName,
-                    ColumnEntity.getByName(entityName));
-        }
         PaginationUtil.Pagination pagination = (PaginationUtil.Pagination) getContext().getRequest().getSession()
                 .getAttribute(ConfigurableSearchActionBean.PAGINATION_PREFIX + sessionKey);
-        ConfigurableList configurableList = new ConfigurableList(columnTabulations, 0, "ASC",
-                ColumnEntity.getByName(entityName));
+        SearchInstance searchInstance = (SearchInstance) getContext().getRequest().getSession()
+                .getAttribute(ConfigurableSearchActionBean.SEARCH_INSTANCE_PREFIX + sessionKey);
 
-        // Add any row listeners
-        configurableList.addAddRowsListeners(SearchDefinitionFactory.getForEntity(entityName));
-
-        // Get each page and add it to the configurable list
-        SearchContext context = buildSearchContext();
-        for (int i = 0; i < pagination.getNumberPages(); i++) {
-            List resultsPage = PaginationUtil.getPage(threadEntityManager.getEntityManager(), pagination, i);
-            configurableList.addRows(resultsPage, context);
-            threadEntityManager.getEntityManager().clear();
-        }
-        return streamResultList(configurableList.getResultList(false));
+        ConfigurableList.ResultList resultList = configurableListFactory.fetchAllPages(pagination, searchInstance,
+                downloadColumnSetName, entityName);
+        return streamResultList(resultList);
     }
 
     /**
      *  BSP user lookup required in column eval expression
      *  Use context to avoid need to test in container
      */
-    private SearchContext buildSearchContext(){
+    private SearchContext buildSearchContext(SearchInstance searchInstance){
         SearchContext evalContext = new SearchContext();
-        evalContext.setBspUserList( bspUserList );// Get search instance
-        SearchInstance searchInstance = (SearchInstance) getContext().getRequest().getSession()
-                .getAttribute(ConfigurableSearchActionBean.SEARCH_INSTANCE_PREFIX + sessionKey);
+        evalContext.setBspUserList( bspUserList );
         evalContext.setSearchInstance(searchInstance);
         evalContext.setColumnEntityType(ColumnEntity.getByName(entityName));
         return evalContext;
@@ -175,40 +150,15 @@ public class ConfigurableListActionBean extends CoreActionBean {
     public Resolution createConfigurableDownload(List<?> entityList, String downloadColumnSetName,
             CoreActionBeanContext context, String entityName, String entityId) {
 
+        // Get search instance
+        SearchInstance searchInstance = (SearchInstance) getContext().getRequest().getSession()
+                .getAttribute(ConfigurableSearchActionBean.SEARCH_INSTANCE_PREFIX + sessionKey);
         ConfigurableList configurableListUtils = configurableListFactory.create(entityList, downloadColumnSetName,
-                ColumnEntity.getByName(entityName), buildSearchContext(),
+                ColumnEntity.getByName(entityName), buildSearchContext(searchInstance),
                 SearchDefinitionFactory.getForEntity(entityName));
 
         Object[][] data = configurableListUtils.getResultList(false).getAsArray();
         return StreamCreatedSpreadsheetUtil.streamSpreadsheet(data, SPREADSHEET_FILENAME);
-    }
-
-    /**
-     * For result columns, a configurable search can combine column sets, individual
-     * columns, and search terms. This method builds a list of columns that match what the
-     * user is viewing, to allow the same columns to be downloaded.
-     *
-     * @return list of columns
-     */
-    // TODO move to SearchInstance?
-    private List<ColumnTabulation> buildViewedColumnTabulations() {
-        // Get search instance
-        SearchInstance searchInstance = (SearchInstance) getContext().getRequest().getSession()
-                .getAttribute(ConfigurableSearchActionBean.SEARCH_INSTANCE_PREFIX + sessionKey);
-
-        List<String> columnNameList;
-        if (searchInstance.getPredefinedViewColumns() != null && !searchInstance.getPredefinedViewColumns().isEmpty()) {
-            columnNameList = searchInstance.getPredefinedViewColumns();
-        } else {
-            columnNameList = searchInstance.getColumnSetColumnNameList();
-        }
-        ConfigurableSearchDefinition configurableSearchDef = SearchDefinitionFactory.getForEntity(entityName);
-        List<ColumnTabulation> columnTabulations = new ArrayList<>();
-        for (String columnName : columnNameList) {
-            columnTabulations.add(configurableSearchDef.getSearchTerm(columnName));
-        }
-        columnTabulations.addAll(searchInstance.findTopLevelColumnTabulations());
-        return columnTabulations;
     }
 
 

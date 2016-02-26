@@ -256,15 +256,6 @@ public class SequencingTemplateFactory {
             prodFlowcellBatches = flowcell.getAllLabBatches(LabBatch.LabBatchType.FCT);
         }
 
-        Set<String> denatureBarcodes = new HashSet<>();
-        for (LabBatch flowcellBatch : prodFlowcellBatches) {
-            denatureBarcodes.add(flowcellBatch.getLabBatchStartingVessels().iterator().next().getLabVessel().getLabel());
-        }
-
-        if (denatureBarcodes.size() > 1) {
-            throw new InformaticsServiceException(String.format("There are more than one FCT Batches " +
-                                                                "associated with %s", flowcell.getLabel()));
-        }
         /** END Temp Hack **/
 
         if (!prodFlowcellBatches.isEmpty()) {
@@ -314,10 +305,6 @@ public class SequencingTemplateFactory {
         BigDecimal concentration = null;
         for (LabBatch batch : batches) {
             for (LabBatchStartingVessel labBatchStartingVessel : batch.getLabBatchStartingVessels()) {
-                //All the concentrations should match. If they don't throw an exception.
-                if (concentration != null && concentration.compareTo(labBatchStartingVessel.getConcentration()) != 0) {
-                    throw new RuntimeException("Found multiple concentrations that do no match.");
-                }
                 concentration = labBatchStartingVessel.getConcentration();
             }
         }

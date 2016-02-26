@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.search;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
 import org.broadinstitute.gpinformatics.infrastructure.common.BaseSplitter;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
+import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.hibernate.Criteria;
 import org.hibernate.Session;
 import org.hibernate.criterion.Criterion;
@@ -68,12 +69,12 @@ public class ConfigurableSearchDao extends GenericDao {
         // Test if inputs are blank (otherwise, a table scan is performed)
         // The case where a user supplies no terms is handled in ConfigurableSearchActionBean
         if( !searchInstance.checkValues() ) {
-            throw new IllegalArgumentException("A value is required for each selected search term.");
+            throw new InformaticsServiceException("A value is required for each selected search term.");
         }
 
         // Fail cleanly with error message if any other terms are include with an exclusive term
         if( searchInstance.hasExclusiveViolation() ) {
-            throw new IllegalArgumentException("No other search terms are allowed with an exclusive search term.");
+            throw new InformaticsServiceException("No other search terms are allowed with an exclusive search term.");
         }
 
         HibernateEntityManager hibernateEntityManager = getEntityManager().unwrap(HibernateEntityManager.class);

@@ -4,6 +4,8 @@ import org.broadinstitute.gpinformatics.athena.control.dao.preference.Preference
 import org.broadinstitute.gpinformatics.athena.entity.preference.ColumnSetsPreference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.ThreadEntityManager;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDao;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.search.PaginationUtil;
@@ -15,14 +17,17 @@ import org.hibernate.Criteria;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.ejb.Stateful;
+import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Creates ConfigurableList instances.
  */
+@Stateful
+@RequestScoped
 public class ConfigurableListFactory {
 
     @Inject
@@ -30,6 +35,12 @@ public class ConfigurableListFactory {
 
     @Inject
     private ConfigurableSearchDao configurableSearchDao;
+
+    @Inject
+    private BSPUserList bspUserList;
+
+    @Inject
+    private ThreadEntityManager threadEntityManager;
 
     /**
      * Create a ConfigurableList instance.
@@ -278,20 +289,8 @@ public class ConfigurableListFactory {
             String sortDirection,
             String entityName) {
 
-        Criteria criteria;
-
-        // Swap out base search definition when an alternate (and exclusive) search term is available
-        if( searchInstance.hasAlternateSearchDefinition() ) {
-            criteria = configurableSearchDao.buildCriteria(
-                    searchInstance.getAlternateSearchDefinition(),
-                    searchInstance, null,
-                    null);
-        } else {
-            criteria = configurableSearchDao.buildCriteria(
-                    configurableSearchDef,
-                    searchInstance, dbSortPath,
-                    sortDirection);
-        }
+        PaginationUtil.Pagination pagination = getPagination(searchInstance, configurableSearchDef, dbSortPath,
+                sortDirection);
 
         // TODO move join-fetch stuff into ListConfig and SearchInstance
         // If the user chose columns to view, use those, else use a pre-defined column set
@@ -318,13 +317,13 @@ public class ConfigurableListFactory {
             columnNameList = columnSet.getColumnDefinitions();
             searchInstance.setColumnSetColumnNameList(columnNameList);
         }
-
         // To improve performance, add join fetches for search values that have the "display" checkbox set
         List<SearchInstance.SearchValue> displaySearchValues = searchInstance.findDisplaySearchValues();
         List<String> joinFetchPaths = new ArrayList<>();
         for (SearchInstance.SearchValue displaySearchValue : displaySearchValues) {
             joinFetchPaths.addAll(displaySearchValue.getJoinFetchPaths());
         }
+
         // Add join fetches for the column set
         List<ColumnTabulation> columnTabulations = new ArrayList<>();
         for (String columnName : columnNameList) {
@@ -335,11 +334,6 @@ public class ConfigurableListFactory {
             }
         }
         columnTabulations.addAll(searchInstance.findTopLevelColumnTabulations());
-
-        PaginationUtil.Pagination pagination = new PaginationUtil.Pagination( searchInstance.getPageSize() );
-
-        configurableSearchDao.startPagination(pagination, criteria, searchInstance, configurableSearchDef );
-
         pagination.setJoinFetchPaths(joinFetchPaths);
         List<?> entityList = PaginationUtil.getPage(configurableSearchDao.getEntityManager(), pagination, 0);
 
@@ -356,6 +350,29 @@ public class ConfigurableListFactory {
         ConfigurableList.ResultList resultList = configurableList.getResultList();
 
         return new FirstPageResults(resultList, pagination);
+    }
+
+    @Nonnull
+    public PaginationUtil.Pagination getPagination(SearchInstance searchInstance,
+            ConfigurableSearchDefinition configurableSearchDef, String dbSortPath, String sortDirection) {
+        Criteria criteria;
+
+        // Swap out base search definition when an alternate (and exclusive) search term is available
+        if( searchInstance.hasAlternateSearchDefinition() ) {
+            criteria = configurableSearchDao.buildCriteria(
+                    searchInstance.getAlternateSearchDefinition(),
+                    searchInstance, null,
+                    null);
+        } else {
+            criteria = configurableSearchDao.buildCriteria(
+                    configurableSearchDef,
+                    searchInstance, dbSortPath,
+                    sortDirection);
+        }
+
+        PaginationUtil.Pagination pagination = new PaginationUtil.Pagination( searchInstance.getPageSize() );
+        configurableSearchDao.startPagination(pagination, criteria, searchInstance, configurableSearchDef );
+        return pagination;
     }
 
     /**
@@ -397,5 +414,43 @@ public class ConfigurableListFactory {
         configurableList.addRows( entityList,searchInstance.getEvalContext() );
 
         return configurableList.getResultList();
+    }
+
+    public ConfigurableList.ResultList fetchAllPages(PaginationUtil.Pagination pagination,
+            SearchInstance searchInstance, String downloadColumnSetName, String entityName) {
+        // Determine which columns the user wants to download
+        List<ColumnTabulation> columnTabulations;
+        if (downloadColumnSetName.equals("Viewed Columns")) {
+            columnTabulations = searchInstance.buildViewedColumnTabulations(entityName);
+        } else {
+            columnTabulations = buildColumnSetTabulations(downloadColumnSetName,
+                    ColumnEntity.getByName(entityName));
+        }
+        ConfigurableList configurableList = new ConfigurableList(columnTabulations, 0, "ASC",
+                ColumnEntity.getByName(entityName));
+
+        // Add any row listeners
+        configurableList.addAddRowsListeners(SearchDefinitionFactory.getForEntity(entityName));
+
+        // Get each page and add it to the configurable list
+        SearchContext context = buildSearchContext(searchInstance, entityName);
+        for (int i = 0; i < pagination.getNumberPages(); i++) {
+            List<?> resultsPage = PaginationUtil.getPage(threadEntityManager.getEntityManager(), pagination, i);
+            configurableList.addRows(resultsPage, context);
+            threadEntityManager.getEntityManager().clear();
+        }
+        return configurableList.getResultList(false);
+    }
+
+    /**
+     *  BSP user lookup required in column eval expression
+     *  Use context to avoid need to test in container
+     */
+    private SearchContext buildSearchContext(SearchInstance searchInstance, String entityName){
+        SearchContext evalContext = new SearchContext();
+        evalContext.setBspUserList( bspUserList );
+        evalContext.setSearchInstance(searchInstance);
+        evalContext.setColumnEntityType(ColumnEntity.getByName(entityName));
+        return evalContext;
     }
 }

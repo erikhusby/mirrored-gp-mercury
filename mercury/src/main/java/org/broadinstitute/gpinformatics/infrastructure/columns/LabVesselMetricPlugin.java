@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.columns;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricDecision;
@@ -7,7 +8,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -76,45 +78,52 @@ public class LabVesselMetricPlugin implements ListPlugin {
 
     /**
      * Adds latest metric of type specified to the plugin row. Framework quietly ignores empty cells.
-     * Uses the last metric with a non-null decision after sorting by date and id due to duplicate Pico entries
-     *   for descendant lab vessels:  Transfers are done from a rack of tubes to two plates.
-     *   The raw values are stored on the plate wells, with no decision, and the average values are stored on the tube,
-     *   with a decision.  If all metrics have a null decision, use the last metric after sorting.
+     *
      * @param metrics Metrics data of a single type as supplied from LabVessel
      * @param row Reference to the current plugin row
      *        @see org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel#getMetricsForVesselAndRelatives()
      */
     private void addMetricsToRow( Set<LabMetric> metrics, ConfigurableList.Row row ) {
-        LabMetric metric = null;
-        LabMetricDecision decision;
         ConfigurableList.Cell valueCell, decisionCell;
-        String value;
 
-        // Metrics are sorted by date (and optionally, id)..
-        Iterator<LabMetric> iter = metrics.iterator();
-        while( iter.hasNext() ) {
-            LabMetric latestMetric = iter.next();
-
-            // Bail out if we aren't interested in this metric.
-            if( !QUANT_VALUE_HEADERS.containsKey(latestMetric.getName()) ) {
-                return;
-            }
-
-            if( latestMetric.getLabMetricDecision() != null ) {
-                // Use latest with a decision
-                metric = latestMetric;
-            } else if( metric == null && !iter.hasNext() ) {
-                // We're at last metric and none have a decision, use the last metric
-                metric = latestMetric;
-            }
+        // Bail out if we aren't interested in this metric.
+        if (CollectionUtils.isEmpty(metrics) ||
+            !QUANT_VALUE_HEADERS.containsKey(metrics.iterator().next().getName())) {
+            return;
         }
-        value = ColumnValueType.TWO_PLACE_DECIMAL.format( metric.getValue(), "" );
+
+        // Takes the most recent metric, but prefers the average quant (on the tube) over raw quant (on plate)
+        // which appear to happen later, because pico transfers are done from a rack of tubes to two plates.
+        // Includes any re-pico having neither metric run nor decision (a generic upload) (see GPLIM-3991).
+        List<LabMetric> sortedMetrics = new ArrayList<>(metrics);
+        Collections.sort(sortedMetrics, new Comparator<LabMetric>() {
+            @Override
+            public int compare(LabMetric o1, LabMetric o2) {
+                // Puts tubes before plates.
+                LabVessel.ContainerType containerType1 = o1.getLabVessel().getType();
+                LabVessel.ContainerType containerType2 = o2.getLabVessel().getType();
+                int o1plate = (o1.getLabVessel().getType() == LabVessel.ContainerType.PLATE_WELL) ? 1 : 0;
+                int o2plate = (o2.getLabVessel().getType() == LabVessel.ContainerType.PLATE_WELL) ? 1 : 0;
+                if (o1plate != o2plate) {
+                    return o1plate - o2plate;
+                }
+                // Puts recent metric before older metric.
+                if (o2.getCreatedDate().compareTo(o1.getCreatedDate()) == 0) {
+                    return o2.getLabMetricId().compareTo(o1.getLabMetricId());
+                } else {
+                    return o2.getCreatedDate().compareTo(o1.getCreatedDate());
+                }
+            }
+        });
+        LabMetric metric = sortedMetrics.get(0);
+
+        String value = ColumnValueType.TWO_PLACE_DECIMAL.format( metric.getValue(), "" );
         // Display measurement units if not default
         if( metric.getUnits() != LabMetric.LabUnit.UG_PER_ML && metric.getUnits() != LabMetric.LabUnit.NG_PER_UL ) {
             value += " " + metric.getUnits().getDisplayName();
         }
         valueCell = new ConfigurableList.Cell(QUANT_VALUE_HEADERS.get(metric.getName()), value, value);
-        decision = metric.getLabMetricDecision();
+        LabMetricDecision decision = metric.getLabMetricDecision();
         if (decision != null) {
             decisionCell =
                     new ConfigurableList.Cell(QUANT_DECISION_HEADERS.get(metric.getName()), decision.getDecision().toString(),

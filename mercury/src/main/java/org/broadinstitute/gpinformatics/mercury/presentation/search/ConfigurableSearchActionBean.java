@@ -23,7 +23,6 @@ import org.broadinstitute.gpinformatics.athena.control.dao.preference.Preference
 import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceEjb;
 import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
-import org.broadinstitute.gpinformatics.athena.entity.preference.SearchInstanceList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
@@ -38,6 +37,7 @@ import org.broadinstitute.gpinformatics.infrastructure.search.PaginationUtil;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstanceEjb;
+import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.BSPLookupException;
 import org.broadinstitute.gpinformatics.mercury.presentation.vessel.RackScanActionBean;
 import org.json.JSONArray;
@@ -340,26 +340,8 @@ public class ConfigurableSearchActionBean extends RackScanActionBean {
         PreferenceType type = PreferenceType.valueOf(searchValues[1]);
         String searchName = searchValues[2];
 
-        SearchInstanceList searchInstanceList = null;
-        if( preferenceMap.containsKey(type)){
-            try {
-                searchInstanceList =
-                        (SearchInstanceList) preferenceMap.get(type).getPreferenceDefinition().getDefinitionValue();
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        }
-        assert searchInstanceList != null;
-
-        for (SearchInstance searchInstanceLocal : searchInstanceList.getSearchInstances()) {
-            if (searchInstanceLocal.getName().equals(searchName)) {
-                searchInstance = searchInstanceLocal;
-                break;
-            }
-        }
+        searchInstance = SearchInstance.findSearchInstance(type, searchName, configurableSearchDef, preferenceMap);
         buildSearchContext();
-        searchInstance.establishRelationships(configurableSearchDef);
-        searchInstance.postLoad();
         return new ForwardResolution("/search/configurable_search.jsp");
     }
 
@@ -471,9 +453,9 @@ public class ConfigurableSearchActionBean extends RackScanActionBean {
                 configurableResultList = firstPageResults.getResultList();
                 getContext().getRequest().getSession().setAttribute(PAGINATION_PREFIX + sessionKey,
                         firstPageResults.getPagination());
-            } catch (IllegalArgumentException e) {
-                log.error(e.getMessage(), e);
-                addGlobalValidationError(e.getMessage());
+            } catch (InformaticsServiceException ve) {
+                log.error(ve.getMessage(), ve);
+                addGlobalValidationError(ve.getMessage());
             } catch (BSPLookupException bspse) {
                 handleRemoteServiceFailure(bspse);
             }

@@ -213,7 +213,7 @@
 
         <jboss.socket.https>8443</jboss.socket.https>
 
-        <bspclient.version>1.3.84</bspclient.version>
+        <bspclient.version>[1.3,)</bspclient.version>
     </properties>
 
     <profiles>
@@ -447,9 +447,9 @@
                                         </include>
                                     </includes>
                                     <excludes>
-                                        <exclude>
-                                            org/broadinstitute/gpinformatics/mercury/boundary/vessel/SampleReceiptMessageBean.java
-                                        </exclude>
+                                        <exclude>org/broadinstitute/gpinformatics/mercury/boundary/vessel/SampleReceiptMessageBean.java</exclude>
+                                        <exclude>org/broadinstitute/gpinformatics/mercury/boundary/vessel/RegisterTubeBean.java</exclude>
+                                        <exclude>org/broadinstitute/gpinformatics/mercury/boundary/vessel/RegisterTubesBean.java</exclude>
                                     </excludes>
                                     <transformSchemas>
                                         <transformSchema>
@@ -458,6 +458,26 @@
                                             <toPrefix>labevent</toPrefix>
                                             -->
                                             <toFile>vessel.xsd</toFile>
+                                        </transformSchema>
+                                    </transformSchemas>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>SearchSchemaGen</id>
+                                <goals>
+                                    <goal>schemagen</goal>
+                                </goals>
+                                <configuration>
+                                    <includes>
+                                        <include>org/broadinstitute/gpinformatics/mercury/boundary/Namespaces.java
+                                        </include>
+                                        <include>org/broadinstitute/gpinformatics/mercury/boundary/search/*Bean.java
+                                        </include>
+                                    </includes>
+                                    <transformSchemas>
+                                        <transformSchema>
+                                            <uri>http://broadinstitute.org/gpinformatics/mercury/search</uri>
+                                            <toFile>search.xsd</toFile>
                                         </transformSchema>
                                     </transformSchemas>
                                 </configuration>
@@ -1466,7 +1486,7 @@ nodePrinter.print(webapp)
         <dependency>
             <groupId>lims</groupId>
             <artifactId>limsThrift</artifactId>
-            <version>1.0-20150403.010917-63</version>
+            <version>1.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.apache.poi</groupId>
@@ -2063,6 +2083,9 @@ nodePrinter.print(webapp)
                 <artifactId>maven-pmd-plugin</artifactId>
                 <configuration>
                     <targetJdk>1.7</targetJdk>
+<!--
+                    <includeTests>true</includeTests>
+-->
                 </configuration>
             </plugin>
 

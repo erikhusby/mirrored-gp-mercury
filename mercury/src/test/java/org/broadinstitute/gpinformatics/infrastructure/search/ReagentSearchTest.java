@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableListFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -13,8 +14,6 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
@@ -35,7 +34,7 @@ public class ReagentSearchTest extends Arquillian {
     /**
      * Validate rejection of a search with any other term(s) in addition to one declared as exclusive
      */
-    @Test( expectedExceptions = {IllegalArgumentException.class},expectedExceptionsMessageRegExp = ".*exclusive.*")
+    @Test( expectedExceptions = {InformaticsServiceException.class},expectedExceptionsMessageRegExp = ".*exclusive.*")
     public void testLcsetTermIsExclusive() {
         ConfigurableSearchDefinition configurableSearchDefinition =
                 SearchDefinitionFactory.getForEntity(ColumnEntity.REAGENT.getEntityName());
