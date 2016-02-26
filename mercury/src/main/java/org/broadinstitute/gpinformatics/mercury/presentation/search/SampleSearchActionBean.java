@@ -9,12 +9,11 @@ import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -88,19 +87,18 @@ public class SampleSearchActionBean extends SearchActionBean {
         return new ForwardResolution(SESSION_LIST_PAGE);
     }
 
-    public Set<SampleInstance> getSampleInstancesForSample(LabVessel vessel, MercurySample sample,
-                                                           LabVessel.SampleType type) {
-        Set<SampleInstance> allSamples = vessel.getSampleInstances(type, null);
-        Set<SampleInstance> filteredSamples = new HashSet<>();
+    public Set<SampleInstanceV2> getSampleInstancesForSample(LabVessel vessel, MercurySample sample) {
+        Set<SampleInstanceV2> allSamples = vessel.getSampleInstancesV2();
+        Set<SampleInstanceV2> filteredSamples = new HashSet<>();
 
         SampleData sampleDTO = sampleDTOMap.get(sample.getSampleKey());
-        for (SampleInstance sampleInstance : allSamples) {
-            SampleData sampleInstanceDTO = sampleDTOMap.get(sampleInstance.getStartingSample().getSampleKey());
+        for (SampleInstanceV2 sampleInstance : allSamples) {
+            SampleData sampleInstanceDTO = sampleDTOMap.get(sampleInstance.getNearestMercurySampleName());
             //check if samples have a common ancestor
             if (sampleDTO != null && sampleInstanceDTO != null
-                && sampleInstance.getStartingSample() != null
-                && (sampleInstance.getStartingSample().equals(sample)
-                    || sampleInstance.getStartingSample().getSampleKey().equals(sampleDTO.getStockSample())
+                && sampleInstance.getMercuryRootSampleName() != null
+                && (sampleInstance.getMercuryRootSampleName().equals(sample.getSampleKey())
+                    || sampleInstance.getMercuryRootSampleName().equals(sampleDTO.getStockSample())
                     || sampleInstanceDTO.getStockSample().equals(sample.getSampleKey())
                     || sampleInstanceDTO.getStockSample().equals(sampleDTO.getStockSample()))) {
                 filteredSamples.add(sampleInstance);

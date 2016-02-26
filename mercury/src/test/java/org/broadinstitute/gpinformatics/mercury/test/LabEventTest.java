@@ -55,7 +55,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -279,7 +278,7 @@ public class LabEventTest extends BaseEventTest {
                                             Workflow.HYBRID_SELECTION);
 
         IlluminaFlowcell illuminaFlowcell = hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell();
-        Set<SampleInstance> lane1SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(
+        Set<SampleInstanceV2> lane1SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPositionV2(
                 VesselPosition.LANE1);
         Assert.assertEquals(lane1SampleInstances.iterator().next().getReagents().size(), 2,
                             "Wrong number of reagents");
@@ -439,11 +438,11 @@ public class LabEventTest extends BaseEventTest {
         runTransferVisualizer(mapBarcodeToTube.values().iterator().next());
 
         IlluminaFlowcell illuminaFlowcell = hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell();
-        Set<SampleInstance> lane1SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(
+        Set<SampleInstanceV2> lane1SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPositionV2(
                 VesselPosition.LANE1);
         Assert.assertEquals(lane1SampleInstances.iterator().next().getReagents().size(), 2,
                 "Wrong number of reagents");
-        Set<SampleInstance> lane2SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(
+        Set<SampleInstanceV2> lane2SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPositionV2(
                 VesselPosition.LANE2);
         Assert.assertEquals(lane2SampleInstances.iterator().next().getReagents().size(), 2,
                 "Wrong number of reagents");
@@ -576,11 +575,11 @@ public class LabEventTest extends BaseEventTest {
                 ProductionFlowcellPath.DENATURE_TO_FLOWCELL, null, Workflow.AGILENT_EXOME_EXPRESS);
 
         IlluminaFlowcell illuminaFlowcell = hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell();
-        Set<SampleInstance> lane1SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(
+        Set<SampleInstanceV2> lane1SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPositionV2(
                 VesselPosition.LANE1);
         Assert.assertEquals(lane1SampleInstances.iterator().next().getReagents().size(), 2,
                             "Wrong number of reagents");
-        Set<SampleInstance> lane2SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(
+        Set<SampleInstanceV2> lane2SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPositionV2(
                 VesselPosition.LANE2);
         Assert.assertEquals(lane2SampleInstances.iterator().next().getReagents().size(), 2,
                             "Wrong number of reagents");
@@ -1153,11 +1152,11 @@ public class LabEventTest extends BaseEventTest {
         runTransferVisualizer(mapBarcodeToTube.values().iterator().next());
 
         IlluminaFlowcell illuminaFlowcell = hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell();
-        Set<SampleInstance> lane1SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(
+        Set<SampleInstanceV2> lane1SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPositionV2(
                 VesselPosition.LANE1);
         Assert.assertEquals(lane1SampleInstances.iterator().next().getReagents().size(), 3,
                 "Wrong number of reagents");
-        Set<SampleInstance> lane2SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(
+        Set<SampleInstanceV2> lane2SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPositionV2(
                 VesselPosition.LANE2);
         Assert.assertEquals(lane2SampleInstances.iterator().next().getReagents().size(), 3,
                 "Wrong number of reagents");
@@ -1319,7 +1318,7 @@ public class LabEventTest extends BaseEventTest {
                                                              libraryConstructionEntityBuilder.getPondRegRackBarcode(),
                                                              libraryConstructionEntityBuilder.getPondRegTubeBarcodes());
 
-        Assert.assertEquals(sageEntityBuilder.getSageCleanupRack().getSampleInstances().size(), NUM_POSITIONS_IN_RACK,
+        Assert.assertEquals(sageEntityBuilder.getSageCleanupRack().getSampleInstancesV2().size(), NUM_POSITIONS_IN_RACK,
                             "Wrong number of sage cleanup samples");
 
         QtpEntityBuilder qtpEntityBuilder =
@@ -1335,7 +1334,7 @@ public class LabEventTest extends BaseEventTest {
                                             Workflow.WHOLE_GENOME);
 
         IlluminaFlowcell illuminaFlowcell = hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell();
-        Set<SampleInstance> lane1SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(
+        Set<SampleInstanceV2> lane1SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPositionV2(
                 VesselPosition.LANE1);
         Assert.assertEquals(lane1SampleInstances.iterator().next().getReagents().size(), 1,
                 "Wrong number of reagents");
@@ -1408,7 +1407,7 @@ public class LabEventTest extends BaseEventTest {
                 getLabEventFactory().buildFromBettaLims(plateToRackCherryPickEvent, mapBarcodeToVessel);
         LabVessel targetRack = plateToRackEntity.getTargetLabVessels().iterator().next();
         Assert.assertEquals(
-                targetRack.getContainerRole().getVesselAtPosition(VesselPosition.A01).getSampleInstances().size(),
+                targetRack.getContainerRole().getVesselAtPosition(VesselPosition.A01).getSampleInstancesV2().size(),
                 1, "Wrong number of sample instances");
     }
 
@@ -1574,9 +1573,6 @@ public class LabEventTest extends BaseEventTest {
         LabVesselDao tubeDao = EasyMock.createNiceMock(LabVesselDao.class);
         labBatchEJB.setTubeDao(tubeDao);
 
-        JiraTicketDao mockJira = EasyMock.createNiceMock(JiraTicketDao.class);
-        labBatchEJB.setJiraTicketDao(mockJira);
-
         LabBatchDao labBatchDao = EasyMock.createNiceMock(LabBatchDao.class);
         labBatchEJB.setLabBatchDao(labBatchDao);
 
@@ -1594,7 +1590,7 @@ public class LabEventTest extends BaseEventTest {
 
         BucketDao mockBucketDao = EasyMock.createNiceMock(BucketDao.class);
 
-        EasyMock.replay(mockBucketDao, tubeDao, mockJira, labBatchDao);
+        EasyMock.replay(mockBucketDao, tubeDao, labBatchDao);
 
         LabEventHandler labEventHandler = getLabEventHandler();
         StaticPlate indexPlate = buildIndexPlate(null, null,
@@ -1690,7 +1686,7 @@ public class LabEventTest extends BaseEventTest {
                         Workflow.TRU_SEQ_STRAND_SPECIFIC_CRSP);
 
         IlluminaFlowcell illuminaFlowcell = hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell();
-        Set<SampleInstance> lane1SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(
+        Set<SampleInstanceV2> lane1SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPositionV2(
                 VesselPosition.LANE1);
         Assert.assertEquals(lane1SampleInstances.iterator().next().getReagents().size(), 1,
                 "Wrong number of reagents");
@@ -1844,7 +1840,7 @@ public class LabEventTest extends BaseEventTest {
             labEventHandler.processEvent(fluidigmSampleInputEntity);
             // asserts
             StaticPlate chip = (StaticPlate) fluidigmSampleInputEntity.getTargetLabVessels().iterator().next();
-            Assert.assertEquals(chip.getSampleInstances().size(), mapBarcodeToTube.size(),
+            Assert.assertEquals(chip.getSampleInstancesV2().size(), mapBarcodeToTube.size(),
                                 "Wrong number of sample instances");
 
             mapBarcodeToVessel.clear();
@@ -1862,14 +1858,14 @@ public class LabEventTest extends BaseEventTest {
             // asserts
             TubeFormation harvestRack =
                     (TubeFormation) fluidigmHarvestingToRackEntity.getTargetLabVessels().iterator().next();
-            Assert.assertEquals(harvestRack.getSampleInstances().size(), mapBarcodeToTube.size(),
+            Assert.assertEquals(harvestRack.getSampleInstancesV2().size(), mapBarcodeToTube.size(),
                                 "Wrong number of sample instances");
         }
     }
 
     /**
      * Builds plates of molecular indexes for the given index positions.  If there are multiple plates, e.g. P5 and P7,
-     * a merged P5/P7 scheme is also created, so {@link SampleInstance#addReagent(Reagent)} can find it.
+     * a merged P5/P7 scheme is also created, so {@link SampleInstanceV2#addReagent(Reagent)} can find it.
      *
      * @param molecularIndexingSchemeDao DAO, nullable if in database free test
      * @param molecularIndexDao          DAO, nullable if in database free test

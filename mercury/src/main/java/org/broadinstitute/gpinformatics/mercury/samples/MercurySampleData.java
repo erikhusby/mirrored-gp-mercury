@@ -22,6 +22,7 @@ import java.util.Set;
  * This class holds sample data specific to MercurySamples whose MetadataSource == MERCURY.
  */
 public class MercurySampleData implements SampleData {
+    private MercurySample mercurySample;
     private String sampleId;
     private String collaboratorSampleId;
     private String patientId;
@@ -33,10 +34,8 @@ public class MercurySampleData implements SampleData {
     private final boolean hasData;
     private Date receiptDate;
     private String materialType;
-    private Date picoRunDate;
-    private double volume;
-    private Double concentration;
-    private double totalDna;
+    private String originalMaterialType;
+    private QuantData quantData;
 
     public MercurySampleData(@Nonnull String sampleId, @Nonnull Set<Metadata> metadata) {
         this(sampleId, metadata, null);
@@ -51,11 +50,7 @@ public class MercurySampleData implements SampleData {
 
     public MercurySampleData(@Nonnull MercurySample mercurySample) {
         this(mercurySample.getSampleKey(), mercurySample.getMetadata(), mercurySample.getReceivedDate());
-        QuantData quantData = new QuantData(mercurySample);
-        picoRunDate = quantData.getPicoRunDate();
-        volume = quantData.getVolume();
-        concentration = quantData.getConcentration();
-        totalDna = quantData.getTotalDna();
+        this.mercurySample = mercurySample;
     }
 
     private void extractSampleDataFromMetadata(Set<Metadata> metadata) {
@@ -82,6 +77,9 @@ public class MercurySampleData implements SampleData {
                 break;
             case MATERIAL_TYPE:
                 this.materialType = value;
+                break;
+            case ORIGINAL_MATERIAL_TYPE:
+                this.originalMaterialType = value;
                 break;
             }
         }
@@ -110,9 +108,27 @@ public class MercurySampleData implements SampleData {
         return true;
     }
 
+
+    /**
+     * Initialize QuantData.
+     *
+     * @return true if QuantData was successfully initialized.
+     */
+    boolean initializeQuantData() {
+        if (quantData == null) {
+            if (mercurySample != null) {
+                quantData = new QuantData(mercurySample);
+            }
+        }
+        return quantData != null;
+    }
+
     @Override
     public Date getPicoRunDate() {
-        return picoRunDate;
+        if (initializeQuantData()) {
+            return quantData.getPicoRunDate();
+        }
+        return null;
     }
 
     /**
@@ -147,12 +163,18 @@ public class MercurySampleData implements SampleData {
 
     @Override
     public double getVolume() {
-        return volume;
+        if (initializeQuantData()) {
+            return quantData.getVolume();
+        }
+        return 0;
     }
 
     @Override
     public Double getConcentration() {
-        return concentration;
+        if (initializeQuantData()) {
+            return quantData.getConcentration();
+        }
+        return null;
     }
 
     /**
@@ -279,8 +301,19 @@ public class MercurySampleData implements SampleData {
     }
 
     @Override
+    public String getOriginalMaterialType() {
+        if (StringUtils.isBlank(originalMaterialType)) {
+            return "";
+        }
+        return originalMaterialType;
+    }
+
+    @Override
     public double getTotal() {
-        return totalDna;
+        if (initializeQuantData()) {
+            return quantData.getTotalDna();
+        }
+        return 0;
     }
 
     @Override

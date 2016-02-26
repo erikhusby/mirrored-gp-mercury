@@ -9,6 +9,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
@@ -27,7 +28,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.TubeTransferException;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -210,12 +210,6 @@ public abstract class LabVessel implements Serializable {
 
     @Transient
     private MaterialType latestMaterialType=null;
-
-    /**
-     * Set by {@link #preProcessEvents()}
-     */
-    @Transient
-    private Set<LabBatch> preProcessedEvents;
 
     protected LabVessel(String label) {
         createdOn = new Date();
@@ -605,15 +599,17 @@ public abstract class LabVessel implements Serializable {
         Map<String, Set<LabVessel>> vesselByPdoMap = new HashMap<>();
 
         for (LabVessel currVessel : labVessels) {
-            Set<SampleInstance> sampleInstances = currVessel.getSampleInstances(SampleType.WITH_PDO, null);
+            Set<SampleInstanceV2> sampleInstances = currVessel.getSampleInstancesV2();
 
-            for (SampleInstance sampleInstance : sampleInstances) {
-                String pdoKey = sampleInstance.getProductOrderKey();
-
-                if (!vesselByPdoMap.containsKey(pdoKey)) {
-                    vesselByPdoMap.put(pdoKey, new HashSet<LabVessel>());
+            for (SampleInstanceV2 sampleInstance : sampleInstances) {
+                ProductOrderSample productOrderSample = sampleInstance.getSingleProductOrderSample();
+                if (productOrderSample != null) {
+                    String pdoKey = productOrderSample.getProductOrder().getJiraTicketKey();
+                    if (!vesselByPdoMap.containsKey(pdoKey)) {
+                        vesselByPdoMap.put(pdoKey, new HashSet<LabVessel>());
+                    }
+                    vesselByPdoMap.get(pdoKey).add(currVessel);
                 }
-                vesselByPdoMap.get(pdoKey).add(currVessel);
             }
         }
 
@@ -772,88 +768,6 @@ public abstract class LabVessel implements Serializable {
         }
     }
 
-    /**
-     * Computes the {@link SampleInstance} data
-     * on-the-fly by walking the history and applying the
-     * StateChange applied during lab work.
-     *
-     * @return All the sample instances.
-     */
-    public Set<SampleInstance> getSampleInstances() {
-        return getSampleInstances(SampleType.ANY, null);
-    }
-
-    /**
-     * Type of sample to return.
-     */
-    public enum SampleType {
-        /**
-         * Only MercurySamples that have a PDO.
-         */
-        WITH_PDO,
-        /**
-         * MercurySamples with PDO, if found, else any.
-         */
-        PREFER_PDO,
-        /**
-         * Any MercurySample.
-         */
-        ANY,
-        /**
-         * Like PREFER_PDO but traverses to the beginning of the vessel transfer chain to get the "root" sample
-         * which appears to be a ProductOrderSample.
-         */
-        ROOT_SAMPLE
-    }
-
-    /**
-     * Get the sample instances in this vessel, by traversing the ancestor transfer graph.
-     *
-     * @param sampleType   whether the sample must have a PDO
-     * @param labBatchType the type of lab batch to include in the instance, or null for any
-     *
-     * @return sample instances
-     */
-    public Set<SampleInstance> getSampleInstances(SampleType sampleType, @Nullable LabBatch.LabBatchType labBatchType) {
-        if (DIAGNOSTICS) {
-            System.out.println("getSampleInstances for " + label);
-        }
-        if (preProcessedEvents == null) {
-            preProcessedEvents = preProcessEvents();
-        }
-        if (getContainerRole() != null) {
-            Set<SampleInstance> sampleInstances = getContainerRole().getSampleInstances(sampleType, labBatchType);
-            for (SampleInstance sampleInstance : sampleInstances) {
-                if (sampleInstance.getLabBatch() == null && preProcessedEvents != null
-                    && preProcessedEvents.size() == 1) {
-                    sampleInstance.setLabBatch(preProcessedEvents.iterator().next());
-                }
-            }
-            return sampleInstances;
-        }
-        TraversalResults traversalResults = traverseAncestors(sampleType, labBatchType);
-        Set<SampleInstance> filteredSampleInstances;
-        if (sampleType == SampleType.WITH_PDO) {
-            filteredSampleInstances = new HashSet<>();
-            for (SampleInstance sampleInstance : traversalResults.getSampleInstances()) {
-                if (sampleInstance.getProductOrderKey() != null) {
-                    filteredSampleInstances.add(sampleInstance);
-                }
-            }
-        } else {
-            filteredSampleInstances = traversalResults.getSampleInstances();
-        }
-
-        // This handles the case where controls are added in a re-array of the destination of the first transfer
-        // from LCSET starting tubes.
-        if (filteredSampleInstances.size() == 1) {
-            SampleInstance sampleInstance = filteredSampleInstances.iterator().next();
-            if (sampleInstance.getLabBatch() == null && preProcessedEvents != null && preProcessedEvents.size() == 1) {
-                sampleInstance.setLabBatch(preProcessedEvents.iterator().next());
-            }
-        }
-        return filteredSampleInstances;
-    }
 
     public int getSampleInstanceCount() {
         Set<SampleInstanceV2> sampleInstancesV2 = getSampleInstancesV2();
@@ -861,243 +775,6 @@ public abstract class LabVessel implements Serializable {
             return 0;
         }
         return sampleInstancesV2.size();
-    }
-
-    /**
-     * The results of traversing (ancestor) vessels.  The main branch in the graph is likely to have (multiple)
-     * SampleInstances, while side branches add reagents.
-     */
-    static class TraversalResults {
-
-        private final Set<SampleInstance> sampleInstances = new HashSet<>();
-        private final Set<Reagent> reagents = new HashSet<>();
-
-        void add(TraversalResults traversalResults) {
-            sampleInstances.addAll(traversalResults.getSampleInstances());
-            reagents.addAll(traversalResults.getReagents());
-        }
-
-        public Set<SampleInstance> getSampleInstances() {
-            return sampleInstances;
-        }
-
-        public Set<Reagent> getReagents() {
-            return reagents;
-        }
-
-        public void add(SampleInstance sampleInstance) {
-            sampleInstances.add(sampleInstance);
-        }
-
-        public void add(Reagent reagent) {
-            reagents.add(reagent);
-        }
-
-        void setBucketEntry(BucketEntry bucketEntry) {
-            for (SampleInstance sampleInstance : sampleInstances) {
-                sampleInstance.setBucketEntry(bucketEntry);
-            }
-        }
-
-        void setProductOrderKey(String productOrderKey) {
-            for (SampleInstance sampleInstance : sampleInstances) {
-                sampleInstance.setProductOrderKey(productOrderKey);
-            }
-        }
-
-        void setBspExportSample(MercurySample exportSample) {
-            for (SampleInstance sampleInstance : sampleInstances) {
-                sampleInstance.setBspExportSample(exportSample);
-            }
-        }
-
-        /**
-         * After traversing all ancestors in a level in the hierarchy, apply reagents to that level, if any.
-         * Reagents are consumed when they are applied to SampleInstances, they don't continue to be applied to
-         * other levels.
-         */
-        public void completeLevel() {
-            if (!sampleInstances.isEmpty()) {
-                for (SampleInstance sampleInstance : sampleInstances) {
-                    if (!reagents.isEmpty()) {
-                        for (Reagent reagent : reagents) {
-                            sampleInstance.addReagent(reagent);
-                        }
-                    }
-                    sampleInstance.setEventApplied(false);
-                }
-                if (!reagents.isEmpty()) {
-                    reagents.clear();
-                }
-            }
-        }
-
-        /**
-         * Called after an event has been traversed, sets lab batch and product order key.
-         *
-         * @param labEvent  event that was traversed
-         * @param labVessel plastic involved in the event
-         */
-        public void applyEvent(@Nonnull LabEvent labEvent, @Nonnull LabVessel labVessel) {
-            if (EVENT_DIAGNOSTICS) {
-                System.out.println("applyEvent " + labEvent.getLabEventType().getName() +
-                                   (CollectionUtils.isEmpty(labVessel.getBucketEntries()) ? "" : " with bucket entry"));
-            }
-            Set<LabBatch> computedLcSets1 = labEvent.getComputedLcSets();
-            if (computedLcSets1.size() == 1) {
-                LabBatch labBatch = computedLcSets1.iterator().next();
-                for (SampleInstance sampleInstance : getSampleInstances()) {
-                    if (labEvent.getLabEventType() == LabEventType.POOLING_TRANSFER) {
-                        // When setting sample instance bucket entry for Pooling Transfer events, be careful
-                        // to apply the bucket entry to only the source vessel's sample instance(s), and not
-                        // to the pooled combination of sample instances from other source vessels.
-                        if (sampleInstance.isEventApplied()) {
-                            continue;
-                        }
-                        sampleInstance.setEventApplied(true);
-                    }
-                    int foundBucketEntries = 0;
-                    for (BucketEntry bucketEntry : labVessel.getBucketEntries()) {
-                        if (bucketEntry.getLabBatch() != null && bucketEntry.getLabBatch().equals(labBatch)) {
-                            if (EVENT_DIAGNOSTICS) {
-                                System.out.println("SampleInstance " +
-                                                   sampleInstance.getStartingSample().getSampleKey() + " gets " +
-                                                   bucketEntry.getLabBatch() + " " + bucketEntry.getProductOrder().getBusinessKey() +
-                                                   " from " + bucketEntry.getBucket().getBucketDefinitionName() +
-                                                   (bucketEntry.getReworkDetail() != null ? " (rework)" : ""));
-                            }
-                            sampleInstance.setBucketEntry(bucketEntry);
-                            foundBucketEntries++;
-                        }
-                    }
-                    if (foundBucketEntries != 1) {
-                        if (EVENT_DIAGNOSTICS) {
-                            System.out.println("SampleInstance " + sampleInstance.getStartingSample().getSampleKey() +
-                                               " gets computed batch " + labBatch);
-                        }
-                        sampleInstance.setLabBatch(labBatch);
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Traverse all ancestors of this vessel, accumulating SampleInstances.
-     *
-     * @param sampleType   where to stop recursion
-     * @param labBatchType which batches to accumulate
-     *
-     * @return accumulated sampleInstances
-     */
-    TraversalResults traverseAncestors(SampleType sampleType, LabBatch.LabBatchType labBatchType) {
-
-        /*
-         * Crawl up this vessel's ancestors looking for a vessel that fits the specified sampleType criteria. Once such
-         * a vessel is found, we stop crawling start accumulating the results as we crawl back down.
-         */
-        TraversalResults traversalResults = new TraversalResults();
-
-        boolean continueTraversing = true;
-        switch (sampleType) {
-        case WITH_PDO:
-        case PREFER_PDO:
-            if (!bucketEntries.isEmpty() && !mercurySamples.isEmpty()) {
-                // Ignore bucket entries that don't have an LCSET yet
-                for (BucketEntry bucketEntry : bucketEntries) {
-                    if (bucketEntry.getLabBatch() != null) {
-                        continueTraversing = false;
-                        break;
-                    }
-                }
-            }
-            break;
-        case ANY:
-            if (!mercurySamples.isEmpty()) {
-                continueTraversing = false;
-            }
-            break;
-        case ROOT_SAMPLE:
-            break;
-        }
-        if (continueTraversing) {
-            List<VesselEvent> vesselEvents = getAncestors();
-            for (VesselEvent vesselEvent : vesselEvents) {
-                LabVessel labVessel = vesselEvent.getSourceLabVessel();
-                if (labVessel == null) {
-                    traversalResults.add(vesselEvent.getSourceVesselContainer().traverseAncestors(vesselEvent.getSourcePosition(),
-                            sampleType, labBatchType));
-                } else {
-                    traversalResults.add(labVessel.traverseAncestors(sampleType, labBatchType));
-                    traversalResults.applyEvent(vesselEvent.getLabEvent(), labVessel);
-                }
-            }
-        }
-
-        /*
-         * Start crawling back down the traversed ancestors. We create SampleInstances for the MercurySamples only from
-         * the topmost vessel that actually has MercurySamples. Any other MercurySamples that we encounter on the way
-         * back down are not collected because they were already determined to not meet the specified sampleType
-         * criteria.
-         */
-
-        if (traversalResults.getSampleInstances().isEmpty() && !mercurySamples.isEmpty()) {
-            for (MercurySample mercurySample : mercurySamples) {
-                SampleInstance sampleInstance = new SampleInstance(mercurySample);
-                traversalResults.add(sampleInstance);
-            }
-        }
-
-        /*
-         * LabBatches are accumulated during downward traversal so that we will know all of the batches that the vessel
-         * in question is somehow related to.
-         */
-
-        for (LabBatch labBatch : getLabBatches()) {
-            if (labBatchType == null || labBatch.getLabBatchType() == labBatchType) {
-                for (SampleInstance sampleInstance : traversalResults.getSampleInstances()) {
-                    sampleInstance.addLabBatches(Collections.singleton(labBatch));
-                }
-            }
-            // If this vessel is a BSP export, sets the aliquot sample.
-            // Expects one sample per vessel in the BSP export.
-            if (labBatch.getLabBatchType() == LabBatch.LabBatchType.SAMPLES_IMPORT) {
-                if (mercurySamples.size() > 1) {
-                    throw new RuntimeException("No support for pooled sample imports.");
-                }
-                traversalResults.setBspExportSample(mercurySamples.iterator().next());
-            }
-        }
-
-        // FIXME: Ignore rework bucket entries when deciding whether or not there is a single entry.
-        // FIXME: There could very well be two bucket entries for different PDOs. We need to decide
-        // FIXME: which is the appropriate one in this case (either here or in getSampleInstances).
-        if (bucketEntries.size() == 1) {
-            BucketEntry bucketEntry = bucketEntries.iterator().next();
-            if (bucketEntry.getReworkDetail() == null) {
-                traversalResults.setBucketEntry(bucketEntry);
-            }
-        } else {
-            /*
-             * Even if there are multiple bucket entries (of any type, rework or not), as long as they all agree on the
-             * PDO, we can assume that is the correct PDO.
-             */
-            Set<String> productOrderKeys = new HashSet<>();
-            for (BucketEntry bucketEntry : bucketEntries) {
-                productOrderKeys.add(bucketEntry.getProductOrder().getBusinessKey());
-            }
-            if (productOrderKeys.size() == 1) {
-                traversalResults.setProductOrderKey(productOrderKeys.iterator().next());
-            }
-        }
-
-        // TODO: completeLevel() simply applies reagents to the sample instances, so this code could probably be changed to look more like setting the bspExportSample and bucketEntry above.
-        for (Reagent reagent : getReagentContents()) {
-            traversalResults.add(reagent);
-        }
-
-        traversalResults.completeLevel();
-        return traversalResults;
     }
 
     /**
@@ -1414,53 +1091,6 @@ public abstract class LabVessel implements Serializable {
         }
     }
 
-    /**
-     * Returns the lab batch for a vessel based on the most frequently occurring lab batch in the given container.
-     *
-     * @param container contains the vessel
-     *
-     * @return the batch
-     */
-    @SuppressWarnings("unchecked")
-    public LabBatch getPluralityLabBatch(VesselContainer container) {
-        Collection<LabBatch> vesselBatches = getAllLabBatches();
-        for (LabBatchComposition labBatchComposition : (List<LabBatchComposition>) container.getLabBatchCompositions()) {
-            if (vesselBatches.contains(labBatchComposition.getLabBatch())) {
-                return labBatchComposition.getLabBatch();
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Finds all the lab batches represented in this container, and determines how many vessels in this
-     * container belong to each of the batches.
-     *
-     * @return list of lab batches sorted by vessel count (descending).
-     */
-    public List<LabBatchComposition> getWorkflowLabBatchCompositions() {
-
-        List<SampleInstance> sampleInstances = new ArrayList<>();
-        sampleInstances.addAll(getSampleInstances(SampleType.WITH_PDO, null));
-
-        Map<LabBatch, LabBatchComposition> batchMap = new HashMap<>();
-        for (SampleInstance sampleInstance : sampleInstances) {
-            for (LabBatch labBatch : sampleInstance.getAllWorkflowLabBatches()) {
-                LabBatchComposition batchComposition = batchMap.get(labBatch);
-                if (batchComposition == null) {
-                    batchMap.put(labBatch, new LabBatchComposition(labBatch, 1, sampleInstances.size()));
-                } else {
-                    batchComposition.addCount();
-                }
-            }
-        }
-
-        List<LabBatchComposition> batchList = new ArrayList<>(batchMap.values());
-        Collections.sort(batchList, LabBatchComposition.HIGHEST_COUNT_FIRST);
-
-        return batchList;
-    }
-
     public Collection<LabBatch> getAllLabBatches() {
         if (getContainerRole() != null) {
             return getContainerRole().getAllLabBatches();
@@ -1595,19 +1225,6 @@ public abstract class LabVessel implements Serializable {
         return vesselForEventTypeCriteria.getVesselsForLabEventType();
     }
 
-        /**
-         * This method walks the vessel transfers in both directions and returns all of the ancestor and descendant
-         * vessels.
-         *
-         * @return A collection containing all ancestor and descendant vessels.
-         */
-    public Collection<LabVessel> getAncestorAndDescendantVessels() {
-        Collection<LabVessel> allVessels;
-        allVessels = getAncestorVessels();
-        allVessels.addAll(getDescendantVessels());
-        return allVessels;
-    }
-
     public Collection<LabVessel> getDescendantVessels() {
         TransferTraverserCriteria.LabVesselDescendantCriteria descendantCriteria =
                 new TransferTraverserCriteria.LabVesselDescendantCriteria();
@@ -1629,7 +1246,7 @@ public abstract class LabVessel implements Serializable {
      */
     public List<MolecularIndexReagent> getIndexes() {
         List<MolecularIndexReagent> indexes = new ArrayList<>();
-        for (SampleInstance sample : getAllSamples()) {
+        for (SampleInstanceV2 sample : getSampleInstancesV2()) {
             for (Reagent reagent : sample.getReagents()) {
                 if (OrmUtil.proxySafeIsInstance(reagent, MolecularIndexReagent.class)) {
                     MolecularIndexReagent indexReagent = (MolecularIndexReagent) reagent;
@@ -1659,23 +1276,15 @@ public abstract class LabVessel implements Serializable {
      */
     public Set<MolecularIndexReagent> getIndexesForSample(MercurySample sample) {
         Set<MolecularIndexReagent> indexes = new HashSet<>();
-        for (SampleInstance sampleInstance : getAllSamplesOfType(SampleType.ANY)) {
-            if (sampleInstance.getStartingSample().equals(sample)) {
-                indexes.addAll(getIndexesForSampleInstanceV1(sampleInstance));
+        for (SampleInstanceV2 sampleInstance : getSampleInstancesV2()) {
+            MercurySample curMercurySample = sampleInstance.getNearestMercurySample();
+            if (curMercurySample != null) {
+                if (curMercurySample.equals(sample)) {
+                    indexes.addAll(getIndexesForSampleInstance(sampleInstance));
+                }
             }
         }
         return indexes;
-    }
-
-    /**
-     * This method gets indexes for the single sample instance passed in.
-     *
-     * @param sampleInstance The sample instance to get the index information for.
-     *
-     * @return A set of indexes for the sample instance passed in.
-     */
-    public Set<MolecularIndexReagent> getIndexesForSampleInstanceV1(SampleInstance sampleInstance) {
-        return getIndexes(sampleInstance.getReagents());
     }
 
     /** This method gets indexes for the single sample instance passed in. */
@@ -1713,43 +1322,8 @@ public abstract class LabVessel implements Serializable {
         return indexes.size();
     }
 
-    public Set<String> getPdoKeys() {
-        Set<String> pdoKeys = new HashSet<>();
-        for (SampleInstance sample : getSampleInstances(SampleType.WITH_PDO, null)) {
-            String productOrderKey = sample.getProductOrderKey();
-            if (productOrderKey != null) {
-                pdoKeys.add(productOrderKey);
-            }
-        }
-        return pdoKeys;
-    }
-
     /**
-     * This method gets all sample instances for a given lab vessel. If this vessel has a container role than the
-     * samples are taken from that container.
-     *
-     * @return a set of sample instances contained in this vessel.
-     */
-    public Set<SampleInstance> getAllSamples() {
-        Set<SampleInstance> allSamples = new HashSet<>();
-        allSamples.addAll(getSampleInstances(SampleType.ANY, null));
-        if (getContainerRole() != null) {
-            allSamples.addAll(getContainerRole().getSampleInstances(SampleType.ANY, null));
-        }
-        return allSamples;
-    }
-
-    public Set<SampleInstance> getAllSamplesOfType(SampleType sampleType) {
-        Set<SampleInstance> allSamples = new HashSet<>();
-        allSamples.addAll(getSampleInstances(sampleType, null));
-        if (getContainerRole() != null) {
-            allSamples.addAll(getContainerRole().getSampleInstances(sampleType, null));
-        }
-        return allSamples;
-    }
-
-    /**
-     * Goes through all the {@link #getSampleInstances()} and creates
+     * Goes through all the {@link #getSampleInstancesV2()} and creates
      * a collection of the unique String sample names from {@link MercurySample#getSampleKey()}
      *
      * @return The names
@@ -1790,32 +1364,6 @@ public abstract class LabVessel implements Serializable {
                 bucketName.equals(currentEntry.getBucket().getBucketDefinitionName()) &&
                 compareStatus == currentEntry.getStatus()) {
                 return true;
-            }
-        }
-
-        return false;
-    }
-
-
-    /**
-     * Helper method to determine if a given vessel or any of its ancestors have ever been in a bucket.
-     *
-     * @param bucketName Name of the bucket to search for associations
-     *
-     * @return true if there is an ancestor in a bucket
-     */
-    public boolean hasAncestorBeenInBucket(@Nonnull String bucketName) {
-
-        List<LabVessel> vesselHierarchy = new ArrayList<>();
-
-        vesselHierarchy.add(this);
-        vesselHierarchy.addAll(this.getAncestorVessels());
-
-        for (LabVessel currentAncestor : vesselHierarchy) {
-            for (BucketEntry currentEntry : currentAncestor.getBucketEntries()) {
-                if (bucketName.equals(currentEntry.getBucket().getBucketDefinitionName())) {
-                    return true;
-                }
             }
         }
 
@@ -1884,45 +1432,6 @@ public abstract class LabVessel implements Serializable {
             metricSet.add(metric);
         }
         return metricMap;
-    }
-
-    /**
-     * In preparation for getSampleInstances recursion, sets the computed LCSETs in each ancestor lab event.  This is
-     * necessary because a control doesn't have a {@link BucketEntry}; controls become associated with LCSETs by being
-     * in the same transfer as vessels with BucketEntries.
-     */
-    public Set<LabBatch> preProcessEvents() {
-        Set<LabEvent> visitedLabEvents = new HashSet<>();
-        return recurseEvents(visitedLabEvents, getTransfersToWithReArrays());
-    }
-
-    /**
-     * Recurses ancestor transfers, setting computed LCSETs.
-     *
-     * @param visitedLabEvents avoid visiting event twice
-     * @param currentTransfers the transfers at the current point in the recursion
-     *
-     * @return results of recursion
-     */
-    Set<LabBatch> recurseEvents(Set<LabEvent> visitedLabEvents, Set<LabEvent> currentTransfers) {
-        Set<LabBatch> returnLcSets = new HashSet<>();
-        for (LabEvent labEvent : currentTransfers) {
-            if (visitedLabEvents.add(labEvent)) {
-                Set<LabBatch> lcSetsFromRecursion = new HashSet<>();
-                for (LabVessel labVessel : labEvent.getSourceLabVessels()) {
-                    lcSetsFromRecursion.addAll(recurseEvents(visitedLabEvents, labVessel.getTransfersToWithReArrays()));
-                }
-                Set<LabBatch> computedLcSets = labEvent.getComputedLcSets();
-                if (computedLcSets.isEmpty()) {
-                    returnLcSets.addAll(lcSetsFromRecursion);
-                    labEvent.addComputedLcSets(lcSetsFromRecursion);
-                } else {
-                    returnLcSets.addAll(computedLcSets);
-                    labEvent.addComputedLcSets(computedLcSets);
-                }
-            }
-        }
-        return returnLcSets;
     }
 
     @Transient

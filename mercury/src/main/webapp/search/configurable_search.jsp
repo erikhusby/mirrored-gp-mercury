@@ -174,7 +174,10 @@ Move the mouse over the question marks to see details about each section.
                            downloadColumnSets="${actionBean.downloadColumnSets}"
                            resultList="${actionBean.configurableSampleList}"
                            action="${ctxpath}/search/ConfigurableSearch.action"
-                           downloadViewedColumns="True"/>
+                           downloadViewedColumns="True"
+                           isDbSortAllowed="${actionBean.searchInstance.isDbSortable}"
+                           dbSortPath="${actionBean.dbSortPath}"
+                           dataTable="false"/>
 </fieldset>
 <script type="text/javascript">
 function validateNewSearch() {

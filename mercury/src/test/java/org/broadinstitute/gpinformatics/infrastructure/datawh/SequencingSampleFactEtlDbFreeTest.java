@@ -24,7 +24,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun
 import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
 import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -425,7 +424,7 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         }
         Assert.assertEquals(mapSampleToRecord.size(), numberOfSamples);
 
-        for (SampleInstance testInstance : dilutionSource.getSampleInstances()) {
+        for (SampleInstanceV2 testInstance : dilutionSource.getSampleInstancesV2()) {
 
             SortedSet<String> names = new TreeSet<>();
 
@@ -436,15 +435,15 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
             }
             String molecularIndexingSchemeName = (names.size() == 0 ? "NONE" : StringUtils.join(names, " "));
 
-            for (String record : mapSampleToRecord.get(testInstance.getStartingSample().getSampleKey())) {
+            for (String record : mapSampleToRecord.get(testInstance.getRootOrEarliestMercurySampleName())) {
                 if (record.contains(",2,")) {
                     verifyRecord(record, molecularIndexingSchemeName, pdoId,
-                                 testInstance.getStartingSample().getSampleKey(), 2, denatureSource.getLabel(),
+                                 testInstance.getRootOrEarliestMercurySampleName(), 2, denatureSource.getLabel(),
                                  ExtractTransform.formatTimestamp(denatureSource.getCreatedOn()),
                                  illuminaFlowcell.getLabel(), researchProjectId, workflowBatch.getBatchName());
                 } else {
                     verifyRecord(record, molecularIndexingSchemeName, pdoId,
-                                 testInstance.getStartingSample().getSampleKey(), 1, denatureSource.getLabel(),
+                                 testInstance.getRootOrEarliestMercurySampleName(), 1, denatureSource.getLabel(),
                                  ExtractTransform.formatTimestamp(denatureSource.getCreatedOn()),
                                  illuminaFlowcell.getLabel(), researchProjectId, workflowBatch.getBatchName());
                 }

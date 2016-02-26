@@ -7,7 +7,7 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
@@ -123,17 +123,17 @@ public class HybridSelectionEntityBuilder {
         labEventHandler.processEvent(preSelPoolEntity2);
         preSelPoolRack = (TubeFormation) preSelPoolEntity2.getTargetLabVessels().iterator().next();
         //asserts
-        Set<SampleInstance> preSelPoolSampleInstances = preSelPoolRack.getSampleInstances();
-        Assert.assertEquals(preSelPoolSampleInstances.size(), pondRegRack.getSampleInstances().size(),
+        Set<SampleInstanceV2> preSelPoolSampleInstances = preSelPoolRack.getSampleInstancesV2();
+        Assert.assertEquals(preSelPoolSampleInstances.size(), pondRegRack.getSampleInstancesV2().size(),
                                    "Wrong number of sample instances");
         Set<String> sampleNames = new HashSet<>();
-        for (SampleInstance preSelPoolSampleInstance : preSelPoolSampleInstances) {
-            if (!sampleNames.add(preSelPoolSampleInstance.getStartingSample().getSampleKey())) {
-                Assert.fail("Duplicate sample " + preSelPoolSampleInstance.getStartingSample().getSampleKey());
+        for (SampleInstanceV2 preSelPoolSampleInstance : preSelPoolSampleInstances) {
+            if (!sampleNames.add(preSelPoolSampleInstance.getRootOrEarliestMercurySampleName())) {
+                Assert.fail("Duplicate sample " + preSelPoolSampleInstance.getRootOrEarliestMercurySampleName());
             }
         }
-        Set<SampleInstance> sampleInstancesInPreSelPoolWell =
-                preSelPoolRack.getContainerRole().getSampleInstancesAtPosition(VesselPosition.A01);
+        Set<SampleInstanceV2> sampleInstancesInPreSelPoolWell =
+                preSelPoolRack.getContainerRole().getSampleInstancesAtPositionV2(VesselPosition.A01);
         Assert.assertEquals(sampleInstancesInPreSelPoolWell.size(), 2, "Wrong number of sample instances in position");
 
         // Hybridization
