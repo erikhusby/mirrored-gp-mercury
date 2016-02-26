@@ -1182,6 +1182,29 @@ public class LabVesselSearchDefinition {
         });
         searchTerms.add(searchTerm);
 
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Proceed If Out Of Spec");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public List<String> evaluate(Object entity, SearchContext context) {
+                List<String> results = new ArrayList<>();
+
+                LabVessel labVessel = (LabVessel)entity;
+                for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+                    for (ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples()) {
+                        ProductOrderSample.ProceedIfOutOfSpec proceedIfOutOfSpec =
+                                productOrderSample.getProceedIfOutOfSpec();
+                        if (proceedIfOutOfSpec == null) {
+                            proceedIfOutOfSpec = ProductOrderSample.ProceedIfOutOfSpec.NO;
+                        }
+                        results.add(proceedIfOutOfSpec.getDisplayName());
+                    }
+                }
+                return results;
+            }
+        });
+        searchTerms.add(searchTerm);
+
         return searchTerms;
     }
 
