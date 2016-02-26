@@ -1484,10 +1484,9 @@ AS
 
           EXCEPTION WHEN OTHERS THEN
           errmsg := SQLERRM;
-          DBMS_OUTPUT.PUT_LINE( 'Following error from inserting library_ancestry data into LIBRARY_LCSET_SAMPLE_BASE, line number irrelevant');
-          DBMS_OUTPUT.PUT_LINE( 'Library ID: ' || new.library_id || ', Library Type: ' || new.library_type || ', Event ID: ' || new.library_creation, new.event_id );
-          DBMS_OUTPUT.PUT_LINE(
-              TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_library_ancestry.dat line ' || new.line_number || '  ' || errmsg);
+          DBMS_OUTPUT.PUT_LINE( 'The following error is from inserting library_ancestry data into LIBRARY_LCSET_SAMPLE_BASE, the line number is irrelevant');
+          DBMS_OUTPUT.PUT_LINE( 'Library ID: ' || new.library_id || ', Library Type: ' || new.library_type || ', Event ID: ' || new.event_id );
+          DBMS_OUTPUT.PUT_LINE( TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_library_ancestry.dat line ' || new.line_number || '  ' || errmsg);
           CONTINUE;
         END;
       END LOOP;
