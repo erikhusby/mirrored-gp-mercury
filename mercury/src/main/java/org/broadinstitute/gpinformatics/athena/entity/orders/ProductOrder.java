@@ -1673,6 +1673,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         mapProductPartToGenoChip.put("P-WG-0055", "PsychChip_v1-1_15073391_A1");
     }
 
+    public static String genoChipTypeForPart(String partNumber) {
+        return mapProductPartToGenoChip.get(partNumber);
+    }
+
     public String getGenoChipType() {
         String genoChipType = mapProductPartToGenoChip.get(getProduct().getPartNumber());
         if (getProduct().getPartNumber().equals("P-WG-0036") && getTitle().contains("Danish")) {
