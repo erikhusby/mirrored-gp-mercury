@@ -161,11 +161,7 @@ public class SequencingTemplateFactory {
         }
         if (!labBatches.isEmpty()) {
             LabBatch fctBatch = labBatches.iterator().next();
-            SequencingTemplateType sequencingTemplateType =
-                    getSequencingTemplateByLabBatch(sequencingConfig, fctBatch, isPoolTest);
-            Set<SampleInstanceV2> sampleInstances = templateTargetTube.getSampleInstancesV2();
-            attachRegulatoryDesignationAndProductOrder(sampleInstances, sequencingTemplateType);
-            return sequencingTemplateType;
+            return getSequencingTemplateByLabBatch(sequencingConfig, fctBatch, isPoolTest);
         } else {
             throw new InformaticsServiceException(
                     "Could not find FCT batch for tube " + templateTargetTube.getLabel() + ".");
@@ -190,11 +186,13 @@ public class SequencingTemplateFactory {
                 sequencingConfig.getChemistry().getValue(), sequencingConfig.getReadStructure().getValue());
         Set<LabBatchStartingVessel> startingFCTVessels = fctBatch.getLabBatchStartingVessels();
         List<SequencingTemplateLaneType> lanes = new ArrayList<>();
+        Set<String> regulatoryDesignations = new HashSet<>();
+        Set<String> productNames = new HashSet<>();
         for (LabBatchStartingVessel startingVessel: startingFCTVessels) {
             Iterator<String> positionNames;
             sequencingTemplate.setConcentration(startingVessel.getConcentration());
             Set<SampleInstanceV2> sampleInstances = startingVessel.getLabVessel().getSampleInstancesV2();
-            attachRegulatoryDesignationAndProductOrder(sampleInstances, sequencingTemplate);
+            attachRegulatoryDesignationAndProductOrder(sampleInstances, sequencingTemplate, regulatoryDesignations, productNames);
             if (startingVessel.getVesselPosition() != null) {
                 SequencingTemplateLaneType lane =
                         LimsQueryObjectFactory.createSequencingTemplateLaneType(
@@ -226,6 +224,7 @@ public class SequencingTemplateFactory {
                 }
             }
         }
+        sequencingTemplate.getRegulatoryDesignation().addAll(regulatoryDesignations);
         sequencingTemplate.getLanes().addAll(lanes);
         return sequencingTemplate;
     }
@@ -288,7 +287,10 @@ public class SequencingTemplateFactory {
 
         sequencingTemplate.getLanes().addAll(lanes);
         Set<SampleInstanceV2> sampleInstances = flowcell.getSampleInstancesV2();
-        attachRegulatoryDesignationAndProductOrder(sampleInstances, sequencingTemplate);
+        Set<String> regulatoryDesignations = new HashSet<>();
+        attachRegulatoryDesignationAndProductOrder(sampleInstances, sequencingTemplate, regulatoryDesignations,
+                new HashSet<String>());
+        sequencingTemplate.getRegulatoryDesignation().addAll(regulatoryDesignations);
         return sequencingTemplate;
     }
 
@@ -350,9 +352,9 @@ public class SequencingTemplateFactory {
     }
 
     private void attachRegulatoryDesignationAndProductOrder(Set<SampleInstanceV2> sampleInstances,
-                                                            SequencingTemplateType sequencingTemplateType) {
-        Set<String> regulatoryDesignations = new HashSet<>();
-        List<String> productNames = new ArrayList<>();
+                                                            SequencingTemplateType sequencingTemplateType,
+                                                            Set<String> regulatoryDesignations,
+                                                            Set<String> productNames) {
         for(SampleInstanceV2 sampleInstance: sampleInstances) {
             if (sampleInstance.getSingleBucketEntry() != null) {
                 String regulatoryDesignation = sampleInstance.getSingleBucketEntry().
@@ -375,7 +377,6 @@ public class SequencingTemplateFactory {
                     regulatoryDesignations.contains(ResearchProject.RegulatoryDesignation.CLINICAL_DIAGNOSTICS.name()))){
             throw new InformaticsServiceException("Template tube has mix of Research and Clinical regulatory designations");
         }
-        sequencingTemplateType.getRegulatoryDesignation().addAll(regulatoryDesignations);
 
         if(productNames.isEmpty()) {
             throw new InformaticsServiceException("Could not find any products.");
