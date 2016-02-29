@@ -352,9 +352,9 @@ public class SequencingTemplateFactory {
     }
 
     private void attachRegulatoryDesignationAndProductOrder(Set<SampleInstanceV2> sampleInstances,
-                                                            SequencingTemplateType sequencingTemplateType) {
-        Set<String> regulatoryDesignations = new HashSet<>();
-        List<String> productNames = new ArrayList<>();
+                                                            SequencingTemplateType sequencingTemplateType,
+                                                            Set<String> regulatoryDesignations,
+                                                            Set<String> productNames) {
         for(SampleInstanceV2 sampleInstance: sampleInstances) {
             if (sampleInstance.getSingleBucketEntry() != null) {
                 String regulatoryDesignation = sampleInstance.getSingleBucketEntry().
@@ -377,7 +377,6 @@ public class SequencingTemplateFactory {
                     regulatoryDesignations.contains(ResearchProject.RegulatoryDesignation.CLINICAL_DIAGNOSTICS.name()))){
             throw new InformaticsServiceException("Template tube has mix of Research and Clinical regulatory designations");
         }
-        sequencingTemplateType.getRegulatoryDesignation().addAll(regulatoryDesignations);
 
         if(productNames.isEmpty()) {
             throw new InformaticsServiceException("Could not find any products.");
