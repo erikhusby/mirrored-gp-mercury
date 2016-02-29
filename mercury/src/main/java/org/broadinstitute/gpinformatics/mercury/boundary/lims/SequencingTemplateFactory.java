@@ -351,17 +351,13 @@ public class SequencingTemplateFactory {
 
     private void attachRegulatoryDesignationAndProductOrder(Set<SampleInstanceV2> sampleInstances,
                                                             SequencingTemplateType sequencingTemplateType) {
-        ResearchProject.RegulatoryDesignation regulatoryDesignation = null;
+        Set<String> regulatoryDesignations = new HashSet<>();
         List<String> productNames = new ArrayList<>();
         for(SampleInstanceV2 sampleInstance: sampleInstances) {
             if (sampleInstance.getSingleBucketEntry() != null) {
-                if (regulatoryDesignation == null) {
-                    regulatoryDesignation = sampleInstance.getSingleBucketEntry().
-                            getProductOrder().getResearchProject().getRegulatoryDesignation();
-                } else if (regulatoryDesignation != sampleInstance.getSingleBucketEntry().
-                        getProductOrder().getResearchProject().getRegulatoryDesignation()) {
-                    throw new InformaticsServiceException("Multiple Regulatory Designations found for template tube");
-                }
+                String regulatoryDesignation = sampleInstance.getSingleBucketEntry().
+                        getProductOrder().getResearchProject().getRegulatoryDesignation().name();
+                regulatoryDesignations.add(regulatoryDesignation);
                 String productName = sampleInstance.getSingleBucketEntry().getProductOrder().getProduct().getName();
                 if (!productNames.contains(productName)) {
                     ProductType productType = new ProductType();
@@ -372,15 +368,19 @@ public class SequencingTemplateFactory {
             }
         }
 
-        if(regulatoryDesignation == null) {
+        if(regulatoryDesignations.isEmpty()) {
             throw new InformaticsServiceException("Could not find regulatory designation.");
+        } else if(regulatoryDesignations.contains(ResearchProject.RegulatoryDesignation.RESEARCH_ONLY.name())
+                && (regulatoryDesignations.contains(ResearchProject.RegulatoryDesignation.GENERAL_CLIA_CAP.name()) ||
+                    regulatoryDesignations.contains(ResearchProject.RegulatoryDesignation.CLINICAL_DIAGNOSTICS.name()))){
+            throw new InformaticsServiceException("Template tube has mix of Research and Clinical regulatory designations");
         }
+        sequencingTemplateType.getRegulatoryDesignation().addAll(regulatoryDesignations);
 
         if(productNames.isEmpty()) {
             throw new InformaticsServiceException("Could not find any products.");
         }
 
-        sequencingTemplateType.setRegulatoryDesignation(regulatoryDesignation.name());
     }
 
     private static SequencingConfigDef getSequencingConfig(boolean isPoolTest) {
