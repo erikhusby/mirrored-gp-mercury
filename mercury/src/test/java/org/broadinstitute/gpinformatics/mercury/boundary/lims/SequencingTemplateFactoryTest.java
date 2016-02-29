@@ -312,7 +312,7 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
         assertThat(template.getOnRigChemistry(), is(nullValue()));
         assertThat(template.getOnRigWorkflow(), is(nullValue()));
         assertThat(template.getReadStructure(), is(PRODUCTION_CIGAR));
-        assertThat(template.getRegulatoryDesignation(), Matchers.hasSize(1));
+        assertThat(template.getRegulatoryDesignation(), Matchers.hasSize(3));
         assertThat(template.getRegulatoryDesignation(), Matchers.hasItem("RESEARCH_ONLY"));
         assertThat(template.getProducts(), not(empty()));
         assertThat(template.getLanes().size(), is(2));
@@ -334,7 +334,7 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
         assertThat(template.getOnRigChemistry(), is(nullValue()));
         assertThat(template.getOnRigWorkflow(), is(nullValue()));
         assertThat(template.getReadStructure(), is(PRODUCTION_CIGAR));
-        assertThat(template.getRegulatoryDesignation(), Matchers.hasSize(1));
+        assertThat(template.getRegulatoryDesignation(), Matchers.hasSize(3));
         assertThat(template.getRegulatoryDesignation(), Matchers.hasItem("RESEARCH_ONLY"));
         assertThat(template.getProducts(), not(empty()));
         assertThat(template.getLanes().size(), is(2));
@@ -356,7 +356,7 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
         assertThat(template.getOnRigChemistry(), is(nullValue()));
         assertThat(template.getOnRigWorkflow(), is(nullValue()));
         assertThat(template.getReadStructure(), is(PRODUCTION_CIGAR));
-        assertThat(template.getRegulatoryDesignation(), Matchers.hasSize(1));
+        assertThat(template.getRegulatoryDesignation(), Matchers.hasSize(2));
         assertThat(template.getRegulatoryDesignation(), Matchers.hasItem("RESEARCH_ONLY"));
         assertThat(template.getProducts(), not(empty()));
         assertThat(template.getLanes().size(), is(2));
