@@ -857,7 +857,7 @@ public enum LabEventType {
             LibraryType.NONE_ASSIGNED),
     SONIC_DAUGHTER_PLATE_CREATION("SonicDaughterPlateCreation",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.BSP_AND_MERCURY,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             LibraryType.NONE_ASSIGNED),
     SAMPLE_IMPORT("SampleImport",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,

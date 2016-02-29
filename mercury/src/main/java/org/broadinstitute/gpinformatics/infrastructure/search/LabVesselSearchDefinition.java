@@ -807,8 +807,6 @@ public class LabVesselSearchDefinition {
         });
         searchTerms.add(searchTerm);
 
-        // todo jmt initial pico
-
         return searchTerms;
     }
 
@@ -1180,6 +1178,29 @@ public class LabVesselSearchDefinition {
                 }
 
                 return value;
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Proceed If Out Of Spec");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Set<String> evaluate(Object entity, SearchContext context) {
+                Set<String> results = new HashSet<>();
+                LabVessel labVessel = (LabVessel)entity;
+
+                for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+                    for (ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples()) {
+                        ProductOrderSample.ProceedIfOutOfSpec proceedIfOutOfSpec =
+                                productOrderSample.getProceedIfOutOfSpec();
+                        if (proceedIfOutOfSpec == null) {
+                            proceedIfOutOfSpec = ProductOrderSample.ProceedIfOutOfSpec.NO;
+                        }
+                        results.add(proceedIfOutOfSpec.getDisplayName());
+                    }
+                }
+                return results;
             }
         });
         searchTerms.add(searchTerm);
