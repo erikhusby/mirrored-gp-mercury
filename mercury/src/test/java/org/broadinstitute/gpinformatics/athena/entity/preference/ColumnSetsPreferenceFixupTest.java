@@ -39,7 +39,7 @@ public class ColumnSetsPreferenceFixupTest extends Arquillian {
         return DeploymentBuilder.buildMercuryWar(DEV, "dev");
     }
 
-    @Test
+    @Test(enabled = false)
     public void labMetrics() {
         try {
             userBean.loginOSUser();
