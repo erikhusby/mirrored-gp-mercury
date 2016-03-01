@@ -1,6 +1,10 @@
 package org.broadinstitute.gpinformatics.infrastructure.columns;
 
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -44,10 +48,46 @@ public class MetadataPluginHelper {
 
     /**
      * Appends sample metadata values to the sample row. Framework quietly ignores empty cells.
-     * @param metadata All sample metadata as supplied from LabVessel
+     * @param sample Sample returned as part of a search result
      * @param rowData Reference to the current row data structure
      */
-    public static void addMetadataToRowData( Set<Metadata> metadata, Map< Metadata.Key, List<String>> rowData ) {
+    public static void addSampleMetadataToRowData( MercurySample sample, Map< Metadata.Key, List<String>> rowData ) {
+
+        Set<Metadata> metadata = sample.getMetadata();
+        if (metadata != null && !metadata.isEmpty()) {
+            // When metadata directly attached to sample, use it verbatim.
+            fillInRowData( metadata, rowData );
+        } else {
+            // Metadata not directly attached to sample, try to get it from root sample.
+            // Override material type with type inferred from transfer(s)
+            for (LabVessel sampleVessel : sample.getLabVessel()) {
+                for (SampleInstanceV2 sampleInstance : sampleVessel.getSampleInstancesV2()) {
+                    MercurySample rootSample = sampleInstance.getRootOrEarliestMercurySample();
+                    if (rootSample != null) {
+                        metadata = rootSample.getMetadata();
+                        if (metadata != null && !metadata.isEmpty()) {
+                            fillInRowData( metadata, rowData );
+                            // Replace material type with type from event
+                            MaterialType materialType = sampleVessel.getLatestMaterialTypeFromEventHistory();
+                            //String rootMaterialType = rowData.get(Metadata.Key.MATERIAL_TYPE).size() > 0?rowData.get(Metadata.Key.MATERIAL_TYPE).get(0):"";
+                            if (materialType != null && materialType != MaterialType.NONE) {
+                                rowData.get(Metadata.Key.MATERIAL_TYPE).clear();
+                                rowData.get(Metadata.Key.MATERIAL_TYPE).add(materialType.getDisplayName());
+                                // Overwrite ORIGINAL_MATERIAL_TYPE from root MATERIAL_TYPE?
+                                //rowData.get(Metadata.Key.ORIGINAL_MATERIAL_TYPE).clear();
+                                //rowData.get(Metadata.Key.ORIGINAL_MATERIAL_TYPE).add(rootMaterialType);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Convenience method to fill row cells with metadata values
+     */
+    private static void fillInRowData( Set<Metadata> metadata, Map< Metadata.Key, List<String>> rowData ) {
         for( Metadata meta : metadata ) {
             if( rowData.containsKey(meta.getKey() ) ) {
                 rowData.get(meta.getKey()).add(meta.getValue());
