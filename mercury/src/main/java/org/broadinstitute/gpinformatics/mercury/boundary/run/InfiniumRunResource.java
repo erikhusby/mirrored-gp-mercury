@@ -69,7 +69,7 @@ public class InfiniumRunResource {
     }
 
     private InfiniumRunBean buildRunBean(VesselPosition vesselPosition, LabVessel chip) {
-        InfiniumRunBean infiniumRunBean = null;
+        InfiniumRunBean infiniumRunBean;
         Set<SampleInstanceV2> sampleInstancesAtPositionV2 =
                 chip.getContainerRole().getSampleInstancesAtPositionV2(vesselPosition);
         if (sampleInstancesAtPositionV2.size() == 1) {
@@ -124,7 +124,8 @@ public class InfiniumRunResource {
         private String clusterFilePath;
         private String zCallThresholdsPath;
 
-        public Config(String chipManifestPath, String beadPoolManifestPath, String clusterFilePath, String zCallThresholdsPath) {
+        private Config(String chipManifestPath, String beadPoolManifestPath, String clusterFilePath,
+                String zCallThresholdsPath) {
             this.chipManifestPath = chipManifestPath;
             this.beadPoolManifestPath = beadPoolManifestPath;
             this.clusterFilePath = clusterFilePath;
@@ -148,6 +149,24 @@ public class InfiniumRunResource {
         }
     }
 
+    /*
+SELECT
+	p.pool_name,
+	ici.norm_manifest_unix,
+	ici.manifest_location_unix,
+	ici.cluster_location_unix,
+	ici.zcall_threshold_unix
+FROM
+	esp.infinium_chip_info ici
+	INNER JOIN esp.pool p
+		ON   p.pool_id = ici.pool_id
+WHERE
+	p.pool_name IN ('Broad_GWAS_supplemental_15061359_A1',
+	               'HumanCoreExome-24v1-0_A', 'HumanExome-12v1-2_A',
+	               'HumanOmni2.5-8v1_A', 'HumanOmniExpressExome-8v1_B',
+	               'HumanOmniExpressExome-8v1-3_A', 'HumanOmniExpress-24v1-1_A',
+	               'PsychChip_15048346_B', 'PsychChip_v1-1_15073391_A1');
+     */
     private static final Map<String, Config> mapChipTypeToConfig = new HashMap<>();
     static {
         mapChipTypeToConfig.put("Broad_GWAS_supplemental_15061359_A1", new Config(
