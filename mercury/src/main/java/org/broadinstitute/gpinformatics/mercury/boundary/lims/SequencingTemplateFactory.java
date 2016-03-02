@@ -161,11 +161,7 @@ public class SequencingTemplateFactory {
         }
         if (!labBatches.isEmpty()) {
             LabBatch fctBatch = labBatches.iterator().next();
-            SequencingTemplateType sequencingTemplateType =
-                    getSequencingTemplateByLabBatch(sequencingConfig, fctBatch, isPoolTest);
-            Set<SampleInstanceV2> sampleInstances = templateTargetTube.getSampleInstancesV2();
-            attachRegulatoryDesignationAndProductOrder(sampleInstances, sequencingTemplateType);
-            return sequencingTemplateType;
+            return getSequencingTemplateByLabBatch(sequencingConfig, fctBatch, isPoolTest);
         } else {
             throw new InformaticsServiceException(
                     "Could not find FCT batch for tube " + templateTargetTube.getLabel() + ".");
@@ -190,11 +186,13 @@ public class SequencingTemplateFactory {
                 sequencingConfig.getChemistry().getValue(), sequencingConfig.getReadStructure().getValue());
         Set<LabBatchStartingVessel> startingFCTVessels = fctBatch.getLabBatchStartingVessels();
         List<SequencingTemplateLaneType> lanes = new ArrayList<>();
+        Set<String> regulatoryDesignations = new HashSet<>();
+        Set<String> productNames = new HashSet<>();
         for (LabBatchStartingVessel startingVessel: startingFCTVessels) {
             Iterator<String> positionNames;
             sequencingTemplate.setConcentration(startingVessel.getConcentration());
             Set<SampleInstanceV2> sampleInstances = startingVessel.getLabVessel().getSampleInstancesV2();
-            attachRegulatoryDesignationAndProductOrder(sampleInstances, sequencingTemplate);
+            attachRegulatoryDesignationAndProductOrder(sampleInstances, sequencingTemplate, regulatoryDesignations, productNames);
             if (startingVessel.getVesselPosition() != null) {
                 SequencingTemplateLaneType lane =
                         LimsQueryObjectFactory.createSequencingTemplateLaneType(
@@ -226,6 +224,7 @@ public class SequencingTemplateFactory {
                 }
             }
         }
+        sequencingTemplate.getRegulatoryDesignation().addAll(regulatoryDesignations);
         sequencingTemplate.getLanes().addAll(lanes);
         return sequencingTemplate;
     }
@@ -288,7 +287,10 @@ public class SequencingTemplateFactory {
 
         sequencingTemplate.getLanes().addAll(lanes);
         Set<SampleInstanceV2> sampleInstances = flowcell.getSampleInstancesV2();
-        attachRegulatoryDesignationAndProductOrder(sampleInstances, sequencingTemplate);
+        Set<String> regulatoryDesignations = new HashSet<>();
+        attachRegulatoryDesignationAndProductOrder(sampleInstances, sequencingTemplate, regulatoryDesignations,
+                new HashSet<String>());
+        sequencingTemplate.getRegulatoryDesignation().addAll(regulatoryDesignations);
         return sequencingTemplate;
     }
 
@@ -350,18 +352,14 @@ public class SequencingTemplateFactory {
     }
 
     private void attachRegulatoryDesignationAndProductOrder(Set<SampleInstanceV2> sampleInstances,
-                                                            SequencingTemplateType sequencingTemplateType) {
-        ResearchProject.RegulatoryDesignation regulatoryDesignation = null;
-        List<String> productNames = new ArrayList<>();
+                                                            SequencingTemplateType sequencingTemplateType,
+                                                            Set<String> regulatoryDesignations,
+                                                            Set<String> productNames) {
         for(SampleInstanceV2 sampleInstance: sampleInstances) {
             if (sampleInstance.getSingleBucketEntry() != null) {
-                if (regulatoryDesignation == null) {
-                    regulatoryDesignation = sampleInstance.getSingleBucketEntry().
-                            getProductOrder().getResearchProject().getRegulatoryDesignation();
-                } else if (regulatoryDesignation != sampleInstance.getSingleBucketEntry().
-                        getProductOrder().getResearchProject().getRegulatoryDesignation()) {
-                    throw new InformaticsServiceException("Multiple Regulatory Designations found for template tube");
-                }
+                String regulatoryDesignation = sampleInstance.getSingleBucketEntry().
+                        getProductOrder().getResearchProject().getRegulatoryDesignation().name();
+                regulatoryDesignations.add(regulatoryDesignation);
                 String productName = sampleInstance.getSingleBucketEntry().getProductOrder().getProduct().getName();
                 if (!productNames.contains(productName)) {
                     ProductType productType = new ProductType();
@@ -372,15 +370,18 @@ public class SequencingTemplateFactory {
             }
         }
 
-        if(regulatoryDesignation == null) {
+        if(regulatoryDesignations.isEmpty()) {
             throw new InformaticsServiceException("Could not find regulatory designation.");
+        } else if(regulatoryDesignations.contains(ResearchProject.RegulatoryDesignation.RESEARCH_ONLY.name())
+                && (regulatoryDesignations.contains(ResearchProject.RegulatoryDesignation.GENERAL_CLIA_CAP.name()) ||
+                    regulatoryDesignations.contains(ResearchProject.RegulatoryDesignation.CLINICAL_DIAGNOSTICS.name()))){
+            throw new InformaticsServiceException("Template tube has mix of Research and Clinical regulatory designations");
         }
 
         if(productNames.isEmpty()) {
             throw new InformaticsServiceException("Could not find any products.");
         }
 
-        sequencingTemplateType.setRegulatoryDesignation(regulatoryDesignation.name());
     }
 
     private static SequencingConfigDef getSequencingConfig(boolean isPoolTest) {
