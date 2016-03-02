@@ -1663,7 +1663,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     static {
         mapProductPartToGenoChip.put("P-EX-0017", "Broad_GWAS_supplemental_15061359_A1");
         mapProductPartToGenoChip.put("P-WG-0022", "HumanOmni2.5-8v1_A");
-        mapProductPartToGenoChip.put("P-WG-0023", "HumanOmniExpressExome-8v1_B");
+        mapProductPartToGenoChip.put("P-WG-0023", "HumanOmniExpressExome-8v1-3_A");
         mapProductPartToGenoChip.put("P-WG-0025", "HumanExome-12v1-2_A");
         mapProductPartToGenoChip.put("P-WG-0028", "HumanOmniExpress-24v1-1_A");
         mapProductPartToGenoChip.put("P-WG-0029", "HumanExome-12v1-2_A");
@@ -1671,6 +1671,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         mapProductPartToGenoChip.put("P-WG-0036", "PsychChip_15048346_B");
         mapProductPartToGenoChip.put("P-WG-0053", "Broad_GWAS_supplemental_15061359_A1");
         mapProductPartToGenoChip.put("P-WG-0055", "PsychChip_v1-1_15073391_A1");
+        mapProductPartToGenoChip.put("P-WG-0058", "Multi-EthnicGlobal-8_A1");
     }
 
     public String getGenoChipType() {
