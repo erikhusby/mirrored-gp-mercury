@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.run;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 
 /**
@@ -7,6 +9,7 @@ import javax.xml.bind.annotation.XmlRootElement;
  */
 // todo jmt XSD?
 @XmlRootElement
+@XmlAccessorType(XmlAccessType.FIELD)
 public class InfiniumRunBean {
 
     private String redIDatPath;
@@ -20,6 +23,10 @@ public class InfiniumRunBean {
     private String gender;
     // todo jmt this or something more REST-like?
     private String error;
+
+    /** For JAXB. */
+    public InfiniumRunBean() {
+    }
 
     public InfiniumRunBean(String redIDatPath, String greenIDatPath, String chipManifestPath,
             String beadPoolManifestPath, String clusterFilePath, String zCallThresholdsPath,
