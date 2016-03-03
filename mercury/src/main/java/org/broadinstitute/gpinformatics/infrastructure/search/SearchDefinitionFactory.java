@@ -222,14 +222,17 @@ public class SearchDefinitionFactory {
             } else {
                 // Sample from MercurySample search
                 MercurySample sample = (MercurySample) entity;
+                Set<String> results = new HashSet<>();
 
                 // Material type comes from event
                 if( metaName.equals(Metadata.Key.MATERIAL_TYPE.getDisplayName())
                         && sample.getLabVessel().iterator().hasNext()) {
-                    return getMetadataFromVessel( sample.getLabVessel().iterator().next(), metaName );
+                    // If data from event is available, use it by default, otherwise, continue
+                    if( results.addAll(getMetadataFromVessel( sample.getLabVessel().iterator().next(), metaName ))) {
+                        return results;
+                    }
                 }
 
-                Set<String> results = new HashSet<>();
                 String value = getSampleMetadataForDisplay(sample, metaName);
                 if( value != null && !value.isEmpty() ) {
                     results.add(value);
