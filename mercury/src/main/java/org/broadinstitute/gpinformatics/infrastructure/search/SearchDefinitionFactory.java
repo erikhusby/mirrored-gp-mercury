@@ -266,8 +266,9 @@ public class SearchDefinitionFactory {
             if( metaName.equals(Metadata.Key.MATERIAL_TYPE.getDisplayName())) {
                 MaterialType materialType = labVessel.getLatestMaterialTypeFromEventHistory();
                 if( materialType != null && materialType != MaterialType.NONE ) {
-                    results.add(materialType.getDisplayName());
-                    return results;
+                    if( results.add(materialType.getDisplayName()) ) {
+                        return results;
+                    }
                 }
             }
 

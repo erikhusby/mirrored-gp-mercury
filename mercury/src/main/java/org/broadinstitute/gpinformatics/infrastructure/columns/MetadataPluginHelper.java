@@ -69,13 +69,9 @@ public class MetadataPluginHelper {
                             fillInRowData( metadata, rowData );
                             // Replace material type with type from event
                             MaterialType materialType = sampleVessel.getLatestMaterialTypeFromEventHistory();
-                            //String rootMaterialType = rowData.get(Metadata.Key.MATERIAL_TYPE).size() > 0?rowData.get(Metadata.Key.MATERIAL_TYPE).get(0):"";
                             if (materialType != null && materialType != MaterialType.NONE) {
                                 rowData.get(Metadata.Key.MATERIAL_TYPE).clear();
                                 rowData.get(Metadata.Key.MATERIAL_TYPE).add(materialType.getDisplayName());
-                                // Overwrite ORIGINAL_MATERIAL_TYPE from root MATERIAL_TYPE?
-                                //rowData.get(Metadata.Key.ORIGINAL_MATERIAL_TYPE).clear();
-                                //rowData.get(Metadata.Key.ORIGINAL_MATERIAL_TYPE).add(rootMaterialType);
                             }
                         }
                     }
