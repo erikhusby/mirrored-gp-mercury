@@ -47,7 +47,8 @@ public class SearchInstancePreferenceFixupTest extends Arquillian {
 
             replaceCount += renameSavedResultColumn("Mercury Sample ID", "Root Sample ID", preferenceTypes);
 
-            preferenceDao.persist(new FixupCommentary("GPLIM-3955 Rename " + replaceCount + " Saved Search Column/Term 'Mercury Sample ID' to 'Root Sample ID'"));
+            preferenceDao.persist(new FixupCommentary("GPLIM-3955 Rename " + replaceCount
+                    + " Saved Search Column/Term 'Mercury Sample ID' to 'Root Sample ID'"));
 
             preferenceDao.flush();
 
@@ -61,7 +62,8 @@ public class SearchInstancePreferenceFixupTest extends Arquillian {
      * @return number of renames made
      * @throws Exception
      */
-    private int renameSavedResultColumn( String oldName, String newName, PreferenceType[] preferenceTypes ) throws Exception {
+    private int renameSavedResultColumn( String oldName, String newName, PreferenceType[] preferenceTypes )
+            throws Exception {
         int replaceCount = 0;
 
         for( int i = 0; i < preferenceTypes.length; i++ ) {
@@ -73,7 +75,9 @@ public class SearchInstancePreferenceFixupTest extends Arquillian {
                     return 0;
                 }
 
-                SearchInstanceList searchInstanceList = (SearchInstanceList) preferenceType.getCreator().create(preference.getData());
+                SearchInstanceList searchInstanceList =
+                        (SearchInstanceList) preference.getPreferenceDefinition().getDefinitionValue();
+
                 if (searchInstanceList == null || searchInstanceList.getSearchInstances().isEmpty()) {
                     return 0;
                 }
@@ -82,6 +86,7 @@ public class SearchInstancePreferenceFixupTest extends Arquillian {
                     List<String> names = searchInstance.getPredefinedViewColumns();
                     for (int j = 0; j < names.size(); j++) {
                         if (names.get(j).equals(oldName)) {
+                            System.out.println(names.get(j));
                             names.set(j, newName);
                             replaceCount++;
                         }
