@@ -1,10 +1,17 @@
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
+<%@ page import="org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDto.SubmissionField" %>
+
 <%@ include file="/resources/layout/taglibs.jsp" %>
-
 <%--@elvariable id="userBean" type="org.broadinstitute.gpinformatics.mercury.presentation.UserBean"--%>
+<%--@elvariable id="submissionsTabSelector" type="java.lang.String"--%>
+<%--@elvariable id="submissionType" type="java.lang.String"--%>
+<%--@elvariable id="submissionRepository" type="java.lang.String"--%>
+<%--@elvariable id="researchProject" type="java.lang.String"--%>
+<%--@elvariable id="event" type="java.lang.String"--%>
+<stripes:layout-definition>
+    <stripes:useActionBean var="actionBean" event="${event}"
+                           beanclass="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean"/>
 
-<stripes:useActionBean var="actionBean"
-                       beanclass="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean"/>
 <head>
     <style type="text/css">
         .columnCheckbox { width: 3em; }
@@ -21,13 +28,29 @@
         .columnSubmittedVersion { width: 6em; }
         .columnSubmissionStatus { width: 6em; }
         .columnSubmissionStatusDate { width: 6em; }
-
+        .dataTables_processing {
+            width:400px;
+            border: 2px solid #644436;
+            height: 55px;
+            color: black;
+            background-image: "${ctxpath}/images/spinner.gif";
+        }
         .submission-status-tooltip {
             border-bottom: 1px dotted #000;
             text-decoration: none;
         }
+
+        .control-group select {
+            width: auto;
+        }
     </style>
     <script type="text/javascript">
+        function formatInput(item) {
+            var extraCount = (item.extraCount == undefined) ? "" : item.extraCount;
+            return "<li>" + item.dropdownItem + extraCount + '</li>';
+        }
+//        var oTable;
+
         $j(document).ready(function () {
             $j("#bioProject").tokenInput(
                     "${ctxpath}/projects/project.action?bioProjectAutocomplete=", {
@@ -36,49 +59,125 @@
                         tokenDelimiter: "${actionBean.bioProjectTokenInput.separator}",
                         preventDuplicates: true,
                         tokenLimit: 1,
+                        minChars: 2,
                         resultsFormatter: formatInput,
                         autoSelectFirstResult: true
                     }
             );
 
-        });
-        function formatInput(item) {
-                        var extraCount = (item.extraCount == undefined) ? "" : item.extraCount;
-                        return "<li>" + item.dropdownItem + extraCount + '</li>';
+
+            function createErrorPopover(data, errors) {
+                var span = document.createElement("span");
+                $j(span).addClass("submission-status-tooltip popover-dismiss");
+                $j(span).attr("title", data);
+                $j(span).append(data);
+                $j(span).attr("data-content", errors);
+                return span.outerHTML;
+            }
+
+            var oTable;
+            $j("${submissionsTabSelector}").click(function () {
+            if (oTable == undefined) {
+                function renderCheckbox(data, type, row) {
+                    if (type === 'display') {
+                        var inputTag = document.createElement("input");
+                        $j(inputTag).attr("name", "selectedSubmissionSamples");
+                        $j(inputTag).attr("value", data);
+                        $j(inputTag).attr("type", "checkbox");
+                        $j(inputTag).addClass("shiftCheckbox");
+                        var status = row.<%=SubmissionField.SUBMITTED_STATUS %>;
+                        if (status) {
+                            $j(inputTag).attr('disabled', status);
+                        }
+                        return inputTag.outerHTML;
                     }
-        $j(document).ready(function () {
-            var oTable = $j('#submissionSamples').dataTable({
-                "oTableTools": ttExportDefines,
-                "aaSorting": [
-                        [1, 'asc']
-                ],
-                "aoColumns": [
-                    {"bSortable": false},               //Checkbox
-                    {"bSortable": true},                //Sample
-//                    {"bSortable": false},                //BioSample
-                    {"bSortable": false},               //Data Type
-                    {"bSortable": false},               //PDOs
-                    {"bSortable": false},               //Aggregation Project
-                    {"bSortable": false},               //File Type
-                    {"bSortable": false},               //Version
-                    {"bSortable": false},               //QualityMetric
-                    {"bSortable": false},               //Contamination
-                    {"bSortable": false},               //Fingerprint
-                    {"bSortable": false},               //Lanes in Aggregation
-                    {"bSortable": false},               //Blacklisted Lanes
-                    {"bSortable": false},               //Submitted Version
-                    {"bSortable": false},               //Current Status
-                    {"bSortable": false}                //Status Date
-                ]
-            });
-            $j('.shiftCheckbox').enableCheckboxRangeSelection();
-            $j(".submission-status-tooltip").popover({
-                trigger: "hover",
-                html: "true",
-                "data-container": "body",
-                "data-toggle": "popover"
-            });
-        })
+                    return data;
+                }
+
+                function displayDataList(data, type, row) {
+                    if (type === 'display') {
+                        if (Array.isArray(data)) {
+                            return data.join("<br/>");
+                        }
+                    }
+                    return data;
+                }
+
+                oTable = $j('#submissionSamples').dataTable({
+                    "oLanguage": {
+                        "sProcessing": "Please wait. Gathering data from Mercury, Bass, and Picard. This may take a few minutes.",
+                    },
+                    "oTableTools": ttExportDefines,
+                    "bStateSave": false,
+                    "bProcessing": true,
+                    "bDeferRender": true,
+                    "sAjaxSource": '${ctxpath}/projects/project.action',
+                    "fnServerData": function (sSource, aoData, fnCallback, oSettings) {
+                        aoData.push({"name": "researchProject", "value": "${researchProject}"});
+                        aoData.push({"name": "${event}", "value": "${event}"});
+
+                        oSettings.jqXHR = $j.ajax({
+                            "dataType": 'json',
+                            "url": sSource,
+                            "data": aoData,
+                            "success": function (data, textStatus, jqXHR) {
+                                fnCallback(data, textStatus, jqXHR);
+                            }
+                        });
+                    },
+
+                    //needed when null value is returned in JSON
+                    "aoColumnDefs": [{ "sDefaultContent": "", "aTargets": ["_all"]}],
+                    "aoColumns": [
+                        {"mData": "<%=SubmissionField.SAMPLE_NAME%>", "mRender": renderCheckbox},
+                        {"mData": "<%=SubmissionField.SAMPLE_NAME%>"},
+                        {"mData": "<%=SubmissionField.DATA_TYPE %>"},
+                        { "mData": "<%=SubmissionField.PRODUCT_ORDERS %>", "sWidth": "140px", "sClass": "ellipsis",
+                            "mRender": displayDataList },
+                        {"mData": "<%=SubmissionField.AGGREGATION_PROJECT %>"},
+                        {"mData": "<%=SubmissionField.FILE_TYPE %>"},
+                        {"mData": "<%=SubmissionField.VERSION %>"},
+                        {"mData": "<%=SubmissionField.QUALITY_METRIC %>"},
+                        {"mData": "<%=SubmissionField.CONTAMINATION_STRING %>"},
+                        {"mData": "<%=SubmissionField.FINGERPRINT_LOD %>"},
+                        {"mData": "<%=SubmissionField.LANES_IN_AGGREGATION %>"},
+                        {"mData": "<%=SubmissionField.SUBMITTED_VERSION %>"},
+                        {
+                            "mData": "<%=SubmissionField.SUBMITTED_STATUS %>",
+                            "mRender": function (data, type, row) {
+                                if (type === 'display') {
+                                    var errors = row.<%=SubmissionField.SUBMITTED_ERRORS%>;
+                                    if (errors) {
+                                        return createErrorPopover(data, errors);
+                                    }
+                                }
+                                return data;
+                            }
+                        },
+                        {"mData": "<%=SubmissionField.STATUS_DATE %>"}
+                    ],
+
+                    "fnDrawCallback": function () {
+                        $j('.shiftCheckbox').enableCheckboxRangeSelection();
+                        $j(".submission-status-tooltip").popover({
+                            trigger: "hover",
+                            html: "true",
+                            "data-container": "body",
+                            "data-toggle": "popover"
+                        });
+
+                        $j(".submissionControls").show();
+                        if ($j("#submissionSamples").height() > $j(window).height()){
+                            $j("#bottomSubmitButton").show();
+                        } else {
+                            $j("#bottomSubmitButton").hide();
+                        }
+                    }
+                })
+            }
+            })
+        });
+
     </script>
 </head>
 
@@ -87,13 +186,40 @@
     <stripes:hidden name="submitString"/>
     <stripes:hidden name="researchProject" value="${actionBean.editResearchProject.jiraTicketKey}"/>
 
-    <div class="control-group">
-        <stripes:label for="bioProject" class="control-label">Choose a BioProject *</stripes:label>
+    <div class="submissionControls" style="width: auto; margin-bottom: 20px;display:none" >
+        <div class="control-group">
+            <stripes:label for="bioProject" class="control-label label-form">Choose a BioProject *</stripes:label>
 
-        <div class="controls">
-            <stripes:text id="bioProject" name="bioProjectTokenInput.listOfKeys"/>
+            <div class="controls">
+                <stripes:text id="bioProject" name="bioProjectTokenInput.listOfKeys"/>
+            </div>
         </div>
-    </div>
+        <div class="control-group">
+            <stripes:label for="submissionType"
+                           class="control-label label-form">Choose a Library Descriptor *</stripes:label>
+
+            <div class="controls">
+                <stripes:select id="submissionType" name="selectedSubmissionLibraryDescriptor">
+                    <option>Choose...</option>
+                    <stripes:options-collection label="description" value="name"
+                                                collection="${actionBean.submissionLibraryDescriptors}"/></stripes:select>
+            </div>
+        </div>
+        <div class="control-group">
+            <stripes:label for="submissionRepository"
+                           class="control-label label-form">Choose a Repository *</stripes:label>
+            <div class="controls">
+                <stripes:select id="submissionRepository" name="selectedSubmissionRepository">
+                    <option>Choose...</option>
+                    <stripes:options-collection label="description" value="name"
+                                                collection="${actionBean.activeRepositories}"/>
+                </stripes:select>
+            </div>
+        </div>
+        <stripes:submit name="<%=ResearchProjectActionBean.POST_SUBMISSIONS_ACTION%>"
+                        value="Post Selected Submissions" class="btn submissionControls"
+                        disabled="${!actionBean.submissionAllowed}" style="display:none;"/>
+</div>
 
     <table class="table simple" id="submissionSamples">
         <thead>
@@ -104,9 +230,7 @@
                 <input for="count" type="checkbox" class="checkAll"/>
                 <span id="count" class="checkedCount"></span>
             </th>
-            <th>Sample</th>
-            <%--<th width="80">BioSample</th>--%>
-            <%--<th width="100">BioSample</th>--%>
+            <th width="80">BioSample</th>
             <th class="columnDataType">Data Type</th>
             <th class="columnPDOs">PDOs</th>
             <th class="columnAggregationProject">Agg. Project</th>
@@ -117,82 +241,17 @@
             <th class="columnFingerprint">Fingerprint</th>
             <!-- add # lanes, # lanes blacklisted, notes -->
             <th class="columnLanesInAggregation">Lanes in Agg.</th>
-            <th class="columnBioProject">Bio Project</th>
+                <%--<th class="columnBioProject">Blacklistd</th>--%>
             <th class="columnSubmittedVersion">Submitted Version</th>
             <th class="columnSubmissionStatus">Current Status</th>
             <th class="columnSubmissionStatusDate">Status Date</th>
 
         </tr>
         </thead>
-        <tbody>
-        <!-- http://localhost:8080/Mercury/projects/project.action?view=&researchProject=RP-13 -->
-        <!-- http://localhost:8080/Mercury/projects/project.action?view=&researchProject=RP-356 -->
-        <!-- $j('.fileCheckbox').children()[0].checked = true -->
-        <!-- $j('.fileCheckbox').data('contamination') -->
-
-
-        <c:forEach items="${actionBean.submissionSamples}" var="submissionSample">
-            <tr>
-                <td>
-                    <stripes:checkbox name="selectedSubmissionSamples" class="shiftCheckbox"
-                                      value="${submissionSample.sampleName}" disabled="${not empty submissionSample.submittedStatus ? 'disabled' : ''}" />
-                </td>
-
-                <td>${submissionSample.sampleName}</td>
-                <%--<td><stripes:text name="bioSamples[${submissionSample.sampleName}]" size="4"/></td>--%>
-                <%--<td>&lt;%&ndash;bio-sample&ndash;%&gt;</td>--%>
-                <td>${submissionSample.dataType}</td>
-                <td style="padding: 5px;
-                                               text-align: center;">
-                    <table class="simple" style="table-layout: fixed;">
-                        <c:forEach items="${submissionSample.productOrders}" var="pdo">
-                            <tr>
-                                <td width="60">${pdo.businessKey}</td>
-                                <td style="max-width: 140px; min-width: 100px; overflow: hidden;
-                                text-overflow: ellipsis; white-space: nowrap;"
-                                    class="ellipsis"
-                                    title="${pdo.product.productName}">
-                                        ${pdo.product.productName}</td>
-                            </tr>
-                        </c:forEach>
-                    </table>
-                </td>
-                <td> ${submissionSample.aggregationProject} </td>
-                <td> ${submissionSample.fileType} </td>
-                <td> ${submissionSample.version}</td>
-                <td> ${submissionSample.qualityMetricString}</td>
-                <td>${submissionSample.contaminationString}</td>
-                <td>${submissionSample.fingerprintLOD.displayString()}</td>
-                <td>${submissionSample.lanesInAggregation}</td>
-                <td>${submissionSample.bioProject}</td>
-                <td>${submissionSample.version}</td>
-                <td>
-                        <c:choose><c:when test="${fn:length(submissionSample.submittedErrorsArray)>0}">
-                        <span class="submission-status-tooltip popover-dismiss"
-                              title="${ submissionSample.submittedStatus}"
-                              data-content="${fn:join(submissionSample.submittedErrorsArray, "<br/>")}">
-                          ${submissionSample.submittedStatus}
-                        </span>
-                        </c:when>
-                        <c:otherwise>${submissionSample.submittedStatus}</c:otherwise></c:choose>
-                </td>
-                <td>${submissionSample.statusDate}</td>
-            </tr>
-        </c:forEach>
-        </tbody>
     </table>
-    <div class="span8">
-        <c:choose>
-            <c:when test="${actionBean.submissionAllowed}">
-                <stripes:submit name="<%=ResearchProjectActionBean.POST_SUBMISSIONS_ACTION%>" value="Post Selected Submissions"
-                                class="btn btn-primary" id="postSubmissionBtn"/>
-            </c:when>
-            <c:otherwise>
-                You do not have permissions to submit data for this project.
-            </c:otherwise>
-        </c:choose>
+    <stripes:submit name="<%=ResearchProjectActionBean.POST_SUBMISSIONS_ACTION%>"
+                    id="bottomSubmitButton" value="Post Selected Submissions" class="btn submissionControls"
+                    disabled="${!actionBean.submissionAllowed}" style="display:none;"/>
 
-    </div>
-
-    <%--<button>Submit these files</button>--%>
 </stripes:form>
+</stripes:layout-definition>

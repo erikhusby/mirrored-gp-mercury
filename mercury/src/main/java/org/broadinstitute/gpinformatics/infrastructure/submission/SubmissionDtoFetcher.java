@@ -24,11 +24,10 @@ import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassSearchService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.AggregationMetricsFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 
@@ -129,7 +128,7 @@ public class SubmissionDtoFetcher {
         List<String> samples = new ArrayList<>();
         List<Integer> versions = new ArrayList<>();
         for (BassDTO bassDTO : bassDTOMap.values()) {
-            log.info(String.format("Fetching Metrics aggregations for project: %s, sample: %s, version: %d",
+            log.debug(String.format("Fetching Metrics aggregations for project: %s, sample: %s, version: %d",
                     researchProject.getBusinessKey(), bassDTO.getSample(), bassDTO.getVersion()));
             projects.add(bassDTO.getProject());
             samples.add(bassDTO.getSample());

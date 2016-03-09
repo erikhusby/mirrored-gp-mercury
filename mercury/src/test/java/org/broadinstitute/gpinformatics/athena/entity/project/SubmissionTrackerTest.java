@@ -1,5 +1,8 @@
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
+import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionLibraryDescriptor;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionRepository;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.testng.Assert;
@@ -15,11 +18,16 @@ public class SubmissionTrackerTest {
     public static String testFileName = "/test/path/file2.bam";
 
     public static String testVersion = "v1";
+    public static SubmissionRepository testRepository =
+            new SubmissionRepository(SubmissionRepository.DEFAULT_REPOSITORY_NAME, "description");
+    public static SubmissionLibraryDescriptor testLibraryDescriptor = ProductFamily.defaultSubmissionType();
 
     public void testBuildSubmissionTracker() {
         Date testStartDate = new Date();
 
-        SubmissionTrackerStub tracker = new SubmissionTrackerStub(testAccessionID, testFileName, testVersion);
+        SubmissionTrackerStub tracker =
+                new SubmissionTrackerStub(testAccessionID, testFileName, testVersion, testRepository,
+                        testLibraryDescriptor);
 
         Assert.assertNotNull(tracker);
 
@@ -59,12 +67,16 @@ public class SubmissionTrackerTest {
             super();
         }
 
-        public SubmissionTrackerStub(String submittedSampleName, String fileName, String version) {
-            super(submittedSampleName, fileName, version);
+        public SubmissionTrackerStub(String submittedSampleName, String fileName, String version,
+                                     SubmissionRepository repository, SubmissionLibraryDescriptor libraryDescriptor) {
+            super(submittedSampleName, fileName, version, repository, libraryDescriptor);
         }
 
-        public SubmissionTrackerStub(Long submissionTrackerId, String testAccessionID, String testFileName, String testVersion) {
-            super(submissionTrackerId, testAccessionID, testFileName, testVersion);
+        public SubmissionTrackerStub(Long submissionTrackerId, String testAccessionID, String testFileName,
+                                     String testVersion, SubmissionRepository repository,
+                                     SubmissionLibraryDescriptor submissionLibraryDescriptor) {
+            super(submissionTrackerId, testAccessionID, testFileName, testVersion, repository,
+                    submissionLibraryDescriptor);
         }
 
         @Override

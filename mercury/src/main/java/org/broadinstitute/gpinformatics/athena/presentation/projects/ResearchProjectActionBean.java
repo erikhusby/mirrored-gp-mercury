@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.presentation.projects;
 
+import com.google.common.collect.Collections2;
 import net.sourceforge.stripes.action.After;
 import net.sourceforge.stripes.action.Before;
 import net.sourceforge.stripes.action.DefaultHandler;
@@ -49,17 +50,22 @@ import org.broadinstitute.gpinformatics.infrastructure.collaborate.Collaboration
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDto;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDtoFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionLibraryDescriptor;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionRepository;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionStatusDetailBean;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionsService;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.AlignerDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.ReferenceSequenceDao;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import javax.inject.Inject;
+import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -67,8 +73,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * This class is for research projects action bean / web page.
@@ -124,6 +132,20 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     @Inject
     private BioProjectTokenInput bioProjectTokenInput;
+
+    @Inject
+    private SubmissionsService submissionsService;
+
+    private List<SubmissionRepository> submissionRepositories;
+
+    private List<SubmissionLibraryDescriptor> submissionLibraryDescriptors;
+
+    private SubmissionLibraryDescriptor submissionLibraryDescriptor;
+
+    private SubmissionRepository submissionRepository;
+
+    private String selectedSubmissionLibraryDescriptor;
+    private String selectedSubmissionRepository;
 
     @Validate(required = true, on = {EDIT_ACTION, VIEW_ACTION, BEGIN_COLLABORATION_ACTION})
     @Inject
@@ -287,6 +309,16 @@ public class ResearchProjectActionBean extends CoreActionBean {
                 collaborationData = null;
                 validCollaborationPortal = false;
             }
+            if (submissionLibraryDescriptor == null) {
+                submissionLibraryDescriptor = findDefaultSubmissionType(editResearchProject);
+                if (submissionLibraryDescriptor != null) {
+                    selectedSubmissionLibraryDescriptor = submissionLibraryDescriptor.getName();
+                }
+            }
+            if (submissionRepository == null) {
+                submissionRepository = editResearchProject.getSubmissionRepository();
+                selectedSubmissionRepository = submissionRepository.getName();
+            }
         } else {
             if (getUserBean().isValidBspUser()) {
                 editResearchProject = new ResearchProject(getUserBean().getBspUser());
@@ -295,6 +327,8 @@ public class ResearchProjectActionBean extends CoreActionBean {
             }
         }
 
+        setSubmissionLibraryDescriptors(submissionsService.getSubmissionLibraryDescriptors());
+        setSubmissionRepositories(submissionsService.getSubmissionRepositories());
         populateTokenListsFromObjectData();
 
         if (StringUtils.isBlank(editResearchProject.getReferenceSequenceKey())) {
@@ -308,6 +342,18 @@ public class ResearchProjectActionBean extends CoreActionBean {
         }
 
         progressFetcher = new CompletionStatusFetcher(productOrderDao.getProgress(productOrderIds));
+    }
+
+    private SubmissionLibraryDescriptor findDefaultSubmissionType(ResearchProject researchProject) {
+        SubmissionLibraryDescriptor defaultSubmissionLibraryDescriptor = null;
+        Set<SubmissionLibraryDescriptor> projectSubmissionLibraryDescriptors =new HashSet<>();
+        for (ProductOrder productOrder : researchProject.getProductOrders()) {
+            projectSubmissionLibraryDescriptors.add(productOrder.getProduct().getProductFamily().getSubmissionType());
+        }
+        if (projectSubmissionLibraryDescriptors.size() == 1) {
+            defaultSubmissionLibraryDescriptor = projectSubmissionLibraryDescriptors.iterator().next();
+        }
+        return defaultSubmissionLibraryDescriptor;
     }
 
     /**
@@ -807,8 +853,16 @@ public class ResearchProjectActionBean extends CoreActionBean {
     }
 
     @HandlesEvent(VIEW_SUBMISSIONS_ACTION)
-    public Resolution viewSubmissions() {
-        return new ForwardResolution(PROJECT_SUBMISSIONS_PAGE);
+    public Resolution viewSubmissions() throws IOException, JSONException {
+        submissionLibraryDescriptor =  findDefaultSubmissionType(editResearchProject);
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        final Map<String, Object> submissionSamplesMap = new HashMap<String, Object>(){{
+            put("aaData", submissionSamples);
+        }};
+        String submissionSamplesData = objectMapper.writeValueAsString(submissionSamples);
+
+        return createTextResolution(submissionSamplesData);
     }
 
     /**
@@ -857,7 +911,19 @@ public class ResearchProjectActionBean extends CoreActionBean {
         BioProject selectedProject = bioProjectTokenInput.getTokenObject();
 
         if (selectedProject == null) {
-            addGlobalValidationError("You must select a bio project in order to post for submissions");
+            addGlobalValidationError("You must select a BioProject in order to post for submissions.");
+            errors = true;
+        }
+        submissionLibraryDescriptor = submissionsService.findSubmissionTypeByKey(selectedSubmissionLibraryDescriptor);
+        if (submissionLibraryDescriptor == null) {
+            addGlobalValidationError("You must select a submission type in order to post for submissions.");
+            errors = true;
+        }
+
+        submissionRepository = submissionsService.findRepositoryByKey(selectedSubmissionRepository);
+
+        if (submissionRepository == null) {
+            addGlobalValidationError("You must select a submission repository in order to post for submissions.");
             errors = true;
         }
         if (!errors) {
@@ -871,8 +937,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
             try {
                 Collection<SubmissionStatusDetailBean> submissionStatuses =
-                        researchProjectEjb.processSubmissions(researchProject,
-                                new BioProject(selectedProject.getAccession()), selectedSubmissions);
+                        researchProjectEjb
+                                .processSubmissions(researchProject, new BioProject(selectedProject.getAccession()),
+                                        selectedSubmissions, submissionRepository, submissionLibraryDescriptor);
                 addMessage("The selected samples for submission have been successfully posted to NCBI.  See the " +
                            "Submission Requests tab for further details");
             } catch (InformaticsServiceException | ValidationException e) {
@@ -1129,6 +1196,22 @@ public class ResearchProjectActionBean extends CoreActionBean {
         this.submissionSamples = submissionSamples;
     }
 
+    public List<SubmissionRepository> getSubmissionRepositories() {
+        return submissionRepositories;
+    }
+
+    public void setSubmissionRepositories(List<SubmissionRepository> submissionRepositories) {
+        this.submissionRepositories = submissionRepositories;
+    }
+
+    public List<SubmissionLibraryDescriptor> getSubmissionLibraryDescriptors() {
+        return submissionLibraryDescriptors;
+    }
+
+    public void setSubmissionLibraryDescriptors(List<SubmissionLibraryDescriptor> submissionLibraryDescriptors) {
+        this.submissionLibraryDescriptors = submissionLibraryDescriptors;
+    }
+
     public BioProjectTokenInput getBioProjectTokenInput() {
         return bioProjectTokenInput;
     }
@@ -1179,5 +1262,42 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public String getComplianceStatement() {
         return String.format(ResearchProject.REGULATORY_COMPLIANCE_STATEMENT,
                 "orders created from this Research Project involve");
+    }
+
+    public SubmissionLibraryDescriptor getSubmissionLibraryDescriptor() {
+        return submissionLibraryDescriptor;
+    }
+
+    public void setSubmissionLibraryDescriptor(SubmissionLibraryDescriptor submissionLibraryDescriptor) {
+        this.submissionLibraryDescriptor = submissionLibraryDescriptor;
+    }
+
+    public SubmissionRepository getSubmissionRepository() {
+        return submissionRepository;
+    }
+
+    public void setSubmissionRepository(SubmissionRepository submissionRepository) {
+        this.submissionRepository = submissionRepository;
+    }
+
+    public String getSelectedSubmissionLibraryDescriptor() {
+        return selectedSubmissionLibraryDescriptor;
+    }
+
+    public void setSelectedSubmissionLibraryDescriptor(String selectedSubmissionLibraryDescriptor) {
+        this.selectedSubmissionLibraryDescriptor = selectedSubmissionLibraryDescriptor;
+    }
+
+    public String getSelectedSubmissionRepository() {
+        return selectedSubmissionRepository;
+    }
+
+    public void setSelectedSubmissionRepository(String selectedSubmissionRepository) {
+        this.selectedSubmissionRepository = selectedSubmissionRepository;
+    }
+
+
+    public Collection<SubmissionRepository> getActiveRepositories() {
+        return Collections2.filter(getSubmissionRepositories(), SubmissionRepository.activeRepositoryPredicate);
     }
 }

@@ -19,66 +19,80 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.not;
 
 @Test(groups = TestGroups.DATABASE_FREE)
-public class SubmissionTupleTest {
+public class SubmissionKeyTest {
     public void testNullSample() {
-        SubmissionTuple tuple1 = null;
-        SubmissionTuple tuple2 = new SubmissionTuple("b", "b", "c");
+        SubmissionKey tuple1 = null;
+        SubmissionKey tuple2 = new SubmissionKey("b", "b", "c");
         assertThat(tuple1, not(equalTo(tuple2)));
         assertThat(tuple2, not(equalTo(tuple1)));
     }
 
     public void testSampleNotEquals() {
-        SubmissionTuple tuple1 = new SubmissionTuple("a", "b", "c");
-        SubmissionTuple tuple2 = new SubmissionTuple("b", "b", "c");
+        SubmissionKey tuple1 = new SubmissionKey("a", "b", "c");
+        SubmissionKey tuple2 = new SubmissionKey("b", "b", "c");
         assertThat(tuple1, not(equalTo(tuple2)));
         assertThat(tuple2, not(equalTo(tuple1)));
     }
 
+    public void testRepositoryNameDiffersNotEquals() {
+        SubmissionKey tuple1 = new SubmissionKey("b", "b", "c", "NCBI_PROTECTED", "Whole Genome");
+        SubmissionKey repositoryNameDiffers = new SubmissionKey("b", "b", "c", "NCBI_PRIVATE", "Whole Genome");
+        assertThat(tuple1, not(equalTo(repositoryNameDiffers)));
+        assertThat(repositoryNameDiffers, not(equalTo(tuple1)));
+    }
+
+    public void testLibraryNameDiffersNotEquals() {
+        SubmissionKey tuple1 = new SubmissionKey("b", "b", "c", "NCBI_PROTECTED", "Whole Genome");
+        SubmissionKey libraryNameDiffers = new SubmissionKey("b", "b", "c", "NCBI_PROTECTED", "Partially Hydrogenated Genome");
+        assertThat(tuple1, not(equalTo(libraryNameDiffers)));
+        assertThat(libraryNameDiffers, not(equalTo(tuple1)));
+    }
+
     public void testEquals() {
-        SubmissionTuple tuple1 = new SubmissionTuple("a", "b", "c");
-        SubmissionTuple tuple2 = new SubmissionTuple("a", "b", "c");
+        SubmissionKey tuple1 = new SubmissionKey("a", "b", "c");
+        SubmissionKey tuple2 = new SubmissionKey("a", "b", "c");
         assertThat(tuple1, equalTo(tuple2));
         assertThat(tuple2, equalTo(tuple1));
     }
 
     public void testNullEquals() {
-        SubmissionTuple tuple1 = null;
-        SubmissionTuple tuple2 = null;
+        SubmissionKey tuple1 = null;
+        SubmissionKey tuple2 = null;
         assertThat(tuple1, equalTo(tuple2));
         assertThat(tuple2, equalTo(tuple1));
     }
 
     public void testFileNotEquals() {
-        SubmissionTuple tuple1 = new SubmissionTuple("a", "b", "c");
-        SubmissionTuple tuple2 = new SubmissionTuple("a", "c", "c");
+        SubmissionKey tuple1 = new SubmissionKey("a", "b", "c");
+        SubmissionKey tuple2 = new SubmissionKey("a", "c", "c");
         assertThat(tuple1, not(equalTo(tuple2)));
         assertThat(tuple2, not(equalTo(tuple1)));
     }
 
     public void testVersionNotEquals() {
-        SubmissionTuple tuple1 = new SubmissionTuple("a", "b", "c");
-        SubmissionTuple tuple2 = new SubmissionTuple("a", "b", "d");
+        SubmissionKey tuple1 = new SubmissionKey("a", "b", "c");
+        SubmissionKey tuple2 = new SubmissionKey("a", "b", "d");
         assertThat(tuple1, not(equalTo(tuple2)));
         assertThat(tuple2, not(equalTo(tuple1)));
     }
 
     public void testNullSampleNotEquals() {
-        SubmissionTuple tuple1 = new SubmissionTuple(null, "b", "c");
-        SubmissionTuple tuple2 = new SubmissionTuple("a", "b", "d");
+        SubmissionKey tuple1 = new SubmissionKey(null, "b", "c");
+        SubmissionKey tuple2 = new SubmissionKey("a", "b", "d");
         assertThat(tuple1, not(equalTo(tuple2)));
         assertThat(tuple2, not(equalTo(tuple1)));
     }
 
     public void testNullFileNotEquals() {
-        SubmissionTuple tuple1 = new SubmissionTuple("a", null, "c");
-        SubmissionTuple tuple2 = new SubmissionTuple("a", "b", "d");
+        SubmissionKey tuple1 = new SubmissionKey("a", null, "c");
+        SubmissionKey tuple2 = new SubmissionKey("a", "b", "d");
         assertThat(tuple1, not(equalTo(tuple2)));
         assertThat(tuple2, not(equalTo(tuple1)));
     }
 
     public void testNullVersionNotEquals() {
-        SubmissionTuple tuple1 = new SubmissionTuple("a", "b", null);
-        SubmissionTuple tuple2 = new SubmissionTuple("a", "b", "d");
+        SubmissionKey tuple1 = new SubmissionKey("a", "b", null);
+        SubmissionKey tuple2 = new SubmissionKey("a", "b", "d");
         assertThat(tuple1, not(equalTo(tuple2)));
         assertThat(tuple2, not(equalTo(tuple1)));
     }

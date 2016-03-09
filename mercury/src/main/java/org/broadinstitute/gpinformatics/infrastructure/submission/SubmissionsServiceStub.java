@@ -10,6 +10,7 @@ import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 import java.util.Random;
 
 @Stub
@@ -17,6 +18,9 @@ import java.util.Random;
 public class SubmissionsServiceStub implements SubmissionsService {
     public static final String TEST_PROJECT_NAME = "Primary submission";
     public static final String STUB_UPDATE_DATE = "Dec 17, 2001 9:30 AM";
+    public static final SubmissionRepository ACTIVE_REPO = new SubmissionRepository("ACTIVE_REPO", "Active Repository", true);
+    public static final SubmissionRepository INACTIVE_REPO = new SubmissionRepository("INACTIVE_REPO", "Inactive Repository", false);
+
 
     private Date getDateOfLastUpdate() {
         Date dateLastUpdate = null;
@@ -88,5 +92,30 @@ public class SubmissionsServiceStub implements SubmissionsService {
 
     private static String generateTestName(String prefix) {
         return String.format("%s%d", prefix, new Random().nextInt(9999));
+    }
+
+    @Override
+    public List<SubmissionRepository> getSubmissionRepositories() {
+        return Arrays.asList(ACTIVE_REPO, INACTIVE_REPO);
+    }
+
+    @Override
+    public List<SubmissionLibraryDescriptor> getSubmissionLibraryDescriptors() {
+        return null;
+    }
+
+    @Override
+    public SubmissionRepository findRepositoryByKey(String key) {
+        return null;
+    }
+
+    @Override
+    public SubmissionRepository repositorySearch(String siteName) {
+        return null;
+    }
+
+    @Override
+    public SubmissionLibraryDescriptor findSubmissionTypeByKey(String selectedSubmissionDescriptor) {
+        return null;
     }
 }

@@ -15,7 +15,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTuple;
+import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionKey;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -48,8 +48,8 @@ public class BassDTO {
     }
 
 // todo: should be in interface?
-    public SubmissionTuple getTuple() {
-        return new SubmissionTuple(getSample(), getFilePath(), getVersion().toString());
+    public SubmissionKey getTuple() {
+        return new SubmissionKey(getSample(), getFilePath(), getVersion().toString());
     }
 
     private String getFilePath() {

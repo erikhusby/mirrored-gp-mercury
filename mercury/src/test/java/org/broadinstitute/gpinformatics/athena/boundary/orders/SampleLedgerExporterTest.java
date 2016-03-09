@@ -72,7 +72,7 @@ public class SampleLedgerExporterTest {
          */
         ProductFamily mockProductFamily = Mockito.mock(ProductFamily.class);
         when(mockProductFamily.isSupportsNumberOfLanes()).thenReturn(true);
-        when(mockProductFamily.getName()).thenReturn(ProductFamily.ProductFamilyName.EXOME.getFamilyName());
+        when(mockProductFamily.getName()).thenReturn(ProductFamily.ProductFamilyInfo.EXOME.getFamilyName());
 
         /*
          * Create product, with a known primary price item, and a research project.

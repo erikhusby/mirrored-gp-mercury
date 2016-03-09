@@ -524,7 +524,7 @@ public class ReworkEjbTest extends Arquillian {
      * On product has a mercury-tracked workflow; the other does not.
      */
     private void setupProducts() {
-        String productFamilyName = ProductFamily.ProductFamilyName.EXOME.getFamilyName();
+        String productFamilyName = ProductFamily.ProductFamilyInfo.EXOME.getFamilyName();
         ProductFamily productFamily = productFamilyDao.find(productFamilyName);
 
         if (productFamily == null) {

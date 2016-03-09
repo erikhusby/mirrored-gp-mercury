@@ -15,16 +15,20 @@ import com.sun.istack.Nullable;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.LevelOfDetection;
+import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonProperty;
+import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 import javax.annotation.Nonnull;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 
+@JsonSerialize(include = JsonSerialize.Inclusion.NON_EMPTY)
 public class SubmissionDto {
     public static final FastDateFormat DATE_FORMAT =
             FastDateFormat.getDateTimeInstance(FastDateFormat.MEDIUM, FastDateFormat.SHORT);
@@ -42,50 +46,70 @@ public class SubmissionDto {
         this.statusDetailBean = statusDetailBean;
     }
 
+    @JsonIgnore
     public String getUuid() {
         return statusDetailBean.getUuid();
     }
 
+    @JsonIgnore
     public BassDTO getBassDTO() {
         return bassDTO;
     }
 
+    @JsonIgnore
     public Aggregation getAggregation() {
         return aggregation;
     }
 
+    @JsonProperty(value = SubmissionField.SAMPLE_NAME)
     public String getSampleName() {
         return bassDTO.getSample();
     }
 
+    @JsonProperty(value = SubmissionField.DATA_TYPE)
     public String getDataType() {
         return bassDTO.getDatatype();
+    }
+
+    @JsonProperty(value = SubmissionField.PRODUCT_ORDERS)
+    public Collection<String> getProductOrdersString() {
+        Collection<String> values = new HashSet<>(productOrders.size());
+        for (ProductOrder productOrder : productOrders) {
+            values.add(String.format("%s: %s", productOrder.getJiraTicketKey(), productOrder.getTitle()));
+        }
+        return values;
     }
 
     public Collection<ProductOrder> getProductOrders() {
         return productOrders;
     }
 
+    @JsonProperty(value = SubmissionField.AGGREGATION_PROJECT)
     public String getAggregationProject() {
         return bassDTO.getProject();
     }
 
+    @JsonProperty(value = SubmissionField.FILE_TYPE)
     public String getFileType() {
         return bassDTO.getFileType();
     }
 
+    @JsonProperty(value = SubmissionField.VERSION)
     public int getVersion() {
         return bassDTO.getVersion();
     }
 
+    @JsonIgnore
     public Double getQualityMetric() {
         return aggregation.getQualityMetric(bassDTO.getDatatype());
     }
 
+    @JsonProperty(value = SubmissionField.QUALITY_METRIC)
     public String getQualityMetricString() {
         return aggregation.getQualityMetricString(bassDTO.getDatatype());
     }
 
+    @JsonProperty(value = SubmissionField.CONTAMINATION_STRING)
     public String getContaminationString() {
         return aggregation.getContaminationString();
     }
@@ -94,35 +118,50 @@ public class SubmissionDto {
         return aggregation.getAggregationContam().getPctContamination();
     }
 
+    @JsonIgnore
     public Date getDateCompleted() {
         return null;
     }
 
+    @JsonIgnore
     public LevelOfDetection getFingerprintLOD() {
         return aggregation.getLevelOfDetection();
     }
 
+    @JsonProperty(value = SubmissionField.FINGERPRINT_LOD)
+    public String getFingerprintLODString() {
+        return String.format("%2.2f/%2.2f",
+                aggregation.getLevelOfDetection().getMin(),
+                aggregation.getLevelOfDetection().getMax()
+        );
+    }
+
+    @JsonProperty(value = SubmissionField.RESEARCH_PROJECT)
     public String getResearchProject() {
         return bassDTO.getRpid();
     }
 
+    @JsonProperty(value = SubmissionField.LANES_IN_AGGREGATION)
     public int getLanesInAggregation() {
         return aggregation.getReadGroupCount();
     }
 
+    @JsonProperty(value = SubmissionField.FILE_NAME)
     public String getFileName() {
         return bassDTO.getFileName();
     }
 
-
+    @JsonIgnore
     public String getFilePath() {
         return bassDTO.getPath();
     }
 
+    @JsonProperty(value = SubmissionField.SUBMITTED_VERSION)
     public int getSubmittedVersion() {
         return bassDTO.getVersion();
     }
 
+    @JsonProperty(value = SubmissionField.SUBMITTED_ERRORS)
     public List<String> getSubmittedErrors() {
         if (statusDetailBean != null) {
             return statusDetailBean.getErrors();
@@ -130,11 +169,13 @@ public class SubmissionDto {
         return Collections.emptyList();
     }
 
+    @JsonIgnore
     public String[] getSubmittedErrorsArray() {
         List<String> errors = getSubmittedErrors();
         return errors.toArray(new String[errors.size()]);
     }
 
+    @JsonProperty(value = SubmissionField.SUBMITTED_STATUS)
     public String getSubmittedStatus() {
         String status = "";
         if (statusDetailBean != null) {
@@ -143,19 +184,44 @@ public class SubmissionDto {
         return status;
     }
 
+
+    @JsonProperty(value = SubmissionField.STATUS_DATE)
     public String getStatusDate() {
-        String format = "";
+        String statusDate = "";
         if (statusDetailBean != null && statusDetailBean.getLastStatusUpdate() != null) {
-            format = DATE_FORMAT.format(statusDetailBean.getLastStatusUpdate());
+            statusDate = DATE_FORMAT.format(statusDetailBean.getLastStatusUpdate());
         }
-        return format;
+        return statusDate;
     }
 
+    @JsonProperty(value = SubmissionField.BIO_PROJECT)
     public String getBioProject() {
         String bioproject = "";
         if (statusDetailBean != null && statusDetailBean.getBioproject() != null) {
             bioproject = statusDetailBean.getBioproject().getAccession();
         }
         return bioproject;
+    }
+
+
+    public class SubmissionField {
+        public static final String SAMPLE_NAME = "sampleName";
+        public static final String DATA_TYPE = "dataType";
+        public static final String RESEARCH_PROJECT = "researchProject";;
+        public static final String AGGREGATION_PROJECT = "aggregationProject";
+        public static final String FILE_NAME = "fileName";
+        public static final String FILE_TYPE = "fileType";
+        public static final String VERSION = "version";
+        public static final String QUALITY_METRIC = "qualityMetric";
+        public static final String CONTAMINATION_STRING = "contaminationString";
+        public static final String FINGERPRINT_LOD = "fingerprintLOD";
+        public static final String LANES_IN_AGGREGATION = "lanesInAggregation";
+        public static final String SUBMITTED_VERSION = "submittedVersion";
+        public static final String SUBMITTED_STATUS = "submittedStatus";
+//        public static final String DATE_COMPLETED = "dateCompleted";
+        public static final String BIO_PROJECT = "bioProject";
+        public static final String PRODUCT_ORDERS = "productOrders";
+        public static final String SUBMITTED_ERRORS = "submittedErrors";
+        public static final String STATUS_DATE = "statusDate";
     }
 }

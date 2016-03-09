@@ -17,15 +17,26 @@ import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 
 import java.io.Serializable;
 
-public class SubmissionTuple implements Serializable {
+public class SubmissionKey implements Serializable {
+    private static final long serialVersionUID = 1262062294730627888L;
     private final String sampleName;
     private final String fileName;
     private final String version;
+    private final String repository;
+    private final String libraryDescriptor;
 
-    public SubmissionTuple(String sampleName, String fileName, String version) {
+    public SubmissionKey(String sampleName, String fileName, String version,
+                         String repository,
+                         String libraryDescriptor) {
         this.sampleName = sampleName;
         this.fileName = fileName;
         this.version = version;
+        this.repository = repository;
+        this.libraryDescriptor = libraryDescriptor;
+    }
+
+    public SubmissionKey(String sampleName, String fileName, String version) {
+        this(sampleName, fileName, version, null, null);
     }
 
     @Override
@@ -37,15 +48,18 @@ public class SubmissionTuple implements Serializable {
             return false;
         }
 
-        SubmissionTuple that = OrmUtil.proxySafeCast(o, SubmissionTuple.class);
+        SubmissionKey that = OrmUtil.proxySafeCast(o, SubmissionKey.class);
         return new EqualsBuilder()
                 .append(this.sampleName, that.sampleName)
                 .append(this.fileName, that.fileName)
-                .append(this.version, that.version).isEquals();
+                .append(this.version, that.version)
+                .append(this.repository, that.repository)
+                .append(this.libraryDescriptor, that.libraryDescriptor).isEquals();
     }
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder().append(this.sampleName).append(this.fileName).append(this.version).hashCode();
+        return new HashCodeBuilder().append(this.sampleName).append(this.fileName).append(this.version)
+                .append(repository).append(libraryDescriptor).hashCode();
     }
 }

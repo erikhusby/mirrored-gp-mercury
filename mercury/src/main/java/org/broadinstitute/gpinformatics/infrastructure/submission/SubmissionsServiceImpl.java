@@ -26,6 +26,7 @@ import java.util.Map;
 public class SubmissionsServiceImpl implements SubmissionsService {
 
     private static final Log log = LogFactory.getLog(SubmissionsServiceImpl.class);
+    private static final long serialVersionUID = -1724342423871535677L;
 
     private final SubmissionConfig submissionsConfig;
     public static final String ACCESSION_PARAMETER = "accession";
@@ -106,5 +107,63 @@ public class SubmissionsServiceImpl implements SubmissionsService {
         }
 
         return response.getEntity(SubmissionSampleResultBean.class).getSubmittedSampleIds();
+    }
+
+    @Override
+    public List<SubmissionRepository> getSubmissionRepositories() {
+        ClientResponse response =
+                JerseyUtils.getWebResource(submissionsConfig.getWSUrl(SubmissionConfig.ALL_SUBMISSION_SITES), MediaType.APPLICATION_JSON_TYPE)
+                        .get(ClientResponse.class);
+        if (response.getStatus() != Response.Status.OK.getStatusCode()) {
+            String error = response.getEntity(String.class);
+            log.error(error);
+            throw new InformaticsServiceException(error);
+        }
+
+        return response.getEntity(SubmissionRepositories.class).getSubmissionRepositories();
+    }
+
+    @Override
+    public List<SubmissionLibraryDescriptor> getSubmissionLibraryDescriptors() {
+        ClientResponse response =
+                       JerseyUtils.getWebResource(submissionsConfig.getWSUrl(SubmissionConfig.SUBMISSION_TYPES),
+                               MediaType.APPLICATION_JSON_TYPE).get(ClientResponse.class);
+        if (response.getStatus() != Response.Status.OK.getStatusCode()) {
+            String error = response.getEntity(String.class);
+            log.error(error);
+            throw new InformaticsServiceException(error);
+        }
+        return response.getEntity(SubmissionLibraryDescriptors.class).getSubmissionLibraryDescriptors();
+    }
+
+    @Override
+    public SubmissionRepository findRepositoryByKey(String key) {
+        for (SubmissionRepository submissionRepository : getSubmissionRepositories()) {
+            if (submissionRepository.getName().equals(key)) {
+                return submissionRepository;
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public SubmissionRepository repositorySearch(String searchString) {
+        for (SubmissionRepository submissionRepository : getSubmissionRepositories()) {
+            if (submissionRepository.getDescription().toLowerCase().contains(searchString.toLowerCase()) ||
+                submissionRepository.getName().toLowerCase().contains(searchString.toLowerCase())) {
+                return submissionRepository;
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public SubmissionLibraryDescriptor findSubmissionTypeByKey(String selectedSubmissionDescriptor) {
+        for (SubmissionLibraryDescriptor submissionLibraryDescriptor : getSubmissionLibraryDescriptors()) {
+            if (submissionLibraryDescriptor.getName().equals(selectedSubmissionDescriptor)) {
+                return submissionLibraryDescriptor;
+            }
+        }
+        return null;
     }
 }

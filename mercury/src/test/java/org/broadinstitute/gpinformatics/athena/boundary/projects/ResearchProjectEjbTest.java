@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDto;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionLibraryDescriptor;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionStatusDetailBean;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionsService;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
@@ -112,7 +113,8 @@ public class ResearchProjectEjbTest extends Arquillian {
 
         BioProject selectedBioProject = new BioProject("PRJNA75723");
         researchProjectEjb.processSubmissions(testRP.getBusinessKey(), selectedBioProject,
-                Arrays.asList(submissionDto1, submissionDto2));
+                Arrays.asList(submissionDto1, submissionDto2), testRP.getSubmissionRepository(),
+                submissionsService.findSubmissionTypeByKey(SubmissionLibraryDescriptor.WHOLE_GENOME_NAME));
 
         ResearchProject updatedRP = researchProjectDao.findByBusinessKey(testRP.getBusinessKey());
 

@@ -44,7 +44,9 @@ import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionBioS
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionContactBean;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDto;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionRequestBean;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionRepository;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionStatusDetailBean;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionLibraryDescriptor;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionsService;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
@@ -242,14 +244,16 @@ public class ResearchProjectEjb {
      * @param researchProjectBusinessKey Unique key of the Research Project under which the
      * @param selectedBioProject         BioProject to be associated with all submissions
      * @param submissionDtos             Collection of submissionDTOs selected to be submitted
+     * @param repository                 Repository where submission will be sent.
+     * @param submissionLibraryDescriptor             The name of the library descriptor to be sent in the submission.
      *
      * @return the results from the post to the submission service
      */
     public Collection<SubmissionStatusDetailBean> processSubmissions(@Nonnull String researchProjectBusinessKey,
                                                                      @Nonnull BioProject selectedBioProject,
-                                                                     @Nonnull List<SubmissionDto> submissionDtos)
-            throws ValidationException {
-
+                                                                     @Nonnull List<SubmissionDto> submissionDtos,
+                                                                     @Nonnull SubmissionRepository repository,
+                                                                     @Nonnull SubmissionLibraryDescriptor submissionLibraryDescriptor) throws ValidationException {
         if (submissionDtos.isEmpty()) {
             throw new InformaticsServiceException("At least one selection is needed to post submissions");
         }
@@ -261,7 +265,7 @@ public class ResearchProjectEjb {
         for (SubmissionDto submissionDto : submissionDtos) {
             SubmissionTracker tracker =
                     new SubmissionTracker(submissionDto.getSampleName(), submissionDto.getFilePath(),
-                            String.valueOf(submissionDto.getVersion()));
+                            String.valueOf(submissionDto.getVersion()), repository, submissionLibraryDescriptor);
             submissionProject.addSubmissionTracker(tracker);
             submissionDtoMap.put(tracker, submissionDto);
         }
@@ -284,7 +288,8 @@ public class ResearchProjectEjb {
 
             SubmissionBean submissionBean =
                     new SubmissionBean(dtoByTracker.getKey().createSubmissionIdentifier(),
-                            userBean.getBspUser().getUsername(), submitBioProject, bioSampleBean);
+                            userBean.getBspUser().getUsername(), submitBioProject, bioSampleBean, repository,
+                            submissionLibraryDescriptor);
             submissionBeans.add(submissionBean);
         }
 

@@ -18,17 +18,8 @@
             }
 
             $j(document).ready(function () {
-                $j( "#tabs" ).tabs({
-                active: getParameterByName("rpSelectedTab"),
-                    beforeLoad: function(event, ui) {
-                        if (ui.panel.children('form').length == 0) {
-                            if (ui.panel.children('p.loading').length == 0) {
-                                $j('<p>').addClass('loading').append('Please wait. Gathering data from Mercury, Bass, and Picard. This may take a few minutes.').appendTo(ui.panel);
-                            }
-                        } else {
-                            event.preventDefault();
-                        }
-                    }
+                $j("#tabs").tabs({
+                    active: getParameterByName("rpSelectedTab")
                 });
 
                 $j('#addRegulatoryInfoDialog').dialog({
@@ -58,6 +49,10 @@
                     $j("#tabs").tabs("load",'${actionBean.rpSelectedTab}');
                     $j("#tabs").tabs({active: eval('${actionBean.rpSelectedTab}')});
                 }
+            });
+
+            $(window).load(function(){
+                $j("#tabs").data().tabs.active.find("a").click();
             });
 
             function showBeginCollaboration() {
@@ -490,6 +485,21 @@
                     </div>
                 </div>
             </fieldset>
+
+            <fieldset>
+                <legend><h4>Data Submission</h4></legend>
+                <div class="control-group view-control-group">
+                    <label class="control-label label-form">Default Repository</label>
+
+                    <div class="controls">
+                        <div class="form-value">
+                            <c:if test="${actionBean.editResearchProject.submissionRepository != null}">
+                                ${actionBean.editResearchProject.submissionRepository.description}
+                            </c:if>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
         </div>
 
         <div id="addRegulatoryInfoDialog" title="Add Regulatory Information for ${actionBean.editResearchProject.title} (${actionBean.editResearchProject.businessKey})" class="form-horizontal">
@@ -548,10 +558,7 @@
         <div id="tabs" class="simpletab">
             <ul>
                 <li><a href="#ordersTab">Orders</a></li>
-                <li><stripes:link beanclass="${actionBean.class.name}" event="viewSubmissions">Submission Requests
-                        <stripes:param name="researchProject" value="${actionBean.researchProject}" />
-                        <stripes:param name="rpSelectedTab" value="<%= ResearchProjectActionBean.RESEARCH_PROJECT_SUBMISSIONS_TAB%>" />
-                    </stripes:link></li>
+                <li><a href="#submissionsTab">Submission Requests</a></li>
             </ul>
 
             <div id="ordersTab">
@@ -614,6 +621,12 @@
                 </c:forEach>
             </tbody>
         </table>
+            </div>
+            <div id="submissionsTab">
+                <stripes:layout-render name="<%=ResearchProjectActionBean.PROJECT_SUBMISSIONS_PAGE%>"
+                                       event="viewSubmissions"
+                                       submissionsTabSelector="a[href = '#submissionsTab']"
+                                       researchProject="${actionBean.editResearchProject.businessKey}"/>
             </div>
         </div>
 

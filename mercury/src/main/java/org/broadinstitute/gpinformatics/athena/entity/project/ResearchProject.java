@@ -9,9 +9,12 @@ import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
+import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraProject;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionRepository;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionsService;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 import org.hibernate.annotations.BatchSize;
@@ -209,6 +212,12 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
             orphanRemoval = true)
     private List<SubmissionTracker> submissionTrackers = new ArrayList<>();
 
+    @Column(name = "REPOSITORY_NAME")
+    private String submissionRepositoryName;
+
+    @Transient
+    private SubmissionRepository submissionRepository;
+
     /**
      * The Buick ManifestSessions linked to this ResearchProject.
      */
@@ -216,10 +225,10 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
     private Set<ManifestSession> manifestSessions = new HashSet<>();
 
     // todo: we can cache the submissiontrackers in a static map
-    public SubmissionTracker getSubmissionTracker(SubmissionTuple tuple){
+    public SubmissionTracker getSubmissionTracker(SubmissionKey tuple){
         Set<SubmissionTracker> foundSubmissionTrackers = new HashSet<>();
         for (SubmissionTracker submissionTracker : getSubmissionTrackers()) {
-            if (submissionTracker.getTuple().equals(tuple)) {
+            if (submissionTracker.getSubmissionKey().equals(tuple)) {
                 if (!foundSubmissionTrackers.add(submissionTracker)) {
                     throw new RuntimeException("More then one result found");
                 }
@@ -371,6 +380,37 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
 
     public void setAccessControlEnabled(boolean accessControlEnabled) {
         this.accessControlEnabled = accessControlEnabled;
+    }
+
+    public SubmissionRepository getSubmissionRepository() {
+        if (submissionRepository == null) {
+            loadDefaultSubmissionSite();
+        }
+        return submissionRepository;
+    }
+
+    private void loadDefaultSubmissionSite() {
+        if (submissionRepositoryName == null) {
+            submissionRepositoryName = SubmissionRepository.DEFAULT_REPOSITORY_NAME;
+        }
+        SubmissionsService submissionsService = ServiceAccessUtility.getBean(SubmissionsService.class);
+        submissionRepository = submissionsService.findRepositoryByKey(submissionRepositoryName);
+    }
+
+    public void setSubmissionRepository(SubmissionRepository submissionRepository) {
+        this.submissionRepository = submissionRepository;
+        this.submissionRepositoryName = submissionRepository.getName();
+    }
+
+    public String getSubmissionRepositoryName() {
+        if (submissionRepositoryName == null) {
+            loadDefaultSubmissionSite();
+        }
+        return submissionRepositoryName;
+    }
+
+    public void setSubmissionRepositoryName(String submissionSiteName) {
+        this.submissionRepositoryName = submissionSiteName;
     }
 
     public Collection<RegulatoryInfo> getRegulatoryInfos() {

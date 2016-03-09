@@ -65,7 +65,9 @@ public class SubmissionDtoFetcherTest {
         ProductOrder productOrder = ProductOrderTestFactory.buildExExProductOrder(0);
         productOrder.addSample(new ProductOrderSample(TEST_SAMPLE));
         researchProject.addProductOrder(productOrder);
-        researchProject.addSubmissionTracker(new SubmissionTrackerTest.SubmissionTrackerStub(1234L, COLLABORATOR_SAMPLE_ID, "bambam.bam", "1"));
+        researchProject.addSubmissionTracker(
+                new SubmissionTrackerTest.SubmissionTrackerStub(1234L, COLLABORATOR_SAMPLE_ID, "bambam.bam", "1",
+                        SubmissionTrackerTest.testRepository, SubmissionTrackerTest.testLibraryDescriptor));
         List<Aggregation> aggregation =
                 Collections.singletonList(AggregationTestFactory
                         .buildAggregation(RESEARCH_PROJECT_ID, COLLABORATOR_SAMPLE_ID, contamination,

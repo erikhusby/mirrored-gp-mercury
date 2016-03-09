@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionLibraryDescriptor;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionRepository;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
@@ -65,19 +67,32 @@ public class SubmissionTracker {
 
     private Date requestDate;
 
+    @Column(name="REPOSITORY_NAME")
+    private String submissionRepositoryName;
+
+    @Column(name="LIBRARY_DESCRIPTOR_NAME")
+    private String submissionLibraryDescriptorName;
+
     protected SubmissionTracker() {
     }
 
-    SubmissionTracker(Long submissionTrackerId, String submittedSampleName, String fileName, String version) {
+    SubmissionTracker(Long submissionTrackerId, String submittedSampleName, String fileName, String version,
+                      SubmissionRepository submissionRepository,
+                      SubmissionLibraryDescriptor submissionLibraryDescriptor) {
         this.submissionTrackerId = submissionTrackerId;
         this.submittedSampleName = submittedSampleName;
         this.fileName = fileName;
         this.version = version;
         requestDate = new Date();
+        this.submissionRepositoryName = submissionRepository.getName();
+                this.submissionLibraryDescriptorName = submissionLibraryDescriptor.getName();
+
     }
 
-    public SubmissionTracker(String submittedSampleName, String fileName, String version) {
-       this(null, submittedSampleName, fileName, version);
+    public SubmissionTracker(String submittedSampleName, String fileName, String version,
+                             SubmissionRepository submissionRepository,
+                             SubmissionLibraryDescriptor submissionLibraryDescriptor) {
+       this(null, submittedSampleName, fileName, version, submissionRepository, submissionLibraryDescriptor);
     }
 
     /**
@@ -137,9 +152,25 @@ public class SubmissionTracker {
         return requestDate;
     }
 
+    public String getSubmissionRepositoryName() {
+        return submissionRepositoryName;
+    }
+
+    public void setSubmissionRepositoryName(String submissionRepositoryName) {
+        this.submissionRepositoryName = submissionRepositoryName;
+    }
+
+    public String getSubmissionLibraryDescriptorName() {
+        return submissionLibraryDescriptorName;
+    }
+
+    public void setSubmissionLibraryDescriptorName(String submissionLibraryDescriptorName) {
+        this.submissionLibraryDescriptorName = submissionLibraryDescriptorName;
+    }
+
     // todo: should be in interface?
     @Transient
-    public SubmissionTuple getTuple() {
-        return new SubmissionTuple(submittedSampleName, fileName, version);
+    public SubmissionKey getSubmissionKey() {
+        return new SubmissionKey(submittedSampleName, fileName, version, submissionRepositoryName, submissionLibraryDescriptorName);
     }
 }
