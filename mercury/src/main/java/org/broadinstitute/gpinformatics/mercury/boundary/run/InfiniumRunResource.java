@@ -6,8 +6,11 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
+import org.broadinstitute.gpinformatics.mercury.control.dao.run.GenotypingChipTypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.entity.run.GenotypingChipAttribute;
+import org.broadinstitute.gpinformatics.mercury.entity.run.GenotypingChipType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -56,6 +59,9 @@ public class InfiniumRunResource {
 
     @Inject
     private ControlDao controlDao;
+
+    @Inject
+    private GenotypingChipTypeDao genotypingChipTypeDao;
 
     @GET
     @Path("/query")
@@ -111,21 +117,21 @@ public class InfiniumRunResource {
 
             String idatPrefix = DATA_PATH + "/" + chip.getLabel() + "_" + vesselPosition.name();
             String chipType = chipTypes.iterator().next();
-            Config config = mapChipTypeToConfig.get(chipType);
-            if (config == null) {
+            GenotypingChipType genotypingChipType = genotypingChipTypeDao.findByName(chipType);
+            if (genotypingChipType == null) {
                 throw new ResourceException("No configuration for " + chipType, Response.Status.INTERNAL_SERVER_ERROR);
-            } else {
-                infiniumRunBean = new InfiniumRunBean(
-                        idatPrefix + "_Red.idat",
-                        idatPrefix + "_Grn.idat",
-                        config.getChipManifestPath(),
-                        config.getBeadPoolManifestPath(),
-                        config.getClusterFilePath(),
-                        config.getzCallThresholdsPath(),
-                        sampleData.getCollaboratorsSampleName(),
-                        sampleData.getSampleLsid(),
-                        sampleData.getGender());
             }
+            Map<String, String> attributes = genotypingChipType.getChipAttributeMap();
+            infiniumRunBean = new InfiniumRunBean(
+                    idatPrefix + "_Red.idat",
+                    idatPrefix + "_Grn.idat",
+                    attributes.get("norm_manifest_unix"),  // todo coordinate with UI how to manage attribute name
+                    attributes.get("manifest_location_unix"),
+                    attributes.get("cluster_location_unix"),
+                    attributes.get("zcall_threshold_unix"),
+                    sampleData.getCollaboratorsSampleName(),
+                    sampleData.getSampleLsid(),
+                    sampleData.getGender());
         } else {
             throw new RuntimeException("Expected 1 sample, found " + sampleInstancesAtPositionV2.size());
         }
@@ -157,104 +163,5 @@ public class InfiniumRunResource {
             }
         }
         return chipTypes;
-    }
-
-    private static class Config {
-        private String chipManifestPath;
-        private String beadPoolManifestPath;
-        private String clusterFilePath;
-        private String zCallThresholdsPath;
-
-        private Config(String chipManifestPath, String beadPoolManifestPath, String clusterFilePath,
-                String zCallThresholdsPath) {
-            this.chipManifestPath = chipManifestPath;
-            this.beadPoolManifestPath = beadPoolManifestPath;
-            this.clusterFilePath = clusterFilePath;
-            this.zCallThresholdsPath = zCallThresholdsPath;
-        }
-
-        public String getChipManifestPath() {
-            return chipManifestPath;
-        }
-
-        public String getBeadPoolManifestPath() {
-            return beadPoolManifestPath;
-        }
-
-        public String getClusterFilePath() {
-            return clusterFilePath;
-        }
-
-        public String getzCallThresholdsPath() {
-            return zCallThresholdsPath;
-        }
-    }
-
-    /*
-SELECT
-	p.pool_name,
-	ici.norm_manifest_unix,
-	ici.manifest_location_unix,
-	ici.cluster_location_unix,
-	ici.zcall_threshold_unix
-FROM
-	esp.infinium_chip_info ici
-	INNER JOIN esp.pool p
-		ON   p.pool_id = ici.pool_id
-WHERE
-	p.pool_name IN ('Broad_GWAS_supplemental_15061359_A1',
-	               'HumanCoreExome-24v1-0_A', 'HumanExome-12v1-2_A',
-	               'HumanOmni2.5-8v1_A', 'HumanOmniExpressExome-8v1_B',
-	               'HumanOmniExpressExome-8v1-3_A', 'HumanOmniExpress-24v1-1_A',
-	               'PsychChip_15048346_B', 'PsychChip_v1-1_15073391_A1');
-     */
-    // todo jmt move this to configuration
-    private static final Map<String, Config> mapChipTypeToConfig = new HashMap<>();
-    static {
-        mapChipTypeToConfig.put("Broad_GWAS_supplemental_15061359_A1", new Config(
-                "/humgen/illumina_data/Broad_GWAS_supplemental_15061359_A1.bpm.csv",
-                "/gap/illumina/beadstudio/Autocall/ChipInfo/Broad_GWAS_supplemental/Broad_GWAS_supplemental_15061359_A1.bpm",
-                "/gap/illumina/beadstudio/Autocall/ChipInfo/Broad_GWAS_supplemental/Broad_GWAS_supplemental_15061359_A1.egt",
-                "/gap/illumina/beadstudio/Autocall/ChipInfo/Broad_GWAS_supplemental/thresholds.7.txt"));
-        mapChipTypeToConfig.put("HumanCoreExome-24v1-0_A", new Config(
-                "/humgen/illumina_data/HumanCoreExome-24v1-0_A.bpm.csv",
-                "/gap/illumina/beadstudio/Autocall/ChipInfo/HumanCoreExome-24v1-0_A/HumanCoreExome-24v1-0_A.bpm",
-                "/gap/illumina/beadstudio/Autocall/ChipInfo/HumanCoreExome-24v1-0_A/HumanCoreExome-24v1-0_A.egt",
-                "/gap/illumina/beadstudio/Autocall/ChipInfo/HumanCoreExome-24v1-0_A/HumanCoreExome-24v1-0_A.thresholds.7.txt"));
-        mapChipTypeToConfig.put("HumanExome-12v1-2_A", new Config(
-                "/humgen/illumina_data/HumanExome-12v1-2_A.bpm.csv",
-                "/gap/illumina/beadstudio/Autocall/ChipInfo/HumanExome-12v1-2_A/HumanExome-12v1-2_A.bpm",
-                "/gap/illumina/beadstudio/Autocall/ChipInfo/HumanExome-12v1-2_A/HumanExome-12v1-2_Illumina-HapMap.egt",
-                "/gap/illumina/beadstudio/Autocall/ChipInfo/HumanExome-12v1-2_A/HumanExome-12v1-2_A.thresholds.7.txt"));
-        mapChipTypeToConfig.put("HumanOmni2.5-8v1_A",new Config(
-                "/humgen/illumina_data/HumanOmni2.5-8v1_A.bpm.csv",
-                "/gap/illumina/beadstudio/Autocall/ChipInfo/HumanOmni2.5-8v1_A/HumanOmni2.5-8v1_A.bpm",
-                "/gap/illumina/beadstudio/Autocall/ChipInfo/HumanOmni2.5-8v1_A/HumanOmni2.5-8v1_A.egt",
-                null));
-        mapChipTypeToConfig.put("HumanOmniExpressExome-8v1_B", new Config(
-                "/humgen/illumina_data/HumanOmniExpressExome-8v1_B.bpm.csv",
-                "/gap/illumina/beadstudio/Autocall/ChipInfo/HumanOmniExpressExome-8v1_B/HumanOmniExpressExome-8v1_B.bpm",
-                "/gap/illumina/beadstudio/Autocall/ChipInfo/HumanOmniExpressExome-8v1_B/HumanOMXEX_CEPH_B.egt",
-                "/gap/illumina/beadstudio/Autocall/ChipInfo/HumanOmniExpressExome-8v1_B/Combo_OmniExpress_Exome_All.egt.thresholds.txt"));
-        mapChipTypeToConfig.put("HumanOmniExpressExome-8v1-3_A", new Config(
-                "/humgen/illumina_data/InfiniumOmniExpressExome-8v1-3_A.csv",
-                "/gap/illumina/beadstudio/Autocall/ChipInfo/InfiniumOmniExpressExome-8v1-3_A/InfiniumOmniExpressExome-8v1-3_A.bpm",
-                "/gap/illumina/beadstudio/Autocall/ChipInfo/InfiniumOmniExpressExome-8v1-3_A/InfiniumOmniExpressExome-8v1-3_A_ClusterFile.egt",
-                null));
-        mapChipTypeToConfig.put("HumanOmniExpress-24v1-1_A", new Config(
-                "/humgen/illumina_data/HumanOmniExpress-24v1.1A.bpm.csv",
-                "/gap/illumina/beadstudio/Autocall/ChipInfo/HumanOmniExpress-24v1-1_A/HumanOmniExpress-24v1.1A.bpm",
-                "/gap/illumina/beadstudio/Autocall/ChipInfo/HumanOmniExpress-24v1.1_A/HumanOmniExpress-24v1.1A.egt",
-                null));
-        mapChipTypeToConfig.put("PsychChip_15048346_B", new Config(
-                "/humgen/illumina_data/PsychChip_15048346_B.bpm.csv",
-                "/gap/illumina/beadstudio/Autocall/ChipInfo/PsychChip_15048346_B/PsychChip_15048346_B.bpm",
-                "/gap/illumina/beadstudio/Autocall/ChipInfo/PsychChip_15048346_B/PsychChip_B_1000samples_no-filters.egt",
-                "/gap/illumina/beadstudio/Autocall/ChipInfo/PsychChip_15048346_B/PsychChip_15048346_B.thresholds.6.1000.txt"));
-        mapChipTypeToConfig.put("PsychChip_v1-1_15073391_A1", new Config(
-                "/humgen/illumina_data/PsychChip_v1-1_15073391_A1.bpm.csv",
-                "/gap/illumina/beadstudio/Autocall/ChipInfo/PsychChip_15073391_v1-1_A/PsychChip_v1-1_15073391_A1.bpm",
-                "/gap/illumina/beadstudio/Autocall/ChipInfo/PsychChip_15073391_v1-1_A/PsychChip_v1-1_15073391_A1_ClusterFile.egt",
-                "/gap/illumina/beadstudio/Autocall/ChipInfo/PsychChip_15073391_v1-1_A/thresholds.7.txt"));
     }
 }

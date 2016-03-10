@@ -432,5 +432,95 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="GPLIM-4023-1" author="epolk">
+      <createTable schemaName="mercury" tableName="GENOTYPING_CHIP_TYPE">
+	<column name="GENOTYPING_CHIP_TYPE_ID" type="number(19,0)">
+	  <constraints nullable="false"/>
+	</column>
+	<column name="CHIP_NAME" type="varchar2(255)">
+	  <constraints nullable="false"/>
+	</column>
+	<column name="CREATED_DATE" type="timestamp">
+	  <constraints nullable="false"/>
+	</column>
+      </createTable>
+      <addPrimaryKey constraintName="PK_GENOTYPING_CHIP_TYPE" tableName="GENOTYPING_CHIP_TYPE"
+		     columnNames="GENOTYPING_CHIP_TYPE_ID"/>
+      <createIndex unique="true" indexName="UK_GENOTYPING_CHIP_TYPE" tableName="GENOTYPING_CHIP_TYPE" schemaName="mercury">
+	<column name="CHIP_NAME"/>
+	<column name="CREATED_DATE"/>
+      </createIndex>
+      <createSequence sequenceName="SEQ_GENOTYPING_CHIP_TYPE" schemaName="mercury" startValue="1" incrementBy="50"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-4023-2" author="epolk">
+      <createTable schemaName="mercury" tableName="GENOTYPING_CHIP_TYPE_AUD">
+	<column name="REV" type="number(19,0)">
+	  <constraints nullable="false"/>
+	</column>
+	<column name="REVTYPE" type="number(3,0)">
+	  <constraints nullable="false"/>
+	</column>
+	<column name="GENOTYPING_CHIP_TYPE_ID" type="number(19,0)">
+	  <constraints nullable="false"/>
+	</column>
+	<column name="CHIP_NAME" type="varchar2(255)"/>
+	<column name="CREATED_DATE" type="timestamp"/>
+      </createTable>
+      <addPrimaryKey constraintName="PK_GENOTYPING_CHIP_TYPE_AUD" tableName="GENOTYPING_CHIP_TYPE_AUD"
+		     columnNames="REV, GENOTYPING_CHIP_TYPE_ID"/>
+      <createIndex indexName="IX_GENOTYPING_CHIP_TYPE_AUD" tableName="GENOTYPING_CHIP_TYPE_AUD" schemaName="mercury">
+	<column name="GENOTYPING_CHIP_TYPE_ID"/>
+      </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-4023-3" author="epolk">
+      <createTable schemaName="mercury" tableName="GENOTYPING_CHIP_ATTRIBUTE">
+	<column name="GENOTYPING_CHIP_ATTRIBUTE_ID" type="number(19,0)">
+	  <constraints nullable="false"/>
+	</column>
+	<column name="GENOTYPING_CHIP_TYPE" type="number(19,0)">
+	  <constraints nullable="false"/>
+	</column>
+	<column name="ATTRIBUTE_NAME" type="varchar2(255)">
+	  <constraints nullable="false"/>
+	</column>
+	<column name="ATTRIBUTE_VALUE" type="varchar2(255)"/>
+      </createTable>
+      <addPrimaryKey constraintName="PK_GENO_CHIP_ATTR" tableName="GENOTYPING_CHIP_ATTRIBUTE"
+		     columnNames="GENOTYPING_CHIP_ATTRIBUTE_ID"/>
+      <createIndex indexName="IX_GENOTYPING_CHIP_ATTR" tableName="GENOTYPING_CHIP_ATTRIBUTE" schemaName="mercury">
+	<column name="GENOTYPING_CHIP_TYPE"/>
+      </createIndex>
+      <createSequence sequenceName="SEQ_GENOTYPING_CHIP_ATTR" schemaName="mercury" startValue="1" incrementBy="50"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-4023-4" author="epolk">
+      <createTable schemaName="mercury" tableName="GENOTYPING_CHIP_ATTRIBUTE_AUD">
+	<column name="REV" type="number(19,0)">
+	  <constraints nullable="false"/>
+	</column>
+	<column name="REVTYPE" type="number(3,0)">
+	  <constraints nullable="false"/>
+	</column>
+	<column name="GENOTYPING_CHIP_ATTRIBUTE_ID" type="number(19,0)">
+	  <constraints nullable="false"/>
+	</column>
+	<column name="GENOTYPING_CHIP_TYPE" type="number(19,0)"/>
+	<column name="ATTRIBUTE_NAME" type="varchar2(255)"/>
+	<column name="ATTRIBUTE_VALUE" type="varchar2(255)"/>
+      </createTable>
+      <addPrimaryKey constraintName="PK_GENO_CHIP_ATTR_AUD" tableName="GENOTYPING_CHIP_ATTRIBUTE_AUD"
+		     columnNames="REV, GENOTYPING_CHIP_ATTRIBUTE_ID"/>
+      <createIndex indexName="IX_GENOTYPING_CHIP_ATTR_AUD" tableName="GENOTYPING_CHIP_ATTRIBUTE_AUD" schemaName="mercury">
+	<column name="GENOTYPING_CHIP_ATTRIBUTE_ID"/>
+      </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-4023-5" author="epolk">
+      <addForeignKeyConstraint constraintName="FK_GENOTYPING_CHIP_ATTR"
+			       baseTableName="GENOTYPING_CHIP_ATTRIBUTE" baseColumnNames="GENOTYPING_CHIP_TYPE"
+			       referencedTableName="GENOTYPING_CHIP_TYPE" referencedColumnNames="GENOTYPING_CHIP_TYPE_ID"/>
+    </changeSet>
 
 </databaseChangeLog>
