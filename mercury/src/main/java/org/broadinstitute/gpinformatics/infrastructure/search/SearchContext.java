@@ -17,6 +17,13 @@ import java.util.Map;
  */
 public class SearchContext {
 
+    // Need to know what to put in cells at rendering stage at ColumnTabulation#evalFormattedExpression(...)
+    public enum ResultCellTargetPlatform {
+        WEB,   // Optional custom formatting, drill-down hyperlinks
+        TEXT  // Raw text (default)
+        // EXCEL  TODO JMS - Need to have a way to integrate with Apache POI, meanwhile, TEXT will be used for download
+    }
+
     private BSPUserList bspUserList;
     // Not used:  columnSetType
     private SearchInstance.SearchValue searchValue;
@@ -29,6 +36,8 @@ public class SearchContext {
     private String multiValueDelimiter = " ";
     private Map<String,ConfigurableList.AddRowsListener> addRowsListeners;
     private JSONObject rackScanData;
+    private ResultCellTargetPlatform resultCellTargetPlatform = ResultCellTargetPlatform.TEXT;
+    private String baseSearchURL;
 
     /**
      * Avoid having to access EJB or web application context to get user data for display
@@ -144,7 +153,6 @@ public class SearchContext {
     /**
      * Rack scan data (if used as search term input for multiple vessel barcodes) is passed from browser as JSON.
      * This method avoids having to re-parse JSON for every required result column and row.
-     * @return
      */
     public JSONObject getScanData(){
         if( getSearchValue() == null || getSearchValue().getRackScanData() == null ) {
@@ -161,5 +169,43 @@ public class SearchContext {
         return rackScanData;
     }
 
+    /**
+     * What is put in result cells based upon target platform (e.g. rendering, drill-down hyperlinks)
+     * Initial configuration typically done in action bean or REST endpoint
+     * @return One of the three enum types, TEXT being the legacy default because
+     * org.broadinstitute.gpinformatics.infrastructure.spreadsheet.SpreadsheetCreator handles text only
+     */
+    public ResultCellTargetPlatform getResultCellTargetPlatform() {
+        return resultCellTargetPlatform;
+    }
+
+    /**
+     * Configured at the initial action bean or REST endpoint to control the output options
+     * at the render phase: ColumnTabulation#evalFormattedExpression(...)
+     */
+    public void setResultCellTargetPlatform(ResultCellTargetPlatform resultCellTargetPlatform) {
+        this.resultCellTargetPlatform = resultCellTargetPlatform;
+    }
+
+    /**
+     * Base URL for optional hyperlinks in result cells.
+     * Initialized at action bean end point.
+     */
+    public String getBaseSearchURL() {
+        return baseSearchURL;
+    }
+
+    /**
+     * Set the base URL for constructing optional hyperlinks in result cells.
+     * Initialized at action bean end point.
+     */
+    public void setBaseSearchURL(StringBuffer baseSearchURL) {
+        int qsDelimiterIndex = baseSearchURL.indexOf("?");
+        if( qsDelimiterIndex > 0 ) {
+            this.baseSearchURL = baseSearchURL.substring(0, qsDelimiterIndex );
+        } else {
+            this.baseSearchURL = baseSearchURL.toString();
+        }
+    }
 
 }

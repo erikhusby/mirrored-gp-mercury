@@ -34,6 +34,7 @@ import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearch
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConstrainedValueDao;
 import org.broadinstitute.gpinformatics.infrastructure.search.PaginationUtil;
+import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstanceEjb;
@@ -541,6 +542,8 @@ public class ConfigurableSearchActionBean extends RackScanActionBean {
         searchInstance.getEvalContext().setBspSampleSearchService(bspSampleSearchService);
         searchInstance.getEvalContext().setOptionValueDao(constrainedValueDao);
         searchInstance.getEvalContext().setSearchInstance(searchInstance);
+        searchInstance.getEvalContext().setResultCellTargetPlatform(SearchContext.ResultCellTargetPlatform.WEB);
+        searchInstance.getEvalContext().setBaseSearchURL(getContext().getRequest().getRequestURL());
     }
 
     /**

@@ -1,13 +1,17 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -38,16 +42,26 @@ public class LabEventVesselTraversalEvaluator extends TraversalEvaluator {
 
         // True if "In-Place Vessel Barcode" search term is present
         boolean inPlaceVesselsOnly = false;
+        // True if only events involving Infinium plates/chips should be returned
+        boolean infiniumEventsOnly = false;
         for( SearchInstance.SearchValue searchValue : searchInstance.getSearchValues() ) {
             if( searchValue.getName().equals("In-Place Vessel Barcode")) {
                 inPlaceVesselsOnly = true;
                 break;
+            } else if( searchValue.getName().equals("Infinium PDO")) {
+                infiniumEventsOnly = true;
+                break;
             }
+        }
+
+        if( infiniumEventsOnly ) {
+            getInfiniumEventsForVessels( rootEventVessels, sortedSet );
+            return sortedSet;
         }
 
         // Get base events for vessels
         for( LabVessel vessel : rootEventVessels ) {
-            if( inPlaceVesselsOnly ) {
+            if (inPlaceVesselsOnly) {
                 sortedSet.addAll(vessel.getInPlaceAndTransferToEvents());
             } else {
                 sortedSet.addAll(vessel.getEvents());
@@ -67,6 +81,19 @@ public class LabEventVesselTraversalEvaluator extends TraversalEvaluator {
         }
 
         return sortedSet;
+    }
+
+    private void getInfiniumEventsForVessels(List<LabVessel> rootEventVessels, Set<Object> events ) {
+        List<LabEventType> infiniumEventType =
+                Arrays.asList( LabEventType.INFINIUM_AMPLIFICATION, LabEventType.INFINIUM_XSTAIN );
+        TransferTraverserCriteria.VesselForEventTypeCriteria eventTypeCriteria
+                = new TransferTraverserCriteria.VesselForEventTypeCriteria(infiniumEventType, true);
+        for( LabVessel initialVessel : rootEventVessels ) {
+            initialVessel.evaluateCriteria(eventTypeCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
+        }
+        for(Map.Entry<LabEvent, Set<LabVessel>> eventEntry : eventTypeCriteria.getVesselsForLabEventType().entrySet()) {
+            events.add(eventEntry.getKey());
+        }
     }
 
     /**
@@ -107,14 +134,7 @@ public class LabEventVesselTraversalEvaluator extends TraversalEvaluator {
         return eventTraversalCriteria.getAllEvents();
     }
 
-    /**
-     * Traverse for chain of custody events against a starting lab vessel container
-     * @param eventTraversalCriteria  Gathers up all events in the chain of custody traversal
-     * @param vesselContainer The container from which to begin the traversal
-     *                        (traversal will include all positions in the container)
-     * @param traversalDirection Ancestors or descendants
-     */
-    private void traverseContainer( TransferTraverserCriteria.LabEventDescendantCriteria eventTraversalCriteria
+    private void traverseContainer(TransferTraverserCriteria.LabEventDescendantCriteria eventTraversalCriteria
             , VesselContainer<?> vesselContainer, TransferTraverserCriteria.TraversalDirection traversalDirection){
 
         // Add any container in place events

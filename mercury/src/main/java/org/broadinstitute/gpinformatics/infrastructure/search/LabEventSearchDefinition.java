@@ -742,6 +742,19 @@ public class LabEventSearchDefinition {
         });
         searchTerms.add(searchTerm);
 
+        // Not available in results - PDO should be used
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Infinium PDO");
+        searchTerm.setHelpText(
+                "Infinium PDO term will only locate events associated with Infinium arrays (InfiniumAmplification for plates, or InfiniumXStain for chips). "
+                        + "Traversal option(s) should be selected if chain of custody events are desired.<br>"
+                        + "Note: The Infinium PDO term is exclusive, no other terms can be selected.");
+        searchTerm.setSearchValueConversionExpression(SearchDefinitionFactory.getPdoInputConverter());
+        searchTerm.setAlternateSearchDefinition(eventByVesselSearchDefinition);
+        searchTerm.setIsExcludedFromResultColumns(Boolean.TRUE);
+        searchTerm.setCriteriaPaths(blankCriteriaPaths);
+        searchTerms.add(searchTerm);
+
         searchTerm = new SearchTerm();
         searchTerm.setName("Source Barcode");
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
@@ -824,9 +837,17 @@ public class LabEventSearchDefinition {
                     }
                 }
 
-                return results;
+                if( context.getResultCellTargetPlatform() == null
+                        || context.getResultCellTargetPlatform() == SearchContext.ResultCellTargetPlatform.TEXT) {
+                    return results;
+                } else {
+                    for( int i = 0; i < results.size(); i++ ) {
+                        // TODO JMS Make this look like org.broadinstitute.gpinformatics.mercury.boundary.search.SearchRequest
+                        results.set(i, SearchDefinitionFactory.buildDrillDownLink("Search", results.get(i), null, context ).toString() );
+                    }
+                    return results;
+                }
             }
-
         });
         searchTerms.add(searchTerm);
 
@@ -836,6 +857,7 @@ public class LabEventSearchDefinition {
     /**
      * Build an alternate search definition to query for lab vessels
      *    and use programmatic logic to populate the lab event list
+     * These terms are mapped to user selectable terms by name.
      * @return
      */
     private ConfigurableSearchDefinition buildAlternateSearchDefByVessel() {
@@ -848,6 +870,19 @@ public class LabEventSearchDefinition {
 
         List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
         SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(
+                Arrays.asList("mercurySample", "mercurySamples", "productOrderSamples", "productOrder"));
+        criteriaPath.setPropertyName("jiraTicketKey");
+        criteriaPaths.add(criteriaPath);
+        searchTerm.setCriteriaPaths(criteriaPaths);
+        searchTerms.add(searchTerm);
+
+        // By Infinium PDO
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Infinium PDO");
+
+        criteriaPaths = new ArrayList<>();
+        criteriaPath = new SearchTerm.CriteriaPath();
         criteriaPath.setCriteria(
                 Arrays.asList("mercurySample", "mercurySamples", "productOrderSamples", "productOrder"));
         criteriaPath.setPropertyName("jiraTicketKey");
@@ -926,6 +961,7 @@ public class LabEventSearchDefinition {
         ConfigurableSearchDefinition configurableSearchDefinition = new ConfigurableSearchDefinition(
                 ColumnEntity.LAB_VESSEL, criteriaProjections, mapGroupSearchTerms);
 
+        // Mandatory to convert a list of LabVessel entities to LabEvent entities
         configurableSearchDefinition.addTraversalEvaluator(ConfigurableSearchDefinition.ALTERNATE_DEFINITION_ID
                 , new LabEventVesselTraversalEvaluator() );
 

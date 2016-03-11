@@ -117,7 +117,6 @@ public class ConfigurableListActionBean extends CoreActionBean {
                 .getAttribute(ConfigurableSearchActionBean.PAGINATION_PREFIX + sessionKey);
         SearchInstance searchInstance = (SearchInstance) getContext().getRequest().getSession()
                 .getAttribute(ConfigurableSearchActionBean.SEARCH_INSTANCE_PREFIX + sessionKey);
-
         ConfigurableList.ResultList resultList = configurableListFactory.fetchAllPages(pagination, searchInstance,
                 downloadColumnSetName, entityName);
         return streamResultList(resultList);

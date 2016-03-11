@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.infrastructure.columns;
 
-import org.apache.commons.lang3.StringEscapeUtils;
 import org.broadinstitute.gpinformatics.athena.entity.preference.ColumnSetsPreference;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
@@ -356,11 +355,7 @@ public class ConfigurableList {
         Cell(Header header, Comparable<?> sortableValue, String formattedValue) {
             this.header = header;
             this.sortableValue = sortableValue;
-
-            // Protect against JS Injection by escaping the formatted value.
-            if ( formattedValue != null && !formattedValue.isEmpty() ) {
-                this.formattedValue = StringEscapeUtils.escapeXml(formattedValue);
-            }
+            this.formattedValue = formattedValue;
         }
 
         public Header getHeader() {

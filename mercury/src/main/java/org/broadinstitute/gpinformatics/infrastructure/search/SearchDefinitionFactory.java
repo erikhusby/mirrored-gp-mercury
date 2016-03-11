@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
@@ -71,7 +72,7 @@ public class SearchDefinitionFactory {
     public static ConfigurableSearchDefinition getForEntity(String entity) {
         /* **** Change condition to true during development to rebuild for JVM hot-swap changes **** */
         //noinspection ConstantIfStatement
-        if( false ) {
+        if( true ) {
             SearchDefinitionFactory fact = new SearchDefinitionFactory();
             fact.buildLabEventSearchDef();
             fact.buildLabVesselSearchDef();
@@ -144,6 +145,40 @@ public class SearchDefinitionFactory {
             vesselTypeName = vessel.getType().getName();
         }
         return vesselTypeName;
+    }
+
+    /**
+     * Builds a link for result cell to facilitate a drill down link to another UDS
+     * TODO JMS Make this look like org.broadinstitute.gpinformatics.mercury.boundary.search.SearchRequest
+     * @param serviceName
+     * @param linkText
+     * @param params
+     * @param context
+     * @return
+     */
+    public static StringBuilder buildDrillDownLink( String serviceName, String linkText, Map<String,String> params, SearchContext context ) {
+        StringBuilder link = new StringBuilder()
+                .append("<a href=\"")
+                .append(context.getBaseSearchURL());
+        if(serviceName != null && !serviceName.isEmpty()){
+            link.append("/").append(serviceName);
+        }
+        if(params != null && params.size()> 0){
+            link.append("?");
+            boolean first = true;
+            for( Map.Entry param : params.entrySet() ){
+                if( !first ) {
+                    link.append("&");
+                } else {
+                    first = false;
+                }
+                link.append(param.getKey()).append("=").append(param.getValue());
+            }
+        }
+        link.append("\">");
+        link.append(StringEscapeUtils.escapeXml(linkText));
+        link.append("</a>");
+        return link;
     }
 
 
