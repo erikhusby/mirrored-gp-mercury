@@ -156,7 +156,7 @@ public class SubmissionDtoFetcher {
             if (aggregationMap.containsKey(collaboratorSampleId) && bassDTOMap.containsKey(collaboratorSampleId)) {
                 Aggregation aggregation = aggregationMap.get(collaboratorSampleId);
                 BassDTO bassDTO = bassDTOMap.get(collaboratorSampleId);
-                SubmissionTracker submissionTracker = researchProject.getSubmissionTracker(bassDTO.getTuple());
+                SubmissionTracker submissionTracker = researchProject.getSubmissionTracker(bassDTO);
                 SubmissionStatusDetailBean statusDetailBean = null;
                 if (submissionTracker != null) {
                     statusDetailBean = sampleSubmissionMap.get(submissionTracker.createSubmissionIdentifier());

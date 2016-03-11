@@ -81,7 +81,7 @@ public class SubmissionBean implements Serializable {
         return submissionType;
     }
 
-    @XmlElement(name="datatype")
+    @XmlElement(name="submissiondatatype")
     public void setSubmissionType(String submissionType) {
         this.submissionType = submissionType;
     }

@@ -17,10 +17,11 @@ public class SubmissionTrackerTest {
     public static String testAccessionID = "SA-2342";
     public static String testFileName = "/test/path/file2.bam";
 
-    public static String testVersion = "v1";
-    public static SubmissionRepository testRepository =
-            new SubmissionRepository(SubmissionRepository.DEFAULT_REPOSITORY_NAME, "description");
-    public static SubmissionLibraryDescriptor testLibraryDescriptor = ProductFamily.defaultSubmissionType();
+    public static String testVersion = "1";
+    public static SubmissionRepository testRepository = new SubmissionRepository(SubmissionRepository.DEFAULT_REPOSITORY_NAME,
+                    "NCBI Controlled Access (dbGaP) submissions");
+
+    public static SubmissionLibraryDescriptor testLibraryDescriptor = ProductFamily.defaultLibraryDescriptor();
 
     public void testBuildSubmissionTracker() {
         Date testStartDate = new Date();

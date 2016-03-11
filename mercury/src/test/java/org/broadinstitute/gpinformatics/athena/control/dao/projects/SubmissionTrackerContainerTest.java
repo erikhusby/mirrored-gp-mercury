@@ -29,7 +29,7 @@ public class SubmissionTrackerContainerTest extends ContainerTest {
     public static String testVersion = "v1";
     public static SubmissionRepository
             testRepository=new SubmissionRepository(SubmissionRepository.DEFAULT_REPOSITORY_NAME, "description");
-    public static SubmissionLibraryDescriptor testLibraryDescriptor= ProductFamily.defaultSubmissionType();
+    public static SubmissionLibraryDescriptor testLibraryDescriptor= ProductFamily.defaultLibraryDescriptor();
 
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void setUp() throws Exception {

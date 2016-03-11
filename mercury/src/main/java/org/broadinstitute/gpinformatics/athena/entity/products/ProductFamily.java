@@ -54,7 +54,7 @@ public class ProductFamily implements Serializable, Comparable<ProductFamily> {
         private final SubmissionLibraryDescriptor submissionLibraryDescriptor;
 
         ProductFamilyInfo(String familyName) {
-            this(familyName, ProductFamily.defaultSubmissionType());
+            this(familyName, ProductFamily.defaultLibraryDescriptor());
         }
 
         ProductFamilyInfo(String familyName, SubmissionLibraryDescriptor submissionLibraryDescriptor) {
@@ -80,7 +80,7 @@ public class ProductFamily implements Serializable, Comparable<ProductFamily> {
         }
     }
 
-    public static SubmissionLibraryDescriptor defaultSubmissionType() {
+    public static SubmissionLibraryDescriptor defaultLibraryDescriptor() {
         return new SubmissionLibraryDescriptor(SubmissionLibraryDescriptor.WHOLE_GENOME_NAME, SubmissionLibraryDescriptor.WHOLE_GENOME_DESCRIPTION);
     }
 

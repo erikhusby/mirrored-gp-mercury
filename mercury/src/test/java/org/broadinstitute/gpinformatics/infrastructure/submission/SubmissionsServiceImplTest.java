@@ -11,11 +11,16 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.submission;
 
+import com.sun.jersey.api.client.ClientResponse;
+import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
+import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.hamcrest.Matchers;
+import org.mockito.Mockito;
+import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -24,6 +29,7 @@ import java.util.Collection;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.emptyCollectionOf;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasItemInArray;
 import static org.hamcrest.Matchers.hasItems;
@@ -56,6 +62,36 @@ public class SubmissionsServiceImplTest {
         submissionsService = new SubmissionsServiceImpl(SubmissionConfig.produce(Deployment.DEV));
         submissionRepository = submissionsService.getSubmissionRepositories().iterator().next();
         submissionLibraryDescriptor =submissionsService.getSubmissionLibraryDescriptors().iterator().next();
+    }
+
+    public void testServerResponseBadRequest() {
+        ClientResponse clientResponse = Mockito.mock(ClientResponse.class);
+        Mockito.when(clientResponse.getStatus()).thenReturn(ClientResponse.Status.BAD_REQUEST.getStatusCode());
+        String activityName = "just testing y'all";
+        String exceptonMessage = "There was an error";
+        String errorMessage = String.format("Error received while %s: %s", activityName, exceptonMessage);
+        Mockito.when(clientResponse.getEntity(String.class)).thenReturn(exceptonMessage);
+        SubmissionsServiceImpl submissionsServiceImpl = ((SubmissionsServiceImpl) submissionsService);
+        try {
+            submissionsServiceImpl.validateResponseStatus(activityName, clientResponse);
+            Assert.fail("Should have thrown an exception but didn't");
+        } catch (InformaticsServiceException e) {
+            assertThat(e.getLocalizedMessage(), equalTo(errorMessage));
+        } catch (Exception e) {
+            Assert.fail("Wrong exception thrown: " + e.getClass().getName());
+
+        }
+    }
+
+    public void testServerResponseOK() {
+        ClientResponse clientResponse = Mockito.mock(ClientResponse.class);
+        Mockito.when(clientResponse.getStatus()).thenReturn(ClientResponse.Status.OK.getStatusCode());
+        SubmissionsServiceImpl submissionsServiceImpl = ((SubmissionsServiceImpl) submissionsService);
+        try {
+            submissionsServiceImpl.validateResponseStatus(null, clientResponse);
+        } catch (Exception e) {
+            Assert.fail("Wrong exception thrown: " + e.getClass().getName());
+        }
     }
 
     public void testGetAllBioProjects() throws Exception {
@@ -144,4 +180,71 @@ public class SubmissionsServiceImplTest {
     private static synchronized String getTestUUID() {
         return String.format("MERCURY_TEST_SUB_%d_%04d", System.currentTimeMillis(), sequenceNumber++);
     }
+
+    public void testFindRepositoryByKeyOK() throws Exception {
+        SubmissionRepository repositoryByKey =
+                submissionsService.findRepositoryByKey(SubmissionRepository.DEFAULT_REPOSITORY_NAME);
+
+        assertThat(repositoryByKey.getName(), equalTo(SubmissionRepository.DEFAULT_REPOSITORY_NAME));
+    }
+
+    public void testFindRepositoryByKeyNullInput() throws Exception {
+        SubmissionRepository repositoryByKey =
+                submissionsService.findRepositoryByKey(null);
+
+        assertThat(repositoryByKey, nullValue());
+    }
+
+    public void testFindRepositoryByKeyNoSuchKey() throws Exception {
+        SubmissionRepository repositoryByKey =
+                submissionsService.findRepositoryByKey("I'm making this up.");
+        assertThat(repositoryByKey, nullValue());
+
+    }
+
+    public void testRepositorySearchPartialMatch() throws Exception {
+        String repositoryName = SubmissionRepository.DEFAULT_REPOSITORY_NAME;
+        String searchString = repositoryName.substring(repositoryName.length() - 3, repositoryName.length());
+        assertThat(searchString, not(equalTo(repositoryName)));
+
+        SubmissionRepository submissionRepository = submissionsService.repositorySearch(searchString);
+        assertThat(submissionRepository.getName(), equalTo(repositoryName));
+    }
+
+    public void testRepositorySearchPartialWrongCase() throws Exception {
+        SubmissionRepository submissionRepository =
+                submissionsService.repositorySearch(SubmissionRepository.DEFAULT_REPOSITORY_NAME.toLowerCase());
+        assertThat(submissionRepository.getName(), equalTo(SubmissionRepository.DEFAULT_REPOSITORY_NAME));
+    }
+
+    public void testRepositorySearchNoResultReturnsNull() throws Exception {
+        SubmissionRepository submissionRepository = submissionsService.repositorySearch("nunsuch");
+        assertThat(submissionRepository, nullValue());
+    }
+
+    public void testRepositorySearchNullSearchReturnsNull() throws Exception {
+        SubmissionRepository submissionRepository = submissionsService.repositorySearch(null);
+        assertThat(submissionRepository, nullValue());
+    }
+
+    public void testFindLibraryDescriptorTypeByKey() throws Exception {
+        SubmissionLibraryDescriptor libraryDescriptorTypeByKey =
+                submissionsService.findLibraryDescriptorTypeByKey(SubmissionLibraryDescriptor.WHOLE_GENOME_NAME);
+
+        assertThat(libraryDescriptorTypeByKey, equalTo(ProductFamily.defaultLibraryDescriptor()));
+    }
+
+    public void testFindLibraryDescriptorTypeByKeyNoResultReturnsNull() throws Exception {
+        SubmissionLibraryDescriptor libraryDescriptorTypeByKey =
+                submissionsService.findLibraryDescriptorTypeByKey("nunsuch");
+
+        assertThat(libraryDescriptorTypeByKey, nullValue());
+    }
+    public void testFindLibraryDescriptorTypeByKeyNullInputReturnsNull() throws Exception {
+        SubmissionLibraryDescriptor libraryDescriptorTypeByKey =
+                submissionsService.findLibraryDescriptorTypeByKey(null);
+
+        assertThat(libraryDescriptorTypeByKey, nullValue());
+    }
+
 }

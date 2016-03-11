@@ -105,7 +105,7 @@
 
                 oTable = $j('#submissionSamples').dataTable({
                     "oLanguage": {
-                        "sProcessing": "Please wait. Gathering data from Mercury, Bass, and Picard. This may take a few minutes.",
+                        "sProcessing": "Please wait. Gathering data from Mercury, Bass, and Picard. This may take a few minutes."
                     },
                     "oTableTools": ttExportDefines,
                     "bStateSave": false,
@@ -120,14 +120,12 @@
                             "dataType": 'json',
                             "url": sSource,
                             "data": aoData,
-                            "success": function (data, textStatus, jqXHR) {
-                                fnCallback(data, textStatus, jqXHR);
-                            }
+                            "success": fnCallback
                         });
                     },
 
                     //needed when null value is returned in JSON
-                    "aoColumnDefs": [{ "sDefaultContent": "", "aTargets": ["_all"]}],
+                    "aoColumnDefs": [{"sDefaultContent": "", "aTargets": ["_all"]}],
                     "aoColumns": [
                         {"mData": "<%=SubmissionField.SAMPLE_NAME%>", "mRender": renderCheckbox},
                         {"mData": "<%=SubmissionField.SAMPLE_NAME%>"},
@@ -167,13 +165,13 @@
                         });
 
                         $j(".submissionControls").show();
-                        if ($j("#submissionSamples").height() > $j(window).height()){
+                        if ($j("#submissionSamples").height() > $j(window).height()) {
                             $j("#bottomSubmitButton").show();
                         } else {
                             $j("#bottomSubmitButton").hide();
                         }
                     }
-                })
+                });
             }
             })
         });

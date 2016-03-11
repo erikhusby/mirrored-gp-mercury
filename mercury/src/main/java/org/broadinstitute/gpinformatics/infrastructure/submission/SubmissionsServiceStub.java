@@ -115,7 +115,7 @@ public class SubmissionsServiceStub implements SubmissionsService {
     }
 
     @Override
-    public SubmissionLibraryDescriptor findSubmissionTypeByKey(String selectedSubmissionDescriptor) {
+    public SubmissionLibraryDescriptor findLibraryDescriptorTypeByKey(String selectedSubmissionDescriptor) {
         return null;
     }
 }

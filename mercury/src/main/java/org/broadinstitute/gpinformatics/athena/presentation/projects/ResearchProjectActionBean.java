@@ -854,13 +854,13 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     @HandlesEvent(VIEW_SUBMISSIONS_ACTION)
     public Resolution viewSubmissions() throws IOException, JSONException {
-        submissionLibraryDescriptor =  findDefaultSubmissionType(editResearchProject);
+        submissionLibraryDescriptor = findDefaultSubmissionType(editResearchProject);
 
         ObjectMapper objectMapper = new ObjectMapper();
-        final Map<String, Object> submissionSamplesMap = new HashMap<String, Object>(){{
+        final Map<String, Object> submissionSamplesMap = new HashMap<String, Object>() {{
             put("aaData", submissionSamples);
         }};
-        String submissionSamplesData = objectMapper.writeValueAsString(submissionSamples);
+        String submissionSamplesData = objectMapper.writeValueAsString(submissionSamplesMap);
 
         return createTextResolution(submissionSamplesData);
     }
@@ -914,7 +914,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
             addGlobalValidationError("You must select a BioProject in order to post for submissions.");
             errors = true;
         }
-        submissionLibraryDescriptor = submissionsService.findSubmissionTypeByKey(selectedSubmissionLibraryDescriptor);
+        submissionLibraryDescriptor = submissionsService.findLibraryDescriptorTypeByKey(selectedSubmissionLibraryDescriptor);
         if (submissionLibraryDescriptor == null) {
             addGlobalValidationError("You must select a submission type in order to post for submissions.");
             errors = true;

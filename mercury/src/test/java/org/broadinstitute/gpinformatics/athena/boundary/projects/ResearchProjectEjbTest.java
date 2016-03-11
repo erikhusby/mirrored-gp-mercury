@@ -114,7 +114,7 @@ public class ResearchProjectEjbTest extends Arquillian {
         BioProject selectedBioProject = new BioProject("PRJNA75723");
         researchProjectEjb.processSubmissions(testRP.getBusinessKey(), selectedBioProject,
                 Arrays.asList(submissionDto1, submissionDto2), testRP.getSubmissionRepository(),
-                submissionsService.findSubmissionTypeByKey(SubmissionLibraryDescriptor.WHOLE_GENOME_NAME));
+                submissionsService.findLibraryDescriptorTypeByKey(SubmissionLibraryDescriptor.WHOLE_GENOME_NAME));
 
         ResearchProject updatedRP = researchProjectDao.findByBusinessKey(testRP.getBusinessKey());
 

@@ -9,10 +9,12 @@ import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
+import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraProject;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionLibraryDescriptor;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionRepository;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionsService;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
@@ -225,20 +227,34 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
     private Set<ManifestSession> manifestSessions = new HashSet<>();
 
     // todo: we can cache the submissiontrackers in a static map
-    public SubmissionTracker getSubmissionTracker(SubmissionKey tuple){
+    public SubmissionTracker getSubmissionTracker(BassDTO bassDTO) {
+        String libraryDescriptorName=null;
+        Collection<SubmissionLibraryDescriptor> libraryDescriptors = findLibraryDescriptors();
+        if (libraryDescriptors.size()==1){
+            libraryDescriptorName=libraryDescriptors.iterator().next().getName();
+        }
+        SubmissionTracker.Key
+                key = bassDTO.getSubmissionKey(submissionRepositoryName, libraryDescriptorName);
         Set<SubmissionTracker> foundSubmissionTrackers = new HashSet<>();
         for (SubmissionTracker submissionTracker : getSubmissionTrackers()) {
-            if (submissionTracker.getSubmissionKey().equals(tuple)) {
-                if (!foundSubmissionTrackers.add(submissionTracker)) {
+            if (submissionTracker.getKey().equals(key)) {
+                if (!foundSubmissionTrackers.add(submissionTracker)){
                     throw new RuntimeException("More then one result found");
                 }
             }
         }
-
-        if (foundSubmissionTrackers.size() == 0) {
+        if (foundSubmissionTrackers.isEmpty()) {
             return null;
         }
         return foundSubmissionTrackers.iterator().next();
+    }
+
+    private Collection<SubmissionLibraryDescriptor> findLibraryDescriptors() {
+        Set<SubmissionLibraryDescriptor> submissionLibraryDescriptors = new HashSet<>();
+        for (ProductOrder productOrder : getProductOrders()) {
+            submissionLibraryDescriptors.add(productOrder.getProduct().getProductFamily().getSubmissionType());
+        }
+        return submissionLibraryDescriptors;
     }
 
     /**
@@ -398,14 +414,13 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
     }
 
     public void setSubmissionRepository(SubmissionRepository submissionRepository) {
-        this.submissionRepository = submissionRepository;
+        if (submissionRepositoryName == null) {
+            loadDefaultSubmissionSite();
+        }
         this.submissionRepositoryName = submissionRepository.getName();
     }
 
     public String getSubmissionRepositoryName() {
-        if (submissionRepositoryName == null) {
-            loadDefaultSubmissionSite();
-        }
         return submissionRepositoryName;
     }
 

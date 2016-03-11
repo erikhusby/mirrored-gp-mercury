@@ -61,7 +61,7 @@ public class SubmissionRequestBeanTest {
                    + "            },\n"
                    + "            \"studyContact\": \"jgentry\",\n"
                    + "            \"site\": \"NCBI_PROTECTED\",\n"
-                   + "            \"datatype\": \"Whole Genome\",\n"
+                   + "            \"submissiondatatype\": \"Whole Genome\",\n"
                    + "            \"uuid\": \"7d835cc7-cd63-4cc6-9621-868155618745\"\n"
                    + "        },\n"
                    + "        {\n"
@@ -82,7 +82,7 @@ public class SubmissionRequestBeanTest {
                    + "            },\n"
                    + "            \"studyContact\": \"jgentry\",\n"
                    + "            \"site\": \"NCBI_PROTECTED\",\n"
-                   + "            \"datatype\": \"Whole Genome\",\n"
+                   + "            \"submissiondatatype\": \"Whole Genome\",\n"
                    + "            \"uuid\": \"7d835cc7-cd63-4cc6-9621-868155618746\"\n"
                    + "        },\n"
                    + "        {\n"
@@ -103,7 +103,7 @@ public class SubmissionRequestBeanTest {
                    + "            },\n"
                    + "            \"studyContact\": \"noSuchProject\",\n"
                    + "            \"site\": \"NCBI_PROTECTED\",\n"
-                   + "            \"datatype\": \"Whole Genome\",\n"
+                   + "            \"submissiondatatype\": \"Whole Genome\",\n"
                    + "            \"uuid\": \"7d835cc7-cd63-4cc6-9621-868155618747\"\n"
                    + "        },\n"
                    + "        {\n"
@@ -124,7 +124,7 @@ public class SubmissionRequestBeanTest {
                    + "            },\n"
                    + "            \"studyContact\": \"noSuchSample\",\n"
                    + "            \"site\": \"NCBI_PROTECTED\",\n"
-                   + "            \"datatype\": \"Whole Genome\",\n"
+                   + "            \"submissiondatatype\": \"Whole Genome\",\n"
                    + "            \"uuid\": \"7d835cc7-cd63-4cc6-9621-868155618748\"\n"
                    + "        },\n"
                    + "        {\n"
@@ -145,7 +145,7 @@ public class SubmissionRequestBeanTest {
                    + "            },\n"
                    + "            \"studyContact\": \"noSuchProjectOrSample\",\n"
                    + "            \"site\": \"NCBI_PROTECTED\",\n"
-                   + "            \"datatype\": \"Whole Genome\",\n"
+                   + "            \"submissiondatatype\": \"Whole Genome\",\n"
                    + "            \"uuid\": \"7d835cc7-cd63-4cc6-9621-868155618749\"\n"
                    + "        }\n"
                    + "    ]\n"
@@ -174,7 +174,7 @@ public class SubmissionRequestBeanTest {
 
         SubmissionRepository defaultRepository=new SubmissionRepository(SubmissionRepository.DEFAULT_REPOSITORY_NAME,
                 "NCBI Controlled Access (dbGaP) submissions");
-        SubmissionLibraryDescriptor defaultType = ProductFamily.defaultSubmissionType();
+        SubmissionLibraryDescriptor defaultType = ProductFamily.defaultLibraryDescriptor();
 
         testRequest.setSubmissions(Arrays.asList(new SubmissionBean(uuID1, studyContact1, bioProject1, bioSampleBean1,
                 defaultRepository, defaultType),

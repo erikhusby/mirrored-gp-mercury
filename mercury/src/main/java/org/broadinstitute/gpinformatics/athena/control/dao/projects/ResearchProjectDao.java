@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.projects;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
@@ -22,6 +23,7 @@ import javax.persistence.criteria.JoinType;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
 import javax.persistence.criteria.SetJoin;
+import javax.persistence.metamodel.SingularAttribute;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -206,5 +208,17 @@ public class ResearchProjectDao extends GenericDao {
      */
     public Collection<ResearchProject> findAllWithAccess(boolean accessControlEnabled) {
         return findList(ResearchProject.class, ResearchProject_.accessControlEnabled, accessControlEnabled);
+    }
+
+    public List<ResearchProject> findWithNull(final SingularAttribute<ResearchProject, String> attribute) {
+        return findAll(ResearchProject.class, new GenericDaoCallback<ResearchProject>() {
+            @Override
+            public void callback(CriteriaQuery<ResearchProject> criteriaQuery, Root<ResearchProject> root) {
+                criteriaQuery.where(getCriteriaBuilder().or(
+                        getCriteriaBuilder().isNull(root.get(attribute)),
+                        getCriteriaBuilder().equal(root.get(attribute), StringUtils.EMPTY)
+                ));
+            }
+        });
     }
 }

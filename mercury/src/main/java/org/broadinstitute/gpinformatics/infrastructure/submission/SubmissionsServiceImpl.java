@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.submission;
 
 import com.sun.jersey.api.client.ClientResponse;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
@@ -82,12 +83,7 @@ public class SubmissionsServiceImpl implements SubmissionsService {
                 JerseyUtils.getWebResource(submissionsConfig.getWSUrl(SubmissionConfig.SUBMIT_ACTION),
                         MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).entity(submissions)
                            .post(ClientResponse.class);
-
-        if(response.getStatus() != Response.Status.OK.getStatusCode()) {
-            String errorResponse = response.getEntity(String.class);
-            log.error("Error received while posting submissions: " + errorResponse);
-            throw new InformaticsServiceException(errorResponse);
-        }
+        validateResponseStatus("posting submissions", response);
 
         return response.getEntity(SubmissionStatusResultBean.class).getSubmissionStatuses();
     }
@@ -100,11 +96,7 @@ public class SubmissionsServiceImpl implements SubmissionsService {
                 JerseyUtils.getWebResource(submissionsConfig.getWSUrl(SubmissionConfig.SUBMISSION_SAMPLES_ACTION),
                         MediaType.APPLICATION_JSON_TYPE, parameterMap).get(ClientResponse.class);
 
-        if(response.getStatus() != Response.Status.OK.getStatusCode()) {
-            String errorResponse = response.getEntity(String.class);
-            log.error("Error received while posting submissions: " + errorResponse);
-            throw new InformaticsServiceException(errorResponse);
-        }
+        validateResponseStatus("receiving submission samples list", response);
 
         return response.getEntity(SubmissionSampleResultBean.class).getSubmittedSampleIds();
     }
@@ -114,11 +106,7 @@ public class SubmissionsServiceImpl implements SubmissionsService {
         ClientResponse response =
                 JerseyUtils.getWebResource(submissionsConfig.getWSUrl(SubmissionConfig.ALL_SUBMISSION_SITES), MediaType.APPLICATION_JSON_TYPE)
                         .get(ClientResponse.class);
-        if (response.getStatus() != Response.Status.OK.getStatusCode()) {
-            String error = response.getEntity(String.class);
-            log.error(error);
-            throw new InformaticsServiceException(error);
-        }
+        validateResponseStatus("receiving Submission Repositories", response);
 
         return response.getEntity(SubmissionRepositories.class).getSubmissionRepositories();
     }
@@ -128,12 +116,17 @@ public class SubmissionsServiceImpl implements SubmissionsService {
         ClientResponse response =
                        JerseyUtils.getWebResource(submissionsConfig.getWSUrl(SubmissionConfig.SUBMISSION_TYPES),
                                MediaType.APPLICATION_JSON_TYPE).get(ClientResponse.class);
+        validateResponseStatus("receiving Submission Library Descriptors", response);
+        return response.getEntity(SubmissionLibraryDescriptors.class).getSubmissionLibraryDescriptors();
+    }
+
+    protected void validateResponseStatus(String activityName, ClientResponse response) {
         if (response.getStatus() != Response.Status.OK.getStatusCode()) {
             String error = response.getEntity(String.class);
-            log.error(error);
-            throw new InformaticsServiceException(error);
+            String errorMessage = String.format("Error received while %s: %s", activityName, error);
+            log.error(errorMessage);
+            throw new InformaticsServiceException(errorMessage);
         }
-        return response.getEntity(SubmissionLibraryDescriptors.class).getSubmissionLibraryDescriptors();
     }
 
     @Override
@@ -148,20 +141,24 @@ public class SubmissionsServiceImpl implements SubmissionsService {
 
     @Override
     public SubmissionRepository repositorySearch(String searchString) {
-        for (SubmissionRepository submissionRepository : getSubmissionRepositories()) {
-            if (submissionRepository.getDescription().toLowerCase().contains(searchString.toLowerCase()) ||
-                submissionRepository.getName().toLowerCase().contains(searchString.toLowerCase())) {
-                return submissionRepository;
+        if (StringUtils.isNotBlank(searchString)) {
+            for (SubmissionRepository submissionRepository : getSubmissionRepositories()) {
+                if (submissionRepository.getDescription().toLowerCase().contains(searchString.toLowerCase()) ||
+                    submissionRepository.getName().toLowerCase().contains(searchString.toLowerCase())) {
+                    return submissionRepository;
+                }
             }
         }
         return null;
     }
 
     @Override
-    public SubmissionLibraryDescriptor findSubmissionTypeByKey(String selectedSubmissionDescriptor) {
-        for (SubmissionLibraryDescriptor submissionLibraryDescriptor : getSubmissionLibraryDescriptors()) {
-            if (submissionLibraryDescriptor.getName().equals(selectedSubmissionDescriptor)) {
-                return submissionLibraryDescriptor;
+    public SubmissionLibraryDescriptor findLibraryDescriptorTypeByKey(String selectedSubmissionDescriptor) {
+        if (StringUtils.isNotBlank(selectedSubmissionDescriptor)) {
+            for (SubmissionLibraryDescriptor submissionLibraryDescriptor : getSubmissionLibraryDescriptors()) {
+                if (submissionLibraryDescriptor.getName().equals(selectedSubmissionDescriptor)) {
+                    return submissionLibraryDescriptor;
+                }
             }
         }
         return null;

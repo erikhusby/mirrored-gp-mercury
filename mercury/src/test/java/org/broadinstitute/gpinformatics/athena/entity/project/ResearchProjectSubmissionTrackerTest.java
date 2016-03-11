@@ -11,9 +11,14 @@
 
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
+import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.testng.annotations.Test;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTrackerTest.SubmissionTrackerStub;
 import static org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTrackerTest.testAccessionID;
@@ -29,23 +34,43 @@ import static org.hamcrest.Matchers.nullValue;
 public class ResearchProjectSubmissionTrackerTest {
     public void testGetSubmissionTracker() {
         ResearchProject testResearchProject = ResearchProjectTestFactory.createTestResearchProject();
+        testResearchProject.addProductOrder(ProductOrderTestFactory.createDummyProductOrder());
+
         SubmissionTrackerStub tracker = new SubmissionTrackerStub(testAccessionID, testFileName, testVersion, testRepository, testLibraryDescriptor);
         SubmissionTrackerStub tracker2 = new SubmissionTrackerStub(testAccessionID + 2, testFileName + 2, testVersion + 2,testRepository, testLibraryDescriptor);
 
         testResearchProject.addSubmissionTracker(tracker, tracker2);
-
-        SubmissionTracker resultTracker = testResearchProject.getSubmissionTracker(new SubmissionKey(testAccessionID, testFileName, testVersion, testRepository.getName(), testLibraryDescriptor.getName()));
+        BassDTO bassDTO = getBassDTO(testAccessionID, testFileName, testVersion);
+        SubmissionTracker resultTracker = testResearchProject.getSubmissionTracker(bassDTO);
         assertThat(tracker, equalTo(resultTracker));
     }
 
     @Test(expectedExceptions = RuntimeException.class)
-    public void testGetSubmissionTrackerTwoResults() {
+    public void testGetSubmissionTrackerThrowsExceptionWhenMoreThenOneResult() {
         ResearchProject testResearchProject = ResearchProjectTestFactory.createTestResearchProject();
-        SubmissionTrackerStub tracker =
-                new SubmissionTrackerStub(testAccessionID, testFileName, testVersion, testRepository, testLibraryDescriptor);
+        testResearchProject.addProductOrder(ProductOrderTestFactory.createDummyProductOrder());
+
+        SubmissionTrackerStub tracker = new SubmissionTrackerStub(testAccessionID, testFileName, testVersion, testRepository, testLibraryDescriptor);
+
         testResearchProject.addSubmissionTracker(tracker, tracker);
-        SubmissionTracker resultTracker = testResearchProject.getSubmissionTracker(new SubmissionKey(testAccessionID, testFileName, testVersion, testRepository.getName(), testLibraryDescriptor.getName()));
-        assertThat(resultTracker, equalTo(resultTracker));
+        BassDTO bassDTO = getBassDTO(testAccessionID, testFileName, testVersion);
+        testResearchProject.getSubmissionTracker(bassDTO);
+    }
+
+    public void testGetSubmissionTrackerReturnsNullWhenThereAreNone() {
+        ResearchProject testResearchProject = ResearchProjectTestFactory.createTestResearchProject();
+        testResearchProject.addSubmissionTracker();
+        BassDTO bassDTO = getBassDTO(testAccessionID, testFileName, testVersion);
+        SubmissionTracker resultTracker = testResearchProject.getSubmissionTracker(bassDTO);
+        assertThat(resultTracker, nullValue());
+    }
+
+    private BassDTO getBassDTO(String testAccessionID, String testFileName, String testVersion) {
+        Map<BassDTO.BassResultColumn, String> bassMap = new HashMap<>();
+        bassMap.put(BassDTO.BassResultColumn.sample, testAccessionID);
+        bassMap.put(BassDTO.BassResultColumn.path, testFileName);
+        bassMap.put(BassDTO.BassResultColumn.version, testVersion);
+        return new BassDTO(bassMap);
     }
 
     public void testGetSubmissionTrackerNoResults() {
@@ -53,7 +78,12 @@ public class ResearchProjectSubmissionTrackerTest {
         SubmissionTracker tracker =
                 new SubmissionTracker(testAccessionID, testFileName, testVersion, testRepository, testLibraryDescriptor);
         testResearchProject.addSubmissionTracker(tracker);
-        SubmissionTracker resultTracker = testResearchProject.getSubmissionTracker(new SubmissionKey("using", "phony", "arguments", "here is", "another"));
+        Map<BassDTO.BassResultColumn, String> bassMap = new HashMap<>();
+        bassMap.put(BassDTO.BassResultColumn.sample, "using" );
+        bassMap.put(BassDTO.BassResultColumn.path, "phony");
+        bassMap.put(BassDTO.BassResultColumn.version, "9");
+        BassDTO bassDTO = new BassDTO(bassMap);
+        SubmissionTracker resultTracker = testResearchProject.getSubmissionTracker(bassDTO);
         assertThat(resultTracker, nullValue());
     }
 

@@ -1,7 +1,10 @@
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionLibraryDescriptor;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionRepository;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
@@ -16,6 +19,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.beans.Transient;
+import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -85,8 +89,7 @@ public class SubmissionTracker {
         this.version = version;
         requestDate = new Date();
         this.submissionRepositoryName = submissionRepository.getName();
-                this.submissionLibraryDescriptorName = submissionLibraryDescriptor.getName();
-
+        this.submissionLibraryDescriptorName = submissionLibraryDescriptor.getName();
     }
 
     public SubmissionTracker(String submittedSampleName, String fileName, String version,
@@ -170,7 +173,48 @@ public class SubmissionTracker {
 
     // todo: should be in interface?
     @Transient
-    public SubmissionKey getSubmissionKey() {
-        return new SubmissionKey(submittedSampleName, fileName, version, submissionRepositoryName, submissionLibraryDescriptorName);
+    public Key getKey() {
+        return new Key(submittedSampleName, fileName, version, submissionRepositoryName, submissionLibraryDescriptorName);
+    }
+
+    public static class Key implements Serializable {
+        private static final long serialVersionUID = 1262062294730627888L;
+        private final String sampleName;
+        private final String fileName;
+        private final String version;
+        private final String repository;
+        private final String libraryDescriptor;
+
+        public Key(String sampleName, String fileName, String version, String repository, String libraryDescriptor) {
+            this.sampleName = sampleName;
+            this.fileName = fileName;
+            this.version = version;
+            this.repository = repository;
+            this.libraryDescriptor = libraryDescriptor;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            Key that = OrmUtil.proxySafeCast(o, Key.class);
+            return new EqualsBuilder()
+                    .append(this.sampleName, that.sampleName)
+                    .append(this.fileName, that.fileName)
+                    .append(this.version, that.version)
+                    .append(this.repository, that.repository)
+                    .append(this.libraryDescriptor, that.libraryDescriptor).isEquals();
+        }
+
+        @Override
+        public int hashCode() {
+            return new HashCodeBuilder().append(this.sampleName).append(this.fileName).append(this.version)
+                    .append(repository).append(libraryDescriptor).hashCode();
+        }
     }
 }

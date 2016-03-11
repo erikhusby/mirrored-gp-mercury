@@ -2,11 +2,14 @@ package org.broadinstitute.gpinformatics.athena.entity.fixup;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject_;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionRepository;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
@@ -42,6 +45,10 @@ public class ResearchProjectFixupTest extends Arquillian {
 
     @Inject
     private BSPUserList bspUserList;
+
+    @SuppressWarnings("CdiInjectionPointsInspection")
+    @Inject
+    private Log log;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -184,5 +191,25 @@ public class ResearchProjectFixupTest extends Arquillian {
         ResearchProject researchProject = rpDao.findByBusinessKey("RP-1040");
         researchProject.setRegulatoryDesignation(ResearchProject.RegulatoryDesignation.RESEARCH_ONLY);
         rpDao.persist(new FixupCommentary("GPLIM-3816 updating incorrectly selected regulatory designation"));
+    }
+
+    @Test(enabled = true)
+    public void gplim4021addDefaultSubmissionRepository() {
+        userBean.loginOSUser();
+        List<ResearchProject> researchProjectList = rpDao.findList(ResearchProject.class, ResearchProject_.submissionRepositoryName, null);
+
+        for (ResearchProject project : researchProjectList) {
+            if (StringUtils.isNotBlank(project.getSubmissionRepositoryName())) {
+                String error = String.format(
+                        "Could not update Project '%s' with default value because it already has a SubmissionRepository defined ('%s')",
+                        project.getName(), project.getSubmissionRepositoryName());
+                log.error(error);
+                throw new RuntimeException(error);
+            } else {
+                project.setSubmissionRepositoryName(SubmissionRepository.DEFAULT_REPOSITORY_NAME);
+            }
+        }
+        rpDao.persist(new FixupCommentary("see https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-4021"));
+        log.info(String.format("Updated %d rows", researchProjectList.size()));
     }
 }

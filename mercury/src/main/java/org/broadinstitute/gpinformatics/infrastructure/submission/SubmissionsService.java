@@ -27,5 +27,5 @@ public interface SubmissionsService extends Serializable {
 
     SubmissionRepository repositorySearch(String siteName);
 
-    SubmissionLibraryDescriptor findSubmissionTypeByKey(String selectedSubmissionDescriptor);
+    SubmissionLibraryDescriptor findLibraryDescriptorTypeByKey(String selectedSubmissionDescriptor);
 }

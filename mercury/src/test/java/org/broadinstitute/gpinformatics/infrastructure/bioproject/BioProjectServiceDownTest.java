@@ -71,7 +71,7 @@ public class BioProjectServiceDownTest {
         }
 
         @Override
-        public SubmissionLibraryDescriptor findSubmissionTypeByKey(String selectedSubmissionDescriptor) {
+        public SubmissionLibraryDescriptor findLibraryDescriptorTypeByKey(String selectedSubmissionDescriptor) {
             return null;
         }
     }
