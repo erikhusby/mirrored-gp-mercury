@@ -489,7 +489,7 @@
             <fieldset>
                 <legend><h4>Data Submission</h4></legend>
                 <div class="control-group view-control-group">
-                    <label class="control-label label-form">Default Submission Repository</label>
+                    <label class="control-label label-form">Submission Repository</label>
 
                     <div class="controls">
                         <div class="form-value">
