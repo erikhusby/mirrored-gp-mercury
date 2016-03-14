@@ -19,7 +19,6 @@ import java.io.IOException;
  */
 public class SecurityFilter implements Filter {
 
-    private final boolean isSecure = ApplicationInstance.CRSP.isCurrent();
     private int securePort;
 
     private static final Log log = LogFactory.getLog(AuthorizationFilter.class);
@@ -48,7 +47,7 @@ public class SecurityFilter implements Filter {
         } else {
             String currentURI = httpReq.getRequestURI();
 
-            if (isSecure && (!httpReq.isSecure())) {
+            if (!httpReq.isSecure()) {
                 // if required to be secure, then redirect user to proper location
                 log.warn(httpReq.getRemoteAddr() + " trying to access " + currentURI + " insecurely.");
 

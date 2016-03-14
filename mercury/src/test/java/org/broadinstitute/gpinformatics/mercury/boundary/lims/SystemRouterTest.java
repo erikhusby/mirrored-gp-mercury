@@ -10,7 +10,6 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.BSPExportsService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.IsExported;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.LabEventTestFactory;
@@ -1149,9 +1148,7 @@ public class SystemRouterTest extends BaseEventTest {
     @DataProvider(name = "deploymentContext")
     public Object[][] sourceDeploymentContext() {
         return new Object[][]{
-                new Object[]{ApplicationInstance.CRSP},
-                new Object[]{ApplicationInstance.RESEARCH},
-
+                new Object[]{ApplicationInstance.RESEARCH}
         };
     }
 

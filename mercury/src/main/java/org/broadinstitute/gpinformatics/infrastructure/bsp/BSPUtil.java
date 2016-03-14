@@ -34,8 +34,7 @@ public class BSPUtil {
      * @return true if the sample name is a valid BSP Sample name.
      */
     public static boolean isInBspFormat(@Nonnull String sampleName) {
-        return  BSP_SAMPLE_SHORT_BARCODE_PATTERN.matcher(sampleName).matches() ||
-                (CRSP_BSP_SAMPLE_SHORT_BARCODE_PATTERN.matcher(sampleName).matches() && ApplicationInstance.CRSP.isCurrent());
+        return  BSP_SAMPLE_SHORT_BARCODE_PATTERN.matcher(sampleName).matches();
     }
 
     /**

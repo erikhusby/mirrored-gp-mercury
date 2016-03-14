@@ -626,9 +626,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             validateRegulatoryInformation(action);
         }
 
-        if (!ApplicationInstance.CRSP.isCurrent()) {
-            validateQuoteOptions(action);
-        }
+        validateQuoteOptions(action);
 
         requireField(editOrder.getProduct(), "a product", action);
 

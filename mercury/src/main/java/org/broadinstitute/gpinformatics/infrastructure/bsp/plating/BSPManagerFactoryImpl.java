@@ -31,8 +31,7 @@ public class BSPManagerFactoryImpl implements BSPManagerFactory {
         try {
             Constructor<?> constructor = clazz.getConstructor(String.class, Integer.class, String.class, String.class, Boolean.class);
             return constructor.newInstance(BSPConfig.getHttpScheme()+params.getHost(), params.getPort(),
-                    params.getLogin(), params.getPassword(),
-                    (ApplicationInstance.CRSP.isCurrent() && (deployment != Deployment.PROD)));
+                    params.getLogin(), params.getPassword());
         } catch (SecurityException | NoSuchMethodException | IllegalArgumentException | InstantiationException |
                 IllegalAccessException | InvocationTargetException e) {
             throw new RuntimeException(e);

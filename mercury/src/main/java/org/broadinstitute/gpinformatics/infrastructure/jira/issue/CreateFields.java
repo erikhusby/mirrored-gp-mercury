@@ -110,7 +110,7 @@ public class CreateFields extends UpdateFields {
          */
         ProjectType(String projectName, String keyPrefix, String crspKeyPrefix) {
             this.projectName = projectName;
-            this.keyPrefix = ApplicationInstance.CRSP.isCurrent() ? crspKeyPrefix : keyPrefix;
+            this.keyPrefix = keyPrefix;
         }
 
         // TODO: currently unused. Can use someday to look up prefix in JIRA instead of hardcoding it here.
@@ -192,7 +192,7 @@ public class CreateFields extends UpdateFields {
          * @param crspPrefix the prefix for CRSP JIRA, if any
          */
         IssueType(String jiraName, String crspPrefix) {
-            this.jiraName = ApplicationInstance.CRSP.isCurrent() ? crspPrefix + jiraName : jiraName;
+            this.jiraName = jiraName;
         }
 
         /** The name for this Issue Type in JIRA. */

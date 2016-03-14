@@ -178,9 +178,7 @@ public class BettaLimsMessageResource {
                 processInSquid = false;
             } else {
                 LabEventType.SystemOfRecord systemOfRecord = labEventType.getSystemOfRecord();
-                if (ApplicationInstance.CRSP.isCurrent() && systemOfRecord == LabEventType.SystemOfRecord.BOTH) {
-                    systemOfRecord = LabEventType.SystemOfRecord.MERCURY;
-                }
+
                 switch (systemOfRecord) {
                 case MERCURY:
                     processInMercury = true;
@@ -229,9 +227,6 @@ public class BettaLimsMessageResource {
 
             BettaLimsConnector.BettaLimsResponse bettaLimsResponse = null;
             if (processInSquid) {
-                if (ApplicationInstance.CRSP.isCurrent()) {
-                    throw new RuntimeException("Cannot route CRSP messages to Squid.");
-                }
                 bettaLimsResponse = bettaLimsConnector.sendMessage(message);
             }
             if (processInMercury) {

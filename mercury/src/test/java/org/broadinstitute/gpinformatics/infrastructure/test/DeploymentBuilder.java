@@ -27,7 +27,6 @@ public class DeploymentBuilder {
 
     private static final String MERCURY_WAR = MERCURY_APP_NAME + ".war";
 
-
     /**
      * Called by default {@link #buildMercuryWar()}, and also useful explicitly in the rare case where you want an
      * in-container test to run as if it's really in another environment (for instance, to isolate a production bug).

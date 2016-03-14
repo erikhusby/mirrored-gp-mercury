@@ -326,11 +326,6 @@ public class ProductOrderData {
             productOrderSamples.add(new ProductOrderSample(sample));
         }
 
-        // Make sure the required sample(s) are present FOR CLIA. For others, adding later is valid.
-        if (productOrderSamples.isEmpty() && ApplicationInstance.CRSP.isCurrent()) {
-            throw new NoSamplesException();
-        }
-
         productOrder.addSamples(productOrderSamples);
 
         // Set the requisition name so one can look up the requisition in the Portal.

@@ -7,8 +7,6 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
  * may grow in the future.
  */
 public enum ApplicationInstance {
-    /** The CLIA instance of Mercury */
-    CRSP,
     /** The non-CLIA instance of Mercury */
     RESEARCH;
 

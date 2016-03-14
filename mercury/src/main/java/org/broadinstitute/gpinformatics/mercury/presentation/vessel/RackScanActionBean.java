@@ -149,10 +149,7 @@ public abstract class RackScanActionBean extends CoreActionBean {
     public List<RackScanner.RackScannerLab> getAllLabs() {
 
         List<RackScanner.RackScannerLab> labsBySoftwareSystems;
-        if (ApplicationInstance.CRSP.isCurrent()) {
-            labsBySoftwareSystems =
-                    RackScanner.RackScannerLab.getLabsBySoftwareSystems(RackScanner.SoftwareSystem.CRSP_BSP);
-        } else if (deployment != Deployment.PROD) {
+        if (deployment != Deployment.PROD) {
             labsBySoftwareSystems = RackScanner.RackScannerLab.getLabsBySoftwareSystems(RackScanner.SoftwareSystem.BSP,
                     RackScanner.SoftwareSystem.MERCURY_NON_PROD, RackScanner.SoftwareSystem.MERCURY);
         } else {

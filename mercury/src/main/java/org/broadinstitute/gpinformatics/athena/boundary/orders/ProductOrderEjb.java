@@ -425,12 +425,6 @@ public class ProductOrderEjb {
                             productOrder.getPublicationDeadline())));
         }
 
-        // Add the Requisition name to the list of fields when appropriate.
-        if (ApplicationInstance.CRSP.isCurrent() && !StringUtils.isBlank(productOrder.getRequisitionName())) {
-            pdoUpdateFields.add(new PDOUpdateField(ProductOrder.JiraField.REQUISITION_NAME,
-                    productOrder.getRequisitionName()));
-        }
-
         String[] customFieldNames = new String[pdoUpdateFields.size()];
 
         int i = 0;
