@@ -312,21 +312,9 @@ public class SystemRouterTest extends BaseEventTest {
 
     @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
     public void testRouteForTubesNoneInMercury(ApplicationInstance instance) {
-        boolean oldDeployment = Deployment.isCRSP;
-        Deployment.isCRSP = (instance == ApplicationInstance.CRSP);
         final List<String> testBarcodes = Arrays.asList("squidTube1", "squidTube2");
-        if (Deployment.isCRSP) {
-            try {
-                systemRouter.routeForVesselBarcodes(testBarcodes);
-                Assert.fail("CRSP Deployment should not route to Squid");
-            } catch (Exception e) {
-
-            }
-        } else {
             assertThat(systemRouter.routeForVesselBarcodes(testBarcodes), is(SQUID));
-        }
         verify(mockLabVesselDao).findByBarcodes(testBarcodes);
-        Deployment.isCRSP = oldDeployment;
     }
 
     @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
@@ -338,43 +326,19 @@ public class SystemRouterTest extends BaseEventTest {
 
     @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
     public void testRouteForTubesSomeInMercuryWithNonExomeExpressOrders(ApplicationInstance instance) {
-        boolean oldDeployment = Deployment.isCRSP;
-        Deployment.isCRSP = (instance == ApplicationInstance.CRSP);
         placeOrderForTube(tube1, testProduct);
         final List<String> testTubes = Arrays.asList("squidTube", MERCURY_TUBE_1);
-        if (Deployment.isCRSP) {
-            try {
-                systemRouter.routeForVesselBarcodes(testTubes);
-                Assert.fail("CRSP Deployment should never route to Squid");
-            } catch (Exception e) {
-
-            }
-        } else {
             assertThat(systemRouter.routeForVesselBarcodes(testTubes), is(SQUID));
-        }
         verify(mockLabVesselDao).findByBarcodes(testTubes);
-        Deployment.isCRSP = oldDeployment;
     }
 
     @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
     public void testRouteForTubesAllInMercuryWithoutExomeExpressOrders(ApplicationInstance instance) {
-        boolean oldDeployment = Deployment.isCRSP;
-        Deployment.isCRSP = (instance == ApplicationInstance.CRSP);
         placeOrderForTube(tube2, testProduct);
         final List<String> testBarcodes = Arrays.asList(MERCURY_TUBE_1, MERCURY_TUBE_2);
-        if (Deployment.isCRSP) {
-            try {
-                systemRouter.routeForVesselBarcodes(testBarcodes);
-                Assert.fail("CRSP Deployment should never route to Squid");
-            } catch (Exception e) {
-
-            }
-        } else {
             assertThat(systemRouter.routeForVesselBarcodes(testBarcodes),
                        is(SQUID));
-        }
         verify(mockLabVesselDao).findByBarcodes(testBarcodes);
-        Deployment.isCRSP = oldDeployment;
     }
 
     @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
@@ -546,24 +510,11 @@ public class SystemRouterTest extends BaseEventTest {
 
     @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
     public void testRouteForPlateNotInMercury(ApplicationInstance instance) {
-        boolean oldDeployment = Deployment.isCRSP;
-        Deployment.isCRSP = (instance == ApplicationInstance.CRSP);
         final String testBarcode = "squidPlate";
-        if (Deployment.isCRSP) {
-            try {
-                systemRouter.routeForVessel(testBarcode);
-
-                Assert.fail("CRSP Deployment should never route to Squid");
-            } catch (Exception e) {
-
-            }
-        } else {
             assertThat(systemRouter.routeForVessel(testBarcode), equalTo(SQUID));
-        }
         verify(mockLabVesselDao).findByBarcodes(new ArrayList<String>() {{
             add(testBarcode);
         }});
-        Deployment.isCRSP = oldDeployment;
     }
 
     @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
@@ -576,24 +527,12 @@ public class SystemRouterTest extends BaseEventTest {
 
     @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
     public void testRouteForPlateInMercuryWithNonExomeExpressOrder(ApplicationInstance instance) {
-        boolean oldDeployment = Deployment.isCRSP;
-        Deployment.isCRSP = (instance == ApplicationInstance.CRSP);
         placeOrderForTube(tube1, testProduct);
         doSectionTransfer(makeTubeFormation(tube1), plate);
-        if (Deployment.isCRSP) {
-            try {
-                systemRouter.routeForVessel(MERCURY_PLATE);
-                Assert.fail("CRSP Deployment should never route to Squid");
-            } catch (Exception e) {
-
-            }
-        } else {
             assertThat(systemRouter.routeForVessel(MERCURY_PLATE), equalTo(SQUID));
-        }
         verify(mockLabVesselDao).findByBarcodes(new ArrayList<String>() {{
             add(MERCURY_PLATE);
         }});
-        Deployment.isCRSP = oldDeployment;
     }
 
     @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
@@ -628,23 +567,11 @@ public class SystemRouterTest extends BaseEventTest {
 
     @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
     public void testRouteForTubeNotInMercury(ApplicationInstance instance) {
-        boolean oldDeployment = Deployment.isCRSP;
-        Deployment.isCRSP = (instance == ApplicationInstance.CRSP);
         final String testBarcode = "squidTube";
-        if (Deployment.isCRSP) {
-            try {
-                systemRouter.routeForVessel(testBarcode);
-                Assert.fail("CRSP Deployment should never route to Squid");
-            } catch (Exception e) {
-
-            }
-        } else {
             assertThat(systemRouter.routeForVessel(testBarcode), is(SQUID));
-        }
         verify(mockLabVesselDao).findByBarcodes(new ArrayList<String>() {{
             add(testBarcode);
         }});
-        Deployment.isCRSP = oldDeployment;
     }
 
     @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
@@ -658,23 +585,11 @@ public class SystemRouterTest extends BaseEventTest {
 
     @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
     public void testRouteForTubeInMercuryWithNonExomeExpressOrder(ApplicationInstance instance) {
-        boolean oldDeployment = Deployment.isCRSP;
-        Deployment.isCRSP = (instance == ApplicationInstance.CRSP);
         placeOrderForTube(tube1, testProduct);
-        if (Deployment.isCRSP) {
-            try {
-                systemRouter.routeForVessel(MERCURY_TUBE_1);
-                Assert.fail("CRSP Deployment should never route to Squid");
-            } catch (Exception e) {
-
-            }
-        } else {
             assertThat(systemRouter.routeForVessel(MERCURY_TUBE_1), is(SQUID));
-        }
         verify(mockLabVesselDao).findByBarcodes(new ArrayList<String>() {{
             add(MERCURY_TUBE_1);
         }});
-        Deployment.isCRSP = oldDeployment;
     }
 
     @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
@@ -919,24 +834,12 @@ public class SystemRouterTest extends BaseEventTest {
 
     @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext", enabled = true)
     public void testGetSystemOfRecordForControlOnly(ApplicationInstance instance) {
-        boolean oldDeployment = Deployment.isCRSP;
-        Deployment.isCRSP = (instance == ApplicationInstance.CRSP);
         tube1.addSample(new MercurySample("SM-1", MercurySample.MetadataSource.BSP));
 
-        if (Deployment.isCRSP) {
-            try {
-                systemRouter.getSystemOfRecordForVessel(MERCURY_TUBE_1);
-                Assert.fail("CRSP Deployment should never route to Squid");
-            } catch (Exception e) {
-
-            }
-        } else {
             assertThat(systemRouter.getSystemOfRecordForVessel(MERCURY_TUBE_1), is(SQUID));
-        }
         verify(mockLabVesselDao).findByBarcodes(new ArrayList<String>() {{
             add(MERCURY_TUBE_1);
         }});
-        Deployment.isCRSP = oldDeployment;
     }
 
     @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext", enabled = true)
@@ -951,8 +854,6 @@ public class SystemRouterTest extends BaseEventTest {
 
     @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext", enabled = true)
     public void testMercuryOnlyRouting(ApplicationInstance instance) {
-        boolean oldDeployment = Deployment.isCRSP;
-        Deployment.isCRSP = (instance == ApplicationInstance.CRSP);
         expectedRouting = SystemRouter.System.MERCURY;
 
         final ProductOrder productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
@@ -963,17 +864,8 @@ public class SystemRouterTest extends BaseEventTest {
          * Bucketing (which is required to find batch and Product key) happens in PicoPlatingEntityBuilder so
          * Routing before bucketing will return Squid
          */
-        if (Deployment.isCRSP) {
-            try {
-                systemRouter.routeForVessels(new HashSet<LabVessel>(mapBarcodeToTube.values()));
-                Assert.fail("CRSP Deployment should never route to Squid");
-            } catch (Exception e) {
-
-            }
-        } else {
             assertThat(systemRouter.routeForVessels(new HashSet<LabVessel>(mapBarcodeToTube.values())),
                        is(SystemRouter.System.SQUID));
-        }
 
         //Build Event History
         LabBatch workflowBatch = new LabBatch("Exome Express Batch",
@@ -1085,13 +977,10 @@ public class SystemRouterTest extends BaseEventTest {
 
         String flowcellBarcode = flowcell.getLabel();
 
-        Deployment.isCRSP = oldDeployment;
     }
 
     @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext", enabled = true)
     public void testMercuryAndSquidRouting(ApplicationInstance instance) {
-        boolean oldDeployment = Deployment.isCRSP;
-        Deployment.isCRSP = (instance == ApplicationInstance.CRSP);
         expectedRouting = SystemRouter.System.BOTH;
 
         final ProductOrder productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
@@ -1102,17 +991,8 @@ public class SystemRouterTest extends BaseEventTest {
          * Bucketing (which is required to find batch and Product key) happens in PicoPlatingEntityBuilder so
          * Routing before bucketing will return Squid
          */
-        if (Deployment.isCRSP) {
-            try {
-                systemRouter.routeForVessels(new HashSet<LabVessel>(mapBarcodeToTube.values()));
-                Assert.fail("CRSP Deployment should never route to Squid");
-            } catch (Exception e) {
-
-            }
-        } else {
             assertThat(systemRouter.routeForVessels(new HashSet<LabVessel>(mapBarcodeToTube.values())),
                        is(SystemRouter.System.SQUID));
-        }
 
         //Build Event History
         LabBatch workflowBatch = new LabBatch("Exome Express Batch",
@@ -1224,7 +1104,6 @@ public class SystemRouterTest extends BaseEventTest {
 
         String flowcellBarcode = flowcell.getLabel();
 
-        Deployment.isCRSP = oldDeployment;
     }
 
     /*

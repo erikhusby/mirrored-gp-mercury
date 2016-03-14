@@ -48,7 +48,7 @@ public class DeploymentBuilder {
         WebArchive war = ShrinkWrap.create(ExplodedImporter.class, MERCURY_WAR)
                 .importDirectory("src/main/webapp")
                 .as(WebArchive.class)
-                .addAsWebInfResource(new File("src/test/resources/" + ((ApplicationInstance.CRSP.isCurrent()) ? "crsp-" : "") + "mercury-"
+                .addAsWebInfResource(new File("src/test/resources/" + "mercury-"
                                               + dataSourceEnvironment + "-ds.xml"))
                 .addAsWebInfResource(new File("src/test/resources/squid-" + dataSourceEnvironment + "-ds.xml"))
                 .addAsWebInfResource(new File("src/test/resources/metrics-prod-ds.xml"))
@@ -64,23 +64,6 @@ public class DeploymentBuilder {
                         "classes/jndi.properties");
         addWebResourcesTo(war, TestUtils.TEST_DATA_LOCATION);
         war = addWarDependencies(war);
-        return war;
-    }
-
-    /**
-     * Allows caller to specify environments for remote systems, and for the database.  This method also adds a flag
-     * to indicate that this is a deployment for CRSP
-     * @param deployment              maps to settings in mercury-config.yaml
-     * @param dataSourceEnvironment   which datasources to use: dev, qa or prod`
-     * @return war
-     *
-     * {@see #buildMercuryWar}
-     */
-    public static WebArchive buildCRSPMercuryWar(Deployment deployment, String dataSourceEnvironment) {
-        WebArchive war = buildMercuryWar(deployment, dataSourceEnvironment);
-
-        war.addAsWebInfResource(new StringAsset(DeploymentProducer.CRSP + "=true"), "classes/jndi.properties");
-
         return war;
     }
 

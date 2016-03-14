@@ -17,7 +17,6 @@ public enum ApplicationInstance {
      * @return true if this is the currently running instance of mercury
      */
     public boolean isCurrent() {
-        return ((this == ApplicationInstance.RESEARCH) && !Deployment.isCRSP) ||
-               ((this == ApplicationInstance.CRSP) && Deployment.isCRSP);
+        return (this == ApplicationInstance.RESEARCH);
     }
 }

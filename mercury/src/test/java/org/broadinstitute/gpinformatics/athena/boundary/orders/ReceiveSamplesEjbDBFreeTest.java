@@ -62,11 +62,11 @@ public class ReceiveSamplesEjbDBFreeTest {
         String sampleKit1ID = "SK-tst1";
         String sampleKit2ID = "SK-tst2";
 
-        sample1Kit1 = (ApplicationInstance.CRSP.isCurrent() ? "CSM" : "SM") + "-1SK1";
-        sample2Kit1 = (ApplicationInstance.CRSP.isCurrent() ? "CSM" : "SM") + "-2SK1";
-        sample3Kit1 = (ApplicationInstance.CRSP.isCurrent() ? "CSM" : "SM") + "-3SK1";
-        sample4Kit1 = (ApplicationInstance.CRSP.isCurrent() ? "CSM" : "SM") + "-4SK1";
-        sample5Kit1 = (ApplicationInstance.CRSP.isCurrent() ? "CSM" : "SM") + "-5SK1";
+        sample1Kit1 = "SM" + "-1SK1";
+        sample2Kit1 = "SM" + "-2SK1";
+        sample3Kit1 = "SM" + "-3SK1";
+        sample4Kit1 = "SM" + "-4SK1";
+        sample5Kit1 = "SM" + "-5SK1";
 
         sampleKit1 = new SampleKit();
         sampleKit1.setSampleKitId(sampleKit1ID);
@@ -77,10 +77,10 @@ public class ReceiveSamplesEjbDBFreeTest {
 
         sampleKit1.setSamples(kit1Samples);
 
-        sample1Kit2 = (ApplicationInstance.CRSP.isCurrent() ? "CSM" : "SM") + "-1SK2";
-        sample2Kit2 = (ApplicationInstance.CRSP.isCurrent() ? "CSM" : "SM") + "-2SK2";
-        sample3Kit2 = (ApplicationInstance.CRSP.isCurrent() ? "CSM" : "SM") + "-3SK2";
-        sample4Kit2 = (ApplicationInstance.CRSP.isCurrent() ? "CSM" : "SM") + "-4SK2";
+        sample1Kit2 = "SM" + "-1SK2";
+        sample2Kit2 = "SM" + "-2SK2";
+        sample3Kit2 = "SM" + "-3SK2";
+        sample4Kit2 = "SM" + "-4SK2";
 
         sampleKit2 = new SampleKit();
         sampleKit2.setSampleKitId(sampleKit2ID);

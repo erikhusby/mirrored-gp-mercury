@@ -44,10 +44,6 @@ public class MercuryConfiguration {
 
     private static final String MERCURY_CONFIG_LOCAL = "/mercury-config-local.yaml";
 
-    private static final String CRSP_MERCURY_CONFIG = "/crsp-mercury-config.yaml";
-
-    private static final String CRSP_MERCURY_CONFIG_LOCAL = "/crsp-mercury-config-local.yaml";
-
     private static final String MERCURY_STANZA = "mercury";
 
     private static MercuryConfiguration instance;
@@ -385,16 +381,10 @@ public class MercuryConfiguration {
     }
 
     private static String getConfigPath() {
-        if (ApplicationInstance.CRSP.isCurrent()) {
-            return CRSP_MERCURY_CONFIG;
-        }
         return MERCURY_CONFIG;
     }
 
     private static String getLocalConfigPath() {
-        if (ApplicationInstance.CRSP.isCurrent()) {
-            return CRSP_MERCURY_CONFIG_LOCAL;
-        }
         return MERCURY_CONFIG_LOCAL;
     }
 
