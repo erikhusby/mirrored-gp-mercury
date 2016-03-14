@@ -803,6 +803,21 @@ public class    ProductOrderFixupTest extends Arquillian {
         productOrderDao.persist(new FixupCommentary("Unabandoning PDO-8013 and PDO-8045 to pending state"));
     }
 
+    @Test(enabled = false)
+    public void support1579updatePdo() {
+        userBean.loginOSUser();
+        String currentPdo = "PDO-8313";
+        String newKey = "PDO-8317";
+
+        ProductOrder productOrder = productOrderDao.findByBusinessKey(currentPdo);
+        if (productOrder==null){
+            throw new RuntimeException(String.format("%s doesn't exist.", currentPdo));
+        }
+        productOrder.setJiraTicketKey(newKey);
+        log.info(String.format("Updated %s to %s", currentPdo, newKey));
+        productOrderDao.persist(new FixupCommentary("https://gpinfojira.broadinstitute.org/jira/browse/SUPPORT-1579"));
+    }
+
     private static class RegulatoryInfoSelection {
         private String productOrderKey;
         private String regulatoryInfoIdentifier;
