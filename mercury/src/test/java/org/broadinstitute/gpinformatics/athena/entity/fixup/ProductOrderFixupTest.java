@@ -789,6 +789,22 @@ public class    ProductOrderFixupTest extends Arquillian {
                 "GPLIM-3765 Cleaning up regulatory designation records (not changing effective IRBs)"));
     }
 
+    @Test(enabled = false)
+    public void support1573ChangeRegInfoForPdo8181() {
+        userBean.loginOSUser();
+
+        List<RegulatoryInfo> regulatoryInfos = regulatoryInfoDao.findByIdentifier("ORSP-3342");
+        assertThat(regulatoryInfos, hasSize(1));
+        RegulatoryInfo orsp3342 = regulatoryInfos.get(0);
+
+        ProductOrder pdo = productOrderDao.findByBusinessKey("PDO-8181");
+        pdo.getRegulatoryInfos().clear();
+        pdo.addRegulatoryInfo(orsp3342);
+
+        productOrderDao.persist(
+                new FixupCommentary("SUPPORT-1573 Updating reg info for PDO-8181 as requested by Kristina Tracy"));
+    }
+
     private static class RegulatoryInfoSelection {
         private String productOrderKey;
         private String regulatoryInfoIdentifier;
