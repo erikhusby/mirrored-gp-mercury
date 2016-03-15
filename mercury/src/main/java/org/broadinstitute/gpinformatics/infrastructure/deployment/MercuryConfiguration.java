@@ -6,7 +6,6 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.log4j.Logger;
 import org.broadinstitute.gpinformatics.athena.presentation.filters.CacheFilter;
-import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 import org.scannotation.AnnotationDB;
 import org.scannotation.ClasspathUrlFinder;
 import org.scannotation.WarUrlFinder;
@@ -78,7 +77,7 @@ public class MercuryConfiguration {
         }
     }
 
-    private static class MercuryConnections {
+    private static class ApplicationConnections {
         // Map of system key ("bsp", "squid", "thrift") to a Map of *Mercury* Deployments to the corresponding external
         // system Deployment.
         private final Map<String, Map<Deployment, Deployment>> map = new HashMap<>();
@@ -114,7 +113,7 @@ public class MercuryConfiguration {
 
     // Map of system key ("bsp", "squid", "thrift") to *Mercury* Deployments to the corresponding external
     // system Deployment.
-    private MercuryConnections mercuryConnections = new MercuryConnections();
+    private ApplicationConnections applicationConnections = new ApplicationConnections();
 
     private static String getConfigKey(Class<? extends AbstractConfig> configClass) {
         ConfigKey annotation = configClass.getAnnotation(ConfigKey.class);
@@ -345,7 +344,7 @@ public class MercuryConfiguration {
                             "Unrecognized external system in mercury connections: '" + systemKey + "'.");
                 }
 
-                mercuryConnections.set(systemKey, mercuryDeployment, externalDeployment);
+                applicationConnections.set(systemKey, mercuryDeployment, externalDeployment);
             }
         }
     }
@@ -357,7 +356,7 @@ public class MercuryConfiguration {
     /* package */
     void clear() {
         externalSystems = new ExternalSystems();
-        mercuryConnections = new MercuryConnections();
+        applicationConnections = new ApplicationConnections();
     }
 
     /* package */
@@ -391,9 +390,9 @@ public class MercuryConfiguration {
     public AbstractConfig getConfig(Class<? extends AbstractConfig> clazz, Deployment deployment) {
         InputStream is = null;
         try {
-            if (!mercuryConnections.isInitialized()) {
+            if (!applicationConnections.isInitialized()) {
                 synchronized (this) {
-                    if (!mercuryConnections.isInitialized()) {
+                    if (!applicationConnections.isInitialized()) {
 
                         is = getClass().getResourceAsStream(getConfigPath());
 
@@ -424,7 +423,7 @@ public class MercuryConfiguration {
             String systemKey = getConfigKey(clazz);
 
             // Find the external deployment for this system key and Mercury deployment.
-            Deployment externalDeployment = mercuryConnections.getExternalDeployment(systemKey, deployment);
+            Deployment externalDeployment = applicationConnections.getExternalDeployment(systemKey, deployment);
 
             // Look up the config for this system.
             return externalSystems.getConfig(systemKey, externalDeployment);
