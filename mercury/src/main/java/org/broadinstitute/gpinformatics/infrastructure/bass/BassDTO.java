@@ -301,7 +301,7 @@ public class BassDTO {
     }
 
     public FileType getFileType() {
-        return FileType.valueOf(getValue(BassResultColumn.file_type));
+        return FileType.byValue(getValue(BassResultColumn.file_type));
     }
 
     public String getRpname() {

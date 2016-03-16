@@ -90,6 +90,11 @@ public class SubmissionDto {
     }
 
     @JsonProperty(value = SubmissionField.FILE_TYPE)
+    public String getFileTypeString(){
+        return getFileType().getValue();
+    }
+
+    @JsonIgnore
     public BassDTO.FileType getFileType() {
         return bassDTO.getFileType();
     }
@@ -224,7 +229,7 @@ public class SubmissionDto {
     public class SubmissionField {
         public static final String SAMPLE_NAME = "sampleName";
         public static final String DATA_TYPE = "dataType";
-        public static final String RESEARCH_PROJECT = "researchProject";;
+        public static final String RESEARCH_PROJECT = "researchProject";
         public static final String AGGREGATION_PROJECT = "aggregationProject";
         public static final String FILE_NAME = "fileName";
         public static final String FILE_TYPE = "fileType";

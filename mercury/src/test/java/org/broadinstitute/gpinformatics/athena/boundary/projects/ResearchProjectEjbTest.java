@@ -91,6 +91,7 @@ public class ResearchProjectEjbTest extends Arquillian {
 
         Map<BassDTO.BassResultColumn, String> bassInfo1 = new HashMap<>();
         bassInfo1.put(BassDTO.BassResultColumn.path, "/your/path/testFile1.bam");
+        bassInfo1.put(BassDTO.BassResultColumn.file_type, BassDTO.FileType.BAM.getValue());
         bassInfo1.put(BassDTO.BassResultColumn.version, String.valueOf(TEST_VERSION_1));
         bassInfo1.put(BassDTO.BassResultColumn.sample, TEST_SAMPLE_1);
 
@@ -103,6 +104,7 @@ public class ResearchProjectEjbTest extends Arquillian {
 
         Map<BassDTO.BassResultColumn, String> bassInfo2 = new HashMap<>();
         bassInfo2.put(BassDTO.BassResultColumn.path, "/your/path/testFile2.bam");
+        bassInfo2.put(BassDTO.BassResultColumn.file_type, BassDTO.FileType.BAM.getValue());
         bassInfo2.put(BassDTO.BassResultColumn.version, String.valueOf(TEST_VERSION_1));
         bassInfo2.put(BassDTO.BassResultColumn.sample, TEST_SAMPLE_2);
 
