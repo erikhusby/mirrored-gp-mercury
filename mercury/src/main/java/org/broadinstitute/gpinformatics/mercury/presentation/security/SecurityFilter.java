@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.presentation.security;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;

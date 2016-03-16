@@ -10,7 +10,6 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.BSPExportsService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.IsExported;
-import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.LabEventTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
@@ -309,30 +308,30 @@ public class SystemRouterTest extends BaseEventTest {
      * Tests for routeForTubes()
      */
 
-    @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
-    public void testRouteForTubesNoneInMercury(ApplicationInstance instance) {
+    @Test(groups = DATABASE_FREE)
+    public void testRouteForTubesNoneInMercury() {
         final List<String> testBarcodes = Arrays.asList("squidTube1", "squidTube2");
             assertThat(systemRouter.routeForVesselBarcodes(testBarcodes), is(SQUID));
         verify(mockLabVesselDao).findByBarcodes(testBarcodes);
     }
 
-    @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
-    public void testRouteForTubesSomeInMercuryWithoutOrders(ApplicationInstance instance) {
+    @Test(groups = DATABASE_FREE)
+    public void testRouteForTubesSomeInMercuryWithoutOrders() {
         final List<String> testTubes = Arrays.asList("squidTube", MERCURY_TUBE_1);
         assertThat(systemRouter.routeForVesselBarcodes(testTubes), is(SQUID));
         verify(mockLabVesselDao).findByBarcodes(testTubes);
     }
 
-    @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
-    public void testRouteForTubesSomeInMercuryWithNonExomeExpressOrders(ApplicationInstance instance) {
+    @Test(groups = DATABASE_FREE)
+    public void testRouteForTubesSomeInMercuryWithNonExomeExpressOrders() {
         placeOrderForTube(tube1, testProduct);
         final List<String> testTubes = Arrays.asList("squidTube", MERCURY_TUBE_1);
             assertThat(systemRouter.routeForVesselBarcodes(testTubes), is(SQUID));
         verify(mockLabVesselDao).findByBarcodes(testTubes);
     }
 
-    @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
-    public void testRouteForTubesAllInMercuryWithoutExomeExpressOrders(ApplicationInstance instance) {
+    @Test(groups = DATABASE_FREE)
+    public void testRouteForTubesAllInMercuryWithoutExomeExpressOrders() {
         placeOrderForTube(tube2, testProduct);
         final List<String> testBarcodes = Arrays.asList(MERCURY_TUBE_1, MERCURY_TUBE_2);
             assertThat(systemRouter.routeForVesselBarcodes(testBarcodes),
@@ -340,8 +339,8 @@ public class SystemRouterTest extends BaseEventTest {
         verify(mockLabVesselDao).findByBarcodes(testBarcodes);
     }
 
-    @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
-    public void testRouteForTubesSomeInMercuryWithExomeExpressOrders(ApplicationInstance instance) {
+    @Test(groups = DATABASE_FREE)
+    public void testRouteForTubesSomeInMercuryWithExomeExpressOrders() {
         placeOrderForTubeAndBucket(tube1, exomeExpress, picoBucket);
         final List<String> testBarcodes = Arrays.asList("squidTube", MERCURY_TUBE_1);
         try {
@@ -352,8 +351,8 @@ public class SystemRouterTest extends BaseEventTest {
         verify(mockLabVesselDao).findByBarcodes(testBarcodes);
     }
 
-    @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
-    public void testRouteForTubesAllInMercuryWithOrdersSomeExomeExpress(ApplicationInstance instance) {
+    @Test(groups = DATABASE_FREE)
+    public void testRouteForTubesAllInMercuryWithOrdersSomeExomeExpress() {
         placeOrderForTube(tube1, testProduct);
         placeOrderForTubeAndBucket(tube2, exomeExpress, picoBucket);
         final List<String> testBarcodes = Arrays.asList(MERCURY_TUBE_1, MERCURY_TUBE_2);
@@ -365,8 +364,8 @@ public class SystemRouterTest extends BaseEventTest {
         verify(mockLabVesselDao).findByBarcodes(testBarcodes);
     }
 
-    @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
-    public void testRouteForTubesAllInMercuryWithExomeExpressOrders(ApplicationInstance instance) {
+    @Test(groups = DATABASE_FREE)
+    public void testRouteForTubesAllInMercuryWithExomeExpressOrders() {
         placeOrderForTubeAndBucket(tube1, exomeExpress, picoBucket);
         placeOrderForTubeAndBucket(tube2, exomeExpress, picoBucket);
         final List<String> testBarcodes = Arrays.asList(MERCURY_TUBE_1, MERCURY_TUBE_2);
@@ -376,8 +375,8 @@ public class SystemRouterTest extends BaseEventTest {
         verify(mockLabVesselDao).findByBarcodes(testBarcodes);
     }
 
-    @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
-    public void testRouteForTubesAllInMercuryWithExomeExpressOrdersWithControls(ApplicationInstance instance) {
+    @Test(groups = DATABASE_FREE)
+    public void testRouteForTubesAllInMercuryWithExomeExpressOrdersWithControls() {
         placeOrderForTubesAndBatch(new HashSet<LabVessel>(Arrays.asList(tube1, tube2)), exomeExpress, picoBucket);
         tube1.getLabBatches().iterator().next().addLabVessel(controlTube);
         final List<String> testBarcodes = Arrays.asList(MERCURY_TUBE_1, MERCURY_TUBE_2, CONTROL_TUBE);
@@ -387,8 +386,8 @@ public class SystemRouterTest extends BaseEventTest {
         verify(mockLabVesselDao).findByBarcodes(testBarcodes);
     }
 
-    @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
-    public void testControlWithoutWorkflowAndMercuryTubes(ApplicationInstance instance) {
+    @Test(groups = DATABASE_FREE)
+    public void testControlWithoutWorkflowAndMercuryTubes() {
         // Make a mixed LCSET rack so that control's implied batch is null.
         placeOrderForTubesAndBatch(new HashSet<LabVessel>(Arrays.asList(tube1)), exomeExpress, picoBucket);
         placeOrderForTubesAndBatch(new HashSet<LabVessel>(Arrays.asList(tube2)), exomeExpress, picoBucket);
@@ -411,8 +410,8 @@ public class SystemRouterTest extends BaseEventTest {
         assertThat(systemRouter.routeForVesselBarcodes(testBarcodes), is(MERCURY));
     }
 
-    @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
-    public void testControlWithoutWorkflowAndSquidTube(ApplicationInstance instance) {
+    @Test(groups = DATABASE_FREE)
+    public void testControlWithoutWorkflowAndSquidTube() {
         final List<String> testBarcodes = Arrays.asList("squidTube", CONTROL_WITHOUT_WORKFLOW1);
 
         // Need to have tubes in a container for this test.
@@ -429,8 +428,8 @@ public class SystemRouterTest extends BaseEventTest {
         assertThat(systemRouter.routeForVesselBarcodes(testBarcodes), is(SQUID));
     }
 
-    @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
-    public void testControlWithoutWorkflowAlone(ApplicationInstance instance) {
+    @Test(groups = DATABASE_FREE)
+    public void testControlWithoutWorkflowAlone() {
         final List<String> testBarcodes = Arrays.asList(CONTROL_WITHOUT_WORKFLOW1);
 
         // Need to have tubes in a container for this test.
@@ -447,8 +446,8 @@ public class SystemRouterTest extends BaseEventTest {
 
     // This test uses two controls without workflow in a rack in order to check the code
     // that tries to determine routing for accompanying vessels.
-    @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
-    public void testTwoControlsWithoutWorkflowAndMercuryTubes(ApplicationInstance instance) {
+    @Test(groups = DATABASE_FREE)
+    public void testTwoControlsWithoutWorkflowAndMercuryTubes() {
         // Make a mixed LCSET rack so that control's implied batch is null.
         placeOrderForTubesAndBatch(new HashSet<LabVessel>(Arrays.asList(tube1)), exomeExpress, picoBucket);
         placeOrderForTubesAndBatch(new HashSet<LabVessel>(Arrays.asList(tube2)), exomeExpress, picoBucket);
@@ -479,9 +478,9 @@ public class SystemRouterTest extends BaseEventTest {
         assertThat(systemRouter.routeForVesselBarcodes(testBarcodes), is(MERCURY));
     }
 
-    @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
+    @Test(groups = DATABASE_FREE)
     public void testRouteForTubesAllInMercuryWithExomeExpressOrdersWithControlsAfterTransfer(
-            ApplicationInstance instance) {
+            ) {
         final BarcodedTube target1 = new BarcodedTube("target1");
         final BarcodedTube target2 = new BarcodedTube("target2");
         final BarcodedTube target3 = new BarcodedTube("target3");
@@ -507,8 +506,8 @@ public class SystemRouterTest extends BaseEventTest {
      * Tests for routeForPlate()
      */
 
-    @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
-    public void testRouteForPlateNotInMercury(ApplicationInstance instance) {
+    @Test(groups = DATABASE_FREE)
+    public void testRouteForPlateNotInMercury() {
         final String testBarcode = "squidPlate";
             assertThat(systemRouter.routeForVessel(testBarcode), equalTo(SQUID));
         verify(mockLabVesselDao).findByBarcodes(new ArrayList<String>() {{
@@ -516,16 +515,16 @@ public class SystemRouterTest extends BaseEventTest {
         }});
     }
 
-    @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
-    public void testRouteForPlateInMercuryWithoutOrder(ApplicationInstance instance) {
+    @Test(groups = DATABASE_FREE)
+    public void testRouteForPlateInMercuryWithoutOrder() {
         assertThat(systemRouter.routeForVessel(MERCURY_PLATE), equalTo(SQUID));
         verify(mockLabVesselDao).findByBarcodes(new ArrayList<String>() {{
             add(MERCURY_PLATE);
         }});
     }
 
-    @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
-    public void testRouteForPlateInMercuryWithNonExomeExpressOrder(ApplicationInstance instance) {
+    @Test(groups = DATABASE_FREE)
+    public void testRouteForPlateInMercuryWithNonExomeExpressOrder() {
         placeOrderForTube(tube1, testProduct);
         doSectionTransfer(makeTubeFormation(tube1), plate);
             assertThat(systemRouter.routeForVessel(MERCURY_PLATE), equalTo(SQUID));
@@ -534,8 +533,8 @@ public class SystemRouterTest extends BaseEventTest {
         }});
     }
 
-    @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
-    public void testRouteForPlateInMercuryWithOrdersSomeExomeExpress(ApplicationInstance instance) {
+    @Test(groups = DATABASE_FREE)
+    public void testRouteForPlateInMercuryWithOrdersSomeExomeExpress() {
         placeOrderForTube(tube1, testProduct);
         placeOrderForTubeAndBucket(tube2, exomeExpress, picoBucket);
         doSectionTransfer(makeTubeFormation(tube1, tube2), plate);
@@ -549,8 +548,8 @@ public class SystemRouterTest extends BaseEventTest {
         }});
     }
 
-    @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
-    public void testRouteForPlateInMercuryWithExomeExpressOrders(ApplicationInstance instance) {
+    @Test(groups = DATABASE_FREE)
+    public void testRouteForPlateInMercuryWithExomeExpressOrders() {
         ProductOrder order1 = placeOrderForTubeAndBucket(tube1, exomeExpress, picoBucket);
         ProductOrder order2 = placeOrderForTubeAndBucket(tube2, exomeExpress, picoBucket);
         doSectionTransfer(makeTubeFormation(tube1, tube2), plate);
@@ -564,8 +563,8 @@ public class SystemRouterTest extends BaseEventTest {
      * Tests for routeForTube()
      */
 
-    @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
-    public void testRouteForTubeNotInMercury(ApplicationInstance instance) {
+    @Test(groups = DATABASE_FREE)
+    public void testRouteForTubeNotInMercury() {
         final String testBarcode = "squidTube";
             assertThat(systemRouter.routeForVessel(testBarcode), is(SQUID));
         verify(mockLabVesselDao).findByBarcodes(new ArrayList<String>() {{
@@ -573,8 +572,8 @@ public class SystemRouterTest extends BaseEventTest {
         }});
     }
 
-    @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
-    public void testRouteForTubeInMercuryWithoutOrder(ApplicationInstance instance) {
+    @Test(groups = DATABASE_FREE)
+    public void testRouteForTubeInMercuryWithoutOrder() {
         // This would go to squid because the tube, at this point in time, is not associated with a product
         assertThat(systemRouter.routeForVessel(MERCURY_TUBE_1), is(SQUID));
         verify(mockLabVesselDao).findByBarcodes(new ArrayList<String>() {{
@@ -582,8 +581,8 @@ public class SystemRouterTest extends BaseEventTest {
         }});
     }
 
-    @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
-    public void testRouteForTubeInMercuryWithNonExomeExpressOrder(ApplicationInstance instance) {
+    @Test(groups = DATABASE_FREE)
+    public void testRouteForTubeInMercuryWithNonExomeExpressOrder() {
         placeOrderForTube(tube1, testProduct);
             assertThat(systemRouter.routeForVessel(MERCURY_TUBE_1), is(SQUID));
         verify(mockLabVesselDao).findByBarcodes(new ArrayList<String>() {{
@@ -591,8 +590,8 @@ public class SystemRouterTest extends BaseEventTest {
         }});
     }
 
-    @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
-    public void testRouteForTubeInMercuryWithExomeExpressOrder(ApplicationInstance instance) {
+    @Test(groups = DATABASE_FREE)
+    public void testRouteForTubeInMercuryWithExomeExpressOrder() {
         placeOrderForTubeAndBucket(tube1, exomeExpress, picoBucket);
         assertThat(systemRouter.routeForVessel(MERCURY_TUBE_1), is(MERCURY));
         verify(mockLabVesselDao).findByBarcodes(new ArrayList<String>() {{
@@ -831,8 +830,8 @@ public class SystemRouterTest extends BaseEventTest {
      * Tests for routing and system of record for a validation LCSET
      */
 
-    @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext", enabled = true)
-    public void testGetSystemOfRecordForControlOnly(ApplicationInstance instance) {
+    @Test(groups = DATABASE_FREE, enabled = true)
+    public void testGetSystemOfRecordForControlOnly() {
         tube1.addSample(new MercurySample("SM-1", MercurySample.MetadataSource.BSP));
 
             assertThat(systemRouter.getSystemOfRecordForVessel(MERCURY_TUBE_1), is(SQUID));
@@ -841,8 +840,8 @@ public class SystemRouterTest extends BaseEventTest {
         }});
     }
 
-    @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext", enabled = true)
-    public void testGetSystemOfRecordForVesselInValidationLCSET(ApplicationInstance instance) {
+    @Test(groups = DATABASE_FREE, enabled = true)
+    public void testGetSystemOfRecordForVesselInValidationLCSET() {
         placeOrderForTubeAndBucket(tube1, exomeExpress, picoBucket);
         tube1.getAllLabBatches().iterator().next().setValidationBatch(true);
         assertThat(systemRouter.getSystemOfRecordForVessel(MERCURY_TUBE_1), is(MERCURY));
@@ -851,8 +850,8 @@ public class SystemRouterTest extends BaseEventTest {
         }});
     }
 
-    @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext", enabled = true)
-    public void testMercuryOnlyRouting(ApplicationInstance instance) {
+    @Test(groups = DATABASE_FREE, enabled = true)
+    public void testMercuryOnlyRouting() {
         expectedRouting = SystemRouter.System.MERCURY;
 
         final ProductOrder productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
@@ -978,8 +977,8 @@ public class SystemRouterTest extends BaseEventTest {
 
     }
 
-    @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext", enabled = true)
-    public void testMercuryAndSquidRouting(ApplicationInstance instance) {
+    @Test(groups = DATABASE_FREE, enabled = true)
+    public void testMercuryAndSquidRouting() {
         expectedRouting = SystemRouter.System.BOTH;
 
         final ProductOrder productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
@@ -1145,15 +1144,8 @@ public class SystemRouterTest extends BaseEventTest {
         return order;
     }
 
-    @DataProvider(name = "deploymentContext")
-    public Object[][] sourceDeploymentContext() {
-        return new Object[][]{
-                new Object[]{ApplicationInstance.RESEARCH}
-        };
-    }
-
-    @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
-    public void testSystemOfRecordForSamplesLabTube(ApplicationInstance instance) {
+    @Test(groups = DATABASE_FREE)
+    public void testSystemOfRecordForSamplesLabTube() {
         assertThat(systemRouter.getSystemOfRecordForVessel(MERCURY_TUBE_1), is(SQUID));
         LabEventTestFactory.addInPlaceEvent(LabEventType.SAMPLE_RECEIPT, tube1);
         assertThat(systemRouter.getSystemOfRecordForVessel(MERCURY_TUBE_1), is(MERCURY));

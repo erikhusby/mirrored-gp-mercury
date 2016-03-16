@@ -90,7 +90,6 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
-import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 import org.broadinstitute.gpinformatics.infrastructure.security.Role;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
 import org.broadinstitute.gpinformatics.mercury.boundary.BucketException;

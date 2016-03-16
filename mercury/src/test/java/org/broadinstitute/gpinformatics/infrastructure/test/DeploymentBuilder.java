@@ -4,7 +4,6 @@ import org.apache.commons.io.FileUtils;
 import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.DeploymentProducer;
-import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.StringAsset;

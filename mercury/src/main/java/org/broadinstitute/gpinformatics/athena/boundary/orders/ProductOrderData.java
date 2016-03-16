@@ -10,7 +10,6 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.LongDateTimeAdapter;
-import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 
 import javax.annotation.Nonnull;
 import javax.xml.bind.annotation.XmlElementWrapper;

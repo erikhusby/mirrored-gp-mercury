@@ -7,7 +7,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.BSPExportsService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.IsExported;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
-import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;

@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.tags.security;
 
-import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.inject.Inject;
@@ -32,22 +31,12 @@ public class AuthorizeBlockStripesTag extends TagSupport {
 
     private String[] roles;
 
-    private ApplicationInstance context;
-
     public String[] getRoles() {
         return roles;
     }
 
     public void setRoles(String[] roles) {
         this.roles = roles;
-    }
-
-    public ApplicationInstance getContext() {
-        return context;
-    }
-
-    public void setContext(ApplicationInstance context) {
-        this.context = context;
     }
 
     /**
@@ -61,13 +50,11 @@ public class AuthorizeBlockStripesTag extends TagSupport {
             return SKIP_BODY;
         }
 
-        if (context == null || context.isCurrent()) {
-            // Now check the roles to include the jsp code block.
-            for (String role : roles) {
-                if (userBean.isUserInRole(role) || role.equals(ALLOW_ALL_ROLES)) {
-                    // User in role or all roles allowed.
-                    return EVAL_BODY_INCLUDE;
-                }
+        // Now check the roles to include the jsp code block.
+        for (String role : roles) {
+            if (userBean.isUserInRole(role) || role.equals(ALLOW_ALL_ROLES)) {
+                // User in role or all roles allowed.
+                return EVAL_BODY_INCLUDE;
             }
         }
 

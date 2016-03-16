@@ -37,7 +37,6 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.BadBusinessKeyExcepti
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
-import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnector;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;

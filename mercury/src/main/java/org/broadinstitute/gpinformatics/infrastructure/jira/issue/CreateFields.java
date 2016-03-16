@@ -5,7 +5,6 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.NameableTypeJsonSeri
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CreateJiraIssueFieldsSerializer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.Nameable;
-import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.codehaus.jackson.JsonGenerator;
@@ -87,10 +86,10 @@ public class CreateFields extends UpdateFields {
     }
 
     public enum ProjectType {
-        LCSET_PROJECT("Illumina Library Construction Tracking", "LCSET", "CLCSET"),
-        FCT_PROJECT("Flowcell Tracking", "FCT", "CFCT"),
-        PRODUCT_ORDERING("Product Ordering", "PDO", "CPDO"),
-        RESEARCH_PROJECTS("Research Projects", "RP", "CRP"),
+        LCSET_PROJECT("Illumina Library Construction Tracking", "LCSET"),
+        FCT_PROJECT("Flowcell Tracking", "FCT"),
+        PRODUCT_ORDERING("Product Ordering", "PDO"),
+        RESEARCH_PROJECTS("Research Projects", "RP"),
         RECEIPT_PROJECT("Sample Receipt Tracking", "RCT"),
         EXTRACTION_PROJECT("Extractions", "XTR");
 
@@ -98,17 +97,6 @@ public class CreateFields extends UpdateFields {
         private final String keyPrefix;
 
         ProjectType(String projectName, String keyPrefix) {
-            this.projectName = projectName;
-            this.keyPrefix = keyPrefix;
-        }
-
-        /**
-         * Create a project type with one of two prefixes.
-         * @param projectName the project name
-         * @param keyPrefix the non-CRSP prefix
-         * @param crspKeyPrefix the CRSP prefix
-         */
-        ProjectType(String projectName, String keyPrefix, String crspKeyPrefix) {
             this.projectName = projectName;
             this.keyPrefix = keyPrefix;
         }
@@ -164,8 +152,8 @@ public class CreateFields extends UpdateFields {
         WHOLE_EXOME_HYBSEL("Whole Exome (HybSel)"),
         EXOME_EXPRESS("Exome Express"),
         CDNA_TRUSEQ_SS("cDNA TruSeq Strand Specific Large Insert"),
-        PRODUCT_ORDER("Product Order", "CLIA "),
-        RESEARCH_PROJECT("Research Project", "CLIA "),
+        PRODUCT_ORDER("Product Order"),
+        RESEARCH_PROJECT("Research Project"),
         FLOWCELL("Flowcell"),
         MISEQ("MiSeq"),
         SAMPLE_INITIATION("Sample Initiation"),
@@ -178,21 +166,12 @@ public class CreateFields extends UpdateFields {
         private final String jiraName;
 
         IssueType(String jiraName) {
-            this(jiraName, "");
+            this.jiraName = jiraName;
         }
 
         @Override
         public String getName() {
             return jiraName;
-        }
-
-        /**
-         * Create an issue type with an optional prefix.
-         * @param jiraName the name for the issue type in JIRA
-         * @param crspPrefix the prefix for CRSP JIRA, if any
-         */
-        IssueType(String jiraName, String crspPrefix) {
-            this.jiraName = jiraName;
         }
 
         /** The name for this Issue Type in JIRA. */

@@ -4,7 +4,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bettalims.BettaLimsConnector;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
-import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
 import org.broadinstitute.gpinformatics.infrastructure.ws.WsMessageStore;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
