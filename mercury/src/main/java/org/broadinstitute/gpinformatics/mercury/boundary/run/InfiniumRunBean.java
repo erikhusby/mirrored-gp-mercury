@@ -21,6 +21,9 @@ public class InfiniumRunBean {
     private String collaboratorSampleId;
     private String sampleLsid;
     private String gender;
+    private String participentId;
+    private Long researchProjectId;
+    private boolean processControl;
     // todo jmt this or something more REST-like?
     private String error;
 
@@ -29,8 +32,9 @@ public class InfiniumRunBean {
     }
 
     public InfiniumRunBean(String redIDatPath, String greenIDatPath, String chipManifestPath,
-            String beadPoolManifestPath, String clusterFilePath, String zCallThresholdsPath,
-            String collaboratorSampleId, String sampleLsid, String gender) {
+                           String beadPoolManifestPath, String clusterFilePath, String zCallThresholdsPath,
+                           String collaboratorSampleId, String sampleLsid, String gender, String participentId,
+                           Long researchProjectId, boolean processControl) {
         this.redIDatPath = redIDatPath;
         this.greenIDatPath = greenIDatPath;
         this.chipManifestPath = chipManifestPath;
@@ -40,6 +44,9 @@ public class InfiniumRunBean {
         this.collaboratorSampleId = collaboratorSampleId;
         this.sampleLsid = sampleLsid;
         this.gender = gender;
+        this.participentId = participentId;
+        this.researchProjectId = researchProjectId;
+        this.processControl = processControl;
     }
 
     public String getRedIDatPath() {
@@ -76,5 +83,17 @@ public class InfiniumRunBean {
 
     public String getGender() {
         return gender;
+    }
+
+    public String getParticipentId() {
+        return participentId;
+    }
+
+    public Long getResearchProjectId() {
+        return researchProjectId;
+    }
+
+    public boolean isProcessControl() {
+        return processControl;
     }
 }
