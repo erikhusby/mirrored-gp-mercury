@@ -1,15 +1,13 @@
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionLibraryDescriptor;
-import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionRepository;
-import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -19,7 +17,6 @@ import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.beans.Transient;
-import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -57,6 +54,12 @@ public class SubmissionTracker {
     private String fileName;
 
     /**
+     * File type of the file being submitted
+     */
+    @Enumerated(EnumType.STRING)
+    private BassDTO.FileType fileType;
+
+    /**
      * version of the data file created
      */
     @Column(name = "VERSION")
@@ -71,31 +74,19 @@ public class SubmissionTracker {
 
     private Date requestDate;
 
-    @Column(name="REPOSITORY_NAME")
-    private String submissionRepositoryName;
-
-    @Column(name="LIBRARY_DESCRIPTOR_NAME")
-    private String submissionLibraryDescriptorName;
-
     protected SubmissionTracker() {
     }
 
-    SubmissionTracker(Long submissionTrackerId, String submittedSampleName, String fileName, String version,
-                      SubmissionRepository submissionRepository,
-                      SubmissionLibraryDescriptor submissionLibraryDescriptor) {
+    SubmissionTracker(Long submissionTrackerId, String submittedSampleName, BassDTO.FileType fileType, String version) {
         this.submissionTrackerId = submissionTrackerId;
         this.submittedSampleName = submittedSampleName;
-        this.fileName = fileName;
+        this.fileType=fileType;
         this.version = version;
         requestDate = new Date();
-        this.submissionRepositoryName = submissionRepository.getName();
-        this.submissionLibraryDescriptorName = submissionLibraryDescriptor.getName();
     }
 
-    public SubmissionTracker(String submittedSampleName, String fileName, String version,
-                             SubmissionRepository submissionRepository,
-                             SubmissionLibraryDescriptor submissionLibraryDescriptor) {
-       this(null, submittedSampleName, fileName, version, submissionRepository, submissionLibraryDescriptor);
+    public SubmissionTracker(String submittedSampleName, BassDTO.FileType fileType, String version) {
+       this(null, submittedSampleName, fileType, version);
     }
 
     /**
@@ -121,7 +112,13 @@ public class SubmissionTracker {
         return id;
     }
 
+    public BassDTO.FileType getFileType() {
+        return fileType;
+    }
 
+    public void setFileType(BassDTO.FileType fileType) {
+        this.fileType = fileType;
+    }
 
     public String getSubmittedSampleName() {
         return submittedSampleName;
@@ -155,66 +152,10 @@ public class SubmissionTracker {
         return requestDate;
     }
 
-    public String getSubmissionRepositoryName() {
-        return submissionRepositoryName;
-    }
-
-    public void setSubmissionRepositoryName(String submissionRepositoryName) {
-        this.submissionRepositoryName = submissionRepositoryName;
-    }
-
-    public String getSubmissionLibraryDescriptorName() {
-        return submissionLibraryDescriptorName;
-    }
-
-    public void setSubmissionLibraryDescriptorName(String submissionLibraryDescriptorName) {
-        this.submissionLibraryDescriptorName = submissionLibraryDescriptorName;
-    }
-
     // todo: should be in interface?
     @Transient
-    public Key getKey() {
-        return new Key(submittedSampleName, fileName, version, submissionRepositoryName, submissionLibraryDescriptorName);
+    public SubmissionTuple getKey() {
+        return new SubmissionTuple(submittedSampleName, fileType, version);
     }
 
-    public static class Key implements Serializable {
-        private static final long serialVersionUID = 1262062294730627888L;
-        private final String sampleName;
-        private final String fileName;
-        private final String version;
-        private final String repository;
-        private final String libraryDescriptor;
-
-        public Key(String sampleName, String fileName, String version, String repository, String libraryDescriptor) {
-            this.sampleName = sampleName;
-            this.fileName = fileName;
-            this.version = version;
-            this.repository = repository;
-            this.libraryDescriptor = libraryDescriptor;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) {
-                return true;
-            }
-            if (o == null || getClass() != o.getClass()) {
-                return false;
-            }
-
-            Key that = OrmUtil.proxySafeCast(o, Key.class);
-            return new EqualsBuilder()
-                    .append(this.sampleName, that.sampleName)
-                    .append(this.fileName, that.fileName)
-                    .append(this.version, that.version)
-                    .append(this.repository, that.repository)
-                    .append(this.libraryDescriptor, that.libraryDescriptor).isEquals();
-        }
-
-        @Override
-        public int hashCode() {
-            return new HashCodeBuilder().append(this.sampleName).append(this.fileName).append(this.version)
-                    .append(repository).append(libraryDescriptor).hashCode();
-        }
-    }
 }

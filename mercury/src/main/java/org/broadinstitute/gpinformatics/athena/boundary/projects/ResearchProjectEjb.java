@@ -264,8 +264,8 @@ public class ResearchProjectEjb {
 
         for (SubmissionDto submissionDto : submissionDtos) {
             SubmissionTracker tracker =
-                    new SubmissionTracker(submissionDto.getSampleName(), submissionDto.getFilePath(),
-                            String.valueOf(submissionDto.getVersion()), repository, submissionLibraryDescriptor);
+                    new SubmissionTracker(submissionDto.getSampleName(), submissionDto.getFileType(),
+                            String.valueOf(submissionDto.getVersion()));
             submissionProject.addSubmissionTracker(tracker);
             submissionDtoMap.put(tracker, submissionDto);
         }

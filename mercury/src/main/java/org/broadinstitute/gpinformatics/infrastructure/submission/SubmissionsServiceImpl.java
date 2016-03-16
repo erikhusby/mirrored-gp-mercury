@@ -78,7 +78,6 @@ public class SubmissionsServiceImpl implements SubmissionsService {
      */
     @Override
     public Collection<SubmissionStatusDetailBean> postSubmissions(SubmissionRequestBean submissions) {
-
         ClientResponse response =
                 JerseyUtils.getWebResource(submissionsConfig.getWSUrl(SubmissionConfig.SUBMIT_ACTION),
                         MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).entity(submissions)

@@ -23,7 +23,7 @@ public class BassDtoTestFactory {
         resultsMap.put(BassDTO.BassResultColumn.datatype, BassDTO.DATA_TYPE_EXOME);
         resultsMap.put(BassDTO.BassResultColumn.project, project);
         resultsMap.put(BassDTO.BassResultColumn.rpid, project);
-        resultsMap.put(BassDTO.BassResultColumn.file_type, SubmissionDtoTest.BAM_FILE);
+        resultsMap.put(BassDTO.BassResultColumn.file_type, SubmissionDtoTest.BAM_FILE.name());
         resultsMap.put(BassDTO.BassResultColumn.path, "bambam.bam");
         resultsMap.put(BassDTO.BassResultColumn.version, "1");
         return new BassDTO(resultsMap);

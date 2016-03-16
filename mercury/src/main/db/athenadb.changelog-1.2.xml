@@ -231,34 +231,14 @@
         </addColumn>
     </changeSet>
 
-    <changeSet id="GPLIM-4021-1" author="dryan">
-        <preConditions onFail="MARK_RAN">
-            <not>
-                <columnExists tableName="RESEARCH_PROJECT" columnName="REPOSITORY_NAME" schemaName="athena" />
-            </not>
-        </preConditions>
-        <addColumn tableName="RESEARCH_PROJECT" schemaName="athena">
-            <column name="REPOSITORY_NAME" type="varchar2(255)"/>
-        </addColumn>
-    </changeSet>
-    <changeSet id="GPLIM-4021-2" author="dryan">
-        <preConditions onFail="MARK_RAN">
-            <not>
-                <columnExists tableName="RESEARCH_PROJECT_AUD" columnName="REPOSITORY_NAME" schemaName="athena" />
-            </not>
-        </preConditions>
-        <addColumn tableName="RESEARCH_PROJECT_AUD" schemaName="athena">
-            <column name="REPOSITORY_NAME" type="varchar(255)" />
-        </addColumn>
-    </changeSet>
     <changeSet id="GPLIM-4021-3" author="dryan">
         <preConditions onFail="MARK_RAN">
             <not>
-                <columnExists columnName="REPOSITORY_NAME" tableName="SUBMISSION_TRACKER" schemaName="athena"/>
+                <columnExists columnName="FILE_TYPE" tableName="SUBMISSION_TRACKER" schemaName="athena"/>
             </not>
         </preConditions>
         <addColumn tableName="SUBMISSION_TRACKER" schemaName="athena">
-            <column name="REPOSITORY_NAME" type="varchar2(255)" >
+            <column name="FILE_TYPE" type="varchar2(255)" >
                 <constraints nullable="true"/>
             </column>
 
@@ -267,42 +247,14 @@
     <changeSet id="GPLIM-4021-4" author="dryan">
         <preConditions onFail="MARK_RAN">
             <not>
-                <columnExists columnName="REPOSITORY_NAME" tableName="SUBMISSION_TRACKER_AUD" schemaName="athena"/>
+                <columnExists columnName="FILE_TYPE" tableName="SUBMISSION_TRACKER_AUD" schemaName="athena"/>
             </not>
         </preConditions>
         <addColumn tableName="SUBMISSION_TRACKER_AUD" schemaName="athena">
-            <column name="REPOSITORY_NAME" type="varchar2(255)" >
+            <column name="FILE_TYPE" type="varchar2(255)" >
                 <constraints nullable="true"/>
             </column>
 
         </addColumn>
     </changeSet>
-
-
-    <changeSet id="GPLIM-4021-5" author="dryan">
-        <preConditions onFail="MARK_RAN">
-            <not>
-                <columnExists columnName="LIBRARY_DESCRIPTOR_NAME" tableName="SUBMISSION_TRACKER" schemaName="athena"/>
-            </not>
-        </preConditions>
-        <addColumn tableName="SUBMISSION_TRACKER" schemaName="athena">
-            <column name="LIBRARY_DESCRIPTOR_NAME" type="varchar2(255)" >
-                <constraints nullable="true"/>
-            </column>
-
-        </addColumn>
-    </changeSet>
-    <changeSet id="GPLIM-4021-6" author="dryan">
-        <preConditions onFail="MARK_RAN">
-            <not>
-                <columnExists columnName="LIBRARY_DESCRIPTOR_NAME" tableName="SUBMISSION_TRACKER_AUD" schemaName="athena"/>
-            </not>
-        </preConditions>
-        <addColumn tableName="SUBMISSION_TRACKER_AUD" schemaName="athena">
-            <column name="LIBRARY_DESCRIPTOR_NAME" type="varchar2(255)" >
-                <constraints nullable="true"/>
-            </column>
-        </addColumn>
-    </changeSet>
-
 </databaseChangeLog>

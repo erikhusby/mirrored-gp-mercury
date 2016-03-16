@@ -6,7 +6,6 @@ import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
 import com.sun.jersey.client.urlconnection.HTTPSProperties;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
-import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
 import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
 
 import javax.net.ssl.HostnameVerifier;

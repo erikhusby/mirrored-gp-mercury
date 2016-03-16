@@ -90,7 +90,7 @@ public class SubmissionDto {
     }
 
     @JsonProperty(value = SubmissionField.FILE_TYPE)
-    public String getFileType() {
+    public BassDTO.FileType getFileType() {
         return bassDTO.getFileType();
     }
 
@@ -203,6 +203,23 @@ public class SubmissionDto {
         return bioproject;
     }
 
+    @JsonProperty(value = SubmissionField.LIBRARY_DESCRIPTOR)
+    public String getSubmissionLibraryDescriptor() {
+        String libraryDescriptor="";
+        if (statusDetailBean != null) {
+            libraryDescriptor = statusDetailBean.getLibraryDescriptor();
+        }
+        return libraryDescriptor;
+    }
+
+    @JsonProperty(value = SubmissionField.SUBMISSION_SITE)
+    public String getSubmissionRepositoryName() {
+        String submissionSite = "";
+        if (statusDetailBean != null) {
+            submissionSite = statusDetailBean.getSubmissionRepositoryName();
+        }
+        return submissionSite;
+    }
 
     public class SubmissionField {
         public static final String SAMPLE_NAME = "sampleName";
@@ -223,5 +240,7 @@ public class SubmissionDto {
         public static final String PRODUCT_ORDERS = "productOrders";
         public static final String SUBMITTED_ERRORS = "submittedErrors";
         public static final String STATUS_DATE = "statusDate";
+        public static final String LIBRARY_DESCRIPTOR = "libraryDescriptor";
+        public static final String SUBMISSION_SITE = "site";
     }
 }

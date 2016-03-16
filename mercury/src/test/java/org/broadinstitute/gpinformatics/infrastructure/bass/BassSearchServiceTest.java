@@ -42,7 +42,7 @@ public class BassSearchServiceTest {
         List<BassDTO> bassDTOs = bassSearchService.runSearch(RP_12, BassDTO.FileType.BAM);
         Assert.assertFalse(bassDTOs.isEmpty());
         for (BassDTO bassDTO : bassDTOs) {
-            Assert.assertEquals(BassDTO.FileType.BAM, BassDTO.FileType.byValue(bassDTO.getFileType()));
+            Assert.assertEquals(BassDTO.FileType.BAM, bassDTO.getFileType());
             // RP Aggregated research projects should always have a data_type column.
             if (bassDTO.isAggregatedByResearchProject()) {
                 Assert.assertEquals(bassDTO.getRpid(), bassDTO.getProject());
@@ -58,7 +58,7 @@ public class BassSearchServiceTest {
         Assert.assertFalse(bassDTOs.isEmpty());
         Set<BassDTO.FileType> resultFileTypes = new HashSet<>();
         for (BassDTO bassDTO : bassDTOs) {
-            resultFileTypes.add(BassDTO.FileType.byValue(bassDTO.getFileType()));
+            resultFileTypes.add(bassDTO.getFileType());
         }
         Assert.assertEquals(resultFileTypes.size(), 2, "Result set should contain bam and picard files.");
         Assert.assertTrue(resultFileTypes.contains(BassDTO.FileType.BAM));

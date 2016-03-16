@@ -233,11 +233,11 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
         if (libraryDescriptors.size()==1){
             libraryDescriptorName=libraryDescriptors.iterator().next().getName();
         }
-        SubmissionTracker.Key
-                key = bassDTO.getSubmissionKey(submissionRepositoryName, libraryDescriptorName);
+        SubmissionTuple
+                submissionTuple = bassDTO.getSubmissionKey();
         Set<SubmissionTracker> foundSubmissionTrackers = new HashSet<>();
         for (SubmissionTracker submissionTracker : getSubmissionTrackers()) {
-            if (submissionTracker.getKey().equals(key)) {
+            if (submissionTracker.getKey().equals(submissionTuple)) {
                 if (!foundSubmissionTrackers.add(submissionTracker)){
                     throw new RuntimeException("More then one result found");
                 }

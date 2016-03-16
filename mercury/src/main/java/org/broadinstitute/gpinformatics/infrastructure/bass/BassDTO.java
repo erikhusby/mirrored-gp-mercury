@@ -15,7 +15,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTracker;
+import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTuple;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -48,12 +48,8 @@ public class BassDTO {
     }
 
 // todo: should be in interface?
-    public SubmissionTracker.Key getSubmissionKey(String repository, String libraryDescriptor) {
-        return new SubmissionTracker.Key(getSample(), getFilePath(), getVersion().toString(), repository, libraryDescriptor);
-    }
-
-    private String getFilePath() {
-        return getValue(BassResultColumn.path);
+    public SubmissionTuple getSubmissionKey() {
+        return new SubmissionTuple(getSample(), getFileType(), getVersion().toString());
     }
 
     public enum FileType {
@@ -304,8 +300,8 @@ public class BassDTO {
         return getValue(BassResultColumn.molecular_barcode_sequence);
     }
 
-    public String getFileType() {
-        return getValue(BassResultColumn.file_type);
+    public FileType getFileType() {
+        return FileType.valueOf(getValue(BassResultColumn.file_type));
     }
 
     public String getRpname() {

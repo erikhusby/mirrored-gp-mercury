@@ -66,8 +66,7 @@ public class SubmissionDtoFetcherTest {
         productOrder.addSample(new ProductOrderSample(TEST_SAMPLE));
         researchProject.addProductOrder(productOrder);
         researchProject.addSubmissionTracker(
-                new SubmissionTrackerTest.SubmissionTrackerStub(1234L, COLLABORATOR_SAMPLE_ID, "bambam.bam", "1",
-                        SubmissionTrackerTest.testRepository, SubmissionTrackerTest.testLibraryDescriptor));
+                new SubmissionTrackerTest.SubmissionTrackerStub(1234L, COLLABORATOR_SAMPLE_ID, BassDTO.FileType.BAM, "1"));
         List<Aggregation> aggregation =
                 Collections.singletonList(AggregationTestFactory
                         .buildAggregation(RESEARCH_PROJECT_ID, COLLABORATOR_SAMPLE_ID, contamination,
@@ -110,6 +109,9 @@ public class SubmissionDtoFetcherTest {
             assertThat(submissionDto.getLanesInAggregation(), Matchers.equalTo(2));
             assertThat(submissionDto.getSubmittedStatus(),
                     Matchers.equalTo(SubmissionStatusDetailBean.Status.FAILURE.getKey()));
+            assertThat(submissionDto.getSubmissionLibraryDescriptor(), equalTo(SubmissionLibraryDescriptor.WHOLE_GENOME_DESCRIPTION));
+            assertThat(submissionDto.getSubmissionRepositoryName(), equalTo(SubmissionRepository.DEFAULT_REPOSITORY_DESCRIPTOR));
+
             assertThat(submissionDto.getStatusDate(), Matchers.notNullValue());
             assertThat(submissionDto.getSubmittedErrors(), Matchers.contains(NCBI_ERROR));
         }

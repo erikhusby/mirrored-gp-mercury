@@ -129,6 +129,8 @@
                     "aoColumns": [
                         {"mData": "<%=SubmissionField.SAMPLE_NAME%>", "mRender": renderCheckbox},
                         {"mData": "<%=SubmissionField.SAMPLE_NAME%>"},
+                        {"mData": "<%=SubmissionField.SUBMISSION_SITE%>"},
+                        {"mData": "<%=SubmissionField.LIBRARY_DESCRIPTOR%>"},
                         {"mData": "<%=SubmissionField.DATA_TYPE %>"},
                         { "mData": "<%=SubmissionField.PRODUCT_ORDERS %>", "sWidth": "140px", "sClass": "ellipsis",
                             "mRender": displayDataList },
@@ -229,6 +231,8 @@
                 <span id="count" class="checkedCount"></span>
             </th>
             <th width="80">BioSample</th>
+            <th class="">Repository</th>
+            <th class="">Library</th>
             <th class="columnDataType">Data Type</th>
             <th class="columnPDOs">PDOs</th>
             <th class="columnAggregationProject">Agg. Project</th>

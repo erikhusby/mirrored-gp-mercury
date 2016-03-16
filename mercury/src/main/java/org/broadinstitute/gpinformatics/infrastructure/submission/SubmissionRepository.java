@@ -25,6 +25,7 @@ import java.io.Serializable;
 public class SubmissionRepository implements Serializable {
     private static final long serialVersionUID = -3831990214996752938L;
     public static final String DEFAULT_REPOSITORY_NAME = "NCBI_PROTECTED";
+    public static final String DEFAULT_REPOSITORY_DESCRIPTOR = "NCBI Controlled Access (dbGaP) submissions";
 
     private String name;
     private String description;

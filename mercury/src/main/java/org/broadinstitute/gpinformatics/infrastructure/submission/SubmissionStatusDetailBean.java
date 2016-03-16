@@ -4,6 +4,7 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.codehaus.jackson.annotate.JsonProperty;
 
 import javax.xml.bind.annotation.XmlElement;
 import java.io.Serializable;
@@ -23,13 +24,17 @@ public class SubmissionStatusDetailBean implements Serializable {
     private List<String> errors=new ArrayList<>();
     private Date lastStatusUpdate;
     private BioProject bioproject;
+    private String repositoryName;
+    private String libraryDescriptor;
 
     public SubmissionStatusDetailBean() {
     }
 
-
-    public SubmissionStatusDetailBean(String uuid, String status, Date lastStatusUpdate, String... errors) {
+    public SubmissionStatusDetailBean(String uuid, String status, String repositoryName, String libraryDescriptor,
+                                      Date lastStatusUpdate, String... errors) {
         this.uuid = uuid;
+        this.repositoryName = repositoryName;
+        this.libraryDescriptor = libraryDescriptor;
         this.lastStatusUpdate = lastStatusUpdate;
         setStatus(status);
         setErrors(Arrays.asList(errors));
@@ -81,6 +86,25 @@ public class SubmissionStatusDetailBean implements Serializable {
     @XmlElement
     public void setBioproject(BioProject bioproject) {
         this.bioproject = bioproject;
+    }
+
+    public String getSubmissionRepositoryName() {
+        return repositoryName;
+    }
+
+    @JsonProperty("site")
+    public void setRepositoryName(String repositoryName) {
+        this.repositoryName = repositoryName;
+    }
+
+
+    public String getLibraryDescriptor() {
+        return libraryDescriptor;
+    }
+
+    @JsonProperty("submissiondatatype")
+    public void setLibraryDescriptor(String libraryDescriptor) {
+        this.libraryDescriptor = libraryDescriptor;
     }
 
     @Override

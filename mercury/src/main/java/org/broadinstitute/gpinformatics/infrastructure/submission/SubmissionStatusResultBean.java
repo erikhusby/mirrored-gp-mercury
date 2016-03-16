@@ -25,14 +25,12 @@ public class SubmissionStatusResultBean implements Serializable {
         submissionStatuses.addAll(submissionStatuses);
     }
 
-    public List<SubmissionStatusDetailBean> getSubmissionStatuses ()
-    {
+    public List<SubmissionStatusDetailBean> getSubmissionStatuses () {
         return submissionStatuses;
     }
 
     @XmlElement
-    public void setSubmissionStatuses (List<SubmissionStatusDetailBean> submissionStatuses)
-    {
+    public void setSubmissionStatuses (List<SubmissionStatusDetailBean> submissionStatuses) {
         this.submissionStatuses = submissionStatuses;
     }
 

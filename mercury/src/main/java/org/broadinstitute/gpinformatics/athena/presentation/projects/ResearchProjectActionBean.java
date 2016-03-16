@@ -868,8 +868,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     /**
      * Forces an update of all submission DTOs associated with the current Research Project
      */
-    @Before(stages = LifecycleStage.EventHandling,
-            on = {VIEW_SUBMISSIONS_ACTION, POST_SUBMISSIONS_ACTION})
+    @Before(stages = LifecycleStage.EventHandling, on = {VIEW_SUBMISSIONS_ACTION, POST_SUBMISSIONS_ACTION})
     public void initializeForSubmissions() {
         updateSubmissionSamples();
     }

@@ -38,19 +38,28 @@ public class SubmissionStatusResultBeanTest {
     public void setUp() throws Exception {
     submissionUpdateDate = DateUtils.parseISO8601Date("2014-07-30T11:35:58Z");
         testUUID1 = "d835cc7-cd63-4cc6-9621-868155618745";
-        detail1 = new SubmissionStatusDetailBean(testUUID1,"Submitted", submissionUpdateDate);
+        detail1 = new SubmissionStatusDetailBean(testUUID1, "Submitted",
+                SubmissionRepository.DEFAULT_REPOSITORY_NAME,
+                SubmissionLibraryDescriptor.WHOLE_GENOME_DESCRIPTION, submissionUpdateDate);
         testUUID2 = "d835cc7-cd63-4cc6-9621-868155618746";
-        detail2 = new SubmissionStatusDetailBean(testUUID2,"Failure", submissionUpdateDate, "And error was returned from NCBI");
+        detail2 = new SubmissionStatusDetailBean(testUUID2, "Failure", SubmissionRepository.DEFAULT_REPOSITORY_NAME,
+                SubmissionLibraryDescriptor.WHOLE_GENOME_NAME, submissionUpdateDate,
+                "And error was returned from NCBI");
 
         testJson = "{\n"
                           + "  \"submissionStatuses\": [\n"
                           + "    {\n"
                           + "      \"lastStatusUpdate\": \"2014-07-30T11:35:58Z\", \n"
+                   + "      \"libraryDescriptor\": \"HumanWholeGenome\", \n"
+                   + "      \"site\": \"NCBI_PROTECTED\", \n"
                           + "      \"status\": \"ReadyForSubmission\",\n"
                           + "      \"uuid\": \"7d835cc7-cd63-4cc6-9621-868155618745\"\n"
                           + "    },\n"
                           + "    {\n"
+                          + "      \"libraryDescriptor\": \"Human Whole Genome\", \n"
                           + "      \"lastStatusUpdate\": \"2014-07-30T11:35:58Z\", \n"
+                          + "      \"libraryDescriptor\": \"HumanWholeGenome\", \n"
+                          + "      \"site\": \"NCBI_PROTECTED\", \n"
                           + "      \"status\": \"ReadyForSubmission\",\n"
                           + "      \"uuid\": \"7d835cc7-cd63-4cc6-9621-868155618746\"\n"
                           + "    },\n"
@@ -60,6 +69,8 @@ public class SubmissionStatusResultBeanTest {
                           + "        \"No biosample found matching submitted id BlahBlahBlah\"\n"
                           + "      ],\n"
                           + "      \"lastStatusUpdate\": \"2014-07-30T11:35:58Z\", \n"
+                   + "      \"libraryDescriptor\": \"HumanWholeGenome\", \n"
+                   + "      \"site\": \"NCBI_PROTECTED\", \n"
                           + "      \"status\": \"Failure\",\n"
                           + "      \"uuid\": \"7d835cc7-cd63-4cc6-9621-868155618749\"\n"
                           + "    },\n"
@@ -68,6 +79,8 @@ public class SubmissionStatusResultBeanTest {
                           + "        \"No biosample found matching submitted id BlahBlahBlah\"\n"
                           + "      ],\n"
                           + "      \"lastStatusUpdate\": \"2014-07-30T11:35:58Z\", \n"
+                   + "      \"libraryDescriptor\": \"HumanWholeGenome\", \n"
+                   + "      \"site\": \"NCBI_PROTECTED\", \n"
                           + "      \"status\": \"Failure\",\n"
                           + "      \"uuid\": \"7d835cc7-cd63-4cc6-9621-868155618748\"\n"
                           + "    },\n"
@@ -75,6 +88,8 @@ public class SubmissionStatusResultBeanTest {
                           + "      \"errors\": [\n"
                           + "        \"No bioproject found matching submitted accession BlahBlah\"\n"
                           + "      ],\n"
+                          + "      \"site\": \"NCBI_PROTECTED\", \n"
+                          + "      \"libraryDescriptor\": \"Human Whole Genome\", \n"
                           + "      \"lastStatusUpdate\": \"2014-07-30T11:35:58Z\", \n"
                           + "      \"status\": \"Failure\",\n"
                           + "      \"uuid\": \"7d835cc7-cd63-4cc6-9621-868155618747\"\n"
@@ -82,20 +97,30 @@ public class SubmissionStatusResultBeanTest {
                           + "  ]\n"
                           + "}";
         results = new SubmissionStatusResultBean();
-        detail11 = new SubmissionStatusDetailBean("7d835cc7-cd63-4cc6-9621-868155618745", "ReadyForSubmission",submissionUpdateDate);
+        detail11 = new SubmissionStatusDetailBean("7d835cc7-cd63-4cc6-9621-868155618745",
+                "ReadyForSubmission", SubmissionRepository.DEFAULT_REPOSITORY_NAME,
+                SubmissionLibraryDescriptor.WHOLE_GENOME_DESCRIPTION, submissionUpdateDate);
         statusUpdate = new GregorianCalendar();
         statusUpdate.set(Calendar.MILLISECOND, 0);
 
         statusUpdate.set(2014, Calendar.JULY, 30, 11, 35, 58);
         detail11.setLastStatusUpdate(statusUpdate.getTime());
 
-        detail21 = new SubmissionStatusDetailBean("7d835cc7-cd63-4cc6-9621-868155618746", "ReadyForSubmission", submissionUpdateDate);
-        detail3 = new SubmissionStatusDetailBean("7d835cc7-cd63-4cc6-9621-868155618749", "Failure", submissionUpdateDate,
+        detail21 = new SubmissionStatusDetailBean("7d835cc7-cd63-4cc6-9621-868155618746", "ReadyForSubmission",
+                SubmissionRepository.DEFAULT_REPOSITORY_NAME, SubmissionLibraryDescriptor.WHOLE_GENOME_DESCRIPTION,
+                submissionUpdateDate);
+        detail3 = new SubmissionStatusDetailBean("7d835cc7-cd63-4cc6-9621-868155618749", "Failure",
+                SubmissionRepository.DEFAULT_REPOSITORY_NAME, SubmissionLibraryDescriptor.WHOLE_GENOME_DESCRIPTION,
+                submissionUpdateDate,
                 "No bioproject found matching submitted accession BlahBlahBlah",
                 "No biosample found matching submitted id BlahBlahBlah");
-        detail4 = new SubmissionStatusDetailBean("7d835cc7-cd63-4cc6-9621-868155618748", "Failure", submissionUpdateDate,
+        detail4 = new SubmissionStatusDetailBean("7d835cc7-cd63-4cc6-9621-868155618748", "Failure",
+                SubmissionRepository.DEFAULT_REPOSITORY_NAME, SubmissionLibraryDescriptor.WHOLE_GENOME_DESCRIPTION,
+                submissionUpdateDate,
                 "No biosample found matching submitted id BlahBlahBlah");
-        detail5 = new SubmissionStatusDetailBean("7d835cc7-cd63-4cc6-9621-868155618747", "Failure", submissionUpdateDate,
+        detail5 = new SubmissionStatusDetailBean("7d835cc7-cd63-4cc6-9621-868155618747", "Failure",
+                SubmissionRepository.DEFAULT_REPOSITORY_NAME, SubmissionLibraryDescriptor.WHOLE_GENOME_DESCRIPTION,
+                submissionUpdateDate,
                 "No bioproject found matching submitted accession BlahBlah");
 
         detail21.setLastStatusUpdate(statusUpdate.getTime());

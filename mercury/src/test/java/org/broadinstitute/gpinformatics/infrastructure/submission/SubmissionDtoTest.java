@@ -40,7 +40,7 @@ public class SubmissionDtoTest {
     public static final double CONTAMINATION = 0.47;
     private static final String CONTAMINATION_STRING = "47%";
     public static final LevelOfDetection FINGERPRINT_LOD = new LevelOfDetection(-4.3d, -3.2d);
-    public static final String BAM_FILE = BassDTO.FileType.BAM.getValue();
+    public static final BassDTO.FileType BAM_FILE = BassDTO.FileType.BAM;
     private static final String DATA_TYPE = "Exome";
     private static final Double QUALITY_METRIC = 1.2;
     public static final String SUBMISSION_UUID = "1234";
