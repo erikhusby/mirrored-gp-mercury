@@ -1196,7 +1196,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         Product tokenProduct = productTokenInput.getTokenObject();
         Product product = tokenProduct != null ? productDao.findByPartNumber(tokenProduct.getPartNumber()) : null;
         List<Product> addOnProducts = productDao.findByPartNumbers(addOnKeys);
-        editOrder.updateData(project, product, addOnProducts, stringToSampleList(sampleList));
+        editOrder.updateData(project, product, addOnProducts, stringToSampleListExisting(sampleList));
         BspUser tokenOwner = owner.getTokenObject();
         editOrder.setCreatedBy(tokenOwner != null ? tokenOwner.getUserId() : null);
 
@@ -1791,7 +1791,16 @@ public class ProductOrderActionBean extends CoreActionBean {
         return sampleList;
     }
 
-    private List<ProductOrderSample> stringToSampleList(String sampleListText) {
+    private static List<ProductOrderSample> stringToSampleList(String sampleListText) {
+        List<ProductOrderSample> samples = new ArrayList<>();
+        for (String sampleName : SearchActionBean.cleanInputStringForSamples(sampleListText)) {
+            samples.add(new ProductOrderSample(sampleName));
+        }
+
+        return samples;
+    }
+
+    private List<ProductOrderSample> stringToSampleListExisting(String sampleListText) {
         List<ProductOrderSample> samples = new ArrayList<>();
         List<String> sampleNames = SearchActionBean.cleanInputStringForSamples(sampleListText);
 
