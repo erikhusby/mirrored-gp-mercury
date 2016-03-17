@@ -583,8 +583,8 @@ public class LabMetricSearchDefinition {
         searchTerm.setName("Product");
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public List<String> evaluate(Object entity, SearchContext context) {
-                List<String> products = new ArrayList<>();
+            public Set<String> evaluate(Object entity, SearchContext context) {
+                Set<String> products = new HashSet<>();
                 LabMetric labMetric = (LabMetric) entity;
                 for (SampleInstanceV2 sampleInstanceV2 : labMetric.getLabVessel().getSampleInstancesV2()) {
                     BucketEntry singleBucketEntry = sampleInstanceV2.getSingleBucketEntry();
@@ -602,8 +602,8 @@ public class LabMetricSearchDefinition {
         searchTerm.setName("Proceed if OOS");
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public List<String> evaluate(Object entity, SearchContext context) {
-                List<String> results = new ArrayList<>();
+            public Set<String> evaluate(Object entity, SearchContext context) {
+                Set<String> results = new HashSet<>();
                 LabMetric labMetric = (LabMetric) entity;
                 for (SampleInstanceV2 sampleInstanceV2 : labMetric.getLabVessel().getSampleInstancesV2()) {
                     List<ProductOrderSample> allProductOrderSamples = sampleInstanceV2.getAllProductOrderSamples();
@@ -612,9 +612,10 @@ public class LabMetricSearchDefinition {
                                 allProductOrderSamples.size() - 1);
                         ProductOrderSample.ProceedIfOutOfSpec proceedIfOutOfSpec =
                                 productOrderSample.getProceedIfOutOfSpec();
-                        if (proceedIfOutOfSpec != null) {
-                            results.add(proceedIfOutOfSpec.getDisplayName());
+                        if (proceedIfOutOfSpec == null) {
+                            proceedIfOutOfSpec = ProductOrderSample.ProceedIfOutOfSpec.NO;
                         }
+                        results.add(proceedIfOutOfSpec.getDisplayName());
                     }
                 }
                 return results;
@@ -626,9 +627,9 @@ public class LabMetricSearchDefinition {
         searchTerm.setName("Original Material Type");
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public List<String> evaluate(Object entity, SearchContext context) {
+            public Set<String> evaluate(Object entity, SearchContext context) {
                 LabMetric labMetric = (LabMetric) entity;
-                List<String> materialTypes = new ArrayList<>();
+                Set<String> materialTypes = new HashSet<>();
                 LabMetricSampleDataAddRowsListener rowsListener = (LabMetricSampleDataAddRowsListener) context.
                         getRowsListener(LabMetricSampleDataAddRowsListener.class.getSimpleName());
 
@@ -653,8 +654,11 @@ public class LabMetricSearchDefinition {
                 Map<LabMetric.MetricType, Set<LabMetric>> mapTypeToMetrics =
                         labMetric.getLabVessel().getMetricsForVesselAndAncestors();
                 Set<LabMetric> labMetrics = mapTypeToMetrics.get(LabMetric.MetricType.INITIAL_PICO);
-                LabMetric mostRecentLabMetric = AncestorLabMetricPlugin.findMostRecentLabMetric(labMetrics);
-                return mostRecentLabMetric.getTotalNg();
+                if (labMetrics != null) {
+                    LabMetric mostRecentLabMetric = AncestorLabMetricPlugin.findMostRecentLabMetric(labMetrics);
+                    return mostRecentLabMetric.getTotalNg();
+                }
+                return null;
             }
         });
         searchTerms.add(searchTerm);
