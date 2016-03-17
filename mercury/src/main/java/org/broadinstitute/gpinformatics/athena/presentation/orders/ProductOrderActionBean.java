@@ -1901,21 +1901,28 @@ public class ProductOrderActionBean extends CoreActionBean {
         List<ProductOrderSample> samples = new ArrayList<>();
         List<String> sampleNames = SearchActionBean.cleanInputStringForSamples(sampleListText);
 
-        Map<String, Set<ProductOrderSample>> mapIdToSample = productOrderSampleDao.findMapBySamples(sampleNames);
-        for (String sampleName : sampleNames) {
-            ProductOrderSample foundProductOrderSample = null;
-            Set<ProductOrderSample> productOrderSamples = mapIdToSample.get(sampleName);
-            for (ProductOrderSample productOrderSample : productOrderSamples) {
-                if (productOrderSample.getProductOrder().equals(editOrder)) {
-                    foundProductOrderSample = productOrderSample;
-                    break;
-                }
+        // Allow random access to existing ProductOrderSamples.  A sample can appear more than once.
+        Map<String, List<ProductOrderSample>> mapIdToSampleList = new HashMap<>();
+        for (ProductOrderSample productOrderSample : editOrder.getSamples()) {
+            List<ProductOrderSample> productOrderSamples = mapIdToSampleList.get(productOrderSample.getSampleKey());
+            if (productOrderSamples == null) {
+                productOrderSamples = new ArrayList<>();
+                mapIdToSampleList.put(productOrderSample.getSampleKey(), productOrderSamples);
             }
+            productOrderSamples.add(productOrderSample);
+        }
 
-            if (foundProductOrderSample == null) {
-                foundProductOrderSample = new ProductOrderSample(sampleName);
+        // Use existing, if any, or create new.
+        for (String sampleName : sampleNames) {
+            ProductOrderSample productOrderSample;
+            List<ProductOrderSample> productOrderSamples = mapIdToSampleList.get(sampleName);
+
+            if (productOrderSamples == null || productOrderSamples.isEmpty()) {
+                productOrderSample = new ProductOrderSample(sampleName);
+            } else {
+                productOrderSample = productOrderSamples.remove(0);
             }
-            samples.add(foundProductOrderSample);
+            samples.add(productOrderSample);
         }
 
         return samples;
