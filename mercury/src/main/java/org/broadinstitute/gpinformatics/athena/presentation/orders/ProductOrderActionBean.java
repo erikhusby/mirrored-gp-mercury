@@ -199,9 +199,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     private PreferenceEjb preferenceEjb;
 
     @Inject
-    private ProductOrderSampleDao sampleDao;
-
-    @Inject
     private ProductOrderListEntryDao orderListEntryDao;
 
     @Inject
@@ -1500,7 +1497,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent("getBspData")
     public Resolution getBspData() throws Exception {
-        List<ProductOrderSample> samples = sampleDao.findListByList(
+        List<ProductOrderSample> samples = productOrderSampleDao.findListByList(
                 ProductOrderSample.class, ProductOrderSample_.productOrderSampleId, sampleIdsForGetBspData);
 
         JSONArray itemList = new JSONArray();
@@ -1900,10 +1897,25 @@ public class ProductOrderActionBean extends CoreActionBean {
         return sampleList;
     }
 
-    private static List<ProductOrderSample> stringToSampleList(String sampleListText) {
+    private List<ProductOrderSample> stringToSampleList(String sampleListText) {
         List<ProductOrderSample> samples = new ArrayList<>();
-        for (String sampleName : SearchActionBean.cleanInputStringForSamples(sampleListText)) {
-            samples.add(new ProductOrderSample(sampleName));
+        List<String> sampleNames = SearchActionBean.cleanInputStringForSamples(sampleListText);
+
+        Map<String, Set<ProductOrderSample>> mapIdToSample = productOrderSampleDao.findMapBySamples(sampleNames);
+        for (String sampleName : sampleNames) {
+            ProductOrderSample foundProductOrderSample = null;
+            Set<ProductOrderSample> productOrderSamples = mapIdToSample.get(sampleName);
+            for (ProductOrderSample productOrderSample : productOrderSamples) {
+                if (productOrderSample.getProductOrder().equals(editOrder)) {
+                    foundProductOrderSample = productOrderSample;
+                    break;
+                }
+            }
+
+            if (foundProductOrderSample == null) {
+                foundProductOrderSample = new ProductOrderSample(sampleName);
+            }
+            samples.add(foundProductOrderSample);
         }
 
         return samples;
