@@ -36,7 +36,7 @@ import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+@Test(groups = TestGroups.STANDARD)
 public class ResearchProjectEjbTest extends Arquillian {
     @Deployment
     public static WebArchive buildMercuryWar() {
