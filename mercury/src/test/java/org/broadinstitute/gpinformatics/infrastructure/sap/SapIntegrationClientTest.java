@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.sap;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.sapservices.SapIntegrationClient;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -27,11 +28,8 @@ public class SapIntegrationClientTest extends Arquillian {
     @Inject
     SapIntegrationClient sapIntegrationClient;
 
-//    private final static Log log = LogFactory.getLog(SapIntegrationClientTest.class);
-
     @BeforeMethod
     public void setUp() {
-//        sapIntegrationClient = SapIntegrationClientProducer.testInstance();
         if (sapIntegrationClient == null) {
             return;
         }

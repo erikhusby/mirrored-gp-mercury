@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.sap;
 
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
+import org.broadinstitute.sapservices.SapIntegrationClient;
 
 import javax.enterprise.inject.Alternative;
 
