@@ -68,11 +68,7 @@ public class SecurityFilter implements Filter {
      * @return true if excluded
      */
     private static boolean excludeFromFilter(String path) {
-        return path.startsWith("/rest/limsQuery") ||
-                path.startsWith("/rest/bettalimsmessage") ||
-                path.startsWith("/rest/vessel/registerTubes") ||
-                path.startsWith("/rest/IlluminaRun/query") ||
-                path.startsWith("/rest/solexarun");
+        return false;
     }
 
     @Override
