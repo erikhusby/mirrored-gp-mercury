@@ -11,13 +11,10 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-
 import java.io.IOException;
-import java.net.MalformedURLException;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.STANDARD;
-
 
 /**
  * TODO scottmat fill in javadoc!!!
@@ -50,7 +47,7 @@ public class SapIntegrationClientTest extends Arquillian {
     @Test
     public void testConnection() throws IOException {
         String age = "42";
-        String result = sapIntegrationClient.testConnection(age);
+        String result = sapIntegrationClient.ageSubmission(age);
 
         Assert.assertEquals(result, "What? Just "+age+" - Great !");
     }

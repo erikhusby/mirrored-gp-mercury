@@ -12,7 +12,7 @@ import javax.enterprise.inject.Alternative;
 @Alternative
 public class SapIntegrationClientStub implements SapIntegrationClient {
     @Override
-    public String testConnection(String age) {
-        return null;
+    public String ageSubmission(String age) {
+        return "What? Just "+age+" - Great !";
     }
 }
