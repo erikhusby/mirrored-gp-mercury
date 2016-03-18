@@ -199,9 +199,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     private PreferenceEjb preferenceEjb;
 
     @Inject
-    private ProductOrderSampleDao sampleDao;
-
-    @Inject
     private ProductOrderListEntryDao orderListEntryDao;
 
     @Inject
@@ -1305,7 +1302,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         Product tokenProduct = productTokenInput.getTokenObject();
         Product product = tokenProduct != null ? productDao.findByPartNumber(tokenProduct.getPartNumber()) : null;
         List<Product> addOnProducts = productDao.findByPartNumbers(addOnKeys);
-        editOrder.updateData(project, product, addOnProducts, stringToSampleList(sampleList));
+        editOrder.updateData(project, product, addOnProducts, stringToSampleListExisting(sampleList));
         BspUser tokenOwner = owner.getTokenObject();
         editOrder.setCreatedBy(tokenOwner != null ? tokenOwner.getUserId() : null);
 
@@ -1500,7 +1497,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent("getBspData")
     public Resolution getBspData() throws Exception {
-        List<ProductOrderSample> samples = sampleDao.findListByList(
+        List<ProductOrderSample> samples = productOrderSampleDao.findListByList(
                 ProductOrderSample.class, ProductOrderSample_.productOrderSampleId, sampleIdsForGetBspData);
 
         JSONArray itemList = new JSONArray();
@@ -1904,6 +1901,37 @@ public class ProductOrderActionBean extends CoreActionBean {
         List<ProductOrderSample> samples = new ArrayList<>();
         for (String sampleName : SearchActionBean.cleanInputStringForSamples(sampleListText)) {
             samples.add(new ProductOrderSample(sampleName));
+        }
+
+        return samples;
+    }
+
+    private List<ProductOrderSample> stringToSampleListExisting(String sampleListText) {
+        List<ProductOrderSample> samples = new ArrayList<>();
+        List<String> sampleNames = SearchActionBean.cleanInputStringForSamples(sampleListText);
+
+        // Allow random access to existing ProductOrderSamples.  A sample can appear more than once.
+        Map<String, List<ProductOrderSample>> mapIdToSampleList = new HashMap<>();
+        for (ProductOrderSample productOrderSample : editOrder.getSamples()) {
+            List<ProductOrderSample> productOrderSamples = mapIdToSampleList.get(productOrderSample.getSampleKey());
+            if (productOrderSamples == null) {
+                productOrderSamples = new ArrayList<>();
+                mapIdToSampleList.put(productOrderSample.getSampleKey(), productOrderSamples);
+            }
+            productOrderSamples.add(productOrderSample);
+        }
+
+        // Use existing, if any, or create new.
+        for (String sampleName : sampleNames) {
+            ProductOrderSample productOrderSample;
+            List<ProductOrderSample> productOrderSamples = mapIdToSampleList.get(sampleName);
+
+            if (productOrderSamples == null || productOrderSamples.isEmpty()) {
+                productOrderSample = new ProductOrderSample(sampleName);
+            } else {
+                productOrderSample = productOrderSamples.remove(0);
+            }
+            samples.add(productOrderSample);
         }
 
         return samples;
