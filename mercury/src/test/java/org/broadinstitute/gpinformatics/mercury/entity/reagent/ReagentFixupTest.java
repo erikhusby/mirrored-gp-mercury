@@ -1044,7 +1044,7 @@ public class ReagentFixupTest extends Arquillian {
         utx.commit();
     }
 
-    @Test(enabled = false)
+@Test(enabled = false)
     public void gplim4063EmergeBaitSpecifyColumn() throws Exception {
         long firstHybBaitEventId = 1220422L;
         long secondHybBaitEventId = 1220756L;
@@ -1089,7 +1089,7 @@ public class ReagentFixupTest extends Arquillian {
             metadataSet.add(metadata);
             labEvent.addReagentMetadata(emergeReagent, metadataSet);
             System.out.println("Reagent " + emergeReagent.getReagentId() +
-                               " added to event " + firstBaitPickEvent.getLabEventId());
+                               " added to event " + labEvent.getLabEventId());
         }
 
         genericReagentDao.persist(new FixupCommentary("GPLIM-4063 fixup create emerge bait reagent and specify columns"));
