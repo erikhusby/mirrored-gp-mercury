@@ -32,6 +32,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.ReworkDetail;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -599,5 +600,91 @@ public class LabBatchFixUpTest extends Arquillian {
         userTransaction.commit();
     }
 
+    @Test(enabled = false)
+    public void fixupSupport1592() throws Exception{
+        List<String> tubeBarcodes = Arrays.asList(
+                "1125638276",
+                "1125638278",
+                "1125638301",
+                "1125638308",
+                "1125638324",
+                "1125638325",
+                "1125638326",
+                "1125638328",
+                "1125638329",
+                "1125638331",
+                "1125638332",
+                "1125638349",
+                "1125638350",
+                "1125638351",
+                "1125638352",
+                "1125638354",
+                "1125638356");
 
+        changeBucketEntriesToAliquots(tubeBarcodes, 1191104L, "LCSET-8673", "SUPPORT-1592");
+    }
+
+    /**
+     * Starting with a set of tubes, looks for ancestors in the given LCSET, then changes bucket entries to the
+     * aliquots created by the given event.  This is intended to fix the case where a root / stock tube appears in a
+     * Mercury LCSET, but an aliquot is later used in a Squid LCSET, causing a routing error.  Moving the bucket entry
+     * from the root to the Mercury aliquot causes the Mercury LCSET to be invisible when routing the Squid tubes.
+     * @param childBarcodes list of aliquots that are children of the bucket entries to be changed (could be siblings
+     *                      of the Mercury aliquots)
+     * @param eventId id of daughter plate transfer that creates Mercury aliquots
+     * @param lcset Mercury LCSET
+     * @param ticket for FixupCommentary
+     */
+    private void changeBucketEntriesToAliquots(List<String> childBarcodes, long eventId, String lcset, String ticket)
+            throws Exception {
+        userBean.loginOSUser();
+        userTransaction.begin();
+        LabBatch labBatch = labBatchDao.findByBusinessKey(lcset);
+        Map<String, LabVessel> mapSourceToTarget = new HashMap<>();
+
+        // Find ancestor bucket entries for given LCSET
+        Set<BucketEntry> bucketEntries = new HashSet<>();
+        Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(childBarcodes);
+        for (Map.Entry<String, LabVessel> stringLabVesselEntry : mapBarcodeToVessel.entrySet()) {
+            for (LabVessel labVessel : stringLabVesselEntry.getValue().getAncestorVessels()) {
+                for (BucketEntry bucketEntry : labVessel.getBucketEntries()) {
+                    if (bucketEntry.getLabBatch().getBatchName().equals(lcset)) {
+                        bucketEntries.add(bucketEntry);
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Find aliquots for given transfer, change bucket entries
+        for (BucketEntry bucketEntry : bucketEntries) {
+            for (LabVessel container : bucketEntry.getLabVessel().getContainers()) {
+                for (SectionTransfer sectionTransfer : container.getContainerRole().getSectionTransfersFrom()) {
+                    if (sectionTransfer.getLabEvent().getLabEventId() == eventId) {
+                        VesselPosition vesselPosition = container.getContainerRole().getPositionOfVessel(
+                                bucketEntry.getLabVessel());
+                        LabVessel targetTube = sectionTransfer.getTargetVesselContainer().getVesselAtPosition(
+                                vesselPosition);
+                        mapSourceToTarget.put(bucketEntry.getLabVessel().getLabel(), targetTube);
+                        System.out.println("Changing bucket entry " + bucketEntry.getBucketEntryId() + " from " +
+                                bucketEntry.getLabVessel().getLabel() + " to " + targetTube.getLabel());
+                        bucketEntry.setLabVessel(targetTube);
+                    }
+                }
+            }
+        }
+        // Change LabBatchStartingVessels
+        for (LabBatchStartingVessel labBatchStartingVessel : labBatch.getLabBatchStartingVessels()) {
+            LabVessel targetTube = mapSourceToTarget.get(labBatchStartingVessel.getLabVessel().getLabel());
+            if (targetTube != null) {
+                System.out.println("Changing lbsv " + labBatchStartingVessel.getBatchStartingVesselId() + " from " +
+                        labBatchStartingVessel.getLabVessel().getLabel() + " to " + targetTube.getLabel());
+                labBatchStartingVessel.setLabVessel(targetTube);
+            }
+        }
+
+        labBatchDao.persist(new FixupCommentary(ticket + " change bucket entries to aliquot"));
+        labBatchDao.flush();
+        userTransaction.commit();
+    }
 }
