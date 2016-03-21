@@ -595,8 +595,9 @@ public class TransferVisualizerV2 {
                     if (containerRole == null) {
                         labVessel.evaluateCriteria(traverser, traversalDirection);
                     } else {
-                        containerRole.evaluateCriteria(labVessel.getVesselGeometry().getVesselPositions()[0], traverser,
-                                traversalDirection, 0);
+                        for (VesselPosition vesselPosition : labVessel.getVesselGeometry().getVesselPositions()) {
+                            containerRole.evaluateCriteria(vesselPosition, traverser, traversalDirection, 0);
+                        }
                     }
                     traverser.resetAllTraversed();
                 }
