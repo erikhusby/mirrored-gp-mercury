@@ -20,9 +20,11 @@
                         {"bSortable":true}, // barcode
                         {"bSortable":true},  // lcset
                         {"bSortable":true},  // tube (event) type
+                        {"bSortable":true},  // number of samples
                         {"bSortable":true},  // enter number lanes
                         {"bSortable":true},  // enter loading conc
                         {"bSortable":true},  // tube create (event) date
+                        {"bSortable":true},  // regulatory designation
                         {"bSortable":true},  // product
                     ]
                 });
@@ -84,7 +86,8 @@
         <style type="text/css">
             /* Fixed width columns except for product name. */
             #tubeList { table-layout: fixed; }
-            .fixedWidthColumn { width: 8em; }
+            .fixedWidthColumn { width: 8em; word-wrap: break-word; }
+            .smallerWidthColumn { width: 5em; }
             .widerFixedWidthColumn { width: 10em; }
         </style>
 
@@ -136,36 +139,42 @@
                         <th class="fixedWidthColumn">Tube Barcode</th>
                         <th class="fixedWidthColumn">LCSET</th>
                         <th class="fixedWidthColumn">Tube Type</th>
-                        <th class="fixedWidthColumn">Number of Lanes</th>
-                        <th class="fixedWidthColumn">Loading Conc</th>
+                        <th class="smallerWidthColumn">Number of Samples</th>
+                        <th class="smallerWidthColumn">Number of Lanes</th>
+                        <th class="smallerWidthColumn">Loading Conc</th>
                         <th class="widerFixedWidthColumn">Tube Created On</th>
+                        <th class="fixedWidthColumn">Regulatory Designation</th>
                         <th>Product</th>
                     </tr>
                     </thead>
                     <tbody>
                     <c:forEach items="${actionBean.rowDtos}" var="rowDto" varStatus="item">
                         <tr>
-                            <td>
+                            <td class="fixedWidthColumn">
                                 <stripes:link id="transferVisualizer" event="view" target="_blank"
                                               beanclass="org.broadinstitute.gpinformatics.mercury.presentation.labevent.TransferVisualizerActionBean">
                                     <stripes:param name="barcodes" value="${rowDto.barcode}"/>
                                     ${rowDto.barcode}
                                 </stripes:link>
                             </td>
-                            <td>
+                            <td class="fixedWidthColumn">
                                 <a href="${rowDto.lcsetUrl}" target="JIRA">${rowDto.lcset}</a>
                             </td>
-                            <td>${rowDto.tubeType}</td>
-                            <td><input style='width:8em' class="numLanes" name="rowDtos[${item.index}].numberLanes"
+                            <td class="fixedWidthColumn">${rowDto.tubeType}</td>
+                            <td class="smallerWidthColumn">${rowDto.numberSamples}</td>
+                            <td class="smallerWidthColumn"><input style='width:5em' class="numLanes" name="rowDtos[${item.index}].numberLanes"
                                        value="${rowDto.numberLanes}" onkeyup="updateSumOfLanes()"/></td>
-                            <td><input style='width:8em' class="loadConc" name="rowDtos[${item.index}].loadingConc"
+                            <td class="smallerWidthColumn"><input style='width:5em' class="loadConc" name="rowDtos[${item.index}].loadingConc"
                                        value="${rowDto.loadingConc}"/></td>
-                            <td>${rowDto.eventDate}</td>
-                            <td><span title="${rowDto.startingBatchVessels}">${rowDto.product}</span></td>
+                            <td class="fixedWidthColumn">${rowDto.eventDate}</td>
+                            <td class="fixedWidthColumn">${rowDto.regulatoryDesignation}</td>
+                            <td class="widerFixedWidthColumn"><span title="${rowDto.startingBatchVessels}">${rowDto.product}</span></td>
                             <input type="hidden" name="rowDtos[${item.index}].barcode" value="${rowDto.barcode}"/>
                             <input type="hidden" name="rowDtos[${item.index}].lcset" value="${rowDto.lcset}"/>
                             <input type="hidden" name="rowDtos[${item.index}].tubeType" value="${rowDto.tubeType}"/>
+                            <input type="hidden" name="rowDtos[${item.index}].numberSamples" value="${rowDto.numberSamples}"/>
                             <input type="hidden" name="rowDtos[${item.index}].eventDate" value="${rowDto.eventDate}"/>
+                            <input type="hidden" name="rowDtos[${item.index}].regulatoryDesignation" value="${rowDto.regulatoryDesignation}"/>
                             <input type="hidden" name="rowDtos[${item.index}].product" value="${rowDto.product}"/>
                             <input type="hidden" name="rowDtos[${item.index}].startingBatchVessels" value="${rowDto.startingBatchVessels}"/>
                             <input type="hidden" name="rowDtos[${item.index}].lcsetUrl" value="${rowDto.lcsetUrl}"/>

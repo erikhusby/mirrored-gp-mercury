@@ -223,7 +223,7 @@
         function setupBucketEvents() {
             var CONFIRM_TEXT = "Confirm";
 
-            $j("input[name='addToBatch'],input[name='createBatch'],input[name='removeFromBucket']").click(function (event) {
+            $j("input[name='addToBatch'],input[name='createBatch'],input[name='removeFromBucket']").on("click dblclick", function (event) {
 
                 // Clear any errors that may be displayed.
                 $j(".alert-error, .error").each(function () {

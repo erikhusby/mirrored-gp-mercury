@@ -14,19 +14,12 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.test.ExomeExpressV2EndToEndTest;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -73,7 +66,7 @@ public class BucketEjbTest extends ContainerTest {
     @Inject
     private UserTransaction utx;
     private Bucket bucket;
-    private String bucketCreationName;
+    private static final String PICO_PLATING_BUCKET = "Pico/Plating Bucket";
     private String howieTest;
     private String poBusinessKey1;
     private String poBusinessKey2;
@@ -159,7 +152,6 @@ public class BucketEjbTest extends ContainerTest {
         dataMap.put(BSPSampleSearchColumn.MATERIAL_TYPE, MaterialType.DNA_DNA_GENOMIC.getDisplayName());
         BspSampleData bspSampleData = new BspSampleData(dataMap);
         bspAliquot1.addSample(new MercurySample(bspStock, bspSampleData));
-        bspAliquot1.addBucketEntry(new BucketEntry(bspAliquot1, productOrder1, BucketEntry.BucketEntryType.PDO_ENTRY));
         mapBarcodeToTube.put(barcode1, bspAliquot1);
 
 
@@ -175,7 +167,6 @@ public class BucketEjbTest extends ContainerTest {
         productOrderSamples.add(new ProductOrderSample(bspStock));
         bspAliquot2 = new BarcodedTube(barcode2);
         bspAliquot2.addSample(new MercurySample(bspStock, bspSampleData));
-        bspAliquot2.addBucketEntry(new BucketEntry(bspAliquot2, productOrder2, BucketEntry.BucketEntryType.PDO_ENTRY));
         mapBarcodeToTube.put(barcode2, bspAliquot2);
 
 
@@ -191,7 +182,6 @@ public class BucketEjbTest extends ContainerTest {
         productOrderSamples.add(new ProductOrderSample(bspStock));
         bspAliquot3 = new BarcodedTube(barcode3);
         bspAliquot3.addSample(new MercurySample(bspStock, bspSampleData));
-        bspAliquot3.addBucketEntry(new BucketEntry(bspAliquot3, productOrder3, BucketEntry.BucketEntryType.PDO_ENTRY));
         mapBarcodeToTube.put(barcode3, bspAliquot3);
 
 
@@ -207,11 +197,8 @@ public class BucketEjbTest extends ContainerTest {
         productOrderSamples.add(new ProductOrderSample(bspStock));
         bspAliquot4 = new BarcodedTube(barcode4);
         bspAliquot4.addSample(new MercurySample(bspStock, bspSampleData));
-        bspAliquot4.addBucketEntry(new BucketEntry(bspAliquot4, productOrder3, BucketEntry.BucketEntryType.PDO_ENTRY));
         mapBarcodeToTube.put(barcode4, bspAliquot4);
 
-
-        bucketCreationName = "Pico/Plating Bucket";
         hrafalUserName = "hrafal";
         howieTest = hrafalUserName;
     }
@@ -228,40 +215,37 @@ public class BucketEjbTest extends ContainerTest {
     }
 
     public void testResource_start_entries() {
-
-        bucket = bucketDao.findByName(bucketCreationName);
+        bucket = bucketDao.findByName(PICO_PLATING_BUCKET);
         int originalBucketSize = bucket.getBucketEntries().size();
-        Assert.assertNotNull(bucket.getBucketEntries());
 
-        Workflow workflow = Workflow.AGILENT_EXOME_EXPRESS;
-        Collection<BucketEntry> testEntries1 = add(Collections.<LabVessel>singletonList(bspAliquot1), workflow, bucket,
-                BucketEntry.BucketEntryType.PDO_ENTRY, howieTest, LabEvent.UI_EVENT_LOCATION,
-                LabEvent.UI_PROGRAM_NAME, productOrder1);
+        Collection<BucketEntry> testEntries1 = resource.applyBucketCriteria(
+                Collections.<LabVessel>singletonList(bspAliquot1), productOrder1, howieTest);
         Assert.assertEquals(testEntries1.size(), 1);
         BucketEntry testEntry1 = testEntries1.iterator().next();
 
-        Assert.assertEquals(originalBucketSize+1, bucket.getBucketEntries().size());
+        Assert.assertEquals(originalBucketSize + 1, bucket.getBucketEntries().size());
         Assert.assertTrue(bucket.contains(testEntry1));
-
-
-        Collection<BucketEntry> testEntries2 = add(Collections.<LabVessel>singletonList(bspAliquot2), workflow, bucket,
-                BucketEntry.BucketEntryType.PDO_ENTRY, howieTest, LabEvent.UI_EVENT_LOCATION,
-                LabEvent.UI_PROGRAM_NAME, productOrder2);
+        
+        Collection<BucketEntry> testEntries2 = resource.applyBucketCriteria(
+                Collections.<LabVessel>singletonList(bspAliquot2), productOrder2, howieTest);
         Assert.assertEquals(testEntries2.size(), 1);
         BucketEntry testEntry2 = testEntries2.iterator().next();
 
-        Collection<BucketEntry> testEntries3 = add(Collections.<LabVessel>singletonList(bspAliquot3), workflow, bucket,
-                BucketEntry.BucketEntryType.PDO_ENTRY, howieTest, LabEvent.UI_EVENT_LOCATION,
-                LabEvent.UI_PROGRAM_NAME, productOrder3);
+        Collection<BucketEntry> testEntries3 = resource.applyBucketCriteria(
+                Collections.<LabVessel>singletonList(bspAliquot3), productOrder3, howieTest);
         Assert.assertEquals(testEntries3.size(), 1);
         BucketEntry testEntry3 = testEntries3.iterator().next();
 
-        Collection<BucketEntry> testEntries4 = add(Collections.<LabVessel>singletonList(bspAliquot4), workflow, bucket,
-                BucketEntry.BucketEntryType.PDO_ENTRY, howieTest, LabEvent.UI_EVENT_LOCATION,
-                LabEvent.UI_PROGRAM_NAME, productOrder3);
+        Collection<BucketEntry> testEntries4 = resource.applyBucketCriteria(
+                        Collections.<LabVessel>singletonList(bspAliquot4), productOrder3, howieTest);
+        
         Assert.assertEquals(testEntries4.size(), 1);
         BucketEntry testEntry4 = testEntries4.iterator().next();
 
+        Collection<BucketEntry> duplicateEntry = resource.applyBucketCriteria(
+                Collections.<LabVessel>singletonList(bspAliquot1), productOrder1, howieTest);
+        Assert.assertTrue(duplicateEntry.isEmpty());
+        
         Assert.assertTrue(bucket.contains(testEntry2));
         Assert.assertTrue(bucket.contains(testEntry3));
         Assert.assertTrue(bucket.contains(testEntry4));
@@ -300,44 +284,31 @@ public class BucketEjbTest extends ContainerTest {
 
 
     public void testResource_start_vessels() {
-
-
-        bucket = bucketDao.findByName(bucketCreationName);
-
-        Assert.assertNotNull(bucket.getBucketEntries());
+        bucket = bucketDao.findByName(PICO_PLATING_BUCKET);
         int originalBucketSize = bucket.getBucketEntries().size();
 
-        Collection<BucketEntry> testEntries1 = add(Collections.<LabVessel>singletonList(bspAliquot1),
-                Workflow.AGILENT_EXOME_EXPRESS, bucket,
-                BucketEntry.BucketEntryType.PDO_ENTRY, howieTest, LabEvent.UI_EVENT_LOCATION,
-                LabEvent.UI_PROGRAM_NAME, productOrder1);
+        Collection<BucketEntry> testEntries1 = resource.applyBucketCriteria(
+                Collections.<LabVessel>singletonList(bspAliquot1), productOrder1, howieTest);
         Assert.assertEquals(testEntries1.size(), 1);
         BucketEntry testEntry1 = testEntries1.iterator().next();
 
-        Assert.assertEquals(originalBucketSize+1, bucket.getBucketEntries().size());
+        Assert.assertEquals(originalBucketSize + 1, bucket.getBucketEntries().size());
         Assert.assertTrue(bucket.contains(testEntry1));
-
 
         BucketEntry testEntry2;
         BucketEntry testEntry3;
         BucketEntry testEntry4;
-
-
+        
         List<LabVessel> bucketCreateBatch = new LinkedList<>();
-
 
         Assert.assertTrue(Collections.addAll(bucketCreateBatch, bspAliquot2,
                 bspAliquot3, bspAliquot4));
 
-
-        add(bucketCreateBatch, Workflow.AGILENT_EXOME_EXPRESS, bucket, BucketEntry.BucketEntryType.PDO_ENTRY, howieTest,
-                "Superman",
-                LabEvent.UI_PROGRAM_NAME, productOrder3);
+        resource.applyBucketCriteria(bucketCreateBatch, productOrder3, howieTest);
 
         bucketDao.flush();
         bucketDao.clear();
-        bucket = bucketDao.findByName(bucketCreationName);
-
+        bucket = bucketDao.findByName(PICO_PLATING_BUCKET);
 
         LabVessel vessel1 = barcodedTubeDao.findByBarcode(barcode1);
         LabVessel vessel2 = barcodedTubeDao.findByBarcode(barcode2);
@@ -358,8 +329,7 @@ public class BucketEjbTest extends ContainerTest {
 
         Set<LabVessel> vesselBucketBatch = new HashSet<>();
 
-        Assert.assertTrue(Collections.addAll(vesselBucketBatch, vessel1,
-                vessel2, vessel3));
+        Assert.assertTrue(Collections.addAll(vesselBucketBatch, vessel1, vessel2, vessel3));
 
         Assert.assertFalse(vessel1.getInPlaceEventsWithContainers().isEmpty());
         Assert.assertEquals(1, vessel1.getInPlaceEventsWithContainers().size());
@@ -374,7 +344,7 @@ public class BucketEjbTest extends ContainerTest {
 
         bucketDao.flush();
         bucketDao.clear();
-        bucket = bucketDao.findByName(bucketCreationName);
+        bucket = bucketDao.findByName(PICO_PLATING_BUCKET);
         vessel1 = barcodedTubeDao.findByBarcode(barcode1);
         vessel2 = barcodedTubeDao.findByBarcode(barcode2);
         vessel3 = barcodedTubeDao.findByBarcode(barcode3);
@@ -405,7 +375,7 @@ public class BucketEjbTest extends ContainerTest {
 
         bucketDao.flush();
         bucketDao.clear();
-        bucket = bucketDao.findByName(bucketCreationName);
+        bucket = bucketDao.findByName(PICO_PLATING_BUCKET);
 
         testEntry4 = bucketEntryDao.findByVesselAndBucket(vessel4, bucket);
         Assert.assertNotNull(testEntry4);
@@ -416,20 +386,16 @@ public class BucketEjbTest extends ContainerTest {
 
 
     public void testResource_start_vessel_count() {
-
-        bucket = bucketDao.findByName(bucketCreationName);
-
-        Assert.assertNotNull(bucket.getBucketEntries());
+        bucket = bucketDao.findByName(PICO_PLATING_BUCKET);
         int originalBucketSize = bucket.getBucketEntries().size();
+        
+        Collection<BucketEntry> testEntries1 = resource.applyBucketCriteria(
+                Collections.<LabVessel>singletonList(bspAliquot1), productOrder1, howieTest);
 
-        Collection<BucketEntry> testEntries1 = add(Collections.<LabVessel>singletonList(bspAliquot1),
-                Workflow.AGILENT_EXOME_EXPRESS, bucket,
-                BucketEntry.BucketEntryType.PDO_ENTRY, howieTest, LabEvent.UI_EVENT_LOCATION,
-                LabEvent.UI_PROGRAM_NAME, productOrder1);
         Assert.assertEquals(testEntries1.size(), 1);
         BucketEntry testEntry1 = testEntries1.iterator().next();
 
-        Assert.assertEquals(originalBucketSize+1, bucket.getBucketEntries().size());
+        Assert.assertEquals(originalBucketSize + 1, bucket.getBucketEntries().size());
         Assert.assertTrue(bucket.contains(testEntry1));
 
         BucketEntry testEntry2;
@@ -439,15 +405,12 @@ public class BucketEjbTest extends ContainerTest {
         List<LabVessel> bucketCreateBatch = new LinkedList<>();
 
         Assert.assertTrue(Collections.addAll(bucketCreateBatch, bspAliquot2, bspAliquot3, bspAliquot4));
-
-        add(bucketCreateBatch, Workflow.AGILENT_EXOME_EXPRESS, bucket, BucketEntry.BucketEntryType.PDO_ENTRY, howieTest,
-                "Superman",
-                LabEvent.UI_PROGRAM_NAME, productOrder3);
+        resource.applyBucketCriteria(bucketCreateBatch, productOrder3, howieTest);
 
         bucketDao.flush();
         bucketDao.clear();
 
-        bucket = bucketDao.findByName(bucketCreationName);
+        bucket = bucketDao.findByName(PICO_PLATING_BUCKET);
 
 
         LabVessel vessel1 = barcodedTubeDao.findByBarcode(barcode1);
@@ -480,20 +443,4 @@ public class BucketEjbTest extends ContainerTest {
         logger.info("Before the start method.  The bucket has " + bucket.getBucketEntries().size() + " Entries in it");
 
     }
-
-    public Collection<BucketEntry> add(List<LabVessel> labVessels, Workflow workflow, Bucket bucket,
-                                       BucketEntry.BucketEntryType bucketEntryType, String operator,
-                                       String eventLocation,
-                                       String programName, ProductOrder productOrder) {
-        WorkflowConfig workflowConfig = new WorkflowLoader().load();
-        ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflow(workflow);
-
-        ProductWorkflowDefVersion workflowDefVersion = productWorkflowDef.getEffectiveVersion();
-
-        Map<WorkflowBucketDef, Collection<LabVessel>> initialBucket =
-                productWorkflowDef.getEffectiveVersion().getInitialBucket(productOrder, labVessels);
-        productOrder.getProduct().getWorkflow();
-        return resource.add(initialBucket, bucketEntryType, programName, operator, eventLocation, productOrder);
-    }
-
 }

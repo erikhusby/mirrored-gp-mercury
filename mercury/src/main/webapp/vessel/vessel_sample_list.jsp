@@ -40,20 +40,20 @@
         </tr>
         </thead>
         <tbody>
-        <c:forEach items="${vessel.getSampleInstances('PREFER_PDO', null)}" var="sample">
-            <%--@elvariable id="sample" type="org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance"--%>
+        <c:forEach items="${vessel.sampleInstancesV2}" var="sample">
+            <%--@elvariable id="sample" type="org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2"--%>
             <tr>
                 <td>
                     <stripes:link
                             beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.SampleSearchActionBean"
                             event="sampleSearch">
-                        <stripes:param name="searchKey" value="${sample.startingSample.sampleKey}"/>
-                        ${sample.startingSample.sampleKey}
+                        <stripes:param name="searchKey" value="${sample.nearestMercurySampleName}"/>
+                        ${sample.nearestMercurySampleName}
                     </stripes:link>
                 </td>
                 <td style="padding: 0;">
                     <table style="padding: 0;">
-                        <c:forEach items="${vessel.getIndexesForSampleInstanceV1(sample)}" var="curIndex">
+                        <c:forEach items="${vessel.getIndexesForSampleInstance(sample)}" var="curIndex">
                             <%--@elvariable id="curIndex" type="org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent"--%>
                             <tr>
                                 <td style="border: none">
@@ -68,7 +68,7 @@
                 <td style="padding: 0;">
                     <table style="padding: 0">
                         <c:if test="${vessel.containerRole != null}">
-                            <c:forEach items="${vessel.containerRole.getPositionsOfSampleInstance(sample, 'WITH_PDO')}"
+                            <c:forEach items="${vessel.containerRole.getPositionsOfSampleInstanceV2(sample)}"
                                        var="position">
                                 <tr>
                                     <td style="border: none;">
@@ -80,26 +80,47 @@
                     </table>
                 </td>
                 <td style="padding: 0;">
-                    <c:forEach items="${sample.getLabBatchCompositionInVesselContext(vessel)}"
-                               var="batchComposition">
-                        <c:if test="${not empty batchComposition.labBatch.businessKey}">
-                            <a target="JIRA" href="${batchComposition.labBatch.jiraTicket.browserUrl}"
+                    <c:choose>
+                        <c:when test="${sample.singleBatch != null}">
+                            <a target="JIRA" href="${sample.singleBatch.jiraTicket.browserUrl}"
                                class="external" target="JIRA">
-                                    ${batchComposition.labBatch.businessKey}
-                                (${batchComposition.count}/${batchComposition.denominator})
+                                    ${sample.singleBatch.jiraTicket.ticketName}
                             </a>&nbsp;&nbsp;
-                        </c:if>
-
-                        <c:if test="${not empty sample.productOrderKey}">
+                        </c:when>
+                        <c:otherwise>
+                            <c:forEach items="${sample.allWorkflowBatches}"
+                                       var="labBatch">
+                                <a target="JIRA" href="${labBatch.jiraTicket.browserUrl}"
+                                   class="external">
+                                        ${labBatch.jiraTicket.ticketName}
+                                </a>&nbsp;&nbsp;
+                            </c:forEach>
+                        </c:otherwise>
+                    </c:choose>
+                    <c:choose>
+                        <c:when test="${sample.singleProductOrderSample != null}">
+                            <c:set var="productOrderSample" value="${sample.singleProductOrderSample}"/>
                             <stripes:link
                                     beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean"
                                     event="view">
-                                <stripes:param name="productOrder" value="${sample.productOrderKey}"/>
-                                ${sample.productOrderKey}
+                                <stripes:param name="productOrder" value="${productOrderSample.productOrder.jiraTicketKey}"/>
+                                ${productOrderSample.productOrder.jiraTicketKey}
                             </stripes:link>
-                        </c:if>
-                        <br/>
-                    </c:forEach>
+                            <br/>
+                        </c:when>
+                        <c:otherwise>
+                            <c:forEach items="${sample.allProductOrderSamples}"
+                                       var="productOrderSample">
+                                <stripes:link
+                                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean"
+                                        event="view">
+                                    <stripes:param name="productOrder" value="${productOrderSample.productOrder.jiraTicketKey}"/>
+                                    ${productOrderSample.productOrder.jiraTicketKey}
+                                </stripes:link>
+                                <br/>
+                            </c:forEach>
+                        </c:otherwise>
+                    </c:choose>
                 </td>
             </tr>
         </c:forEach>

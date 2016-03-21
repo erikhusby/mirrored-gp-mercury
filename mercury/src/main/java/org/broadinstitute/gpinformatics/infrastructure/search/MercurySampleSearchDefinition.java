@@ -51,7 +51,7 @@ public class MercurySampleSearchDefinition {
                 "mercurySampleId", "metadata", MercurySample.class));
 
         ConfigurableSearchDefinition configurableSearchDefinition = new ConfigurableSearchDefinition(
-                ColumnEntity.MERCURY_SAMPLE, 100, criteriaProjections, mapGroupSearchTerms);
+                ColumnEntity.MERCURY_SAMPLE, criteriaProjections, mapGroupSearchTerms);
 
         return configurableSearchDefinition;
     }
@@ -166,6 +166,23 @@ public class MercurySampleSearchDefinition {
             public String evaluate(Object entity, SearchContext context) {
                 MercurySample sample = (MercurySample) entity;
                 return sample.getSampleKey();
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Root Sample ID");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Set<String> evaluate(Object entity, SearchContext context) {
+                Set<String> values = new HashSet<>();
+                MercurySample sample = (MercurySample) entity;
+                for( LabVessel sampleVessel : sample.getLabVessel() ){
+                    for( SampleInstanceV2 sampleInstance : sampleVessel.getSampleInstancesV2()) {
+                        values.add(sampleInstance.getRootOrEarliestMercurySampleName());
+                    }
+                }
+                return values;
             }
         });
         searchTerms.add(searchTerm);

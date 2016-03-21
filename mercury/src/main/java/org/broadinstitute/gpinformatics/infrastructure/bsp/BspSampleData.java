@@ -1,15 +1,17 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.sample.MaterialType;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
 
 import javax.annotation.Nonnull;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -200,7 +202,7 @@ public class BspSampleData implements SampleData {
 
         if (StringUtils.isNotBlank(dateString)) {
             try {
-                return new SimpleDateFormat(BSP_DATE_FORMAT_STRING).parse(dateString);
+                return FastDateFormat.getInstance(BSP_DATE_FORMAT_STRING).parse(dateString);
             } catch (Exception e) {
                 // Fall through to return.
                 logger.warn(
@@ -325,6 +327,11 @@ public class BspSampleData implements SampleData {
     @Override
     public String getMaterialType() {
         return getValue(BSPSampleSearchColumn.MATERIAL_TYPE);
+    }
+
+    @Override
+    public String getOriginalMaterialType() {
+        return getValue(BSPSampleSearchColumn.ORIGINAL_MATERIAL_TYPE);
     }
 
     @Override
@@ -478,6 +485,20 @@ public class BspSampleData implements SampleData {
             return manufacturerBarcode;
         } else {
             return bspLabelBarcode;
+        }
+    }
+
+    public void overrideWithMercuryQuants(ProductOrderSample productOrderSample) {
+        MercurySample mercurySample = productOrderSample.getMercurySample();
+        if (mercurySample != null) {
+            MercurySampleData.QuantData quantData = new MercurySampleData.QuantData(mercurySample);
+            columnToValue.put(BSPSampleSearchColumn.VOLUME, String.valueOf(quantData.getVolume()));
+            columnToValue.put(BSPSampleSearchColumn.CONCENTRATION, String.valueOf(quantData.getConcentration()));
+            if (quantData.getPicoRunDate() != null) {
+                columnToValue.put(BSPSampleSearchColumn.PICO_RUN_DATE,
+                        FastDateFormat.getInstance(BSP_DATE_FORMAT_STRING).format(quantData.getPicoRunDate()));
+            }
+            columnToValue.put(BSPSampleSearchColumn.TOTAL_DNA, String.valueOf(quantData.getTotalDna()));
         }
     }
 }

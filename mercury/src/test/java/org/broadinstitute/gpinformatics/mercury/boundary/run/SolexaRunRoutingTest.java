@@ -106,7 +106,7 @@ public class SolexaRunRoutingTest extends BaseEventTest {
                                                              libraryConstructionEntityBuilder.getPondRegRackBarcode(),
                                                              libraryConstructionEntityBuilder.getPondRegTubeBarcodes());
 
-        Assert.assertEquals(sageEntityBuilder.getSageCleanupRack().getSampleInstances().size(), NUM_POSITIONS_IN_RACK,
+        Assert.assertEquals(sageEntityBuilder.getSageCleanupRack().getSampleInstancesV2().size(), NUM_POSITIONS_IN_RACK,
                             "Wrong number of sage cleanup samples");
 
         QtpEntityBuilder qtpEntityBuilder =
@@ -219,7 +219,7 @@ public class SolexaRunRoutingTest extends BaseEventTest {
                                                              libraryConstructionEntityBuilder.getPondRegRackBarcode(),
                                                              libraryConstructionEntityBuilder.getPondRegTubeBarcodes());
 
-        Assert.assertEquals(sageEntityBuilder.getSageCleanupRack().getSampleInstances().size(), NUM_POSITIONS_IN_RACK,
+        Assert.assertEquals(sageEntityBuilder.getSageCleanupRack().getSampleInstancesV2().size(), NUM_POSITIONS_IN_RACK,
                             "Wrong number of sage cleanup samples");
 
         QtpEntityBuilder qtpEntityBuilder =

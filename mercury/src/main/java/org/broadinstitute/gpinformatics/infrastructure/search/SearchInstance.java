@@ -10,6 +10,9 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
+import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
+import org.broadinstitute.gpinformatics.athena.entity.preference.SearchInstanceList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
 
@@ -68,6 +71,12 @@ public class SearchInstance implements Serializable {
          * Dependent search values (e.g. metadata for a trait).
          */
         private List<SearchValue> children = new ArrayList<>();
+
+        /**
+         * When a rack scan is used as a source of barcodes, persist it so additional data is available in results
+         * Stored as JSON text
+         */
+        private String rackScanData;
 
         /**
          * The list of valid values
@@ -335,6 +344,7 @@ public class SearchInstance implements Serializable {
                     } else {
                         switch(getDataType()) {
                         case STRING:
+                        case NOT_NULL:
                             propertyValues.add(value);
                             break;
                         case TWO_PLACE_DECIMAL:
@@ -468,6 +478,14 @@ public class SearchInstance implements Serializable {
 
         public void setAddToCriteria(Boolean addToCriteria) {
             this.addToCriteria = addToCriteria;
+        }
+
+        public void setRackScanData( String rackScanData ) {
+            this.rackScanData = rackScanData;
+        }
+
+        public String getRackScanData() {
+            return rackScanData;
         }
 
         @Override
@@ -646,7 +664,8 @@ public class SearchInstance implements Serializable {
         GREATER_THAN,
         GREATER_THAN_EQUAL,
         BETWEEN,
-        LIKE;
+        LIKE,
+        NOT_NULL;
 
         public String getName() {
             return name();
@@ -741,6 +760,8 @@ public class SearchInstance implements Serializable {
     private Map<String,Boolean> traversalEvaluatorValues = new HashMap<>();
 
     private boolean isDbSortable = true;
+
+    private int pageSize;
 
     /**
      * Default constructor for Stripes.
@@ -1008,6 +1029,29 @@ public class SearchInstance implements Serializable {
         }
     }
 
+    /**
+     * For result columns, a configurable search can combine column sets, individual
+     * columns, and search terms. This method builds a list of columns that match what the
+     * user is viewing, to allow the same columns to be downloaded.
+     *
+     * @return list of columns
+     */
+    public List<ColumnTabulation> buildViewedColumnTabulations(String entityName) {
+        List<String> columnNameList;
+        if (getPredefinedViewColumns() != null && !getPredefinedViewColumns().isEmpty()) {
+            columnNameList = getPredefinedViewColumns();
+        } else {
+            columnNameList = getColumnSetColumnNameList();
+        }
+        ConfigurableSearchDefinition configurableSearchDef = SearchDefinitionFactory.getForEntity(entityName);
+        List<ColumnTabulation> columnTabulations = new ArrayList<>();
+        for (String columnName : columnNameList) {
+            columnTabulations.add(configurableSearchDef.getSearchTerm(columnName));
+        }
+        columnTabulations.addAll(findTopLevelColumnTabulations());
+        return columnTabulations;
+    }
+
     public List<SearchValue> getSearchValues() {
         return searchValues;
     }
@@ -1038,6 +1082,36 @@ public class SearchInstance implements Serializable {
         } else {
             return null;
         }
+    }
+
+    public static SearchInstance findSearchInstance(PreferenceType type, String searchName,
+            ConfigurableSearchDefinition configurableSearchDef, Map<PreferenceType, Preference> preferenceMap) {
+        SearchInstanceList searchInstanceList = null;
+        if( preferenceMap.containsKey(type)){
+            try {
+                searchInstanceList =
+                        (SearchInstanceList) preferenceMap.get(type).getPreferenceDefinition().getDefinitionValue();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+        if (searchInstanceList == null) {
+            throw new RuntimeException("No search instances for " + type);
+        }
+
+        SearchInstance searchInstance = null;
+        for (SearchInstance searchInstanceLocal : searchInstanceList.getSearchInstances()) {
+            if (searchInstanceLocal.getName().equals(searchName)) {
+                searchInstance = searchInstanceLocal;
+                break;
+            }
+        }
+        if (searchInstance == null) {
+            throw new RuntimeException("No search " + searchName);
+        }
+        searchInstance.establishRelationships(configurableSearchDef);
+        searchInstance.postLoad();
+        return searchInstance;
     }
 
     public void setSearchValues(List<SearchValue> searchValues) {
@@ -1099,4 +1173,18 @@ public class SearchInstance implements Serializable {
     public Map<String,Boolean> getTraversalEvaluatorValues(){
         return traversalEvaluatorValues;
     }
+
+    public void setPageSize( int pageSize ) {
+        this.pageSize = pageSize;
+    }
+
+    public int getPageSize(){
+        // Default to 100 if uninitialized
+        if( pageSize == 0 ) {
+            return 100;
+        } else {
+            return pageSize;
+        }
+    }
+
 }

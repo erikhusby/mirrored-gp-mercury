@@ -272,19 +272,52 @@ CREATE TABLE billing_session (
 );
 
 CREATE TABLE lab_metric (
-  lab_metric_id    NUMERIC(19) NOT NULL PRIMARY KEY,
-  sample_name      VARCHAR(40) NOT NULL,
-  lab_vessel_id    NUMERIC(19) NOT NULL,
-  product_order_id NUMERIC(19),
-  batch_name       VARCHAR(40),
+  lab_metric_id    NUMERIC(19) NOT NULL,
   quant_type       VARCHAR2(255),
   quant_units      VARCHAR2(255),
   quant_value      NUMBER(19,2),
   run_name         VARCHAR2(255),
   run_date         DATE,
-  vessel_position  VARCHAR2(255),
-  etl_date         DATE NOT NULL
+  lab_vessel_id    NUMERIC(19),
+  vessel_barcode   VARCHAR2(40) NOT NULL,
+  rack_position    VARCHAR2(255),
+  decision         VARCHAR2(12),
+  decision_date    DATE,
+  decider          VARCHAR2(255),
+  override_reason  VARCHAR2(255),
+  etl_date         DATE NOT NULL,
+  constraint PK_LAB_METRIC PRIMARY KEY ( lab_metric_id )
 );
+
+CREATE TABLE LIBRARY_LCSET_SAMPLE_BASE(
+  LIBRARY_LABEL VARCHAR2(40) NOT NULL,
+  LIBRARY_ID NUMBER(19) NOT NULL,
+  LIBRARY_TYPE VARCHAR2(255) NOT NULL,
+  LIBRARY_CREATION_DATE DATE NOT NULL,
+  LIBRARY_EVENT_ID NUMBER(19) NOT NULL );
+
+CREATE OR REPLACE VIEW LIBRARY_LCSET_SAMPLE
+AS
+  SELECT SB.LIBRARY_LABEL
+    --, SB.LIBRARY_ID
+    , EF.POSITION
+    , EF.LCSET_SAMPLE_NAME AS LCSET_SAMPLE
+    , EF.BATCH_NAME
+    , EF.MOLECULAR_INDEXING_SCHEME AS MOLECULAR_BARCODE
+    , PDO.JIRA_TICKET_KEY AS PRODUCT_ORDER_KEY
+    , EF.SAMPLE_NAME AS PRODUCT_ORDER_SAMPLE
+    , SB.LIBRARY_TYPE
+    , SB.LIBRARY_CREATION_DATE
+  --, SB.LIBRARY_EVENT_ID
+  FROM LIBRARY_LCSET_SAMPLE_BASE SB
+    , EVENT_FACT EF
+    , PRODUCT_ORDER PDO
+  WHERE EF.LAB_EVENT_ID = SB.LIBRARY_EVENT_ID
+        AND EF.LAB_VESSEL_ID = SB.LIBRARY_ID
+        AND PDO.PRODUCT_ORDER_ID = EF.PRODUCT_ORDER_ID
+        AND EF.LCSET_SAMPLE_NAME IS NOT NULL
+        AND EF.BATCH_NAME IS NOT NULL;
+
 
 --   Creates the import tables
 
@@ -607,18 +640,19 @@ CREATE TABLE im_lab_metric (
   etl_date         DATE        NOT NULL,
   is_delete        CHAR(1)     NOT NULL,
   lab_metric_id    NUMERIC(19) NOT NULL,
-  sample_name      VARCHAR(40),
-  lab_vessel_id    NUMERIC(19),
-  product_order_id NUMERIC(19),
-  batch_name       VARCHAR(40),
   quant_type       VARCHAR2(255),
   quant_units      VARCHAR2(255),
   quant_value      NUMBER(19,2),
   run_name         VARCHAR2(255),
   run_date         DATE,
-  vessel_position  VARCHAR2(255)
+  lab_vessel_id    NUMERIC(19),
+  vessel_barcode   VARCHAR2(40),
+  rack_position    VARCHAR2(255),
+  decision         VARCHAR2(12),
+  decision_date    DATE,
+  decider          VARCHAR2(255),
+  override_reason  VARCHAR2(255)
 );
-
 
 
 CREATE SEQUENCE event_fact_id_seq START WITH 1;
@@ -675,12 +709,6 @@ REFERENCES product_order (product_order_id) ON DELETE CASCADE;
 ALTER TABLE sequencing_sample_fact ADD CONSTRAINT fk_seq_sample_rpid FOREIGN KEY (research_project_id)
 REFERENCES research_project (research_project_id) ON DELETE CASCADE;
 
-ALTER TABLE lab_metric ADD CONSTRAINT fk_lab_metric_vessel_id FOREIGN KEY (lab_vessel_id)
-REFERENCES lab_vessel (lab_vessel_id) ON DELETE CASCADE;
-
-ALTER TABLE lab_metric ADD CONSTRAINT fk_lab_metric_pdo_id FOREIGN KEY (product_order_id)
-REFERENCES product_order (product_order_id) ON DELETE CASCADE;
-
 alter table pdo_regulatory_infos
 add constraint FK_PDO_REGINFO
 foreign key(product_order)
@@ -697,6 +725,7 @@ CREATE INDEX research_project_status_idx1 ON research_project_status (research_p
 CREATE INDEX research_project_person_idx1 ON research_project_person (research_project_id);
 CREATE INDEX research_project_fund_idx1 ON research_project_funding (research_project_id);
 CREATE INDEX research_project_cohort_idx1 ON research_project_cohort (research_project_id);
+CREATE INDEX lab_metric_vessel_idx1 ON lab_metric (vessel_barcode);
 CREATE INDEX research_project_irb_idx1 ON research_project_irb (research_project_id);
 CREATE INDEX product_order_idx1 ON product_order (research_project_id);
 CREATE INDEX product_order_idx2 ON product_order (product_id);
@@ -716,10 +745,11 @@ CREATE INDEX ix_root_project ON research_project (root_research_project_id);
 CREATE UNIQUE INDEX seq_sample_fact_idx1 ON sequencing_sample_fact (flowcell_barcode, lane, molecular_indexing_scheme);
 CREATE INDEX seq_sample_fact_idx2 ON sequencing_sample_fact (product_order_id, sample_name);
 CREATE INDEX seq_sample_fact_idx3 ON sequencing_sample_fact (sequencing_run_id);
-CREATE INDEX lab_metric_idx1 ON lab_metric (product_order_id, sample_name, batch_name);
 CREATE INDEX pdo_regulatory_info_idx1 ON pdo_regulatory_infos (regulatory_infos);
 -- Warehouse ancestry query performance
 CREATE UNIQUE INDEX IDX_VESSEL_LABEL ON LAB_VESSEL(LABEL);
 -- Ancestry ETL delete performance
 CREATE INDEX IDX_ANCESTRY_CHILD_EVENT ON LIBRARY_ANCESTRY( CHILD_EVENT_ID );
+CREATE INDEX IDX_LIBRARY_LABEL_SAMPLE ON LIBRARY_LCSET_SAMPLE_BASE ( LIBRARY_LABEL, LIBRARY_TYPE );
+CREATE INDEX IDX_LIBRARY_ID_SAMPLE ON LIBRARY_LCSET_SAMPLE_BASE ( LIBRARY_ID, LIBRARY_TYPE );
 

@@ -13,19 +13,21 @@ import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.Resolution;
+import net.sourceforge.stripes.action.StreamingResolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.bsp.client.rackscan.ScannerException;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceEjb;
 import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
-import org.broadinstitute.gpinformatics.athena.entity.preference.SearchInstanceList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation;
+import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableListFactory;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDao;
@@ -35,11 +37,17 @@ import org.broadinstitute.gpinformatics.infrastructure.search.PaginationUtil;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstanceEjb;
+import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.BSPLookupException;
-import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.vessel.RackScanActionBean;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import javax.inject.Inject;
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -53,7 +61,7 @@ import java.util.Random;
  */
 @SuppressWarnings("UnusedDeclaration")
 @UrlBinding("/search/ConfigurableSearch.action")
-public class ConfigurableSearchActionBean extends CoreActionBean {
+public class ConfigurableSearchActionBean extends RackScanActionBean {
 
     private static final Log log = LogFactory.getLog(ConfigurableSearchActionBean.class);
 
@@ -66,6 +74,67 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
      * Prefix for pagination session key
      */
     public static final String PAGINATION_PREFIX = "pagination_";
+
+    public static final String AJAX_SELECT_LAB_EVENT = "ajaxLabSelect";
+    public static final String AJAX_SCAN_EVENT = "ajaxScan";
+    public static final String RACK_SCAN_PAGE_TITLE = "Rack Scan Barcodes";
+
+    @HandlesEvent(AJAX_SELECT_LAB_EVENT)
+    public Resolution selectLab() {
+        return new ForwardResolution("/vessel/ajax_div_rack_scanner.jsp");
+    }
+
+    /**
+     * Utilizes a rack scanner to return a line delimited list of tube barcodes to a client side ajax function
+     * callback which transfers value directly to a text area field.
+     * @throws ScannerException
+     */
+    @Override
+    @HandlesEvent(AJAX_SCAN_EVENT)
+    public Resolution scan() throws ScannerException {
+        final JSONObject scannerData = new JSONObject();
+        final StringBuilder errors = new StringBuilder();
+        try {
+            // Run the rack scanner and include the rack barcode in position map
+            super.runRackScan(true);
+            if( rackScan == null || rackScan.isEmpty() ){
+                errors.append("No results from rack scan");
+            } else {
+                // Scan data can be persisted with a SearchInstance, keep track of who ran it and when
+                scannerData.put("scanDate", ColumnValueType.DATE_TIME.format(new Date(),""));
+                scannerData.put("scanUser", getUserBean().getLoginUserName());
+                scannerData.put("scannerName", getRackScanner().getScannerName());
+                JSONArray scan = new JSONArray();
+                scannerData.put("scans", scan);
+                for( Map.Entry<String,String> positionAndBarcode : rackScan.entrySet() ) {
+                    if( positionAndBarcode.getKey().equals("rack")) {
+                        scannerData.put("rackBarcode", positionAndBarcode.getValue());
+                        continue;
+                    }
+
+                    scan.put( new JSONObject()
+                            .put("position", positionAndBarcode.getKey())
+                            .put("barcode",positionAndBarcode.getValue())
+                    );
+                }
+            }
+        } catch (Exception ex){
+            errors.append(ex.getMessage());
+        }
+
+        return new StreamingResolution("text/plain") {
+            @Override
+            public void stream(HttpServletResponse response) throws Exception {
+                if(errors.length() > 0 ) {
+                    response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, errors.toString());
+                } else {
+                    ServletOutputStream out = response.getOutputStream();
+                    out.write(scannerData.toString().getBytes());
+                    out.close();
+                }
+            }
+        };
+    }
 
     /**
      * The definition from which the user will create the search
@@ -271,26 +340,8 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
         PreferenceType type = PreferenceType.valueOf(searchValues[1]);
         String searchName = searchValues[2];
 
-        SearchInstanceList searchInstanceList = null;
-        if( preferenceMap.containsKey(type)){
-            try {
-                searchInstanceList =
-                        (SearchInstanceList) preferenceMap.get(type).getPreferenceDefinition().getDefinitionValue();
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        }
-        assert searchInstanceList != null;
-
-        for (SearchInstance searchInstanceLocal : searchInstanceList.getSearchInstances()) {
-            if (searchInstanceLocal.getName().equals(searchName)) {
-                searchInstance = searchInstanceLocal;
-                break;
-            }
-        }
+        searchInstance = SearchInstance.findSearchInstance(type, searchName, configurableSearchDef, preferenceMap);
         buildSearchContext();
-        searchInstance.establishRelationships(configurableSearchDef);
-        searchInstance.postLoad();
         return new ForwardResolution("/search/configurable_search.jsp");
     }
 
@@ -402,9 +453,9 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
                 configurableResultList = firstPageResults.getResultList();
                 getContext().getRequest().getSession().setAttribute(PAGINATION_PREFIX + sessionKey,
                         firstPageResults.getPagination());
-            } catch (IllegalArgumentException e) {
-                log.error(e.getMessage(), e);
-                addGlobalValidationError(e.getMessage());
+            } catch (InformaticsServiceException ve) {
+                log.error(ve.getMessage(), ve);
+                addGlobalValidationError(ve.getMessage());
             } catch (BSPLookupException bspse) {
                 handleRemoteServiceFailure(bspse);
             }
@@ -710,6 +761,24 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
 
     public ColumnEntity[] getAvailableEntityTypes(){
         return ColumnEntity.values();
+    }
+
+    @Override
+    public String getRackScanPageUrl() {
+        return "/search/ConfigurableSearch.action";
+    }
+
+    @Override
+    public String getPageTitle() {
+        return RACK_SCAN_PAGE_TITLE;
+    }
+
+    /**
+     * Flags as an ajax call to simply append the results of a scan to the output element
+     * @return true use-case is only ajax
+     */
+    public boolean isAppendScanResults(){
+        return true;
     }
 
 }

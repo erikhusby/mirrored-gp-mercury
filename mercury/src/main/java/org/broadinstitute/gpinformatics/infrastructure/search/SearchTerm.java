@@ -277,6 +277,8 @@ public class SearchTerm implements Serializable, ColumnTabulation {
 
     private ConfigurableSearchDefinition alternateSearchDefinition;
 
+    private Boolean rackScanSupported = Boolean.FALSE;
+
     /**
      * Evaluate the expression that returns constrained values, e.g. list of phenotypes
      *
@@ -468,6 +470,14 @@ public class SearchTerm implements Serializable, ColumnTabulation {
 
     public void setIsDefaultResultColumn(Boolean isDefaultResultColumn) {
         this.isDefaultResultColumn = isDefaultResultColumn;
+    }
+
+    public Boolean isRackScanSupported() {
+        return rackScanSupported;
+    }
+
+    public void setRackScanSupported(Boolean rackScanSupported) {
+        this.rackScanSupported = rackScanSupported;
     }
 
     @Override

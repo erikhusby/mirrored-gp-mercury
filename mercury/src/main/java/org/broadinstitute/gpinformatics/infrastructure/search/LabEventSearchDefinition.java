@@ -104,7 +104,7 @@ public class LabEventSearchDefinition {
                 "reagents", LabEvent.class));
 
         ConfigurableSearchDefinition configurableSearchDefinition = new ConfigurableSearchDefinition(
-                ColumnEntity.LAB_EVENT, 100, criteriaProjections, mapGroupSearchTerms);
+                ColumnEntity.LAB_EVENT, criteriaProjections, mapGroupSearchTerms);
 
         // Allow user to search ancestor and/or descendant events
         // Note:  Terms with alternate search definitions ignore these evaluators and contain logic
@@ -566,6 +566,62 @@ public class LabEventSearchDefinition {
                 "Mercury Sample ID term searches for events that involve vessels with a sample barcode.<br>"
                 + "Traversal option(s) should be selected if chain of custody events are desired.<br>"
                 + "Note: This term is exclusive, no other terms can be selected.");
+        searchTerm.setIsExcludedFromResultColumns(Boolean.TRUE);
+        searchTerm.setAlternateSearchDefinition(eventByVesselSearchDefinition);
+        searchTerm.setCriteriaPaths(blankCriteriaPaths);
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Nearest Sample ID");
+        for( SearchTerm nestedTableTerm : nestedTableTerms ) {
+            nestedTableTerm.addParentTermHandledByChild(searchTerm);
+        }
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Set<String> evaluate(Object entity, SearchContext context) {
+                Set<String> results = new HashSet<>();
+                LabVessel labVessel;
+                // Has to handle LabEvent from parent term, LabVessel from nested table,
+                //  and sample data from nested table.
+
+                // Handle possible null (e.g. MercurySample from vessel position plugin)
+                if( entity == null ) {
+                    return results;
+                }
+                if( OrmUtil.proxySafeIsInstance( entity, LabEvent.class ) ) {
+                    LabEvent labEvent = OrmUtil.proxySafeCast(entity, LabEvent.class);
+                    labVessel = labEvent.getInPlaceLabVessel();
+                    if (labVessel == null) {
+                        for( LabVessel srcVessel : labEvent.getSourceLabVessels() ) {
+                            for( SampleInstanceV2 sample : srcVessel.getSampleInstancesV2()) {
+                                results.add(sample.getNearestMercurySampleName());
+                            }
+                        }
+                        return results;
+                    }
+                } else if( OrmUtil.proxySafeIsInstance( entity, MercurySample.class ) ) {
+                    MercurySample mercurySample = OrmUtil.proxySafeCast(entity, MercurySample.class);
+                    results.add(mercurySample.getSampleKey());
+                    return results;
+                } else if( OrmUtil.proxySafeIsInstance( entity, LabVessel.class ) ) {
+                    labVessel = OrmUtil.proxySafeCast(entity, LabVessel.class);
+                } else {
+                    throw new RuntimeException("Unhandled display value type for 'Mercury Sample ID': "
+                            + OrmUtil.getProxyObjectClass(entity).getSimpleName());
+                }
+                // Shared for event in place vessel and lab vessel entity logic
+                if( labVessel != null ) {
+                    for( SampleInstanceV2 sample : labVessel.getSampleInstancesV2()) {
+                        results.add(sample.getNearestMercurySampleName());
+                    }
+                }
+                return results;
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Root Sample ID");
         for( SearchTerm nestedTableTerm : nestedTableTerms ) {
             nestedTableTerm.addParentTermHandledByChild(searchTerm);
         }
@@ -593,14 +649,20 @@ public class LabEventSearchDefinition {
                         return results;
                     }
                 } else if( OrmUtil.proxySafeIsInstance( entity, MercurySample.class ) ) {
-                        MercurySample mercurySample = OrmUtil.proxySafeCast(entity, MercurySample.class);
-                        results.add(mercurySample.getSampleKey());
-                        return results;
+                    MercurySample mercurySample = OrmUtil.proxySafeCast(entity, MercurySample.class);
+                    results.add(mercurySample.getSampleKey());
+                    // May have another sample in ancestry...
+                    for( LabVessel sampleVessel : mercurySample.getLabVessel() ) {
+                        for( SampleInstanceV2 sample : sampleVessel.getSampleInstancesV2()) {
+                            results.add(sample.getRootOrEarliestMercurySampleName());
+                        }
+                    }
+                    return results;
                 } else if( OrmUtil.proxySafeIsInstance( entity, LabVessel.class ) ) {
                     labVessel = OrmUtil.proxySafeCast(entity, LabVessel.class);
                 } else {
                     throw new RuntimeException("Unhandled display value type for 'Mercury Sample ID': "
-                                               + OrmUtil.getProxyObjectClass(entity).getSimpleName());
+                            + OrmUtil.getProxyObjectClass(entity).getSimpleName());
                 }
                 // Shared for event in place vessel and lab vessel entity logic
                 if( labVessel != null ) {
@@ -611,8 +673,6 @@ public class LabEventSearchDefinition {
                 return results;
             }
         });
-        searchTerm.setAlternateSearchDefinition(eventByVesselSearchDefinition);
-        searchTerm.setCriteriaPaths(blankCriteriaPaths);
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
@@ -662,6 +722,7 @@ public class LabEventSearchDefinition {
         searchTerm.setName("Event Vessel Barcode");
         // Do not show in output - redundant with source/target layouts
         searchTerm.setIsExcludedFromResultColumns(Boolean.TRUE);
+        searchTerm.setRackScanSupported(Boolean.TRUE);
         searchTerm.setAlternateSearchDefinition(eventByVesselSearchDefinition);
         // Need a non-functional criteria path to make terms with alternate definitions visible in selection list
         List<SearchTerm.CriteriaPath> blankCriteriaPaths = new ArrayList<>();
@@ -863,7 +924,7 @@ public class LabEventSearchDefinition {
         mapGroupSearchTerms.put("Never Seen", searchTerms);
 
         ConfigurableSearchDefinition configurableSearchDefinition = new ConfigurableSearchDefinition(
-                ColumnEntity.LAB_VESSEL, 100, criteriaProjections, mapGroupSearchTerms);
+                ColumnEntity.LAB_VESSEL, criteriaProjections, mapGroupSearchTerms);
 
         configurableSearchDefinition.addTraversalEvaluator(ConfigurableSearchDefinition.ALTERNATE_DEFINITION_ID
                 , new LabEventVesselTraversalEvaluator() );

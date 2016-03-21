@@ -102,6 +102,10 @@ function searchNamesRecurse(parent, termDepth, indexArray) {
                         node.setAttribute("name", "searchInstance." +
                                 stripesChildren(termDepth, indexArray) + "valueSetWhenLoaded");
                         break;
+                    case "rackScanData" :
+                        node.setAttribute("name", "searchInstance." +
+                            stripesChildren(termDepth, indexArray) + "rackScanData");
+                        break;
                 }
             }
             searchNamesRecurse(node, termDepth + 1, indexArray);

@@ -79,7 +79,7 @@ public class PicoPlatingEntityBuilder {
         labEventHandler.processEvent(picoQcEntity);
 
         StaticPlate picoQcPlate = (StaticPlate) picoQcEntity.getTargetLabVessels().iterator().next();
-        Assert.assertEquals(picoQcPlate.getSampleInstances().size(), mapBarcodeToTube.values().size());
+        Assert.assertEquals(picoQcPlate.getSampleInstancesV2().size(), mapBarcodeToTube.values().size());
 
         LabEventTest.validateWorkflow(LabEventType.PICO_DILUTION_TRANSFER.getName(), picoQcPlate);
         mapBarcodeToVessel.clear();

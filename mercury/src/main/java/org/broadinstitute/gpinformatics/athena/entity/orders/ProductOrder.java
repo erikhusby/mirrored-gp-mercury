@@ -1,6 +1,9 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
+import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Iterators;
 import com.google.common.collect.Multimap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -1089,8 +1092,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         }
         OrderStatus newStatus = OrderStatus.Completed;
         for (ProductOrderSample sample : samples) {
-            if (sample.getDeliveryStatus() != ProductOrderSample.DeliveryStatus.ABANDONED
-                && !sample.isCompletelyBilled()) {
+            if (sample.isToBeBilled()) {
                 // Found an incomplete item.
                 newStatus = OrderStatus.Submitted;
                 break;
@@ -1674,6 +1676,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         mapProductPartToGenoChip.put("P-WG-0058", "Multi-EthnicGlobal-8_A1");
     }
 
+    public static String genoChipTypeForPart(String partNumber) {
+        return mapProductPartToGenoChip.get(partNumber);
+    }
+
     public String getGenoChipType() {
         String genoChipType = mapProductPartToGenoChip.get(getProduct().getPartNumber());
         if (getProduct().getPartNumber().equals("P-WG-0036") && getTitle().contains("Danish")) {
@@ -1704,5 +1710,19 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             workflows.add(workflow);
         }
         return workflows;
+    }
+
+    public int getUnbilledSampleCount() {
+        Iterable<ProductOrderSample> filteredResults = null;
+
+            filteredResults = Iterables.filter(samples,
+                    new Predicate<ProductOrderSample>() {
+                        @Override
+                        public boolean apply(@Nullable ProductOrderSample productOrderSample) {
+                            return productOrderSample.isToBeBilled();
+                        }
+                    });
+
+        return (filteredResults != null)?Iterators.size(filteredResults.iterator()):0;
     }
 }

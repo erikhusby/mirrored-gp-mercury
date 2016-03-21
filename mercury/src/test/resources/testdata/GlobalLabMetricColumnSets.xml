@@ -1,0 +1,25 @@
+<columnSetsPreference>
+    <columnSets>
+        <columnDefinitions>Position</columnDefinitions>
+        <columnDefinitions>Barcode</columnDefinitions>
+        <columnDefinitions>Root Sample ID</columnDefinitions>
+        <columnDefinitions>Nearest Sample ID</columnDefinitions>
+        <columnDefinitions>Collaborator Patient ID</columnDefinitions>
+        <columnDefinitions>Metric Value</columnDefinitions>
+        <columnDefinitions>Volume</columnDefinitions>
+        <columnDefinitions>Metric Total ng</columnDefinitions>
+        <columnDefinitions>Decision</columnDefinitions>
+        <columnDefinitions>Note</columnDefinitions>
+        <columnDefinitions>User</columnDefinitions>
+        <columnDefinitions>Metric Date</columnDefinitions>
+        <columnDefinitions>Reason</columnDefinitions>
+        <columnDefinitions>Product</columnDefinitions>
+        <columnDefinitions>Proceed if OOS</columnDefinitions>
+        <columnDefinitions>Original Material Type</columnDefinitions>
+        <columnDefinitions>Initial Total ng of stock</columnDefinitions>
+        <columnDefinitions>Ancestor Quants</columnDefinitions>
+        <columnDefinitions>Sample Count</columnDefinitions>
+        <columnEntity>LAB_METRIC</columnEntity>
+        <name>Default</name>
+    </columnSets>
+</columnSetsPreference>

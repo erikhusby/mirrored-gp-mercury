@@ -9,10 +9,8 @@ import net.sourceforge.stripes.action.RedirectResolution;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.validation.Validate;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
-import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
@@ -23,7 +21,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
@@ -44,6 +41,10 @@ public class CreateFCTActionBean extends CoreActionBean {
     public static final String LOAD_DENATURE = "loadDenature";
     public static final String LOAD_NORM = "loadNorm";
     public static final String LOAD_POOLNORM = "loadPoolNorm";
+
+    public static final String CLINICAL = "Clinical";
+    public static final String RESEARCH = "Research";
+    public static final String MIXED = "Clinical and Research";
 
     public static final List<IlluminaFlowcell.FlowcellType> FLOWCELL_TYPES;
 
@@ -81,10 +82,6 @@ public class CreateFCTActionBean extends CoreActionBean {
     private BigDecimal defaultLoadingConc = BigDecimal.ZERO;
     private String hasCrsp = "none";
     private Format dateFormat = FastDateFormat.getInstance("yyyy-MM-dd hh:mm a");
-
-    private static final VesselPosition[] VESSEL_POSITIONS = {VesselPosition.LANE1, VesselPosition.LANE2,
-            VesselPosition.LANE3, VesselPosition.LANE4, VesselPosition.LANE5, VesselPosition.LANE6,
-            VesselPosition.LANE7, VesselPosition.LANE8};
 
     public enum LoadingTubeType {
         // These names are also used in GPUITEST FCTCreationPage.
@@ -188,30 +185,35 @@ public class CreateFCTActionBean extends CoreActionBean {
                     }
                 }
 
-                // Disallows a mix of clinical and research samples.
-                for (BucketEntry bucketEntry : vesselToBucketEntries.values()) {
-                    String foundCrsp = String.valueOf(bucketEntry.getProductOrder().getResearchProject().
-                            getRegulatoryDesignation().isClinical());
-                    if (CollectionUtils.isEmpty(rowDtos)) {
-                        hasCrsp = foundCrsp;
-                    } else if (!hasCrsp.equals(foundCrsp)) {
-                        addValidationError(lcsetNames,
-                                "Cannot mix clinical and research samples (" + labBatch.getBatchName() + ")");
-                        return new ForwardResolution(VIEW_PAGE);
-                    }
-                }
-
                 String lcsetUrl = labBatch.getJiraTicket().getBrowserUrl();
 
                 for (LabVessel loadingTube : vesselToEvents.keySet()) {
-
                     // Gets products and starting batch vessels for each loading tube.
                     Multimap<String, String> productToStartingVessel = HashMultimap.create();
+                    String regulatoryDesignation = null;
+                    int numberSamples = 0;
+
                     for (BucketEntry bucketEntry : vesselToBucketEntries.get(loadingTube)) {
                         String productName = bucketEntry.getProductOrder().getProduct() != null ?
                                 bucketEntry.getProductOrder().getProduct().getProductName() :
                                 "[No product for " + bucketEntry.getProductOrder().getJiraTicketKey() + "]";
                         productToStartingVessel.put(productName, bucketEntry.getLabVessel().getLabel());
+                        // Sets the regulatory designation to Clinical, Research, or mixed.
+                        if (bucketEntry.getProductOrder().getResearchProject().getRegulatoryDesignation().
+                                isClinical()) {
+                            if (regulatoryDesignation == null) {
+                                regulatoryDesignation = CLINICAL;
+                            } else if (!regulatoryDesignation.equals(CLINICAL)) {
+                                regulatoryDesignation = MIXED;
+                            }
+                        } else {
+                            if (regulatoryDesignation == null) {
+                                regulatoryDesignation = RESEARCH;
+                            } else if (!regulatoryDesignation.equals(RESEARCH)) {
+                                regulatoryDesignation = MIXED;
+                            }
+                        }
+                        numberSamples += bucketEntry.getLabVessel().getSampleNames().size();
                     }
                     // Coordinate the display so for each loading tube, the list of products shown corresponds
                     // to a list of starting vessels. The UI will show the starting tubes for each product.
@@ -236,7 +238,8 @@ public class CreateFCTActionBean extends CoreActionBean {
                             StringUtils.join(eventDates, "<br/>"),
                             StringUtils.join(productNameList, "<br/>"),
                             StringUtils.join(startingVesselList, "\n"),
-                            selectedEventTypeDisplay, defaultLoadingConc, lcsetUrl);
+                            selectedEventTypeDisplay, defaultLoadingConc, lcsetUrl,
+                            regulatoryDesignation, numberSamples);
                     if (!rowDtos.contains(rowDto)) {
                         rowDtos.add(rowDto);
                     }
@@ -279,100 +282,22 @@ public class CreateFCTActionBean extends CoreActionBean {
      */
     @HandlesEvent(SAVE_ACTION)
     public Resolution createFCTTicket() {
-        // Collects all the selected rowDtos and their loading tubes.
-        List<Pair<RowDto, LabVessel>> rowDtoLabVessels = new ArrayList<>();
+        String regulatoryDesignation = null;
+        // Checks selected tubes for a mix of regulatory designations.
         for (RowDto rowDto : rowDtos) {
             if (rowDto.getNumberLanes() > 0) {
-                LabVessel labVessel = labVesselDao.findByIdentifier(rowDto.getBarcode());
-                rowDtoLabVessels.add(Pair.of(rowDto, labVessel));
-            }
-        }
-        if (rowDtoLabVessels.size() == 0) {
-            addMessage("No lanes were selected.");
-        } else {
-            List<Pair<LabBatch, Set<String>>> fctBatches = makeFctDaoFree(rowDtoLabVessels, selectedFlowcellType);
-            if (fctBatches.size() == 0) {
-                addMessage("No FCTs were created.");
-            } else {
-                StringBuilder createdBatchLinks = new StringBuilder("<ol>");
-                // For each batch, pushes the FCT to JIRA, makes the parent-child JIRA links,
-                // and makes a UI message.
-                for (Pair<LabBatch, Set<String>> pair : fctBatches) {
-                    LabBatch fctBatch = pair.getLeft();
-                    labBatchEjb.createLabBatch(fctBatch, userBean.getLoginUserName(),
-                            selectedFlowcellType.getIssueType(), this);
-                    for (String lcset : pair.getRight()) {
-                        labBatchEjb.linkJiraBatchToTicket(lcset, fctBatch);
-                    }
-                    createdBatchLinks.append("<li><a target=\"JIRA\" href=\"");
-                    createdBatchLinks.append(fctBatch.getJiraTicket().getBrowserUrl());
-                    createdBatchLinks.append("\" class=\"external\" target=\"JIRA\">");
-                    createdBatchLinks.append(fctBatch.getBusinessKey());
-                    createdBatchLinks.append("</a></li>");
+                if (regulatoryDesignation == null) {
+                    regulatoryDesignation = rowDto.getRegulatoryDesignation();
                 }
-                createdBatchLinks.append("</ol>");
-                addMessage("Created {0} FCT tickets: {1}", fctBatches.size(), createdBatchLinks.toString());
+                if (!regulatoryDesignation.equals(rowDto.getRegulatoryDesignation()) ||
+                    regulatoryDesignation.equals(MIXED)) {
+                    addGlobalValidationError("Cannot mix Clinical and Research on a flowcell.");
+                    return new ForwardResolution(VIEW_PAGE);
+                }
             }
         }
+        labBatchEjb.makeFcts(rowDtos, selectedFlowcellType, userBean.getLoginUserName(), this);
         return new RedirectResolution(CreateFCTActionBean.class, VIEW_ACTION);
-    }
-
-    /**
-     * Allocates the loading tubes to flowcells.  A given lane only contains material from one
-     * tube.  But a tube may span multiple lanes and multiple flowcells, depending on the
-     * number of lanes requested for the tube.
-     *
-     * @param rowDtoLabVessels the loading tubes' RowDtos and corresponding lab vessels.
-     * @param flowcellType  the type of flowcells to create.
-     * @return  the fct batches to be persisted, plus the set of lcset names to be linked to it.
-     */
-    public List<Pair<LabBatch, Set<String>>> makeFctDaoFree(List<Pair<RowDto, LabVessel>> rowDtoLabVessels,
-                                                            IlluminaFlowcell.FlowcellType flowcellType) {
-        final List<Pair<LabBatch, Set<String>>> fctBatches = new ArrayList<>();
-        final int lanesPerFlowcell = flowcellType.getVesselGeometry().getRowCount();
-        // These are per-flowcell accumulations, for one or more loading vessels.
-        int laneIndex = 0;
-        Set<String> linkedLcsets = new HashSet<>();
-        List<LabBatch.VesselToLanesInfo> fctVesselLaneInfo = new ArrayList<>();
-
-        // Iterates on the RowDtos which represent the loading tubes. For each one, keeps allocating
-        // lanes until the tube's requested Number of Lanes is fulfilled. When enough lanes exist an
-        // FCT is allocated and put in the return multimap.
-        for (Pair<RowDto, LabVessel> rowDtoLabVessel : rowDtoLabVessels) {
-            RowDto rowDto = rowDtoLabVessel.getLeft();
-            LabBatch.VesselToLanesInfo vesselLaneInfo = null;
-            linkedLcsets.add(rowDto.getLcset());
-
-            // Accumulates the lanes.
-            for (int i = 0; i < rowDto.getNumberLanes(); ++i) {
-                if (vesselLaneInfo == null) {
-                    vesselLaneInfo = new LabBatch.VesselToLanesInfo(new ArrayList<VesselPosition>(),
-                            rowDto.getLoadingConc(), rowDtoLabVessel.getRight());
-                    fctVesselLaneInfo.add(vesselLaneInfo);
-                }
-                if (linkedLcsets.size() ==  0) {
-                    linkedLcsets.add(rowDto.getLcset());
-                }
-                vesselLaneInfo.getLanes().add(VESSEL_POSITIONS[laneIndex++]);
-                // Are there are enough lanes to make a new FCT?
-                if (laneIndex == lanesPerFlowcell) {
-                    LabBatch fctBatch = new LabBatch(rowDto.getBarcode() + " FCT ticket", fctVesselLaneInfo,
-                            flowcellType.getBatchType(), flowcellType);
-                    fctBatch.setBatchDescription(fctBatch.getBatchName());
-                    fctBatches.add(Pair.of(fctBatch, linkedLcsets));
-                    // Resets the accumulations.
-                    laneIndex = 0;
-                    fctVesselLaneInfo = new ArrayList<>();
-                    linkedLcsets = new HashSet<>();
-                    vesselLaneInfo = null;
-                }
-            }
-        }
-
-        if (laneIndex != 0) {
-            throw new RuntimeException("A partially filled flowcell is not supported.");
-        }
-        return fctBatches;
     }
 
     public List<RowDto> getRowDtos() {

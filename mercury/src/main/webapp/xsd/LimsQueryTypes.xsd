@@ -85,6 +85,7 @@
             <xsd:element name="dateCreated" type="xsd:dateTime"/>
             <xsd:element name="discarded" type="xsd:boolean"/>
             <xsd:element name="destroyed" type="xsd:boolean"/>
+            <xsd:element name="regulatoryDesignation" type="xsd:string" maxOccurs="unbounded"/>
         </xsd:sequence>
     </xsd:complexType>
 
