@@ -132,7 +132,7 @@
             <tbody>
         </c:if>
         <%-- Render data rows and cells --%>
-        <tr class="${status.index%2==0 ? "even" : "odd"}${empty resultRow.cssStyles ? "" : " " + "resultRow.cssStyles"}">
+        <tr class="${status.index%2==0 ? "even" : "odd"}${empty resultRow.cssStyles ? "" : " ".concat(resultRow.cssStyles)}">
             <c:if test="${!dataTable}">
                 <td>
                     <input name="selectedIds" value="${resultRow.resultId}" class="shiftCheckbox" type="checkbox">

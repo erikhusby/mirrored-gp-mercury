@@ -21,13 +21,15 @@ public class RowDto {
     private String startingBatchVessels;
     private String tubeType;
     private String lcsetUrl;
+    private String regulatoryDesignation;
+    private int numberSamples;
 
     public RowDto() {
     }
 
     public RowDto(@Nonnull String barcode, @Nonnull String lcset, @Nonnull String eventDate, @Nonnull String product,
                   @Nonnull String startingBatchVessels, @Nonnull String tubeType, @Nonnull BigDecimal loadingConc,
-                  String lcsetUrl) {
+                  String lcsetUrl, @Nonnull String regulatoryDesignation, int numberSamples) {
         this.barcode = barcode;
         this.lcset = lcset;
         this.eventDate = eventDate;
@@ -36,12 +38,14 @@ public class RowDto {
         this.tubeType = tubeType;
         this.loadingConc = loadingConc;
         this.lcsetUrl = lcsetUrl;
+        this.regulatoryDesignation = regulatoryDesignation;
+        this.numberSamples = numberSamples;
     }
 
     public RowDto(@Nonnull String barcode, @Nonnull String lcset, @Nonnull String eventDate, @Nonnull String product,
                   @Nonnull String startingBatchVessels, @Nonnull String tubeType, @Nonnull BigDecimal loadingConc,
                   int numberLanes) {
-        this(barcode, lcset, eventDate, product, startingBatchVessels, tubeType, loadingConc, null);
+        this(barcode, lcset, eventDate, product, startingBatchVessels, tubeType, loadingConc, null, "", 0);
         setNumberLanes(numberLanes);
     }
 
@@ -141,6 +145,22 @@ public class RowDto {
 
     public void setLcsetUrl(String lcsetUrl) {
         this.lcsetUrl = lcsetUrl;
+    }
+
+    public String getRegulatoryDesignation() {
+        return regulatoryDesignation;
+    }
+
+    public void setRegulatoryDesignation(String regulatoryDesignation) {
+        this.regulatoryDesignation = regulatoryDesignation;
+    }
+
+    public int getNumberSamples() {
+        return numberSamples;
+    }
+
+    public void setNumberSamples(int numberSamples) {
+        this.numberSamples = numberSamples;
     }
 
     public static final Comparator BY_BARCODE = new Comparator() {

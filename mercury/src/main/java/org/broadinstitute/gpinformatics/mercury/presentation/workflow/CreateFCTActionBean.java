@@ -9,7 +9,6 @@ import net.sourceforge.stripes.action.RedirectResolution;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.validation.Validate;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
@@ -42,6 +41,10 @@ public class CreateFCTActionBean extends CoreActionBean {
     public static final String LOAD_DENATURE = "loadDenature";
     public static final String LOAD_NORM = "loadNorm";
     public static final String LOAD_POOLNORM = "loadPoolNorm";
+
+    public static final String CLINICAL = "Clinical";
+    public static final String RESEARCH = "Research";
+    public static final String MIXED = "Clinical and Research";
 
     public static final List<IlluminaFlowcell.FlowcellType> FLOWCELL_TYPES;
 
@@ -182,30 +185,35 @@ public class CreateFCTActionBean extends CoreActionBean {
                     }
                 }
 
-                // Disallows a mix of clinical and research samples.
-                for (BucketEntry bucketEntry : vesselToBucketEntries.values()) {
-                    String foundCrsp = String.valueOf(bucketEntry.getProductOrder().getResearchProject().
-                            getRegulatoryDesignation().isClinical());
-                    if (CollectionUtils.isEmpty(rowDtos)) {
-                        hasCrsp = foundCrsp;
-                    } else if (!hasCrsp.equals(foundCrsp)) {
-                        addValidationError(lcsetNames,
-                                "Cannot mix clinical and research samples (" + labBatch.getBatchName() + ")");
-                        return new ForwardResolution(VIEW_PAGE);
-                    }
-                }
-
                 String lcsetUrl = labBatch.getJiraTicket().getBrowserUrl();
 
                 for (LabVessel loadingTube : vesselToEvents.keySet()) {
-
                     // Gets products and starting batch vessels for each loading tube.
                     Multimap<String, String> productToStartingVessel = HashMultimap.create();
+                    String regulatoryDesignation = null;
+                    int numberSamples = 0;
+
                     for (BucketEntry bucketEntry : vesselToBucketEntries.get(loadingTube)) {
                         String productName = bucketEntry.getProductOrder().getProduct() != null ?
                                 bucketEntry.getProductOrder().getProduct().getProductName() :
                                 "[No product for " + bucketEntry.getProductOrder().getJiraTicketKey() + "]";
                         productToStartingVessel.put(productName, bucketEntry.getLabVessel().getLabel());
+                        // Sets the regulatory designation to Clinical, Research, or mixed.
+                        if (bucketEntry.getProductOrder().getResearchProject().getRegulatoryDesignation().
+                                isClinical()) {
+                            if (regulatoryDesignation == null) {
+                                regulatoryDesignation = CLINICAL;
+                            } else if (!regulatoryDesignation.equals(CLINICAL)) {
+                                regulatoryDesignation = MIXED;
+                            }
+                        } else {
+                            if (regulatoryDesignation == null) {
+                                regulatoryDesignation = RESEARCH;
+                            } else if (!regulatoryDesignation.equals(RESEARCH)) {
+                                regulatoryDesignation = MIXED;
+                            }
+                        }
+                        numberSamples += bucketEntry.getLabVessel().getSampleNames().size();
                     }
                     // Coordinate the display so for each loading tube, the list of products shown corresponds
                     // to a list of starting vessels. The UI will show the starting tubes for each product.
@@ -230,7 +238,8 @@ public class CreateFCTActionBean extends CoreActionBean {
                             StringUtils.join(eventDates, "<br/>"),
                             StringUtils.join(productNameList, "<br/>"),
                             StringUtils.join(startingVesselList, "\n"),
-                            selectedEventTypeDisplay, defaultLoadingConc, lcsetUrl);
+                            selectedEventTypeDisplay, defaultLoadingConc, lcsetUrl,
+                            regulatoryDesignation, numberSamples);
                     if (!rowDtos.contains(rowDto)) {
                         rowDtos.add(rowDto);
                     }
@@ -273,6 +282,20 @@ public class CreateFCTActionBean extends CoreActionBean {
      */
     @HandlesEvent(SAVE_ACTION)
     public Resolution createFCTTicket() {
+        String regulatoryDesignation = null;
+        // Checks selected tubes for a mix of regulatory designations.
+        for (RowDto rowDto : rowDtos) {
+            if (rowDto.getNumberLanes() > 0) {
+                if (regulatoryDesignation == null) {
+                    regulatoryDesignation = rowDto.getRegulatoryDesignation();
+                }
+                if (!regulatoryDesignation.equals(rowDto.getRegulatoryDesignation()) ||
+                    regulatoryDesignation.equals(MIXED)) {
+                    addGlobalValidationError("Cannot mix Clinical and Research on a flowcell.");
+                    return new ForwardResolution(VIEW_PAGE);
+                }
+            }
+        }
         labBatchEjb.makeFcts(rowDtos, selectedFlowcellType, userBean.getLoginUserName(), this);
         return new RedirectResolution(CreateFCTActionBean.class, VIEW_ACTION);
     }
