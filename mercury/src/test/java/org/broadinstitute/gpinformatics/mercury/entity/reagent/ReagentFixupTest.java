@@ -1046,6 +1046,7 @@ public class ReagentFixupTest extends Arquillian {
 
 @Test(enabled = false)
     public void gplim4063EmergeBaitSpecifyColumn() throws Exception {
+        userBean.loginOSUser();
         long firstHybBaitEventId = 1220422L;
         long secondHybBaitEventId = 1220756L;
 
