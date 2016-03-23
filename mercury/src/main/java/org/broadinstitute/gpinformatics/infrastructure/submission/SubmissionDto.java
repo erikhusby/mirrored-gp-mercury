@@ -162,8 +162,11 @@ public class SubmissionDto {
     }
 
     @JsonProperty(value = SubmissionField.SUBMITTED_VERSION)
-    public int getSubmittedVersion() {
-        return bassDTO.getVersion();
+    public Integer getSubmittedVersion() {
+        if (statusDetailBean != null) {
+            return Integer.parseInt(statusDetailBean.getSubmittedVersion());
+        }
+        return null;
     }
 
     @JsonProperty(value = SubmissionField.SUBMITTED_ERRORS)

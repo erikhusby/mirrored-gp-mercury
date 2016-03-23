@@ -20,6 +20,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTracker;
+import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTuple;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassSearchService;
@@ -92,7 +93,7 @@ public class SubmissionDtoFetcher {
 
         Map<String, Set<ProductOrder>> sampleNameToPdos = buildSampleToPdoMap(researchProject);
 
-        List<String> submissionIds = collectSubmissionIdentifiers(researchProject);
+        Map<String, SubmissionTuple> submissionIds = collectSubmissionIdentifiers(researchProject);
 
         Map<String, SubmissionStatusDetailBean> sampleSubmissionMap = buildSampleToSubmissionMap(submissionIds);
 
@@ -166,25 +167,28 @@ public class SubmissionDtoFetcher {
         }
     }
 
-    public Map<String, SubmissionStatusDetailBean> buildSampleToSubmissionMap(List<String> submissionIds) {
+    public Map<String, SubmissionStatusDetailBean> buildSampleToSubmissionMap(Map<String, SubmissionTuple> submissionTupleMap) {
         Map<String, SubmissionStatusDetailBean> sampleSubmissionMap = new HashMap<>();
 
+        Set<String> submissionIds = submissionTupleMap.keySet();
         if (CollectionUtils.isNotEmpty(submissionIds)) {
             Collection<SubmissionStatusDetailBean> submissionStatus =
                     submissionsService.getSubmissionStatus(submissionIds.toArray(new String[submissionIds.size()]));
             for (SubmissionStatusDetailBean submissionStatusDetailBean : submissionStatus) {
+                SubmissionTuple submissionTuple = submissionTupleMap.get(submissionStatusDetailBean.getUuid());
+                submissionStatusDetailBean.setSubmittedVersion(submissionTuple.getVersion());
                 sampleSubmissionMap.put(submissionStatusDetailBean.getUuid(), submissionStatusDetailBean);
             }
         }
         return sampleSubmissionMap;
     }
 
-    public List<String> collectSubmissionIdentifiers(ResearchProject researchProject) {
-        List<String> submissionIds = new ArrayList<>();
+    public Map<String, SubmissionTuple> collectSubmissionIdentifiers(ResearchProject researchProject) {
+        Map<String, SubmissionTuple> submissionIds = new HashMap<>();
         /** SubmissionTracker uses sampleName for accessionIdentifier
          @see: org/broadinstitute/gpinformatics/athena/boundary/projects/ ResearchProjectEjb.java:243 **/
         for (SubmissionTracker submissionTracker : researchProject.getSubmissionTrackers()) {
-            submissionIds.add(submissionTracker.createSubmissionIdentifier());
+            submissionIds.put(submissionTracker.createSubmissionIdentifier(), submissionTracker.getKey());
         }
         return submissionIds;
     }

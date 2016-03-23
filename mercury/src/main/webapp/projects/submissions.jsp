@@ -35,7 +35,7 @@
             color: black;
             background-image: "${ctxpath}/images/spinner.gif";
         }
-        .submission-status-tooltip {
+        .submission-tooltip {
             border-bottom: 1px dotted #000;
             text-decoration: none;
         }
@@ -66,12 +66,15 @@
             );
 
 
-            function createErrorPopover(data, errors) {
+            function createPopover(data, title, errors) {
                 var span = document.createElement("span");
                 $j(span).addClass("submission-status-tooltip popover-dismiss");
-                $j(span).attr("title", data);
+                $j(span).attr("title", title);
                 $j(span).append(data);
                 $j(span).attr("data-content", errors);
+                $j(span).attr("data-sort", data);
+                $j(span).attr("data-toggle", "popover");
+                $j(span).attr("data-placement", "top");
                 return span.outerHTML;
             }
 
@@ -141,14 +144,24 @@
                         {"mData": "<%=SubmissionField.CONTAMINATION_STRING %>"},
                         {"mData": "<%=SubmissionField.FINGERPRINT_LOD %>"},
                         {"mData": "<%=SubmissionField.LANES_IN_AGGREGATION %>"},
-                        {"mData": "<%=SubmissionField.SUBMITTED_VERSION %>"},
+                        {"mData": "<%=SubmissionField.SUBMITTED_VERSION %>",
+                            "mRender": function (data, type, row) {
+                                if (type === 'display') {
+                                    var latestVersion = row.<%=SubmissionField.VERSION%>;
+                                    if (latestVersion >= data) {
+                                        return createPopover(data, "Submitted version: "+data, "A newer version is available: " + data);
+                                    }
+                                }
+                                return data;
+                            }
+                        },
                         {
                             "mData": "<%=SubmissionField.SUBMITTED_STATUS %>",
                             "mRender": function (data, type, row) {
                                 if (type === 'display') {
                                     var errors = row.<%=SubmissionField.SUBMITTED_ERRORS%>;
                                     if (errors) {
-                                        return createErrorPopover(data, errors);
+                                        return createPopover(data, data, errors);
                                     }
                                 }
                                 return data;

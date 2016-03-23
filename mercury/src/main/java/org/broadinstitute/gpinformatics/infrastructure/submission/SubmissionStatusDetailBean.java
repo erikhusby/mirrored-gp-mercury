@@ -4,6 +4,7 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonProperty;
 
 import javax.xml.bind.annotation.XmlElement;
@@ -26,6 +27,7 @@ public class SubmissionStatusDetailBean implements Serializable {
     private BioProject bioproject;
     private String repositoryName;
     private String libraryDescriptor;
+    private String submittedVersion;
 
     public SubmissionStatusDetailBean() {
     }
@@ -131,6 +133,16 @@ public class SubmissionStatusDetailBean implements Serializable {
         return new HashCodeBuilder().append(getUuid()).append(getStatus()).append(getErrors())
                                     .append(getLastStatusUpdate()).append(getBioproject()).toHashCode();
     }
+
+    @JsonIgnore
+    public void setSubmittedVersion(String submittedVersion) {
+        this.submittedVersion = submittedVersion;
+    }
+
+    public String getSubmittedVersion() {
+        return submittedVersion;
+    }
+
     /**
      * TODO scottmat fill in javadoc!!!
      */

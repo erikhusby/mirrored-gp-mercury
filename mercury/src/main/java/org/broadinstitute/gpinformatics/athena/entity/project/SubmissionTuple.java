@@ -30,6 +30,10 @@ public class SubmissionTuple implements Serializable {
         this.version = version;
     }
 
+    public String getVersion() {
+        return version;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
