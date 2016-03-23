@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEv
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.DenatureToDilutionTubeHandler;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 
@@ -30,6 +31,9 @@ public class HiSeq4000JaxbBuilder {
     private final int sampleInstanceCount;
     private final String designationName;
     private final int flowcellLanes;
+    private final TubeFormation normRack;
+    private final Map<String, String> normToPosition;
+    private final HiSeq4000FlowcellEntityBuilder.FCTCreationPoint fctCreationPoint;
     private String flowcellBarcode;
     private String stripTubeHolderBarcode;
     private String stripTubeBarcode;
@@ -42,9 +46,9 @@ public class HiSeq4000JaxbBuilder {
     public HiSeq4000JaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory, String testPrefix,
                                 String flowcellBarcode, List<String> denatureTubeBarcodes,
                                 Map<String, String> denatureToPosition, String denatureRackBarcode,
-                                LabBatch fctTicket,
-                                int sampleInstanceCount,
-                                String designationName, int flowcellLanes) {
+                                LabBatch fctTicket, int sampleInstanceCount, String designationName,
+                                int flowcellLanes, TubeFormation normRack, Map<String, String> normToPosition,
+                                HiSeq4000FlowcellEntityBuilder.FCTCreationPoint fctCreationPoint) {
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
         this.testPrefix = testPrefix;
         this.flowcellBarcode = flowcellBarcode;
@@ -55,19 +59,28 @@ public class HiSeq4000JaxbBuilder {
         this.sampleInstanceCount = sampleInstanceCount;
         this.designationName = designationName;
         this.flowcellLanes = flowcellLanes;
+        this.normRack = normRack;
+        this.normToPosition = normToPosition;
+        this.fctCreationPoint = fctCreationPoint;
     }
 
     public HiSeq4000JaxbBuilder invoke() {
         stripTubeHolderBarcode = "StripTubeHolder" + testPrefix;
         List<BettaLimsMessageTestFactory.CherryPick> stripTubeCherryPicks = new ArrayList<>();
         for (LabBatchStartingVessel startingVessel : fctTicket.getLabBatchStartingVessels()) {
-            LabVessel denatureLabVessel = startingVessel.getLabVessel();
+            LabVessel labVessel = startingVessel.getLabVessel();
             String lane = startingVessel.getVesselPosition().name();
             int laneNum = Integer.parseInt(lane.substring(lane.length() - 1));
             char laneRow = (char) (laneNum + 64); //Convert 1 to A
             String destWell = laneRow + "01";
+            String position = null;
+            if (fctCreationPoint== HiSeq4000FlowcellEntityBuilder.FCTCreationPoint.DENATURE) {
+                position = denatureToPosition.get(labVessel.getLabel());
+            } else if (fctCreationPoint== HiSeq4000FlowcellEntityBuilder.FCTCreationPoint.NORMALIZATION) {
+                position = normToPosition.get(labVessel.getLabel());
+            }
             stripTubeCherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(
-                    denatureRackBarcode, denatureToPosition.get(denatureLabVessel.getLabel()),
+                    denatureRackBarcode, position,
                     stripTubeHolderBarcode, destWell
             ));
         }
