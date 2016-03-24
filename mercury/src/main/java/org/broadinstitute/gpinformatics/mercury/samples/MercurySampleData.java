@@ -6,16 +6,23 @@ import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricRun;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.math.BigDecimal;
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 
 /**
  * This class holds sample data specific to MercurySamples whose MetadataSource == MERCURY.
  */
 public class MercurySampleData implements SampleData {
+    private MercurySample mercurySample;
     private String sampleId;
     private String collaboratorSampleId;
     private String patientId;
@@ -27,15 +34,23 @@ public class MercurySampleData implements SampleData {
     private final boolean hasData;
     private Date receiptDate;
     private String materialType;
+    private String originalMaterialType;
+    private QuantData quantData;
 
     public MercurySampleData(@Nonnull String sampleId, @Nonnull Set<Metadata> metadata) {
         this(sampleId, metadata, null);
     }
+
     public MercurySampleData(@Nonnull String sampleId, @Nonnull Set<Metadata> metadata, @Nullable Date receiptDate) {
         this.sampleId = sampleId;
         hasData = !metadata.isEmpty();
         this.receiptDate = receiptDate;
         extractSampleDataFromMetadata(metadata);
+    }
+
+    public MercurySampleData(@Nonnull MercurySample mercurySample) {
+        this(mercurySample.getSampleKey(), mercurySample.getMetadata(), mercurySample.getReceivedDate());
+        this.mercurySample = mercurySample;
     }
 
     private void extractSampleDataFromMetadata(Set<Metadata> metadata) {
@@ -62,6 +77,9 @@ public class MercurySampleData implements SampleData {
                 break;
             case MATERIAL_TYPE:
                 this.materialType = value;
+                break;
+            case ORIGINAL_MATERIAL_TYPE:
+                this.originalMaterialType = value;
                 break;
             }
         }
@@ -90,8 +108,26 @@ public class MercurySampleData implements SampleData {
         return true;
     }
 
+
+    /**
+     * Initialize QuantData.
+     *
+     * @return true if QuantData was successfully initialized.
+     */
+    boolean initializeQuantData() {
+        if (quantData == null) {
+            if (mercurySample != null) {
+                quantData = new QuantData(mercurySample);
+            }
+        }
+        return quantData != null;
+    }
+
     @Override
     public Date getPicoRunDate() {
+        if (initializeQuantData()) {
+            return quantData.getPicoRunDate();
+        }
         return null;
     }
 
@@ -127,12 +163,73 @@ public class MercurySampleData implements SampleData {
 
     @Override
     public double getVolume() {
+        if (initializeQuantData()) {
+            return quantData.getVolume();
+        }
         return 0;
     }
 
     @Override
     public Double getConcentration() {
+        if (initializeQuantData()) {
+            return quantData.getConcentration();
+        }
         return null;
+    }
+
+    /**
+     * A sample may have a root MetadataSource of BSP (i.e. BspSampleData), but have aliquots that are managed by
+     * Mercury.  This class returns Mercury quant information.
+     */
+    public static class QuantData {
+        private Date picoRunDate;
+        private double volume;
+        private Double concentration;
+        private double totalDna;
+
+        public QuantData(MercurySample mercurySample) {
+            if (!mercurySample.getLabVessel().isEmpty()) {
+                // A sample with multiple vessels is a data inconsistency that should be fixed before quanting.
+                LabVessel labVessel = mercurySample.getLabVessel().iterator().next();
+                BigDecimal vesselVolume = labVessel.getVolume();
+                if (vesselVolume != null) {
+                    volume = vesselVolume.doubleValue();
+                }
+
+                List<LabMetric> labMetrics = labVessel.getNearestMetricsOfType(LabMetric.MetricType.INITIAL_PICO,
+                        TransferTraverserCriteria.TraversalDirection.Descendants);
+                if (labMetrics != null && !labMetrics.isEmpty()) {
+                    // Use most recent
+                    LabMetric labMetric = labMetrics.get(labMetrics.size() - 1);
+                    concentration = labMetric.getValue().doubleValue();
+                    totalDna = labMetric.getTotalNg().doubleValue();
+                    LabMetricRun labMetricRun = labMetric.getLabMetricRun();
+
+                    // Generic uploads don't have runs
+                    if (labMetricRun == null) {
+                        picoRunDate = labMetric.getCreatedDate();
+                    } else {
+                        picoRunDate = labMetricRun.getRunDate();
+                    }
+                }
+            }
+        }
+
+        public Date getPicoRunDate() {
+            return picoRunDate;
+        }
+
+        public double getVolume() {
+            return volume;
+        }
+
+        public Double getConcentration() {
+            return concentration;
+        }
+
+        public double getTotalDna() {
+            return totalDna;
+        }
     }
 
     /**
@@ -204,7 +301,18 @@ public class MercurySampleData implements SampleData {
     }
 
     @Override
+    public String getOriginalMaterialType() {
+        if (StringUtils.isBlank(originalMaterialType)) {
+            return "";
+        }
+        return originalMaterialType;
+    }
+
+    @Override
     public double getTotal() {
+        if (initializeQuantData()) {
+            return quantData.getTotalDna();
+        }
         return 0;
     }
 

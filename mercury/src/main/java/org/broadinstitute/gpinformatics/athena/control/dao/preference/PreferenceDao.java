@@ -148,4 +148,26 @@ public class PreferenceDao extends GenericDao {
 
         return preferences;
     }
+
+    /**
+     * This grabs ALL preferences of a specific type, regardless of user
+     *
+     * @param preferenceType The preference type to get.
+     *
+     * @return The list of preferences that match.
+     *
+     * @throws Exception Any errors.
+     */
+    public List<Preference> getPreferences( @Nonnull PreferenceType preferenceType ) throws Exception {
+        EntityManager entityManager = getEntityManager();
+        CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+
+        CriteriaQuery<Preference> criteriaQuery = criteriaBuilder.createQuery(Preference.class);
+        Root<Preference> preferenceRoot = criteriaQuery.from(Preference.class);
+
+        List<Predicate> terms = new ArrayList<>();
+        terms.add(criteriaBuilder.equal(preferenceRoot.get(Preference_.preferenceType), preferenceType));
+
+        return populateOrderedPreferences(criteriaBuilder, criteriaQuery, preferenceRoot, terms);
+    }
 }

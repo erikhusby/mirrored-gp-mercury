@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
@@ -204,39 +205,64 @@ public class SampleDataFetcher implements Serializable {
         Collection<MercurySample> mercurySamplesWithMercurySource = new ArrayList<>();
         Collection<String> sampleIdsWithBspSource = new ArrayList<>();
 
-        Set<String> sampleNames = new HashSet<>(samples.size());
+        Set<String> bspSourceSampleNames = new HashSet<>(samples.size());
+        Map<String, ProductOrderSample> mapMercuryQuantIdToPdoSample = new HashMap<>();
         for (AbstractSample sample : samples) {
-            if (sample.needsBspMetaData()) {
+            if (!sample.isHasBspSampleDataBeenInitialized()) {
                 MercurySample mercurySample;
                 String sampleName;
+                Product product = null;
+                ProductOrderSample productOrderSample = null;
                 if (OrmUtil.proxySafeIsInstance(sample, MercurySample.class)) {
                     mercurySample = OrmUtil.proxySafeCast(sample, MercurySample.class);
                     sampleName = mercurySample.getSampleKey();
+                    if (!mercurySample.getProductOrderSamples().isEmpty()) {
+                        productOrderSample = mercurySample.getProductOrderSamples().iterator().next();
+                        product = productOrderSample.getProductOrder().getProduct();
+                    }
                 } else {
-                    ProductOrderSample productOrderSample = OrmUtil.proxySafeCast(sample, ProductOrderSample.class);
+                    productOrderSample = OrmUtil.proxySafeCast(sample, ProductOrderSample.class);
+                    product = productOrderSample.getProductOrder().getProduct();
                     mercurySample = productOrderSample.getMercurySample();
                     sampleName = productOrderSample.getName();
                 }
                 if (mercurySample != null &&
-                    mercurySample.getMetadataSource() == MercurySample.MetadataSource.MERCURY) {
+                        mercurySample.getMetadataSource() == MercurySample.MetadataSource.MERCURY) {
                     mercurySamplesWithMercurySource.add(mercurySample);
                 } else {
-                    sampleNames.add(sampleName);
+                    bspSourceSampleNames.add(sampleName);
+                }
+                // To improve performance, check for Mercury quants only if the product indicates that they're there.
+                if (product != null && product.getExpectInitialQuantInMercury() && quantColumnRequested(bspSampleSearchColumns)) {
+                    mapMercuryQuantIdToPdoSample.put(sampleName, productOrderSample);
                 }
             }
         }
-        if (!sampleNames.isEmpty()) {
+        if (!bspSourceSampleNames.isEmpty() || !mercurySamplesWithMercurySource.isEmpty()) {
 
-            buildSampleCollectionsBySource(sampleNames, mercurySamplesWithMercurySource, sampleIdsWithBspSource);
+            buildSampleCollectionsBySource(bspSourceSampleNames, mercurySamplesWithMercurySource, sampleIdsWithBspSource);
 
             if (!sampleIdsWithBspSource.isEmpty()) {
                 Map<String, BspSampleData> bspSampleData =
                         bspSampleDataFetcher.fetchSampleData(sampleIdsWithBspSource, bspSampleSearchColumns);
+                for (Map.Entry<String, ProductOrderSample> idPdoSampleEntry : mapMercuryQuantIdToPdoSample.entrySet()) {
+                    BspSampleData bspSampleData1 = bspSampleData.get(idPdoSampleEntry.getKey());
+                    bspSampleData1.overrideWithMercuryQuants(idPdoSampleEntry.getValue());
+                }
                 sampleData.putAll(bspSampleData);
             }
         }
         sampleData.putAll(mercurySampleDataFetcher.fetchSampleData(mercurySamplesWithMercurySource));
 
         return sampleData;
+    }
+
+    private boolean quantColumnRequested(BSPSampleSearchColumn[] bspSampleSearchColumns) {
+        for (BSPSampleSearchColumn bspSampleSearchColumn : bspSampleSearchColumns) {
+            if (BSPSampleSearchColumn.isQuantColumn(bspSampleSearchColumn)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

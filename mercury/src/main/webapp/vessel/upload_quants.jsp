@@ -16,19 +16,12 @@
                         {"bSortable": true} // value
                     ]
                 });
-                $j('#metricsTable').dataTable({
-                    "oTableTools": ttExportDefines,
-                    "aoColumnDefs" : [
-                        { "bSortable": false, "aTargets": "no-sort" },
-                        { "bSortable": true, "sType": "numeric", "aTargets": "sort-numeric" }
-                    ]
-                });
                 <%-- Clears all checkboxes. --%>
-                $j('input.overrideCheckboxClass').prop('checked',false);
+                $j('input.conditionalCheckboxClass').prop('checked',false);
 
                 <%-- Hooks any override checkbox change and hides/shows the NextSteps button. --%>
-                $j('input.overrideCheckboxClass').change(function() {
-                    var isChecked = $j('input.overrideCheckboxClass:checked');
+                $j('input.conditionalCheckboxClass').change(function() {
+                    var isChecked = $j('input.conditionalCheckboxClass:checked');
                     if (isChecked.length) {
                         $j("#viewNextStepsBtn").attr("disabled", "disabled");
                     } else {
@@ -69,7 +62,7 @@
                     <stripes:label for="allowRePico" class="control-label">Redo existing quants</stripes:label>
                     <div class="controls">
                         <stripes:checkbox id="allowRePico" name="acceptRePico"
-                                          style="margin-top: 10px;" class="overrideCheckboxClass"
+                                          style="margin-top: 10px;"
                                           title="Check this to upload a spreadsheet of quants when tubes already have quants of the same Quant Type and a new pico run was done.  If left unchecked, Mercury will error the upload if it finds existing quants."/>
                     </div>
                 </div>
@@ -101,82 +94,19 @@
                 </c:forEach>
             </table>
             <stripes:form beanclass="${actionBean.class.name}" id="metricsForm" class="form-horizontal">
-                <table class="table simple" id="metricsTable">
-                    <thead>
-                    <tr>
-                        <th>Position</th>
-                        <th>Barcode</th>
-                        <th>Sample ID</th>
-                        <th>Collaborator Patient ID</th>
-                        <th>Value</th>
-                        <c:if test="${actionBean.labMetricRun.metricType.category != 'QUALITY'}">
-                            <th class="sort-numeric">Volume</th>
-                            <th class="sort-numeric">Total ng</th>
-                        </c:if>
-                        <th>Decision</th>
-                        <th>Note</th>
-                        <th>User</th>
-                        <th>Date</th>
-                        <th>Reason</th>
-                        <th class="no-sort"></th>
-                        <%--<th class="no-show"></th>--%>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <c:forEach items="${actionBean.labMetricRun.labMetrics}" var="labMetric">
-                        <c:if test="${labMetric.labMetricDecision != null}">
-                            <tr <c:if test="${labMetric.labMetricDecision.needsReview}">
-                                    class="warning"
-                                </c:if>>
-                                <td>
-                                    ${labMetric.vesselPosition}
-                                </td>
-                                <td>
-                                    ${labMetric.labVessel.label}
-                                </td>
-                                <td>
-                                    ${fn:join(labMetric.labVessel.sampleNamesArray, " ")}
-                                </td>
-                                <td>
-                                    ${fn:join(labMetric.labVessel.getMetadataValues("PATIENT_ID"), " ")}
-                                </td>
-                                <td>
-                                    ${labMetric.value}
-                                </td>
-                                <c:if test="${labMetric.name.category != 'QUALITY'}">
-                                    <td>
-                                        ${labMetric.labVessel.volume}
-                                    </td>
-                                    <td>
-                                        ${labMetric.totalNg}
-                                    </td>
-                                </c:if>
-                                <td>
-                                    ${labMetric.labMetricDecision.decision}
-                                </td>
-                                <td>
-                                    ${labMetric.labMetricDecision.note}
-                                </td>
-                                <td>
-                                    ${actionBean.getUserFullName(labMetric.labMetricDecision.deciderUserId)}
-                                </td>
-                                <td>
-                                    <fmt:formatDate value="${labMetric.labMetricDecision.decidedDate}" pattern="${actionBean.dateTimePattern}"/>
-                                </td>
-                                <td>
-                                    ${labMetric.labMetricDecision.overrideReason}
-                                </td>
-                                <td>
-                                    <c:if test="${labMetric.labMetricDecision.decision.editable}">
-                                        <stripes:checkbox name="selectedMetrics" value="${labMetric.labMetricId}"
-                                                class="overrideCheckboxClass"/>
-                                    </c:if>
-                                </td>
-                            </tr>
-                        </c:if>
-                    </c:forEach>
-                    </tbody>
-                </table>
+
+                <stripes:layout-render name="/columns/configurable_list.jsp"
+                        entityName="${actionBean.entityName}"
+                        sessionKey="${actionBean.sessionKey}"
+                        columnSetName="${actionBean.columnSetName}"
+                        downloadColumnSets="${actionBean.downloadColumnSets}"
+                        resultList="${actionBean.resultList}"
+                        action="${ctxpath}/search/ConfigurableSearch.action"
+                        downloadViewedColumns="False"
+                        isDbSortAllowed="False"
+                        dbSortPath=""
+                        dataTable="true"/>
+
                 <stripes:hidden name="labMetricRunId" value="${actionBean.labMetricRun.labMetricRunId}"/>
                 <stripes:hidden name="tubeFormationLabel" value="${actionBean.tubeFormationLabel}"/>
                 <stripes:hidden name="quantType" value="${actionBean.quantType}"/>

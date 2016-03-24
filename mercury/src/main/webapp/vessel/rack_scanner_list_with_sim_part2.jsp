@@ -2,7 +2,9 @@
 <%@ include file="/resources/layout/taglibs.jsp" %>
 <%@ taglib prefix='fn' uri='http://java.sun.com/jsp/jstl/functions' %>
 
-<%-- Reusable layout-definition used for rack scan selection. --%>
+<%-- Reusable layout-definition used for rack scan selection.
+     Expects that rack_scanner_list_with_sim_part1 is present on the page.
+     See ajax_div_rack_scanner.jsp for a modal dialog overlay implementation.  --%>
 
 <stripes:layout-definition>
 
