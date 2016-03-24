@@ -1347,6 +1347,7 @@ public class LabEventFixupTest extends Arquillian {
         long[] ids = {1242543L, 1242544L, 1242545L, 1242546L, 1242547L};
         for (long id : ids) {
             LabEvent labEvent = labEventDao.findById(LabEvent.class, id);
+            System.out.println("Deleting lab event " + labEvent.getLabEventId());
             labEventDao.remove(labEvent);
         }
 
