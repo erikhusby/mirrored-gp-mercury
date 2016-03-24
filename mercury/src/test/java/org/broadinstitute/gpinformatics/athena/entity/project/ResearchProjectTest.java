@@ -4,6 +4,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.projects.SubmissionTrackerDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
@@ -13,7 +14,6 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NoJiraTransitionException;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionsService;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
@@ -26,7 +26,6 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -251,6 +250,7 @@ public class ResearchProjectTest {
         BSPCohortList bspCohortList = EasyMock.createMock(BSPCohortList.class);
         ResearchProjectDao researchProjectDao = EasyMock.createMock(ResearchProjectDao.class);
         SubmissionsService submissionsService = Mockito.mock(SubmissionsService.class);
+        SubmissionTrackerDao submissionTrackerDao=Mockito.mock(SubmissionTrackerDao.class);
 
         researchProject = EasyMock.createMock(ResearchProject.class);
 
@@ -261,7 +261,7 @@ public class ResearchProjectTest {
 
         EasyMock.replay(userBean, bspCohortList, bspUserList, researchProject);
         return new ResearchProjectEjb(jiraService, userBean, bspUserList,
-                bspCohortList, AppConfig.produce(Deployment.STUBBY), researchProjectDao, submissionsService);
+                bspCohortList, AppConfig.produce(Deployment.STUBBY), researchProjectDao, submissionsService, submissionTrackerDao);
 
     }
 }
