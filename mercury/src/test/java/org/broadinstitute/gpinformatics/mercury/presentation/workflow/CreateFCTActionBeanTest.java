@@ -4,6 +4,7 @@ package org.broadinstitute.gpinformatics.mercury.presentation.workflow;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -22,7 +23,7 @@ import java.util.Set;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class CreateFCTActionBeanTest {
-    private CreateFCTActionBean testBean = new CreateFCTActionBean();
+    private LabBatchEjb testBean = new LabBatchEjb();
     private List<LabVessel> stbTubes = new ArrayList<>();
     private String eventDate = "today";
     private BigDecimal conc = new BigDecimal("7.0");

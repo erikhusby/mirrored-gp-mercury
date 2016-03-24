@@ -4,6 +4,8 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -97,4 +99,48 @@ public class MercurySampleDataTest {
         Assert.assertEquals(productOrderSample.getSampleData().getMaterialType(), "");
     }
 
+    public void testMercurySampleDataDoesNotInitializeQuantDataWhenNotQueried() {
+        MercurySample mercurySample = new MercurySample("some pig", MercurySample.MetadataSource.MERCURY);
+        MercurySampleData mockMercurySampleData = Mockito.spy(new MercurySampleData(mercurySample));
+
+        mockMercurySampleData.getCollaboratorName();
+        mockMercurySampleData.getRawRin();
+        mockMercurySampleData.getCollaboratorParticipantId();
+        mockMercurySampleData.getPatientId();
+        mockMercurySampleData.getGender();
+        mockMercurySampleData.getMaterialType();
+
+        Mockito.verify(mockMercurySampleData, Mockito.never()).initializeQuantData();
+    }
+
+    public void testMercurySampleDataInitializesQuantDataOnGetVolume() {
+        MercurySample mercurySample = new MercurySample("some pig", MercurySample.MetadataSource.MERCURY);
+        MercurySampleData mockMercurySampleData = Mockito.spy(new MercurySampleData(mercurySample));
+
+        mockMercurySampleData.getVolume();
+        Mockito.verify(mockMercurySampleData, Mockito.times(1)).initializeQuantData();
+    }
+
+    public void testMercurySampleDataInitializesQuantDataOnGetConcentration() {
+        MercurySample mercurySample = new MercurySample("some pig", MercurySample.MetadataSource.MERCURY);
+        MercurySampleData mockMercurySampleData = Mockito.spy(new MercurySampleData(mercurySample));
+
+        mockMercurySampleData.getConcentration();
+        Mockito.verify(mockMercurySampleData, Mockito.times(1)).initializeQuantData();
+    }
+
+    public void testMercurySampleDataInitializesQuantDataOnGetPicoRunDate() {
+        MercurySample mercurySample = new MercurySample("some pig", MercurySample.MetadataSource.MERCURY);
+        MercurySampleData mockMercurySampleData = Mockito.spy(new MercurySampleData(mercurySample));
+        mockMercurySampleData.getPicoRunDate();
+        Mockito.verify(mockMercurySampleData, Mockito.times(1)).initializeQuantData();
+    }
+
+    public void testMercurySampleDataInitializesQuantDataOnGetTotal() {
+        MercurySample mercurySample = new MercurySample("some pig", MercurySample.MetadataSource.MERCURY);
+        MercurySampleData mockMercurySampleData = Mockito.spy(new MercurySampleData(mercurySample));
+
+        mockMercurySampleData.getTotal();
+        Mockito.verify(mockMercurySampleData, Mockito.times(1)).initializeQuantData();
+    }
 }

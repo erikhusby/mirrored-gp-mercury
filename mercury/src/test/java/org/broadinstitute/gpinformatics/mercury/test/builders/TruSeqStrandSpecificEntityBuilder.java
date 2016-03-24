@@ -7,7 +7,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
@@ -171,9 +171,9 @@ public class TruSeqStrandSpecificEntityBuilder {
         labEventHandler.processEvent(indexedAdapterLigationEntity);
 
         //Asserts
-        Set<SampleInstance> postIndexingSampleInstances =
-                secondStrandCleanupPlate.getContainerRole().getSampleInstancesAtPosition(VesselPosition.A01);
-        SampleInstance sampleInstance = postIndexingSampleInstances.iterator().next();
+        Set<SampleInstanceV2> postIndexingSampleInstances =
+                secondStrandCleanupPlate.getContainerRole().getSampleInstancesAtPositionV2(VesselPosition.A01);
+        SampleInstanceV2 sampleInstance = postIndexingSampleInstances.iterator().next();
         List<Reagent> reagents = sampleInstance.getReagents();
         Assert.assertEquals(reagents.size(), 1, "Wrong number of reagents");
         MolecularIndexReagent molecularIndexReagent = (MolecularIndexReagent) reagents.iterator().next();
@@ -211,14 +211,14 @@ public class TruSeqStrandSpecificEntityBuilder {
 
         // asserts
         Assert.assertEquals(enrichmentCleanupRack.getSampleInstancesV2().size(),
-                polyAPlate.getSampleInstances().size(), "Wrong number of sample instances");
-        Set<SampleInstance> sampleInstancesInPondRegWell =
-                enrichmentCleanupRack.getContainerRole().getSampleInstancesAtPosition(VesselPosition.A01);
+                polyAPlate.getSampleInstancesV2().size(), "Wrong number of sample instances");
+        Set<SampleInstanceV2> sampleInstancesInPondRegWell =
+                enrichmentCleanupRack.getContainerRole().getSampleInstancesAtPositionV2(VesselPosition.A01);
         Assert.assertEquals(sampleInstancesInPondRegWell.size(), 1, "Wrong number of sample instances in position");
-        SampleInstance pondRegSampleInstance = sampleInstancesInPondRegWell.iterator().next();
-        Assert.assertEquals(pondRegSampleInstance.getStartingSample().getSampleKey(),
-                polyAPlate.getContainerRole().getSampleInstancesAtPosition(VesselPosition.A01).iterator().next()
-                        .getStartingSample().getSampleKey(),
+        SampleInstanceV2 pondRegSampleInstance = sampleInstancesInPondRegWell.iterator().next();
+        Assert.assertEquals(pondRegSampleInstance.getRootOrEarliestMercurySampleName(),
+                polyAPlate.getContainerRole().getSampleInstancesAtPositionV2(VesselPosition.A01).iterator().next()
+                        .getRootOrEarliestMercurySampleName(),
                 "Wrong sample");
         reagents = pondRegSampleInstance.getReagents();
         Assert.assertEquals(reagents.size(), 1, "Wrong number of reagents");

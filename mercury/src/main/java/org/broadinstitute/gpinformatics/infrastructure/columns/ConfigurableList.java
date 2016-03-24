@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.columns;
 
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.broadinstitute.gpinformatics.athena.entity.preference.ColumnSetsPreference;
+import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchTerm;
@@ -73,7 +74,7 @@ public class ConfigurableList {
     /**
      * Cache row plugin instances
      */
-    private Map<Class,ListPlugin> pluginCache = new HashMap<>();
+    private Map<Class<?>, ListPlugin> pluginCache = new HashMap<>();
 
 //    private final Boolean isAdmin;
 
@@ -349,10 +350,10 @@ public class ConfigurableList {
      */
     static class Cell {
         private final Header header;
-        private Comparable sortableValue;
+        private Comparable<?> sortableValue;
         private String formattedValue;
 
-        Cell(Header header, Comparable sortableValue, String formattedValue) {
+        Cell(Header header, Comparable<?> sortableValue, String formattedValue) {
             this.header = header;
             this.sortableValue = sortableValue;
 
@@ -366,7 +367,7 @@ public class ConfigurableList {
             return header;
         }
 
-        public Comparable getSortableValue() {
+        public Comparable<?> getSortableValue() {
             return sortableValue;
         }
 
@@ -451,7 +452,7 @@ public class ConfigurableList {
                 } else {
                     Collection<?> nestedEntities = columnTabulation.evalNestedTableExpression(entity, context);
                     // Build final nested ResultList here...
-                    if( nestedEntities != null && nestedEntities.size() > 0 ) {
+                    if( nestedEntities != null && !nestedEntities.isEmpty()) {
                         ResultList nestedResultList = buildNestedTable(columnTabulation, nestedEntities, context);
                         row.getNestedTableEntities().put(columnTabulation, nestedResultList);
                     }
@@ -460,8 +461,7 @@ public class ConfigurableList {
             // Plugins for nested table processing handled on a row-by-row basis
             for (ColumnTabulation columnTabulation : pluginTabulations) {
                 if( columnTabulation.isNestedParent() ) {
-                    ListPlugin listPlugin = null;
-                    listPlugin = getPlugin(columnTabulation.getPluginClass());
+                    ListPlugin listPlugin = getPlugin(columnTabulation.getPluginClass());
                     // Nested table will never be a SearchValue ... cast to SearchTerm
                     context.setSearchTerm((SearchTerm) columnTabulation);
                     ResultList nestedResultList = listPlugin.getNestedTableData(entity, columnTabulation, context);
@@ -560,7 +560,7 @@ public class ConfigurableList {
             }
             String formattedString = columnTabulation.evalFormattedExpression(currentValue, context );
 
-            Comparable comparableValue =
+            Comparable<?> comparableValue =
                     columnTabulation.evalValueTypeExpression(entity,context)
                         .getComparableValue(currentValue,multiValueDelimiter);
             Cell cell = new Cell(header, comparableValue, formattedString);
@@ -581,7 +581,7 @@ public class ConfigurableList {
      * @return Simple nested table data set for use in UI
      */
     private ResultList buildNestedTable(ColumnTabulation columnTabulation, Collection<?> nestedEntityList, SearchContext context) {
-        List<ResultRow> rows = new ArrayList<>();
+        List<ResultRow> localRows = new ArrayList<>();
         List<Header> headers = new ArrayList<>();
         List<Comparable<?>> emptySortableCells = new ArrayList<>();
 
@@ -597,15 +597,14 @@ public class ConfigurableList {
                 cells.add(nestedColumnTabulation.evalFormattedExpression(value, context));
             }
             ResultRow row = new ResultRow( emptySortableCells, cells, null );
-            rows.add(row);
+            localRows.add(row);
         }
 
-        return new ResultList(rows, headers, 0, "ASC" );
+        return new ResultList(localRows, headers, 0, "ASC" );
     }
 
     /**
      * Default is to re-sort results
-     * @return
      */
     public ResultList getResultList() {
         return getResultList( true );
@@ -697,7 +696,10 @@ public class ConfigurableList {
     public static class ResultList {
         private final List<ResultRow> resultRows;
 
-        List<Header> headers;
+        private List<Header> headers;
+
+        /** The header for the conditional checkboxes, if any. */
+        private String conditionalCheckboxHeader;
 
         /**
          * For in-memory sorts, which column the user is sorting on.
@@ -725,23 +727,23 @@ public class ConfigurableList {
         public Object[][] getAsArray() {
 
             // Calculate how many rows and columns required using nested tables
-            int rows, cols;
             // Default for no nested tables
-            rows = getResultRows().size() + 2;
-            cols = getHeaders().size();
+            int rowCount = getResultRows().size() + 2;
+            int colCount = getHeaders().size();
 
             // Some rows have 1 or more nested tables, some don't.
             // Adjust array size as required
             for (ConfigurableList.ResultRow resultRow : getResultRows()) {
-                int nestCols;
                 for( ResultList nestedTable: resultRow.getNestedTables().values() ){
-                    rows += nestedTable.getResultRows().size() + 2;
-                    nestCols = nestedTable.getHeaders().size() + 1;
-                    if( nestCols > cols ) cols = nestCols;
+                    rowCount += nestedTable.getResultRows().size() + 2;
+                    int nestCols = nestedTable.getHeaders().size() + 1;
+                    if( nestCols > colCount ) {
+                        colCount = nestCols;
+                    }
                 }
             }
 
-            Object rowObjects[][] = new Object[rows][cols];
+            Object[][] rowObjects = new Object[rowCount][colCount];
 
             // Set the first (name) and second (units, metadata) headers.
             int columnNumber;
@@ -750,7 +752,7 @@ public class ConfigurableList {
                 ConfigurableList.Header header = getHeaders().get(columnNumber);
                 rowObjects[0][columnNumber] = new SpreadsheetCreator.ExcelHeader(header.getDownloadHeader1());
                 String header2Name = header.getDownloadHeader2();
-                if (header2Name != null && header2Name.length() > 0) {
+                if (header2Name != null && !header2Name.isEmpty()) {
                     rowObjects[1][columnNumber] = new SpreadsheetCreator.ExcelHeader(header2Name);
                     headerRow2Present = true;
                 }
@@ -779,13 +781,8 @@ public class ConfigurableList {
         /**
          * Append nested table rows to 2 dimensional Excel output data array
          * (Assume no deeper than 1 layer)
-         * @param rowIndex
-         * @param startColumn
-         * @param resultList
-         * @param rowObjects
-         * @return
          */
-        private int appendNestedRows( int rowIndex, int startColumn, ResultList resultList, Object rowObjects[][] ){
+        private int appendNestedRows( int rowIndex, int startColumn, ResultList resultList, Object[][] rowObjects ){
 
             int col = startColumn;
 
@@ -823,6 +820,13 @@ public class ConfigurableList {
             return resultSortDirection;
         }
 
+        public String getConditionalCheckboxHeader() {
+            return conditionalCheckboxHeader;
+        }
+
+        public void setConditionalCheckboxHeader(String conditionalCheckboxHeader) {
+            this.conditionalCheckboxHeader = conditionalCheckboxHeader;
+        }
     }
 
     /**
@@ -849,6 +853,10 @@ public class ConfigurableList {
          * String that when equal to {@code resultId} indicates a selected value.
          */
         private String checked;
+
+        private String cssStyles;
+
+        private Boolean conditionalCheckbox;
 
         /**
          * Each row may have a nested table
@@ -881,6 +889,22 @@ public class ConfigurableList {
             this.checked = checked;
         }
 
+        public String getCssStyles() {
+            return cssStyles;
+        }
+
+        public void setCssStyles(String cssStyles) {
+            this.cssStyles = cssStyles;
+        }
+
+        public Boolean hasConditionalCheckbox() {
+            return conditionalCheckbox;
+        }
+
+        public void setConditionalCheckbox(Boolean conditionalCheckbox) {
+            this.conditionalCheckbox = conditionalCheckbox;
+        }
+
         /**
          * This finds the position of the column name in the headers and then updates the value for that position.
          *
@@ -888,6 +912,7 @@ public class ConfigurableList {
          * @param columnName The name of the column to update
          * @param theValue The value to update
          */
+        // todo jmt delete?
         public void addValue(List<Header> headers, String columnName, Comparable<?> theValue) {
 
             // This is just using toString to get the rendered cell. Since this is for the specific case of
@@ -1030,6 +1055,7 @@ public class ConfigurableList {
      * @param escapedSubstring  Escaped sortable value we'd like to replace the sortableValue with.
      * @return fully formatted value where all instances of the substring are escaped.
      */
+    // todo jmt delete or use?
     public static String escapeSortableValueWithinFormatted(String substring, String formattedValue,
             String escapedSubstring) {
         StringBuilder finalString = new StringBuilder();
@@ -1050,16 +1076,20 @@ public class ConfigurableList {
         return finalString.toString();
     }
 
-    public void addAddRowsListener(String name, AddRowsListener addRowsListener) {
-        addRowsListeners.put(name, addRowsListener);
+    public void addAddRowsListeners(ConfigurableSearchDefinition configurableSearchDef) {
+        ConfigurableSearchDefinition.AddRowsListenerFactory addRowsListenerFactory =
+                configurableSearchDef.getAddRowsListenerFactory();
+        if (addRowsListenerFactory != null ) {
+            for (Map.Entry<String, AddRowsListener> entry : addRowsListenerFactory.getAddRowsListeners().entrySet()) {
+                addRowsListeners.put(entry.getKey(), entry.getValue());
+            }
+        }
     }
 
     /**
-     * Cache row plugins
-     * @param pluginClass
-     * @return
+     * Cache row plugins.
      */
-    private ListPlugin getPlugin( Class pluginClass ) {
+    private ListPlugin getPlugin( Class<?> pluginClass ) {
         ListPlugin plugin = null;
         if( pluginCache == null ) {
             pluginCache = new HashMap<>();

@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
+import org.broadinstitute.gpinformatics.mercury.boundary.sample.QuantificationEJB;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabMetricRunDao;
@@ -31,7 +32,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricDecision;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricRun;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricRun_;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
@@ -46,7 +46,6 @@ import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.validation.constraints.Null;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
@@ -83,6 +82,9 @@ public class VesselEjb {
 
     @Inject
     private LabMetricRunDao labMetricRunDao;
+
+    @Inject
+    private QuantificationEJB quantificationEjb;
 
     @Resource
     private EJBContext ejbContext;
@@ -278,6 +280,8 @@ public class VesselEjb {
                                     ejbContext.setRollbackOnly();
                                 } else {
                                     labMetricRunDao.persist(pair.getLeft());
+                                    quantificationEjb.updateRisk(pair.getLeft().getLabMetrics(), metricType,
+                                            messageCollection);
                                 }
                             }
                         }

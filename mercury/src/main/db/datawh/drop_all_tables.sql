@@ -17,7 +17,7 @@ BEGIN
  FOR i IN (
    SELECT * FROM all_objects
    WHERE owner = 'MERCURYDW'
-   AND object_type = 'TABLE'
+   AND object_type IN ( 'TABLE', 'VIEW' )
  )
  LOOP
    execute immediate 'DROP '||i.object_type||' '||i.object_name||' CASCADE CONSTRAINTS';

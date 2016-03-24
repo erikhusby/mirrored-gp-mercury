@@ -1,4 +1,5 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java"
+         import="org.broadinstitute.gpinformatics.mercury.presentation.search.ConfigurableSearchActionBean"%>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <%-- This page allows the user to construct a user-defined search.  It is also used to display
@@ -33,6 +34,7 @@
                 div.style.display = "block";
             }
         }
+
     </script>
     <%-- Need to stomp some global layout settings:
          label html5 tag in search terms consumes entire horizontal layout area (Chrome only?), remove padding
@@ -40,12 +42,11 @@
      --%>
     <style>
         label {display:inline; margin-left: 5px;}
-        input.displayTerm, input.termoperator, input.termvalue { margin: 3px; }
+        input.displayTerm, input.termoperator, input.termvalue, input.rackScanData { margin: 3px; }
         <%-- Firefox select options allow this, Chrome quietly ignores --%>
        .help-option { background-image: url("${ctxpath}/images/help.png");
            background-repeat: no-repeat;
            background-position: right; }
-
     </style>
 </stripes:layout-component>
 <stripes:layout-component name="content">
@@ -173,7 +174,10 @@ Move the mouse over the question marks to see details about each section.
                            downloadColumnSets="${actionBean.downloadColumnSets}"
                            resultList="${actionBean.configurableSampleList}"
                            action="${ctxpath}/search/ConfigurableSearch.action"
-                           downloadViewedColumns="True"/>
+                           downloadViewedColumns="True"
+                           isDbSortAllowed="${actionBean.searchInstance.isDbSortable}"
+                           dbSortPath="${actionBean.dbSortPath}"
+                           dataTable="false"/>
 </fieldset>
 <script type="text/javascript">
 function validateNewSearch() {
@@ -310,6 +314,8 @@ function changeOperator(operatorSelect) {
     var textInput2;
     var andText;
     var textarea;
+    var rackScanButton;
+    var rackScanData;
     // Find the value element (could be text, textarea or select)
     while (valueElement != null) {
         if (valueElement.nodeType == 1) {
@@ -321,11 +327,26 @@ function changeOperator(operatorSelect) {
         valueElement = valueElement.nextSibling;
     }
 
+    // Remove rack scan button if one exists
+    rackScanButton = valueElement.nextSibling;
+    while( rackScanButton != null ) {
+        if( rackScanButton.nodeName == "INPUT" && rackScanButton.getAttribute("name") == "rackScanBtn" ) {
+            // Remove scan JSON hidden field if exists
+            var hiddenJSON = rackScanButton.nextSibling;
+            if( hiddenJSON != null && hiddenJSON.nodeName == "INPUT" && hiddenJSON.getAttribute("name") == "rackScanData" ) {
+                valueElement.parentNode.removeChild(hiddenJSON);
+            }
+            valueElement.parentNode.removeChild(rackScanButton);
+            rackScanButton = null;
+            break;
+        }
+        rackScanButton = rackScanButton.nextSibling;
+    }
+
     // indexOf because jQuery date picker adds hasDatepicker to class
     if (valueElement.className.indexOf("termvalue") >= 0) {
 
         if (valueElement.tagName == "SELECT") {
-
             if (operator == "IN" || operator == "NOT_IN") {
 
                 // Change single select to multiple, remove "(Choose one)"
@@ -371,6 +392,24 @@ function changeOperator(operatorSelect) {
                     andText.parentNode.removeChild(andText);
                     textInput2 = valueElement.nextSibling;
                     textInput2.parentNode.removeChild(textInput2);
+                }
+                // Create a rack scan button if input is configured to support one
+                if( valueElement.parentNode.getAttribute("rackScanSupported")){
+                    rackScanButton = document.createElement("INPUT");
+                    rackScanButton.setAttribute("id", "rackScanBtn");
+                    rackScanButton.setAttribute("name", "rackScanBtn");
+                    rackScanButton.setAttribute("value", "Rack Scan");
+                    rackScanButton.setAttribute("class", "btn btn-primary");
+                    rackScanButton.setAttribute("onclick", "startRackScan(this);");
+                    rackScanButton.setAttribute("type", "button");
+                    valueElement.parentNode.appendChild(rackScanButton);
+                    rackScanData = document.createElement("INPUT");
+                    rackScanData.setAttribute("id", "rackScanData_" + valueElementId );
+                    rackScanData.setAttribute("name", "rackScanData");
+                    rackScanData.setAttribute("value", "");
+                    rackScanData.setAttribute("class", "rackScanData");
+                    rackScanData.setAttribute("type", "hidden");
+                    valueElement.parentNode.appendChild(rackScanData);
                 }
                 valueElement.parentNode.replaceChild(textarea, valueElement);
             } else if (operator == "BETWEEN") {
@@ -451,6 +490,38 @@ function removeTerm(link) {
 
     searchTerm.parentNode.removeChild(searchTerm);
 
+}
+
+<%-- Ajax rack scanner implementation: See /vessel/ajax_div_rack_scanner.jsp for dependent functionality --%>
+var rackScanSrcBtn = null;
+function rackScanComplete() {
+    var barcodes = $j("#rack_scan_overlay").data("results");
+    //alert(barcodes);
+    var textarea;
+    if( barcodes != null && rackScanSrcBtn != null ) {
+        // Store rack scan raw JSON in hidden form field
+        var rackScanDataElement = rackScanSrcBtn.nextSibling;
+        rackScanDataElement.setAttribute("value", barcodes);
+
+        // Extract barcodes from JSON and enter in text field
+        var scanJSON = $j.parseJSON(barcodes);
+        textarea = rackScanSrcBtn.previousSibling;
+        while( textarea != null ) {
+            if( textarea.className == "termvalue" ) {
+                var multiText = "";
+                $j.each( scanJSON.scans, function(index){
+                    multiText = multiText + this.barcode + "\n";
+                });
+                textarea.textContent = multiText;
+                break;
+            }
+            textarea = textarea.previousSibling;
+        }
+    }
+    $j("#rack_scan_overlay").dialog("close");
+    $j("#rack_scan_overlay").removeData("results");
+    rackScanSrcBtn = null;
+    $j("#rack_scan_inputs").html("");
 }
 
 /**
@@ -676,5 +747,11 @@ function chooseColumnSet() {
         selectList.outerWidth( selectList.outerWidth() + 40 );
     });
 </script>
+
+<%-- Adds the overlay elements for ajax rack scanner See: /vessel/ajax_div_rack_scanner.jsp --%>
+<div id="rack_scan_overlay">
+    <%@include file="/vessel/ajax_div_rack_scanner.jsp"%>
+</div>
+
 </stripes:layout-component>
 </stripes:layout-render>

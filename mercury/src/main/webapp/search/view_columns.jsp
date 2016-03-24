@@ -4,7 +4,7 @@
 buttons to move columns from one to the other --%>
 
 <%-- map from column group name to list of columns in that group --%>
-<%--@elvariable id="availableMapGroupToColumnNames" type="java.util.Map<java.lang.String, java.util.List<edu.mit.broad.bsp.core.datavo.preference.ListConfig.ColumnConfig>>"--%>
+<%--@elvariable id="availableMapGroupToColumnNames" type="java.util.Map<java.lang.String, java.util.List<org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation>>"--%>
 <%-- list of columns that have already been chosen --%>
 <%--@elvariable id="predefinedViewColumns" type="java.util.List"--%>
 <stripes:layout-definition>
@@ -151,7 +151,21 @@ buttons to move columns from one to the other --%>
             }
         };
 
-        $( document ).ready( syncChosenAvailable );
+        $j( document ).ready( syncChosenAvailable );
+        $j( document ).ready( function() {
+            $j( "#pageSizeSlider" ).slider({
+                value:${actionBean.searchInstance.pageSize},
+                min: 100,
+                max: 3000,
+                step: 100,
+                slide: function( event, ui ) {
+                    $j( "#userPageSize" ).val( ui.value );
+                    $j( "#userPageSizeDisplay" ).html(ui.value);
+                }
+            });
+            $j( "#userPageSize" ).val( $j( "#pageSizeSlider" ).slider( "value" ) );
+            $j( "#userPageSizeDisplay" ).html( $j( "#pageSizeSlider" ).slider( "value" ) );
+        } );
     </script>
     <br/>
     <!-- Allow user to choose individual result columns -->
@@ -230,9 +244,15 @@ buttons to move columns from one to the other --%>
                 </a>
             </td>
         </tr>
-        <tr style="padding-top: 4px">
-            <td colspan="2"><label>Filter: </label><input type="text" id="filterColumns" onkeyup="filterSelect($j('#sourceColumnDefNames')[0], this);">
-            </td>
+        <tr>
+            <td colspan="4" style="padding-top: 6px"><label>Filter: </label><input type="text" id="filterColumns" onkeyup="filterSelect($j('#sourceColumnDefNames')[0], this);"></td>
         </tr>
+    </table>
+    <table style="margin-top: 6px">
+    <tr>
+        <td><label>Page size: </label></td>
+        <td style="font-weight:bold; width: 40px; padding-right: 10px"><div id="userPageSizeDisplay"></div><input type="hidden" name="searchInstance.pageSize" id="userPageSize" value="${actionBean.searchInstance.pageSize}"/></td>
+        <td style="width: 500px"><div id="pageSizeSlider"></div></td>
+    </tr>
     </table>
 </stripes:layout-definition>

@@ -7,7 +7,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMess
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventRefDataFetcher;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
@@ -87,8 +87,8 @@ public class DriedBloodSpotEntityBuilder {
         mapBarcodeToVessel.put(firstPurificationPlate.getLabel(), firstPurificationPlate);
         LabEvent dbsFinalTransferEntity = labEventFactory.buildFromBettaLims(
                 driedBloodSpotJaxbBuilder.getDbsFinalTransferJaxb(), mapBarcodeToVessel);
-        Set<SampleInstance> sampleInstances = dbsFinalTransferEntity.getTargetLabVessels().iterator().next().
-                getContainerRole().getVesselAtPosition(VesselPosition.A01).getSampleInstances();
+        Set<SampleInstanceV2> sampleInstances = dbsFinalTransferEntity.getTargetLabVessels().iterator().next().
+                getContainerRole().getVesselAtPosition(VesselPosition.A01).getSampleInstancesV2();
         // todo jmt what to assert here?
 //        Assert.assertEquals(sampleInstances.size(), 1, "Wrong number of sample instances");
     }

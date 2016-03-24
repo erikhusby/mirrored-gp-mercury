@@ -146,6 +146,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private static final String DELETE_SAMPLES_ACTION = "deleteSamples";
     public static final String SQUID_COMPONENTS_ACTION = "createSquidComponents";
     private static final String SET_RISK = "setRisk";
+    private static final String SET_PROCEED_OOS = "setProceedOos";
     private static final String RECALCULATE_RISK = "recalculateRisk";
     protected static final String PLACE_ORDER_ACTION = "placeOrder";
     protected static final String VALIDATE_ORDER = "validate";
@@ -193,9 +194,6 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @Inject
     private PreferenceEjb preferenceEjb;
-
-    @Inject
-    private ProductOrderSampleDao sampleDao;
 
     @Inject
     private ProductOrderListEntryDao orderListEntryDao;
@@ -301,6 +299,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @Validate(required = true, on = SET_RISK)
     private String riskComment;
+
+    @Validate(required = true, on = SET_PROCEED_OOS)
+    private ProductOrderSample.ProceedIfOutOfSpec proceedOos;
 
     private String abandonComment;
     private String unAbandonComment;
@@ -1195,7 +1196,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         Product tokenProduct = productTokenInput.getTokenObject();
         Product product = tokenProduct != null ? productDao.findByPartNumber(tokenProduct.getPartNumber()) : null;
         List<Product> addOnProducts = productDao.findByPartNumbers(addOnKeys);
-        editOrder.updateData(project, product, addOnProducts, stringToSampleList(sampleList));
+        editOrder.updateData(project, product, addOnProducts, stringToSampleListExisting(sampleList));
         BspUser tokenOwner = owner.getTokenObject();
         editOrder.setCreatedBy(tokenOwner != null ? tokenOwner.getUserId() : null);
 
@@ -1390,7 +1391,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent("getBspData")
     public Resolution getBspData() throws Exception {
-        List<ProductOrderSample> samples = sampleDao.findListByList(
+        List<ProductOrderSample> samples = productOrderSampleDao.findListByList(
                 ProductOrderSample.class, ProductOrderSample_.productOrderSampleId, sampleIdsForGetBspData);
 
         JSONArray itemList = new JSONArray();
@@ -1445,7 +1446,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @ValidationMethod(
             on = {DELETE_SAMPLES_ACTION, ABANDON_SAMPLES_ACTION, SET_RISK, RECALCULATE_RISK, ADD_SAMPLES_TO_BUCKET,
-                    UNABANDON_SAMPLES_ACTION},
+                    UNABANDON_SAMPLES_ACTION, SET_PROCEED_OOS},
             priority = 0)
     public void validateSampleListOperation() {
         if (selectedProductOrderSampleIds != null) {
@@ -1504,6 +1505,12 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         addMessage("Set manual on risk to {0} for {1} samples.", riskStatus, selectedProductOrderSampleIds.size());
 
+        return createViewResolution(editOrder.getBusinessKey());
+    }
+
+    @HandlesEvent(SET_PROCEED_OOS)
+    public Resolution proceedOos() {
+        productOrderEjb.proceedOos(userBean.getBspUser(), selectedProductOrderSamples, editOrder, proceedOos);
         return createViewResolution(editOrder.getBusinessKey());
     }
 
@@ -1793,6 +1800,37 @@ public class ProductOrderActionBean extends CoreActionBean {
         return samples;
     }
 
+    private List<ProductOrderSample> stringToSampleListExisting(String sampleListText) {
+        List<ProductOrderSample> samples = new ArrayList<>();
+        List<String> sampleNames = SearchActionBean.cleanInputStringForSamples(sampleListText);
+
+        // Allow random access to existing ProductOrderSamples.  A sample can appear more than once.
+        Map<String, List<ProductOrderSample>> mapIdToSampleList = new HashMap<>();
+        for (ProductOrderSample productOrderSample : editOrder.getSamples()) {
+            List<ProductOrderSample> productOrderSamples = mapIdToSampleList.get(productOrderSample.getSampleKey());
+            if (productOrderSamples == null) {
+                productOrderSamples = new ArrayList<>();
+                mapIdToSampleList.put(productOrderSample.getSampleKey(), productOrderSamples);
+            }
+            productOrderSamples.add(productOrderSample);
+        }
+
+        // Use existing, if any, or create new.
+        for (String sampleName : sampleNames) {
+            ProductOrderSample productOrderSample;
+            List<ProductOrderSample> productOrderSamples = mapIdToSampleList.get(sampleName);
+
+            if (productOrderSamples == null || productOrderSamples.isEmpty()) {
+                productOrderSample = new ProductOrderSample(sampleName);
+            } else {
+                productOrderSample = productOrderSamples.remove(0);
+            }
+            samples.add(productOrderSample);
+        }
+
+        return samples;
+    }
+
     public void setSampleList(String sampleList) {
         this.sampleList = sampleList;
     }
@@ -1871,6 +1909,14 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void setRiskComment(String riskComment) {
         this.riskComment = riskComment;
+    }
+
+    public ProductOrderSample.ProceedIfOutOfSpec getProceedOos() {
+        return proceedOos;
+    }
+
+    public void setProceedOos(ProductOrderSample.ProceedIfOutOfSpec proceedOos) {
+        this.proceedOos = proceedOos;
     }
 
     public String getAbandonComment() {
