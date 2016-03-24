@@ -85,7 +85,7 @@
         var formData = new FormData();
         formData.append("labToFilterBy", $j('#selectLab').val());
         formData.append("rackScanner", $j('#selectScanner').val());
-        if($j('#simulationFile')) {
+        if( $j('#simulationFile').length > 0 ) {
             if($j('#simulationFile')[0].files[0]){
                 formData.append("simulatedScanCsv", $j('#simulationFile')[0].files[0]);
             } else {
