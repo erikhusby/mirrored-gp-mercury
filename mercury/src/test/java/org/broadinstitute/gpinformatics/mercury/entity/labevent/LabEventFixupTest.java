@@ -1408,4 +1408,20 @@ public class LabEventFixupTest extends Arquillian {
         utx.commit();
     }
 
+    @Test(enabled = false)
+    public void fixupSupport1602() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        long[] ids = {1242543L, 1242544L, 1242545L, 1242546L, 1242547L};
+        for (long id : ids) {
+            LabEvent labEvent = labEventDao.findById(LabEvent.class, id);
+            System.out.println("Deleting lab event " + labEvent.getLabEventId());
+            labEventDao.remove(labEvent);
+        }
+
+        labEventDao.persist(new FixupCommentary("SUPPORT-1602 delete Infinium events"));
+        labEventDao.flush();
+        utx.commit();
+    }
 }
