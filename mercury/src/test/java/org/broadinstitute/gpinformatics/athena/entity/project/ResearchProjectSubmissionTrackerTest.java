@@ -11,7 +11,6 @@
 
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
-import org.broadinstitute.gpinformatics.infrastructure.bass.BassFileType;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.testng.annotations.Test;
@@ -25,30 +24,27 @@ import static org.hamcrest.Matchers.nullValue;
 public class ResearchProjectSubmissionTrackerTest {
     public void testGetSubmissionTracker() {
         ResearchProject testResearchProject = ResearchProjectTestFactory.createTestResearchProject();
-        SubmissionTrackerStub tracker = new SubmissionTrackerStub(testAccessionID, testFileType, testVersion);
-        SubmissionTrackerStub tracker2 = new SubmissionTrackerStub(testAccessionID + 2, BassFileType.PICARD, testVersion + 2);
+        SubmissionTrackerStub tracker = new SubmissionTrackerStub(testAccessionID, testFileName, testVersion);
+        SubmissionTrackerStub tracker2 = new SubmissionTrackerStub(testAccessionID + 2, testFileName + 2, testVersion + 2);
         testResearchProject.addSubmissionTracker(tracker, tracker2);
-        SubmissionTracker resultTracker = testResearchProject.getSubmissionTracker(new SubmissionTuple(testAccessionID,
-                testFileType, testVersion));
+        SubmissionTracker resultTracker = testResearchProject.getSubmissionTracker(new SubmissionTuple(testAccessionID, testFileName, testVersion));
         assertThat(tracker, equalTo(resultTracker));
     }
 
     @Test(expectedExceptions = RuntimeException.class)
     public void testGetSubmissionTrackerTwoResults() {
         ResearchProject testResearchProject = ResearchProjectTestFactory.createTestResearchProject();
-        SubmissionTrackerStub tracker = new SubmissionTrackerStub(testAccessionID, testFileType, testVersion);
+        SubmissionTrackerStub tracker = new SubmissionTrackerStub(testAccessionID, testFileName, testVersion);
         testResearchProject.addSubmissionTracker(tracker, tracker);
-        SubmissionTracker resultTracker = testResearchProject.getSubmissionTracker(new SubmissionTuple(testAccessionID,
-                testFileType, testVersion));
+        SubmissionTracker resultTracker = testResearchProject.getSubmissionTracker(new SubmissionTuple(testAccessionID, testFileName, testVersion));
         assertThat(resultTracker, equalTo(resultTracker));
     }
 
     public void testGetSubmissionTrackerNoResults() {
         ResearchProject testResearchProject = ResearchProjectTestFactory.createTestResearchProject();
-        SubmissionTracker tracker = new SubmissionTracker(testAccessionID, testFileType, testVersion);
+        SubmissionTracker tracker = new SubmissionTracker(testAccessionID, testFileName, testVersion);
         testResearchProject.addSubmissionTracker(tracker);
-        SubmissionTracker resultTracker =
-                testResearchProject.getSubmissionTracker(new SubmissionTuple("using", BassFileType.PICARD, "arguments"));
+        SubmissionTracker resultTracker = testResearchProject.getSubmissionTracker(new SubmissionTuple("using", "phony", "arguments"));
         assertThat(resultTracker, nullValue());
     }
 

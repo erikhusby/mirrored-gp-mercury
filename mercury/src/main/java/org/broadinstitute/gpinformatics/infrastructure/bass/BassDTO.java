@@ -49,11 +49,36 @@ public class BassDTO {
 
 // todo: should be in interface?
     public SubmissionTuple getTuple() {
-        return new SubmissionTuple(getSample(), BassFileType.byBassValue(getFileType()), getVersion().toString());
+        return new SubmissionTuple(getSample(), getFilePath(), getVersion().toString());
     }
 
     private String getFilePath() {
         return getValue(BassResultColumn.path);
+    }
+
+    public enum FileType {
+        BAM("bam"),
+        PICARD("picard"),
+        READ_GROUP_BAM("read_group_bam"),
+        ALL("all");
+        private String value;
+
+        FileType(String value) {
+            this.value = value;
+        }
+
+        public String getValue() {
+            return value;
+        }
+
+        public static FileType byValue(String fileType) {
+            for (FileType type : FileType.values()) {
+                if (fileType.equals(type.getValue())) {
+                    return type;
+                }
+            }
+            throw new IllegalArgumentException("No enum constant for " + fileType);
+        }
     }
 
     public enum BassResultColumn {

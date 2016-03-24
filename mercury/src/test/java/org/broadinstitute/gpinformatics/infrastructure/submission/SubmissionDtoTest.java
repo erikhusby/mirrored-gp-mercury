@@ -14,7 +14,6 @@ package org.broadinstitute.gpinformatics.infrastructure.submission;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassDtoTestFactory;
-import org.broadinstitute.gpinformatics.infrastructure.bass.BassFileType;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.AggregationTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.LevelOfDetection;
@@ -41,8 +40,7 @@ public class SubmissionDtoTest {
     public static final double CONTAMINATION = 0.47;
     private static final String CONTAMINATION_STRING = "47%";
     public static final LevelOfDetection FINGERPRINT_LOD = new LevelOfDetection(-4.3d, -3.2d);
-    private static final BassFileType BAM_ENUM = BassFileType.BAM;
-    public static final String BAM_FILE = BAM_ENUM.getBassValue();
+    public static final String BAM_FILE = BassDTO.FileType.BAM.getValue();
     private static final String DATA_TYPE = "Exome";
     private static final Double QUALITY_METRIC = 1.2;
     public static final String SUBMISSION_UUID = "1234";
@@ -74,7 +72,6 @@ public class SubmissionDtoTest {
         assertThat(submissionDTO.getProductOrders(), containsInAnyOrder(productOrders.toArray()));
         assertThat(submissionDTO.getAggregationProject(), equalTo(AGGREGATION_PROJECT));
         assertThat(submissionDTO.getFileType(), equalTo(BAM_FILE));
-        assertThat(submissionDTO.getFileTypeEnum(), equalTo(BAM_ENUM));
         assertThat(submissionDTO.getVersion(), equalTo(VERSION));
         assertThat(submissionDTO.getQualityMetric(), equalTo(QUALITY_METRIC));
         assertThat(submissionDTO.getContamination(), equalTo(CONTAMINATION));

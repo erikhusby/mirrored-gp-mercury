@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
-import org.broadinstitute.gpinformatics.infrastructure.bass.BassFileType;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.testng.Assert;
@@ -13,19 +12,19 @@ import java.util.Date;
 public class SubmissionTrackerTest {
 
     public static String testAccessionID = "SA-2342";
-    public static BassFileType testFileType = BassFileType.BAM;
+    public static String testFileName = "/test/path/file2.bam";
 
     public static String testVersion = "v1";
 
     public void testBuildSubmissionTracker() {
         Date testStartDate = new Date();
 
-        SubmissionTrackerStub tracker = new SubmissionTrackerStub(testAccessionID, testFileType, testVersion);
+        SubmissionTrackerStub tracker = new SubmissionTrackerStub(testAccessionID, testFileName, testVersion);
 
         Assert.assertNotNull(tracker);
 
         Assert.assertEquals(tracker.getSubmittedSampleName(), testAccessionID);
-        Assert.assertEquals(tracker.getFileType(), testFileType);
+        Assert.assertEquals(tracker.getFileName(), testFileName);
 
         Assert.assertEquals(tracker.getVersion(), testVersion);
 
@@ -55,28 +54,17 @@ public class SubmissionTrackerTest {
 
     }
 
-    public void testSubmissionTrackerWithDifferentFilePath() throws Exception {
-        SubmissionTracker submissionTracker = new SubmissionTrackerStub("sample1", BassFileType.BAM, "1");
-        submissionTracker.setFileName("/path/to/file");
-
-        SubmissionTracker submissionTracker2 = new SubmissionTrackerStub("sample1", BassFileType.BAM, "1");
-        Assert.assertEquals(submissionTracker.getTuple(), submissionTracker2.getTuple());
-
-        submissionTracker2.setFileName("/different/path/same/file");
-        Assert.assertEquals(submissionTracker.getTuple(), submissionTracker2.getTuple());
-    }
-
     public static class SubmissionTrackerStub extends SubmissionTracker {
         protected SubmissionTrackerStub() {
             super();
         }
 
-        public SubmissionTrackerStub(String submittedSampleName, BassFileType fileType, String version) {
-            super(submittedSampleName, fileType, version);
+        public SubmissionTrackerStub(String submittedSampleName, String fileName, String version) {
+            super(submittedSampleName, fileName, version);
         }
 
-        public SubmissionTrackerStub(Long submissionTrackerId, String testAccessionID, BassFileType fileType, String testVersion) {
-            super(submissionTrackerId, testAccessionID, fileType, testVersion);
+        public SubmissionTrackerStub(Long submissionTrackerId, String testAccessionID, String testFileName, String testVersion) {
+            super(submissionTrackerId, testAccessionID, testFileName, testVersion);
         }
 
         @Override

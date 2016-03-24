@@ -230,32 +230,4 @@
             <column name="EXPECT_INIT_QUANT_IN_MERCURY" type="number(1,0)"/>
         </addColumn>
     </changeSet>
-
-    <changeSet id="GPLIM-4060-1" author="dryan">
-        <dropNotNullConstraint columnName="FILE_NAME" tableName="SUBMISSION_TRACKER" schemaName="athena"/>
-    </changeSet>
-
-    <changeSet id="GPLIM-4060-3" author="dryan">
-        <preConditions onFail="MARK_RAN">
-            <not>
-                <columnExists columnName="FILE_TYPE" tableName="SUBMISSION_TRACKER" schemaName="athena"/>
-            </not>
-        </preConditions>
-        <addColumn tableName="SUBMISSION_TRACKER" schemaName="athena">
-            <column name="FILE_TYPE" type="varchar2(255)" >
-                <constraints nullable="true"/>
-            </column>
-        </addColumn>
-    </changeSet>
-
-    <changeSet id="GPLIM-4060-4" author="dryan">
-        <preConditions onFail="MARK_RAN">
-            <not>
-                <columnExists columnName="FILE_TYPE" tableName="SUBMISSION_TRACKER_AUD" schemaName="athena"/>
-            </not>
-        </preConditions>
-        <addColumn tableName="SUBMISSION_TRACKER_AUD" schemaName="athena">
-            <column name="FILE_TYPE" type="varchar2(255)"/>
-        </addColumn>
-    </changeSet>
 </databaseChangeLog>

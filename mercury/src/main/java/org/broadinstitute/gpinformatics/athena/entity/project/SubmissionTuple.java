@@ -13,19 +13,18 @@ package org.broadinstitute.gpinformatics.athena.entity.project;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.broadinstitute.gpinformatics.infrastructure.bass.BassFileType;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 
 import java.io.Serializable;
 
 public class SubmissionTuple implements Serializable {
     private final String sampleName;
-    private final BassFileType fileType;
+    private final String fileName;
     private final String version;
 
-    public SubmissionTuple(String sampleName, BassFileType fileType, String version) {
+    public SubmissionTuple(String sampleName, String fileName, String version) {
         this.sampleName = sampleName;
-        this.fileType = fileType;
+        this.fileName = fileName;
         this.version = version;
     }
 
@@ -41,17 +40,12 @@ public class SubmissionTuple implements Serializable {
         SubmissionTuple that = OrmUtil.proxySafeCast(o, SubmissionTuple.class);
         return new EqualsBuilder()
                 .append(this.sampleName, that.sampleName)
-                .append(this.fileType, that.fileType)
+                .append(this.fileName, that.fileName)
                 .append(this.version, that.version).isEquals();
     }
 
     @Override
-    public String toString() {
-        return String.format("{sampleName = %s; fileType = %s; version = %s}",sampleName, fileType, version);
-    }
-
-    @Override
     public int hashCode() {
-        return new HashCodeBuilder().append(this.sampleName).append(this.fileType).append(this.version).hashCode();
+        return new HashCodeBuilder().append(this.sampleName).append(this.fileName).append(this.version).hashCode();
     }
 }

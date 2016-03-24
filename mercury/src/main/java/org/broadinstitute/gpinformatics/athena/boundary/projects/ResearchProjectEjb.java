@@ -20,13 +20,11 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.UpdateField;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
-import org.broadinstitute.gpinformatics.athena.control.dao.projects.SubmissionTrackerDao;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.ProjectPerson;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectFunding;
 import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTracker;
-import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTuple;
 import org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
@@ -83,18 +81,17 @@ public class ResearchProjectEjb {
     private final AppConfig appConfig;
     private final ResearchProjectDao researchProjectDao;
     private final SubmissionsService submissionsService;
-    private SubmissionTrackerDao submissionTrackerDao;
 
     // EJBs require a no arg constructor.
     @SuppressWarnings("unused")
     public ResearchProjectEjb() {
-        this(null, null, null, null, null, null, null, null);
+        this(null, null, null, null, null, null, null);
     }
 
     @Inject
     public ResearchProjectEjb(JiraService jiraService, UserBean userBean, BSPUserList userList,
                               BSPCohortList cohortList, AppConfig appConfig, ResearchProjectDao researchProjectDao,
-                              SubmissionsService submissionsService, SubmissionTrackerDao submissionTrackerDao) {
+                              SubmissionsService submissionsService) {
         this.jiraService = jiraService;
         this.userBean = userBean;
         this.userList = userList;
@@ -102,7 +99,6 @@ public class ResearchProjectEjb {
         this.appConfig = appConfig;
         this.researchProjectDao = researchProjectDao;
         this.submissionsService = submissionsService;
-        this.submissionTrackerDao = submissionTrackerDao;
     }
 
     /**
@@ -253,20 +249,23 @@ public class ResearchProjectEjb {
                                                                      @Nonnull BioProject selectedBioProject,
                                                                      @Nonnull List<SubmissionDto> submissionDtos)
             throws ValidationException {
-        validateSubmissionDto(researchProjectBusinessKey, submissionDtos);
-        validateSubmissionSamples(selectedBioProject, submissionDtos);
+
+        if (submissionDtos.isEmpty()) {
+            throw new InformaticsServiceException("At least one selection is needed to post submissions");
+        }
 
         ResearchProject submissionProject = researchProjectDao.findByBusinessKey(researchProjectBusinessKey);
 
         Map<SubmissionTracker, SubmissionDto> submissionDtoMap = new HashMap<>();
 
         for (SubmissionDto submissionDto : submissionDtos) {
-            SubmissionTracker tracker = new SubmissionTracker(submissionDto.getSampleName(),
-                    submissionDto.getFileTypeEnum(), String.valueOf(submissionDto.getVersion()));
+            SubmissionTracker tracker =
+                    new SubmissionTracker(submissionDto.getSampleName(), submissionDto.getFilePath(),
+                            String.valueOf(submissionDto.getVersion()));
             submissionProject.addSubmissionTracker(tracker);
             submissionDtoMap.put(tracker, submissionDto);
         }
-
+        validateSubmissionSamples(selectedBioProject, submissionDtos);
         researchProjectDao.persist(submissionProject);
 
         List<SubmissionBean> submissionBeans = new ArrayList<>();
@@ -323,39 +322,7 @@ public class ResearchProjectEjb {
         return submissionResults;
     }
 
-    public void validateSubmissionDto(@Nonnull String researchProjectKey, @Nonnull List<SubmissionDto> submissionDtos)
-            throws ValidationException {
-
-        if (submissionDtos.isEmpty()) {
-            throw new InformaticsServiceException("At least one selection is needed to post submissions");
-        }
-
-        Set<String> errors = new HashSet<>();
-        Set<SubmissionTuple> tuples = new HashSet<>(submissionDtos.size());
-        for (SubmissionDto submissionDto : submissionDtos) {
-            SubmissionTuple tuple = submissionDto.getBassDTO().getTuple();
-            if (!tuples.add(tuple)) {
-                errors.add(tuple.toString());
-            }
-        }
-
-        if (!errors.isEmpty()) {
-            throw new ValidationException(String.format("Attempt to submit duplicate samples: %s", errors));
-        }
-
-        List<SubmissionTracker> submissionTrackers =
-                submissionTrackerDao.findSubmissionTrackers(researchProjectKey, submissionDtos);
-        if (!submissionTrackers.isEmpty()) {
-            for (SubmissionTracker tracker : submissionTrackers) {
-                errors.add(tracker.getTuple().toString());
-            }
-        }
-        if (!errors.isEmpty()) {
-            throw new ValidationException(String.format("Some samples have already been submitted: %s", errors));
-        }
-    }
-
-    public void validateSubmissionSamples(BioProject bioProject, Collection<SubmissionDto> submissionDtos)
+    void validateSubmissionSamples(BioProject bioProject, Collection<SubmissionDto> submissionDtos)
             throws ValidationException {
         try {
             Collection<String> submissionSamples = submissionsService.getSubmissionSamples(bioProject);

@@ -23,12 +23,14 @@ import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO.BassResultColumn;
+import static org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO.FileType;
+import static org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO.FileType.ALL;
+import static org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO.FileType.BAM;
 
 /**
  * This class retrieves data from Bass. Bass can be queried on any of it's {@link BassResultColumn}s except for
@@ -61,7 +63,7 @@ public class BassSearchService extends AbstractJerseyClientService {
      *
      * @return List of {@link BassDTO} objects matching all criteria in the parameters map.
      */
-    public List<BassDTO> runSearch(Map<BassResultColumn, List<String>> parameters, BassFileType fileType) {
+    public List<BassDTO> runSearch(Map<BassResultColumn, List<String>> parameters, FileType fileType) {
         String url = bassConfig.getWSUrl(ACTION_LIST);
         MultivaluedMap<String, String> params = new MultivaluedMapImpl();
 
@@ -82,12 +84,12 @@ public class BassSearchService extends AbstractJerseyClientService {
         return BassResultsParser.parse(response.getEntityInputStream());
     }
 
-    protected MultivaluedMap<String, String> getFileTypeParam(BassFileType fileType) {
+    protected MultivaluedMap<String, String> getFileTypeParam(FileType fileType) {
         MultivaluedMap<String, String> params = new MultivaluedMapImpl();
-        if (fileType == BassFileType.ALL) {
+        if (fileType == ALL) {
             return params;
         }
-        params.put(BassDTO.FILETYPE, Collections.singletonList(fileType.getBassValue()));
+        params.put(BassDTO.FILETYPE, Arrays.asList(fileType.getValue()));
         return params;
     }
 
@@ -99,9 +101,9 @@ public class BassSearchService extends AbstractJerseyClientService {
      *
      * @return All records matching the supplied  Research Project ID.
      */
-    public List<BassDTO> runSearch(String researchProjectId, BassFileType fileType) {
+    public List<BassDTO> runSearch(String researchProjectId, FileType fileType) {
         Map<BassResultColumn, List<String>> parameters = new HashMap<>();
-        parameters.put(BassResultColumn.rpid, Collections.singletonList(researchProjectId));
+        parameters.put(BassResultColumn.rpid, Arrays.asList(researchProjectId));
         return runSearch(parameters, fileType);
     }
 
@@ -113,10 +115,10 @@ public class BassSearchService extends AbstractJerseyClientService {
      *
      * @return All records matching the supplied  Research Project ID.
      *
-     * @see BassFileType#BAM
+     * @see org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO.FileType#BAM
      */
     public List<BassDTO> runSearch(String researchProjectId) {
-        return runSearch(researchProjectId, BassFileType.BAM);
+        return runSearch(researchProjectId, BAM);
     }
 
     /**
@@ -130,7 +132,7 @@ public class BassSearchService extends AbstractJerseyClientService {
      */
     public List<BassDTO> runSearch(String researchProjectId, String... collaboratorSampleId) {
         Map<BassResultColumn, List<String>> parameters = buildParameterMap(researchProjectId, collaboratorSampleId);
-        return runSearch(parameters, BassFileType.BAM);
+        return runSearch(parameters, BAM);
     }
 
     /**
