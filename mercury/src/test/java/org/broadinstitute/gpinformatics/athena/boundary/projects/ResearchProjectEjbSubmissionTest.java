@@ -85,6 +85,30 @@ public class ResearchProjectEjbSubmissionTest {
     }
 
 
+    public void testValidateSubmissions_PreviousSubmissionTrackerHasEmptyPath() throws Exception {
+        ProductOrder dummyProductOrder = ProductOrderTestFactory.createDummyProductOrder(1, PDO_99999);
+        SubmissionTrackerDao submissionTrackerDao = Mockito.mock(SubmissionTrackerDao.class);
+        Map<BassDTO.BassResultColumn, String> bassInfo = getBassResultMap();
+
+        SubmissionDto submissionDto = getSubmissionDto(dummyProductOrder, bassInfo);
+        SubmissionTracker submissionTracker = getSubmissionTracker(submissionDto);
+        submissionTracker.setFileName("");
+
+        Mockito.when(submissionTrackerDao
+                .findSubmissionTrackers(Mockito.anyString(), Mockito.anyCollectionOf(SubmissionDto.class)))
+                .thenReturn(Collections.singletonList(submissionTracker));
+
+        researchProjectEjb = getResearchProjectEjb(submissionTrackerDao);
+
+        try {
+            researchProjectEjb.validateSubmissionDto(dummyProductOrder.getResearchProject().getJiraTicketKey(),
+                    Collections.singletonList(submissionDto));
+            Assert.fail("An exception should have ben thrown.");
+        } catch (ValidationException e) {
+            Assert.assertTrue(e.getMessage().contains(submissionTracker.getTuple().toString()));
+        }
+    }
+
     public void testValidateSubmissions_PreviousSubmissionTrackerHasNullPath() throws Exception {
         ProductOrder dummyProductOrder = ProductOrderTestFactory.createDummyProductOrder(1, PDO_99999);
         SubmissionTrackerDao submissionTrackerDao = Mockito.mock(SubmissionTrackerDao.class);
@@ -92,7 +116,8 @@ public class ResearchProjectEjbSubmissionTest {
 
         SubmissionDto submissionDto = getSubmissionDto(dummyProductOrder, bassInfo);
         SubmissionTracker submissionTracker = getSubmissionTracker(submissionDto);
-        submissionTracker.setFileName(null);
+
+        Assert.assertNull(submissionTracker.getFileName());
 
         Mockito.when(submissionTrackerDao
                 .findSubmissionTrackers(Mockito.anyString(), Mockito.anyCollectionOf(SubmissionDto.class)))
