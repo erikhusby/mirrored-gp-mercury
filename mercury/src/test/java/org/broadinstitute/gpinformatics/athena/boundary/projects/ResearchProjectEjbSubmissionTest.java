@@ -20,6 +20,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bass.BassFileType;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDto;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
+import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -44,6 +45,54 @@ public class ResearchProjectEjbSubmissionTest {
         SubmissionDto submissionDto = getSubmissionDto(dummyProductOrder, bassInfo);
         SubmissionTracker submissionTracker = getSubmissionTracker(submissionDto);
         submissionTracker.setFileName("/i/am/a/file");
+
+        Mockito.when(submissionTrackerDao
+                .findSubmissionTrackers(Mockito.anyString(), Mockito.anyCollectionOf(SubmissionDto.class)))
+                .thenReturn(Collections.singletonList(submissionTracker));
+
+        researchProjectEjb = getResearchProjectEjb(submissionTrackerDao);
+
+        try {
+            researchProjectEjb.validateSubmissionDto(dummyProductOrder.getResearchProject().getJiraTicketKey(),
+                    Collections.singletonList(submissionDto));
+            Assert.fail("An exception should have ben thrown.");
+        } catch (ValidationException e) {
+            Assert.assertTrue(e.getMessage().contains(submissionTracker.getTuple().toString()));
+        }
+    }
+
+    public void testValidateSubmissionsDtoHasNullsDto() throws Exception {
+        SubmissionDto submissionDto = new SubmissionDto(null,null,null,null);
+        SubmissionTrackerDao submissionTrackerDao = Mockito.mock(SubmissionTrackerDao.class);
+
+        researchProjectEjb = getResearchProjectEjb(submissionTrackerDao);
+
+        try {
+            researchProjectEjb.validateSubmissionDto(PDO_99999, Collections.singletonList(submissionDto));
+            Assert.fail("An exception should have ben thrown.");
+        } catch (ValidationException e) {
+            Assert.assertTrue(e.getMessage().contains("No data was found in submission request."));
+        }
+    }
+
+    public void testValidateSubmissionsEmtpyDtoList() throws Exception {
+        try {
+            researchProjectEjb.validateSubmissionDto(PDO_99999, Collections.<SubmissionDto>emptyList());
+            Assert.fail("An exception should have ben thrown.");
+        } catch (InformaticsServiceException e) {
+            Assert.assertTrue(e.getMessage().equals("At least one selection is needed to post submissions"));
+        }
+    }
+
+
+    public void testValidateSubmissions_PreviousSubmissionTrackerHasNullPath() throws Exception {
+        ProductOrder dummyProductOrder = ProductOrderTestFactory.createDummyProductOrder(1, PDO_99999);
+        SubmissionTrackerDao submissionTrackerDao = Mockito.mock(SubmissionTrackerDao.class);
+        Map<BassDTO.BassResultColumn, String> bassInfo = getBassResultMap();
+
+        SubmissionDto submissionDto = getSubmissionDto(dummyProductOrder, bassInfo);
+        SubmissionTracker submissionTracker = getSubmissionTracker(submissionDto);
+        submissionTracker.setFileName(null);
 
         Mockito.when(submissionTrackerDao
                 .findSubmissionTrackers(Mockito.anyString(), Mockito.anyCollectionOf(SubmissionDto.class)))

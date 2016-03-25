@@ -29,6 +29,7 @@ import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTracker;
 import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTuple;
 import org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
+import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -333,14 +334,21 @@ public class ResearchProjectEjb {
         Set<String> errors = new HashSet<>();
         Set<SubmissionTuple> tuples = new HashSet<>(submissionDtos.size());
         for (SubmissionDto submissionDto : submissionDtos) {
-            SubmissionTuple tuple = submissionDto.getBassDTO().getTuple();
-            if (!tuples.add(tuple)) {
-                errors.add(tuple.toString());
+            BassDTO bassDTO = submissionDto.getBassDTO();
+            if (bassDTO != null) {
+                SubmissionTuple tuple = bassDTO.getTuple();
+                if (!tuples.add(tuple)) {
+                    errors.add(tuple.toString());
+                }
             }
         }
 
         if (!errors.isEmpty()) {
             throw new ValidationException(String.format("Attempt to submit duplicate samples: %s", errors));
+        }
+
+        if (tuples.isEmpty()) {
+            throw new ValidationException("No data was found in submission request.");
         }
 
         List<SubmissionTracker> submissionTrackers =
