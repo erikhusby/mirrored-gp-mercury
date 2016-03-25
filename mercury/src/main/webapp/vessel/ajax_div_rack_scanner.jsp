@@ -105,13 +105,17 @@
             data: formData,
             async: true,
             success: function (results) {
-                $j("#rack_scan_overlay").data("results",results);
                 $j("#doScanBtn").removeAttr("disabled");
-                rackScanComplete();
+                if( results.startsWith("Failure")) {
+                    $j("#rackScanError").text(results);
+                } else {
+                    $j("#rack_scan_overlay").data("results", results);
+                    rackScanComplete();
+                }
             },
             error: function(results){
-                $j("#rackScanError").text("A server error occurred");
                 $j("#doScanBtn").removeAttr("disabled");
+                $j("#rackScanError").text("A server error occurred");
             },
             cache: false,
             datatype: "text",
