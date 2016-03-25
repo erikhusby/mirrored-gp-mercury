@@ -51,6 +51,10 @@ public class TransferVisualizerActionBean extends CoreActionBean {
      * Called when the user clicks the Visualize button.
      */
     public Resolution visualize() {
+        if (barcodes == null) {
+            addValidationError("barcodes", "Enter at least one barcode.");
+            return new ForwardResolution(TRANSFER_VIS_PAGE);
+        }
         String[] splitBarcodes = barcodes.split("\\s");
         Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(Arrays.asList(splitBarcodes));
         for (Map.Entry<String, LabVessel> barcodeLabVesselEntry : mapBarcodeToVessel.entrySet()) {
