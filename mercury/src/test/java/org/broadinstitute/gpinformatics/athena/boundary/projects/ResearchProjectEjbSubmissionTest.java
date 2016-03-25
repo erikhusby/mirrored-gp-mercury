@@ -35,7 +35,6 @@ public class ResearchProjectEjbSubmissionTest {
     private static String TEST_SAMPLE_1 = String.format("%d_E", System.currentTimeMillis());
     private static final int TEST_VERSION_1 = 1;
     private static final String PDO_99999 = "PDO-99999";
-    private ResearchProjectEjb researchProjectEjb = null;
 
     public void testValidateSubmissionsAlreadySubmitted() throws Exception {
         ProductOrder dummyProductOrder = ProductOrderTestFactory.createDummyProductOrder(1, PDO_99999);
@@ -50,7 +49,7 @@ public class ResearchProjectEjbSubmissionTest {
                 .findSubmissionTrackers(Mockito.anyString(), Mockito.anyCollectionOf(SubmissionDto.class)))
                 .thenReturn(Collections.singletonList(submissionTracker));
 
-        researchProjectEjb = getResearchProjectEjb(submissionTrackerDao);
+        ResearchProjectEjb researchProjectEjb = getResearchProjectEjb(submissionTrackerDao);
 
         try {
             researchProjectEjb.validateSubmissionDto(dummyProductOrder.getResearchProject().getJiraTicketKey(),
@@ -59,13 +58,13 @@ public class ResearchProjectEjbSubmissionTest {
         } catch (ValidationException e) {
             Assert.assertTrue(e.getMessage().contains(submissionTracker.getTuple().toString()));
         }
+        verifySubmissionTrackerMock(submissionTrackerDao);
     }
 
     public void testValidateSubmissionsDtoHasNullsDto() throws Exception {
         SubmissionDto submissionDto = new SubmissionDto(null,null,null,null);
-        SubmissionTrackerDao submissionTrackerDao = Mockito.mock(SubmissionTrackerDao.class);
 
-        researchProjectEjb = getResearchProjectEjb(submissionTrackerDao);
+        ResearchProjectEjb researchProjectEjb = getResearchProjectEjb(null);
 
         try {
             researchProjectEjb.validateSubmissionDto(PDO_99999, Collections.singletonList(submissionDto));
@@ -76,6 +75,7 @@ public class ResearchProjectEjbSubmissionTest {
     }
 
     public void testValidateSubmissionsEmtpyDtoList() throws Exception {
+        ResearchProjectEjb researchProjectEjb = getResearchProjectEjb(null);
         try {
             researchProjectEjb.validateSubmissionDto(PDO_99999, Collections.<SubmissionDto>emptyList());
             Assert.fail("An exception should have ben thrown.");
@@ -98,7 +98,7 @@ public class ResearchProjectEjbSubmissionTest {
                 .findSubmissionTrackers(Mockito.anyString(), Mockito.anyCollectionOf(SubmissionDto.class)))
                 .thenReturn(Collections.singletonList(submissionTracker));
 
-        researchProjectEjb = getResearchProjectEjb(submissionTrackerDao);
+        ResearchProjectEjb researchProjectEjb = getResearchProjectEjb(submissionTrackerDao);
 
         try {
             researchProjectEjb.validateSubmissionDto(dummyProductOrder.getResearchProject().getJiraTicketKey(),
@@ -107,6 +107,60 @@ public class ResearchProjectEjbSubmissionTest {
         } catch (ValidationException e) {
             Assert.assertTrue(e.getMessage().contains(submissionTracker.getTuple().toString()));
         }
+        verifySubmissionTrackerMock(submissionTrackerDao);
+    }
+
+    public void testValidateSubmissionsDtoWithNoDaoResultPass() {
+        ProductOrder dummyProductOrder = ProductOrderTestFactory.createDummyProductOrder(1, PDO_99999);
+        SubmissionTrackerDao submissionTrackerDao = Mockito.mock(SubmissionTrackerDao.class);
+        Map<BassDTO.BassResultColumn, String> bassInfo = new HashMap<>();
+        bassInfo.put(BassDTO.BassResultColumn.file_type, BassFileType.BAM.getBassValue());
+        bassInfo.put(BassDTO.BassResultColumn.version, String.valueOf(9));
+        bassInfo.put(BassDTO.BassResultColumn.sample, "ABC1234");
+
+        SubmissionDto submissionDto = getSubmissionDto(dummyProductOrder, bassInfo);
+
+        Mockito.when(submissionTrackerDao
+                .findSubmissionTrackers(Mockito.anyString(), Mockito.anyCollectionOf(SubmissionDto.class)))
+                .thenReturn(Collections.<SubmissionTracker>emptyList());
+
+        ResearchProjectEjb researchProjectEjb = getResearchProjectEjb(submissionTrackerDao);
+
+        try {
+            researchProjectEjb.validateSubmissionDto(dummyProductOrder.getResearchProject().getJiraTicketKey(),
+                    Collections.singletonList(submissionDto));
+        } catch (Exception e) {
+            Assert.fail("This should not happen", e);
+        }
+
+        verifySubmissionTrackerMock(submissionTrackerDao);
+    }
+
+    public void testValidateSubmissionsDtoWithDaoResultPass() {
+        ProductOrder dummyProductOrder = ProductOrderTestFactory.createDummyProductOrder(1, PDO_99999);
+        SubmissionTrackerDao submissionTrackerDao = Mockito.mock(SubmissionTrackerDao.class);
+
+        SubmissionDto submissionDto = getSubmissionDto(dummyProductOrder, getBassResultMap());
+        SubmissionTracker submissionTracker = getSubmissionTracker(submissionDto);
+
+        Mockito.when(submissionTrackerDao
+                .findSubmissionTrackers(Mockito.anyString(), Mockito.anyCollectionOf(SubmissionDto.class)))
+                .thenReturn(Collections.singletonList(submissionTracker));
+
+        Map<BassDTO.BassResultColumn, String> bassInfo = new HashMap<>();
+        bassInfo.put(BassDTO.BassResultColumn.file_type, BassFileType.BAM.getBassValue());
+        bassInfo.put(BassDTO.BassResultColumn.version, String.valueOf(9));
+        bassInfo.put(BassDTO.BassResultColumn.sample, "ABC1234");
+
+        ResearchProjectEjb researchProjectEjb = getResearchProjectEjb(submissionTrackerDao);
+
+        try {
+            researchProjectEjb.validateSubmissionDto(dummyProductOrder.getResearchProject().getJiraTicketKey(),
+                    Collections.singletonList(getSubmissionDto(dummyProductOrder, bassInfo)));
+        } catch (Exception e) {
+            Assert.fail("This should not happen", e);
+        }
+        verifySubmissionTrackerMock(submissionTrackerDao);
     }
 
     public void testValidateSubmissions_PreviousSubmissionTrackerHasNullPath() throws Exception {
@@ -123,7 +177,7 @@ public class ResearchProjectEjbSubmissionTest {
                 .findSubmissionTrackers(Mockito.anyString(), Mockito.anyCollectionOf(SubmissionDto.class)))
                 .thenReturn(Collections.singletonList(submissionTracker));
 
-        researchProjectEjb = getResearchProjectEjb(submissionTrackerDao);
+        ResearchProjectEjb researchProjectEjb = getResearchProjectEjb(submissionTrackerDao);
 
         try {
             researchProjectEjb.validateSubmissionDto(dummyProductOrder.getResearchProject().getJiraTicketKey(),
@@ -132,6 +186,12 @@ public class ResearchProjectEjbSubmissionTest {
         } catch (ValidationException e) {
             Assert.assertTrue(e.getMessage().contains(submissionTracker.getTuple().toString()));
         }
+        verifySubmissionTrackerMock(submissionTrackerDao);
+    }
+
+    private void verifySubmissionTrackerMock(SubmissionTrackerDao submissionTrackerDao) {
+        Mockito.verify(submissionTrackerDao, Mockito.times(1)).
+        findSubmissionTrackers(Mockito.anyString(), Mockito.anyCollectionOf(SubmissionDto.class));
     }
 
     public void testValidateSubmissionsDtoDiffersTupleEqual() throws Exception {
@@ -149,7 +209,7 @@ public class ResearchProjectEjbSubmissionTest {
 
         SubmissionDto submissionDto2 = getSubmissionDto(dummyProductOrder, bassInfo);
 
-        researchProjectEjb = getResearchProjectEjb(null);
+        ResearchProjectEjb researchProjectEjb = getResearchProjectEjb(null);
 
         try {
             researchProjectEjb.validateSubmissionDto(dummyProductOrder.getResearchProject().getJiraTicketKey(),
@@ -165,7 +225,7 @@ public class ResearchProjectEjbSubmissionTest {
 
         SubmissionDto submissionDto = getSubmissionDto(dummyProductOrder, getBassResultMap());
         SubmissionDto submissionDto2 = getSubmissionDto(dummyProductOrder, getBassResultMap());
-
+        ResearchProjectEjb researchProjectEjb = getResearchProjectEjb(null);
         try {
             researchProjectEjb.validateSubmissionDto(dummyProductOrder.getResearchProject().getJiraTicketKey(),
                     Arrays.asList(submissionDto, submissionDto2));

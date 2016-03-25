@@ -355,7 +355,10 @@ public class ResearchProjectEjb {
                 submissionTrackerDao.findSubmissionTrackers(researchProjectKey, submissionDtos);
         if (!submissionTrackers.isEmpty()) {
             for (SubmissionTracker tracker : submissionTrackers) {
-                errors.add(tracker.getTuple().toString());
+                SubmissionTuple submittedTuple = tracker.getTuple();
+                if (tuples.contains(submittedTuple)) {
+                    errors.add(submittedTuple.toString());
+                }
             }
         }
         if (!errors.isEmpty()) {
