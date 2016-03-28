@@ -37,7 +37,6 @@ import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferVis
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferVisualizerV2;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.CrspPipelineUtils;
-import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
@@ -964,7 +963,6 @@ public class BaseEventTest {
                 },
                 new SequencingTemplateFactory(),
                 productOrderDao,
-                new CrspControlsTestUtils().getMockResearchProjectDao(),
                 crspPipelineUtils
         );
     }

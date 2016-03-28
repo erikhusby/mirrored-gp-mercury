@@ -537,9 +537,9 @@ public class ProductActionBean extends CoreActionBean {
     }
 
     /**
-     * Get the list of available analysis types.
+     * Get the list of research projects for controls.
      *
-     * @return List of strings representing the analysis types
+     * @return List of strings representing research project names
      */
     public Collection<DisplayableItem> getControlsProjects() {
         List<ResearchProject> researchProjects = researchProjectDao.findLikeTitle("Control");

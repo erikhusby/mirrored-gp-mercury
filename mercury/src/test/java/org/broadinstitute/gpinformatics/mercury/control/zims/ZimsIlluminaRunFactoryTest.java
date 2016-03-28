@@ -2,17 +2,16 @@ package org.broadinstitute.gpinformatics.mercury.control.zims;
 
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
-import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -74,7 +73,6 @@ import java.util.Map;
 import java.util.Random;
 
 import static org.broadinstitute.gpinformatics.Matchers.argThat;
-import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -94,7 +92,6 @@ public class ZimsIlluminaRunFactoryTest {
     }});
 
     private CrspPipelineUtils crspPipelineUtils = new CrspPipelineUtils(Deployment.DEV);
-    private ResearchProjectDao mockResearchProjectDao;
     private static final String PRODUCT_ORDER_KEY = "TestPDO-1";
     private final String labBatchName = "LCSET-1";
     private static final short LANE_NUMBER = 1;
@@ -118,11 +115,10 @@ public class ZimsIlluminaRunFactoryTest {
 
     private void setupCrsp() {
         CrspControlsTestUtils crspControlsTestUtils = new CrspControlsTestUtils();
-        mockResearchProjectDao = crspControlsTestUtils.getMockResearchProjectDao();
     }
 
 
-    @BeforeMethod(groups = DATABASE_FREE)
+    @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void setUp() {
         setupCrsp();
         testSampleIds.clear();
@@ -150,7 +146,7 @@ public class ZimsIlluminaRunFactoryTest {
         testProduct.setAnalysisTypeKey("HybridSelection.Resequencing");
 
         zimsIlluminaRunFactory = new ZimsIlluminaRunFactory(mockSampleDataFetcher, mockControlDao,
-                new SequencingTemplateFactory(), productOrderDao, mockResearchProjectDao, crspPipelineUtils);
+                new SequencingTemplateFactory(), productOrderDao, crspPipelineUtils);
 
         // Create a test research project
         testResearchProject = new ResearchProject(101L, "Test Project", "ZimsIlluminaRunFactoryTest project", true,
@@ -292,7 +288,6 @@ public class ZimsIlluminaRunFactoryTest {
         return BSP_SM_ID_FOR_POSITIVE_CONTROL.equals(sampleId);
     }
 
-    @Test(groups = DATABASE_FREE)
     public void testGetLibraryTwoLcSetBatches() {
         List<ZimsIlluminaRunFactory.SampleInstanceDto> instanceDtoList =
                 createSampleInstanceDto(false, LabBatch.LabBatchType.WORKFLOW, LabBatch.LabBatchType.WORKFLOW,
@@ -306,7 +301,6 @@ public class ZimsIlluminaRunFactoryTest {
         }
     }
 
-    @Test(groups = DATABASE_FREE)
     public void testMakeZimsIlluminaRun() {
         Date runDate = new Date(1358889107084L);
         String testRunDirectory = "TestRun";
@@ -343,7 +337,6 @@ public class ZimsIlluminaRunFactoryTest {
     }
 
 
-    @Test(groups = DATABASE_FREE)
     public void testMakeZimsIlluminaRunWithExtraction() {
         Date runDate = new Date(1358889107084L);
         String testRunDirectory = "TestRun";
@@ -514,7 +507,6 @@ public class ZimsIlluminaRunFactoryTest {
         return items.iterator().next();
     }
 
-    @Test(groups = DATABASE_FREE)
     public void testMakeLibraryBean() {
         final int numberOfBatchTypeParameters = 2;
         List<ZimsIlluminaRunFactory.SampleInstanceDto> instanceDtoList =
@@ -587,7 +579,6 @@ public class ZimsIlluminaRunFactoryTest {
         }
     }
 
-    @Test(groups = DATABASE_FREE)
     public void testCrspPositiveControls() {
         testProductOrder.getResearchProject().setRegulatoryDesignation(ResearchProject.RegulatoryDesignation.GENERAL_CLIA_CAP);
 
@@ -621,7 +612,6 @@ public class ZimsIlluminaRunFactoryTest {
      * Starting with multiple SampleInstanceDtos having the same molecular index barcodes and the same sampleId,
      * tests that only one consolidated library bean is created.  See FCT-18466.
      */
-    @Test(groups = DATABASE_FREE)
     public void testSplitRejoinWorkflowConsolidation() {
         List<ZimsIlluminaRunFactory.SampleInstanceDto> dtoList1 =
                 createSampleInstanceDto(false, LabBatch.LabBatchType.WORKFLOW);
