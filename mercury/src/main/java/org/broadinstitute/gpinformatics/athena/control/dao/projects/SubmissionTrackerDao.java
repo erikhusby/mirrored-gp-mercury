@@ -24,6 +24,19 @@ import java.util.List;
 @TransactionAttribute(TransactionAttributeType.SUPPORTS)
 @RequestScoped
 public class SubmissionTrackerDao extends GenericDao {
+
+    /**
+     * Find any submissionTrackers based on their:
+     * <ul>
+     *     <li>Research Project Jira Key</li>
+     *     <li>Sample Name</li>
+     *     <li>File Type</li>
+     *     <li>File Version</li>
+     * </ul>
+     * @param researchProjectKey
+     * @param submissionDtos
+     * @return
+     */
     public List<SubmissionTracker> findSubmissionTrackers(String researchProjectKey,
                                                           Collection<SubmissionDto> submissionDtos) {
         CriteriaBuilder submissionTrackerCriteria = getEntityManager().getCriteriaBuilder();

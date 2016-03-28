@@ -324,6 +324,17 @@ public class ResearchProjectEjb {
         return submissionResults;
     }
 
+    /**
+     * Validates a list of submissionDTOs being submitted in a research project. SubmissionDTOs need to:
+     * <ul>
+     *     <li>Not be empty.</li>
+     *     <li>Have bassDTOs with distinct tuples </li>
+     *     <li>Have distinct tuples compared to previous Submissions</li>
+     * </ul>
+     * @param researchProjectKey
+     * @param submissionDtos
+     * @throws ValidationException
+     */
     public void validateSubmissionDto(@Nonnull String researchProjectKey, @Nonnull List<SubmissionDto> submissionDtos)
             throws ValidationException {
 
