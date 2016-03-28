@@ -447,7 +447,7 @@
                             <div class="controls">
                                 <stripes:select id="controlsProject" name="controlsProject">
                                     <stripes:option value="">Select One</stripes:option>
-                                    <stripes:options-collection collection="${actionBean.controlsProjects}" label="businessKey" value="businessKey"/>
+                                    <stripes:options-collection collection="${actionBean.controlsProjects}" label="displayName" value="businessKey"/>
                                 </stripes:select>
                             </div>
                         </div>
