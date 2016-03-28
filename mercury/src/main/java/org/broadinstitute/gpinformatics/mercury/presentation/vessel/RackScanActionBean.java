@@ -17,7 +17,6 @@ import org.broadinstitute.bsp.client.rackscan.geometry.Dimension;
 import org.broadinstitute.bsp.client.rackscan.geometry.Geometry;
 import org.broadinstitute.bsp.client.rackscan.geometry.index.AlphaNumeric;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
-import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.RackScannerEjb;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
@@ -106,16 +105,24 @@ public abstract class RackScanActionBean extends CoreActionBean {
         return new ForwardResolution(SHOW_SCANNER_SELECTION_JSP);
     }
 
-    /** Does a rack scan and sets the rackScan variable. Returns a default results jsp. */
+    /** Does a rack scan and sets the rackScan variable, rack barcode is excluded. Returns a default results jsp. */
     @HandlesEvent(SCAN_EVENT)
     public Resolution scan() throws ScannerException {
+        runRackScan( false );
+        return new ForwardResolution(SCAN_RESULTS_JSP);
+    }
+
+    /**
+     * Allow a sub-class to override scan logic to optionally include the rack barcode in the rackScan variable.
+     * */
+    protected void runRackScan( boolean includeRackBarcode ) throws ScannerException {
         Reader reader = null;
         try {
             if (simulatedScanCsv == null) {
-                rackScan = rackScannerEjb.runRackScanner(rackScanner, null);
+                rackScan = rackScannerEjb.runRackScanner(rackScanner, null, includeRackBarcode);
             } else {
                 reader = simulatedScanCsv.getReader();
-                rackScan = rackScannerEjb.runRackScanner(rackScanner, reader);
+                rackScan = rackScannerEjb.runRackScanner(rackScanner, reader, includeRackBarcode);
             }
         } catch (Exception e) {
             log.error(e);
@@ -135,18 +142,13 @@ public abstract class RackScanActionBean extends CoreActionBean {
                 }
             }
         }
-
-        return new ForwardResolution(SCAN_RESULTS_JSP);
     }
 
     /** Shows the possible labs rack scanners are in. */
     public List<RackScanner.RackScannerLab> getAllLabs() {
 
         List<RackScanner.RackScannerLab> labsBySoftwareSystems;
-        if (ApplicationInstance.CRSP.isCurrent()) {
-            labsBySoftwareSystems =
-                    RackScanner.RackScannerLab.getLabsBySoftwareSystems(RackScanner.SoftwareSystem.CRSP_BSP);
-        } else if (deployment != Deployment.PROD) {
+        if (deployment != Deployment.PROD) {
             labsBySoftwareSystems = RackScanner.RackScannerLab.getLabsBySoftwareSystems(RackScanner.SoftwareSystem.BSP,
                     RackScanner.SoftwareSystem.MERCURY_NON_PROD, RackScanner.SoftwareSystem.MERCURY);
         } else {
@@ -187,6 +189,9 @@ public abstract class RackScanActionBean extends CoreActionBean {
 
     public void setLabToFilterBy(RackScanner.RackScannerLab labToFilterBy) {
         this.labToFilterBy = labToFilterBy;
+        if( this.labToFilterBy == RackScanner.RackScannerLab.RACK_SCAN_SIMULATOR_LAB ){
+            setRackScanner(RackScanner.RACK_SCAN_SIMULATOR);
+        }
     }
 
     public LinkedHashMap<String, String> getRackScan() {

@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry_;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket_;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
 import javax.ejb.Stateful;
 import javax.ejb.TransactionAttribute;
@@ -20,6 +21,7 @@ import javax.persistence.criteria.Join;
 import javax.persistence.criteria.JoinType;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,6 +52,19 @@ public class BucketEntryDao extends GenericDao {
             return getEntityManager().createQuery(query).getSingleResult();
         } catch (NoResultException ignored) {
             return null;
+        }
+    }
+
+    public List<BucketEntry> findByVesselAndBatch(LabVessel vessel, LabBatch labBatch) {
+        CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
+        CriteriaQuery<BucketEntry> query = criteriaBuilder.createQuery(BucketEntry.class);
+        Root<BucketEntry> root = query.from(BucketEntry.class);
+        query.where(criteriaBuilder.and(criteriaBuilder.equal(root.get(BucketEntry_.labVessel), vessel),
+                criteriaBuilder.equal(root.get(BucketEntry_.labBatch), labBatch)));
+        try {
+            return getEntityManager().createQuery(query).getResultList();
+        } catch (NoResultException ignored) {
+            return Collections.emptyList();
         }
     }
 

@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.presentation.security;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -19,7 +18,6 @@ import java.io.IOException;
  */
 public class SecurityFilter implements Filter {
 
-    private final boolean isSecure = ApplicationInstance.CRSP.isCurrent();
     private int securePort;
 
     private static final Log log = LogFactory.getLog(AuthorizationFilter.class);
@@ -48,7 +46,7 @@ public class SecurityFilter implements Filter {
         } else {
             String currentURI = httpReq.getRequestURI();
 
-            if (isSecure && (!httpReq.isSecure())) {
+            if (!httpReq.isSecure()) {
                 // if required to be secure, then redirect user to proper location
                 log.warn(httpReq.getRemoteAddr() + " trying to access " + currentURI + " insecurely.");
 
@@ -70,11 +68,7 @@ public class SecurityFilter implements Filter {
      * @return true if excluded
      */
     private static boolean excludeFromFilter(String path) {
-        return path.startsWith("/rest/limsQuery") ||
-                path.startsWith("/rest/bettalimsmessage") ||
-                path.startsWith("/rest/vessel/registerTubes") ||
-                path.startsWith("/rest/IlluminaRun/query") ||
-                path.startsWith("/rest/solexarun");
+        return false;
     }
 
     @Override

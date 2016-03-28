@@ -35,14 +35,14 @@ public class LimsQueryTypesResourceTest extends RestServiceContainerTest {
             +
             "{\"sampleName\":\"SM-5001\",\"sampleType\":\"Test Sample\",\"indexLength\":6,\"indexSequence\":\"TACTAG\",\"referenceSequence\":\"Test Reference\",\"lsid\":\"broad.mit.edu:bsp.prod.sample:5001\"}],"
             +
-            "\"dateCreated\":\"2012-07-12T11:23:45.000-0400\",\"discarded\":false,\"destroyed\":false}," +
+            "\"dateCreated\":\"2012-07-12T11:23:45.000-0400\",\"discarded\":false,\"destroyed\":false,\"regulatoryDesignation\":[]}," +
             "{\"wasFound\":true,\"libraryName\":\"Library-101\",\"libraryType\":\"Test Library\",\"tubeBarcode\":\"00000101\",\"sampleDetails\":["
             +
             "{\"sampleName\":\"SM-5002\",\"sampleType\":\"Test Sample\",\"indexLength\":6,\"indexSequence\":\"TACTAG\",\"referenceSequence\":\"Test Reference\",\"lsid\":\"broad.mit.edu:bsp.prod.sample:5002\"},"
             +
             "{\"sampleName\":\"SM-5003\",\"sampleType\":\"Test Sample\",\"indexLength\":6,\"indexSequence\":\"TACTAG\",\"referenceSequence\":\"Test Reference\",\"lsid\":\"broad.mit.edu:bsp.prod.sample:5003\"}],"
             +
-            "\"dateCreated\":\"2012-07-12T11:23:45.000-0400\",\"discarded\":false,\"destroyed\":false}]," +
+            "\"dateCreated\":\"2012-07-12T11:23:45.000-0400\",\"discarded\":false,\"destroyed\":false,\"regulatoryDesignation\":[]}]," +
             "\"loadingConcentration\":1.2,\"derivedLibraryData\":[" +
             "{\"wasFound\":true,\"libraryName\":\"Library-102\",\"libraryType\":\"Test Library\",\"tubeBarcode\":\"00000102\",\"sampleDetails\":["
             +
@@ -50,7 +50,7 @@ public class LimsQueryTypesResourceTest extends RestServiceContainerTest {
             +
             "{\"sampleName\":\"SM-5005\",\"sampleType\":\"Test Sample\",\"indexLength\":6,\"indexSequence\":\"TACTAG\",\"referenceSequence\":\"Test Reference\",\"lsid\":\"broad.mit.edu:bsp.prod.sample:5005\"}],"
             +
-            "\"dateCreated\":\"2012-07-12T11:23:45.000-0400\",\"discarded\":false,\"destroyed\":false}]}," +
+            "\"dateCreated\":\"2012-07-12T11:23:45.000-0400\",\"discarded\":false,\"destroyed\":false,\"regulatoryDesignation\":[]}]}," +
             "{\"laneName\":\"2\",\"libraryData\":[" +
             "{\"wasFound\":true,\"libraryName\":\"Library-103\",\"libraryType\":\"Test Library\",\"tubeBarcode\":\"00000103\",\"sampleDetails\":["
             +
@@ -58,14 +58,14 @@ public class LimsQueryTypesResourceTest extends RestServiceContainerTest {
             +
             "{\"sampleName\":\"SM-5007\",\"sampleType\":\"Test Sample\",\"indexLength\":6,\"indexSequence\":\"TACTAG\",\"referenceSequence\":\"Test Reference\",\"lsid\":\"broad.mit.edu:bsp.prod.sample:5007\"}],"
             +
-            "\"dateCreated\":\"2012-07-12T11:23:45.000-0400\",\"discarded\":false,\"destroyed\":false}," +
+            "\"dateCreated\":\"2012-07-12T11:23:45.000-0400\",\"discarded\":false,\"destroyed\":false,\"regulatoryDesignation\":[]}," +
             "{\"wasFound\":true,\"libraryName\":\"Library-104\",\"libraryType\":\"Test Library\",\"tubeBarcode\":\"00000104\",\"sampleDetails\":["
             +
             "{\"sampleName\":\"SM-5008\",\"sampleType\":\"Test Sample\",\"indexLength\":6,\"indexSequence\":\"TACTAG\",\"referenceSequence\":\"Test Reference\",\"lsid\":\"broad.mit.edu:bsp.prod.sample:5008\"},"
             +
             "{\"sampleName\":\"SM-5009\",\"sampleType\":\"Test Sample\",\"indexLength\":6,\"indexSequence\":\"TACTAG\",\"referenceSequence\":\"Test Reference\",\"lsid\":\"broad.mit.edu:bsp.prod.sample:5009\"}],"
             +
-            "\"dateCreated\":\"2012-07-12T11:23:45.000-0400\",\"discarded\":false,\"destroyed\":false}]," +
+            "\"dateCreated\":\"2012-07-12T11:23:45.000-0400\",\"discarded\":false,\"destroyed\":false,\"regulatoryDesignation\":[]}]," +
             "\"loadingConcentration\":1.2,\"derivedLibraryData\":[" +
             "{\"wasFound\":true,\"libraryName\":\"Library-105\",\"libraryType\":\"Test Library\",\"tubeBarcode\":\"00000105\",\"sampleDetails\":["
             +
@@ -73,7 +73,7 @@ public class LimsQueryTypesResourceTest extends RestServiceContainerTest {
             +
             "{\"sampleName\":\"SM-5011\",\"sampleType\":\"Test Sample\",\"indexLength\":6,\"indexSequence\":\"TACTAG\",\"referenceSequence\":\"Test Reference\",\"lsid\":\"broad.mit.edu:bsp.prod.sample:5011\"}],"
             +
-            "\"dateCreated\":\"2012-07-12T11:23:45.000-0400\",\"discarded\":false,\"destroyed\":false}]}]," +
+            "\"dateCreated\":\"2012-07-12T11:23:45.000-0400\",\"discarded\":false,\"destroyed\":false,\"regulatoryDesignation\":[]}]}]," +
             "\"designationName\":\"Test Designation\",\"readLength\":101,\"pairedEndRun\":true,\"indexedRun\":true,\"controlLane\":2,\"keepIntensityFiles\":false,\"indexingReadConfiguration\":\"SINGLE\"}";
 
 

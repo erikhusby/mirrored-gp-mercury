@@ -14,7 +14,7 @@
             <xsd:element name="onRigChemistry" type="xsd:string"/>
             <xsd:element name="concentration" type="xsd:decimal" />
             <xsd:element name="products" type="productType" maxOccurs="unbounded"/>
-            <xsd:element name="regulatoryDesignation" type="xsd:string"/>
+            <xsd:element name="regulatoryDesignation" type="xsd:string" maxOccurs="unbounded"/>
             <xsd:element name="readStructure" type="xsd:string">
                 <xsd:annotation>
                     <xsd:documentation>A read structure string is a textual encoding of templates, barcodes, or skips.
@@ -85,6 +85,7 @@
             <xsd:element name="dateCreated" type="xsd:dateTime"/>
             <xsd:element name="discarded" type="xsd:boolean"/>
             <xsd:element name="destroyed" type="xsd:boolean"/>
+            <xsd:element name="regulatoryDesignation" type="xsd:string" maxOccurs="unbounded"/>
         </xsd:sequence>
     </xsd:complexType>
 

@@ -220,6 +220,7 @@
                 <reEntryPoint>false</reEntryPoint>
                 <bucketEntryEvaluator>
                     <materialTypes>RNA</materialTypes>
+                    <materialTypes>RNA_TOTAL_RNA</materialTypes>
                 </bucketEntryEvaluator>
                 <batchJiraProjectType>LCSET</batchJiraProjectType>
                 <batchJiraIssueType>CDNA_TRUSEQ_SS</batchJiraIssueType>

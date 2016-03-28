@@ -4,9 +4,12 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -19,7 +22,9 @@ import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -161,11 +166,19 @@ public class SampleInstanceV2 {
     }
 
     /**
-     * Returns the nearest Mercury sample in the transfer history.  Tolerates unknown root sample.
+     * Returns the name of the nearest Mercury sample in the transfer history.  Tolerates unknown root sample.
      */
     public String getNearestMercurySampleName() {
         return mercurySamples.isEmpty() ? null : mercurySamples.get(mercurySamples.size() - 1).getSampleKey();
     }
+
+    /**
+     * Returns the nearest Mercury sample in the transfer history.  Tolerates unknown root sample.
+     */
+    public MercurySample getNearestMercurySample() {
+        return mercurySamples.isEmpty() ? null : mercurySamples.get(mercurySamples.size() - 1);
+    }
+
 
     /**
      * Returns the root sample or if none, the earliest Mercury sample.
@@ -340,10 +353,67 @@ public class SampleInstanceV2 {
         if (LabVessel.DIAGNOSTICS) {
             log.info("Adding reagent " + newReagent.getName());
         }
-        MolecularIndexingScheme molecularIndexingSchemeLocal = SampleInstance.addReagent(newReagent, reagents);
+        MolecularIndexingScheme molecularIndexingSchemeLocal = addReagent(newReagent, reagents);
         if (molecularIndexingSchemeLocal != null) {
             molecularIndexingScheme = molecularIndexingSchemeLocal;
         }
+    }
+
+    static MolecularIndexingScheme addReagent(Reagent newReagent, List<Reagent> reagents) {
+        MolecularIndexingScheme returnMolecularIndexingScheme = null;
+        // If we're adding a molecular index
+        if (OrmUtil.proxySafeIsInstance(newReagent, MolecularIndexReagent.class)) {
+            MolecularIndexReagent newMolecularIndexReagent =
+                    OrmUtil.proxySafeCast(newReagent, MolecularIndexReagent.class);
+            // Avoid adding the same index twice
+            if (reagents.contains(newMolecularIndexReagent)) {
+                return returnMolecularIndexingScheme;
+            }
+            boolean foundExistingIndex = false;
+            boolean foundMergedScheme = false;
+            // The new index has to be merged with other indexes encountered, if any.
+            // E.g. If the field index is Illumina_P7-A, and the new index is Illumina_P5-B, we need a merged index
+            // called Illumina_P5-B_P7-A.
+            // Need to find a scheme that holds the field position / sequence combination(s) and the new
+            // position / sequence combination(s).
+            Iterator<Reagent> iterator = reagents.iterator();
+            while (iterator.hasNext()) {
+                Reagent fieldReagent = iterator.next();
+                if (OrmUtil.proxySafeIsInstance(fieldReagent, MolecularIndexReagent.class)) {
+                    foundExistingIndex = true;
+                    MolecularIndexReagent fieldMolecularIndexReagent =
+                            OrmUtil.proxySafeCast(fieldReagent, MolecularIndexReagent.class);
+                    for (MolecularIndex molecularIndex : fieldMolecularIndexReagent.getMolecularIndexingScheme()
+                            .getIndexes().values()) {
+                        for (MolecularIndexingScheme molecularIndexingScheme : molecularIndex
+                                .getMolecularIndexingSchemes()) {
+                            Set<Map.Entry<MolecularIndexingScheme.IndexPosition, MolecularIndex>> entries =
+                                    molecularIndexingScheme.getIndexes().entrySet();
+                            if (entries.containsAll(
+                                    fieldMolecularIndexReagent.getMolecularIndexingScheme().getIndexes().entrySet()) &&
+                                entries.containsAll(
+                                        newMolecularIndexReagent.getMolecularIndexingScheme().getIndexes().entrySet())) {
+                                foundMergedScheme = true;
+                                iterator.remove();
+                                reagents.add(new MolecularIndexReagent(molecularIndexingScheme));
+                                returnMolecularIndexingScheme = molecularIndexingScheme;
+                                break;
+                            }
+                        }
+                    }
+                    break;
+                }
+            }
+            if (!foundExistingIndex) {
+                reagents.add(newReagent);
+                returnMolecularIndexingScheme = newMolecularIndexReagent.getMolecularIndexingScheme();
+            } else if (!foundMergedScheme) {
+                throw new RuntimeException("Failed to find merged molecular index scheme");
+            }
+        } else {
+            reagents.add(newReagent);
+        }
+        return returnMolecularIndexingScheme;
     }
 
     /**

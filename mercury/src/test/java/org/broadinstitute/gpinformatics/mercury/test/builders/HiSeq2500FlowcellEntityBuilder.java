@@ -145,7 +145,7 @@ public class HiSeq2500FlowcellEntityBuilder {
             LabEventTest.validateWorkflow("StripTubeBTransfer", denatureRack);
 
             Map<String, StripTube> mapBarcodeToStripTube = new HashMap<>();
-            int catchSampleInstanceCount = denatureRack.getSampleInstances().size();
+            int catchSampleInstanceCount = denatureRack.getSampleInstancesV2().size();
             LabEvent stripTubeTransferEntity =
                     labEventFactory.buildCherryPickRackToStripTubeDbFree(stripTubeTransferJaxb,
                             new HashMap<String, TubeFormation>() {{
@@ -164,7 +164,7 @@ public class HiSeq2500FlowcellEntityBuilder {
             stripTube = (StripTube) TestUtils.getFirst(stripTubeTransferEntity.getTargetLabVessels());
             Assert.assertNotNull(stripTube);
             Assert.assertEquals(
-                    stripTube.getContainerRole().getSampleInstancesAtPosition(VesselPosition.TUBE1).size(),
+                    stripTube.getContainerRole().getSampleInstancesAtPositionV2(VesselPosition.TUBE1).size(),
                     catchSampleInstanceCount,
                     "Wrong number of samples in strip tube well");
 

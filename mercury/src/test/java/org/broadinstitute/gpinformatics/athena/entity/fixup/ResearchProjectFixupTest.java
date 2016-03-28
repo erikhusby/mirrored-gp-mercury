@@ -19,6 +19,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import javax.transaction.UserTransaction;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,6 +43,9 @@ public class ResearchProjectFixupTest extends Arquillian {
 
     @Inject
     private BSPUserList bspUserList;
+
+    @Inject
+    private UserTransaction utx;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -184,5 +188,19 @@ public class ResearchProjectFixupTest extends Arquillian {
         ResearchProject researchProject = rpDao.findByBusinessKey("RP-1040");
         researchProject.setRegulatoryDesignation(ResearchProject.RegulatoryDesignation.RESEARCH_ONLY);
         rpDao.persist(new FixupCommentary("GPLIM-3816 updating incorrectly selected regulatory designation"));
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim4025() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        ResearchProject researchProject = rpDao.findByBusinessKey("RP-1074");
+        researchProject.setRegulatoryDesignation(ResearchProject.RegulatoryDesignation.CLINICAL_DIAGNOSTICS);
+        System.out.println("Changing regulatory designation for " + researchProject.getJiraTicketKey());
+        rpDao.persist(new FixupCommentary("GPLIM-4025 changing regulatory designation for RP-1074"));
+        rpDao.flush();
+
+        utx.commit();
     }
 }

@@ -7,7 +7,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.BSPExportsService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.IsExported;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
-import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
@@ -28,6 +27,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -196,7 +196,39 @@ public class SystemRouter implements Serializable {
     private System routeForVessels(Collection<LabVessel> labVessels, Intent intent) {
         // If all samples have Mercury for their metadata source, then regardless of intent, the
         // relevant system is Mercury, because neither BSP nor Squid know about the samples.
-        if (isEntirelyMercuryMetadata(labVessels)) {
+        int nonNullCount = 0;
+        int sampleCount = 0;
+        int mercurySourceCount = 0;
+        Set<LabVessel> nonMercurySampleVesselsSet = new HashSet<>();
+        List<LabVessel> nonMercurySampleVesselsList = new ArrayList<>();
+        for (LabVessel labVessel : labVessels) {
+            if (labVessel != null) {
+                nonNullCount++;
+                boolean foundBsp = false;
+                Set<SampleInstanceV2> sampleInstancesV2 = labVessel.getSampleInstancesV2();
+                for (SampleInstanceV2 sampleInstanceV2 : sampleInstancesV2) {
+                    Set<MercurySample> rootMercurySamples = sampleInstanceV2.getRootMercurySamples();
+                    if (rootMercurySamples.isEmpty()) {
+                        foundBsp = true;
+                    } else {
+                        for (MercurySample mercurySample : rootMercurySamples) {
+                            sampleCount++;
+                            if (mercurySample.getMetadataSource() == MercurySample.MetadataSource.MERCURY) {
+                                mercurySourceCount++;
+                            } else if (mercurySample.getMetadataSource() == MercurySample.MetadataSource.BSP) {
+                                foundBsp = true;
+                            }
+                        }
+                    }
+                }
+                if (foundBsp) {
+                    if (nonMercurySampleVesselsSet.add(labVessel)) {
+                        nonMercurySampleVesselsList.add(labVessel);
+                    }
+                }
+            }
+        }
+        if (nonNullCount == labVessels.size() && mercurySourceCount > 0 && sampleCount == mercurySourceCount) {
             return System.MERCURY;
         }
 
@@ -218,11 +250,10 @@ public class SystemRouter implements Serializable {
                 LabEventType.SystemOfRecord systemOfRecord = systemsOfRecord.iterator().next();
                 switch (systemOfRecord) {
                 case SQUID:
-                    badCrspRouting();
                     return System.SQUID;
                 case MERCURY:
                     // If everything here has been exported to sequencing.
-                    return determineSystemOfRecordPerBspExports(labVessels);
+                    return determineSystemOfRecordPerBspExports(nonMercurySampleVesselsList);
                 case WORKFLOW_DEPENDENT:
                     // Fall through.
                 }
@@ -238,28 +269,6 @@ public class SystemRouter implements Serializable {
 
         return evaluateRoutingOption(routingOptions, intent);
     }
-
-    /** Determines if all sample metadata is sourced by Mercury. */
-    private boolean isEntirelyMercuryMetadata(Collection<LabVessel> labVessels) {
-        int nonNullCount = 0;
-        int sampleCount = 0;
-        int mercurySourceCount = 0;
-        for (LabVessel labVessel : labVessels) {
-            if (labVessel != null) {
-                nonNullCount++;
-                for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
-                    for (MercurySample mercurySample : sampleInstanceV2.getRootMercurySamples()) {
-                        sampleCount++;
-                        if (mercurySample.getMetadataSource() == MercurySample.MetadataSource.MERCURY) {
-                            mercurySourceCount++;
-                        }
-                    }
-                }
-            }
-        }
-        return (nonNullCount == labVessels.size() && mercurySourceCount > 0 && sampleCount == mercurySourceCount);
-    }
-
 
     /**
      * Determines the system to use for the specified intent (e.g. which system will process a vessel,
@@ -286,7 +295,6 @@ public class SystemRouter implements Serializable {
                             continue;
                         }
                         if (sampleInstance.getAllWorkflowBatches().isEmpty()) { // todo jmt what about bucket entry with no batch?
-                            badCrspRouting();
                             routingOptions.add(System.SQUID);
                         } else {
                             for (LabBatch batch : sampleInstance.getAllWorkflowBatches()) {
@@ -302,7 +310,6 @@ public class SystemRouter implements Serializable {
                                             system = productWorkflowDef.getRouting();
                                         }
                                         if (system == System.BOTH) {
-                                            badCrspRouting();
                                             system = System.SQUID;
                                         }
                                         routingOptions.add(system);
@@ -323,12 +330,6 @@ public class SystemRouter implements Serializable {
             return null;
         } else {
             return evaluateRoutingOption(routingOptions, intent);
-        }
-    }
-
-    private void badCrspRouting() {
-        if(ApplicationInstance.CRSP.isCurrent()) {
-            throw new RouterException("For a CRSP Deployment, Squid should never be a routing option")  ;
         }
     }
 
@@ -359,13 +360,11 @@ public class SystemRouter implements Serializable {
         System result;
 
         if (routingOptions.isEmpty()) {
-            badCrspRouting();
             result = System.SQUID;
         } else if (routingOptions.size() == 1) {
             result = routingOptions.iterator().next();
         } else if (routingOptions.equals(EnumSet.of(System.SQUID, System.BOTH)) ||
                 (intent == Intent.SYSTEM_OF_RECORD && routingOptions.equals(EnumSet.of(System.SQUID, System.MERCURY)))) {
-            badCrspRouting();
             result = System.SQUID;
         } else if (routingOptions.equals(EnumSet.of(System.MERCURY, System.BOTH))) {
             result = System.MERCURY;

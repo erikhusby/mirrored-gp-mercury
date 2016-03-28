@@ -2,7 +2,9 @@ package org.broadinstitute.gpinformatics.infrastructure;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
@@ -23,6 +25,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -33,6 +36,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.mockito.Matchers.anyVararg;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
@@ -480,6 +484,36 @@ public class SampleDataFetcherTest {
         verifyZeroInteractions(mockBspSampleDataFetcher);
     }
 
+    @DataProvider(name = "fetchSampleDataWithColumns")
+    public Iterator<Object[]> fetchSampleDataWithColumns() {
+
+        List<Object[]> testCases = new ArrayList<>();
+        testCases.add(new Object[]{BSPSampleSearchColumn.PDO_SEARCH_COLUMNS, true});
+        testCases.add(new Object[]{BSPSampleSearchColumn.BILLING_TRACKER_COLUMNS, false});
+
+        return testCases.iterator();
+    }
+
+    @Test(dataProvider = "fetchSampleDataWithColumns")
+    public void test_fetchSampleData_for_BSP_sample_should_call_overrideWithMercuryQuants_when_Quants_are_requested(
+            BSPSampleSearchColumn[] searchColumns, boolean quantDataExpected) {
+        BspSampleData mockBspSampleData = Mockito.mock(BspSampleData.class);
+        configureBspFetcher(BSP_SAMPLE_ID, mockBspSampleData);
+        configureMercurySampleDao(bspMercurySample);
+        ProductOrderSample productOrderSample =
+                build_product_order_sample_without_mercury_sample_bound(BSP_SAMPLE_ID);
+        productOrderSample.getProductOrder().getProduct().setExpectInitialQuantInMercury(quantDataExpected);
+
+        bspMercurySample.addProductOrderSample(productOrderSample);
+        sampleDataFetcher.fetchSampleDataForSamples(Collections.singletonList(productOrderSample), searchColumns);
+
+        when(mockBspSampleDataFetcher.fetchSampleData(argThat(contains(BSP_SAMPLE_ID))))
+                .thenReturn(ImmutableMap.of(BSP_SAMPLE_ID, mockBspSampleData));
+
+        int invocationCount = quantDataExpected ? 1 : 0;
+        verify(mockBspSampleData, times(invocationCount)).overrideWithMercuryQuants(productOrderSample);
+    }
+
     /*
      * Utility methods for configuring mocks.
      */
@@ -510,7 +544,11 @@ public class SampleDataFetcherTest {
 
     private ProductOrderSample build_product_order_sample_without_mercury_sample_bound(String sampleId) {
 
-        return new ProductOrderSample(sampleId);
+        ProductOrderSample productOrderSample = new ProductOrderSample(sampleId);
+        ProductOrder productOrder = new ProductOrder();
+        productOrder.setProduct(new Product());
+        productOrderSample.setProductOrder(productOrder);
+        return productOrderSample;
     }
 
     private ProductOrderSample build_product_order_sample_with_mercury_sample_bound(
@@ -518,6 +556,9 @@ public class SampleDataFetcherTest {
             String sampleId) {
 
         ProductOrderSample productOrderSample = new ProductOrderSample(sampleId);
+        ProductOrder productOrder = new ProductOrder();
+        productOrder.setProduct(new Product());
+        productOrderSample.setProductOrder(productOrder);
         MercurySample mercurySample = presetSampleToMercurySampleMap.get(sampleId);
         if(mercurySample == null) {
             mercurySample = new MercurySample(sampleId, metadataSource);

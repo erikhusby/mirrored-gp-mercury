@@ -116,6 +116,29 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     @ManyToOne(cascade = CascadeType.PERSIST)
     private MercurySample mercurySample;
 
+    /**
+     * Whether to continue processing a sample if a quantification (e.g. Pico) is out of specification
+     * (e.g. concentration is too low).
+     */
+    public enum ProceedIfOutOfSpec implements StatusType {
+        YES("Yes"),
+        NO("No");
+
+        private String displayName;
+
+        ProceedIfOutOfSpec(String displayName) {
+            this.displayName = displayName;
+        }
+
+        @Override
+        public String getDisplayName() {
+            return displayName;
+        }
+    }
+
+    @Enumerated(EnumType.STRING)
+    private ProceedIfOutOfSpec proceedIfOutOfSpec = ProceedIfOutOfSpec.NO;
+
     @Transient
     private MercurySample.MetadataSource metadataSource;
 
@@ -886,4 +909,16 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         this.mercurySample = mercurySample;
     }
 
+    public ProceedIfOutOfSpec getProceedIfOutOfSpec() {
+        return proceedIfOutOfSpec;
+    }
+
+    public void setProceedIfOutOfSpec(ProceedIfOutOfSpec proceedIfOutOfSpec) {
+        this.proceedIfOutOfSpec = proceedIfOutOfSpec;
+    }
+
+    public boolean isToBeBilled() {
+        return getDeliveryStatus() != ProductOrderSample.DeliveryStatus.ABANDONED
+        && !isCompletelyBilled();
+    }
 }

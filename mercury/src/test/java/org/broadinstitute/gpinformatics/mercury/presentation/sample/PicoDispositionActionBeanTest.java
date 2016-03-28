@@ -350,7 +350,7 @@ public class PicoDispositionActionBeanTest {
         picoDispositionActionBean.setRackScannerEjb(rackScannerEjb);
         picoDispositionActionBean.setBarcodedTubeDao(barcodedTubeDao);
         EasyMock.expect(rackScannerEjb.runRackScanner(EasyMock.anyObject(RackScanner.class),
-                EasyMock.anyObject(Reader.class))).andReturn(cellToBarcode);
+                EasyMock.anyObject(Reader.class),EasyMock.eq(false))).andReturn(cellToBarcode);
         for (BarcodedTube barcodedTube : positionToVessel.values()) {
             // This returns all tubes but not in the correct position, which will have to be ok for our purposes.
             EasyMock.expect(barcodedTubeDao.findByBarcode(EasyMock.anyObject(String.class))).andReturn(barcodedTube);

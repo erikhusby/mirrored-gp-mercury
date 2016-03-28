@@ -10,7 +10,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ParentVesselBean
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleReceiptBean;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
@@ -53,9 +53,9 @@ public class LabVesselFactoryTest {
         Assert.assertEquals(labVessels.size(), 2, "Wrong number of vessels");
         LabVessel labVessel = labVessels.get(0);
         Assert.assertEquals(labVessel.getLabel(), BARCODE1, "Wrong barcode");
-        Set<SampleInstance> sampleInstances = labVessel.getSampleInstances();
+        Set<SampleInstanceV2> sampleInstances = labVessel.getSampleInstancesV2();
         Assert.assertEquals(sampleInstances.size(), 1, "Wrong number of samples");
-        MercurySample mercurySample = sampleInstances.iterator().next().getStartingSample();
+        MercurySample mercurySample = sampleInstances.iterator().next().getRootOrEarliestMercurySample();
         Assert.assertEquals(mercurySample.getSampleKey(), SAMPLE1, "Wrong sample");
     }
 
@@ -108,9 +108,9 @@ public class LabVesselFactoryTest {
         Assert.assertEquals(labVessels.size(), 2, "Wrong number of vessels");
         LabVessel labVessel = labVessels.get(0);
         Assert.assertEquals(labVessel.getLabel(), BARCODE1, "Wrong barcode");
-        Set<SampleInstance> sampleInstances = labVessel.getSampleInstances();
+        Set<SampleInstanceV2> sampleInstances = labVessel.getSampleInstancesV2();
         Assert.assertEquals(sampleInstances.size(), 1, "Wrong number of samples");
-        MercurySample mercurySample = sampleInstances.iterator().next().getStartingSample();
+        MercurySample mercurySample = sampleInstances.iterator().next().getRootOrEarliestMercurySample();
         Assert.assertEquals(mercurySample.getSampleKey(), SAMPLE1, "Wrong sample");
     }
 
@@ -143,9 +143,9 @@ public class LabVesselFactoryTest {
         Assert.assertEquals(staticPlate.getContainerRole().getMapPositionToVessel().size(), 2,
                 "Wrong number of child vessels");
         PlateWell plateWell = staticPlate.getContainerRole().getVesselAtPosition(VesselPosition.A01);
-        Set<SampleInstance> sampleInstances = plateWell.getSampleInstances();
+        Set<SampleInstanceV2> sampleInstances = plateWell.getSampleInstancesV2();
         Assert.assertEquals(sampleInstances.size(), 1, "Wrong number of samples");
-        Assert.assertEquals(sampleInstances.iterator().next().getStartingSample().getSampleKey(), sampleId1, "Wrong sample");
+        Assert.assertEquals(sampleInstances.iterator().next().getRootOrEarliestMercurySampleName(), sampleId1, "Wrong sample");
     }
 
     @Test

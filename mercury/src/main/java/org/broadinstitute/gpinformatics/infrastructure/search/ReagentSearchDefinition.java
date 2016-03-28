@@ -33,7 +33,7 @@ public class ReagentSearchDefinition {
                 "reagentId", "reagentId", Reagent.class));
 
         ConfigurableSearchDefinition configurableSearchDefinition = new ConfigurableSearchDefinition(
-                ColumnEntity.REAGENT, 100, criteriaProjections, mapGroupSearchTerms);
+                ColumnEntity.REAGENT, criteriaProjections, mapGroupSearchTerms);
 
         return configurableSearchDefinition;
     }
@@ -161,7 +161,7 @@ public class ReagentSearchDefinition {
         mapGroupSearchTerms.put("Never Seen", searchTerms);
 
         ConfigurableSearchDefinition configurableSearchDefinition = new ConfigurableSearchDefinition(
-                ColumnEntity.LAB_EVENT, 100, criteriaProjections, mapGroupSearchTerms);
+                ColumnEntity.LAB_EVENT, criteriaProjections, mapGroupSearchTerms);
 
         configurableSearchDefinition.addTraversalEvaluator(ConfigurableSearchDefinition.ALTERNATE_DEFINITION_ID
                 , new LcsetReagentTraversalEvaluator() );

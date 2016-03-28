@@ -394,7 +394,8 @@ public class LibraryBean {
             gender = StringUtils.trimToNull(sampleData.getGender());
             // todo arz pop/ethnicity,
             collection = StringUtils.trimToNull(sampleData.getCollection());
-            collaboratorSampleId = StringUtils.trimToNull(sampleData.getCollaboratorsSampleName());
+            String trimCollabSampleName = StringUtils.trimToNull(sampleData.getCollaboratorsSampleName());
+            collaboratorSampleId = trimCollabSampleName == null ? sampleId : trimCollabSampleName;
             materialType = StringUtils.trimToNull(sampleData.getMaterialType());
             participantId = StringUtils.trimToNull(sampleData.getPatientId());
             population = StringUtils.trimToNull(sampleData.getEthnicity());

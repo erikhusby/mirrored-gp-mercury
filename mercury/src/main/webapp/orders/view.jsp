@@ -2,8 +2,8 @@
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
-<%@ page import="org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry" %>
+<%@ page import="org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -123,6 +123,28 @@ function setupDialogs() {
                     $j("#riskOkButton").attr("disabled", "disabled");
                     $j("#riskStatus").attr("value", $j("#onRiskDialogId").is(':checked'));
                     $j("#riskComment").attr("value", $j("#riskCommentId").val());
+
+                    $j("#orderForm").submit();
+                }
+            },
+            {
+                text: "Cancel",
+                click: handleCancelEvent
+            }
+        ]
+    });
+
+    $j("#proceedOosDialog").dialog({
+        modal: true,
+        autoOpen: false,
+        buttons: [
+            {
+                id: "oosOkButton",
+                text: "OK",
+                click: function () {
+                    $j(this).dialog("close");
+                    $j("#oosOkButton").attr("disabled", "disabled");
+                    $j("#proceedOos").attr("value", $j("input:radio[name='pOosRadio']:checked").val());
 
                     $j("#orderForm").submit();
                 }
@@ -332,6 +354,7 @@ function showSamples(sampleData) {
                 {"bSortable": true},                            // sample kit upload/rackscan mismatch
                 {"bSortable": true},                            // On Risk
                 {"bSortable": false},                           // On Risk Details
+                {"bSortable": true},                            // Proceed OOS
                 {"bSortable": true},                            // Status
                 {"bSortable": true, "sType": "title-string"},   // is billed
                 {"bSortable": true}                             // Comment
@@ -386,7 +409,8 @@ function updateFundsRemaining() {
 
 function updateFunds(data) {
     if (data.fundsRemaining) {
-        $j("#fundsRemaining").text('Status: ' + data.status + ' - Funds Remaining: ' + data.fundsRemaining);
+        $j("#fundsRemaining").text('Status: ' + data.status + ' - Funds Remaining: ' + data.fundsRemaining +
+                ' with ' + data.outstandingEstimate + ' unbilled across existing open orders');
     } else {
         $j("#fundsRemaining").text('Error: ' + data.error);
     }
@@ -423,6 +447,15 @@ function showRiskDialog() {
     } else {
         $j("#noneSelectedDialogMessage").text("Update Risk");
         $j("#noneSelectedDialog").dialog("open");
+    }
+}
+
+function showProceedOosDialog() {
+    var numChecked = $("input.shiftCheckbox:checked").size();
+    if (numChecked) {
+        $j("#dialogAction").attr("name", "setProceedOos");
+        $j("#proceedOosSelectedCountId").text(numChecked);
+        $j("#proceedOosDialog").dialog("open").dialog("option", "width", 600);
     }
 }
 
@@ -602,6 +635,18 @@ function formatInput(item) {
     <textarea id="riskCommentId" name="comment" class="controlledText" cols="80" rows="4"> </textarea>
 </div>
 
+<div id="proceedOosDialog" style="width:600px;display:none;">
+    <p>Proceed if Out of Spec (<span id="proceedOosSelectedCountId"> </span> selected)</p>
+
+    <p><span style="float:left; width:185px;">Update status to:</span>
+        <c:forEach items="<%=ProductOrderSample.ProceedIfOutOfSpec.values()%>" var="pOos">
+            <label style="float:left;width:60px;">
+                <input type="radio" name="pOosRadio" value="${pOos.toString()}" style="float:left;margin-right:5px;">
+                ${pOos.displayName}
+            </label>
+        </c:forEach>
+</div>
+
 <div id="abandonDialog" style="width:600px;display:none;">
     <p>Abandon Samples (<span id="abandonSelectedSamplesCountId"> </span> selected)</p>
 
@@ -688,6 +733,7 @@ function formatInput(item) {
 <stripes:hidden id="dialogAction" name=""/>
 <stripes:hidden id="riskStatus" name="riskStatus" value=""/>
 <stripes:hidden id="riskComment" name="riskComment" value=""/>
+<stripes:hidden id="proceedOos" name="proceedOos" value=""/>
 <stripes:hidden id="abandonComment" name="abandonComment" value=""/>
 <stripes:hidden id="unAbandonComment" name="unAbandonComment" value=""/>
 <stripes:hidden id="attestationConfirmed" name="editOrder.attestationConfirmed" value=""/>
@@ -1175,12 +1221,6 @@ function formatInput(item) {
                     <stripes:button name="setRisk" value="Set Risk" class="btn"
                                     style="margin-left:5px;" onclick="showRiskDialog()"/>
 
-                    <security:authorizeBlock roles="<%= roles(All) %>"
-                                             context="<%= ApplicationInstance.CRSP %>">
-                        <stripes:button name="addSamplesToBucket" value="Add Samples to Bucket" class="btn"
-                                        style="margin-left:5px;" id="addToBucketButton"
-                                        onclick="showConfirm('addSamplesToBucket', 'add to bucket')"/>
-                    </security:authorizeBlock>
                 </security:authorizeBlock>
                 <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
                     <c:if test="${actionBean.editOrder.product.supportsNumberOfLanes}">
@@ -1200,6 +1240,12 @@ function formatInput(item) {
             </security:authorizeBlock>
 
         </c:if>
+
+        <security:authorizeBlock roles="<%= roles(Developer, PDM, PM) %>">
+            <stripes:button name="setProceedOos" value="Set Proceed OOS" class="btn"
+                    style="margin-left:5px;" onclick="showProceedOosDialog()"/>
+        </security:authorizeBlock>
+
     </div>
 
     <div id="summaryId" class="fourcolumn" style="margin-bottom:5px;">
@@ -1211,10 +1257,8 @@ function formatInput(item) {
             <thead>
             <tr>
                 <th width="20">
-                    <c:if test="${!actionBean.editOrder.draft}">
-                        <input id="checkAllSamples" for="count" type="checkbox" class="checkAll"/><span id="count"
-                                                                                                        class="checkedCount"></span>
-                    </c:if>
+                    <input id="checkAllSamples" for="count" type="checkbox" class="checkAll"/><span id="count"
+                                                                                                    class="checkedCount"></span>
                 </th>
                 <th width="10">#</th>
                 <th width="90">ID</th>
@@ -1241,6 +1285,7 @@ function formatInput(item) {
                 <th width="60"><abbr title="Sample Kit Upload/Rackscan Mismatch">Rackscan Mismatch</abbr></th>
                 <th>On Risk</th>
                 <th style="display:none;">On Risk Details</th>
+                <th>Proceed OOS</th>
                 <th width="40">Status</th>
                 <th width="40">Billed</th>
                 <th width="200">Comment</th>
@@ -1250,11 +1295,9 @@ function formatInput(item) {
             <c:forEach items="${actionBean.editOrder.samples}" var="sample">
                 <tr>
                     <td>
-                        <c:if test="${!actionBean.editOrder.draft}">
-                            <stripes:checkbox title="${sample.samplePosition}" class="shiftCheckbox"
-                                              name="selectedProductOrderSampleIds"
-                                              value="${sample.productOrderSampleId}"/>
-                        </c:if>
+                        <stripes:checkbox title="${sample.samplePosition}" class="shiftCheckbox"
+                                          name="selectedProductOrderSampleIds"
+                                          value="${sample.productOrderSampleId}"/>
                     </td>
                     <td>
                             ${sample.samplePosition + 1}
@@ -1314,6 +1357,7 @@ function formatInput(item) {
                         </c:if>
                     </td>
                     <td id="onRiskDetails-${sample.productOrderSampleId}" style="display:none;">${sample.riskString}</td>
+                    <td>${sample.proceedIfOutOfSpec.displayName}</td>
                     <td>${sample.deliveryStatus.displayName}</td>
                     <td id="completelyBilled-${sample.productOrderSampleId}" style="text-align: center"></td>
                     <td>${sample.sampleComment}</td>

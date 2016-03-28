@@ -169,7 +169,7 @@ public class ConfigurableSearchTest extends Arquillian {
 
         // Add columns
         searchInstance.getPredefinedViewColumns().add("LabEventId");
-        searchInstance.getPredefinedViewColumns().add("Mercury Sample ID");
+        searchInstance.getPredefinedViewColumns().add("Root Sample ID");
         searchInstance.getPredefinedViewColumns().add("Source Layout");
         searchInstance.getPredefinedViewColumns().add("Destination Layout");
 
@@ -243,7 +243,7 @@ public class ConfigurableSearchTest extends Arquillian {
         // Add columns
         searchInstance.getPredefinedViewColumns().add("PDO");
         searchInstance.getPredefinedViewColumns().add("LCSET");
-        searchInstance.getPredefinedViewColumns().add("Mercury Sample ID");
+        searchInstance.getPredefinedViewColumns().add("Root Sample ID");
         searchInstance.getPredefinedViewColumns().add("Mercury Sample Tube Barcode");
         // Multi column
         searchInstance.getPredefinedViewColumns().add("All Sample Metadata");
@@ -317,7 +317,7 @@ public class ConfigurableSearchTest extends Arquillian {
         List<String> values = row.getRenderableCells();
         Assert.assertEquals( values.get(columnNumbersByHeader.get("PDO")),                                               "PDO-5115",    "Incorrect PDO Value");
         Assert.assertEquals( values.get(columnNumbersByHeader.get("LCSET")),                                             "LCSET-6449",  "Incorrect LCSET Value");
-        Assert.assertEquals( values.get(columnNumbersByHeader.get("Mercury Sample ID")),                                 "SM-74PK6",    "Incorrect Mercury Sample ID Value");
+        Assert.assertEquals( values.get(columnNumbersByHeader.get("Root Sample ID")),                                    "SM-74PK6",    "Incorrect Root Sample ID Value");
         Assert.assertEquals( values.get(columnNumbersByHeader.get("Mercury Sample Tube Barcode")),                       "0175567583",  "Incorrect Mercury Sample Tube Barcode Value");
         Assert.assertEquals( values.get(columnNumbersByHeader.get(Metadata.Key.GENDER.getDisplayName())),                "Male",        "Incorrect Gender Value");
         Assert.assertEquals( values.get(columnNumbersByHeader.get(Metadata.Key.PATIENT_ID.getDisplayName())),            "12005-008",   "Incorrect Patient ID Value");

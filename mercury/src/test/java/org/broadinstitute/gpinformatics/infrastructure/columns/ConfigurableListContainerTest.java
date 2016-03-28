@@ -73,12 +73,7 @@ public class ConfigurableListContainerTest extends Arquillian {
         ConfigurableList configurableList = new ConfigurableList(columnTabulations, 1, "ASC", ColumnEntity.LAB_VESSEL);
 
         // Add any row listeners
-        ConfigurableSearchDefinition.AddRowsListenerFactory addRowsListenerFactory = configurableSearchDef.getAddRowsListenerFactory();
-        if( addRowsListenerFactory != null ) {
-            for( Map.Entry<String,ConfigurableList.AddRowsListener> entry : addRowsListenerFactory.getAddRowsListeners().entrySet() ) {
-                configurableList.addAddRowsListener(entry.getKey(), entry.getValue());
-            }
-        }
+        configurableList.addAddRowsListeners(configurableSearchDef);
 
         SearchContext context = buildSearchContext();
         configurableList.addRows(labVessels, context);
@@ -158,12 +153,7 @@ public class ConfigurableListContainerTest extends Arquillian {
         ConfigurableList configurableList = new ConfigurableList(columnTabulations, 1, "ASC", ColumnEntity.LAB_VESSEL);
 
         // Add any row listeners
-        ConfigurableSearchDefinition.AddRowsListenerFactory addRowsListenerFactory = configurableSearchDef.getAddRowsListenerFactory();
-        if( addRowsListenerFactory != null ) {
-            for( Map.Entry<String,ConfigurableList.AddRowsListener> entry : addRowsListenerFactory.getAddRowsListeners().entrySet() ) {
-                configurableList.addAddRowsListener(entry.getKey(), entry.getValue());
-            }
-        }
+        configurableList.addAddRowsListeners(configurableSearchDef);
 
         SearchContext context = buildSearchContext();
         configurableList.addRows(labVesselDao.findBySampleKey("SM-7RDNO"), context);

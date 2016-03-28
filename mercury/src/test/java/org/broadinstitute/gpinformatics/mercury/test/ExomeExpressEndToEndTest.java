@@ -45,16 +45,16 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventRefDataFetcher;
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.control.zims.ZimsIlluminaRunFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingReceipt;
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventName;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.AliquotParameters;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
@@ -331,9 +331,6 @@ public class ExomeExpressEndToEndTest {
             LabVesselDao tubeDao = EasyMock.createNiceMock(LabVesselDao.class);
             labBatchEJB.setTubeDao(tubeDao);
 
-            JiraTicketDao mockJira = EasyMock.createNiceMock(JiraTicketDao.class);
-            labBatchEJB.setJiraTicketDao(mockJira);
-
             LabBatchDao labBatchDao = EasyMock.createNiceMock(LabBatchDao.class);
             labBatchEJB.setLabBatchDao(labBatchDao);
 
@@ -356,7 +353,7 @@ public class ExomeExpressEndToEndTest {
 //                    .andReturn(new LabEventTest.MockBucket(new WorkflowStepDef(LabEventType.SHEARING_BUCKET
 //                            .getName()), jiraTicket.getTicketName()));
 
-            EasyMock.replay(mockBucketDao, mockJira, labBatchDao, tubeDao, reworkEjb, bucketDao);
+            EasyMock.replay(mockBucketDao, labBatchDao, tubeDao, reworkEjb, bucketDao);
 
 
             TemplateEngine templateEngine = new TemplateEngine();
@@ -398,7 +395,7 @@ public class ExomeExpressEndToEndTest {
                                                              .getPondRegTubeBarcodes(), "testPrefix").invoke(false);
 
             TubeFormation pondRack = libraryConstructionEntityBuilder.getPondRegRack();
-            Assert.assertEquals(pondRack.getSampleInstances().size(), 2);
+            Assert.assertEquals(pondRack.getSampleInstancesV2().size(), 2);
 
             // make sure that the pond sample instances contain the starters from the project plan.
             //            for (Starter starter : projectPlan.getStarters()) {
@@ -445,8 +442,9 @@ public class ExomeExpressEndToEndTest {
                     qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
 
 
-            LabBatch fctBatch = new LabBatch("FCT-3", Collections.singleton((LabVessel) denatureTube),
-                                             LabBatch.LabBatchType.FCT, BigDecimal.valueOf(12.33f));
+            LabBatch fctBatch = new LabBatch("FCT-3", LabBatch.LabBatchType.FCT,
+                    IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell, denatureTube, BigDecimal.valueOf(12.33f));
+
 
             HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
                     new HiSeq2500FlowcellEntityBuilder(bettaLimsMessageTestFactory,
@@ -472,8 +470,8 @@ public class ExomeExpressEndToEndTest {
             //                    aliquotsFromProjectPlan.add(sampleInstance.getStartingSample().getLabel());
             //                }
             //            }
-            for (SampleInstance sampleInstance : currEntry.getSampleInstances()) {
-                Assert.assertTrue(aliquotsFromProjectPlan.contains(sampleInstance.getStartingSample().getSampleKey()));
+            for (SampleInstanceV2 sampleInstance : currEntry.getSampleInstancesV2()) {
+                Assert.assertTrue(aliquotsFromProjectPlan.contains(sampleInstance.getEarliestMercurySampleName()));
                 numStartersFromSampleInstances++;
                 //                Assert.assertEquals(projectPlan, sampleInstance.getSingleProjectPlan());
             }

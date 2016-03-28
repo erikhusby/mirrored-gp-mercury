@@ -37,7 +37,6 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.BadBusinessKeyExcepti
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
-import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnector;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
@@ -306,6 +305,20 @@ public class ProductOrderEjb {
     }
 
     /**
+     * Set the Proceed if Out of Spec indicator.
+     */
+    public void proceedOos(@Nonnull BspUser user, @Nonnull List<ProductOrderSample> orderSamples,
+            @Nonnull ProductOrder productOrder, @Nonnull ProductOrderSample.ProceedIfOutOfSpec proceedIfOutOfSpec) {
+
+        for (ProductOrderSample orderSample : orderSamples) {
+            orderSample.setProceedIfOutOfSpec(proceedIfOutOfSpec);
+        }
+        productOrder.prepareToSave(user);
+        // Recruit the persistence context into the transaction
+        productOrderDao.flush();
+    }
+
+    /**
      * Post a comment in jira about risk.
      *
      * @param jiraKey     Key of jira issue to add comment to.
@@ -409,12 +422,6 @@ public class ProductOrderEjb {
             pdoUpdateFields.add(new PDOUpdateField(ProductOrder.JiraField.PUBLICATION_DEADLINE,
                     JiraService.JIRA_DATE_FORMAT.format(
                             productOrder.getPublicationDeadline())));
-        }
-
-        // Add the Requisition name to the list of fields when appropriate.
-        if (ApplicationInstance.CRSP.isCurrent() && !StringUtils.isBlank(productOrder.getRequisitionName())) {
-            pdoUpdateFields.add(new PDOUpdateField(ProductOrder.JiraField.REQUISITION_NAME,
-                    productOrder.getRequisitionName()));
         }
 
         String[] customFieldNames = new String[pdoUpdateFields.size()];

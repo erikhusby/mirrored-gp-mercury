@@ -1,8 +1,9 @@
 
 <%@ page import="org.broadinstitute.bsp.client.rackscan.RackScanner" %>
 
-<%-- javascript to be included in jsp that selects a rack scan lab and device. --%>
-<%-- Expects that rack_scanner_list_with_sim_part2 is present on the page. --%>
+<%-- javascript to be included in jsp that selects a rack scan lab and device.
+     Expects that rack_scanner_list_with_sim_part2 is present on the page.
+     See ajax_div_rack_scanner.jsp for a modal dialog overlay implementation. --%>
 
 <script type="text/javascript">
 

@@ -5,10 +5,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
-import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
 import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRun_;
@@ -16,6 +14,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 
 import javax.ejb.Stateful;
 import javax.inject.Inject;
@@ -267,16 +266,17 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
         if (entity != null) {
             RunCartridge cartridge = entity.getSampleCartridge();
             String flowcellBarcode = cartridge.getCartridgeName();
-            Collection<LabBatch> fctBatches = cartridge.getAllLabBatches(LabBatch.LabBatchType.FCT);
-            LabBatch fctBatch = fctBatches.size() == 1 ? fctBatches.iterator().next() : null;
-            Map<VesselPosition, LabVessel> vesselsWithPositions = cartridge.getNearestTubeAncestorsForLanes();
-            for (Map.Entry<VesselPosition, LabVessel> entry : vesselsWithPositions.entrySet()) {
-                VesselPosition position = entry.getKey();
-                LabVessel tube = entry.getValue();
-                if (tube != null) {
-                    LabVessel fctVessel = (fctBatch != null) ? fctBatch.getStartingVesselByPosition(position) : tube;
-                    Collection<SampleInstanceV2> sampleInstances = tube.getSampleInstancesV2();
+            Map<VesselPosition, LabVessel> lanesAndLoadingTubes = cartridge.getNearestTubeAncestorsForLanes();
+            for (Map.Entry<VesselPosition, LabVessel> entry : lanesAndLoadingTubes.entrySet()) {
+                VesselPosition lane = entry.getKey();
+                LabVessel loadingTube = entry.getValue();
+                if (loadingTube != null) {
+                    Collection<SampleInstanceV2> sampleInstances = loadingTube.getSampleInstancesV2();
                     for (SampleInstanceV2 si : sampleInstances) {
+                        LabBatchStartingVessel labBatchStartingVessel =
+                                si.getSingleBatchVessel(LabBatch.LabBatchType.FCT);
+                        LabVessel fctVessel = labBatchStartingVessel != null ?
+                                labBatchStartingVessel.getLabVessel() : loadingTube;
 
                         // Extract ETL data from sample instance
                         SampleInstanceEtlData sampleInstanceEtlData = SampleInstanceEtlData.buildFromSampleInstance
@@ -297,7 +297,7 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
                         boolean canEtl = !StringUtils.isBlank(flowcellBarcode) && !StringUtils.isBlank(productOrderId)
                                          && !StringUtils.isBlank(researchProjectId);
 
-                        dtos.add(new SequencingRunDto(entity, flowcellBarcode, position.name(),
+                        dtos.add(new SequencingRunDto(entity, flowcellBarcode, lane.name(),
                                 molecularIndexingSchemeName, productOrderId, pdoSampleKey, researchProjectId,
                                 canEtl, fctVessel, batchName));
                     }
@@ -306,7 +306,7 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
                         // since exactly which fields are null is used as indicator in postEtlLogging, and this
                         // pattern is used in other fact table etl that are exposed in ExtractTransformResource.
                         dtos.add(new SequencingRunDto(entity, flowcellBarcode, null, null, null, null, null, false,
-                                fctVessel, null));
+                                loadingTube, null));
                     }
                 }
             }

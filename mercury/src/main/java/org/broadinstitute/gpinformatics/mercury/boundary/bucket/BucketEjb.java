@@ -125,7 +125,9 @@ public class BucketEjb {
             LabEventType bucketEventType = bucketDef.getBucketEventType();
 
             for (LabVessel currVessel : bucketVessels) {
-                listOfNewEntries.add(bucket.addEntry(pdo, currVessel, entryType, workflow));
+                if (!currVessel.checkCurrentBucketStatus(pdo, bucketDef.getName(), BucketEntry.Status.Active)) {
+                    listOfNewEntries.add(bucket.addEntry(pdo, currVessel, entryType, workflow));
+                }
             }
             labEventFactory.buildFromBatchRequests(listOfNewEntries, operator, null, eventLocation, programName,
                     bucketEventType);
@@ -418,7 +420,7 @@ public class BucketEjb {
     }
 
 
-    Collection<BucketEntry> applyBucketCriteria(List<LabVessel> vessels, ProductOrder productOrder, String username) {
+    public Collection<BucketEntry> applyBucketCriteria(List<LabVessel> vessels, ProductOrder productOrder, String username) {
         Collection<BucketEntry> bucketEntries = new ArrayList<>(vessels.size());
         WorkflowConfig workflowConfig = workflowLoader.load();
         List<Product> possibleProducts = new ArrayList<>();

@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -11,8 +12,10 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeD
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
@@ -26,8 +29,10 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
+import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -228,5 +233,53 @@ public class LabBatchEjbStandardTest extends Arquillian {
         jiraIssue = jiraService.getIssue(testFind.getJiraTicket().getTicketName());
 
         Assert.assertEquals(jiraIssue.getSummary(), nameForBatch);
+    }
+
+    @Test
+    public void testCreateFCTLabBatch() throws Exception {
+        //Create FCT lab batch
+        List<LabBatch.VesselToLanesInfo> laneInfos = new ArrayList<>();
+        VesselPosition[] hiseq4000VesselPositions =
+                IlluminaFlowcell.FlowcellType.HiSeq4000Flowcell.getVesselGeometry().getVesselPositions();
+        List<VesselPosition> vesselPositionList = Arrays.asList(hiseq4000VesselPositions);
+        BarcodedTube barcodedTube = mapBarcodeToTube.entrySet().iterator().next().getValue();
+        LabBatch.VesselToLanesInfo vesselToLanesInfo =
+                new LabBatch.VesselToLanesInfo(vesselPositionList, BigDecimal.valueOf(13.11f), barcodedTube);
+        laneInfos.add(vesselToLanesInfo);
+        LabBatch fctLabBatch = new LabBatch("Test FCT batch name", laneInfos,
+                LabBatch.LabBatchType.FCT, IlluminaFlowcell.FlowcellType.HiSeq4000Flowcell);
+        fctLabBatch.setBatchDescription(fctLabBatch.getBatchName());
+        labBatchEJB.createLabBatch(fctLabBatch, "jowalsh", CreateFields.IssueType.FLOWCELL,
+                CreateFields.ProjectType.FCT_PROJECT);
+
+        labBatchDao.flush();
+        labBatchDao.clear();
+
+        final String batchName = fctLabBatch.getBatchName();
+
+        LabBatch testFind = labBatchDao.findByName(batchName);
+
+        JiraIssue jiraIssue = jiraService.getIssue(testFind.getJiraTicket().getTicketName());
+
+        System.out.println("FCT Jira ticket ID is... " + testFind.getJiraTicket().getTicketName());
+
+        Object laneInfoValue = jiraIssue.getField(LabBatch.TicketFields.LANE_INFO.getName());
+        Assert.assertNotNull(laneInfoValue);
+        String laneInfo = (String) laneInfoValue;
+        String expectedLaneInfo = "||Lane||Loading Vessel||Loading Concentration||\n"
+                                  + "|LANE1|R111111SM-423|13.109999656677246|\n"
+                                  + "|LANE2|R111111SM-423|13.109999656677246|\n"
+                                  + "|LANE3|R111111SM-423|13.109999656677246|\n"
+                                  + "|LANE4|R111111SM-423|13.109999656677246|\n"
+                                  + "|LANE5|R111111SM-423|13.109999656677246|\n"
+                                  + "|LANE6|R111111SM-423|13.109999656677246|\n"
+                                  + "|LANE7|R111111SM-423|13.109999656677246|\n"
+                                  + "|LANE8|R111111SM-423|13.109999656677246|\n";
+        Assert.assertEquals(laneInfo, expectedLaneInfo);
+        Assert.assertNotNull(testFind);
+        Assert.assertNotNull(testFind.getJiraTicket());
+        Assert.assertNotNull(testFind.getJiraTicket().getTicketName());
+        Assert.assertNotNull(testFind.getStartingBatchLabVessels());
+        Assert.assertEquals(testFind.getBatchName(), testFind.getJiraTicket().getTicketName());
     }
 }

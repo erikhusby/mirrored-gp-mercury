@@ -10,6 +10,8 @@ import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 public class CrspPipelineUtils {
@@ -52,17 +54,34 @@ public class CrspPipelineUtils {
     }
 
     /**
+     * The clinical pipeline requires a product part number, but controls are not associated with PDOs, so derive
+     * the product from the bait.
+     */
+    private Map<String, String> mapBaitToProductPartNumber = new HashMap<String, String>() {{
+        put("Buick_v6_0_2014", "P-EX-0011");
+        put("whole_exome_agilent_1.1_refseq_plus_3_boosters", "P-CLA-0001");
+        put("whole_exome_illumina_coding_v1", "P-CLA-0003");
+    }};
+
+    /**
      * Overrides various fields with CRSP-specific values
      */
     public void setFieldsForCrsp(
             LibraryBean libraryBean,
-            SampleData sampleData) {
+            SampleData sampleData,
+            String bait) {
         throwExceptionIfInProductionAndSampleIsNotABSPSample(sampleData.getSampleId());
         setBuickVisitAndCollectionDate(libraryBean, sampleData);
 
         libraryBean.setLsid(getCrspLSIDForBSPSampleId(sampleData.getSampleId()));
         libraryBean.setRootSample(libraryBean.getSampleId());
         libraryBean.setTestType(LibraryBean.CRSP_SOMATIC_TEST_TYPE);
+
+        if (Boolean.TRUE.equals(libraryBean.isPositiveControl())) {
+            if (bait != null) {
+                libraryBean.setProductPartNumber(mapBaitToProductPartNumber.get(bait));
+            }
+        }
     }
 
     private void setBuickVisitAndCollectionDate(LibraryBean libraryBean, SampleData sampleData) {
