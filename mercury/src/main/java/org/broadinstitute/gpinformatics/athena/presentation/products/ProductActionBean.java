@@ -49,6 +49,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -543,6 +544,12 @@ public class ProductActionBean extends CoreActionBean {
      */
     public Collection<DisplayableItem> getControlsProjects() {
         List<ResearchProject> researchProjects = researchProjectDao.findLikeTitle("Control");
+        Collections.sort(researchProjects, new Comparator<ResearchProject>() {
+            @Override
+            public int compare(ResearchProject o1, ResearchProject o2) {
+                return o1.getJiraTicketKey().compareTo(o2.getJiraTicketKey());
+            }
+        });
         Collection<DisplayableItem> displayableItems = new ArrayList<>(researchProjects.size());
 
         for (BusinessObject item : researchProjects) {

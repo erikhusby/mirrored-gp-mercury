@@ -153,18 +153,10 @@ public class ResearchProjectDao extends GenericDao {
      *
      * @param searchTerm The term to search on. (case insensitive)
      *
-     * @return A list of research projects that matches the search term, ordered by JIRA ticket ID.
+     * @return A list of research projects that matches the search term by title.
      */
-    public List<ResearchProject> findLikeTitle(final String searchTerm) {
-        return findAll(ResearchProject.class, new GenericDaoCallback<ResearchProject>() {
-            @Override
-            public void callback(CriteriaQuery<ResearchProject> criteriaQuery, Root<ResearchProject> root) {
-                CriteriaBuilder criteriaBuilder = getCriteriaBuilder();
-                criteriaQuery.where(criteriaBuilder.like(criteriaBuilder.lower(root.get(ResearchProject_.title)),
-                        '%' + searchTerm.toLowerCase() + '%'));
-                criteriaQuery.orderBy(criteriaBuilder.asc(root.get(ResearchProject_.jiraTicketKey)));
-            }
-        });
+    public List<ResearchProject> findLikeTitle(String searchTerm) {
+        return findListWithWildcard(ResearchProject.class, searchTerm, true, ResearchProject_.title);
     }
 
     public List<ResearchProject> findByJiraTicketKeys(List<String> jiraTicketKeys) {
