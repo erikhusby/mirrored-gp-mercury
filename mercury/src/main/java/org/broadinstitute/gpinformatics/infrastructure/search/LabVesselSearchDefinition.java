@@ -820,17 +820,17 @@ public class LabVesselSearchDefinition {
         SearchTerm searchTerm = new SearchTerm();
         searchTerm.setName("Mercury Sample ID");
         searchTerm.setIsExcludedFromResultColumns(Boolean.TRUE);
-        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
-            @Override
-            public List<String> evaluate(Object entity, SearchContext context) {
-                List<String> values = new ArrayList<String>();
-                LabVessel labVessel = (LabVessel) entity;
-                for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
-                    values.add(sampleInstanceV2.getNearestMercurySampleName());
-                }
-                return values;
-            }
-        });
+//        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+//            @Override
+//            public List<String> evaluate(Object entity, SearchContext context) {
+//                List<String> values = new ArrayList<String>();
+//                LabVessel labVessel = (LabVessel) entity;
+//                for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+//                    values.add(sampleInstanceV2.getNearestMercurySampleName());
+//                }
+//                return values;
+//            }
+//        });
         List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
         SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
         criteriaPath.setCriteria(Arrays.asList("mercurySample", "mercurySamples"));

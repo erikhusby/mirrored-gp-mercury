@@ -1096,7 +1096,7 @@ public class SearchInstance implements Serializable {
             }
         }
         if (searchInstanceList == null) {
-            throw new RuntimeException("No search instances for " + type);
+            throw new RuntimeException("No saved search instances available for type " + type);
         }
 
         SearchInstance searchInstance = null;
@@ -1107,7 +1107,7 @@ public class SearchInstance implements Serializable {
             }
         }
         if (searchInstance == null) {
-            throw new RuntimeException("No search " + searchName);
+            throw new RuntimeException("No saved search instance named '" + searchName + "' is available");
         }
         searchInstance.establishRelationships(configurableSearchDef);
         searchInstance.postLoad();
