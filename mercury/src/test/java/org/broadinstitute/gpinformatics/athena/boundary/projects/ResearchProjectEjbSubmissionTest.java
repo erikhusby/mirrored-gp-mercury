@@ -267,9 +267,9 @@ public class ResearchProjectEjbSubmissionTest {
         SubmissionTracker submissionTrackerResult1 = getSubmissionTracker(submissionDto);
 
         Map<BassDTO.BassResultColumn, String> bassInfo2 = getBassResultMap();
-        bassInfo.put(BassDTO.BassResultColumn.file_type, getFileTypeValue(BassFileType.BAM));
-        bassInfo.put(BassDTO.BassResultColumn.path, "/a/file.bam");
-        SubmissionDto submissionDto2 = getSubmissionDto(dummyProductOrder, bassInfo);
+        bassInfo2.put(BassDTO.BassResultColumn.file_type, getFileTypeValue(BassFileType.BAM));
+        bassInfo2.put(BassDTO.BassResultColumn.path, "/a/file.bam");
+        SubmissionDto submissionDto2 = getSubmissionDto(dummyProductOrder, bassInfo2);
         SubmissionTracker submissionTrackerResult2 = getSubmissionTracker(submissionDto2);
 
         Mockito.when(submissionTrackerDao
@@ -309,9 +309,9 @@ public class ResearchProjectEjbSubmissionTest {
         SubmissionTracker submissionTrackerResult1 = getSubmissionTracker(submissionDto);
 
         Map<BassDTO.BassResultColumn, String> bassInfo2 = getBassResultMap();
-        bassInfo.put(BassDTO.BassResultColumn.file_type, getFileTypeValue(BassFileType.BAM));
-        bassInfo.put(BassDTO.BassResultColumn.path, "/a/file.bam");
-        SubmissionDto submissionDto2 = getSubmissionDto(dummyProductOrder, bassInfo);
+        bassInfo2.put(BassDTO.BassResultColumn.file_type, getFileTypeValue(BassFileType.BAM));
+        bassInfo2.put(BassDTO.BassResultColumn.path, "/a/file.bam");
+        SubmissionDto submissionDto2 = getSubmissionDto(dummyProductOrder, bassInfo2);
         SubmissionTracker submissionTrackerResult2 = getSubmissionTracker(submissionDto2);
 
         Mockito.when(submissionTrackerDao
