@@ -94,7 +94,9 @@ import org.broadinstitute.gpinformatics.infrastructure.security.Role;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
 import org.broadinstitute.gpinformatics.mercury.boundary.BucketException;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.BSPLookupException;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean;
@@ -190,6 +192,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @Inject
     private ProductOrderSampleDao productOrderSampleDao;
+
+    @Inject
+    private MercurySampleDao mercurySampleDao;
 
     @Inject
     private ResearchProjectDao researchProjectDao;
@@ -1894,10 +1899,18 @@ public class ProductOrderActionBean extends CoreActionBean {
         return sampleList;
     }
 
-    private static List<ProductOrderSample> stringToSampleList(String sampleListText) {
+    private List<ProductOrderSample> stringToSampleList(String sampleListText) {
         List<ProductOrderSample> samples = new ArrayList<>();
-        for (String sampleName : SearchActionBean.cleanInputStringForSamples(sampleListText)) {
-            samples.add(new ProductOrderSample(sampleName));
+        List<String> sampleIds = SearchActionBean.cleanInputStringForSamples(sampleListText);
+        Map<String, MercurySample> mapIdToMercurySample = mercurySampleDao.findMapIdToMercurySample(sampleIds);
+
+        for (String sampleName : sampleIds) {
+            ProductOrderSample productOrderSample = new ProductOrderSample(sampleName);
+            samples.add(productOrderSample);
+            MercurySample mercurySample = mapIdToMercurySample.get(sampleName);
+            if (mercurySample != null) {
+                mercurySample.addProductOrderSample(productOrderSample);
+            }
         }
 
         return samples;
@@ -1906,6 +1919,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private List<ProductOrderSample> stringToSampleListExisting(String sampleListText) {
         List<ProductOrderSample> samples = new ArrayList<>();
         List<String> sampleNames = SearchActionBean.cleanInputStringForSamples(sampleListText);
+        Map<String, MercurySample> mapIdToMercurySample = mercurySampleDao.findMapIdToMercurySample(sampleNames);
 
         // Allow random access to existing ProductOrderSamples.  A sample can appear more than once.
         Map<String, List<ProductOrderSample>> mapIdToSampleList = new HashMap<>();
@@ -1925,6 +1939,10 @@ public class ProductOrderActionBean extends CoreActionBean {
 
             if (productOrderSamples == null || productOrderSamples.isEmpty()) {
                 productOrderSample = new ProductOrderSample(sampleName);
+                MercurySample mercurySample = mapIdToMercurySample.get(sampleName);
+                if (mercurySample != null) {
+                    mercurySample.addProductOrderSample(productOrderSample);
+                }
             } else {
                 productOrderSample = productOrderSamples.remove(0);
             }
