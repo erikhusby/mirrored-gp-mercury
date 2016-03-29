@@ -2197,18 +2197,6 @@ nodePrinter.print(webapp)
                             <wsdlDirectory>${basedir}/src/main/wsdl/squid</wsdlDirectory>
                         </configuration>
                     </execution>
-                    <!--<execution>-->
-                        <!--<id>sap-wsimport</id>-->
-                        <!--<goals>-->
-                            <!--<goal>wsimport</goal>-->
-                        <!--</goals>-->
-                        <!--<configuration>-->
-                            <!--&lt;!&ndash; The name of your generated source package &ndash;&gt;-->
-                            <!--<packageName>org.broadinstitute.gpinformatics.infrastructure.sap</packageName>-->
-                            <!--<wsdlDirectory>${basedir}/src/main/wsdl/sap</wsdlDirectory>-->
-                        <!--</configuration>-->
-                    <!--</execution>-->
-
                 </executions>
 
 
