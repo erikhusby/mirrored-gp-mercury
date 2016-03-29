@@ -199,8 +199,8 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
         TubeFormation rearrayedDenatureRack = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
         rearrayedDenatureRack.addRackOfTubes(new RackOfTubes("denatureRearray", RackOfTubes.RackType.Matrix96));
         HiSeq4000FlowcellEntityBuilder flowcell4000EntityBuilder =
-                runHiSeq4000FlowcellProcess(rearrayedDenatureRack, BARCODE_SUFFIX + "ADXX",
-                        fctBatchHiSeq4000, null);
+                runHiSeq4000FlowcellProcess(rearrayedDenatureRack, null, BARCODE_SUFFIX + "ADXX",
+                        fctBatchHiSeq4000, null, HiSeq4000FlowcellEntityBuilder.FCTCreationPoint.DENATURE);
         dilutionTube2500 = flowcellEntityBuilder.getDilutionRack().getContainerRole().getVesselAtPosition(
                 VesselPosition.A01);
 

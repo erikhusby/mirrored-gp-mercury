@@ -1381,4 +1381,47 @@ public class LabEventFixupTest extends Arquillian {
         utx.commit();
     }
 
+    @Test(enabled = false)
+    public void fixupGplim4046() throws Exception {
+        // Deletes shearing transfer event in order to resend a corrected bettalims message with an added rework tube.
+        userBean.loginOSUser();
+        utx.begin();
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, 1222203L);
+        for (LabEventReagent labEventReagent : labEvent.getLabEventReagents()) {
+            System.out.println("Removing labEventReagent " + labEventReagent.getLabEvent().getLabEventId() +
+                               ", " + labEventReagent.getReagent().getName());
+            labEventDao.remove(labEventReagent);
+        }
+        labEvent.getLabEventReagents().clear();
+        Assert.assertTrue(CollectionUtils.isEmpty(labEvent.getCherryPickTransfers()));
+        for (SectionTransfer sectionTransfer : labEvent.getSectionTransfers()) {
+            System.out.println("Removing sectionTransfer " + sectionTransfer.getVesselTransferId());
+            labEventDao.remove(sectionTransfer);
+        }
+        labEvent.getSectionTransfers().clear();
+        Assert.assertTrue(CollectionUtils.isEmpty(labEvent.getVesselToSectionTransfers()));
+        Assert.assertTrue(CollectionUtils.isEmpty(labEvent.getVesselToVesselTransfers()));
+        System.out.println("Removing " + labEvent.getLabEventType() + " " + labEvent.getLabEventId());
+        labEventDao.remove(labEvent);
+        labEventDao.persist(new FixupCommentary("GPLIM-4046 delete shearing transfer event."));
+        labEventDao.flush();
+        utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void fixupSupport1602() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        long[] ids = {1242543L, 1242544L, 1242545L, 1242546L, 1242547L};
+        for (long id : ids) {
+            LabEvent labEvent = labEventDao.findById(LabEvent.class, id);
+            System.out.println("Deleting lab event " + labEvent.getLabEventId());
+            labEventDao.remove(labEvent);
+        }
+
+        labEventDao.persist(new FixupCommentary("SUPPORT-1602 delete Infinium events"));
+        labEventDao.flush();
+        utx.commit();
+    }
 }

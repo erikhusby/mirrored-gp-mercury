@@ -1024,6 +1024,9 @@ public class LabEventFactory implements Serializable {
             if (sourceContainer == null) {
                 throw new RuntimeException("Failed to find source " + plateTransferEvent.getSourcePlate().getBarcode());
             }
+            if (sourceContainer.getContainerRole() == null) {
+                throw new RuntimeException(plateTransferEvent.getSourcePlate().getBarcode() + " is not a container");
+            }
         } else {
             ancillarySourceLabVessel = mapBarcodeToVessel.get(plateTransferEvent.getSourcePlate().getBarcode());
         }
@@ -1034,6 +1037,9 @@ public class LabEventFactory implements Serializable {
             destinationContainer = mapBarcodeToVessel.get(plateTransferEvent.getPlate().getBarcode());
             if (destinationContainer == null) {
                 throw new RuntimeException("Failed to find destination " + plateTransferEvent.getPlate().getBarcode());
+            }
+            if (destinationContainer.getContainerRole() == null) {
+                throw new RuntimeException(plateTransferEvent.getPlate().getBarcode() + " is not a container");
             }
         } else {
             ancillaryDestinationLabVessel = mapBarcodeToVessel.get(plateTransferEvent.getPlate().getBarcode());

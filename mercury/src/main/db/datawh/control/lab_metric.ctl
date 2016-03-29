@@ -4,20 +4,18 @@ REPLACE INTO TABLE im_lab_metric
 FIELDS TERMINATED BY "," OPTIONALLY ENCLOSED BY '"'
 TRAILING NULLCOLS
 (
-  line_number,
-  etl_date DATE "YYYYMMDDHH24MISS",
-  is_delete,
-  lab_metric_id,
-  quant_type,
-  quant_units,
-  quant_value,
-  run_name,
-  run_date DATE "YYYYMMDDHH24MISS",
-  lab_vessel_id,
-  vessel_barcode,
-  rack_position,
-  decision,
-  decision_date DATE "YYYYMMDDHH24MISS",
-  decider,
-  override_reason
+ line_number,
+ etl_date DATE "YYYYMMDDHH24MISS",
+ is_delete,
+ lab_metric_id,
+ sample_name,
+ lab_vessel_id,
+ product_order_id,
+ batch_name,
+ quant_type,
+ quant_units,
+ quant_value,
+ run_name,
+ run_date DATE "YYYYMMDDHH24MISS",
+ vessel_position
 )

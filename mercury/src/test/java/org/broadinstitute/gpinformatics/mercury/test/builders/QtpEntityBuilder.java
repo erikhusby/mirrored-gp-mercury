@@ -251,4 +251,7 @@ public class QtpEntityBuilder {
         return denatureRack;
     }
 
+    public TubeFormation getNormalizationRack() {
+        return normalizationRack;
+    }
 }
