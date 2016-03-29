@@ -140,8 +140,8 @@ public class ResearchProjectEjbSubmissionTest {
     @DataProvider(name = "fileTypeDataProvider")
     public Iterator<Object[]> fileTypeDataProvider() {
         List<Object[]> testCases = new ArrayList<>();
-        testCases.add(new Object[]{BassFileType.BAM, BassFileType.BAM,
-                String.format("[{sampleName = %s; fileType = BAM; version = 1}]", TEST_SAMPLE_1)});
+        String exceptionMessage = String.format("[{sampleName = %s; fileType = BAM; version = 1}]", TEST_SAMPLE_1);
+        testCases.add(new Object[]{BassFileType.BAM, BassFileType.BAM, exceptionMessage});
         testCases.add(new Object[]{BassFileType.BAM, BassFileType.PICARD, ""});
         return testCases.iterator();
     }
@@ -181,6 +181,76 @@ public class ResearchProjectEjbSubmissionTest {
         }
 
         verifySubmissionTrackerMock(submissionTrackerDao);
+    }
+
+    public void testFileTypeVariationNoTrackerFileType() throws Exception {
+        String bassFileType = BassFileType.BAM.getBassValue();
+
+        // data setup for dao result.
+        ProductOrder dummyProductOrder = ProductOrderTestFactory.createDummyProductOrder(1, PDO_99999);
+        SubmissionTrackerDao submissionTrackerDao = Mockito.mock(SubmissionTrackerDao.class);
+
+        Map<BassDTO.BassResultColumn, String> bassInfo = getBassResultMap();
+        bassInfo.put(BassDTO.BassResultColumn.file_type, null);
+        SubmissionDto submissionDto = getSubmissionDto(dummyProductOrder, bassInfo);
+        SubmissionTracker submissionTracker =
+                new SubmissionTracker(submissionDto.getSampleName(), null, String.valueOf(submissionDto.getVersion()));
+
+        Mockito.when(submissionTrackerDao
+                .findSubmissionTrackers(Mockito.anyString(), Mockito.anyCollectionOf(SubmissionDto.class)))
+                .thenReturn(Collections.singletonList(submissionTracker));
+
+        // data setup for new submission request.
+        Map<BassDTO.BassResultColumn, String> submissionBassInfo = getBassResultMap();
+        submissionBassInfo.put(BassDTO.BassResultColumn.file_type, bassFileType);
+        SubmissionDto newSubmissionDto = getSubmissionDto(dummyProductOrder, submissionBassInfo);
+        ResearchProjectEjb researchProjectEjb = getResearchProjectEjb(submissionTrackerDao);
+
+        try {
+            researchProjectEjb.validateSubmissionDto(dummyProductOrder.getResearchProject().getJiraTicketKey(),
+                    Collections.singletonList(newSubmissionDto));
+        } catch (Exception e) {
+            Assert.assertTrue(e.getMessage().contains("Null value not allowed."));
+        }
+
+        verifySubmissionTrackerMock(submissionTrackerDao);
+    }
+
+    public void testFileTypeVariationNoBassDTOFileType() throws Exception {
+        // data setup for dao result.
+        ProductOrder dummyProductOrder = ProductOrderTestFactory.createDummyProductOrder(1, PDO_99999);
+        SubmissionTrackerDao submissionTrackerDao = Mockito.mock(SubmissionTrackerDao.class);
+
+        Map<BassDTO.BassResultColumn, String> bassInfo = getBassResultMap();
+        bassInfo.put(BassDTO.BassResultColumn.file_type, BassFileType.BAM.getBassValue());
+        SubmissionDto submissionDto = getSubmissionDto(dummyProductOrder, bassInfo);
+        SubmissionTracker submissionTracker =
+                new SubmissionTracker(submissionDto.getSampleName(), BassFileType.BAM,
+                        String.valueOf(submissionDto.getVersion()));
+
+        Mockito.when(submissionTrackerDao
+                .findSubmissionTrackers(Mockito.anyString(), Mockito.anyCollectionOf(SubmissionDto.class)))
+                .thenReturn(Collections.singletonList(submissionTracker));
+
+        // data setup for submission request.
+        Map<BassDTO.BassResultColumn, String> submissionBassInfo = getBassResultMap();
+        submissionBassInfo.put(BassDTO.BassResultColumn.file_type, null);
+        SubmissionDto newSubmissionDto = getSubmissionDto(dummyProductOrder, submissionBassInfo);
+        ResearchProjectEjb researchProjectEjb = getResearchProjectEjb(submissionTrackerDao);
+
+        try {
+            researchProjectEjb.validateSubmissionDto(dummyProductOrder.getResearchProject().getJiraTicketKey(),
+                    Collections.singletonList(newSubmissionDto));
+        } catch (IllegalArgumentException e) {
+            Assert.assertTrue(e.getMessage().contains("No enum constant for"));
+        }
+    }
+
+    private String getFileTypeValue(BassFileType trackerFileType) {
+        if (trackerFileType != null) {
+            return trackerFileType.getBassValue();
+        }
+        return null;
     }
 
     public void testMultipleResultsFromDaoAlreadySubmitted()
@@ -263,76 +333,6 @@ public class ResearchProjectEjbSubmissionTest {
         }
 
         verifySubmissionTrackerMock(submissionTrackerDao);
-    }
-
-    public void testFileTypeVariationNoTrackerFileType() throws Exception {
-        String bassFileType = BassFileType.BAM.getBassValue();
-
-        // data setup for dao result.
-        ProductOrder dummyProductOrder = ProductOrderTestFactory.createDummyProductOrder(1, PDO_99999);
-        SubmissionTrackerDao submissionTrackerDao = Mockito.mock(SubmissionTrackerDao.class);
-
-        Map<BassDTO.BassResultColumn, String> bassInfo = getBassResultMap();
-        bassInfo.put(BassDTO.BassResultColumn.file_type, null);
-        SubmissionDto submissionDto = getSubmissionDto(dummyProductOrder, bassInfo);
-        SubmissionTracker submissionTracker =
-                new SubmissionTracker(submissionDto.getSampleName(), null, String.valueOf(submissionDto.getVersion()));
-
-        Mockito.when(submissionTrackerDao
-                .findSubmissionTrackers(Mockito.anyString(), Mockito.anyCollectionOf(SubmissionDto.class)))
-                .thenReturn(Collections.singletonList(submissionTracker));
-
-        // data setup for new submission request.
-        Map<BassDTO.BassResultColumn, String> submissionBassInfo = getBassResultMap();
-        submissionBassInfo.put(BassDTO.BassResultColumn.file_type, bassFileType);
-        SubmissionDto newSubmissionDto = getSubmissionDto(dummyProductOrder, submissionBassInfo);
-        ResearchProjectEjb researchProjectEjb = getResearchProjectEjb(submissionTrackerDao);
-
-        try {
-            researchProjectEjb.validateSubmissionDto(dummyProductOrder.getResearchProject().getJiraTicketKey(),
-                    Collections.singletonList(newSubmissionDto));
-        } catch (Exception e) {
-            Assert.assertTrue(e.getMessage().contains("Null value not allowed."));
-        }
-
-        verifySubmissionTrackerMock(submissionTrackerDao);
-    }
-
-    public void testFileTypeVariationNoBassDTOFileType() throws Exception {
-        // data setup for dao result.
-        ProductOrder dummyProductOrder = ProductOrderTestFactory.createDummyProductOrder(1, PDO_99999);
-        SubmissionTrackerDao submissionTrackerDao = Mockito.mock(SubmissionTrackerDao.class);
-
-        Map<BassDTO.BassResultColumn, String> bassInfo = getBassResultMap();
-        bassInfo.put(BassDTO.BassResultColumn.file_type, BassFileType.BAM.getBassValue());
-        SubmissionDto submissionDto = getSubmissionDto(dummyProductOrder, bassInfo);
-        SubmissionTracker submissionTracker =
-                new SubmissionTracker(submissionDto.getSampleName(), BassFileType.BAM,
-                        String.valueOf(submissionDto.getVersion()));
-
-        Mockito.when(submissionTrackerDao
-                .findSubmissionTrackers(Mockito.anyString(), Mockito.anyCollectionOf(SubmissionDto.class)))
-                .thenReturn(Collections.singletonList(submissionTracker));
-
-        // data setup for submission request.
-        Map<BassDTO.BassResultColumn, String> submissionBassInfo = getBassResultMap();
-        submissionBassInfo.put(BassDTO.BassResultColumn.file_type, null);
-        SubmissionDto newSubmissionDto = getSubmissionDto(dummyProductOrder, submissionBassInfo);
-        ResearchProjectEjb researchProjectEjb = getResearchProjectEjb(submissionTrackerDao);
-
-        try {
-            researchProjectEjb.validateSubmissionDto(dummyProductOrder.getResearchProject().getJiraTicketKey(),
-                    Collections.singletonList(newSubmissionDto));
-        } catch (IllegalArgumentException e) {
-            Assert.assertTrue(e.getMessage().contains("No enum constant for"));
-        }
-    }
-
-    private String getFileTypeValue(BassFileType trackerFileType) {
-        if (trackerFileType != null) {
-            return trackerFileType.getBassValue();
-        }
-        return null;
     }
 
     public void testValidateSubmissionsDtoDiffersTupleEqual() throws Exception {
