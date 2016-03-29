@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.GenericReagentDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventReagent;
@@ -43,9 +44,11 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
@@ -1039,6 +1042,59 @@ public class ReagentFixupTest extends Arquillian {
                 "GPLIM-3849 add missing EEW reagents using the Bravo log records."));
         genericReagentDao.flush();
         utx.commit();
+    }
+
+@Test(enabled = false)
+    public void gplim4063EmergeBaitSpecifyColumn() throws Exception {
+        userBean.loginOSUser();
+        long firstHybBaitEventId = 1220422L;
+        long secondHybBaitEventId = 1220756L;
+
+        LabEvent firstBaitPickEvent = genericReagentDao.findById(LabEvent.class, firstHybBaitEventId);
+        Assert.assertNotNull(firstBaitPickEvent);
+
+        LabEvent secondBaitPickEvent = genericReagentDao.findById(LabEvent.class, secondHybBaitEventId);
+        Assert.assertNotNull(secondBaitPickEvent);
+
+        List<LabEvent> labEvents = Arrays.asList(firstBaitPickEvent, secondBaitPickEvent);
+
+        //Set well metadata for non-emerge bait reagent to every other well except A1
+        for (LabEvent labEvent : labEvents) {
+            Set<LabEventReagent> reagents = labEvent.getLabEventReagents();
+            Assert.assertTrue(reagents.size() == 1);
+            LabEventReagent labEventReagent = reagents.iterator().next();
+            Assert.assertEquals(labEventReagent.getReagent().getLot(), "16A07A0006");
+            Assert.assertTrue(labEventReagent.getMetadata().isEmpty());
+            Set<Metadata> nonEmergeMetadata = new HashSet<>();
+            for (String well : Arrays.asList("A3", "A5", "A7", "A9", "A11")) {
+                nonEmergeMetadata.add(new Metadata(Metadata.Key.BAIT_WELL, well));
+                System.out.println("Created Metadata key " + Metadata.Key.BAIT_WELL.getDisplayName() +
+                                   " value " + well + " for event " + labEvent.getLabEventId());
+            }
+            labEventReagent.setMetadata(nonEmergeMetadata);
+        }
+
+        //Create new emerge bait reagent
+        final SimpleDateFormat expDateFormat = new SimpleDateFormat("MM-dd-yyyy");
+        Date expiration = expDateFormat.parse("11-01-2016");
+        String lot = "20024869";
+        String type = "Rapid Capture Kit Box 4 (Bait)";
+
+        Assert.assertNull(genericReagentDao.findByReagentNameLotExpiration(type, lot, expiration));
+        Reagent emergeReagent = new GenericReagent(type, lot, expiration);
+        System.out.println("Created reagent " + type + " lot " + lot + " expiration " + expiration);
+
+        for (LabEvent labEvent: labEvents) {
+            Set<Metadata> metadataSet = new HashSet<>();
+            Metadata metadata = new Metadata(Metadata.Key.BAIT_WELL, "A1");
+            metadataSet.add(metadata);
+            labEvent.addReagentMetadata(emergeReagent, metadataSet);
+            System.out.println("Reagent " + emergeReagent.getReagentId() +
+                               " added to event " + labEvent.getLabEventId());
+        }
+
+        genericReagentDao.persist(new FixupCommentary("GPLIM-4063 fixup create emerge bait reagent and specify columns"));
+        genericReagentDao.flush();
     }
 
 }
