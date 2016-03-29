@@ -1710,7 +1710,7 @@ nodePrinter.print(webapp)
         <dependency>
             <groupId>org.broadinstitute.sapservices</groupId>
             <artifactId>SAPServices</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>1.0-RC-SNAPSHOT</version>
         </dependency>
 
     </dependencies>
