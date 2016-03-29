@@ -9,9 +9,6 @@ import javax.enterprise.inject.New;
 import javax.inject.Inject;
 import javax.ws.rs.Produces;
 
-/**
- * TODO scottmat fill in javadoc!!!
- */
 public class SapIntegrationClientProducer {
 
     private Deployment deployment;

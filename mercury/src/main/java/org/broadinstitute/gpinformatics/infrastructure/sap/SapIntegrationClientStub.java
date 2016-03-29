@@ -5,9 +5,6 @@ import org.broadinstitute.sapservices.SapIntegrationClient;
 
 import javax.enterprise.inject.Alternative;
 
-/**
- * TODO scottmat fill in javadoc!!!
- */
 @Stub
 @Alternative
 public class SapIntegrationClientStub implements SapIntegrationClient {

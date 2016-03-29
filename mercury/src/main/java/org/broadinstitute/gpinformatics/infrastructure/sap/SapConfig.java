@@ -9,9 +9,6 @@ import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.io.Serializable;
 
-/**
- * TODO scottmat fill in javadoc!!!
- */
 @SuppressWarnings("UnusedDeclaration")
 @ConfigKey("sap")
 public class SapConfig extends AbstractConfig implements LoginAndPassword, Serializable {
