@@ -109,7 +109,11 @@ public class SubmissionTracker {
         return id;
     }
 
+    // todo: GPLIM-4083 don't set default value.
     public BassFileType getFileType() {
+        if (fileType != null) {
+            fileType = BassFileType.BAM;
+        }
         return fileType;
     }
 

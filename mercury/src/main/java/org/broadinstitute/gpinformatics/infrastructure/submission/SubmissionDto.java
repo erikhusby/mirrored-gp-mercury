@@ -43,7 +43,11 @@ public class SubmissionDto {
     }
 
     public String getUuid() {
-        return statusDetailBean.getUuid();
+        String result = "";
+        if (statusDetailBean != null) {
+            result = statusDetailBean.getUuid();
+        }
+        return result;
     }
 
     public BassDTO getBassDTO() {

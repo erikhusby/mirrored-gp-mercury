@@ -49,7 +49,7 @@ public class SubmissionTrackerDao extends GenericDao {
             predicates.add(submissionTrackerCriteria.and(
                     submissionTrackerCriteria.equal(root.get(SubmissionTracker_.submittedSampleName), submissionDto.getSampleName()),
                     submissionTrackerCriteria.equal(root.get(SubmissionTracker_.fileType),submissionDto.getFileTypeEnum()),
-                    submissionTrackerCriteria.equal(root.get(SubmissionTracker_.version), submissionDto.getVersion()),
+//                    submissionTrackerCriteria.equal(root.get(SubmissionTracker_.version), submissionDto.getVersion()),
                     submissionTrackerCriteria.equal(researchProjectJoin.get(ResearchProject_.jiraTicketKey), researchProjectKey)
             ));
         }

@@ -47,7 +47,11 @@ public class BassDTO {
         this.columnToValue = columnToValue;
     }
 
-// todo: should be in interface?
+    public Map<BassResultColumn, String> getColumnToValue() {
+        return columnToValue;
+    }
+
+    // todo: should be in interface?
     public SubmissionTuple getTuple() {
         return new SubmissionTuple(getSample(), BassFileType.byBassValue(getFileType()), getVersion().toString());
     }

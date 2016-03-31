@@ -364,13 +364,11 @@ public class ResearchProjectEjb {
 
         List<SubmissionTracker> submissionTrackers =
                 submissionTrackerDao.findSubmissionTrackers(researchProjectKey, submissionDtos);
-        if (!submissionTrackers.isEmpty()) {
-            for (SubmissionTracker tracker : submissionTrackers) {
-                SubmissionTuple submittedTuple = tracker.getTuple();
-                if (tuples.contains(submittedTuple)) {
-                    errors.add(submittedTuple.toString());
-                }
-            }
+
+        Set<SubmissionTuple> foundTuples=new HashSet<>();
+        for (SubmissionTracker submissionTracker : submissionTrackers) {
+            errors.add(submissionTracker.getTuple().toString());
+            foundTuples.add(submissionTracker.getTuple());
         }
         if (!errors.isEmpty()) {
             throw new ValidationException(String.format("Some samples have already been submitted: %s", errors));
