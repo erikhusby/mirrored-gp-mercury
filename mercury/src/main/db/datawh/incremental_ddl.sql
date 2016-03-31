@@ -1,49 +1,56 @@
 -------------------------------------------------------
--- https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-3557
--- Create Ancestry ETL
+-- https://gpinfojira.broadinstitute.org/jira/browse/RPT-3131
+-- Mercury QC DM structural changes (Lab_Metric)
 
-DECLARE
-  V_YN CHAR;
-BEGIN
-    SELECT 'Y' INTO V_YN FROM ALL_TABLES WHERE TABLE_NAME = 'LIBRARY_LCSET_SAMPLE_BASE';
-    EXECUTE IMMEDIATE 'DROP TABLE LIBRARY_LCSET_SAMPLE_BASE';
-  EXCEPTION WHEN NO_DATA_FOUND THEN NULL;
-END;
-/
+-- Prior to run:
+-- Create backfill files from PROD release branch - record latest lab_metric_id value in last file (IDs not sequential in file - sort required)
+-- Copy lab_metric.ctl file
 
-CREATE TABLE LIBRARY_LCSET_SAMPLE_BASE(
-  LIBRARY_LABEL VARCHAR2(40) NOT NULL,
-  LIBRARY_ID NUMBER(19) NOT NULL,
-  LIBRARY_TYPE VARCHAR2(255) NOT NULL,
-  LIBRARY_CREATION_DATE DATE NOT NULL,
-  LIBRARY_EVENT_ID NUMBER(19) NOT NULL );
+DROP TABLE im_lab_metric;
 
-CREATE INDEX IDX_LIBRARY_LABEL_SAMPLE
-ON LIBRARY_LCSET_SAMPLE_BASE ( LIBRARY_LABEL, LIBRARY_TYPE );
-
-CREATE INDEX IDX_LIBRARY_ID_SAMPLE
-ON LIBRARY_LCSET_SAMPLE_BASE ( LIBRARY_ID, LIBRARY_TYPE );
-
-CREATE OR REPLACE VIEW LIBRARY_LCSET_SAMPLE
-AS
-  SELECT SB.LIBRARY_LABEL
-       --, SB.LIBRARY_ID
-       , EF.POSITION
-       , EF.LCSET_SAMPLE_NAME AS LCSET_SAMPLE
-       , EF.BATCH_NAME
-       , EF.MOLECULAR_INDEXING_SCHEME AS MOLECULAR_BARCODE
-       , PDO.JIRA_TICKET_KEY AS PRODUCT_ORDER_KEY
-       , EF.SAMPLE_NAME AS PRODUCT_ORDER_SAMPLE
-       , SB.LIBRARY_TYPE
-       , SB.LIBRARY_CREATION_DATE
-       --, SB.LIBRARY_EVENT_ID
-    FROM LIBRARY_LCSET_SAMPLE_BASE SB
-       , EVENT_FACT EF
-       , PRODUCT_ORDER PDO
-   WHERE EF.LAB_EVENT_ID = SB.LIBRARY_EVENT_ID
-     AND EF.LAB_VESSEL_ID = SB.LIBRARY_ID
-     AND PDO.PRODUCT_ORDER_ID(+) = EF.PRODUCT_ORDER_ID
-     AND EF.LCSET_SAMPLE_NAME IS NOT NULL;
+CREATE TABLE im_lab_metric (
+  line_number      NUMERIC(9)  NOT NULL,
+  etl_date         DATE        NOT NULL,
+  is_delete        CHAR(1)     NOT NULL,
+  lab_metric_id    NUMERIC(19) NOT NULL,
+  quant_type       VARCHAR2(255),
+  quant_units      VARCHAR2(255),
+  quant_value      NUMBER(19,2),
+  run_name         VARCHAR2(255),
+  run_date         DATE,
+  lab_vessel_id    NUMERIC(19),
+  vessel_barcode   VARCHAR2(40),
+  rack_position    VARCHAR2(255),
+  decision         VARCHAR2(12),
+  decision_date    DATE,
+  decider          VARCHAR2(255),
+  override_reason  VARCHAR2(255)
+);
 
 
+drop table lab_metric;
 
+CREATE TABLE lab_metric (
+  lab_metric_id    NUMERIC(19) NOT NULL,
+  quant_type       VARCHAR2(255),
+  quant_units      VARCHAR2(255),
+  quant_value      NUMBER(19,2),
+  run_name         VARCHAR2(255),
+  run_date         DATE,
+  lab_vessel_id    NUMERIC(19),
+  vessel_barcode   VARCHAR2(40) NOT NULL,
+  rack_position    VARCHAR2(255),
+  decision         VARCHAR2(12),
+  decision_date    DATE,
+  decider          VARCHAR2(255),
+  override_reason  VARCHAR2(255),
+  etl_date         DATE NOT NULL,
+  constraint PK_LAB_METRIC PRIMARY KEY ( lab_metric_id )
+);
+
+CREATE INDEX lab_metric_vessel_idx1 ON lab_metric (vessel_barcode);
+
+-- After run:
+-- Execute merge_import.sql
+-- Copy backfill files to datawh/prod/new folder
+-- Execute backfill rest call against prod for all id's greater than the one recorded at pre-deploy backfill
