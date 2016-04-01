@@ -433,94 +433,193 @@
     </changeSet>
 
     <changeSet id="GPLIM-4023-1" author="epolk">
-      <createTable schemaName="mercury" tableName="GENOTYPING_CHIP_TYPE">
-	<column name="GENOTYPING_CHIP_TYPE_ID" type="number(19,0)">
+      <createTable schemaName="mercury" tableName="ATTRIBUTE_ARCHETYPE">
+	<column name="archetype_id" type="number(19,0)">
 	  <constraints nullable="false"/>
 	</column>
-	<column name="CHIP_NAME" type="varchar2(255)">
+	<column name="archetype_name" type="varchar2(255)">
 	  <constraints nullable="false"/>
 	</column>
-	<column name="CREATED_DATE" type="timestamp">
+	<column name="attribute_family" type="varchar2(255)">
+	  <constraints nullable="false"/>
+	</column>
+	<column name="created_date" type="timestamp">
+	  <constraints nullable="false"/>
+	</column>
+	<column name="overrides_earlier_versions" type="number(1,0)">
 	  <constraints nullable="false"/>
 	</column>
       </createTable>
-      <addPrimaryKey constraintName="PK_GENOTYPING_CHIP_TYPE" tableName="GENOTYPING_CHIP_TYPE"
-		     columnNames="GENOTYPING_CHIP_TYPE_ID"/>
-      <createIndex unique="true" indexName="UK_GENOTYPING_CHIP_TYPE" tableName="GENOTYPING_CHIP_TYPE" schemaName="mercury">
-	<column name="CHIP_NAME"/>
-	<column name="CREATED_DATE"/>
-      </createIndex>
-      <createSequence sequenceName="SEQ_GENOTYPING_CHIP_TYPE" schemaName="mercury" startValue="1" incrementBy="50"/>
+
+      <addPrimaryKey constraintName="PK_ATTRIBUTE_ARCHETYPE" tableName="ATTRIBUTE_ARCHETYPE"
+		     schemaName="mercury" columnNames="archetype_id"/>
+
+      <addUniqueConstraint constraintName="U_ATTRIBUTE_ARCHETYPE" tableName="ATTRIBUTE_ARCHETYPE"
+			   schemaName="mercury" columnNames="attribute_family, archetype_name, created_date"/>
     </changeSet>
 
     <changeSet id="GPLIM-4023-2" author="epolk">
-      <createTable schemaName="mercury" tableName="GENOTYPING_CHIP_TYPE_AUD">
-	<column name="REV" type="number(19,0)">
+      <createTable schemaName="mercury" tableName="ATTRIBUTE_ARCHETYPE_AUD">
+	<column name="archetype_id" type="number(19,0)">
 	  <constraints nullable="false"/>
 	</column>
-	<column name="REVTYPE" type="number(3,0)">
+	<column name="rev" type="number(19,0)">
 	  <constraints nullable="false"/>
 	</column>
-	<column name="GENOTYPING_CHIP_TYPE_ID" type="number(19,0)">
+	<column name="revtype" type="number(3,0)">
 	  <constraints nullable="false"/>
 	</column>
-	<column name="CHIP_NAME" type="varchar2(255)"/>
-	<column name="CREATED_DATE" type="timestamp"/>
+	<column name="archetype_name" type="varchar2(255)"/>
+	<column name="attribute_family" type="varchar2(255)"/>
+	<column name="created_date" type="timestamp"/>
+	<column name="overrides_earlier_versions" type="number(1,0)"/>
       </createTable>
-      <addPrimaryKey constraintName="PK_GENOTYPING_CHIP_TYPE_AUD" tableName="GENOTYPING_CHIP_TYPE_AUD"
-		     columnNames="REV, GENOTYPING_CHIP_TYPE_ID"/>
-      <createIndex indexName="IX_GENOTYPING_CHIP_TYPE_AUD" tableName="GENOTYPING_CHIP_TYPE_AUD" schemaName="mercury">
-	<column name="GENOTYPING_CHIP_TYPE_ID"/>
+
+      <addPrimaryKey constraintName="PK_ATTRIBUTE_ARCHETYPE_AUD" tableName="ATTRIBUTE_ARCHETYPE_AUD"
+		     schemaName="mercury"  columnNames="rev,archetype_id"/>
+
+      <createIndex indexName="IX_ATTRIBUTE_ARCHETYPE_AUD" tableName="ATTRIBUTE_ARCHETYPE_AUD" schemaName="mercury">
+	<column name="archetype_id"/>
+	<column name="rev"/>
       </createIndex>
+
     </changeSet>
 
     <changeSet id="GPLIM-4023-3" author="epolk">
-      <createTable schemaName="mercury" tableName="GENOTYPING_CHIP_ATTRIBUTE">
-	<column name="GENOTYPING_CHIP_ATTRIBUTE_ID" type="number(19,0)">
+      <createTable schemaName="mercury" tableName="ARCHETYPE_ATTRIBUTE">
+	<column name="attribute_id" type="number(19,0)">
 	  <constraints nullable="false"/>
 	</column>
-	<column name="GENOTYPING_CHIP_TYPE" type="number(19,0)">
+	<column name="attribute_name" type="varchar2(255)">
 	  <constraints nullable="false"/>
 	</column>
-	<column name="ATTRIBUTE_NAME" type="varchar2(255)">
-	  <constraints nullable="false"/>
-	</column>
-	<column name="ATTRIBUTE_VALUE" type="varchar2(255)"/>
+	<column name="archetype" type="number(19,0)"/>
+	<column name="attribute_value" type="varchar2(255)"/>
       </createTable>
-      <addPrimaryKey constraintName="PK_GENO_CHIP_ATTR" tableName="GENOTYPING_CHIP_ATTRIBUTE"
-		     columnNames="GENOTYPING_CHIP_ATTRIBUTE_ID"/>
-      <createIndex indexName="IX_GENOTYPING_CHIP_ATTR" tableName="GENOTYPING_CHIP_ATTRIBUTE" schemaName="mercury">
-	<column name="GENOTYPING_CHIP_TYPE"/>
-      </createIndex>
-      <createSequence sequenceName="SEQ_GENOTYPING_CHIP_ATTR" schemaName="mercury" startValue="1" incrementBy="50"/>
+
+      <addPrimaryKey constraintName="PK_ARCHETYPE_ATTRIBUTE" tableName="ARCHETYPE_ATTRIBUTE"
+		     schemaName="mercury"  columnNames="attribute_id"/>
+
+      <addUniqueConstraint constraintName="U_ARCHETYPE_ATTRIBUTE" tableName="ARCHETYPE_ATTRIBUTE"
+			   schemaName="mercury" columnNames="archetype, attribute_name"/>
+
     </changeSet>
 
     <changeSet id="GPLIM-4023-4" author="epolk">
-      <createTable schemaName="mercury" tableName="GENOTYPING_CHIP_ATTRIBUTE_AUD">
-	<column name="REV" type="number(19,0)">
+      <createTable schemaName="mercury" tableName="ARCHETYPE_ATTRIBUTE_AUD">
+	<column name="attribute_id" type="number(19,0)">
 	  <constraints nullable="false"/>
 	</column>
-	<column name="REVTYPE" type="number(3,0)">
+	<column name="rev" type="number(19,0)">
 	  <constraints nullable="false"/>
 	</column>
-	<column name="GENOTYPING_CHIP_ATTRIBUTE_ID" type="number(19,0)">
+	<column name="revtype" type="number(3,0)">
 	  <constraints nullable="false"/>
 	</column>
-	<column name="GENOTYPING_CHIP_TYPE" type="number(19,0)"/>
-	<column name="ATTRIBUTE_NAME" type="varchar2(255)"/>
-	<column name="ATTRIBUTE_VALUE" type="varchar2(255)"/>
+	<column name="archetype" type="number(19,0)"/>
+	<column name="attribute_name" type="varchar2(255)"/>
+	<column name="attribute_value" type="varchar2(255)"/>
       </createTable>
-      <addPrimaryKey constraintName="PK_GENO_CHIP_ATTR_AUD" tableName="GENOTYPING_CHIP_ATTRIBUTE_AUD"
-		     columnNames="REV, GENOTYPING_CHIP_ATTRIBUTE_ID"/>
-      <createIndex indexName="IX_GENOTYPING_CHIP_ATTR_AUD" tableName="GENOTYPING_CHIP_ATTRIBUTE_AUD" schemaName="mercury">
-	<column name="GENOTYPING_CHIP_ATTRIBUTE_ID"/>
+
+      <addPrimaryKey constraintName="PK_ARCHETYPE_ATTRIBUTE_AUD" tableName="ARCHETYPE_ATTRIBUTE_AUD"
+		     schemaName="mercury"  columnNames="rev, attribute_id"/>
+
+      <createIndex indexName="IX_ARCHETYPE_ATTRIBUTE_AUD" tableName="ARCHETYPE_ATTRIBUTE_AUD" schemaName="mercury">
+	<column name="attribute_id"/>
+	<column name="rev"/>
       </createIndex>
     </changeSet>
 
     <changeSet id="GPLIM-4023-5" author="epolk">
-      <addForeignKeyConstraint constraintName="FK_GENOTYPING_CHIP_ATTR"
-			       baseTableName="GENOTYPING_CHIP_ATTRIBUTE" baseColumnNames="GENOTYPING_CHIP_TYPE"
-			       referencedTableName="GENOTYPING_CHIP_TYPE" referencedColumnNames="GENOTYPING_CHIP_TYPE_ID"/>
+      <createTable schemaName="mercury" tableName="ARCHETYPE_JOIN_ATTRIBUTE_AUD">
+	<column name="rev" type="number(19,0)">
+	  <constraints nullable="false"/>
+	</column>
+	<column name="archetype" type="number(19,0)">
+	  <constraints nullable="false"/>
+	</column>
+	<column name="attribute_id" type="number(19,0)">
+	  <constraints nullable="false"/>
+	</column>
+	<column name="revtype" type="number(3,0)">
+	  <constraints nullable="false"/>
+	</column>
+      </createTable>
+
+      <addPrimaryKey constraintName="PK_ARCHETYPE_JOIN_ATTR_AUD" tableName="ARCHETYPE_JOIN_ATTRIBUTE_AUD"
+		     schemaName="mercury"  columnNames="rev, archetype, attribute_id"/>
+
+      <createIndex indexName="IX1_ARCHETYPE_JOIN_ATTR_AUD" tableName="ARCHETYPE_JOIN_ATTRIBUTE_AUD" schemaName="mercury">
+	<column name="archetype"/>
+	<column name="attribute_id"/>
+	<column name="rev"/>
+      </createIndex>
+
+      <createIndex indexName="IX2_ARCHETYPE_JOIN_ATTR_AUD" tableName="ARCHETYPE_JOIN_ATTRIBUTE_AUD" schemaName="mercury">
+	<column name="attribute_id"/>
+	<column name="archetype"/>
+	<column name="rev"/>
+      </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-4023-6" author="epolk">
+      <createTable schemaName="mercury" tableName="ATTRIBUTE_DEFINITION">
+	<column name="attribute_definition_id" type="number(19,0)">
+	  <constraints nullable="false"/>
+	</column>
+	<column name="attribute_family" type="varchar2(255)">
+	  <constraints nullable="false"/>
+	</column>
+	<column name="attribute_name" type="varchar2(255)">
+	  <constraints nullable="false"/>
+	</column>
+	<column name="class_field_value" type="varchar2(255)"/>
+      </createTable>
+
+      <addPrimaryKey constraintName="PK_ATTRIBUTE_DEFINITION" tableName="ATTRIBUTE_DEFINITION"
+		     schemaName="mercury"  columnNames="attribute_definition_id"/>
+
+      <addUniqueConstraint constraintName="U_ATTRIBUTE_DEFINITION" tableName="ATTRIBUTE_DEFINITION"
+			   schemaName="mercury" columnNames="attribute_family, attribute_name"/>
+
+    </changeSet>
+
+    <changeSet id="GPLIM-4023-7" author="epolk">
+      <createTable schemaName="mercury" tableName="ATTRIBUTE_DEFINITION_AUD">
+	<column name="attribute_definition_id" type="number(19,0)">
+	  <constraints nullable="false"/>
+	</column>
+	<column name="rev" type="number(19,0)">
+	  <constraints nullable="false"/>
+	</column>
+	<column name="revtype" type="number(3,0)">
+	  <constraints nullable="false"/>
+	</column>
+	<column name="attribute_family" type="varchar2(255)"/>
+	<column name="class_field_value" type="varchar2(255)"/>
+	<column name="attribute_name" type="varchar2(255)"/>
+      </createTable>
+
+      <addPrimaryKey constraintName="PK_ATTRIBUTE_DEFINITION_AUD" tableName="ATTRIBUTE_DEFINITION_AUD"
+		     schemaName="mercury"  columnNames="rev, attribute_definition_id"/>
+
+      <createIndex indexName="IX_ATTRIBUTE_DEFINITION_AUD" tableName="ATTRIBUTE_DEFINITION_AUD" schemaName="mercury">
+	<column name="attribute_definition_id"/>
+	<column name="rev"/>
+      </createIndex>
+
+    </changeSet>
+
+    <changeSet id="GPLIM-4023-8" author="epolk">
+      <addForeignKeyConstraint constraintName="FK_ARCHETYPE_ATTRIBUTE"
+			       baseTableName="ARCHETYPE_ATTRIBUTE" baseColumnNames="archetype"
+			       referencedTableName="attribute_archetype" referencedColumnNames="archetype_id"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-4023-9" author="epolk">
+      <createSequence sequenceName="seq_attribute_archetype" schemaName="mercury" startValue="1" incrementBy="50"/>
+      <createSequence sequenceName="seq_archetype_attribute" schemaName="mercury" startValue="1" incrementBy="50"/>
+      <createSequence sequenceName="seq_attribute_definition" schemaName="mercury" startValue="1" incrementBy="50"/>
     </changeSet>
 
 </databaseChangeLog>

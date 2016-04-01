@@ -1,31 +1,34 @@
 package org.broadinstitute.gpinformatics.mercury.entity.run;
 
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.mercury.control.dao.run.GenotypingChipTypeDao;
+import org.broadinstitute.gpinformatics.mercury.boundary.run.InfiniumRunResource;
+import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
 /**
- * Data fixups for genotyping chip types.
+ * Data fixups AttributeArchetype.
  */
 @Test(groups = TestGroups.FIXUP)
-public class GenotypingChipTypeFixupTest extends Arquillian {
+public class AttributeArchetypeFixupTest extends Arquillian {
 
     @Inject
     private UserBean userBean;
@@ -34,15 +37,16 @@ public class GenotypingChipTypeFixupTest extends Arquillian {
     private UserTransaction utx;
 
     @Inject
-    private GenotypingChipTypeDao genotypingChipTypeDao;
+    private AttributeArchetypeDao attributeArchetypeDao;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
         return DeploymentBuilder.buildMercuryWar(DEV, "dev");
     }
 
-    @Test(enabled = true)
-    public void populateEmptyTables() throws Exception {
+    // Populates the initial genotyping chip types.
+    @Test(enabled = false)
+    public void gplim4023PopulateGenoChipTypes() throws Exception {
         String[] initialAttributes = {
                 "pool_name", "Broad_GWAS_supplemental_15061359_A1",
                 "norm_manifest_unix"	, "/humgen/illumina_data/Broad_GWAS_supplemental_15061359_A1.bpm.csv",
@@ -101,29 +105,46 @@ public class GenotypingChipTypeFixupTest extends Arquillian {
 
         utx.begin();
         userBean.loginOSUser();
+        // The collection of new entities to persist.
         List<Object> entities = new ArrayList<>();
-        GenotypingChipType genotypingChipType = null;
-        // Iterates on each pair of data.
+
+        // Collects and persists the required attribute names, excluding "pool_name".
+        Set<String> attributeNames = new HashSet<>();
+        for (int i = 0; i < initialAttributes.length; i += 2) {
+            String attributeName = initialAttributes[i];
+            if (!attributeName.equals("pool_name") && attributeNames.add(attributeName)) {
+                attributeArchetypeDao.persist(
+                        new AttributeDefinition(InfiniumRunResource.INFINIUM_FAMILY, attributeName));
+            }
+        }
+
+        // Adds the data applicable to all INFINIUM_FAMILY chips.
+        attributeArchetypeDao.persist(new AttributeDefinition(InfiniumRunResource.INFINIUM_FAMILY, "data_path",
+                "/humgen/illumina_data"));
+
+        // Adds the attributes for each chip type. When iterating, "pool_name" marks the start of a new chip type.
+        AttributeArchetype attributeArchetype = null;
         for (int i = 0; i < initialAttributes.length; i += 2) {
             String key = initialAttributes[i];
             String value = initialAttributes[i + 1];
             if (key.equals("pool_name")) {
                 // Creates the new chip type.
-                genotypingChipType = new GenotypingChipType(value);
-                entities.add(genotypingChipType);
+                attributeArchetype = new AttributeArchetype(InfiniumRunResource.INFINIUM_FAMILY, value);
+                attributeArchetypeDao.persist(attributeArchetype);
+                attributeArchetypeDao.flush();
             } else {
-                // Adds attribute.
-                GenotypingChipAttribute attribute = new GenotypingChipAttribute(genotypingChipType, key, value);
-                entities.add(attribute);
+                // Adds attribute to the currently referenced chip type.
+                ArchetypeAttribute attribute = new ArchetypeAttribute(attributeArchetype, key, value);
                 System.out.println("Adding attribute (" + attribute.getAttributeName() + ", " +
                                    attribute.getAttributeValue() + ") to " +
-                                   attribute.getGenotypingChipType().getChipName());
+                                   attributeArchetype.getArchetypeName());
+                attributeArchetype.getAttributes().add(attribute);
+                attributeArchetypeDao.persist(attribute);
             }
         }
-        genotypingChipTypeDao.persistAll(entities);
-        genotypingChipTypeDao.persist(new FixupCommentary(
+        attributeArchetypeDao.persist(new FixupCommentary(
                 "GPLIM-4023 add the initial Infinium genotyping chip types from GAP."));
-        genotypingChipTypeDao.flush();
+        attributeArchetypeDao.flush();
         utx.commit();
     }
 }
