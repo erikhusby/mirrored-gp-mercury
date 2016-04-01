@@ -81,9 +81,7 @@ public class SubmissionTrackerDaoTest extends ContainerTest {
     }
 
     public void testFindSubmissionTrackersWithResult() throws Exception {
-        BassFileType bamFile = BassFileType.BAM;
-
-        SubmissionDto submissionDto = getSubmissionDto(RP_ID, sampleName, bamFile, DEFAULT_VERSION, null);
+        SubmissionDto submissionDto = getSubmissionDto(RP_ID, sampleName, BassFileType.BAM, DEFAULT_VERSION, null);
         SubmissionTracker submissionTracker = addTracker(submissionDto);
 
         persistTrackers(Collections.singleton(submissionTracker));
@@ -97,13 +95,11 @@ public class SubmissionTrackerDaoTest extends ContainerTest {
     }
 
     public void testFindSubmissionTrackersWithNewVersion() throws Exception {
-        BassFileType bamFile = BassFileType.BAM;
-
-        SubmissionDto submissionDto1 = getSubmissionDto(RP_ID, sampleName, bamFile, DEFAULT_VERSION, null);
+        SubmissionDto submissionDto1 = getSubmissionDto(RP_ID, sampleName, BassFileType.BAM, DEFAULT_VERSION, null);
         SubmissionTracker submissionTracker1 = addTracker(submissionDto1);
 
         int newVersion = DEFAULT_VERSION + 1;
-        SubmissionDto submissionDto2 = getSubmissionDto(RP_ID, sampleName, bamFile, newVersion, null);
+        SubmissionDto submissionDto2 = getSubmissionDto(RP_ID, sampleName, BassFileType.BAM, newVersion, null);
         SubmissionTracker submissionTracker2 = addTracker(submissionDto2);
 
         persistTrackers(Arrays.asList(submissionTracker1, submissionTracker2));
