@@ -179,9 +179,10 @@ public class ProductActionBean extends CoreActionBean {
             editProduct.setProductFamily(productFamilyDao.find(productFamilyId));
         }
 
-        if (controlsProject != null && (editProduct.getPositiveControlResearchProject() == null ||
-                !editProduct.getPositiveControlResearchProject().getBusinessKey().equals(controlsProject))) {
-            editProduct.setPositiveControlResearchProject(researchProjectDao.findByBusinessKey(controlsProject));
+        if (editProduct.getPositiveControlResearchProject() == null ||
+                !editProduct.getPositiveControlResearchProject().getBusinessKey().equals(controlsProject)) {
+            editProduct.setPositiveControlResearchProject(controlsProject == null ? null :
+                    researchProjectDao.findByBusinessKey(controlsProject));
         }
     }
 
@@ -202,6 +203,9 @@ public class ProductActionBean extends CoreActionBean {
         if (editProduct != null) {
             if (editProduct.getProductFamily() != null) {
                 productFamilyId = editProduct.getProductFamily().getProductFamilyId();
+            }
+            if (editProduct.getPositiveControlResearchProject() != null) {
+                controlsProject = editProduct.getPositiveControlResearchProject().getBusinessKey();
             }
         }
     }
