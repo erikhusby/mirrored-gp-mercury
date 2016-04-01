@@ -124,16 +124,6 @@ public class ResearchProjectEjbSubmissionTest {
         verifySubmissionTrackerMock(submissionTrackerDao);
     }
 
-    @DataProvider(name = "fileTypeDataProvider")
-    public Iterator<Object[]> fileTypeDataProvider() {
-        List<Object[]> testCases = new ArrayList<>();
-        String exceptionMessage = String.format("[{sampleName = %s; fileType = BAM; version = 1}]", TEST_SAMPLE_1);
-        testCases.add(new Object[]{BassFileType.BAM, BassFileType.BAM, exceptionMessage});
-        testCases.add(new Object[]{BassFileType.BAM, BassFileType.PICARD, ""});
-        return testCases.iterator();
-    }
-
-
     public void testBassSameAsBass() throws Exception {
         BassFileType trackerFileType = BassFileType.BAM;
         BassFileType bassFileType = BassFileType.BAM;
