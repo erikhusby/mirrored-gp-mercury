@@ -39,8 +39,8 @@ public class SubmissionTrackerFixupTest extends Arquillian {
         return DeploymentBuilder.buildMercuryWar(DEV, "dev");
     }
 
-    @Test(enabled = true)
-    public void gplim4060BackfillFileType() throws Exception {
+    @Test(enabled = false)
+    public void gplim4091BackfillFileType() throws Exception {
         userBean.loginOSUser();
 
         List<SubmissionTracker> submissionTrackerList =
