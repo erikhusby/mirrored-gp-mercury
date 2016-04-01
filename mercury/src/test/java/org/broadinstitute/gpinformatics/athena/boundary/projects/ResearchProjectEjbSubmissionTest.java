@@ -205,6 +205,9 @@ public class ResearchProjectEjbSubmissionTest {
         testCases.add(new Object[]{"TEST-4", Arrays.asList(bA2), Arrays.asList(stA), false});
         testCases.add(new Object[]{"TEST-5", Arrays.asList(bA2), Arrays.asList(stBa2_NullFileType), false});
 
+        // This test case is the scenario addressed in GPLIM-4060
+        testCases.add(new Object[]{"TEST-6", Arrays.asList(bA), Arrays.asList(stA, stB), false});
+
         return testCases.iterator();
     }
 
@@ -225,37 +228,6 @@ public class ResearchProjectEjbSubmissionTest {
                 Assert.fail(String.format("Expected ValidationException on %s", label), e);
             }
         }
-        verifySubmissionTrackerMock(submissionTrackerDao);
-    }
-
-    public void testMultipleResultsFromDaoAlreadySubmitted() throws Exception {
-
-        // data setup for dto result.
-        SubmissionDto submissionDto = getSubmissionDto(TEST_SAMPLE_1, BassFileType.BAM, TEST_VERSION_1, "/b/file.bam");
-        SubmissionTracker submissionTrackerResult1 = getSubmissionTracker(submissionDto);
-
-        SubmissionDto submissionDto2 = getSubmissionDto(TEST_SAMPLE_1, BassFileType.BAM, TEST_VERSION_1, "/a/file.bam");
-        SubmissionTracker submissionTrackerResult2 = getSubmissionTracker(submissionDto2);
-
-        SubmissionTrackerDao submissionTrackerDao = Mockito.mock(SubmissionTrackerDao.class);
-        setupSubmissionTrackerMock(submissionTrackerDao,
-                Arrays.asList(submissionTrackerResult1, submissionTrackerResult2));
-
-        // data setup for new submission request.
-        SubmissionDto newSubmissionDto =
-                getSubmissionDto(TEST_SAMPLE_1, BassFileType.BAM, TEST_VERSION_1, "/b/file.bam");
-        ResearchProjectEjb researchProjectEjb = getResearchProjectEjb(submissionTrackerDao);
-
-        try {
-            researchProjectEjb.validateSubmissionDto("RP-1234", Collections.singletonList(newSubmissionDto));
-
-            Assert.fail(String.format(
-                    "ValidationException was expected: submissionTrackerResult1 returned %s and bass returned %s.",
-                    submissionTrackerResult1.getTuple(), newSubmissionDto.getBassDTO().getTuple()));
-        } catch (Exception e) {
-            Assert.assertTrue(e.getMessage().contains(newSubmissionDto.getBassDTO().getTuple().toString()));
-        }
-
         verifySubmissionTrackerMock(submissionTrackerDao);
     }
 
