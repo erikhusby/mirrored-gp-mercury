@@ -193,20 +193,15 @@ public class ResearchProjectEjbSubmissionTest {
                 new SubmissionTracker(bA2.getSampleName(), bA2.getFileTypeEnum(), String.valueOf(bA2.getVersion()));
         stA2.setFileName(bA2.getFileName());
 
-        SubmissionTracker stBa2_NullFileType =
-                new SubmissionTracker(bA2.getSampleName(), null, String.valueOf(bA2.getVersion()));
-        stA2.setFileName(bA2.getFileName());
-
         List<Object[]> testCases = new ArrayList<>();
         testCases.add(new Object[]{"TEST-1", Arrays.asList(bA), Collections.emptyList(), true});
         testCases.add(new Object[]{"TEST-1", Arrays.asList(bA, bApicard), Collections.emptyList(), true});
         testCases.add(new Object[]{"TEST-2", Arrays.asList(bA), Arrays.asList(stA), false});
         testCases.add(new Object[]{"TEST-3", Arrays.asList(bA), Arrays.asList(stB), false});
         testCases.add(new Object[]{"TEST-4", Arrays.asList(bA2), Arrays.asList(stA), false});
-        testCases.add(new Object[]{"TEST-5", Arrays.asList(bA2), Arrays.asList(stBa2_NullFileType), false});
 
         // This test case is the scenario addressed in GPLIM-4060
-        testCases.add(new Object[]{"TEST-6", Arrays.asList(bA), Arrays.asList(stA, stB), false});
+        testCases.add(new Object[]{"TEST-5", Arrays.asList(bA), Arrays.asList(stA, stB), false});
 
         return testCases.iterator();
     }
