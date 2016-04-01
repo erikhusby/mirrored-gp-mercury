@@ -142,7 +142,8 @@ public class ResearchProjectEjbSubmissionTest {
 
         try {
             researchProjectEjb.validateSubmissionDto("RP-1234", Collections.singletonList(newSubmissionDto));
-
+            Assert.fail(String.format("Sample has already been submitted: New submission: %s prior submission %s",
+                    newSubmissionDto.toString(), submissionDto.toString()));
         } catch (Exception e) {
             String exceptionMessage = String.format("[{sampleName = %s; fileType = BAM; version = 1}]", TEST_SAMPLE_1);
             Assert.assertTrue(e.getMessage().contains(exceptionMessage));
