@@ -11,9 +11,10 @@ function renderJson(json) {
                 return 'Add barcode ' + d.label;
             },
             action: function (element, d, i) {
-                var currentValue = d3.select("#barcodes").text();
+                var textArea = document.getElementById("barcodes");
+                var currentValue = textArea.value;
                 // d.id for racks and plates, d.label for tubes
-                d3.select("#barcodes").text(currentValue + " " + (d.id ? d.id : d.label));
+                textArea.value = currentValue + " " + (d.id ? d.id : d.label);
             }
         }
     ];
