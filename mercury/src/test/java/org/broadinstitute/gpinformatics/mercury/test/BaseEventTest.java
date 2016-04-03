@@ -874,7 +874,8 @@ public class BaseEventTest {
                 FileWriter fileWriter = new FileWriter(xfrVis);
                 transferVisualizerV2.jsonForVessels(
                         Collections.singletonList(labVessel),
-                        Collections.singletonList(TransferTraverserCriteria.TraversalDirection.Descendants),
+                        Arrays.asList(TransferTraverserCriteria.TraversalDirection.Ancestors,
+                                TransferTraverserCriteria.TraversalDirection.Descendants),
                         fileWriter,
                         Arrays.asList(TransferVisualizerV2.AlternativeIds.SAMPLE_ID,
                                 TransferVisualizerV2.AlternativeIds.LCSET));

@@ -394,11 +394,9 @@ public class TransferVisualizerV2 {
                 for (VesselPosition vesselPosition : vesselGeometry.getVesselPositions()) {
                     VesselGeometry.RowColumn rowColumn = vesselGeometry.getRowColumnForVesselPosition(vesselPosition);
                     LabVessel child = vesselContainer.getVesselAtPosition(vesselPosition);
-                    if (child != null) {
-                        // todo jmt popup if more than one sample?
-                        dimensionsForChild(dimensions, mapBarcodeToAlternativeIds, child, rowColumn.getColumn(),
-                                rowColumn.getRow());
-                    }
+                    // todo jmt popup if more than one sample?
+                    dimensionsForChild(dimensions, mapBarcodeToAlternativeIds, child, vesselPosition,
+                            rowColumn.getColumn(), rowColumn.getRow());
                 }
 
                 // JSON for the parent vessel
@@ -409,10 +407,8 @@ public class TransferVisualizerV2 {
                 for (VesselPosition vesselPosition : vesselGeometry.getVesselPositions()) {
                     VesselGeometry.RowColumn rowColumn = vesselGeometry.getRowColumnForVesselPosition(vesselPosition);
                     LabVessel child = vesselContainer.getVesselAtPosition(vesselPosition);
-                    if (child != null) {
-                        jsonForChild(child, dimensions, mapBarcodeToAlternativeIds, labVessel, rowColumn.getColumn(),
-                                rowColumn.getRow());
-                    }
+                    jsonForChild(child, vesselPosition, dimensions, mapBarcodeToAlternativeIds, rowColumn.getColumn(),
+                            rowColumn.getRow());
                 }
                 jsonWriter.endArray().endObject();
                 if (startId == null) {
@@ -434,9 +430,13 @@ public class TransferVisualizerV2 {
          * Calculates the dimensions of a child, including alternative IDs.
          */
         private void dimensionsForChild(Dimensions dimensions, Map<String, List<String>> mapBarcodeToAlternativeIds,
-                LabVessel child, int columnNumber, int rowNumber) {
+                LabVessel child, VesselPosition vesselPosition, int columnNumber, int rowNumber) {
             dimensions.setMaxColumn(Math.max(dimensions.getMaxColumn(), columnNumber));
             dimensions.setMaxRow(Math.max(dimensions.getMaxRow(), rowNumber + 1));
+            if (child == null) {
+                // todo jmt width of position label
+                return;
+            }
             for (AlternativeIds alternativeId : alternativeIds) {
                 switch (alternativeId) {
                     case SAMPLE_ID:
@@ -519,18 +519,19 @@ public class TransferVisualizerV2 {
          * Writes JSON for a child, e.g. a tube, a flowcell lane or a strip tube well.
          * @throws JSONException
          */
-        private void jsonForChild(LabVessel child, Dimensions dimensions,
-                Map<String, List<String>> mapBarcodeToAlternativeIds, LabVessel labVessel, int columnNumber,
+        private void jsonForChild(LabVessel child, VesselPosition vesselPosition, Dimensions dimensions,
+                Map<String, List<String>> mapBarcodeToAlternativeIds, int columnNumber,
                 int rowNumber) throws JSONException {
+            String label = (child == null ? vesselPosition.name() : child.getLabel());
             jsonWriter.object().
-                    key("label").value(child.getLabel()).
+                    key("label").value(label).
                     key("x").value((columnNumber - 1) * dimensions.getMaxColumnWidth()).
                     key("y").value((rowNumber) * dimensions.getMaxRowHeight() + dimensions.getInPlaceHeight()).
                     key("w").value(dimensions.getMaxColumnWidth()).
                     key("h").value(dimensions.getMaxRowHeight()).
                     key("altIds").array();
             if (!mapBarcodeToAlternativeIds.isEmpty()) {
-                List<String> ids = mapBarcodeToAlternativeIds.get(child.getLabel());
+                List<String> ids = mapBarcodeToAlternativeIds.get(label);
                 if (ids != null) {
                     for (String id : ids) {
                         jsonWriter.object().key("altId").value(id).endObject();
