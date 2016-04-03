@@ -11,6 +11,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToVesselTransfer;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.DesignedReagent;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
@@ -464,9 +467,24 @@ public class TransferVisualizerV2 {
                         Set<SampleInstanceV2> sampleInstances = child.getSampleInstancesV2();
                         if (sampleInstances.size() == 1) {
                             SampleInstanceV2 sampleInstance = sampleInstances.iterator().next();
-                            String indexName = sampleInstance.getMolecularIndexingScheme() == null ? "" :
-                                    " " + sampleInstance.getMolecularIndexingScheme().getName();
-                            String ids = sampleInstance.getNearestMercurySampleName() + indexName;
+                            String ids = "";
+                            if (sampleInstance.isReagentOnly()) {
+                                for (Reagent reagent : sampleInstance.getReagents()) {
+                                    if (OrmUtil.proxySafeIsInstance(reagent, MolecularIndexReagent.class)) {
+                                        MolecularIndexReagent molecularIndexReagent = OrmUtil.proxySafeCast(reagent,
+                                                MolecularIndexReagent.class);
+                                        ids += molecularIndexReagent.getMolecularIndexingScheme().getName();
+                                    } else if (OrmUtil.proxySafeIsInstance(reagent, DesignedReagent.class)) {
+                                        DesignedReagent designedReagent = OrmUtil.proxySafeCast(reagent,
+                                                DesignedReagent.class);
+                                        ids += designedReagent.getReagentDesign().getName();
+                                    }
+                                }
+                            } else {
+                                String indexName = sampleInstance.getMolecularIndexingScheme() == null ? "" :
+                                        " " + sampleInstance.getMolecularIndexingScheme().getName();
+                                ids = sampleInstance.getNearestMercurySampleName() + indexName;
+                            }
                             dimensionsForAltId(dimensions, mapBarcodeToAlternativeIds, child, ids);
                         }
                         break;
@@ -553,7 +571,7 @@ public class TransferVisualizerV2 {
                     key("h").value(dimensions.getMaxRowHeight()).
                     key("altIds").array();
             if (!mapBarcodeToAlternativeIds.isEmpty()) {
-                List<String> ids = mapBarcodeToAlternativeIds.get(label);
+                List<String> ids = mapBarcodeToAlternativeIds.get(child == null ? label : child.getLabel());
                 if (ids != null) {
                     for (String id : ids) {
                         jsonWriter.object().key("altId").value(id).endObject();
