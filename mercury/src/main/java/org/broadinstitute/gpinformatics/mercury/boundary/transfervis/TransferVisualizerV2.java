@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionT
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToVesselTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
@@ -108,7 +109,6 @@ public class TransferVisualizerV2 {
     private class Traverser extends TransferTraverserCriteria {
         public static final String REARRAY_LABEL = "rearray";
         public static final int ROW_HEIGHT = 16;
-        public static final int PLATE_WIDTH = 480;
         public static final int WELL_WIDTH = 80;
 
         /** Stream to browser. */
@@ -188,7 +188,7 @@ public class TransferVisualizerV2 {
                             cherryPickTransfer.getTargetPosition());
                     String targetVesselLabel = targetVessel == null ? cherryPickTransfer.getTargetPosition().name() :
                             targetVessel.getLabel();
-                    // todo jmt handle plate wells
+
                     renderContainer(cherryPickTransfer.getSourceVesselContainer(),
                             cherryPickTransfer.getAncillarySourceVessel(), labVessel, false);
                     renderContainer(cherryPickTransfer.getTargetVesselContainer(),
@@ -307,10 +307,11 @@ public class TransferVisualizerV2 {
 
         private class Dimensions {
             private int maxColumn;
-            private int maxColumnWidth = WELL_WIDTH;
+            private int maxColumnWidth;
             private int maxRow;
             private int maxRowHeight = ROW_HEIGHT;
             private int inPlaceHeight;
+            private int plateWidth;
 
             public int getMaxColumn() {
                 return maxColumn;
@@ -352,8 +353,16 @@ public class TransferVisualizerV2 {
                 this.inPlaceHeight = inPlaceHeight;
             }
 
+            public int getPlateWidth() {
+                return plateWidth;
+            }
+
+            public void setPlateWidth(int plateWidth) {
+                this.plateWidth = plateWidth;
+            }
+
             public int getWidth() {
-                return Math.max(PLATE_WIDTH, maxColumn * maxColumnWidth);
+                return Math.max(plateWidth, maxColumn * maxColumnWidth);
             }
 
             public int getHeight() {
@@ -387,9 +396,16 @@ public class TransferVisualizerV2 {
                 logger.debug("Rendering container " + containerLabel);
 
                 Dimensions dimensions = new Dimensions();
+                // Width of plate, based on label and in-place events
+                dimensions.setPlateWidth(fontMetrics.stringWidth(containerLabel));
+                dimensions.setInPlaceHeight(vesselContainer.getEmbedder().getInPlaceLabEvents().size() * ROW_HEIGHT);
+                for (LabEvent labEvent : vesselContainer.getEmbedder().getInPlaceLabEvents()) {
+                    dimensions.setPlateWidth(Math.max(dimensions.getPlateWidth(),
+                            fontMetrics.stringWidth(buildEventLabel(labEvent))));
+                }
+
                 // Sizes for child vessels (e.g. tubes in a rack)
                 VesselGeometry vesselGeometry = vesselContainer.getEmbedder().getVesselGeometry();
-                dimensions.setInPlaceHeight(vesselContainer.getEmbedder().getInPlaceLabEvents().size() * ROW_HEIGHT);
                 Map<String, List<String>> mapBarcodeToAlternativeIds = new HashMap<>();
                 for (VesselPosition vesselPosition : vesselGeometry.getVesselPositions()) {
                     VesselGeometry.RowColumn rowColumn = vesselGeometry.getRowColumnForVesselPosition(vesselPosition);
@@ -434,8 +450,13 @@ public class TransferVisualizerV2 {
             dimensions.setMaxColumn(Math.max(dimensions.getMaxColumn(), columnNumber));
             dimensions.setMaxRow(Math.max(dimensions.getMaxRow(), rowNumber + 1));
             if (child == null) {
-                // todo jmt width of position label
+                int width = fontMetrics.stringWidth(vesselPosition.name());
+                dimensions.setMaxColumnWidth(Math.max(width, dimensions.getMaxColumnWidth()));
                 return;
+            } else {
+                int width = fontMetrics.stringWidth(OrmUtil.proxySafeIsInstance(child, PlateWell.class) ?
+                        vesselPosition.name() : child.getLabel());
+                dimensions.setMaxColumnWidth(Math.max(width, dimensions.getMaxColumnWidth()));
             }
             for (AlternativeIds alternativeId : alternativeIds) {
                 switch (alternativeId) {
@@ -522,7 +543,8 @@ public class TransferVisualizerV2 {
         private void jsonForChild(LabVessel child, VesselPosition vesselPosition, Dimensions dimensions,
                 Map<String, List<String>> mapBarcodeToAlternativeIds, int columnNumber,
                 int rowNumber) throws JSONException {
-            String label = (child == null ? vesselPosition.name() : child.getLabel());
+            String label = (child == null || OrmUtil.proxySafeIsInstance(child, PlateWell.class) ?
+                    vesselPosition.name() : child.getLabel());
             jsonWriter.object().
                     key("label").value(label).
                     key("x").value((columnNumber - 1) * dimensions.getMaxColumnWidth()).
