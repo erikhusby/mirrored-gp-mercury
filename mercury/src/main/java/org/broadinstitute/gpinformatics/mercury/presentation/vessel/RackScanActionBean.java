@@ -17,7 +17,6 @@ import org.broadinstitute.bsp.client.rackscan.geometry.Dimension;
 import org.broadinstitute.bsp.client.rackscan.geometry.Geometry;
 import org.broadinstitute.bsp.client.rackscan.geometry.index.AlphaNumeric;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
-import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.RackScannerEjb;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
@@ -149,10 +148,7 @@ public abstract class RackScanActionBean extends CoreActionBean {
     public List<RackScanner.RackScannerLab> getAllLabs() {
 
         List<RackScanner.RackScannerLab> labsBySoftwareSystems;
-        if (ApplicationInstance.CRSP.isCurrent()) {
-            labsBySoftwareSystems =
-                    RackScanner.RackScannerLab.getLabsBySoftwareSystems(RackScanner.SoftwareSystem.CRSP_BSP);
-        } else if (deployment != Deployment.PROD) {
+        if (deployment != Deployment.PROD) {
             labsBySoftwareSystems = RackScanner.RackScannerLab.getLabsBySoftwareSystems(RackScanner.SoftwareSystem.BSP,
                     RackScanner.SoftwareSystem.MERCURY_NON_PROD, RackScanner.SoftwareSystem.MERCURY);
         } else {

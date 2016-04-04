@@ -37,7 +37,6 @@ import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferVis
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferVisualizerV2;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.CrspPipelineUtils;
-import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
@@ -577,13 +576,14 @@ public class BaseEventTest {
  *                               parallel
 *    @return Returns the entity builder that contains the entities after this process has been invoked.
      */
-    public HiSeq4000FlowcellEntityBuilder runHiSeq4000FlowcellProcess(TubeFormation denatureRack, String barcodeSuffix,
-                                                                      LabBatch fctTicket,
-                                                                      String designationName) {
+    public HiSeq4000FlowcellEntityBuilder runHiSeq4000FlowcellProcess(TubeFormation denatureRack, TubeFormation normRack,
+                                                                      String barcodeSuffix, LabBatch fctTicket,
+                                                                      String designationName,
+                                                                      HiSeq4000FlowcellEntityBuilder.FCTCreationPoint fctCreationPoint) {
         String flowcellBarcode = "flowcell" + new Date().getTime() + "BBXX";
         return new HiSeq4000FlowcellEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
                 denatureRack, flowcellBarcode, barcodeSuffix, fctTicket,
-                designationName, 8).invoke();
+                designationName, 8, normRack, fctCreationPoint).invoke();
     }
 
 
@@ -964,7 +964,6 @@ public class BaseEventTest {
                 },
                 new SequencingTemplateFactory(),
                 productOrderDao,
-                new CrspControlsTestUtils().getMockResearchProjectDao(),
                 crspPipelineUtils
         );
     }

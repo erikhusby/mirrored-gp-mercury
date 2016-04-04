@@ -544,8 +544,8 @@ AS
         -- RPT-3131 - Delete any older metrics for same vessel
         DELETE FROM lab_metric
         WHERE vessel_barcode =  new.vessel_barcode
-          AND quant_type     =  new.quant_type
-          AND run_date       < new.run_date;
+              AND quant_type     =  new.quant_type
+              AND run_date       < new.run_date;
 
         UPDATE lab_metric
            SET quant_type      = new.quant_type,
@@ -573,19 +573,19 @@ AS
                 lab_vessel_id, vessel_barcode, rack_position,
                 decision, decision_date, decider,
                 override_reason, etl_date )
-          SELECT new.lab_metric_id,
-                 new.quant_type, new.quant_units, new.quant_value,
-                 new.run_name, new.run_date,
-                 new.lab_vessel_id, new.vessel_barcode, new.rack_position,
-                 new.decision, new.decision_date, new.decider,
-                 new.override_reason, new.etl_date
-            FROM dual
-           WHERE NOT EXISTS (
-               SELECT 'Y'
-                 FROM lab_metric
-                WHERE vessel_barcode =  new.vessel_barcode
-                  AND quant_type     =  new.quant_type
-                  AND run_date       > new.run_date );
+            SELECT new.lab_metric_id,
+                   new.quant_type, new.quant_units, new.quant_value,
+                   new.run_name, new.run_date,
+                   new.lab_vessel_id, new.vessel_barcode, new.rack_position,
+                   new.decision, new.decision_date, new.decider,
+                   new.override_reason, new.etl_date
+              FROM dual
+             WHERE NOT EXISTS (
+                SELECT 'Y'
+                  FROM lab_metric
+                 WHERE vessel_barcode =  new.vessel_barcode
+                   AND quant_type     =  new.quant_type
+                   AND run_date       > new.run_date );
 
           V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;
 
@@ -1449,26 +1449,33 @@ AS
     V_UPD_COUNT CONSTANT PLS_INTEGER := 0;
     BEGIN
       V_LIBRARY_INS_COUNT := 0;
-      FOR new IN (SELECT child_library_id AS library_id,
-                         -- Is there more than 1 event in this file for a vessel?
-                         max(child_event_id) KEEP ( DENSE_RANK LAST ORDER BY child_library_creation ) AS event_id,
-                         child_library_type as library_type,
-                         MAX(child_library_creation) as library_creation,
-                         min(line_number) as line_number,
-                         max(etl_date) AS etl_date
-                    FROM im_library_ancestry
-                   WHERE is_delete = 'F'
-                  GROUP BY child_library_id, child_library_type
-                  UNION
-                  SELECT ancestor_library_id,
-                         max(ancestor_event_id) KEEP ( DENSE_RANK LAST ORDER BY ancestor_library_creation ),
-                         ancestor_library_type,
-                         MAX(ancestor_library_creation),
-                         min(line_number) as line_number,
-                         max(etl_date) AS etl_date
-                    FROM im_library_ancestry
-                   WHERE is_delete = 'F'
-                  GROUP BY ancestor_library_id, ancestor_library_type
+      FOR new IN (SELECT library_id, event_id
+                       , library_type, library_creation
+                       , MIN(line_number) as line_number, etl_date
+                    FROM (
+                      SELECT child_library_id AS library_id,
+                             -- Is there more than 1 event in this file for a vessel?
+                        MAX(child_event_id) KEEP ( DENSE_RANK LAST ORDER BY child_library_creation ) AS event_id,
+                             child_library_type as library_type,
+                             MAX(child_library_creation) as library_creation,
+                        MIN(line_number) as line_number,
+                        MAX(etl_date) AS etl_date
+                        FROM im_library_ancestry
+                       WHERE is_delete = 'F'
+                      GROUP BY child_library_id, child_library_type
+                      UNION
+                      SELECT ancestor_library_id,
+                             MAX(ancestor_event_id) KEEP ( DENSE_RANK LAST ORDER BY ancestor_library_creation ),
+                             ancestor_library_type,
+                             MAX(ancestor_library_creation),
+                             MIN(line_number) as line_number,
+                             MAX(etl_date) AS etl_date
+                        FROM im_library_ancestry
+                       WHERE is_delete = 'F'
+                      GROUP BY ancestor_library_id, ancestor_library_type
+                  )
+                    GROUP BY library_id, event_id
+                           , library_type, library_creation, etl_date
           ) LOOP
         BEGIN
           -- Rows for libraries - we've already deleted any rows related to libraries

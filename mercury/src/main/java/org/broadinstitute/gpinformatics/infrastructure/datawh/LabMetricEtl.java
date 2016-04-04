@@ -95,7 +95,7 @@ public class LabMetricEtl extends GenericEntityEtl<LabMetric, LabMetric> {
                             format(entity.getLabMetricDecision() != null ? entity.getLabMetricDecision().getDecidedDate() : null),
                             format(decider),
                             format(entity.getLabMetricDecision() != null ? entity.getLabMetricDecision().getOverrideReason() : null)
-                            )
+                    )
             );
 
         } catch(Exception e) {
