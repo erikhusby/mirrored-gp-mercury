@@ -229,6 +229,14 @@ datawhEtl:
     PROD:
         datawhEtlDirRoot: /seq/lims/datawh/prod
 
+infiniumStarter:
+
+    PROD:
+        dataPath: /humgen/ilumina_data
+        minimumIdatFileLength: -1
+        jmsHost: localhost
+        jmsPort: 8443
+        jmsQueue: broad.arrays.enqueue
 
 hipchat:
     DEV:

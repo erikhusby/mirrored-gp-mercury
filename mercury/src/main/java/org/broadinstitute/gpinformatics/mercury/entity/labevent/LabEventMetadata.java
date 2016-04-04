@@ -29,7 +29,8 @@ public class LabEventMetadata {
         Volume("Volume"),  // volume is used for plate transfer because bettalims message doesn't permit well volumes.
         TaskId("TaskID"),  // Use in arrays plating to pass BSP task ID from deck, to allow auto-export from BSP to GAP.
         MessageNum("MessageNum"), // Temporary solution to allow 24 Infinium chips on one Manual Transfer page for XStain.
-        SimulationMode("SimulationMode");  // If message is sent from a deck running in simulation.
+        SimulationMode("SimulationMode"),  // If message is sent from a deck running in simulation.
+        AutocallStarted("AutocallStarted"); //If infinium chip well was forwarded to the pipeline.
 
         private static final Map<String, LabEventMetadataType> MAP_NAME_TO_METADATA_TYPE =
                 new HashMap<>(LabEventMetadataType.values().length);

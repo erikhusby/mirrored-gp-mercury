@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.control.dao.labevent;
 
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent_;
 
 import javax.ejb.Stateful;
@@ -39,6 +40,15 @@ public class LabEventDao extends GenericDao {
                 criteriaQuery.where(getCriteriaBuilder().equal(root.get(LabEvent_.eventLocation), location),
                         getCriteriaBuilder().equal(root.get(LabEvent_.eventDate), date),
                         getCriteriaBuilder().equal(root.get(LabEvent_.disambiguator), disambiguator));
+            }
+        });
+    }
+
+    public List<LabEvent> findByEventType(final LabEventType labEventType) {
+        return findAll(LabEvent.class, new GenericDaoCallback<LabEvent>() {
+            @Override
+            public void callback(CriteriaQuery<LabEvent> criteriaQuery, Root<LabEvent> root) {
+                criteriaQuery.where(getCriteriaBuilder().equal(root.get(LabEvent_.labEventType), labEventType));
             }
         });
     }
