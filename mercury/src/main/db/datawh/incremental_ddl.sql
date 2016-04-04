@@ -1,49 +1,11 @@
 -------------------------------------------------------
--- https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-3557
--- Create Ancestry ETL
+-- https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-4085
+-- Add ancestry relationships for DenatureToDilutionTransfer events
 
-DECLARE
-  V_YN CHAR;
-BEGIN
-    SELECT 'Y' INTO V_YN FROM ALL_TABLES WHERE TABLE_NAME = 'LIBRARY_LCSET_SAMPLE_BASE';
-    EXECUTE IMMEDIATE 'DROP TABLE LIBRARY_LCSET_SAMPLE_BASE';
-  EXCEPTION WHEN NO_DATA_FOUND THEN NULL;
-END;
-/
+-- Uncomment and execute when ready to clear existing data prior to full refresh of related tables:
 
-CREATE TABLE LIBRARY_LCSET_SAMPLE_BASE(
-  LIBRARY_LABEL VARCHAR2(40) NOT NULL,
-  LIBRARY_ID NUMBER(19) NOT NULL,
-  LIBRARY_TYPE VARCHAR2(255) NOT NULL,
-  LIBRARY_CREATION_DATE DATE NOT NULL,
-  LIBRARY_EVENT_ID NUMBER(19) NOT NULL );
-
-CREATE INDEX IDX_LIBRARY_LABEL_SAMPLE
-ON LIBRARY_LCSET_SAMPLE_BASE ( LIBRARY_LABEL, LIBRARY_TYPE );
-
-CREATE INDEX IDX_LIBRARY_ID_SAMPLE
-ON LIBRARY_LCSET_SAMPLE_BASE ( LIBRARY_ID, LIBRARY_TYPE );
-
-CREATE OR REPLACE VIEW LIBRARY_LCSET_SAMPLE
-AS
-  SELECT SB.LIBRARY_LABEL
-       --, SB.LIBRARY_ID
-       , EF.POSITION
-       , EF.LCSET_SAMPLE_NAME AS LCSET_SAMPLE
-       , EF.BATCH_NAME
-       , EF.MOLECULAR_INDEXING_SCHEME AS MOLECULAR_BARCODE
-       , PDO.JIRA_TICKET_KEY AS PRODUCT_ORDER_KEY
-       , EF.SAMPLE_NAME AS PRODUCT_ORDER_SAMPLE
-       , SB.LIBRARY_TYPE
-       , SB.LIBRARY_CREATION_DATE
-       --, SB.LIBRARY_EVENT_ID
-    FROM LIBRARY_LCSET_SAMPLE_BASE SB
-       , EVENT_FACT EF
-       , PRODUCT_ORDER PDO
-   WHERE EF.LAB_EVENT_ID = SB.LIBRARY_EVENT_ID
-     AND EF.LAB_VESSEL_ID = SB.LIBRARY_ID
-     AND PDO.PRODUCT_ORDER_ID(+) = EF.PRODUCT_ORDER_ID
-     AND EF.LCSET_SAMPLE_NAME IS NOT NULL;
-
-
-
+--truncate table event_fact;
+--truncate table library_ancestry;
+--truncate table library_lcset_sample_base;
+--drop sequence event_fact_id_seq;
+--CREATE SEQUENCE event_fact_id_seq START WITH 1;
