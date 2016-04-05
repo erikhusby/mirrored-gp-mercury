@@ -8,7 +8,11 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSetVolumeConcentration;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSetVolumeConcentrationProducer;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -25,7 +29,12 @@ import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferEntityGrapher;
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferVisualizer;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ChildVesselBean;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchResource;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ParentVesselBean;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.TubeBean;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexDao;
@@ -36,6 +45,7 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactory;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.control.zims.ZimsIlluminaRunFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
@@ -86,6 +96,7 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.QtpJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.SageEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ShearingEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.StoolTNAEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.TruSeqStrandSpecificEntityBuilder;
 import org.easymock.EasyMock;
 import org.hamcrest.MatcherAssert;
@@ -1617,6 +1628,41 @@ public class LabEventTest extends BaseEventTest {
         InfiniumEntityBuilder infiniumEntityBuilder = runInfiniumProcess(sourcePlate, "Infinium");
         Set<SampleInstanceV2> samples = infiniumEntityBuilder.getHybChips().get(0).getSampleInstancesV2();
         Assert.assertEquals(samples.size(), 24, "Wrong number of sample instances");
+    }
+
+    /**
+     * Build object graph for stool extraction to TNA messages
+     */
+    @Test(groups = {TestGroups.DATABASE_FREE})
+    public void testStoolExtractionToTNA() {
+        expectedRouting = SystemRouter.System.MERCURY;
+        SimpleDateFormat sdf = new SimpleDateFormat("MMddHHmmss");
+        String suffix = sdf.format(new Date());
+
+        ArrayList<ChildVesselBean> childVesselBeans = new ArrayList<>();
+        childVesselBeans.add(new ChildVesselBean(null, "SM-1234" + suffix, "Well [200uL]", "A01"));
+        childVesselBeans.add(new ChildVesselBean(null, "SM-2345" + suffix, "Well [200uL]", "A02"));
+        ParentVesselBean parentVesselBean =
+                new ParentVesselBean("P1234" + suffix, null, "Plate96Well200PCR", childVesselBeans);
+
+        BSPUserList testUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
+        LabVesselFactory labVesselFactory = new LabVesselFactory();
+        labVesselFactory.setBspUserList(testUserList);
+        LabBatchResource labBatchResource = new LabBatchResource(labVesselFactory);
+
+        String batchId = "BP-" + suffix;
+        LabBatch labBatch = labBatchResource.createLabBatchByParentVessel(
+                new LabBatchBean(batchId, parentVesselBean, "jowalsh"));
+
+        StaticPlate sourcePlate = (StaticPlate) labBatch.getStartingBatchLabVessels().iterator().next();
+
+        int numSamples = childVesselBeans.size();
+        StoolTNAEntityBuilder stoolTNAEntityBuilder = runStoolExtractionToTNAProcess(
+                sourcePlate, numSamples, "StoolXTR");
+        Set<SampleInstanceV2> dnaSamples = stoolTNAEntityBuilder.getStoolDNATubeRack().getSampleInstancesV2();
+        Set<SampleInstanceV2> rnaSamples = stoolTNAEntityBuilder.getStoolRNATubeRack().getSampleInstancesV2();
+        Assert.assertEquals(dnaSamples.size(), numSamples, "Wrong number of sample instances");
+        Assert.assertEquals(rnaSamples.size(), numSamples, "Wrong number of sample instances");
     }
 
     /**

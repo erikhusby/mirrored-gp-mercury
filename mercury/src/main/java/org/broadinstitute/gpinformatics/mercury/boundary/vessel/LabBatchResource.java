@@ -1,10 +1,12 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -17,6 +19,9 @@ import javax.inject.Inject;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -42,24 +47,42 @@ public class LabBatchResource {
     @Inject
     private LabBatchDao labBatchDao;
 
+    @Inject
+    private LabVesselFactory labVesselFactory;
+
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private JiraService jiraService;
 
+    public LabBatchResource() {
+    }
+
+    /** Constructor used for test purposes. */
+    public LabBatchResource(LabVesselFactory labVesselFactory) {
+        this.labVesselFactory = labVesselFactory;
+    }
+
     @POST
     public String createLabBatch(LabBatchBean labBatchBean) {
-        List<String> tubeBarcodes = new ArrayList<>();
-        List<MercurySample> mercurySampleKeys = new ArrayList<>();
-        for (TubeBean tubeBean : labBatchBean.getTubeBeans()) {
-            tubeBarcodes.add(tubeBean.getBarcode());
-            if (tubeBean.getSampleBarcode() != null) {
-                mercurySampleKeys.add(new MercurySample(tubeBean.getSampleBarcode(), MercurySample.MetadataSource.BSP));
+        LabBatch labBatch = null;
+        if (labBatchBean.getParentVesselBean() != null) {
+            labBatch = createLabBatchByParentVessel(labBatchBean);
+        } else {
+            List<String> tubeBarcodes = new ArrayList<>();
+            List<MercurySample> mercurySampleKeys = new ArrayList<>();
+            for (TubeBean tubeBean : labBatchBean.getTubeBeans()) {
+                tubeBarcodes.add(tubeBean.getBarcode());
+                if (tubeBean.getSampleBarcode() != null) {
+                    mercurySampleKeys
+                            .add(new MercurySample(tubeBean.getSampleBarcode(), MercurySample.MetadataSource.BSP));
+                }
             }
-        }
 
-        Map<String, BarcodedTube> mapBarcodeToTube = barcodedTubeDao.findByBarcodes(tubeBarcodes);
-        Map<MercurySample, MercurySample> mapSampleToSample = mercurySampleDao.findByMercurySample(mercurySampleKeys);
-        LabBatch labBatch = buildLabBatch(labBatchBean, mapBarcodeToTube, mapSampleToSample);
+            Map<String, BarcodedTube> mapBarcodeToTube = barcodedTubeDao.findByBarcodes(tubeBarcodes);
+            Map<MercurySample, MercurySample> mapSampleToSample =
+                    mercurySampleDao.findByMercurySample(mercurySampleKeys);
+            labBatch = buildLabBatch(labBatchBean, mapBarcodeToTube, mapSampleToSample);
+        }
 
         if (!labBatchBean.getBatchId().startsWith(BSP_BATCH_PREFIX)) {
             JiraTicket jiraTicket = new JiraTicket(jiraService, labBatchBean.getBatchId());
@@ -70,6 +93,23 @@ public class LabBatchResource {
         labBatchDao.flush();
 
         return "Batch persisted";
+    }
+
+    /**
+     * DAO-free method to build a LabBatch entity from a LabBatchBean with a ParentVesselBean
+     */
+    @DaoFree
+    public LabBatch createLabBatchByParentVessel(LabBatchBean labBatchBean) {
+        List<LabVessel> labVessels = labVesselFactory.buildLabVesselDaoFree(
+                new HashMap<String, LabVessel>(), new HashMap<String, MercurySample>(),
+                new HashMap<String, Set<ProductOrderSample>>(), labBatchBean.getUsername(),
+                new Date(), Arrays.asList(labBatchBean.getParentVesselBean()),
+                null, MercurySample.MetadataSource.BSP);
+
+        Set<LabVessel> labVesselSet = new HashSet<>(labVessels);
+        return new LabBatch(labBatchBean.getBatchId(), labVesselSet,
+                labBatchBean.getBatchId().startsWith(BSP_BATCH_PREFIX) ?
+                        LabBatch.LabBatchType.BSP : LabBatch.LabBatchType.WORKFLOW);
     }
 
     /**
