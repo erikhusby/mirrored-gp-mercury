@@ -205,6 +205,7 @@ public class ProductOrderEjb {
         } else {
             updateJiraIssue(editedProductOrder);
         }
+        attachMercurySamples(editedProductOrder.getSamples());
         productOrderDao.persist(editedProductOrder);
     }
 
@@ -928,6 +929,19 @@ public class ProductOrderEjb {
         ProductOrder order = findProductOrder(jiraTicketKey);
         order.addSamples(samples);
 
+        attachMercurySamples(samples);
+
+        order.prepareToSave(userBean.getBspUser());
+        productOrderDao.persist(order);
+        handleSamplesAdded(jiraTicketKey, samples, reporter);
+
+        updateSamples(order, samples, reporter, "added");
+    }
+
+    /**
+     * Makes the association between ProductOrderSample and MercurySample.
+     */
+    private void attachMercurySamples(@Nonnull List<ProductOrderSample> samples) {
         ImmutableListMultimap<String, ProductOrderSample> samplesBySampleId =
                 Multimaps.index(samples, new Function<ProductOrderSample, String>() {
                     @Override
@@ -936,19 +950,15 @@ public class ProductOrderEjb {
                     }
                 });
 
-        Map<String, MercurySample> mercurySampleMap = mercurySampleDao.findMapIdToMercurySample(samplesBySampleId.keySet());
+        Map<String, MercurySample> mercurySampleMap = mercurySampleDao.findMapIdToMercurySample(
+                samplesBySampleId.keySet());
 
         for (Map.Entry<String, ProductOrderSample> sampleMapEntry : samplesBySampleId.entries()) {
-            if (sampleMapEntry.getValue().getMercurySample() == null && mercurySampleMap.get(sampleMapEntry.getKey()) !=null) {
-                mercurySampleMap.get(sampleMapEntry.getKey()).addProductOrderSample(sampleMapEntry.getValue());
+            MercurySample mercurySample = mercurySampleMap.get(sampleMapEntry.getKey());
+            if (sampleMapEntry.getValue().getMercurySample() == null && mercurySample != null) {
+                mercurySample.addProductOrderSample(sampleMapEntry.getValue());
             }
         }
-
-        order.prepareToSave(userBean.getBspUser());
-        productOrderDao.persist(order);
-        handleSamplesAdded(jiraTicketKey, samples, reporter);
-
-        updateSamples(order, samples, reporter, "added");
     }
 
     public void removeSamples(@Nonnull String jiraTicketKey, @Nonnull Collection<ProductOrderSample> samples,

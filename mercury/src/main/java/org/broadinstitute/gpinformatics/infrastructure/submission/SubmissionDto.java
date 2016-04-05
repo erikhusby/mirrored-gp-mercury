@@ -15,7 +15,7 @@ import com.sun.istack.Nullable;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
+import org.broadinstitute.gpinformatics.infrastructure.bass.BassFileType;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.LevelOfDetection;
 
@@ -43,7 +43,11 @@ public class SubmissionDto {
     }
 
     public String getUuid() {
-        return statusDetailBean.getUuid();
+        String result = "";
+        if (statusDetailBean != null) {
+            result = statusDetailBean.getUuid();
+        }
+        return result;
     }
 
     public BassDTO getBassDTO() {
@@ -157,5 +161,9 @@ public class SubmissionDto {
             bioproject = statusDetailBean.getBioproject().getAccession();
         }
         return bioproject;
+    }
+
+    public BassFileType getFileTypeEnum() {
+        return BassFileType.byBassValue(getFileType());
     }
 }

@@ -11,8 +11,12 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToVesselTransfer;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.DesignedReagent;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
@@ -108,7 +112,6 @@ public class TransferVisualizerV2 {
     private class Traverser extends TransferTraverserCriteria {
         public static final String REARRAY_LABEL = "rearray";
         public static final int ROW_HEIGHT = 16;
-        public static final int PLATE_WIDTH = 480;
         public static final int WELL_WIDTH = 80;
 
         /** Stream to browser. */
@@ -188,7 +191,7 @@ public class TransferVisualizerV2 {
                             cherryPickTransfer.getTargetPosition());
                     String targetVesselLabel = targetVessel == null ? cherryPickTransfer.getTargetPosition().name() :
                             targetVessel.getLabel();
-                    // todo jmt handle plate wells
+
                     renderContainer(cherryPickTransfer.getSourceVesselContainer(),
                             cherryPickTransfer.getAncillarySourceVessel(), labVessel, false);
                     renderContainer(cherryPickTransfer.getTargetVesselContainer(),
@@ -307,10 +310,11 @@ public class TransferVisualizerV2 {
 
         private class Dimensions {
             private int maxColumn;
-            private int maxColumnWidth = WELL_WIDTH;
+            private int maxColumnWidth;
             private int maxRow;
             private int maxRowHeight = ROW_HEIGHT;
             private int inPlaceHeight;
+            private int plateWidth;
 
             public int getMaxColumn() {
                 return maxColumn;
@@ -352,8 +356,16 @@ public class TransferVisualizerV2 {
                 this.inPlaceHeight = inPlaceHeight;
             }
 
+            public int getPlateWidth() {
+                return plateWidth;
+            }
+
+            public void setPlateWidth(int plateWidth) {
+                this.plateWidth = plateWidth;
+            }
+
             public int getWidth() {
-                return Math.max(PLATE_WIDTH, maxColumn * maxColumnWidth);
+                return Math.max(plateWidth, maxColumn * maxColumnWidth);
             }
 
             public int getHeight() {
@@ -387,18 +399,23 @@ public class TransferVisualizerV2 {
                 logger.debug("Rendering container " + containerLabel);
 
                 Dimensions dimensions = new Dimensions();
+                // Width of plate, based on label and in-place events
+                dimensions.setPlateWidth(fontMetrics.stringWidth(containerLabel));
+                dimensions.setInPlaceHeight(vesselContainer.getEmbedder().getInPlaceLabEvents().size() * ROW_HEIGHT);
+                for (LabEvent labEvent : vesselContainer.getEmbedder().getInPlaceLabEvents()) {
+                    dimensions.setPlateWidth(Math.max(dimensions.getPlateWidth(),
+                            fontMetrics.stringWidth(buildEventLabel(labEvent))));
+                }
+
                 // Sizes for child vessels (e.g. tubes in a rack)
                 VesselGeometry vesselGeometry = vesselContainer.getEmbedder().getVesselGeometry();
-                dimensions.setInPlaceHeight(vesselContainer.getEmbedder().getInPlaceLabEvents().size() * ROW_HEIGHT);
                 Map<String, List<String>> mapBarcodeToAlternativeIds = new HashMap<>();
                 for (VesselPosition vesselPosition : vesselGeometry.getVesselPositions()) {
                     VesselGeometry.RowColumn rowColumn = vesselGeometry.getRowColumnForVesselPosition(vesselPosition);
                     LabVessel child = vesselContainer.getVesselAtPosition(vesselPosition);
-                    if (child != null) {
-                        // todo jmt popup if more than one sample?
-                        dimensionsForChild(dimensions, mapBarcodeToAlternativeIds, child, rowColumn.getColumn(),
-                                rowColumn.getRow());
-                    }
+                    // todo jmt popup if more than one sample?
+                    dimensionsForChild(dimensions, mapBarcodeToAlternativeIds, child, vesselPosition,
+                            rowColumn.getColumn(), rowColumn.getRow());
                 }
 
                 // JSON for the parent vessel
@@ -409,10 +426,8 @@ public class TransferVisualizerV2 {
                 for (VesselPosition vesselPosition : vesselGeometry.getVesselPositions()) {
                     VesselGeometry.RowColumn rowColumn = vesselGeometry.getRowColumnForVesselPosition(vesselPosition);
                     LabVessel child = vesselContainer.getVesselAtPosition(vesselPosition);
-                    if (child != null) {
-                        jsonForChild(child, dimensions, mapBarcodeToAlternativeIds, labVessel, rowColumn.getColumn(),
-                                rowColumn.getRow());
-                    }
+                    jsonForChild(child, vesselPosition, dimensions, mapBarcodeToAlternativeIds, rowColumn.getColumn(),
+                            rowColumn.getRow());
                 }
                 jsonWriter.endArray().endObject();
                 if (startId == null) {
@@ -434,18 +449,42 @@ public class TransferVisualizerV2 {
          * Calculates the dimensions of a child, including alternative IDs.
          */
         private void dimensionsForChild(Dimensions dimensions, Map<String, List<String>> mapBarcodeToAlternativeIds,
-                LabVessel child, int columnNumber, int rowNumber) {
+                LabVessel child, VesselPosition vesselPosition, int columnNumber, int rowNumber) {
             dimensions.setMaxColumn(Math.max(dimensions.getMaxColumn(), columnNumber));
             dimensions.setMaxRow(Math.max(dimensions.getMaxRow(), rowNumber + 1));
+            if (child == null) {
+                int width = fontMetrics.stringWidth(vesselPosition.name());
+                dimensions.setMaxColumnWidth(Math.max(width, dimensions.getMaxColumnWidth()));
+                return;
+            } else {
+                int width = fontMetrics.stringWidth(OrmUtil.proxySafeIsInstance(child, PlateWell.class) ?
+                        vesselPosition.name() : child.getLabel());
+                dimensions.setMaxColumnWidth(Math.max(width, dimensions.getMaxColumnWidth()));
+            }
             for (AlternativeIds alternativeId : alternativeIds) {
                 switch (alternativeId) {
                     case SAMPLE_ID:
                         Set<SampleInstanceV2> sampleInstances = child.getSampleInstancesV2();
                         if (sampleInstances.size() == 1) {
                             SampleInstanceV2 sampleInstance = sampleInstances.iterator().next();
-                            String indexName = sampleInstance.getMolecularIndexingScheme() == null ? "" :
-                                    " " + sampleInstance.getMolecularIndexingScheme().getName();
-                            String ids = sampleInstance.getNearestMercurySampleName() + indexName;
+                            String ids = "";
+                            if (sampleInstance.isReagentOnly()) {
+                                for (Reagent reagent : sampleInstance.getReagents()) {
+                                    if (OrmUtil.proxySafeIsInstance(reagent, MolecularIndexReagent.class)) {
+                                        MolecularIndexReagent molecularIndexReagent = OrmUtil.proxySafeCast(reagent,
+                                                MolecularIndexReagent.class);
+                                        ids += molecularIndexReagent.getMolecularIndexingScheme().getName();
+                                    } else if (OrmUtil.proxySafeIsInstance(reagent, DesignedReagent.class)) {
+                                        DesignedReagent designedReagent = OrmUtil.proxySafeCast(reagent,
+                                                DesignedReagent.class);
+                                        ids += designedReagent.getReagentDesign().getName();
+                                    }
+                                }
+                            } else {
+                                String indexName = sampleInstance.getMolecularIndexingScheme() == null ? "" :
+                                        " " + sampleInstance.getMolecularIndexingScheme().getName();
+                                ids = sampleInstance.getNearestMercurySampleName() + indexName;
+                            }
                             dimensionsForAltId(dimensions, mapBarcodeToAlternativeIds, child, ids);
                         }
                         break;
@@ -519,18 +558,20 @@ public class TransferVisualizerV2 {
          * Writes JSON for a child, e.g. a tube, a flowcell lane or a strip tube well.
          * @throws JSONException
          */
-        private void jsonForChild(LabVessel child, Dimensions dimensions,
-                Map<String, List<String>> mapBarcodeToAlternativeIds, LabVessel labVessel, int columnNumber,
+        private void jsonForChild(LabVessel child, VesselPosition vesselPosition, Dimensions dimensions,
+                Map<String, List<String>> mapBarcodeToAlternativeIds, int columnNumber,
                 int rowNumber) throws JSONException {
+            String label = (child == null || OrmUtil.proxySafeIsInstance(child, PlateWell.class) ?
+                    vesselPosition.name() : child.getLabel());
             jsonWriter.object().
-                    key("label").value(child.getLabel()).
+                    key("label").value(label).
                     key("x").value((columnNumber - 1) * dimensions.getMaxColumnWidth()).
                     key("y").value((rowNumber) * dimensions.getMaxRowHeight() + dimensions.getInPlaceHeight()).
                     key("w").value(dimensions.getMaxColumnWidth()).
                     key("h").value(dimensions.getMaxRowHeight()).
                     key("altIds").array();
             if (!mapBarcodeToAlternativeIds.isEmpty()) {
-                List<String> ids = mapBarcodeToAlternativeIds.get(child.getLabel());
+                List<String> ids = mapBarcodeToAlternativeIds.get(child == null ? label : child.getLabel());
                 if (ids != null) {
                     for (String id : ids) {
                         jsonWriter.object().key("altId").value(id).endObject();
@@ -595,8 +636,9 @@ public class TransferVisualizerV2 {
                     if (containerRole == null) {
                         labVessel.evaluateCriteria(traverser, traversalDirection);
                     } else {
-                        containerRole.evaluateCriteria(labVessel.getVesselGeometry().getVesselPositions()[0], traverser,
-                                traversalDirection, 0);
+                        for (VesselPosition vesselPosition : labVessel.getVesselGeometry().getVesselPositions()) {
+                            containerRole.evaluateCriteria(vesselPosition, traverser, traversalDirection, 0);
+                        }
                     }
                     traverser.resetAllTraversed();
                 }

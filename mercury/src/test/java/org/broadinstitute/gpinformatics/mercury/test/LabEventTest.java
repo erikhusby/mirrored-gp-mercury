@@ -1149,9 +1149,8 @@ public class LabEventTest extends BaseEventTest {
                         ProductionFlowcellPath.DILUTION_TO_FLOWCELL, null,
                         Workflow.ICE_EXOME_EXPRESS);
 
-        runTransferVisualizer(mapBarcodeToTube.values().iterator().next());
-
         IlluminaFlowcell illuminaFlowcell = hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell();
+        runTransferVisualizer(illuminaFlowcell);
         Set<SampleInstanceV2> lane1SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPositionV2(
                 VesselPosition.LANE1);
         Assert.assertEquals(lane1SampleInstances.iterator().next().getReagents().size(), 3,
