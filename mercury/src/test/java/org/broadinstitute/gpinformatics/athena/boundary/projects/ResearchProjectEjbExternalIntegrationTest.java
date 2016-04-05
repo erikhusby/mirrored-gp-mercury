@@ -40,7 +40,7 @@ public class ResearchProjectEjbExternalIntegrationTest {
             getTestDataWithSamples("4304714212_K", "4377315018_E", "4304714040_C");
 
     private ResearchProjectEjb researchProjectEjb = new ResearchProjectEjb(null, null, null, null, null, null,
-            new SubmissionsServiceImpl(SubmissionConfig.produce(Deployment.DEV)));
+            new SubmissionsServiceImpl(SubmissionConfig.produce(Deployment.DEV)), null);
 
     @Test(expectedExceptions = NullPointerException.class)
     public void testValidateSubmissionSamplesNullSample() throws Exception {
