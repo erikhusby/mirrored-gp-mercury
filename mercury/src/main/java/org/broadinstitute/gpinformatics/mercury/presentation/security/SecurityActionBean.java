@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.security;
 
 import net.sourceforge.stripes.action.*;
+import net.sourceforge.stripes.controller.StripesConstants;
 import net.sourceforge.stripes.validation.Validate;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -12,6 +13,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import javax.inject.Inject;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
+import java.util.Map;
 
 /**
  * This class is for managing security.
@@ -111,7 +113,17 @@ public class SecurityActionBean extends CoreActionBean {
                 previouslyTargetedPage = role.checkUrlForRoleRedirect(previouslyTargetedPage);
 
                 request.getSession().setAttribute(AuthorizationFilter.TARGET_PAGE_ATTRIBUTE, null);
-                return new RedirectResolution(previouslyTargetedPage, false);
+                Map<String, String[]> parameters = (Map<String, String[]>) request.getSession().getAttribute(
+                        AuthorizationFilter.TARGET_PARAMETERS);
+
+                RedirectResolution redirectResolution = new RedirectResolution(previouslyTargetedPage, false);
+                for (Map.Entry<String, String[]> mapEntry : parameters.entrySet()) {
+                    if (StripesConstants.SPECIAL_URL_KEYS.contains(mapEntry.getKey())) {
+                        continue;
+                    }
+                    redirectResolution.addParameter(mapEntry.getKey(), mapEntry.getValue());
+                }
+                return redirectResolution;
             }
         } catch (ServletException le) {
             logger.error("ServletException Retrieved: ", le);
