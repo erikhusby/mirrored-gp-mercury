@@ -11,8 +11,12 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.metrics.entity;
 
+import com.google.common.base.Optional;
+import org.apache.commons.lang3.ObjectUtils;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
+import org.hibernate.annotations.BatchSize;
 
+import javax.persistence.Cacheable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -52,6 +56,7 @@ public class Aggregation {
     private String dataType;
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "aggregation")
+    @BatchSize(size = 100)
     private Collection<AggregationAlignment> aggregationAlignments = new ArrayList<>();
 
     @OneToOne(fetch = FetchType.LAZY, mappedBy = "aggregation", optional = false)
@@ -61,6 +66,7 @@ public class Aggregation {
     private AggregationHybridSelection aggregationHybridSelection;
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "aggregation")
+    @BatchSize(size = 100)
     private Collection<AggregationReadGroup> aggregationReadGroups = new ArrayList<>();
 
     @OneToOne(mappedBy = "aggregation")
@@ -138,6 +144,10 @@ public class Aggregation {
         }
     }
 
+    public Integer getId() {
+        return id;
+    }
+
     public String getLibrary() {
         return library;
     }
@@ -204,6 +214,7 @@ public class Aggregation {
     public void setLevelOfDetection(LevelOfDetection levelOfDetection) {
         this.levelOfDetection = levelOfDetection;
     }
+
 
     @Override
     public boolean equals(Object o) {

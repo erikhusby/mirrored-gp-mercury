@@ -92,11 +92,11 @@ public class SubmissionStatusDetailBean implements Serializable {
         this.bioproject = bioproject;
     }
 
-    public String getSubmissionRepositoryName() {
+    public String getRepositoryName() {
         return repositoryName;
     }
 
-    @JsonProperty("site")
+    @XmlElement(name = "site")
     public void setRepositoryName(String repositoryName) {
         this.repositoryName = repositoryName;
     }
@@ -106,7 +106,7 @@ public class SubmissionStatusDetailBean implements Serializable {
         return libraryDescriptor;
     }
 
-    @JsonProperty("submissiondatatype")
+    @XmlElement(name = "submissiondatatype")
     public void setLibraryDescriptor(String libraryDescriptor) {
         this.libraryDescriptor = libraryDescriptor;
     }

@@ -226,7 +226,7 @@ public class SubmissionDto {
     public String getSubmissionRepositoryName() {
         String submissionSite = "";
         if (statusDetailBean != null) {
-            submissionSite = statusDetailBean.getSubmissionRepositoryName();
+            submissionSite = statusDetailBean.getRepositoryName();
         }
         return submissionSite;
     }
