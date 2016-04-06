@@ -202,7 +202,9 @@ public class MercurySampleData implements SampleData {
                     // Use most recent
                     LabMetric labMetric = labMetrics.get(labMetrics.size() - 1);
                     concentration = labMetric.getValue().doubleValue();
-                    totalDna = labMetric.getTotalNg().doubleValue();
+                    if (labMetric.getTotalNg() != null) {
+                        totalDna = labMetric.getTotalNg().doubleValue();
+                    }
                     LabMetricRun labMetricRun = labMetric.getLabMetricRun();
 
                     // Generic uploads don't have runs

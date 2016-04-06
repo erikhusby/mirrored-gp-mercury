@@ -47,34 +47,17 @@ public class BassDTO {
         this.columnToValue = columnToValue;
     }
 
-// todo: should be in interface?
-    public SubmissionTuple getSubmissionKey() {
-        return new SubmissionTuple(getSample(), getFileType(), getVersion().toString());
+    public Map<BassResultColumn, String> getColumnToValue() {
+        return columnToValue;
     }
 
-    public enum FileType {
-        BAM("bam"),
-        PICARD("picard"),
-        READ_GROUP_BAM("read_group_bam"),
-        ALL("all");
-        private String value;
+    // todo: should be in interface?
+    public SubmissionTuple getTuple() {
+        return new SubmissionTuple(getSample(), BassFileType.byBassValue(getFileType()), getVersion().toString());
+    }
 
-        FileType(String value) {
-            this.value = value;
-        }
-
-        public String getValue() {
-            return value;
-        }
-
-        public static FileType byValue(String fileType) {
-            for (FileType type : FileType.values()) {
-                if (fileType.equals(type.getValue())) {
-                    return type;
-                }
-            }
-            throw new IllegalArgumentException("No enum constant for " + fileType);
-        }
+    private String getFilePath() {
+        return getValue(BassResultColumn.path);
     }
 
     public enum BassResultColumn {

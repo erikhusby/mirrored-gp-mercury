@@ -87,7 +87,7 @@
             <thead>
             <tr>
                 <c:if test="${!dataTable}">
-                <th><input for="count" type="checkbox" class="checkAll" id="checkAllTop" onclick="checkOtherAllBox('#checkAllBottom', this.checked );"><span id="count" class="checkedCount">0</span></th>
+                <th width="5em"><c:if test="${status.index == 0}"><input for="count" type="checkbox" class="checkAll" id="checkAllTop" onclick="checkOtherAllBox('#checkAllBottom', this.checked );"><div id="count" class="checkedCount">0</div></c:if></th>
                 </c:if>
                 <c:forEach items="${resultList.headers}" var="resultListHeader" varStatus="status">
                     <%-- Render headers, and links for sorting by column --%>
@@ -132,7 +132,7 @@
             <tbody>
         </c:if>
         <%-- Render data rows and cells --%>
-        <tr class="${status.index%2==0 ? "even" : "odd"}${empty resultRow.cssStyles ? "" : " " + "resultRow.cssStyles"}">
+        <tr class="${status.index%2==0 ? "even" : "odd"}${empty resultRow.cssStyles ? "" : " ".concat(resultRow.cssStyles)}">
             <c:if test="${!dataTable}">
                 <td>
                     <input name="selectedIds" value="${resultRow.resultId}" class="shiftCheckbox" type="checkbox">
@@ -181,11 +181,10 @@
         </c:if>
         <%-- *** End nested table *** --%>
 
-        <c:if test="${(status.index + 1)%500 == 0}">
-            </tbody>
-</table>
-<table width="100%">
-    </c:if>
+<c:if test="${(status.index + 1)%500 == 0}">
+    </tbody></table>
+    <table width="100%" class="table simple dataTable" id="${entityName}ResultsTable">
+</c:if>
     </c:forEach>
 </table>
 </div>

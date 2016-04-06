@@ -13,7 +13,7 @@ package org.broadinstitute.gpinformatics.athena.entity.project;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bass.BassFileType;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 
 import java.io.Serializable;
@@ -21,10 +21,10 @@ import java.io.Serializable;
 public class SubmissionTuple implements Serializable {
     private static final long serialVersionUID = 1262062294730627888L;
     private final String sampleName;
-    private final BassDTO.FileType fileType;
+    private final BassFileType fileType;
     private final String version;
 
-    public SubmissionTuple(String sampleName, BassDTO.FileType fileType, String version) {
+    public SubmissionTuple(String sampleName, BassFileType fileType, String version) {
         this.sampleName = sampleName;
         this.fileType = fileType;
         this.version = version;
@@ -48,6 +48,11 @@ public class SubmissionTuple implements Serializable {
                 .append(this.sampleName, that.sampleName)
                 .append(this.fileType, that.fileType)
                 .append(this.version, that.version).isEquals();
+    }
+
+    @Override
+    public String toString() {
+        return String.format("{sampleName = %s; fileType = %s; version = %s}",sampleName, fileType, version);
     }
 
     @Override

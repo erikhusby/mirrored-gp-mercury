@@ -305,6 +305,33 @@ public class LabMetricFixupTest extends Arquillian {
         }
     }
 
+    @Test(enabled = false)
+    public void fixupGplim4028() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+        LabMetric labMetric = labVesselDao.findById(LabMetric.class, 167003L);
+        Assert.assertEquals(labMetric.getName(), LabMetric.MetricType.FINGERPRINT_PICO);
+        Assert.assertEquals(labMetric.getLabMetricRun().getRunName(), "LCSET-8751 FP and Initial");
+        System.out.println("Deleting LabMetric " + labMetric.getLabMetricId());
+        labVesselDao.remove(labMetric);
+        dao.persist(new FixupCommentary("GPLIM-4028 delete fingerpinting metric"));
+        dao.flush();
+        utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void gplim4084ChangePondToShearingPico() {
+        try {
+            utx.begin();
+            userBean.loginOSUser();
+            deleteRun("8937_Pond_", "GPLIM-4084 remove Pico run, so lab can upload as Shearing with correct run name");
+            utx.commit();
+        } catch (NotSupportedException | SystemException | RollbackException | HeuristicMixedException |
+                HeuristicRollbackException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private void deleteRun(String runName, String reason) {
         LabMetricRun labMetricRun = dao.findByName(runName);
         for (LabMetric labMetric : labMetricRun.getLabMetrics()) {

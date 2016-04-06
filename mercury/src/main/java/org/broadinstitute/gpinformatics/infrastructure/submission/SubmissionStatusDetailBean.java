@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonProperty;
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 
 import javax.xml.bind.annotation.XmlElement;
 import java.io.Serializable;
@@ -17,6 +18,7 @@ import java.util.List;
 /**
  * TODO scottmat fill in javadoc!!!
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class SubmissionStatusDetailBean implements Serializable {
 
     private static final long serialVersionUID = 6352810343445206054L;

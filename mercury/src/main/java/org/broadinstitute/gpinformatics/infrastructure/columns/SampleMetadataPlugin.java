@@ -37,25 +37,10 @@ public class SampleMetadataPlugin implements ListPlugin {
         // Populate rows with any available sample metadata.
         for( MercurySample sample : sampleList ) {
 
-            // Collect cell values for each metadata type in case multiple samples in vessel ancestry
+            // Collect cell values for each metadata type
             Map<Metadata.Key,List<String>> rowData = MetadataPluginHelper.buildRowDataHolder();
 
-            Set<Metadata> metadata = sample.getMetadata();
-            if( metadata != null && !metadata.isEmpty() ) {
-                MetadataPluginHelper.addMetadataToRowData( metadata, rowData );
-            } else {
-                for(LabVessel sampleVessel : sample.getLabVessel() ) {
-                    for( SampleInstanceV2 sampleInstance : sampleVessel.getSampleInstancesV2()){
-                        MercurySample rootSample = sampleInstance.getRootOrEarliestMercurySample();
-                        if( rootSample != null ) {
-                            metadata = rootSample.getMetadata();
-                            if( metadata != null && !metadata.isEmpty() ) {
-                                MetadataPluginHelper.addMetadataToRowData( metadata, rowData );
-                            }
-                        }
-                    }
-                }
-            }
+            MetadataPluginHelper.addSampleMetadataToRowData( sample, rowData );
 
             ConfigurableList.Row row = MetadataPluginHelper.buildRow(sample.getMercurySampleId().toString(), rowData );
 

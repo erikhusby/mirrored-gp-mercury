@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bass.BassFileType;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
@@ -49,6 +50,7 @@ public class SubmissionTracker {
 
     /**
      * File name and path for the data file being submitted
+     * TODO: Remove this field!
      */
     @Column(name = "FILE_NAME")
     private String fileName;
@@ -59,6 +61,8 @@ public class SubmissionTracker {
     @Enumerated(EnumType.STRING)
     private BassDTO.FileType fileType;
 
+    @Enumerated(EnumType.STRING)
+    private BassFileType fileType;
     /**
      * version of the data file created
      */
@@ -78,14 +82,15 @@ public class SubmissionTracker {
     }
 
     SubmissionTracker(Long submissionTrackerId, String submittedSampleName, BassDTO.FileType fileType, String version) {
+    SubmissionTracker(Long submissionTrackerId, String submittedSampleName, BassFileType fileType, String version) {
         this.submissionTrackerId = submissionTrackerId;
         this.submittedSampleName = submittedSampleName;
-        this.fileType=fileType;
+        this.fileType = fileType;
         this.version = version;
         requestDate = new Date();
     }
 
-    public SubmissionTracker(String submittedSampleName, BassDTO.FileType fileType, String version) {
+    public SubmissionTracker(String submittedSampleName, BassFileType fileType, String version) {
        this(null, submittedSampleName, fileType, version);
     }
 
@@ -112,11 +117,11 @@ public class SubmissionTracker {
         return id;
     }
 
-    public BassDTO.FileType getFileType() {
+    public BassFileType getFileType() {
         return fileType;
     }
 
-    public void setFileType(BassDTO.FileType fileType) {
+    public void setFileType(BassFileType fileType) {
         this.fileType = fileType;
     }
 
@@ -126,6 +131,11 @@ public class SubmissionTracker {
 
     public String getFileName() {
         return fileName;
+    }
+
+    @Deprecated
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
     }
 
     public String getVersion() {
@@ -155,6 +165,8 @@ public class SubmissionTracker {
     // todo: should be in interface?
     @Transient
     public SubmissionTuple getKey() {
+        return new SubmissionTuple(submittedSampleName, fileType, version);
+    public SubmissionTuple getTuple() {
         return new SubmissionTuple(submittedSampleName, fileType, version);
     }
 

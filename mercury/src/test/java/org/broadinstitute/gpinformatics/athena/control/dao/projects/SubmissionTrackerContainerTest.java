@@ -3,9 +3,7 @@ package org.broadinstitute.gpinformatics.athena.control.dao.projects;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTracker;
-import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
-import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionLibraryDescriptor;
-import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionRepository;
+import org.broadinstitute.gpinformatics.infrastructure.bass.BassFileType;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
@@ -24,10 +22,10 @@ public class SubmissionTrackerContainerTest extends ContainerTest {
     @Inject
     ResearchProjectDao researchProjectDao;
 
-    public static String testAccessionID = "SA-2342";
-    public static BassDTO.FileType fileType = BassDTO.FileType.BAM;
+    private static String testAccessionID = "SA-2342";
+    private static BassFileType testFileType = BassFileType.BAM;
+    private static String testVersion = "v1";
 
-    public static String testVersion = "v1";
     public static SubmissionRepository
             testRepository=new SubmissionRepository(SubmissionRepository.DEFAULT_REPOSITORY_NAME, "description");
     public static SubmissionLibraryDescriptor testLibraryDescriptor= ProductFamily.defaultLibraryDescriptor();
@@ -41,7 +39,6 @@ public class SubmissionTrackerContainerTest extends ContainerTest {
 
     }
 
-    @Override
     @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void tearDown() throws Exception {
         // Skip if no injections, meaning we're not running in container
@@ -54,7 +51,7 @@ public class SubmissionTrackerContainerTest extends ContainerTest {
     public void testTrackerConfiguration() throws Exception {
         ResearchProject testProject = ResearchProjectTestFactory.createTestResearchProject();
         testProject.setJiraTicketKey("RP-testRP");
-        SubmissionTracker tracker = new SubmissionTracker(testAccessionID, fileType, testVersion);
+        SubmissionTracker tracker = new SubmissionTracker(testAccessionID, testFileType, testVersion);
 
         testProject.addSubmissionTracker(tracker);
 

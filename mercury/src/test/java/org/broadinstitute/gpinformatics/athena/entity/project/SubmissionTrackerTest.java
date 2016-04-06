@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
-import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bass.BassFileType;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.testng.Assert;
@@ -13,8 +13,9 @@ import java.util.Date;
 public class SubmissionTrackerTest {
 
     public static String testAccessionID = "SA-2342";
-    public static BassDTO.FileType testFileType = BassDTO.FileType.PICARD;
-    public static String testVersion = "1";
+    public static BassFileType testFileType = BassFileType.BAM;
+
+    public static String testVersion = "v1";
 
     public void testBuildSubmissionTracker() {
         Date testStartDate = new Date();
@@ -55,17 +56,27 @@ public class SubmissionTrackerTest {
 
     }
 
+    public void testSubmissionTrackerWithDifferentFilePath() throws Exception {
+        SubmissionTracker submissionTracker = new SubmissionTrackerStub("sample1", BassFileType.BAM, "1");
+        submissionTracker.setFileName("/path/to/file");
+
+        SubmissionTracker submissionTracker2 = new SubmissionTrackerStub("sample1", BassFileType.BAM, "1");
+        Assert.assertEquals(submissionTracker.getTuple(), submissionTracker2.getTuple());
+
+        submissionTracker2.setFileName("/different/path/same/file");
+        Assert.assertEquals(submissionTracker.getTuple(), submissionTracker2.getTuple());
+    }
+
     public static class SubmissionTrackerStub extends SubmissionTracker {
         protected SubmissionTrackerStub() {
             super();
         }
 
-        public SubmissionTrackerStub(String submittedSampleName, BassDTO.FileType fileType, String version) {
+        public SubmissionTrackerStub(String submittedSampleName, BassFileType fileType, String version) {
             super(submittedSampleName, fileType, version);
         }
 
-        public SubmissionTrackerStub(Long submissionTrackerId, String testAccessionID, BassDTO.FileType fileType,
-                                     String testVersion) {
+        public SubmissionTrackerStub(Long submissionTrackerId, String testAccessionID, BassFileType fileType, String testVersion) {
             super(submissionTrackerId, testAccessionID, fileType, testVersion);
         }
 

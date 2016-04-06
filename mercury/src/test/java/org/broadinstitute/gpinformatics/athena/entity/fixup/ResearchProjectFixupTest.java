@@ -22,6 +22,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import javax.transaction.UserTransaction;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -49,6 +50,9 @@ public class ResearchProjectFixupTest extends Arquillian {
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private Log log;
+
+    @Inject
+    private UserTransaction utx;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -193,7 +197,7 @@ public class ResearchProjectFixupTest extends Arquillian {
         rpDao.persist(new FixupCommentary("GPLIM-3816 updating incorrectly selected regulatory designation"));
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void gplim4021addDefaultSubmissionRepository() {
         userBean.loginOSUser();
         List<ResearchProject> researchProjectList = rpDao.findList(ResearchProject.class, ResearchProject_.submissionRepositoryName, null);
@@ -211,5 +215,19 @@ public class ResearchProjectFixupTest extends Arquillian {
         }
         rpDao.persist(new FixupCommentary("see https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-4021"));
         log.info(String.format("Updated %d rows", researchProjectList.size()));
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim4025() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        ResearchProject researchProject = rpDao.findByBusinessKey("RP-1074");
+        researchProject.setRegulatoryDesignation(ResearchProject.RegulatoryDesignation.CLINICAL_DIAGNOSTICS);
+        System.out.println("Changing regulatory designation for " + researchProject.getJiraTicketKey());
+        rpDao.persist(new FixupCommentary("GPLIM-4025 changing regulatory designation for RP-1074"));
+        rpDao.flush();
+
+        utx.commit();
     }
 }

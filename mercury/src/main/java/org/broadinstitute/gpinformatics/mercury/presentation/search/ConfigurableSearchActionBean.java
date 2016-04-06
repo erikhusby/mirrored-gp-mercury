@@ -15,6 +15,8 @@ import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.StreamingResolution;
 import net.sourceforge.stripes.action.UrlBinding;
+import net.sourceforge.stripes.validation.ValidationError;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.rackscan.ScannerException;
@@ -23,7 +25,6 @@ import org.broadinstitute.gpinformatics.athena.control.dao.preference.Preference
 import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceEjb;
 import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
-import org.broadinstitute.gpinformatics.athena.entity.preference.SearchInstanceList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
@@ -38,6 +39,7 @@ import org.broadinstitute.gpinformatics.infrastructure.search.PaginationUtil;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstanceEjb;
+import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.BSPLookupException;
 import org.broadinstitute.gpinformatics.mercury.presentation.vessel.RackScanActionBean;
 import org.json.JSONArray;
@@ -51,6 +53,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
 
@@ -97,9 +100,14 @@ public class ConfigurableSearchActionBean extends RackScanActionBean {
         try {
             // Run the rack scanner and include the rack barcode in position map
             super.runRackScan(true);
+
+            // Should never happen
             if( rackScan == null || rackScan.isEmpty() ){
                 errors.append("No results from rack scan");
-            } else {
+            }
+
+            // Check for scan errors
+            if( getValidationErrors().isEmpty()) {
                 // Scan data can be persisted with a SearchInstance, keep track of who ran it and when
                 scannerData.put("scanDate", ColumnValueType.DATE_TIME.format(new Date(),""));
                 scannerData.put("scanUser", getUserBean().getLoginUserName());
@@ -111,27 +119,39 @@ public class ConfigurableSearchActionBean extends RackScanActionBean {
                         scannerData.put("rackBarcode", positionAndBarcode.getValue());
                         continue;
                     }
-
-                    scan.put( new JSONObject()
-                            .put("position", positionAndBarcode.getKey())
-                            .put("barcode",positionAndBarcode.getValue())
-                    );
+                    if( StringUtils.isNotEmpty( positionAndBarcode.getValue() ) ) {
+                        scan.put(new JSONObject()
+                                .put("position", positionAndBarcode.getKey())
+                                .put("barcode", positionAndBarcode.getValue())
+                        );
+                    }
+                }
+                if( scan.length() == 0 ){
+                    errors.append("No results from rack scan");
+                }
+            } else {
+                for( Map.Entry<String, List<ValidationError>> errorEntry : getValidationErrors().entrySet() ) {
+                    for( ValidationError error : errorEntry.getValue() ) {
+                        errors.append( error.getMessage(Locale.getDefault()) );
+                    }
                 }
             }
         } catch (Exception ex){
-            errors.append(ex.getMessage());
+            log.error(ex);
+            errors.append("Rack scan error occurred: " + ex.getMessage());
         }
 
         return new StreamingResolution("text/plain") {
             @Override
             public void stream(HttpServletResponse response) throws Exception {
+                ServletOutputStream out = response.getOutputStream();
                 if(errors.length() > 0 ) {
-                    response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, errors.toString());
+                    out.write("Failure: ".getBytes());
+                    out.write(errors.toString().getBytes());
                 } else {
-                    ServletOutputStream out = response.getOutputStream();
                     out.write(scannerData.toString().getBytes());
-                    out.close();
                 }
+                out.close();
             }
         };
     }
@@ -340,26 +360,8 @@ public class ConfigurableSearchActionBean extends RackScanActionBean {
         PreferenceType type = PreferenceType.valueOf(searchValues[1]);
         String searchName = searchValues[2];
 
-        SearchInstanceList searchInstanceList = null;
-        if( preferenceMap.containsKey(type)){
-            try {
-                searchInstanceList =
-                        (SearchInstanceList) preferenceMap.get(type).getPreferenceDefinition().getDefinitionValue();
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        }
-        assert searchInstanceList != null;
-
-        for (SearchInstance searchInstanceLocal : searchInstanceList.getSearchInstances()) {
-            if (searchInstanceLocal.getName().equals(searchName)) {
-                searchInstance = searchInstanceLocal;
-                break;
-            }
-        }
+        searchInstance = SearchInstance.findSearchInstance(type, searchName, configurableSearchDef, preferenceMap);
         buildSearchContext();
-        searchInstance.establishRelationships(configurableSearchDef);
-        searchInstance.postLoad();
         return new ForwardResolution("/search/configurable_search.jsp");
     }
 
@@ -471,9 +473,9 @@ public class ConfigurableSearchActionBean extends RackScanActionBean {
                 configurableResultList = firstPageResults.getResultList();
                 getContext().getRequest().getSession().setAttribute(PAGINATION_PREFIX + sessionKey,
                         firstPageResults.getPagination());
-            } catch (IllegalArgumentException e) {
-                log.error(e.getMessage(), e);
-                addGlobalValidationError(e.getMessage());
+            } catch (InformaticsServiceException ve) {
+                log.error(ve.getMessage(), ve);
+                addGlobalValidationError(ve.getMessage());
             } catch (BSPLookupException bspse) {
                 handleRemoteServiceFailure(bspse);
             }

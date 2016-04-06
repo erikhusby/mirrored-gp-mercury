@@ -39,10 +39,10 @@ public class BassSearchServiceTest {
     }
 
     public void testSearchBass() {
-        List<BassDTO> bassDTOs = bassSearchService.runSearch(RP_12, BassDTO.FileType.BAM);
+        List<BassDTO> bassDTOs = bassSearchService.runSearch(RP_12, BassFileType.BAM);
         Assert.assertFalse(bassDTOs.isEmpty());
         for (BassDTO bassDTO : bassDTOs) {
-            Assert.assertEquals(BassDTO.FileType.BAM, bassDTO.getFileType());
+            Assert.assertEquals(BassFileType.BAM, BassFileType.byBassValue(bassDTO.getFileType()));
             // RP Aggregated research projects should always have a data_type column.
             if (bassDTO.isAggregatedByResearchProject()) {
                 Assert.assertEquals(bassDTO.getRpid(), bassDTO.getProject());
@@ -54,15 +54,15 @@ public class BassSearchServiceTest {
     }
 
     public void testSearchBassAllFileTypes() {
-        List<BassDTO> bassDTOs = bassSearchService.runSearch(RP_12, BassDTO.FileType.ALL);
+        List<BassDTO> bassDTOs = bassSearchService.runSearch(RP_12, BassFileType.ALL);
         Assert.assertFalse(bassDTOs.isEmpty());
-        Set<BassDTO.FileType> resultFileTypes = new HashSet<>();
+        Set<BassFileType> resultFileTypes = new HashSet<>();
         for (BassDTO bassDTO : bassDTOs) {
-            resultFileTypes.add(bassDTO.getFileType());
+            resultFileTypes.add(BassFileType.byBassValue(bassDTO.getFileType()));
         }
-        Assert.assertEquals(resultFileTypes.size(), 2, "Result set should contain bam and picard files.");
-        Assert.assertTrue(resultFileTypes.contains(BassDTO.FileType.BAM));
-        Assert.assertTrue(resultFileTypes.contains(BassDTO.FileType.PICARD));
+        Assert.assertEquals(resultFileTypes.size(), 2, "Result set should contain BAM and PICARD files.");
+        Assert.assertTrue(resultFileTypes.contains(BassFileType.BAM));
+        Assert.assertTrue(resultFileTypes.contains(BassFileType.PICARD));
     }
 
     public void testSearchBassMultipleParams() {
@@ -82,44 +82,44 @@ public class BassSearchServiceTest {
         parameters.put(BassDTO.BassResultColumn.rpid, Arrays.asList(RP_12));
 
         try {
-            bassSearchService.runSearch(parameters, BassDTO.FileType.BAM);
+            bassSearchService.runSearch(parameters, BassFileType.BAM);
         } catch (Exception e) {
             Assert.assertTrue(e.getMessage().contains(BassSearchService.ONLY_IDS_MAY_BE_SPECIFIED));
         }
     }
 
     public void testGetBamParam() {
-        MultivaluedMap<String, String> fileTypeParam = bassSearchService.getFileTypeParam(BassDTO.FileType.BAM);
-        validate(fileTypeParam, BassDTO.FILETYPE, BassDTO.FileType.BAM);
+        MultivaluedMap<String, String> fileTypeParam = bassSearchService.getFileTypeParam(BassFileType.BAM);
+        validate(fileTypeParam, BassDTO.FILETYPE, BassFileType.BAM);
     }
 
     public void testGetRgBamParam() {
         MultivaluedMap<String, String> fileTypeParam =
-                bassSearchService.getFileTypeParam(BassDTO.FileType.READ_GROUP_BAM);
-        validate(fileTypeParam, BassDTO.FILETYPE, BassDTO.FileType.READ_GROUP_BAM);
+                bassSearchService.getFileTypeParam(BassFileType.READ_GROUP_BAM);
+        validate(fileTypeParam, BassDTO.FILETYPE, BassFileType.READ_GROUP_BAM);
     }
 
     public void testGetPicardParam() {
-        MultivaluedMap<String, String> fileTypeParam = bassSearchService.getFileTypeParam(BassDTO.FileType.PICARD);
-        validate(fileTypeParam, BassDTO.FILETYPE, BassDTO.FileType.PICARD);
+        MultivaluedMap<String, String> fileTypeParam = bassSearchService.getFileTypeParam(BassFileType.PICARD);
+        validate(fileTypeParam, BassDTO.FILETYPE, BassFileType.PICARD);
     }
 
     public void testGetAllParam() {
-        MultivaluedMap<String, String> fileTypeParam = bassSearchService.getFileTypeParam(BassDTO.FileType.ALL);
+        MultivaluedMap<String, String> fileTypeParam = bassSearchService.getFileTypeParam(BassFileType.ALL);
         Assert.assertTrue(fileTypeParam.isEmpty());
     }
 
-    private void validate(MultivaluedMap<String, String> fileTypeParam, String expected, BassDTO.FileType fileType) {
+    private void validate(MultivaluedMap<String, String> fileTypeParam, String expected, BassFileType fileType) {
         Assert.assertTrue(fileTypeParam.keySet().contains(expected), "Key should be " + BassDTO.FILETYPE);
-        Assert.assertTrue(fileTypeParam.get(expected).contains(fileType.getValue()),
-                "Value should contain " + fileType.getValue());
+        Assert.assertTrue(fileTypeParam.get(expected).contains(fileType.getBassValue()),
+                "Value should contain " + fileType.getBassValue());
 
     }
 
     public void testFileTypeByValue() {
         boolean iDidLoop = false;
-        for (BassDTO.FileType fileType : BassDTO.FileType.values()) {
-            BassDTO.FileType type = BassDTO.FileType.byValue(fileType.getValue());
+        for (BassFileType fileType : BassFileType.values()) {
+            BassFileType type = BassFileType.byBassValue(fileType.getBassValue());
             Assert.assertNotNull(type);
             iDidLoop = true;
         }
@@ -129,7 +129,7 @@ public class BassSearchServiceTest {
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testFileTypeEnumByValueNoEnumConstant() {
-        BassDTO.FileType.byValue("no-such-enum");
+        BassFileType.byBassValue("no-such-enum");
         Assert.fail("Should have thrown an IllegalArgumentException!");
     }
 

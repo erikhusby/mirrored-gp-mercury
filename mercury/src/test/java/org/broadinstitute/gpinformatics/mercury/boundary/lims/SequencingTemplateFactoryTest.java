@@ -199,8 +199,8 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
         TubeFormation rearrayedDenatureRack = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
         rearrayedDenatureRack.addRackOfTubes(new RackOfTubes("denatureRearray", RackOfTubes.RackType.Matrix96));
         HiSeq4000FlowcellEntityBuilder flowcell4000EntityBuilder =
-                runHiSeq4000FlowcellProcess(rearrayedDenatureRack, BARCODE_SUFFIX + "ADXX",
-                        fctBatchHiSeq4000, null);
+                runHiSeq4000FlowcellProcess(rearrayedDenatureRack, null, BARCODE_SUFFIX + "ADXX",
+                        fctBatchHiSeq4000, null, HiSeq4000FlowcellEntityBuilder.FCTCreationPoint.DENATURE);
         dilutionTube2500 = flowcellEntityBuilder.getDilutionRack().getContainerRole().getVesselAtPosition(
                 VesselPosition.A01);
 
@@ -260,7 +260,8 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
         template = factory.getSequencingTemplate(flowcellHiSeq2500, vesselsAndPositions, false);
         assertThat(template.getOnRigChemistry(), is(nullValue()));
         assertThat(template.getOnRigWorkflow(), is(nullValue()));
-        assertThat(template.getRegulatoryDesignation(), is(ResearchProject.RegulatoryDesignation.RESEARCH_ONLY.name()));
+        assertThat(template.getRegulatoryDesignation(), Matchers.hasSize(1));
+        assertThat(template.getRegulatoryDesignation(), Matchers.hasItem("RESEARCH_ONLY"));
         assertThat(template.getProducts(), not(empty()));
 
         assertThat(template.getReadStructure(), is(PRODUCTION_CIGAR));
@@ -311,7 +312,8 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
         assertThat(template.getOnRigChemistry(), is(nullValue()));
         assertThat(template.getOnRigWorkflow(), is(nullValue()));
         assertThat(template.getReadStructure(), is(PRODUCTION_CIGAR));
-        assertThat(template.getRegulatoryDesignation(), is(ResearchProject.RegulatoryDesignation.RESEARCH_ONLY.name()));
+        assertThat(template.getRegulatoryDesignation(), Matchers.hasSize(1));
+        assertThat(template.getRegulatoryDesignation(), Matchers.hasItem("RESEARCH_ONLY"));
         assertThat(template.getProducts(), not(empty()));
         assertThat(template.getLanes().size(), is(2));
         Set<String> allLanes = new HashSet<>();
@@ -332,7 +334,8 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
         assertThat(template.getOnRigChemistry(), is(nullValue()));
         assertThat(template.getOnRigWorkflow(), is(nullValue()));
         assertThat(template.getReadStructure(), is(PRODUCTION_CIGAR));
-        assertThat(template.getRegulatoryDesignation(), is(ResearchProject.RegulatoryDesignation.RESEARCH_ONLY.name()));
+        assertThat(template.getRegulatoryDesignation(), Matchers.hasSize(1));
+        assertThat(template.getRegulatoryDesignation(), Matchers.hasItem("RESEARCH_ONLY"));
         assertThat(template.getProducts(), not(empty()));
         assertThat(template.getLanes().size(), is(2));
         Set<String> allLanes = new HashSet<>();
@@ -353,7 +356,8 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
         assertThat(template.getOnRigChemistry(), is(nullValue()));
         assertThat(template.getOnRigWorkflow(), is(nullValue()));
         assertThat(template.getReadStructure(), is(PRODUCTION_CIGAR));
-        assertThat(template.getRegulatoryDesignation(), is(ResearchProject.RegulatoryDesignation.RESEARCH_ONLY.name()));
+        assertThat(template.getRegulatoryDesignation(), Matchers.hasSize(1));
+        assertThat(template.getRegulatoryDesignation(), Matchers.hasItem("RESEARCH_ONLY"));
         assertThat(template.getProducts(), not(empty()));
         assertThat(template.getLanes().size(), is(2));
         Set<String> allLanes = new HashSet<>();

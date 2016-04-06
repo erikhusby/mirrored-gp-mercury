@@ -6,7 +6,6 @@ import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceEjb;
 import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
-import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceDefinition;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
 import org.broadinstitute.gpinformatics.athena.entity.preference.SearchInstanceList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
@@ -56,11 +55,6 @@ public class SearchInstanceEjb {
             new LinkedHashMap<>();
 
     /**
-     * Map each search entity type to its respective GLOBAL/USER preference types
-     */
-    private static final Map<ColumnEntity,PreferenceType[]> mapEntityTypeToPrefType = new LinkedHashMap<>();
-
-    /**
      * Method to retrieve preference from the database, has a different implementation for each type
      */
     private interface PreferenceAccess {
@@ -75,30 +69,11 @@ public class SearchInstanceEjb {
     }
 
     static {
-        // todo jmt move preferences to ColumnEntity?
-        mapEntityTypeToPrefType.put(ColumnEntity.LAB_VESSEL,
-                new PreferenceType[]{PreferenceType.GLOBAL_LAB_VESSEL_SEARCH_INSTANCES,
-                        PreferenceType.USER_LAB_VESSEL_SEARCH_INSTANCES});
-        mapEntityTypeToPrefType.put(ColumnEntity.LAB_EVENT,
-                new PreferenceType[]{PreferenceType.GLOBAL_LAB_EVENT_SEARCH_INSTANCES,
-                        PreferenceType.USER_LAB_EVENT_SEARCH_INSTANCES});
-        mapEntityTypeToPrefType.put(ColumnEntity.MERCURY_SAMPLE,
-                new PreferenceType[]{PreferenceType.GLOBAL_MERCURY_SAMPLE_SEARCH_INSTANCES,
-                        PreferenceType.USER_MERCURY_SAMPLE_SEARCH_INSTANCES});
-        mapEntityTypeToPrefType.put(ColumnEntity.REAGENT,
-                new PreferenceType[]{PreferenceType.GLOBAL_REAGENT_SEARCH_INSTANCES,
-                        PreferenceType.USER_REAGENT_SEARCH_INSTANCES});
-        mapEntityTypeToPrefType.put(ColumnEntity.LAB_METRIC,
-                new PreferenceType[]{PreferenceType.GLOBAL_LAB_METRIC_SEARCH_INSTANCES,
-                        PreferenceType.USER_LAB_METRIC_SEARCH_INSTANCES});
-    }
-
-    static {
         mapTypeToPreferenceAccess.put(PreferenceType.GLOBAL_LAB_VESSEL_SEARCH_INSTANCES, new PreferenceAccess() {
             @Override
             public List<Preference> getPreferences(Long userID,
                                                    PreferenceDao preferenceDao) {
-                List<Preference> preferences = new ArrayList<Preference>();
+                List<Preference> preferences = new ArrayList<>();
                 Preference preference =  preferenceDao.getGlobalPreference(PreferenceType.GLOBAL_LAB_VESSEL_SEARCH_INSTANCES);
                 if( preference != null ) {
                     preferences.add(preference);
@@ -120,15 +95,13 @@ public class SearchInstanceEjb {
             public PreferenceType.PreferenceScope getScope() {
                 return PreferenceType.PreferenceScope.GLOBAL;
             }
-
-            ;
         });
 
         mapTypeToPreferenceAccess.put(PreferenceType.GLOBAL_LAB_EVENT_SEARCH_INSTANCES, new PreferenceAccess() {
             @Override
             public List<Preference> getPreferences(Long userID,
                                                    PreferenceDao preferenceDao) {
-                List<Preference> preferences = new ArrayList<Preference>();
+                List<Preference> preferences = new ArrayList<>();
                 Preference preference =  preferenceDao.getGlobalPreference(PreferenceType.GLOBAL_LAB_EVENT_SEARCH_INSTANCES);
                 if( preference != null ) {
                     preferences.add(preference);
@@ -150,15 +123,13 @@ public class SearchInstanceEjb {
             public PreferenceType.PreferenceScope getScope() {
                 return PreferenceType.PreferenceScope.GLOBAL;
             }
-
-            ;
         });
 
         mapTypeToPreferenceAccess.put(PreferenceType.GLOBAL_MERCURY_SAMPLE_SEARCH_INSTANCES, new PreferenceAccess() {
             @Override
             public List<Preference> getPreferences(Long userID,
                                                    PreferenceDao preferenceDao) {
-                List<Preference> preferences = new ArrayList<Preference>();
+                List<Preference> preferences = new ArrayList<>();
                 Preference preference =  preferenceDao.getGlobalPreference(PreferenceType.GLOBAL_MERCURY_SAMPLE_SEARCH_INSTANCES);
                 if( preference != null ) {
                     preferences.add(preference);
@@ -180,15 +151,13 @@ public class SearchInstanceEjb {
             public PreferenceType.PreferenceScope getScope() {
                 return PreferenceType.PreferenceScope.GLOBAL;
             }
-
-            ;
         });
 
         mapTypeToPreferenceAccess.put(PreferenceType.GLOBAL_REAGENT_SEARCH_INSTANCES, new PreferenceAccess() {
             @Override
             public List<Preference> getPreferences(Long userID,
                                                    PreferenceDao preferenceDao) {
-                List<Preference> preferences = new ArrayList<Preference>();
+                List<Preference> preferences = new ArrayList<>();
                 Preference preference =  preferenceDao.getGlobalPreference(PreferenceType.GLOBAL_REAGENT_SEARCH_INSTANCES);
                 if( preference != null ) {
                     preferences.add(preference);
@@ -210,15 +179,13 @@ public class SearchInstanceEjb {
             public PreferenceType.PreferenceScope getScope() {
                 return PreferenceType.PreferenceScope.GLOBAL;
             }
-
-            ;
         });
 
         mapTypeToPreferenceAccess.put(PreferenceType.GLOBAL_LAB_METRIC_SEARCH_INSTANCES, new PreferenceAccess() {
             @Override
             public List<Preference> getPreferences(Long userID,
                                                    PreferenceDao preferenceDao) {
-                List<Preference> preferences = new ArrayList<Preference>();
+                List<Preference> preferences = new ArrayList<>();
                 Preference preference =  preferenceDao.getGlobalPreference(PreferenceType.GLOBAL_LAB_METRIC_SEARCH_INSTANCES);
                 if( preference != null ) {
                     preferences.add(preference);
@@ -240,8 +207,6 @@ public class SearchInstanceEjb {
             public PreferenceType.PreferenceScope getScope() {
                 return PreferenceType.PreferenceScope.GLOBAL;
             }
-
-            ;
         });
 
         mapTypeToPreferenceAccess.put(PreferenceType.USER_LAB_VESSEL_SEARCH_INSTANCES, new PreferenceAccess() {
@@ -265,8 +230,6 @@ public class SearchInstanceEjb {
             public PreferenceType.PreferenceScope getScope() {
                 return PreferenceType.PreferenceScope.USER;
             }
-
-            ;
         });
 
         mapTypeToPreferenceAccess.put(PreferenceType.USER_LAB_EVENT_SEARCH_INSTANCES, new PreferenceAccess() {
@@ -290,8 +253,6 @@ public class SearchInstanceEjb {
             public PreferenceType.PreferenceScope getScope() {
                 return PreferenceType.PreferenceScope.USER;
             }
-
-            ;
         });
 
         mapTypeToPreferenceAccess.put(PreferenceType.USER_MERCURY_SAMPLE_SEARCH_INSTANCES, new PreferenceAccess() {
@@ -315,8 +276,6 @@ public class SearchInstanceEjb {
             public PreferenceType.PreferenceScope getScope() {
                 return PreferenceType.PreferenceScope.USER;
             }
-
-            ;
         });
 
         mapTypeToPreferenceAccess.put(PreferenceType.USER_REAGENT_SEARCH_INSTANCES, new PreferenceAccess() {
@@ -340,8 +299,6 @@ public class SearchInstanceEjb {
             public PreferenceType.PreferenceScope getScope() {
                 return PreferenceType.PreferenceScope.USER;
             }
-
-            ;
         });
 
         mapTypeToPreferenceAccess.put(PreferenceType.USER_LAB_METRIC_SEARCH_INSTANCES, new PreferenceAccess() {
@@ -365,8 +322,6 @@ public class SearchInstanceEjb {
             public PreferenceType.PreferenceScope getScope() {
                 return PreferenceType.PreferenceScope.USER;
             }
-
-            ;
         });
     }
 
@@ -385,7 +340,7 @@ public class SearchInstanceEjb {
         Long userID = userBean.getBspUser().getUserId();
 
         // Entity types available for GLOBAL and USER scopes
-        PreferenceType[] types = mapEntityTypeToPrefType.get(entityType);
+        PreferenceType[] types = entityType.getSearchInstancePrefs();
         if( types == null || types.length == 0 ) {
             String msg = "No search preference types declared for entity type " + entityType;
             log.error( msg );
@@ -399,7 +354,9 @@ public class SearchInstanceEjb {
                 newSearchLevels.put(preferenceAccess.getScope().toString(), type.toString());
             }
             List<Preference> preferences = preferenceAccess.getPreferences( userID, preferenceDao);
-            if ( preferences == null ) continue;
+            if ( preferences == null ) {
+                continue;
+            }
             for( Preference preference : preferences ) {
                 SearchInstanceList searchInstanceList;
                 try {
@@ -436,14 +393,16 @@ public class SearchInstanceEjb {
         // Required for user defined searches
         Long userID = userBean.getBspUser().getUserId();
 
-        for( Map.Entry<ColumnEntity,PreferenceType[]> mapEntry : mapEntityTypeToPrefType.entrySet() ) {
+        for (ColumnEntity columnEntity : ColumnEntity.values()) {
             Map<PreferenceType,List<String>> typeMap = new LinkedHashMap<>();
-            for( PreferenceType preferenceType : mapEntry.getValue() ) {
+            for (PreferenceType preferenceType : columnEntity.getSearchInstancePrefs()) {
                 PreferenceAccess preferenceAccess  = mapTypeToPreferenceAccess.get(preferenceType);
 
                 // An entity can only have USER and GLOBAL scope
                 List<Preference> preferences = preferenceAccess.getPreferences( userID, preferenceDao);
-                if ( preferences == null ) continue;
+                if ( preferences == null ) {
+                    continue;
+                }
                 if( preferences.isEmpty() ){
                     typeMap.put( preferenceType, new ArrayList<String>());
                 } else {
@@ -463,7 +422,7 @@ public class SearchInstanceEjb {
                     }
                 }
             }
-            searchInstances.put(mapEntry.getKey(), typeMap);
+            searchInstances.put(columnEntity, typeMap);
         }
     }
 
@@ -481,10 +440,6 @@ public class SearchInstanceEjb {
         try {
             boolean save = true;
 
-            // Flag to create a brand new global or user preference
-            //    (vs. adding/updating a search instance in an existing preference)
-            boolean preferenceExists = true;
-
             // Required for user defined searches
             Long userID = userBean.getBspUser().getUserId();
 
@@ -494,14 +449,16 @@ public class SearchInstanceEjb {
                 save = false;
             }
 
-            Preference preference = null;
-
             if (save) {
                 // Find the existing preference (if any) for the type
                 //   (each preference holds many searches)
-                preference = mapTypeToPreference.get(newSearchType);
+                Preference preference = mapTypeToPreference.get(newSearchType);
 
                 SearchInstanceList searchInstanceList;
+
+                // Flag to create a brand new global or user preference
+                //    (vs. adding/updating a search instance in an existing preference)
+                boolean preferenceExists = true;
                 if (preference == null) {
                     // Didn't find an existing preference, so create a new one
                     preference = mapTypeToPreferenceAccess.get(newSearchType)

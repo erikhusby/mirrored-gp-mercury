@@ -336,6 +336,7 @@ public class LabMetric implements Comparable<LabMetric> {
         this.createdDate = createdDate;
     }
 
+    @Nullable
     public BigDecimal getTotalNg() {
         for (Metadata metadata : metadataSet) {
             if (metadata.getKey() == Metadata.Key.TOTAL_NG) {

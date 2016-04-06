@@ -15,6 +15,7 @@ import com.sun.istack.Nullable;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bass.BassFileType;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.LevelOfDetection;
 import org.codehaus.jackson.annotate.JsonIgnore;
@@ -48,7 +49,11 @@ public class SubmissionDto {
 
     @JsonIgnore
     public String getUuid() {
-        return statusDetailBean.getUuid();
+        String result = "";
+        if (statusDetailBean != null) {
+            result = statusDetailBean.getUuid();
+        }
+        return result;
     }
 
     @JsonIgnore
@@ -135,10 +140,7 @@ public class SubmissionDto {
 
     @JsonProperty(value = SubmissionField.FINGERPRINT_LOD)
     public String getFingerprintLODString() {
-        return String.format("%2.2f/%2.2f",
-                aggregation.getLevelOfDetection().getMin(),
-                aggregation.getLevelOfDetection().getMax()
-        );
+        return getFingerprintLOD().toString();
     }
 
     @JsonProperty(value = SubmissionField.RESEARCH_PROJECT)
@@ -209,6 +211,10 @@ public class SubmissionDto {
             bioproject = statusDetailBean.getBioproject().getAccession();
         }
         return bioproject;
+    }
+
+    public BassFileType getFileTypeEnum() {
+        return BassFileType.byBassValue(getFileType());
     }
 
     @JsonProperty(value = SubmissionField.LIBRARY_DESCRIPTOR)

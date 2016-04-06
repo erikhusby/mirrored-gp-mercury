@@ -2,7 +2,6 @@
 <%@ taglib uri="http://mercury.broadinstitute.org/Mercury/security" prefix="security" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
-<%@ page import="org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance" %>
 
 <header class="navbar">
     <div class="navbar-inner">
@@ -115,14 +114,6 @@
                         <li>
                             <a tabindex="-1" href="${ctxpath}/reagent/design.action?list">Reagent Designs</a>
                         </li>
-                        <security:authorizeBlock roles="<%= roles(LabUser, LabManager, Developer) %>" context="<%= ApplicationInstance.CRSP %>">
-                            <li>
-                                <a tabindex="-1" href="${ctxpath}/reagent/molindscheme.action">Molecular Index Schemes</a>
-                            </li>
-                            <li>
-                                <a tabindex="-1" href="${ctxpath}/reagent/molindplate.action">Molecular Index Plates</a>
-                            </li>
-                        </security:authorizeBlock>
                         <li>
                             <stripes:link id="uploadQuants"
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.UploadQuantsActionBean"
@@ -143,13 +134,6 @@
                                 <stripes:link id="listWorkflows"
                                               beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.WorkflowActionBean"
                                               event="List">Show Workflows</stripes:link>
-                            </li>
-                        </security:authorizeBlock>
-                        <security:authorizeBlock roles="<%= roles(Developer) %>" context="<%= ApplicationInstance.CRSP %>">
-                            <li>
-                                <stripes:link id="receiveSamples"
-                                              beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.ReceiveSamplesActionBean"
-                                              event="showReceipt">Receive Samples</stripes:link>
                             </li>
                         </security:authorizeBlock>
                         <li>

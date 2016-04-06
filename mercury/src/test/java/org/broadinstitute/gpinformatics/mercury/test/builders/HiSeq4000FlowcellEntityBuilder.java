@@ -37,14 +37,20 @@ public class HiSeq4000FlowcellEntityBuilder {
     private final LabBatch fctTicket;
     private final String designationName;
     private final int flowcellLanes;
+    private final TubeFormation normRack;
+    private final FCTCreationPoint fctCreationPoint;
     private StripTube stripTube;
     private IlluminaFlowcell illuminaFlowcell;
+
+    public enum FCTCreationPoint {
+        NORMALIZATION, DENATURE
+    }
 
     public HiSeq4000FlowcellEntityBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
                                           LabEventFactory labEventFactory, LabEventHandler labEventHandler,
                                           TubeFormation denatureRack, String flowcellBarcode, String barcodeSuffix,
-                                          LabBatch fctTicket,
-                                          String designationName, int flowcellLanes) {
+                                          LabBatch fctTicket, String designationName, int flowcellLanes,
+                                          TubeFormation normRack, FCTCreationPoint fctCreationPoint) {
 
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
         this.labEventFactory = labEventFactory;
@@ -55,6 +61,8 @@ public class HiSeq4000FlowcellEntityBuilder {
         this.fctTicket = fctTicket;
         this.designationName = designationName;
         this.flowcellLanes = flowcellLanes;
+        this.normRack = normRack;
+        this.fctCreationPoint = fctCreationPoint;
     }
 
     public HiSeq4000FlowcellEntityBuilder invoke() {
@@ -69,10 +77,21 @@ public class HiSeq4000FlowcellEntityBuilder {
             }
         }
 
+        Map<String, String> normToPosition = new HashMap<>();
+        if (normRack != null) {
+            for (VesselPosition vesselPosition : normRack.getRackType().getVesselGeometry().getVesselPositions()) {
+                BarcodedTube vesselAtPosition = normRack.getContainerRole().getVesselAtPosition(vesselPosition);
+                if (vesselAtPosition != null) {
+                    normToPosition.put(vesselAtPosition.getLabel(), vesselPosition.name());
+                }
+            }
+        }
+
         HiSeq4000JaxbBuilder hiSeq4000JaxbBuilder = new HiSeq4000JaxbBuilder(
                 bettaLimsMessageTestFactory, barcodeSuffix, flowcellBarcode,
                 denatureTubeBarcodes, denatureToPosition, denatureRack.getRacksOfTubes().iterator().next().getLabel(),
-                fctTicket, denatureRack.getSampleInstanceCount(), designationName, flowcellLanes).invoke();
+                fctTicket, denatureRack.getSampleInstanceCount(), designationName, flowcellLanes, normRack,
+                normToPosition, fctCreationPoint).invoke();
 
         Map<String, BarcodedTube> mapBarcodeToVessel = new HashMap<>();
 

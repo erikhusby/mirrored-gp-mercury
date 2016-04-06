@@ -23,15 +23,5 @@
             <rtexprvalue>true</rtexprvalue>
             <type>java.lang.String</type>
         </attribute>
-        <attribute>
-            <name>context</name>
-            <description>
-                Single input String that represents a context enum.  This will let us know the environment (CRSP or Research)
-                to which these roles should be applied.  Omitting this will indicate that it should be both.
-            </description>
-            <required>false</required>
-            <rtexprvalue>true</rtexprvalue>
-            <type>org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance</type>
-        </attribute>
     </tag>
 </taglib>

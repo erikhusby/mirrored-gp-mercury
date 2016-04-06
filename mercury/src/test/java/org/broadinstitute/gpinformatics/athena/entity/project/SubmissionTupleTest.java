@@ -11,7 +11,7 @@
 
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
-import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bass.BassFileType;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.annotations.Test;
 
@@ -23,21 +23,21 @@ import static org.hamcrest.Matchers.not;
 public class SubmissionTupleTest {
     public void testNullSample() {
         SubmissionTuple tuple1 = null;
-        SubmissionTuple tuple2 = new SubmissionTuple("b", BassDTO.FileType.BAM, "c");
+        SubmissionTuple tuple2 = new SubmissionTuple("b", BassFileType.BAM, "c");
         assertThat(tuple1, not(equalTo(tuple2)));
         assertThat(tuple2, not(equalTo(tuple1)));
     }
 
     public void testSampleNotEquals() {
-        SubmissionTuple tuple1 = new SubmissionTuple("a", BassDTO.FileType.BAM, "c");
-        SubmissionTuple tuple2 = new SubmissionTuple("b", BassDTO.FileType.BAM, "c");
+        SubmissionTuple tuple1 = new SubmissionTuple("a", BassFileType.BAM, "c");
+        SubmissionTuple tuple2 = new SubmissionTuple("b", BassFileType.BAM, "c");
         assertThat(tuple1, not(equalTo(tuple2)));
         assertThat(tuple2, not(equalTo(tuple1)));
     }
 
     public void testEquals() {
-        SubmissionTuple tuple1 = new SubmissionTuple("a", BassDTO.FileType.BAM, "c");
-        SubmissionTuple tuple2 = new SubmissionTuple("a", BassDTO.FileType.BAM, "c");
+        SubmissionTuple tuple1 = new SubmissionTuple("a", BassFileType.BAM, "c");
+        SubmissionTuple tuple2 = new SubmissionTuple("a", BassFileType.BAM, "c");
         assertThat(tuple1, equalTo(tuple2));
         assertThat(tuple2, equalTo(tuple1));
     }
@@ -49,37 +49,37 @@ public class SubmissionTupleTest {
         assertThat(tuple2, equalTo(tuple1));
     }
 
-    public void testFileTypeNotEquals() {
-        SubmissionTuple tuple1 = new SubmissionTuple("a", BassDTO.FileType.BAM, "c");
-        SubmissionTuple tuple2 = new SubmissionTuple("a", BassDTO.FileType.PICARD, "c");
+    public void testFileNotEquals() {
+        SubmissionTuple tuple1 = new SubmissionTuple("a", BassFileType.BAM, "c");
+        SubmissionTuple tuple2 = new SubmissionTuple("a", BassFileType.PICARD, "c");
         assertThat(tuple1, not(equalTo(tuple2)));
         assertThat(tuple2, not(equalTo(tuple1)));
     }
 
     public void testVersionNotEquals() {
-        SubmissionTuple tuple1 = new SubmissionTuple("a", BassDTO.FileType.BAM, "c");
-        SubmissionTuple tuple2 = new SubmissionTuple("a", BassDTO.FileType.BAM, "d");
+        SubmissionTuple tuple1 = new SubmissionTuple("a", BassFileType.BAM, "c");
+        SubmissionTuple tuple2 = new SubmissionTuple("a", BassFileType.BAM, "d");
         assertThat(tuple1, not(equalTo(tuple2)));
         assertThat(tuple2, not(equalTo(tuple1)));
     }
 
     public void testNullSampleNotEquals() {
-        SubmissionTuple tuple1 = new SubmissionTuple(null, BassDTO.FileType.BAM, "c");
-        SubmissionTuple tuple2 = new SubmissionTuple("a", BassDTO.FileType.BAM, "d");
+        SubmissionTuple tuple1 = new SubmissionTuple(null, BassFileType.BAM, "c");
+        SubmissionTuple tuple2 = new SubmissionTuple("a", BassFileType.BAM, "d");
         assertThat(tuple1, not(equalTo(tuple2)));
         assertThat(tuple2, not(equalTo(tuple1)));
     }
 
-    public void testNullFileTypeNotEquals() {
+    public void testNullFileNotEquals() {
         SubmissionTuple tuple1 = new SubmissionTuple("a", null, "c");
-        SubmissionTuple tuple2 = new SubmissionTuple("a", BassDTO.FileType.BAM, "d");
+        SubmissionTuple tuple2 = new SubmissionTuple("a", BassFileType.BAM, "d");
         assertThat(tuple1, not(equalTo(tuple2)));
         assertThat(tuple2, not(equalTo(tuple1)));
     }
 
     public void testNullVersionNotEquals() {
-        SubmissionTuple tuple1 = new SubmissionTuple("a", BassDTO.FileType.BAM, null);
-        SubmissionTuple tuple2 = new SubmissionTuple("a", BassDTO.FileType.BAM, "d");
+        SubmissionTuple tuple1 = new SubmissionTuple("a", BassFileType.BAM, null);
+        SubmissionTuple tuple2 = new SubmissionTuple("a", BassFileType.BAM, "d");
         assertThat(tuple1, not(equalTo(tuple2)));
         assertThat(tuple2, not(equalTo(tuple1)));
     }

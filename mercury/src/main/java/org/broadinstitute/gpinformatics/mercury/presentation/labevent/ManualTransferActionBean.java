@@ -320,7 +320,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
         return new ForwardResolution(MANUAL_TRANSFER_PAGE);
     }
 
-    private void validateBarcodes(LabBatch labBatch, MessageCollection messageCollection) {
+    private void validateBarcodes(@Nullable LabBatch labBatch, MessageCollection messageCollection) {
         switch (manualTransferDetails.getMessageType()) {
             case PLATE_EVENT:
                 for (StationEventType stationEvent : stationEvents) {
@@ -477,7 +477,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
     }
 
     private Map<String, LabVessel> loadPlateFromDb(PlateType plateType, PositionMapType positionMapType,
-            boolean required, LabBatch labBatch, MessageCollection messageCollection, Direction direction) {
+            boolean required, @Nullable LabBatch labBatch, MessageCollection messageCollection, Direction direction) {
         Map<String, LabVessel> returnMapBarcodeToVessel = new HashMap<>();
         if (plateType != null) {
             String barcode = plateType.getBarcode();
@@ -521,12 +521,13 @@ public class ManualTransferActionBean extends RackScanActionBean {
                     } else {
                         messageCollection.addError(message);
                     }
-                    if (direction == Direction.SOURCE && !labVessel.getNearestWorkflowLabBatches().contains(labBatch)) {
+                    if (labBatch != null && direction == Direction.SOURCE &&
+                            !labVessel.getNearestWorkflowLabBatches().contains(labBatch)) {
                         messageCollection.addError(barcode + " is not in batch " + labBatch.getBatchName());
                     }
                 }
             }
-            if (required && barcodes.size() != labBatch.getLabBatchStartingVessels().size()) {
+            if (labBatch != null && required && barcodes.size() != labBatch.getLabBatchStartingVessels().size()) {
                 messageCollection.addWarning("Batch has " + labBatch.getLabBatchStartingVessels().size() +
                         " vessels, but " + barcodes.size() + " were scanned.");
             }
@@ -665,6 +666,9 @@ public class ManualTransferActionBean extends RackScanActionBean {
                 if (next.getBarcode() == null || next.getBarcode().isEmpty()) {
                     iterator.remove();
                 }
+            }
+            if (positionMapType.getReceptacle().isEmpty()) {
+                addGlobalValidationError("There must be at least one tube in the rack.");
             }
             String barcode;
             if (vesselTypeGeometry.isBarcoded()) {

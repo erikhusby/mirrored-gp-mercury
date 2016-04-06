@@ -1,6 +1,9 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
+import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Iterators;
 import com.google.common.collect.Multimap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -1089,8 +1092,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         }
         OrderStatus newStatus = OrderStatus.Completed;
         for (ProductOrderSample sample : samples) {
-            if (sample.getDeliveryStatus() != ProductOrderSample.DeliveryStatus.ABANDONED
-                && !sample.isCompletelyBilled()) {
+            if (sample.isToBeBilled()) {
                 // Found an incomplete item.
                 newStatus = OrderStatus.Submitted;
                 break;
@@ -1663,7 +1665,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     static {
         mapProductPartToGenoChip.put("P-EX-0017", "Broad_GWAS_supplemental_15061359_A1");
         mapProductPartToGenoChip.put("P-WG-0022", "HumanOmni2.5-8v1_A");
-        mapProductPartToGenoChip.put("P-WG-0023", "HumanOmniExpressExome-8v1_B");
+        mapProductPartToGenoChip.put("P-WG-0023", "HumanOmniExpressExome-8v1-3_A");
         mapProductPartToGenoChip.put("P-WG-0025", "HumanExome-12v1-2_A");
         mapProductPartToGenoChip.put("P-WG-0028", "HumanOmniExpress-24v1-1_A");
         mapProductPartToGenoChip.put("P-WG-0029", "HumanExome-12v1-2_A");
@@ -1671,6 +1673,11 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         mapProductPartToGenoChip.put("P-WG-0036", "PsychChip_15048346_B");
         mapProductPartToGenoChip.put("P-WG-0053", "Broad_GWAS_supplemental_15061359_A1");
         mapProductPartToGenoChip.put("P-WG-0055", "PsychChip_v1-1_15073391_A1");
+        mapProductPartToGenoChip.put("P-WG-0058", "Multi-EthnicGlobal-8_A1");
+    }
+
+    public static String genoChipTypeForPart(String partNumber) {
+        return mapProductPartToGenoChip.get(partNumber);
     }
 
     public String getGenoChipType() {
@@ -1703,5 +1710,19 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             workflows.add(workflow);
         }
         return workflows;
+    }
+
+    public int getUnbilledSampleCount() {
+        Iterable<ProductOrderSample> filteredResults = null;
+
+            filteredResults = Iterables.filter(samples,
+                    new Predicate<ProductOrderSample>() {
+                        @Override
+                        public boolean apply(@Nullable ProductOrderSample productOrderSample) {
+                            return productOrderSample.isToBeBilled();
+                        }
+                    });
+
+        return (filteredResults != null)?Iterators.size(filteredResults.iterator()):0;
     }
 }

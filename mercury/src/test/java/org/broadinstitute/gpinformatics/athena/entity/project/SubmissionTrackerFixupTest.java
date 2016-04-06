@@ -14,6 +14,8 @@ package org.broadinstitute.gpinformatics.athena.entity.project;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.SubmissionTrackerDao;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
+import org.broadinstitute.gpinformatics.athena.control.dao.projects.SubmissionTrackerDao;
+import org.broadinstitute.gpinformatics.infrastructure.bass.BassFileType;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
@@ -31,7 +33,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 @Test(groups = TestGroups.FIXUP)
 public class SubmissionTrackerFixupTest extends Arquillian {
     @Inject
-    SubmissionTrackerDao submissionTrackerDao;
+    private SubmissionTrackerDao submissionTrackerDao;
 
     @Inject
     private UserBean userBean;
@@ -46,26 +48,25 @@ public class SubmissionTrackerFixupTest extends Arquillian {
     }
 
     @Test(enabled = false)
-    public void fixupGplim4121_BackFillFileType() throws Exception {
+    public void gplim4091BackfillFileType() throws Exception {
         userBean.loginOSUser();
 
-        List<SubmissionTracker> submissionTrackers =
+        List<SubmissionTracker> submissionTrackerList =
                 submissionTrackerDao.findList(SubmissionTracker.class, SubmissionTracker_.fileType, null);
-        for (SubmissionTracker submissionTracker : submissionTrackers) {
+
+        BassFileType defaultFileType = BassFileType.BAM;
+
+        for (SubmissionTracker submissionTracker : submissionTrackerList) {
             if (submissionTracker.getFileType() != null) {
-                String errorMessage =
-                        String.format(
-                                "Could not update SubmissionTracker for sample '%s' because the fileType was expected to be null but is %s",
-                                submissionTracker.getSubmittedSampleName(), submissionTracker.getFileType());
-                log.error(errorMessage);
-                throw new RuntimeException(errorMessage);
+                throw new RuntimeException(
+                        String.format("Expected SubmissionTracker %s to have null value but it was %s",
+                                submissionTracker.createSubmissionIdentifier(), submissionTracker.getFileType()));
             } else {
-                submissionTracker.setFileType(BassDTO.FileType.BAM);
+                submissionTracker.setFileType(defaultFileType);
             }
         }
-        submissionTrackerDao
-                .persist(new FixupCommentary("Backfill SubmissionTracker fileType. See https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-4021"));
-        log.info(String.format("Updated %d rows", submissionTrackers.size()));
-    }
 
+        submissionTrackerDao.persist(new FixupCommentary(
+                "Backfill fileTypes for existing SubmissionTrackers. See https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-4060"));
+    }
 }

@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselLatestEv
 import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselMetadataPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselMetricPlugin;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -20,7 +21,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
@@ -33,8 +36,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -743,6 +748,66 @@ public class LabVesselSearchDefinition {
         });
         searchTerms.add(searchTerm);
 
+        searchTerm = new SearchTerm();
+        searchTerm.setName("EmergeVolumeTransfer SM-ID");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public List<String> evaluate(Object entity, SearchContext context) {
+                LabVessel labVessel = (LabVessel) entity;
+                List<String> results = new ArrayList<>();
+
+                Map<LabEvent, Set<LabVessel>> mapEventToVessels = labVessel.findVesselsForLabEventType(
+                        LabEventType.EMERGE_VOLUME_TRANSFER, true,
+                        EnumSet.of(TransferTraverserCriteria.TraversalDirection.Descendants));
+                for (Map.Entry<LabEvent, Set<LabVessel>> labEventSetEntry : mapEventToVessels.entrySet()) {
+                    for (LabVessel vessel : labEventSetEntry.getValue()) {
+                        for (SampleInstanceV2 sampleInstanceV2 : vessel.getSampleInstancesV2()) {
+                            results.add(sampleInstanceV2.getNearestMercurySampleName());
+                        }
+                    }
+                }
+                return results;
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Rack Barcode");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public List<String> evaluate(Object entity, SearchContext context) {
+                LabVessel labVessel = (LabVessel) entity;
+                List<String> results = new ArrayList<>();
+
+                for (LabVessel vessel : labVessel.getContainers()) {
+                    if (OrmUtil.proxySafeIsInstance(vessel, TubeFormation.class)) {
+                        TubeFormation tubeFormation = OrmUtil.proxySafeCast(vessel, TubeFormation.class);
+                        for (RackOfTubes rackOfTubes : tubeFormation.getRacksOfTubes()) {
+                            results.add(rackOfTubes.getLabel());
+                        }
+                    }
+                }
+                return results;
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Rack Position");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public List<String> evaluate(Object entity, SearchContext context) {
+                LabVessel labVessel = (LabVessel) entity;
+                List<String> results = new ArrayList<>();
+
+                for (LabVessel container : labVessel.getContainers()) {
+                    results.add(container.getContainerRole().getPositionOfVessel(labVessel).toString());
+                }
+                return results;
+            }
+        });
+        searchTerms.add(searchTerm);
+
         return searchTerms;
     }
 
@@ -830,13 +895,13 @@ public class LabVesselSearchDefinition {
             @Override
             public BigDecimal evaluate(Object entity, SearchContext context) {
                 LabVessel labVessel = (LabVessel) entity;
-                Set<LabMetric> labMetrics = labVessel.getMetrics();
-                for (LabMetric labMetric : labMetrics) {
-                    if (labMetric.getName() == LabMetric.MetricType.INITIAL_PICO) {
-                        return labMetric.getTotalNg();
+                List<LabMetric> labMetrics = new ArrayList<>(labVessel.getMetrics());
+                for (Iterator<LabMetric> iter = labMetrics.iterator(); iter.hasNext(); ) {
+                    if (iter.next().getName() != LabMetric.MetricType.INITIAL_PICO) {
+                        iter.remove();
                     }
                 }
-                return null;
+                return labMetrics.size() > 0 ? LabVesselMetricPlugin.latestTubeMetric(labMetrics).getTotalNg() : null;
             }
         });
         searchTerm.setSearchValueConversionExpression(new SearchTerm.Evaluator<Object>() {
@@ -1114,6 +1179,29 @@ public class LabVesselSearchDefinition {
                 }
 
                 return value;
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Proceed if OOS");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Set<String> evaluate(Object entity, SearchContext context) {
+                Set<String> results = new HashSet<>();
+                LabVessel labVessel = (LabVessel)entity;
+
+                for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+                    for (ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples()) {
+                        ProductOrderSample.ProceedIfOutOfSpec proceedIfOutOfSpec =
+                                productOrderSample.getProceedIfOutOfSpec();
+                        if (proceedIfOutOfSpec == null) {
+                            proceedIfOutOfSpec = ProductOrderSample.ProceedIfOutOfSpec.NO;
+                        }
+                        results.add(proceedIfOutOfSpec.getDisplayName());
+                    }
+                }
+                return results;
             }
         });
         searchTerms.add(searchTerm);

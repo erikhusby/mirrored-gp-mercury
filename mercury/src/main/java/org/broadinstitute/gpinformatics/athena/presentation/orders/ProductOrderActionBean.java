@@ -85,9 +85,11 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NoJiraTransitionException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.ApprovalStatus;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
-import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 import org.broadinstitute.gpinformatics.infrastructure.security.Role;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
 import org.broadinstitute.gpinformatics.mercury.boundary.BucketException;
@@ -196,9 +198,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     private PreferenceEjb preferenceEjb;
 
     @Inject
-    private ProductOrderSampleDao sampleDao;
-
-    @Inject
     private ProductOrderListEntryDao orderListEntryDao;
 
     @Inject
@@ -249,6 +248,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @Inject
     private QuoteService quoteService;
+
+    @Inject
+    private PriceListCache priceListCache;
 
     private List<ProductOrderListEntry> displayedProductOrderListEntries;
 
@@ -620,9 +622,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             validateRegulatoryInformation(action);
         }
 
-        if (!ApplicationInstance.CRSP.isCurrent()) {
-            validateQuoteOptions(action);
-        }
+        validateQuoteOptions(action);
 
         requireField(editOrder.getProduct(), "a product", action);
 
@@ -631,11 +631,104 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         String quoteId = editOrder.getQuoteId();
-        validateQuoteId(quoteId);
+        Quote quote = validateQuoteId(quoteId);
+//        validateQuoteDetails(quote, ErrorLevel.ERROR);
 
         if (editOrder != null) {
             validateRinScores(editOrder);
         }
+    }
+
+    private void validateQuoteDetails(String quoteId, final ErrorLevel errorLevel) {
+        Quote quote = validateQuoteId(quoteId);
+
+        validateQuoteDetails(quote, errorLevel);
+    }
+
+    private void validateQuoteDetails(Quote quote, ErrorLevel errorLevel) {
+        if (!quote.getApprovalStatus().equals(ApprovalStatus.FUNDED)) {
+            String unFundedMessage = "A quote must be funded in order to be used for a product order.";
+            addMessageBasedOnErrorLevel(errorLevel, unFundedMessage);
+        }
+
+        if (quote.getQuoteFunding().getFundingLevel().size() > 1) {
+            String multiFundingLevelMessage =
+                    "Quotes with split funding are inelligible to be used for funding a product order.";
+
+            addMessageBasedOnErrorLevel(errorLevel, multiFundingLevelMessage);
+        }
+        double fundsRemaining = Double.parseDouble(quote.getQuoteFunding().getFundsRemaining());
+        double outstandingEstimate = estimateOutstandingOrders(quote.getName());
+        double valueOfCurrentOrder = 0;
+        if(!editOrder.hasJiraTicketKey()) {
+            valueOfCurrentOrder = getValueOfOpenOrders(Collections.singletonList(editOrder));
+        }
+
+        if (fundsRemaining <= 0d ||
+            (fundsRemaining < (outstandingEstimate+valueOfCurrentOrder))) {
+            String inssuficientFundsMessage = "Insufficient funds are available on " + quote.getName() + " to place a new Product order";
+            addMessageBasedOnErrorLevel(errorLevel, inssuficientFundsMessage);
+        }
+    }
+
+    private void addMessageBasedOnErrorLevel(ErrorLevel errorLevel, String multiFundingLevelMessage) {
+        switch (errorLevel) {
+        case ERROR:
+            addGlobalValidationError(multiFundingLevelMessage);
+            break;
+        case WARNING:
+            addMessage("WARNING: " +multiFundingLevelMessage);
+            break;
+        }
+    }
+
+    private double estimateOutstandingOrders(String quoteId) {
+
+        List<ProductOrder> ordersWithCommonQuote = productOrderDao.findOrdersWithCommonQuote(quoteId);
+
+        double value = getValueOfOpenOrders(ordersWithCommonQuote);
+        return value;
+    }
+
+    private double getValueOfOpenOrders(List<ProductOrder> ordersWithCommonQuote) {
+        double value = 0d;
+
+        for (ProductOrder testOrder : ordersWithCommonQuote) {
+            int unbilledCount = testOrder.getUnbilledSampleCount();
+
+            QuotePriceItem primaryPriceItem =
+                    priceListCache.findByKeyFields(testOrder.getProduct().getPrimaryPriceItem().getPlatform(),
+                            testOrder.getProduct().getPrimaryPriceItem().getCategory(),
+                            testOrder.getProduct().getPrimaryPriceItem().getName());
+
+            if (primaryPriceItem != null &&
+                StringUtils.isNotBlank(primaryPriceItem.getPrice())) {
+                Double productPrice = Double.valueOf(primaryPriceItem.getPrice());
+
+                if(productPrice != null) {
+                    value += productPrice * unbilledCount;
+                }
+
+                for (ProductOrderAddOn testOrderAddon : testOrder.getAddOns()) {
+                    QuotePriceItem addonPriceItem =
+                            priceListCache
+                                    .findByKeyFields(testOrderAddon.getAddOn().getPrimaryPriceItem().getPlatform(),
+                                            testOrderAddon.getAddOn().getPrimaryPriceItem().getCategory(),
+                                            testOrderAddon.getAddOn().getPrimaryPriceItem().getName());
+
+                    if (addonPriceItem != null &&
+                        StringUtils.isNotBlank(addonPriceItem.getPrice())) {
+                        Double addOnPrice = Double.valueOf(addonPriceItem.getPrice());
+
+                        if(addOnPrice != null) {
+                            value += addOnPrice * unbilledCount;
+                        }
+                    }
+                }
+            }
+
+        }
+        return value;
     }
 
     private void doSaveValidation(String action, ResearchProject researchProject) {
@@ -926,6 +1019,10 @@ public class ProductOrderActionBean extends CoreActionBean {
                 double fundsRemaining = Double.parseDouble(quote.getQuoteFunding().getFundsRemaining());
                 item.put("fundsRemaining", NumberFormat.getCurrencyInstance().format(fundsRemaining));
                 item.put("status", quote.getApprovalStatus().getValue());
+
+                double outstandingOrdersValue = estimateOutstandingOrders(quoteIdentifier);
+                item.put("outstandingEstimate",  NumberFormat.getCurrencyInstance().format(
+                        outstandingOrdersValue));
             }
 
         } catch (Exception ex) {
@@ -1179,6 +1276,9 @@ public class ProductOrderActionBean extends CoreActionBean {
         productOrderEjb.persistProductOrder(saveType, editOrder, deletedIdsConverted, kitDetails);
 
         addMessage("Product Order \"{0}\" has been saved.", editOrder.getTitle());
+        // Temporarily adding the quote validation when the order is saved to give the user a warning of upcoming
+        // new restrictions
+        validateQuoteDetails(editOrder.getQuoteId(), ErrorLevel.WARNING);
         return createViewResolution(editOrder.getBusinessKey());
     }
 
@@ -1199,7 +1299,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         Product tokenProduct = productTokenInput.getTokenObject();
         Product product = tokenProduct != null ? productDao.findByPartNumber(tokenProduct.getPartNumber()) : null;
         List<Product> addOnProducts = productDao.findByPartNumbers(addOnKeys);
-        editOrder.updateData(project, product, addOnProducts, stringToSampleList(sampleList));
+        editOrder.updateData(project, product, addOnProducts, stringToSampleListExisting(sampleList));
         BspUser tokenOwner = owner.getTokenObject();
         editOrder.setCreatedBy(tokenOwner != null ? tokenOwner.getUserId() : null);
 
@@ -1394,7 +1494,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent("getBspData")
     public Resolution getBspData() throws Exception {
-        List<ProductOrderSample> samples = sampleDao.findListByList(
+        List<ProductOrderSample> samples = productOrderSampleDao.findListByList(
                 ProductOrderSample.class, ProductOrderSample_.productOrderSampleId, sampleIdsForGetBspData);
 
         JSONArray itemList = new JSONArray();
@@ -1798,6 +1898,37 @@ public class ProductOrderActionBean extends CoreActionBean {
         List<ProductOrderSample> samples = new ArrayList<>();
         for (String sampleName : SearchActionBean.cleanInputStringForSamples(sampleListText)) {
             samples.add(new ProductOrderSample(sampleName));
+        }
+
+        return samples;
+    }
+
+    private List<ProductOrderSample> stringToSampleListExisting(String sampleListText) {
+        List<ProductOrderSample> samples = new ArrayList<>();
+        List<String> sampleNames = SearchActionBean.cleanInputStringForSamples(sampleListText);
+
+        // Allow random access to existing ProductOrderSamples.  A sample can appear more than once.
+        Map<String, List<ProductOrderSample>> mapIdToSampleList = new HashMap<>();
+        for (ProductOrderSample productOrderSample : editOrder.getSamples()) {
+            List<ProductOrderSample> productOrderSamples = mapIdToSampleList.get(productOrderSample.getSampleKey());
+            if (productOrderSamples == null) {
+                productOrderSamples = new ArrayList<>();
+                mapIdToSampleList.put(productOrderSample.getSampleKey(), productOrderSamples);
+            }
+            productOrderSamples.add(productOrderSample);
+        }
+
+        // Use existing, if any, or create new.
+        for (String sampleName : sampleNames) {
+            ProductOrderSample productOrderSample;
+            List<ProductOrderSample> productOrderSamples = mapIdToSampleList.get(sampleName);
+
+            if (productOrderSamples == null || productOrderSamples.isEmpty()) {
+                productOrderSample = new ProductOrderSample(sampleName);
+            } else {
+                productOrderSample = productOrderSamples.remove(0);
+            }
+            samples.add(productOrderSample);
         }
 
         return samples;

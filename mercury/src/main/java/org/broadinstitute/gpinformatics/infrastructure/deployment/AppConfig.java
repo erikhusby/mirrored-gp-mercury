@@ -21,8 +21,8 @@ public class AppConfig extends AbstractConfig implements Serializable {
     }
 
     @Inject
-    public AppConfig(@Nonnull Deployment mercuryDeployment) {
-        super(mercuryDeployment);
+    public AppConfig(@Nonnull Deployment deploymentConfig) {
+        super(deploymentConfig);
     }
 
     private String host;

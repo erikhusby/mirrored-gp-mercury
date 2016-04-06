@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.mercury.limsquery.generated.PlateTransfe
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ProductType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateLaneType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateType;
+import org.hamcrest.Matchers;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -446,7 +447,7 @@ public class LimsQueryResourceUnitTest {
         ProductType productType = new ProductType();
         productType.setName("Lims Product");
         template.getProducts().add(productType);
-        template.setRegulatoryDesignation("RESEARCH_ONLY");
+        template.getRegulatoryDesignation().add("RESEARCH_ONLY");
         expect(resource.fetchIlluminaSeqTemplate("12345", SequencingTemplateFactory.QueryVesselType.FLOWCELL, true))
                 .andReturn(template);
         replayAll();
@@ -462,7 +463,8 @@ public class LimsQueryResourceUnitTest {
         Assert.assertEquals(result.getProducts().size(), 1);
         ProductType productType1 = result.getProducts().get(0);
         Assert.assertEquals(productType1.getName(), "Lims Product");
-        Assert.assertEquals(result.getRegulatoryDesignation(), "RESEARCH_ONLY");
+        assertThat(template.getRegulatoryDesignation(), Matchers.hasSize(1));
+        assertThat(template.getRegulatoryDesignation(), Matchers.hasItem("RESEARCH_ONLY"));
         Assert.assertTrue(result.isPairedRun());
         Assert.assertEquals(result.getLanes().size(), 1);
         SequencingTemplateLaneType laneOne = result.getLanes().get(0);
