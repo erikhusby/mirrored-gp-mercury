@@ -230,4 +230,49 @@
             <column name="EXPECT_INIT_QUANT_IN_MERCURY" type="number(1,0)"/>
         </addColumn>
     </changeSet>
+
+    <changeSet id="GPLIM-3934-1" author="thompson">
+        <addColumn schemaName="ATHENA" tableName="PRODUCT">
+            <column name="POSITIVE_CONTROL_RP_ID" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-3934-2" author="thompson">
+        <addColumn schemaName="ATHENA" tableName="PRODUCT_AUD">
+            <column name="POSITIVE_CONTROL_RP_ID" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-3934-3" author="thompson">
+        <addForeignKeyConstraint constraintName="FK_PRODUCT_POS_CONTROL_RP"
+                baseTableSchemaName="ATHENA" baseTableName="PRODUCT" baseColumnNames="POSITIVE_CONTROL_RP_ID"
+                referencedTableSchemaName="ATHENA" referencedTableName="RESEARCH_PROJECT"
+                referencedColumnNames="RESEARCH_PROJECT_ID"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-4060-1" author="dryan">
+        <dropNotNullConstraint columnName="FILE_NAME" tableName="SUBMISSION_TRACKER" schemaName="athena"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-4060-3" author="dryan">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists columnName="FILE_TYPE" tableName="SUBMISSION_TRACKER" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="SUBMISSION_TRACKER" schemaName="athena">
+            <column name="FILE_TYPE" type="varchar2(255)" >
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-4060-4" author="dryan">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists columnName="FILE_TYPE" tableName="SUBMISSION_TRACKER_AUD" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="SUBMISSION_TRACKER_AUD" schemaName="athena">
+            <column name="FILE_TYPE" type="varchar2(255)"/>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>

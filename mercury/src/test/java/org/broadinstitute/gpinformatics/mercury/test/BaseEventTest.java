@@ -37,7 +37,6 @@ import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferVis
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferVisualizerV2;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.CrspPipelineUtils;
-import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
@@ -875,7 +874,8 @@ public class BaseEventTest {
                 FileWriter fileWriter = new FileWriter(xfrVis);
                 transferVisualizerV2.jsonForVessels(
                         Collections.singletonList(labVessel),
-                        Collections.singletonList(TransferTraverserCriteria.TraversalDirection.Descendants),
+                        Arrays.asList(TransferTraverserCriteria.TraversalDirection.Ancestors,
+                                TransferTraverserCriteria.TraversalDirection.Descendants),
                         fileWriter,
                         Arrays.asList(TransferVisualizerV2.AlternativeIds.SAMPLE_ID,
                                 TransferVisualizerV2.AlternativeIds.LCSET));
@@ -965,7 +965,6 @@ public class BaseEventTest {
                 },
                 new SequencingTemplateFactory(),
                 productOrderDao,
-                new CrspControlsTestUtils().getMockResearchProjectDao(),
                 crspPipelineUtils
         );
     }
