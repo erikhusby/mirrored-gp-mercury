@@ -1,11 +1,9 @@
 package org.broadinstitute.gpinformatics.mercury.entity.run;
 
 import org.hibernate.envers.AuditJoinTable;
-import org.hibernate.envers.AuditMappedBy;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
-import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -65,6 +63,9 @@ public class AttributeArchetype {
     @Transient
     private List<AttributeDefinition> attributeDefinitions;
 
+    public AttributeArchetype() {
+    }
+
     public AttributeArchetype(String attributeFamily, String name) {
         this.attributeFamily = attributeFamily;
         this.archetypeName = name;
@@ -108,14 +109,4 @@ public class AttributeArchetype {
     public String getAttributeFamily() {
         return attributeFamily;
     }
-
-    public static final Comparator BY_NAME_DATE_DESC = new Comparator() {
-        @Override
-        public int compare(Object o1, Object o2) {
-            AttributeArchetype g1 = (AttributeArchetype)o1;
-            AttributeArchetype g2 = (AttributeArchetype)o2;
-            int nameCompare = g1.archetypeName.compareTo(g2.archetypeName);
-            return nameCompare != 0 ? nameCompare : g1.getCreatedDate().compareTo(g2.getCreatedDate());
-        }
-    };
 }

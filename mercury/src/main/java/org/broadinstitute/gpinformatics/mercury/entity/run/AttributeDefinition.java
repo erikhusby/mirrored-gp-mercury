@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.entity.run;
 
 import org.hibernate.envers.Audited;
 
-import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -12,9 +11,11 @@ import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
 /**
- * This class defines the attribute names, plus any common data, used by each attribute family.
- * It can be thought of as a persisted enum of attribute names, plus any class fields that would
- * apply to all instances of the attribute family.
+ * This class defines the attributs of an AttributeArchetype. There are two types of attributes, one that
+ * applies to one instance of an Archetype, and one that applies to one family of Archetypes.
+ * The instance attributes have their names defined here, so that a UI can know what the required names
+ * are, and their values get defined in ArchetypeAttribute, which has a link to one Archetype. Family-wide
+ * attributes have both name and value defined here, which has a link to one family of Archetypes.
  */
 
 @Entity
@@ -29,23 +30,41 @@ public class AttributeDefinition {
 
     private String attributeFamily;
     private String attributeName;
-
+    private boolean isDisplayedInUi;
     /**
-     * The value in this field applies to all instances of AttributeArchetype that have this attributeFamily.
-     *
-     * <b>Leave this NULL to indicate that this attribute gets defined in ArchetypeAttribute.</b>
+     * Indicates if the attribute is a family attribute (defined in this object) or
+     * an instance attribute (defined in ArchetypeAttribute).
      */
-    @Column(name = "classFieldValue")
-    private String attributeFamilyClassFieldValue;
+    private boolean isFamilyAttribute;
+    private String familyAttributeValue;
 
-    public AttributeDefinition(String attributeFamily, String attributeName) {
-        this.attributeFamily = attributeFamily;
-        this.attributeName = attributeName;
+    public AttributeDefinition() {
     }
 
-    public AttributeDefinition(String attributeFamily, String attributeName, String attributeFamilyClassFieldValue) {
-        this(attributeFamily, attributeName);
-        this.attributeFamilyClassFieldValue = attributeFamilyClassFieldValue;
+    /** Constructor for an Archetype instance attribute.
+     * @param attributeFamily Defines the Archetype family.
+     * @param attributeName Defines the name of the ArchetypeAttribute.
+     * @param isDisplayedInUi Indicates if attribute is shown in the UI.
+     */
+    public AttributeDefinition(String attributeFamily, String attributeName, boolean isDisplayedInUi) {
+        this.attributeFamily = attributeFamily;
+        this.attributeName = attributeName;
+        this.familyAttributeValue = null;
+        this.isDisplayedInUi = isDisplayedInUi;
+        this.isFamilyAttribute = false;
+    }
+
+    /** Constructor for an Archetype family attribute.
+     * @param attributeFamily Defines the Archetype family that this attribute applies to.
+     * @param attributeName Defines the name of the family attribute.
+     * @param familyAttributeValue Defines the value of the attribute.
+     * @param isDisplayedInUi Indicates if attribute is shown in the UI.
+     */
+    public AttributeDefinition(String attributeFamily, String attributeName, String familyAttributeValue,
+                               boolean isDisplayedInUi) {
+        this(attributeFamily, attributeName, isDisplayedInUi);
+        this.familyAttributeValue = familyAttributeValue;
+        this.isFamilyAttribute = true;
     }
 
     public String getAttributeFamily() {
@@ -56,11 +75,27 @@ public class AttributeDefinition {
         return attributeName;
     }
 
-    public String getAttributeFamilyClassFieldValue() {
-        return attributeFamilyClassFieldValue;
+    public String getFamilyAttributeValue() {
+        return familyAttributeValue;
     }
 
-    public void setAttributeFamilyClassFieldValue(String attributeFamilyClassFieldValue) {
-        this.attributeFamilyClassFieldValue = attributeFamilyClassFieldValue;
+    public void setFamilyAttributeValue(String familyAttributeValue) {
+        this.familyAttributeValue = familyAttributeValue;
+    }
+
+    public boolean isDisplayedInUi() {
+        return isDisplayedInUi;
+    }
+
+    public void setIsDisplayedInUi(boolean isDisplayedInUi) {
+        this.isDisplayedInUi = isDisplayedInUi;
+    }
+
+    public boolean isFamilyAttribute() {
+        return isFamilyAttribute;
+    }
+
+    public void setIsFamilyAttribute(boolean isFamilyAttribute) {
+        this.isFamilyAttribute = isFamilyAttribute;
     }
 }

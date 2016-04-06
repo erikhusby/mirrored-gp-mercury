@@ -15,6 +15,14 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.run.GenotypingChipTypeActionBean"/>
 
+    <script type="text/javascript">
+        function familyChanged() {
+            // Redisplays the list page for a different chipFamily.
+            window.location.assign("${ctxpath}/genotyping/chipType.action?chipFamily=" + $j('#familySelect').val());
+        }
+    </script>
+
+
 <stripes:layout-render name="/layout.jsp" pageTitle="List Genotyping Chips" sectionTitle="List Genotyping Chips" showCreate="true">
 
     <stripes:layout-component name="extraHead">
@@ -22,11 +30,11 @@
             $j(document).ready(function() {
                 $j('#reagentList').dataTable( {
                     "oTableTools": ttExportDefines,
-                    "aaSorting": [[0,'asc'],[1,'asc'],[2,'asc']],
+                    "aaSorting": [[1,'asc'],[2,'asc']],
                     "aoColumns": [
-                        {"bSortable": true},
-                        {"bSortable": true},
-                        {"bSortable": true},
+                        {"bSortable": true}, //checkbox
+                        {"bSortable": true}, //chip name
+                        {"bSortable": true}, //created date
                     ]
                 })
             });
@@ -34,37 +42,46 @@
     </stripes:layout-component>
 
     <stripes:layout-component name="content">
+        <stripes:form beanclass="${actionBean.class.name}" id="selectionForm" class="form-horizontal">
+            <div class="control-group">
+                <stripes:label for="familySelect" name="Chip Family" class="control-label"/>
+                <div class="controls">
+                    <stripes:select id="familySelect" name="chipFamily" style="width:25%" onchange="familyChanged()">
+                        <stripes:option label="Select a chip family..." value="-1" disabled="true" selected="selected"/>
+                        <stripes:options-collection collection="${actionBean.chipFamilies}"/>
+                    </stripes:select>
+                </div>
+            </div>
 
-        <div class="actionButtons">
-            <stripes:link title="Add New Genotyping Chip" beanclass="${actionBean.class.name}" event="createChip">
-                New
-            </stripes:link>
-        </div>
-
-        <div class="clearfix"></div>
-
-        <table id="chipList" class="table simple">
-            <thead>
-            <tr>
-                <th>Family</th>
-                <th>Chip</th>
-                <th>Created Date</th>
-            </tr>
-            </thead>
-            <tbody>
-            <c:forEach items="${actionBean.allGenotypingChips}" var="chip">
+            <table id="chipList" class="table simple">
+                <thead>
                 <tr>
-                    <td>${chip.attributeDef.family}</td>
-                    <td>
-                        <stripes:link beanclass="${actionBean.class.name}" event="edit">
-                            <stripes:param name="chip" value="${chip.name}"/>
-                            ${chip.name}
-                        </stripes:link>
-                    </td>
-                    <td>${chip.createdDate}</td>
+                    <th/>
+                    <th>Chip</th>
+                    <th>Created Date</th>
                 </tr>
-            </c:forEach>
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                <c:forEach items="${actionBean.chipTypes}" var="chip" varStatus="chipStatus">
+                    <tr>
+                        <td><stripes:radio name="chipRadio" value="${chip.archetypeName}"
+                                   style="float:left;margin-right:5px;"/>
+                        </td>
+                        <td>${chip.archetypeName}</td>
+                        <td>${chip.createdDate}</td>
+                    </tr>
+                </c:forEach>
+                </tbody>
+            </table>
+
+            <div class="control-group">
+                <div class="control-label">&#160;</div>
+                <div class="controls actionButtons">
+                    <stripes:submit name="edit" value="Edit" style="margin-right: 10px;margin-top:10px;"/>
+                    <stripes:submit name="create" value="Create" style="margin-right: 10px;margin-top:10px;"/>
+                </div>
+            </div>
+
+        </stripes:form>
     </stripes:layout-component>
 </stripes:layout-render>

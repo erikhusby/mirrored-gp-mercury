@@ -573,7 +573,9 @@
 	<column name="attribute_name" type="varchar2(255)">
 	  <constraints nullable="false"/>
 	</column>
-	<column name="class_field_value" type="varchar2(255)"/>
+	<column name="family_attribute_value" type="varchar2(255)"/>
+	<column name="is_family_attribute" type="number(1,0)"/>
+	<column name="is_displayed_in_ui" type="number(1,0)"/>
       </createTable>
 
       <addPrimaryKey constraintName="PK_ATTRIBUTE_DEFINITION" tableName="ATTRIBUTE_DEFINITION"
@@ -596,8 +598,10 @@
 	  <constraints nullable="false"/>
 	</column>
 	<column name="attribute_family" type="varchar2(255)"/>
-	<column name="class_field_value" type="varchar2(255)"/>
 	<column name="attribute_name" type="varchar2(255)"/>
+	<column name="family_attribute_value" type="varchar2(255)"/>
+	<column name="is_family_attribute" type="number(1,0)"/>
+	<column name="is_displayed_in_ui" type="number(1,0)"/>
       </createTable>
 
       <addPrimaryKey constraintName="PK_ATTRIBUTE_DEFINITION_AUD" tableName="ATTRIBUTE_DEFINITION_AUD"

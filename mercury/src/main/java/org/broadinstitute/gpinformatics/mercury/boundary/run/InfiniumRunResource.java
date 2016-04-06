@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.run;
 
-import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
@@ -16,7 +15,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
-import org.broadinstitute.gpinformatics.mercury.presentation.run.GenotypingChipTypeActionBean;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
@@ -47,7 +45,7 @@ public class InfiniumRunResource {
     /** Extract barcode, row and column from e.g. 3999595020_R12C02 */
     private static final Pattern BARCODE_PATTERN = Pattern.compile("(\\d*)_(R\\d*)(C\\d*)");
     /** This matches with attribute_definition.attribute_family in the database. */
-    public static final String INFINIUM_FAMILY = GenotypingChipTypeActionBean.ATTRIBUTE_DEF_FAMILY_PREFIX + "Infinium";
+    public static final String INFINIUM_FAMILY = "Infinium";
     private static String DATA_PATH = null;
 
     @Inject
@@ -90,9 +88,9 @@ public class InfiniumRunResource {
     private InfiniumRunBean buildRunBean(LabVessel chip, VesselPosition vesselPosition) {
         if (DATA_PATH == null) {
             AttributeDefinition def =
-                    attributeArchetypeDao.findAttributeDefinitionsByFamily(INFINIUM_FAMILY, "data_path");
+                    attributeArchetypeDao.findAttributeDefinitionByFamily(INFINIUM_FAMILY, "data_path");
             if (def != null) {
-                DATA_PATH = def.getAttributeFamilyClassFieldValue();
+                DATA_PATH = def.getFamilyAttributeValue();
             }
             if (DATA_PATH == null) {
                 throw new ResourceException("No configuration for " + INFINIUM_FAMILY + " data_path attribute",

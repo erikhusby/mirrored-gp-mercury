@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.run.InfiniumRunResource
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.run.GenotypingChipTypeActionBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -15,11 +16,8 @@ import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
@@ -45,7 +43,7 @@ public class AttributeArchetypeFixupTest extends Arquillian {
     }
 
     // Populates the initial genotyping chip types.
-    @Test(enabled = false)
+    @Test(enabled = true)
     public void gplim4023PopulateGenoChipTypes() throws Exception {
         String[] initialAttributes = {
                 "pool_name", "Broad_GWAS_supplemental_15061359_A1",
@@ -102,7 +100,7 @@ public class AttributeArchetypeFixupTest extends Arquillian {
                 "cluster_location_unix"	, "/gap/illumina/beadstudio/Autocall/ChipInfo/PsychChip_15073391_v1-1_A/PsychChip_v1-1_15073391_A1_ClusterFile.egt",
                 "zcall_threshold_unix", "/gap/illumina/beadstudio/Autocall/ChipInfo/PsychChip_15073391_v1-1_A/thresholds.7.txt",
         };
-
+        final int fieldCount = 2;
         utx.begin();
         userBean.loginOSUser();
         // The collection of new entities to persist.
@@ -110,21 +108,24 @@ public class AttributeArchetypeFixupTest extends Arquillian {
 
         // Collects and persists the required attribute names, excluding "pool_name".
         Set<String> attributeNames = new HashSet<>();
-        for (int i = 0; i < initialAttributes.length; i += 2) {
+        for (int i = 0; i < initialAttributes.length; i += fieldCount) {
             String attributeName = initialAttributes[i];
             if (!attributeName.equals("pool_name") && attributeNames.add(attributeName)) {
                 attributeArchetypeDao.persist(
-                        new AttributeDefinition(InfiniumRunResource.INFINIUM_FAMILY, attributeName));
+                        new AttributeDefinition(InfiniumRunResource.INFINIUM_FAMILY, attributeName, true));
             }
         }
 
-        // Adds the data applicable to all INFINIUM_FAMILY chips.
+        // Adds the data applicable to all Infinium chips.
+        attributeArchetypeDao.persist(new AttributeDefinition(InfiniumRunResource.INFINIUM_FAMILY,
+                GenotypingChipTypeActionBean.GENOTYPING_CHIP_MARKER_ATTRIBUTE,
+                GenotypingChipTypeActionBean.GENOTYPING_CHIP_MARKER_ATTRIBUTE, false));
         attributeArchetypeDao.persist(new AttributeDefinition(InfiniumRunResource.INFINIUM_FAMILY, "data_path",
-                "/humgen/illumina_data"));
+                "/humgen/illumina_data", false));
 
         // Adds the attributes for each chip type. When iterating, "pool_name" marks the start of a new chip type.
         AttributeArchetype attributeArchetype = null;
-        for (int i = 0; i < initialAttributes.length; i += 2) {
+        for (int i = 0; i < initialAttributes.length; i += fieldCount) {
             String key = initialAttributes[i];
             String value = initialAttributes[i + 1];
             if (key.equals("pool_name")) {

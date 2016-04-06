@@ -37,6 +37,9 @@ public class ArchetypeAttribute {
 
     private String attributeValue;
 
+    private ArchetypeAttribute() {
+    }
+
     public ArchetypeAttribute(AttributeArchetype archetype, String attributeName) {
         this.archetype = archetype;
         this.attributeName = attributeName;
