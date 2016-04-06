@@ -43,7 +43,6 @@ public class SubmissionDtoTest {
     public static final LevelOfDetection FINGERPRINT_LOD = new LevelOfDetection(-4.3d, -3.2d);
     private static final BassFileType BAM_ENUM = BassFileType.BAM;
     public static final String BAM_FILE = BAM_ENUM.getBassValue();
-    public static final BassDTO.FileType BAM_FILE = BassDTO.FileType.BAM;
     private static final String DATA_TYPE = "Exome";
     private static final Double QUALITY_METRIC = 1.2;
     public static final String SUBMISSION_UUID = "1234";
@@ -74,8 +73,8 @@ public class SubmissionDtoTest {
         assertThat(submissionDTO.getDataType(), equalTo(BassDTO.DATA_TYPE_EXOME));
         assertThat(submissionDTO.getProductOrders(), containsInAnyOrder(productOrders.toArray()));
         assertThat(submissionDTO.getAggregationProject(), equalTo(AGGREGATION_PROJECT));
-        assertThat(submissionDTO.getFileType(), equalTo(BAM_FILE));
-        assertThat(submissionDTO.getFileTypeEnum(), equalTo(BAM_ENUM));
+        assertThat(submissionDTO.getFileTypeString(), equalTo(BAM_FILE));
+        assertThat(submissionDTO.getFileType(), equalTo(BAM_ENUM));
         assertThat(submissionDTO.getVersion(), equalTo(VERSION));
         assertThat(submissionDTO.getQualityMetric(), equalTo(QUALITY_METRIC));
         assertThat(submissionDTO.getContamination(), equalTo(CONTAMINATION));

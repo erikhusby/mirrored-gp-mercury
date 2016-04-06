@@ -182,15 +182,15 @@ public class ResearchProjectEjbSubmissionTest {
         SubmissionDto bApicard = getSubmissionDto("A", BassFileType.PICARD, TEST_VERSION_1, DEFAULT_FILE_PATH);
 
         SubmissionTracker stA =
-                new SubmissionTracker(bA.getSampleName(), bA.getFileTypeEnum(), String.valueOf(bA.getVersion()));
+                new SubmissionTracker(bA.getSampleName(), bA.getFileType(), String.valueOf(bA.getVersion()));
         stA.setFileName(bA.getFileName());
 
         SubmissionTracker stB =
-                new SubmissionTracker(bB.getSampleName(), bB.getFileTypeEnum(), String.valueOf(bB.getVersion()));
+                new SubmissionTracker(bB.getSampleName(), bB.getFileType(), String.valueOf(bB.getVersion()));
         stB.setFileName(bB.getFileName());
 
         SubmissionTracker stA2 =
-                new SubmissionTracker(bA2.getSampleName(), bA2.getFileTypeEnum(), String.valueOf(bA2.getVersion()));
+                new SubmissionTracker(bA2.getSampleName(), bA2.getFileType(), String.valueOf(bA2.getVersion()));
         stA2.setFileName(bA2.getFileName());
 
         List<Object[]> testCases = new ArrayList<>();
@@ -265,9 +265,7 @@ public class ResearchProjectEjbSubmissionTest {
     }
 
     private SubmissionTracker getSubmissionTracker(SubmissionDto submissionDto) {
-        BassFileType bassFileType =
-                StringUtils.isBlank(submissionDto.getFileType()) ? null : submissionDto.getFileTypeEnum();
-        return new SubmissionTracker(submissionDto.getSampleName(), bassFileType,
+        return new SubmissionTracker(submissionDto.getSampleName(), submissionDto.getFileType(),
                 String.valueOf(submissionDto.getVersion()));
     }
 

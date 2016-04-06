@@ -157,7 +157,7 @@ public class SubmissionDtoFetcher {
             if (aggregationMap.containsKey(collaboratorSampleId) && bassDTOMap.containsKey(collaboratorSampleId)) {
                 Aggregation aggregation = aggregationMap.get(collaboratorSampleId);
                 BassDTO bassDTO = bassDTOMap.get(collaboratorSampleId);
-                SubmissionTracker submissionTracker = researchProject.getSubmissionTracker(bassDTO);
+                SubmissionTracker submissionTracker = researchProject.getSubmissionTracker(bassDTO.getTuple());
                 SubmissionStatusDetailBean statusDetailBean = null;
                 if (submissionTracker != null) {
                     statusDetailBean = sampleSubmissionMap.get(submissionTracker.createSubmissionIdentifier());
@@ -188,7 +188,7 @@ public class SubmissionDtoFetcher {
         /** SubmissionTracker uses sampleName for accessionIdentifier
          @see: org/broadinstitute/gpinformatics/athena/boundary/projects/ ResearchProjectEjb.java:243 **/
         for (SubmissionTracker submissionTracker : researchProject.getSubmissionTrackers()) {
-            submissionIds.put(submissionTracker.createSubmissionIdentifier(), submissionTracker.getKey());
+            submissionIds.put(submissionTracker.createSubmissionIdentifier(), submissionTracker.getTuple());
         }
         return submissionIds;
     }

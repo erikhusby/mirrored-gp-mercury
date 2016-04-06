@@ -256,8 +256,10 @@ public class ResearchProjectEjb {
      */
     public Collection<SubmissionStatusDetailBean> processSubmissions(@Nonnull String researchProjectBusinessKey,
                                                                      @Nonnull BioProject selectedBioProject,
-                                                                     @Nonnull List<SubmissionDto> submissionDtos)
-            throws ValidationException {
+                                                                     @Nonnull List<SubmissionDto> submissionDtos,
+                                                                     @Nonnull SubmissionRepository repository,
+                                                                     @Nonnull SubmissionLibraryDescriptor
+                                                                     submissionLibraryDescriptor) throws ValidationException {
         validateSubmissionDto(researchProjectBusinessKey, submissionDtos);
         validateSubmissionSamples(selectedBioProject, submissionDtos);
 
@@ -267,7 +269,7 @@ public class ResearchProjectEjb {
 
         for (SubmissionDto submissionDto : submissionDtos) {
             SubmissionTracker tracker = new SubmissionTracker(submissionDto.getSampleName(),
-                    submissionDto.getFileTypeEnum(), String.valueOf(submissionDto.getVersion()));
+                    submissionDto.getFileType(), String.valueOf(submissionDto.getVersion()));
             submissionProject.addSubmissionTracker(tracker);
             submissionDtoMap.put(tracker, submissionDto);
         }

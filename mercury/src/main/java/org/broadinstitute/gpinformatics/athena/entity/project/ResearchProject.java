@@ -227,17 +227,15 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
     private Set<ManifestSession> manifestSessions = new HashSet<>();
 
     // todo: we can cache the submissiontrackers in a static map
-    public SubmissionTracker getSubmissionTracker(BassDTO bassDTO) {
+    public SubmissionTracker getSubmissionTracker(SubmissionTuple submissionTuple) {
         String libraryDescriptorName=null;
         Collection<SubmissionLibraryDescriptor> libraryDescriptors = findLibraryDescriptors();
         if (libraryDescriptors.size()==1){
             libraryDescriptorName=libraryDescriptors.iterator().next().getName();
         }
-        SubmissionTuple
-                submissionTuple = bassDTO.getSubmissionKey();
         Set<SubmissionTracker> foundSubmissionTrackers = new HashSet<>();
         for (SubmissionTracker submissionTracker : getSubmissionTrackers()) {
-            if (submissionTracker.getKey().equals(submissionTuple)) {
+            if (submissionTracker.getTuple().equals(submissionTuple)) {
                 if (!foundSubmissionTrackers.add(submissionTracker)){
                     throw new RuntimeException("More then one result found");
                 }

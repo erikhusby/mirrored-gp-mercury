@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
-import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassFileType;
 import org.hibernate.envers.Audited;
 
@@ -59,9 +58,6 @@ public class SubmissionTracker {
      * File type of the file being submitted
      */
     @Enumerated(EnumType.STRING)
-    private BassDTO.FileType fileType;
-
-    @Enumerated(EnumType.STRING)
     private BassFileType fileType;
     /**
      * version of the data file created
@@ -81,7 +77,6 @@ public class SubmissionTracker {
     protected SubmissionTracker() {
     }
 
-    SubmissionTracker(Long submissionTrackerId, String submittedSampleName, BassDTO.FileType fileType, String version) {
     SubmissionTracker(Long submissionTrackerId, String submittedSampleName, BassFileType fileType, String version) {
         this.submissionTrackerId = submissionTrackerId;
         this.submittedSampleName = submittedSampleName;
@@ -164,8 +159,6 @@ public class SubmissionTracker {
 
     // todo: should be in interface?
     @Transient
-    public SubmissionTuple getKey() {
-        return new SubmissionTuple(submittedSampleName, fileType, version);
     public SubmissionTuple getTuple() {
         return new SubmissionTuple(submittedSampleName, fileType, version);
     }

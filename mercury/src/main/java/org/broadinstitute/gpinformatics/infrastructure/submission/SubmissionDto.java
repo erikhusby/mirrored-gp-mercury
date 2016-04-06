@@ -11,7 +11,6 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.submission;
 
-import com.sun.istack.Nullable;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
@@ -23,6 +22,7 @@ import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -96,12 +96,12 @@ public class SubmissionDto {
 
     @JsonProperty(value = SubmissionField.FILE_TYPE)
     public String getFileTypeString(){
-        return getFileType().getValue();
+        return bassDTO.getFileType();
     }
 
     @JsonIgnore
-    public BassDTO.FileType getFileType() {
-        return bassDTO.getFileType();
+    public BassFileType getFileType() {
+        return BassFileType.byBassValue(bassDTO.getFileType());
     }
 
     @JsonProperty(value = SubmissionField.VERSION)
@@ -211,10 +211,6 @@ public class SubmissionDto {
             bioproject = statusDetailBean.getBioproject().getAccession();
         }
         return bioproject;
-    }
-
-    public BassFileType getFileTypeEnum() {
-        return BassFileType.byBassValue(getFileType());
     }
 
     @JsonProperty(value = SubmissionField.LIBRARY_DESCRIPTOR)

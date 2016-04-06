@@ -67,7 +67,7 @@ public class SubmissionDtoFetcherTest {
         productOrder.addSample(new ProductOrderSample(TEST_SAMPLE));
         researchProject.addProductOrder(productOrder);
         researchProject.addSubmissionTracker(
-                new SubmissionTrackerTest.SubmissionTrackerStub(1234L, COLLABORATOR_SAMPLE_ID, BassDTO.FileType.BAM, "1"));
+                new SubmissionTrackerTest.SubmissionTrackerStub(1234L, COLLABORATOR_SAMPLE_ID, BassFileType.BAM, "1"));
         researchProject.addSubmissionTracker(new SubmissionTrackerTest.SubmissionTrackerStub(1234L, COLLABORATOR_SAMPLE_ID,
                 BassFileType.BAM, "1"));
         List<Aggregation> aggregation =
