@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LabMetricProcessor;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -54,6 +55,10 @@ public class QuantificationEJB {
                                                  + " already exists for lab vessel "
                                                  + metric.getLabVessel().getLabel());
                         }
+                    }
+                    if (labVessel.getVolume() != null && metric.getUnits() == LabMetric.LabUnit.NG_PER_UL) {
+                        metric.getMetadataSet().add(new Metadata(Metadata.Key.TOTAL_NG,
+                                metric.getValue().multiply(labVessel.getVolume())));
                     }
                 }
             }
