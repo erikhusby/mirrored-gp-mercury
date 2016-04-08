@@ -19,7 +19,6 @@ import net.sourceforge.stripes.action.RedirectResolution;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
-import net.sourceforge.stripes.validation.Validate;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
@@ -47,7 +46,6 @@ public class GenotypingChipTypeActionBean extends CoreActionBean {
 
     private static final String CREATE_CHIP_TYPE = CoreActionBean.CREATE + "Chip Type";
     private static final String EDIT_CHIP_TYPE = CoreActionBean.EDIT + "Chip Type";
-
     private static final String CHIP_TYPE_LIST_PAGE = "/run/genotyping_chip_list.jsp";
     private static final String CHIP_TYPE_EDIT_PAGE = "/run/genotyping_chip_edit.jsp";
 
@@ -57,8 +55,7 @@ public class GenotypingChipTypeActionBean extends CoreActionBean {
     private Map<String, AttributeDefinition> definitions = null;
 
     private String chipName;
-    private String selectedChipName;
-
+    private String saveChipName;
     private String chipFamily;
     private String selectedFamily;
 
@@ -88,23 +85,23 @@ public class GenotypingChipTypeActionBean extends CoreActionBean {
     @HandlesEvent(EDIT_ACTION)
     public Resolution edit() {
         setSubmitString(EDIT_CHIP_TYPE);
-        if (StringUtils.isBlank(selectedChipName)) {
+        if (StringUtils.isBlank(chipName)) {
             return new ForwardResolution(CHIP_TYPE_LIST_PAGE);
         }
         setSubmitString(EDIT_CHIP_TYPE);
-        populateAttributes(selectedChipName);
-        chipName = selectedChipName;
+        populateAttributes(chipName);
+        saveChipName = chipName;
         return new ForwardResolution(CHIP_TYPE_EDIT_PAGE);
     }
 
     @HandlesEvent(CREATE_ACTION)
     public Resolution create() {
         setSubmitString(CREATE_CHIP_TYPE);
-        if (StringUtils.isBlank(selectedChipName)) {
+        if (StringUtils.isBlank(chipName)) {
             return new ForwardResolution(CHIP_TYPE_LIST_PAGE);
         }
-        populateAttributes(selectedChipName);
-        chipName = "";
+        populateAttributes(chipName);
+        saveChipName = "";
         return new ForwardResolution(CHIP_TYPE_EDIT_PAGE);
     }
 
@@ -112,11 +109,20 @@ public class GenotypingChipTypeActionBean extends CoreActionBean {
     public Resolution save() {
         try {
             boolean foundChange = false;
-            AttributeArchetype archetype = attributeArchetypeDao.findByName(chipFamily, chipName);
-            if (archetype == null) {
-                // Adds the new chip type.
+            AttributeArchetype archetype = attributeArchetypeDao.findByName(chipFamily, saveChipName);
+            if (archetype != null) {
+                if (getSubmitString().equals(CREATE_CHIP_TYPE)) {
+                    addValidationError("saveChipName", "Chip name is already in use.");
+                    return new ForwardResolution(CHIP_TYPE_EDIT_PAGE);
+                }
+            } else {
+                if (StringUtils.isBlank(saveChipName)) {
+                    addValidationError("saveChipName", "Chip name must not be blank.");
+                    return new ForwardResolution(CHIP_TYPE_EDIT_PAGE);
+                }
+                // Adds the new chip type with null valued non-family attributes.
                 foundChange = true;
-                archetype = new AttributeArchetype(chipFamily, chipName);
+                archetype = new AttributeArchetype(chipFamily, saveChipName);
                 for (AttributeDefinition definition : getDefinitionsMap().values()) {
                     if (!definition.isFamilyAttribute()) {
                         archetype.getAttributes().add(new ArchetypeAttribute(archetype,
@@ -137,7 +143,7 @@ public class GenotypingChipTypeActionBean extends CoreActionBean {
                 }
             }
             if (foundChange) {
-                // Updates the modified date attribute.
+                // Updates the last modified date attribute.
                 for (ArchetypeAttribute existingAttribute : archetype.getAttributes()) {
                     if (existingAttribute.getAttributeName().equals(LAST_MODIFIED)) {
                         existingAttribute.setAttributeValue(DateUtils.getYYYYMMMDDTime(new Date()));
@@ -179,6 +185,14 @@ public class GenotypingChipTypeActionBean extends CoreActionBean {
         this.chipName = chipName;
     }
 
+    public String getSaveChipName() {
+        return saveChipName;
+    }
+
+    public void setSaveChipName(String saveChipName) {
+        this.saveChipName = saveChipName;
+    }
+
     public String getChipFamily() {
         return chipFamily;
     }
@@ -201,14 +215,6 @@ public class GenotypingChipTypeActionBean extends CoreActionBean {
 
     public void setSelectedFamily(String selectedFamily) {
         this.selectedFamily = selectedFamily;
-    }
-
-    public String getSelectedChipName() {
-        return selectedChipName;
-    }
-
-    public void setSelectedChipName(String selectedChipName) {
-        this.selectedChipName = selectedChipName;
     }
 
     private void populateAttributes(String name) {

@@ -23,8 +23,8 @@
                     "oTableTools": ttExportDefines,
                     "aaSorting": [0,'asc'],
                     "aoColumns": [
-                        {"bSortable": true},
-                        {"bSortable": false},
+                        {"bSortable": true},   // attribute name
+                        {"bSortable": false},  // attribute value
                     ]
                 })
             });
@@ -33,11 +33,12 @@
 
     <stripes:layout-component name="content">
         <stripes:form beanclass="${actionBean.class.name}" id="editForm">
+            <input type="hidden" name="submitString" value="${actionBean.submitString}"/>
             <input type="hidden" name="chipFamily" value="${actionBean.chipFamily}"/>
 
             <div class="control-group">
-                <stripes:label for="chipNameText" name="Chip Name" class="control-label"/>
-                <stripes:text id="chipNameText" name="chipName" style="width:70%;height:auto"
+                <stripes:label for="nameId" name="Chip Name" class="control-label"/>
+                <stripes:text id="nameId" name="saveChipName" style="width:70%;height:auto"
                               readonly="${actionBean.submitString.startsWith('Edit')}"/>
             </div>
 

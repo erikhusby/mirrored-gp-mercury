@@ -1,4 +1,3 @@
-<%@ page import="org.broadinstitute.gpinformatics.mercury.presentation.run.GenotypingChipTypeActionBean" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <%--
@@ -30,11 +29,11 @@
             $j(document).ready(function() {
                 $j('#reagentList').dataTable( {
                     "oTableTools": ttExportDefines,
-                    "aaSorting": [[1,'asc'],[2,'asc']],
+                    "aaSorting": [1,'asc'],
                     "aoColumns": [
                         {"bSortable": true}, //checkbox
                         {"bSortable": true}, //chip name
-                        {"bSortable": true} //last modified date
+                        {"bSortable": true}  //last modified date
                     ]
                 })
             });
@@ -49,7 +48,7 @@
                 <stripes:label for="familySelect" name="Chip Family" class="control-label"/>
                 <div class="controls">
                     <stripes:select id="familySelect" name="selectedFamily" style="width:25%" onchange="familyChanged()">
-                        <stripes:option label="Select a chip family..." value="-1" disabled="true" selected="selected"/>
+                        <stripes:option label="Select a chip family..." value="-1" disabled="true" selected="true"/>
                         <stripes:options-collection collection="${actionBean.chipFamilies}"/>
                     </stripes:select>
                 </div>
@@ -67,7 +66,7 @@
                 <c:forEach items="${actionBean.chipTypes}" var="chip" varStatus="chipStatus">
                     <tr>
                         <!-- One button must be checked so that Edit and Create don't choke. -->
-                        <td><stripes:radio name="selectedChipName" value="${chip.archetypeName}"
+                        <td><stripes:radio name="chipName" value="${chip.archetypeName}"
                                            checked="${actionBean.chipTypes[0].archetypeName}"/>
                         </td>
                         <td>${chip.archetypeName}</td>
