@@ -1,18 +1,16 @@
 package org.broadinstitute.gpinformatics.mercury.entity.run;
 
-import org.hibernate.envers.AuditMappedBy;
 import org.hibernate.envers.Audited;
 
-import javax.persistence.Column;
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 
 /**
@@ -29,15 +27,14 @@ public class ArchetypeAttribute {
     @Id
     private Long attributeId;
 
-    @ManyToOne
-    @JoinColumn(name = "archetype", insertable = false, updatable = false, nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.MERGE, CascadeType.PERSIST})
     private AttributeArchetype archetype;
 
     private String attributeName;
 
     private String attributeValue;
 
-    private ArchetypeAttribute() {
+    public ArchetypeAttribute() {
     }
 
     public ArchetypeAttribute(AttributeArchetype archetype, String attributeName) {

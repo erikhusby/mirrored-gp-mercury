@@ -1,4 +1,3 @@
-<%@ page import="org.broadinstitute.gpinformatics.mercury.presentation.run.GenotypingChipTypeActionBean" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <%--
@@ -30,24 +29,16 @@
                 })
             });
         </script>
-        <style type="text/css">
-            input, select {
-                -webkit-box-sizing: border-box;
-                -moz-box-sizing: border-box;
-                box-sizing: border-box;
-            }
-        </style>
     </stripes:layout-component>
 
     <stripes:layout-component name="content">
         <stripes:form beanclass="${actionBean.class.name}" id="editForm">
+            <input type="hidden" name="chipFamily" value="${actionBean.chipFamily}"/>
+
             <div class="control-group">
-                <stripes:label for="chipName" name="Chip Name" class="control-label"/>
-                <div class="controls">
-                    <stripes:text id="chipName" name="chipName" style="width:70%;height:auto">
-                    ${actionBean.chipName}
-                    </stripes:text>
-                </div>
+                <stripes:label for="chipNameText" name="Chip Name" class="control-label"/>
+                <stripes:text id="chipNameText" name="chipName" style="width:70%;height:auto"
+                              readonly="${actionBean.submitString.startsWith('Edit')}"/>
             </div>
 
             <table id="attributeList" class="table simple">
@@ -58,23 +49,17 @@
                 </tr>
                 </thead>
                 <tbody>
-                <c:forEach items="${actionBean.attributes}" var="item" varStatus="itemStatus">
+                <c:forEach items="${actionBean.attributes}" var="item">
                     <tr>
-                        <td width="20%">${item.attributeName}</td>
-                        <td width="80%"><input style="width:100%" class="attributeValue"
-                                               name="attributes[${itemStatus.index}].attributeValue"
-                                               value="${item.attributeValue}"/></td>
+                        <td width="20%">${item.key}</td>
+                        <td width="80%"><input style="width:99%" class="attributeValue" name="attributes[${item.key}]"
+                                               value="${item.value}"/></td>
                     </tr>
                 </c:forEach>
                 </tbody>
             </table>
 
             <div class="control-group">
-            <div class="controls">
-                <span><stripes:label for="overrideId" name="Override earlier versions?" class="control-label"/>
-                        <stripes:checkbox id="overrideId" name="overrideEarlier" style="margin-top: 10px;"
-                                          title="Check this if earlier versions should be inaccessible and old runs must use this version."/>
-                </span>
                 <div class="control-label">&#160;</div>
                 <div class="controls actionButtons">
                     <stripes:submit name="list" value="Cancel"/>

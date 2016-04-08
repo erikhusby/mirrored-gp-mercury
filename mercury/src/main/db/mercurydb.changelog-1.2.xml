@@ -443,19 +443,13 @@
 	<column name="attribute_family" type="varchar2(255)">
 	  <constraints nullable="false"/>
 	</column>
-	<column name="created_date" type="timestamp">
-	  <constraints nullable="false"/>
-	</column>
-	<column name="overrides_earlier_versions" type="number(1,0)">
-	  <constraints nullable="false"/>
-	</column>
       </createTable>
 
       <addPrimaryKey constraintName="PK_ATTRIBUTE_ARCHETYPE" tableName="ATTRIBUTE_ARCHETYPE"
 		     schemaName="mercury" columnNames="archetype_id"/>
 
       <addUniqueConstraint constraintName="U_ATTRIBUTE_ARCHETYPE" tableName="ATTRIBUTE_ARCHETYPE"
-			   schemaName="mercury" columnNames="attribute_family, archetype_name, created_date"/>
+			   schemaName="mercury" columnNames="attribute_family, archetype_name"/>
     </changeSet>
 
     <changeSet id="GPLIM-4023-2" author="epolk">
@@ -471,12 +465,10 @@
 	</column>
 	<column name="archetype_name" type="varchar2(255)"/>
 	<column name="attribute_family" type="varchar2(255)"/>
-	<column name="created_date" type="timestamp"/>
-	<column name="overrides_earlier_versions" type="number(1,0)"/>
       </createTable>
 
       <addPrimaryKey constraintName="PK_ATTRIBUTE_ARCHETYPE_AUD" tableName="ATTRIBUTE_ARCHETYPE_AUD"
-		     schemaName="mercury"  columnNames="rev,archetype_id"/>
+		     schemaName="mercury"  columnNames="rev, archetype_id"/>
 
       <createIndex indexName="IX_ATTRIBUTE_ARCHETYPE_AUD" tableName="ATTRIBUTE_ARCHETYPE_AUD" schemaName="mercury">
 	<column name="archetype_id"/>
@@ -493,8 +485,8 @@
 	<column name="attribute_name" type="varchar2(255)">
 	  <constraints nullable="false"/>
 	</column>
-	<column name="archetype" type="number(19,0)"/>
 	<column name="attribute_value" type="varchar2(255)"/>
+	<column name="archetype" type="number(19,0)"/>
       </createTable>
 
       <addPrimaryKey constraintName="PK_ARCHETYPE_ATTRIBUTE" tableName="ARCHETYPE_ATTRIBUTE"
@@ -530,38 +522,6 @@
       </createIndex>
     </changeSet>
 
-    <changeSet id="GPLIM-4023-5" author="epolk">
-      <createTable schemaName="mercury" tableName="ARCHETYPE_JOIN_ATTRIBUTE_AUD">
-	<column name="rev" type="number(19,0)">
-	  <constraints nullable="false"/>
-	</column>
-	<column name="archetype" type="number(19,0)">
-	  <constraints nullable="false"/>
-	</column>
-	<column name="attribute_id" type="number(19,0)">
-	  <constraints nullable="false"/>
-	</column>
-	<column name="revtype" type="number(3,0)">
-	  <constraints nullable="false"/>
-	</column>
-      </createTable>
-
-      <addPrimaryKey constraintName="PK_ARCHETYPE_JOIN_ATTR_AUD" tableName="ARCHETYPE_JOIN_ATTRIBUTE_AUD"
-		     schemaName="mercury"  columnNames="rev, archetype, attribute_id"/>
-
-      <createIndex indexName="IX1_ARCHETYPE_JOIN_ATTR_AUD" tableName="ARCHETYPE_JOIN_ATTRIBUTE_AUD" schemaName="mercury">
-	<column name="archetype"/>
-	<column name="attribute_id"/>
-	<column name="rev"/>
-      </createIndex>
-
-      <createIndex indexName="IX2_ARCHETYPE_JOIN_ATTR_AUD" tableName="ARCHETYPE_JOIN_ATTRIBUTE_AUD" schemaName="mercury">
-	<column name="attribute_id"/>
-	<column name="archetype"/>
-	<column name="rev"/>
-      </createIndex>
-    </changeSet>
-
     <changeSet id="GPLIM-4023-6" author="epolk">
       <createTable schemaName="mercury" tableName="ATTRIBUTE_DEFINITION">
 	<column name="attribute_definition_id" type="number(19,0)">
@@ -575,7 +535,7 @@
 	</column>
 	<column name="family_attribute_value" type="varchar2(255)"/>
 	<column name="is_family_attribute" type="number(1,0)"/>
-	<column name="is_displayed_in_ui" type="number(1,0)"/>
+	<column name="is_displayable" type="number(1,0)"/>
       </createTable>
 
       <addPrimaryKey constraintName="PK_ATTRIBUTE_DEFINITION" tableName="ATTRIBUTE_DEFINITION"
@@ -601,7 +561,7 @@
 	<column name="attribute_name" type="varchar2(255)"/>
 	<column name="family_attribute_value" type="varchar2(255)"/>
 	<column name="is_family_attribute" type="number(1,0)"/>
-	<column name="is_displayed_in_ui" type="number(1,0)"/>
+	<column name="is_displayable" type="number(1,0)"/>
       </createTable>
 
       <addPrimaryKey constraintName="PK_ATTRIBUTE_DEFINITION_AUD" tableName="ATTRIBUTE_DEFINITION_AUD"

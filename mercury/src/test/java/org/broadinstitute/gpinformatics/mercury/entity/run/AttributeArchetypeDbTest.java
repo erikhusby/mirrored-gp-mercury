@@ -13,9 +13,8 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -56,14 +55,14 @@ public class AttributeArchetypeDbTest extends Arquillian {
         // Adds family attributes on family 0.
         for (int i = 0; i < testFamilyAttribute.length; ++i) {
             AttributeDefinition attributeDefinition = new AttributeDefinition(testFamily[0], testFamilyAttribute[i],
-                    (i == 0) ? testPrefix : null, false);
+                    (i == 0) ? testPrefix : null, false, true);
             dao.persist(attributeDefinition);
         }
         for (String family : testFamily) {
             Assert.assertTrue(CollectionUtils.isEmpty(dao.findAllByFamily(family)));
             // Adds attribute definitions.
             for (String attribute : testAttribute) {
-                dao.persist(new AttributeDefinition(family, attribute, true));
+                dao.persist(new AttributeDefinition(family, attribute, null, true, false));
             }
             // Adds archetype and attributes.
             for (String archetypeName : testArchetype) {
@@ -88,25 +87,24 @@ public class AttributeArchetypeDbTest extends Arquillian {
         Assert.assertEquals(identifiedFamilies.get(0), testFamily[0]);
 
         // Checks the number of attributes defined for each family.
-        Assert.assertEquals(dao.findAttributeDefinitionsByFamily(testFamily[0]).size(),
-                testFamilyAttribute.length + testAttribute.length);
-        Assert.assertEquals(dao.findAttributeDefinitionsByFamily(testFamily[1]).size(), testAttribute.length);
-        Assert.assertEquals(dao.findAttributeDefinitionsByFamily(testFamily[2]).size(), testAttribute.length);
+        Map<String, AttributeDefinition>[] definitionMaps = new HashMap[testFamily.length];
+        for (int i = 0; i < definitionMaps.length; ++i) {
+            definitionMaps[i] = dao.findAttributeDefinitionsByFamily(testFamily[i]);
+        }
+        Assert.assertEquals(definitionMaps[0].size(), testFamilyAttribute.length + testAttribute.length);
+        Assert.assertEquals(definitionMaps[1].size(), testAttribute.length);
+        Assert.assertEquals(definitionMaps[2].size(), testAttribute.length);
 
         // Verifies the family attributes.
-        for (AttributeDefinition definition : dao.findAttributeDefinitionsByFamily(testFamily[0])) {
+        for (AttributeDefinition definition : definitionMaps[0].values()) {
             boolean isFamilyAttribute = definition.getAttributeName().equals(testFamilyAttribute[0])
                                         || definition.getAttributeName().equals(testFamilyAttribute[1]);
             Assert.assertTrue(isFamilyAttribute == definition.isFamilyAttribute(), definition.getAttributeName());
-            Assert.assertTrue(isFamilyAttribute != definition.isDisplayedInUi(), definition.getAttributeName());
+            Assert.assertTrue(isFamilyAttribute != definition.isDisplayable(), definition.getAttributeName());
         }
-        Assert.assertEquals(dao.findAttributeDefinitionByFamily(testFamily[0], testFamilyAttribute[0]).
-                getFamilyAttributeValue(), testPrefix);
-        Assert.assertNull(dao.findAttributeDefinitionByFamily(testFamily[0], testFamilyAttribute[1]).
-                getFamilyAttributeValue());
-
-        Assert.assertNull(dao.findAttributeDefinitionByFamily(testFamily[0], testAttribute[0]).
-                getFamilyAttributeValue());
+        Assert.assertEquals(definitionMaps[0].get(testFamilyAttribute[0]).getFamilyAttributeValue(), testPrefix);
+        Assert.assertNull(definitionMaps[0].get(testFamilyAttribute[1]).getFamilyAttributeValue());
+        Assert.assertNull(definitionMaps[0].get(testAttribute[0]).getFamilyAttributeValue());
 
         // Tests the archetypes and their attributes.
         for (String family : testFamily) {
@@ -114,10 +112,6 @@ public class AttributeArchetypeDbTest extends Arquillian {
             for (String archetypeName : testArchetype) {
                 AttributeArchetype archetype = dao.findByName(family, archetypeName);
                 Assert.assertNotNull(archetype);
-                // Test lookups by date.
-                Assert.assertNull(dao.findByName(family, archetypeName, new Date(0)));
-                Assert.assertEquals(dao.findByName(family, archetypeName, archetype.getCreatedDate()), archetype);
-                Assert.assertEquals(dao.findByName(family, archetypeName, new Date()), archetype);
                 // Test the attributes.
                 Assert.assertEquals(archetype.getAttributes().size(), testAttribute.length);
                 for (ArchetypeAttribute attribute : archetype.getAttributes()) {
@@ -127,92 +121,6 @@ public class AttributeArchetypeDbTest extends Arquillian {
                 }
             }
         }
-
-        // Adds two archetype versions.
-        String family = testFamily[0];
-        String archetypeName = testArchetype[0];
-        List<Date> versionDates = new ArrayList<>();
-        versionDates.add(new Date());
-        Assert.assertTrue(testAttribute.length > 2);
-        for (int i = 1; i < 3; ++i) {
-            Thread.sleep(500);
-            versionDates.add(new Date());
-            AttributeArchetype archetype = dao.findByName(family, archetypeName);
-            Map<String, String> attributeMap = archetype.getAttributeMap();
-            // Changes a different attributes each time.
-            String attributeName = testAttribute[i];
-            String attributeData = String.valueOf(i);
-            attributeMap.put(attributeName, attributeData);
-            AttributeArchetype newArchetype = dao.createArchetypeVersion(family, archetypeName, attributeMap);
-            Assert.assertNotNull(newArchetype);
-            if (i == 1) {
-                // Marks the first new version so that it overrides the original version (i.e. hidden
-                // in the search by version date).
-                newArchetype.setOverridesEarlierVersions(true);
-            }
-        }
-        // Bracket the last version with a final datetime.
-        Thread.sleep(500);
-        versionDates.add(new Date());
-
-        // It should not make a new version from the latest attributes since there are no changes.
-        Assert.assertNull(dao.createArchetypeVersion(family, archetypeName,
-                dao.findByName(family, archetypeName).getAttributeMap()));
-
-        // Checks the list of versions, already sorted by date, most recent first.
-        List<AttributeArchetype> archetypeVersions = dao.findAllVersionsByFamilyAndName(family, archetypeName);
-        Assert.assertEquals(archetypeVersions.size(), 3);
-
-        // Checks the attributes.
-        Date[] archetypeDates = new Date[archetypeVersions.size()];
-        for (int i = 0; i < archetypeVersions.size(); ++i) {
-            AttributeArchetype archetype = archetypeVersions.get(i);
-            archetypeDates[i] = archetype.getCreatedDate();
-            Map<String, String> map = archetype.getAttributeMap();
-            Assert.assertEquals(map.size(), testAttribute.length);
-            if (i == 0) {
-                // latest
-                Assert.assertEquals(map.get(testAttribute[0]), testAttribute[0] + "value");
-                Assert.assertEquals(map.get(testAttribute[1]), "1");
-                Assert.assertEquals(map.get(testAttribute[2]), "2");
-                Assert.assertFalse(archetype.getOverridesEarlierVersions());
-            } else if (i == 1) {
-                // middle version
-                Assert.assertEquals(map.get(testAttribute[0]), testAttribute[0] + "value");
-                Assert.assertEquals(map.get(testAttribute[1]), "1");
-                Assert.assertEquals(map.get(testAttribute[2]), testAttribute[2] + "value");
-                Assert.assertTrue(archetype.getOverridesEarlierVersions());
-            } else if (i == 2) {
-                // earliest
-                Assert.assertEquals(map.get(testAttribute[0]), testAttribute[0] + "value");
-                Assert.assertEquals(map.get(testAttribute[1]), testAttribute[1] + "value");
-                Assert.assertEquals(map.get(testAttribute[2]), testAttribute[2] + "value");
-                Assert.assertFalse(archetype.getOverridesEarlierVersions());
-            }
-        }
-        Assert.assertTrue(archetypeDates[2].before(archetypeDates[1]));
-        Assert.assertTrue(archetypeDates[1].before(archetypeDates[0]));
-
-        // Looking for archetype by effective date should only reveal two different versions, since the middle one
-        // was marked to override the earlier version.
-        for (int i = 0; i < versionDates.size(); ++i) {
-            AttributeArchetype archetype = dao.findByName(family, archetypeName, versionDates.get(i));
-            Assert.assertNotNull(archetype);
-            switch (i) {
-            case 0:
-            case 1:
-            case 2:
-                Assert.assertEquals(archetype.getCreatedDate(), archetypeDates[1]);
-                Assert.assertEquals(archetype.getAttributeMap().get(testAttribute[1]), "1");
-                break;
-            case 3:
-                Assert.assertEquals(archetype.getCreatedDate(), archetypeDates[0]);
-                break;
-            default:
-                Assert.fail();
-            }
-        }
-
         utx.rollback();
     }
 }

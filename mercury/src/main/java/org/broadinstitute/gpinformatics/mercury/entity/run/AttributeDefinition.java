@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.run;
 
 import org.hibernate.envers.Audited;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -30,41 +31,26 @@ public class AttributeDefinition {
 
     private String attributeFamily;
     private String attributeName;
-    private boolean isDisplayedInUi;
+    private boolean isDisplayable;
+
     /**
      * Indicates if the attribute is a family attribute (defined in this object) or
      * an instance attribute (defined in ArchetypeAttribute).
      */
+    @Column(name = "is_family_attribute")
     private boolean isFamilyAttribute;
     private String familyAttributeValue;
 
     public AttributeDefinition() {
     }
 
-    /** Constructor for an Archetype instance attribute.
-     * @param attributeFamily Defines the Archetype family.
-     * @param attributeName Defines the name of the ArchetypeAttribute.
-     * @param isDisplayedInUi Indicates if attribute is shown in the UI.
-     */
-    public AttributeDefinition(String attributeFamily, String attributeName, boolean isDisplayedInUi) {
+    public AttributeDefinition(String attributeFamily, String attributeName, String familyAttributeValue,
+                               boolean isDisplayable, boolean isFamilyAttribute) {
         this.attributeFamily = attributeFamily;
         this.attributeName = attributeName;
-        this.familyAttributeValue = null;
-        this.isDisplayedInUi = isDisplayedInUi;
-        this.isFamilyAttribute = false;
-    }
-
-    /** Constructor for an Archetype family attribute.
-     * @param attributeFamily Defines the Archetype family that this attribute applies to.
-     * @param attributeName Defines the name of the family attribute.
-     * @param familyAttributeValue Defines the value of the attribute.
-     * @param isDisplayedInUi Indicates if attribute is shown in the UI.
-     */
-    public AttributeDefinition(String attributeFamily, String attributeName, String familyAttributeValue,
-                               boolean isDisplayedInUi) {
-        this(attributeFamily, attributeName, isDisplayedInUi);
         this.familyAttributeValue = familyAttributeValue;
-        this.isFamilyAttribute = true;
+        this.isDisplayable = isDisplayable;
+        this.isFamilyAttribute = isFamilyAttribute;
     }
 
     public String getAttributeFamily() {
@@ -83,12 +69,12 @@ public class AttributeDefinition {
         this.familyAttributeValue = familyAttributeValue;
     }
 
-    public boolean isDisplayedInUi() {
-        return isDisplayedInUi;
+    public boolean isDisplayable() {
+        return isDisplayable;
     }
 
-    public void setIsDisplayedInUi(boolean isDisplayedInUi) {
-        this.isDisplayedInUi = isDisplayedInUi;
+    public void setIsDisplayable(boolean isDisplayable) {
+        this.isDisplayable = isDisplayable;
     }
 
     public boolean isFamilyAttribute() {

@@ -18,12 +18,12 @@
     <script type="text/javascript">
         function familyChanged() {
             // Redisplays the list page for a different chipFamily.
-            window.location.assign("${ctxpath}/genotyping/chipType.action?chipFamily=" + $j('#familySelect').val());
+            $j('#selectionForm').submit();
         }
     </script>
 
 
-<stripes:layout-render name="/layout.jsp" pageTitle="List Genotyping Chips" sectionTitle="List Genotyping Chips" showCreate="true">
+<stripes:layout-render name="/layout.jsp" pageTitle="List Genotyping Chips" sectionTitle="List Genotyping Chips">
 
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
@@ -34,7 +34,7 @@
                     "aoColumns": [
                         {"bSortable": true}, //checkbox
                         {"bSortable": true}, //chip name
-                        {"bSortable": true}, //created date
+                        {"bSortable": true} //last modified date
                     ]
                 })
             });
@@ -43,10 +43,12 @@
 
     <stripes:layout-component name="content">
         <stripes:form beanclass="${actionBean.class.name}" id="selectionForm" class="form-horizontal">
+            <input type="hidden" name="chipFamily" value="${actionBean.chipFamily}"/>
+
             <div class="control-group">
                 <stripes:label for="familySelect" name="Chip Family" class="control-label"/>
                 <div class="controls">
-                    <stripes:select id="familySelect" name="chipFamily" style="width:25%" onchange="familyChanged()">
+                    <stripes:select id="familySelect" name="selectedFamily" style="width:25%" onchange="familyChanged()">
                         <stripes:option label="Select a chip family..." value="-1" disabled="true" selected="selected"/>
                         <stripes:options-collection collection="${actionBean.chipFamilies}"/>
                     </stripes:select>
@@ -56,19 +58,20 @@
             <table id="chipList" class="table simple">
                 <thead>
                 <tr>
-                    <th/>
+                    <th></th>
                     <th>Chip</th>
-                    <th>Created Date</th>
+                    <th>Last Modified</th>
                 </tr>
                 </thead>
                 <tbody>
                 <c:forEach items="${actionBean.chipTypes}" var="chip" varStatus="chipStatus">
                     <tr>
-                        <td><stripes:radio name="chipRadio" value="${chip.archetypeName}"
-                                   style="float:left;margin-right:5px;"/>
+                        <!-- One button must be checked so that Edit and Create don't choke. -->
+                        <td><stripes:radio name="selectedChipName" value="${chip.archetypeName}"
+                                           checked="${actionBean.chipTypes[0].archetypeName}"/>
                         </td>
                         <td>${chip.archetypeName}</td>
-                        <td>${chip.createdDate}</td>
+                        <td>${chip.attributeMap['LastModifiedDate']}</td>
                     </tr>
                 </c:forEach>
                 </tbody>

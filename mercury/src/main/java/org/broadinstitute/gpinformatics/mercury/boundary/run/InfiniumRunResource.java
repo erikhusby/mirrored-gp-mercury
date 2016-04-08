@@ -87,15 +87,15 @@ public class InfiniumRunResource {
      */
     private InfiniumRunBean buildRunBean(LabVessel chip, VesselPosition vesselPosition) {
         if (DATA_PATH == null) {
-            AttributeDefinition def =
-                    attributeArchetypeDao.findAttributeDefinitionByFamily(INFINIUM_FAMILY, "data_path");
+            AttributeDefinition def = attributeArchetypeDao.findAttributeDefinitionsByFamily(INFINIUM_FAMILY).
+                    get("data_path");
             if (def != null) {
                 DATA_PATH = def.getFamilyAttributeValue();
             }
-            if (DATA_PATH == null) {
-                throw new ResourceException("No configuration for " + INFINIUM_FAMILY + " data_path attribute",
-                        Response.Status.INTERNAL_SERVER_ERROR);
-            }
+        }
+        if (DATA_PATH == null) {
+            throw new ResourceException("No configuration for " + INFINIUM_FAMILY + " data_path attribute",
+                    Response.Status.INTERNAL_SERVER_ERROR);
         }
         InfiniumRunBean infiniumRunBean;
         Set<SampleInstanceV2> sampleInstancesAtPositionV2 =

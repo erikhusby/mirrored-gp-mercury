@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.entity.run;
 
-import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
@@ -8,18 +7,14 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * The AttributeArchetype is a class that can confer configurable attributes to some other entity.
@@ -29,19 +24,11 @@ import java.util.Map;
  * attribute is put in AttributeDefinition, keyed by attributeFamily.
  * The AttributeDefinition class defines the attribute names (the keys), and the AttributeArchetype
  * class contains each attribute key-value pair.
- *
- * Each instance of AttributeArchetype has a unique version (consisting of name and created date)
- * with its own set of attributes. It is intended to be immutable. Any edits made by a user to the
- * attribute values or any other fields should cause a new AttributeArchetype to be created, with the
- * old one still available for use if the application requires it, and not really a fit for Envers entity
- * auditing. It would be useful, for example, to obtain repeatable results when an older genotyping run
- * is reanalyzed with old chip attributes after the chip type attributes have been updated.
  */
 
 @Entity
 @Audited
-@Table(schema = "mercury", uniqueConstraints = @UniqueConstraint(columnNames =
-        {"attributeFamily", "archetypeName", "createdDate"}))
+@Table(schema = "mercury", uniqueConstraints = @UniqueConstraint(columnNames = {"attributeFamily", "archetypeName"}))
 public class AttributeArchetype {
 
     @SequenceGenerator(name = "seq_attribute_archetype", schema = "mercury", sequenceName = "seq_attribute_archetype")
@@ -51,17 +38,9 @@ public class AttributeArchetype {
 
     private String archetypeName;
     private String attributeFamily;
-    private Date createdDate;
-    /** Set this true to cause lookups to stop seeking an earlier version. */
-    private boolean overridesEarlierVersions = false;
 
-    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
-    @JoinColumn(name = "archetype")
-    @AuditJoinTable(name = "ARCHETYPE_JOIN_ATTRIBUTE_AUD")
-    private List<ArchetypeAttribute> attributes;
-
-    @Transient
-    private List<AttributeDefinition> attributeDefinitions;
+    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true, mappedBy = "archetype")
+    private Set<ArchetypeAttribute> attributes;
 
     public AttributeArchetype() {
     }
@@ -69,33 +48,19 @@ public class AttributeArchetype {
     public AttributeArchetype(String attributeFamily, String name) {
         this.attributeFamily = attributeFamily;
         this.archetypeName = name;
-        createdDate = new Date();
-        attributes = new ArrayList<>();
-        attributeDefinitions = new ArrayList<>();
+        attributes = new HashSet<>();
     }
 
     public String getArchetypeName() {
         return archetypeName;
     }
 
-    public Date getCreatedDate() {
-        return createdDate;
-    }
-
-    public List<ArchetypeAttribute> getAttributes() {
+    public Set<ArchetypeAttribute> getAttributes() {
         return attributes;
     }
 
-    public List<AttributeDefinition> getAttributeDefinitions() {
-        return attributeDefinitions;
-    }
-
-    public boolean getOverridesEarlierVersions() {
-        return overridesEarlierVersions;
-    }
-
-    public void setOverridesEarlierVersions(boolean overridesEarlierVersions) {
-        this.overridesEarlierVersions = overridesEarlierVersions;
+    public String getAttributeFamily() {
+        return attributeFamily;
     }
 
     public Map<String, String> getAttributeMap() {
@@ -104,9 +69,5 @@ public class AttributeArchetype {
                 put(attribute.getAttributeName(), attribute.getAttributeValue());
             }
         }};
-    }
-
-    public String getAttributeFamily() {
-        return attributeFamily;
     }
 }

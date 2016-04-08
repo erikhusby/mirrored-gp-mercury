@@ -21,6 +21,7 @@ import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.entity.run.ArchetypeAttribute;
 import org.broadinstitute.gpinformatics.mercury.entity.run.AttributeArchetype;
@@ -28,7 +29,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.AttributeDefinition;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,11 +39,11 @@ import java.util.Map;
  */
 @UrlBinding("/genotyping/chipType.action")
 public class GenotypingChipTypeActionBean extends CoreActionBean {
-    public static final String CHIP_NAME_PARAMETER = "chipName";
-    public static final String CHIP_FAMILY_PARAMETER = "chipFamily";
 
     // Attribute that identifies the genotyping chip family names.
     public static final String GENOTYPING_CHIP_MARKER_ATTRIBUTE = "GenotypingChip_";
+    // Attribute for last modified date.
+    public static final String LAST_MODIFIED = "LastModifiedDate";
 
     private static final String CREATE_CHIP_TYPE = CoreActionBean.CREATE + "Chip Type";
     private static final String EDIT_CHIP_TYPE = CoreActionBean.EDIT + "Chip Type";
@@ -52,22 +53,20 @@ public class GenotypingChipTypeActionBean extends CoreActionBean {
 
     private List<String> chipFamilies;
     private List<AttributeArchetype> chipTypes;
-    private List<ArchetypeAttribute> attributes;
-    private Map<String, AttributeDefinition> attributeDefinitions;
-    private AttributeArchetype archetype;
-    private String chipRadio;
+    private Map<String, String> attributes = new HashMap<>();
+    private Map<String, AttributeDefinition> definitions = null;
 
-    @Validate(required = true, on = {SAVE_ACTION})
     private String chipName;
+    private String selectedChipName;
 
-//    @Validate(required = true, on = {CREATE_ACTION, EDIT_ACTION, SAVE_ACTION})
     private String chipFamily;
+    private String selectedFamily;
 
     @Inject
     private AttributeArchetypeDao attributeArchetypeDao;
 
     public GenotypingChipTypeActionBean() {
-        super(CREATE_CHIP_TYPE, EDIT_CHIP_TYPE, CHIP_NAME_PARAMETER);
+        super(CREATE_CHIP_TYPE, EDIT_CHIP_TYPE, "");
     }
 
     @Before(stages = LifecycleStage.BindingAndValidation)
@@ -75,77 +74,80 @@ public class GenotypingChipTypeActionBean extends CoreActionBean {
         // Populates the Genotyping chip families for the jsp dropdown.
         chipFamilies = attributeArchetypeDao.findFamiliesIdentifiedByAttribute(GENOTYPING_CHIP_MARKER_ATTRIBUTE,
                 GENOTYPING_CHIP_MARKER_ATTRIBUTE);
-        // As a convenience, pre-select when there's only one choice.
-        if (chipFamilies.size() == 1) {
-            chipFamily = chipFamilies.get(0);
-        }
-        if (!StringUtils.isBlank(chipFamily)) {
-            attributeDefinitions = new HashMap<>();
-            for (AttributeDefinition def : attributeArchetypeDao.findAttributeDefinitionsByFamily(chipFamily)) {
-                attributeDefinitions.put(def.getAttributeName(), def);
-            }
-        }
     }
+
 
     @DefaultHandler
     @HandlesEvent(LIST_ACTION)
     public Resolution list() {
-        if (StringUtils.isNotBlank(chipFamily)) {
-            chipTypes = attributeArchetypeDao.findAllByFamily(chipFamily);
-            if (chipTypes.size() == 0) {
-                addMessage("No chips found for chip family '" + chipFamily + "'");
-            }
-        } else {
-            addMessage("Please select a chip family.");
-        }
+        chipTypes = attributeArchetypeDao.findAllByFamily(selectedFamily);
+        chipFamily = selectedFamily;
         return new ForwardResolution(CHIP_TYPE_LIST_PAGE);
     }
 
     @HandlesEvent(EDIT_ACTION)
     public Resolution edit() {
-        extractAttributes(chipRadio);
-        chipName = chipRadio;
         setSubmitString(EDIT_CHIP_TYPE);
+        if (StringUtils.isBlank(selectedChipName)) {
+            return new ForwardResolution(CHIP_TYPE_LIST_PAGE);
+        }
+        setSubmitString(EDIT_CHIP_TYPE);
+        populateAttributes(selectedChipName);
+        chipName = selectedChipName;
         return new ForwardResolution(CHIP_TYPE_EDIT_PAGE);
     }
 
     @HandlesEvent(CREATE_ACTION)
     public Resolution create() {
-        extractAttributes(chipRadio);
-        chipName = "";
         setSubmitString(CREATE_CHIP_TYPE);
-        return new ForwardResolution(CHIP_TYPE_EDIT_PAGE);
-    }
-
-    private void extractAttributes(String archetypeName) {
-        if (StringUtils.isNotBlank(archetypeName)) {
-            archetype = attributeArchetypeDao.findByName(chipFamily, archetypeName);
-            if (archetype != null) {
-                attributes = new ArrayList<>();
-                for (ArchetypeAttribute attribute : archetype.getAttributes()) {
-                    if (attributeDefinitions.get(attribute.getAttributeName()).isDisplayedInUi()) {
-                        attributes.add(new ArchetypeAttribute(null, attribute.getAttributeName(),
-                                attribute.getAttributeValue()));
-                    }
-                }
-            }
+        if (StringUtils.isBlank(selectedChipName)) {
+            return new ForwardResolution(CHIP_TYPE_LIST_PAGE);
         }
+        populateAttributes(selectedChipName);
+        chipName = "";
+        return new ForwardResolution(CHIP_TYPE_EDIT_PAGE);
     }
 
     @HandlesEvent(SAVE_ACTION)
     public Resolution save() {
         try {
-            // Determines if there are any changes. If so, creates a new Archetype version
-            // with its own attributes and leaves the existing archetype and attributes as-is.
-            // Attribute names cannot be added or deleted here. That requires a data fixup.
-            Map<String, String> attributeMap = new HashMap<>();
-            for (ArchetypeAttribute attribute : attributes) {
-                attributeMap.put(attribute.getAttributeName(), attribute.getAttributeValue());
+            boolean foundChange = false;
+            AttributeArchetype archetype = attributeArchetypeDao.findByName(chipFamily, chipName);
+            if (archetype == null) {
+                // Adds the new chip type.
+                foundChange = true;
+                archetype = new AttributeArchetype(chipFamily, chipName);
+                for (AttributeDefinition definition : getDefinitionsMap().values()) {
+                    if (!definition.isFamilyAttribute()) {
+                        archetype.getAttributes().add(new ArchetypeAttribute(archetype,
+                                definition.getAttributeName(), null));
+                    }
+                }
             }
-            boolean foundChange = (attributeArchetypeDao.createArchetypeVersion(archetype.getAttributeFamily(),
-                    archetype.getArchetypeName(), attributeMap) != null);
-            addMessage(getSubmitString() + " " + archetype.getArchetypeName() +
-                       (foundChange? " created a new chip version." : " leaves the chip unchanged."));
+            // Updates the values for the displayable attributes. A data fixup is needed to delete or add new
+            // attributes and their definitions.
+            for (ArchetypeAttribute existingAttribute : archetype.getAttributes()) {
+                if (getDefinitionsMap().get(existingAttribute.getAttributeName()).isDisplayable()) {
+                    String newValue = attributes.get(existingAttribute.getAttributeName());
+                    String oldValue = existingAttribute.getAttributeValue();
+                    if (oldValue == null && newValue != null || oldValue != null && !oldValue.equals(newValue)) {
+                        foundChange = true;
+                        existingAttribute.setAttributeValue(newValue);
+                    }
+                }
+            }
+            if (foundChange) {
+                // Updates the modified date attribute.
+                for (ArchetypeAttribute existingAttribute : archetype.getAttributes()) {
+                    if (existingAttribute.getAttributeName().equals(LAST_MODIFIED)) {
+                        existingAttribute.setAttributeValue(DateUtils.getYYYYMMMDDTime(new Date()));
+                    }
+                }
+                attributeArchetypeDao.persist(archetype);
+                addMessage(archetype.getArchetypeName() + " was successfully updated.");
+            } else {
+                addMessage("No changes found. " + archetype.getArchetypeName() + " remains as it was.");
+            }
         } catch (Exception e) {
             addGlobalValidationError(e.getMessage());
             return new ForwardResolution(getContext().getSourcePage());
@@ -165,8 +167,7 @@ public class GenotypingChipTypeActionBean extends CoreActionBean {
         return chipTypes;
     }
 
-    public void setChipTypes(
-            List<AttributeArchetype> chipTypes) {
+    public void setChipTypes(List<AttributeArchetype> chipTypes) {
         this.chipTypes = chipTypes;
     }
 
@@ -186,19 +187,48 @@ public class GenotypingChipTypeActionBean extends CoreActionBean {
         this.chipFamily = chipFamily;
     }
 
-    public List<ArchetypeAttribute> getAttributes() {
+    public Map<String, String> getAttributes() {
         return attributes;
     }
 
-    public void setAttributes(List<ArchetypeAttribute> attributes) {
+    public void setAttributes(Map<String, String> attributes) {
         this.attributes = attributes;
     }
 
-    public String getChipRadio() {
-        return chipRadio;
+    public String getSelectedFamily() {
+        return selectedFamily;
     }
 
-    public void setChipRadio(String chipRadio) {
-        this.chipRadio = chipRadio;
+    public void setSelectedFamily(String selectedFamily) {
+        this.selectedFamily = selectedFamily;
     }
+
+    public String getSelectedChipName() {
+        return selectedChipName;
+    }
+
+    public void setSelectedChipName(String selectedChipName) {
+        this.selectedChipName = selectedChipName;
+    }
+
+    private void populateAttributes(String name) {
+        AttributeArchetype archetype = attributeArchetypeDao.findByName(chipFamily, name);
+        if (archetype != null) {
+            attributes.clear();
+            for (ArchetypeAttribute attribute : archetype.getAttributes()) {
+                AttributeDefinition definition = getDefinitionsMap().get(attribute.getAttributeName());
+                if (definition != null && definition.isDisplayable()) {
+                    attributes.put(attribute.getAttributeName(), attribute.getAttributeValue());
+                }
+            }
+        }
+    }
+
+    private Map<String, AttributeDefinition> getDefinitionsMap() {
+        if (definitions == null) {
+            definitions = attributeArchetypeDao.findAttributeDefinitionsByFamily(chipFamily);
+        }
+        return definitions;
+    }
+
 }
