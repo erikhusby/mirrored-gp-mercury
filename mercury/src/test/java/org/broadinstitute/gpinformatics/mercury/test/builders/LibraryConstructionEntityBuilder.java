@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.test.builders;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.LimsQueries;
@@ -179,7 +178,7 @@ public class LibraryConstructionEntityBuilder {
         StaticPlate ligationCleanupPlate =
                 (StaticPlate) ligationCleanupEntity.getTargetLabVessels().iterator().next();
 
-        LimsQueries limsQueries = new LimsQueries(null, null, null);
+        LimsQueries limsQueries = new LimsQueries(null, null, null, null);
         List<String> plateParents = limsQueries.findImmediatePlateParents(ligationCleanupPlate);
         Assert.assertEquals(plateParents.size(), 1, "Wrong number of plate parents");
         Assert.assertEquals(plateParents.get(0), shearingCleanupPlate.getLabel(), "Wrong parent barcode");

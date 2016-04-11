@@ -1,6 +1,9 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.GetSampleDetails;
+import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -26,6 +29,7 @@ import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SampleInfoTy
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.WellAndSourceTubeType;
 
 import javax.inject.Inject;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -47,13 +51,15 @@ public class LimsQueries {
     private StaticPlateDao staticPlateDao;
     private LabVesselDao labVesselDao;
     private BarcodedTubeDao barcodedTubeDao;
+    private BSPSampleDataFetcher bspSampleDataFetcher;
 
     @Inject
     public LimsQueries(StaticPlateDao staticPlateDao, LabVesselDao labVesselDao,
-                       BarcodedTubeDao barcodedTubeDao) {
+            BarcodedTubeDao barcodedTubeDao, BSPSampleDataFetcher bspSampleDataFetcher) {
         this.staticPlateDao = staticPlateDao;
         this.labVesselDao = labVesselDao;
         this.barcodedTubeDao = barcodedTubeDao;
+        this.bspSampleDataFetcher = bspSampleDataFetcher;
     }
 
     /**
@@ -302,12 +308,33 @@ public class LimsQueries {
     public Map<String, ConcentrationAndVolumeAndWeightType> fetchConcentrationAndVolumeAndWeightForTubeBarcodes(
             List<String> tubeBarcodes) {
         Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(tubeBarcodes);
-        return fetchConcentrationAndVolumeAndWeightForTubeBarcodes(mapBarcodeToVessel);
+        List<String> bspBarcodes = new ArrayList<>();
+        for (Map.Entry<String, LabVessel> entry: mapBarcodeToVessel.entrySet()) {
+            LabVessel labVessel = entry.getValue();
+            if (labVessel.getVolume() == null) {
+                Set<MercurySample.MetadataSource> metadataSources = new HashSet<>();
+                for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+                    if (!sampleInstanceV2.isReagentOnly()) {
+                        metadataSources.add(sampleInstanceV2.getRootOrEarliestMercurySample().getMetadataSource());
+                    }
+                }
+                if (metadataSources.size() == 1 && metadataSources.iterator().next() ==
+                        MercurySample.MetadataSource.BSP) {
+                    bspBarcodes.add(labVessel.getLabel());
+                }
+            }
+        }
+        Map<String, GetSampleDetails.SampleInfo> mapSampleIdToInfo = new HashMap<>();
+        if (!bspBarcodes.isEmpty()) {
+            mapSampleIdToInfo = bspSampleDataFetcher.fetchSampleDetailsByBarcode(bspBarcodes);
+        }
+        return fetchConcentrationAndVolumeAndWeightForTubeBarcodes(mapBarcodeToVessel, mapSampleIdToInfo);
     }
 
     @DaoFree
     public Map<String, ConcentrationAndVolumeAndWeightType> fetchConcentrationAndVolumeAndWeightForTubeBarcodes(
-            Map<String, LabVessel> mapBarcodeToVessel) {
+            Map<String, LabVessel> mapBarcodeToVessel,
+            Map<String, GetSampleDetails.SampleInfo> mapSampleIdToInfo) {
         Map<String, ConcentrationAndVolumeAndWeightType> concentrationAndVolumeAndWeightTypeMap = new HashMap<>();
         for (Map.Entry<String, LabVessel> entry: mapBarcodeToVessel.entrySet()) {
             String tubeBarcode = entry.getKey();
@@ -333,8 +360,7 @@ public class LimsQueries {
                     LabMetric.MetricType metricType = metricList.get(0).getName();
                     for (LabMetric labMetric : metricList) {
                         if (labMetric.getName() != metricType) {
-                            throw new RuntimeException(
-                                    "Got more than one quant for barcode:" + tubeBarcode);
+                            throw new RuntimeException("Got more than one quant for barcode:" + tubeBarcode);
                         }
                     }
                     LabMetric labMetric = metricList.get(0);
@@ -346,6 +372,18 @@ public class LimsQueries {
                 }
             }
             concentrationAndVolumeAndWeightTypeMap.put(tubeBarcode, concentrationAndVolumeAndWeightType);
+        }
+
+        if (!mapSampleIdToInfo.isEmpty()) {
+            for (GetSampleDetails.SampleInfo sampleInfo : mapSampleIdToInfo.values()) {
+                ConcentrationAndVolumeAndWeightType concAndVol = concentrationAndVolumeAndWeightTypeMap.get(
+                        sampleInfo.getManufacturerBarcode());
+                concAndVol.setVolume(MathUtils.scaleTwoDecimalPlaces(BigDecimal.valueOf(sampleInfo.getVolume())));
+                if (concAndVol.getConcentration() == null) {
+                    concAndVol.setConcentration(MathUtils.scaleTwoDecimalPlaces(BigDecimal.valueOf(
+                            sampleInfo.getConcentration())));
+                }
+            }
         }
 
         return concentrationAndVolumeAndWeightTypeMap;
