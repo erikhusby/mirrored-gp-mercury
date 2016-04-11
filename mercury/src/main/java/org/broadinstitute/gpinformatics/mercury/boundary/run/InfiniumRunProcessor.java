@@ -9,7 +9,9 @@ import javax.inject.Inject;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -21,8 +23,17 @@ public class InfiniumRunProcessor {
     @Inject
     private InfiniumStarterConfig infiniumStarterConfig;
 
+    public InfiniumRunProcessor() {
+    }
+
+    //For testing purposes
+    public InfiniumRunProcessor(InfiniumStarterConfig infiniumStarterConfig) {
+        this.infiniumStarterConfig = infiniumStarterConfig;
+    }
+
     public ChipWellResults process(StaticPlate chip) {
         ChipWellResults chipWellResults = new ChipWellResults();
+        Map<VesselPosition, Boolean> wellCompleteMap = new HashMap<>();
         String chipBarcode = chip.getLabel();
         File runDirectory = getRunDirectory(chipBarcode);
         boolean isChipCompleted = true;
@@ -32,11 +43,12 @@ public class InfiniumRunProcessor {
                 Set<SampleInstanceV2> sampleInstancesAtPositionV2 =
                         chip.getContainerRole().getSampleInstancesAtPositionV2(vesselPosition);
                 if (sampleInstancesAtPositionV2 != null && !sampleInstancesAtPositionV2.isEmpty()) {
+                    chipWellResults.getPositionWithSampleInstance().add(vesselPosition);
                     String red = String.format("%s_%s_Red.idat", chipBarcode, vesselPosition.name());
                     String green = String.format("%s_%s_Grn.idat", chipBarcode, vesselPosition.name());
-                    if (idatFiles.contains(red) && idatFiles.contains(green)) {
-                        chipWellResults.getCompletedWells().add(vesselPosition);
-                    } else {
+                    boolean complete = idatFiles.contains(red) && idatFiles.contains(green);
+                    wellCompleteMap.put(vesselPosition, complete);
+                    if (!complete) {
                         isChipCompleted = false;
                     }
                 }
@@ -44,6 +56,7 @@ public class InfiniumRunProcessor {
         }
 
         chipWellResults.setCompleted(isChipCompleted);
+        chipWellResults.setWellCompleteMap(wellCompleteMap);
         return chipWellResults;
     }
 
@@ -72,12 +85,21 @@ public class InfiniumRunProcessor {
 
     public class ChipWellResults {
         private boolean completed;
-        private List<VesselPosition> completedWells;
+        private Map<VesselPosition, Boolean> wellCompleteMap;
+        private List<VesselPosition> positionWithSampleInstance;
 
-        public List<VesselPosition> getCompletedWells() {
-            if (completedWells == null)
-                completedWells = new ArrayList<>();
-            return completedWells;
+        public Map<VesselPosition, Boolean> getWellCompleteMap() {
+            return wellCompleteMap;
+        }
+
+        public void setWellCompleteMap(Map<VesselPosition, Boolean> wellCompleteMap) {
+            this.wellCompleteMap = wellCompleteMap;
+        }
+
+        public List<VesselPosition> getPositionWithSampleInstance() {
+            if (positionWithSampleInstance == null)
+                positionWithSampleInstance = new ArrayList<>();
+            return positionWithSampleInstance;
         }
 
         public boolean isCompleted() {

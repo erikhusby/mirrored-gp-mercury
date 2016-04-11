@@ -7,7 +7,6 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMes
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateType;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResource;
-import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -17,24 +16,22 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
+import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
-import java.util.ArrayList;
+import java.io.Serializable;
 import java.util.Date;
-import java.util.List;
 import java.util.Set;
 
 /**
  * User: jowalsh
  * Date: 4/2/16
  */
-public class InfiniumRunFinder {
+@RequestScoped
+public class InfiniumRunFinder implements Serializable {
     private static final Log log = LogFactory.getLog(InfiniumRunFinder.class);
 
     @Inject
     private InfiniumRunProcessor infiniumRunProcessor;
-
-    @Inject
-    private LabEventDao labEventDao;
 
     @Inject
     private BettaLimsMessageResource bettaLimsMessageResource;
@@ -42,46 +39,54 @@ public class InfiniumRunFinder {
     @Inject
     private InfiniumPipelineClient infiniumPipelineClient;
 
-    public void find() {
-        for (LabVessel labVessel: listPendingXStainChips()) {
-            if (OrmUtil.proxySafeIsInstance(labVessel, StaticPlate.class)) {
-                try {
-                    StaticPlate staticPlate = OrmUtil.proxySafeCast(labVessel, StaticPlate.class);
-                    InfiniumRunProcessor.ChipWellResults chipWellResults = infiniumRunProcessor.process(staticPlate);
-                    LabEvent someStartedEvent = findOrCreateSomeStartedEvent(staticPlate);
-                    Set<LabEventMetadata> labEventMetadata = someStartedEvent.getLabEventMetadatas();
-                    boolean autocallStartedOnAllWells = true;
-                    for (VesselPosition vesselPosition: chipWellResults.getCompletedWells()) {
-                        boolean autocallStarted = false;
-                        for (LabEventMetadata metadata: labEventMetadata) {
-                            if (metadata.getLabEventMetadataType() ==
-                                LabEventMetadata.LabEventMetadataType.AutocallStarted) {
-                                if (metadata.getValue().equals(vesselPosition.name())) {
-                                    autocallStarted = true;
-                                    break;
-                                }
-                            }
-                        }
-                        if (!autocallStarted) {
-                            if (callStarterOnWell(staticPlate, vesselPosition)) {
-                                LabEventMetadata newMetadata = new LabEventMetadata();
-                                newMetadata
-                                        .setLabEventMetadataType(LabEventMetadata.LabEventMetadataType.AutocallStarted);
-                                newMetadata.setValue(vesselPosition.name());
-                                someStartedEvent.addMetadata(newMetadata);
-                            } else {
-                                autocallStartedOnAllWells = false;
-                            }
-                        }
-                    }
+    @Inject
+    private InfiniumPendingChipFinder infiniumPendingChipFinder;
 
-                    if (autocallStartedOnAllWells) {
-                        createEvent(staticPlate, LabEventType.INFINIUM_AUTOCALL_ALL_STARTED);
+    //TODO Email on failure
+    public void find() {
+        for (LabVessel labVessel : infiniumPendingChipFinder.listPendingXStainChips()) {
+            try {
+                if (OrmUtil.proxySafeIsInstance(labVessel, StaticPlate.class)) {
+                    StaticPlate staticPlate = OrmUtil.proxySafeCast(labVessel, StaticPlate.class);
+                    processChip(staticPlate);
+                }
+            } catch (Exception e) {
+                log.error("Failed to process chip " + labVessel.getLabel());
+            }
+        }
+    }
+
+    public void processChip(StaticPlate staticPlate) throws Exception {
+        InfiniumRunProcessor.ChipWellResults chipWellResults = infiniumRunProcessor.process(staticPlate);
+        LabEvent someStartedEvent = findOrCreateSomeStartedEvent(staticPlate);
+        Set<LabEventMetadata> labEventMetadata = someStartedEvent.getLabEventMetadatas();
+        boolean allComplete = true;
+        for (VesselPosition vesselPosition : chipWellResults.getPositionWithSampleInstance()) {
+            boolean autocallStarted = false;
+            for (LabEventMetadata metadata : labEventMetadata) {
+                if (metadata.getLabEventMetadataType() ==
+                    LabEventMetadata.LabEventMetadataType.AutocallStarted) {
+                    if (metadata.getValue().equals(vesselPosition.name())) {
+                        autocallStarted = true;
+                        break;
                     }
-                } catch (Exception e) {
-                    log.error("Failed to process chip " + labVessel.getLabel(), e);
                 }
             }
+
+            if (!autocallStarted && chipWellResults.getWellCompleteMap().get(vesselPosition)) {
+                if (callStarterOnWell(staticPlate, vesselPosition)) {
+                    LabEventMetadata newMetadata = new LabEventMetadata();
+                    newMetadata
+                            .setLabEventMetadataType(LabEventMetadata.LabEventMetadataType.AutocallStarted);
+                    newMetadata.setValue(vesselPosition.name());
+                    someStartedEvent.addMetadata(newMetadata);
+                } else {
+                    allComplete = false;
+                }
+            }
+        }
+        if (allComplete) {
+            createEvent(staticPlate, LabEventType.INFINIUM_AUTOCALL_ALL_STARTED);
         }
     }
 
@@ -107,7 +112,7 @@ public class InfiniumRunFinder {
         return null;
     }
 
-    private LabEvent createEvent(StaticPlate staticPlate, LabEventType eventType) throws Exception {
+    public LabEvent createEvent(StaticPlate staticPlate, LabEventType eventType) throws Exception {
         BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
         bettaLIMSMessage.setMode(LabEventFactory.MODE_MERCURY);
         Date start = new Date();
@@ -129,30 +134,6 @@ public class InfiniumRunFinder {
         return findLabEvent(staticPlate, eventType);
     }
 
-    public List<LabVessel> listPendingXStainChips() {
-        List<LabVessel> list = new ArrayList<>();
-        List<LabEvent> labEvents = labEventDao.findByEventType(LabEventType.INFINIUM_XSTAIN);
-        for (LabEvent labEvent: labEvents) {
-            boolean foundAllStartedEvent = false;
-            LabVessel labVessel = labEvent.getInPlaceLabVessel();
-            Set<LabEvent> inPlaceLabEvents = labVessel.getInPlaceLabEvents();
-            for (LabEvent inPlaceLabEvent: inPlaceLabEvents) {
-                if (inPlaceLabEvent.getLabEventType() == LabEventType.INFINIUM_AUTOCALL_ALL_STARTED) {
-                    foundAllStartedEvent = true;
-                    break;
-                }
-            }
-            if (!foundAllStartedEvent) {
-                list.add(labVessel);
-            }
-        }
-        return list;
-    }
-
-    public void setLabEventDao(LabEventDao labEventDao) {
-        this.labEventDao = labEventDao;
-    }
-
     public void setInfiniumRunProcessor(
             InfiniumRunProcessor infiniumRunProcessor) {
         this.infiniumRunProcessor = infiniumRunProcessor;
@@ -161,5 +142,9 @@ public class InfiniumRunFinder {
     public void setInfiniumPipelineClient(
             InfiniumPipelineClient infiniumPipelineClient) {
         this.infiniumPipelineClient = infiniumPipelineClient;
+    }
+
+    public void setInfiniumPendingChipFinder(InfiniumPendingChipFinder infiniumPendingChipFinder) {
+        this.infiniumPendingChipFinder = infiniumPendingChipFinder;
     }
 }
