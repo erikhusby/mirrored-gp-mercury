@@ -324,17 +324,17 @@ public class LimsQueries {
                 }
             }
         }
-        Map<String, GetSampleDetails.SampleInfo> mapSampleIdToInfo = new HashMap<>();
+        Map<String, GetSampleDetails.SampleInfo> mapBarcodeToInfo = new HashMap<>();
         if (!bspBarcodes.isEmpty()) {
-            mapSampleIdToInfo = bspSampleDataFetcher.fetchSampleDetailsByBarcode(bspBarcodes);
+            mapBarcodeToInfo = bspSampleDataFetcher.fetchSampleDetailsByBarcode(bspBarcodes);
         }
-        return fetchConcentrationAndVolumeAndWeightForTubeBarcodes(mapBarcodeToVessel, mapSampleIdToInfo);
+        return fetchConcentrationAndVolumeAndWeightForTubeBarcodes(mapBarcodeToVessel, mapBarcodeToInfo);
     }
 
     @DaoFree
     public Map<String, ConcentrationAndVolumeAndWeightType> fetchConcentrationAndVolumeAndWeightForTubeBarcodes(
             Map<String, LabVessel> mapBarcodeToVessel,
-            Map<String, GetSampleDetails.SampleInfo> mapSampleIdToInfo) {
+            Map<String, GetSampleDetails.SampleInfo> mapBarcodeToInfo) {
         Map<String, ConcentrationAndVolumeAndWeightType> concentrationAndVolumeAndWeightTypeMap = new HashMap<>();
         for (Map.Entry<String, LabVessel> entry: mapBarcodeToVessel.entrySet()) {
             String tubeBarcode = entry.getKey();
@@ -349,7 +349,17 @@ public class LimsQueries {
                 if (labVessel.getReceptacleWeight() != null) {
                     concentrationAndVolumeAndWeightType.setWeight(labVessel.getReceptacleWeight());
                 }
-                if (labVessel.getVolume() != null) {
+                if (labVessel.getVolume() == null) {
+                    GetSampleDetails.SampleInfo sampleInfo = mapBarcodeToInfo.get(labVessel.getLabel());
+                    if (sampleInfo != null) {
+                        concentrationAndVolumeAndWeightType.setVolume(MathUtils.scaleTwoDecimalPlaces(
+                                BigDecimal.valueOf(sampleInfo.getVolume())));
+                        if (concentrationAndVolumeAndWeightType.getConcentration() == null) {
+                            concentrationAndVolumeAndWeightType.setConcentration(MathUtils.scaleTwoDecimalPlaces(
+                                    BigDecimal.valueOf(sampleInfo.getConcentration())));
+                        }
+                    }
+                } else {
                     concentrationAndVolumeAndWeightType.setVolume(labVessel.getVolume());
                 }
 
@@ -365,27 +375,13 @@ public class LimsQueries {
                     }
                     LabMetric labMetric = metricList.get(0);
                     concentrationAndVolumeAndWeightType.setConcentration(labMetric.getValue());
-                    concentrationAndVolumeAndWeightType
-                            .setConcentrationUnits(labMetric.getUnits().getDisplayName());
+                    concentrationAndVolumeAndWeightType.setConcentrationUnits(labMetric.getUnits().getDisplayName());
                 } else if (labVessel.getConcentration() != null) {
                     concentrationAndVolumeAndWeightType.setConcentration(labVessel.getConcentration());
                 }
             }
             concentrationAndVolumeAndWeightTypeMap.put(tubeBarcode, concentrationAndVolumeAndWeightType);
         }
-
-        if (!mapSampleIdToInfo.isEmpty()) {
-            for (GetSampleDetails.SampleInfo sampleInfo : mapSampleIdToInfo.values()) {
-                ConcentrationAndVolumeAndWeightType concAndVol = concentrationAndVolumeAndWeightTypeMap.get(
-                        sampleInfo.getManufacturerBarcode());
-                concAndVol.setVolume(MathUtils.scaleTwoDecimalPlaces(BigDecimal.valueOf(sampleInfo.getVolume())));
-                if (concAndVol.getConcentration() == null) {
-                    concAndVol.setConcentration(MathUtils.scaleTwoDecimalPlaces(BigDecimal.valueOf(
-                            sampleInfo.getConcentration())));
-                }
-            }
-        }
-
         return concentrationAndVolumeAndWeightTypeMap;
     }
 }
