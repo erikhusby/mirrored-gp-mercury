@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.GetSampleDetails;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -282,7 +283,8 @@ public class LimsQueriesTest {
                         "A01", new Date());
         tube.addMetric(finalLibrarySizeMetric);
         Map<String, ConcentrationAndVolumeAndWeightType> concentrationAndVolumeTypeMap =
-                limsQueries.fetchConcentrationAndVolumeAndWeightForTubeBarcodes(mercuryTubes);
+                limsQueries.fetchConcentrationAndVolumeAndWeightForTubeBarcodes(mercuryTubes,
+                        Collections.<String, GetSampleDetails.SampleInfo>emptyMap());
         assertThat(concentrationAndVolumeTypeMap.size(), equalTo(1));
         ConcentrationAndVolumeAndWeightType concentrationAndVolumeType = concentrationAndVolumeTypeMap.get(barcode);
         assertThat(concentrationAndVolumeType.isWasFound(), equalTo(true));
@@ -298,8 +300,8 @@ public class LimsQueriesTest {
         BigDecimal receptacleWeight = BigDecimal.valueOf(.002);
         tube.setReceptacleWeight(receptacleWeight);
 
-        concentrationAndVolumeTypeMap =
-                limsQueries.fetchConcentrationAndVolumeAndWeightForTubeBarcodes(mercuryTubes);
+        concentrationAndVolumeTypeMap = limsQueries.fetchConcentrationAndVolumeAndWeightForTubeBarcodes(mercuryTubes,
+                Collections.<String, GetSampleDetails.SampleInfo>emptyMap());
         assertThat(concentrationAndVolumeTypeMap.size(), equalTo(1));
         concentrationAndVolumeType = concentrationAndVolumeTypeMap.get(barcode);
         assertThat(concentrationAndVolumeType.isWasFound(), equalTo(true));
