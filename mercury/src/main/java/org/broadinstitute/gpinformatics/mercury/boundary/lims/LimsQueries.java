@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.GetSampleDetails;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -26,6 +28,7 @@ import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SampleInfoTy
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.WellAndSourceTubeType;
 
 import javax.inject.Inject;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -47,13 +50,15 @@ public class LimsQueries {
     private StaticPlateDao staticPlateDao;
     private LabVesselDao labVesselDao;
     private BarcodedTubeDao barcodedTubeDao;
+    private BSPSampleDataFetcher bspSampleDataFetcher;
 
     @Inject
     public LimsQueries(StaticPlateDao staticPlateDao, LabVesselDao labVesselDao,
-                       BarcodedTubeDao barcodedTubeDao) {
+            BarcodedTubeDao barcodedTubeDao, BSPSampleDataFetcher bspSampleDataFetcher) {
         this.staticPlateDao = staticPlateDao;
         this.labVesselDao = labVesselDao;
         this.barcodedTubeDao = barcodedTubeDao;
+        this.bspSampleDataFetcher = bspSampleDataFetcher;
     }
 
     /**
@@ -309,6 +314,7 @@ public class LimsQueries {
     public Map<String, ConcentrationAndVolumeAndWeightType> fetchConcentrationAndVolumeAndWeightForTubeBarcodes(
             Map<String, LabVessel> mapBarcodeToVessel) {
         Map<String, ConcentrationAndVolumeAndWeightType> concentrationAndVolumeAndWeightTypeMap = new HashMap<>();
+        List<String> bspBarcodes = new ArrayList<>();
         for (Map.Entry<String, LabVessel> entry: mapBarcodeToVessel.entrySet()) {
             String tubeBarcode = entry.getKey();
             LabVessel labVessel = entry.getValue();
@@ -322,7 +328,18 @@ public class LimsQueries {
                 if (labVessel.getReceptacleWeight() != null) {
                     concentrationAndVolumeAndWeightType.setWeight(labVessel.getReceptacleWeight());
                 }
-                if (labVessel.getVolume() != null) {
+                if (labVessel.getVolume() == null) {
+                    Set<MercurySample.MetadataSource> metadataSources = new HashSet<>();
+                    for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+                        if (!sampleInstanceV2.isReagentOnly()) {
+                            metadataSources.add(sampleInstanceV2.getRootOrEarliestMercurySample().getMetadataSource());
+                        }
+                    }
+                    if (metadataSources.size() == 1 && metadataSources.iterator().next() ==
+                            MercurySample.MetadataSource.BSP) {
+                        bspBarcodes.add(labVessel.getLabel());
+                    }
+                } else {
                     concentrationAndVolumeAndWeightType.setVolume(labVessel.getVolume());
                 }
 
@@ -346,6 +363,19 @@ public class LimsQueries {
                 }
             }
             concentrationAndVolumeAndWeightTypeMap.put(tubeBarcode, concentrationAndVolumeAndWeightType);
+        }
+
+        if (!bspBarcodes.isEmpty()) {
+            Map<String, GetSampleDetails.SampleInfo> mapSampleIdToInfo =
+                    bspSampleDataFetcher.fetchSampleDetailsByBarcode(bspBarcodes);
+            for (GetSampleDetails.SampleInfo sampleInfo : mapSampleIdToInfo.values()) {
+                ConcentrationAndVolumeAndWeightType concAndVol = concentrationAndVolumeAndWeightTypeMap.get(
+                        sampleInfo.getManufacturerBarcode());
+                concAndVol.setVolume(BigDecimal.valueOf(sampleInfo.getVolume()));
+                if (concAndVol.getConcentration() == null) {
+                    concAndVol.setConcentration(BigDecimal.valueOf(sampleInfo.getConcentration()));
+                }
+            }
         }
 
         return concentrationAndVolumeAndWeightTypeMap;
