@@ -308,14 +308,34 @@ public class LimsQueries {
     public Map<String, ConcentrationAndVolumeAndWeightType> fetchConcentrationAndVolumeAndWeightForTubeBarcodes(
             List<String> tubeBarcodes) {
         Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(tubeBarcodes);
-        return fetchConcentrationAndVolumeAndWeightForTubeBarcodes(mapBarcodeToVessel);
+        List<String> bspBarcodes = new ArrayList<>();
+        for (Map.Entry<String, LabVessel> entry: mapBarcodeToVessel.entrySet()) {
+            LabVessel labVessel = entry.getValue();
+            if (labVessel.getVolume() == null) {
+                Set<MercurySample.MetadataSource> metadataSources = new HashSet<>();
+                for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+                    if (!sampleInstanceV2.isReagentOnly()) {
+                        metadataSources.add(sampleInstanceV2.getRootOrEarliestMercurySample().getMetadataSource());
+                    }
+                }
+                if (metadataSources.size() == 1 && metadataSources.iterator().next() ==
+                        MercurySample.MetadataSource.BSP) {
+                    bspBarcodes.add(labVessel.getLabel());
+                }
+            }
+        }
+        Map<String, GetSampleDetails.SampleInfo> mapSampleIdToInfo = new HashMap<>();
+        if (!bspBarcodes.isEmpty()) {
+            mapSampleIdToInfo = bspSampleDataFetcher.fetchSampleDetailsByBarcode(bspBarcodes);
+        }
+        return fetchConcentrationAndVolumeAndWeightForTubeBarcodes(mapBarcodeToVessel, mapSampleIdToInfo);
     }
 
     @DaoFree
     public Map<String, ConcentrationAndVolumeAndWeightType> fetchConcentrationAndVolumeAndWeightForTubeBarcodes(
-            Map<String, LabVessel> mapBarcodeToVessel) {
+            Map<String, LabVessel> mapBarcodeToVessel,
+            Map<String, GetSampleDetails.SampleInfo> mapSampleIdToInfo) {
         Map<String, ConcentrationAndVolumeAndWeightType> concentrationAndVolumeAndWeightTypeMap = new HashMap<>();
-        List<String> bspBarcodes = new ArrayList<>();
         for (Map.Entry<String, LabVessel> entry: mapBarcodeToVessel.entrySet()) {
             String tubeBarcode = entry.getKey();
             LabVessel labVessel = entry.getValue();
@@ -329,18 +349,7 @@ public class LimsQueries {
                 if (labVessel.getReceptacleWeight() != null) {
                     concentrationAndVolumeAndWeightType.setWeight(labVessel.getReceptacleWeight());
                 }
-                if (labVessel.getVolume() == null) {
-                    Set<MercurySample.MetadataSource> metadataSources = new HashSet<>();
-                    for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
-                        if (!sampleInstanceV2.isReagentOnly()) {
-                            metadataSources.add(sampleInstanceV2.getRootOrEarliestMercurySample().getMetadataSource());
-                        }
-                    }
-                    if (metadataSources.size() == 1 && metadataSources.iterator().next() ==
-                            MercurySample.MetadataSource.BSP) {
-                        bspBarcodes.add(labVessel.getLabel());
-                    }
-                } else {
+                if (labVessel.getVolume() != null) {
                     concentrationAndVolumeAndWeightType.setVolume(labVessel.getVolume());
                 }
 
@@ -351,8 +360,7 @@ public class LimsQueries {
                     LabMetric.MetricType metricType = metricList.get(0).getName();
                     for (LabMetric labMetric : metricList) {
                         if (labMetric.getName() != metricType) {
-                            throw new RuntimeException(
-                                    "Got more than one quant for barcode:" + tubeBarcode);
+                            throw new RuntimeException("Got more than one quant for barcode:" + tubeBarcode);
                         }
                     }
                     LabMetric labMetric = metricList.get(0);
@@ -366,9 +374,7 @@ public class LimsQueries {
             concentrationAndVolumeAndWeightTypeMap.put(tubeBarcode, concentrationAndVolumeAndWeightType);
         }
 
-        if (!bspBarcodes.isEmpty()) {
-            Map<String, GetSampleDetails.SampleInfo> mapSampleIdToInfo =
-                    bspSampleDataFetcher.fetchSampleDetailsByBarcode(bspBarcodes);
+        if (!mapSampleIdToInfo.isEmpty()) {
             for (GetSampleDetails.SampleInfo sampleInfo : mapSampleIdToInfo.values()) {
                 ConcentrationAndVolumeAndWeightType concAndVol = concentrationAndVolumeAndWeightTypeMap.get(
                         sampleInfo.getManufacturerBarcode());
