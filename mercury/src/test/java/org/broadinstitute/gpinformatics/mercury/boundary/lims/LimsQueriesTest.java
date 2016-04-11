@@ -73,7 +73,7 @@ public class LimsQueriesTest {
         doSectionTransfer(makeTubeFormation(new BarcodedTube("tube")), plate3);
         doSectionTransfer(new StaticPlate("plate1", Eppendorf96), plate3);
         doSectionTransfer(new StaticPlate("plate2", Eppendorf96), plate3);
-        limsQueries = new LimsQueries(staticPlateDao, labVesselDao, barcodedTubeDao);
+        limsQueries = new LimsQueries(staticPlateDao, labVesselDao, barcodedTubeDao, null);
     }
 
     @Test(groups = DATABASE_FREE)
@@ -273,6 +273,7 @@ public class LimsQueriesTest {
         String barcode = "tube1";
         Map<String, LabVessel> mercuryTubes = new HashMap<>();
         BarcodedTube tube = new BarcodedTube(barcode);
+        tube.getMercurySamples().add(new MercurySample("SM-1234", MercurySample.MetadataSource.MERCURY));
         mercuryTubes.put(barcode, tube);
 
         //Should not find Final Library Size since its not a concentration

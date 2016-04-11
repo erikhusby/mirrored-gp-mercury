@@ -67,7 +67,7 @@ public class CrspPicoEntityBuilder {
         labEventHandler.processEvent(initialTareEntity);
         TubeFormation initialRack = (TubeFormation) initialTareEntity.getInPlaceLabVessel();
 
-        LimsQueries limsQueries = new LimsQueries(null, null, null);
+        LimsQueries limsQueries = new LimsQueries(null, null, null, null);
         mapBarcodeToVessel.putAll(mapBarcodeToTube);
         Map<String, ConcentrationAndVolumeAndWeightType> mapBarcodeToConcVolDto =
                 limsQueries.fetchConcentrationAndVolumeAndWeightForTubeBarcodes(mapBarcodeToVessel);
@@ -111,7 +111,8 @@ public class CrspPicoEntityBuilder {
         }
         fingerprintingAliquotEntity = labEventFactory.buildFromBettaLims(
                 crspPicoJaxbBuilder.getFingerprintingAliquotJaxb(), mapBarcodeToVessel);
-        mapBarcodeToConcVolDto = limsQueries.fetchConcentrationAndVolumeAndWeightForTubeBarcodes(mapBarcodeToVessel);
+        mapBarcodeToConcVolDto = limsQueries.fetchConcentrationAndVolumeAndWeightForTubeBarcodes(
+                new HashMap<String, LabVessel>(mapBarcodeToTube));
         concVolDto = mapBarcodeToConcVolDto.get("R1");
         Assert.assertEquals(concVolDto.getWeight(), new BigDecimal("0.63"));
         Assert.assertNull(concVolDto.getConcentration());

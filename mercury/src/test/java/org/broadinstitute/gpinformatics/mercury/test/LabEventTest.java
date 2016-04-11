@@ -7,6 +7,7 @@ import org.apache.commons.collections4.map.LazySortedMap;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
@@ -27,7 +28,6 @@ import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferEnt
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferVisualizer;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexingSchemeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -1495,9 +1495,12 @@ public class LabEventTest extends BaseEventTest {
         // Use Standard Exome product, to verify that workflow is taken from LCSet, not Product
         int numSamples = NUM_POSITIONS_IN_RACK - 2;
         ProductOrder productOrder = ProductOrderTestFactory.buildIceProductOrder(numSamples);
+        productOrder.getResearchProject().setRegulatoryDesignation(
+                ResearchProject.RegulatoryDesignation.CLINICAL_DIAGNOSTICS);
         Date runDate = new Date();
         // todo jmt create bucket, then batch, rather than rack then batch then bucket
-        Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
+        Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R",
+                MercurySample.MetadataSource.MERCURY);
         LabBatch workflowBatch = new LabBatch("Exome Express Batch",
                 new HashSet<LabVessel>(mapBarcodeToTube.values()),
                 LabBatch.LabBatchType.WORKFLOW);
