@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.GetSampleDetails;
+import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -371,9 +372,10 @@ public class LimsQueries {
             for (GetSampleDetails.SampleInfo sampleInfo : mapSampleIdToInfo.values()) {
                 ConcentrationAndVolumeAndWeightType concAndVol = concentrationAndVolumeAndWeightTypeMap.get(
                         sampleInfo.getManufacturerBarcode());
-                concAndVol.setVolume(BigDecimal.valueOf(sampleInfo.getVolume()));
+                concAndVol.setVolume(MathUtils.scaleTwoDecimalPlaces(BigDecimal.valueOf(sampleInfo.getVolume())));
                 if (concAndVol.getConcentration() == null) {
-                    concAndVol.setConcentration(BigDecimal.valueOf(sampleInfo.getConcentration()));
+                    concAndVol.setConcentration(MathUtils.scaleTwoDecimalPlaces(BigDecimal.valueOf(
+                            sampleInfo.getConcentration())));
                 }
             }
         }
