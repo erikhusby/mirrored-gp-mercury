@@ -88,11 +88,11 @@
          */
         //pass the options variable to the function
         updateCheckCount:function (options) {
-            $('.' + options.countDisplayClass).text($("input." + options.checkboxClass + ":checked").size());
+            $('.' + options.countDisplayClass).text($("input." + options.checkboxClass + ":enabled:checked").size());
         },
 
         checkAll:function (input, options) {
-            $('.' + options.checkboxClass).prop("checked", input.checked);
+            $('.' + options.checkboxClass + ':enabled').prop("checked", input.checked);
             this.updateCheckCount(options);
         },
 
@@ -114,7 +114,7 @@
 
                 obj.click(function (e) {
                     // get the current full list and assume on any reorder the lastCheckbox will be reset by a user click
-                    var currentList = $('.' + $options.checkboxClass);
+                    var currentList = $('.' + $options.checkboxClass + ':enabled');
                     var currentIndex = currentList.index(e.target);
 
                     if ($lastCheckbox != null && e.shiftKey) {
