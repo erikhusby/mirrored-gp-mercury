@@ -344,44 +344,59 @@ public class LabEventSearchDefinition {
         return searchTerms;
     }
 
-
+    /**
+     * Build result columns which drill down to other searches
+     * <strong>Note: Links are dependent on search term names built in LabVesselSearchDefinition#buildArrayTerms</strong>
+     */
     private List<SearchTerm> buildLabEventDrillDownLinks() {
         List<SearchTerm> searchTerms = new ArrayList<>();
 
         SearchTerm searchTerm = new SearchTerm();
-        searchTerm.setName("Infinium Plate Drill Down");
+        searchTerm.setName("Infinium Array Drill Down");
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public String evaluate(Object entity, SearchContext context) {
-                String results = null;
+            public List<String> evaluate(Object entity, SearchContext context) {
+                List<String> results = null;
                 LabEvent labEvent = (LabEvent) entity;
+                LabEventType eventType = labEvent.getLabEventType();
 
-                // Valid for infinium events only
-                if( labEvent.getLabEventType() != LabEventType.INFINIUM_AMPLIFICATION
-                        && labEvent.getLabEventType() != LabEventType.INFINIUM_XSTAIN ) {
-                    return results;
-                }
-
-                // XStain is in-place
-                LabVessel infiniumPlate = labEvent.getInPlaceLabVessel();
-
-                // Amplification is a target container
-                if( infiniumPlate == null ) {
-                    for (LabVessel vessel : labEvent.getTargetLabVessels()) {
-                        infiniumPlate = vessel;
+                String drillDownSearchName;
+                String drillDownSearchTerm;
+                List<LabVessel> vessels = new ArrayList<>();
+                switch( eventType ) {
+                    case INFINIUM_AMPLIFICATION:
+                        drillDownSearchName = "GLOBAL|GLOBAL_LAB_VESSEL_SEARCH_INSTANCES|Amp Plate Drill Down";
+                        drillDownSearchTerm = "Amp Plate Barcode";
+                        // This could be one or more Infinium chips
+                        vessels.addAll(labEvent.getTargetLabVessels());
                         break;
-                    }
+                    case INFINIUM_XSTAIN:
+                        drillDownSearchName = "GLOBAL|GLOBAL_LAB_VESSEL_SEARCH_INSTANCES|Infinium Chip Drill Down";
+                        drillDownSearchTerm = "Infinium Chip Barcode";
+                        // XStain event is an  in-place event on a single vessel
+                        vessels.add( labEvent.getInPlaceLabVessel() );
+                        break;
+                    case ARRAY_PLATING_DILUTION:
+                        drillDownSearchName = "GLOBAL|GLOBAL_LAB_VESSEL_SEARCH_INSTANCES|DNA Plate Drill Down";
+                        drillDownSearchTerm = "DNA Array Plate Barcode";
+                        vessels = new ArrayList<>();
+                        vessels.addAll(labEvent.getTargetLabVessels());
+                        break;
+                    default:
+                        return results;
                 }
-                // Should be containers, but ignore if not
-                if( infiniumPlate != null && infiniumPlate.getContainerRole() != null ) {
-                    String label = infiniumPlate.getContainerRole().getEmbedder().getLabel();
+
+                results = new ArrayList<>();
+
+                for( LabVessel infiniumPlate : vessels ) {
+                    String label = infiniumPlate.getLabel();
                     if (context.getResultCellTargetPlatform() != null
                             && context.getResultCellTargetPlatform() == SearchContext.ResultCellTargetPlatform.WEB) {
                         Map<String, String[]> terms = new HashMap<>();
-                        terms.put("Barcode", new String[]{label});
-                        results = SearchDefinitionFactory.buildDrillDownLink(label, ColumnEntity.LAB_VESSEL, "GLOBAL|GLOBAL_LAB_VESSEL_SEARCH_INSTANCES|Vessel Drill Down", terms, context);
+                        terms.put(drillDownSearchTerm, new String[]{label});
+                        results.add( SearchDefinitionFactory.buildDrillDownLink(label, ColumnEntity.LAB_VESSEL, drillDownSearchName, terms, context) );
                     } else {
-                        results = label;
+                        results.add( label );
                     }
                 }
 

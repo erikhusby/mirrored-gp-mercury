@@ -78,7 +78,9 @@ public class SearchDefinitionFactory {
     public static ConfigurableSearchDefinition getForEntity(String entity) {
         /* **** Change condition to true during development to rebuild for JVM hot-swap changes **** */
         //noinspection ConstantIfStatement
-        if( true ) {
+
+        // *************************************** REVERT TO FALSE BEFORE MERGE ************** //
+        if( false ) {
             SearchDefinitionFactory fact = new SearchDefinitionFactory();
             fact.buildLabEventSearchDef();
             fact.buildLabVesselSearchDef();

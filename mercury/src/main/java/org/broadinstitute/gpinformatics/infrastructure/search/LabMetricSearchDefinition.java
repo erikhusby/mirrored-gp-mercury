@@ -270,15 +270,15 @@ public class LabMetricSearchDefinition {
                 labEventTypes.add(LabEventType.DENATURE_TO_FLOWCELL_TRANSFER);
                 labEventTypes.add(LabEventType.DILUTION_TO_FLOWCELL_TRANSFER);
 
-                LabVesselSearchDefinition.VesselDescendantTraverserCriteria eval
-                        = new LabVesselSearchDefinition.VesselDescendantTraverserCriteria(labEventTypes );
+                LabVesselSearchDefinition.VesselsForEventTraverserCriteria eval
+                        = new LabVesselSearchDefinition.VesselsForEventTraverserCriteria(labEventTypes );
                 labMetric.getLabVessel().evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
 
                 Set<String> barcodes = null;
                 if (!eval.getPositions().isEmpty()) {
                     barcodes = new HashSet<>();
-                    for( Pair<String,VesselPosition> positionPair : eval.getPositions() ) {
-                        barcodes.add(positionPair.getLeft());
+                    for( Pair<LabVessel,VesselPosition> positionPair : eval.getPositions() ) {
+                        barcodes.add(positionPair.getLeft().getLabel());
                     }
                 }
                 return barcodes;

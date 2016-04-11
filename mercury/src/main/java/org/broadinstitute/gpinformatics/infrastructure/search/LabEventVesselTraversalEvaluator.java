@@ -5,11 +5,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -23,6 +21,9 @@ import java.util.TreeSet;
  * Directionality implemented in AncestorTraversalEvaluator and DescendantTraversalEvaluator nested classes
  */
 public class LabEventVesselTraversalEvaluator extends TraversalEvaluator {
+
+    public static List<LabEventType> INFINIUM_EVENT_TYPES = Arrays.asList(
+            LabEventType.ARRAY_PLATING_DILUTION, LabEventType.INFINIUM_AMPLIFICATION, LabEventType.INFINIUM_XSTAIN  );
 
     public LabEventVesselTraversalEvaluator(){ }
 
@@ -84,10 +85,11 @@ public class LabEventVesselTraversalEvaluator extends TraversalEvaluator {
     }
 
     private void getInfiniumEventsForVessels(List<LabVessel> rootEventVessels, Set<Object> events ) {
-        List<LabEventType> infiniumEventType =
-                Arrays.asList( LabEventType.INFINIUM_AMPLIFICATION, LabEventType.INFINIUM_XSTAIN );
+
         TransferTraverserCriteria.VesselForEventTypeCriteria eventTypeCriteria
-                = new TransferTraverserCriteria.VesselForEventTypeCriteria(infiniumEventType, true);
+                = new TransferTraverserCriteria.VesselForEventTypeCriteria(INFINIUM_EVENT_TYPES, true);
+
+        // Always starts off with samples found via a PDO so do descendant search only
         for( LabVessel initialVessel : rootEventVessels ) {
             initialVessel.evaluateCriteria(eventTypeCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
         }
