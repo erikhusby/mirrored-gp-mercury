@@ -311,7 +311,7 @@ public class LimsQueries {
         List<String> bspBarcodes = new ArrayList<>();
         for (Map.Entry<String, LabVessel> entry: mapBarcodeToVessel.entrySet()) {
             LabVessel labVessel = entry.getValue();
-            if (labVessel.getVolume() == null) {
+            if (labVessel != null && labVessel.getVolume() == null) {
                 Set<MercurySample.MetadataSource> metadataSources = new HashSet<>();
                 for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
                     if (!sampleInstanceV2.isReagentOnly()) {
