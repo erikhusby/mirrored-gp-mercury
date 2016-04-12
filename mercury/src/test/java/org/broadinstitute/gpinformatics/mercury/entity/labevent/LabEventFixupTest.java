@@ -1400,7 +1400,7 @@ public class LabEventFixupTest extends Arquillian {
         labEventDao.flush();
         BarcodedTube barcodedTube = barcodedTubeDao.findByBarcode("0193780863");
         Assert.assertEquals(barcodedTube.getSampleInstancesV2().size(), 5);
-        utx.rollback();
+        utx.commit();
     }
 
 }
