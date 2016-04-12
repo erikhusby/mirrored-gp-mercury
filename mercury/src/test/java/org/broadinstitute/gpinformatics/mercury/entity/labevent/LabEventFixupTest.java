@@ -1381,4 +1381,26 @@ public class LabEventFixupTest extends Arquillian {
         utx.commit();
     }
 
+    /**
+     * Delete malformed DenatureTransfer
+     */
+    @Test(enabled = false)
+    public void fixupSupport1661() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        long[] ids = {1268180L};
+        for (long id : ids) {
+            LabEvent labEvent = labEventDao.findById(LabEvent.class, id);
+            System.out.println("Deleting lab event " + labEvent.getLabEventId());
+            labEventDao.remove(labEvent);
+        }
+
+        labEventDao.persist(new FixupCommentary("SUPPORT-1661 delete Denature transfer"));
+        labEventDao.flush();
+        BarcodedTube barcodedTube = barcodedTubeDao.findByBarcode("0193780863");
+        Assert.assertEquals(barcodedTube.getSampleInstancesV2().size(), 5);
+        utx.rollback();
+    }
+
 }
