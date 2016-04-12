@@ -73,9 +73,9 @@
          *
          * and it will
          *
-         *     1. look for all checkboxes with the class: shiftCheckbox and make that shift selectable
-         *     2. Make any checkbox with the class: checkAll and have that select all values
-         *     3. Take any DOM element with the class: checkedCount and drop in the number of items selected
+         *     1. look for all enabled checkboxes with the class: shiftCheckbox and make that shift selectable.
+         *     2. Make any enabled checkbox with the class: checkAll and have that select all values.
+         *     3. Take any DOM element with the class: checkedCount and drop in the number of items selected.
          *
          * If you need multiple classes to work or want to define your own versions, you can do that by passing
          * in overrides to the options like:
@@ -88,7 +88,9 @@
          */
         //pass the options variable to the function
         updateCheckCount:function (options) {
-            $('.' + options.countDisplayClass).text($("input." + options.checkboxClass + ":enabled:checked").size());
+            
+            // count all checked checkboxes, even if they are disabled (value set by database perhaps?). 
+            $('.' + options.countDisplayClass).text($("input." + options.checkboxClass + ":checked").size());
         },
 
         checkAll:function (input, options) {
