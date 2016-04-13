@@ -158,7 +158,7 @@ public class UploadQuantsActionBean extends CoreActionBean {
                 break;
             }
             case GENERIC:
-                labMetrics = quantEJB.validateQuantsDontExist(quantStream, quantType);
+                labMetrics = quantEJB.validateQuantsDontExist(quantStream, quantType, acceptRePico);
                 break;
             }
         } catch (IOException e) {
