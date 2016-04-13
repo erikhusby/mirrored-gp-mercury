@@ -72,7 +72,7 @@ public class MercurySampleSearchDefinition {
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
-        searchTerm.setName("PDO-(Delivery Status)");
+        searchTerm.setName("PDO->(Sample Status)");
         searchTerm.setDisplayValueExpression(new SamplePdoDisplayExpression(true));
         searchTerms.add(searchTerm);
 
@@ -337,14 +337,16 @@ public class MercurySampleSearchDefinition {
             MercurySample sample = (MercurySample) entity;
             List<String> results = new ArrayList<>();
             String jiraTicketKey;
+            String sampleDeliveryStatus;
 
             // Try for PDO sample directly from mercury sample
             Set<ProductOrderSample> productOrderSamples = sample.getProductOrderSamples();
             if (!productOrderSamples.isEmpty()) {
                 for( ProductOrderSample productOrderSample : productOrderSamples ) {
                     jiraTicketKey = productOrderSample.getProductOrder().getJiraTicketKey();
-                    if( includeSampleStatus ) {
-                        results.add( jiraTicketKey + "-(" + productOrderSample.getDeliveryStatus() + ")" );
+                    sampleDeliveryStatus = productOrderSample.getDeliveryStatus().getDisplayName();
+                    if( includeSampleStatus && !sampleDeliveryStatus.isEmpty()) {
+                        results.add(jiraTicketKey + "->(" + sampleDeliveryStatus + ")");
                     } else {
                         results.add( jiraTicketKey );
                     }
@@ -356,14 +358,18 @@ public class MercurySampleSearchDefinition {
                     for( SampleInstanceV2 sampleInstanceV2 : sampleVessel.getSampleInstancesV2() ) {
                         for( ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples() ) {
                             jiraTicketKey = productOrderSample.getProductOrder().getJiraTicketKey();
-                            if( includeSampleStatus ) {
-                                results.add( jiraTicketKey + "-(" + productOrderSample.getDeliveryStatus() + ")" );
+                            sampleDeliveryStatus = productOrderSample.getDeliveryStatus().getDisplayName();
+                            if( includeSampleStatus && !sampleDeliveryStatus.isEmpty()) {
+                                results.add(jiraTicketKey + "->(" + sampleDeliveryStatus + ")");
                             } else {
                                 results.add( jiraTicketKey );
                             }
                         }
                     }
                 }
+            }
+            if( results.size() > 1 ) {
+                Collections.sort(results);
             }
             return results;
         }
