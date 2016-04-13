@@ -1648,11 +1648,16 @@ public class LabEventTest extends BaseEventTest {
         BSPUserList testUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
         LabVesselFactory labVesselFactory = new LabVesselFactory();
         labVesselFactory.setBspUserList(testUserList);
-        LabBatchResource labBatchResource = new LabBatchResource(labVesselFactory);
 
         String batchId = "BP-" + suffix;
-        LabBatch labBatch = labBatchResource.createLabBatchByParentVessel(
-                new LabBatchBean(batchId, parentVesselBean, "jowalsh"));
+        List<LabVessel> startingVessels = labVesselFactory.buildLabVesselDaoFree(
+                new HashMap<String, LabVessel>(), new HashMap<String, MercurySample>(),
+                new HashMap<String, Set<ProductOrderSample>>(), "jowalsh",
+                new Date(), Arrays.asList(parentVesselBean),
+                null, MercurySample.MetadataSource.BSP);
+        Set<LabVessel> labVesselSet = new HashSet<>(startingVessels);
+        LabBatch labBatch = new LabBatch(batchId, labVesselSet,
+                        LabBatch.LabBatchType.BSP);
 
         StaticPlate sourcePlate = (StaticPlate) labBatch.getStartingBatchLabVessels().iterator().next();
 

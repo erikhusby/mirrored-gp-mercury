@@ -96,15 +96,12 @@ public class LabBatchResource {
     }
 
     /**
-     * DAO-free method to build a LabBatch entity from a LabBatchBean with a ParentVesselBean
+     * Build a LabBatch entity from a LabBatchBean with a ParentVesselBean
      */
-    @DaoFree
     public LabBatch createLabBatchByParentVessel(LabBatchBean labBatchBean) {
-        List<LabVessel> labVessels = labVesselFactory.buildLabVesselDaoFree(
-                new HashMap<String, LabVessel>(), new HashMap<String, MercurySample>(),
-                new HashMap<String, Set<ProductOrderSample>>(), labBatchBean.getUsername(),
-                new Date(), Arrays.asList(labBatchBean.getParentVesselBean()),
-                null, MercurySample.MetadataSource.BSP);
+        List<LabVessel> labVessels = labVesselFactory.buildLabVessels(
+                Arrays.asList(labBatchBean.getParentVesselBean()), labBatchBean.getUsername(),
+                new Date(), null, MercurySample.MetadataSource.BSP);
 
         Set<LabVessel> labVesselSet = new HashSet<>(labVessels);
         return new LabBatch(labBatchBean.getBatchId(), labVesselSet,
