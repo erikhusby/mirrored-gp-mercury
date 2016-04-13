@@ -87,6 +87,7 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.QtpJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.SageEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ShearingEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.StoolTNAEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.TruSeqStrandSpecificEntityBuilder;
 import org.easymock.EasyMock;
 import org.mockito.Mockito;
@@ -642,6 +643,12 @@ public class BaseEventTest {
                                                        String prefix) {
         return new CrspRiboPlatingEntityBuilder(bettaLimsMessageTestFactory,
                 labEventFactory, labEventHandler, mapBarcodeToTube, rackBarcode, prefix).invoke();
+    }
+
+    public StoolTNAEntityBuilder runStoolExtractionToTNAProcess(StaticPlate sourcePlate,
+                                                                int numSamples, String prefix) {
+        return new StoolTNAEntityBuilder(sourcePlate, numSamples, bettaLimsMessageTestFactory,
+                labEventFactory, getLabEventHandler(), prefix).invoke();
     }
 
     /**
