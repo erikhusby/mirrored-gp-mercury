@@ -62,41 +62,19 @@ public class MercurySampleSearchDefinition {
         SearchTerm searchTerm = new SearchTerm();
         searchTerm.setName("PDO");
         searchTerm.setSearchValueConversionExpression(SearchDefinitionFactory.getPdoInputConverter());
+        searchTerm.setDisplayValueExpression(new SamplePdoDisplayExpression(false));
         List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
         SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
         criteriaPath.setCriteria( Arrays.asList( "PDOSamples", "productOrderSamples", "productOrder" ) );
         criteriaPath.setPropertyName("jiraTicketKey");
         criteriaPaths.add(criteriaPath);
-
         searchTerm.setCriteriaPaths(criteriaPaths);
-        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
-            @Override
-            public List<String> evaluate(Object entity, SearchContext context) {
-                MercurySample sample = (MercurySample) entity;
-                List<String> results = new ArrayList<>();
-
-                // Try for PDO sample directly from mercury sample
-                Set<ProductOrderSample> productOrderSamples = sample.getProductOrderSamples();
-                if (!productOrderSamples.isEmpty()) {
-                    for( ProductOrderSample productOrderSample : productOrderSamples ) {
-                        results.add( productOrderSample.getProductOrder().getJiraTicketKey() );
-                    }
-                } else {
-                    // PDO sample needs to be found via SampleInstanceV2 ancestry
-                    Set<LabVessel> sampleVessels = sample.getLabVessel();
-                    for( LabVessel sampleVessel : sampleVessels ) {
-                        for( SampleInstanceV2 sampleInstanceV2 : sampleVessel.getSampleInstancesV2() ) {
-                            for( ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples() ) {
-                                results.add( productOrderSample.getProductOrder().getJiraTicketKey() );
-                            }
-                        }
-                    }
-                }
-                return results;
-            }
-        });
         searchTerms.add(searchTerm);
 
+        searchTerm = new SearchTerm();
+        searchTerm.setName("PDO-(Delivery Status)");
+        searchTerm.setDisplayValueExpression(new SamplePdoDisplayExpression(true));
+        searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
         searchTerm.setName("LCSET");
@@ -341,5 +319,53 @@ public class MercurySampleSearchDefinition {
         searchTerms.add(searchTerm);
 
         return searchTerms;
+    }
+
+    /**
+     * Share logic to find sample PDO with the added functionality for PDO result column to include delivery status
+     */
+    private class SamplePdoDisplayExpression extends SearchTerm.Evaluator<Object> {
+
+        private boolean includeSampleStatus = false;
+
+        public SamplePdoDisplayExpression(boolean includeSampleStatus) {
+            this.includeSampleStatus = includeSampleStatus;
+        }
+
+        @Override
+        public List<String> evaluate(Object entity, SearchContext context) {
+            MercurySample sample = (MercurySample) entity;
+            List<String> results = new ArrayList<>();
+            String jiraTicketKey;
+
+            // Try for PDO sample directly from mercury sample
+            Set<ProductOrderSample> productOrderSamples = sample.getProductOrderSamples();
+            if (!productOrderSamples.isEmpty()) {
+                for( ProductOrderSample productOrderSample : productOrderSamples ) {
+                    jiraTicketKey = productOrderSample.getProductOrder().getJiraTicketKey();
+                    if( includeSampleStatus ) {
+                        results.add( jiraTicketKey + "-(" + productOrderSample.getDeliveryStatus() + ")" );
+                    } else {
+                        results.add( jiraTicketKey );
+                    }
+                }
+            } else {
+                // PDO sample needs to be found via SampleInstanceV2 ancestry
+                Set<LabVessel> sampleVessels = sample.getLabVessel();
+                for( LabVessel sampleVessel : sampleVessels ) {
+                    for( SampleInstanceV2 sampleInstanceV2 : sampleVessel.getSampleInstancesV2() ) {
+                        for( ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples() ) {
+                            jiraTicketKey = productOrderSample.getProductOrder().getJiraTicketKey();
+                            if( includeSampleStatus ) {
+                                results.add( jiraTicketKey + "-(" + productOrderSample.getDeliveryStatus() + ")" );
+                            } else {
+                                results.add( jiraTicketKey );
+                            }
+                        }
+                    }
+                }
+            }
+            return results;
+        }
     }
 }
