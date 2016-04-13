@@ -160,11 +160,19 @@ public class QtpJaxbBuilder {
 
         switch (pcrType) {
             case ECO_DUPLICATE:
+                String[] sectionPositions = {"A1", "A2", "A3", "B1", "B2", "B3", "C1", "C2", "C3",
+                        "D1", "D2", "D3", "E1", "E2", "E3", "F1", "F2", "F3"};
                 ecoTransferDuplicateA3Jaxb = bettaLimsMessageTestFactory.buildRackToPlate("EcoTransfer", poolRackBarcode,
                         poolTubeBarcodes, ecoPlateBarcode, "Eco48", "3BY6A1", "8BY6A3ALTROWS");
 
                 ecoTransferDuplicateB3Jaxb = bettaLimsMessageTestFactory.buildRackToPlate("EcoTransfer", poolRackBarcode,
                         poolTubeBarcodes, ecoPlateBarcode, "Eco48", "3BY6A1", "8BY6B3ALTROWS");
+                for(int i = 0; i < poolTubeBarcodes.size(); i++) {
+                    String position = sectionPositions[i];
+                    ecoTransferDuplicateA3Jaxb.getSourcePositionMap().getReceptacle().get(i).setPosition(position);
+                    ecoTransferDuplicateB3Jaxb.getSourcePositionMap().getReceptacle().get(i).setPosition(position);
+                }
+
                 ecoTransferMessage = bettaLimsMessageTestFactory.addMessage(
                         messageList, ecoTransferDuplicateA3Jaxb, ecoTransferDuplicateB3Jaxb);
                 break;

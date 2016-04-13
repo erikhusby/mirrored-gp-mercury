@@ -236,7 +236,7 @@ public class SolexaRunResource {
 
         if (EnumSet.of(SystemRouter.System.SQUID, SystemRouter.System.BOTH).contains(route)) {
             requestToReturn = readStructureRequest;
-            if (squidConfig.getMercuryDeployment() != Deployment.STUBBY) {
+            if (squidConfig.getDeploymentConfig() != Deployment.STUBBY) {
                 String squidUrl = squidConfig.getUrl() + "/resources/solexarunsynopsis";
                 try {
 

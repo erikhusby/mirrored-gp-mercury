@@ -37,7 +37,6 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.BadBusinessKeyExcepti
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
-import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnector;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
@@ -206,6 +205,7 @@ public class ProductOrderEjb {
         } else {
             updateJiraIssue(editedProductOrder);
         }
+        attachMercurySamples(editedProductOrder.getSamples());
         productOrderDao.persist(editedProductOrder);
     }
 
@@ -423,12 +423,6 @@ public class ProductOrderEjb {
             pdoUpdateFields.add(new PDOUpdateField(ProductOrder.JiraField.PUBLICATION_DEADLINE,
                     JiraService.JIRA_DATE_FORMAT.format(
                             productOrder.getPublicationDeadline())));
-        }
-
-        // Add the Requisition name to the list of fields when appropriate.
-        if (ApplicationInstance.CRSP.isCurrent() && !StringUtils.isBlank(productOrder.getRequisitionName())) {
-            pdoUpdateFields.add(new PDOUpdateField(ProductOrder.JiraField.REQUISITION_NAME,
-                    productOrder.getRequisitionName()));
         }
 
         String[] customFieldNames = new String[pdoUpdateFields.size()];
@@ -935,6 +929,19 @@ public class ProductOrderEjb {
         ProductOrder order = findProductOrder(jiraTicketKey);
         order.addSamples(samples);
 
+        attachMercurySamples(samples);
+
+        order.prepareToSave(userBean.getBspUser());
+        productOrderDao.persist(order);
+        handleSamplesAdded(jiraTicketKey, samples, reporter);
+
+        updateSamples(order, samples, reporter, "added");
+    }
+
+    /**
+     * Makes the association between ProductOrderSample and MercurySample.
+     */
+    private void attachMercurySamples(@Nonnull List<ProductOrderSample> samples) {
         ImmutableListMultimap<String, ProductOrderSample> samplesBySampleId =
                 Multimaps.index(samples, new Function<ProductOrderSample, String>() {
                     @Override
@@ -943,19 +950,15 @@ public class ProductOrderEjb {
                     }
                 });
 
-        Map<String, MercurySample> mercurySampleMap = mercurySampleDao.findMapIdToMercurySample(samplesBySampleId.keySet());
+        Map<String, MercurySample> mercurySampleMap = mercurySampleDao.findMapIdToMercurySample(
+                samplesBySampleId.keySet());
 
         for (Map.Entry<String, ProductOrderSample> sampleMapEntry : samplesBySampleId.entries()) {
-            if (sampleMapEntry.getValue().getMercurySample() == null && mercurySampleMap.get(sampleMapEntry.getKey()) !=null) {
-                mercurySampleMap.get(sampleMapEntry.getKey()).addProductOrderSample(sampleMapEntry.getValue());
+            MercurySample mercurySample = mercurySampleMap.get(sampleMapEntry.getKey());
+            if (sampleMapEntry.getValue().getMercurySample() == null && mercurySample != null) {
+                mercurySample.addProductOrderSample(sampleMapEntry.getValue());
             }
         }
-
-        order.prepareToSave(userBean.getBspUser());
-        productOrderDao.persist(order);
-        handleSamplesAdded(jiraTicketKey, samples, reporter);
-
-        updateSamples(order, samples, reporter, "added");
     }
 
     public void removeSamples(@Nonnull String jiraTicketKey, @Nonnull Collection<ProductOrderSample> samples,

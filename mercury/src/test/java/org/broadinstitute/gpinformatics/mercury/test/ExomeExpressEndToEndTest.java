@@ -36,7 +36,6 @@ import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.CrspPipelineUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bsp.BSPSampleFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
@@ -92,8 +91,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
-import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
-
 /**
  * A container free test of Exome Express
  */
@@ -117,7 +114,7 @@ public class ExomeExpressEndToEndTest {
 
     private final String BILLING_QUOTE = "DNA375";
 
-    @Test(groups = {DATABASE_FREE}, enabled = false)
+    @Test(enabled = false)
     public void testAll() throws Exception {
         List<ProductOrderSample> productOrderSamples = new ArrayList<>();
         ProductOrder productOrder1 = new ProductOrder(101L, "Test PO", productOrderSamples, "GSP-123", new Product(
@@ -554,7 +551,6 @@ public class ExomeExpressEndToEndTest {
                                                                                        null,
                                                                                        new SequencingTemplateFactory(),
                                                                                        productOrderDao,
-                                                                                       null,
                                                                                        crspPipelineUtils);
             ZimsIlluminaRun zimsRun = zimsIlluminaRunFactory.makeZimsIlluminaRun(illuminaSequencingRun);
 

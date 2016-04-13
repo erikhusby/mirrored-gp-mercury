@@ -39,6 +39,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObjectFinder;
 import org.broadinstitute.gpinformatics.infrastructure.presentation.JiraLink;
 import org.broadinstitute.gpinformatics.infrastructure.presentation.PortalLink;
 import org.broadinstitute.gpinformatics.infrastructure.presentation.SampleLink;
+import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
@@ -121,6 +122,13 @@ public abstract class CoreActionBean implements ActionBean, MessageReporter {
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private QuoteService quoteService;
+
+
+    public enum ErrorLevel {
+        WARNING,
+        ERROR,
+        ;
+    }
 
     // Needed for managed bean.
     public CoreActionBean() {
@@ -592,14 +600,16 @@ public abstract class CoreActionBean implements ActionBean, MessageReporter {
         return createTitle;
     }
 
-    protected void validateQuoteId(String quoteId) {
+    protected Quote validateQuoteId(String quoteId) {
+        Quote quoteDetails = null;
         try {
-            quoteService.getQuoteByAlphaId(quoteId);
+            quoteDetails = quoteService.getQuoteByAlphaId(quoteId);
         } catch (QuoteServerException e) {
             addGlobalValidationError("The quote ''{2}'' is not valid: {3}", quoteId, e.getMessage());
         } catch (QuoteNotFoundException e) {
             addGlobalValidationError("The quote ''{2}'' was not found ", quoteId);
         }
+        return quoteDetails;
     }
 
     /**

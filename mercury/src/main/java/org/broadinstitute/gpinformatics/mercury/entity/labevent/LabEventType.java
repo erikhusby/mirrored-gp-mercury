@@ -266,7 +266,7 @@ public enum LabEventType {
     DENATURE_TO_DILUTION_TRANSFER("DenatureToDilutionTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            LibraryType.NONE_ASSIGNED),
+            LibraryType.DILUTED_DENATURE),
     DILUTION_TO_FLOWCELL_TRANSFER("DilutionToFlowcellTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
@@ -1611,6 +1611,7 @@ public enum LabEventType {
         NONE_ASSIGNED(""),
         NORMALIZED("Normalized"),
         DENATURED("Denatured"),
+        DILUTED_DENATURE("Diluted Denature"),
         HISEQ_FLOWCELL("HiSeq Flowcell");
 
         private LibraryType( String displayName ){

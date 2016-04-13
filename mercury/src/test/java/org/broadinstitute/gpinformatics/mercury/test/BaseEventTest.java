@@ -37,7 +37,6 @@ import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferVis
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferVisualizerV2;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.CrspPipelineUtils;
-import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
@@ -227,22 +226,27 @@ public class BaseEventTest {
                 Mockito.mock(MercurySampleDao.class));
     }
 
+    public Map<String, BarcodedTube> createInitialRack(ProductOrder productOrder, String tubeBarcodePrefix) {
+        return createInitialRack(productOrder, tubeBarcodePrefix, MercurySample.MetadataSource.BSP);
+    }
+
     /**
      * This method builds the initial tube rack for starting an event test.  This will log an error if you attempt to
      * create the rack from a product order than has more than NUM_POSITIONS_IN_RACK tubes.
      *
      * @param productOrder      The product order to create the initial rack from
      * @param tubeBarcodePrefix prefix for each tube barcode
-     *
+     * @param metadataSource    BSP or Mercury
      * @return Returns a map of String barcodes to their tube objects.
      */
-    public Map<String, BarcodedTube> createInitialRack(ProductOrder productOrder, String tubeBarcodePrefix) {
+    public Map<String, BarcodedTube> createInitialRack(ProductOrder productOrder, String tubeBarcodePrefix,
+            MercurySample.MetadataSource metadataSource) {
         Map<String, BarcodedTube> mapBarcodeToTube = new LinkedHashMap<>();
         int rackPosition = 1;
         for (ProductOrderSample poSample : productOrder.getSamples()) {
             String barcode = tubeBarcodePrefix + rackPosition;
             BarcodedTube bspAliquot = new BarcodedTube(barcode);
-            bspAliquot.addSample(new MercurySample(poSample.getName(), MercurySample.MetadataSource.BSP));
+            bspAliquot.addSample(new MercurySample(poSample.getName(), metadataSource));
             mapBarcodeToTube.put(barcode, bspAliquot);
             Map<BSPSampleSearchColumn, String> dataMap = new HashMap<>();
             dataMap.put(BSPSampleSearchColumn.SAMPLE_ID, poSample.getName());
@@ -875,7 +879,8 @@ public class BaseEventTest {
                 FileWriter fileWriter = new FileWriter(xfrVis);
                 transferVisualizerV2.jsonForVessels(
                         Collections.singletonList(labVessel),
-                        Collections.singletonList(TransferTraverserCriteria.TraversalDirection.Descendants),
+                        Arrays.asList(TransferTraverserCriteria.TraversalDirection.Ancestors,
+                                TransferTraverserCriteria.TraversalDirection.Descendants),
                         fileWriter,
                         Arrays.asList(TransferVisualizerV2.AlternativeIds.SAMPLE_ID,
                                 TransferVisualizerV2.AlternativeIds.LCSET));
@@ -965,7 +970,6 @@ public class BaseEventTest {
                 },
                 new SequencingTemplateFactory(),
                 productOrderDao,
-                new CrspControlsTestUtils().getMockResearchProjectDao(),
                 crspPipelineUtils
         );
     }
