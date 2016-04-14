@@ -36,11 +36,7 @@ public class SearchDefinitionFactory {
         @Override
         public Object evaluate(Object entity, SearchContext context) {
             String value = context.getSearchValueString();
-            // Don't do replacement on multi values
-            if( context.getSearchValue().getValues().size() != 1 ) {
-                return value;
-            }
-            if( !value.matches("-")){
+            if( value.matches("[0-9]*")){
                 value = "LCSET-" + value;
             }
             return value;
@@ -54,11 +50,7 @@ public class SearchDefinitionFactory {
         @Override
         public Object evaluate(Object entity, SearchContext context) {
             String value = context.getSearchValueString();
-            // Don't do replacement on multi values
-            if( context.getSearchValue().getValues().size() != 1 ) {
-                return value;
-            }
-            if( !value.matches("-")){
+            if( value.matches("[0-9]*")){
                 value = "PDO-" + value;
             }
             return value;
