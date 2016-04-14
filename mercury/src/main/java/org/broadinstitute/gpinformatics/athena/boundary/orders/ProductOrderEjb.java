@@ -22,6 +22,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
+import org.broadinstitute.gpinformatics.athena.entity.orders.StaleLedgerUpdateException;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -1093,6 +1094,30 @@ public class ProductOrderEjb {
 //            pdoIssue.addComment(String.format("Work request %s is associated with LCSet %s",
 //                    createdWorkRequestResults.getWorkRequestId(), squidInput.getLcsetId()));
         }
+    }
+
+    /**
+     * Apply a collection of ledger updates for some product order samples. The update requests have the previous
+     * quantities as well as the new quantities being requested. The previous quantities represent those that were in
+     * effect when the decision to change the quantity was made. Across a sequence of web requests, it is possible that
+     * those quantities have changed for other reasons, so this protects users from making billing decisions based on
+     * outdated information.
+     *
+     * @param ledgerUpdates a map of PDO sample to a collection of ledger updates
+     * @throws StaleLedgerUpdateException if the previous quantity in any ledger update is out-of-date
+     */
+    public void updateSampleLedgers(
+            Map<ProductOrderSample, Collection<ProductOrderSample.LedgerUpdate>> ledgerUpdates)
+            throws StaleLedgerUpdateException {
+        for (Map.Entry<ProductOrderSample, Collection<ProductOrderSample.LedgerUpdate>> entry : ledgerUpdates
+                .entrySet()) {
+            ProductOrderSample productOrderSample = entry.getKey();
+            Collection<ProductOrderSample.LedgerUpdate> updates = entry.getValue();
+            for (ProductOrderSample.LedgerUpdate update : updates) {
+                productOrderSample.applyLedgerUpdate(update);
+            }
+        }
+        productOrderDao.flush();
     }
 
     @Inject
