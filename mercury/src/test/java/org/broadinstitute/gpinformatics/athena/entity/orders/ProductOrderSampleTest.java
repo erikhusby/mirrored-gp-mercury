@@ -37,12 +37,12 @@ import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
@@ -555,40 +555,27 @@ public class ProductOrderSampleTest {
     }
 
     /**
-     * All of these test cases must satisfy the equation: resulting ready-to-bill = new quantity - billed quantity
-     * where billed quantity = billed ? 1 : 0
+     * All of these test cases must satisfy the equation:
+     *      expected resulting ready-to-bill = requested quantity - billed quantity
      */
     @DataProvider(name = "everything")
     public Object[][] everything() {
         // @formatter:off
         return new Object[][]{
-                // billed   ready-to-bill   new quantity   resulting ready-to-bill
-    /**
-     * Test that a request for no change does nothing. This could be filtered out in a controller, but the entities
-     * should be able to handle the case correctly anyway.
-     */
-                {  false,       0,              0,             0   }, // no change (no existing billing)
-                {  false,       0,              1,             1   }, // request new billing
-                {  false,       0,              2,             2   }, // (redundant with "request new billing", but included for combinatorial completeness
-    /**
-     * Test setting the quantity to 0 when there is an existing unbilled ledger entry. There is no need to issue a
-     * credit because nothing has been billed outside of Mercury (Broad Quotes, SAP, etc.). Therefore, the ledger entry
-     * can simply be removed.
-     */
-                {  false,       1,              0,             0   }, // cancel unbilled request (not yet billed)
-                {  false,       1,              1,             1   }, // no change (pending billing request)
-    /**
-     * Test changing the quantity to bill when there is an unbilled ledger entry. This should simply update the unbilled
-     * ledger entry, including work complete date.
-     */
-                {  false,       1,              2,             2   }, // update unbilled request (increase quantity, not yet billed)
-
-                {  true,        0,              0,             -1  }, // credit
-                {  true,        0,              1,             0   }, // no change (completed billing)
-                {  true,        0,              2,             1   }, // request more billing
-                {  true,        1,              0,             -1  }, // update unbilled request (change from charge to credit)
-                {  true,        1,              1,             0   }, // cancel unbilled request (
-                {  true,        1,              2,             1   }  // update unbilled request (increase quantity, some already billed)
+            // billed       existing        requested       expected resulting
+            // quantity     ready-to-bill   quantity        ready-to-bill
+            {  0,           0,              0,              0              }, // no change (no existing billing)
+            {  0,           0,              1,              1              }, // request new billing
+            {  0,           0,              2,              2              }, // (redundant with "request new billing", but included for combinatorial completeness
+            {  0,           1,              0,              0              }, // cancel unbilled request (no existing billing)
+            {  0,           1,              1,              1              }, // no change (pending billing request)
+            {  0,           1,              2,              2              }, // update unbilled request (increase quantity, no existing billing)
+            {  1,           0,              0,             -1              }, // credit
+            {  1,           0,              1,              0              }, // no change (completed billing)
+            {  1,           0,              2,              1              }, // request more billing
+            {  1,           1,              0,             -1              }, // update unbilled request (change from charge to credit)
+            {  1,           1,              1,              0              }, // cancel unbilled request (completed billing)
+            {  1,           1,              2,              1              }  // no change (completed billing and pending billing request)
         };
         // @formatter:on
     }
@@ -599,15 +586,15 @@ public class ProductOrderSampleTest {
      * The combination of these values also varies whether a quantity should be charged, credited, or if no changes are
      * needed at all.
      *
-     * @param billed
+     * @param quantityBilled
      * @param quantityReadyToBill
-     * @param quantityRequest
-     * @param expectedQuantityPending
+     * @param quantityRequested
+     * @param expectedQuantityReadyToBill
      * @throws StaleLedgerUpdateException
      */
     @Test(dataProvider = "everything")
-    public void testEverything(boolean billed, double quantityReadyToBill, double quantityRequest,
-                               double expectedQuantityPending) throws StaleLedgerUpdateException {
+    public void testEverything(int quantityBilled, double quantityReadyToBill, double quantityRequested,
+                               double expectedQuantityReadyToBill) throws StaleLedgerUpdateException {
 
         /*
          * The expected resulting unbilled ledger quantity must equal the new quantity being requested minus the
@@ -616,57 +603,59 @@ public class ProductOrderSampleTest {
          *
          * This assertion is here both to document that point and as a guard against nonsensical test cases.
          */
-        assertThat(expectedQuantityPending, equalTo(quantityRequest - (billed ? 1 : 0)));
+        assertThat(expectedQuantityReadyToBill, equalTo(quantityRequested - quantityBilled));
+        assertThat(quantityBilled, anyOf(equalTo(0), equalTo(1)));
 
         ProductOrderSample productOrderSample;
-        if (billed) {
-            productOrderSample = createBilledSample("TEST");
-        } else {
+        if (quantityBilled == 0) {
             productOrderSample = createOrderedSample("TEST");
+        } else {
+            productOrderSample = createBilledSample("TEST");
         }
 
         PriceItem priceItem = productOrderSample.getProductOrder().getProduct().getPrimaryPriceItem();
         if (quantityReadyToBill > 0) {
-            Calendar calendar = Calendar.getInstance();
-            calendar.add(Calendar.DAY_OF_MONTH, -1);
-            Date oldWorkCompleteDate = calendar.getTime();
-            productOrderSample.addLedgerItem(oldWorkCompleteDate, priceItem, quantityReadyToBill);
+            addUnbilledLedgerEntry(productOrderSample, priceItem, quantityReadyToBill);
         }
 
         ProductOrderSample.LedgerQuantities ledgerQuantities = productOrderSample.getLedgerQuantities().get(priceItem);
-        double quantityBefore = 0;
-        if (ledgerQuantities != null) {
-            quantityBefore = ledgerQuantities.getTotal();
-        }
+        double quantityBefore = ledgerQuantities != null ? ledgerQuantities.getTotal() : 0;
+        double currentQuantity = quantityBefore; // these tests all assume no external changes
         Date workCompleteDate = new Date();
 
         ProductOrderSample.LedgerUpdate ledgerUpdate =
-                new ProductOrderSample.LedgerUpdate(productOrderSample, priceItem, ledgerQuantities, quantityBefore,
-                        quantityRequest, workCompleteDate);
-        ledgerUpdate.apply();
+                new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(), priceItem, quantityBefore,
+                        currentQuantity, quantityRequested, workCompleteDate);
+        productOrderSample.applyLedgerUpdate(ledgerUpdate);
 
         LedgerEntry ledgerEntry = productOrderSample.findUnbilledLedgerEntryForPriceItem(priceItem);
-        if (expectedQuantityPending == 0) {
+        if (expectedQuantityReadyToBill == 0) {
             assertThat(ledgerEntry, nullValue());
             assertThat(productOrderSample.getBillableLedgerItems(), empty());
         } else {
-            assertThat(ledgerEntry.getQuantity(), equalTo(expectedQuantityPending));
+            assertThat(ledgerEntry.getQuantity(), equalTo(expectedQuantityReadyToBill));
             assertThat(productOrderSample.getBillableLedgerItems(), hasSize(1));
         }
+    }
+
+    private void addUnbilledLedgerEntry(ProductOrderSample productOrderSample, PriceItem priceItem,
+                                        double quantityReadyToBill) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.DAY_OF_MONTH, -1);
+        Date oldWorkCompleteDate = calendar.getTime();
+        productOrderSample.addLedgerItem(oldWorkCompleteDate, priceItem, quantityReadyToBill);
     }
 
     @Test
     public void testApplyUpdateWithOutdatedInformationThrowsException() {
         ProductOrderSample productOrderSample = createOrderedSample("TEST");
-
         PriceItem priceItem = productOrderSample.getProductOrder().getProduct().getPrimaryPriceItem();
-        ProductOrderSample.LedgerQuantities ledgerQuantities = productOrderSample.getLedgerQuantities().get(priceItem);
 
-        ProductOrderSample.LedgerUpdate ledgerUpdate =
-                new ProductOrderSample.LedgerUpdate(productOrderSample, priceItem, ledgerQuantities, 1, 2, null);
         Exception caught = null;
         try {
-            ledgerUpdate.apply();
+            ProductOrderSample.LedgerUpdate ledgerUpdate =
+                    new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(), priceItem, 1, 0, 2, null);
+            productOrderSample.applyLedgerUpdate(ledgerUpdate);
         } catch (Exception e) {
             caught = e;
         }

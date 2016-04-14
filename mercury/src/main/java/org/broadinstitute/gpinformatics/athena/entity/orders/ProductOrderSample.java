@@ -782,60 +782,36 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
      * </ul>
      */
     public static class LedgerUpdate {
-        private ProductOrderSample productOrderSample;
+        private String sampleName;
+
         private PriceItem priceItem;
-        private ProductOrderSample.LedgerQuantities ledgerQuantities;
 
         /**
          * The total quantity that the user was viewing when deciding what the new quantity should be.
          */
         private double oldQuantity;
 
+        private double currentQuantity;
+
         /**
          * The new total quantity being requested.
          */
         private double newQuantity;
-        private Date newWorkCompleteDate;
 
-        public LedgerUpdate(ProductOrderSample productOrderSample,
-                            PriceItem priceItem,
-                            LedgerQuantities ledgerQuantities, double oldQuantity, double newQuantity,
-                            Date newWorkCompleteDate) {
-            this.productOrderSample = productOrderSample;
+        private Date workCompleteDate;
+
+        public LedgerUpdate(String sampleName, PriceItem priceItem, double oldQuantity, double currentQuantity,
+                            double newQuantity, Date workCompleteDate) {
+            this.sampleName = sampleName;
             this.priceItem = priceItem;
-            this.ledgerQuantities = ledgerQuantities;
+            this.currentQuantity = currentQuantity;
             this.oldQuantity = oldQuantity;
             this.newQuantity = newQuantity;
-            this.newWorkCompleteDate = newWorkCompleteDate;
+            this.workCompleteDate = workCompleteDate;
         }
 
-        public void apply() throws StaleLedgerUpdateException {
-            if (isChangeIntended()) {
-                if (isChangeNeeded()) {
-                    if (isChangeRequestCurrent()) {
-                        // apply change
-                        double quantityDelta = newQuantity - oldQuantity;
-                        LedgerEntry ledgerEntry = productOrderSample.findUnbilledLedgerEntryForPriceItem(priceItem);
-                        if (ledgerEntry == null) {
-                            productOrderSample.addLedgerItem(newWorkCompleteDate, priceItem, quantityDelta);
-                        } else {
-                            if (ledgerEntry.isBeingBilled()) {
-                                throw new RuntimeException(
-                                        "Cannot change quantity for sample that is currently being billed.");
-                            }
-                            double newQuantity = ledgerEntry.getQuantity() + quantityDelta;
-                            if (newQuantity == 0.0) {
-                                productOrderSample.getLedgerItems().remove(ledgerEntry);
-                            } else {
-                                ledgerEntry.setQuantity(newQuantity);
-                                ledgerEntry.setWorkCompleteDate(newWorkCompleteDate);
-                            }
-                        }
-                    } else {
-                        throw new StaleLedgerUpdateException(this);
-                    }
-                }
-            }
+        private double getQuantityDelta() {
+            return newQuantity - oldQuantity;
         }
 
         /**
@@ -844,7 +820,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
          *
          * @return true if the user requested a change; false otherwise
          */
-        private boolean isChangeIntended() {
+        public boolean isChangeIntended() {
             return newQuantity != oldQuantity;
         }
 
@@ -855,7 +831,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
          * @return true if the quantity submitted is different than the current quantity; false otherwise
          */
         private boolean isChangeNeeded() {
-            return newQuantity != getCurrentTotal();
+            return newQuantity != currentQuantity;
         }
 
         /**
@@ -865,45 +841,61 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
          * @return true if the change request is based on current data; false otherwise
          */
         private boolean isChangeRequestCurrent() {
-            return oldQuantity == getCurrentTotal();
+            return oldQuantity == currentQuantity;
         }
 
-        /**
-         * Gets the current total from the ledger quantities. If there are no ledger quantities, then there have been no
-         * billing actions for this price item and therefore the total is 0.
-         *
-         * @return the total quantity currently recorded for billing
-         */
-        private double getCurrentTotal() {
-            double total = 0;
-            if (ledgerQuantities != null) {
-                total = ledgerQuantities.getTotal();
-            }
-            return total;
-        }
-
-        public ProductOrderSample getProductOrderSample() {
-            return productOrderSample;
+        public String getSampleName() {
+            return sampleName;
         }
 
         public PriceItem getPriceItem() {
             return priceItem;
         }
 
-        public LedgerQuantities getLedgerQuantities() {
-            return ledgerQuantities;
-        }
-
         public double getOldQuantity() {
             return oldQuantity;
+        }
+
+        public double getCurrentQuantity() {
+            return currentQuantity;
         }
 
         public double getNewQuantity() {
             return newQuantity;
         }
 
-        public Date getNewWorkCompleteDate() {
-            return newWorkCompleteDate;
+        public Date getWorkCompleteDate() {
+            return workCompleteDate;
+        }
+    }
+
+    public void applyLedgerUpdate(LedgerUpdate ledgerUpdate) throws StaleLedgerUpdateException {
+        if (ledgerUpdate.isChangeIntended()) {
+            if (ledgerUpdate.isChangeNeeded()) {
+                if (ledgerUpdate.isChangeRequestCurrent()) {
+                    PriceItem priceItem = ledgerUpdate.getPriceItem();
+                    double quantityDelta = ledgerUpdate.getQuantityDelta();
+                    LedgerEntry ledgerEntry = findUnbilledLedgerEntryForPriceItem(priceItem);
+
+                    if (ledgerEntry == null) {
+                        addLedgerItem(ledgerUpdate.getWorkCompleteDate(), priceItem, quantityDelta);
+                    } else {
+                        if (ledgerEntry.isBeingBilled()) {
+                            throw new RuntimeException(
+                                    "Cannot change quantity for sample that is currently being billed.");
+                        }
+                        double newQuantity = ledgerEntry.getQuantity() + quantityDelta;
+                        if (newQuantity == 0) {
+                            ledgerItems.remove(ledgerEntry);
+                        } else {
+                            ledgerEntry.setQuantity(newQuantity);
+                        }
+                        ledgerEntry.setWorkCompleteDate(ledgerUpdate.getWorkCompleteDate());
+                    }
+                } else {
+                    throw new StaleLedgerUpdateException(ledgerUpdate);
+                }
+            }
         }
     }
 
