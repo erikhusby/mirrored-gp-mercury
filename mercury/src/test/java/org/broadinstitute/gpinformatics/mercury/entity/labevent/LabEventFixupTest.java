@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.labevent;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -10,6 +11,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeD
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
@@ -1381,4 +1383,33 @@ public class LabEventFixupTest extends Arquillian {
         utx.commit();
     }
 
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/DeleteLabEvents.txt, so it can
+     * be used for other similar fixups, without writing a new test.  Example contents of the file are:
+     * GPLIM-4104
+     * InfiniumHybridization
+     * 1278705
+     * 1278706
+     * 1278707
+     */
+    @Test(enabled = false)
+    public void fixupGplim4104() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("DeleteLabEvents.txt"));
+        String jiraTicket = lines.get(0);
+        String eventType = lines.get(1);
+
+        for (String id : lines.subList(2, lines.size())) {
+            LabEvent labEvent = labEventDao.findById(LabEvent.class, Long.parseLong(id));
+            Assert.assertEquals(labEvent.getLabEventType().getName(), eventType);
+            System.out.println("Deleting lab event " + labEvent.getLabEventId());
+            labEventDao.remove(labEvent);
+        }
+
+        labEventDao.persist(new FixupCommentary(jiraTicket + " delete " + eventType));
+        labEventDao.flush();
+        utx.commit();
+    }
 }
