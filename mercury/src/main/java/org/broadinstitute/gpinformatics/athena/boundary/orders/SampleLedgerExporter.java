@@ -106,9 +106,10 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
 
         List<PriceItem> allPriceItems = new ArrayList<>();
 
-        // First add the primary price item
+        // First add the primary price item.
         allPriceItems.add(product.getPrimaryPriceItem());
 
+        // Now add the replacement price items.
         // Get the replacement items from the quote cache.
         Collection<QuotePriceItem> quotePriceItems =
             priceItemListCache.getReplacementPriceItems(product.getPrimaryPriceItem());
@@ -205,6 +206,14 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
 
     private SortedSet<PriceItem> getHistoricalPriceItems(List<ProductOrder> productOrders, List<PriceItem> priceItems,
                                                          List<Product> addOns) {
+        return getHistoricalPriceItems(productOrders, priceItems, addOns, priceItemDao, priceListCache);
+    }
+
+    // TODO: this is static; move it somewhere else
+    public static SortedSet<PriceItem> getHistoricalPriceItems(List<ProductOrder> productOrders,
+                                                               List<PriceItem> priceItems, List<Product> addOns,
+                                                               PriceItemDao priceItemDao,
+                                                               PriceListCache priceListCache) {
         Set<PriceItem> addOnPriceItems = new HashSet<>();
         for (Product addOn : addOns) {
             addOnPriceItems.addAll(getPriceItems(addOn, priceItemDao, priceListCache));
