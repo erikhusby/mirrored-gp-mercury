@@ -288,6 +288,6 @@
     </changeSet>
     <changeSet id="GPLIM-4060-POST_RELEASE-3" author="dryan">
         <addUniqueConstraint tableName="SUBMISSION_TRACKER" constraintName="UNQ_SUBMISSION_TRACKER_TUPLE"
-                             schemaName="ATHENA" columnNames="SUBMITTED_SAMPLE_NAME, FILE_TYPE, VERSION" />
+                             schemaName="ATHENA" columnNames="RESEARCH_PROJECT_ID,SUBMITTED_SAMPLE_NAME, FILE_TYPE, VERSION" />
     </changeSet>
 </databaseChangeLog>
