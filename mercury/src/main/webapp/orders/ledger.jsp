@@ -178,6 +178,25 @@
              */
             $j('.dateComplete').datepicker({ dateFormat: 'M d, yy' }).datepicker('refresh');
 
+            /**
+             * When rows are selected and one "date complete" is changed, change all selected rows.
+             */
+            $j('.dateComplete').change(function(event) {
+                var $selectedRows = getSelectedRows();
+                if ($selectedRows.length > 0) {
+                    var $input = $j(event.target);
+                    var inputName = $input.attr('name');
+                    var value = $input.val();
+                    var $selectedInputs = $selectedRows.find('input.dateComplete');
+                    for (var i = 0; i < $selectedInputs.length; i++) {
+                        var $selectedInput = $selectedInputs.eq(i);
+                        if ($selectedInput.attr('name') != inputName) {
+                            $selectedInput.val(value);
+                        }
+                    }
+                }
+            });
+
             /*
              * Set up hSpinner widgets for controlling ledger quantities.
              */
