@@ -86,9 +86,9 @@
             /*
              * Extract the values from the quantity fields to use when sorting.
              */
-            $j.fn.dataTableExt.afnSortData['input-value'] = function(oSettings, iColumn) {
+            $j.fn.dataTableExt.afnSortData['input-value'] = function(oSettings, iDataColumn, iVisibleColumn) {
                 return $j.map(oSettings.oApi._fnGetTrNodes(oSettings), function (tr, i) {
-                    return $j('td:eq(' + iColumn + ') input:text', tr).val();
+                    return $j('td:eq(' + iVisibleColumn + ') input:text', tr).val();
                 });
             };
 
@@ -101,19 +101,20 @@
                 'sDom': "<'row-fluid'<'span6'f><'span4'<'#dtButtonHolder'>><'span2'T>r>t<'row-fluid'<'span6'i><'span6'p>>",
                 'aaSorting': [[1, 'asc']],
                 'aoColumns': [
-                    {'bSortable': false},                           // checkbox
-                    {'bSortable': true},                            // sample position
-                    {'bSortable': false},                           // expand
-                    {'bSortable': true},                            // sample ID
-                    {'bSortable': true},                            // collaborator sample ID
-                    {'bSortable': true},                            // on risk
-                    {'bSortable': true},                            // status
-                    {'bSortable': true},                            // DCFM
-                    {'bSortable': true, 'sSortDataType': 'input-value', 'sType': 'date'}, // date complete
+                    {'bSortable': false},                                                   // 0: checkbox
+                    {'bSortable': true},                                                    // 1: sample position
+                    {'bSortable': false},                                                   // 2: expand
+                    {'bSortable': true},                                                    // 3: sample ID
+                    {'bSortable': true},                                                    // 4: collaborator sample ID
+                    {'bSortable': true},                                                    // 5: on risk
+                    {'bSortable': true},                                                    // 6: status
+                    {'bSortable': true},                                                    // 7: DCFM
+                    {'bSortable': true, 'sSortDataType': 'input-value', 'sType': 'date'},   // 8: date complete
 
                     // price item columns
-                    <c:forEach items="${actionBean.priceItems}" var="priceItem">
-                    {'bSortable': true, 'sSortDataType': 'input-value', 'sType': 'numeric'}, // ${priceItem.name}
+                    <c:forEach items="${actionBean.priceItems}" var="priceItem" varStatus="status">
+                    {'bVisible': false},
+                    {'bSortable': true, 'sSortDataType': 'input-value', 'sType': 'numeric'}, // ${9 + status.index}: ${priceItem.name}
                     </c:forEach>
 
                     {'bSortable': true, 'sType': 'title-string'}    // billed
@@ -265,21 +266,59 @@
             });
         });
 
+        /*
+         * Filter functions
+         */
         var numPriceItems = ${actionBean.priceItems.size()};
+
         var allFilter = function(oSettings, aData, iDataIndex) { return true; };
+
         var riskFilter = function (oSettings, aData, iDataIndex) {
             return aData[5] != '';
         };
-        var noRiskFilter = function(oSettings, aData, iDataIndex) { return aData[5] == ''; };
-        var coverageMetFilter = function(oSettings, aData, iDataIndex) { return aData[7] != ''; };
-        var notCoverageMetFilter = function(oSettings, aData, iDataIndex) { return aData[7] == ''; };
-        var billedFilter = function(oSettings, aData, iDataIndex) { return aData[9 + numPriceItems] != ''; };
-        var notBilledFilter = function(oSettings, aData, iDataIndex) { return aData[9 + numPriceItems] == ''; };
-        var modifiedFilter = function (oSettings, aData, iDataIndex) {
-            return $j('#ledger tbody tr:nth-child(' + (iDataIndex + 1) + ') .changed').length > 0;
+
+        var noRiskFilter = function(oSettings, aData, iDataIndex) {
+            return !riskFilter(oSettings, aData, iDataIndex);
         };
+
+        var coverageMetFilter = function(oSettings, aData, iDataIndex) {
+            return aData[7] != '';
+        };
+
+        var notCoverageMetFilter = function(oSettings, aData, iDataIndex) {
+            return !coverageMetFilter(oSettings, aData, iDataIndex);
+        };
+
+        var billedFilter = function(oSettings, aData, iDataIndex) {
+            // Assumes that the content is rendered as something indicating a check mark, i.e., "check.png"
+            return aData[9 + numPriceItems * 2].includes('check');
+        };
+
+        var notBilledFilter = function (oSettings, aData, iDataIndex) {
+            return !billedFilter(oSettings, aData, iDataIndex);
+        };
+
+        var modifiedFilter = function (oSettings, aData, iDataIndex) {
+            /*
+             * aData contains a copy of the original cell content which will not have any updates to the text inputs.
+             * Therefore, we need to look at the actual rows to extract the current value.
+             */
+            var row = oSettings.oApi._fnGetTrNodes(oSettings)[iDataIndex];
+
+            for (var i = 0; i < numPriceItems; i++) {
+                // aData has all data, including hidden cells, so a little math is needed.
+                var original = parseFloat(aData[9 + i*2]);
+                // cells contains only the visible cells, so no need to skip over the hidden ones.
+                var current = parseFloat($j(row).children().eq(9 + i).find('input:text').val());
+                if (original != current) {
+                    return true;
+                }
+            }
+            return false;
+        };
+
         function notModifiedFilter(oSettings, aData, iDataIndex) {
-            return $j('#ledger tbody tr:nth-child(' + (iDataIndex + 1) + ') .changed').length == 0;
+            return !modifiedFilter(oSettings, aData, iDataIndex);
         };
 
         function updateSubmitButton() {
@@ -432,7 +471,7 @@
             <tr>
                 <th colspan="3"></th>
                 <th colspan="5" style="text-align: center">Sample Information</th>
-                <th colspan="${actionBean.priceItems.size() + 2}" style="text-align: center">Billing</th>
+                <th colspan="${actionBean.priceItems.size() * 2 + 2}" style="text-align: center">Billing</th>
             </tr>
             <tr>
                 <th>
@@ -448,6 +487,7 @@
                 <th title="Date Coverage First Met">DCFM</th>
                 <th style="text-align: center">Date Complete</th>
                 <c:forEach items="${actionBean.priceItems}" var="priceItem">
+                    <th>Original value for ${priceItem.name}</th>
                     <th style="text-align: center">${priceItem.name}</th>
                 </c:forEach>
                 <th style="text-align: center">Billed</th>
@@ -492,6 +532,9 @@
                     </td>
 
                     <c:forEach items="${actionBean.priceItems}" var="priceItem">
+                        <td>
+                                ${info.getTotalForPriceItem(priceItem)}
+                        </td>
                         <td style="text-align: center">
                             <stripes:hidden name="formData[${info.sample.samplePosition}].quantities[${priceItem.priceItemId}].originalQuantity"
                                             value="${info.getTotalForPriceItem(priceItem)}"/>
