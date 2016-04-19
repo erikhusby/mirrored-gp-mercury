@@ -319,6 +319,19 @@ public class LabMetricFixupTest extends Arquillian {
         utx.commit();
     }
 
+    @Test(enabled = false)
+    public void fixupGplim4105() {
+        try {
+            utx.begin();
+            userBean.loginOSUser();
+            deleteRun("9059 FP pico", "GPLIM-4105 remove FP run which was uploaded as Initial");
+            utx.commit();
+        } catch (NotSupportedException | SystemException | RollbackException | HeuristicMixedException |
+                HeuristicRollbackException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private void deleteRun(String runName, String reason) {
         LabMetricRun labMetricRun = dao.findByName(runName);
         for (LabMetric labMetric : labMetricRun.getLabMetrics()) {
