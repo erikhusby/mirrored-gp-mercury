@@ -542,10 +542,10 @@
                             </div>
                         </c:if>
                     </td>
-                    <td>
-                        <!-- status -->
+                    <td style="text-align: center">
+                        ${info.sample.deliveryStatus.displayName}
                     </td>
-                    <td>
+                    <td style="text-align: center">
                         <fmt:formatDate value="${info.coverageFirstMet}"/>
                     </td>
                     <td style="text-align: center">
