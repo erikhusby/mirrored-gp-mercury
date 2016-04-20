@@ -651,15 +651,30 @@ public class ProductOrderSampleTest {
         ProductOrderSample productOrderSample = createOrderedSample("TEST");
         PriceItem priceItem = productOrderSample.getProductOrder().getProduct().getPrimaryPriceItem();
 
+        ProductOrderSample.LedgerUpdate ledgerUpdate =
+                new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(), priceItem, 1, 0, 2, new Date());
         Exception caught = null;
         try {
-            ProductOrderSample.LedgerUpdate ledgerUpdate =
-                    new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(), priceItem, 1, 0, 2, null);
             productOrderSample.applyLedgerUpdate(ledgerUpdate);
         } catch (Exception e) {
             caught = e;
         }
         assertThat(caught, instanceOf(StaleLedgerUpdateException.class));
+    }
+
+    public void testAddLedgerEntryWithNoWorkCompleteDateThrowsException() {
+        ProductOrderSample productOrderSample = createOrderedSample("TEST");
+        PriceItem priceItem = productOrderSample.getProductOrder().getProduct().getPrimaryPriceItem();
+
+        ProductOrderSample.LedgerUpdate ledgerUpdate =
+                new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(), priceItem, 0, 0, 1, null);
+        Exception caught = null;
+        try {
+            productOrderSample.applyLedgerUpdate(ledgerUpdate);
+        } catch (Exception e) {
+            caught = e;
+        }
+        assertThat(caught, instanceOf(IllegalArgumentException.class));
     }
 
     @NotNull

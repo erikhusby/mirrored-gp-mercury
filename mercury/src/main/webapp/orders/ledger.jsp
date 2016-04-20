@@ -378,7 +378,8 @@
         function updateUnbilledStatus($input) {
             var hasUnbilledQuantity = parseFloat($input.val()) != parseFloat($input.attr('billedQuantity'));
             $input.toggleClass('pending', hasUnbilledQuantity);
-            $input.parentsUntil('tbody', 'tr').find('.unbilledStatus').text(hasUnbilledQuantity ? '*' : '');
+            var row = $input.parentsUntil('tbody', 'tr');
+            row.find('.unbilledStatus').text(row.find('input.pending').length > 0 ? '*' : '');
         }
 
 
@@ -427,11 +428,14 @@
         <%-- Hidden form data for order context --%>
         <stripes:hidden name="orderId"/>
 
-        <%-- Container for inputs that may be hidden because of datatable filters. If the rows are hidden, the form data
-             will not be submitted. This could lead to requested changes not being applied. Also, the action bean
-             expects there to be form data for all samples. --%>
+        <%-- If any rows are hidden due to filtering or paging, the hidden input values will not be submitted. This
+             could lead to action bean errors and requested changes not being applied. Therefore, when the form is
+             submitted, inputs from hidden rows will be gathered and moved into this div. --%>
         <div id="hiddenRowInputs" style="display: none;"></div>
 
+        <stripes:hidden name="renderedSampleNames"/>
+        <stripes:hidden name="renderedPriceItemNames"/>
+        
         <%-- Datatable filters --%>
         <div id="filters" class="row-fluid" style="display: none;">
             <div class="span10">
@@ -516,7 +520,7 @@
             <c:forEach items="${actionBean.productOrderSampleLedgerInfos}" var="info">
                 <tr>
                     <td>
-                        <stripes:checkbox title="${info.sample.samplePosition}" class="shiftCheckbox" name="selectedProductOrderSampleIds" value="${info.sample.productOrderSampleId}"/>
+                        <input type="checkbox" title="${info.sample.samplePosition}" class="shiftCheckbox" name="selectedProductOrderSampleIds" value="${info.sample.productOrderSampleId}">
                     </td>
                     <td style="text-align: right">
                         ${info.sample.samplePosition + 1}
@@ -526,7 +530,7 @@
                     </td>
                     <td>
                         ${info.sample.name}
-                        <stripes:hidden name="formData[${info.sample.samplePosition}].sampleName" value="${info.sample.name}"/>
+                        <stripes:hidden name="ledgerData[${info.sample.samplePosition}].sampleName" value="${info.sample.name}"/>
                     </td>
                     <td>
                         ${info.sample.sampleData.collaboratorsSampleName}
@@ -545,7 +549,7 @@
                         <fmt:formatDate value="${info.coverageFirstMet}"/>
                     </td>
                     <td style="text-align: center">
-                        <input name="formData[${info.sample.samplePosition}].workCompleteDate"
+                        <input name="ledgerData[${info.sample.samplePosition}].workCompleteDate"
                                value="${info.dateComplete}"
                                class="dateComplete">
                     </td>
@@ -555,11 +559,11 @@
                                 ${info.getTotalForPriceItem(priceItem)}
                         </td>
                         <td style="text-align: center">
-                            <stripes:hidden name="formData[${info.sample.samplePosition}].quantities[${priceItem.priceItemId}].originalQuantity"
+                            <stripes:hidden name="ledgerData[${info.sample.samplePosition}].quantities[${priceItem.priceItemId}].originalQuantity"
                                             value="${info.getTotalForPriceItem(priceItem)}"/>
                             <%--<input name="${info.sample.samplePosition}-${priceItem.priceItemId}-${info.sample.name}" value="${info.getTotalForPriceItem(priceItem)}" class="ledgerQuantity">--%>
-                            <input id="formData[${info.sample.samplePosition}].quantities[${priceItem.priceItemId}].submittedQuantity"
-                                   name="formData[${info.sample.samplePosition}].quantities[${priceItem.priceItemId}].submittedQuantity"
+                            <input id="ledgerData[${info.sample.samplePosition}].quantities[${priceItem.priceItemId}].submittedQuantity"
+                                   name="ledgerData[${info.sample.samplePosition}].quantities[${priceItem.priceItemId}].submittedQuantity"
                                    value="${info.getTotalForPriceItem(priceItem)}"
                                    class="ledgerQuantity"
                                    priceItemId="${priceItem.priceItemId}"
@@ -577,74 +581,13 @@
                         <c:if test="${info.sample.completelyBilled}">
                             <img src="${ctxpath}/images/check.png" title="Yes">
                         </c:if>
-                        <span class="unbilledStatus"></span>
+                        <span class="unbilledStatus pending"></span>
                     </td>
                 </tr>
             </c:forEach>
         </tbody>
     </table>
     </stripes:form>
-
-<%--
-    <table id="ledger" class="table simple">
-        <thead>
-            <tr>
-                <th>Sample</th>
-                <th>Collaborator Sample ID</th>
-                <th style="text-align: center">Primary Billed</th>
-                <th colspan="6"></th>
-            </tr>
-            <tr>
-                <th></th>
-                <th>Price Item</th>
-                <th style="text-align: right">Total Quantity</th>
-                <th colspan="5"></th>
-            </tr>
-            <tr>
-                <th></th>
-                <th></th>
-                <th>Billed Date</th>
-                <th>Quote</th>
-                <th style="text-align: right">Qty</th>
-                <th style="text-align: center">Billed</th>
-                <th>Billing Session</th>
-                <th>Billing Message</th>
-            </tr>
-        </thead>
-        <tbody>
-            <c:forEach items="${actionBean.productOrderSampleLedgerInfos}" var="info">
-                <tr>
-                    <td>${info.sample.name}</td>
-                    <td>${info.sample.sampleData.collaboratorsSampleName}</td>
-                    <td style="text-align: center"><c:if test="${info.sample.completelyBilled}"><img src="${ctxpath}/images/check.png" title="Yes"></c:if></td>
-                    <td colspan="5"></td>
-                </tr>
-                <c:forEach items="${actionBean.priceItems}" var="priceItem">
-                    <c:if test="${info.ledgerEntriesByPriceItem.containsKey(priceItem)}">
-                        <tr>
-                            <td></td>
-                            <td>${priceItem.displayName}</td>
-                            <td style="text-align: right">${info.ledgerQuantities[priceItem].billed}</td>
-                            <td colspan="5"></td>
-                        </tr>
-                        <c:forEach items="${info.ledgerEntriesByPriceItem.asMap()[priceItem]}" var="ledgerEntry">
-                            <tr>
-                                <td></td>
-                                <td></td>
-                                <td>${ledgerEntry.billingSession.billedDate}</td>
-                                <td>${ledgerEntry.quoteId}</td>
-                                <td style="text-align: right">${ledgerEntry.quantity}</td>
-                                <td style="text-align: center"><c:if test="${ledgerEntry.billed}"><img src="${ctxpath}/images/check.png" title="Yes"></c:if></td>
-                                <td>${ledgerEntry.billingSession.billingSessionId}</td>
-                                <td>${ledgerEntry.billingMessage}</td>
-                            </tr>
-                        </c:forEach>
-                    </c:if>
-                </c:forEach>
-            </c:forEach>
-        </tbody>
-    </table>
---%>
 
 </stripes:layout-component>
 </stripes:layout-render>

@@ -25,6 +25,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_
 import org.broadinstitute.gpinformatics.athena.entity.orders.StaleLedgerUpdateException;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
+import org.broadinstitute.gpinformatics.infrastructure.ValidationWithRollbackException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPKitRequestService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
@@ -1106,16 +1107,25 @@ public class ProductOrderEjb {
      * @param ledgerUpdates a map of PDO sample to a collection of ledger updates
      * @throws StaleLedgerUpdateException if the previous quantity in any ledger update is out-of-date
      */
-    public void updateSampleLedgers(
-            Map<ProductOrderSample, Collection<ProductOrderSample.LedgerUpdate>> ledgerUpdates)
-            throws StaleLedgerUpdateException {
+    public void updateSampleLedgers(Map<ProductOrderSample, Collection<ProductOrderSample.LedgerUpdate>> ledgerUpdates)
+            throws ValidationWithRollbackException {
+        List<String> errorMessages = new ArrayList<>();
+
         for (Map.Entry<ProductOrderSample, Collection<ProductOrderSample.LedgerUpdate>> entry : ledgerUpdates
                 .entrySet()) {
             ProductOrderSample productOrderSample = entry.getKey();
             Collection<ProductOrderSample.LedgerUpdate> updates = entry.getValue();
             for (ProductOrderSample.LedgerUpdate update : updates) {
-                productOrderSample.applyLedgerUpdate(update);
+                try {
+                    productOrderSample.applyLedgerUpdate(update);
+                } catch (Exception e) {
+                    errorMessages.add(e.getMessage());
+                }
             }
+        }
+
+        if (!errorMessages.isEmpty()) {
+            throw new ValidationWithRollbackException("Error updating ledger quantities", errorMessages);
         }
         productOrderDao.flush();
     }

@@ -873,12 +873,18 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         if (ledgerUpdate.isChangeIntended()) {
             if (ledgerUpdate.isChangeNeeded()) {
                 if (ledgerUpdate.isChangeRequestCurrent()) {
+                    Date workCompleteDate = ledgerUpdate.getWorkCompleteDate();
+                    if (workCompleteDate == null) {
+                        throw new RuntimeException(
+                                "Work complete date is missing for sample " + ledgerUpdate.getSampleName());
+                    }
+
                     PriceItem priceItem = ledgerUpdate.getPriceItem();
                     double quantityDelta = ledgerUpdate.getQuantityDelta();
-                    LedgerEntry ledgerEntry = findUnbilledLedgerEntryForPriceItem(priceItem);
 
+                    LedgerEntry ledgerEntry = findUnbilledLedgerEntryForPriceItem(priceItem);
                     if (ledgerEntry == null) {
-                        addLedgerItem(ledgerUpdate.getWorkCompleteDate(), priceItem, quantityDelta);
+                        addLedgerItem(workCompleteDate, priceItem, quantityDelta);
                     } else {
                         if (ledgerEntry.isBeingBilled()) {
                             throw new RuntimeException(
@@ -890,7 +896,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
                         } else {
                             ledgerEntry.setQuantity(newQuantity);
                         }
-                        ledgerEntry.setWorkCompleteDate(ledgerUpdate.getWorkCompleteDate());
+                        ledgerEntry.setWorkCompleteDate(workCompleteDate);
                     }
                 } else {
                     throw new StaleLedgerUpdateException(ledgerUpdate);
