@@ -413,12 +413,16 @@
 
 <%-- ================ Product Order Information ================ --%>
 
-    <p>Product: ${actionBean.productOrder.product.name}</p>
-    <p>Quote: ${actionBean.productOrder.quoteId}</p>
-    <p>Number of Samples: ${actionBean.productOrder.samples.size()}</p>
-    <p>Primary Price Item: ${actionBean.productOrder.product.primaryPriceItem.name}</p>
+    <div class="row-fluid">
+        <div class="span4"><span class="label-form">Product:</span> ${actionBean.productOrder.product.name}</div>
+        <div class="span4"><span class="label-form">Primary Price Item:</span> ${actionBean.productOrder.product.primaryPriceItem.name}</div>
+        <div class="span2"><span class="label-form">Quote:</span> ${actionBean.productOrder.quoteId}</div>
+        <div class="span2">${actionBean.productOrder.samples.size()} samples</div>
+    </div>
     <c:if test="${actionBean.productOrder.addOnList != 'no Add-ons'}">
-        <p>Add-Ons: ${actionBean.productOrder.addOnList}</p>
+        <div class="row-fluid">
+            <div class="span12"><span class="label-form">Add-Ons:</span> ${actionBean.productOrder.addOnList}</div>
+        </div>
     </c:if>
 
 <%-- ================ Ledger Datatable and Form ================ --%>
