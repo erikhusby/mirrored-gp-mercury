@@ -440,7 +440,10 @@
 	<column name="archetype_name" type="varchar2(255)">
 	  <constraints nullable="false"/>
 	</column>
-	<column name="attribute_family" type="varchar2(255)">
+	<column name="archetype_group" type="varchar2(255)">
+	  <constraints nullable="false"/>
+	</column>
+	<column name="namespace" type="varchar2(255)">
 	  <constraints nullable="false"/>
 	</column>
       </createTable>
@@ -449,7 +452,7 @@
 		     schemaName="mercury" columnNames="archetype_id"/>
 
       <addUniqueConstraint constraintName="U_ATTRIBUTE_ARCHETYPE" tableName="ATTRIBUTE_ARCHETYPE"
-			   schemaName="mercury" columnNames="attribute_family, archetype_name"/>
+			   schemaName="mercury" columnNames="archetype_group, namespace, archetype_name"/>
     </changeSet>
 
     <changeSet id="GPLIM-4023-2" author="epolk">
@@ -464,7 +467,8 @@
 	  <constraints nullable="false"/>
 	</column>
 	<column name="archetype_name" type="varchar2(255)"/>
-	<column name="attribute_family" type="varchar2(255)"/>
+	<column name="archetype_group" type="varchar2(255)"/>
+	<column name="namespace" type="varchar2(255)"/>
       </createTable>
 
       <addPrimaryKey constraintName="PK_ATTRIBUTE_ARCHETYPE_AUD" tableName="ATTRIBUTE_ARCHETYPE_AUD"
@@ -527,14 +531,17 @@
 	<column name="attribute_definition_id" type="number(19,0)">
 	  <constraints nullable="false"/>
 	</column>
-	<column name="attribute_family" type="varchar2(255)">
+	<column name="namespace" type="varchar2(255)">
+	  <constraints nullable="false"/>
+	</column>
+	<column name="archetype_group" type="varchar2(255)">
 	  <constraints nullable="false"/>
 	</column>
 	<column name="attribute_name" type="varchar2(255)">
 	  <constraints nullable="false"/>
 	</column>
-	<column name="family_attribute_value" type="varchar2(255)"/>
-	<column name="is_family_attribute" type="number(1,0)"/>
+	<column name="group_attribute_value" type="varchar2(255)"/>
+	<column name="is_group_attribute" type="number(1,0)"/>
 	<column name="is_displayable" type="number(1,0)"/>
       </createTable>
 
@@ -542,7 +549,7 @@
 		     schemaName="mercury"  columnNames="attribute_definition_id"/>
 
       <addUniqueConstraint constraintName="U_ATTRIBUTE_DEFINITION" tableName="ATTRIBUTE_DEFINITION"
-			   schemaName="mercury" columnNames="attribute_family, attribute_name"/>
+			   schemaName="mercury" columnNames="archetype_group, namespace, attribute_name"/>
 
     </changeSet>
 
@@ -557,10 +564,11 @@
 	<column name="revtype" type="number(3,0)">
 	  <constraints nullable="false"/>
 	</column>
-	<column name="attribute_family" type="varchar2(255)"/>
+	<column name="namespace" type="varchar2(255)"/>
+	<column name="archetype_group" type="varchar2(255)"/>
 	<column name="attribute_name" type="varchar2(255)"/>
-	<column name="family_attribute_value" type="varchar2(255)"/>
-	<column name="is_family_attribute" type="number(1,0)"/>
+	<column name="group_attribute_value" type="varchar2(255)"/>
+	<column name="is_group_attribute" type="number(1,0)"/>
 	<column name="is_displayable" type="number(1,0)"/>
       </createTable>
 

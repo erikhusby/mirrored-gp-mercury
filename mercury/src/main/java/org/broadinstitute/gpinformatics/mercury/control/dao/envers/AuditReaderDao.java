@@ -2,12 +2,15 @@ package org.broadinstitute.gpinformatics.mercury.control.dao.envers;
 
 import com.sun.xml.ws.developer.Stateful;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.poi.ss.formula.functions.T;
 import org.broadinstitute.gpinformatics.infrastructure.datawh.ExtractTransform;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.RevInfo;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.RevInfo_;
+import org.broadinstitute.gpinformatics.mercury.entity.run.ArchetypeAttribute;
 import org.hibernate.SQLQuery;
 import org.hibernate.envers.AuditReader;
 import org.hibernate.envers.AuditReaderFactory;
@@ -15,6 +18,9 @@ import org.hibernate.envers.RevisionType;
 import org.hibernate.envers.exception.AuditException;
 import org.hibernate.envers.query.AuditEntity;
 import org.hibernate.envers.query.AuditQuery;
+import org.hibernate.envers.query.order.AuditOrder;
+import org.hibernate.envers.query.order.PropertyAuditOrder;
+import org.hibernate.envers.query.property.RevisionPropertyPropertyName;
 import org.hibernate.type.LongType;
 import org.hibernate.type.StringType;
 import org.hibernate.type.TimestampType;
@@ -263,4 +269,46 @@ public class AuditReaderDao extends GenericDao {
         return (Collections.emptyList());
     }
 
+    /**
+     * Returns all versions of the entity identified by entity id.
+     * The entity class must be auditable and have an @Id field.
+     *
+     * @return List of the Pair (modified date, entity) ordered by increasing date.
+     * A deleted entity is represented by the Pair (date deleted, null).
+     */
+    public <T> List<Pair<Date, T>> getSortedVersionsOfEntity(Class entityClass, Long entityId) {
+        List<Pair<Date, T>> list = new ArrayList<>();
+        List<Object[]> versions = getAuditReader().createQuery()
+                .forRevisionsOfEntity(entityClass, false, true)
+                .add(AuditEntity.id().eq(entityId))
+                .addOrder(new PropertyAuditOrder(new RevisionPropertyPropertyName("revDate"), true))
+                .getResultList();
+        for (Object[] version : versions) {
+            RevInfo revInfo = (RevInfo) version[AuditReaderDao.AUDIT_READER_REV_INFO_IDX];
+            RevisionType revType = (RevisionType) version[AuditReaderDao.AUDIT_READER_TYPE_IDX];
+            T entity = (revType == RevisionType.DEL) ? null : (T) version[AuditReaderDao.AUDIT_READER_ENTITY_IDX];
+            list.add(Pair.of(revInfo.getRevDate(), entity));
+        }
+        return list;
+    }
+
+    /**
+     * Returns the version of the entity as of the effective date. The entity will be null if it was deleted
+     * before effective date. It will also be null if the entity was created after the effective date unless
+     * extendToFirstAvailable is true, which then returns the first available entity.
+     */
+    public <T> T getVersionAsOf(Class entityClass, Long entityId, Date effectiveDate, boolean extendToFirstAvailable) {
+        T entity = null;
+        boolean found = false;
+        List<Pair<Date, Object>> versions = getSortedVersionsOfEntity(entityClass, entityId);
+        for (Pair<Date, Object> version : versions) {
+            if (version.getLeft().getTime() <= effectiveDate.getTime() || !found && extendToFirstAvailable) {
+                found = true;
+                entity = (T)version.getRight();
+            } else {
+                break;
+            }
+        }
+        return entity;
+    }
 }

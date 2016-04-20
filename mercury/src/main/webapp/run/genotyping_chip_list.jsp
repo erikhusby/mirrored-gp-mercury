@@ -48,7 +48,7 @@
                 <stripes:label for="familySelect" name="Chip Family" class="control-label"/>
                 <div class="controls">
                     <stripes:select id="familySelect" name="selectedFamily" style="width:25%" onchange="familyChanged()">
-                        <stripes:option label="Select a chip family..." value="-1" disabled="true" selected="true"/>
+                        <stripes:option label="Select a chip group..." value="-1" disabled="true" selected="true"/>
                         <stripes:options-collection collection="${actionBean.chipFamilies}"/>
                     </stripes:select>
                 </div>

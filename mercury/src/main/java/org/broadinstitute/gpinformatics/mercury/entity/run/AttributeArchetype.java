@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.run;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -11,24 +12,28 @@ import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 /**
- * The AttributeArchetype is a class that can confer configurable attributes to some other entity.
- * An example is Genotyping array chip type, which is entirely modeled by an archetype, one per chip type,
- * and each archetype has a set of attributes for that chip type. Genotyping array chip type also has
- * a more global attribute that applies to each chip type family ("Infinium", "Fluidigm", etc.) and this
- * attribute is put in AttributeDefinition, keyed by attributeFamily.
- * The AttributeDefinition class defines the attribute names (the keys), and the AttributeArchetype
- * class contains each attribute key-value pair.
- */
+ * AttributeArchetype is intended to confer configurable attributes to some other entity, for the
+ * purpose of adding properties via fixup test rather than hotfix.
+ * An archetype may also be sufficient by itself without needing another entity.
+ * An example is Genotyping array chip type, which models a chip vendor/technology (e.g. Infinium)
+ * as an archetype group and the genotyping chip types as archetypes of that group.
+ * Attributes that apply to a specific chip are represented in ArchetypeAttribute.
+ * Their names and UI visibility are represented in AttributeDefinition.
+ * Attributes that apply to an archetype group are also represented in AttributeDefinition.
+  */
 
 @Entity
 @Audited
-@Table(schema = "mercury", uniqueConstraints = @UniqueConstraint(columnNames = {"attributeFamily", "archetypeName"}))
+@Table(schema = "mercury", uniqueConstraints = @UniqueConstraint(columnNames = {"archetype_group", "namespace", "archetypeName"}))
 public class AttributeArchetype {
 
     @SequenceGenerator(name = "seq_attribute_archetype", schema = "mercury", sequenceName = "seq_attribute_archetype")
@@ -36,8 +41,12 @@ public class AttributeArchetype {
     @Id
     private Long archetypeId;
 
+    private String namespace;
+
+    @Column(name = "archetype_group")
+    private String group;
+
     private String archetypeName;
-    private String attributeFamily;
 
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true, mappedBy = "archetype")
     private Set<ArchetypeAttribute> attributes;
@@ -45,8 +54,9 @@ public class AttributeArchetype {
     public AttributeArchetype() {
     }
 
-    public AttributeArchetype(String attributeFamily, String name) {
-        this.attributeFamily = attributeFamily;
+    public AttributeArchetype(String namespace, String group, String name) {
+        this.namespace = namespace;
+        this.group = group;
         this.archetypeName = name;
         attributes = new HashSet<>();
     }
@@ -59,15 +69,84 @@ public class AttributeArchetype {
         return attributes;
     }
 
-    public String getAttributeFamily() {
-        return attributeFamily;
+    public String getNamespace() {
+        return namespace;
+    }
+
+    public String getGroup() {
+        return group;
+    }
+
+    public Long getArchetypeId() {
+        return archetypeId;
     }
 
     public Map<String, String> getAttributeMap() {
         return new HashMap<String, String>(){{
-            for (ArchetypeAttribute attribute : attributes) {
-                put(attribute.getAttributeName(), attribute.getAttributeValue());
+            if (attributes != null) {
+                for (ArchetypeAttribute attribute : attributes) {
+                    put(attribute.getAttributeName(), attribute.getAttributeValue());
+                }
             }
         }};
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof AttributeArchetype)) {
+            return false;
+        }
+
+        AttributeArchetype archetype = (AttributeArchetype) o;
+
+        if (archetypeId != null ? !archetypeId.equals(archetype.archetypeId) : archetype.archetypeId != null) {
+            return false;
+        }
+        if (archetypeName != null ? !archetypeName.equals(archetype.archetypeName) : archetype.archetypeName != null) {
+            return false;
+        }
+        if (namespace != null ? !namespace.equals(archetype.namespace) :
+                archetype.namespace != null) {
+            return false;
+        }
+        if (group != null ? !group.equals(archetype.group) :
+                archetype.group != null) {
+            return false;
+        }
+        // Uses attribute id, name, value and archetypeId in the comparison.
+        if (attributes == null) {
+            return (archetype.attributes == null);
+        } else if (archetype.attributes == null) {
+            return false;
+        }
+        Map<String, ArchetypeAttribute> map = new HashMap<>();
+        for (ArchetypeAttribute attribute : attributes) {
+            map.put(attribute.getAttributeName(), attribute);
+        }
+        for (ArchetypeAttribute otherAttribute : archetype.attributes) {
+            ArchetypeAttribute attribute = map.get(otherAttribute.getAttributeName());
+            if (!otherAttribute.equals(attribute)) {
+                return false;
+            }
+        }
+        return (map.size() == attributes.size());
+    }
+
+    @Override
+    public int hashCode() {
+        int result = archetypeId != null ? archetypeId.hashCode() : 0;
+        result = 31 * result + (archetypeName != null ? archetypeName.hashCode() : 0);
+        result = 31 * result + (namespace != null ? namespace.hashCode() : 0);
+        result = 31 * result + (group != null ? group.hashCode() : 0);
+        List<Integer> attributeHashcodes = new ArrayList<>();
+        for (ArchetypeAttribute attribute : attributes) {
+            attributeHashcodes.add(attribute.hashCode());
+        }
+        Collections.sort(attributeHashcodes);
+        result = 31 * result + attributeHashcodes.hashCode();
+        return result;
     }
 }

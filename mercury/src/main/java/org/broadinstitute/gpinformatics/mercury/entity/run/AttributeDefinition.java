@@ -12,16 +12,13 @@ import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
 /**
- * This class defines the attributs of an AttributeArchetype. There are two types of attributes, one that
- * applies to one instance of an Archetype, and one that applies to one family of Archetypes.
- * The instance attributes have their names defined here, so that a UI can know what the required names
- * are, and their values get defined in ArchetypeAttribute, which has a link to one Archetype. Family-wide
- * attributes have both name and value defined here, which has a link to one family of Archetypes.
+ * This class defines the name and other characteristics of an AttributeArchetype.
+ * For group attributes it also holds the attribute value.
  */
 
 @Entity
 @Audited
-@Table(schema = "mercury", uniqueConstraints = @UniqueConstraint(columnNames = {"attributeFamily", "attributeName"}))
+@Table(schema = "mercury", uniqueConstraints = @UniqueConstraint(columnNames = {"archetype_group", "namespace", "attributeName"}))
 public class AttributeDefinition {
 
     @SequenceGenerator(name = "seq_attribute_definition", schema = "mercury", sequenceName = "seq_attribute_definition")
@@ -29,44 +26,55 @@ public class AttributeDefinition {
     @Id
     private Long attributeDefinitionId;
 
-    private String attributeFamily;
+    private String namespace;
+
+    @Column(name = "archetype_group")
+    private String group;
+
     private String attributeName;
+
     private boolean isDisplayable;
 
     /**
-     * Indicates if the attribute is a family attribute (defined in this object) or
+     * Indicates if the attribute is a group attribute (defined in this object) or
      * an instance attribute (defined in ArchetypeAttribute).
      */
-    @Column(name = "is_family_attribute")
-    private boolean isFamilyAttribute;
-    private String familyAttributeValue;
+    @Column(name = "is_group_attribute")
+    private boolean isGroupAttribute;
+
+    private String groupAttributeValue;
 
     public AttributeDefinition() {
     }
 
-    public AttributeDefinition(String attributeFamily, String attributeName, String familyAttributeValue,
-                               boolean isDisplayable, boolean isFamilyAttribute) {
-        this.attributeFamily = attributeFamily;
+    public AttributeDefinition(String namespace, String group, String attributeName, String groupAttributeValue,
+                               boolean isDisplayable, boolean isGroupAttribute) {
+        this.namespace = namespace;
+        this.group = group;
         this.attributeName = attributeName;
-        this.familyAttributeValue = familyAttributeValue;
+        this.groupAttributeValue = groupAttributeValue;
         this.isDisplayable = isDisplayable;
-        this.isFamilyAttribute = isFamilyAttribute;
+        this.isGroupAttribute = isGroupAttribute;
     }
 
-    public String getAttributeFamily() {
-        return attributeFamily;
+    public String getGroup() {
+        return group;
+    }
+
+    public String getNamespace() {
+        return namespace;
     }
 
     public String getAttributeName() {
         return attributeName;
     }
 
-    public String getFamilyAttributeValue() {
-        return familyAttributeValue;
+    public String getGroupAttributeValue() {
+        return groupAttributeValue;
     }
 
-    public void setFamilyAttributeValue(String familyAttributeValue) {
-        this.familyAttributeValue = familyAttributeValue;
+    public void setGroupAttributeValue(String groupAttributeValue) {
+        this.groupAttributeValue = groupAttributeValue;
     }
 
     public boolean isDisplayable() {
@@ -77,11 +85,11 @@ public class AttributeDefinition {
         this.isDisplayable = isDisplayable;
     }
 
-    public boolean isFamilyAttribute() {
-        return isFamilyAttribute;
+    public boolean isGroupAttribute() {
+        return isGroupAttribute;
     }
 
-    public void setIsFamilyAttribute(boolean isFamilyAttribute) {
-        this.isFamilyAttribute = isFamilyAttribute;
+    public void setIsGroupAttribute(boolean isGroupAttribute) {
+        this.isGroupAttribute = isGroupAttribute;
     }
 }

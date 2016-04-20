@@ -1,7 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.run;
 
+import org.apache.commons.lang3.tuple.Pair;
+import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
@@ -9,12 +10,15 @@ import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.run.AttributeArchetype;
 import org.broadinstitute.gpinformatics.mercury.entity.run.AttributeDefinition;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.broadinstitute.gpinformatics.mercury.presentation.run.GenotypingChipTypeActionBean;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
@@ -27,6 +31,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -45,7 +50,7 @@ public class InfiniumRunResource {
     /** Extract barcode, row and column from e.g. 3999595020_R12C02 */
     private static final Pattern BARCODE_PATTERN = Pattern.compile("(\\d*)_(R\\d*)(C\\d*)");
     /** This matches with attribute_definition.attribute_family in the database. */
-    public static final String INFINIUM_FAMILY = "Infinium";
+    public static final String INFINIUM_GROUP = "Infinium";
     private static String DATA_PATH = null;
 
     @Inject
@@ -63,6 +68,9 @@ public class InfiniumRunResource {
     @Inject
     private AttributeArchetypeDao attributeArchetypeDao;
 
+    @Inject
+    private ProductEjb productEjb;
+
     @GET
     @Path("/query")
     @Produces(MediaType.APPLICATION_JSON)
@@ -75,27 +83,37 @@ public class InfiniumRunResource {
             String column = matcher.group(3);
             VesselPosition vesselPosition = VesselPosition.valueOf(row + column);
             LabVessel chip = labVesselDao.findByIdentifier(chipBarcode);
-            infiniumRunBean = buildRunBean(chip, vesselPosition);
+            infiniumRunBean = buildRunBean(chip, vesselPosition, runDate(chip));
         } else {
             throw new ResourceException("Barcode is not of expected format", Response.Status.INTERNAL_SERVER_ERROR);
         }
         return infiniumRunBean;
     }
 
+    private Date runDate(LabVessel chip) {
+        for (LabEvent event : chip.getEvents()) {
+            if (event.getLabEventType() == LabEventType.INFINIUM_XSTAIN) {
+                return event.getEventDate();
+            }
+        }
+        return chip.getLatestEvent().getEventDate();
+    }
+
     /**
      * Build a JAXB DTO from a chip and position (a single sample)
      */
-    private InfiniumRunBean buildRunBean(LabVessel chip, VesselPosition vesselPosition) {
+    private InfiniumRunBean buildRunBean(LabVessel chip, VesselPosition vesselPosition, Date effectiveDate) {
         if (DATA_PATH == null) {
-            AttributeDefinition def = attributeArchetypeDao.findAttributeDefinitionsByFamily(INFINIUM_FAMILY).
+            String namespace = GenotypingChipTypeActionBean.class.getCanonicalName();
+            AttributeDefinition def = attributeArchetypeDao.findAttributeDefinitions(namespace, INFINIUM_GROUP).
                     get("data_path");
             if (def != null) {
-                DATA_PATH = def.getFamilyAttributeValue();
+                DATA_PATH = def.getGroupAttributeValue();
             }
         }
         if (DATA_PATH == null) {
-            throw new ResourceException("No configuration for " + INFINIUM_FAMILY + " data_path attribute",
-                    Response.Status.INTERNAL_SERVER_ERROR);
+            throw new ResourceException("No configuration for " + INFINIUM_GROUP +
+                                        " data_path attribute", Response.Status.INTERNAL_SERVER_ERROR);
         }
         InfiniumRunBean infiniumRunBean;
         Set<SampleInstanceV2> sampleInstancesAtPositionV2 =
@@ -104,35 +122,25 @@ public class InfiniumRunResource {
             SampleInstanceV2 sampleInstanceV2 = sampleInstancesAtPositionV2.iterator().next();
             SampleData sampleData = sampleDataFetcher.fetchSampleData(
                     sampleInstanceV2.getRootOrEarliestMercurySampleName());
-            // todo jmt determine why Arrays samples have no connection between MercurySample and ProductOrderSample
-            List<ProductOrderSample> productOrderSamples = productOrderSampleDao.findBySamples(
-                    Collections.singletonList(sampleInstanceV2.getRootOrEarliestMercurySampleName()));
-
-            Set<String> chipTypes = new HashSet<>();
-            for (ProductOrderSample productOrderSample : productOrderSamples) {
-                String chipType = ProductOrder.genoChipTypeForPart(
-                        productOrderSample.getProductOrder().getProduct().getPartNumber());
-                if (chipType != null) {
-                    chipTypes.add(chipType);
-                }
+            Set<AttributeArchetype> chipTypes = chipTypeNames(productOrderSampleDao.findBySamples(
+                    Collections.singletonList(sampleInstanceV2.getRootOrEarliestMercurySampleName())), effectiveDate);
+            if (chipTypes.isEmpty()) {
+                chipTypes = evaluateAsControl(chip, sampleData, effectiveDate);
             }
             if (chipTypes.isEmpty()) {
-                chipTypes = evaluateAsControl(chip, sampleData);
-            }
-            if (chipTypes.isEmpty()) {
-                throw new ResourceException("Found no chip types", Response.Status.INTERNAL_SERVER_ERROR);
+                throw new ResourceException("Found no chip types for " + chip.getLabel() + " on " + effectiveDate,
+                        Response.Status.INTERNAL_SERVER_ERROR);
             }
             if (chipTypes.size() != 1) {
-                throw new ResourceException("Found mix of chip types " + chipTypes,
+                throw new ResourceException("Found mix of chip types for " + chip.getLabel() + " on " + effectiveDate,
                         Response.Status.INTERNAL_SERVER_ERROR);
             }
 
             String idatPrefix = DATA_PATH + "/" + chip.getLabel() + "_" + vesselPosition.name();
-            String chipType = chipTypes.iterator().next();
-            AttributeArchetype chipTypeArchetype = attributeArchetypeDao.findByName(INFINIUM_FAMILY, chipType);
+            AttributeArchetype chipTypeArchetype = chipTypes.iterator().next();
             Map<String, String> chipTypeAttributes = chipTypeArchetype.getAttributeMap();
             if (chipTypeArchetype == null || chipTypeAttributes.size() == 0) {
-                throw new ResourceException("Found no configuration for " + chipType,
+                throw new ResourceException("Found no configuration for " + chipTypeArchetype.getArchetypeName(),
                         Response.Status.INTERNAL_SERVER_ERROR);
             }
             infiniumRunBean = new InfiniumRunBean(
@@ -155,8 +163,8 @@ public class InfiniumRunResource {
      * No connection to a product was found for a specific sample, so determine if it's a control, then try to
      * get chip type from all samples.
      */
-    private Set<String> evaluateAsControl(LabVessel chip, SampleData sampleData) {
-        Set<String> chipTypes = new HashSet<>();
+    private Set<AttributeArchetype> evaluateAsControl(LabVessel chip, SampleData sampleData, Date effectiveDate) {
+        Set<AttributeArchetype> chipTypes = Collections.emptySet();
         List<Control> controls = controlDao.findAllActive();
         for (Control control : controls) {
             if (control.getCollaboratorParticipantId().equals(sampleData.getCollaboratorParticipantId())) {
@@ -164,17 +172,29 @@ public class InfiniumRunResource {
                 for (SampleInstanceV2 sampleInstanceV2 : chip.getSampleInstancesV2()) {
                      sampleNames.add(sampleInstanceV2.getRootOrEarliestMercurySampleName());
                 }
-                List<ProductOrderSample> productOrderSamples = productOrderSampleDao.findBySamples(sampleNames);
-                for (ProductOrderSample productOrderSample : productOrderSamples) {
-                    String chipType = ProductOrder.genoChipTypeForPart(
-                            productOrderSample.getProductOrder().getProduct().getPartNumber());
-                    if (chipType != null) {
-                        chipTypes.add(chipType);
-                    }
-                }
+                chipTypes = chipTypeNames(productOrderSampleDao.findBySamples(sampleNames), effectiveDate);
                 break;
             }
         }
         return chipTypes;
+    }
+
+    private Set<AttributeArchetype> chipTypeNames(List <ProductOrderSample> productOrderSamples, Date effectiveDate) {
+        Set<AttributeArchetype> archetypes = new HashSet<>();
+        for (ProductOrderSample productOrderSample : productOrderSamples) {
+            Pair<String, String> chipFamilyAndName = productEjb.getGenotypingChip(productOrderSample, effectiveDate);
+            if (chipFamilyAndName.getLeft() != null && chipFamilyAndName.getRight() != null) {
+                AttributeArchetype archetype =
+                        attributeArchetypeDao.findByName(GenotypingChipTypeActionBean.class.getCanonicalName(),
+                                chipFamilyAndName.getLeft(), chipFamilyAndName.getRight());
+                if (archetype == null) {
+                    throw new ResourceException("Chip " + chipFamilyAndName.getRight() + " is not configured",
+                            Response.Status.INTERNAL_SERVER_ERROR);
+                } else {
+                    archetypes.add(archetype);
+                }
+            }
+        }
+        return archetypes;
     }
 }

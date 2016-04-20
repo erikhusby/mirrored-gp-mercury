@@ -47,6 +47,10 @@ public class ArchetypeAttribute {
         this.attributeValue = attributeValue;
     }
 
+    public Long getAttributeId() {
+        return attributeId;
+    }
+
     public AttributeArchetype getArchetype() {
         return archetype;
     }
@@ -61,5 +65,49 @@ public class ArchetypeAttribute {
 
     public void setAttributeValue(String attributeValue) {
         this.attributeValue = attributeValue;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof ArchetypeAttribute)) {
+            return false;
+        }
+
+        ArchetypeAttribute attribute = (ArchetypeAttribute) o;
+
+        if (attributeId != null ? !attributeId.equals(attribute.attributeId) : attribute.attributeId != null) {
+            return false;
+        }
+        if (attributeName != null ? !attributeName.equals(attribute.attributeName) : attribute.attributeName != null) {
+            return false;
+        }
+        if (attributeValue != null ? !attributeValue.equals(attribute.attributeValue) : attribute.attributeValue != null) {
+            return false;
+        }
+        // Only compares the archetypes' entity ids.
+        if (archetype == null) {
+            return (attribute.archetype == null);
+        } else if (attribute.archetype == null) {
+            return false;
+        } else {
+            Long thisId = archetype.getArchetypeId();
+            Long otherId = attribute.archetype.getArchetypeId();
+            return (thisId == null ? (otherId == null) : thisId.equals(otherId));
+        }
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = attributeId != null ? attributeId.hashCode() : 0;
+        result = 31 * result + (attributeName != null ? attributeName.hashCode() : 0);
+        result = 31 * result + (attributeValue != null ? attributeValue.hashCode() : 0);
+        // Only hashes the archetype entity id.
+        result = 31 * result + ((archetype != null && archetype.getArchetypeId() != null) ?
+                archetype.getArchetypeId().hashCode() : 0);
+        return result;
     }
 }

@@ -13,7 +13,6 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.ws.rs.core.MediaType;
-
 import java.net.URL;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
@@ -34,18 +33,32 @@ public class InfiniumRunResourceTest extends RestServiceContainerTest {
     public void testBasics(@ArquillianResource URL baseUrl) throws Exception {
         WebResource resource = makeWebResource(baseUrl, "query");
 
-        InfiniumRunBean response = resource.queryParam("chipWellBarcode", "3999582166_R01C01").
+        InfiniumRunBean response1 = resource.queryParam("chipWellBarcode", "3999582166_R01C01").
                 type(MediaType.APPLICATION_JSON_TYPE).
                 accept(MediaType.APPLICATION_JSON_TYPE).
                 get(InfiniumRunBean.class);
-        Assert.assertEquals(response.getCollaboratorSampleId(), "TREDAP123");
+        Assert.assertTrue(response1.getRedIDatPath().startsWith("/humgen/illumina_data"));
+        Assert.assertTrue(response1.getGreenIDatPath().startsWith("/humgen/illumina_data"));
+        Assert.assertEquals(response1.getChipManifestPath(),
+                "/humgen/illumina_data/Broad_GWAS_supplemental_15061359_A1.bpm.csv");
+        Assert.assertEquals(response1.getBeadPoolManifestPath(),
+                "/gap/illumina/beadstudio/Autocall/ChipInfo/Broad_GWAS_supplemental/Broad_GWAS_supplemental_15061359_A1.bpm");
+        Assert.assertEquals(response1.getClusterFilePath(),
+                "/gap/illumina/beadstudio/Autocall/ChipInfo/Broad_GWAS_supplemental/Broad_GWAS_supplemental_15061359_A1.egt");
+        Assert.assertEquals(response1.getzCallThresholdsPath(),
+                "/gap/illumina/beadstudio/Autocall/ChipInfo/Broad_GWAS_supplemental/thresholds.7.txt");
+        Assert.assertEquals(response1.getCollaboratorSampleId(), "TREDAP123");
 
         // Test a control
-        response = resource.queryParam("chipWellBarcode", "3999582166_R05C01").
+        InfiniumRunBean response2 = resource.queryParam("chipWellBarcode", "3999582166_R05C01").
                 type(MediaType.APPLICATION_JSON_TYPE).
                 accept(MediaType.APPLICATION_JSON_TYPE).
                 get(InfiniumRunBean.class);
-        Assert.assertEquals(response.getCollaboratorSampleId(), "NA12878");
+        Assert.assertEquals(response2.getChipManifestPath(), response1.getChipManifestPath());
+        Assert.assertEquals(response2.getBeadPoolManifestPath(), response1.getBeadPoolManifestPath());
+        Assert.assertEquals(response2.getClusterFilePath(), response1.getClusterFilePath());
+        Assert.assertEquals(response2.getzCallThresholdsPath(), response1.getzCallThresholdsPath());
+        Assert.assertEquals(response2.getCollaboratorSampleId(), "NA12878");
     }
 
     @Override

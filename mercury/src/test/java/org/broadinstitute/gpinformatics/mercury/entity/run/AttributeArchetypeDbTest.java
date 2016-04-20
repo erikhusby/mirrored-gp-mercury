@@ -17,6 +17,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
@@ -38,79 +39,89 @@ public class AttributeArchetypeDbTest extends Arquillian {
         return DeploymentBuilder.buildMercuryWarWithAlternatives(DEV, "dev", SessionContextUtilityKeepScope.class);
     }
 
+    final private String namespace = getClass().getCanonicalName();
     final private String testPrefix = String.format("%s", System.currentTimeMillis());
-    final private String[] testFamily = {testPrefix + "family0", testPrefix + "family1", testPrefix + "family2"};
-    final private String[] testArchetype = {testPrefix + "arch0", testPrefix + "arch1", testPrefix + "arch2"};
-    final private String[] testAttribute = {testPrefix + "attrib0", testPrefix + "attrib1", testPrefix + "attrib2"};
-    final private String[] testFamilyAttribute = {testPrefix + "famAttr0", testPrefix + "famAttr1"};
+    final private String[] testGroup = {
+            testPrefix + "group0",
+            testPrefix + "group1"};
+    final private String[] testArchetype = {
+            testPrefix + "arch0",
+            testPrefix + "arch1",
+            testPrefix + "arch2",
+            testPrefix + "arch3"};
+    final private String[] testAttribute = {
+            testPrefix + "attrib0",
+            testPrefix + "attrib1",
+            testPrefix + "attrib2"};
+    final private String[] testGroupAttribute = {
+            testPrefix + "famAttr0",
+            testPrefix + "famAttr1"};
+    final private String[] testGroupAttributeValue = {
+            testPrefix + "groupValue0",
+            null};
 
     @Test(groups = TestGroups.ALTERNATIVES)
     public void testArchetype() throws Exception {
         Assert.assertNotNull(utx);
         utx.begin();
 
-        // Ensure uniqueness.
-        Assert.assertEquals(dao.findFamiliesIdentifiedByAttribute(testFamilyAttribute[0], testPrefix).size(), 0);
-
-        // Adds family attributes on family 0.
-        for (int i = 0; i < testFamilyAttribute.length; ++i) {
-            AttributeDefinition attributeDefinition = new AttributeDefinition(testFamily[0], testFamilyAttribute[i],
-                    (i == 0) ? testPrefix : null, false, true);
+        // Adds Group attributes on Group 0.
+        for (int i = 0; i < testGroupAttribute.length; ++i) {
+            AttributeDefinition attributeDefinition = new AttributeDefinition(namespace, testGroup[0],
+                    testGroupAttribute[i], testGroupAttributeValue[i], false, true);
             dao.persist(attributeDefinition);
         }
-        for (String family : testFamily) {
-            Assert.assertTrue(CollectionUtils.isEmpty(dao.findAllByFamily(family)));
+
+        for (String group : testGroup) {
+            Assert.assertTrue(CollectionUtils.isEmpty(dao.findByGroup(namespace, group)));
             // Adds attribute definitions.
             for (String attribute : testAttribute) {
-                dao.persist(new AttributeDefinition(family, attribute, null, true, false));
+                dao.persist(new AttributeDefinition(namespace, group, attribute, null, true, false));
             }
             // Adds archetype and attributes.
             for (String archetypeName : testArchetype) {
-                AttributeArchetype archetype = new AttributeArchetype(family, archetypeName);
-                dao.persist(archetype);
-                // Must flush here to define archetypeId and avoid subsequent ArchetypeAttribute unique key failure.
-                dao.flush();
+                AttributeArchetype archetype = new AttributeArchetype(namespace, group, archetypeName);
                 for (String attributeName : testAttribute) {
                     ArchetypeAttribute attribute =
                             new ArchetypeAttribute(archetype, attributeName, attributeName + "value");
                     archetype.getAttributes().add(attribute);
                 }
+                dao.persist(archetype);
             }
         }
         dao.flush();
 
-        // Tests lookup family name by identifier attribute.
-        Assert.assertEquals(dao.findFamiliesIdentifiedByAttribute(testAttribute[0], testAttribute[0] + "value").size(), 0);
-        Assert.assertEquals(dao.findFamiliesIdentifiedByAttribute(testFamilyAttribute[0], null).size(), 0);
-        List<String> identifiedFamilies = dao.findFamiliesIdentifiedByAttribute(testFamilyAttribute[0], testPrefix);
-        Assert.assertEquals(identifiedFamilies.size(), 1);
-        Assert.assertEquals(identifiedFamilies.get(0), testFamily[0]);
+        // Tests lookup group.
+        for (int i = 0; i < testGroup.length; ++i) {
+            Assert.assertTrue(dao.findGroups(namespace).contains(testGroup[i]));
 
-        // Checks the number of attributes defined for each family.
-        Map<String, AttributeDefinition>[] definitionMaps = new HashMap[testFamily.length];
-        for (int i = 0; i < definitionMaps.length; ++i) {
-            definitionMaps[i] = dao.findAttributeDefinitionsByFamily(testFamily[i]);
-        }
-        Assert.assertEquals(definitionMaps[0].size(), testFamilyAttribute.length + testAttribute.length);
-        Assert.assertEquals(definitionMaps[1].size(), testAttribute.length);
-        Assert.assertEquals(definitionMaps[2].size(), testAttribute.length);
+            // Checks the attribute definitions for each Group.
+            Map<String, AttributeDefinition> definitionMap = dao.findAttributeDefinitions(namespace, testGroup[i]);
+            if (i == 0) {
+                Assert.assertEquals(definitionMap.size(), testGroupAttribute.length + testAttribute.length);
+                for (int j = 0; j < testGroupAttribute.length; ++j) {
+                    Assert.assertEquals(definitionMap.get(testGroupAttribute[j]).getNamespace(), namespace);
+                    Assert.assertEquals(definitionMap.get(testGroupAttribute[j]).getGroupAttributeValue(),
+                            testGroupAttributeValue[j]);
+                    Assert.assertFalse(definitionMap.get(testGroupAttribute[j]).isDisplayable());
+                    Assert.assertTrue(definitionMap.get(testGroupAttribute[j]).isGroupAttribute());
+                }
+            } else {
+                for (int j = 0; j < testGroupAttribute.length; ++j) {
+                    Assert.assertFalse(definitionMap.containsKey(testGroupAttribute[j]));
+                }
+            }
+            for (int j = 0; j < testAttribute.length; ++j) {
+                Assert.assertNull(definitionMap.get(testAttribute[j]).getGroupAttributeValue());
+                Assert.assertTrue(definitionMap.get(testAttribute[j]).isDisplayable());
+                Assert.assertFalse(definitionMap.get(testAttribute[j]).isGroupAttribute());
+            }
 
-        // Verifies the family attributes.
-        for (AttributeDefinition definition : definitionMaps[0].values()) {
-            boolean isFamilyAttribute = definition.getAttributeName().equals(testFamilyAttribute[0])
-                                        || definition.getAttributeName().equals(testFamilyAttribute[1]);
-            Assert.assertTrue(isFamilyAttribute == definition.isFamilyAttribute(), definition.getAttributeName());
-            Assert.assertTrue(isFamilyAttribute != definition.isDisplayable(), definition.getAttributeName());
-        }
-        Assert.assertEquals(definitionMaps[0].get(testFamilyAttribute[0]).getFamilyAttributeValue(), testPrefix);
-        Assert.assertNull(definitionMaps[0].get(testFamilyAttribute[1]).getFamilyAttributeValue());
-        Assert.assertNull(definitionMaps[0].get(testAttribute[0]).getFamilyAttributeValue());
+            // Tests the archetypes and their attributes.
 
-        // Tests the archetypes and their attributes.
-        for (String family : testFamily) {
-            Assert.assertEquals(dao.findAllByFamily(family).size(), testAttribute.length);
+            Assert.assertEquals(dao.findByGroup(namespace, testGroup[i]).size(), testArchetype.length);
             for (String archetypeName : testArchetype) {
-                AttributeArchetype archetype = dao.findByName(family, archetypeName);
+                AttributeArchetype archetype = dao.findByName(namespace, testGroup[i], archetypeName);
                 Assert.assertNotNull(archetype);
                 // Test the attributes.
                 Assert.assertEquals(archetype.getAttributes().size(), testAttribute.length);

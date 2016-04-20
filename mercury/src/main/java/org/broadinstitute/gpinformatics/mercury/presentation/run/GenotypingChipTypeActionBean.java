@@ -28,6 +28,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.AttributeDefinition;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -39,8 +40,6 @@ import java.util.Map;
 @UrlBinding("/genotyping/chipType.action")
 public class GenotypingChipTypeActionBean extends CoreActionBean {
 
-    // Attribute that identifies the genotyping chip family names.
-    public static final String GENOTYPING_CHIP_MARKER_ATTRIBUTE = "GenotypingChip_";
     // Attribute for last modified date.
     public static final String LAST_MODIFIED = "LastModifiedDate";
 
@@ -58,6 +57,7 @@ public class GenotypingChipTypeActionBean extends CoreActionBean {
     private String saveChipName;
     private String chipFamily;
     private String selectedFamily;
+    private final String namespace = getClass().getCanonicalName();
 
     @Inject
     private AttributeArchetypeDao attributeArchetypeDao;
@@ -69,15 +69,14 @@ public class GenotypingChipTypeActionBean extends CoreActionBean {
     @Before(stages = LifecycleStage.BindingAndValidation)
     public void init() {
         // Populates the Genotyping chip families for the jsp dropdown.
-        chipFamilies = attributeArchetypeDao.findFamiliesIdentifiedByAttribute(GENOTYPING_CHIP_MARKER_ATTRIBUTE,
-                GENOTYPING_CHIP_MARKER_ATTRIBUTE);
+        chipFamilies = new ArrayList<String>(attributeArchetypeDao.findGroups(namespace));
     }
 
 
     @DefaultHandler
     @HandlesEvent(LIST_ACTION)
     public Resolution list() {
-        chipTypes = attributeArchetypeDao.findAllByFamily(selectedFamily);
+        chipTypes = new ArrayList<>(attributeArchetypeDao.findByGroup(namespace, selectedFamily));
         chipFamily = selectedFamily;
         return new ForwardResolution(CHIP_TYPE_LIST_PAGE);
     }
@@ -109,7 +108,7 @@ public class GenotypingChipTypeActionBean extends CoreActionBean {
     public Resolution save() {
         try {
             boolean foundChange = false;
-            AttributeArchetype archetype = attributeArchetypeDao.findByName(chipFamily, saveChipName);
+            AttributeArchetype archetype = attributeArchetypeDao.findByName(namespace, chipFamily, saveChipName);
             if (archetype != null) {
                 if (getSubmitString().equals(CREATE_CHIP_TYPE)) {
                     addValidationError("saveChipName", "Chip name is already in use.");
@@ -120,11 +119,11 @@ public class GenotypingChipTypeActionBean extends CoreActionBean {
                     addValidationError("saveChipName", "Chip name must not be blank.");
                     return new ForwardResolution(CHIP_TYPE_EDIT_PAGE);
                 }
-                // Adds the new chip type with null valued non-family attributes.
+                // Adds the new chip type with null valued attributes.
                 foundChange = true;
-                archetype = new AttributeArchetype(chipFamily, saveChipName);
+                archetype = new AttributeArchetype(namespace, chipFamily, saveChipName);
                 for (AttributeDefinition definition : getDefinitionsMap().values()) {
-                    if (!definition.isFamilyAttribute()) {
+                    if (!definition.isGroupAttribute()) {
                         archetype.getAttributes().add(new ArchetypeAttribute(archetype,
                                 definition.getAttributeName(), null));
                     }
@@ -218,7 +217,7 @@ public class GenotypingChipTypeActionBean extends CoreActionBean {
     }
 
     private void populateAttributes(String name) {
-        AttributeArchetype archetype = attributeArchetypeDao.findByName(chipFamily, name);
+        AttributeArchetype archetype = attributeArchetypeDao.findByName(namespace, chipFamily, name);
         if (archetype != null) {
             attributes.clear();
             for (ArchetypeAttribute attribute : archetype.getAttributes()) {
@@ -232,7 +231,7 @@ public class GenotypingChipTypeActionBean extends CoreActionBean {
 
     private Map<String, AttributeDefinition> getDefinitionsMap() {
         if (definitions == null) {
-            definitions = attributeArchetypeDao.findAttributeDefinitionsByFamily(chipFamily);
+            definitions = attributeArchetypeDao.findAttributeDefinitions(namespace, chipFamily);
         }
         return definitions;
     }

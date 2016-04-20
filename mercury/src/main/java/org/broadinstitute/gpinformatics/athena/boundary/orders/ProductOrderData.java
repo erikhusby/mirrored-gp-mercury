@@ -45,7 +45,6 @@ public class ProductOrderData {
     private String productOrderKey;
     private String workRequestId;
     private int riskNotCalculatedCount;
-    private String genoChipType;
 
     /** Even if includeSamples == false this will still contain the number of samples in the PDO. */
     private int numberOfSamples;
@@ -124,7 +123,6 @@ public class ProductOrderData {
         }
 
         numberOfSamples = productOrder.getSampleCount();
-        genoChipType = productOrder.getGenoChipType();
     }
 
     private static List<String> getSampleList(List<ProductOrderSample> productOrderSamples) {
@@ -371,13 +369,5 @@ public class ProductOrderData {
 
     public void setCreatedDate(Date createdDate) {
         this.createdDate = createdDate;
-    }
-
-    public String getGenoChipType() {
-        return genoChipType;
-    }
-
-    public void setGenoChipType(String genoChipType) {
-        this.genoChipType = genoChipType;
     }
 }

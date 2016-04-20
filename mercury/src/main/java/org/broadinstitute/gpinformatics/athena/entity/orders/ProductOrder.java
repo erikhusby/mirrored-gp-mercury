@@ -1660,34 +1660,6 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return regInfo;
     }
 
-    // todo jmt move this to a preference
-    private static final Map<String, String> mapProductPartToGenoChip = new HashMap<>();
-    static {
-        mapProductPartToGenoChip.put("P-EX-0017", "Broad_GWAS_supplemental_15061359_A1");
-        mapProductPartToGenoChip.put("P-WG-0022", "HumanOmni2.5-8v1_A");
-        mapProductPartToGenoChip.put("P-WG-0023", "HumanOmniExpressExome-8v1-3_A");
-        mapProductPartToGenoChip.put("P-WG-0025", "HumanExome-12v1-2_A");
-        mapProductPartToGenoChip.put("P-WG-0028", "HumanOmniExpress-24v1-1_A");
-        mapProductPartToGenoChip.put("P-WG-0029", "HumanExome-12v1-2_A");
-        mapProductPartToGenoChip.put("P-WG-0031", "HumanCoreExome-24v1-0_A");
-        mapProductPartToGenoChip.put("P-WG-0036", "PsychChip_15048346_B");
-        mapProductPartToGenoChip.put("P-WG-0053", "Broad_GWAS_supplemental_15061359_A1");
-        mapProductPartToGenoChip.put("P-WG-0055", "PsychChip_v1-1_15073391_A1");
-        mapProductPartToGenoChip.put("P-WG-0058", "Multi-EthnicGlobal-8_A1");
-    }
-
-    public static String genoChipTypeForPart(String partNumber) {
-        return mapProductPartToGenoChip.get(partNumber);
-    }
-
-    public String getGenoChipType() {
-        String genoChipType = mapProductPartToGenoChip.get(getProduct().getPartNumber());
-        if (getProduct().getPartNumber().equals("P-WG-0036") && getTitle().contains("Danish")) {
-            genoChipType = "DBS_Wave_Psych";
-        }
-        return genoChipType;
-    }
-
     /**
      * A product can have more then one Workflow if its AddOns have workflows. This method returns a List of
      * AddOn workflows and the workflow of its Product.
