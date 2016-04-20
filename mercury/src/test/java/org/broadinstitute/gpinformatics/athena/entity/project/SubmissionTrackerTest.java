@@ -55,17 +55,6 @@ public class SubmissionTrackerTest {
 
     }
 
-    public void testSubmissionTrackerWithDifferentFilePath() throws Exception {
-        SubmissionTracker submissionTracker = new SubmissionTrackerStub("sample1", BassFileType.BAM, "1");
-        submissionTracker.setFileName("/path/to/file");
-
-        SubmissionTracker submissionTracker2 = new SubmissionTrackerStub("sample1", BassFileType.BAM, "1");
-        Assert.assertEquals(submissionTracker.getTuple(), submissionTracker2.getTuple());
-
-        submissionTracker2.setFileName("/different/path/same/file");
-        Assert.assertEquals(submissionTracker.getTuple(), submissionTracker2.getTuple());
-    }
-
     public static class SubmissionTrackerStub extends SubmissionTracker {
         protected SubmissionTrackerStub() {
             super();

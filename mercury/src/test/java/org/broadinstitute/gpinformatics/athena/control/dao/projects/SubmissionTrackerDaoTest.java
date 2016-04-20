@@ -196,10 +196,6 @@ public class SubmissionTrackerDaoTest extends ContainerTest {
                 new SubmissionTracker(submissionDto.getSampleName(), submissionDto.getFileTypeEnum(),
                         String.valueOf(submissionDto.getVersion()));
         submissionTracker.setResearchProject(researchProject);
-        if (submissionDto.getFileName() != null) {
-            // todo: GPLIM-4083 don't set default value.
-            submissionTracker.setFileName(submissionDto.getFileName());
-        }
         return submissionTracker;
     }
 
