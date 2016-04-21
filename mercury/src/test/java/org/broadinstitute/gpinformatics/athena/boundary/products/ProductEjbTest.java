@@ -30,23 +30,36 @@ public class ProductEjbTest extends Arquillian {
     @Test(enabled = true)
     public void testInitialMapping() throws Exception {
         Date effectiveDate = new Date(0);
-        for (String productPartNumber : AttributeArchetypeFixupTest.INITIAL_PRODUCT_PART_TO_GENO_CHIP.keySet()) {
-            Pair<String, String> chipFamilyAndName1 = productEjb.getGenotypingChip(productPartNumber, "pdo name",
-                    effectiveDate);
-            Pair<String, String> chipFamilyAndName2 =
-                    productEjb.getGenotypingChip(productPartNumber, "The Danish Study",
-                            effectiveDate);
-            if (productPartNumber.contains("Danish")) {
-                Assert.assertNull(chipFamilyAndName1.getRight());
-                Assert.assertNull(chipFamilyAndName1.getLeft());
-                Assert.assertEquals(chipFamilyAndName2.getLeft(), InfiniumRunResource.INFINIUM_GROUP);
-                Assert.assertEquals(chipFamilyAndName2.getRight(),
-                        AttributeArchetypeFixupTest.INITIAL_PRODUCT_PART_TO_GENO_CHIP.get(productPartNumber));
+
+        String danishPartNumber = null;
+        String danishChipName = null;
+        for (String key : AttributeArchetypeFixupTest.INITIAL_PRODUCT_PART_TO_GENO_CHIP.keySet()) {
+            if (key.contains("Danish")) {
+                danishPartNumber = key.split(" ")[0];
+                danishChipName = AttributeArchetypeFixupTest.INITIAL_PRODUCT_PART_TO_GENO_CHIP.get(key);
+            }
+        }
+        // Gets the expected chip name for the part number that does not have "Danish" substring match.
+        String nonDanishChipName = AttributeArchetypeFixupTest.INITIAL_PRODUCT_PART_TO_GENO_CHIP.
+                get(danishPartNumber.split(" ")[0]);
+
+        for (String key : AttributeArchetypeFixupTest.INITIAL_PRODUCT_PART_TO_GENO_CHIP.keySet()) {
+            String productPartNumber = key.split(" ")[0];
+
+            Pair<String, String> chipFamilyAndName1 = productEjb.getGenotypingChip(productPartNumber,
+                    "pdo name", effectiveDate);
+            Pair<String, String> chipFamilyAndName2 = productEjb.getGenotypingChip(productPartNumber,
+                    "The Danish Study", effectiveDate);
+
+            Assert.assertEquals(chipFamilyAndName1.getLeft(), InfiniumRunResource.INFINIUM_GROUP);
+            Assert.assertEquals(chipFamilyAndName2.getLeft(), InfiniumRunResource.INFINIUM_GROUP);
+
+            if (productPartNumber.equals(danishPartNumber)) {
+                Assert.assertEquals(chipFamilyAndName1.getRight(), nonDanishChipName);
+                Assert.assertEquals(chipFamilyAndName2.getRight(), danishChipName);
             } else {
-                Assert.assertEquals(chipFamilyAndName1.getLeft(), InfiniumRunResource.INFINIUM_GROUP);
                 Assert.assertEquals(chipFamilyAndName1.getRight(),
-                        AttributeArchetypeFixupTest.INITIAL_PRODUCT_PART_TO_GENO_CHIP.get(productPartNumber));
-                Assert.assertEquals(chipFamilyAndName2.getLeft(), chipFamilyAndName1.getLeft());
+                        AttributeArchetypeFixupTest.INITIAL_PRODUCT_PART_TO_GENO_CHIP.get(key));
                 Assert.assertEquals(chipFamilyAndName2.getRight(), chipFamilyAndName1.getRight());
             }
         }

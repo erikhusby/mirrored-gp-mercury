@@ -13,13 +13,14 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDa
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.entity.run.ArchetypeAttribute;
 import org.broadinstitute.gpinformatics.mercury.entity.run.AttributeArchetype;
-import org.broadinstitute.gpinformatics.mercury.presentation.run.GenotypingChipTypeActionBean;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.util.Collection;
 import java.util.Date;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 @Stateful
 @RequestScoped
@@ -113,29 +114,41 @@ public class ProductEjb {
 
     /** Returns the genotyping chip family and name for the product, product order, and date. */
     public Pair<String, String> getGenotypingChip(String productPartNumber, String productOrderName, Date effectiveDate) {
-        // Finds the genotyping chip that maps to the product and optionally to the pdo.
+
+        Collection<AttributeArchetype> allChipMappings = attributeArchetypeDao.findByGroup(
+                Product.class.getCanonicalName(), Product.GENOTYPING_CHIP_CONFIG);
+
+        // Collects the mappings that match on just the part number.
+        SortedMap<String, AttributeArchetype> mapOfPartNumberMatches = new TreeMap<>();
+        for (AttributeArchetype productConfigArchetype : allChipMappings) {
+            if (productPartNumber.equals(productConfigArchetype.getArchetypeName().split(" ")[0])) {
+                mapOfPartNumberMatches.put(productConfigArchetype.getArchetypeName(), productConfigArchetype);
+            }
+        }
+        // When there are more than one possible chips then applies substring matching on the product order
+        // name, in increasing order of complexity (substring length) so that the last match is the best one.
+        AttributeArchetype bestMatch = null;
+        for (String key : mapOfPartNumberMatches.keySet()) {
+            // key consists of part number and possibly also a substring.
+            String[] keySplit = key.split(" ", 2);
+            if (keySplit.length == 1 || productOrderName.contains(keySplit[1])) {
+                bestMatch = mapOfPartNumberMatches.get(key);
+            }
+        }
         String chipTypeName = null;
         String chipFamily = null;
-        Collection<AttributeArchetype> archetypes = attributeArchetypeDao.findByGroup(
-                Product.class.getCanonicalName(), Product.GENOTYPING_CHIP_CONFIG);
-        for (AttributeArchetype productConfigArchetype : archetypes) {
-            // The archetype name consists of the product part number and an optional string.
-            // When present it must match a substring in the product order name.
-            String[] ppnAndPdoName = productConfigArchetype.getArchetypeName().split(" ", 2);
-            if (productPartNumber.equals(ppnAndPdoName[0]) &&
-                (ppnAndPdoName.length == 1 || productOrderName.contains(ppnAndPdoName[1]))) {
-                // Gets the chip name and chip technology from the attributes.
-                for (ArchetypeAttribute attribute : productConfigArchetype.getAttributes()) {
-                    if (attribute.getAttributeName().equals(Product.GENOTYPING_CHIP_TECHNOLOGY)) {
-                        chipFamily = attribute.getAttributeValue();
-                    }
-                    if (attribute.getAttributeName().equals(Product.GENOTYPING_CHIP_NAME)) {
-                        // Users may occasionally change the type of chip used for a product.
-                        // Retrieves the chip name from the mapping on the effective date.
-                        ArchetypeAttribute versionedAttribute = auditReaderDao.getVersionAsOf(
-                                ArchetypeAttribute.class, attribute.getAttributeId(), effectiveDate, true);
-                        chipTypeName = versionedAttribute.getAttributeValue();
-                    }
+        if (bestMatch != null) {
+            // Gets the chip name and chip technology from the attributes.
+            for (ArchetypeAttribute attribute : bestMatch.getAttributes()) {
+                if (attribute.getAttributeName().equals(Product.GENOTYPING_CHIP_TECHNOLOGY)) {
+                    chipFamily = attribute.getAttributeValue();
+                }
+                if (attribute.getAttributeName().equals(Product.GENOTYPING_CHIP_NAME)) {
+                    // Users may occasionally change the type of chip used for a product. Retrieves
+                    // the chip name from the mapping as of the effective date, or first available.
+                    ArchetypeAttribute versionedAttribute = auditReaderDao.getVersionAsOf(
+                            ArchetypeAttribute.class, attribute.getAttributeId(), effectiveDate, true);
+                    chipTypeName = versionedAttribute.getAttributeValue();
                 }
             }
         }
