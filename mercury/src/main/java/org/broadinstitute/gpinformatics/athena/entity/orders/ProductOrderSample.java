@@ -722,7 +722,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
          * Get the total quantity uploaded, in-progress, and billed for this sample and price item. This represents the
          * total intended net quantity to be billed regardless of the state of actually being billed.
          *
-         * @return
+         * @return the total quantity for billing
          */
         public double getTotal() {
             return billed + inProgress + uploaded;
@@ -782,8 +782,15 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
      * </ul>
      */
     public static class LedgerUpdate {
+
+        /**
+         * The name of the sample being updated.
+         */
         private String sampleName;
 
+        /**
+         * The price item for the ledger update.
+         */
         private PriceItem priceItem;
 
         /**
@@ -791,6 +798,11 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
          */
         private double oldQuantity;
 
+        /**
+         * The current quantity loaded from the database at the time the update request was received. This may be
+         * different than oldQuantity if it was changed by another user/process while this user was making billing
+         * decisions.
+         */
         private double currentQuantity;
 
         /**
@@ -798,8 +810,22 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
          */
         private double newQuantity;
 
+        /**
+         * The work complete date for any new or updated ledger entries. Used as a bill date when billing to
+         * Broad Quotes/SAP.
+         */
         private Date workCompleteDate;
 
+        /**
+         * Create a new LedgerUpdate. This is only a representation of the requested change; no updates are performed.
+         *
+         * @param sampleName          the sample being updated
+         * @param priceItem           the price item being billed
+         * @param oldQuantity         the old quantity
+         * @param currentQuantity     the current quantity
+         * @param newQuantity         the requested quantity
+         * @param workCompleteDate    the date that work was completed
+         */
         public LedgerUpdate(String sampleName, PriceItem priceItem, double oldQuantity, double currentQuantity,
                             double newQuantity, Date workCompleteDate) {
             this.sampleName = sampleName;
@@ -808,10 +834,6 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
             this.oldQuantity = oldQuantity;
             this.newQuantity = newQuantity;
             this.workCompleteDate = workCompleteDate;
-        }
-
-        private double getQuantityDelta() {
-            return newQuantity - oldQuantity;
         }
 
         /**
@@ -844,6 +866,15 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
             return oldQuantity == currentQuantity;
         }
 
+        /**
+         * Calculate the difference in quantity to apply. Can be negative if issuing a credit.
+         *
+         * @return the quantity to apply in a ledger entry
+         */
+        public double getQuantityDelta() {
+            return newQuantity - oldQuantity;
+        }
+
         public String getSampleName() {
             return sampleName;
         }
@@ -869,6 +900,18 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         }
     }
 
+    /**
+     * Apply a ledger update to this ProductOrderSample by adding, modifying, or cancelling unbilled LedgerEntry
+     * instances. Because of all of the data contained in the LedgerUpdate, this operation can be optimized to make the
+     * minimum change necessary to produce the desired result, including recognizing that a requested change has already
+     * been applied by another user/process.
+     *
+     * @param ledgerUpdate    the ledger update to apply to this sample
+     * @throws StaleLedgerUpdateException if the data in the ledger update indicates that the update decision was made
+     *                                    based on old data
+     * @throws RuntimeException if the work complete date is required and missing
+     *                          or if an update would need to be made to a ledger entry in an active billing session
+     */
     public void applyLedgerUpdate(LedgerUpdate ledgerUpdate) throws StaleLedgerUpdateException {
         if (ledgerUpdate.isChangeIntended()) {
             if (ledgerUpdate.isChangeNeeded()) {

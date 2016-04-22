@@ -1,5 +1,5 @@
 /**
- * A widget for controlling numeric text inputs. It surrounds the input with button for incrementing and decrementing
+ * A widget for controlling numeric text inputs. It surrounds the input with buttons for incrementing and decrementing
  * the value by 1, much like a spinner widget but in a horizontal orientation which results in larger click targets for
  * the buttons. Negative values are disallowed.
  */
@@ -35,13 +35,9 @@ $j.widget('mercury.hSpinner', {
         this._on($container, {
             'click .decButton': this._handleDecrement,
             'click .incButton': this._handleIncrement,
-            'change .hSpinner': this._updateDisplayState,
+            'input .hSpinner': this._handleInput,
             'keydown .hSpinner': this._handleKeydown,
-            'input .hSpinner': function(event) {
-                this._updateDisplayState();
-                // Trigger an event after updating the widget so that the page can respond based on the resulting state.
-                this._trigger('input', event, this.inputName);
-            }
+            'change .hSpinner': this._updateDisplayState
         });
 
         // Capture the original value to enable applying a CSS class if the value is changed.
@@ -72,6 +68,16 @@ $j.widget('mercury.hSpinner', {
         this.increment();
         this._trigger('incremented', event, this.inputName);
         event.preventDefault();
+    },
+
+    /**
+     * Handle an input event on the text field. 'input' events are fired when any input is processed, making it more
+     * granular than 'change' events. This allows for more interesting live editing features.
+     */
+    _handleInput: function(event) {
+        this._updateDisplayState();
+        // Trigger an event after updating the widget so that the page can respond based on the resulting state.
+        this._trigger('input', event, this.inputName);
     },
 
     /*
@@ -125,6 +131,12 @@ $j.widget('mercury.hSpinner', {
         this.$decButton.prop('disabled', currentValue == 0);
     },
 
+    /* ================================================================
+     * Below are functions to mutate the input's value and update the widget's display state. These functions use the
+     * jQuery val() function which does not cause any DOM change events to be fired, so any such events must be fired by
+     * the caller if they are needed.
+     * ================================================================ */
+
     /**
      * Sets the input's value to the given value and updates the widget's display state.
      * @param value
@@ -140,12 +152,6 @@ $j.widget('mercury.hSpinner', {
          */
         // this._trigger('valueUpdated', null, this.inputName);
     },
-
-    /*
-     * Functions to mutate the input's value and update the widget's display state. These functions use the jQuery val()
-     * function which does not cause any DOM change events to be fired, so any such events must be fired by the caller
-     * if they are needed.
-     */
 
     /**
      * Decrements the input's value by 1 and updates the widget's display state. If the result would be less than 0, the

@@ -693,7 +693,6 @@
                         <td style="text-align: center">
                             <stripes:hidden name="ledgerData[${info.sample.samplePosition}].quantities[${priceItem.priceItemId}].originalQuantity"
                                             value="${info.getTotalForPriceItem(priceItem)}"/>
-                            <%--<input name="${info.sample.samplePosition}-${priceItem.priceItemId}-${info.sample.name}" value="${info.getTotalForPriceItem(priceItem)}" class="ledgerQuantity">--%>
                             <input id="ledgerData[${info.sample.samplePosition}].quantities[${priceItem.priceItemId}].submittedQuantity"
                                    name="ledgerData[${info.sample.samplePosition}].quantities[${priceItem.priceItemId}].submittedQuantity"
                                    value="${info.getTotalForPriceItem(priceItem)}"

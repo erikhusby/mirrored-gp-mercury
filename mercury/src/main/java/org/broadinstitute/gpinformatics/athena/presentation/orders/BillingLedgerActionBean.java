@@ -55,7 +55,13 @@ public class BillingLedgerActionBean extends CoreActionBean {
     private static final String BILLING_LEDGER_PAGE = "/orders/ledger.jsp";
 
     @Inject
+    private ProductOrderEjb productOrderEjb;
+
+    @Inject
     private ProductOrderDao productOrderDao;
+
+    @Inject
+    private ProductOrderListEntryDao productOrderListEntryDao;
 
     @Inject
     private PriceItemDao priceItemDao;
@@ -64,16 +70,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
     private PriceListCache priceListCache;
 
     @Inject
-    private SampleDataFetcher sampleDataFetcher;
-
-    @Inject
     private SampleCoverageFirstMetFetcher sampleCoverageFirstMetFetcher;
-
-    @Inject
-    private ProductOrderEjb productOrderEjb;
-
-    @Inject
-    private ProductOrderListEntryDao productOrderListEntryDao;
 
     /**
      * The ID of the order being billed.
@@ -85,37 +82,46 @@ public class BillingLedgerActionBean extends CoreActionBean {
      */
     private ProductOrder productOrder;
 
+    /**
+     * Provides information about the billing state of the product order.
+     */
     private ProductOrderListEntry productOrderListEntry;
 
     /**
-     * The price items that are in effect for this product order. This includes the product's primary price item, any
-     * configured replacement price items, add-on price items, and any historical price items that this order's samples
-     * have been billed for (in the case where the price item for the product or an add-on has been changed while this
-     * order was open and being billed).
+     * The price items that are in effect for this product order.
+     *
+     * @see BillingLedgerActionBean#gatherPriceItems
      */
     private List<PriceItem> priceItems = new ArrayList<>();
 
-    private List<ProductOrderSampleLedgerInfo> productOrderSampleLedgerInfos = new ArrayList<>();
-    private Map<String, SampleCoverageFirstMet> coverageFirstMetBySample;
-
     /**
      * List of sample names for this product order. This is saved into the form and checked against current data when
-     * the form is submitted to make sure that nothing changed between rendering and submitting the form.
+     * the form is submitted to make sure that nothing changed between rendering and submitting the form. Used for both
+     * rendering the JSP and capturing the values submitted from hidden elements in the form.
      */
     private List<String> renderedSampleNames;
 
     /**
      * List of price item names for this product order. This is saved into the form and checked against current data
-     * when the form is submitted to make sure that nothing changed between rendering and submitting the form, including
-     * the order of the price items. With that guaranteed, we know that the originalQuantities array is reliable.
-     * // TODO: review javadoc
+     * when the form is submitted to make sure that nothing changed between rendering and submitting the form. Used for
+     * both rendering the JSP and capturing the values submitted from hidden elements in the form.
      */
     private List<String> renderedPriceItemNames;
+
+    /**
+     * Information used to render the ledger table and form inputs. Effectively the "output" of the action bean, or
+     * "input" to the JSP, whichever way you want to look at it.
+     *
+     * This is ONLY used for rendering the page, not for capturing the data submitted by the form.
+     */
+    private List<ProductOrderSampleLedgerInfo> productOrderSampleLedgerInfos = new ArrayList<>();
 
     /**
      * All quantities for all samples for all price items, including the quantities at the time that the page was
      * rendered. Used to verify that there were no significant changes to the data between the time that the page was
      * loaded and ultimately submitted.
+     *
+     * This is ONLY used for capturing the data submitted by the form, not for rendering the page.
      *
      * Stripes will nicely map into this nested data structure using Indexed Properties:
      * https://stripesframework.atlassian.net/wiki/display/STRIPES/Indexed+Properties
@@ -123,29 +129,93 @@ public class BillingLedgerActionBean extends CoreActionBean {
     private List<LedgerData> ledgerData;
 
     /**
-     * All quantities for all samples for all price items at the time that the page was rendered. The first dimension is
-     * price items. The second dimension is product order samples.
-     *
-     * It seems that Stripes will do the heavy lifting for an array of doubles, but doesn't do anything useful with
-     * nested data structures (maps of arrays, arrays of arrays, etc.). Therefore, there's some extra logic in this
-     * action bean and the JSP to handle the price item dimension.
+     * Load the product order, price items, sample data, and various other information based on the orderId parameter.
+     * All of this data is needed for rendering the billing ledger UI.
      */
-    private double[][] originalQuantities;
+    @Before(stages = LifecycleStage.EventHandling, on = { "view" })
+    public void loadAllDataForView() {
+        loadProductOrderAndPriceItems();
 
-    @Before(stages = LifecycleStage.EventHandling)
-    public void before() {
-        productOrder = productOrderDao.findByBusinessKey(orderId);
+        // Load sample data
         ProductOrder.loadSampleData(productOrder.getSamples(), BSPSampleSearchColumn.BILLING_TRACKER_COLUMNS);
 
+        // Load billing status information
         productOrderListEntry = productOrder.isDraft() ? ProductOrderListEntry.createDummy() :
                 productOrderListEntryDao.findSingle(productOrder.getJiraTicketKey());
 
         // Gather metrics and related information
-        coverageFirstMetBySample =
-                sampleCoverageFirstMetFetcher.getCoverageFirstMetBySampleForPdo(productOrder.getBusinessKey());
+        productOrderSampleLedgerInfos = gatherSampleInfo();
 
-        gatherSampleInfo();
+        // Capture data to render into the form to verify that nothing changed when the form is submitted
+        renderedSampleNames = buildSampleNameList();
+        renderedPriceItemNames = buildPriceItemNameList();
+    }
 
+    /**
+     * Load the product order and price items for the product order specified by the orderId parameter. This is all of
+     * the data that is needed to process requested ledger updates.
+     */
+    @Before(stages = LifecycleStage.EventHandling, on = { "updateLedgers" })
+    public void loadProductOrderAndPriceItems() {
+        loadProductOrder();
+        gatherPriceItems();
+    }
+
+    /**
+     * Load the product order based on the orderId request parameter. This is all of the data that is needed for loading
+     * the ledger details (from an AJAX request).
+     */
+    @Before(stages = LifecycleStage.EventHandling, on = { "ledgerDetails" })
+    public void loadProductOrder() {
+        productOrder = productOrderDao.findByBusinessKey(orderId);
+    }
+
+    /**
+     * Render the billing ledger UI.
+     */
+    @DefaultHandler
+    public Resolution view() {
+        return new ForwardResolution(BILLING_LEDGER_PAGE);
+    }
+
+    /**
+     * Load the ledger details and return them as JSON data to be loaded by the page via AJAX.
+     *
+     * @return a resolution containing the ledger details serialized as JSON
+     * @throws JSONException
+     */
+    @HandlesEvent("ledgerDetails")
+    public Resolution ledgerDetails() throws JSONException {
+        JSONArray details = new JSONArray();
+        for (ProductOrderSample sample : productOrder.getSamples()) {
+            details.put(makeLedgerDetailJson(sample));
+        }
+        return createTextResolution(details.toString());
+    }
+
+    /**
+     * Apply billing ledger updates.
+     */
+    @HandlesEvent("updateLedgers")
+    public Resolution updateLedgers() {
+        if (isSubmittedSampleListValid() && isSubmittedPriceItemListValid()) {
+            Map<ProductOrderSample, Collection<ProductOrderSample.LedgerUpdate>> ledgerUpdates = buildLedgerUpdates();
+            try {
+                productOrderEjb.updateSampleLedgers(ledgerUpdates);
+            } catch (ValidationException e) {
+                logger.error(e);
+                addGlobalValidationErrors(e.getValidationMessages());
+            }
+        }
+        return new RedirectResolution("/orders/ledger.action?orderId=" + productOrder.getBusinessKey());
+    }
+
+    /**
+     * Gather all price items associated with a product order. This includes the product's primary price item, any
+     * configured replacement price items, add-on price items, and any "historical" price items (ones that have been
+     * billed for this PDO but are otherwise no longer related).
+     */
+    private void gatherPriceItems() {
         // Collect primary and replacement price items
         priceItems.addAll(SampleLedgerExporter.getPriceItems(productOrder.getProduct(), priceItemDao, priceListCache));
 
@@ -165,8 +235,18 @@ public class BillingLedgerActionBean extends CoreActionBean {
         }
     }
 
-    private void gatherSampleInfo() {
-        productOrderSampleLedgerInfos.clear();
+    /**
+     * Gather information about samples needed to render the billing ledger UI. This includes Date Coverage First Met
+     * (DCFM) and ledger quantities for all applicable price items.
+     *
+     * @return a list of sample information in the same order as the product order samples
+     */
+    private List<ProductOrderSampleLedgerInfo> gatherSampleInfo() {
+        List<ProductOrderSampleLedgerInfo> infos = new ArrayList<>();
+
+        Map<String, SampleCoverageFirstMet> coverageFirstMetBySample =
+                sampleCoverageFirstMetFetcher.getCoverageFirstMetBySampleForPdo(productOrder.getBusinessKey());
+
         for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
             SampleCoverageFirstMet sampleCoverageFirstMet =
                     coverageFirstMetBySample.get(productOrderSample.getSampleData().getCollaboratorsSampleName());
@@ -175,16 +255,19 @@ public class BillingLedgerActionBean extends CoreActionBean {
             }
             ProductOrderSampleLedgerInfo info = new ProductOrderSampleLedgerInfo(productOrderSample,
                     sampleCoverageFirstMet != null ? sampleCoverageFirstMet.getDcfm() : null);
-            productOrderSampleLedgerInfos.add(info);
+            infos.add(info);
         }
+
+        return infos;
     }
 
-    @Before(stages = LifecycleStage.EventHandling, on = "view")
-    public void captureOriginalData() {
-        renderedSampleNames = buildSampleNameList();
-        renderedPriceItemNames = buildPriceItemNameList();
-    }
-
+    /**
+     * Build a list of all of the sample names on this product order. This is done both when rendering the form and when
+     * the form is submitted. The results are compared and an error is thrown if they are different, indicating that a
+     * change has been made that may make it unsafe to apply the requested ledger updates.
+     *
+     * @return a list of sample names on the product order
+     */
     private ArrayList<String> buildSampleNameList() {
         ArrayList<String> sampleNames = new ArrayList<>();
         for (ProductOrderSample sample : productOrder.getSamples()) {
@@ -193,6 +276,13 @@ public class BillingLedgerActionBean extends CoreActionBean {
         return sampleNames;
     }
 
+    /**
+     * Build a list of all of the price item names for this product order.  This is done both when rendering the form
+     * and when the form is submitted. The results are compared and an error is thrown if they are different, indicating
+     * that a change has been made that may make it unsafe to apply the requested ledger updates.
+     *
+     * @return a list of the price item names for the product order
+     */
     private ArrayList<String> buildPriceItemNameList() {
         ArrayList<String> priceItemNames = new ArrayList<>();
         for (PriceItem priceItem : priceItems) {
@@ -201,34 +291,12 @@ public class BillingLedgerActionBean extends CoreActionBean {
         return priceItemNames;
     }
 
-    @DefaultHandler
-    public Resolution view() {
-        return new ForwardResolution(BILLING_LEDGER_PAGE);
-    }
-
-    @HandlesEvent("ledgerDetails")
-    public Resolution ledgerDetails() throws JSONException {
-        JSONArray details = new JSONArray();
-        for (ProductOrderSampleLedgerInfo info : productOrderSampleLedgerInfos) {
-            details.put(makeLedgerDetailJson(info));
-        }
-        return createTextResolution(details.toString());
-    }
-
-    @HandlesEvent("updateLedgers")
-    public Resolution updateLedgers() {
-        if (isSubmittedSampleListValid() && isSubmittedPriceItemListValid()) {
-            Map<ProductOrderSample, Collection<ProductOrderSample.LedgerUpdate>> ledgerUpdates = buildLedgerUpdates();
-            try {
-                productOrderEjb.updateSampleLedgers(ledgerUpdates);
-            } catch (ValidationException e) {
-                logger.error(e);
-                addGlobalValidationErrors(e.getValidationMessages());
-            }
-        }
-        return new RedirectResolution("/orders/ledger.action?orderId=" + productOrder.getBusinessKey());
-    }
-
+    /**
+     * Validation method that compares the current list of sample names with the list of sample names as it was when the
+     * billing ledger UI was rendered. Adds a validation error and returns false if there is an inconsistency.
+     *
+     * @return true if the sample names have not changed; false otherwise
+     */
     private boolean isSubmittedSampleListValid() {
         List<String> sampleNames = buildSampleNameList();
         if (!sampleNames.equals(renderedSampleNames)) {
@@ -239,6 +307,12 @@ public class BillingLedgerActionBean extends CoreActionBean {
         return true;
     }
 
+    /**
+     * Validation method that compares the current list of price item names with the list of price item names as it was
+     * when the billing ledger UI was rendered. Adds a validation error and returns false if there is an inconsistency.
+     *
+     * @return true if the price item names have not changed; false otherwise
+     */
     private boolean isSubmittedPriceItemListValid() {
         List<String> priceItemNames = buildPriceItemNameList();
         if (!priceItemNames.equals(renderedPriceItemNames)) {
@@ -249,6 +323,13 @@ public class BillingLedgerActionBean extends CoreActionBean {
         return true;
     }
 
+    /**
+     * Gathers all of the submitted data into a collection of LedgerUpdate instances representing the requested changes
+     * to apply. Also gathers the current quantities to be compared with the originals to detect changes made by another
+     * user or process.
+     *
+     * @return a map of LedgerUpdate instances by ProductOrderSample to be applied
+     */
     private Map<ProductOrderSample, Collection<ProductOrderSample.LedgerUpdate>> buildLedgerUpdates() {
         Multimap<ProductOrderSample, ProductOrderSample.LedgerUpdate> ledgerUpdates = LinkedListMultimap.create();
         for (int i = 0; i < ledgerData.size(); i++) {
@@ -273,22 +354,33 @@ public class BillingLedgerActionBean extends CoreActionBean {
         return ledgerUpdates.asMap();
     }
 
-    private JSONArray makeLedgerDetailJson(ProductOrderSampleLedgerInfo info) throws JSONException {
+    /**
+     * Builds a JSON array of ledger entry data for a product order sample.
+     *
+     * @param sample    the sample to return ledger data for
+     * @return and array of all of the ledger entry data as a JSONArray
+     */
+    private JSONArray makeLedgerDetailJson(ProductOrderSample sample) {
         JSONArray result = new JSONArray();
 
-        for (LedgerEntry ledgerEntry : info.getSample().getLedgerItems()) {
+        for (LedgerEntry ledgerEntry : sample.getLedgerItems()) {
             result.put(makeLedgerEntryJson(ledgerEntry));
         }
         return result;
     }
 
-    private JSONArray makeLedgerEntryJson(LedgerEntry ledgerEntry) throws JSONException {
+    /**
+     * Builds a JSON array of information about a single ledger entry.
+     *
+     * @param ledgerEntry    the ledger entry to serialize
+     * @return the ledger entry data as a JSONArray
+     */
+    private JSONArray makeLedgerEntryJson(LedgerEntry ledgerEntry) {
         JSONArray result = new JSONArray();
 
         result.put(ledgerEntry.getPriceItem().getName());
-        result.put(ledgerEntry.getQuantity());
+        result.put(Double.valueOf(ledgerEntry.getQuantity()));
         result.put(ledgerEntry.getQuoteId());
-//        result.put(DateFormat.getDateInstance(DateFormat.MEDIUM).format(ledgerEntry.getWorkCompleteDate()));
         result.put(new SimpleDateFormat("MMM d, yyyy").format(ledgerEntry.getWorkCompleteDate()));
         BillingSession billingSession = ledgerEntry.getBillingSession();
         result.put(billingSession != null ? billingSession.getBillingSessionId() : null);
@@ -319,18 +411,6 @@ public class BillingLedgerActionBean extends CoreActionBean {
         return priceItems;
     }
 
-    public List<ProductOrderSampleLedgerInfo> getProductOrderSampleLedgerInfos() {
-        return productOrderSampleLedgerInfos;
-    }
-
-    public List<LedgerData> getLedgerData() {
-        return ledgerData;
-    }
-
-    public void setLedgerData(List<LedgerData> ledgerData) {
-        this.ledgerData = ledgerData;
-    }
-
     public List<String> getRenderedSampleNames() {
         return renderedSampleNames;
     }
@@ -345,6 +425,18 @@ public class BillingLedgerActionBean extends CoreActionBean {
 
     public void setRenderedPriceItemNames(List<String> renderedPriceItemNames) {
         this.renderedPriceItemNames = renderedPriceItemNames;
+    }
+
+    public List<ProductOrderSampleLedgerInfo> getProductOrderSampleLedgerInfos() {
+        return productOrderSampleLedgerInfos;
+    }
+
+    public List<LedgerData> getLedgerData() {
+        return ledgerData;
+    }
+
+    public void setLedgerData(List<LedgerData> ledgerData) {
+        this.ledgerData = ledgerData;
     }
 
     /**
@@ -373,24 +465,11 @@ public class BillingLedgerActionBean extends CoreActionBean {
                     primaryBilled = true;
                 }
             }
+
+            // If coverage has been met and the sample hasn't yet been billed, indicate an auto-fill quantity of 1
             if (coverageFirstMet != null && !primaryBilled) {
                 autoFillQuantity = 1;
             }
-        }
-
-        /**
-         * Get the date complete to use for the form. To maintain familiarity with the billing tracker spreadsheet, this
-         * will use the work complete date from unbilled ledger entries. If there are none, then DCFM (Date Coverage
-         * First Met) will be pre-populated if
-         *
-         * @return
-         */
-        public String getDateComplete() {
-            Date workCompleteDate = productOrderSample.getWorkCompleteDate();
-            if (workCompleteDate == null) {
-                workCompleteDate = coverageFirstMet;
-            }
-            return workCompleteDate != null ? new SimpleDateFormat("MMM d, yyyy").format(workCompleteDate) : null;
         }
 
         public ProductOrderSample getSample() {
@@ -401,14 +480,29 @@ public class BillingLedgerActionBean extends CoreActionBean {
             return coverageFirstMet;
         }
 
-        public double getBilledForPriceItem(PriceItem priceItem) {
-            ProductOrderSample.LedgerQuantities quantities = ledgerQuantities.get(priceItem);
-            return quantities != null ? quantities.getBilled() : 0;
+        /**
+         * Get the date complete to use for the form. To maintain familiarity with the billing tracker spreadsheet, this
+         * will use the work complete date from unbilled ledger entries. If there are none and coverage has been met,
+         * DCFM (Date Coverage First Met) will be pre-populated.
+         *
+         * @return the date complete to populate in the UI
+         */
+        public String getDateComplete() {
+            Date workCompleteDate = productOrderSample.getWorkCompleteDate();
+            if (workCompleteDate == null) {
+                workCompleteDate = coverageFirstMet;
+            }
+            return workCompleteDate != null ? new SimpleDateFormat("MMM d, yyyy").format(workCompleteDate) : null;
         }
 
         public double getTotalForPriceItem(PriceItem priceItem) {
             ProductOrderSample.LedgerQuantities quantities = ledgerQuantities.get(priceItem);
             return quantities != null ? quantities.getTotal() : 0;
+        }
+
+        public double getBilledForPriceItem(PriceItem priceItem) {
+            ProductOrderSample.LedgerQuantities quantities = ledgerQuantities.get(priceItem);
+            return quantities != null ? quantities.getBilled() : 0;
         }
 
         public int getAutoFillQuantity() {
@@ -417,7 +511,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
     }
 
     /**
-     *
+     * Data posted from the billing ledger UI.
      */
     public static class LedgerData {
         private String sampleName;
@@ -449,6 +543,9 @@ public class BillingLedgerActionBean extends CoreActionBean {
         }
     }
 
+    /**
+     * Quantity data for a single price item posted from the billing ledger UI.
+     */
     public static class ProductOrderSampleQuantities {
         private double originalQuantity;
         private double submittedQuantity;
