@@ -107,7 +107,6 @@
              */
             var ledgerTable = $j('#ledger').dataTable({
                 'oTableTools': ttExportDefines,
-//                'sDom': sDomNoTableToolsButtons,
                 'sDom': "<'row-fluid'<'span6'f><'span4'<'#dtButtonHolder'>><'span2'T>r>t<'row-fluid'<'span6'i><'span6'p>>",
                 'aaSorting': [[1, 'asc']],
                 'aoColumns': [
@@ -372,8 +371,10 @@
         };
 
         function updateSubmitButton() {
+<c:if test="${!actionBean.productOrderListEntry.billing}">
             var changedInputs = $j('input.changed');
             $j('#updateLedgers').attr('disabled', changedInputs.length == 0);
+</c:if>
         }
 
         function getSelectedRows() {
@@ -601,7 +602,14 @@
                 </span>
             </div>
             <div class="span2" style="text-align: right;">
-                <input type="submit" id="updateLedgers" name="updateLedgers" value="Update" class="btn btn-primary" disabled>
+                <c:choose>
+                    <c:when test="${actionBean.productOrderListEntry.billing}">
+                        <button id="updateLedgers" class="btn" title="No updates allowed while billing is in progress" disabled><strike>Update</strike></button>
+                    </c:when>
+                    <c:otherwise>
+                        <input type="submit" id="updateLedgers" name="updateLedgers" value="Update" class="btn btn-primary" disabled>
+                    </c:otherwise>
+                </c:choose>
             </div>
         </div>
 
