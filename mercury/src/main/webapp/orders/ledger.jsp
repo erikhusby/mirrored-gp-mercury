@@ -1,5 +1,6 @@
 <%--<%@ page import="org.broadinstitute.gpinformatics.athena.presentation.orders.BillingLedgerActionBean" %>--%>
 <%@ include file="/resources/layout/taglibs.jsp" %>
+<%@ page import="org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry" %>
 
 <stripes:useActionBean var="actionBean" beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.BillingLedgerActionBean"/>
 
@@ -11,6 +12,10 @@
 <%-- ================ Page-specific CSS ================ --%>
 
     <style type="text/css">
+        #filters {
+            margin-top: 6px;
+        }
+
         .table th, .table td {
             white-space: nowrap;
         }
@@ -262,8 +267,27 @@
 
             $j('#ledgerForm').submit(function() {
                 var hiddenInputs = $j(ledgerTable.fnGetHiddenNodes()).find('input');
-                hiddenInputs.appendTo($j('#hiddenRowInputs'));
-            })
+                var hiddenInputContainer = $j('#hiddenRowInputs');
+                hiddenInputs.appendTo(hiddenInputContainer);
+                var disabledInputs = $j('#ledgerForm').find('input:disabled');
+                for (var i = 0; i < disabledInputs.length; i++) {
+                    var disabledInput = disabledInputs.eq(i);
+                    hiddenInputContainer.append($j('<input/>', {
+                        type: 'hidden',
+                        name: disabledInput.attr('name'),
+                        value: disabledInput.val()
+                    }));
+                }
+            });
+
+            $j('#helpButton').click(function() {
+                $j('#helpDialog').dialog({
+                    draggable: false,
+                    modal: true,
+                    resizable: false,
+                    width: 800
+                });
+            });
 
             /*
              * Data for this table comes from DOM and is initially hidden and shown only after applying DataTables. This
@@ -411,13 +435,96 @@
 
 <stripes:layout-component name="content">
 
+    <div id="helpDialog" title="Help" style="display: none">
+        <h4>Introduction</h4>
+        <p>This interface allows you to request billing for samples in a product order. Changes made here will be
+            eligible for billing to Broad Quotes/SAP through a new billing session.</p>
+
+        <h4>Sorting and Filtering</h4>
+        <p>Samples can be sorted by clicking on any column header. Shift-click to sort on multiple columns. Samples can
+            also be filtered by:</p>
+        <ul>
+            <li>On Risk</li>
+            <li>Coverage Met</li>
+            <li>Billed</li>
+            <li>Modified (since page load)</li>
+        </ul>
+
+        <h4>Making Changes</h4>
+        <p>For each sample, there are inputs for:</p>
+        <ul>
+            <li>Primary Price Item</li>
+            <li>Replacement Price Item (if applicable)</li>
+            <li>Add-on Price Items (only those selected for this order)</li>
+        </ul>
+        <p>
+            The quantities represent the desired quantity to be billed for each sample and price item, including amounts
+            that have been billed to Broad Quotes/SAP and amounts that are still pending. Changes to these quantities
+            will queue billing actions to Broad Quotes/SAP.
+        </p>
+
+        <h4>Columns</h4>
+        <ul>
+            <li><b>Sample Information</b>
+                <ul>
+                    <li><b>Checkbox</b>: Select samples for bulk updates. Shift-click to select a range of samples.
+                        Clicking the checkbox in the header will select all/none. The header will also display the
+                        number of samples selected.</li>
+                    <li><b>Sample #</b>: The position of each sample in the order.</li>
+                    <li><b>Expand Ledger Details</b>: Clicking the <i class="icon-plus-sign"></i> icon will show all of
+                        the ledger entries for the sample. Note that modifications on the page will not appear in the
+                        details until they are saved.</li>
+                    <li><b>Sample ID</b>: The Broad sample ID.</li>
+                    <li><b>Collaborator Sample ID</b>: The externally assigned sample ID.</li>
+                    <li><b>On Risk</b>: A <img src="${ctxpath}/images/check.png"> is displayed if the sample is on risk.
+                        Hover over the check mark to see the risk details.</li>
+                    <li><b>Status</b>: Shows whether or not the sample has been "Abandoned" on this order.</li>
+                    <li><b>DCFM</b>: Date Coverage First Met. This is the same information that is available in
+                        Tableau.</li>
+                </ul>
+            </li>
+            <li><b>Billing</b>
+                <ul>
+                    <li><b>Date Complete</b>: Select the date the work was complete. This is the date that will be sent
+                        to Broad Quotes/SAP for billing. If there is no pending billing, this is pre-populated with
+                        DCFM.</li>
+                    <li><b>Price Item(s)</b>: Enter the desired quantities for each price item.</li>
+                    <li><b>Billed</b>: A <img src="${ctxpath}/images/check.png"> is displayed when the primary (or a
+                        replacement) price item has been billed to Broad Quotes/SAP. A "<span class="pending">*</span>"
+                        indicates that there are ledger changes that have not been billed that may affect this
+                        status.</li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+
 <%-- ================ Product Order Information ================ --%>
 
     <div class="row-fluid">
-        <div class="span4"><span class="label-form">Product:</span> ${actionBean.productOrder.product.name}</div>
-        <div class="span4"><span class="label-form">Primary Price Item:</span> ${actionBean.productOrder.product.primaryPriceItem.name}</div>
-        <div class="span2"><span class="label-form">Quote:</span> ${actionBean.productOrder.quoteId}</div>
-        <div class="span2">${actionBean.productOrder.samples.size()} samples</div>
+        <div class="span3"><span class="label-form">Product</span><br>${actionBean.productOrder.product.name}</div>
+        <div class="span3"><span class="label-form">Primary Price Item</span><br>${actionBean.productOrder.product.primaryPriceItem.name}</div>
+        <div class="span2"><span class="label-form">Quote</span><br>${actionBean.productOrder.quoteId}</div>
+        <div class="span1">${actionBean.productOrder.samples.size()} samples</div>
+        <div class="span2" style="text-align: right">
+            <c:choose>
+                <c:when test="${actionBean.productOrderListEntry.readyForReview}">
+                        <span class="badge badge-warning">
+                            <%=ProductOrderListEntry.LedgerStatus.READY_FOR_REVIEW.getDisplayName()%>
+                        </span>
+                </c:when>
+                <c:when test="${actionBean.productOrderListEntry.billing}">
+                        <span class="badge badge-info">
+                            <%=ProductOrderListEntry.LedgerStatus.BILLING_STARTED.getDisplayName()%>
+                        </span>
+                </c:when>
+                <c:when test="${actionBean.productOrderListEntry.readyForBilling}">
+                        <span class="badge badge-success">
+                            <%=ProductOrderListEntry.LedgerStatus.READY_TO_BILL.getDisplayName()%>
+                        </span>
+                </c:when>
+            </c:choose>
+        </div>
+        <div class="span1" style="text-align: right"><button id="helpButton" class="btn btn-small"><i class="icon-question-sign"></i></button></div>
     </div>
     <c:if test="${actionBean.productOrder.addOnList != 'no Add-ons'}">
         <div class="row-fluid">

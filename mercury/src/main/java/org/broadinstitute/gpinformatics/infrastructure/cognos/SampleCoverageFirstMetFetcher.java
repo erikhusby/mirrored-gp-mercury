@@ -18,7 +18,7 @@ import java.util.Map;
 @Stateful
 public class SampleCoverageFirstMetFetcher {
 
-    @PersistenceContext(unitName = "squid_pu")
+    @PersistenceContext(unitName = "metrics_pu")
     private EntityManager entityManager;
 
     public Map<String, SampleCoverageFirstMet> getCoverageFirstMetBySampleForPdo(String productOrderKey) {

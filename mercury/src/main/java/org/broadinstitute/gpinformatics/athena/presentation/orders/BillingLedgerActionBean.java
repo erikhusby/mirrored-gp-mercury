@@ -18,11 +18,13 @@ import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 // TODO: Move anything that is needed from SampleLedgerExporter into another class
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderListEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -70,6 +72,9 @@ public class BillingLedgerActionBean extends CoreActionBean {
     @Inject
     private ProductOrderEjb productOrderEjb;
 
+    @Inject
+    private ProductOrderListEntryDao productOrderListEntryDao;
+
     /**
      * The ID of the order being billed.
      */
@@ -79,6 +84,8 @@ public class BillingLedgerActionBean extends CoreActionBean {
      * The product order instance loaded from the orderId.
      */
     private ProductOrder productOrder;
+
+    private ProductOrderListEntry productOrderListEntry;
 
     /**
      * The price items that are in effect for this product order. This includes the product's primary price item, any
@@ -129,6 +136,9 @@ public class BillingLedgerActionBean extends CoreActionBean {
     public void before() {
         productOrder = productOrderDao.findByBusinessKey(orderId);
         ProductOrder.loadSampleData(productOrder.getSamples(), BSPSampleSearchColumn.BILLING_TRACKER_COLUMNS);
+
+        productOrderListEntry = productOrder.isDraft() ? ProductOrderListEntry.createDummy() :
+                productOrderListEntryDao.findSingle(productOrder.getJiraTicketKey());
 
         // Gather metrics and related information
         coverageFirstMetBySample =
@@ -299,6 +309,10 @@ public class BillingLedgerActionBean extends CoreActionBean {
 
     public ProductOrder getProductOrder() {
         return productOrder;
+    }
+
+    public ProductOrderListEntry getProductOrderListEntry() {
+        return productOrderListEntry;
     }
 
     public List<PriceItem> getPriceItems() {
