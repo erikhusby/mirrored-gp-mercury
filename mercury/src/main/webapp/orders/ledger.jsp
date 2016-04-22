@@ -20,7 +20,12 @@
             white-space: nowrap;
         }
         .table td.expand {
+            cursor: pointer;
             text-align: center;
+        }
+
+        .table td.expand.loading {
+            cursor: progress;
         }
 
         #ledger td.ledgerDetail {
@@ -148,30 +153,6 @@
                 event.preventDefault();
             });
             $j('#filters').show();
-
-            /*
-             * Set up ledger detail expand buttons.
-             */
-            $j('#ledger').on('click', 'td.expand', function() {
-                var parentRow = this.parentNode;
-                var icon = $j('i', this);
-                if (ledgerTable.fnIsOpen(parentRow)) {
-                    ledgerTable.fnClose(parentRow);
-                    icon.removeClass('icon-minus-sign');
-                    icon.addClass('icon-plus-sign');
-                } else {
-                    var position = $j(parentRow.children[1]).text();
-                    var detailTable = $j('<table class="subTable" style="width: 100%;"><thead><tr><th>Price Item</th><th>Quantity</th><th>Quote</th><th>Work Complete</th><th>Billing Session</th><th>Billed Date</th><th>Billing Message</th></tr></thead><tbody></tbody></table>');
-                    detailTable.dataTable({
-                        aaData: ledgerDetails[position - 1],
-                        "aaSorting": [[5, 'asc']]
-                    });
-                    var detailRow = ledgerTable.fnOpen(parentRow, detailTable, 'ledgerDetail');
-                    $j(detailRow).addClass(parentRow.className);
-                    icon.removeClass('icon-plus-sign');
-                    icon.addClass('icon-minus-sign');
-                }
-            });
 
             /*
              * Set up on-risk hover.
@@ -305,6 +286,32 @@
                 dataType: 'json',
                 success: function (data) {
                     ledgerDetails = data;
+
+                    /*
+                     * Set up ledger detail expand buttons.
+                     */
+                    $j('#ledger').on('click', 'td.expand', function() {
+                        var parentRow = this.parentNode;
+                        var icon = $j('i', this);
+                        if (ledgerTable.fnIsOpen(parentRow)) {
+                            ledgerTable.fnClose(parentRow);
+                            icon.removeClass('icon-minus-sign');
+                            icon.addClass('icon-plus-sign');
+                        } else {
+                            var position = $j(parentRow.children[1]).text();
+                            var detailTable = $j('<table class="subTable" style="width: 100%;"><thead><tr><th>Price Item</th><th>Quantity</th><th>Quote</th><th>Work Complete</th><th>Billing Session</th><th>Billed Date</th><th>Billing Message</th></tr></thead><tbody></tbody></table>');
+                            detailTable.dataTable({
+                                aaData: ledgerDetails[position - 1],
+                                "aaSorting": [[5, 'asc']]
+                            });
+                            var detailRow = ledgerTable.fnOpen(parentRow, detailTable, 'ledgerDetail');
+                            $j(detailRow).addClass(parentRow.className);
+                            icon.removeClass('icon-plus-sign');
+                            icon.addClass('icon-minus-sign');
+                        }
+                    });
+
+                    $j('#ledger').find('td.expand').removeClass('loading');
                 }
             });
         });
@@ -462,6 +469,12 @@
             that have been billed to Broad Quotes/SAP and amounts that are still pending. Changes to these quantities
             will queue billing actions to Broad Quotes/SAP.
         </p>
+
+        <h4>Auto Fill</h4>
+        <p>The <b>Auto Fill</b> button will fill in any billing quantities that Mercury believes should be billed. The
+            quantities will be entered into the inputs as if you had made the changes yourself, allowing you to review
+            Mercury's decisions before saving them.</p>
+        <p>Currently, the determination is based on coverage having been met (DCFM).</p>
 
         <h4>Columns</h4>
         <ul>
@@ -636,7 +649,7 @@
                     <td style="text-align: right">
                         ${info.sample.samplePosition + 1}
                     </td>
-                    <td class="expand">
+                    <td class="expand loading">
                         <i class="icon-plus-sign"></i>
                     </td>
                     <td>
