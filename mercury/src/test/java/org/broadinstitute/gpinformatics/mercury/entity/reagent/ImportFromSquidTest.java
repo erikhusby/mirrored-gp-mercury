@@ -21,26 +21,11 @@ import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.Test;
-import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathExpression;
-import javax.xml.xpath.XPathExpressionException;
-import javax.xml.xpath.XPathFactory;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -406,50 +391,4 @@ public class ImportFromSquidTest extends Arquillian {
         barcodedTubeDao.clear();
     }
 
-    /**
-     * This test creates Mercury LCSETs to match those in Squid.  It reads from an XML export from JIRA.
-     */
-    @Test(enabled = true)
-    public void testCreateLcsets() {
-
-        try {
-            // Open XML
-            DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder documentBuilder = builderFactory.newDocumentBuilder();
-            Document document = documentBuilder.parse(new FileInputStream(
-                    "C:\\Users\\thompson\\Downloads\\SearchRequest.xml"));
-            XPath xPath =  XPathFactory.newInstance().newXPath();
-            XPathExpression lcsetKeyExpr = xPath.compile("/rss/channel/item/key");
-            XPathExpression gssrExpr = xPath.compile(
-                    "../customfields/customfield/customfieldname[text()='GSSR ID(s)']/../customfieldvalues/customfieldvalue");
-            NodeList lcsetNodeList = (NodeList) lcsetKeyExpr.evaluate(document,
-                    XPathConstants.NODESET);
-            for (int i = 0; i < lcsetNodeList.getLength(); i++) {
-                Node keyNode = lcsetNodeList.item(i);
-                System.out.println(keyNode.getFirstChild().getNodeValue());
-                NodeList gssrNodeList = (NodeList) gssrExpr.evaluate(keyNode, XPathConstants.NODESET);
-                for (int j = 0; j < gssrNodeList.getLength(); j++) {
-                    Node customfieldvalueNode = gssrNodeList.item(j);
-                    System.out.println(customfieldvalueNode.getFirstChild().getNodeValue());
-                }
-            }
-            // Iterate over LCSETs
-            // If LCSET doesn't exist in Mercury
-            // Get GSSR IDs
-            // Get barcodes
-            // Determine control
-            // Create LCSET
-            // Register control
-        } catch (ParserConfigurationException e) {
-            throw new RuntimeException(e);
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } catch (SAXException e) {
-            throw new RuntimeException(e);
-        } catch (XPathExpressionException e) {
-            throw new RuntimeException(e);
-        }
-    }
 }
