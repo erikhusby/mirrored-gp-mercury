@@ -102,15 +102,22 @@ public class MercurySampleSearchDefinition {
         searchTerm.setName("LCSET");
         searchTerm.setSearchValueConversionExpression(SearchDefinitionFactory.getLcsetInputConverter());
         criteriaPaths = new ArrayList<>();
+
+        // Mercury only cares about workflow batches
+        SearchTerm.ImmutableTermFilter workflowOnlyFilter = new SearchTerm.ImmutableTermFilter(
+                "labBatchType", SearchInstance.Operator.EQUALS, LabBatch.LabBatchType.WORKFLOW);
+
         // Non-reworks
         criteriaPath = new SearchTerm.CriteriaPath();
         criteriaPath.setCriteria(Arrays.asList("BatchVessels", "labVessel", "labBatches", "labBatch"));
         criteriaPath.setPropertyName("batchName");
+        criteriaPath.addImmutableTermFilter(workflowOnlyFilter);
         criteriaPaths.add(criteriaPath);
         // Reworks
         criteriaPath = new SearchTerm.CriteriaPath();
         criteriaPath.setCriteria(Arrays.asList("BatchVessels", "labVessel", "reworkLabBatches"));
         criteriaPath.setPropertyName("batchName");
+        criteriaPath.addImmutableTermFilter(workflowOnlyFilter);
         criteriaPaths.add(criteriaPath);
         searchTerm.setCriteriaPaths(criteriaPaths);
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {

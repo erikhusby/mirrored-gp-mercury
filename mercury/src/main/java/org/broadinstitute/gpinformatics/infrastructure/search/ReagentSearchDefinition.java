@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -133,6 +134,10 @@ public class ReagentSearchDefinition {
         Map<String, List<SearchTerm>> mapGroupSearchTerms = new LinkedHashMap<>();
         List<SearchTerm> searchTerms = new ArrayList<>();
 
+        // Mercury only cares about workflow batches
+        SearchTerm.ImmutableTermFilter workflowOnlyFilter = new SearchTerm.ImmutableTermFilter(
+                "labBatchType", SearchInstance.Operator.EQUALS, LabBatch.LabBatchType.WORKFLOW);
+
         SearchTerm searchTerm = new SearchTerm();
         searchTerm.setName("LCSET");
         List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
@@ -140,6 +145,7 @@ public class ReagentSearchDefinition {
         criteriaPath.setCriteria(Arrays.asList(/* LabEvent*/ "inPlaceLabEvents", /* LabVessel */
                 "labBatches", /* LabBatchStartingVessel */ "labBatch" /* LabBatch */));
         criteriaPath.setPropertyName("batchName");
+        criteriaPath.addImmutableTermFilter(workflowOnlyFilter);
         criteriaPaths.add(criteriaPath);
         searchTerm.setCriteriaPaths(criteriaPaths);
 
@@ -147,6 +153,7 @@ public class ReagentSearchDefinition {
         criteriaPath.setCriteria(Arrays.asList(/* LabEvent*/ "inPlaceLabEvents", /* LabVessel */
                 "reworkLabBatches" /* LabBatch */));
         criteriaPath.setPropertyName("batchName");
+        criteriaPath.addImmutableTermFilter(workflowOnlyFilter);
         criteriaPaths.add(criteriaPath);
         searchTerm.setCriteriaPaths(criteriaPaths);
 
