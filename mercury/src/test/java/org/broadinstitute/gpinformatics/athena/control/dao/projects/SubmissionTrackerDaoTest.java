@@ -142,31 +142,6 @@ public class SubmissionTrackerDaoTest extends ContainerTest {
         assertThat(submissionTracker1.getTuple(), not(equalTo(submissionTracker2.getTuple())));
     }
 
-    public void testFindSubmissionTrackersWithDifferentFileNames() throws Exception {
-        // SubmissionTracker 1
-        SubmissionDto submissionDto1 =
-                getSubmissionDto(RP_ID, sampleName, BassFileType.BAM, DEFAULT_VERSION, TEST_FILE);
-        SubmissionTracker submissionTracker = addTracker(submissionDto1);
-
-        // SubmissionTracker 2
-        SubmissionDto submissionDto2 =
-                getSubmissionDto(RP_ID, sampleName, BassFileType.BAM, DEFAULT_VERSION, TEST_FILE + "/is/not");
-        SubmissionTracker submissionTracker2 =
-                addTracker(submissionDto2);
-
-        persistTrackers(Arrays.asList(submissionTracker, submissionTracker2));
-
-        List<SubmissionTracker> submissionTrackers =
-                submissionTrackerDao.findSubmissionTrackers(RP_ID, Collections.singleton(submissionDto1));
-        assertThat(submissionTrackers, hasSize(2));
-
-        SubmissionTracker tracker1 = submissionTrackers.get(0);
-        SubmissionTracker tracker2 = submissionTrackers.get(1);
-
-        // Tuples should be equal
-        assertThat(tracker1.getTuple(), equalTo(tracker2.getTuple()));
-    }
-
 
     private void persistTrackers(Collection<SubmissionTracker> submissionTrackers) {
         for (SubmissionTracker tracker : submissionTrackers) {
