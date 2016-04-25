@@ -87,6 +87,7 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.QtpJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.SageEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ShearingEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.StoolTNAEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.TruSeqStrandSpecificEntityBuilder;
 import org.easymock.EasyMock;
 import org.mockito.Mockito;
@@ -226,22 +227,27 @@ public class BaseEventTest {
                 Mockito.mock(MercurySampleDao.class));
     }
 
+    public Map<String, BarcodedTube> createInitialRack(ProductOrder productOrder, String tubeBarcodePrefix) {
+        return createInitialRack(productOrder, tubeBarcodePrefix, MercurySample.MetadataSource.BSP);
+    }
+
     /**
      * This method builds the initial tube rack for starting an event test.  This will log an error if you attempt to
      * create the rack from a product order than has more than NUM_POSITIONS_IN_RACK tubes.
      *
      * @param productOrder      The product order to create the initial rack from
      * @param tubeBarcodePrefix prefix for each tube barcode
-     *
+     * @param metadataSource    BSP or Mercury
      * @return Returns a map of String barcodes to their tube objects.
      */
-    public Map<String, BarcodedTube> createInitialRack(ProductOrder productOrder, String tubeBarcodePrefix) {
+    public Map<String, BarcodedTube> createInitialRack(ProductOrder productOrder, String tubeBarcodePrefix,
+            MercurySample.MetadataSource metadataSource) {
         Map<String, BarcodedTube> mapBarcodeToTube = new LinkedHashMap<>();
         int rackPosition = 1;
         for (ProductOrderSample poSample : productOrder.getSamples()) {
             String barcode = tubeBarcodePrefix + rackPosition;
             BarcodedTube bspAliquot = new BarcodedTube(barcode);
-            bspAliquot.addSample(new MercurySample(poSample.getName(), MercurySample.MetadataSource.BSP));
+            bspAliquot.addSample(new MercurySample(poSample.getName(), metadataSource));
             mapBarcodeToTube.put(barcode, bspAliquot);
             Map<BSPSampleSearchColumn, String> dataMap = new HashMap<>();
             dataMap.put(BSPSampleSearchColumn.SAMPLE_ID, poSample.getName());
@@ -637,6 +643,12 @@ public class BaseEventTest {
                                                        String prefix) {
         return new CrspRiboPlatingEntityBuilder(bettaLimsMessageTestFactory,
                 labEventFactory, labEventHandler, mapBarcodeToTube, rackBarcode, prefix).invoke();
+    }
+
+    public StoolTNAEntityBuilder runStoolExtractionToTNAProcess(StaticPlate sourcePlate,
+                                                                int numSamples, String prefix) {
+        return new StoolTNAEntityBuilder(sourcePlate, numSamples, bettaLimsMessageTestFactory,
+                labEventFactory, getLabEventHandler(), prefix).invoke();
     }
 
     /**

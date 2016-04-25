@@ -62,7 +62,7 @@ public class LabMetricProcessor extends TableProcessor {
         // Convert to a number.
         try {
             BigDecimal metricDecimal = new BigDecimal(dataRow.get(LabMetricHeaders.METRIC.getText()));
-            LabMetric currentMetric = new LabMetric(metricDecimal, metricType, LabMetric.LabUnit.UG_PER_ML,
+            LabMetric currentMetric = new LabMetric(metricDecimal, metricType, LabMetric.LabUnit.NG_PER_UL,
                     vesselPosition, metricDate);
             LabVessel metricVessel = labVesselDao.findByIdentifier(barcode);
             if (metricVessel == null) {

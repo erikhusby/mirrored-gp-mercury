@@ -11,7 +11,6 @@
 
 package org.broadinstitute.gpinformatics.athena.boundary.projects;
 
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.SubmissionTrackerDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTracker;
@@ -46,6 +45,7 @@ public class ResearchProjectEjbSubmissionTest {
     private static final String PDO_99999 = "PDO-99999";
     private ProductOrder dummyProductOrder = ProductOrderTestFactory.createDummyProductOrder(1, PDO_99999);
 
+    @SuppressWarnings("ConstantConditions")
     public void testValidateSubmissionsDtoHasNullsDto() throws Exception {
         SubmissionDto submissionDto = new SubmissionDto(null, null, null, null);
 
@@ -59,7 +59,7 @@ public class ResearchProjectEjbSubmissionTest {
         }
     }
 
-    public void testValidateSubmissionsEmtpyDtoList() throws Exception {
+    public void testValidateSubmissionsEmptyDtoList() throws Exception {
         ResearchProjectEjb researchProjectEjb = getResearchProjectEjb(null);
         try {
             researchProjectEjb.validateSubmissionDto(PDO_99999, Collections.<SubmissionDto>emptyList());
@@ -74,7 +74,7 @@ public class ResearchProjectEjbSubmissionTest {
         setupSubmissionTrackerMock(submissionTrackerDao, Collections.<SubmissionTracker>emptyList());
         ResearchProjectEjb researchProjectEjb = getResearchProjectEjb(submissionTrackerDao);
 
-        SubmissionDto submissionDto = getSubmissionDto("ABC1234", BassFileType.BAM, 9, DEFAULT_FILE_PATH);
+        SubmissionDto submissionDto = getSubmissionDto("ABC1234", BassFileType.BAM, 9);
 
         try {
             researchProjectEjb.validateSubmissionDto("RP-1234", Collections.singletonList(submissionDto));
@@ -86,71 +86,6 @@ public class ResearchProjectEjbSubmissionTest {
         verifySubmissionTrackerMock(submissionTrackerDao);
     }
 
-    @DataProvider(name = "fileNameDataProvider")
-    public Iterator<Object[]> fileNameDataProvider() {
-        List<Object[]> testCases = new ArrayList<>();
-        testCases.add(new Object[]{"file a", "file a"});
-        testCases.add(new Object[]{"file a", "file b"});
-        testCases.add(new Object[]{"", "file a"});
-        testCases.add(new Object[]{null, "file a"});
-        testCases.add(new Object[]{null, null});
-        testCases.add(new Object[]{"", ""});
-
-        return testCases.iterator();
-    }
-
-    @Test(dataProvider = "fileNameDataProvider")
-    public void testFileNameVariations(String trackerFileName, String bassFilename) {
-        SubmissionDto submissionDto =
-                getSubmissionDto(TEST_SAMPLE_1, BassFileType.BAM, TEST_VERSION_1, trackerFileName);
-        SubmissionTracker submissionTracker = getSubmissionTracker(submissionDto);
-        submissionTracker.setFileName(trackerFileName);
-
-        SubmissionTrackerDao submissionTrackerDao = Mockito.mock(SubmissionTrackerDao.class);
-        setupSubmissionTrackerMock(submissionTrackerDao, Collections.singletonList(submissionTracker));
-
-        SubmissionDto newSubmissionDto =
-                getSubmissionDto(TEST_SAMPLE_1, BassFileType.BAM, TEST_VERSION_1, bassFilename);
-        ResearchProjectEjb researchProjectEjb = getResearchProjectEjb(submissionTrackerDao);
-
-        try {
-            researchProjectEjb.validateSubmissionDto("RP-1234", Collections.singletonList(newSubmissionDto));
-            Assert.fail(String.format(
-                    "submissionTracker returned %s and bass returned %s This should not have been allowed",
-                    trackerFileName, bassFilename));
-        } catch (ValidationException e) {
-            Assert.assertTrue(e.getMessage().contains(submissionTracker.getTuple().toString()));
-        }
-        verifySubmissionTrackerMock(submissionTrackerDao);
-    }
-
-    public void testBassSameAsBass() throws Exception {
-        BassFileType trackerFileType = BassFileType.BAM;
-        BassFileType bassFileType = BassFileType.BAM;
-
-        // data setup for dto result.
-        SubmissionTrackerDao submissionTrackerDao = Mockito.mock(SubmissionTrackerDao.class);
-
-        SubmissionDto submissionDto = getSubmissionDto(dummyProductOrder, trackerFileType, "/some/file");
-        SubmissionTracker submissionTracker = getSubmissionTracker(submissionDto);
-
-        setupSubmissionTrackerMock(submissionTrackerDao, Collections.singletonList(submissionTracker));
-
-        // data setup for new submission request.
-        SubmissionDto newSubmissionDto = getSubmissionDto(dummyProductOrder, bassFileType, "/some/file");
-        ResearchProjectEjb researchProjectEjb = getResearchProjectEjb(submissionTrackerDao);
-
-        try {
-            researchProjectEjb.validateSubmissionDto("RP-1234", Collections.singletonList(newSubmissionDto));
-            Assert.fail(String.format("Sample has already been submitted: New submission: %s prior submission %s",
-                    newSubmissionDto.toString(), submissionDto.toString()));
-        } catch (Exception e) {
-            String exceptionMessage = String.format("[{sampleName = %s; fileType = BAM; version = 1}]", TEST_SAMPLE_1);
-            Assert.assertTrue(e.getMessage().contains(exceptionMessage));
-        }
-
-        verifySubmissionTrackerMock(submissionTrackerDao);
-    }
 
     public void testFileTypeVariationNoBassDTOFileType() throws Exception {
         // data setup for dao result.
@@ -175,46 +110,31 @@ public class ResearchProjectEjbSubmissionTest {
     @SuppressWarnings("ArraysAsListWithZeroOrOneArgument")
     @DataProvider(name = "manyDtosManyTrackers")
     public Iterator<Object[]> manyDtosManyTrackers() {
-        String anotherFilename = "/not" + DEFAULT_FILE_PATH;
-        SubmissionDto bA = getSubmissionDto("A", BassFileType.BAM, TEST_VERSION_1, DEFAULT_FILE_PATH);
-        SubmissionDto bB = getSubmissionDto("A", BassFileType.BAM, TEST_VERSION_1, anotherFilename);
-        SubmissionDto bA2 = getSubmissionDto("A", BassFileType.BAM, TEST_VERSION_2, DEFAULT_FILE_PATH);
-        SubmissionDto bApicard = getSubmissionDto("A", BassFileType.PICARD, TEST_VERSION_1, DEFAULT_FILE_PATH);
+        SubmissionDto bA = getSubmissionDto("A", BassFileType.BAM, TEST_VERSION_1);
+        SubmissionDto bA2 = getSubmissionDto("A", BassFileType.BAM, TEST_VERSION_2);
+        SubmissionDto bApicard = getSubmissionDto("A", BassFileType.PICARD, TEST_VERSION_1);
 
         SubmissionTracker stA =
-                new SubmissionTracker(bA.getSampleName(), bA.getFileType(), String.valueOf(bA.getVersion()));
-        stA.setFileName(bA.getFileName());
-
-        SubmissionTracker stB =
-                new SubmissionTracker(bB.getSampleName(), bB.getFileType(), String.valueOf(bB.getVersion()));
-        stB.setFileName(bB.getFileName());
-
-        SubmissionTracker stA2 =
-                new SubmissionTracker(bA2.getSampleName(), bA2.getFileType(), String.valueOf(bA2.getVersion()));
-        stA2.setFileName(bA2.getFileName());
+                new SubmissionTracker(bA.getSampleName(), bA.getFileTypeEnum(), String.valueOf(bA.getVersion()));
 
         List<Object[]> testCases = new ArrayList<>();
-        testCases.add(new Object[]{"TEST-1", Arrays.asList(bA), Collections.emptyList(), true});
-        testCases.add(new Object[]{"TEST-1", Arrays.asList(bA, bApicard), Collections.emptyList(), true});
-        testCases.add(new Object[]{"TEST-2", Arrays.asList(bA), Arrays.asList(stA), false});
-        testCases.add(new Object[]{"TEST-3", Arrays.asList(bA), Arrays.asList(stB), false});
-        testCases.add(new Object[]{"TEST-4", Arrays.asList(bA2), Arrays.asList(stA), false});
-
-        // This test case is the scenario addressed in GPLIM-4060
-        testCases.add(new Object[]{"TEST-5", Arrays.asList(bA), Arrays.asList(stA, stB), false});
+        testCases.add(new Object[]{"TEST-1", Collections.singletonList(bA), Collections.emptyList(), true});
+        testCases.add(new Object[]{"TEST-2", Arrays.asList(bA, bApicard), Collections.emptyList(), true});
+        testCases.add(new Object[]{"TEST-3", Collections.singletonList(bA), Collections.singletonList(stA), false});
+        testCases.add(new Object[]{"TEST-4", Collections.singletonList(bA2), Collections.singletonList(stA), false});
 
         return testCases.iterator();
     }
 
     @Test(dataProvider = "manyDtosManyTrackers")
-    public void testValidateSubmissionDtoVariations(String label, List<SubmissionDto> submisisonDTOs,
+    public void testValidateSubmissionDtoVariations(String label, List<SubmissionDto> submissionDTOs,
                                                     List<SubmissionTracker> submissionTrackers, boolean willPass) {
         SubmissionTrackerDao submissionTrackerDao = Mockito.mock(SubmissionTrackerDao.class);
         setupSubmissionTrackerMock(submissionTrackerDao, submissionTrackers);
         ResearchProjectEjb researchProjectEjb = getResearchProjectEjb(submissionTrackerDao);
 
         try {
-            researchProjectEjb.validateSubmissionDto(PDO_99999, submisisonDTOs);
+            researchProjectEjb.validateSubmissionDto(PDO_99999, submissionDTOs);
             if (!willPass) {
                 Assert.fail(String.format("ValidationException Expected on %s", label));
             }
@@ -228,7 +148,7 @@ public class ResearchProjectEjbSubmissionTest {
 
     public void testValidateSubmissionsDtoDiffersTupleEqual() throws Exception {
         SubmissionDto submissionDto =
-                getSubmissionDto(TEST_SAMPLE_1, BassFileType.BAM, TEST_VERSION_1, DEFAULT_FILE_PATH);
+                getSubmissionDto(TEST_SAMPLE_1, BassFileType.BAM, TEST_VERSION_1);
 
         Map<BassDTO.BassResultColumn, String> bassInfo = new HashMap<>(submissionDto.getBassDTO().getColumnToValue());
         bassInfo.put(path, "not"+DEFAULT_FILE_PATH);
@@ -250,9 +170,9 @@ public class ResearchProjectEjbSubmissionTest {
 
     public void testValidateSubmissionsDtoEqual() throws Exception {
         SubmissionDto submissionDto =
-                getSubmissionDto(TEST_SAMPLE_1, BassFileType.BAM, TEST_VERSION_1, DEFAULT_FILE_PATH);
+                getSubmissionDto(TEST_SAMPLE_1, BassFileType.BAM, TEST_VERSION_1);
         SubmissionDto submissionDto2 =
-                getSubmissionDto(TEST_SAMPLE_1, BassFileType.BAM, TEST_VERSION_1, DEFAULT_FILE_PATH);
+                getSubmissionDto(TEST_SAMPLE_1, BassFileType.BAM, TEST_VERSION_1);
 
         SubmissionTrackerDao submissionTrackerDao = Mockito.mock(SubmissionTrackerDao.class);
         ResearchProjectEjb researchProjectEjb = getResearchProjectEjb(submissionTrackerDao);
@@ -262,11 +182,6 @@ public class ResearchProjectEjbSubmissionTest {
         } catch (ValidationException e) {
             Assert.assertTrue(e.getMessage().contains(submissionDto.getBassDTO().getTuple().toString()));
         }
-    }
-
-    private SubmissionTracker getSubmissionTracker(SubmissionDto submissionDto) {
-        return new SubmissionTracker(submissionDto.getSampleName(), submissionDto.getFileType(),
-                String.valueOf(submissionDto.getVersion()));
     }
 
     private ResearchProjectEjb getResearchProjectEjb(SubmissionTrackerDao submissionTrackerDao) {
@@ -288,14 +203,14 @@ public class ResearchProjectEjbSubmissionTest {
                 Collections.singletonList(productOrder), null);
     }
 
+    @SuppressWarnings("serial")
     public SubmissionDto getSubmissionDto(final String sampleName,
-                                           final BassFileType fileType, final int version, final String path) {
+                                          final BassFileType fileType, final int version) {
         ProductOrder productOrder = ProductOrderTestFactory.createDummyProductOrder(1, PDO_99999);
         return getSubmissionDto(productOrder, new HashMap<BassDTO.BassResultColumn, String>() {{
                     put(BassDTO.BassResultColumn.sample, sampleName);
                     put(BassDTO.BassResultColumn.file_type, fileType == null ? null : fileType.getBassValue());
                     put(BassDTO.BassResultColumn.version, String.valueOf(version));
-                    put(BassDTO.BassResultColumn.path, path);
                 }}
         );
     }

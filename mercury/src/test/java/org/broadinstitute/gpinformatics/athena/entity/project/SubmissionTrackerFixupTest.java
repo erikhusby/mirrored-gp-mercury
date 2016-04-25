@@ -69,4 +69,18 @@ public class SubmissionTrackerFixupTest extends Arquillian {
         submissionTrackerDao.persist(new FixupCommentary(
                 "Backfill fileTypes for existing SubmissionTrackers. See https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-4060"));
     }
+
+    @Test(enabled = false)
+    public void gplim4086RemoveDuplicateSubmissions() {
+        userBean.loginOSUser();
+
+        long[] ids = new long[] { 1, 951, 952, 2952, 2983 };
+
+        for (long id : ids) {
+            SubmissionTracker tracker = submissionTrackerDao.findById(SubmissionTracker.class, id);
+            submissionTrackerDao.remove(tracker);
+        }
+
+        submissionTrackerDao.persist(new FixupCommentary("GPLIM-4086 removed duplicate submissions"));
+    }
 }

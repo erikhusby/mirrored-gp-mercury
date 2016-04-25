@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
-import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.GenericType;
 import com.sun.jersey.api.client.UniformInterfaceException;
 import com.sun.jersey.api.client.WebResource;
@@ -9,7 +8,6 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.LibraryDataType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SampleInfoType;
-import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
