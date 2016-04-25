@@ -311,4 +311,15 @@ public class AuditReaderDao extends GenericDao {
         }
         return entity;
     }
+
+    /**
+     * Returns the version of the entity as of the effective date. The entity will be null if it was deleted
+     * before effective date. It will also be null if the entity was created after the effective date unless
+     * extendToFirstAvailable is true, which then returns the first available entity.
+     */
+    public <T> List<T> getVersionsAsOf(Class entityClass, Date effectiveDate) {
+        Number revId = getAuditReader().getRevisionNumberForDate(effectiveDate);
+        List<T> list = getAuditReader().createQuery().forEntitiesAtRevision(entityClass, revId).getResultList();
+        return list;
+    }
 }

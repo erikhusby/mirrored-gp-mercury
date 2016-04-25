@@ -1,7 +1,10 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.envers;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.time.FastDateFormat;
+import org.apache.commons.lang3.time.FastDateParser;
 import org.apache.commons.lang3.tuple.Pair;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationReadGroup;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
@@ -18,6 +21,7 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -322,7 +326,7 @@ public class AuditReaderDaoTest extends ContainerTest {
         Assert.assertEquals(((BarcodedTube) auditReaderDao.getVersionAsOf(BarcodedTube.class, entityId, dates.get(0),
                 true)).getTubeType(), BarcodedTube.BarcodedTubeType.MatrixTube);
         Assert.assertEquals(((BarcodedTube) auditReaderDao.getVersionAsOf(BarcodedTube.class, entityId, dates.get(1),
-                true)).getTubeType(),  BarcodedTube.BarcodedTubeType.MatrixTube);
+                true)).getTubeType(), BarcodedTube.BarcodedTubeType.MatrixTube);
         Assert.assertEquals(((BarcodedTube) auditReaderDao.getVersionAsOf(BarcodedTube.class, entityId, dates.get(2),
                 true)).getTubeType(), BarcodedTube.BarcodedTubeType.Cryovial2018);
         Assert.assertNull(auditReaderDao.getVersionAsOf(BarcodedTube.class, entityId, dates.get(3), false));
@@ -332,6 +336,34 @@ public class AuditReaderDaoTest extends ContainerTest {
     @Test(groups = TestGroups.STANDARD)
     public void testEntityAtDateFail() throws Exception {
         Assert.assertEquals(auditReaderDao.getSortedVersionsOfEntity(BarcodedTube.class, 999999999999L).size(), 0);
+    }
+
+    @Test(groups = TestGroups.STANDARD)
+    public void testEntitiesAtDate() throws Exception {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MMM-yyyy HH.mm.ss");
+
+        // pdoId 9102, created revId = 10843, deleted revId = 11501
+        Date created = dateFormat.parse("28-JAN-2013 16.21.05");
+        List<ProductOrder> pdosOnDate1 = auditReaderDao.getVersionsAsOf(ProductOrder.class, created);
+        boolean found = false;
+        for (ProductOrder pdo : pdosOnDate1) {
+            if (pdo.getProductOrderId() == 9102) {
+                found = true;
+                Assert.assertEquals(pdo.getSamples().size(), 1);
+                Assert.assertEquals(pdo.getSamples().get(0).getSampleKey(), "292700.0");
+            }
+        }
+        Assert.assertTrue(found);
+
+        Date deleted = dateFormat.parse("29-JAN-2013 23.34.45");
+        List<ProductOrder> pdosOnDate2 = auditReaderDao.getVersionsAsOf(ProductOrder.class, deleted);
+        found = false;
+        for (ProductOrder pdo : pdosOnDate2) {
+            if (pdo.getProductOrderId() == 9102) {
+                found = true;
+            }
+        }
+        Assert.assertFalse(found);
     }
 
     /**

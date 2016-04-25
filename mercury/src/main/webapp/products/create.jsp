@@ -39,6 +39,7 @@
             </c:forEach>
 
             var criteriaCount = 0;
+            var genotypingChipCount = 0;
 
             $j(document).ready(
                 function () {
@@ -72,6 +73,10 @@
 
                     <c:forEach items="${actionBean.editProduct.riskCriteria}" var="criterion">
                         addCriterion('${criterion.type.label}', '${criterion.operator.label}', '${criterion.value}');
+                    </c:forEach>
+
+                    <c:forEach items="${actionBean.genotypingChipInfo}" var="iterator" varStatus="iteratorStatus">
+                        addGenotypingChip('${iterator.left}', '${iterator.middle}', '${iterator.right}');
                     </c:forEach>
                 }
             );
@@ -179,6 +184,38 @@
                 }
 
                 return options;
+            }
+
+            function removeGenotypingChip(itemNumber) {
+                $j('#genotypingChip-' + itemNumber).remove();
+            }
+
+            function addGenotypingChip(chipTechnology, chipName, pdoSubstring) {
+
+                var newGenotypingChip = '<div id="genotypingChip-' + genotypingChipCount + '" style="margin-bottom:3px;" class="genotypingChipPanel">\n';
+
+                // Adds a button to remove this item
+                newGenotypingChip += '    <a class="btn btn-mini" style="font-size:14pt;text-decoration: none;" onclick="removeGenotypingChip(' + genotypingChipCount + ')">-</a>\n';
+
+                // The chip technology dropdown
+                newGenotypingChip += '    <select id="chipTechnologySelect-' + genotypingChipCount +
+                        '" style="width:auto;" name="genotypingChipTechnologies" value="' + chipTechnology + '">\n';
+                <c:forEach items="${actionBean.availableChipTechnologies}" var="item">
+                newGenotypingChip += '<option value="${item}">${item}</option>';
+                </c:forEach>
+                newGenotypingChip += '    </select>\n';
+
+                // The text boxes
+                newGenotypingChip += '    <input style="width:80%" id="chipName-' + genotypingChipCount +
+                        '" type="text" name="genotypingChipNames" value="' + chipName + '"/>\n';
+                newGenotypingChip += '<br/>Product order name substring match: ';
+                newGenotypingChip += '    <input style="width:80%" id="pdoSubstring-' + genotypingChipCount +
+                        '" type="text" name="genotypingChipPdoSubstrings" value="' + pdoSubstring + '"/>\n';
+                newGenotypingChip += '</div>\n';
+
+                $j('#genotypingChips').append(newGenotypingChip);
+
+                genotypingChipCount++;
             }
 
         </script>
@@ -348,6 +385,13 @@
                     <div id="riskCriterion" class="controls" style="margin-top: 5px;">
                         A sample is on risk if:
                         <a id="addRiskCriteria" class="btn btn-mini" style="margin-bottom: 3px;text-decoration: none;" onclick="addCriterion()">+</a>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <stripes:label for="genotypingChips" name="GenotypingChip" class="control-label"/>
+                    <div id="genotypingChips" class="controls" style="margin-top: 5px;">
+                        <a id="addGenotypingChip" class="btn btn-mini" style="margin-bottom: 3px;text-decoration: none;" onclick="addGenotypingChip()">+</a>
                     </div>
                 </div>
 

@@ -15,6 +15,7 @@ import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidateNestedProperties;
 import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Triple;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
@@ -113,6 +114,15 @@ public class ProductActionBean extends CoreActionBean {
     private String[] operators = new String[0];
     private String[] values = new String[0];
 
+    // Genotyping chip name, pdo substring, chip technology for the current product.
+    private List<Triple<String, String, String>> genotypingChipInfo = new ArrayList<>();
+    private String[] genotypingChipTechnologies = new String[0];
+    private String[] genotypingChipNames = new String[0];
+    private String[] genotypingChipPdoSubstrings = new String[0];
+
+    // All genotyping chip technologies (families) for populating UI dropdown.
+    private Set<String> availableChipTechnologies;
+
     @Validate(required = true, on = {SAVE_ACTION})
     private Long productFamilyId;
 
@@ -164,6 +174,12 @@ public class ProductActionBean extends CoreActionBean {
             // This must be a create, so construct a new top level product that has nothing else set
             editProduct = new Product(Product.TOP_LEVEL_PRODUCT);
         }
+        availableChipTechnologies = productEjb.findChipTechnologies();
+    }
+
+    @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION, EDIT_ACTION, CREATE_ACTION})
+    public void initGenotypingInfo() {
+        genotypingChipInfo = productEjb.getMappedGenotypingChips(editProduct.getPartNumber());
     }
 
     @Before(stages = LifecycleStage.CustomValidation, on = SAVE_ACTION)
@@ -346,9 +362,9 @@ public class ProductActionBean extends CoreActionBean {
 
     @HandlesEvent(SAVE_ACTION)
     public Resolution save() {
-        productEjb.saveProduct(
-                editProduct, addOnTokenInput, priceItemTokenInput,
-                allLengthsMatch(), criteria, operators, values);
+        productEjb.saveProduct(editProduct, addOnTokenInput, priceItemTokenInput, allLengthsMatch(),
+                criteria, operators, values, genotypingChipTechnologies, genotypingChipNames,
+                genotypingChipPdoSubstrings);
         addMessage("Product \"" + editProduct.getProductName() + "\" has been saved");
         return new RedirectResolution(ProductActionBean.class, VIEW_ACTION).addParameter(PRODUCT_PARAMETER,
                 editProduct.getPartNumber());
@@ -591,5 +607,41 @@ public class ProductActionBean extends CoreActionBean {
 
     public void setControlsProject(String controlsProject) {
         this.controlsProject = controlsProject;
+    }
+
+    public String[] getGenotypingChipTechnologies() {
+        return genotypingChipTechnologies;
+    }
+
+    public void setGenotypingChipTechnologies(String[] genotypingChipTechnologies) {
+        this.genotypingChipTechnologies = genotypingChipTechnologies;
+    }
+
+    public String[] getGenotypingChipNames() {
+        return genotypingChipNames;
+    }
+
+    public void setGenotypingChipNames(String[] genotypingChipNames) {
+        this.genotypingChipNames = genotypingChipNames;
+    }
+
+    public String[] getGenotypingChipPdoSubstrings() {
+        return genotypingChipPdoSubstrings;
+    }
+
+    public void setGenotypingChipPdoSubstrings(String[] genotypingChipPdoSubstrings) {
+        this.genotypingChipPdoSubstrings = genotypingChipPdoSubstrings;
+    }
+
+    public List<Triple<String, String, String>> getGenotypingChipInfo() {
+        return genotypingChipInfo;
+    }
+
+    public void setGenotypingChipInfo(List<Triple<String, String, String>> genotypingChipInfo) {
+        this.genotypingChipInfo = genotypingChipInfo;
+    }
+
+    public Set<String> getAvailableChipTechnologies() {
+        return availableChipTechnologies;
     }
 }

@@ -207,7 +207,7 @@ public class AttributeArchetypeFixupTest extends Arquillian {
         put("P-WG-0029", "HumanExome-12v1-2_A");
         put("P-WG-0031", "HumanCoreExome-24v1-0_A");
         put("P-WG-0036", "PsychChip_15048346_B");
-        put("P-WG-0036 Danish", "DBS_Wave_Psych");
+        put("P-WG-0036" + ProductEjb.DELIMITER + "Danish", "DBS_Wave_Psych");
         put("P-WG-0053", "Broad_GWAS_supplemental_15061359_A1");
         put("P-WG-0055", "PsychChip_v1-1_15073391_A1");
         put("P-WG-0058", "Multi-EthnicGlobal-8_A1");
