@@ -21,6 +21,8 @@ import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -65,14 +67,13 @@ public class ProductEjb {
      * @param criteria The risk criteria
      * @param operators The operators
      * @param values The values
-     * @param genotypingChipTechnologies Genotyping chip mapped to this product part number
-     * @param genotypingChipNames Genotyping chip mapped to this product part number
-     * @param genotypingChipPdoSubstrings Genotyping chip mapped to this product part number
+     * @param genotypingChipInfo Genotyping chip technology and chip name that are mapped to this
+     *                           product part number and pdo name.
      */
     public void saveProduct(
             Product product, ProductTokenInput addOnTokenInput, PriceItemTokenInput priceItemTokenInput,
             boolean allLengthsMatch, String[] criteria, String[] operators, String[] values,
-            String[] genotypingChipTechnologies, String[] genotypingChipNames, String[] genotypingChipPdoSubstrings) {
+            List<Triple<String, String, String>> genotypingChipInfo) {
 
         populateTokenListFields(product, addOnTokenInput, priceItemTokenInput);
         // If all lengths match, just send it.
@@ -110,8 +111,7 @@ public class ProductEjb {
         productDao.persist(product);
 
         // Genotyping chip mappings are AttributeArchetypes which are persisted independent of Product.
-        persistGenotypingChipMappings(product.getPartNumber(), genotypingChipTechnologies, genotypingChipNames,
-                genotypingChipPdoSubstrings);
+        persistGenotypingChipMappings(product.getPartNumber(), genotypingChipInfo);
     }
 
     private void populateTokenListFields(Product product, ProductTokenInput addOnTokenInput,
@@ -146,9 +146,8 @@ public class ProductEjb {
         AttributeArchetype bestMatch = null;
         SortedMap<String, AttributeArchetype> partialMatches = partNumberMatches(productPartNumber, archetypes);
         for (String key : partialMatches.keySet()) {
-            // key consists of part number and possibly also a substring.
-            String[] keySplit = key.split(DELIMITER, 2);
-            if (keySplit.length == 1 || productOrderName.contains(keySplit[1])) {
+            String pdoSubstring = StringUtils.trimToEmpty(StringUtils.substringAfter(key, DELIMITER));
+            if (productOrderName.contains(pdoSubstring)) {
                 bestMatch = partialMatches.get(key);
             }
         }
@@ -160,7 +159,9 @@ public class ProductEjb {
     }
 
     /**
-     * Returns the product configuration genotyping chip mappings that match on the part number.
+     * Returns the product configuration genotyping chip mappings that match on the part number,
+     * ordered by increasing pdoString, nulls first.
+     *
      * @param productPartNumber  part number to match
      * @param allArchetypes collection of archetypes and may include other namespaces and groups.
      * @return  map of (product part number + delimiter + pdoString) -> archetype
@@ -171,7 +172,7 @@ public class ProductEjb {
 
         for (AttributeArchetype archetype : allArchetypes) {
             if (archetype.getNamespace().equals(namespace) && archetype.getGroup().equals(group) &&
-                productPartNumber.equals(archetype.getArchetypeName().split(DELIMITER)[0])) {
+                productPartNumber.equals(StringUtils.substringBefore(archetype.getArchetypeName(), DELIMITER))) {
 
                 matches.put(archetype.getArchetypeName(), archetype);
             }
@@ -181,28 +182,28 @@ public class ProductEjb {
 
     // Updates, deletes, adds the mappings for a product part number to genotyping chips.
     // Corresponding elements of chipNames, pdoStrings, chipTechnology have the same array index.
-    private void persistGenotypingChipMappings(String productPartNumber, String[] genotypingChipTechnologies,
-                                               String[] genotypingChipNames, String[] genotypingChipPdoSubstrings) {
+    private void persistGenotypingChipMappings(String productPartNumber,
+                                               List<Triple<String, String, String>> genotypingChipInfo) {
 
-        SortedMap<String, AttributeArchetype> currentMappings = partNumberMatches(productPartNumber,
-                attributeArchetypeDao.findByGroup(Product.class.getCanonicalName(), Product.GENOTYPING_CHIP_CONFIG));
+        SortedMap<String, AttributeArchetype> currentMappings =
+                partNumberMatches(productPartNumber, attributeArchetypeDao.findByGroup(namespace, group));
 
-        for (int i = 0; i < genotypingChipTechnologies.length; ++i) {
-            String chipName = genotypingChipNames[i];
-            String chipTechnology = genotypingChipTechnologies[i];
+        for (Triple<String, String, String> techNameAndPdoSubstring : genotypingChipInfo) {
+            String chipTechnology = techNameAndPdoSubstring.getLeft();
+            String chipName = techNameAndPdoSubstring.getMiddle();
+            String pdoSubstring = techNameAndPdoSubstring.getRight();
 
-            String key = productPartNumber;
-            if (genotypingChipPdoSubstrings != null && i < genotypingChipPdoSubstrings.length &&
-                StringUtils.isNotBlank(genotypingChipPdoSubstrings[i])) {
-                key += DELIMITER + genotypingChipPdoSubstrings[i];
+            // The archetype name is the product part number plus optional pdo name substring.
+            String archetypeName = productPartNumber;
+            if (StringUtils.isNotBlank(pdoSubstring)) {
+                archetypeName += DELIMITER + pdoSubstring;
             }
 
-            AttributeArchetype archetype = currentMappings.remove(key);
+            AttributeArchetype archetype = currentMappings.remove(archetypeName);
             if (archetype == null) {
-                // A new mapping consists of an archetype having two attributes.
-                // The archetype name is the product part number + delimiter + pdo name substring.
-                // Its attributes are the genotyping chip technology and the genotyping chip name.
-                AttributeArchetype attributeArchetype = new AttributeArchetype(namespace, group, key);
+                // A new mapping consists of an archetype having two attributes,
+                // the genotyping chip technology and the genotyping chip name.
+                AttributeArchetype attributeArchetype = new AttributeArchetype(namespace, group, archetypeName);
                 attributeArchetype.getAttributes().add(new ArchetypeAttribute(attributeArchetype,
                         Product.GENOTYPING_CHIP_TECHNOLOGY, chipTechnology));
                 attributeArchetype.getAttributes().add(new ArchetypeAttribute(attributeArchetype,
@@ -228,8 +229,8 @@ public class ProductEjb {
     /** Returns the chip technologies found among the existing chip mappings. */
     public Set<String> findChipTechnologies() {
         Set<String> chipTechnologies = new HashSet<>();
-        for (Triple<String, String, String> triple : getMappedGenotypingChips(null)) {
-            chipTechnologies.add(triple.getLeft());
+        for (AttributeArchetype archetype : attributeArchetypeDao.findByGroup(namespace, group)) {
+            chipTechnologies.add(archetype.getAttributeMap().get(Product.GENOTYPING_CHIP_TECHNOLOGY));
         }
         return chipTechnologies;
     }
@@ -239,22 +240,39 @@ public class ProductEjb {
      * distinguished from one another using pdoSubstring.
      *
      * @param productPartNumber is used to determine the returned info. If null, returns all mappings found.
-     * @return List of chip technology, chip name, pdo substring.
+     * @return List of chip technology, chip name, pdo substring.  These are ordered by decreasing
+     *         pdo substring with nulls last.
      */
     public List<Triple<String, String, String>> getMappedGenotypingChips(String productPartNumber) {
         List<Triple<String, String, String>> chipInfo = new ArrayList<>();
 
         for (AttributeArchetype archetype : attributeArchetypeDao.findByGroup(namespace, group)) {
-            String[] partNumberAndPdoString = archetype.getArchetypeName().split(DELIMITER);
-            if (productPartNumber == null || productPartNumber.equals(partNumberAndPdoString[0])) {
+            if (productPartNumber == null ||
+                productPartNumber.equals(StringUtils.substringBefore(archetype.getArchetypeName(), DELIMITER))) {
 
                 chipInfo.add(Triple.of(
                         archetype.getAttributeMap().get(Product.GENOTYPING_CHIP_TECHNOLOGY),
                         archetype.getAttributeMap().get(Product.GENOTYPING_CHIP_NAME),
-                        (partNumberAndPdoString.length > 1) ? partNumberAndPdoString[1] : null));
-
+                        StringUtils.trimToNull(StringUtils.substringAfter(archetype.getArchetypeName(), DELIMITER))));
             }
         }
+
+        Collections.sort(chipInfo, new Comparator<Triple<String, String, String>>() {
+            @Override
+            public int compare(Triple<String, String, String> o1, Triple<String, String, String> o2) {
+                int pdoSubstringComparison = (o2.getRight() == null) ? (o1.getRight() == null ? 0 : -1) :
+                        (o1.getRight() == null) ? 1 : o2.getRight().compareTo(o1.getRight());
+                if (pdoSubstringComparison != 0) {
+                    return pdoSubstringComparison;
+                }
+                int technologyComparison = o1.getLeft().compareTo(o2.getLeft());
+                if (technologyComparison != 0) {
+                    return technologyComparison;
+                }
+                int nameComparison = o1.getMiddle().compareTo(o2.getMiddle());
+                return nameComparison;
+            }
+        });
         return chipInfo;
     }
 }

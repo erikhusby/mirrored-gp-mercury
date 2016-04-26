@@ -190,12 +190,25 @@
                 $j('#genotypingChip-' + itemNumber).remove();
             }
 
+            function updateGenotypingChipName(itemNumber) {
+                // Prefixes the chipName passed to the action bean with "item" delimited by a space.
+                var nakedChipName = $j('#visibleChipName-' + itemNumber).val();
+                $j('#chipName-' + itemNumber).attr("value", "item " + nakedChipName);
+            }
+
+            function updateGenotypingPdoSubstring(itemNumber) {
+                // Prefixes the pdoSubstring passed to the action bean with "item" delimited by a space.
+                var nakedPdoSubstring = $j('#visiblePdoSubstring-' + itemNumber).val();
+                $j('#pdoSubstring-' + itemNumber).attr("value", "item " + nakedPdoSubstring);
+            }
+
             function addGenotypingChip(chipTechnology, chipName, pdoSubstring) {
 
                 var newGenotypingChip = '<div id="genotypingChip-' + genotypingChipCount + '" style="margin-bottom:3px;" class="genotypingChipPanel">\n';
 
                 // Adds a button to remove this item
-                newGenotypingChip += '    <a class="btn btn-mini" style="font-size:14pt;text-decoration: none;" onclick="removeGenotypingChip(' + genotypingChipCount + ')">-</a>\n';
+                newGenotypingChip += '    <a class="btn btn-mini" style="font-size:14pt;text-decoration: none;"' +
+                        ' onclick="removeGenotypingChip(' + genotypingChipCount + ')">-</a>\n';
 
                 // The chip technology dropdown
                 newGenotypingChip += '    <select id="chipTechnologySelect-' + genotypingChipCount +
@@ -206,11 +219,21 @@
                 newGenotypingChip += '    </select>\n';
 
                 // The text boxes
-                newGenotypingChip += '    <input style="width:80%" id="chipName-' + genotypingChipCount +
-                        '" type="text" name="genotypingChipNames" value="' + chipName + '"/>\n';
-                newGenotypingChip += '<br/>Product order name substring match: ';
-                newGenotypingChip += '    <input style="width:80%" id="pdoSubstring-' + genotypingChipCount +
-                        '" type="text" name="genotypingChipPdoSubstrings" value="' + pdoSubstring + '"/>\n';
+                newGenotypingChip += '<br/>Chip name: ';
+                newGenotypingChip += '    <input style="width:80%" id="visibleChipName-' + genotypingChipCount + '" type="text" ' +
+                        'title="Enter the Genotyping chip name. Must not be left blank." ' +
+                        '" onchange="updateGenotypingChipName(' + genotypingChipCount + ')" name="visibleChipNames" value="' + chipName + '"/>\n';
+                newGenotypingChip += '<br/>Restrict to Product Orders named:';
+                newGenotypingChip += '    <input style="width:80%" id="visiblePdoSubstring-' + genotypingChipCount + '" type="text" ' +
+                        'title="Enter the distinctive portion of a Product Order name to cause this genotyping chip to only be used for that Product Order. ' +
+                        'Leave it blank to cause this genotyping chip to be used for any Product Order." ' +
+                        '" onchange="updateGenotypingPdoSubstring(' + genotypingChipCount + ')" name="visiblePdoSubstrings" value="' + pdoSubstring + '"/>\n';
+
+                <!-- Uses hidden fields to set the arrays in the action bean since null strings don't get sent in the array and then the array indexes don't line up. -->
+                newGenotypingChip += '    <input style="display:none" id="chipName-' + genotypingChipCount + '" type="text" name="genotypingChipNames"' +
+                        ' value="item' + genotypingChipCount + ' ' + chipName + '"/>\n';
+                newGenotypingChip += '    <input style="display:none" id="pdoSubstring-' + genotypingChipCount + '" type="text" name="genotypingChipPdoSubstrings"' +
+                        ' value="item' + genotypingChipCount + ' ' + pdoSubstring + '"/>\n';
                 newGenotypingChip += '</div>\n';
 
                 $j('#genotypingChips').append(newGenotypingChip);
@@ -391,7 +414,7 @@
                 <div class="control-group">
                     <stripes:label for="genotypingChips" name="GenotypingChip" class="control-label"/>
                     <div id="genotypingChips" class="controls" style="margin-top: 5px;">
-                        <a id="addGenotypingChip" class="btn btn-mini" style="margin-bottom: 3px;text-decoration: none;" onclick="addGenotypingChip()">+</a>
+                        <a id="addGenotypingChip" class="btn btn-mini" style="margin-bottom: 3px;text-decoration: none;" onclick="addGenotypingChip('', '', '')">+</a>
                     </div>
                 </div>
 

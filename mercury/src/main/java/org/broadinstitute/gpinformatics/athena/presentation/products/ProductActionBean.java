@@ -119,6 +119,7 @@ public class ProductActionBean extends CoreActionBean {
     private String[] genotypingChipTechnologies = new String[0];
     private String[] genotypingChipNames = new String[0];
     private String[] genotypingChipPdoSubstrings = new String[0];
+    private List<String> nakedPdoSubstrings = new ArrayList<>();
 
     // All genotyping chip technologies (families) for populating UI dropdown.
     private Set<String> availableChipTechnologies;
@@ -264,6 +265,39 @@ public class ProductActionBean extends CoreActionBean {
         }
 
         checkValidCriteria();
+
+        // Strips off "item" prefix.
+        List<String> nakedChipNames = new ArrayList<>();
+        for (String prefixedString : genotypingChipNames) {
+            String nakedString = StringUtils.trimToNull(StringUtils.substringAfter(prefixedString, " "));
+            if (nakedString == null) {
+                addGlobalValidationError("Genotyping chip name must not be blank.");
+                nakedString = "";
+            }
+            nakedChipNames.add(nakedString);
+        }
+        genotypingChipNames = nakedChipNames.toArray(new String[0]);
+
+        // Strips off "item" prefix.
+        List<String> nakedPdoSubstrings = new ArrayList<>();
+        for (String prefixedString : genotypingChipPdoSubstrings) {
+            String nakedString = StringUtils.trimToNull(StringUtils.substringAfter(prefixedString, " "));
+            // pdoSubstring must be unique since product part number + pdoSubstring must form a unique lookup key.
+            if (nakedPdoSubstrings.contains(nakedString)) {
+                addGlobalValidationError("Cannot have duplicate genotyping chip product order name substrings: " +
+                                         nakedString);
+            }
+            nakedPdoSubstrings.add(nakedString);
+        }
+        genotypingChipPdoSubstrings = nakedPdoSubstrings.toArray(new String[0]);
+
+        // Repacks genotyping parameters into a list for persistence and to redisplay in case of validation failure.
+        genotypingChipInfo.clear();
+        for (int i = 0; i < genotypingChipTechnologies.length; ++i) {
+            genotypingChipInfo.add(
+                    Triple.of(genotypingChipTechnologies[i], genotypingChipNames[i], genotypingChipPdoSubstrings[i]));
+        }
+
     }
 
     private void checkValidCriteria() {
@@ -363,8 +397,7 @@ public class ProductActionBean extends CoreActionBean {
     @HandlesEvent(SAVE_ACTION)
     public Resolution save() {
         productEjb.saveProduct(editProduct, addOnTokenInput, priceItemTokenInput, allLengthsMatch(),
-                criteria, operators, values, genotypingChipTechnologies, genotypingChipNames,
-                genotypingChipPdoSubstrings);
+                criteria, operators, values, genotypingChipInfo);
         addMessage("Product \"" + editProduct.getProductName() + "\" has been saved");
         return new RedirectResolution(ProductActionBean.class, VIEW_ACTION).addParameter(PRODUCT_PARAMETER,
                 editProduct.getPartNumber());
