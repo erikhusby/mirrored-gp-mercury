@@ -535,6 +535,10 @@ public class LabEventFactory implements Serializable {
                     plateCherryPickEvent.getSourcePlate(), plateCherryPickEvent.getSourcePositionMap());
             extractBarcodes(barcodes, extractSourcePositionMaps);
 
+            for (PlateType plateType : plateCherryPickEvent.getPlate()) {
+                barcodes.add(plateType.getBarcode());
+            }
+
             List<PositionMapType> extractPositionMaps = extractPositionMapBarcodes(
                     plateCherryPickEvent.getPlate(), plateCherryPickEvent.getPositionMap());
             extractBarcodes(barcodes, extractPositionMaps);
