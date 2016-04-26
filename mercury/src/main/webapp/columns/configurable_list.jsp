@@ -72,7 +72,7 @@
 </c:if>
 
 <c:if test="${!dataTable}">
-    <form action="/Mercury/util/ConfigurableList.action" id="searchResultsForm${entityName}">
+    <form action="/Mercury/util/ConfigurableList.action" id="searchResultsForm${entityName}" method="post">
     <input type="hidden" name="sessionKey" value="${sessionKey}"/>
     <input type="hidden" name="entityName" value="${entityName}"/>
 </c:if>
