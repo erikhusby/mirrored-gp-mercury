@@ -419,31 +419,31 @@ public class ConfigurableSearchDao extends GenericDao {
         for (SearchTerm.ImmutableTermFilter immutableTermFilter : criteriaPath.getImmutableTermFilters()) {
             switch( immutableTermFilter.getOperator() ){
                 case EQUALS:
-                    junction.add(Restrictions.eq(immutableTermFilter.getPropertyName(), immutableTermFilter.getValues().get(0)));
+                    junction.add(Restrictions.eq(immutableTermFilter.getPropertyName(), immutableTermFilter.getValues()[0]));
                     break;
                 case GREATER_THAN:
-                    junction.add(Restrictions.gt(immutableTermFilter.getPropertyName(), immutableTermFilter.getValues().get(0)));
+                    junction.add(Restrictions.gt(immutableTermFilter.getPropertyName(), immutableTermFilter.getValues()[0]));
                     break;
                 case GREATER_THAN_EQUAL:
-                    junction.add(Restrictions.ge(immutableTermFilter.getPropertyName(), immutableTermFilter.getValues().get(0)));
+                    junction.add(Restrictions.ge(immutableTermFilter.getPropertyName(), immutableTermFilter.getValues()[0]));
                     break;
                 case LESS_THAN:
-                    junction.add(Restrictions.lt(immutableTermFilter.getPropertyName(), immutableTermFilter.getValues().get(0)));
+                    junction.add(Restrictions.lt(immutableTermFilter.getPropertyName(), immutableTermFilter.getValues()[0]));
                     break;
                 case LESS_THAN_EQUAL:
-                    junction.add(Restrictions.le(immutableTermFilter.getPropertyName(), immutableTermFilter.getValues().get(0)));
+                    junction.add(Restrictions.le(immutableTermFilter.getPropertyName(), immutableTermFilter.getValues()[0]));
                     break;
                 case BETWEEN:
-                    junction.add(Restrictions.between(immutableTermFilter.getPropertyName(), immutableTermFilter.getValues().get(0), immutableTermFilter.getValues().get(1)));
+                    junction.add(Restrictions.between(immutableTermFilter.getPropertyName(), immutableTermFilter.getValues()[0], immutableTermFilter.getValues()[1]));
                     break;
                 case IN:
                     junction.add(Restrictions.in(immutableTermFilter.getPropertyName(), immutableTermFilter.getValues()));
                     break;
                 case LIKE:
-                    junction.add(Restrictions.ilike(immutableTermFilter.getPropertyName(), immutableTermFilter.getValues().get(0)));
+                    junction.add(Restrictions.ilike(immutableTermFilter.getPropertyName(), immutableTermFilter.getValues()[0]));
                     break;
                 case NOT_EQUALS:
-                    junction.add(Restrictions.ne(immutableTermFilter.getPropertyName(), immutableTermFilter.getValues().get(0)));
+                    junction.add(Restrictions.ne(immutableTermFilter.getPropertyName(), immutableTermFilter.getValues()[0]));
                     break;
                 case NOT_IN:
                     junction.add(Restrictions.not(Restrictions.in(immutableTermFilter.getPropertyName(), immutableTermFilter.getValues())));
