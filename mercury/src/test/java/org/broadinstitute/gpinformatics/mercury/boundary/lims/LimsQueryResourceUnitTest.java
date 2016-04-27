@@ -9,9 +9,11 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
+import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.GenericReagentDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.lims.LimsQueryResourceResponseFactory;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ConcentrationAndVolumeAndWeightType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.FlowcellDesignationType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.PlateTransferType;
@@ -24,8 +26,11 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.math.BigDecimal;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +38,7 @@ import java.util.Map;
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
 import static org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter.System.MERCURY;
 import static org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter.System.SQUID;
+import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
@@ -56,6 +62,7 @@ public class LimsQueryResourceUnitTest {
     private LimsQueryResource resource;
     private StaticPlateDao mockStaticPlateDao;
     private SequencingTemplateFactory sequencingTemplateFactory;
+    private GenericReagentDao mockGenericReagentDao;
 
     @BeforeMethod(groups = DATABASE_FREE)
     public void setUp() {
@@ -66,10 +73,11 @@ public class LimsQueryResourceUnitTest {
         mockResponseFactory = createMock(LimsQueryResourceResponseFactory.class);
         mockBarcodedTubeDao = createMock(BarcodedTubeDao.class);
         mockStaticPlateDao = createMock(StaticPlateDao.class);
+        mockGenericReagentDao = createMock(GenericReagentDao.class);
         BSPUserList bspUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
         resource =
                 new LimsQueryResource(mockThriftService, mockLimsQueries, sequencingTemplateFactory,
-                        mockResponseFactory, mockSystemRouter, bspUserList);
+                        mockResponseFactory, mockSystemRouter, bspUserList, mockGenericReagentDao);
 
     }
 
@@ -474,13 +482,27 @@ public class LimsQueryResourceUnitTest {
         verifyAll();
     }
 
+    @Test(groups = DATABASE_FREE)
+    public void testIsReagentNameLotExpirationRegistered() throws ParseException {
+        Date expirationDate = new SimpleDateFormat("yyyy-MM-dd").parse("2016-04-28");
+        expect(mockGenericReagentDao.findByReagentNameLotExpiration("SbsKitBox1", "SbsLotBarcode", expirationDate))
+                .andReturn(new GenericReagent("SbsKitBox1", "SbsLotBarcode", new Date()));
+        replayAll();
+
+        boolean isRegistered =
+                resource.isReagentNameLotExpirationRegistered("SbsKitBox1", "SbsLotBarcode", "2016-04-28");
+        assertThat(isRegistered, is(true));
+
+        verifyAll();
+    }
+
     private void replayAll() {
         replay(mockSystemRouter, mockThriftService, mockLimsQueries, sequencingTemplateFactory,
-                mockResponseFactory, mockBarcodedTubeDao, mockStaticPlateDao);
+                mockResponseFactory, mockBarcodedTubeDao, mockStaticPlateDao, mockGenericReagentDao);
     }
 
     private void verifyAll() {
         verify(mockSystemRouter, mockThriftService, mockLimsQueries, sequencingTemplateFactory,
-                mockResponseFactory, mockBarcodedTubeDao, mockStaticPlateDao);
+                mockResponseFactory, mockBarcodedTubeDao, mockStaticPlateDao, mockGenericReagentDao);
     }
 }

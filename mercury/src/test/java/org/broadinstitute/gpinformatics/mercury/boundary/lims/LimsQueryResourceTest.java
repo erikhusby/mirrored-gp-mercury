@@ -22,6 +22,7 @@ import java.util.List;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.TEST;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
@@ -483,5 +484,16 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
                 .asList("barcode", "name", "onRigWorkflow", "onRigChemistry")) {
             assertThat(result, containsString(String.format("\"%s\":null,", varToTest)));
         }
+    }
+
+    @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testisReagentNameLotExpirationRegistered(@ArquillianResource URL baseUrl)
+            throws Exception {
+        WebResource resource = makeWebResource(baseUrl, "isReagentNameLotExpirationRegistered")
+                .queryParam("name", "A Base Enzyme").queryParam("lot", "14D02A0012")
+                .queryParam("expiration", "2015-07-01");
+        String result = get(resource);
+        assertThat(result, is(equalTo("true")));
     }
 }
