@@ -111,7 +111,6 @@ public class ImportLcsetTest extends Arquillian {
                 "../customfields/customfield/customfieldname[text()='GSSR ID(s)']/../customfieldvalues/customfieldvalue");
         XPathExpression pdoExpr = xPath.compile(
                 "../issuelinks/issuelinktype/outwardlinks/issuelink/issuekey");
-        Bucket shearingBucket = bucketDao.findByName("Shearing Bucket");
 
         // Open XML
         DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
@@ -123,6 +122,7 @@ public class ImportLcsetTest extends Arquillian {
                 XPathConstants.NODESET);
         // Iterate over LCSETs
         for (int i = 0; i < lcsetNodeList.getLength(); i++) {
+            Bucket shearingBucket = bucketDao.findByName("Shearing Bucket");
             Node keyNode = lcsetNodeList.item(i);
             String lcsetId = keyNode.getFirstChild().getNodeValue();
             System.out.println(lcsetId);
@@ -235,7 +235,8 @@ lcsetPdoLoop:       for (String pdo : tubeBarcodePdoPair.getRight()) {
                     labBatchDao.persist(labBatch);
                 }
             }
-            // todo jmt flush and clear
+            labBatchDao.flush();
+            labBatchDao.clear();
         }
     }
 
