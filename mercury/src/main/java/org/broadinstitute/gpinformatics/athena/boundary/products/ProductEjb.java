@@ -24,11 +24,13 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 import java.util.SortedMap;
+import java.util.SortedSet;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 @Stateful
 @RequestScoped
@@ -38,8 +40,7 @@ import java.util.TreeMap;
 public class ProductEjb {
     private final ProductDao productDao;
     public final static String DELIMITER = " ";
-    public final static String namespace = Product.class.getCanonicalName();
-    public final static String group = Product.GENOTYPING_CHIP_CONFIG;
+    public final static String NAMESPACE = Product.class.getCanonicalName();
 
     // EJBs require a no arg constructor.
     @SuppressWarnings("unused")
@@ -121,6 +122,28 @@ public class ProductEjb {
         product.setPrimaryPriceItem(priceItemTokenInput.getItem());
     }
 
+
+    /**
+     * Returns the currently defined but not necessarily mapped chip technologies and their chip names
+     * which are eligible for mapping to a product. This must also include all mapped chips too.
+     */
+    public Map<String, SortedSet<String>> findChipTechnologiesAndNames() {
+        Map<String, SortedSet<String>> map = new HashMap<>();
+        for (AttributeArchetype archetype : attributeArchetypeDao.findByGroup(NAMESPACE,
+                Product.GENOTYPING_CHIP_CONFIG)) {
+            String chipTechnology = archetype.getAttributeMap().get(Product.GENOTYPING_CHIP_TECHNOLOGY);
+            String chipName = archetype.getAttributeMap().get(Product.GENOTYPING_CHIP_NAME);
+            SortedSet<String> names = map.get(chipTechnology);
+                if (names == null) {
+                    names = new TreeSet<>();
+                    map.put(chipTechnology, names);
+                }
+            names.add(chipName);
+        }
+        return map;
+    }
+
+
     /** Returns the genotyping chip family and name for the product, product order, and date. */
     public Pair<String, String> getGenotypingChip(ProductOrderSample productOrderSample, Date effectiveDate) {
         String productPartNumber = productOrderSample.getProductOrder().getProduct().getPartNumber();
@@ -139,8 +162,7 @@ public class ProductEjb {
 
         // Retrieves the historical chip mappings and uses them to find the best match for the product part number
         // and pdo name. There are multiple chips for a product part number when substring matching on the product
-        // order name is used. Matches substrings in increasing order of complexity (substring length) so that the
-        // last match is the best one.
+        // order name is used. Matches substrings in decreasing order, as shown in UI for Product chip mappings.
         List<AttributeArchetype> archetypes = auditReaderDao.getVersionsAsOf(AttributeArchetype.class, effectiveDate);
 
         AttributeArchetype bestMatch = null;
@@ -160,7 +182,7 @@ public class ProductEjb {
 
     /**
      * Returns the product configuration genotyping chip mappings that match on the part number,
-     * ordered by increasing pdoString, nulls first.
+     * ordered by decreasing pdoString, nulls last.
      *
      * @param productPartNumber  part number to match
      * @param allArchetypes collection of archetypes and may include other namespaces and groups.
@@ -168,10 +190,11 @@ public class ProductEjb {
      */
     private SortedMap<String, AttributeArchetype> partNumberMatches(String productPartNumber,
                                                                     Collection<AttributeArchetype> allArchetypes) {
-        SortedMap<String, AttributeArchetype> matches = new TreeMap<>();
+        SortedMap<String, AttributeArchetype> matches = new TreeMap<>(Collections.reverseOrder());
 
         for (AttributeArchetype archetype : allArchetypes) {
-            if (archetype.getNamespace().equals(namespace) && archetype.getGroup().equals(group) &&
+            if (archetype.getNamespace().equals(NAMESPACE) &&
+                archetype.getGroup().equals(Product.GENOTYPING_CHIP_CONFIG) &&
                 productPartNumber.equals(StringUtils.substringBefore(archetype.getArchetypeName(), DELIMITER))) {
 
                 matches.put(archetype.getArchetypeName(), archetype);
@@ -185,8 +208,8 @@ public class ProductEjb {
     private void persistGenotypingChipMappings(String productPartNumber,
                                                List<Triple<String, String, String>> genotypingChipInfo) {
 
-        SortedMap<String, AttributeArchetype> currentMappings =
-                partNumberMatches(productPartNumber, attributeArchetypeDao.findByGroup(namespace, group));
+        SortedMap<String, AttributeArchetype> currentMappings = partNumberMatches(productPartNumber,
+                attributeArchetypeDao.findByGroup(NAMESPACE, Product.GENOTYPING_CHIP_CONFIG));
 
         for (Triple<String, String, String> techNameAndPdoSubstring : genotypingChipInfo) {
             String chipTechnology = techNameAndPdoSubstring.getLeft();
@@ -203,7 +226,8 @@ public class ProductEjb {
             if (archetype == null) {
                 // A new mapping consists of an archetype having two attributes,
                 // the genotyping chip technology and the genotyping chip name.
-                AttributeArchetype attributeArchetype = new AttributeArchetype(namespace, group, archetypeName);
+                AttributeArchetype attributeArchetype = new AttributeArchetype(NAMESPACE,
+                        Product.GENOTYPING_CHIP_CONFIG, archetypeName);
                 attributeArchetype.getAttributes().add(new ArchetypeAttribute(attributeArchetype,
                         Product.GENOTYPING_CHIP_TECHNOLOGY, chipTechnology));
                 attributeArchetype.getAttributes().add(new ArchetypeAttribute(attributeArchetype,
@@ -226,15 +250,6 @@ public class ProductEjb {
         }
     }
 
-    /** Returns the chip technologies found among the existing chip mappings. */
-    public Set<String> findChipTechnologies() {
-        Set<String> chipTechnologies = new HashSet<>();
-        for (AttributeArchetype archetype : attributeArchetypeDao.findByGroup(namespace, group)) {
-            chipTechnologies.add(archetype.getAttributeMap().get(Product.GENOTYPING_CHIP_TECHNOLOGY));
-        }
-        return chipTechnologies;
-    }
-
     /**
      * Returns info on the genotyping chips mapped to the given product. Multiple mappings are
      * distinguished from one another using pdoSubstring.
@@ -246,7 +261,8 @@ public class ProductEjb {
     public List<Triple<String, String, String>> getMappedGenotypingChips(String productPartNumber) {
         List<Triple<String, String, String>> chipInfo = new ArrayList<>();
 
-        for (AttributeArchetype archetype : attributeArchetypeDao.findByGroup(namespace, group)) {
+        for (AttributeArchetype archetype : attributeArchetypeDao.findByGroup(NAMESPACE,
+                Product.GENOTYPING_CHIP_CONFIG)) {
             if (productPartNumber == null ||
                 productPartNumber.equals(StringUtils.substringBefore(archetype.getArchetypeName(), DELIMITER))) {
 

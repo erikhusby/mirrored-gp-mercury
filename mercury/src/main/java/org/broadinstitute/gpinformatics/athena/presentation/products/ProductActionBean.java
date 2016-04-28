@@ -37,6 +37,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.AnalysisTypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
@@ -51,8 +52,11 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.TreeSet;
 
 import static org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao.IncludePDMOnly;
@@ -103,6 +107,9 @@ public class ProductActionBean extends CoreActionBean {
     @Inject
     private ResearchProjectDao researchProjectDao;
 
+    @Inject
+    private AttributeArchetypeDao attributeArchetypeDao;
+
     // Data needed for displaying the view.
     private List<ProductFamily> productFamilies;
     private List<Product> allProducts;
@@ -119,10 +126,9 @@ public class ProductActionBean extends CoreActionBean {
     private String[] genotypingChipTechnologies = new String[0];
     private String[] genotypingChipNames = new String[0];
     private String[] genotypingChipPdoSubstrings = new String[0];
-    private List<String> nakedPdoSubstrings = new ArrayList<>();
 
-    // All genotyping chip technologies (families) for populating UI dropdown.
-    private Set<String> availableChipTechnologies;
+    // Map of chip technology to chip names, for populating UI dropdowns.
+    private Map<String, SortedSet<String>> availableChipTechnologyAndChipNames = new HashMap<>();
 
     @Validate(required = true, on = {SAVE_ACTION})
     private Long productFamilyId;
@@ -175,7 +181,7 @@ public class ProductActionBean extends CoreActionBean {
             // This must be a create, so construct a new top level product that has nothing else set
             editProduct = new Product(Product.TOP_LEVEL_PRODUCT);
         }
-        availableChipTechnologies = productEjb.findChipTechnologies();
+        availableChipTechnologyAndChipNames = productEjb.findChipTechnologiesAndNames();
     }
 
     @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION, EDIT_ACTION, CREATE_ACTION})
@@ -265,18 +271,6 @@ public class ProductActionBean extends CoreActionBean {
         }
 
         checkValidCriteria();
-
-        // Strips off "item" prefix.
-        List<String> nakedChipNames = new ArrayList<>();
-        for (String prefixedString : genotypingChipNames) {
-            String nakedString = StringUtils.trimToNull(StringUtils.substringAfter(prefixedString, " "));
-            if (nakedString == null) {
-                addGlobalValidationError("Genotyping chip name must not be blank.");
-                nakedString = "";
-            }
-            nakedChipNames.add(nakedString);
-        }
-        genotypingChipNames = nakedChipNames.toArray(new String[0]);
 
         // Strips off "item" prefix.
         List<String> nakedPdoSubstrings = new ArrayList<>();
@@ -674,7 +668,7 @@ public class ProductActionBean extends CoreActionBean {
         this.genotypingChipInfo = genotypingChipInfo;
     }
 
-    public Set<String> getAvailableChipTechnologies() {
-        return availableChipTechnologies;
+    public Map<String, SortedSet<String>> getAvailableChipTechnologyAndChipNames() {
+        return availableChipTechnologyAndChipNames;
     }
 }

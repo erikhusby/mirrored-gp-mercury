@@ -10,6 +10,7 @@
                        sectionTitle="${actionBean.submitString}: ${actionBean.editProduct.productName}">
 
     <stripes:layout-component name="extraHead">
+
         <script type="text/javascript">
 
             var booleanTypes = [];
@@ -37,6 +38,19 @@
                     </c:forEach>
                 </c:if>
             </c:forEach>
+
+            // Builds a map of chipTechnology to array of chipNames.
+            var genotypingTechAndChipNames = {
+                <c:forEach items="${actionBean.availableChipTechnologyAndChipNames.keySet()}" var="keyItem" varStatus="keyItemStatus">
+                    '${keyItem}': [
+                        <c:forEach items="${actionBean.availableChipTechnologyAndChipNames[keyItem]}" var="item" varStatus="itemStatus">
+                            '${item}'
+                            <c:if test="${!itemStatus.last}">,</c:if>
+                        </c:forEach>
+                    ]
+                    <c:if test="${!keyItemStatus.last}">,</c:if>
+                </c:forEach>
+            };
 
             var criteriaCount = 0;
             var genotypingChipCount = 0;
@@ -190,10 +204,20 @@
                 $j('#genotypingChip-' + itemNumber).remove();
             }
 
-            function updateGenotypingChipName(itemNumber) {
-                // Prefixes the chipName passed to the action bean with "item" delimited by a space.
-                var nakedChipName = $j('#visibleChipName-' + itemNumber).val();
-                $j('#chipName-' + itemNumber).attr("value", "item " + nakedChipName);
+            function updateGenotypingTechnology(itemNumber) {
+                var selectedTechnology = $j('#chipTechnology-' + itemNumber).val();
+                var selectedChipName = $j('#chipName-' + itemNumber).val();
+
+                // Replaces the options in the corresponding chip name dropdown select.
+                $j('#chipName-' + itemNumber).empty();
+
+                for (var optionName of genotypingTechAndChipNames[selectedTechnology]) {
+                    var option = $('<option></option>').attr("value", optionName).text(optionName);
+                    if (optionName == selectedChipName) {
+                        option.attr("selected", "selected");
+                    }
+                    $j('#chipName-' + itemNumber).append(option);
+                }
             }
 
             function updateGenotypingPdoSubstring(itemNumber) {
@@ -203,35 +227,48 @@
             }
 
             function addGenotypingChip(chipTechnology, chipName, pdoSubstring) {
-
-                var newGenotypingChip = '<div id="genotypingChip-' + genotypingChipCount + '" style="margin-bottom:3px;" class="genotypingChipPanel">\n';
+                var newGenotypingChip = '<div id="genotypingChip-' + genotypingChipCount +
+                        '" style="margin-bottom:3px;" class="genotypingChipPanel">\n';
 
                 // Adds a button to remove this item
                 newGenotypingChip += '    <a class="btn btn-mini" style="font-size:14pt;text-decoration: none;"' +
                         ' onclick="removeGenotypingChip(' + genotypingChipCount + ')">-</a>\n';
 
-                // The chip technology dropdown
-                newGenotypingChip += '    <select id="chipTechnologySelect-' + genotypingChipCount +
-                        '" style="width:auto;" name="genotypingChipTechnologies" value="' + chipTechnology + '">\n';
-                <c:forEach items="${actionBean.availableChipTechnologies}" var="item">
-                newGenotypingChip += '<option value="${item}">${item}</option>';
-                </c:forEach>
+                // Populates the chip technology dropdown
+                newGenotypingChip += '    <select id="chipTechnology-' + genotypingChipCount + '" ' +
+                        '" onchange="updateGenotypingTechnology(' + genotypingChipCount + ')" ' +
+                        'style="width:auto;" name="genotypingChipTechnologies" value="' + chipTechnology + '">\n';
+                for (var optionName of Object.keys(genotypingTechAndChipNames)) {
+                    var selectedString = '';
+                    if (optionName == chipTechnology) {
+                        selectedString = ' selected="selected"';
+                    }
+                    newGenotypingChip += '      <option' + selectedString + '>' + optionName + '</option>';
+                }
                 newGenotypingChip += '    </select>\n';
 
-                // The text boxes
-                newGenotypingChip += '<br/>Chip name: ';
-                newGenotypingChip += '    <input style="width:80%" id="visibleChipName-' + genotypingChipCount + '" type="text" ' +
-                        'title="Enter the Genotyping chip name. Must not be left blank." ' +
-                        '" onchange="updateGenotypingChipName(' + genotypingChipCount + ')" name="visibleChipNames" value="' + chipName + '"/>\n';
-                newGenotypingChip += '<br/>Restrict to Product Orders named:';
-                newGenotypingChip += '    <input style="width:80%" id="visiblePdoSubstring-' + genotypingChipCount + '" type="text" ' +
-                        'title="Enter the distinctive portion of a Product Order name to cause this genotyping chip to only be used for that Product Order. ' +
-                        'Leave it blank to cause this genotyping chip to be used for any Product Order." ' +
+                // Populates the chip name dropdown
+                newGenotypingChip += '    <select id="chipName-' + genotypingChipCount +
+                        '" style="width:auto;" name="genotypingChipNames" value="' + chipName + '">\n';
+                if (genotypingTechAndChipNames[chipTechnology]) {
+                    for (var optionName of genotypingTechAndChipNames[chipTechnology]) {
+                        var selectedString = '';
+                        if (optionName == chipName) {
+                            selectedString = ' selected="selected"';
+                        }
+                        newGenotypingChip += '      <option' + selectedString + '>' + optionName + '</option>';
+                    }
+                }
+                newGenotypingChip += '    </select>\n';
+
+                // The text box for pdo name restriction
+                newGenotypingChip += '    <br/>Restrict to Product Orders whose names contain:';
+                newGenotypingChip += '    <br/><input style="width:80%" id="visiblePdoSubstring-' + genotypingChipCount + '" type="text" ' +
+                        'title="Enter the distinctive portion of a Product Order name. This chip will only apply when Product Order name has the distinctive portion. ' +
+                        'Leave blank when this genotyping chip should apply to any Product Order when name is not otherwise matched." ' +
                         '" onchange="updateGenotypingPdoSubstring(' + genotypingChipCount + ')" name="visiblePdoSubstrings" value="' + pdoSubstring + '"/>\n';
 
-                <!-- Uses hidden fields to set the arrays in the action bean since null strings don't get sent in the array and then the array indexes don't line up. -->
-                newGenotypingChip += '    <input style="display:none" id="chipName-' + genotypingChipCount + '" type="text" name="genotypingChipNames"' +
-                        ' value="item' + genotypingChipCount + ' ' + chipName + '"/>\n';
+                <!-- Uses hidden fields to set the arrays in the action bean since null strings don't get sent in the array and then the array indexes can't line up. -->
                 newGenotypingChip += '    <input style="display:none" id="pdoSubstring-' + genotypingChipCount + '" type="text" name="genotypingChipPdoSubstrings"' +
                         ' value="item' + genotypingChipCount + ' ' + pdoSubstring + '"/>\n';
                 newGenotypingChip += '</div>\n';
@@ -414,7 +451,8 @@
                 <div class="control-group">
                     <stripes:label for="genotypingChips" name="GenotypingChip" class="control-label"/>
                     <div id="genotypingChips" class="controls" style="margin-top: 5px;">
-                        <a id="addGenotypingChip" class="btn btn-mini" style="margin-bottom: 3px;text-decoration: none;" onclick="addGenotypingChip('', '', '')">+</a>
+                        <a id="addGenotypingChip" class="btn btn-mini" style="margin-bottom: 3px;text-decoration: none;"
+                           onclick="addGenotypingChip(Object.keys(genotypingTechAndChipNames)[0], '', '')">+</a>
                     </div>
                 </div>
 

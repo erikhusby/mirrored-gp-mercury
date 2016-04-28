@@ -1,8 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.envers;
 
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang.time.FastDateFormat;
-import org.apache.commons.lang3.time.FastDateParser;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;

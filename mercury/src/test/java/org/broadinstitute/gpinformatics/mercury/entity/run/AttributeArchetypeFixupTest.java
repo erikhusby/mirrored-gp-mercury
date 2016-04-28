@@ -131,6 +131,19 @@ public class AttributeArchetypeFixupTest extends Arquillian {
                 "/gap/illumina/beadstudio/Autocall/ChipInfo/PsychChip_15073391_v1-1_A/PsychChip_v1-1_15073391_A1_ClusterFile.egt",
                 "zcall_threshold_unix",
                 "/gap/illumina/beadstudio/Autocall/ChipInfo/PsychChip_15073391_v1-1_A/thresholds.7.txt",
+
+                // These chips are used in product mapping so they need to be defined.
+                "pool_name", "DBS_Wave_Psych",
+                "norm_manifest_unix", "",
+                "manifest_location_unix", "",
+                "cluster_location_unix", "",
+                "zcall_threshold_unix", "",
+
+                "pool_name", "Multi-EthnicGlobal-8_A1",
+                "norm_manifest_unix", "",
+                "manifest_location_unix", "",
+                "cluster_location_unix", "",
+                "zcall_threshold_unix", "",
         };
         final int fieldCount = 2;
         utx.begin();
@@ -244,10 +257,9 @@ public class AttributeArchetypeFixupTest extends Arquillian {
                                " to the configuration for product " + attributeArchetype.getArchetypeName());
             attributeArchetypeDao.persist(attributeArchetype);
         }
-        attributeArchetypeDao.persist(new FixupCommentary(
-                "GPLIM-4023 add the mapping from product to Infinium genotyping chip types."));
+        String fixupReason = "GPLIM-4023 add the mapping from product to Infinium genotyping chip types.";
+        attributeArchetypeDao.persist(new FixupCommentary(fixupReason));
         attributeArchetypeDao.flush();
         utx.commit();
     }
-
 }

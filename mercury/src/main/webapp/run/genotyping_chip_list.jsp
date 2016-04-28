@@ -29,11 +29,11 @@
             $j(document).ready(function() {
                 $j('#reagentList').dataTable( {
                     "oTableTools": ttExportDefines,
-                    "aaSorting": [1,'asc'],
+                    "aaSorting": [2,'asc'],
                     "aoColumns": [
-                        {"bSortable": true}, //checkbox
+                        {"bSortable": false}, //checkbox
                         {"bSortable": true}, //chip name
-                        {"bSortable": true}  //last modified date
+                        {"bSortable": false}  //last modified date
                     ]
                 })
             });

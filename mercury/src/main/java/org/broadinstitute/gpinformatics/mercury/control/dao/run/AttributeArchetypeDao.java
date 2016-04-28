@@ -9,10 +9,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.AttributeDefinition_;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.validation.constraints.NotNull;
-import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -64,4 +63,16 @@ public class AttributeArchetypeDao extends GenericDao {
         }
         return map;
     }
+
+    public static final Comparator<AttributeArchetype> BY_ARCHETYPE_NAME = new Comparator<AttributeArchetype>() {
+        @Override
+        public int compare(AttributeArchetype o1, AttributeArchetype o2) {
+            if (o1 != null) {
+                return (o2 != null) ? o1.getArchetypeName().compareTo(o2.getArchetypeName()) : 1;
+            } else {
+                return (o2 != null) ? -1 : 0;
+            }
+        }
+    };
+
 }

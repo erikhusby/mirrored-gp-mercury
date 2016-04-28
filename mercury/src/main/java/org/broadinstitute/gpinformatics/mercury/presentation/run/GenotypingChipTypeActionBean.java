@@ -29,6 +29,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -77,6 +78,7 @@ public class GenotypingChipTypeActionBean extends CoreActionBean {
     @HandlesEvent(LIST_ACTION)
     public Resolution list() {
         chipTypes = new ArrayList<>(attributeArchetypeDao.findByGroup(namespace, selectedFamily));
+        Collections.sort(chipTypes, attributeArchetypeDao.BY_ARCHETYPE_NAME);
         chipFamily = selectedFamily;
         return new ForwardResolution(CHIP_TYPE_LIST_PAGE);
     }
