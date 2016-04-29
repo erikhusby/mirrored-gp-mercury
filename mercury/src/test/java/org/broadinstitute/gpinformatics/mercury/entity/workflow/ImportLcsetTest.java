@@ -245,7 +245,9 @@ lcsetPdoLoop:       for (String pdo : tubeBarcodePdoPair.getRight()) {
                     // Create LCSET
                     labBatch = new LabBatch(lcsetId, nonControlTubes, LabBatch.LabBatchType.WORKFLOW);
                     String workflow = mapLcsetTypeToWorkflow.get(lcsetType);
-                    if (!workflow.isEmpty()) {
+                    if (workflow == null) {
+                        System.out.println("Failed to find workflow mapping for " + lcsetType);
+                    } else if (!workflow.isEmpty()) {
                         labBatch.setWorkflowName(workflow);
                     }
                     for (BucketEntry bucketEntry : bucketEntries) {
