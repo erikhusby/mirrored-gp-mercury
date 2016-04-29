@@ -35,6 +35,7 @@ import java.io.FileInputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -63,6 +64,23 @@ public class ImportLcsetTest extends Arquillian {
 
     @Inject
     private ProductOrderDao productOrderDao;
+
+    private static Map<String, String> mapLcsetTypeToWorkflow = new HashMap<>();
+    static {
+        mapLcsetTypeToWorkflow.put("Aliquot Only", "");
+        mapLcsetTypeToWorkflow.put("cDNA TruSeq Strand Specific Large Insert", "");
+        mapLcsetTypeToWorkflow.put("Development LCSET", "");
+        mapLcsetTypeToWorkflow.put("Exome Express", "ICE Exome Express");
+        mapLcsetTypeToWorkflow.put("Fluidigm Custom Amplicon Standard & Seq", "");
+        mapLcsetTypeToWorkflow.put("Human PCR-Free", "Whole Genome PCR Free");
+        mapLcsetTypeToWorkflow.put("Human PCR-Plus", "Whole Genome PCR Plus");
+        mapLcsetTypeToWorkflow.put("Large Genome (WGS)", "Whole Genome");
+        mapLcsetTypeToWorkflow.put("Large Insert Nexome", "Nexome");
+        mapLcsetTypeToWorkflow.put("Lasso", "");
+        mapLcsetTypeToWorkflow.put("MiSeq16s", "");
+        mapLcsetTypeToWorkflow.put("Standard Non-Assembly LC", "");
+        mapLcsetTypeToWorkflow.put("Whole Exome (HybSel)", "Hybrid Selection");
+    }
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -107,6 +125,7 @@ public class ImportLcsetTest extends Arquillian {
 
         XPath xPath =  XPathFactory.newInstance().newXPath();
         XPathExpression lcsetKeyExpr = xPath.compile("/rss/channel/item/key");
+        XPathExpression lcsetTypeExpr = xPath.compile("../type");
         XPathExpression gssrExpr = xPath.compile(
                 "../customfields/customfield/customfieldname[text()='GSSR ID(s)']/../customfieldvalues/customfieldvalue");
         XPathExpression pdoExpr = xPath.compile(
@@ -132,6 +151,8 @@ public class ImportLcsetTest extends Arquillian {
             if (labBatch != null) {
                 continue;
             }
+            Node lcsetTypeNode = (Node) lcsetTypeExpr.evaluate(keyNode, XPathConstants.NODE);
+            String lcsetType = lcsetTypeNode.getFirstChild().getNodeValue();
             NodeList pdoNodeList = (NodeList) pdoExpr.evaluate(keyNode, XPathConstants.NODESET);
             List<String> lcsetPdos = new ArrayList<>();
             for (int j = 0; j < pdoNodeList.getLength(); j++) {
@@ -223,6 +244,10 @@ lcsetPdoLoop:       for (String pdo : tubeBarcodePdoPair.getRight()) {
                 if (!bucketEntries.isEmpty()) {
                     // Create LCSET
                     labBatch = new LabBatch(lcsetId, nonControlTubes, LabBatch.LabBatchType.WORKFLOW);
+                    String workflow = mapLcsetTypeToWorkflow.get(lcsetType);
+                    if (!workflow.isEmpty()) {
+                        labBatch.setWorkflowName(workflow);
+                    }
                     for (BucketEntry bucketEntry : bucketEntries) {
                         labBatch.addBucketEntry(bucketEntry);
                     }
