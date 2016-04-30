@@ -56,11 +56,6 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
 
     public static final String SUPPORTS_SKIPPING_QUOTE = "supportsSkippingQuote";
 
-    /** Archetype constants for the genotyping chip mapping. */
-    public static final String GENOTYPING_CHIP_CONFIG = "Genotyping Chip";
-    public static final String GENOTYPING_CHIP_NAME = "Genotyping chip name";
-    public static final String GENOTYPING_CHIP_TECHNOLOGY = "Genotyping chip technology";
-
     /** The part number for the sample initiation product. */
     public static final String SAMPLE_INITIATION_PART_NUMBER = "P-ESH-0001";
     public static final String EXOME_EXPRESS_V2_PART_NUMBER = "P-EX-0007";

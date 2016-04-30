@@ -20,17 +20,15 @@ import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.entity.run.ArchetypeAttribute;
-import org.broadinstitute.gpinformatics.mercury.entity.run.AttributeArchetype;
 import org.broadinstitute.gpinformatics.mercury.entity.run.AttributeDefinition;
+import org.broadinstitute.gpinformatics.mercury.entity.run.GenotypingChip;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,16 +39,13 @@ import java.util.Map;
 @UrlBinding("/genotyping/chipType.action")
 public class GenotypingChipTypeActionBean extends CoreActionBean {
 
-    // Attribute for last modified date.
-    public static final String LAST_MODIFIED = "LastModifiedDate";
-
     private static final String CREATE_CHIP_TYPE = CoreActionBean.CREATE + "Chip Type";
     private static final String EDIT_CHIP_TYPE = CoreActionBean.EDIT + "Chip Type";
     private static final String CHIP_TYPE_LIST_PAGE = "/run/genotyping_chip_list.jsp";
     private static final String CHIP_TYPE_EDIT_PAGE = "/run/genotyping_chip_edit.jsp";
 
     private List<String> chipFamilies;
-    private List<AttributeArchetype> chipTypes;
+    private List<GenotypingChip> chipTypes;
     private Map<String, String> attributes = new HashMap<>();
     private Map<String, AttributeDefinition> definitions = null;
 
@@ -70,16 +65,17 @@ public class GenotypingChipTypeActionBean extends CoreActionBean {
     @Before(stages = LifecycleStage.BindingAndValidation)
     public void init() {
         // Populates the Genotyping chip families for the jsp dropdown.
-        chipFamilies = new ArrayList<String>(attributeArchetypeDao.findGroups(namespace));
+        chipFamilies = new ArrayList<String>(attributeArchetypeDao.findGenotypingChipFamilies());
+        Collections.sort(chipFamilies);
     }
-
 
     @DefaultHandler
     @HandlesEvent(LIST_ACTION)
     public Resolution list() {
-        chipTypes = new ArrayList<>(attributeArchetypeDao.findByGroup(namespace, selectedFamily));
-        Collections.sort(chipTypes, attributeArchetypeDao.BY_ARCHETYPE_NAME);
         chipFamily = selectedFamily;
+        chipTypes = new ArrayList<>(attributeArchetypeDao.findGenotypingChips(chipFamily));
+        Collections.sort(chipTypes, attributeArchetypeDao.BY_ARCHETYPE_NAME);
+        chipName = !chipTypes.isEmpty() ? chipTypes.get(0).getArchetypeName() : null;
         return new ForwardResolution(CHIP_TYPE_LIST_PAGE);
     }
 
@@ -89,7 +85,6 @@ public class GenotypingChipTypeActionBean extends CoreActionBean {
         if (StringUtils.isBlank(chipName)) {
             return new ForwardResolution(CHIP_TYPE_LIST_PAGE);
         }
-        setSubmitString(EDIT_CHIP_TYPE);
         populateAttributes(chipName);
         saveChipName = chipName;
         return new ForwardResolution(CHIP_TYPE_EDIT_PAGE);
@@ -110,9 +105,9 @@ public class GenotypingChipTypeActionBean extends CoreActionBean {
     public Resolution save() {
         try {
             boolean foundChange = false;
-            AttributeArchetype archetype = attributeArchetypeDao.findByName(namespace, chipFamily, saveChipName);
-            if (archetype != null) {
-                if (getSubmitString().equals(CREATE_CHIP_TYPE)) {
+            GenotypingChip chip = attributeArchetypeDao.findGenotypingChip(chipFamily, saveChipName);
+            if (chip != null) {
+                if (isCreating()) {
                     addValidationError("saveChipName", "Chip name is already in use.");
                     return new ForwardResolution(CHIP_TYPE_EDIT_PAGE);
                 }
@@ -123,17 +118,11 @@ public class GenotypingChipTypeActionBean extends CoreActionBean {
                 }
                 // Adds the new chip type with null valued attributes.
                 foundChange = true;
-                archetype = new AttributeArchetype(namespace, chipFamily, saveChipName);
-                for (AttributeDefinition definition : getDefinitionsMap().values()) {
-                    if (!definition.isGroupAttribute()) {
-                        archetype.getAttributes().add(new ArchetypeAttribute(archetype,
-                                definition.getAttributeName(), null));
-                    }
-                }
+                chip = new GenotypingChip(chipFamily, saveChipName, getDefinitionsMap().values());
             }
             // Updates the values for the displayable attributes. A data fixup is needed to delete or add new
             // attributes and their definitions.
-            for (ArchetypeAttribute existingAttribute : archetype.getAttributes()) {
+            for (ArchetypeAttribute existingAttribute : chip.getAttributes()) {
                 if (getDefinitionsMap().get(existingAttribute.getAttributeName()).isDisplayable()) {
                     String newValue = attributes.get(existingAttribute.getAttributeName());
                     String oldValue = existingAttribute.getAttributeValue();
@@ -145,15 +134,11 @@ public class GenotypingChipTypeActionBean extends CoreActionBean {
             }
             if (foundChange) {
                 // Updates the last modified date attribute.
-                for (ArchetypeAttribute existingAttribute : archetype.getAttributes()) {
-                    if (existingAttribute.getAttributeName().equals(LAST_MODIFIED)) {
-                        existingAttribute.setAttributeValue(DateUtils.getYYYYMMMDDTime(new Date()));
-                    }
-                }
-                attributeArchetypeDao.persist(archetype);
-                addMessage(archetype.getArchetypeName() + " was successfully updated.");
+                chip.setLastModifiedDate();
+                attributeArchetypeDao.persist(chip);
+                addMessage(chip.getArchetypeName() + " was successfully updated.");
             } else {
-                addMessage("No changes found. " + archetype.getArchetypeName() + " remains as it was.");
+                addMessage("No changes found. " + chip.getArchetypeName() + " remains as it was.");
             }
         } catch (Exception e) {
             addGlobalValidationError(e.getMessage());
@@ -170,11 +155,11 @@ public class GenotypingChipTypeActionBean extends CoreActionBean {
         this.chipFamilies = chipFamilies;
     }
 
-    public List<AttributeArchetype> getChipTypes() {
+    public List<GenotypingChip> getChipTypes() {
         return chipTypes;
     }
 
-    public void setChipTypes(List<AttributeArchetype> chipTypes) {
+    public void setChipTypes(List<GenotypingChip> chipTypes) {
         this.chipTypes = chipTypes;
     }
 
@@ -219,10 +204,10 @@ public class GenotypingChipTypeActionBean extends CoreActionBean {
     }
 
     private void populateAttributes(String name) {
-        AttributeArchetype archetype = attributeArchetypeDao.findByName(namespace, chipFamily, name);
-        if (archetype != null) {
+        GenotypingChip chip = attributeArchetypeDao.findGenotypingChip(chipFamily, name);
+        if (chip != null) {
             attributes.clear();
-            for (ArchetypeAttribute attribute : archetype.getAttributes()) {
+            for (ArchetypeAttribute attribute : chip.getAttributes()) {
                 AttributeDefinition definition = getDefinitionsMap().get(attribute.getAttributeName());
                 if (definition != null && definition.isDisplayable()) {
                     attributes.put(attribute.getAttributeName(), attribute.getAttributeValue());
@@ -233,7 +218,7 @@ public class GenotypingChipTypeActionBean extends CoreActionBean {
 
     private Map<String, AttributeDefinition> getDefinitionsMap() {
         if (definitions == null) {
-            definitions = attributeArchetypeDao.findAttributeDefinitions(namespace, chipFamily);
+            definitions = attributeArchetypeDao.findGenotypingChipAttributeDefinitions(chipFamily);
         }
         return definitions;
     }

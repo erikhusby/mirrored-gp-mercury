@@ -66,8 +66,7 @@
                 <c:forEach items="${actionBean.chipTypes}" var="chip" varStatus="chipStatus">
                     <tr>
                         <!-- One button must be checked so that Edit and Create don't choke. -->
-                        <td><stripes:radio name="chipName" value="${chip.archetypeName}"
-                                           checked="${actionBean.chipTypes[0].archetypeName}"/>
+                        <td><stripes:radio name="chipName" value="${chip.archetypeName}"/>
                         </td>
                         <td>${chip.archetypeName}</td>
                         <td>${chip.attributeMap['LastModifiedDate']}</td>

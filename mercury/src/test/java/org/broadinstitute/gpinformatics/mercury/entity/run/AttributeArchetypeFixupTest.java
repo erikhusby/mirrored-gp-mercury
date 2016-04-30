@@ -1,15 +1,13 @@
 package org.broadinstitute.gpinformatics.mercury.entity.run;
 
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
-import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingChipMapping;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.InfiniumRunResource;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
-import org.broadinstitute.gpinformatics.mercury.presentation.run.GenotypingChipTypeActionBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -18,7 +16,6 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -148,65 +145,50 @@ public class AttributeArchetypeFixupTest extends Arquillian {
         final int fieldCount = 2;
         utx.begin();
         userBean.loginOSUser();
-        // The collection of new entities to persist.
-        List<Object> entities = new ArrayList<>();
 
-        // The data design:
-        // - The different genotyping chip technologies (vendors) are represented as different
-        //   archetype groups, all having the Genotyping Chip namespace.  The group here is Infinium.
-        // - The different Infinium chips each are represented by an Archetype.
-        // - Each Infinium archetype has the same attributes with different values for each chip.
-        //   The attributes are the four pathnames, plus a "last modified date".
-        // - These attributes are defined with AttributeDefinitions.
-        // - There is a group attribute in AttributeDefinitions for the one data_path that
-        //   applies to all Infinium chips.
+        String chipFamily = InfiniumRunResource.INFINIUM_GROUP;
 
-        String namespace = GenotypingChipTypeActionBean.class.getCanonicalName();
+        List<AttributeDefinition> definitions = new ArrayList<>();
 
         // Collects the attribute definitions from the array.
         Set<String> attributeNames = new HashSet<>();
         for (int i = 0; i < initialAttributes.length; i += fieldCount) {
             String attributeName = initialAttributes[i];
             if (!attributeName.equals("pool_name") && attributeNames.add(attributeName)) {
-                entities.add(new AttributeDefinition(namespace, InfiniumRunResource.INFINIUM_GROUP,
-                        attributeName, null, true, false));
+                definitions.add(new AttributeDefinition(AttributeDefinition.DefinitionType.GENOTYPING_CHIP,
+                        chipFamily, attributeName, true));
             }
         }
 
         // Adds the "last modified" attribute definition.
-        entities.add(new AttributeDefinition(namespace, InfiniumRunResource.INFINIUM_GROUP,
-                GenotypingChipTypeActionBean.LAST_MODIFIED, null, false, false));
+        definitions.add(new AttributeDefinition(AttributeDefinition.DefinitionType.GENOTYPING_CHIP,
+                chipFamily, GenotypingChip.LAST_MODIFIED, false));
 
         // Adds the group attribute for data_path.
-        entities.add(new AttributeDefinition(namespace, InfiniumRunResource.INFINIUM_GROUP,
-                "data_path", "/humgen/illumina_data", false, true));
+        definitions.add(new AttributeDefinition(AttributeDefinition.DefinitionType.GENOTYPING_CHIP,
+                chipFamily, "data_path", "/humgen/illumina_data"));
 
         // Adds each chip type. When iterating, "pool_name" marks the start of a new chip type.
-        AttributeArchetype attributeArchetype = null;
+        List<GenotypingChip> chips = new ArrayList<>();
+        GenotypingChip chip = null;
         for (int i = 0; i < initialAttributes.length; i += fieldCount) {
             String key = initialAttributes[i];
             String value = initialAttributes[i + 1];
 
             if (key.equals("pool_name")) {
-                // Creates the new chip type.
-                attributeArchetype = new AttributeArchetype(namespace, InfiniumRunResource.INFINIUM_GROUP, value);
-                entities.add(attributeArchetype);
-
-                // Adds "last modified date" attribute.
-                ArchetypeAttribute dateAttribute = new ArchetypeAttribute(attributeArchetype,
-                        GenotypingChipTypeActionBean.LAST_MODIFIED, DateUtils.getYYYYMMMDDTime(new Date()));
-                attributeArchetype.getAttributes().add(dateAttribute);
+                // Creates the new chip type with null valued instance attributes.
+                chip = new GenotypingChip(InfiniumRunResource.INFINIUM_GROUP, value, definitions);
+                chip.setLastModifiedDate();
+                chips.add(chip);
             } else {
-                // Adds attribute to the currently referenced chip type.
-                ArchetypeAttribute attribute = new ArchetypeAttribute(attributeArchetype, key, value);
-                System.out.println("Adding attribute (" + attribute.getAttributeName() + ", " +
-                                   attribute.getAttributeValue() + ") to " +
-                                   attributeArchetype.getArchetypeName());
-                attributeArchetype.getAttributes().add(attribute);
+                chip.setAttribute(key, value);
+                System.out.println("Adding attribute (" + key + ", " + value + ") to " + chip.getChipName());
             }
         }
-        entities.add(new FixupCommentary("GPLIM-4023 add the initial Infinium genotyping chip types from GAP."));
-        attributeArchetypeDao.persistAll(entities);
+        attributeArchetypeDao.persist(new FixupCommentary(
+                "GPLIM-4023 add the initial Infinium genotyping chip types from GAP."));
+        attributeArchetypeDao.persistAll(definitions);
+        attributeArchetypeDao.persistAll(chips);
         attributeArchetypeDao.flush();
         utx.commit();
     }
@@ -220,7 +202,7 @@ public class AttributeArchetypeFixupTest extends Arquillian {
         put("P-WG-0029", "HumanExome-12v1-2_A");
         put("P-WG-0031", "HumanCoreExome-24v1-0_A");
         put("P-WG-0036", "PsychChip_15048346_B");
-        put("P-WG-0036" + ProductEjb.DELIMITER + "Danish", "DBS_Wave_Psych");
+        put("P-WG-0036" + GenotypingChipMapping.DELIMITER + "Danish", "DBS_Wave_Psych");
         put("P-WG-0053", "Broad_GWAS_supplemental_15061359_A1");
         put("P-WG-0055", "PsychChip_v1-1_15073391_A1");
         put("P-WG-0058", "Multi-EthnicGlobal-8_A1");
@@ -232,30 +214,20 @@ public class AttributeArchetypeFixupTest extends Arquillian {
         utx.begin();
         userBean.loginOSUser();
 
-        // The data design:
-        // - Each product that uses a genotyping chip gets an archetype named with product part number.
-        // - Archetypes have a namespace indicating Product, and a group indicating genotyping chip mapping.
-        // - One attribute is for genotyping chip technology (Infinium), and one for genotyping chip name.
-        // - Over time the genotyping chip name may be changed by the user. Envers is used to find old versions
-        //   of attributes belonging to this mapping archetype in order to retrieve the original mapping.
-        String namespace = Product.class.getCanonicalName();
-        String group = Product.GENOTYPING_CHIP_CONFIG;
+        String chipFamily = InfiniumRunResource.INFINIUM_GROUP;
 
-        attributeArchetypeDao.persist(
-                new AttributeDefinition(namespace, group, Product.GENOTYPING_CHIP_TECHNOLOGY, null, false, false));
-        attributeArchetypeDao.persist(
-                new AttributeDefinition(namespace, group, Product.GENOTYPING_CHIP_NAME, null, false, false));
+        List<AttributeDefinition> definitions = new ArrayList<AttributeDefinition>() {{
+            add(new AttributeDefinition(AttributeDefinition.DefinitionType.GENOTYPING_CHIP_MAPPING,
+                    GenotypingChipMapping.MAPPING_GROUP, GenotypingChipMapping.GENOTYPING_CHIP_TECHNOLOGY, false));
+            add(new AttributeDefinition(AttributeDefinition.DefinitionType.GENOTYPING_CHIP_MAPPING,
+                    GenotypingChipMapping.MAPPING_GROUP, GenotypingChipMapping.GENOTYPING_CHIP_NAME, false));
+        }};
+        attributeArchetypeDao.persistAll(definitions);
 
-        for (String productPartNumber : INITIAL_PRODUCT_PART_TO_GENO_CHIP.keySet()) {
-            AttributeArchetype attributeArchetype = new AttributeArchetype(namespace, group, productPartNumber);
-            attributeArchetype.getAttributes().add(new ArchetypeAttribute(attributeArchetype,
-                    Product.GENOTYPING_CHIP_TECHNOLOGY, InfiniumRunResource.INFINIUM_GROUP));
-            ArchetypeAttribute attribute = new ArchetypeAttribute(attributeArchetype, Product.GENOTYPING_CHIP_NAME,
-                    INITIAL_PRODUCT_PART_TO_GENO_CHIP.get(productPartNumber));
-            attributeArchetype.getAttributes().add(attribute);
-            System.out.println("Adding " + attribute.getAttributeName() + " " + attribute.getAttributeValue() +
-                               " to the configuration for product " + attributeArchetype.getArchetypeName());
-            attributeArchetypeDao.persist(attributeArchetype);
+        for (Map.Entry<String, String> entry : INITIAL_PRODUCT_PART_TO_GENO_CHIP.entrySet()) {
+            GenotypingChipMapping mapping = new GenotypingChipMapping(entry.getKey(), chipFamily, entry.getValue());
+            System.out.println("Adding chip mapping for " + entry.getKey() + " to " + entry.getValue());
+            attributeArchetypeDao.persist(mapping);
         }
         String fixupReason = "GPLIM-4023 add the mapping from product to Infinium genotyping chip types.";
         attributeArchetypeDao.persist(new FixupCommentary(fixupReason));

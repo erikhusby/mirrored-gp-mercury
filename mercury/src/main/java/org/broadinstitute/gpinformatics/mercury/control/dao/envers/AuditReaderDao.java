@@ -1,10 +1,12 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.envers;
 
 import com.sun.xml.ws.developer.Stateful;
+import oracle.sql.TIMESTAMP;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.poi.ss.formula.functions.T;
 import org.broadinstitute.gpinformatics.infrastructure.datawh.ExtractTransform;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.RevInfo;
@@ -310,13 +312,26 @@ public class AuditReaderDao extends GenericDao {
     }
 
     /**
-     * Returns the version of the entity as of the effective date. The entity will be null if it was deleted
-     * before effective date. It will also be null if the entity was created after the effective date unless
-     * extendToFirstAvailable is true, which then returns the first available entity.
+     * Returns all entities of a given class as they existed on the effective date.
      */
     public <T> List<T> getVersionsAsOf(Class entityClass, Date effectiveDate) {
-        Number revId = getAuditReader().getRevisionNumberForDate(effectiveDate);
-        List<T> list = getAuditReader().createQuery().forEntitiesAtRevision(entityClass, revId).getResultList();
+        // Cannot use getAuditReader().getRevisionNumberForDate(effectiveDate) since it assumes sequential
+        // revInfoId gives monotonic time, which isn't true for Mercury. A bonus is this way runs much faster.
+        Query query = getEntityManager().createNativeQuery(
+                " select max(rev_info_id) rev_id from rev_info where rev_date = " +
+                " (select max(rev_date) from rev_info where rev_date <= :effectiveDate) ");
+        query.setParameter("effectiveDate", effectiveDate, TemporalType.TIMESTAMP);
+        // Fixes the return types.
+        query.unwrap(SQLQuery.class).addScalar("rev_id", LongType.INSTANCE);
+        List<T> list = Collections.emptyList();
+        try {
+            Long revId = (Long)query.getSingleResult();
+            if (revId != null) {
+                list = getAuditReader().createQuery().forEntitiesAtRevision(entityClass, revId).getResultList();
+            }
+        } catch (NoResultException e) {
+            // returns empty list.
+        }
         return list;
     }
 }

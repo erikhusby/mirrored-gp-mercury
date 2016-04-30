@@ -171,9 +171,31 @@ public class ProductActionBean extends CoreActionBean {
     /**
      * Initialize the product with the passed in key for display in the form.
      */
-    @Before(stages = LifecycleStage.BindingAndValidation,
-            on = {VIEW_ACTION, EDIT_ACTION, CREATE_ACTION, SAVE_ACTION, "addOnsAutocomplete"})
-    public void init() {
+    @Before(stages = LifecycleStage.BindingAndValidation, on = {"addOnsAutocomplete"})
+    public void addOnsAutocompleteBindingAndValidation() {
+        initProduct();
+    }
+
+    @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION})
+    public void viewBindingAndValidation() {
+        initProduct();
+        initGenotypingInfo();
+    }
+
+    @Before(stages = LifecycleStage.BindingAndValidation, on = {EDIT_ACTION, CREATE_ACTION})
+    public void editCreateBindingAndValidation() {
+        initProduct();
+        initGenotypingInfo();
+        setupFamilies();
+    }
+
+    @Before(stages = LifecycleStage.BindingAndValidation, on = {SAVE_ACTION})
+    public void saveBindingAndValidation() {
+        initProduct();
+        setupFamilies();
+    }
+
+    private void initProduct() {
         product = getContext().getRequest().getParameter(PRODUCT_PARAMETER);
         if (!StringUtils.isBlank(product)) {
             editProduct = productDao.findByBusinessKey(product);
@@ -181,12 +203,17 @@ public class ProductActionBean extends CoreActionBean {
             // This must be a create, so construct a new top level product that has nothing else set
             editProduct = new Product(Product.TOP_LEVEL_PRODUCT);
         }
-        availableChipTechnologyAndChipNames = productEjb.findChipTechnologiesAndNames();
+        availableChipTechnologyAndChipNames = productEjb.findChipFamiliesAndNames();
     }
 
-    @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION, EDIT_ACTION, CREATE_ACTION})
-    public void initGenotypingInfo() {
+    private void initGenotypingInfo() {
         genotypingChipInfo = productEjb.getMappedGenotypingChips(editProduct.getPartNumber());
+    }
+
+    @Before(stages = LifecycleStage.BindingAndValidation, on = {CREATE_ACTION, EDIT_ACTION, SAVE_ACTION})
+    private void setupFamilies() {
+        productFamilies = productFamilyDao.findAll();
+        Collections.sort(productFamilies);
     }
 
     @Before(stages = LifecycleStage.CustomValidation, on = SAVE_ACTION)
@@ -207,15 +234,6 @@ public class ProductActionBean extends CoreActionBean {
             editProduct.setPositiveControlResearchProject(controlsProject == null ? null :
                     researchProjectDao.findByBusinessKey(controlsProject));
         }
-    }
-
-    /**
-     * Need to get this for setting up create and edit and for any errors on save.
-     */
-    @Before(stages = LifecycleStage.BindingAndValidation, on = {CREATE_ACTION, EDIT_ACTION, SAVE_ACTION})
-    public void setupFamilies() {
-        productFamilies = productFamilyDao.findAll();
-        Collections.sort(productFamilies);
     }
 
     /**

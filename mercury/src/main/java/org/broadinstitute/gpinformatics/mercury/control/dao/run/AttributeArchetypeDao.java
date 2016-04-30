@@ -1,17 +1,21 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.run;
 
+import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingChipMapping;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.entity.run.AttributeArchetype;
-import org.broadinstitute.gpinformatics.mercury.entity.run.AttributeArchetype_;
 import org.broadinstitute.gpinformatics.mercury.entity.run.AttributeDefinition;
 import org.broadinstitute.gpinformatics.mercury.entity.run.AttributeDefinition_;
+import org.broadinstitute.gpinformatics.mercury.entity.run.GenotypingChip;
+import org.broadinstitute.gpinformatics.mercury.entity.run.GenotypingChip_;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.validation.constraints.NotNull;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -21,48 +25,6 @@ import java.util.Set;
 @Stateful
 @RequestScoped
 public class AttributeArchetypeDao extends GenericDao {
-
-    public Set<String> findGroups(@NotNull String namespace) {
-        Set<String> groupNames = new HashSet<>();
-        for (AttributeArchetype archetype : findList(AttributeArchetype.class, AttributeArchetype_.namespace, namespace)) {
-            groupNames.add(archetype.getGroup());
-        }
-        return groupNames;
-    }
-
-    /** Returns all archetypes for the given group. */
-    public Set<AttributeArchetype> findByGroup(@NotNull String namespace, @NotNull String group) {
-        Set<AttributeArchetype> archetypes = new HashSet<>();
-        for (AttributeArchetype archetype : findList(AttributeArchetype.class, AttributeArchetype_.group, group)) {
-            if (namespace.equals(archetype.getNamespace())) {
-                archetypes.add(archetype);
-            }
-        }
-        return archetypes;
-    }
-
-    /** Returns one archetype for the given group and name, or null if not found. */
-    public AttributeArchetype findByName(@NotNull String namespace, @NotNull String group, @NotNull String name) {
-        for (AttributeArchetype attributeArchetype : findList(AttributeArchetype.class,
-                AttributeArchetype_.archetypeName, name)) {
-            if (attributeArchetype.getGroup().equals(group)) {
-                return attributeArchetype;
-            }
-        }
-        return null;
-    }
-
-    /** Returns a map (name -> definition) of the attribute definitions for an attribute group. */
-    public Map<String, AttributeDefinition> findAttributeDefinitions(@NotNull String namespace, @NotNull String group) {
-        Map<String, AttributeDefinition> map = new HashMap<>();
-        for (AttributeDefinition definition : findList(AttributeDefinition.class,
-                AttributeDefinition_.group, group)) {
-            if (namespace.equals(definition.getNamespace())) {
-                map.put(definition.getAttributeName(), definition);
-            }
-        }
-        return map;
-    }
 
     public static final Comparator<AttributeArchetype> BY_ARCHETYPE_NAME = new Comparator<AttributeArchetype>() {
         @Override
@@ -74,5 +36,68 @@ public class AttributeArchetypeDao extends GenericDao {
             }
         }
     };
+
+    public List<GenotypingChip> findGenotypingChips() {
+        return findAll((GenotypingChip.class));
+    }
+
+    public Collection<GenotypingChipMapping> findGenotypingChipMappings() {
+        return findAll((GenotypingChipMapping.class));
+    }
+
+    private List<AttributeDefinition> findAttributeDefinitions(@NotNull AttributeDefinition.DefinitionType type) {
+        return findList(AttributeDefinition.class, AttributeDefinition_.definitionType, type);
+    }
+
+    /** Returns the definitions for chip type attributes. */
+    public Map<String, AttributeDefinition> findGenotypingChipAttributeDefinitions(String chipFamily) {
+        Map<String, AttributeDefinition> map = new HashMap<>();
+        for (AttributeDefinition def : findAttributeDefinitions(AttributeDefinition.DefinitionType.GENOTYPING_CHIP)) {
+            if (chipFamily.equals(def.getGroup())) {
+                map.put(def.getAttributeName(), def);
+            }
+        }
+        return map;
+    }
+
+    /** Returns the named chip family attribute value. */
+    public String findChipFamilyAttribute(String chipFamily, String attributeName) {
+        for (AttributeDefinition def : findAttributeDefinitions(AttributeDefinition.DefinitionType.GENOTYPING_CHIP)) {
+            if (def.isGroupAttribute() && attributeName.equals(def.getAttributeName())) {
+                return def.getGroupAttributeValue();
+            }
+        }
+        return null;
+    }
+
+    /** Returns chip types for a chip family. */
+    public Set<GenotypingChip> findGenotypingChips(String chipFamily) {
+        Set<GenotypingChip> chips = new HashSet<>();
+        for (GenotypingChip chip : findGenotypingChips()) {
+            if (chip.getChipTechnology().equals(chipFamily)) {
+                chips.add(chip);
+            }
+        }
+        return chips;
+    }
+
+    /** Returns all chip families. */
+    public Set<String> findGenotypingChipFamilies() {
+        Set<String> families = new HashSet<>();
+        for (GenotypingChip chip : findGenotypingChips()) {
+            families.add(chip.getChipTechnology());
+        }
+        return families;
+    }
+
+    /** Returns the chip type */
+    public GenotypingChip findGenotypingChip(@NotNull String chipFamily, String chipName) {
+        for (GenotypingChip chip : findList(GenotypingChip.class, GenotypingChip_.archetypeName, chipName)) {
+            if (chip.getChipTechnology().equals(chipFamily)) {
+                return chip;
+            }
+        }
+        return null;
+    }
 
 }

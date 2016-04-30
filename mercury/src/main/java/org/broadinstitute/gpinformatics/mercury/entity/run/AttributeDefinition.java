@@ -4,6 +4,8 @@ import org.hibernate.envers.Audited;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -18,15 +20,21 @@ import javax.persistence.UniqueConstraint;
 
 @Entity
 @Audited
-@Table(schema = "mercury", uniqueConstraints = @UniqueConstraint(columnNames = {"archetype_group", "namespace", "attributeName"}))
+@Table(schema = "mercury", uniqueConstraints = @UniqueConstraint(columnNames = {"definitionType", "archetype_group", "attributeName"}))
 public class AttributeDefinition {
+
+    public enum DefinitionType {
+        GENOTYPING_CHIP,
+        GENOTYPING_CHIP_MAPPING
+    }
 
     @SequenceGenerator(name = "seq_attribute_definition", schema = "mercury", sequenceName = "seq_attribute_definition")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_attribute_definition")
     @Id
     private Long attributeDefinitionId;
 
-    private String namespace;
+    @Enumerated(EnumType.STRING)
+    private DefinitionType definitionType;
 
     @Column(name = "archetype_group")
     private String group;
@@ -47,22 +55,37 @@ public class AttributeDefinition {
     public AttributeDefinition() {
     }
 
-    public AttributeDefinition(String namespace, String group, String attributeName, String groupAttributeValue,
-                               boolean isDisplayable, boolean isGroupAttribute) {
-        this.namespace = namespace;
+    /** Constructor for attributes that vary by archetype instance. Values are in ArchetypeAttribute. */
+    private AttributeDefinition(DefinitionType definitionType, String group, String attributeName) {
+        this.definitionType = definitionType;
         this.group = group;
         this.attributeName = attributeName;
+    }
+
+    /** Constructor for attributes that vary by archetype group. */
+    public AttributeDefinition(DefinitionType definitionType, String group, String attributeName,
+                               String groupAttributeValue) {
+        this(definitionType, group, attributeName);
         this.groupAttributeValue = groupAttributeValue;
+        this.isGroupAttribute = true;
+    }
+
+    /** Constructor for attributes that vary by archetype instance that are to be displayed. */
+    public AttributeDefinition(DefinitionType definitionType, String group, String attributeName,
+                               boolean isDisplayable) {
+        this.definitionType = definitionType;
+        this.group = group;
+        this.attributeName = attributeName;
+        this.isGroupAttribute = false;
         this.isDisplayable = isDisplayable;
-        this.isGroupAttribute = isGroupAttribute;
     }
 
     public String getGroup() {
         return group;
     }
 
-    public String getNamespace() {
-        return namespace;
+    public DefinitionType getDefinitionType() {
+        return definitionType;
     }
 
     public String getAttributeName() {
