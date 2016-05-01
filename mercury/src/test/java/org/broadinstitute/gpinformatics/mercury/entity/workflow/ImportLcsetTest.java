@@ -33,22 +33,17 @@ import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathFactory;
 import java.io.FileInputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 /**
  * Imports Squid LCSETs from labopsjira, to allow testing of messages.
  */
 @Test(groups = TestGroups.STANDARD)
 public class ImportLcsetTest extends Arquillian {
-
-    private static final Pattern BREAK_PATTERN = Pattern.compile("<br/>\\n");
 
     @PersistenceContext(unitName = "squid_pu")
     private EntityManager entityManager;
@@ -65,7 +60,7 @@ public class ImportLcsetTest extends Arquillian {
     @Inject
     private ProductOrderDao productOrderDao;
 
-    private static Map<String, String> mapLcsetTypeToWorkflow = new HashMap<>();
+    private static final Map<String, String> mapLcsetTypeToWorkflow = new HashMap<>();
     static {
         mapLcsetTypeToWorkflow.put("Aliquot Only", "");
         mapLcsetTypeToWorkflow.put("cDNA TruSeq Strand Specific Large Insert", "");
@@ -92,20 +87,25 @@ public class ImportLcsetTest extends Arquillian {
     /**
      * This test creates Mercury LCSETs to match those in Squid.  It reads from an XML export from JIRA.
      */
+    @SuppressWarnings("UseOfSystemOutOrSystemErr")
     @Test(enabled = true)
     public void testCreateLcsets() throws Exception {
 
         Query nativeQuery = entityManager.createNativeQuery("SELECT " +
-                "    ls.barcode  AS sample_barcode, " +
-                "    listagg(wrmd.product_order_name, ',') WITHIN GROUP (ORDER BY wrmd.product_order_name), " +
-                "    r.barcode   AS receptacle_barcode, " +
-                "    gso.individual_name " +
+                "    ls.barcode  AS sample_barcode,   " +
+                "    wrmd.product_order_name,   " +
+                "    r.barcode   AS receptacle_barcode,   " +
+                "    gso.individual_name   " +
                 "FROM " +
-                "    lc_sample ls " +
-                "    LEFT OUTER JOIN lc_sample ls2 " +
-                "        ON   ls.parent_sample_id = ls2.lc_sample_id " +
+                "    SEQ20.WORK_REQUEST_MAT_SAMPLE wrms " +
+                "    INNER JOIN SEQ20.WORK_REQUEST_MATERIAL wrm " +
+                "        ON   wrms.WORK_REQUEST_MATERIAL_ID = wrm.WORK_REQUEST_MATERIAL_ID " +
+                "    INNER JOIN lc_sample_work_req_checkout lswrc " +
+                "        ON   lswrc.work_request_material_id = wrm.work_request_material_id " +
+                "    INNER JOIN lc_sample ls " +
+                "        ON   ls.lc_sample_id = lswrc.aliquot_sample_id " +
                 "    INNER JOIN work_request_material_descr wrmd " +
-                "        ON wrmd.lc_sample_id = ls2.lc_sample_id " +
+                "        ON   wrmd.work_request_material_id = wrm.work_request_material_id " +
                 "    INNER JOIN genomic_sample_organism gso " +
                 "        ON   gso.genomic_sample_organism_id = ls.genomic_sample_organism_id " +
                 "    INNER JOIN gssr_pool_descr gpd " +
@@ -119,17 +119,13 @@ public class ImportLcsetTest extends Arquillian {
                 "    INNER JOIN receptacle r " +
                 "        ON   r.receptacle_id = sc.receptacle_id " +
                 "WHERE " +
-                "    ls.barcode IN (:sample_ids) " +
-                "GROUP BY " +
-                "    ls.barcode, r.barcode, gso.individual_name ");
+                "    wrm.WORK_REQUEST_ID = :work_request");
 
         XPath xPath =  XPathFactory.newInstance().newXPath();
         XPathExpression lcsetKeyExpr = xPath.compile("/rss/channel/item/key");
         XPathExpression lcsetTypeExpr = xPath.compile("../type");
-        XPathExpression gssrExpr = xPath.compile(
-                "../customfields/customfield/customfieldname[text()='GSSR ID(s)']/../customfieldvalues/customfieldvalue");
-        XPathExpression pdoExpr = xPath.compile(
-                "../issuelinks/issuelinktype/outwardlinks/issuelink/issuekey");
+        XPathExpression workRequestExpr = xPath.compile(
+                "../customfields/customfield/customfieldname[text()='Work Request ID(s)']/../customfieldvalues/customfieldvalue");
 
         // Open XML
         DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
@@ -153,26 +149,22 @@ public class ImportLcsetTest extends Arquillian {
             }
             Node lcsetTypeNode = (Node) lcsetTypeExpr.evaluate(keyNode, XPathConstants.NODE);
             String lcsetType = lcsetTypeNode.getFirstChild().getNodeValue();
-            NodeList pdoNodeList = (NodeList) pdoExpr.evaluate(keyNode, XPathConstants.NODESET);
-            List<String> lcsetPdos = new ArrayList<>();
-            for (int j = 0; j < pdoNodeList.getLength(); j++) {
-                Node issueKeyNode = pdoNodeList.item(j);
-                lcsetPdos.add(issueKeyNode.getFirstChild().getNodeValue());
-            }
-
-            // Get GSSR IDs
-            NodeList gssrNodeList = (NodeList) gssrExpr.evaluate(keyNode, XPathConstants.NODESET);
-            List<String> sampleIds = new ArrayList<>();
-            for (int j = 0; j < gssrNodeList.getLength(); j++) {
-                Node customfieldvalueNode = gssrNodeList.item(j);
-                String sampleIdString = customfieldvalueNode.getFirstChild().getNodeValue();
-                System.out.println(sampleIdString);
-                Collections.addAll(sampleIds, BREAK_PATTERN.split(sampleIdString));
+            Node workRequestNode = (Node) workRequestExpr.evaluate(keyNode, XPathConstants.NODE);
+            if (workRequestNode == null) {
+                continue;
             }
 
             // Get barcodes
-            if (!sampleIds.isEmpty()) {
-                nativeQuery.setParameter("sample_ids", sampleIds);
+            String workRequest = workRequestNode.getFirstChild().getNodeValue();
+            if (workRequest != null) {
+                System.out.println("Work request " + workRequest);
+                try {
+                    Integer.parseInt(workRequest);
+                } catch (NumberFormatException e) {
+                    System.out.println("Failed to convert work request to number");
+                    continue;
+                }
+                nativeQuery.setParameter("work_request", workRequest);
                 List<?> resultList = nativeQuery.getResultList();
                 System.out.println("Found " + resultList.size() + " Squid tubes.");
                 if (resultList.isEmpty()) {
@@ -180,33 +172,35 @@ public class ImportLcsetTest extends Arquillian {
                 }
                 List<String> tubeBarcodes = new ArrayList<>();
                 List<String> controlTubeBarcodes = new ArrayList<>();
-                List<ImmutablePair<String, String[]>> nonControlTubeBarcodes = new ArrayList<>();
+                List<ImmutablePair<String, String>> nonControlTubeBarcodes = new ArrayList<>();
                 Set<String> productOrderNames = new HashSet<>();
                 for (Object o : resultList) {
                     Object[] columns = (Object[]) o;
 //                    String sampleBarcode = (String) columns[0];
-                    String productOrderNamesCsv = (String) columns[1];
+                    String productOrderName = (String) columns[1];
                     String receptacleBarcode = (String) columns[2];
                     String individualName = (String) columns[3];
 
-                    String[] productOrderNamesArray = productOrderNamesCsv.split(",");
-                    Collections.addAll(productOrderNames, productOrderNamesArray);
+                    productOrderNames.add(productOrderName);
                     tubeBarcodes.add(receptacleBarcode);
                     // Determine control
                     if (individualName.equals("NA12878") || individualName.equals("WATER_CONTROL") ||
                             individualName.equals("Affi E.coli")) {
                         controlTubeBarcodes.add(receptacleBarcode);
                     } else {
-                        nonControlTubeBarcodes.add(new ImmutablePair<>(receptacleBarcode, productOrderNamesArray));
+                        nonControlTubeBarcodes.add(new ImmutablePair<>(receptacleBarcode, productOrderName));
                     }
                 }
                 Map<String, BarcodedTube> mapBarcodeToTube = barcodedTubeDao.findByBarcodes(tubeBarcodes);
+                if (productOrderNames.size() > 1) {
+                    System.out.println("Multiple PDOs " + productOrderNames);
+                }
                 List<ProductOrder> productOrders = productOrderDao.findListByBusinessKeys(productOrderNames);
 
                 // Create bucket entries
                 Set<LabVessel> nonControlTubes = new HashSet<>();
                 List<BucketEntry> bucketEntries = new ArrayList<>();
-                for (Pair<String, String[]> tubeBarcodePdoPair : nonControlTubeBarcodes) {
+                for (Pair<String, String> tubeBarcodePdoPair : nonControlTubeBarcodes) {
                     String nonControlTubeBarcode = tubeBarcodePdoPair.getLeft();
                     BarcodedTube barcodedTube = mapBarcodeToTube.get(nonControlTubeBarcode);
                     if (barcodedTube == null) {
@@ -220,20 +214,16 @@ public class ImportLcsetTest extends Arquillian {
                     nonControlTubes.add(barcodedTube);
 
                     ProductOrder foundProductOrder = null;
-lcsetPdoLoop:       for (String pdo : tubeBarcodePdoPair.getRight()) {
-                        if (lcsetPdos.contains(pdo)) {
-                            for (ProductOrder productOrder : productOrders) {
-                                if (productOrder.getJiraTicketKey().equals(pdo)) {
-                                    foundProductOrder = productOrder;
-                                    break lcsetPdoLoop;
-                                }
-                            }
+                    String pdo = tubeBarcodePdoPair.getRight();
+                    for (ProductOrder productOrder : productOrders) {
+                        if (productOrder.getJiraTicketKey().equals(pdo)) {
+                            foundProductOrder = productOrder;
+                            break;
                         }
                     }
 
                     if (foundProductOrder == null) {
-                        System.out.println("Failed to find Product Order " + Arrays.toString(
-                                tubeBarcodePdoPair.getRight()));
+                        System.out.println("Failed to find Product Order " + pdo);
                         continue;
                     }
 
