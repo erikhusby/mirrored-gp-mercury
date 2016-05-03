@@ -653,12 +653,6 @@ public class ProductOrderActionBean extends CoreActionBean {
             addMessageBasedOnErrorLevel(errorLevel, unFundedMessage);
         }
 
-        if (quote.getQuoteFunding().getFundingLevel().size() > 1) {
-            String multiFundingLevelMessage =
-                    "Using Quotes with split funding is discouraged when funding a product order.";
-
-            addMessageBasedOnErrorLevel(errorLevel, multiFundingLevelMessage);
-        }
         double fundsRemaining = Double.parseDouble(quote.getQuoteFunding().getFundsRemaining());
         double outstandingEstimate = estimateOutstandingOrders(quote.getName());
         double valueOfCurrentOrder = 0;
