@@ -40,14 +40,23 @@ $j.widget('mercury.hSpinner', {
             'change .hSpinner': this._updateDisplayState
         });
 
+        // Parse the current value and coerce it into a number.
+        var currentValue = parseFloat(this.element.val());
+        if (isNaN(currentValue)) {
+            currentValue = 0;
+        }
+
         // Capture the original value to enable applying a CSS class if the value is changed.
-        this.originalValue = parseFloat(this.element.val());
-        if (isNaN(this.originalValue)) {
-            this.originalValue = 0;
+        if ($j.isFunction(this.options.originalValue)) {
+            this.originalValue = this.options.originalValue($container);
+        } else if (this.options.originalValue != null) {
+            this.originalValue = this.options.originalValue;
+        } else {
+            this.originalValue = currentValue;
         }
 
         // Set the value to normalize formatting and to display 0 if there was no value.
-        this.setValue(this.originalValue);
+        this.setValue(currentValue);
     },
 
     /**
@@ -142,7 +151,7 @@ $j.widget('mercury.hSpinner', {
      * @param value
      */
     setValue: function (value) {
-        this.element.val(value.toLocaleString());
+        this.element.val(value.toString());
         this._updateDisplayState();
         /*
          * I'd like to be able to fire some sort of valueUpdated event (or a native change event) from here, but I've
@@ -163,7 +172,7 @@ $j.widget('mercury.hSpinner', {
         if (newValue < 0) {
             newValue = 0;
         }
-        this.setValue((newValue).toLocaleString());
+        this.setValue((newValue).toString());
     },
 
     /**
@@ -171,6 +180,6 @@ $j.widget('mercury.hSpinner', {
      */
     increment: function () {
         var oldValue = parseFloat(this.element.val());
-        this.setValue((oldValue + 1.0).toLocaleString());
+        this.setValue((oldValue + 1.0).toString());
     }
 });
