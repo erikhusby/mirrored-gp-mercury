@@ -760,7 +760,10 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         for (LedgerEntry ledgerItem : ledgerItems) {
             if (ledgerItem.getPriceItem().equals(priceItem) && !ledgerItem.isBilled()) {
                 if (ledgerEntry != null) {
-                    throw new RuntimeException("Blah blah blah");
+                    throw new RuntimeException(
+                            "Found multiple unbilled ledger entries for sample '" + sampleName + "' and price item '"
+                            + priceItem.getName()
+                            + "'. This situation has been known to lead to serious billing problems in the past!");
                 }
                 ledgerEntry = ledgerItem;
             }
