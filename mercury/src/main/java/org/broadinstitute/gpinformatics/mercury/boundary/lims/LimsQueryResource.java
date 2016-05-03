@@ -348,10 +348,11 @@ public class LimsQueryResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/fetchQpcrForTube")
-    public Double fetchQpcrForTube(@QueryParam("tubeBarcode") String tubeBarcode) {
+    public Double fetchQpcrForTube(@QueryParam("tubeBarcode") String tubeBarcode,
+                                   @QueryParam("quantType") String quantType) {
         switch (systemRouter.getSystemOfRecordForVessel(tubeBarcode)) {
         case MERCURY:
-            return limsQueries.fetchQuantForTube(tubeBarcode, LabMetric.MetricType.ECO_QPCR.getDisplayName());
+            return limsQueries.fetchQuantForTube(tubeBarcode, quantType);
         case SQUID:
             return thriftService.fetchQpcrForTube(tubeBarcode);
         default:

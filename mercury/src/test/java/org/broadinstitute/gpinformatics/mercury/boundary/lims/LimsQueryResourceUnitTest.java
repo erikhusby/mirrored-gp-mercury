@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.lims.LimsQueryResourceResponseFactory;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ConcentrationAndVolumeAndWeightType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.FlowcellDesignationType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.PlateTransferType;
@@ -316,7 +317,7 @@ public class LimsQueryResourceUnitTest {
         expect(mockThriftService.fetchQpcrForTube("barcode")).andReturn(1.23);
         replayAll();
 
-        double result = resource.fetchQpcrForTube("barcode");
+        double result = resource.fetchQpcrForTube("barcode", LabMetric.MetricType.ECO_QPCR.getDisplayName());
         assertThat(result, equalTo(1.23));
 
         verifyAll();
