@@ -132,33 +132,18 @@ public class BillingLedgerActionBean extends CoreActionBean {
      * Load the product order, price items, sample data, and various other information based on the orderId parameter.
      * All of this data is needed for rendering the billing ledger UI.
      */
-    @Before(stages = LifecycleStage.EventHandling, on = { "view" })
+    @Before(stages = LifecycleStage.EventHandling, on = { "view", "updateLedgers" })
     public void loadAllDataForView() {
-        loadProductOrderAndPriceItems();
-
-        // Load sample data
-        ProductOrder.loadSampleData(productOrder.getSamples(), BSPSampleSearchColumn.BILLING_TRACKER_COLUMNS);
-
-        // Load billing status information
-        productOrderListEntry = productOrder.isDraft() ? ProductOrderListEntry.createDummy() :
-                productOrderListEntryDao.findSingle(productOrder.getJiraTicketKey());
-
-        // Gather metrics and related information
-        productOrderSampleLedgerInfos = gatherSampleInfo();
-
-        // Capture data to render into the form to verify that nothing changed when the form is submitted
-        renderedSampleNames = buildSampleNameList();
-        renderedPriceItemNames = buildPriceItemNameList();
-    }
-
-    /**
-     * Load the product order and price items for the product order specified by the orderId parameter. This is all of
-     * the data that is needed to process requested ledger updates.
-     */
-    @Before(stages = LifecycleStage.EventHandling, on = { "updateLedgers" })
-    public void loadProductOrderAndPriceItems() {
         loadProductOrder();
         gatherPriceItems();
+
+        /*
+         * When processing a form submit ("updateLedgers" action), this will only be used if rendering an error.
+         * However, it is important to gather this data now, especially ProductOrderSample.getLedgerQuantities(),
+         * because the results can be side-effected by changes made to managed entities but not committed due to a
+         * subsequent error from the EJB method.
+         */
+        loadViewData();
     }
 
     /**
@@ -207,7 +192,12 @@ public class BillingLedgerActionBean extends CoreActionBean {
                 addGlobalValidationErrors(e.getValidationMessages());
             }
         }
-        return new RedirectResolution("/orders/ledger.action?orderId=" + productOrder.getBusinessKey());
+
+        if (hasErrors()) {
+            return new ForwardResolution(BILLING_LEDGER_PAGE);
+        } else {
+            return new RedirectResolution("/orders/ledger.action?orderId=" + productOrder.getBusinessKey());
+        }
     }
 
     /**
@@ -233,6 +223,22 @@ public class BillingLedgerActionBean extends CoreActionBean {
         for (Product addOn : addOns) {
             priceItems.add(addOn.getPrimaryPriceItem());
         }
+    }
+
+    private void loadViewData() {
+        // Load sample data
+        ProductOrder.loadSampleData(productOrder.getSamples(), BSPSampleSearchColumn.BILLING_TRACKER_COLUMNS);
+
+        // Load billing status information
+        productOrderListEntry = productOrder.isDraft() ? ProductOrderListEntry.createDummy() :
+                productOrderListEntryDao.findSingle(productOrder.getJiraTicketKey());
+
+        // Gather metrics and related information
+        productOrderSampleLedgerInfos = gatherSampleInfo();
+
+        // Capture data to render into the form to verify that nothing changed when the form is submitted
+        renderedSampleNames = buildSampleNameList();
+        renderedPriceItemNames = buildPriceItemNameList();
     }
 
     /**
@@ -384,7 +390,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
         result.put(new SimpleDateFormat("MMM d, yyyy").format(ledgerEntry.getWorkCompleteDate()));
         BillingSession billingSession = ledgerEntry.getBillingSession();
         result.put(billingSession != null ? billingSession.getBillingSessionId() : null);
-        result.put(billingSession != null ?
+        result.put(billingSession != null && billingSession.getBilledDate() != null ?
                 new SimpleDateFormat("MMM d, yyyy HH:mm:ss a").format(billingSession.getBilledDate()) : null);
         result.put(ledgerEntry.getBillingMessage());
 
@@ -445,6 +451,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
     public static class ProductOrderSampleLedgerInfo {
         private ProductOrderSample productOrderSample;
         private Date coverageFirstMet;
+        private Date workCompleteDate;
         private Map<PriceItem, ProductOrderSample.LedgerQuantities> ledgerQuantities;
         private ListMultimap<PriceItem, LedgerEntry> ledgerEntriesByPriceItem = ArrayListMultimap.create();
         private int autoFillQuantity = 0;
@@ -452,6 +459,12 @@ public class BillingLedgerActionBean extends CoreActionBean {
         public ProductOrderSampleLedgerInfo(ProductOrderSample productOrderSample, Date coverageFirstMet) {
             this.productOrderSample = productOrderSample;
             this.coverageFirstMet = coverageFirstMet;
+
+            // Capture this value now so that it is not affected by later changes in the entity graph.
+            workCompleteDate = productOrderSample.getWorkCompleteDate();
+            if (workCompleteDate == null) {
+                workCompleteDate = coverageFirstMet;
+            }
 
             ledgerQuantities = productOrderSample.getLedgerQuantities();
 
@@ -487,11 +500,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
          *
          * @return the date complete to populate in the UI
          */
-        public String getDateComplete() {
-            Date workCompleteDate = productOrderSample.getWorkCompleteDate();
-            if (workCompleteDate == null) {
-                workCompleteDate = coverageFirstMet;
-            }
+        public String getDateCompleteFormatted() {
             return workCompleteDate != null ? new SimpleDateFormat("MMM d, yyyy").format(workCompleteDate) : null;
         }
 
@@ -528,6 +537,10 @@ public class BillingLedgerActionBean extends CoreActionBean {
 
         public Date getWorkCompleteDate() {
             return workCompleteDate;
+        }
+
+        public String getCompleteDateFormatted() {
+            return workCompleteDate != null ? new SimpleDateFormat("MMM d, yyyy").format(workCompleteDate) : null;
         }
 
         public void setWorkCompleteDate(Date workCompleteDate) {

@@ -16,9 +16,17 @@
             margin-top: 6px;
         }
 
+        /* Prevent sample rows from wrapping so that they're all the same height. */
         .table th, .table td {
             white-space: nowrap;
         }
+
+        /* Allow wrapping for popovers (on-risk hover) and ledger detail rows (specifically Billing Message). */
+        .table td .popover,
+        .table td .subTable td {
+            white-space: normal;
+        }
+
         .table td.expand {
             cursor: pointer;
             text-align: center;
@@ -31,9 +39,8 @@
         #ledger td.ledgerDetail {
             padding: 0 0 3px 10em;
         }
-        table.subTable {
 
-        }
+        /* Normalize coloring of ledger detail tables. The usual alternating rows and hover colors are not needed. */
         table.subTable thead tr {
             background: none;
         }
@@ -53,6 +60,10 @@
         tr.odd table.subTable tr td.sorting_3
         {
             background-color: #f5f5f5;
+        }
+
+        table.simple tr.abandoned {
+            background-color: #FF99CC;
         }
 
         .dateComplete {
@@ -76,12 +87,6 @@
         .pending {
             font-weight: bold;
         }
-
-/*
-        .dataTables_filter input {
-            width: 300px;
-        }
-*/
     </style>
 
 <%-- ================ Page-specific JavaScript ================ --%>
@@ -106,8 +111,17 @@
              * Configure ledger datatable.
              */
             var ledgerTable = $j('#ledger').dataTable({
-                'oTableTools': ttExportDefines,
+                <%-- copy/csv/print buttons don't work very will with the hidden columns and text inputs. Buttons need
+                     to be overridden with custom mColumns and fnCellRender. Disabling this feature for now by removing
+                     the "T" from the sDom string.
                 'sDom': "<'row-fluid'<'span6'f><'span4'<'#dtButtonHolder'>><'span2'T>r>t<'row-fluid'<'span6'i><'span6'p>>",
+                --%>
+                'sDom': "<'row-fluid'<'span6'f><'span4'<'#dtButtonHolder'>><'span2'>r>t<'row-fluid'<'span6'i><'span6'p>>",
+                /*
+                 * It's not useful to save filter state for this UI. Also, hSpinner widgets will not be initialized if
+                 * they are filtered out of the DOM when the page loads
+                 */
+                'bStateSave': false,
                 'aaSorting': [[1, 'asc']],
                 'aoColumns': [
                     {'bSortable': false},                                                   // 0: checkbox
@@ -129,6 +143,7 @@
                     {'bSortable': true, 'sType': 'title-string'}    // billed
                 ]
             });
+            includeAdvancedFilter(ledgerTable, '#ledger');
 
             /*
              * Set up ledger datatable filters.
@@ -187,6 +202,9 @@
              */
             var ledgerQuantities = $j('input.ledgerQuantity');
             ledgerQuantities.hSpinner({
+                originalValue: function(element) {
+                    return $j(element).siblings().filter('input').eq(0).val();
+                },
                 incremented: function(event, inputName) {
                     updateUnbilledStatus($j('#' + escapeForSelector(inputName)));
                     applyToSelected(inputName, 'increment');
@@ -274,6 +292,9 @@
              * avoids extra rendering and repositioning/flickering.
              */
             $j('#ledger').show();
+
+            // Enable the submit button if there are changes from a previous form submit that had validation errors
+            updateSubmitButton();
 
             // Last thing to do on document-ready: AJAX-fetch ledger details
             $j.ajax({
@@ -368,7 +389,7 @@
 
         function notModifiedFilter(oSettings, aData, iDataIndex) {
             return !modifiedFilter(oSettings, aData, iDataIndex);
-        };
+        }
 
         function updateSubmitButton() {
 <c:if test="${!actionBean.productOrderListEntry.billing}">
@@ -650,9 +671,10 @@
         </thead>
         <tbody>
             <c:forEach items="${actionBean.productOrderSampleLedgerInfos}" var="info">
-                <tr>
+                <tr class="${info.sample.deliveryStatus.displayName == 'Abandoned' ? 'abandoned' : ''}">
                     <td>
                         <input type="checkbox" title="${info.sample.samplePosition}" class="shiftCheckbox" name="selectedProductOrderSampleIds" value="${info.sample.productOrderSampleId}">
+                        <stripes:hidden name="ledgerData[${info.sample.samplePosition}].sampleName" value="${info.sample.name}"/>
                     </td>
                     <td style="text-align: right">
                         ${info.sample.samplePosition + 1}
@@ -662,7 +684,6 @@
                     </td>
                     <td>
                         ${info.sample.name}
-                        <stripes:hidden name="ledgerData[${info.sample.samplePosition}].sampleName" value="${info.sample.name}"/>
                     </td>
                     <td>
                         ${info.sample.sampleData.collaboratorsSampleName}
@@ -681,8 +702,10 @@
                         <fmt:formatDate value="${info.coverageFirstMet}"/>
                     </td>
                     <td style="text-align: center">
+                        <c:set var="submittedCompleteDate"
+                               value="${actionBean.ledgerData[info.sample.samplePosition].completeDateFormatted}"/>
                         <input name="ledgerData[${info.sample.samplePosition}].workCompleteDate"
-                               value="${info.dateComplete}"
+                               value="${submittedCompleteDate != null ? submittedCompleteDate : info.dateCompleteFormatted}"
                                class="dateComplete">
                     </td>
 
@@ -691,11 +714,13 @@
                                 ${info.getTotalForPriceItem(priceItem)}
                         </td>
                         <td style="text-align: center">
-                            <stripes:hidden name="ledgerData[${info.sample.samplePosition}].quantities[${priceItem.priceItemId}].originalQuantity"
-                                            value="${info.getTotalForPriceItem(priceItem)}"/>
+                            <input type="hidden"
+                                   name="ledgerData[${info.sample.samplePosition}].quantities[${priceItem.priceItemId}].originalQuantity"
+                                   value="${info.getTotalForPriceItem(priceItem)}"/>
+                            <c:set var="submittedQuantity" value="${actionBean.ledgerData[info.sample.samplePosition].quantities[priceItem.priceItemId].submittedQuantity}"/>
                             <input id="ledgerData[${info.sample.samplePosition}].quantities[${priceItem.priceItemId}].submittedQuantity"
                                    name="ledgerData[${info.sample.samplePosition}].quantities[${priceItem.priceItemId}].submittedQuantity"
-                                   value="${info.getTotalForPriceItem(priceItem)}"
+                                   value="${submittedQuantity != null ? submittedQuantity : info.getTotalForPriceItem(priceItem)}"
                                    class="ledgerQuantity"
                                    priceItemId="${priceItem.priceItemId}"
                                    billedQuantity="${info.getBilledForPriceItem(priceItem)}">
