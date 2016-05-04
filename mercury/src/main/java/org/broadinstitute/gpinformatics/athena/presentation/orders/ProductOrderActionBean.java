@@ -654,7 +654,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         double fundsRemaining = Double.parseDouble(quote.getQuoteFunding().getFundsRemaining());
-        double outstandingEstimate = estimateOutstandingOrders(quote.getName());
+        double outstandingEstimate = estimateOutstandingOrders(quote.getAlphanumericId());
         double valueOfCurrentOrder = 0;
         if(!editOrder.hasJiraTicketKey()) {
             valueOfCurrentOrder = getValueOfOpenOrders(Collections.singletonList(editOrder));
