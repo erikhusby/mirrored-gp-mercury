@@ -14,6 +14,7 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import javax.persistence.Query;
 import javax.transaction.UserTransaction;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -48,7 +49,7 @@ public class AttributeArchetypeFixupTest extends Arquillian {
     }
 
     // Populates the initial genotyping chip types.
-    @Test(enabled = false)
+    @Test(enabled = true)
     public void gplim4023PopulateGenoChipTypes() throws Exception {
         String[] initialAttributes = {
                 "pool_name", "Broad_GWAS_supplemental_15061359_A1",
@@ -185,12 +186,25 @@ public class AttributeArchetypeFixupTest extends Arquillian {
                 System.out.println("Adding attribute (" + key + ", " + value + ") to " + chip.getChipName());
             }
         }
-        attributeArchetypeDao.persist(new FixupCommentary(
-                "GPLIM-4023 add the initial Infinium genotyping chip types from GAP."));
+        String fixupReason = "GPLIM-4023 add the initial Infinium genotyping chip types from GAP.";
+        attributeArchetypeDao.persist(new FixupCommentary(fixupReason));
         attributeArchetypeDao.persistAll(definitions);
         attributeArchetypeDao.persistAll(chips);
         attributeArchetypeDao.flush();
         utx.commit();
+
+        // Updates the genotyping chip attributes' revDate so that it applies to existing chip runs.
+        // This change cannot be audited.
+        utx.begin();
+        Query query = attributeArchetypeDao.getEntityManager().createNativeQuery(
+                "update rev_info set rev_date = " +
+                "(select trunc(min(event_date)) from lab_event where lab_event_type = 'INFINIUM_XSTAIN') " +
+                "where rev_date > SYSDATE - 1 / (24 * 60) " +
+                "and rev_info_id = " +
+                "(select max(rev) from fixup_commentary_aud where reason = '" + fixupReason + "')");
+        query.executeUpdate();
+        utx.commit();
+
     }
 
     public static final Map<String, String> INITIAL_PRODUCT_PART_TO_GENO_CHIP = new HashMap<String, String>() {{
@@ -209,7 +223,7 @@ public class AttributeArchetypeFixupTest extends Arquillian {
     }};
 
     // Populates the initial mapping of product to genotyping chip types.
-    @Test(enabled = false)
+    @Test(enabled = true)
     public void gplim4023PopulateProductToGenoChipTypes() throws Exception {
         utx.begin();
         userBean.loginOSUser();
@@ -233,5 +247,18 @@ public class AttributeArchetypeFixupTest extends Arquillian {
         attributeArchetypeDao.persist(new FixupCommentary(fixupReason));
         attributeArchetypeDao.flush();
         utx.commit();
+
+        // Updates the genotyping chip mapping revDate so that it applies to existing chip runs.
+        // This change cannot be audited.
+        utx.begin();
+        Query query = attributeArchetypeDao.getEntityManager().createNativeQuery(
+                "update rev_info set rev_date = " +
+                "(select trunc(min(event_date)) from lab_event where lab_event_type = 'INFINIUM_XSTAIN') " +
+                "where rev_date > SYSDATE - 1 / (24 * 60) " +
+                "and rev_info_id = " +
+                "(select max(rev) from fixup_commentary_aud where reason = '" + fixupReason + "')");
+        query.executeUpdate();
+        utx.commit();
     }
+
 }

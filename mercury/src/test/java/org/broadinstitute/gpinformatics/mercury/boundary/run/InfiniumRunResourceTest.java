@@ -28,12 +28,8 @@ public class InfiniumRunResourceTest extends RestServiceContainerTest {
         return DeploymentBuilder.buildMercuryWar(DEV);
     }
 
-    // Test is disabled until there is a genotyping run using a mapped chip that happened after
-    // the mapping was created.
-    // Alternatively, just for this test, change the part number from P-EX-0002 to P_WG_0031 for productOrderId=19
-    // and change the event date on labEventId=1179031 to be after the AttributeArchetype initial data fixup.
     @RunAsClient
-    @Test(dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, enabled = false)
+    @Test(dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, enabled = true)
     public void testBasics(@ArquillianResource URL baseUrl) throws Exception {
         WebResource resource = makeWebResource(baseUrl, "query");
 
