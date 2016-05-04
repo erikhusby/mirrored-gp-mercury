@@ -30,7 +30,6 @@ import javax.persistence.TemporalType;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
-import javax.ws.rs.DELETE;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
