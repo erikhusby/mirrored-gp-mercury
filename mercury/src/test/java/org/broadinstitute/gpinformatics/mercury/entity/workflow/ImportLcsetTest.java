@@ -64,24 +64,26 @@ public class ImportLcsetTest extends Arquillian {
 
     private static final Map<String, String> mapLcsetTypeToWorkflow = new HashMap<>();
     static {
-        mapLcsetTypeToWorkflow.put("Aliquot Only", "");
-        mapLcsetTypeToWorkflow.put("cDNA TruSeq Non-Strand Specific", "");
+        // Many of these LCSETs don't yet have corresponding workflows in Mercury.  Arbitrarily assign them to
+        // Hybrid Selection, so they at least get routed to Mercury.
+        mapLcsetTypeToWorkflow.put("Aliquot Only", "Hybrid Selection"); // todo fix
+        mapLcsetTypeToWorkflow.put("cDNA TruSeq Non-Strand Specific", "Hybrid Selection"); // todo fix
         mapLcsetTypeToWorkflow.put("cDNA TruSeq Strand Specific Large Insert", "TruSeq Strand Specific CRSP");
-        mapLcsetTypeToWorkflow.put("Custom Amplicon", "");
+        mapLcsetTypeToWorkflow.put("Custom Amplicon", "Hybrid Selection"); // todo fix
         mapLcsetTypeToWorkflow.put("Custom Design (HybSel)", "Hybrid Selection");
-        mapLcsetTypeToWorkflow.put("Development LCSET", "");
+        mapLcsetTypeToWorkflow.put("Development LCSET", "Hybrid Selection"); // todo fix
         mapLcsetTypeToWorkflow.put("Exome Express", "ICE Exome Express");
-        mapLcsetTypeToWorkflow.put("Fluidigm Custom Amplicon Multiplexed & Seq", "");
-        mapLcsetTypeToWorkflow.put("Fluidigm Custom Amplicon Standard & Seq", "");
+        mapLcsetTypeToWorkflow.put("Fluidigm Custom Amplicon Multiplexed & Seq", "Hybrid Selection"); // todo fix
+        mapLcsetTypeToWorkflow.put("Fluidigm Custom Amplicon Standard & Seq", "Hybrid Selection"); // todo fix
         mapLcsetTypeToWorkflow.put("Human PCR-Free", "Whole Genome PCR Free");
         mapLcsetTypeToWorkflow.put("Human PCR-Plus", "Whole Genome PCR Plus");
         mapLcsetTypeToWorkflow.put("Large Genome (WGS)", "Whole Genome");
         mapLcsetTypeToWorkflow.put("Large Insert Nexome", "Nexome");
         mapLcsetTypeToWorkflow.put("Nexome", "Nexome");
-        mapLcsetTypeToWorkflow.put("Lasso", "");
-        mapLcsetTypeToWorkflow.put("MiSeq16s", "");
-        mapLcsetTypeToWorkflow.put("Standard Non-Assembly LC", "");
-        mapLcsetTypeToWorkflow.put("TSCA", "");
+        mapLcsetTypeToWorkflow.put("Lasso", "Hybrid Selection"); // todo fix
+        mapLcsetTypeToWorkflow.put("MiSeq16s", "Hybrid Selection"); // todo fix
+        mapLcsetTypeToWorkflow.put("Standard Non-Assembly LC", "Hybrid Selection"); // todo fix
+        mapLcsetTypeToWorkflow.put("TSCA", "Hybrid Selection"); // todo fix
         mapLcsetTypeToWorkflow.put("Whole Exome (HybSel)", "Hybrid Selection");
         mapLcsetTypeToWorkflow.put("Whole Exome (ICE)", "ICE Exome Express");
     }
@@ -126,7 +128,7 @@ public class ImportLcsetTest extends Arquillian {
      * This test creates Mercury LCSETs to match those in Squid.  It reads from an XML export from JIRA.
      */
     @SuppressWarnings("UseOfSystemOutOrSystemErr")
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void testCreateLcsets() throws Exception {
 
         // For a given LCSET, go through the work request to get the tubes and samples.
@@ -210,7 +212,7 @@ public class ImportLcsetTest extends Arquillian {
         // LCSET-7432 is for Dev Aliquots that are used in many transfers, so need to go back at least as far
         // as 11/Jun/2015.
         Document document = documentBuilder.parse(new FileInputStream(
-                "C:\\Users\\thompson\\Downloads\\SearchRequest20160201.xml"));
+                "C:\\Users\\thompson\\Downloads\\SearchRequest20150501.xml"));
 
         NodeList lcsetNodeList = (NodeList) lcsetKeyExpr.evaluate(document,
                 XPathConstants.NODESET);
