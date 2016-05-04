@@ -12,6 +12,7 @@ package org.broadinstitute.gpinformatics.infrastructure.search;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
 
+import javax.annotation.Nullable;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -67,6 +68,11 @@ public class SearchTerm implements Serializable, ColumnTabulation {
          */
         private CriteriaPath nestedCriteriaPath;
 
+        /**
+         * Optional non user-editable criteria to be used as a global filter for user entered search term criteria
+         */
+        private List<ImmutableTermFilter> immutableTermFilters;
+
         public List<String> getCriteria() {
             return criteria;
         }
@@ -106,6 +112,72 @@ public class SearchTerm implements Serializable, ColumnTabulation {
         public void setNestedCriteriaPath( CriteriaPath nestedCriteriaPath ) {
             this.nestedCriteriaPath = nestedCriteriaPath;
         }
+
+        @Nullable
+        public List<ImmutableTermFilter> getImmutableTermFilters(){
+            return immutableTermFilters;
+        }
+
+        public void addImmutableTermFilter(ImmutableTermFilter immutableTermFilter){
+            if( immutableTermFilters == null ) {
+                immutableTermFilters = new ArrayList<>();
+            }
+            immutableTermFilters.add(immutableTermFilter);
+        }
+    }
+
+    /**
+     * Allow the case where one or more additional filters can be attached to a search term.
+     * Filters are not user editable so values must be type safe with entity values
+     */
+    public static class ImmutableTermFilter {
+        private String propertyName;
+        private SearchInstance.Operator operator;
+        private Object value;
+        private List<Object> values;
+
+        /**
+         * Constructor for when more than one value required to support in/not-in lists and between operators
+         * @param propertyName A property of the search term entity to base the filter on
+         * @param operator Filter restriction operator
+         * @param values Filter values, 2 required for between operator, 1 or more for list operators
+         */
+        public ImmutableTermFilter(
+                String propertyName, SearchInstance.Operator operator, List<Object> values){
+            this.propertyName = propertyName;
+            this.operator     = operator;
+            this.values       = values;
+        }
+
+        /**
+         * Constructor for when one value is required to support operator
+         * @param propertyName A property of the search term entity to base the filter on
+         * @param operator Filter restriction operator
+         * @param value Filter values, 2 required for between operator, 1 or more for list operators
+         */
+        public ImmutableTermFilter(
+                String propertyName, SearchInstance.Operator operator, Object value){
+            this.propertyName = propertyName;
+            this.operator     = operator;
+            this.value        = value;
+        }
+
+        public String getPropertyName(){
+            return propertyName;
+        }
+
+        public SearchInstance.Operator getOperator(){
+            return operator;
+        }
+
+        public List<Object> getValues() {
+            if( values != null ) {
+                return values;
+            } else {
+                return Collections.singletonList(value);
+            }
+        }
+
     }
 
     /**
