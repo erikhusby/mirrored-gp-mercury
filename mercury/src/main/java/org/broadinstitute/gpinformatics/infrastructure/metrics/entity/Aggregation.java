@@ -11,29 +11,28 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.metrics.entity;
 
-import com.google.common.base.Optional;
-import org.apache.commons.lang3.ObjectUtils;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
 import org.hibernate.annotations.BatchSize;
 
-import javax.persistence.Cacheable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "AGGREGATION", schema = "METRICS")
 public class Aggregation {
     @SuppressWarnings("unused")
-    @Id
+    @Id @Column(name = "ID")
     private Integer id;
 
     @Column(name="PROJECT")
@@ -55,21 +54,24 @@ public class Aggregation {
     @Transient
     private String dataType;
 
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "aggregation")
+    @OneToMany(fetch = FetchType.EAGER, mappedBy = "aggregation")
     @BatchSize(size = 100)
-    private Collection<AggregationAlignment> aggregationAlignments = new ArrayList<>();
+    private Set<AggregationAlignment> aggregationAlignments = new HashSet<>();
 
-    @OneToOne(fetch = FetchType.LAZY, mappedBy = "aggregation", optional = false)
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "ID", referencedColumnName = "AGGREGATION_ID", insertable = false, updatable = false)
     private AggregationContam aggregationContam;
 
-    @OneToOne(fetch = FetchType.LAZY, mappedBy = "aggregation", optional = false)
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "ID", referencedColumnName = "AGGREGATION_ID", insertable = false, updatable = false)
     private AggregationHybridSelection aggregationHybridSelection;
 
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "aggregation")
+    @OneToMany(fetch = FetchType.EAGER, mappedBy = "aggregation")
     @BatchSize(size = 100)
-    private Collection<AggregationReadGroup> aggregationReadGroups = new ArrayList<>();
+    private Set<AggregationReadGroup> aggregationReadGroups = new HashSet<>();
 
-    @OneToOne(mappedBy = "aggregation")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ID", referencedColumnName = "AGGREGATION_ID", insertable = false, updatable = false)
     private AggregationWgs aggregationWgs;
 
     @Transient
@@ -80,10 +82,10 @@ public class Aggregation {
 
     public Aggregation(String project, String sample, String library, Integer version, Integer readGroupCount,
                        String dataType,
-                       Collection<AggregationAlignment> aggregationAlignments,
+                       Set<AggregationAlignment> aggregationAlignments,
                        AggregationContam aggregationContam,
                        AggregationHybridSelection aggregationHybridSelection,
-                       Collection<AggregationReadGroup> aggregationReadGroups,
+                       Set<AggregationReadGroup> aggregationReadGroups,
                        AggregationWgs aggregationWgs,
                        LevelOfDetection levelOfDetection) {
         this.project = project;
@@ -179,7 +181,7 @@ public class Aggregation {
         this.dataType = dataType;
     }
 
-    public Collection<AggregationAlignment> getAggregationAlignments() {
+    public Set<AggregationAlignment> getAggregationAlignments() {
         return aggregationAlignments;
     }
 
@@ -199,7 +201,7 @@ public class Aggregation {
         return aggregationHybridSelection;
     }
 
-    public Collection<AggregationReadGroup> getAggregationReadGroups() {
+    public Set<AggregationReadGroup> getAggregationReadGroups() {
         return aggregationReadGroups;
     }
 

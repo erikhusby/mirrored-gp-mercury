@@ -29,9 +29,6 @@ public class AggregationHybridSelection implements Serializable {
     private Integer aggregationId;
     @Column(name = "PCT_TARGET_BASES_20X")
     private Double pctTargetBases20X;
-    @OneToOne
-    @JoinColumn(name = "AGGREGATION_ID", referencedColumnName = "ID", nullable = false, updatable = false, insertable = false)
-    private Aggregation aggregation;
 
     public AggregationHybridSelection(Double pctTargetBases20X) {
         this.pctTargetBases20X = pctTargetBases20X;

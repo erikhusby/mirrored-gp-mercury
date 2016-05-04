@@ -27,9 +27,6 @@ public class AggregationContam implements Serializable {
     private Integer aggregationId;
     @Column(name = "PCT_CONTAMINATION")
     private Double pctContamination;
-    @OneToOne
-    @JoinColumn(name = "AGGREGATION_ID", referencedColumnName = "ID", nullable = false, updatable = false, insertable = false)
-    private Aggregation aggregation;
 
     public AggregationContam(Double pctContamination) {
         this.pctContamination = pctContamination;
@@ -50,9 +47,6 @@ public class AggregationContam implements Serializable {
         return pctContamination;
     }
 
-    public Aggregation getAggregation() {
-        return aggregation;
-    }
 
     @Override
     public boolean equals(Object o) {
