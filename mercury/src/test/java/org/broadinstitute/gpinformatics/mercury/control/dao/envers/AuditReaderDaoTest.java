@@ -338,30 +338,28 @@ public class AuditReaderDaoTest extends ContainerTest {
 
     @Test(groups = TestGroups.STANDARD)
     public void testEntitiesAtDate() throws Exception {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MMM-yyyy HH.mm.ss");
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MMM-yy HH.mm.ss");
 
-        // pdoId 9102, created revId = 10843, deleted revId = 11501
-        Date created = dateFormat.parse("28-JAN-2013 16.21.05");
-        List<ProductOrder> pdosOnDate1 = auditReaderDao.getVersionsAsOf(ProductOrder.class, created);
+        // Picks a production PDO that was created and deleted a while ago.
+        long pdoId = 104106;
+        Date justAfterCreation = dateFormat.parse("07-AUG-14 11.53.41");
+        Date justAfterDeletion = dateFormat.parse("11-AUG-14 10.50.24");
+
+        Collection<ProductOrder> pdosOnDate1 = auditReaderDao.getVersionsAsOf(ProductOrder.class, justAfterCreation);
         boolean found = false;
         for (ProductOrder pdo : pdosOnDate1) {
-            if (pdo.getProductOrderId() == 9102) {
+            if (pdo.getProductOrderId() == pdoId) {
                 found = true;
-                Assert.assertEquals(pdo.getSamples().size(), 1);
-                Assert.assertEquals(pdo.getSamples().get(0).getSampleKey(), "292700.0");
+                Assert.assertEquals(pdo.getSamples().size(), 96);
+                Assert.assertTrue(pdo.getSamples().get(0).getBusinessKey().startsWith("SM-"));
             }
         }
         Assert.assertTrue(found);
 
-        Date deleted = dateFormat.parse("29-JAN-2013 23.34.45");
-        List<ProductOrder> pdosOnDate2 = auditReaderDao.getVersionsAsOf(ProductOrder.class, deleted);
-        found = false;
+        Collection<ProductOrder> pdosOnDate2 = auditReaderDao.getVersionsAsOf(ProductOrder.class, justAfterDeletion);
         for (ProductOrder pdo : pdosOnDate2) {
-            if (pdo.getProductOrderId() == 9102) {
-                found = true;
-            }
+            Assert.assertNotEquals(pdo.getProductOrderId(), pdoId);
         }
-        Assert.assertFalse(found);
     }
 
     /**

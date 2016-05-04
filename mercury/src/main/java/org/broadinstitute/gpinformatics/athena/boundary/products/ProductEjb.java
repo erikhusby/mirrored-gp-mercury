@@ -158,7 +158,7 @@ public class ProductEjb {
         // Retrieves the historical chip mappings and uses them to find the best match for the product part number
         // and pdo name. There are multiple chips for a product part number when substring matching on the product
         // order name is used. Matches substrings in decreasing order, as shown in UI for Product chip mappings.
-        List<GenotypingChipMapping> mappings = auditReaderDao.getVersionsAsOf(GenotypingChipMapping.class,
+        Collection<GenotypingChipMapping> mappings = auditReaderDao.getVersionsAsOf(GenotypingChipMapping.class,
                 effectiveDate);
 
         GenotypingChipMapping bestMatch = null;
