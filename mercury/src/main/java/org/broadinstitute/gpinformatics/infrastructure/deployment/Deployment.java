@@ -16,8 +16,4 @@ public enum Deployment {
     AUTO_BUILD,
     DISABLED;
 
-    /**
-     * True if we are in a CRSP build of Mercury. This is set manually when the deployment object is first constructed.
-     */
-    public static boolean isCRSP;
 }

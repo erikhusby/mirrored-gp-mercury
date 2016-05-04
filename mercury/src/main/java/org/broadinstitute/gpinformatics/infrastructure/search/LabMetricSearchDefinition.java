@@ -500,7 +500,11 @@ public class LabMetricSearchDefinition {
             @Override
             public String evaluate(Object entity, SearchContext context) {
                 LabMetric labMetric = (LabMetric) entity;
-                return labMetric.getLabMetricDecision().getDecision().toString();
+                if( labMetric.getLabMetricDecision() != null ) {
+                    return labMetric.getLabMetricDecision().getDecision().toString();
+                } else {
+                    return null;
+                }
             }
         });
         searchTerms.add(searchTerm);
@@ -512,7 +516,11 @@ public class LabMetricSearchDefinition {
             @Override
             public String evaluate(Object entity, SearchContext context) {
                 LabMetric labMetric = (LabMetric) entity;
-                return labMetric.getLabMetricDecision().getNote();
+                if( labMetric.getLabMetricDecision() != null ) {
+                    return labMetric.getLabMetricDecision().getNote();
+                } else {
+                    return null;
+                }
             }
         });
         searchTerms.add(searchTerm);
@@ -523,6 +531,11 @@ public class LabMetricSearchDefinition {
             @Override
             public String evaluate(Object entity, SearchContext context) {
                 LabMetric labMetric = (LabMetric) entity;
+                if( labMetric.getLabMetricDecision() == null ) {
+                    return null;
+                }
+                // TODO JMS Result column name may be misleading - displaying the user who made the decision.
+                // Adding lab event logic would get the user who created the metric.
                 BSPUserList bspUserList = context.getBspUserList();
                 Long userId = labMetric.getLabMetricDecision().getDeciderUserId();
                 BspUser bspUser = bspUserList.getById(userId);
@@ -542,7 +555,11 @@ public class LabMetricSearchDefinition {
             @Override
             public String evaluate(Object entity, SearchContext context) {
                 LabMetric labMetric = (LabMetric) entity;
-                return labMetric.getLabMetricDecision().getOverrideReason();
+                if( labMetric.getLabMetricDecision() != null ) {
+                    return labMetric.getLabMetricDecision().getOverrideReason();
+                } else {
+                    return null;
+                }
             }
         });
         searchTerms.add(searchTerm);

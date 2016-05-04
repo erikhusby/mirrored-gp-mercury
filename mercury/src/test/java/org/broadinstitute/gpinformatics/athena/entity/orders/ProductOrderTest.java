@@ -1,12 +1,15 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
+import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
+import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderSampleTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.hamcrest.Matchers;
@@ -23,6 +26,7 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
@@ -316,4 +320,60 @@ public class ProductOrderTest {
         Assert.assertFalse(productOrder.isRegulatoryInfoEditAllowed());
     }
 
+    public void testAllSamplesHaveBeenBilled() {
+
+        ProductOrder testProductOrder = ProductOrderTestFactory.createDummyProductOrder(2, PDO_JIRA_KEY);
+
+        ProductOrderSample sample1 = testProductOrder.getSamples().get(0);
+        ProductOrderSample sample2 = testProductOrder.getSamples().get(1);
+
+        Product addonProduct = ProductTestFactory.createDummyProduct(Workflow.ICE_CRSP, "test-product-addon");
+        PriceItem exExPriceItem =
+                new PriceItem(testProductOrder.getQuoteId(), PriceItem.PLATFORM_GENOMICS, PriceItem.CATEGORY_EXOME_SEQUENCING_ANALYSIS,
+                        PriceItem.NAME_STANDARD_WHOLE_EXOME);
+        addonProduct.setPrimaryPriceItem(exExPriceItem);
+
+        testProductOrder.getProduct().getAddOns().add(addonProduct);
+        testProductOrder.setProductOrderAddOns(Collections.singletonList(new ProductOrderAddOn(addonProduct, productOrder)));
+
+        Assert.assertEquals(testProductOrder.getUnbilledSampleCount(), 2);
+
+        billSampleOut(testProductOrder, sample1, 2);
+
+        Assert.assertEquals(testProductOrder.getUnbilledSampleCount(), 1);
+
+        billSampleOut(testProductOrder, sample2, 1);
+
+        Assert.assertEquals(testProductOrder.getUnbilledSampleCount(), 0);
+    }
+
+    private void billSampleOut(ProductOrder productOrder, ProductOrderSample sample, int expected) {
+
+        LedgerEntry primaryItemSampleEntry = new LedgerEntry(sample,
+                productOrder.getProduct().getPrimaryPriceItem(), new Date(), 1);
+        primaryItemSampleEntry.setPriceItemType(LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM);
+
+        LedgerEntry addonItemSampleEntry = new LedgerEntry(sample,
+                productOrder.getAddOns().iterator().next().getAddOn().getPrimaryPriceItem(),
+                new Date(), 1);
+        addonItemSampleEntry.setPriceItemType(LedgerEntry.PriceItemType.ADD_ON_PRICE_ITEM);
+        sample.getLedgerItems().add(primaryItemSampleEntry);
+        sample.getLedgerItems().add(addonItemSampleEntry);
+
+
+        Assert.assertEquals(productOrder.getUnbilledSampleCount(), expected);
+
+
+        BillingSession billingSession =
+                new BillingSession(4L, sample.getLedgerItems());
+
+
+        Assert.assertEquals(productOrder.getUnbilledSampleCount(), expected);
+
+
+        addonItemSampleEntry.setBillingMessage(BillingSession.SUCCESS);
+        Assert.assertEquals(productOrder.getUnbilledSampleCount(), expected);
+        primaryItemSampleEntry.setBillingMessage(BillingSession.SUCCESS);
+        billingSession.setBilledDate(new Date());
+    }
 }

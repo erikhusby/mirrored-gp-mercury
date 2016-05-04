@@ -91,32 +91,7 @@ public class LabVesselMetricPlugin implements ListPlugin {
             !QUANT_VALUE_HEADERS.containsKey(metrics.iterator().next().getName())) {
             return;
         }
-
-        // Takes the most recent metric, but prefers the average quant (on the tube) over raw quant (on plate)
-        // which appear to happen later, because pico transfers are done from a rack of tubes to two plates.
-        // Includes any re-pico having neither metric run nor decision (a generic upload) (see GPLIM-3991).
-        List<LabMetric> sortedMetrics = new ArrayList<>(metrics);
-        Collections.sort(sortedMetrics, new Comparator<LabMetric>() {
-            @Override
-            public int compare(LabMetric o1, LabMetric o2) {
-                // Puts tubes before plates.
-                LabVessel.ContainerType containerType1 = o1.getLabVessel().getType();
-                LabVessel.ContainerType containerType2 = o2.getLabVessel().getType();
-                int o1plate = (o1.getLabVessel().getType() == LabVessel.ContainerType.PLATE_WELL) ? 1 : 0;
-                int o2plate = (o2.getLabVessel().getType() == LabVessel.ContainerType.PLATE_WELL) ? 1 : 0;
-                if (o1plate != o2plate) {
-                    return o1plate - o2plate;
-                }
-                // Puts recent metric before older metric.
-                if (o2.getCreatedDate().compareTo(o1.getCreatedDate()) == 0) {
-                    return o2.getLabMetricId().compareTo(o1.getLabMetricId());
-                } else {
-                    return o2.getCreatedDate().compareTo(o1.getCreatedDate());
-                }
-            }
-        });
-        LabMetric metric = sortedMetrics.get(0);
-
+        LabMetric metric = latestTubeMetric(new ArrayList<>(metrics));
         String value = ColumnValueType.TWO_PLACE_DECIMAL.format( metric.getValue(), "" );
         // Display measurement units if not default
         if( metric.getUnits() != LabMetric.LabUnit.UG_PER_ML && metric.getUnits() != LabMetric.LabUnit.NG_PER_UL ) {
@@ -134,6 +109,38 @@ public class LabVesselMetricPlugin implements ListPlugin {
 
         row.addCell(valueCell);
         row.addCell(decisionCell);
+    }
+
+    /**
+     * Returns the most recent tube metric, if a tube is present, otherwise the most recent metric.
+     * The background is: the average quant is desired, and it is found on the tube even though the
+     * raw quant was done on a plate, and the plate metric is dated after the tube metric since pico
+     * transfers are done from a rack of tubes to two plates.
+     *
+     * Includes any re-pico having neither metric run nor decision (a generic upload) (see GPLIM-3991).
+     */
+    public static LabMetric latestTubeMetric(List<LabMetric> labMetrics) {
+        if (CollectionUtils.isNotEmpty(labMetrics)) {
+            Collections.sort(labMetrics, new Comparator<LabMetric>() {
+                @Override
+                public int compare(LabMetric o1, LabMetric o2) {
+                    // Puts tubes before plates.
+                    LabVessel.ContainerType containerType1 = o1.getLabVessel().getType();
+                    LabVessel.ContainerType containerType2 = o2.getLabVessel().getType();
+                    int o1plate = (o1.getLabVessel().getType() == LabVessel.ContainerType.PLATE_WELL) ? 1 : 0;
+                    int o2plate = (o2.getLabVessel().getType() == LabVessel.ContainerType.PLATE_WELL) ? 1 : 0;
+                    if (o1plate != o2plate) {
+                        return o1plate - o2plate;
+                    }
+                    // Puts recent metric before older metric.
+                    int dateCompare = o2.getCreatedDate().compareTo(o1.getCreatedDate());
+                    return (dateCompare != 0) ? dateCompare : o2.getLabMetricId().compareTo(o1.getLabMetricId());
+                }
+            });
+            return labMetrics.get(0);
+        } else {
+            return null;
+        }
     }
 
     @Override

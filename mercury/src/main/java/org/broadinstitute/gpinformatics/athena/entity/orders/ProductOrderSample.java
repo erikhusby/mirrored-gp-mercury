@@ -916,4 +916,9 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     public void setProceedIfOutOfSpec(ProceedIfOutOfSpec proceedIfOutOfSpec) {
         this.proceedIfOutOfSpec = proceedIfOutOfSpec;
     }
+
+    public boolean isToBeBilled() {
+        return getDeliveryStatus() != ProductOrderSample.DeliveryStatus.ABANDONED
+        && !isCompletelyBilled();
+    }
 }
