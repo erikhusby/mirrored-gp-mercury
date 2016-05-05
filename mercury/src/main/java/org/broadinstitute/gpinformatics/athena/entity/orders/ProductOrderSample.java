@@ -824,8 +824,8 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
          *
          * @param sampleName          the sample being updated
          * @param priceItem           the price item being billed
-         * @param oldQuantity         the old quantity
-         * @param currentQuantity     the current quantity
+         * @param oldQuantity         the quantity at the time the form was rendered
+         * @param currentQuantity     the quantity at the time the form was submitted
          * @param newQuantity         the requested quantity
          * @param workCompleteDate    the date that work was completed
          */
@@ -845,7 +845,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
          *
          * @return true if the user requested a change; false otherwise
          */
-        public boolean isChangeIntended() {
+        public boolean isQuantityChangeIntended() {
             return newQuantity != oldQuantity;
         }
 
@@ -855,7 +855,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
          *
          * @return true if the quantity submitted is different than the current quantity; false otherwise
          */
-        private boolean isChangeNeeded() {
+        private boolean isQuantityChangeNeeded() {
             return newQuantity != currentQuantity;
         }
 
@@ -916,38 +916,50 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
      *                          or if an update would need to be made to a ledger entry in an active billing session
      */
     public void applyLedgerUpdate(LedgerUpdate ledgerUpdate) throws StaleLedgerUpdateException {
-        if (ledgerUpdate.isChangeIntended()) {
-            if (ledgerUpdate.isChangeNeeded()) {
-                if (ledgerUpdate.isChangeRequestCurrent()) {
-                    Date workCompleteDate = ledgerUpdate.getWorkCompleteDate();
-                    if (workCompleteDate == null) {
-                        throw new RuntimeException(
-                                "Work complete date is missing for sample " + ledgerUpdate.getSampleName());
-                    }
+        PriceItem priceItem = ledgerUpdate.getPriceItem();
+        LedgerEntry existingLedgerEntry = findUnbilledLedgerEntryForPriceItem(priceItem);
+        Date workCompleteDate = ledgerUpdate.getWorkCompleteDate();
 
-                    PriceItem priceItem = ledgerUpdate.getPriceItem();
+        // Update quantity if needed and request is valid.
+        if (ledgerUpdate.isQuantityChangeIntended()) {
+            if (ledgerUpdate.isQuantityChangeNeeded()) {
+                if (ledgerUpdate.isChangeRequestCurrent()) {
+                    validateWorkCompleteDate(workCompleteDate, ledgerUpdate.getSampleName());
+
                     double quantityDelta = ledgerUpdate.getQuantityDelta();
 
-                    LedgerEntry ledgerEntry = findUnbilledLedgerEntryForPriceItem(priceItem);
-                    if (ledgerEntry == null) {
+                    if (existingLedgerEntry == null) {
                         addLedgerItem(workCompleteDate, priceItem, quantityDelta);
                     } else {
-                        if (ledgerEntry.isBeingBilled()) {
+                        if (existingLedgerEntry.isBeingBilled()) {
                             throw new RuntimeException(
                                     "Cannot change quantity for sample that is currently being billed.");
                         }
-                        double newQuantity = ledgerEntry.getQuantity() + quantityDelta;
+                        double newQuantity = existingLedgerEntry.getQuantity() + quantityDelta;
                         if (newQuantity == 0) {
-                            ledgerItems.remove(ledgerEntry);
+                            ledgerItems.remove(existingLedgerEntry);
                         } else {
-                            ledgerEntry.setQuantity(newQuantity);
+                            existingLedgerEntry.setQuantity(newQuantity);
                         }
-                        ledgerEntry.setWorkCompleteDate(workCompleteDate);
+                        existingLedgerEntry.setWorkCompleteDate(workCompleteDate);
                     }
                 } else {
                     throw new StaleLedgerUpdateException(ledgerUpdate);
                 }
             }
+        }
+
+        // Update work complete date if there is an existing unbilled ledger entry.
+        if (existingLedgerEntry != null) {
+            validateWorkCompleteDate(workCompleteDate, ledgerUpdate.getSampleName());
+            existingLedgerEntry.setWorkCompleteDate(workCompleteDate);
+        }
+    }
+
+    private void validateWorkCompleteDate(Date workCompleteDate, String sampleName) {
+        if (workCompleteDate == null) {
+            throw new RuntimeException(
+                    "Work complete date is missing for sample " + sampleName);
         }
     }
 

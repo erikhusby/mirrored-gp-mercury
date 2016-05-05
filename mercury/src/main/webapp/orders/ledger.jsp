@@ -80,11 +80,17 @@
             background-color: lawngreen;
         }
 
-        .changed.ui-state-disabled {
+        .changed.ui-state-disabled,
+        .changed.hasDatepicker:disabled {
             background-color: springgreen;
         }
 
-        .pending {
+        /* Mimic styles that would be applied if ui-state-disabled was correctly applied to datepicker widgets. */
+        .changed.hasDatepicker:disabled {
+            opacity: .35;
+        }
+
+        .ledgerQuantity.pending, .unbilledStatus.pending {
             font-weight: bold;
         }
     </style>
@@ -183,18 +189,23 @@
              */
             $j('.dateComplete').change(function(event) {
                 var $selectedRows = getSelectedRows();
+                var $input = $j(event.target);
+                var value = $input.val();
                 if ($selectedRows.length > 0) {
-                    var $input = $j(event.target);
                     var inputName = $input.attr('name');
-                    var value = $input.val();
-                    var $selectedInputs = $selectedRows.find('input.dateComplete');
+                    var $selectedInputs = $selectedRows.find('input.dateComplete:enabled');
                     for (var i = 0; i < $selectedInputs.length; i++) {
                         var $selectedInput = $selectedInputs.eq(i);
                         if ($selectedInput.attr('name') != inputName) {
                             $selectedInput.val(value);
+                            var changed = value != $selectedInput.attr('originalValue');
+                            $selectedInput.toggleClass('changed', changed);
                         }
                     }
                 }
+                var changed = value != $input.attr('originalValue');
+                $input.toggleClass('changed', changed);
+                updateSubmitButton();
             });
 
             /*
@@ -203,7 +214,7 @@
             var ledgerQuantities = $j('input.ledgerQuantity');
             ledgerQuantities.hSpinner({
                 originalValue: function(element) {
-                    return $j(element).siblings().filter('input').eq(0).val();
+                    return $j(element).siblings().filter('input:hidden').eq(0).val();
                 },
                 incremented: function(event, inputName) {
                     updateUnbilledStatus($j('#' + escapeForSelector(inputName)));
@@ -243,10 +254,10 @@
                 if (selectedRows.length > 0) {
                     allRows.find('input.dateComplete').datepicker().datepicker('disable');
                     allRows.find('input.ledgerQuantity').hSpinner().hSpinner('disable');
-                    selectedRows.find('input.dateComplete').datepicker().datepicker('enable');
+                    selectedRows.find('input.dateComplete.pending').datepicker().datepicker('enable');
                     selectedRows.find('input.ledgerQuantity').hSpinner().hSpinner('enable');
                 } else {
-                    allRows.find('input.dateComplete').datepicker().datepicker('enable');
+                    allRows.find('input.dateComplete.pending').datepicker().datepicker('enable');
                     allRows.find('input.ledgerQuantity').hSpinner().hSpinner('enable');
                 }
             });
@@ -432,7 +443,16 @@
             var hasUnbilledQuantity = parseFloat($input.val()) != parseFloat($input.attr('billedQuantity'));
             $input.toggleClass('pending', hasUnbilledQuantity);
             var row = $input.parentsUntil('tbody', 'tr');
-            row.find('.unbilledStatus').text(row.find('input.pending').length > 0 ? '*' : '');
+            var hasUnbilledQuantityForAnyPriceItem = row.find('input.ledgerQuantity.pending').length > 0;
+            row.find('.unbilledStatus').text(hasUnbilledQuantityForAnyPriceItem ? '*' : '');
+            var dateComplete = row.find('.dateComplete');
+            dateComplete.toggleClass('pending', hasUnbilledQuantityForAnyPriceItem);
+            var datePicker = dateComplete.datepicker();
+            if (hasUnbilledQuantityForAnyPriceItem) {
+                datePicker.datepicker('enable');
+            } else {
+                datePicker.datepicker('disable');
+            }
         }
 
 
@@ -581,7 +601,7 @@
 
         <stripes:hidden name="renderedSampleNames"/>
         <stripes:hidden name="renderedPriceItemNames"/>
-        
+
         <%-- Datatable filters --%>
         <div id="filters" class="row-fluid" style="display: none;">
             <div class="span10">
@@ -704,9 +724,12 @@
                     <td style="text-align: center">
                         <c:set var="submittedCompleteDate"
                                value="${actionBean.ledgerData[info.sample.samplePosition].completeDateFormatted}"/>
+                        <c:set var="currentValue"
+                               value="${submittedCompleteDate != null ? submittedCompleteDate : info.dateCompleteFormatted}"/>
                         <input name="ledgerData[${info.sample.samplePosition}].workCompleteDate"
-                               value="${submittedCompleteDate != null ? submittedCompleteDate : info.dateCompleteFormatted}"
-                               class="dateComplete">
+                               value="${currentValue}"
+                               originalValue="${info.dateCompleteFormatted}"
+                               class="dateComplete ${currentValue != info.dateCompleteFormatted ? 'changed' : ''}">
                     </td>
 
                     <c:forEach items="${actionBean.priceItems}" var="priceItem">

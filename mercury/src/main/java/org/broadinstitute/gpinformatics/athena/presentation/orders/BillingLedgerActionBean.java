@@ -352,9 +352,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
                         new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(), priceItem,
                                 quantities.originalQuantity, currentQuantity, quantities.submittedQuantity,
                                 data.getWorkCompleteDate());
-                if (ledgerUpdate.isChangeIntended()) {
-                    ledgerUpdates.put(productOrderSample, ledgerUpdate);
-                }
+                ledgerUpdates.put(productOrderSample, ledgerUpdate);
             }
         }
         return ledgerUpdates.asMap();
