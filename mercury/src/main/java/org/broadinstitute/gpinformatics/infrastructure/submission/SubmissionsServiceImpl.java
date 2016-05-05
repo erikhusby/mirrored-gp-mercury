@@ -60,6 +60,19 @@ public class SubmissionsServiceImpl implements SubmissionsService {
             allResults.addAll(result.getSubmissionStatuses());
         }
 
+        Map<String, BioProject> bioProjectMap = new HashMap<>();
+        for (BioProject bioProject : getAllBioProjects()) {
+            bioProjectMap.put(bioProject.getAccession(), bioProject);
+        }
+        for (SubmissionStatusDetailBean result : allResults) {
+            if (result.getBioproject() != null) {
+                String accession = result.getBioproject().getAccession();
+                BioProject fullBioProject = bioProjectMap.get(accession);
+                if (fullBioProject != null) {
+                    result.setBioproject(fullBioProject);
+                }
+            }
+        }
         return allResults;
     }
 
@@ -151,8 +164,8 @@ public class SubmissionsServiceImpl implements SubmissionsService {
 
     @Override
     public SubmissionRepository repositorySearch(String searchString) {
-        if (StringUtils.isNotBlank(searchString)) {
-            for (SubmissionRepository submissionRepository : getSubmissionRepositories()) {
+            if (StringUtils.isNotBlank(searchString)) {
+                for (SubmissionRepository submissionRepository : getSubmissionRepositories()) {
                 if (submissionRepository.getDescription().toLowerCase().contains(searchString.toLowerCase()) ||
                     submissionRepository.getName().toLowerCase().contains(searchString.toLowerCase())) {
                     return submissionRepository;

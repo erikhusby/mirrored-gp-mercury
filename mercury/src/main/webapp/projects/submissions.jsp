@@ -33,28 +33,221 @@
             border: 2px solid #644436;
             height: 55px;
             color: black;
-            background-image: "${ctxpath}/images/spinner.gif";
+            left: 40%;
+            visibility: visible;
+            z-index: 10;
+            top: 0;
+        }
+
+        .dataTables_info {
+            float: right;
+        }
+
+        .submissionControls {
+            width: auto;
+            margin-bottom: 20px;
+            display: none
+        }
+
+        .columnFilter {
+            margin-bottom: 5px
+        }
+
+        .form-horizontal .control-group {
+            margin-bottom: 10px
         }
         .submission-tooltip {
             border-bottom: 1px dotted #000;
             text-decoration: none;
         }
 
+        .chosen-container input {
+            min-width: 150px !important;
+        }
+        .chosen-drop {
+            position:static;
+        }
         .control-group select {
             width: auto;
         }
     </style>
+    <link rel="stylesheet" href="${ctxpath}/resources/scripts/chosen_v1.5.1/chosen.min.css">
+    <script type="text/javascript" src="${ctxpath}/resources/scripts/chosen_v1.5.1/chosen.jquery.min.js"></script>
+    <script type="text/javascript" src="${ctxpath}/resources/scripts/dataTables-filterColumn.js"></script>
     <script type="text/javascript">
         function formatInput(item) {
             var extraCount = (item.extraCount == undefined) ? "" : item.extraCount;
             return "<li>" + item.dropdownItem + extraCount + '</li>';
         }
-//        var oTable;
+
+        function hasSubmissionSamples() {
+            return $j('#submissionSamples tbody tr td').not('.dataTables_empty').length == 0;
+        }
+
+        function initializeBarcodeEntryDialog() {
+            dialog = $j("#ListOfBarcodesForm").dialog({
+                autoOpen: false,
+                height: 400,
+                width: 250,
+                modal: false,
+                buttons: {
+                    "ApplyBarcodesButton": {
+                        id: "applyBarcodes",
+                        text: "Apply barcodes",
+                        click: applyBarcodes
+                    },
+                    Cancel: function () {
+                        dialog.dialog("close");
+                    }
+                }
+            });
+
+            $j("#PasteBarcodesList").on("click", function () {
+                if (!hasSubmissionSamples()) {
+                    clearBarcodesDialog();
+                    dialog.dialog("open");
+                }
+            });
+
+            hideBarcodeEntryDialog();
+        }
+
+        function addAmbiguousEntryError(barcode) {
+            // todo avoid showing duplicate strings
+            $j('#AmbiguousEntries tbody').append(
+                    "<tr><td>" + barcode + "</td></tr>"
+            );
+        }
+
+
+        function addBarcodeNotFoundError(barcode) {
+            // todo avoid showing duplicate strings
+            $j('#NoBucketEntries tbody').append(
+                    "<tr><td>" + barcode + "</td></tr>"
+            );
+        }
+
+        function showBarcodeErrors() {
+            $j('#BarcodeErrors').show();
+        }
+
+        function showNoEntriesErrors() {
+            showBarcodeErrors();
+            $j('#NoSamplesErrors').show();
+        }
+
+        function showAmbiguousEntryErrors() {
+            showBarcodeErrors();
+            $j('#AmbiguousEntriesErrors').show();
+        }
+
+        function clearBarcodesDialogErrors() {
+            $j('#NoEntries tbody tr').remove();
+            $j('#AmbiguousEntries tbody tr').remove();
+
+            $j('#NoSamplesErrors').hide();
+            $j('#AmbiguousEntriesErrors').hide();
+        }
+
+        function clearBarcodesDialog() {
+            $j('#barcodes').val('');
+            $j('#BarcodeErrors').hide();
+            clearBarcodesDialogErrors();
+        }
+
+        function uncheckedInputByValue(barcode) {
+            return 'input[value="' + barcode + '"]';
+        }
+
+        function applyBarcodes() {
+            clearBarcodesDialogErrors();
+
+            var hasBarcodes = barcodes.value.trim().length > 0;
+            var splitBarcodes = barcodes.value.trim().split(/\s+/);
+            var hasAmbiguousEntryErrors = false;
+            var hasBarcodesNotFoundErrors = false;
+
+            if (!hasBarcodes) {
+                alert("No barcodes were entered.");
+                return;
+            }
+
+            for (var i = 0; i < splitBarcodes.length; i++) {
+                var barcodeInputSelector = uncheckedInputByValue(splitBarcodes[i]);
+                var numMatchingRows = $j(barcodeInputSelector).length;
+
+                if (numMatchingRows > 1) {
+                    hasAmbiguousEntryErrors = true;
+                    addAmbiguousEntryError(barcode);
+                }
+                else if (numMatchingRows == 0) {
+                    hasBarcodesNotFoundErrors = true;
+                    addBarcodeNotFoundError(barcode);
+                }
+            }
+
+            if (!hasAmbiguousEntryErrors && !hasBarcodesNotFoundErrors) {
+                for (var i = 0; i < splitBarcodes.length; i++) {
+                    var barcodeInputSelector = uncheckedInputByValue(splitBarcodes[i]);
+                    var numMatchingRows = $j(barcodeInputSelector).length;
+
+                    if (numMatchingRows == 1) {
+                        // todo event handler for enter
+                        var barcodeCheckbox = $j(barcodeInputSelector).not(":checked");
+                        barcodeCheckbox.click();
+                    }
+                }
+                dialog.dialog("close");
+                addStripesMessage(splitBarcodes.length + " submissions chosen.");
+            }
+            else {
+                if (hasAmbiguousEntryErrors) {
+                    showAmbiguousEntryErrors();
+                }
+                if (hasBarcodesNotFoundErrors) {
+                    showNoEntriesErrors();
+                }
+            }
+        }
+
+        function addStripesMessageDiv(alertType, fieldSelector) {
+            var alertClass = 'alert-' + alertType;
+            var messageBox = $j(document.createElement("div"));
+            messageBox.css({"margin-left": "20%", "margin-right": "20%"});
+            messageBox.addClass("alert").addClass(alertClass);
+            if (fieldSelector != undefined) {
+                $j(fieldSelector).addClass(alertType);
+            }
+            messageBox.append('<button type="button" class="close" data-dismiss="alert">&times;</button>')
+            messageBox.append('<ul></ul>');
+
+            $j('.page-body').before(messageBox);
+            return messageBox;
+        }
+
+        function addStripesMessage(message, type, fieldSelector) {
+            if (type == undefined) {
+                type = "success";
+            }
+            var messageBoxJquery = $j("div.alert-" + type);
+            if (messageBoxJquery.length == 0) {
+                messageBoxJquery = addStripesMessageDiv(type, fieldSelector);
+            }
+            messageBoxJquery.find("ul").append("<li>" + message + "</li>");
+        }
+
+        function hideBarcodeEntryDialog() {
+            $j('#BarcodeErrors').hide();
+            $j('#NoEntriesErrors').hide();
+            $j('#AmbiguousEntriesErrors').hide();
+        }
 
         $j(document).ready(function () {
+            initializeBarcodeEntryDialog();
+
             $j("#bioProject").tokenInput(
                     "${ctxpath}/projects/project.action?bioProjectAutocomplete=", {
-                        hintText: "Type a BioProject Name",
+                        hintText: "Type a Study Name",
                         prePopulate: ${actionBean.ensureStringResult(actionBean.bioProjectTokenInput.completeData)},
                         tokenDelimiter: "${actionBean.bioProjectTokenInput.separator}",
                         preventDuplicates: true,
@@ -83,16 +276,22 @@
             if (oTable == undefined) {
                 function renderCheckbox(data, type, row) {
                     if (type === 'display') {
-                        var inputTag = document.createElement("input");
-                        $j(inputTag).attr("name", "selectedSubmissionSamples");
-                        $j(inputTag).attr("value", data);
-                        $j(inputTag).attr("type", "checkbox");
-                        $j(inputTag).addClass("shiftCheckbox");
                         var status = row.<%=SubmissionField.SUBMITTED_STATUS %>;
-                        if (status) {
-                            $j(inputTag).attr('disabled', status);
+                        var tagAttributes = {};
+                        if (status.length === 0) {
+                            tagAttributes = {
+                                "name": "selectedSubmissionSamples",
+                                "value": data,
+                                "type": "checkbox",
+                                "class": "shiftCheckbox"
+                            };
+                        } else {
+                            tagAttributes = {
+                                "value": data,
+                                "type": "hidden"
+                            };
                         }
-                        return inputTag.outerHTML;
+                        return jQuery("<input/>", tagAttributes)[0].outerHTML;
                     }
                     return data;
                 }
@@ -108,11 +307,14 @@
 
                 oTable = $j('#submissionSamples').dataTable({
                     "oLanguage": {
-                        "sProcessing": "Please wait. Gathering data from Mercury, Bass, and Picard. This may take a few minutes."
+                        "sInfo": "_TOTAL_ of _MAX_ submissions displayed.",
+                        "sProcessing": "&nbsp;<img src='${ctxpath}/images/spinner.gif'>&nbsp;Please wait. Gathering data from Mercury, Bass, and Picard. This may take a few minutes."
                     },
                     "oTableTools": ttExportDefines,
-                    "bStateSave": false,
+                    "bStateSave": true,
                     "bProcessing": true,
+                    "bInfo": true,
+                    "sDom": "r<'#filtering.accordion'<'row-fluid'<'span12'<'columnFilter'>><'row-fluid'<'span8'f><'span4' i>'span2'T>>>t<'row-fluid'<'span6'><'span6'p>>",
                     "bDeferRender": true,
                     "sAjaxSource": '${ctxpath}/projects/project.action',
                     "fnServerData": function (sSource, aoData, fnCallback, oSettings) {
@@ -128,7 +330,10 @@
                     },
 
                     //needed when null value is returned in JSON
-                    "aoColumnDefs": [{"sDefaultContent": "", "aTargets": ["_all"]}],
+                    "aoColumnDefs": [
+                        {"sDefaultContent": "", "aTargets": ["_all"]},
+                        {"bSearchable": true, "aTargets": ["_all"]}
+                    ],
                     "aoColumns": [
                         {"mData": "<%=SubmissionField.SAMPLE_NAME%>", "mRender": renderCheckbox},
                         {"mData": "<%=SubmissionField.SAMPLE_NAME%>"},
@@ -138,6 +343,7 @@
                         { "mData": "<%=SubmissionField.PRODUCT_ORDERS %>", "sWidth": "140px", "sClass": "ellipsis",
                             "mRender": displayDataList },
                         {"mData": "<%=SubmissionField.AGGREGATION_PROJECT %>"},
+                        {"mData": "<%=SubmissionField.BIO_PROJECT%>"},
                         {"mData": "<%=SubmissionField.FILE_TYPE %>"},
                         {"mData": "<%=SubmissionField.VERSION %>"},
                         {"mData": "<%=SubmissionField.QUALITY_METRIC %>"},
@@ -171,15 +377,18 @@
                     ],
 
                     "fnDrawCallback": function () {
+                        $j(".submissionControls").show();
                         $j('.shiftCheckbox').enableCheckboxRangeSelection();
+                        var currentFullTextSearch = this.fnSettings().oPreviousSearch.sSearch;
+                        if (currentFullTextSearch !== undefined && currentFullTextSearch !== "") {
+                            $j(".dtFilters").html("<b>Text matches</b>: " + currentFullTextSearch);
+                        }
                         $j(".submission-status-tooltip").popover({
                             trigger: "hover",
                             html: "true",
                             "data-container": "body",
                             "data-toggle": "popover"
                         });
-
-                        $j(".submissionControls").show();
                         if ($j("#submissionSamples").height() > $j(window).height()) {
                             $j("#bottomSubmitButton").show();
                         } else {
@@ -187,8 +396,25 @@
                         }
                     }
                 });
+
+                filteringDiv= jQuery("<div></div>", {"id":"columnFilter_filteringText","style": "padding-left:2em;"})
+                                    .prependTo($j("#filtering"));
+                $j(filteringDiv).prepend(jQuery("<div class='headerText'>Filtering</div>"));
+                $j(filteringDiv).prepend(jQuery("<div class='dtFilters'></div>"));
+
+                $j("#filtering").accordion({
+                      "collapsible": true, "heightStyle": "content", 'active': false
+                    });
+
+                includeAdvancedFilter(oTable, "#submissionSamples");
+                $j('#submissionSamples').one('init', function (event, oSettings, aaData) {
+                    $j('#submissionSamples').filterColumn("Current Status", ${actionBean.submissionStatusesJson}, {
+                        selectedValues: ${actionBean.preselectedStatusesJson},
+                        filteringText: "#columnFilter_filteringText .headerText"
+                    });
+                });
             }
-            })
+            });
         });
 
     </script>
@@ -199,9 +425,9 @@
     <stripes:hidden name="submitString"/>
     <stripes:hidden name="researchProject" value="${actionBean.editResearchProject.jiraTicketKey}"/>
 
-    <div class="submissionControls" style="width: auto; margin-bottom: 20px;display:none" >
+    <div class="submissionControls">
         <div class="control-group">
-            <stripes:label for="bioProject" class="control-label label-form">Choose a BioProject *</stripes:label>
+            <stripes:label for="bioProject" class="control-label label-form">Choose a Study *</stripes:label>
 
             <div class="controls">
                 <stripes:text id="bioProject" name="bioProjectTokenInput.listOfKeys"/>
@@ -229,11 +455,14 @@
                 </stripes:select>
             </div>
         </div>
+    </div>
+    <div class="submissionControls">
         <stripes:submit name="<%=ResearchProjectActionBean.POST_SUBMISSIONS_ACTION%>"
                         value="Post Selected Submissions" class="btn submissionControls"
-                        disabled="${!actionBean.submissionAllowed}" style="display:none;"/>
-</div>
-
+                        disabled="${!actionBean.submissionAllowed}"/>
+        <a href="javascript:void(0)" id="PasteBarcodesList"
+           title="Use a pasted-in list of tube barcodes to select samples">Choose via list of barcodes...</a>
+    </div>
     <table class="table simple" id="submissionSamples">
         <thead>
         <tr>
@@ -249,6 +478,7 @@
             <th class="columnDataType">Data Type</th>
             <th class="columnPDOs">PDOs</th>
             <th class="columnAggregationProject">Agg. Project</th>
+            <th class="columnBioProject">Study</th>
             <th class="columnFileType">File Type</th>
             <th class="columnVersion">Version</th>
             <th class="columnQualityMetric">Quality Metric</th>
@@ -256,7 +486,6 @@
             <th class="columnFingerprint">Fingerprint</th>
             <!-- add # lanes, # lanes blacklisted, notes -->
             <th class="columnLanesInAggregation">Lanes in Agg.</th>
-                <%--<th class="columnBioProject">Blacklistd</th>--%>
             <th class="columnSubmittedVersion">Submitted Version</th>
             <th class="columnSubmissionStatus">Current Status</th>
             <th class="columnSubmissionStatusDate">Status Date</th>
@@ -269,4 +498,36 @@
                     disabled="${!actionBean.submissionAllowed}" style="display:none;"/>
 
 </stripes:form>
+    <div id="ListOfBarcodesForm">
+        <form>
+            <div class="control-group">
+                <label for="barcodes" class="control-label">Enter 2D Barcodes, one per line</label>
+                <textarea name="barcodes" id="barcodes" class="defaultText" cols="12" rows="5"></textarea>
+            </div>
+            <div id="BarcodeErrors">
+                <p>We're sorry, but Mercury could not automatically choose submission entries
+                    because of the following errors.</p>
+                <div id="NoSamplesErrors">
+                    <table id="NoSamples">
+                        <thead>
+                        <tr>
+                            <th>No submission entries</th>
+                        </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div id="AmbiguousEntriesErrors">
+                    <table id="AmbiguousEntries">
+                        <thead>
+                        <tr>
+                            <th>Ambiguous submission entries</th>
+                        </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </form>
+    </div>
 </stripes:layout-definition>

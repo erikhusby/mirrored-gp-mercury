@@ -41,6 +41,7 @@ import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.Fundi
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProjectTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
+import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProjectList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
@@ -105,6 +106,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public static final String VALIDATE_TITLE_ACTION = "validateTitle";
     public static final String VIEW_SUBMISSIONS_ACTION = "viewSubmissions";
     public static final String POST_SUBMISSIONS_ACTION = "postSubmissions";
+    public static final String GET_SUBMISSION_STATUSES_ACTION = "getSubmissionStatuses";
 
     public static final String PROJECT_CREATE_PAGE = "/projects/create.jsp";
     public static final String PROJECT_LIST_PAGE = "/projects/list.jsp";
@@ -184,7 +186,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     })
     private ResearchProject editResearchProject;
 
-    private List<SubmissionDto> submissionSamples;
+    private List<SubmissionDto> submissionSamples = new ArrayList<>();
     /*
      * The search query.
      */
@@ -296,7 +298,8 @@ public class ResearchProjectActionBean extends CoreActionBean {
             on = {VIEW_ACTION, EDIT_ACTION, CREATE_ACTION, SAVE_ACTION, REGULATORY_INFO_QUERY_ACTION,
                     ADD_REGULATORY_INFO_TO_RESEARCH_PROJECT_ACTION, ADD_NEW_REGULATORY_INFO_ACTION,
                     REMOVE_REGULATORY_INFO_ACTION, EDIT_REGULATORY_INFO_ACTION, BEGIN_COLLABORATION_ACTION,
-                    RESEND_INVITATION_ACTION, VIEW_SUBMISSIONS_ACTION, POST_SUBMISSIONS_ACTION})
+                    RESEND_INVITATION_ACTION, VIEW_SUBMISSIONS_ACTION, POST_SUBMISSIONS_ACTION,
+                    GET_SUBMISSION_STATUSES_ACTION})
     public void init() throws Exception {
         researchProject = getContext().getRequest().getParameter(RESEARCH_PROJECT_PARAMETER);
         if (!StringUtils.isBlank(researchProject)) {
@@ -311,9 +314,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
             }
             if (submissionLibraryDescriptor == null) {
                 submissionLibraryDescriptor = findDefaultSubmissionType(editResearchProject);
-                if (submissionLibraryDescriptor != null) {
-                    selectedSubmissionLibraryDescriptor = submissionLibraryDescriptor.getName();
-                }
+                selectedSubmissionLibraryDescriptor = submissionLibraryDescriptor.getDescription();
             }
             if (submissionRepository == null) {
                 submissionRepository = editResearchProject.getSubmissionRepository();
@@ -854,8 +855,6 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     @HandlesEvent(VIEW_SUBMISSIONS_ACTION)
     public Resolution viewSubmissions() throws IOException, JSONException {
-        submissionLibraryDescriptor = findDefaultSubmissionType(editResearchProject);
-
         ObjectMapper objectMapper = new ObjectMapper();
         final Map<String, Object> submissionSamplesMap = new HashMap<String, Object>() {{
             put("aaData", submissionSamples);
@@ -868,7 +867,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     /**
      * Forces an update of all submission DTOs associated with the current Research Project
      */
-    @Before(stages = LifecycleStage.EventHandling, on = {VIEW_SUBMISSIONS_ACTION, POST_SUBMISSIONS_ACTION})
+    @Before(stages = LifecycleStage.EventHandling, on = {VIEW_SUBMISSIONS_ACTION})
     public void initializeForSubmissions() {
         updateSubmissionSamples();
     }
@@ -926,12 +925,13 @@ public class ResearchProjectActionBean extends CoreActionBean {
             errors = true;
         }
         if (!errors) {
-
             List<SubmissionDto> selectedSubmissions = new ArrayList<>();
-            for (SubmissionDto dto : submissionSamples) {
-                if (selectedSubmissionSamples.contains(dto.getSampleName())) {
-                    selectedSubmissions.add(dto);
-                }
+            Map<String, BassDTO> bassDtoMap = submissionDtoFetcher.fetchBassDtos(editResearchProject,
+                    selectedSubmissionSamples.toArray(new String[selectedSubmissionSamples.size()]));
+            for (BassDTO bassDTO : bassDtoMap.values()) {
+
+                // All required data are in the bassDTO
+                selectedSubmissions.add(new SubmissionDto(bassDTO, null, editResearchProject.getProductOrders(), null));
             }
 
             try {
@@ -1298,5 +1298,24 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     public Collection<SubmissionRepository> getActiveRepositories() {
         return Collections2.filter(getSubmissionRepositories(), SubmissionRepository.activeRepositoryPredicate);
+    }
+
+    public String getPreselectedStatusesJson() {
+        JSONArray itemList = new JSONArray();
+        Collection<SubmissionStatusDetailBean.Status> preselected =
+                EnumSet.complementOf(EnumSet.of(SubmissionStatusDetailBean.Status.FAILURE));
+
+        for (SubmissionStatusDetailBean.Status status : preselected) {
+            itemList.put(status.getLabel());
+        }
+        return itemList.toString();
+    }
+
+    public String getSubmissionStatusesJson() {
+        JSONArray itemList=new JSONArray();
+        for (SubmissionStatusDetailBean.Status status : SubmissionStatusDetailBean.Status.values()) {
+            itemList.put(status.getLabel());
+        }
+        return itemList.toString();
     }
 }

@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.submission;
 
+import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProjects;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
@@ -9,6 +10,7 @@ import javax.enterprise.inject.Alternative;
 import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
@@ -105,12 +107,12 @@ public class SubmissionsServiceStub implements SubmissionsService {
 
     @Override
     public List<SubmissionLibraryDescriptor> getSubmissionLibraryDescriptors() {
-        return null;
+        return Collections.singletonList(ProductFamily.defaultLibraryDescriptor());
     }
 
     @Override
     public SubmissionRepository findRepositoryByKey(String key) {
-        return null;
+        return new SubmissionRepository(SubmissionRepository.DEFAULT_REPOSITORY_NAME,SubmissionRepository.DEFAULT_REPOSITORY_DESCRIPTOR);
     }
 
     @Override

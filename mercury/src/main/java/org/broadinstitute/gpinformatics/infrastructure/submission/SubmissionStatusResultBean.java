@@ -8,6 +8,7 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -21,8 +22,8 @@ public class SubmissionStatusResultBean implements Serializable {
     public SubmissionStatusResultBean() {
     }
 
-    public SubmissionStatusResultBean(SubmissionStatusDetailBean ... submissions) {
-        submissionStatuses.addAll(submissionStatuses);
+    public SubmissionStatusResultBean(Collection<SubmissionStatusDetailBean> submissionStatuses) {
+        this.submissionStatuses.addAll(submissionStatuses);
     }
 
     public List<SubmissionStatusDetailBean> getSubmissionStatuses () {

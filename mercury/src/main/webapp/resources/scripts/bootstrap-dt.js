@@ -53,7 +53,7 @@ function includeAdvancedFilter(oTable, tableID) {
         chooseFilterForData(oTable);
     });
 
-    $j(".dataTables_filter input").keyup();
+    $j(".dataTables_filter input[type='text']").keyup();
 }
 
 /**
@@ -63,33 +63,36 @@ function includeAdvancedFilter(oTable, tableID) {
  * @param oTable
  */
 function chooseFilterForData(oTable) {
-    $j(".dataTables_filter input").unbind('keyup');
-    $j(".dataTables_filter input").keyup(function() {
+    var filterWrapperSelector=$j(oTable).closest("[id$='_wrapper']");
+    var filterTextInput = $j(filterWrapperSelector).find(".dataTables_filter input[type='text']");
+    filterTextInput.unbind('keyup');
+    filterTextInput.keyup(function () {
         var tab = RegExp("\\t", "g");
         var useOr = false;
-        var dataTableName = $j(this).attr("aria-controls");
-        if ($j("#" + dataTableName + "_filter").find(".filterDropdown").val() == "any") {
+        if ($j(filterWrapperSelector).find(".filterDropdown").val() == "any") {
             useOr = true;
         }
-
-        var filterInput = $j(".dataTables_filter input").val().replace(tab, " ");
+        var filterInput = filterTextInput.val().replace(tab, " ");
+        var searchRegex = ".";
         if (useOr) {
             // OR
-            var searchRegex = ".";
             if (filterInput != '') {
-                var searchRegex = "(" + filterInput.trim().split(" ").join("+|") + "+)";
+                searchRegex = "(" + filterInput.trim().split(" ").join("+|") + "+)";
             }
             oTable.fnFilter( searchRegex, null, true, false );
-        } else {
+        }else {
             // AND
             if (filterInput != '') {
                 oTable.fnFilter(filterInput, null, false, true);
             }
         }
-        $j(".dataTables_filter input").val( filterInput );
+        if (useOr||matchNone) {
+            oTable.fnFilter( searchRegex, null, true, false );
+        }
+        filterTextInput.val(filterInput);
     });
 
-    $j(".dataTables_filter input").keyup();
+    filterTextInput.keyup();
 }
 
 

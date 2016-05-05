@@ -124,8 +124,8 @@ textarea.controlledText { width: 550px; }
 
 .padright { margin-right: 30px; }
 
-.dataTables_filter { float: left !important; text-align: left !important; }
-.dataTables_filter input { width: 500px; font-size: 12px; height: 14px; }
+.dataTables_filter { float: left !important; text-align: left !important;}
+.dataTables_filter input.text { width: 500px; font-size: 12px; height: 14px; }
 .filterOptions { position: absolute; margin-left: 10px; display: inline; }
 .filterDropdown { height: 25px; }
 

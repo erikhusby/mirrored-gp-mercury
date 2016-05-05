@@ -107,10 +107,20 @@ public class SubmissionDtoFetcher {
         return results;
     }
 
+    public Map<String, BassDTO> fetchBassDtos(ResearchProject researchProject, String ... samples) {
+        List<BassDTO> bassDTOs = bassSearchService.runSearch(researchProject.getBusinessKey(),samples);
+        return buildBassDtoMap(bassDTOs);
+    }
+
     public Map<String, BassDTO> fetchBassDtos(ResearchProject researchProject) {
         log.debug(String.format("Fetching bassDTOs for %s", researchProject.getBusinessKey()));
         List<BassDTO> bassDTOs = bassSearchService.runSearch(researchProject.getBusinessKey());
         log.debug(String.format("Fetched %d bassDTOs", bassDTOs.size()));
+        Map<String, BassDTO> bassDTOMap = buildBassDtoMap(bassDTOs);
+        return bassDTOMap;
+    }
+
+    private Map<String, BassDTO> buildBassDtoMap(List<BassDTO> bassDTOs) {
         Map<String, BassDTO> bassDTOMap = new HashMap<>();
         for (BassDTO bassDTO : bassDTOs) {
             if (bassDTOMap.containsKey(bassDTO.getSample())) {
