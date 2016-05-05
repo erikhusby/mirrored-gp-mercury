@@ -86,7 +86,7 @@
         }
 
         /* Mimic styles that would be applied if ui-state-disabled was correctly applied to datepicker widgets. */
-        .changed.hasDatepicker:disabled {
+        .hasDatepicker:disabled {
             opacity: .35;
         }
 
@@ -131,6 +131,7 @@
                 'aaSorting': [[1, 'asc']],
                 'aoColumns': [
                     {'bSortable': false},                                                   // 0: checkbox
+                    {'bVisible': false},                                                    // 0: search text
                     {'bSortable': true},                                                    // 1: sample position
                     {'bSortable': false},                                                   // 2: expand
                     {'bSortable': true},                                                    // 3: sample ID
@@ -143,13 +144,23 @@
                     // price item columns
                     <c:forEach items="${actionBean.priceItems}" var="priceItem" varStatus="status">
                     {'bVisible': false},
-                    {'bSortable': true, 'sSortDataType': 'input-value', 'sType': 'numeric'}, // ${9 + status.index}: ${priceItem.name}
+                    {'bSortable': true, 'sSortDataType': 'input-value', 'sType': 'numeric'}, // ${10 + status.index}: ${priceItem.name}
                     </c:forEach>
 
                     {'bSortable': true, 'sType': 'title-string'}    // billed
                 ]
             });
-            includeAdvancedFilter(ledgerTable, '#ledger');
+            // Reuse the existing filter input, but unbind its usual behavior and replace it with our own.
+            $j(".dataTables_filter input").unbind('keyup');
+            $j('.dataTables_filter input').on('input', function() {
+                var tab = RegExp("\\t", "g");
+                var filter = $j(this).val().trim().replace(tab, " ");
+                var regexFilter = '.';
+                if (filter != '') {
+                    regexFilter = '(' + filter.split(' ').join('|') + ')';
+                }
+                ledgerTable.fnFilter(regexFilter, 1, true, false);
+            });
 
             /*
              * Set up ledger datatable filters.
@@ -355,7 +366,7 @@
         var allFilter = function(oSettings, aData, iDataIndex) { return true; };
 
         var riskFilter = function (oSettings, aData, iDataIndex) {
-            return aData[5] != '';
+            return aData[6] != '';
         };
 
         var noRiskFilter = function(oSettings, aData, iDataIndex) {
@@ -363,7 +374,7 @@
         };
 
         var coverageMetFilter = function(oSettings, aData, iDataIndex) {
-            return aData[7] != '';
+            return aData[8] != '';
         };
 
         var notCoverageMetFilter = function(oSettings, aData, iDataIndex) {
@@ -372,7 +383,7 @@
 
         var billedFilter = function(oSettings, aData, iDataIndex) {
             // Assumes that the content is rendered as something indicating a check mark, i.e., "check.png"
-            return aData[9 + numPriceItems * 2].includes('check');
+            return aData[10 + numPriceItems * 2].includes('check');
         };
 
         var notBilledFilter = function (oSettings, aData, iDataIndex) {
@@ -388,7 +399,7 @@
 
             for (var i = 0; i < numPriceItems; i++) {
                 // aData has all data, including hidden cells, so a little math is needed.
-                var original = parseFloat(aData[9 + i*2]);
+                var original = parseFloat(aData[10 + i*2]);
                 // cells contains only the visible cells, so no need to skip over the hidden ones.
                 var current = parseFloat($j(row).children().eq(9 + i).find('input:text').val());
                 if (original != current) {
@@ -490,14 +501,17 @@
             eligible for billing to Broad Quotes/SAP through a new billing session.</p>
 
         <h4>Sorting and Filtering</h4>
-        <p>Samples can be sorted by clicking on any column header. Shift-click to sort on multiple columns. Samples can
-            also be filtered by:</p>
+        <p>Samples can be sorted by clicking on any column header. Shift-click to sort on multiple columns.</p>
+        <p>Buttons are provided to filter samples by:</p>
         <ul>
             <li>On Risk</li>
             <li>Coverage Met</li>
             <li>Billed</li>
             <li>Modified (since page load)</li>
         </ul>
+        <p>Also, the "Filter" input will filter samples by Sample ID and Collaborator Sample ID. Space-separated filter
+            terms are independent, so you can find multiple samples by entering multiple IDs (paste in a list of sample
+            IDs, for example).</p>
 
         <h4>Making Changes</h4>
         <p>For each sample, there are inputs for:</p>
@@ -665,7 +679,7 @@
         <table id="ledger" class="table simple" style="display: none">
         <thead>
             <tr>
-                <th colspan="3"></th>
+                <th colspan="4"></th>
                 <th colspan="5" style="text-align: center">Sample Information</th>
                 <th colspan="${actionBean.priceItems.size() * 2 + 2}" style="text-align: center">Billing</th>
             </tr>
@@ -674,6 +688,7 @@
                     <input id="checkAllSamples" for="count" type="checkbox" class="checkAll"/>
                     <span id="count" class="checkedCount"></span>
                 </th>
+                <th></th>
                 <th></th>
                 <th></th>
                 <th>Sample ID</th>
@@ -694,7 +709,10 @@
                 <tr class="${info.sample.deliveryStatus.displayName == 'Abandoned' ? 'abandoned' : ''}">
                     <td>
                         <input type="checkbox" title="${info.sample.samplePosition}" class="shiftCheckbox" name="selectedProductOrderSampleIds" value="${info.sample.productOrderSampleId}">
-                        <stripes:hidden name="ledgerData[${info.sample.samplePosition}].sampleName" value="${info.sample.name}"/>
+                    </td>
+                    <td>
+                        ${info.sample.name}
+                        ${info.sample.sampleData.collaboratorsSampleName}
                     </td>
                     <td style="text-align: right">
                         ${info.sample.samplePosition + 1}
@@ -704,6 +722,7 @@
                     </td>
                     <td>
                         ${info.sample.name}
+                        <stripes:hidden name="ledgerData[${info.sample.samplePosition}].sampleName" value="${info.sample.name}"/>
                     </td>
                     <td>
                         ${info.sample.sampleData.collaboratorsSampleName}
