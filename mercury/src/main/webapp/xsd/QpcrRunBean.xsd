@@ -14,6 +14,7 @@
             <xs:sequence>
                 <xs:element type="xs:string" name="runName"/>
                 <xs:element type="xs:dateTime" name="runDate"/>
+                <xs:element type="xs:string" name="operator"/>
                 <xs:element name="libraryBeans" type="libraryBeansType" maxOccurs="unbounded" minOccurs="0"/>
             </xs:sequence>
         </xs:complexType>

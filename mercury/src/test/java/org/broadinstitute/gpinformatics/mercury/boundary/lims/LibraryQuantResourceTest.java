@@ -83,6 +83,7 @@ public class LibraryQuantResourceTest extends Arquillian {
         QpcrRunBean qpcrRunBean = new QpcrRunBean();
         qpcrRunBean.setRunDate(new Date());
         qpcrRunBean.setRunName(timestamp + "VIIA_7_Run");
+        qpcrRunBean.setOperator("jowalsh");
 
         LibraryBeansType lib = new LibraryBeansType();
         lib.setConcentration(new BigDecimal("12.2"));

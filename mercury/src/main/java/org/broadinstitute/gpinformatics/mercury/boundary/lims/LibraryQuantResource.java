@@ -1,8 +1,10 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.bettalims.BettaLimsConnector;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.generated.LibraryBeansType;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.generated.LibraryQuantBeanType;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.generated.LibraryQuantRunBean;
@@ -30,6 +32,9 @@ public class LibraryQuantResource {
     @Inject
     private BettaLimsConnector bettaLimsConnector;
 
+    @Inject
+    private BSPUserList bspUserList;
+
     @POST
     @Consumes(MediaType.APPLICATION_XML)
     @Path("/qpcrrun")
@@ -41,8 +46,9 @@ public class LibraryQuantResource {
         }
         switch (systemRouter.getSystemOfRecordForVesselBarcodes(tubeBarcodes)) {
             case MERCURY:
+                BspUser bspUser = getBspUser(qpcrRunBean.getOperator());
                 MessageCollection messageCollection = new MessageCollection();
-                vesselEjb.createQpcrRunFromRunBean(qpcrRunBean, messageCollection);
+                vesselEjb.createQpcrRunFromRunBean(qpcrRunBean, messageCollection, bspUser.getUserId());
                 if (messageCollection.hasErrors()) {
                     String errors = StringUtils.join(messageCollection.getErrors(), ",");
                     return Response.serverError().entity(errors).build();
@@ -78,6 +84,14 @@ public class LibraryQuantResource {
         default:
             throw new RuntimeException("Unable to route createQpcrRun for tubes: " + tubeBarcodes);
         }
+    }
+
+    private BspUser getBspUser(String operator) {
+        BspUser bspUser = bspUserList.getByUsername(operator);
+        if (bspUser == null) {
+            throw new RuntimeException("Failed to find operator " + operator);
+        }
+        return bspUser;
     }
 
 }

@@ -661,7 +661,8 @@ public class VesselEjb {
         return labMetricRun;
     }
 
-    public LabMetricRun createQpcrRunFromRunBean(QpcrRunBean qpcrRunBean, MessageCollection messageCollection) {
+    public LabMetricRun createQpcrRunFromRunBean(QpcrRunBean qpcrRunBean, MessageCollection messageCollection,
+                                                 Long userId) {
         LabMetricRun labMetricRun = labMetricRunDao.findByName(qpcrRunBean.getRunName());
         if (labMetricRun != null) {
             messageCollection.addError("This run has been uploaded previously.");
@@ -679,9 +680,7 @@ public class VesselEjb {
                 messageCollection.addError("A previous upload has the same Run Started timestamp.");
             } else {
                 labMetricRun = createQpcrRunDaoFree(mapBarcodeToVessel, mapBarcodeToLibraryBean,
-                        LabMetric.MetricType.VIIA_QPCR, BSPManagerFactoryStub.QA_DUDE_USER_ID,
-                        messageCollection,
-                        qpcrRunBean);
+                        LabMetric.MetricType.VIIA_QPCR, userId ,messageCollection, qpcrRunBean);
                 if (messageCollection.hasErrors()) {
                     ejbContext.setRollbackOnly();
                 } else {
