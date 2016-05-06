@@ -451,8 +451,6 @@
       <addPrimaryKey constraintName="PK_ATTRIBUTE_ARCHETYPE" tableName="ATTRIBUTE_ARCHETYPE"
 		     schemaName="mercury" columnNames="archetype_id"/>
 
-      <addUniqueConstraint constraintName="U_ATTRIBUTE_ARCHETYPE" tableName="ATTRIBUTE_ARCHETYPE"
-			   schemaName="mercury" columnNames="dtype, archetype_group, archetype_name"/>
     </changeSet>
 
     <changeSet id="GPLIM-4023-2" author="epolk">
