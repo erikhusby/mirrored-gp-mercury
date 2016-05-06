@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.run;
 
+import org.apache.commons.lang3.StringUtils;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
@@ -11,7 +12,11 @@ import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * The attributes of an AttributeArchetype are represented here by free-form key value pairs.
@@ -21,6 +26,7 @@ import javax.persistence.UniqueConstraint;
 @Audited
 @Table(schema = "mercury", uniqueConstraints = @UniqueConstraint(columnNames = {"archetype","attributeName"}))
 public class ArchetypeAttribute {
+    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     @SequenceGenerator(name = "seq_archetype_attribute", schema = "mercury", sequenceName = "seq_archetype_attribute")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_archetype_attribute")
@@ -66,4 +72,24 @@ public class ArchetypeAttribute {
     public void setAttributeValue(String attributeValue) {
         this.attributeValue = attributeValue;
     }
+
+    /**
+     * Returns value as a date. Returns null if unset or if value is not a date.
+     */
+    public Date getDate() {
+        try {
+            return StringUtils.isNotBlank(attributeValue) ? dateFormat.parse(attributeValue) : null;
+        } catch (ParseException e) {
+            return null;
+        }
+    }
+
+    /**
+     * Sets value as a date.
+     */
+    @Transient
+    public void setDate(Date date) {
+        attributeValue = (date != null) ? dateFormat.format(date) : "";
+    }
+
 }

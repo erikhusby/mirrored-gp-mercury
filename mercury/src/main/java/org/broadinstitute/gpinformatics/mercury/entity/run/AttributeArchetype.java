@@ -55,7 +55,7 @@ public abstract class AttributeArchetype {
         this(group, name);
         for (AttributeDefinition definition : attributeDefinitions) {
             if (!definition.isGroupAttribute()) {
-                addAttribute(definition.getAttributeName(), null);
+                addOrSetAttribute(definition.getAttributeName(), null);
             }
         }
     }
@@ -86,15 +86,25 @@ public abstract class AttributeArchetype {
         }};
     }
 
-    public void addAttribute(@NotNull String name, String value) {
-        getAttributes().add(new ArchetypeAttribute(this, name, value));
-    }
-
-    public void setAttribute(@NotNull String name, String value) {
-        for (ArchetypeAttribute attribute : attributes) {
-            if (attribute.getAttributeName().equals(name)) {
-                attribute.setAttributeValue(value);
+    public ArchetypeAttribute getAttribute(String attributeName) {
+        if (attributes != null) {
+            for (ArchetypeAttribute attribute : attributes) {
+                if (attribute.getAttributeName().equals(attributeName)) {
+                    return attribute;
+                }
             }
         }
+        return null;
     }
+
+    public void addOrSetAttribute(@NotNull String name, String value) {
+        ArchetypeAttribute attribute = getAttribute(name);
+        // If it already exists then sets the value.
+        if (attribute == null) {
+            attributes.add(new ArchetypeAttribute(this, name, value));
+        } else {
+            attribute.setAttributeValue(value);
+        }
+    }
+
 }

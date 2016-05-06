@@ -35,6 +35,6 @@ public class GenotypingChip extends AttributeArchetype {
 
     @Transient
     public void setLastModifiedDate() {
-        setAttribute(LAST_MODIFIED, DateUtils.getYYYYMMMDDTime(new Date()));
+        addOrSetAttribute(LAST_MODIFIED, DateUtils.getYYYYMMMDDTime(new Date()));
     }
 }

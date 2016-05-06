@@ -12,9 +12,9 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.PriceItemTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProductTokenInput;
+import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
-import org.broadinstitute.gpinformatics.mercury.entity.run.AttributeArchetype;
 import org.broadinstitute.gpinformatics.mercury.entity.run.GenotypingChip;
 
 import javax.ejb.Stateful;
@@ -26,8 +26,10 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
@@ -139,7 +141,10 @@ public class ProductEjb {
     }
 
 
-    /** Returns the genotyping chip family and name for the product, product order, and date. */
+    /**
+     * Looks up a genotyping chip mapping that was active on the effective date.
+     * @return (chip family, chip name) or (null, null) if no match was found.
+     */
     public Pair<String, String> getGenotypingChip(ProductOrderSample productOrderSample, Date effectiveDate) {
         String productPartNumber = productOrderSample.getProductOrder().getProduct().getPartNumber();
         String productOrderName = productOrderSample.getProductOrder().getName();
@@ -147,22 +152,30 @@ public class ProductEjb {
     }
 
     /**
-     * Returns the genotyping chip family and name for the product part number and product order
-     * using the historical genotyping chip mappings that existed on the effective date.
-     *
+     * Looks up a genotyping chip mapping that was active on the effective date.
      * @return (chip family, chip name) or (null, null) if no match was found.
      */
     public Pair<String, String> getGenotypingChip(String productPartNumber, String productOrderName,
                                                   Date effectiveDate) {
 
         // Retrieves the historical chip mappings and uses them to find the best match for the product part number
-        // and pdo name. There are multiple chips for a product part number when substring matching on the product
-        // order name is used. Matches substrings in decreasing order, as shown in UI for Product chip mappings.
-        Collection<GenotypingChipMapping> mappings = auditReaderDao.getVersionsAsOf(GenotypingChipMapping.class,
-                effectiveDate);
+        // and pdo name.
+        Collection<GenotypingChipMapping> mappings = attributeArchetypeDao.getMappingsAsOf(effectiveDate);
 
-        GenotypingChipMapping bestMatch = null;
+        // Only one of each mapping may be active for this date, i.e. mappings should be unique on product
+        // part number and pdo substring.
+        Set<String> uniquePartNumberAndSubstring = new HashSet<>();
+        for (GenotypingChipMapping mapping : mappings) {
+            if (!uniquePartNumberAndSubstring.add(mapping.getArchetypeName())) {
+                throw new RuntimeException("Multiple genotyping chip mappings for '" + mapping.getArchetypeName() +
+                                           "' on " + DateUtils.convertDateTimeToString(effectiveDate));
+            }
+        }
+
+        // Does substring matching on the product order name when there are multiple chips for a product part number.
+        // The map keys are in search order, same as shown in UI for Product chip mappings.
         SortedMap<String, GenotypingChipMapping> partialMatches = partNumberMatches(productPartNumber, mappings);
+        GenotypingChipMapping bestMatch = null;
         for (Map.Entry<String, GenotypingChipMapping> entry : partialMatches.entrySet()) {
             if (productOrderName.contains(entry.getValue().getPdoSubstring())) {
                 bestMatch = partialMatches.get(entry.getKey());
@@ -197,9 +210,9 @@ public class ProductEjb {
     // Updates, deletes, adds the mappings for a product part number to genotyping chips.
     private void persistGenotypingChipMappings(String productPartNumber,
                                                List<Triple<String, String, String>> genotypingChipInfo) {
-
+        final Date now = new Date();
         SortedMap<String, GenotypingChipMapping> currentMappings = partNumberMatches(productPartNumber,
-                attributeArchetypeDao.findGenotypingChipMappings());
+                attributeArchetypeDao.getMappingsAsOf(now));
 
         for (Triple<String, String, String> familyAndNameAndPdoSubstring : genotypingChipInfo) {
             String chipFamily = familyAndNameAndPdoSubstring.getLeft();
@@ -211,31 +224,31 @@ public class ProductEjb {
 
             GenotypingChipMapping chip = currentMappings.remove(mappingName);
             if (chip == null) {
-                attributeArchetypeDao.persist(new GenotypingChipMapping(mappingName, chipFamily, chipName));
+                attributeArchetypeDao.persist(new GenotypingChipMapping(mappingName, chipFamily, chipName, now));
             } else {
                 chip.setChipTechnology(chipFamily);
                 chip.setChipName(chipName);
             }
         }
 
-        // Deletes the remaining mappings which were not found in the given arrays.
-        for (AttributeArchetype archetype : currentMappings.values()) {
-            attributeArchetypeDao.remove(archetype);
+        // Inactivates the remaining mappings which were not found in the given arrays.
+        for (GenotypingChipMapping mapping : currentMappings.values()) {
+            mapping.setInactiveDate(now);
         }
     }
 
     /**
-     * Returns info on the genotyping chips mapped to the given product. Multiple mappings are
+     * Returns info on the genotyping chips mapped currently mapped to the given product. Multiple mappings are
      * distinguished from one another using pdoSubstring.
      *
-     * @param productPartNumber is used to determine the returned info. If null, returns all mappings found.
+     * @param productPartNumber is used to determine the returned info. If null, returns all current mappings.
      * @return List of chip family, chip name, pdo substring.  These are ordered the same way they
      *         are used to lookup a mapping: by decreasing pdo substring with nulls last.
      */
-    public List<Triple<String, String, String>> getMappedGenotypingChips(String productPartNumber) {
+    public List<Triple<String, String, String>> getCurrentMappedGenotypingChips(String productPartNumber) {
         List<Triple<String, String, String>> chipInfo = new ArrayList<>();
 
-        for (GenotypingChipMapping mapping : attributeArchetypeDao.findGenotypingChipMappings()) {
+        for (GenotypingChipMapping mapping : attributeArchetypeDao.getMappingsAsOf(new Date())) {
             if (productPartNumber == null || productPartNumber.equals(mapping.getProductPartNumber())) {
                 chipInfo.add(Triple.of(mapping.getChipFamily(), mapping.getChipName(),
                         StringUtils.trimToNull(mapping.getPdoSubstring())));

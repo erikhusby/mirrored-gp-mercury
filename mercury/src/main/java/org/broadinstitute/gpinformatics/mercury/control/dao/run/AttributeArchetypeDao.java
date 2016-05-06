@@ -13,6 +13,7 @@ import javax.enterprise.context.RequestScoped;
 import javax.validation.constraints.NotNull;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -63,7 +64,8 @@ public class AttributeArchetypeDao extends GenericDao {
     /** Returns the named chip family attribute value. */
     public String findChipFamilyAttribute(String chipFamily, String attributeName) {
         for (AttributeDefinition def : findAttributeDefinitions(AttributeDefinition.DefinitionType.GENOTYPING_CHIP)) {
-            if (def.isGroupAttribute() && attributeName.equals(def.getAttributeName())) {
+            if (def.isGroupAttribute() && attributeName.equals(def.getAttributeName()) &&
+                def.getGroup().equals(chipFamily)) {
                 return def.getGroupAttributeValue();
             }
         }
@@ -98,6 +100,22 @@ public class AttributeArchetypeDao extends GenericDao {
             }
         }
         return null;
+    }
+
+    /**
+     * Returns genotyping chip mappings that were active on the effectiveDate.
+     *
+     * @param effectiveDate comparison date
+     * @return list of mappings
+     */
+    public Set<GenotypingChipMapping> getMappingsAsOf(Date effectiveDate) {
+        Set<GenotypingChipMapping> mappings = new HashSet<>();
+        for (GenotypingChipMapping mapping : findGenotypingChipMappings()) {
+            if (mapping.isActiveOn(effectiveDate)) {
+                mappings.add(mapping);
+            }
+        }
+        return mappings;
     }
 
 }

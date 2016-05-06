@@ -62,12 +62,15 @@ public class GenotypingChipDbTest extends Arquillian {
         Assert.assertNotNull(utx);
         utx.begin();
 
-        // Adds Group attributes on Group 0.
+        // Adds Group attributes on Group 0 and 1.
         for (int i = 0; i < testGroupAttribute.length; ++i) {
-            AttributeDefinition attributeDefinition = new AttributeDefinition(
-                    AttributeDefinition.DefinitionType.GENOTYPING_CHIP, testGroup[0],
-                    testGroupAttribute[i], testGroupAttributeValue[i]);
-            dao.persist(attributeDefinition);
+            for (int j = 0; j < 2; ++j) {
+                AttributeDefinition attributeDefinition = new AttributeDefinition(
+                        AttributeDefinition.DefinitionType.GENOTYPING_CHIP, testGroup[j],
+                        testGroupAttribute[i],
+                        testGroupAttributeValue[i] != null ? testGroupAttributeValue[i] + j : null);
+                dao.persist(attributeDefinition);
+            }
         }
 
 
@@ -84,7 +87,7 @@ public class GenotypingChipDbTest extends Arquillian {
             for (String archetypeName : testArchetype) {
                 AttributeArchetype chip = new GenotypingChip(group, archetypeName, definitions);
                 for (String attributeName : testAttribute) {
-                    chip.setAttribute(attributeName, attributeName + "value");
+                    chip.addOrSetAttribute(attributeName, attributeName + "value");
                 }
                 dao.persist(chip);
             }
@@ -95,16 +98,21 @@ public class GenotypingChipDbTest extends Arquillian {
         for (int i = 0; i < testGroup.length; ++i) {
             // Checks the attribute definitions for each Group.
             Map<String, AttributeDefinition> definitionMap = dao.findGenotypingChipAttributeDefinitions(testGroup[i]);
-            if (i == 0) {
+            if (i < 2) {
                 Assert.assertEquals(definitionMap.size(), testGroupAttribute.length + testAttribute.length);
                 for (int j = 0; j < testGroupAttribute.length; ++j) {
                     Assert.assertEquals(definitionMap.get(testGroupAttribute[j]).getDefinitionType(),
                             AttributeDefinition.DefinitionType.GENOTYPING_CHIP);
                     Assert.assertEquals(definitionMap.get(testGroupAttribute[j]).getGroupAttributeValue(),
-                            testGroupAttributeValue[j]);
+                            (j == 0) ? testGroupAttributeValue[j] + i : null);
                     Assert.assertFalse(definitionMap.get(testGroupAttribute[j]).isDisplayable());
                     Assert.assertTrue(definitionMap.get(testGroupAttribute[j]).isGroupAttribute());
                 }
+
+                // Tests the alternative lookup method.
+                Assert.assertEquals(dao.findChipFamilyAttribute(testGroup[i], testGroupAttribute[0]),
+                        testGroupAttributeValue[0] + i);
+
             } else {
                 for (int j = 0; j < testGroupAttribute.length; ++j) {
                     Assert.assertFalse(definitionMap.containsKey(testGroupAttribute[j]));
@@ -131,6 +139,7 @@ public class GenotypingChipDbTest extends Arquillian {
                 }
             }
         }
+
         utx.rollback();
     }
 }

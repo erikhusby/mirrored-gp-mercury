@@ -207,7 +207,7 @@ public class ProductActionBean extends CoreActionBean {
     }
 
     private void initGenotypingInfo() {
-        genotypingChipInfo = productEjb.getMappedGenotypingChips(editProduct.getPartNumber());
+        genotypingChipInfo = productEjb.getCurrentMappedGenotypingChips(editProduct.getPartNumber());
     }
 
     @Before(stages = LifecycleStage.BindingAndValidation, on = {CREATE_ACTION, EDIT_ACTION, SAVE_ACTION})

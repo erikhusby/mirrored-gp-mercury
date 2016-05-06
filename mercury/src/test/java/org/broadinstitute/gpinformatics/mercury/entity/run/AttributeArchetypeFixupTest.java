@@ -1,9 +1,9 @@
 package org.broadinstitute.gpinformatics.mercury.entity.run;
 
-import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
 import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingChipMapping;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.InfiniumRunResource;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
@@ -14,9 +14,10 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import javax.persistence.Query;
 import javax.transaction.UserTransaction;
+import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -40,16 +41,23 @@ public class AttributeArchetypeFixupTest extends Arquillian {
     @Inject
     private AttributeArchetypeDao attributeArchetypeDao;
 
-    @Inject
-    private ProductEjb productEjb;
-
     @Deployment
     public static WebArchive buildMercuryWar() {
         return DeploymentBuilder.buildMercuryWar(DEV, "dev");
     }
 
+    public static final Date EARLIEST_XSTAIN_DATE;
+
+    static {
+        try {
+            EARLIEST_XSTAIN_DATE = DateUtils.yyyymmmdddDateTimeFormat.parse("2015-OCT-09 11:13 AM");
+        } catch (ParseException e) {
+            throw new RuntimeException("Cannot parse date.");
+        }
+    }
+
     // Populates the initial genotyping chip types.
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void gplim4023PopulateGenoChipTypes() throws Exception {
         String[] initialAttributes = {
                 "pool_name", "Broad_GWAS_supplemental_15061359_A1",
@@ -182,7 +190,7 @@ public class AttributeArchetypeFixupTest extends Arquillian {
                 chip.setLastModifiedDate();
                 chips.add(chip);
             } else {
-                chip.setAttribute(key, value);
+                chip.addOrSetAttribute(key, value);
                 System.out.println("Adding attribute (" + key + ", " + value + ") to " + chip.getChipName());
             }
         }
@@ -192,19 +200,6 @@ public class AttributeArchetypeFixupTest extends Arquillian {
         attributeArchetypeDao.persistAll(chips);
         attributeArchetypeDao.flush();
         utx.commit();
-
-        // Updates the genotyping chip attributes' revDate so that it applies to existing chip runs.
-        // This change cannot be audited.
-        utx.begin();
-        Query query = attributeArchetypeDao.getEntityManager().createNativeQuery(
-                "update rev_info set rev_date = " +
-                "(select trunc(min(event_date)) from lab_event where lab_event_type = 'INFINIUM_XSTAIN') " +
-                "where rev_date > SYSDATE - 1 / (24 * 60) " +
-                "and rev_info_id = " +
-                "(select max(rev) from fixup_commentary_aud where reason = '" + fixupReason + "')");
-        query.executeUpdate();
-        utx.commit();
-
     }
 
     public static final Map<String, String> INITIAL_PRODUCT_PART_TO_GENO_CHIP = new HashMap<String, String>() {{
@@ -223,7 +218,7 @@ public class AttributeArchetypeFixupTest extends Arquillian {
     }};
 
     // Populates the initial mapping of product to genotyping chip types.
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void gplim4023PopulateProductToGenoChipTypes() throws Exception {
         utx.begin();
         userBean.loginOSUser();
@@ -235,29 +230,22 @@ public class AttributeArchetypeFixupTest extends Arquillian {
                     GenotypingChipMapping.MAPPING_GROUP, GenotypingChipMapping.GENOTYPING_CHIP_TECHNOLOGY, false));
             add(new AttributeDefinition(AttributeDefinition.DefinitionType.GENOTYPING_CHIP_MAPPING,
                     GenotypingChipMapping.MAPPING_GROUP, GenotypingChipMapping.GENOTYPING_CHIP_NAME, false));
+            add(new AttributeDefinition(AttributeDefinition.DefinitionType.GENOTYPING_CHIP_MAPPING,
+                    GenotypingChipMapping.MAPPING_GROUP, GenotypingChipMapping.ACTIVE_DATE, false));
+            add(new AttributeDefinition(AttributeDefinition.DefinitionType.GENOTYPING_CHIP_MAPPING,
+                    GenotypingChipMapping.MAPPING_GROUP, GenotypingChipMapping.INACTIVE_DATE, false));
         }};
         attributeArchetypeDao.persistAll(definitions);
 
         for (Map.Entry<String, String> entry : INITIAL_PRODUCT_PART_TO_GENO_CHIP.entrySet()) {
-            GenotypingChipMapping mapping = new GenotypingChipMapping(entry.getKey(), chipFamily, entry.getValue());
+            GenotypingChipMapping mapping = new GenotypingChipMapping(entry.getKey(), chipFamily, entry.getValue(),
+                    EARLIEST_XSTAIN_DATE);
             System.out.println("Adding chip mapping for " + entry.getKey() + " to " + entry.getValue());
             attributeArchetypeDao.persist(mapping);
         }
         String fixupReason = "GPLIM-4023 add the mapping from product to Infinium genotyping chip types.";
         attributeArchetypeDao.persist(new FixupCommentary(fixupReason));
         attributeArchetypeDao.flush();
-        utx.commit();
-
-        // Updates the genotyping chip mapping revDate so that it applies to existing chip runs.
-        // This change cannot be audited.
-        utx.begin();
-        Query query = attributeArchetypeDao.getEntityManager().createNativeQuery(
-                "update rev_info set rev_date = " +
-                "(select trunc(min(event_date)) from lab_event where lab_event_type = 'INFINIUM_XSTAIN') " +
-                "where rev_date > SYSDATE - 1 / (24 * 60) " +
-                "and rev_info_id = " +
-                "(select max(rev) from fixup_commentary_aud where reason = '" + fixupReason + "')");
-        query.executeUpdate();
         utx.commit();
     }
 

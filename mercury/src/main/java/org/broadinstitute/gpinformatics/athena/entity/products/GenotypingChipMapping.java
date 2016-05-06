@@ -7,6 +7,7 @@ import org.hibernate.envers.Audited;
 import javax.persistence.Entity;
 import javax.persistence.Transient;
 import javax.validation.constraints.NotNull;
+import java.util.Date;
 
 /**
  * Contains the configurable attributes of a product, such as the mapping from
@@ -21,27 +22,30 @@ public class GenotypingChipMapping extends AttributeArchetype {
     public static final String GENOTYPING_CHIP_CONFIG = "Genotyping Chip";
     public static final String GENOTYPING_CHIP_NAME = "Genotyping chip name";
     public static final String GENOTYPING_CHIP_TECHNOLOGY = "Genotyping chip technology";
+    public static final String ACTIVE_DATE = "Active date";
+    public static final String INACTIVE_DATE = "Inactive date";
     // There is only one type of mapping.
     public static final String MAPPING_GROUP = "default";
 
     public GenotypingChipMapping() {
     }
 
-    public GenotypingChipMapping(String mappingName) {
+    public GenotypingChipMapping(String mappingName, String chipTechnology, String chipName, Date effectiveDate) {
         super(GENOTYPING_CHIP_CONFIG, mappingName);
-    }
-
-    public GenotypingChipMapping(String mappingName, String chipTechnology, String chipName) {
-        this(mappingName);
-        addAttribute(GENOTYPING_CHIP_TECHNOLOGY, chipTechnology);
-        addAttribute(GENOTYPING_CHIP_NAME, chipName);
+        addOrSetAttribute(GENOTYPING_CHIP_TECHNOLOGY, chipTechnology);
+        addOrSetAttribute(GENOTYPING_CHIP_NAME, chipName);
+        addOrSetAttribute(ACTIVE_DATE, "");
+        setActiveDate(effectiveDate);
+        addOrSetAttribute(INACTIVE_DATE, "");
     }
 
     public String getProductPartNumber() {
         return StringUtils.substringBefore(getArchetypeName(), DELIMITER);
     }
 
-    public @NotNull String getPdoSubstring() {
+    public
+    @NotNull
+    String getPdoSubstring() {
         return StringUtils.trimToEmpty(StringUtils.substringAfter(getArchetypeName(), DELIMITER));
     }
 
@@ -55,11 +59,35 @@ public class GenotypingChipMapping extends AttributeArchetype {
 
     @Transient
     public void setChipTechnology(String chipTechnology) {
-        setAttribute(GENOTYPING_CHIP_TECHNOLOGY, chipTechnology);
+        addOrSetAttribute(GENOTYPING_CHIP_TECHNOLOGY, chipTechnology);
     }
 
     @Transient
     public void setChipName(String chipName) {
-        setAttribute(GENOTYPING_CHIP_NAME, chipName);
+        addOrSetAttribute(GENOTYPING_CHIP_NAME, chipName);
+    }
+
+    public Date getActiveDate() {
+        return getAttribute(ACTIVE_DATE).getDate();
+    }
+
+    @Transient
+    public void setActiveDate(Date date) {
+        getAttribute(ACTIVE_DATE).setDate(date);
+    }
+
+    public Date getInactiveDate() {
+        return getAttribute(INACTIVE_DATE).getDate();
+    }
+
+    @Transient
+    public void setInactiveDate(Date date) {
+        getAttribute(INACTIVE_DATE).setDate(date);
+    }
+
+    /** Returns true if active on or before effective date, and inactive after effective date. */
+    public boolean isActiveOn(Date effectiveDate) {
+        return effectiveDate != null && getActiveDate() != null && !getActiveDate().after(effectiveDate) &&
+               (getInactiveDate() == null || getInactiveDate().after(effectiveDate));
     }
 }
