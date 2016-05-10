@@ -875,7 +875,8 @@ public class ReagentFixupTest extends Arquillian {
                 "2015-11-12T12:52:23", "Ice2ndBaitPick", "03-17-2018", "15F24A0005",
         }, "Rapid Capture Kit Box 4 (Bait)");
 
-        genericReagentDao.persist(new FixupCommentary("GPLIM-3791 add missing bait reagents using the Bravo log records."));
+        genericReagentDao.persist(
+                new FixupCommentary("GPLIM-3791 add missing bait reagents using the Bravo log records."));
         genericReagentDao.flush();
         utx.commit();
     }
@@ -1116,6 +1117,7 @@ public class ReagentFixupTest extends Arquillian {
     @Test(enabled = false)
     public void fixupGplim4130() throws Exception {
         userBean.loginOSUser();
+        utx.begin();
         // Replaces reagent with one with the correct expiration. Preserves the original being used on other lab events.
         LabEvent labEvent = labEventDao.findById(LabEvent.class, 1308892L);
         Reagent reagent = genericReagentDao.findById(Reagent.class, 1086959L);
@@ -1140,6 +1142,23 @@ public class ReagentFixupTest extends Arquillian {
 
         genericReagentDao.persist(new FixupCommentary("GPLIM-4130 change reagent due to wrong expiration date."));
         genericReagentDao.flush();
+        utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim4130a() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+        // Updates date from 5/13/18 to 4/13/18.
+        Reagent reagent = genericReagentDao.findById(Reagent.class, 1199001L);
+        Assert.assertNotNull(reagent);
+        reagent.setExpiration(new GregorianCalendar(2018, Calendar.APRIL, 13).getTime());
+        System.out.println("Updating reagent " + reagent.getReagentId() +
+                           " expiration to " + reagent.getExpiration().toString());
+
+        genericReagentDao.persist(new FixupCommentary("GPLIM-4130 fix expiration date."));
+        genericReagentDao.flush();
+        utx.commit();
     }
 
 }
