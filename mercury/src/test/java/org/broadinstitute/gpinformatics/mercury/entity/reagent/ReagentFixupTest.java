@@ -1097,4 +1097,20 @@ public class ReagentFixupTest extends Arquillian {
         genericReagentDao.flush();
     }
 
+    @Test(enabled = false)
+    public void gplim4120fixDate() throws Exception {
+        userBean.loginOSUser();
+        // Replaces wrong expiration for P5 Indexed Adapter Plate reagent.
+        // Reagent was newly created for the event and not used elsewhere so the
+        // code just needs to fix the Reagent entity.
+        Reagent reagent = genericReagentDao.findById(Reagent.class, 1195956L);
+        Assert.assertNotNull(reagent);
+        String lot = "000001805823";
+        Assert.assertEquals(lot, reagent.getLot());
+        Date expiration = new GregorianCalendar(2016, Calendar.MAY, 21).getTime();
+        System.out.println("Changing expiration date on reagent id " + reagent.getReagentId() + " to " + expiration);
+        reagent.setExpiration(expiration);
+        genericReagentDao.persist(new FixupCommentary("GPLIM-4120 fixup incorrect P5 adapter expiration"));
+        genericReagentDao.flush();
+    }
 }
