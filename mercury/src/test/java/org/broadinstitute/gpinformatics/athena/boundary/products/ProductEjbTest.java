@@ -59,7 +59,7 @@ public class ProductEjbTest extends Arquillian {
     }
 
     // todo emp Reenable this test after running the genotyping mapping fixup test.
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void testPdoNameMatching() throws Exception {
         Assert.assertNotNull(sharedPartNumber);
         Assert.assertNotNull(danishChipName);
