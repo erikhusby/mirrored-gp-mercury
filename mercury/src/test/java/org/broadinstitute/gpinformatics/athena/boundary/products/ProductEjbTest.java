@@ -58,6 +58,7 @@ public class ProductEjbTest extends Arquillian {
         nonDanishChipName = AttributeArchetypeFixupTest.INITIAL_PRODUCT_PART_TO_GENO_CHIP.get(sharedPartNumber);
     }
 
+    // todo emp Reenable this test after running the genotyping mapping fixup test.
     @Test(enabled = true)
     public void testPdoNameMatching() throws Exception {
         Assert.assertNotNull(sharedPartNumber);
@@ -86,7 +87,8 @@ public class ProductEjbTest extends Arquillian {
         }
     }
 
-    @Test(enabled = true)
+    // todo emp Reenable this test after running the genotyping mapping fixup test.
+    @Test(enabled = false)
     public void testPdoNameMatchingOrder() throws Exception {
         utx.begin();
 
