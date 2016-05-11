@@ -40,9 +40,7 @@ public class WallacParserTest {
                     plateBarcode1, plateBarcode2);
             PoiSpreadsheetParser parser = new PoiSpreadsheetParser(Collections.<String, TableProcessor>emptyMap());
 
-            parser.processRows(workbook.getSheet(
-                            WallacRowParser.RESULTS_TABLE_TAB),
-                    wallacPlateProcessor);
+            parser.processRows(workbook.getSheet(WallacRowParser.RESULTS_TABLE_TAB), wallacPlateProcessor);
 
             Assert.assertEquals(wallacPlateProcessor.getPlateWellResults().size(), 192);
             Assert.assertEquals(wallacPlateProcessor.getMessages().size(), 0);
