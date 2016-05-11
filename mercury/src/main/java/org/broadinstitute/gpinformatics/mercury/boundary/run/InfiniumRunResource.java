@@ -175,7 +175,8 @@ public class InfiniumRunResource {
     private Set<GenotypingChip> findChipTypes(List<ProductOrderSample> productOrderSamples, Date effectiveDate) {
         Set<GenotypingChip> chips = new HashSet<>();
         for (ProductOrderSample productOrderSample : productOrderSamples) {
-            Pair<String, String> chipFamilyAndName = productEjb.getGenotypingChip(productOrderSample, effectiveDate);
+            Pair<String, String> chipFamilyAndName = productEjb.getGenotypingChip(productOrderSample.getProductOrder(),
+                    effectiveDate);
             if (chipFamilyAndName.getLeft() != null && chipFamilyAndName.getRight() != null) {
                 GenotypingChip chip = attributeArchetypeDao.findGenotypingChip(chipFamilyAndName.getLeft(),
                         chipFamilyAndName.getRight());

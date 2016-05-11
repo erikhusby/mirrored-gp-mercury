@@ -5,7 +5,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingChipMapping;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -145,9 +145,9 @@ public class ProductEjb {
      * Looks up a genotyping chip mapping that was active on the effective date.
      * @return (chip family, chip name) or (null, null) if no match was found.
      */
-    public Pair<String, String> getGenotypingChip(ProductOrderSample productOrderSample, Date effectiveDate) {
-        String productPartNumber = productOrderSample.getProductOrder().getProduct().getPartNumber();
-        String productOrderName = productOrderSample.getProductOrder().getName();
+    public Pair<String, String> getGenotypingChip(ProductOrder productOrder, Date effectiveDate) {
+        String productPartNumber = productOrder.getProduct().getPartNumber();
+        String productOrderName = productOrder.getName();
         return getGenotypingChip(productPartNumber, productOrderName, effectiveDate);
     }
 
