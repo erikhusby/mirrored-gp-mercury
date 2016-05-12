@@ -320,6 +320,19 @@ public class LabMetricFixupTest extends Arquillian {
     }
 
     @Test(enabled = false)
+    public void fixupGplim4105() {
+        try {
+            utx.begin();
+            userBean.loginOSUser();
+            deleteRun("9059 FP pico", "GPLIM-4105 remove FP run which was uploaded as Initial");
+            utx.commit();
+        } catch (NotSupportedException | SystemException | RollbackException | HeuristicMixedException |
+                HeuristicRollbackException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test(enabled = false)
     public void gplim4084ChangePondToShearingPico() {
         try {
             utx.begin();
