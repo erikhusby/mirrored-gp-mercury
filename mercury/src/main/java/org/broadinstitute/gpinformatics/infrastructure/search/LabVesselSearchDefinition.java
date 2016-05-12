@@ -274,30 +274,19 @@ public class LabVesselSearchDefinition {
                 Set<String> results = null;
                 LabVessel labVessel = (LabVessel) entity;
 
-                VesselsForEventTraverserCriteria fctCriteria = new VesselsForEventTraverserCriteria(
-                        Arrays.asList(LabEventType.DENATURE_TRANSFER), true, true);
-
-                if(labVessel.getContainerRole() != null ) {
-                    labVessel.getContainerRole().applyCriteriaToAllPositions(fctCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
-                    // Putting a fake position in to capture possible FCT batch of existing vessel
-                    for( LabVessel containee : labVessel.getContainerRole().getContainedVessels()) {
-                        fctCriteria.getPositions().put(containee, labVessel.getContainerRole().getPositionOfVessel(containee));
-                    }
+                VesselBatchTraverserCriteria downstreamBatchFinder = new VesselBatchTraverserCriteria();
+                if( labVessel.getContainerRole() != null ) {
+                    labVessel.getContainerRole().applyCriteriaToAllPositions(
+                            downstreamBatchFinder, TransferTraverserCriteria.TraversalDirection.Ancestors);
                 } else {
-                    labVessel.evaluateCriteria(fctCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
-                    // Putting a fake position in to capture possible FCT batch of existing vessel
-                    fctCriteria.getPositions().put(labVessel,null);
+                    labVessel.evaluateCriteria(
+                            downstreamBatchFinder, TransferTraverserCriteria.TraversalDirection.Ancestors);
                 }
 
-                for (Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions
-                        : fctCriteria.getPositions().asMap().entrySet()) {
-                    Set<LabBatchStartingVessel> batchVessels
-                            = labVesselAndPositions.getKey().getLabBatchStartingVessels();
-                    for (LabBatchStartingVessel batchVessel : batchVessels) {
-                        LabBatch.LabBatchType batchType = batchVessel.getLabBatch().getLabBatchType();
-                        if (batchType == LabBatch.LabBatchType.FCT || batchType == LabBatch.LabBatchType.MISEQ ) {
-                            (results==null?results = new HashSet<>():results).add(batchVessel.getLabBatch().getBatchName());
-                        }
+                for ( LabBatch labBatch : downstreamBatchFinder.getLabBatches() ) {
+                    if( labBatch.getLabBatchType() == LabBatch.LabBatchType.FCT
+                            || labBatch.getLabBatchType() == LabBatch.LabBatchType.MISEQ ) {
+                        (results==null?results = new HashSet<>():results).add(labBatch.getBatchName());
                     }
                 }
                 return results;
@@ -1561,7 +1550,12 @@ public class LabVesselSearchDefinition {
     }
 
     /**
-     * Searches for lab vessel descendants and accumulates batches
+     * Searches for lab vessel ancestors and/or descendants and accumulates batches <br />
+     * Note:  Looking into ancestry, if a vessel associated with an FCT batch dilution vessel is hit,
+     *  any other FCT batches associated with ancestor denatured vessel are ignored.
+     * This prevents collecting FCT batches (multiple) associated with denatured tubes
+     * and only gets single FCT batches associated with the flowcell, strip tube, or dilution vessel.
+     *
      */
     public static class VesselBatchTraverserCriteria extends TransferTraverserCriteria {
 
@@ -1569,6 +1563,7 @@ public class LabVesselSearchDefinition {
 
         private Set<LabBatch> labBatches = new HashSet<>();
         private LabVessel startingVessel = null;
+        private boolean stopCollectingFctBatches = false;
 
         public Set<LabBatch> getLabBatches(){
             return labBatches;
@@ -1585,14 +1580,14 @@ public class LabVesselSearchDefinition {
                     startingVessel = context.getContextVessel();
                     // Examine ancestor vessel batches
                     if( context.getTraversalDirection() == TraversalDirection.Ancestors ) {
-                        getVesselBatches(startingVessel);
+                        getVesselBatches(startingVessel, context);
                     }
                 }
                 if( startingVessel == null ) {
                     if( context.getTraversalDirection() == TraversalDirection.Ancestors ) {
-                        getVesselBatches(startingVessel);
+                        getVesselBatches(startingVessel, context);
                         for( LabVessel containee : (Set<LabVessel>)context.getContextVesselContainer().getContainedVessels()) {
-                            getVesselBatches(containee);
+                            getVesselBatches(containee, context);
                         }
                     }
                 }
@@ -1625,7 +1620,7 @@ public class LabVesselSearchDefinition {
                 }
 
                 if( context.getTraversalDirection() == TraversalDirection.Ancestors || !labVessel.equals(startingVessel)) {
-                    getVesselBatches(labVessel);
+                    getVesselBatches(labVessel, context);
                 }
 
             }
@@ -1633,7 +1628,7 @@ public class LabVesselSearchDefinition {
             return TraversalControl.ContinueTraversing;
         }
 
-        private void getVesselBatches( LabVessel labVessel ) {
+        private void getVesselBatches( LabVessel labVessel, Context context ) {
 
             if( labVessel == null ) {
                 return;
@@ -1642,9 +1637,21 @@ public class LabVesselSearchDefinition {
             // If vessel has LabBatchStartingVessel, don't bother with bucket entries
             boolean hadStartingVessels = false;
 
-            for (LabBatchStartingVessel labBatchStartingVessel : labVessel.getLabBatchStartingVessels()){
-                labBatches.add( labBatchStartingVessel.getLabBatch() );
-                hadStartingVessels = true;
+            if( labVessel.getDilutionReferences().isEmpty() ) {
+                for (LabBatchStartingVessel labBatchStartingVessel : labVessel.getLabBatchStartingVessels()) {
+                    LabBatch labBatch = labBatchStartingVessel.getLabBatch();
+                    if (context.getTraversalDirection() == TraversalDirection.Descendants || labBatch.getLabBatchType() != LabBatch.LabBatchType.FCT || !stopCollectingFctBatches){
+                        labBatches.add(labBatch);
+                    }
+                    hadStartingVessels = true;
+                }
+            } else {
+                for (LabBatchStartingVessel labBatchStartingVessel : labVessel.getDilutionReferences()) {
+                    LabBatch labBatch = labBatchStartingVessel.getLabBatch();
+                    labBatches.add(labBatch);
+                    hadStartingVessels = true;
+                    stopCollectingFctBatches = true;
+                }
             }
 
             if( !hadStartingVessels ) {
