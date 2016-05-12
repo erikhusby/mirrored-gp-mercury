@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.infrastructure.presentation;
 
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
-import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 
 import javax.inject.Inject;
@@ -36,7 +35,6 @@ public class SampleLink {
 
     public String getUrl() {
         switch (format) {
-        case CRSP:
         case BSP:
             return bspConfig.getUrl(BSPConfig.SEARCH_PATH + sample.getSampleKey());
         default:
@@ -45,8 +43,8 @@ public class SampleLink {
     }
 
     private enum Format {
+        /* TODO SGM: Revisit the Validity of this enum */
         BSP("BSP_SAMPLE", "BSP Sample"),
-        CRSP("CRSP_SAMPLE", "CRSP Sample"),
         UNKNOWN(null, null);
         private final String target;
         private final String label;
@@ -58,11 +56,7 @@ public class SampleLink {
 
         static Format fromSample(AbstractSample sample) {
             if (sample.isInBspFormat() && sample.getMetadataSource() == MercurySample.MetadataSource.BSP) {
-                if (ApplicationInstance.CRSP.isCurrent()) {
-                    return Format.CRSP;
-                } else {
-                    return Format.BSP;
-                }
+                return Format.BSP;
             }
             return Format.UNKNOWN;
         }

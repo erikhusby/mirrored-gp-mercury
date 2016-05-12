@@ -51,7 +51,11 @@ public class TransferVisualizerActionBean extends CoreActionBean {
      * Called when the user clicks the Visualize button.
      */
     public Resolution visualize() {
-        String[] splitBarcodes = barcodes.split("\\s");
+        if (barcodes == null) {
+            addValidationError("barcodes", "Enter at least one barcode.");
+            return new ForwardResolution(TRANSFER_VIS_PAGE);
+        }
+        String[] splitBarcodes = barcodes.trim().split("\\s+");
         Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(Arrays.asList(splitBarcodes));
         for (Map.Entry<String, LabVessel> barcodeLabVesselEntry : mapBarcodeToVessel.entrySet()) {
             if (barcodeLabVesselEntry.getValue() == null) {
@@ -65,7 +69,7 @@ public class TransferVisualizerActionBean extends CoreActionBean {
      * Called through AJAX after the page has rendered.
      */
     public Resolution getJson() {
-        String[] splitBarcodes = barcodes.split("\\s");
+        String[] splitBarcodes = barcodes.trim().split("\\s+");
         final Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(Arrays.asList(splitBarcodes));
         return new Resolution() {
             @Override

@@ -421,4 +421,33 @@ public class ProductOrderDao extends GenericDao {
             return null;
         }
     }
+
+    /**
+     * Every product order is associated with a Quote ID.  This method allows a consumer to find all product orders,
+     * which are in a Submitted state, that have the same common quote id stored in the quoteId field.
+     *
+     * @param quoteId Main criteria with which to base the query.  This value will determine which product orders will
+     *                be returned
+     * @return a List of product orders, all of which have the same quoteId as the one passed in as a parameter to this
+     * method
+     */
+    public List<ProductOrder> findOrdersWithCommonQuote(String quoteId) {
+        return findListByList(ProductOrder.class, ProductOrder_.quoteId, Collections.singleton(quoteId),
+                new ProductOrderDaoCallback(new ProductOrderDao.FetchSpec[]{ProductOrderDao.FetchSpec.SAMPLES}) {
+                    @Override
+                    public void callback(CriteriaQuery<ProductOrder> criteriaQuery, Root<ProductOrder> root) {
+
+                        super.callback(criteriaQuery, root);
+
+                        CriteriaBuilder builder = getEntityManager().getCriteriaBuilder();
+
+                        Predicate predicate =
+                                builder.equal(root.get(ProductOrder_.orderStatus), ProductOrder.OrderStatus.Submitted);
+                        criteriaQuery.where(predicate);
+                    }
+                }
+        );
+    }
 }
+
+
