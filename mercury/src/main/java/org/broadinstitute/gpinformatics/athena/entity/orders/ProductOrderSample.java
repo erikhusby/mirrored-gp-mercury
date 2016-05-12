@@ -855,7 +855,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
          *
          * @return true if the quantity submitted is different than the current quantity; false otherwise
          */
-        private boolean isQuantityChangeNeeded() {
+        public boolean isQuantityChangeNeeded() {
             return newQuantity != currentQuantity;
         }
 
@@ -865,8 +865,19 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
          *
          * @return true if the change request is based on current data; false otherwise
          */
-        private boolean isChangeRequestCurrent() {
+        public boolean isChangeRequestCurrent() {
             return oldQuantity == currentQuantity;
+        }
+
+        /**
+         * Determine whether or not this update request represents a change to the current quantity. This is a
+         * combination of {@link #isQuantityChangeIntended()} and {@link #isQuantityChangeNeeded()} for cases where it
+         * isn't necessary to handle those cases separately.
+         *
+         * @return true if action needs to be taken to change the quantity from what it currently is; false otherwise
+         */
+        public boolean isQuantityChanging() {
+            return isQuantityChangeIntended() && isQuantityChangeNeeded();
         }
 
         /**
@@ -916,50 +927,52 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
      *                          or if an update would need to be made to a ledger entry in an active billing session
      */
     public void applyLedgerUpdate(LedgerUpdate ledgerUpdate) throws StaleLedgerUpdateException {
-        PriceItem priceItem = ledgerUpdate.getPriceItem();
-        LedgerEntry existingLedgerEntry = findUnbilledLedgerEntryForPriceItem(priceItem);
-        Date workCompleteDate = ledgerUpdate.getWorkCompleteDate();
+        LedgerEntry existingLedgerEntry = findUnbilledLedgerEntryForPriceItem(ledgerUpdate.getPriceItem());
 
-        // Update quantity if needed and request is valid.
-        if (ledgerUpdate.isQuantityChangeIntended()) {
-            if (ledgerUpdate.isQuantityChangeNeeded()) {
+        /*
+         * These 2 conditions both require validation of the work complete date. The actions taken beyond that depend on
+         * the further combinatorial possibilities of these conditions.
+         */
+        boolean haveExistingEntry = existingLedgerEntry != null;
+        if (ledgerUpdate.isQuantityChanging() || haveExistingEntry) {
+
+            // Validate work complete date.
+            if (ledgerUpdate.getWorkCompleteDate() == null) {
+                throw new IllegalArgumentException(
+                        "Work complete date is missing for sample " + ledgerUpdate.getSampleName());
+            }
+
+            // Update quantity, adding a new ledger entry if needed.
+            if (ledgerUpdate.isQuantityChanging()) {
                 if (ledgerUpdate.isChangeRequestCurrent()) {
-                    validateWorkCompleteDate(workCompleteDate, ledgerUpdate.getSampleName());
 
                     double quantityDelta = ledgerUpdate.getQuantityDelta();
 
-                    if (existingLedgerEntry == null) {
-                        addLedgerItem(workCompleteDate, priceItem, quantityDelta);
+                    if (!haveExistingEntry) {
+                        addLedgerItem(ledgerUpdate.getWorkCompleteDate(), ledgerUpdate.getPriceItem(), quantityDelta);
                     } else {
+
                         if (existingLedgerEntry.isBeingBilled()) {
                             throw new RuntimeException(
                                     "Cannot change quantity for sample that is currently being billed.");
                         }
+
                         double newQuantity = existingLedgerEntry.getQuantity() + quantityDelta;
                         if (newQuantity == 0) {
                             ledgerItems.remove(existingLedgerEntry);
                         } else {
                             existingLedgerEntry.setQuantity(newQuantity);
                         }
-                        existingLedgerEntry.setWorkCompleteDate(workCompleteDate);
                     }
                 } else {
                     throw new StaleLedgerUpdateException(ledgerUpdate);
                 }
             }
-        }
 
-        // Update work complete date if there is an existing unbilled ledger entry.
-        if (existingLedgerEntry != null) {
-            validateWorkCompleteDate(workCompleteDate, ledgerUpdate.getSampleName());
-            existingLedgerEntry.setWorkCompleteDate(workCompleteDate);
-        }
-    }
-
-    private void validateWorkCompleteDate(Date workCompleteDate, String sampleName) {
-        if (workCompleteDate == null) {
-            throw new RuntimeException(
-                    "Work complete date is missing for sample " + sampleName);
+            // Update work complete date for existing entry, whether or not the quantity is changing.
+            if (haveExistingEntry) {
+                existingLedgerEntry.setWorkCompleteDate(ledgerUpdate.getWorkCompleteDate());
+            }
         }
     }
 
