@@ -10,7 +10,6 @@ import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Fetches available sample metadata for each page of a lab vessel search.
@@ -41,12 +40,9 @@ public class LabVesselMetadataPlugin implements ListPlugin {
             Map<Metadata.Key,List<String>> rowData = MetadataPluginHelper.buildRowDataHolder();
 
             for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
-                MercurySample sample = sampleInstanceV2.getRootOrEarliestMercurySample();
+                MercurySample sample = sampleInstanceV2.getNearestMercurySample();
                 if( sample != null ) {
-                    Set<Metadata> metadata = sample.getMetadata();
-                    if( metadata != null && !metadata.isEmpty() ) {
-                        MetadataPluginHelper.addMetadataToRowData( metadata, rowData );
-                    }
+                    MetadataPluginHelper.addSampleMetadataToRowData( sample, rowData );
                 }
             }
 

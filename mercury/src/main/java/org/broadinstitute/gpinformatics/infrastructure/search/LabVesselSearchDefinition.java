@@ -39,6 +39,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -166,10 +167,16 @@ public class LabVesselSearchDefinition {
         SearchTerm searchTerm = new SearchTerm();
         searchTerm.setName("LCSET");
         List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
+
+        // Mercury only cares about workflow batches
+        SearchTerm.ImmutableTermFilter workflowOnlyFilter = new SearchTerm.ImmutableTermFilter(
+                "labBatchType", SearchInstance.Operator.EQUALS, LabBatch.LabBatchType.WORKFLOW);
+
         // Non-reworks
         SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
         criteriaPath.setCriteria(Arrays.asList("labBatches", "labBatch"));
         criteriaPath.setPropertyName("batchName");
+        criteriaPath.addImmutableTermFilter(workflowOnlyFilter);
         criteriaPath.setJoinFetch(Boolean.TRUE);
         criteriaPaths.add(criteriaPath);
         // Reworks
@@ -180,6 +187,7 @@ public class LabVesselSearchDefinition {
         criteriaPath.setNestedCriteriaPath(nestedCriteriaPath);
         criteriaPath.setPropertyName("batchName");
         criteriaPath.setJoinFetch(Boolean.TRUE);
+        criteriaPath.addImmutableTermFilter(workflowOnlyFilter);
         criteriaPaths.add(criteriaPath);
         searchTerm.setCriteriaPaths(criteriaPaths);
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
@@ -894,13 +902,13 @@ public class LabVesselSearchDefinition {
             @Override
             public BigDecimal evaluate(Object entity, SearchContext context) {
                 LabVessel labVessel = (LabVessel) entity;
-                Set<LabMetric> labMetrics = labVessel.getMetrics();
-                for (LabMetric labMetric : labMetrics) {
-                    if (labMetric.getName() == LabMetric.MetricType.INITIAL_PICO) {
-                        return labMetric.getTotalNg();
+                List<LabMetric> labMetrics = new ArrayList<>(labVessel.getMetrics());
+                for (Iterator<LabMetric> iter = labMetrics.iterator(); iter.hasNext(); ) {
+                    if (iter.next().getName() != LabMetric.MetricType.INITIAL_PICO) {
+                        iter.remove();
                     }
                 }
-                return null;
+                return labMetrics.size() > 0 ? LabVesselMetricPlugin.latestTubeMetric(labMetrics).getTotalNg() : null;
             }
         });
         searchTerm.setSearchValueConversionExpression(new SearchTerm.Evaluator<Object>() {

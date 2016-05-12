@@ -803,6 +803,37 @@ public class    ProductOrderFixupTest extends Arquillian {
         productOrderDao.persist(new FixupCommentary("Unabandoning PDO-8013 and PDO-8045 to pending state"));
     }
 
+    @Test(enabled = false)
+    public void support1579updatePdo() {
+        userBean.loginOSUser();
+        String currentPdo = "PDO-8313";
+        String newKey = "PDO-8317";
+
+        ProductOrder productOrder = productOrderDao.findByBusinessKey(currentPdo);
+        if (productOrder==null){
+            throw new RuntimeException(String.format("%s doesn't exist.", currentPdo));
+        }
+        productOrder.setJiraTicketKey(newKey);
+        log.info(String.format("Updated %s to %s", currentPdo, newKey));
+        productOrderDao.persist(new FixupCommentary("https://gpinfojira.broadinstitute.org/jira/browse/SUPPORT-1579"));
+    }
+
+    @Test(enabled = false)
+    public void support1573ChangeRegInfoForPdo8181() {
+        userBean.loginOSUser();
+
+        List<RegulatoryInfo> regulatoryInfos = regulatoryInfoDao.findByIdentifier("ORSP-3342");
+        assertThat(regulatoryInfos, hasSize(1));
+        RegulatoryInfo orsp3342 = regulatoryInfos.get(0);
+
+        ProductOrder pdo = productOrderDao.findByBusinessKey("PDO-8181");
+        pdo.getRegulatoryInfos().clear();
+        pdo.addRegulatoryInfo(orsp3342);
+
+        productOrderDao.persist(
+                new FixupCommentary("SUPPORT-1573 Updating reg info for PDO-8181 as requested by Kristina Tracy"));
+    }
+
     private static class RegulatoryInfoSelection {
         private String productOrderKey;
         private String regulatoryInfoIdentifier;

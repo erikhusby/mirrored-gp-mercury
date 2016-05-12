@@ -156,10 +156,16 @@ public class LabMetricSearchDefinition {
         searchTerm = new SearchTerm();
         searchTerm.setName("LCSET");
         criteriaPaths = new ArrayList<>();
+
+        // Mercury only cares about workflow batches
+        SearchTerm.ImmutableTermFilter workflowOnlyFilter = new SearchTerm.ImmutableTermFilter(
+                "labBatchType", SearchInstance.Operator.EQUALS, LabBatch.LabBatchType.WORKFLOW);
+
         // Non-reworks
         criteriaPath = new SearchTerm.CriteriaPath();
         criteriaPath.setCriteria(Arrays.asList("metricsVessel", "labBatches", "labBatch"));
         criteriaPath.setPropertyName("batchName");
+        criteriaPath.addImmutableTermFilter(workflowOnlyFilter);
         criteriaPath.setJoinFetch(Boolean.TRUE);
         criteriaPaths.add(criteriaPath);
         // Reworks
@@ -170,6 +176,7 @@ public class LabMetricSearchDefinition {
         criteriaPath.setCriteria(Arrays.asList("metricsVessel", "labMetrics"));
         criteriaPath.setNestedCriteriaPath(nestedCriteriaPath);
         criteriaPath.setPropertyName("batchName");
+        criteriaPath.addImmutableTermFilter(workflowOnlyFilter);
         criteriaPath.setJoinFetch(Boolean.TRUE);
         criteriaPaths.add(criteriaPath);
         searchTerm.setCriteriaPaths(criteriaPaths);
@@ -500,7 +507,11 @@ public class LabMetricSearchDefinition {
             @Override
             public String evaluate(Object entity, SearchContext context) {
                 LabMetric labMetric = (LabMetric) entity;
-                return labMetric.getLabMetricDecision().getDecision().toString();
+                if( labMetric.getLabMetricDecision() != null ) {
+                    return labMetric.getLabMetricDecision().getDecision().toString();
+                } else {
+                    return null;
+                }
             }
         });
         searchTerms.add(searchTerm);
@@ -512,7 +523,11 @@ public class LabMetricSearchDefinition {
             @Override
             public String evaluate(Object entity, SearchContext context) {
                 LabMetric labMetric = (LabMetric) entity;
-                return labMetric.getLabMetricDecision().getNote();
+                if( labMetric.getLabMetricDecision() != null ) {
+                    return labMetric.getLabMetricDecision().getNote();
+                } else {
+                    return null;
+                }
             }
         });
         searchTerms.add(searchTerm);
@@ -523,6 +538,11 @@ public class LabMetricSearchDefinition {
             @Override
             public String evaluate(Object entity, SearchContext context) {
                 LabMetric labMetric = (LabMetric) entity;
+                if( labMetric.getLabMetricDecision() == null ) {
+                    return null;
+                }
+                // TODO JMS Result column name may be misleading - displaying the user who made the decision.
+                // Adding lab event logic would get the user who created the metric.
                 BSPUserList bspUserList = context.getBspUserList();
                 Long userId = labMetric.getLabMetricDecision().getDeciderUserId();
                 BspUser bspUser = bspUserList.getById(userId);
@@ -542,7 +562,11 @@ public class LabMetricSearchDefinition {
             @Override
             public String evaluate(Object entity, SearchContext context) {
                 LabMetric labMetric = (LabMetric) entity;
-                return labMetric.getLabMetricDecision().getOverrideReason();
+                if( labMetric.getLabMetricDecision() != null ) {
+                    return labMetric.getLabMetricDecision().getOverrideReason();
+                } else {
+                    return null;
+                }
             }
         });
         searchTerms.add(searchTerm);

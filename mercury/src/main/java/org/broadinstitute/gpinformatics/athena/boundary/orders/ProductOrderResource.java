@@ -15,6 +15,7 @@ import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
 import org.broadinstitute.bsp.client.workrequest.kit.KitTypeAllowanceSpecification;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingEjb;
+import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.ApplicationValidationException;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
@@ -139,6 +140,9 @@ public class ProductOrderResource {
 
     @Inject
     private ProductOrderJiraUtil productOrderJiraUtil;
+
+    @Inject
+    private ProductEjb productEjb;
 
     /**
      * Should be used only by test code
@@ -485,7 +489,12 @@ public class ProductOrderResource {
         List<ProductOrderData> productOrderDataList = new ArrayList<>(productOrderList.size());
 
         for (ProductOrder productOrder : productOrderList) {
-            productOrderDataList.add(new ProductOrderData(productOrder, includeSamples));
+            // Adds genotyping chip info.
+            ProductOrderData productOrderData = new ProductOrderData(productOrder, includeSamples);
+            Date effectiveDate =  productOrder.getCreatedDate();
+            productOrderData.setGenoChipType(productEjb.getGenotypingChip(productOrder, effectiveDate).getRight());
+
+            productOrderDataList.add(productOrderData);
         }
 
         return new ProductOrders(productOrderDataList);

@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LabMetricProcessor;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -32,7 +33,8 @@ public class QuantificationEJB {
 
     public Set<LabMetric> validateQuantsDontExist(
             InputStream quantSpreadsheet,
-            LabMetric.MetricType metricType) throws ValidationException, IOException, InvalidFormatException {
+            LabMetric.MetricType metricType,
+            boolean acceptRePico) throws ValidationException, IOException, InvalidFormatException {
         try {
             List<String> validationErrors = new ArrayList<>();
 
@@ -48,12 +50,18 @@ public class QuantificationEJB {
 
                 // Do not need to add an error for no lab vessel because the parser will already have that.
                 if (labVessel != null) {
-                    for (LabMetric persistedMetric : labVessel.getMetrics()) {
-                        if (persistedMetric.getName() == metricType) {
-                            validationErrors.add("Lab metric " + metric.getName().getDisplayName()
-                                                 + " already exists for lab vessel "
-                                                 + metric.getLabVessel().getLabel());
+                    if (!acceptRePico) {
+                        for (LabMetric persistedMetric : labVessel.getMetrics()) {
+                            if (persistedMetric.getName() == metricType) {
+                                validationErrors.add("Lab metric " + metric.getName().getDisplayName()
+                                                     + " already exists for lab vessel "
+                                                     + metric.getLabVessel().getLabel());
+                            }
                         }
+                    }
+                    if (labVessel.getVolume() != null && metric.getUnits() == LabMetric.LabUnit.NG_PER_UL) {
+                        metric.getMetadataSet().add(new Metadata(Metadata.Key.TOTAL_NG,
+                                metric.getValue().multiply(labVessel.getVolume())));
                     }
                 }
             }

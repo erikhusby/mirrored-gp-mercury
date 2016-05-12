@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
@@ -220,8 +221,18 @@ public class SearchDefinitionFactory {
                 }
             } else {
                 // Sample from MercurySample search
-                Set<String> results = new HashSet<>();
                 MercurySample sample = (MercurySample) entity;
+                Set<String> results = new HashSet<>();
+
+                // Material type comes from event
+                if( metaName.equals(Metadata.Key.MATERIAL_TYPE.getDisplayName())
+                        && sample.getLabVessel().iterator().hasNext()) {
+                    // If data from event is available, use it by default, otherwise, continue
+                    if( results.addAll(getMetadataFromVessel( sample.getLabVessel().iterator().next(), metaName ))) {
+                        return results;
+                    }
+                }
+
                 String value = getSampleMetadataForDisplay(sample, metaName);
                 if( value != null && !value.isEmpty() ) {
                     results.add(value);
@@ -250,6 +261,17 @@ public class SearchDefinitionFactory {
         private Set<String> getMetadataFromVessel( LabVessel labVessel, String metaName ) {
             String metaValue;
             Set<String> results = new HashSet<>();
+
+            // Material type should come from event, not sample
+            if( metaName.equals(Metadata.Key.MATERIAL_TYPE.getDisplayName())) {
+                MaterialType materialType = labVessel.getLatestMaterialTypeFromEventHistory();
+                if( materialType != null && materialType != MaterialType.NONE ) {
+                    if( results.add(materialType.getDisplayName()) ) {
+                        return results;
+                    }
+                }
+            }
+
             // A vessel can end up with more than 1 sample in it
             for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
                 MercurySample sample = sampleInstanceV2.getRootOrEarliestMercurySample();

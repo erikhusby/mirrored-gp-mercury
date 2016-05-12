@@ -7,7 +7,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.BSPExportsService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.IsExported;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
-import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
@@ -251,7 +250,6 @@ public class SystemRouter implements Serializable {
                 LabEventType.SystemOfRecord systemOfRecord = systemsOfRecord.iterator().next();
                 switch (systemOfRecord) {
                 case SQUID:
-                    badCrspRouting();
                     return System.SQUID;
                 case MERCURY:
                     // If everything here has been exported to sequencing.
@@ -297,7 +295,6 @@ public class SystemRouter implements Serializable {
                             continue;
                         }
                         if (sampleInstance.getAllWorkflowBatches().isEmpty()) { // todo jmt what about bucket entry with no batch?
-                            badCrspRouting();
                             routingOptions.add(System.SQUID);
                         } else {
                             for (LabBatch batch : sampleInstance.getAllWorkflowBatches()) {
@@ -313,7 +310,6 @@ public class SystemRouter implements Serializable {
                                             system = productWorkflowDef.getRouting();
                                         }
                                         if (system == System.BOTH) {
-                                            badCrspRouting();
                                             system = System.SQUID;
                                         }
                                         routingOptions.add(system);
@@ -334,12 +330,6 @@ public class SystemRouter implements Serializable {
             return null;
         } else {
             return evaluateRoutingOption(routingOptions, intent);
-        }
-    }
-
-    private void badCrspRouting() {
-        if(ApplicationInstance.CRSP.isCurrent()) {
-            throw new RouterException("For a CRSP Deployment, Squid should never be a routing option")  ;
         }
     }
 
@@ -370,13 +360,11 @@ public class SystemRouter implements Serializable {
         System result;
 
         if (routingOptions.isEmpty()) {
-            badCrspRouting();
             result = System.SQUID;
         } else if (routingOptions.size() == 1) {
             result = routingOptions.iterator().next();
         } else if (routingOptions.equals(EnumSet.of(System.SQUID, System.BOTH)) ||
                 (intent == Intent.SYSTEM_OF_RECORD && routingOptions.equals(EnumSet.of(System.SQUID, System.MERCURY)))) {
-            badCrspRouting();
             result = System.SQUID;
         } else if (routingOptions.equals(EnumSet.of(System.MERCURY, System.BOTH))) {
             result = System.MERCURY;
