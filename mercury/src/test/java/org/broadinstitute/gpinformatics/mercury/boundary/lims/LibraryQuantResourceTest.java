@@ -70,6 +70,7 @@ public class LibraryQuantResourceTest extends Arquillian {
         runBean.setQuantType("Pond Pico");
         runBean.setRunDate(new Date());
         runBean.setRunName(timestamp + "PondPico_Run");
+        runBean.setOperator("jowalsh");
         LibraryQuantBeanType libraryQuantBeanType = new LibraryQuantBeanType();
         libraryQuantBeanType.setRackPositionName("A01");
         libraryQuantBeanType.setTubeBarcode(tubeBarcode);

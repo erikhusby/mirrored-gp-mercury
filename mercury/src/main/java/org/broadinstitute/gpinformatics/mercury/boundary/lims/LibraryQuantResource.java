@@ -10,7 +10,10 @@ import org.broadinstitute.gpinformatics.mercury.boundary.lims.generated.LibraryQ
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.generated.LibraryQuantRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.generated.QpcrRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselEjb;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
+import javax.ejb.Stateful;
+import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
@@ -20,6 +23,8 @@ import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.List;
 
+@Stateful
+@RequestScoped
 @Path("/libraryquant")
 public class LibraryQuantResource {
 
@@ -34,6 +39,9 @@ public class LibraryQuantResource {
 
     @Inject
     private BSPUserList bspUserList;
+
+    @Inject
+    private UserBean userBean;
 
     @POST
     @Consumes(MediaType.APPLICATION_XML)
@@ -72,6 +80,7 @@ public class LibraryQuantResource {
         switch (systemRouter.getSystemOfRecordForVesselBarcodes(tubeBarcodes)) {
         case MERCURY:
             MessageCollection messageCollection = new MessageCollection();
+            getBspUser(libraryQuantRunBean.getOperator());
             vesselEjb.createLibraryQuantsFromRunBean(libraryQuantRunBean, messageCollection);
             if (messageCollection.hasErrors()) {
                 String errors = StringUtils.join(messageCollection.getErrors(), ",");
@@ -91,7 +100,15 @@ public class LibraryQuantResource {
         if (bspUser == null) {
             throw new RuntimeException("Failed to find operator " + operator);
         }
+        login(operator);
         return bspUser;
+    }
+
+    /**
+     * Login, so the audit trail shows the user from the post.
+     */
+    private void login(String operator) {
+        userBean.login(operator);
     }
 
 }

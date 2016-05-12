@@ -34,6 +34,7 @@
                 <xs:element type="xs:string" name="runName"/>
                 <xs:element type="xs:string" name="quantType"/>
                 <xs:element type="xs:dateTime" name="runDate"/>
+                <xs:element type="xs:string" name="operator"/>
                 <xs:element name="libraryQuantBeans" type="libraryQuantBeanType" maxOccurs="unbounded" minOccurs="0"/>
             </xs:sequence>
         </xs:complexType>
