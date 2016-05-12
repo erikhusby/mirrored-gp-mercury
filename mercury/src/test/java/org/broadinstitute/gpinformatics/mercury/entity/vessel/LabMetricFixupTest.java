@@ -332,6 +332,20 @@ public class LabMetricFixupTest extends Arquillian {
         }
     }
 
+    @Test(enabled = false)
+    public void fixupSupport1734() {
+        try {
+            utx.begin();
+            userBean.loginOSUser();
+            deleteRun("4-20-2016 IgFit Stock re-ribo",
+                    "SUPPORT-1734 remove Plating Ribo run, so lab can do initial ribo upload");
+            utx.commit();
+        } catch (NotSupportedException | SystemException | RollbackException | HeuristicMixedException |
+                HeuristicRollbackException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private void deleteRun(String runName, String reason) {
         LabMetricRun labMetricRun = dao.findByName(runName);
         for (LabMetric labMetric : labMetricRun.getLabMetrics()) {
