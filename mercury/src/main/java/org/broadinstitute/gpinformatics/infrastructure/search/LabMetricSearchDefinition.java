@@ -24,6 +24,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -277,16 +278,15 @@ public class LabMetricSearchDefinition {
                 labEventTypes.add(LabEventType.DENATURE_TO_FLOWCELL_TRANSFER);
                 labEventTypes.add(LabEventType.DILUTION_TO_FLOWCELL_TRANSFER);
 
-                LabVesselSearchDefinition.VesselDescendantTraverserCriteria eval
-                        = new LabVesselSearchDefinition.VesselDescendantTraverserCriteria(labEventTypes );
+                LabVesselSearchDefinition.VesselsForEventTraverserCriteria eval
+                        = new LabVesselSearchDefinition.VesselsForEventTraverserCriteria(labEventTypes );
                 labMetric.getLabVessel().evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
 
                 Set<String> barcodes = null;
-                if (!eval.getPositions().isEmpty()) {
-                    barcodes = new HashSet<>();
-                    for( Pair<String,VesselPosition> positionPair : eval.getPositions() ) {
-                        barcodes.add(positionPair.getLeft());
-                    }
+                for(Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions
+                        : eval.getPositions().asMap().entrySet()) {
+                        (barcodes==null?barcodes = new HashSet<>():barcodes)
+                                .add(labVesselAndPositions.getKey().getLabel());
                 }
                 return barcodes;
             }

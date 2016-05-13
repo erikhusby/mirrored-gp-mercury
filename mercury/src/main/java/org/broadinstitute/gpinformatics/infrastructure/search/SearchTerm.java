@@ -15,6 +15,7 @@ import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
 import javax.annotation.Nullable;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -133,33 +134,19 @@ public class SearchTerm implements Serializable, ColumnTabulation {
     public static class ImmutableTermFilter {
         private String propertyName;
         private SearchInstance.Operator operator;
-        private Object value;
-        private List<Object> values;
-
-        /**
-         * Constructor for when more than one value required to support in/not-in lists and between operators
-         * @param propertyName A property of the search term entity to base the filter on
-         * @param operator Filter restriction operator
-         * @param values Filter values, 2 required for between operator, 1 or more for list operators
-         */
-        public ImmutableTermFilter(
-                String propertyName, SearchInstance.Operator operator, List<Object> values){
-            this.propertyName = propertyName;
-            this.operator     = operator;
-            this.values       = values;
-        }
+        private Object[] values;
 
         /**
          * Constructor for when one value is required to support operator
          * @param propertyName A property of the search term entity to base the filter on
          * @param operator Filter restriction operator
-         * @param value Filter values, 2 required for between operator, 1 or more for list operators
+         * @param values Filter values, 2 required for between operator, 1 or more for list operators
          */
         public ImmutableTermFilter(
-                String propertyName, SearchInstance.Operator operator, Object value){
+                String propertyName, SearchInstance.Operator operator, Object ... values ){
             this.propertyName = propertyName;
             this.operator     = operator;
-            this.value        = value;
+            this.values = values;
         }
 
         public String getPropertyName(){
@@ -170,12 +157,8 @@ public class SearchTerm implements Serializable, ColumnTabulation {
             return operator;
         }
 
-        public List<Object> getValues() {
-            if( values != null ) {
-                return values;
-            } else {
-                return Collections.singletonList(value);
-            }
+        public Object[] getValues() {
+            return values;
         }
 
     }
