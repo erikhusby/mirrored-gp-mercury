@@ -2,6 +2,8 @@ package org.broadinstitute.gpinformatics.mercury.presentation;
 
 import com.google.common.collect.ImmutableSet;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -24,6 +26,7 @@ import java.util.EnumSet;
 @SessionScoped
 public class UserBean implements Serializable {
     private static final String SUPPORT_EMAIL = "mercury-support@broadinstitute.org";
+    private static final Log log = LogFactory.getLog(UserBean.class);
 
     /**
      * Prefix for CRSP roles. This is added to regular mercury roles; you can map from one to the other by adding
@@ -169,6 +172,7 @@ public class UserBean implements Serializable {
             }
         } catch (Exception e) {
             // This can happen for a few reasons, most common is JIRA server is down/misconfigured
+            log.error("Failed to communicate with JIRA", e);
             jiraStatus = ServerStatus.down;
         }
     }
