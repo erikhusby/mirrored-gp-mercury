@@ -211,174 +211,182 @@ public class ImportLcsetTest extends Arquillian {
         DocumentBuilder documentBuilder = builderFactory.newDocumentBuilder();
         // LCSET-7432 is for Dev Aliquots that are used in many transfers, so need to go back at least as far
         // as 11/Jun/2015.
-        Document document = documentBuilder.parse(new FileInputStream(
-                "C:\\Users\\thompson\\Downloads\\SearchRequest20150501.xml"));
+        String[] fileNames = {
+                "SearchRequest20150501.xml",
+                "SearchRequest20150801.xml",
+                "SearchRequest20151101.xml",
+                "SearchRequest20160201.xml",
+        };
+        for (String fileName : fileNames) {
+            Document document = documentBuilder.parse(new FileInputStream(
+                    "C:\\Users\\thompson\\Downloads\\" + fileName));
 
-        NodeList lcsetNodeList = (NodeList) lcsetKeyExpr.evaluate(document,
-                XPathConstants.NODESET);
-        // Iterate over LCSETs
-        for (int i = 0; i < lcsetNodeList.getLength(); i++) {
-            Bucket shearingBucket = bucketDao.findByName("Shearing Bucket");
-            Node keyNode = lcsetNodeList.item(i);
-            String lcsetId = keyNode.getFirstChild().getNodeValue();
-            System.out.println(lcsetId);
+            NodeList lcsetNodeList = (NodeList) lcsetKeyExpr.evaluate(document,
+                    XPathConstants.NODESET);
+            // Iterate over LCSETs
+            for (int i = 0; i < lcsetNodeList.getLength(); i++) {
+                Bucket shearingBucket = bucketDao.findByName("Shearing Bucket");
+                Node keyNode = lcsetNodeList.item(i);
+                String lcsetId = keyNode.getFirstChild().getNodeValue();
+                System.out.println(lcsetId);
 
-            // If LCSET doesn't exist in Mercury
-            LabBatch labBatch = labBatchDao.findByBusinessKey(lcsetId);
-            if (labBatch != null) {
-                continue;
-            }
-            Node lcsetTypeNode = (Node) lcsetTypeExpr.evaluate(keyNode, XPathConstants.NODE);
-            String lcsetType = lcsetTypeNode.getFirstChild().getNodeValue();
-
-            // Get work request tubes
-            lcsetQuery.setParameter("lcset", lcsetId);
-            List<?> resultList = lcsetQuery.getResultList();
-            System.out.println("Found " + resultList.size() + " Squid tubes by LCSET.");
-            if (resultList.isEmpty()) {
-                Node workRequestNode = (Node) workRequestExpr.evaluate(keyNode, XPathConstants.NODE);
-                if (workRequestNode == null) {
+                // If LCSET doesn't exist in Mercury
+                LabBatch labBatch = labBatchDao.findByBusinessKey(lcsetId);
+                if (labBatch != null) {
                     continue;
                 }
-                String workRequest = workRequestNode.getFirstChild().getNodeValue();
-                if (workRequest != null) {
-                    System.out.println("Work request " + workRequest);
-                    try {
-                        Integer.parseInt(workRequest);
-                    } catch (NumberFormatException e) {
-                        System.out.println("Failed to convert work request to number");
+                Node lcsetTypeNode = (Node) lcsetTypeExpr.evaluate(keyNode, XPathConstants.NODE);
+                String lcsetType = lcsetTypeNode.getFirstChild().getNodeValue();
+
+                // Get work request tubes
+                lcsetQuery.setParameter("lcset", lcsetId);
+                List<?> resultList = lcsetQuery.getResultList();
+                System.out.println("Found " + resultList.size() + " Squid tubes by LCSET.");
+                if (resultList.isEmpty()) {
+                    Node workRequestNode = (Node) workRequestExpr.evaluate(keyNode, XPathConstants.NODE);
+                    if (workRequestNode == null) {
                         continue;
                     }
-                    workRequestQuery.setParameter("work_request", workRequest);
-                    resultList = workRequestQuery.getResultList();
-                    System.out.println("Found " + resultList.size() + " Squid tubes by work request.");
-                }
-                if (resultList.isEmpty()) {
-                    continue;
-                }
-            }
-            List<String> tubeBarcodes = new ArrayList<>();
-            List<String> controlTubeBarcodes = new ArrayList<>();
-            List<Row> nonControlTubeBarcodes = new ArrayList<>();
-            Set<String> productOrderNames = new HashSet<>();
-            Set<String> sampleIds = new HashSet<>();
-            for (Object o : resultList) {
-                Row row = new Row((Object[]) o);
-
-                sampleIds.add(row.getSampleBarcode());
-                if (row.getProductOrderName() != null) {
-                    productOrderNames.add(row.getProductOrderName());
-                }
-                tubeBarcodes.add(row.getReceptacleBarcode());
-
-                // If product order is null, assume it's a control
-                if (row.getProductOrderName() == null) {
-                    if (!(row.getIndividualName().equals("NA12878") ||
-                            row.getIndividualName().equals("WATER_CONTROL") ||
-                            row.getIndividualName().equals("K-562") ||
-                            row.getIndividualName().equals("Affi E.coli"))) {
-                        System.out.println("Non-control sample with no product order: " + row.getIndividualName());
+                    String workRequest = workRequestNode.getFirstChild().getNodeValue();
+                    if (workRequest != null) {
+                        System.out.println("Work request " + workRequest);
+                        try {
+                            Integer.parseInt(workRequest);
+                        } catch (NumberFormatException e) {
+                            System.out.println("Failed to convert work request to number");
+                            continue;
+                        }
+                        workRequestQuery.setParameter("work_request", workRequest);
+                        resultList = workRequestQuery.getResultList();
+                        System.out.println("Found " + resultList.size() + " Squid tubes by work request.");
                     }
-                    controlTubeBarcodes.add(row.getReceptacleBarcode());
-                } else {
-                    nonControlTubeBarcodes.add(row);
+                    if (resultList.isEmpty()) {
+                        continue;
+                    }
                 }
-            }
+                List<String> tubeBarcodes = new ArrayList<>();
+                List<String> controlTubeBarcodes = new ArrayList<>();
+                List<Row> nonControlTubeBarcodes = new ArrayList<>();
+                Set<String> productOrderNames = new HashSet<>();
+                Set<String> sampleIds = new HashSet<>();
+                for (Object o : resultList) {
+                    Row row = new Row((Object[]) o);
 
-            // Get dev aliquots.
-            Map<String, List<String>> mapSampleToListDevTubes = new HashMap<>();
-            devAliquotsQuery.setParameter("sampleIds", sampleIds);
-            List<?> devAliquots = devAliquotsQuery.getResultList();
-            for (Object row : devAliquots) {
-                Object[] row1 = (Object[]) row;
-                String sampleBarcode = (String) row1[0];
-                String tubeBarcode = (String) row1[1];
-                List<String> devTubeBarcodes = mapSampleToListDevTubes.get(sampleBarcode);
-                if (devTubeBarcodes == null) {
-                    devTubeBarcodes = new ArrayList<>();
-                    mapSampleToListDevTubes.put(sampleBarcode, devTubeBarcodes);
-                }
-                devTubeBarcodes.add(tubeBarcode);
-            }
+                    sampleIds.add(row.getSampleBarcode());
+                    if (row.getProductOrderName() != null) {
+                        productOrderNames.add(row.getProductOrderName());
+                    }
+                    tubeBarcodes.add(row.getReceptacleBarcode());
 
-            // Get existing PDOs and tubes
-            if (productOrderNames.size() > 1) {
-                System.out.println("Multiple PDOs " + productOrderNames);
-            }
-            List<ProductOrder> productOrders = productOrderDao.findListByBusinessKeys(productOrderNames);
-            Map<String, BarcodedTube> mapBarcodeToTube = barcodedTubeDao.findByBarcodes(tubeBarcodes);
-
-            // Create bucket entries
-            Set<LabVessel> nonControlTubes = new HashSet<>();
-            List<BucketEntry> bucketEntries = new ArrayList<>();
-            LabEvent labEvent = null;
-            for (Row row : nonControlTubeBarcodes) {
-                String nonControlTubeBarcode = row.getReceptacleBarcode();
-                BarcodedTube barcodedTube = mapBarcodeToTube.get(nonControlTubeBarcode);
-                if (barcodedTube == null) {
-                    System.out.println("Failed to find " + nonControlTubeBarcode + " in Mercury");
-                    continue;
-                }
-                if (barcodedTube.getMercurySamples().isEmpty()) {
-                    System.out.println("Failed to find MercurySamples for " + nonControlTubeBarcode);
-                    continue;
-                }
-                nonControlTubes.add(barcodedTube);
-
-                ProductOrder foundProductOrder = null;
-                for (ProductOrder productOrder : productOrders) {
-                    if (productOrder.getJiraTicketKey().equals(row.getProductOrderName())) {
-                        foundProductOrder = productOrder;
-                        break;
+                    // If product order is null, assume it's a control
+                    if (row.getProductOrderName() == null) {
+                        if (!(row.getIndividualName().equals("NA12878") ||
+                                row.getIndividualName().equals("WATER_CONTROL") ||
+                                row.getIndividualName().equals("K-562") ||
+                                row.getIndividualName().equals("Affi E.coli"))) {
+                            System.out.println("Non-control sample with no product order: " + row.getIndividualName());
+                        }
+                        controlTubeBarcodes.add(row.getReceptacleBarcode());
+                    } else {
+                        nonControlTubeBarcodes.add(row);
                     }
                 }
 
-                if (foundProductOrder == null) {
-                    System.out.println("Failed to find Product Order " + row.getProductOrderName());
-                    continue;
-                }
-
-                bucketEntries.add(new BucketEntry(barcodedTube, foundProductOrder, shearingBucket,
-                        BucketEntry.BucketEntryType.PDO_ENTRY, 1));
-
-                // Create a transfer from each sample to its dev aliquots.
-                List<String> devTubeList = mapSampleToListDevTubes.get(row.getSampleBarcode());
-                if (devTubeList != null && !devTubeList.isEmpty()) {
-                    if (labEvent == null) {
-                        labEvent = new LabEvent(LabEventType.TRANSFER, new Date(), "ImportLcsetTest", 1L,
-                                101L, "ImportLcsetTest");
+                // Get dev aliquots.
+                Map<String, List<String>> mapSampleToListDevTubes = new HashMap<>();
+                devAliquotsQuery.setParameter("sampleIds", sampleIds);
+                List<?> devAliquots = devAliquotsQuery.getResultList();
+                for (Object row : devAliquots) {
+                    Object[] row1 = (Object[]) row;
+                    String sampleBarcode = (String) row1[0];
+                    String tubeBarcode = (String) row1[1];
+                    List<String> devTubeBarcodes = mapSampleToListDevTubes.get(sampleBarcode);
+                    if (devTubeBarcodes == null) {
+                        devTubeBarcodes = new ArrayList<>();
+                        mapSampleToListDevTubes.put(sampleBarcode, devTubeBarcodes);
                     }
-                    for (String devTube : devTubeList) {
-                        new VesselToVesselTransfer(barcodedTube, new BarcodedTube(devTube), labEvent);
+                    devTubeBarcodes.add(tubeBarcode);
+                }
+
+                // Get existing PDOs and tubes
+                if (productOrderNames.size() > 1) {
+                    System.out.println("Multiple PDOs " + productOrderNames);
+                }
+                List<ProductOrder> productOrders = productOrderDao.findListByBusinessKeys(productOrderNames);
+                Map<String, BarcodedTube> mapBarcodeToTube = barcodedTubeDao.findByBarcodes(tubeBarcodes);
+
+                // Create bucket entries
+                Set<LabVessel> nonControlTubes = new HashSet<>();
+                List<BucketEntry> bucketEntries = new ArrayList<>();
+                LabEvent labEvent = null;
+                for (Row row : nonControlTubeBarcodes) {
+                    String nonControlTubeBarcode = row.getReceptacleBarcode();
+                    BarcodedTube barcodedTube = mapBarcodeToTube.get(nonControlTubeBarcode);
+                    if (barcodedTube == null) {
+                        System.out.println("Failed to find " + nonControlTubeBarcode + " in Mercury");
+                        continue;
+                    }
+                    if (barcodedTube.getMercurySamples().isEmpty()) {
+                        System.out.println("Failed to find MercurySamples for " + nonControlTubeBarcode);
+                        continue;
+                    }
+                    nonControlTubes.add(barcodedTube);
+
+                    ProductOrder foundProductOrder = null;
+                    for (ProductOrder productOrder : productOrders) {
+                        if (productOrder.getJiraTicketKey().equals(row.getProductOrderName())) {
+                            foundProductOrder = productOrder;
+                            break;
+                        }
+                    }
+
+                    if (foundProductOrder == null) {
+                        System.out.println("Failed to find Product Order " + row.getProductOrderName());
+                        continue;
+                    }
+
+                    bucketEntries.add(new BucketEntry(barcodedTube, foundProductOrder, shearingBucket,
+                            BucketEntry.BucketEntryType.PDO_ENTRY, 1));
+
+                    // Create a transfer from each sample to its dev aliquots.
+                    List<String> devTubeList = mapSampleToListDevTubes.get(row.getSampleBarcode());
+                    if (devTubeList != null && !devTubeList.isEmpty()) {
+                        if (labEvent == null) {
+                            labEvent = new LabEvent(LabEventType.TRANSFER, new Date(), "ImportLcsetTest", 1L,
+                                    101L, "ImportLcsetTest");
+                        }
+                        for (String devTube : devTubeList) {
+                            new VesselToVesselTransfer(barcodedTube, new BarcodedTube(devTube), labEvent);
+                        }
                     }
                 }
+
+                if (!bucketEntries.isEmpty()) {
+                    // Create LCSET
+                    labBatch = new LabBatch(lcsetId, nonControlTubes, LabBatch.LabBatchType.WORKFLOW);
+                    String workflow = mapLcsetTypeToWorkflow.get(lcsetType);
+                    if (workflow == null) {
+                        System.out.println("Failed to find workflow mapping for " + lcsetType);
+                    } else if (!workflow.isEmpty()) {
+                        labBatch.setWorkflowName(workflow);
+                    }
+                    for (BucketEntry bucketEntry : bucketEntries) {
+                        labBatch.addBucketEntry(bucketEntry);
+                    }
+
+                    // Register controls
+                    for (String controlTubeBarcode : controlTubeBarcodes) {
+                        labBatch.addLabVessel(mapBarcodeToTube.get(controlTubeBarcode));
+                    }
+
+                    if (labEvent != null) {
+                        labBatchDao.persist(labEvent);
+                    }
+                    labBatchDao.persist(labBatch);
+                }
+                labBatchDao.flush();
+                labBatchDao.clear();
             }
-
-            if (!bucketEntries.isEmpty()) {
-                // Create LCSET
-                labBatch = new LabBatch(lcsetId, nonControlTubes, LabBatch.LabBatchType.WORKFLOW);
-                String workflow = mapLcsetTypeToWorkflow.get(lcsetType);
-                if (workflow == null) {
-                    System.out.println("Failed to find workflow mapping for " + lcsetType);
-                } else if (!workflow.isEmpty()) {
-                    labBatch.setWorkflowName(workflow);
-                }
-                for (BucketEntry bucketEntry : bucketEntries) {
-                    labBatch.addBucketEntry(bucketEntry);
-                }
-
-                // Register controls
-                for (String controlTubeBarcode : controlTubeBarcodes) {
-                    labBatch.addLabVessel(mapBarcodeToTube.get(controlTubeBarcode));
-                }
-
-                if (labEvent != null) {
-                    labBatchDao.persist(labEvent);
-                }
-                labBatchDao.persist(labBatch);
-            }
-            labBatchDao.flush();
-            labBatchDao.clear();
         }
     }
 
