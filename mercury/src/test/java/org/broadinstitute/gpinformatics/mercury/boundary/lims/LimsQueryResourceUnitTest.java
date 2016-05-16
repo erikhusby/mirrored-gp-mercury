@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReagentType;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.GenericReagentDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
@@ -34,6 +35,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
 import static org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter.System.MERCURY;
@@ -489,9 +491,9 @@ public class LimsQueryResourceUnitTest {
                 .andReturn(new GenericReagent("SbsKitBox1", "SbsLotBarcode", new Date()));
         replayAll();
 
-        boolean isRegistered =
-                resource.isReagentNameLotExpirationRegistered("SbsKitBox1", "SbsLotBarcode", "2016-04-28");
-        assertThat(isRegistered, is(true));
+        Set<ReagentType> reagentTypes =
+                resource.findAllReagentsListedInEventWithReagent("SbsKitBox1", "SbsLotBarcode", "2016-04-28");
+        assertThat(reagentTypes, notNullValue());
 
         verifyAll();
     }

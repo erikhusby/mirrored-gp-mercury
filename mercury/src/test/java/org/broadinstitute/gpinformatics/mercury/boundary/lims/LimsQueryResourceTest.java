@@ -488,12 +488,16 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
 
     @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testisReagentNameLotExpirationRegistered(@ArquillianResource URL baseUrl)
+    public void testFindAllReagentsListedInEventWithReagent(@ArquillianResource URL baseUrl)
             throws Exception {
-        WebResource resource = makeWebResource(baseUrl, "isReagentNameLotExpirationRegistered")
-                .queryParam("name", "A Base Enzyme").queryParam("lot", "14D02A0012")
-                .queryParam("expiration", "2015-07-01");
+        WebResource resource = makeWebResource(baseUrl, "findAllReagentsListedInEventWithReagent")
+                .queryParam("name", "TruSeq Rapid SBS Kit").queryParam("lot", "15L03A0047")
+                .queryParam("expiration", "2016-06-28");
         String result = get(resource);
-        assertThat(result, is(equalTo("true")));
+        assertThat(result, containsString("\"kitType\":\"Universal Sequencing Buffer 2\""));
+        assertThat(result, containsString("\"kitType\":\"Universal Sequencing Buffer 1\""));
+        assertThat(result, containsString("\"kitType\":\"Incorporation Master Mix\""));
+        assertThat(result, containsString("\"kitType\":\"Cleavage Reagent Master Mix\""));
+        assertThat(result, containsString("\"kitType\":\"Scan Reagent\","));
     }
 }
