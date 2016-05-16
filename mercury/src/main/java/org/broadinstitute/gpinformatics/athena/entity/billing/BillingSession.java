@@ -224,6 +224,18 @@ public class BillingSession implements Serializable {
         return allRemoved;
     }
 
+    /**
+     * Tells whether or not this billing session has been billed.
+     *
+     * Sessions that are cancelled or fail for all samples are removed from the database, so having a billedDate is a
+     * distinguishing feature of sessions that have been completed for at least one sample.
+     *
+     * @return true if the session has been billed; false if it is in progress
+     */
+    public boolean isComplete() {
+        return billedDate != null;
+    }
+
     @Override
     public boolean equals(Object other) {
         if (this == other) {
