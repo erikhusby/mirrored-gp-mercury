@@ -400,6 +400,7 @@
                     "fnDrawCallback": function () {
                         $j(".submissionControls").show();
                         $j(".accordion").show();
+                        $j(".ui-accordion-content").css('overflow', 'visible');
                         $j('.shiftCheckbox').enableCheckboxRangeSelection();
 
                         if ($("#columnFilter_filteringText").length === 0) {
@@ -408,7 +409,7 @@
                                 "style": "padding-left:2em;"
                             }).prependTo($j("#filtering"));
                             $j(filteringDiv).prepend(jQuery("<div class='headerText'></div>"));
-                            $j(filteringDiv).prepend(jQuery("<div class='dtFilters'></div>"));
+                            $j(filteringDiv).prepend(jQuery("<div class='dtFilters ellipsis'></div>"));
                         }
 
                         $j(".submission-status-tooltip").popover({

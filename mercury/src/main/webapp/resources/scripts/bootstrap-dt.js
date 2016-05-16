@@ -57,7 +57,7 @@ function includeAdvancedFilter(oTable, tableID) {
     });
     findFilterTextInput(oTable).focusout(function () {
         var filterTextInput = oTable.fnSettings().oPreviousSearch;
-        if (isBlank(filterTextInput.text())) {
+        if (isBlank(filterTextInput.sSearch)) {
             oTable.fnFilterClear();
         }
     });
