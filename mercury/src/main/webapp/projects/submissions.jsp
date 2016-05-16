@@ -100,7 +100,7 @@
                 buttons: {
                     "ApplyBarcodesButton": {
                         id: "applyBarcodes",
-                        text: "Apply barcodes",
+                        text: "Select Samples",
                         click: applyBarcodes
                     },
                     Cancel: function () {
@@ -129,7 +129,7 @@
 
         function addBarcodeNotFoundError(barcode) {
             // todo avoid showing duplicate strings
-            $j('#NoBucketEntries tbody').append(
+            $j('#BarcodeErrors tbody').append(
                     "<tr><td>" + barcode + "</td></tr>"
             );
         }
@@ -140,7 +140,7 @@
 
         function showNoEntriesErrors() {
             showBarcodeErrors();
-            $j('#NoSamplesErrors').show();
+            $j('#NoEntriesErrors').show();
         }
 
         function showAmbiguousEntryErrors() {
@@ -152,7 +152,7 @@
             $j('#NoEntries tbody tr').remove();
             $j('#AmbiguousEntries tbody tr').remove();
 
-            $j('#NoSamplesErrors').hide();
+            $j('#NoEntriesErrors').hide();
             $j('#AmbiguousEntriesErrors').hide();
         }
 
@@ -180,7 +180,8 @@
             }
 
             for (var i = 0; i < splitBarcodes.length; i++) {
-                var barcodeInputSelector = uncheckedInputByValue(splitBarcodes[i]);
+                var barcode = splitBarcodes[i];
+                var barcodeInputSelector = uncheckedInputByValue(barcode);
                 var numMatchingRows = $j(barcodeInputSelector).length;
 
                 if (numMatchingRows > 1) {
@@ -219,16 +220,23 @@
 
         function addStripesMessageDiv(alertType, fieldSelector) {
             var alertClass = 'alert-' + alertType;
-            var messageBox = $j(document.createElement("div"));
-            messageBox.css({"margin-left": "20%", "margin-right": "20%"});
-            messageBox.addClass("alert").addClass(alertClass);
-            if (fieldSelector != undefined) {
-                $j(fieldSelector).addClass(alertType);
-            }
-            messageBox.append('<button type="button" class="close" data-dismiss="alert">&times;</button>')
-            messageBox.append('<ul></ul>');
+            var messageBox = jQuery("<div></div>",{
+                "class":"alert alertClass".replace("alertClass", alertClass)
+            });
 
-            $j('.page-body').before(messageBox);
+            messageBox.append('<ul></ul>');
+            if (fieldSelector != undefined) {
+                $j(fieldSelector).empty();
+                $j(fieldSelector).append(messageBox);
+            } else {
+                messageBox.append(jQuery("<button>&times;</button>", {
+                    "type": "button",
+                    "class": "close",
+                    "data-dismiss": "alert"
+                }));
+                messageBox.css({"margin-left": "20%", "margin-right": "20%"});
+                $j('.page-body').before(messageBox);
+            }
             return messageBox;
         }
 
@@ -331,7 +339,11 @@
                             "dataType": 'json',
                             "url": sSource,
                             "data": aoData,
-                            "success": fnCallback
+                            "success": fnCallback,
+                            "error": function (jqXHR, textStatus, errorThrown) {
+                                addStripesMessage("Error receiving submission data: " + errorThrown, "error", ".dataTables_processing");
+                            }
+
                         });
                     },
 
@@ -448,7 +460,6 @@
 <stripes:form beanclass="${actionBean.class.name}" class="form-horizontal">
     <stripes:hidden name="submitString"/>
     <stripes:hidden name="researchProject" value="${actionBean.editResearchProject.jiraTicketKey}"/>
-
     <div class="submissionControls">
         <div class="control-group">
             <stripes:label for="bioProject" class="control-label label-form">Choose a Study *</stripes:label>
@@ -485,7 +496,7 @@
                         value="Post Selected Submissions" class="btn submissionControls"
                         disabled="${!actionBean.submissionAllowed}"/>
         <a href="javascript:void(0)" id="PasteBarcodesList"
-           title="Use a pasted-in list of tube barcodes to select samples">Choose via list of barcodes...</a>
+           title="Select samples using a pasted-in list of values.">Choose via list of samples...</a>
     </div>
     <table class="table simple" id="submissionSamples">
         <thead>
@@ -531,11 +542,11 @@
             <div id="BarcodeErrors">
                 <p>We're sorry, but Mercury could not automatically choose submission entries
                     because of the following errors.</p>
-                <div id="NoSamplesErrors">
-                    <table id="NoSamples">
+                <div id="NoEntriesErrors">
+                    <table id="NoEntries">
                         <thead>
                         <tr>
-                            <th>No submission entries</th>
+                            <th>No submission entries match</th>
                         </tr>
                         </thead>
                         <tbody></tbody>
