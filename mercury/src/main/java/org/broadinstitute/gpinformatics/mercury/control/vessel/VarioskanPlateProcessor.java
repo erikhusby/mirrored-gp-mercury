@@ -39,6 +39,7 @@ public class VarioskanPlateProcessor extends TableProcessor {
 
     // The barcode sometimes has a trailing .0, so use a group to extract only the digits before that
     private static final Pattern BARCODE_PATTERN = Pattern.compile("(\\d*)\\.?\\d*");
+    private static final String SAMPLE_PREFIX = "Un_";
     public static final int SCALE = 2;
     private List<String> headers;
     private List<PlateWellResult> plateWellResults = new ArrayList<>();
@@ -92,34 +93,38 @@ public class VarioskanPlateProcessor extends TableProcessor {
     @Override
     public void processRowDetails(Map<String, String> dataRow, int dataRowIndex) {
         String plate = dataRow.get(Headers.PLATE.getText());
+        String sample = dataRow.get(Headers.SAMPLE.getText());
         String well = dataRow.get(Headers.WELL.getText());
         String value = dataRow.get(Headers.VALUE.getText());
         String result = dataRow.get(Headers.RESULT.getText());
 
         if (plate != null && !plate.isEmpty()) {
-            Matcher matcher = BARCODE_PATTERN.matcher(plate);
-            // value and result empty means the row is in the Curve Fit Calibrator Table
-            if (matcher.matches() && !StringUtils.isEmpty(value) && !StringUtils.isEmpty(result)) {
-                String paddedBarcode = StringUtils.leftPad(matcher.group(1), 12, '0');
-                VesselPosition vesselPosition = VesselPosition.getByName(well.trim());
-                if (vesselPosition == null) {
-                    addDataMessage("Failed to find position " + well, dataRowIndex);
-                }
-                try {
-                    BigDecimal bigDecimal;
-                    if (result.equals("NaN")) {
-                        if (metricType == LabMetric.MetricType.PLATING_RIBO) {
-                            throw new RuntimeException("NaN not currently supported for RIBO");
-                        }
-                        // result = 0.73 * value + 0.69
-                        bigDecimal = new BigDecimal(value).multiply(new BigDecimal("0.73")).add(new BigDecimal("0.69"));
-                    } else {
-                        bigDecimal = new BigDecimal(result);
+            if (sample !=null && sample.startsWith(SAMPLE_PREFIX)) {
+                Matcher matcher = BARCODE_PATTERN.matcher(plate);
+                // value and result empty means the row is in the Curve Fit Calibrator Table
+                if (matcher.matches() && !StringUtils.isEmpty(value) && !StringUtils.isEmpty(result)) {
+                    String paddedBarcode = StringUtils.leftPad(matcher.group(1), 12, '0');
+                    VesselPosition vesselPosition = VesselPosition.getByName(well.trim());
+                    if (vesselPosition == null) {
+                        addDataMessage("Failed to find position " + well, dataRowIndex);
                     }
-                    bigDecimal = MathUtils.scaleTwoDecimalPlaces(bigDecimal);
-                    plateWellResults.add(new PlateWellResult(paddedBarcode, vesselPosition, bigDecimal));
-                } catch (NumberFormatException e) {
-                    addDataMessage("Failed to parse number " + result, dataRowIndex);
+                    try {
+                        BigDecimal bigDecimal;
+                        if (result.equals("NaN")) {
+                            if (metricType == LabMetric.MetricType.PLATING_RIBO) {
+                                throw new RuntimeException("NaN not currently supported for RIBO");
+                            }
+                            // result = 0.73 * value + 0.69
+                            bigDecimal =
+                                    new BigDecimal(value).multiply(new BigDecimal("0.73")).add(new BigDecimal("0.69"));
+                        } else {
+                            bigDecimal = new BigDecimal(result);
+                        }
+                        bigDecimal = MathUtils.scaleTwoDecimalPlaces(bigDecimal);
+                        plateWellResults.add(new PlateWellResult(paddedBarcode, vesselPosition, bigDecimal));
+                    } catch (NumberFormatException e) {
+                        addDataMessage("Failed to parse number " + result, dataRowIndex);
+                    }
                 }
             }
         }
