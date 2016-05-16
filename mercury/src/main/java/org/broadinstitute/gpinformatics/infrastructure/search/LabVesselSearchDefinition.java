@@ -832,12 +832,12 @@ public class LabVesselSearchDefinition {
                 labEventTypes.add(LabEventType.DILUTION_TO_FLOWCELL_TRANSFER);
 
                 VesselsForEventTraverserCriteria eval
-                        = new VesselsForEventTraverserCriteria(labEventTypes );
+                        = new VesselsForEventTraverserCriteria( labEventTypes );
                 labVessel.evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
 
                 for(Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions
                         : eval.getPositions().asMap().entrySet()) {
-                    (barcodes==null?new HashSet<String>():barcodes)
+                    (barcodes==null?barcodes=new HashSet<String>():barcodes)
                             .add(labVesselAndPositions.getKey().getLabel());
                 }
                 return barcodes;
