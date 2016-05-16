@@ -315,7 +315,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
             if (submissionLibraryDescriptor == null) {
                 submissionLibraryDescriptor = findDefaultSubmissionType(editResearchProject);
                 if (submissionLibraryDescriptor != null) {
-                    selectedSubmissionLibraryDescriptor = submissionLibraryDescriptor.getDescription();
+                    selectedSubmissionLibraryDescriptor = submissionLibraryDescriptor.getName();
                 }
             }
             if (submissionRepository == null) {
@@ -351,7 +351,11 @@ public class ResearchProjectActionBean extends CoreActionBean {
         SubmissionLibraryDescriptor defaultSubmissionLibraryDescriptor = null;
         Set<SubmissionLibraryDescriptor> projectSubmissionLibraryDescriptors =new HashSet<>();
         for (ProductOrder productOrder : researchProject.getProductOrders()) {
-            projectSubmissionLibraryDescriptors.add(productOrder.getProduct().getProductFamily().getSubmissionType());
+            SubmissionLibraryDescriptor submissionType =
+                    productOrder.getProduct().getProductFamily().getSubmissionType();
+            if (submissionType != null) {
+                projectSubmissionLibraryDescriptors.add(submissionType);
+            }
         }
         if (projectSubmissionLibraryDescriptors.size() == 1) {
             defaultSubmissionLibraryDescriptor = projectSubmissionLibraryDescriptors.iterator().next();

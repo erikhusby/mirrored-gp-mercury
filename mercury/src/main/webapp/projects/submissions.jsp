@@ -470,7 +470,7 @@
         </div>
         <div class="control-group">
             <stripes:label for="submissionType"
-                           class="control-label label-form">Choose a Library Descriptor *</stripes:label>
+                           class="control-label label-form">Choose a Library *</stripes:label>
 
             <div class="controls">
                 <stripes:select id="submissionType" name="selectedSubmissionLibraryDescriptor">
@@ -481,7 +481,7 @@
         </div>
         <div class="control-group">
             <stripes:label for="submissionRepository"
-                           class="control-label label-form">Choose a Repository *</stripes:label>
+                           class="control-label label-form">Choose a Site *</stripes:label>
             <div class="controls">
                 <stripes:select id="submissionRepository" name="selectedSubmissionRepository">
                     <option>Choose...</option>
