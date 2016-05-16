@@ -210,42 +210,20 @@ public class SubmissionDtoFetcher {
         return sampleSubmissionMap;
     }
 
-    public void refreshSubmissionStatuses(Collection<SubmissionDto.SubmissionDisplayBean> submissionDisplayBeans) {
-
-        Map<String, SubmissionDto.SubmissionDisplayBean> uuIdDtoMap = new HashMap<>(submissionDisplayBeans.size());
-        for (SubmissionDto.SubmissionDisplayBean submissionDisplayBean : submissionDisplayBeans) {
-            if (StringUtils.isNotBlank(submissionDisplayBean.getUuid())) {
-                uuIdDtoMap.put(submissionDisplayBean.getUuid(), submissionDisplayBean);
+    public void refreshSubmissionStatuses(List<SubmissionDto> submissionDtoList) {
+        Map<String, SubmissionDto> uuIdDtoMap = new HashMap<>(submissionDtoList.size());
+        for (SubmissionDto submissionDto : submissionDtoList) {
+            if (StringUtils.isNotBlank(submissionDto.getUuid())) {
+                uuIdDtoMap.put(submissionDto.getUuid(), submissionDto);
             }
         }
         Set<String> uuIds = uuIdDtoMap.keySet();
         if (!uuIds.isEmpty()) {
             Collection<SubmissionStatusDetailBean> submissionDetailBeans =
                     submissionsService.getSubmissionStatus(uuIds.toArray(new String[uuIds.size()]));
-//            PropertyUtilsBean propertyUtilsBean = new PropertyUtilsBean();
             for (SubmissionStatusDetailBean statusDetailBean : submissionDetailBeans) {
-                SubmissionDto.SubmissionDisplayBean submissionDisplayBean = uuIdDtoMap.get(statusDetailBean.getUuid());
-                String status = statusDetailBean.getStatus();
-                if (status != null) {
-                    submissionDisplayBean.setSubmittedStatus(status);
-                }
-                submissionDisplayBean.setSubmittedErrors(statusDetailBean.getErrors());
-                String version = statusDetailBean.getSubmittedVersion();
-                if (version != null) {
-                    submissionDisplayBean.setSubmittedVersion(Integer.parseInt(version));
-                }
-                String libraryDescriptor = statusDetailBean.getLibraryDescriptor();
-                if (libraryDescriptor != null) {
-                    submissionDisplayBean.setSubmissionLibraryDescriptor(libraryDescriptor);
-                }
-                String repositoryName = statusDetailBean.getRepositoryName();
-                if (repositoryName != null) {
-                    submissionDisplayBean.setSubmissionRepositoryName(repositoryName);
-                }
-                Date lastStatusUpdate = statusDetailBean.getLastStatusUpdate();
-                if (lastStatusUpdate != null) {
-                    submissionDisplayBean.setStatusDate(SubmissionDto.DATE_FORMAT.format(lastStatusUpdate));
-                }
+                SubmissionDto submissionDto = uuIdDtoMap.get(statusDetailBean.getUuid());
+                submissionDto.setStatusDetailBean(statusDetailBean);
             }
         }
     }

@@ -5,7 +5,6 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.codehaus.jackson.annotate.JsonIgnore;
-import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 
 import javax.xml.bind.annotation.XmlElement;
@@ -27,18 +26,18 @@ public class SubmissionStatusDetailBean implements Serializable {
     private List<String> errors=new ArrayList<>();
     private Date lastStatusUpdate;
     private BioProject bioproject;
-    private String repositoryName;
-    private String libraryDescriptor;
+    private String site;
+    private String submissiondatatype;
     private String submittedVersion;
 
     public SubmissionStatusDetailBean() {
     }
 
-    public SubmissionStatusDetailBean(String uuid, String status, String repositoryName, String libraryDescriptor,
+    public SubmissionStatusDetailBean(String uuid, String status, String site, String submissiondatatype,
                                       Date lastStatusUpdate, String... errors) {
         this.uuid = uuid;
-        this.repositoryName = repositoryName;
-        this.libraryDescriptor = libraryDescriptor;
+        this.site = site;
+        this.submissiondatatype = submissiondatatype;
         this.lastStatusUpdate = lastStatusUpdate;
         setStatus(status);
         setErrors(Arrays.asList(errors));
@@ -92,23 +91,23 @@ public class SubmissionStatusDetailBean implements Serializable {
         this.bioproject = bioproject;
     }
 
-    public String getRepositoryName() {
-        return repositoryName;
+    public String getSite() {
+        return site;
     }
 
     @XmlElement(name = "site")
-    public void setRepositoryName(String repositoryName) {
-        this.repositoryName = repositoryName;
+    public void setSite(String site) {
+        this.site = site;
     }
 
 
-    public String getLibraryDescriptor() {
-        return libraryDescriptor;
+    public String getSubmissiondatatype() {
+        return submissiondatatype;
     }
 
     @XmlElement(name = "submissiondatatype")
-    public void setLibraryDescriptor(String libraryDescriptor) {
-        this.libraryDescriptor = libraryDescriptor;
+    public void setSubmissiondatatype(String submissiondatatype) {
+        this.submissiondatatype = submissiondatatype;
     }
 
     @Override

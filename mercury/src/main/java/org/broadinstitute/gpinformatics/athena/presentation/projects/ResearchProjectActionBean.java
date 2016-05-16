@@ -186,7 +186,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     })
     private ResearchProject editResearchProject;
 
-    private List<SubmissionDto.SubmissionDisplayBean> submissionSamples = new ArrayList<>();
+    private List<SubmissionDto> submissionSamples = new ArrayList<>();
     /*
      * The search query.
      */
@@ -879,24 +879,15 @@ public class ResearchProjectActionBean extends CoreActionBean {
     private void updateSubmissionSamples() {
         if (editResearchProject != null) {
             String rpSamplesKey = String.format("%s_submissionSamples", editResearchProject.getBusinessKey());
-            submissionSamples = (List<SubmissionDto.SubmissionDisplayBean>) getContext().getSession().getAttribute(rpSamplesKey);
+            submissionSamples = (List<SubmissionDto>) getContext().getSession().getAttribute(rpSamplesKey);
             if (submissionSamples == null) {
-                submissionSamples = createSubmissionDisplayList(submissionDtoFetcher.fetch(editResearchProject));
+                submissionSamples = submissionDtoFetcher.fetch(editResearchProject);
                 getContext().getSession().setAttribute(rpSamplesKey,submissionSamples);
             } else {
                 submissionDtoFetcher.refreshSubmissionStatuses(submissionSamples);
                 log.info("submissionSamples retrieved from cache.");
             }
         }
-    }
-
-    private List<SubmissionDto.SubmissionDisplayBean> createSubmissionDisplayList(List<SubmissionDto> submissionDtos) {
-        List<SubmissionDto.SubmissionDisplayBean> sampleList=new ArrayList<>(submissionDtos.size());
-        for (SubmissionDto submissionDto : submissionDtos) {
-            sampleList.add(submissionDto.displayBean());
-        }
-
-        return sampleList;
     }
 
     /**
@@ -1208,11 +1199,11 @@ public class ResearchProjectActionBean extends CoreActionBean {
         return validCollaborationPortal;
     }
 
-    public List<SubmissionDto.SubmissionDisplayBean> getSubmissionSamples() {
+    public List<SubmissionDto> getSubmissionSamples() {
         return submissionSamples;
     }
 
-    public void setSubmissionSamples(List<SubmissionDto.SubmissionDisplayBean> submissionSamples) {
+    public void setSubmissionSamples(List<SubmissionDto> submissionSamples) {
         this.submissionSamples = submissionSamples;
     }
 
