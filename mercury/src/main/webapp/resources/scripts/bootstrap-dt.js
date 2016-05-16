@@ -40,6 +40,9 @@ $j.extend( $j.fn.dataTableExt.oStdClasses, {
 
 var filterDropdownHtml = "<div class='filterOptions'>using <select class='filterDropdown'><option value='all'>All of the words</option><option value='any'>Any of the words</option></select></div>";
 
+function isBlank(value){
+    return (value === undefined || value.trim() === '');
+}
 /**
  * Dynamically add the HTML element for the dropdown and the choices, as well as define the
  * dropdown behavior when the user changes it (clicks on it and selects another item).
@@ -52,10 +55,24 @@ function includeAdvancedFilter(oTable, tableID) {
     $j(tableID + "_filter").find(".filterDropdown").change(function() {
         chooseFilterForData(oTable);
     });
+    findFilterTextInput(oTable).focusout(function () {
+        var filterTextInput = oTable.fnSettings().oPreviousSearch;
+        if (isBlank(filterTextInput.text())) {
+            oTable.fnFilterClear();
+        }
+    });
+
 
     $j(".dataTables_filter input[type='text']").keyup();
 }
 
+function findDataTableWrapper(oTable) {
+    return $j(oTable).closest("[id$='_wrapper']");
+}
+
+function findFilterTextInput(oTable) {
+    return $j(findDataTableWrapper(oTable)).find(".dataTables_filter input[type='text']");
+}
 /**
  * Define the regular expression for the AND and OR filter.  The OR filter needs to create
  * the regex on the fly as the user adds characters into the filter input textbox.
@@ -63,8 +80,8 @@ function includeAdvancedFilter(oTable, tableID) {
  * @param oTable
  */
 function chooseFilterForData(oTable) {
-    var filterWrapperSelector=$j(oTable).closest("[id$='_wrapper']");
-    var filterTextInput = $j(filterWrapperSelector).find(".dataTables_filter input[type='text']");
+    var filterWrapperSelector = findDataTableWrapper(oTable);
+    var filterTextInput = findFilterTextInput(oTable);
     filterTextInput.unbind('keyup');
     filterTextInput.keyup(function () {
         var tab = RegExp("\\t", "g");
@@ -76,13 +93,13 @@ function chooseFilterForData(oTable) {
         var searchRegex = ".";
         if (useOr) {
             // OR
-            if (filterInput != '') {
+            if (!isBlank(filterInput)) {
                 searchRegex = "(" + filterInput.trim().split(" ").join("+|") + "+)";
             }
             oTable.fnFilter( searchRegex, null, true, false );
         }else {
             // AND
-            if (filterInput != '') {
+            if (!isBlank(filterInput)) {
                 oTable.fnFilter(filterInput, null, false, true);
             }
         }

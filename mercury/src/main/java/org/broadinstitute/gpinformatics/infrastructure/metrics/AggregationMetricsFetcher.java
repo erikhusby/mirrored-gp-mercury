@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.infrastructure.metrics;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.xmlbeans.impl.xb.xsdschema.RestrictionDocument;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationReadGroup;
@@ -13,8 +12,6 @@ import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.PicardAnal
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.PicardAnalysis_;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.PicardFingerprint;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.PicardFingerprint_;
-import org.hibernate.criterion.Restrictions;
-import org.hornetq.utils.json.JSONArray;
 
 import javax.ejb.Stateful;
 import javax.persistence.EntityManager;
@@ -32,7 +29,6 @@ import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -100,20 +96,6 @@ public class AggregationMetricsFetcher {
             log.info("Unable to retrieve aggregations based on given criteria");
         }
         fetchLod(aggregations);
-//        for(Aggregation aggregation:aggregations) {
-//            try {
-//                TypedQuery<LevelOfDetection> lodQuery =
-//                        entityManager.createNamedQuery(LevelOfDetection.LOD_QUERY_NAME, LevelOfDetection.class)
-//                                .setParameter(SAMPLE_COLUMN, aggregation.getSample())
-//                                .setParameter(PROJECT_COLUMN, aggregation.getProject())
-//                                .setParameter(VERSION_COLUMN, aggregation.getVersion());
-//                aggregation.setLevelOfDetection(lodQuery.getSingleResult());
-//            } catch (NoResultException e) {
-//                log.info(String.format("Unable to retrieve LOD info for Aggregation based on : " +
-//                                       "Project %s, Sample %s, Version %d", aggregation.getProject(),
-//                        aggregation.getSample(), aggregation.getVersion()));
-//            }
-//        }
         return aggregations;
     }
     /*

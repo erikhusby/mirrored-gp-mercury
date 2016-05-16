@@ -11,7 +11,9 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.submission;
 
+import org.apache.commons.beanutils.PropertyUtilsBean;
 import org.apache.commons.lang3.time.FastDateFormat;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassFileType;
@@ -24,18 +26,20 @@ import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.io.Serializable;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 
-@JsonSerialize(include = JsonSerialize.Inclusion.NON_EMPTY)
 public class SubmissionDto {
     public static final FastDateFormat DATE_FORMAT =
             FastDateFormat.getDateTimeInstance(FastDateFormat.MEDIUM, FastDateFormat.SHORT);
+    private static final org.apache.commons.logging.Log log = LogFactory.getLog(SubmissionDto.class);
     private Collection<ProductOrder> productOrders;
-    private final SubmissionStatusDetailBean statusDetailBean;
+    private SubmissionStatusDetailBean statusDetailBean;
     private final BassDTO bassDTO;
     private final Aggregation aggregation;
 
@@ -48,7 +52,6 @@ public class SubmissionDto {
         this.statusDetailBean = statusDetailBean;
     }
 
-    @JsonIgnore
     public String getUuid() {
         String result = "";
         if (statusDetailBean != null) {
@@ -57,27 +60,22 @@ public class SubmissionDto {
         return result;
     }
 
-    @JsonIgnore
     public BassDTO getBassDTO() {
         return bassDTO;
     }
 
-    @JsonIgnore
     public Aggregation getAggregation() {
         return aggregation;
     }
 
-    @JsonProperty(value = SubmissionField.SAMPLE_NAME)
     public String getSampleName() {
         return bassDTO.getSample();
     }
 
-    @JsonProperty(value = SubmissionField.DATA_TYPE)
     public String getDataType() {
         return bassDTO.getDatatype();
     }
 
-    @JsonProperty(value = SubmissionField.PRODUCT_ORDERS)
     public Collection<String> getProductOrdersString() {
         Collection<String> values = new HashSet<>(productOrders.size());
         for (ProductOrder productOrder : productOrders) {
@@ -90,81 +88,66 @@ public class SubmissionDto {
         return productOrders;
     }
 
-    @JsonProperty(value = SubmissionField.AGGREGATION_PROJECT)
-    public String getAggregationProject() {
+    String getAggregationProject() {
         return bassDTO.getProject();
     }
 
-    @JsonProperty(value = SubmissionField.FILE_TYPE)
-    public String getFileTypeString(){
+    String getFileTypeString() {
         return bassDTO.getFileType();
     }
 
-    @JsonIgnore
     public BassFileType getFileType() {
         return BassFileType.byBassValue(bassDTO.getFileType());
     }
 
-    @JsonProperty(value = SubmissionField.VERSION)
     public int getVersion() {
         return bassDTO.getVersion();
     }
 
-    @JsonIgnore
-    public Double getQualityMetric() {
+    Double getQualityMetric() {
         return aggregation.getQualityMetric(bassDTO.getDatatype());
     }
 
-    @JsonProperty(value = SubmissionField.QUALITY_METRIC)
     public String getQualityMetricString() {
         return aggregation.getQualityMetricString(bassDTO.getDatatype());
     }
 
-    @JsonProperty(value = SubmissionField.CONTAMINATION_STRING)
-    public String getContaminationString() {
+    String getContaminationString() {
         return aggregation.getContaminationString();
     }
 
-    public Double getContamination() {
+    Double getContamination() {
         return aggregation.getAggregationContam().getPctContamination();
     }
 
-    @JsonIgnore
     public Date getDateCompleted() {
         return null;
     }
 
-    @JsonIgnore
-    public LevelOfDetection getFingerprintLOD() {
+    LevelOfDetection getFingerprintLOD() {
         return aggregation.getLevelOfDetection();
     }
 
-    @JsonProperty(value = SubmissionField.FINGERPRINT_LOD)
     public String getFingerprintLODString() {
         return getFingerprintLOD().toString();
     }
 
-    @JsonProperty(value = SubmissionField.RESEARCH_PROJECT)
     public String getResearchProject() {
         return bassDTO.getRpid();
     }
 
-    @JsonProperty(value = SubmissionField.LANES_IN_AGGREGATION)
     public int getLanesInAggregation() {
         return aggregation.getReadGroupCount();
     }
 
-    @JsonProperty(value = SubmissionField.FILE_NAME)
     public String getFileName() {
         return bassDTO.getFileName();
     }
 
-    @JsonIgnore
     public String getFilePath() {
         return bassDTO.getPath();
     }
 
-    @JsonProperty(value = SubmissionField.SUBMITTED_VERSION)
     public Integer getSubmittedVersion() {
         if (statusDetailBean != null) {
             return Integer.parseInt(statusDetailBean.getSubmittedVersion());
@@ -172,7 +155,6 @@ public class SubmissionDto {
         return null;
     }
 
-    @JsonProperty(value = SubmissionField.SUBMITTED_ERRORS)
     public List<String> getSubmittedErrors() {
         if (statusDetailBean != null) {
             return statusDetailBean.getErrors();
@@ -180,13 +162,11 @@ public class SubmissionDto {
         return Collections.emptyList();
     }
 
-    @JsonIgnore
     public String[] getSubmittedErrorsArray() {
         List<String> errors = getSubmittedErrors();
         return errors.toArray(new String[errors.size()]);
     }
 
-    @JsonProperty(value = SubmissionField.SUBMITTED_STATUS)
     public String getSubmittedStatus() {
         String status = "";
         if (statusDetailBean != null) {
@@ -196,7 +176,6 @@ public class SubmissionDto {
     }
 
 
-    @JsonProperty(value = SubmissionField.STATUS_DATE)
     public String getStatusDate() {
         String statusDate = "";
         if (statusDetailBean != null && statusDetailBean.getLastStatusUpdate() != null) {
@@ -205,7 +184,6 @@ public class SubmissionDto {
         return statusDate;
     }
 
-    @JsonProperty(value = SubmissionField.BIO_PROJECT)
     public String getBioProject() {
         String bioProjectString = "";
         if (statusDetailBean != null && statusDetailBean.getBioproject() != null) {
@@ -215,7 +193,6 @@ public class SubmissionDto {
         return bioProjectString;
     }
 
-    @JsonProperty(value = SubmissionField.LIBRARY_DESCRIPTOR)
     public String getSubmissionLibraryDescriptor() {
         String libraryDescriptor="";
         if (statusDetailBean != null) {
@@ -224,13 +201,16 @@ public class SubmissionDto {
         return libraryDescriptor;
     }
 
-    @JsonProperty(value = SubmissionField.SUBMISSION_SITE)
     public String getSubmissionRepositoryName() {
         String submissionSite = "";
         if (statusDetailBean != null) {
             submissionSite = statusDetailBean.getRepositoryName();
         }
         return submissionSite;
+    }
+
+    public void setStatusDetailBean(SubmissionStatusDetailBean statusDetailBean) {
+        this.statusDetailBean = statusDetailBean;
     }
 
     public class SubmissionField {
@@ -254,5 +234,240 @@ public class SubmissionDto {
         public static final String STATUS_DATE = "statusDate";
         public static final String LIBRARY_DESCRIPTOR = "libraryDescriptor";
         public static final String SUBMISSION_SITE = "site";
+    }
+
+    public SubmissionDisplayBean displayBean() {
+        SubmissionDisplayBean submissionDisplayBean = new SubmissionDisplayBean();
+        PropertyUtilsBean propertyUtilsBean = new PropertyUtilsBean();
+        try {
+            propertyUtilsBean.copyProperties(submissionDisplayBean, this);
+        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+            log.error("could not copy submissionDto properties", e);
+        }
+        return submissionDisplayBean;
+    }
+
+    @JsonSerialize(include = JsonSerialize.Inclusion.NON_EMPTY)
+    public class SubmissionDisplayBean implements Serializable {
+        private static final long serialVersionUID = -1748300627900819095L;
+        @JsonProperty(value = SubmissionDto.SubmissionField.SAMPLE_NAME)
+        private String sampleName;
+
+        @JsonProperty(value = SubmissionDto.SubmissionField.DATA_TYPE)
+        private String dataType;
+
+        @JsonProperty(value = SubmissionDto.SubmissionField.PRODUCT_ORDERS)
+        private Collection<String> productOrdersString;
+
+        @JsonProperty(value = SubmissionDto.SubmissionField.AGGREGATION_PROJECT)
+        private String aggregationProject;
+
+        @JsonProperty(value = SubmissionDto.SubmissionField.FILE_TYPE)
+        private String fileTypeString;
+
+        @JsonProperty(value = SubmissionDto.SubmissionField.VERSION)
+        private int version;
+
+        @JsonProperty(value = SubmissionDto.SubmissionField.QUALITY_METRIC)
+        private String qualityMetricString;
+
+        @JsonProperty(value = SubmissionDto.SubmissionField.CONTAMINATION_STRING)
+        private String contaminationString;
+
+        @JsonProperty(value = SubmissionDto.SubmissionField.FINGERPRINT_LOD)
+        private String fingerprintLODString;
+
+        @JsonProperty(value = SubmissionDto.SubmissionField.RESEARCH_PROJECT)
+        private String researchProject;
+
+        @JsonProperty(value = SubmissionDto.SubmissionField.LANES_IN_AGGREGATION)
+        private int lanesInAggregation;
+
+        @JsonProperty(value = SubmissionDto.SubmissionField.FILE_NAME)
+        private String fileName;
+
+        @JsonProperty(value = SubmissionDto.SubmissionField.SUBMITTED_VERSION)
+        private Integer submittedVersion;
+
+        @JsonProperty(value = SubmissionDto.SubmissionField.SUBMITTED_ERRORS)
+        private List<String> submittedErrors;
+
+        @JsonProperty(value = SubmissionDto.SubmissionField.SUBMITTED_STATUS)
+        private String submittedStatus;
+
+        @JsonProperty(value = SubmissionDto.SubmissionField.STATUS_DATE)
+        private String statusDate;
+
+        @JsonProperty(value = SubmissionDto.SubmissionField.BIO_PROJECT)
+        private String bioProject;
+
+        @JsonProperty(value = SubmissionDto.SubmissionField.LIBRARY_DESCRIPTOR)
+        private String submissionLibraryDescriptor;
+
+        @JsonProperty(value = SubmissionDto.SubmissionField.SUBMISSION_SITE)
+        private String submissionRepositoryName;
+
+        @JsonIgnore
+        private String uuid;
+
+        public String getAggregationProject() {
+            return aggregationProject;
+        }
+
+        public void setAggregationProject(String aggregationProject) {
+            this.aggregationProject = aggregationProject;
+        }
+
+        public String getBioProject() {
+            return bioProject;
+        }
+
+        public void setBioProject(String bioProject) {
+            this.bioProject = bioProject;
+        }
+
+        public String getContaminationString() {
+            return contaminationString;
+        }
+
+        public void setContaminationString(String contaminationString) {
+            this.contaminationString = contaminationString;
+        }
+
+        public String getDataType() {
+            return dataType;
+        }
+
+        public void setDataType(String dataType) {
+            this.dataType = dataType;
+        }
+
+        public String getFileName() {
+            return fileName;
+        }
+
+        public void setFileName(String fileName) {
+            this.fileName = fileName;
+        }
+
+        public String getFileTypeString() {
+            return fileTypeString;
+        }
+
+        public void setFileTypeString(String fileTypeString) {
+            this.fileTypeString = fileTypeString;
+        }
+
+        public String getFingerprintLODString() {
+            return fingerprintLODString;
+        }
+
+        public void setFingerprintLODString(String fingerprintLODString) {
+            this.fingerprintLODString = fingerprintLODString;
+        }
+
+        public int getLanesInAggregation() {
+            return lanesInAggregation;
+        }
+
+        public void setLanesInAggregation(int lanesInAggregation) {
+            this.lanesInAggregation = lanesInAggregation;
+        }
+
+        public Collection<String> getProductOrdersString() {
+            return productOrdersString;
+        }
+
+        public void setProductOrdersString(Collection<String> productOrdersString) {
+            this.productOrdersString = productOrdersString;
+        }
+
+        public String getQualityMetricString() {
+            return qualityMetricString;
+        }
+
+        public void setQualityMetricString(String qualityMetricString) {
+            this.qualityMetricString = qualityMetricString;
+        }
+
+        public String getResearchProject() {
+            return researchProject;
+        }
+
+        public void setResearchProject(String researchProject) {
+            this.researchProject = researchProject;
+        }
+
+        public String getSampleName() {
+            return sampleName;
+        }
+
+        public void setSampleName(String sampleName) {
+            this.sampleName = sampleName;
+        }
+
+        public String getStatusDate() {
+            return statusDate;
+        }
+
+        public void setStatusDate(String statusDate) {
+            this.statusDate = statusDate;
+        }
+
+        public String getSubmissionLibraryDescriptor() {
+            return submissionLibraryDescriptor;
+        }
+
+        public void setSubmissionLibraryDescriptor(String submissionLibraryDescriptor) {
+            this.submissionLibraryDescriptor = submissionLibraryDescriptor;
+        }
+
+        public String getSubmissionRepositoryName() {
+            return submissionRepositoryName;
+        }
+
+        public void setSubmissionRepositoryName(String submissionRepositoryName) {
+            this.submissionRepositoryName = submissionRepositoryName;
+        }
+
+        public List<String> getSubmittedErrors() {
+            return submittedErrors;
+        }
+
+        public void setSubmittedErrors(List<String> submittedErrors) {
+            this.submittedErrors = submittedErrors;
+        }
+
+        public String getSubmittedStatus() {
+            return submittedStatus;
+        }
+
+        public void setSubmittedStatus(String submittedStatus) {
+            this.submittedStatus = submittedStatus;
+        }
+
+        public Integer getSubmittedVersion() {
+            return submittedVersion;
+        }
+
+        public void setSubmittedVersion(Integer submittedVersion) {
+            this.submittedVersion = submittedVersion;
+        }
+
+        public void setUuid(String uuid) {
+            this.uuid = uuid;
+        }
+
+        public int getVersion() {
+            return version;
+        }
+
+        public void setVersion(int version) {
+            this.version = version;
+        }
+
+        public String getUuid() {
+            return uuid;
+        }
     }
 }

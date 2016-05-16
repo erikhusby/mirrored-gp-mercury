@@ -46,7 +46,7 @@
         .submissionControls {
             width: auto;
             margin-bottom: 20px;
-            display: none
+            display: none;
         }
 
         .columnFilter {
@@ -64,12 +64,19 @@
         .chosen-container input {
             min-width: 150px !important;
         }
-        .chosen-drop {
-            position:static;
-        }
+
         .control-group select {
             width: auto;
         }
+        .ui-accordion-content {
+            overflow: visible;
+        }
+        span.submission-status-tooltip{
+            position:relative;
+            padding: 12px;
+            left: -12px;
+        }
+
     </style>
     <link rel="stylesheet" href="${ctxpath}/resources/scripts/chosen_v1.5.1/chosen.min.css">
     <script type="text/javascript" src="${ctxpath}/resources/scripts/chosen_v1.5.1/chosen.jquery.min.js"></script>
@@ -244,7 +251,6 @@
 
         $j(document).ready(function () {
             initializeBarcodeEntryDialog();
-
             $j("#bioProject").tokenInput(
                     "${ctxpath}/projects/project.action?bioProjectAutocomplete=", {
                         hintText: "Type a Study Name",
@@ -260,15 +266,15 @@
 
 
             function createPopover(data, title, errors) {
-                var span = document.createElement("span");
-                $j(span).addClass("submission-status-tooltip popover-dismiss");
-                $j(span).attr("title", title);
-                $j(span).append(data);
-                $j(span).attr("data-content", errors);
-                $j(span).attr("data-sort", data);
-                $j(span).attr("data-toggle", "popover");
-                $j(span).attr("data-placement", "top");
-                return span.outerHTML;
+                var span = jQuery("<span/>", {
+                    "class":"submission-status-tooltip popover-dismiss",
+                    "title":title,
+                    "data-content":errors,
+                    "data-sort":data,
+                    "data-toggle":"popover",
+                    "data-placement":"top",
+                    "text": data
+                });
             }
 
             var oTable;
@@ -304,24 +310,24 @@
                     }
                     return data;
                 }
-
                 oTable = $j('#submissionSamples').dataTable({
+                    "bDeferRender": true,
                     "oLanguage": {
-                        "sInfo": "_TOTAL_ of _MAX_ submissions displayed.",
+                        "sInfo": "_TOTAL_ submissions displayed.",
                         "sProcessing": "&nbsp;<img src='${ctxpath}/images/spinner.gif'>&nbsp;Please wait. Gathering data from Mercury, Bass, and Picard. This may take a few minutes."
                     },
                     "oTableTools": ttExportDefines,
                     "bStateSave": true,
                     "bProcessing": true,
                     "bInfo": true,
-                    "sDom": "r<'#filtering.accordion'<'row-fluid'<'span12'<'columnFilter'>><'row-fluid'<'span8'f><'span4' i>'span2'T>>>t<'row-fluid'<'span6'><'span6'p>>",
-                    "bDeferRender": true,
+                    "sDom": "r<'#filtering.accordion'<'row-fluid'<'span12'<'columnFilter'>><'row-fluid'<'span8'f><'span4' iT>'span2'>>>t<'row-fluid'<'span6'><'span6'p>>",
                     "sAjaxSource": '${ctxpath}/projects/project.action',
                     "fnServerData": function (sSource, aoData, fnCallback, oSettings) {
                         aoData.push({"name": "researchProject", "value": "${researchProject}"});
                         aoData.push({"name": "${event}", "value": "${event}"});
 
                         oSettings.jqXHR = $j.ajax({
+                            "method": 'POST',
                             "dataType": 'json',
                             "url": sSource,
                             "data": aoData,
@@ -354,8 +360,10 @@
                             "mRender": function (data, type, row) {
                                 if (type === 'display') {
                                     var latestVersion = row.<%=SubmissionField.VERSION%>;
-                                    if (latestVersion >= data) {
-                                        return createPopover(data, "Submitted version: "+data, "A newer version is available: " + data);
+                                    if (latestVersion > data) {
+                                        return createPopover(data+"*", "Submitted version: "+data, "A newer version is available: " + latestVersion);
+                                    }else {
+                                        return data;
                                     }
                                 }
                                 return data;
@@ -374,15 +382,35 @@
                             }
                         },
                         {"mData": "<%=SubmissionField.STATUS_DATE %>"}
-                    ],
+                    ], "fnInitComplete": function () {
+                        function updateSearchText() {
+                            var currentFullTextSearch = oTable.fnSettings().oPreviousSearch.sSearch;
+                            if (currentFullTextSearch !== undefined) {
+                                var matchContent = "any text";
+                                if (!isBlank(currentFullTextSearch)) {
+                                    matchContent = currentFullTextSearch;
+                                }
+                                $j(".dtFilters").html("<b>Search text matches</b>: " + matchContent);
+                            }
+                        }
 
+                        updateSearchText();
+                        $j(findFilterTextInput(oTable).on("change init", updateSearchText));
+                    },
                     "fnDrawCallback": function () {
                         $j(".submissionControls").show();
+                        $j(".accordion").show();
                         $j('.shiftCheckbox').enableCheckboxRangeSelection();
-                        var currentFullTextSearch = this.fnSettings().oPreviousSearch.sSearch;
-                        if (currentFullTextSearch !== undefined && currentFullTextSearch !== "") {
-                            $j(".dtFilters").html("<b>Text matches</b>: " + currentFullTextSearch);
+
+                        if ($("#columnFilter_filteringText").length === 0) {
+                            filteringDiv = jQuery("<div></div>", {
+                                "id": "columnFilter_filteringText",
+                                "style": "padding-left:2em;"
+                            }).prependTo($j("#filtering"));
+                            $j(filteringDiv).prepend(jQuery("<div class='headerText'></div>"));
+                            $j(filteringDiv).prepend(jQuery("<div class='dtFilters'></div>"));
                         }
+
                         $j(".submission-status-tooltip").popover({
                             trigger: "hover",
                             html: "true",
@@ -396,12 +424,7 @@
                         }
                     }
                 });
-
-                filteringDiv= jQuery("<div></div>", {"id":"columnFilter_filteringText","style": "padding-left:2em;"})
-                                    .prependTo($j("#filtering"));
-                $j(filteringDiv).prepend(jQuery("<div class='headerText'>Filtering</div>"));
-                $j(filteringDiv).prepend(jQuery("<div class='dtFilters'></div>"));
-
+                $j("#filtering").hide();
                 $j("#filtering").accordion({
                       "collapsible": true, "heightStyle": "content", 'active': false
                     });
@@ -501,7 +524,7 @@
     <div id="ListOfBarcodesForm">
         <form>
             <div class="control-group">
-                <label for="barcodes" class="control-label">Enter 2D Barcodes, one per line</label>
+                <label for="barcodes" class="control-label">Enter BioSample IDs, one per line</label>
                 <textarea name="barcodes" id="barcodes" class="defaultText" cols="12" rows="5"></textarea>
             </div>
             <div id="BarcodeErrors">

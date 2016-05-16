@@ -335,6 +335,14 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
      * Load SampleData for all the supplied ProductOrderSamples.
      * @see SampleDataFetcher
      */
+    public static void loadCollaboratorSampleName(List<ProductOrderSample> samples) {
+        loadSampleData(samples, BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID);
+    }
+
+    /**
+     * Load SampleData for all the supplied ProductOrderSamples.
+     * @see SampleDataFetcher
+     */
     public static void loadSampleData(List<ProductOrderSample> samples, BSPSampleSearchColumn... bspSampleSearchColumns) {
 
         // Create a subset of the samples so we only call BSP for BSP samples that aren't already cached.

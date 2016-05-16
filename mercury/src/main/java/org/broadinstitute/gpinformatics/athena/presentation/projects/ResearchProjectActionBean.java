@@ -186,7 +186,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     })
     private ResearchProject editResearchProject;
 
-    private List<SubmissionDto> submissionSamples = new ArrayList<>();
+    private List<SubmissionDto.SubmissionDisplayBean> submissionSamples = new ArrayList<>();
     /*
      * The search query.
      */
@@ -314,7 +314,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
             }
             if (submissionLibraryDescriptor == null) {
                 submissionLibraryDescriptor = findDefaultSubmissionType(editResearchProject);
-                selectedSubmissionLibraryDescriptor = submissionLibraryDescriptor.getDescription();
+                if (submissionLibraryDescriptor != null) {
+                    selectedSubmissionLibraryDescriptor = submissionLibraryDescriptor.getDescription();
+                }
             }
             if (submissionRepository == null) {
                 submissionRepository = editResearchProject.getSubmissionRepository();
@@ -857,7 +859,8 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public Resolution viewSubmissions() throws IOException, JSONException {
         ObjectMapper objectMapper = new ObjectMapper();
         final Map<String, Object> submissionSamplesMap = new HashMap<String, Object>() {{
-            put("aaData", submissionSamples);
+            put("aaData", submissionSamples);//iDisplayLength  iRecordsTotal
+            put("iTotalRecords", submissionSamples.size());
         }};
         String submissionSamplesData = objectMapper.writeValueAsString(submissionSamplesMap);
 
@@ -872,10 +875,28 @@ public class ResearchProjectActionBean extends CoreActionBean {
         updateSubmissionSamples();
     }
 
+    @SuppressWarnings("unchecked")
     private void updateSubmissionSamples() {
         if (editResearchProject != null) {
-            submissionSamples = submissionDtoFetcher.fetch(editResearchProject);
+            String rpSamplesKey = String.format("%s_submissionSamples", editResearchProject.getBusinessKey());
+            submissionSamples = (List<SubmissionDto.SubmissionDisplayBean>) getContext().getSession().getAttribute(rpSamplesKey);
+            if (submissionSamples == null) {
+                submissionSamples = createSubmissionDisplayList(submissionDtoFetcher.fetch(editResearchProject));
+                getContext().getSession().setAttribute(rpSamplesKey,submissionSamples);
+            } else {
+                submissionDtoFetcher.refreshSubmissionStatuses(submissionSamples);
+                log.info("submissionSamples retrieved from cache.");
+            }
         }
+    }
+
+    private List<SubmissionDto.SubmissionDisplayBean> createSubmissionDisplayList(List<SubmissionDto> submissionDtos) {
+        List<SubmissionDto.SubmissionDisplayBean> sampleList=new ArrayList<>(submissionDtos.size());
+        for (SubmissionDto submissionDto : submissionDtos) {
+            sampleList.add(submissionDto.displayBean());
+        }
+
+        return sampleList;
     }
 
     /**
@@ -1187,11 +1208,11 @@ public class ResearchProjectActionBean extends CoreActionBean {
         return validCollaborationPortal;
     }
 
-    public List<SubmissionDto> getSubmissionSamples() {
+    public List<SubmissionDto.SubmissionDisplayBean> getSubmissionSamples() {
         return submissionSamples;
     }
 
-    public void setSubmissionSamples(List<SubmissionDto> submissionSamples) {
+    public void setSubmissionSamples(List<SubmissionDto.SubmissionDisplayBean> submissionSamples) {
         this.submissionSamples = submissionSamples;
     }
 

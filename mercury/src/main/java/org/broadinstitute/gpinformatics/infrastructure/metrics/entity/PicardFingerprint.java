@@ -33,20 +33,5 @@ public class PicardFingerprint {
     @JoinColumn(insertable = false, updatable = false, name = "PICARD_ANALYSIS_ID", referencedColumnName = "ID")
     private PicardAnalysis picardAnalysis;
 
-//    public Double getLodExpectedSample() {
-//        return lodExpectedSample;
-//    }
-//
-//    public void setLodExpectedSample(Double lodExpectedSample) {
-//        this.lodExpectedSample = lodExpectedSample;
-//    }
-//
-//    public PicardAnalysis getPicardAnalysis() {
-//        return picardAnalysis;
-//    }
-//
-//    public void setPicardAnalysis(PicardAnalysis picardAnalysis) {
-//        this.picardAnalysis = picardAnalysis;
-//    }
 }
 

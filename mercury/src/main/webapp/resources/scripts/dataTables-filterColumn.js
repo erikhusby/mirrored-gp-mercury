@@ -36,45 +36,45 @@
                 selectedValues: [],
                 selectionClass: defaultFilterName,
                 invertResultClass: "invert_" + defaultFilterName,
-                filteringTextSelector: idSelector(defaultFilterName.concat("_filteringText .headerText"))
+                filteringTextSelector: idSelector(defaultFilterName.concat("_filteringText"))
             };
             var settings = $.extend({}, defaults, options);
             var inverseSelector = classSelector(settings.invertResultClass);
 
 
-            oTable.fnSettings().aoStateLoadParams.push({
-                "fn": function (oSettings, oData) {
-                    if (oSettings.oLoadedState.columnFilterState != undefined) {
-                        selectedValues = oSettings.oLoadedState.columnFilterState;
-                    }
-                    if (oSettings.oLoadedState.columnFilterHideMatchingRows != undefined) {
-                        invertName = oSettings.oLoadedState.columnFilterHideMatchingRows;
-                    }
-                    return oData + selectedValues;
-                },
-                "sName": "loadColumnFilterState"
-            });
-
-            oTable.fnSettings().aoStateSaveParams.push({
-                "fn": function (oS, sVal) {
-                    var filterSelect = "select" + classSelector(settings.selectionClass)
-                    var selectedOptions =  $(filterSelect).val() == undefined ? [] :  $(filterSelect).val();
-                    if (selectedOptions !==undefined) {
-                        return sVal + selectedOptions;
-                    }
-                },
-                "sName": "columnFilterState"
-            });
-            oTable.fnSettings().aoStateSaveParams.push({
-                "fn": function (oS, sVal) {
-                    inverseSelector = classSelector(settings.invertResultClass);
-                    var invertResult = $(inverseSelector).val();
-                    if (invertResult!==undefined) {
-                        return sVal + invertResult;
-                    }
-                },
-                "sName": "columnFilterHideMatchingRows"
-            });
+            // oTable.fnSettings().aoStateLoadParams.push({
+            //     "fn": function (oSettings, oData) {
+            //         if (oSettings.oLoadedState.columnFilterState != undefined) {
+            //             selectedValues = oSettings.oLoadedState.columnFilterState;
+            //         }
+            //         if (oSettings.oLoadedState.columnFilterHideMatchingRows != undefined) {
+            //             invertName = oSettings.oLoadedState.columnFilterHideMatchingRows;
+            //         }
+            //         return oData + selectedValues;
+            //     },
+            //     "sName": "loadColumnFilterState"
+            // });
+            //
+            // oTable.fnSettings().aoStateSaveParams.push({
+            //     "fn": function (oS, sVal) {
+            //         var filterSelect = "select" + classSelector(settings.selectionClass)
+            //         var selectedOptions =  $(filterSelect).val() == undefined ? [] :  $(filterSelect).val();
+            //         if (selectedOptions !==undefined) {
+            //             return sVal + selectedOptions;
+            //         }
+            //     },
+            //     "sName": "columnFilterState"
+            // });
+            // oTable.fnSettings().aoStateSaveParams.push({
+            //     "fn": function (oS, sVal) {
+            //         inverseSelector = classSelector(settings.invertResultClass);
+            //         var invertResult = $(inverseSelector).val();
+            //         if (invertResult!==undefined) {
+            //             return sVal + invertResult;
+            //         }
+            //     },
+            //     "sName": "columnFilterHideMatchingRows"
+            // });
 
 
             return this.each(function () {
@@ -91,22 +91,25 @@
                 //     }
                 //
                 // }
-
-
-                // var filterSelect = idSelector(settings.selectionClass).concat(" ", classSelector(settings.selectionClass));
                 var filterSelect = "select" + classSelector(settings.selectionClass);
 
-                $(filterSelect).chosen({"width": "auto"}).on("change chosen:updated", function (event, what) {
+                var chosen = $(filterSelect).chosen({"width": "auto"});
+                var infoSection;
+                chosen.ready(function () {
+                    infoSection = $(oTable.selector + "_wrapper").find("[class$='_info']");
+                });
+                chosen.on("change chosen:updated", function (event, what) {
                     if (what === undefined) {
                         oTable.fnDraw();
                     }
                     var selectedOptions = $(this).val() == undefined ? [] : $(this).val();
                     var invertResult = $(inverseSelector).val();
                     var filters = [];
-                    var filterText = "";
+                    var filterText = "<b>Filtering column</b> 'COLUMN_NAME' <b>for rows WITH_OR_WITHOUT values:</b> ";
+                    var withOrWithout;
                     if (invertResult === "true" && selectedOptions) {
                         filters = values.slice(0);
-                        filterText = filterText.concat("<b>Filtering '").concat(columnName).concat("</b>' rows without values: ");
+                        withOrWithout = "without";
                         for (i = 0; i < selectedOptions.length; i++) {
                             index = filters.indexOf(selectedOptions[i]);
                             if (index > -1) {
@@ -119,10 +122,12 @@
                         }
                     } else {
                         filters = selectedOptions;
-                        filterText = filterText.concat("Filtering '").concat(columnName).concat("' rows with values: ");
+                        withOrWithout = "with";
                     }
+                    filterText = filterText.replace("COLUMN_NAME", columnName).replace("WITH_OR_WITHOUT", withOrWithout);
+                    setData(filtersName, filters);
+                    
                     if (selectedOptions.length > 0) {
-                        // filterText.concat(filters);
                         var moreText = ", ";
                         var lastValue = selectedOptions.slice(-1)[0];
                         for (i = 0; i < selectedOptions.length; i++) {
@@ -132,13 +137,20 @@
                             }
                             filterText = filterText.concat(selectedOptions[i]).concat(moreText);
                         }
-                        var filteringTextSelector = settings.filteringTextSelector;
-                        if (filteringTextSelector !== undefined && filteringTextSelector !== "") {
-                            $(filteringTextSelector).html(filterText);
+                        if (settings.filteringTextSelector !== undefined && settings.filteringTextSelector !== "") {
+                            var filterStatusDivId = "columnFilterStatus";
+                            if ($(idSelector(filterStatusDivId)).length===0) {
+                                var filterTextDiv = jQuery("<div></div>", {id: filterStatusDivId});
+                                $(settings.filteringTextSelector).append(filterTextDiv);
+                            }
+                            $(idSelector(filterStatusDivId)).html(filterText);
+                            if (infoSection) {
+                                $(infoSection).hide();
+                                $(filterTextDiv).append(infoSection);
+                                $(infoSection).fadeIn();
+                            }
                         }
                     }
-
-                    setData(filtersName, filters);
                     oTable.fnDraw();
                 });
 
