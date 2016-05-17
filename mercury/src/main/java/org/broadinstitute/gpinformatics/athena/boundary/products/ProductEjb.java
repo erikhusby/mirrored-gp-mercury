@@ -241,20 +241,20 @@ public class ProductEjb {
      * Returns info on the genotyping chips mapped currently mapped to the given product. Multiple mappings are
      * distinguished from one another using pdoSubstring.
      *
-     * @param productPartNumber is used to determine the returned info. If null, returns all current mappings.
+     * @param productPartNumber is used to determine the returned info. Null returns no mappings.
      * @return List of chip family, chip name, pdo substring.  These are ordered the same way they
      *         are used to lookup a mapping: by decreasing pdo substring with nulls last.
      */
     public List<Triple<String, String, String>> getCurrentMappedGenotypingChips(String productPartNumber) {
         List<Triple<String, String, String>> chipInfo = new ArrayList<>();
-
-        for (GenotypingChipMapping mapping : attributeArchetypeDao.getMappingsAsOf(new Date())) {
-            if (productPartNumber == null || productPartNumber.equals(mapping.getProductPartNumber())) {
-                chipInfo.add(Triple.of(mapping.getChipFamily(), mapping.getChipName(),
-                        StringUtils.trimToNull(mapping.getPdoSubstring())));
+        if (productPartNumber != null) {
+            for (GenotypingChipMapping mapping : attributeArchetypeDao.getMappingsAsOf(new Date())) {
+                if (productPartNumber.equals(mapping.getProductPartNumber())) {
+                    chipInfo.add(Triple.of(mapping.getChipFamily(), mapping.getChipName(),
+                            StringUtils.trimToNull(mapping.getPdoSubstring())));
+                }
             }
         }
-
         Collections.sort(chipInfo, new Comparator<Triple<String, String, String>>() {
             @Override
             public int compare(Triple<String, String, String> o1, Triple<String, String, String> o2) {
