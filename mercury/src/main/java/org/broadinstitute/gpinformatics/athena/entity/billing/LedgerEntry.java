@@ -128,6 +128,10 @@ public class LedgerEntry implements Serializable {
         return workCompleteDate;
     }
 
+    public void setWorkCompleteDate(Date workCompleteDate) {
+        this.workCompleteDate = workCompleteDate;
+    }
+
     public String getBillingMessage() {
         return billingMessage;
     }
@@ -152,6 +156,15 @@ public class LedgerEntry implements Serializable {
      */
     private boolean isBillingSessionBilled() {
         return (billingSession != null) && (billingSession.getBilledDate() != null);
+    }
+
+    /**
+     * Tells whether or not this ledger entry is currently being billed (is included in an incomplete billing session).
+     *
+     * @return true if this ledger entry is being billed; false if it is ready to bill or has been successfully billed
+     */
+    public boolean isBeingBilled() {
+        return billingSession != null && !billingSession.isComplete();
     }
 
     /**

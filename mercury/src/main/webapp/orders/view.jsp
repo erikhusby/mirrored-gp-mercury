@@ -813,6 +813,9 @@ function formatInput(item) {
                         &#160;
                         Upload not allowed while billing is in progress
                     </c:if>
+
+                    &nbsp;&nbsp;&nbsp;&nbsp;
+                    <stripes:link beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.BillingLedgerActionBean"><stripes:param name="orderId" value="${actionBean.editOrder.jiraTicketKey}"/>Online Billing Ledger</stripes:link>
                 </security:authorizeBlock>
 
             </c:if>
