@@ -9,8 +9,14 @@ import edu.mit.broad.prodinfo.thrift.lims.WellAndSourceTube;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReagentType;
+import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.GenericReagentDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.lims.LimsQueryResourceResponseFactory;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventReagent;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
@@ -30,11 +36,16 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 /**
@@ -64,19 +75,24 @@ public class LimsQueryResource {
     @Inject
     private LabVesselDao labVesselDao;
 
+    @Inject
+    private GenericReagentDao genericReagentDao;
+
     public LimsQueryResource() {
     }
 
     public LimsQueryResource(ThriftService thriftService, LimsQueries limsQueries,
                              SequencingTemplateFactory sequencingTemplateFactory,
                              LimsQueryResourceResponseFactory responseFactory,
-                             SystemRouter systemRouter, BSPUserList bspUserList) {
+                             SystemRouter systemRouter, BSPUserList bspUserList,
+                             GenericReagentDao genericReagentDao) {
         this.thriftService = thriftService;
         this.limsQueries = limsQueries;
         this.sequencingTemplateFactory = sequencingTemplateFactory;
         this.responseFactory = responseFactory;
         this.systemRouter = systemRouter;
         this.bspUserList = bspUserList;
+        this.genericReagentDao = genericReagentDao;
     }
 
     @GET
@@ -471,5 +487,43 @@ public class LimsQueryResource {
     @Path("/routeForVesselBarcodes")
     public SystemRouter.System routeForVesselBarcodes(@QueryParam("q") List<String> barcodes) {
         return systemRouter.routeForVesselBarcodes(barcodes);
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/findAllReagentsListedInEventWithReagent")
+    public Set<ReagentType> findAllReagentsListedInEventWithReagent(@QueryParam("name") String name,
+                                                        @QueryParam("lot") String lot,
+                                                        @QueryParam("expiration") String expiration) {
+        if (name == null || lot == null || expiration == null) {
+            throw new RuntimeException("name, lot, and exp are all required query parameters");
+        }
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        Set<ReagentType> reagentTypes = new HashSet<>();
+        try {
+            Date expirationDate = sdf.parse(expiration);
+            GenericReagent genericReagent =
+                    genericReagentDao.findByReagentNameLotExpiration(name, lot, expirationDate);
+            if (genericReagent != null) {
+                Set<LabEventReagent> labEventReagents = genericReagent.getLabEventReagents();
+                if (labEventReagents != null && !labEventReagents.isEmpty()) {
+                    LabEventReagent labEventReagent = labEventReagents.iterator().next();
+                    LabEvent labEvent = labEventReagent.getLabEvent();
+                    for (Reagent reagent : labEvent.getReagents()) {
+                        ReagentType reagentType = new ReagentType();
+                        reagentType.setBarcode(reagent.getLot());
+                        reagentType.setExpiration(reagent.getExpiration());
+                        reagentType.setKitType(reagent.getName());
+                        reagentTypes.add(reagentType);
+                    }
+                }
+            } else {
+                throw new RuntimeException(
+                        "Reagent not found for name: " + name + ", lot: " + lot + ", and expiration: " + expiration);
+            }
+            return reagentTypes;
+        } catch (ParseException e) {
+            throw new RuntimeException("Expiration string must be in the format of yyyy-MM-dd");
+        }
     }
 }
