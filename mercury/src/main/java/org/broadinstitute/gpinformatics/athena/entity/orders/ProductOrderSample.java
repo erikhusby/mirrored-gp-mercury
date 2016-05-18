@@ -727,6 +727,10 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         public double getTotal() {
             return billed + inProgress + uploaded;
         }
+
+        public boolean isBeingBilled() {
+            return inProgress != 0.0;
+        }
     }
 
     public Map<PriceItem, LedgerQuantities> getLedgerQuantities() {
