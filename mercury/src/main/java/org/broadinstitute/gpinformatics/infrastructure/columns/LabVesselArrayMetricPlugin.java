@@ -51,7 +51,7 @@ public class LabVesselArrayMetricPlugin implements ListPlugin {
 
     /**
      * Gathers metric data of interest and associates with LabVessel row in search results.
-     * @param entityList  List of LabVessel entities for which to return LabMetrics data
+     * @param entityList  List of LabVessel entities (DNA plate wells) for which to return LabMetrics data
      * @param headerGroup List of headers associated with columns selected by user.  This plugin appends column headers
      *                    for LabMetrics and Decisions of interest.
      * @return A list of rows, each corresponding to a LabVessel row in search results.
@@ -67,10 +67,15 @@ public class LabVesselArrayMetricPlugin implements ListPlugin {
             headerGroup.addHeader(valueColumnType.getResultHeader());
         }
 
+        if( !LabVesselSearchDefinition.isInfiniumSearch( context ) ) {
+            return metricRows;
+        }
+
         // Populate rows with any available metrics data.
         for( LabVessel labVessel : labVesselList ) {
 
-            if( !LabVesselSearchDefinition.isInfiniumPlate( labVessel ) ) {
+            // This search only applies to DNA plate wells
+            if(labVessel.getType() != LabVessel.ContainerType.PLATE_WELL ) {
                 continue;
             }
 

@@ -51,9 +51,13 @@ import java.util.Set;
  * Builds ConfigurableSearchDefinition for lab vessel user defined search logic
  */
 public class LabVesselSearchDefinition {
-    public LabVesselSearchDefinition(){}
+
+    // This singleton is used to determine if search is related specifically to Infinium arrays
+    private static ConfigurableSearchDefinition ARRAYS_ALT_SRCH_DEFINITION;
 
     public ConfigurableSearchDefinition buildSearchDefinition(){
+
+        ARRAYS_ALT_SRCH_DEFINITION = buildArraysAlternateSearchDefinition();
 
         LabVesselSearchDefinition srchDef = new LabVesselSearchDefinition();
         Map<String, List<SearchTerm>> mapGroupSearchTerms = new LinkedHashMap<>();
@@ -160,8 +164,6 @@ public class LabVesselSearchDefinition {
                         return listeners;
                     }
                 });
-
-        configurableSearchDefinition.addTraversalEvaluator("expandPlateContainee", new PlateContaineeEvaluator() );
 
         return configurableSearchDefinition;
     }
@@ -1169,18 +1171,33 @@ public class LabVesselSearchDefinition {
      */
     private List<SearchTerm> buildArrayTerms() {
         List<SearchTerm> searchTerms = new ArrayList<>();
-        List<SearchTerm.CriteriaPath> criteriaPaths;
-        SearchTerm.CriteriaPath criteriaPath;
         SearchTerm searchTerm;
+
+        // Need a non-functional criteria path to make terms with alternate definitions visible in selection list
+        List<SearchTerm.CriteriaPath> blankCriteriaPaths = new ArrayList<>();
+        SearchTerm.CriteriaPath blankCriteriaPath = new SearchTerm.CriteriaPath();
+        blankCriteriaPath.setCriteria(new ArrayList<String>());
+        blankCriteriaPaths.add(blankCriteriaPath);
 
         final List<LabEventType> platingEventTypes
                 = Collections.singletonList(LabEventType.ARRAY_PLATING_DILUTION);
         final List<LabEventType> ampPlateEventTypes
                 = Collections.singletonList(LabEventType.INFINIUM_AMPLIFICATION);
         final List<LabEventType> chipEventTypes
-                = Collections.singletonList(LabEventType.INFINIUM_XSTAIN);
+                = Collections.singletonList(LabEventType.INFINIUM_HYBRIDIZATION);
 
-        ConfigurableSearchDefinition arraysAlternateSearchDefinition = buildArraysAlternateSearchDefinition();
+        // Not available in results - PDO should be used
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Infinium PDO");
+        searchTerm.setHelpText(
+                "Infinium PDO term will only locate events associated with Infinium arrays (InfiniumAmplification for plates, or InfiniumXStain for chips). "
+                        + "Traversal option(s) should be selected if chain of custody events are desired.<br>"
+                        + "Note: The Infinium PDO term is exclusive, no other terms can be selected.");
+        searchTerm.setSearchValueConversionExpression(SearchDefinitionFactory.getPdoInputConverter());
+        searchTerm.setAlternateSearchDefinition(ARRAYS_ALT_SRCH_DEFINITION);
+        searchTerm.setIsExcludedFromResultColumns(Boolean.TRUE);
+        searchTerm.setCriteriaPaths(blankCriteriaPaths);
+        searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
         searchTerm.setName("DNA Plate Well");
@@ -1188,34 +1205,86 @@ public class LabVesselSearchDefinition {
             @Override
             public String evaluate(Object entity, SearchContext context) {
                 LabVessel vessel = (LabVessel)entity;
-                if(!isInfiniumPlate(vessel)) {
+                if(!isInfiniumSearch(context) || vessel.getType() != LabVessel.ContainerType.PLATE_WELL ) {
+                    return null;
+                }
+                return vessel.getContainers().iterator().next().getContainerRole().getPositionOfVessel(vessel).toString();
+            }
+        });
+
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("DNA Array Plate Barcode");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public String evaluate(Object entity, SearchContext context) {
+                LabVessel vessel = (LabVessel)entity;
+                if(!isInfiniumSearch(context)) {
                     return null;
                 }
 
-                return vessel.getContainers().iterator().next().getContainerRole().getPositionOfVessel(vessel).toString();
+                if(vessel.getType() == LabVessel.ContainerType.PLATE_WELL ) {
+                    return vessel.getContainers().iterator().next().getContainerRole().getEmbedder().getLabel();
+                } else {
+                    return vessel.getLabel();
+                }
+            }
+        });
+        searchTerm.setAlternateSearchDefinition(ARRAYS_ALT_SRCH_DEFINITION);
+        searchTerm.setCriteriaPaths(blankCriteriaPaths);
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Amp Plate Well");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public String evaluate(Object entity, SearchContext context) {
+                String result = null;
+                LabVessel vessel = (LabVessel)entity;
+                if(!isInfiniumSearch(context) || vessel.getType() != LabVessel.ContainerType.PLATE_WELL) {
+                    return null;
+                }
+
+                // Every event/vessel looks to descendant for amp plate barcode
+                VesselsForEventTraverserCriteria infiniumAncestorCriteria = new VesselsForEventTraverserCriteria(
+                        ampPlateEventTypes, true, true);
+                vessel.evaluateCriteria(infiniumAncestorCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
+                for (Pair<LabVessel, VesselPosition> labVesselVesselPositionPair : infiniumAncestorCriteria.getPositions()) {
+                    result = labVesselVesselPositionPair.getRight().toString();
+                    break;
+                }
+
+                return result;
             }
         });
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
-        searchTerm.setName("DNA Array Plate Barcode");
-        searchTerm.setAlternateSearchDefinition(arraysAlternateSearchDefinition);
+        searchTerm.setName("Amp Plate Barcode");
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public String evaluate(Object entity, SearchContext context) {
+                String result = null;
                 LabVessel vessel = (LabVessel)entity;
-                if(!isInfiniumPlate(vessel)) {
+                if(!isInfiniumSearch(context) || vessel.getType() != LabVessel.ContainerType.PLATE_WELL) {
                     return null;
                 }
 
-                return vessel.getContainers().iterator().next().getLabel();
+                // Every event/vessel looks to descendant for amp plate barcode
+                VesselsForEventTraverserCriteria infiniumAncestorCriteria = new VesselsForEventTraverserCriteria(
+                        ampPlateEventTypes, true, true);
+                vessel.evaluateCriteria(infiniumAncestorCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
+                for (Pair<LabVessel, VesselPosition> labVesselVesselPositionPair : infiniumAncestorCriteria.getPositions()) {
+                    result = labVesselVesselPositionPair.getLeft().getLabel();
+                    break;
+                }
+
+                return result;
             }
         });
-        criteriaPaths = new ArrayList<>();
-        criteriaPath = new SearchTerm.CriteriaPath();
-        criteriaPath.setPropertyName("label");
-        criteriaPaths.add(criteriaPath);
-        searchTerm.setCriteriaPaths(criteriaPaths);
+        searchTerm.setAlternateSearchDefinition(ARRAYS_ALT_SRCH_DEFINITION);
+        searchTerm.setCriteriaPaths(blankCriteriaPaths);
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
@@ -1225,7 +1294,7 @@ public class LabVesselSearchDefinition {
             public String evaluate(Object entity, SearchContext context) {
                 String result = null;
                 LabVessel vessel = (LabVessel)entity;
-                if(!isInfiniumPlate(vessel)) {
+                if(!isInfiniumSearch(context) || vessel.getType() != LabVessel.ContainerType.PLATE_WELL) {
                     return null;
                 }
 
@@ -1245,13 +1314,12 @@ public class LabVesselSearchDefinition {
 
         searchTerm = new SearchTerm();
         searchTerm.setName("Infinium Chip Barcode");
-        searchTerm.setAlternateSearchDefinition(arraysAlternateSearchDefinition);
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public String evaluate(Object entity, SearchContext context) {
                 String result = null;
                 LabVessel vessel = (LabVessel)entity;
-                if(!isInfiniumPlate(vessel)) {
+                if(!isInfiniumSearch(context) || vessel.getType() != LabVessel.ContainerType.PLATE_WELL) {
                     return null;
                 }
 
@@ -1267,67 +1335,8 @@ public class LabVesselSearchDefinition {
                 return result;
             }
         });
-        criteriaPaths = new ArrayList<>();
-        criteriaPath = new SearchTerm.CriteriaPath();
-        criteriaPath.setPropertyName("label");
-        criteriaPaths.add(criteriaPath);
-        searchTerm.setCriteriaPaths(criteriaPaths);
-        searchTerms.add(searchTerm);
-
-        searchTerm = new SearchTerm();
-        searchTerm.setName("Amp Plate Well");
-        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
-            @Override
-            public String evaluate(Object entity, SearchContext context) {
-                String result = null;
-                LabVessel vessel = (LabVessel)entity;
-                if(!isInfiniumPlate(vessel)) {
-                    return null;
-                }
-
-                // Every event/vessel looks to descendant for chip barcode
-                VesselsForEventTraverserCriteria infiniumAncestorCriteria = new VesselsForEventTraverserCriteria(
-                        ampPlateEventTypes, true, true);
-                vessel.evaluateCriteria(infiniumAncestorCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
-                for (Pair<LabVessel, VesselPosition> labVesselVesselPositionPair : infiniumAncestorCriteria.getPositions()) {
-                    result = labVesselVesselPositionPair.getRight().toString();
-                    break;
-                }
-
-                return result;
-            }
-        });
-        searchTerms.add(searchTerm);
-
-        searchTerm = new SearchTerm();
-        searchTerm.setName("Amp Plate Barcode");
-        searchTerm.setAlternateSearchDefinition(arraysAlternateSearchDefinition);
-        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
-            @Override
-            public String evaluate(Object entity, SearchContext context) {
-                String result = null;
-                LabVessel vessel = (LabVessel)entity;
-                if(!isInfiniumPlate(vessel)) {
-                    return null;
-                }
-
-                // Every event/vessel looks to descendant for chip barcode
-                VesselsForEventTraverserCriteria infiniumAncestorCriteria = new VesselsForEventTraverserCriteria(
-                        ampPlateEventTypes, true, true);
-                vessel.evaluateCriteria(infiniumAncestorCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
-                for (Pair<LabVessel, VesselPosition> labVesselVesselPositionPair : infiniumAncestorCriteria.getPositions()) {
-                    result = labVesselVesselPositionPair.getLeft().getLabel();
-                    break;
-                }
-
-                return result;
-            }
-        });
-        criteriaPaths = new ArrayList<>();
-        criteriaPath = new SearchTerm.CriteriaPath();
-        criteriaPath.setPropertyName("label");
-        criteriaPaths.add(criteriaPath);
-        searchTerm.setCriteriaPaths(criteriaPaths);
+        searchTerm.setAlternateSearchDefinition(ARRAYS_ALT_SRCH_DEFINITION);
+        searchTerm.setCriteriaPaths(blankCriteriaPaths);
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
@@ -1335,23 +1344,109 @@ public class LabVesselSearchDefinition {
         searchTerm.setPluginClass(LabVesselArrayMetricPlugin.class);
         searchTerms.add(searchTerm);
 
+        // Build result columns which drill down to other searches
+        // <strong>Note: Links are dependent on search term names built in LabVesselSearchDefinition#buildArrayTerms</strong>
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Infinium Array Drill Down");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public List<String> evaluate(Object entity, SearchContext context) {
+                List<String> results = null;
+
+                if(!isInfiniumSearch(context)) {
+                    return results;
+                }
+
+                LabVessel labVessel = (LabVessel) entity;
+                LabEvent infiniumEvent = null;
+
+                for( LabEvent event : labVessel.getTransfersTo() ) {
+                    LabEventType eventType = event.getLabEventType();
+                    if( eventType != LabEventType.ARRAY_PLATING_DILUTION &&
+                            eventType != LabEventType.INFINIUM_AMPLIFICATION &&
+                            eventType != LabEventType.INFINIUM_HYBRIDIZATION ) {
+                        return results;
+                    } else {
+                        infiniumEvent = event;
+                        break;
+                    }
+                }
+
+                String drillDownSearchName;
+                String drillDownSearchTerm;
+                List<LabVessel> vessels = new ArrayList<>();
+                switch( infiniumEvent.getLabEventType() ) {
+                    case INFINIUM_AMPLIFICATION:
+                        drillDownSearchName = "GLOBAL|GLOBAL_LAB_VESSEL_SEARCH_INSTANCES|Amp Plate Drill Down";
+                        drillDownSearchTerm = "Amp Plate Barcode";
+                        // This could be one or more Infinium chips
+                        vessels.addAll(infiniumEvent.getTargetLabVessels());
+                        break;
+                    case INFINIUM_HYBRIDIZATION:
+                        drillDownSearchName = "GLOBAL|GLOBAL_LAB_VESSEL_SEARCH_INSTANCES|Infinium Chip Drill Down";
+                        drillDownSearchTerm = "Infinium Chip Barcode";
+                        // XStain event is an  in-place event on a single vessel
+                        vessels.addAll( infiniumEvent.getTargetLabVessels() );
+                        break;
+                    case ARRAY_PLATING_DILUTION:
+                        drillDownSearchName = "GLOBAL|GLOBAL_LAB_VESSEL_SEARCH_INSTANCES|DNA Plate Drill Down";
+                        drillDownSearchTerm = "DNA Array Plate Barcode";
+                        vessels = new ArrayList<>();
+                        vessels.addAll(infiniumEvent.getTargetLabVessels());
+                        break;
+                    default:
+                        return results;
+                }
+
+                results = new ArrayList<>();
+
+                for( LabVessel infiniumPlate : vessels ) {
+                    String label = infiniumPlate.getLabel();
+                    if (context.getResultCellTargetPlatform() != null
+                            && context.getResultCellTargetPlatform() == SearchContext.ResultCellTargetPlatform.WEB) {
+                        Map<String, String[]> terms = new HashMap<>();
+                        terms.put(drillDownSearchTerm, new String[]{label});
+                        results.add( SearchDefinitionFactory.buildDrillDownLink(label, ColumnEntity.LAB_VESSEL, drillDownSearchName, terms, context) );
+                    } else {
+                        results.add( label );
+                    }
+                }
+
+                return results;
+            }
+        });
+        searchTerms.add(searchTerm);
+
         return searchTerms;
     }
 
     /**
      * Build an alternate search definition to query for array related lab vessels.
-     * In the end, use programmatic logic to populate the lab vessel list with DNA plate well entities
+     * In the end, use programmatic logic to populate the lab vessel list with downstream Infinium vessels for a PDO
+     * search or DNA plate well entities for Infinium vessel barcodes
      * @return
      */
     private ConfigurableSearchDefinition buildArraysAlternateSearchDefinition() {
         Map<String, List<SearchTerm>> mapGroupSearchTerms = new LinkedHashMap<>();
         List<SearchTerm> searchTerms = new ArrayList<>();
 
-        SearchTerm searchTerm;
+        // By Infinium PDO
+        SearchTerm searchTerm = new SearchTerm();
+        searchTerm.setName("Infinium PDO");
+        searchTerm.setIsExcludedFromResultColumns(Boolean.TRUE);
 
-        // All use the same criteria
         List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
         SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(
+                Arrays.asList("mercurySample", "mercurySamples", "productOrderSamples", "productOrder"));
+        criteriaPath.setPropertyName("jiraTicketKey");
+        criteriaPaths.add(criteriaPath);
+        searchTerm.setCriteriaPaths(criteriaPaths);
+        searchTerms.add(searchTerm);
+
+        // Next 3 all use the same criteria
+        criteriaPaths = new ArrayList<>();
+        criteriaPath = new SearchTerm.CriteriaPath();
         criteriaPath.setPropertyName("label");
         criteriaPaths.add(criteriaPath);
 
@@ -1372,12 +1467,17 @@ public class LabVesselSearchDefinition {
 
         mapGroupSearchTerms.put("Never Seen", searchTerms);
 
+        List<ConfigurableSearchDefinition.CriteriaProjection> criteriaProjections = new ArrayList<>();
+
+        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("mercurySample", "labVesselId",
+                "mercurySamples", LabVessel.class));
+
         ConfigurableSearchDefinition configurableSearchDefinition = new ConfigurableSearchDefinition(
                 ColumnEntity.LAB_VESSEL,
-                new ArrayList<ConfigurableSearchDefinition.CriteriaProjection>(), // No projections
+                criteriaProjections,
                 mapGroupSearchTerms);
 
-        // Mandatory to convert a list of LabVessel entities to LabEvent entities
+        // Restrict results to strictly Infinium related vessels
         configurableSearchDefinition.addTraversalEvaluator(ConfigurableSearchDefinition.ALTERNATE_DEFINITION_ID
                 , new InfiniumPlateSourceEvaluator() );
 
@@ -1463,24 +1563,14 @@ public class LabVesselSearchDefinition {
     }
 
     /**
-     * All Infinium related columns depend on row source vessel being a plate well in a DNA plate
-     * with a transfer-from event type of InfiniumAmplification
-     * @param vessel The vessel representing the DNA array plate
-     * @return True if the vessel is a plate well and has a transfer from event type of InfiniumAmplification
+     * All Infinium related columns depend on search term being related to Infinium arrays.
+     * @param context Used to determine if term has array alternate search definition attached
+     * @return True if the search term is related to Infinium arrays
      */
-    public static boolean isInfiniumPlate( LabVessel vessel ){
-        // Will it ever not be a plate well?
-        if( vessel.getType() != LabVessel.ContainerType.PLATE_WELL ) {
-            return false;
-        }
-        // On first good hit, return a thumbs up
-        for (LabEvent labEvent : vessel.getTransfersFrom()) {
-            if( labEvent.getLabEventType() == LabEventType.INFINIUM_AMPLIFICATION ) {
-                return true;
-            }
-        }
-
-        return false;
+    public static boolean isInfiniumSearch( SearchContext context ){
+        ConfigurableSearchDefinition alternateSearchDefinition =
+                context.getSearchInstance().getSearchValues().iterator().next().getSearchTerm().getAlternateSearchDefinition();
+        return ARRAYS_ALT_SRCH_DEFINITION.equals(alternateSearchDefinition);
     }
 
     /**

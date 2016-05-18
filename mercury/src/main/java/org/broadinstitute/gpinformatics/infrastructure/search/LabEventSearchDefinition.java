@@ -11,7 +11,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
@@ -24,7 +23,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -99,9 +97,6 @@ public class LabEventSearchDefinition {
         searchTerms.add(sourceLayoutTerm);
         searchTerms.add(destinationLayoutTerm);
         mapGroupSearchTerms.put("Nested Data", searchTerms);
-
-        searchTerms = buildLabEventDrillDownLinks();
-        mapGroupSearchTerms.put("Search Drill Downs", searchTerms);
 
         List<ConfigurableSearchDefinition.CriteriaProjection> criteriaProjections = new ArrayList<>();
 
@@ -340,70 +335,6 @@ public class LabEventSearchDefinition {
         });
         searchTerm.setValueType(ColumnValueType.DATE);
         parentSearchTerm.addNestedEntityColumn(searchTerm);
-
-        return searchTerms;
-    }
-
-    /**
-     * Build result columns which drill down to other searches
-     * <strong>Note: Links are dependent on search term names built in LabVesselSearchDefinition#buildArrayTerms</strong>
-     */
-    private List<SearchTerm> buildLabEventDrillDownLinks() {
-        List<SearchTerm> searchTerms = new ArrayList<>();
-
-        SearchTerm searchTerm = new SearchTerm();
-        searchTerm.setName("Infinium Array Drill Down");
-        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
-            @Override
-            public List<String> evaluate(Object entity, SearchContext context) {
-                List<String> results = null;
-                LabEvent labEvent = (LabEvent) entity;
-                LabEventType eventType = labEvent.getLabEventType();
-
-                String drillDownSearchName;
-                String drillDownSearchTerm;
-                List<LabVessel> vessels = new ArrayList<>();
-                switch( eventType ) {
-                    case INFINIUM_AMPLIFICATION:
-                        drillDownSearchName = "GLOBAL|GLOBAL_LAB_VESSEL_SEARCH_INSTANCES|Amp Plate Drill Down";
-                        drillDownSearchTerm = "Amp Plate Barcode";
-                        // This could be one or more Infinium chips
-                        vessels.addAll(labEvent.getTargetLabVessels());
-                        break;
-                    case INFINIUM_XSTAIN:
-                        drillDownSearchName = "GLOBAL|GLOBAL_LAB_VESSEL_SEARCH_INSTANCES|Infinium Chip Drill Down";
-                        drillDownSearchTerm = "Infinium Chip Barcode";
-                        // XStain event is an  in-place event on a single vessel
-                        vessels.add( labEvent.getInPlaceLabVessel() );
-                        break;
-                    case ARRAY_PLATING_DILUTION:
-                        drillDownSearchName = "GLOBAL|GLOBAL_LAB_VESSEL_SEARCH_INSTANCES|DNA Plate Drill Down";
-                        drillDownSearchTerm = "DNA Array Plate Barcode";
-                        vessels = new ArrayList<>();
-                        vessels.addAll(labEvent.getTargetLabVessels());
-                        break;
-                    default:
-                        return results;
-                }
-
-                results = new ArrayList<>();
-
-                for( LabVessel infiniumPlate : vessels ) {
-                    String label = infiniumPlate.getLabel();
-                    if (context.getResultCellTargetPlatform() != null
-                            && context.getResultCellTargetPlatform() == SearchContext.ResultCellTargetPlatform.WEB) {
-                        Map<String, String[]> terms = new HashMap<>();
-                        terms.put(drillDownSearchTerm, new String[]{label});
-                        results.add( SearchDefinitionFactory.buildDrillDownLink(label, ColumnEntity.LAB_VESSEL, drillDownSearchName, terms, context) );
-                    } else {
-                        results.add( label );
-                    }
-                }
-
-                return results;
-            }
-        });
-        searchTerms.add(searchTerm);
 
         return searchTerms;
     }
@@ -778,19 +709,6 @@ public class LabEventSearchDefinition {
         });
         searchTerms.add(searchTerm);
 
-        // Not available in results - PDO should be used
-        searchTerm = new SearchTerm();
-        searchTerm.setName("Infinium PDO");
-        searchTerm.setHelpText(
-                "Infinium PDO term will only locate events associated with Infinium arrays (InfiniumAmplification for plates, or InfiniumXStain for chips). "
-                        + "Traversal option(s) should be selected if chain of custody events are desired.<br>"
-                        + "Note: The Infinium PDO term is exclusive, no other terms can be selected.");
-        searchTerm.setSearchValueConversionExpression(SearchDefinitionFactory.getPdoInputConverter());
-        searchTerm.setAlternateSearchDefinition(eventByVesselSearchDefinition);
-        searchTerm.setIsExcludedFromResultColumns(Boolean.TRUE);
-        searchTerm.setCriteriaPaths(blankCriteriaPaths);
-        searchTerms.add(searchTerm);
-
         return searchTerms;
     }
 
@@ -928,19 +846,6 @@ public class LabEventSearchDefinition {
 
         List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
         SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
-        criteriaPath.setCriteria(
-                Arrays.asList("mercurySample", "mercurySamples", "productOrderSamples", "productOrder"));
-        criteriaPath.setPropertyName("jiraTicketKey");
-        criteriaPaths.add(criteriaPath);
-        searchTerm.setCriteriaPaths(criteriaPaths);
-        searchTerms.add(searchTerm);
-
-        // By Infinium PDO
-        searchTerm = new SearchTerm();
-        searchTerm.setName("Infinium PDO");
-
-        criteriaPaths = new ArrayList<>();
-        criteriaPath = new SearchTerm.CriteriaPath();
         criteriaPath.setCriteria(
                 Arrays.asList("mercurySample", "mercurySamples", "productOrderSamples", "productOrder"));
         criteriaPath.setPropertyName("jiraTicketKey");
