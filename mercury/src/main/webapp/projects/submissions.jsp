@@ -18,6 +18,7 @@
         .columnDataType { width: 4em; }
         .columnPDOs { width: 12em; }
         .columnAggregationProject { width: 5em; }
+        .columnLibraryDescriptor { min-width: 90px; }
         .columnFileType { width: 5em; }
         .columnVersion { width: 6em; }
         .columnQualityMetric { width: 5em; }
@@ -65,6 +66,9 @@
             min-width: 150px !important;
         }
 
+        .noWrap {
+            white-space: nowrap;
+        }
         .control-group select {
             width: auto;
         }
@@ -307,6 +311,14 @@
                         }
                         return jQuery("<input/>", tagAttributes)[0].outerHTML;
                     }
+//                    if (type === 'sort') {
+//                        var selector = 'input[type="checkbox"][value="data"]'.replace("data", data);
+//                        var result = $j(selector).prop("checked");
+//                        if (result === undefined) {
+//                            result = 1;
+//                        }
+//                        return result;
+//                    }
                     return data;
                 }
 
@@ -355,8 +367,8 @@
                     "aoColumns": [
                         {"mData": "<%=SubmissionField.SAMPLE_NAME%>", "mRender": renderCheckbox},
                         {"mData": "<%=SubmissionField.SAMPLE_NAME%>"},
-                        {"mData": "<%=SubmissionField.SUBMISSION_SITE%>"},
-                        {"mData": "<%=SubmissionField.LIBRARY_DESCRIPTOR%>"},
+                        {"mData": "<%=SubmissionField.SUBMISSION_SITE%>", "sWidth": "140px", "sClass": "ellipsis"},
+                        {"mData": "<%=SubmissionField.LIBRARY_DESCRIPTOR%>", "sClass": "columnLibraryDescriptor"},
                         {"mData": "<%=SubmissionField.DATA_TYPE %>"},
                         { "mData": "<%=SubmissionField.PRODUCT_ORDERS %>", "sWidth": "140px", "sClass": "ellipsis",
                             "mRender": displayDataList },
@@ -365,7 +377,15 @@
                         {"mData": "<%=SubmissionField.FILE_TYPE %>"},
                         {"mData": "<%=SubmissionField.VERSION %>"},
                         {"mData": "<%=SubmissionField.QUALITY_METRIC %>"},
-                        {"mData": "<%=SubmissionField.CONTAMINATION_STRING %>"},
+                        {"mData": "<%=SubmissionField.CONTAMINATION_STRING %>",
+                            "sType": "numeric",
+                            "mRender": function (data, type) {
+                                if (type === 'sort') {
+                                    return data.replace("%", "");
+                                }
+                                return data;
+                            }
+                        },
                         {"mData": "<%=SubmissionField.FINGERPRINT_LOD %>"},
                         {"mData": "<%=SubmissionField.LANES_IN_AGGREGATION %>"},
                         {"mData": "<%=SubmissionField.SUBMITTED_VERSION %>",
@@ -393,7 +413,7 @@
                                 return data;
                             }
                         },
-                        {"mData": "<%=SubmissionField.STATUS_DATE %>"}
+                        {"mData": "<%=SubmissionField.STATUS_DATE %>", "sClass": "noWrap"}
                     ], "fnInitComplete": function () {
                         function updateSearchText() {
                             var currentFullTextSearch = oTable.fnSettings().oPreviousSearch.sSearch;

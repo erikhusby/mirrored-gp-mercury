@@ -33,6 +33,7 @@ import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.CollaborationData;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTuple;
 import org.broadinstitute.gpinformatics.athena.presentation.DisplayableItem;
 import org.broadinstitute.gpinformatics.athena.presentation.converter.IrbConverter;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.BioProjectTokenInput;
@@ -42,6 +43,7 @@ import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.Proje
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bass.BassFileType;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProjectList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
@@ -49,6 +51,8 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.collaborate.CollaborationNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.collaborate.CollaborationPortalException;
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionData;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDataBean;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDto;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDtoFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionLibraryDescriptor;
@@ -61,6 +65,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.ReferenceSe
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.map.RuntimeJsonMappingException;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -119,6 +124,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     // Reference sequence that will be used for Exome projects.
     private static final String DEFAULT_REFERENCE_SEQUENCE = "Homo_sapiens_assembly19|1";
+    public static final String SESSION_SAMPLES_KEY = "SUBMISSIONS";
 
     @Inject
     private ResearchProjectDao researchProjectDao;
@@ -186,7 +192,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     })
     private ResearchProject editResearchProject;
 
-    private List<SubmissionDto> submissionSamples = new ArrayList<>();
+    private List<SubmissionData> submissionSamples = new ArrayList<>();
     /*
      * The search query.
      */
@@ -862,7 +868,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     @HandlesEvent(VIEW_SUBMISSIONS_ACTION)
     public Resolution viewSubmissions() throws IOException, JSONException {
         ObjectMapper objectMapper = new ObjectMapper();
-        final Map<String, Object> submissionSamplesMap = new HashMap<String, Object>() {{
+        Map<String, Object> submissionSamplesMap = new HashMap<String, Object>() {{
             put("aaData", submissionSamples);//iDisplayLength  iRecordsTotal
             put("iTotalRecords", submissionSamples.size());
         }};
@@ -882,16 +888,78 @@ public class ResearchProjectActionBean extends CoreActionBean {
     @SuppressWarnings("unchecked")
     private void updateSubmissionSamples() {
         if (editResearchProject != null) {
-            String rpSamplesKey = String.format("%s_submissionSamples", editResearchProject.getBusinessKey());
-            submissionSamples = (List<SubmissionDto>) getContext().getSession().getAttribute(rpSamplesKey);
-            if (submissionSamples == null) {
-                submissionSamples = submissionDtoFetcher.fetch(editResearchProject);
-                getContext().getSession().setAttribute(rpSamplesKey,submissionSamples);
+            submissionSamples = getSamplesFromCache(researchProject);
+            if (submissionSamples.isEmpty()) {
+                for (SubmissionDto submissionDto : submissionDtoFetcher.fetch(editResearchProject)) {
+                    SubmissionData submissionData = submissionDto.submissionData();
+                    submissionSamples.add(submissionData);
+                }
             } else {
                 submissionDtoFetcher.refreshSubmissionStatuses(submissionSamples);
                 log.info("submissionSamples retrieved from cache.");
             }
+            addSamplesToCache(researchProject, submissionSamples);
         }
+    }
+
+    /**
+     * Clear existing sampleData from the session and add new samples for businessKey.
+     *
+     * @param businessKey The research project businessKey
+     * @param sampleData  A list of SampleData to add to the cache.
+     */
+    private void addSamplesToCache(String businessKey, List<SubmissionData> sampleData) {
+        // remove
+        getContext().getSession().removeAttribute(SESSION_SAMPLES_KEY);
+        String jsonBean;
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            jsonBean = objectMapper.writeValueAsString(new SubmissionDataBean(sampleData));
+            if (jsonBean == null) {
+                throw new RuntimeJsonMappingException("Could not serialize sampleData");
+            }
+            Map<String, String> submissionMap = new HashMap<>();
+            submissionMap.put(researchProject, jsonBean);
+            getContext().getSession().setAttribute(SESSION_SAMPLES_KEY, submissionMap);
+
+        } catch (IOException e) {
+            log.error("Could not serialize sample data", e);
+        }
+        log.info(String.format("%d submissionSamples saved in session attribute %s.", sampleData.size(),
+                SESSION_SAMPLES_KEY));
+
+    }
+
+    /**
+     * Retrieve samples from the session
+     *
+     * @param businessKey The research project businessKey
+     *
+     * @return List of SubmissionData for this RP.
+     */
+    @SuppressWarnings("unchecked")
+    private List<SubmissionData> getSamplesFromCache(String businessKey) {
+        // Samples are stored as a Map<String, List<>> with the key being the businessKey.
+        // This ensures the samples returned are for this RP
+        Map<String, String> submissionSamplesMap =
+                (Map<String, String>) getContext().getSession().getAttribute(SESSION_SAMPLES_KEY);
+        if (submissionSamplesMap != null) {
+            String json = submissionSamplesMap.get(researchProject);
+            if (json != null) {
+                try {
+                    ObjectMapper objectMapper = new ObjectMapper();
+                    SubmissionDataBean submissionDataBean = objectMapper.readValue(json, SubmissionDataBean.class);
+                    if (submissionDataBean.getSubmissionData() != null) {
+                        List<SubmissionData> submissionData = submissionDataBean.getSubmissionData();
+                        log.info(String.format("%d submissionSamples retrieved from cache.", submissionData.size()));
+                        return submissionData;
+                    }
+                } catch (IOException e) {
+                    log.error("Could not deserialize sample data", e);
+                }
+            }
+        }
+        return new ArrayList<>();
     }
 
     /**
@@ -955,6 +1023,21 @@ public class ResearchProjectActionBean extends CoreActionBean {
                         researchProjectEjb
                                 .processSubmissions(researchProject, new BioProject(selectedProject.getAccession()),
                                         selectedSubmissions, submissionRepository, submissionLibraryDescriptor);
+                Map<SubmissionTuple, SubmissionDto> newSubmissionDtoMap = new HashMap<>(selectedSubmissions.size());
+                for (SubmissionDto selectedSubmission : selectedSubmissions) {
+                    newSubmissionDtoMap.put(selectedSubmission.getBassDTO().getTuple(), selectedSubmission);
+                }
+                submissionSamples = getSamplesFromCache(researchProject);
+                for (SubmissionData submissionSample : submissionSamples) {
+                    SubmissionTuple tuple = new SubmissionTuple(submissionSample.getSampleName(),
+                            BassFileType.byBassValue(submissionSample.getFileTypeString()),
+                            String.valueOf(submissionSample.getVersion()));
+                    SubmissionDto submissionDto = newSubmissionDtoMap.get(tuple);
+                    if (submissionDto != null) {
+                        submissionSample.updateStatusDetail(submissionDto.getStatusDetailBean());
+                    }
+                }
+                addSamplesToCache(SESSION_SAMPLES_KEY, submissionSamples);
                 addMessage("The selected samples for submission have been successfully posted to NCBI.  See the " +
                            "Submission Requests tab for further details");
             } catch (InformaticsServiceException | ValidationException e) {
@@ -1203,11 +1286,11 @@ public class ResearchProjectActionBean extends CoreActionBean {
         return validCollaborationPortal;
     }
 
-    public List<SubmissionDto> getSubmissionSamples() {
+    public List<SubmissionData> getSubmissionSamples() {
         return submissionSamples;
     }
 
-    public void setSubmissionSamples(List<SubmissionDto> submissionSamples) {
+    public void setSubmissionSamples(List<SubmissionData> submissionSamples) {
         this.submissionSamples = submissionSamples;
     }
 

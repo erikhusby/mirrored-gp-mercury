@@ -38,10 +38,8 @@ import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregatio
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -210,20 +208,20 @@ public class SubmissionDtoFetcher {
         return sampleSubmissionMap;
     }
 
-    public void refreshSubmissionStatuses(List<SubmissionDto> submissionDtoList) {
-        Map<String, SubmissionDto> uuIdDtoMap = new HashMap<>(submissionDtoList.size());
-        for (SubmissionDto submissionDto : submissionDtoList) {
-            if (StringUtils.isNotBlank(submissionDto.getUuid())) {
-                uuIdDtoMap.put(submissionDto.getUuid(), submissionDto);
+    public void refreshSubmissionStatuses(List<SubmissionData> submissionDataList) {
+        Map<String, SubmissionData> uuIdSubmisisonDataMap = new HashMap<>(submissionDataList.size());
+        for (SubmissionData submissionData : submissionDataList) {
+            if (StringUtils.isNotBlank(submissionData.getUuid())) {
+                uuIdSubmisisonDataMap.put(submissionData.getUuid(), submissionData);
             }
         }
-        Set<String> uuIds = uuIdDtoMap.keySet();
+        Set<String> uuIds = uuIdSubmisisonDataMap.keySet();
         if (!uuIds.isEmpty()) {
             Collection<SubmissionStatusDetailBean> submissionDetailBeans =
                     submissionsService.getSubmissionStatus(uuIds.toArray(new String[uuIds.size()]));
             for (SubmissionStatusDetailBean statusDetailBean : submissionDetailBeans) {
-                SubmissionDto submissionDto = uuIdDtoMap.get(statusDetailBean.getUuid());
-                submissionDto.setStatusDetailBean(statusDetailBean);
+                SubmissionData submissionData = uuIdSubmisisonDataMap.get(statusDetailBean.getUuid());
+                submissionData.updateStatusDetail(statusDetailBean);
             }
         }
     }
@@ -236,21 +234,5 @@ public class SubmissionDtoFetcher {
             submissionIds.put(submissionTracker.createSubmissionIdentifier(), submissionTracker.getTuple());
         }
         return submissionIds;
-    }
-
-    private Map<String, Set<ProductOrder>> buildSampleToPdoMap(ResearchProject researchProject) {
-        Set<ProductOrderSample> productOrderSamples = researchProject.collectSamples();
-        updateBulkBspSampleInfo(productOrderSamples);
-        Map<String, Set<ProductOrder>> sampleNameToPdos = new HashMap<>();
-        for (ProductOrderSample productOrderSample : productOrderSamples) {
-            String pdoSampleName = productOrderSample.getSampleData().getCollaboratorsSampleName();
-            if (!pdoSampleName.isEmpty()) {
-                if (sampleNameToPdos.get(pdoSampleName) == null) {
-                    sampleNameToPdos.put(pdoSampleName, new HashSet<ProductOrder>());
-                }
-                sampleNameToPdos.get(pdoSampleName).add(productOrderSample.getProductOrder());
-            }
-        }
-        return sampleNameToPdos;
     }
 }

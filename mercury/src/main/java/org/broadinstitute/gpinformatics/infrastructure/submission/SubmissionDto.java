@@ -19,9 +19,6 @@ import org.broadinstitute.gpinformatics.infrastructure.bass.BassFileType;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.LevelOfDetection;
-import org.codehaus.jackson.annotate.JsonIgnore;
-import org.codehaus.jackson.annotate.JsonProperty;
-import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -31,7 +28,6 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 
-@JsonSerialize(include = JsonSerialize.Inclusion.NON_EMPTY)
 public class SubmissionDto {
     public static final FastDateFormat DATE_FORMAT =
             FastDateFormat.getDateTimeInstance(FastDateFormat.MEDIUM, FastDateFormat.SHORT);
@@ -49,7 +45,6 @@ public class SubmissionDto {
         this.statusDetailBean = statusDetailBean;
     }
 
-    @JsonIgnore
     public String getUuid() {
         String result = "";
         if (statusDetailBean != null) {
@@ -58,27 +53,22 @@ public class SubmissionDto {
         return result;
     }
 
-    @JsonIgnore
     public BassDTO getBassDTO() {
         return bassDTO;
     }
 
-    @JsonIgnore
     public Aggregation getAggregation() {
         return aggregation;
     }
 
-    @JsonProperty(value = SubmissionField.SAMPLE_NAME)
     public String getSampleName() {
         return bassDTO.getSample();
     }
 
-    @JsonProperty(value = SubmissionField.DATA_TYPE)
     public String getDataType() {
         return bassDTO.getDatatype();
     }
 
-    @JsonProperty(value = SubmissionField.PRODUCT_ORDERS)
     public Collection<String> getProductOrdersString() {
         Collection<String> values = new HashSet<>(productOrders.size());
         for (ProductOrder productOrder : productOrders) {
@@ -91,37 +81,30 @@ public class SubmissionDto {
         return productOrders;
     }
 
-    @JsonProperty(value = SubmissionField.AGGREGATION_PROJECT)
     String getAggregationProject() {
         return bassDTO.getProject();
     }
 
-    @JsonProperty(value = SubmissionField.FILE_TYPE)
     String getFileTypeString(){
         return bassDTO.getFileType();
     }
 
-    @JsonIgnore
     public BassFileType getFileType() {
         return BassFileType.byBassValue(bassDTO.getFileType());
     }
 
-    @JsonProperty(value = SubmissionField.VERSION)
     public int getVersion() {
         return bassDTO.getVersion();
     }
 
-    @JsonIgnore
     Double getQualityMetric() {
         return aggregation.getQualityMetric(bassDTO.getDatatype());
     }
 
-    @JsonProperty(value = SubmissionField.QUALITY_METRIC)
     public String getQualityMetricString() {
         return aggregation.getQualityMetricString(bassDTO.getDatatype());
     }
 
-    @JsonProperty(value = SubmissionField.CONTAMINATION_STRING)
     String getContaminationString() {
         return aggregation.getContaminationString();
     }
@@ -130,42 +113,34 @@ public class SubmissionDto {
         return aggregation.getAggregationContam().getPctContamination();
     }
 
-    @JsonIgnore
     public Date getDateCompleted() {
         return null;
     }
 
-    @JsonIgnore
     LevelOfDetection getFingerprintLOD() {
         return aggregation.getLevelOfDetection();
     }
 
-    @JsonProperty(value = SubmissionField.FINGERPRINT_LOD)
     public String getFingerprintLODString() {
         return getFingerprintLOD().toString();
     }
 
-    @JsonProperty(value = SubmissionField.RESEARCH_PROJECT)
     public String getResearchProject() {
         return bassDTO.getRpid();
     }
 
-    @JsonProperty(value = SubmissionField.LANES_IN_AGGREGATION)
     int getLanesInAggregation() {
         return aggregation.getReadGroupCount();
     }
 
-    @JsonProperty(value = SubmissionField.FILE_NAME)
     public String getFileName() {
         return bassDTO.getFileName();
     }
 
-    @JsonIgnore
     public String getFilePath() {
         return bassDTO.getPath();
     }
 
-    @JsonProperty(value = SubmissionField.SUBMITTED_VERSION)
     public Integer getSubmittedVersion() {
         if (statusDetailBean != null) {
             String submittedVersion = statusDetailBean.getSubmittedVersion();
@@ -176,7 +151,6 @@ public class SubmissionDto {
         return null;
     }
 
-    @JsonProperty(value = SubmissionField.SUBMITTED_ERRORS)
     public List<String> getSubmittedErrors() {
         if (statusDetailBean != null) {
             return statusDetailBean.getErrors();
@@ -184,13 +158,11 @@ public class SubmissionDto {
         return Collections.emptyList();
     }
 
-    @JsonIgnore
     public String[] getSubmittedErrorsArray() {
         List<String> errors = getSubmittedErrors();
         return errors.toArray(new String[errors.size()]);
     }
 
-    @JsonProperty(value = SubmissionField.SUBMITTED_STATUS)
     public String getSubmittedStatus() {
         String status = "";
         if (statusDetailBean != null) {
@@ -199,8 +171,6 @@ public class SubmissionDto {
         return status;
     }
 
-
-    @JsonProperty(value = SubmissionField.STATUS_DATE)
     public String getStatusDate() {
         String statusDate = "";
         if (statusDetailBean != null && statusDetailBean.getLastStatusUpdate() != null) {
@@ -209,17 +179,18 @@ public class SubmissionDto {
         return statusDate;
     }
 
-    @JsonProperty(value = SubmissionField.BIO_PROJECT)
     public String getBioProject() {
         String bioProjectString = "";
         if (statusDetailBean != null && statusDetailBean.getBioproject() != null) {
-            BioProject bioProject = statusDetailBean.getBioproject();
-            bioProjectString = String.format("%s %s", bioProject.getAccession(), bioProject.getAlias());
+            bioProjectString = formatBioProject(statusDetailBean.getBioproject());
         }
         return bioProjectString;
     }
 
-    @JsonProperty(value = SubmissionField.LIBRARY_DESCRIPTOR)
+    protected static String formatBioProject(BioProject bioProject) {
+        return String.format("%s %s", bioProject.getAccession(), bioProject.getAlias());
+    }
+
     String getSubmissionLibraryDescriptor() {
         String libraryDescriptor="";
         if (statusDetailBean != null) {
@@ -228,7 +199,6 @@ public class SubmissionDto {
         return libraryDescriptor;
     }
 
-    @JsonProperty(value = SubmissionField.SUBMISSION_SITE)
     String getSubmissionRepositoryName() {
         String submissionSite = "";
         if (statusDetailBean != null) {
@@ -237,8 +207,16 @@ public class SubmissionDto {
         return submissionSite;
     }
 
-    void setStatusDetailBean(SubmissionStatusDetailBean statusDetailBean) {
+    public void setStatusDetailBean(SubmissionStatusDetailBean statusDetailBean) {
         this.statusDetailBean = statusDetailBean;
+    }
+
+    public SubmissionData submissionData() {
+        return new SubmissionData(this);
+    }
+
+    public SubmissionStatusDetailBean getStatusDetailBean() {
+        return statusDetailBean;
     }
 
     public class SubmissionField {
@@ -262,5 +240,6 @@ public class SubmissionDto {
         public static final String STATUS_DATE = "statusDate";
         public static final String LIBRARY_DESCRIPTOR = "libraryDescriptor";
         public static final String SUBMISSION_SITE = "site";
+        public static final String UUID = "uuid";
     }
 }

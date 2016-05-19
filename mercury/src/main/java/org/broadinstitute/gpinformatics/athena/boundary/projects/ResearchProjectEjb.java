@@ -46,10 +46,10 @@ import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionBean
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionBioSampleBean;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionContactBean;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDto;
-import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionRequestBean;
-import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionRepository;
-import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionStatusDetailBean;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionLibraryDescriptor;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionRepository;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionRequestBean;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionStatusDetailBean;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionsService;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
@@ -316,10 +316,13 @@ public class ResearchProjectEjb {
         List<String> errorMessages = new ArrayList<>();
 
         for (SubmissionStatusDetailBean status : submissionResults) {
+            SubmissionTracker submissionTracker = submissionIdentifierToTracker.get(status.getUuid());
             if (CollectionUtils.isNotEmpty(status.getErrors())) {
                 for(String errorMessage:status.getErrors()) {
-                    errorMessages.add(String.format("%s: %s", submissionIdentifierToTracker.get(status.getUuid()).getSubmittedSampleName(),errorMessage));
+                    errorMessages.add(String.format("%s: %s", submissionTracker.getSubmittedSampleName(),errorMessage));
                 }
+            }else {
+                submissionDtoMap.get(submissionTracker).setStatusDetailBean(status);
             }
         }
 

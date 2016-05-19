@@ -60,6 +60,15 @@ public class SubmissionsServiceImpl implements SubmissionsService {
             allResults.addAll(result.getSubmissionStatuses());
         }
 
+        Map<String, String> libraryDescriptionMap=new HashMap<>();
+        for (SubmissionLibraryDescriptor library : getSubmissionLibraryDescriptors()) {
+            libraryDescriptionMap.put(library.getName(), library.getDescription());
+        }
+        Map<String, String> siteDescriptionMap = new HashMap<>();
+        for (SubmissionRepository submissionRepository : getSubmissionRepositories()) {
+            siteDescriptionMap.put(submissionRepository.getName(), submissionRepository.getDescription());
+        }
+
         Map<String, BioProject> bioProjectMap = new HashMap<>();
         for (BioProject bioProject : getAllBioProjects()) {
             bioProjectMap.put(bioProject.getAccession(), bioProject);
@@ -70,6 +79,20 @@ public class SubmissionsServiceImpl implements SubmissionsService {
                 BioProject fullBioProject = bioProjectMap.get(accession);
                 if (fullBioProject != null) {
                     result.setBioproject(fullBioProject);
+                }
+                String site = result.getSite();
+                if (StringUtils.isNotBlank(site)) {
+                    String siteDescription = siteDescriptionMap.get(site);
+                    if (StringUtils.isNotBlank(siteDescription)) {
+                        result.setSite(siteDescription);
+                    }
+                }
+                String library = result.getSubmissiondatatype();
+                if (StringUtils.isNotBlank(library)) {
+                    String libraryDescription = libraryDescriptionMap.get(library);
+                    if (StringUtils.isNotBlank(libraryDescription)) {
+                        result.setSubmissiondatatype(libraryDescription);
+                    }
                 }
             }
         }

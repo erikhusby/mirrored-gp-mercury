@@ -14,6 +14,7 @@ package org.broadinstitute.gpinformatics.infrastructure.submission;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.codehaus.jackson.annotate.JsonProperty;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
@@ -41,6 +42,7 @@ public class SubmissionLibraryDescriptor implements Serializable {
     public SubmissionLibraryDescriptor() {
     }
 
+    @JsonProperty
     @XmlElement
     public void setName(String name) {
         this.name = name;
@@ -50,6 +52,7 @@ public class SubmissionLibraryDescriptor implements Serializable {
         return description;
     }
 
+    @JsonProperty
     @XmlElement(required = false)
     public void setDescription(String description) {
         this.description = description;
