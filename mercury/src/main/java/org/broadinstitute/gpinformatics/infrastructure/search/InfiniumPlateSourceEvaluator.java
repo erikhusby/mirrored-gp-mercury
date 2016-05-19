@@ -26,8 +26,7 @@ public class  InfiniumPlateSourceEvaluator extends TraversalEvaluator {
     public InfiniumPlateSourceEvaluator(){
         infiniumEvents = Arrays.asList(
                 LabEventType.ARRAY_PLATING_DILUTION,
-                LabEventType.INFINIUM_AMPLIFICATION,
-                LabEventType.INFINIUM_HYBRIDIZATION);
+                LabEventType.INFINIUM_AMPLIFICATION);
     }
 
     @Override
@@ -50,7 +49,7 @@ public class  InfiniumPlateSourceEvaluator extends TraversalEvaluator {
     }
 
     /**
-     * Get Infinium vessels (DNA Plates, AMP Plates, and Infinium Chips) starting from PDO sample tubes
+     * Get Infinium vessels (DNA Plates and AMP Plates) starting from PDO sample tubes
      * @param rootEntities Vessels associated with Infinium PDOs (sample tubes)
      * @return
      */

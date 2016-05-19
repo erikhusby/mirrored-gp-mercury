@@ -1205,9 +1205,12 @@ public class LabVesselSearchDefinition {
             @Override
             public String evaluate(Object entity, SearchContext context) {
                 LabVessel vessel = (LabVessel)entity;
-                if(!isInfiniumSearch(context) || vessel.getType() != LabVessel.ContainerType.PLATE_WELL ) {
+
+                // Ignore for all but Infinium DNA Plate wells as source vessel
+                if(!isInfiniumSearch(context) || vessel.getType() != LabVessel.ContainerType.PLATE_WELL) {
                     return null;
                 }
+
                 return vessel.getContainers().iterator().next().getContainerRole().getPositionOfVessel(vessel).toString();
             }
         });
@@ -1219,16 +1222,29 @@ public class LabVesselSearchDefinition {
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public String evaluate(Object entity, SearchContext context) {
+                String result = null;
                 LabVessel vessel = (LabVessel)entity;
                 if(!isInfiniumSearch(context)) {
                     return null;
                 }
 
-                if(vessel.getType() == LabVessel.ContainerType.PLATE_WELL ) {
-                    return vessel.getContainers().iterator().next().getContainerRole().getEmbedder().getLabel();
+                // All Infinium vessels look in ancestors for dna plate barcode
+                VesselsForEventTraverserCriteria infiniumAncestorCriteria = new VesselsForEventTraverserCriteria(
+                        platingEventTypes, true, true);
+                if( vessel.getContainerRole() == null ) {
+                    vessel.evaluateCriteria(infiniumAncestorCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
                 } else {
-                    return vessel.getLabel();
+                    vessel.getContainerRole().applyCriteriaToAllPositions(infiniumAncestorCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
                 }
+                for (Pair<LabVessel, VesselPosition> labVesselVesselPositionPair : infiniumAncestorCriteria.getPositions()) {
+                    LabVessel plateVessel = labVesselVesselPositionPair.getLeft();
+                    if( plateVessel.getType() == LabVessel.ContainerType.PLATE_WELL ) {
+                        result = plateVessel.getContainers().iterator().next().getLabel();
+                        break;
+                    }
+                }
+
+                return result;
             }
         });
         searchTerm.setAlternateSearchDefinition(ARRAYS_ALT_SRCH_DEFINITION);
@@ -1242,6 +1258,8 @@ public class LabVesselSearchDefinition {
             public String evaluate(Object entity, SearchContext context) {
                 String result = null;
                 LabVessel vessel = (LabVessel)entity;
+
+                // Ignore for all but Infinium DNA Plate wells as source vessel
                 if(!isInfiniumSearch(context) || vessel.getType() != LabVessel.ContainerType.PLATE_WELL) {
                     return null;
                 }
@@ -1250,6 +1268,7 @@ public class LabVesselSearchDefinition {
                 VesselsForEventTraverserCriteria infiniumAncestorCriteria = new VesselsForEventTraverserCriteria(
                         ampPlateEventTypes, true, true);
                 vessel.evaluateCriteria(infiniumAncestorCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
+
                 for (Pair<LabVessel, VesselPosition> labVesselVesselPositionPair : infiniumAncestorCriteria.getPositions()) {
                     result = labVesselVesselPositionPair.getRight().toString();
                     break;
@@ -1267,14 +1286,29 @@ public class LabVesselSearchDefinition {
             public String evaluate(Object entity, SearchContext context) {
                 String result = null;
                 LabVessel vessel = (LabVessel)entity;
-                if(!isInfiniumSearch(context) || vessel.getType() != LabVessel.ContainerType.PLATE_WELL) {
+                if(!isInfiniumSearch(context)) {
                     return null;
                 }
 
-                // Every event/vessel looks to descendant for amp plate barcode
+                // Infinium vessels look in ancestors and descendants for amp plate barcode
                 VesselsForEventTraverserCriteria infiniumAncestorCriteria = new VesselsForEventTraverserCriteria(
                         ampPlateEventTypes, true, true);
-                vessel.evaluateCriteria(infiniumAncestorCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
+                if( vessel.getContainerRole() == null ) {
+                    vessel.evaluateCriteria(infiniumAncestorCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
+                    // Try ancestors
+                    if( infiniumAncestorCriteria.getPositions().isEmpty() ) {
+                        infiniumAncestorCriteria.resetAllTraversed();
+                        vessel.evaluateCriteria(infiniumAncestorCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
+                    }
+                } else {
+                    vessel.getContainerRole().applyCriteriaToAllPositions(infiniumAncestorCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
+                    // Try ancestors
+                    if( infiniumAncestorCriteria.getPositions().isEmpty() ) {
+                        infiniumAncestorCriteria.resetAllTraversed();
+                        vessel.getContainerRole().applyCriteriaToAllPositions(infiniumAncestorCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
+                    }
+                }
+
                 for (Pair<LabVessel, VesselPosition> labVesselVesselPositionPair : infiniumAncestorCriteria.getPositions()) {
                     result = labVesselVesselPositionPair.getLeft().getLabel();
                     break;
@@ -1294,14 +1328,17 @@ public class LabVesselSearchDefinition {
             public String evaluate(Object entity, SearchContext context) {
                 String result = null;
                 LabVessel vessel = (LabVessel)entity;
+
+                // Ignore for all but DNA Plate wells as source vessel
                 if(!isInfiniumSearch(context) || vessel.getType() != LabVessel.ContainerType.PLATE_WELL) {
-                    return null;
+                    return result;
                 }
 
-                // Every event/vessel looks to descendant for chip barcode
+                // DNA plate well event/vessel looks to descendant for chip well
                 VesselsForEventTraverserCriteria infiniumAncestorCriteria = new VesselsForEventTraverserCriteria(
                         chipEventTypes, true, true);
                 vessel.evaluateCriteria(infiniumAncestorCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
+
                 for (Pair<LabVessel, VesselPosition> labVesselVesselPositionPair : infiniumAncestorCriteria.getPositions()) {
                     result = labVesselVesselPositionPair.getRight().toString();
                     break;
@@ -1316,20 +1353,24 @@ public class LabVesselSearchDefinition {
         searchTerm.setName("Infinium Chip Barcode");
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public String evaluate(Object entity, SearchContext context) {
-                String result = null;
+            public Set<String> evaluate(Object entity, SearchContext context) {
+                Set<String> result = null;
                 LabVessel vessel = (LabVessel)entity;
-                if(!isInfiniumSearch(context) || vessel.getType() != LabVessel.ContainerType.PLATE_WELL) {
+                if(!isInfiniumSearch(context)) {
                     return null;
                 }
 
-                // Every event/vessel looks to descendant for chip barcode
+                // Every Infinium event/vessel looks to descendant for chip barcode
                 VesselsForEventTraverserCriteria infiniumAncestorCriteria = new VesselsForEventTraverserCriteria(
-                        chipEventTypes, true, true);
-                vessel.evaluateCriteria(infiniumAncestorCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
+                        chipEventTypes, false, true);
+
+                if( vessel.getContainerRole() == null ) {
+                    vessel.evaluateCriteria(infiniumAncestorCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
+                } else {
+                    vessel.getContainerRole().applyCriteriaToAllPositions(infiniumAncestorCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
+                }
                 for (Pair<LabVessel, VesselPosition> labVesselVesselPositionPair : infiniumAncestorCriteria.getPositions()) {
-                    result = labVesselVesselPositionPair.getLeft().getLabel();
-                    break;
+                    (result==null?result=new HashSet<>():result).add(labVesselVesselPositionPair.getLeft().getLabel());
                 }
 
                 return result;
@@ -1363,8 +1404,7 @@ public class LabVesselSearchDefinition {
                 for( LabEvent event : labVessel.getTransfersTo() ) {
                     LabEventType eventType = event.getLabEventType();
                     if( eventType != LabEventType.ARRAY_PLATING_DILUTION &&
-                            eventType != LabEventType.INFINIUM_AMPLIFICATION &&
-                            eventType != LabEventType.INFINIUM_HYBRIDIZATION ) {
+                            eventType != LabEventType.INFINIUM_AMPLIFICATION ) {
                         return results;
                     } else {
                         infiniumEvent = event;
@@ -1381,12 +1421,6 @@ public class LabVesselSearchDefinition {
                         drillDownSearchTerm = "Amp Plate Barcode";
                         // This could be one or more Infinium chips
                         vessels.addAll(infiniumEvent.getTargetLabVessels());
-                        break;
-                    case INFINIUM_HYBRIDIZATION:
-                        drillDownSearchName = "GLOBAL|GLOBAL_LAB_VESSEL_SEARCH_INSTANCES|Infinium Chip Drill Down";
-                        drillDownSearchTerm = "Infinium Chip Barcode";
-                        // XStain event is an  in-place event on a single vessel
-                        vessels.addAll( infiniumEvent.getTargetLabVessels() );
                         break;
                     case ARRAY_PLATING_DILUTION:
                         drillDownSearchName = "GLOBAL|GLOBAL_LAB_VESSEL_SEARCH_INSTANCES|DNA Plate Drill Down";
