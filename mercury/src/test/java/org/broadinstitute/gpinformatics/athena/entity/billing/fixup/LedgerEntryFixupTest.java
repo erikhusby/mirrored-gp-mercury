@@ -249,7 +249,7 @@ public class LedgerEntryFixupTest extends Arquillian {
         ledgerEntryFixupDao.persistAll(Collections.emptyList());
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void gplim4143FixEntryBilledAsAddOnInsteadOfPrimary()
             throws IOException, ProductOrderEjb.NoSuchPDOException, SystemException, NotSupportedException,
             HeuristicRollbackException, HeuristicMixedException, RollbackException {
