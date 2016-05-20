@@ -198,6 +198,12 @@ public class ProductOrderSampleDao extends GenericDao {
                 page * sampleBlockSize, sampleBlockSize);
     }
 
+    /**
+     * Find all ProductOrderSamples in PDOs which are in a ResearchProject
+     *
+     * @param researchProjectKey The research project to search.
+     * @return List<ProductOrderSample> which are in ResearchProject with key researchProjectKey
+     */
     public List<ProductOrderSample> findByResearchProject(String researchProjectKey) {
         EntityManager entityManager = getEntityManager();
         CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();

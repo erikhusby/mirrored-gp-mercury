@@ -12,12 +12,10 @@
 package org.broadinstitute.gpinformatics.infrastructure.metrics.entity;
 
 import com.google.common.base.Optional;
-import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 
-import javax.annotation.Nonnull;
 import java.io.Serializable;
 
 
@@ -48,7 +46,6 @@ public class LevelOfDetection implements Serializable {
     public String toString() {
         return String.format("%2.2f/%2.2f", min, max);
     }
-
 
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     @Override

@@ -217,7 +217,6 @@ public class Aggregation {
         this.levelOfDetection = levelOfDetection;
     }
 
-
     @Override
     public boolean equals(Object o) {
         if (this == o) {

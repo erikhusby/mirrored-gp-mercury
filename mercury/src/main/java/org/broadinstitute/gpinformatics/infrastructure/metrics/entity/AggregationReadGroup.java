@@ -15,12 +15,9 @@ import javax.persistence.Column;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
-import javax.persistence.JoinColumns;
 import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import java.io.Serializable;
-import java.util.Collection;
 
 @Entity
 @Table(name = "AGGREGATION_READ_GROUP", schema = "METRICS")
@@ -46,17 +43,6 @@ public class AggregationReadGroup implements Serializable {
             updatable = false)
     private Aggregation aggregation;
 
-//    @OneToMany(mappedBy = "aggregationReadGroups")
-//    private Collection<PicardAnalysis> picardAnalysis;
-//
-//    public Collection<PicardAnalysis> getPicardAnalysis() {
-//        return picardAnalysis;
-//    }
-//
-//    public void setPicardAnalysis(Collection<PicardAnalysis> picardAnalysis) {
-//        this.picardAnalysis = picardAnalysis;
-//    }
-
     public AggregationReadGroup() {
     }
 
@@ -81,22 +67,6 @@ public class AggregationReadGroup implements Serializable {
     public Aggregation getAggregation() {
         return aggregation;
     }
-
-//    public AggregationReadGroupPK getAggregationReadGroupPK() {
-//        return aggregationReadGroupPK;
-//    }
-//
-//    public void setAggregationReadGroupPK(AggregationReadGroupPK aggregationReadGroupPK) {
-//        this.aggregationReadGroupPK = aggregationReadGroupPK;
-//    }
-//
-//    public Integer getAggregationId() {
-//        return aggregationId;
-//    }
-//
-//    public void setAggregationId(Integer aggregationId) {
-//        this.aggregationId = aggregationId;
-//    }
 
     public void setFlowcellBarcode(String flowcellBarcode) {
         this.flowcellBarcode = flowcellBarcode;

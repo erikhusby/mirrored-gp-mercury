@@ -319,7 +319,7 @@ public class ResearchProjectEjb {
             SubmissionTracker submissionTracker = submissionIdentifierToTracker.get(status.getUuid());
             if (CollectionUtils.isNotEmpty(status.getErrors())) {
                 for(String errorMessage:status.getErrors()) {
-                    errorMessages.add(String.format("%s: %s", submissionTracker.getSubmittedSampleName(),errorMessage));
+                    errorMessages.add(String.format("%s: %s", submissionTracker.getSubmittedSampleName(), errorMessage));
                 }
             }else {
                 submissionDtoMap.get(submissionTracker).setStatusDetailBean(status);

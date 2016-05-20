@@ -21,10 +21,8 @@ import javax.persistence.JoinColumns;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
-import javax.persistence.Transient;
 import java.io.Serializable;
 import java.util.Collection;
-import java.util.HashSet;
 
 
 @SuppressWarnings("JpaObjectClassSignatureInspection")
@@ -47,12 +45,6 @@ public class PicardAnalysis implements Serializable {
 
     private PicardAnalysis() {
     }
-//
-//    public PicardAnalysis(String flowcellBarcode, Long lane, String libraryName) {
-//        this.lane = lane;
-//        this.flowcellBarcode = flowcellBarcode;
-//        this.libraryName = libraryName;
-//    }
 
     @OneToMany(mappedBy = "picardAnalysis")
     @BatchSize(size = 100)
@@ -66,61 +58,4 @@ public class PicardAnalysis implements Serializable {
                     @JoinColumn(name = "LIBRARY_NAME", referencedColumnName = "LIBRARY_NAME")}
     )
     private AggregationReadGroup aggregationReadGroups;
-//
-//    @Transient
-//    private Double maxLod;
-//    @Transient
-//    private Double minLod;
-
-
-//    private void updateLodValues() {
-//        for (PicardFingerprint fingerprint : picardFingerprints) {
-//            Double lodValue = fingerprint.getLodExpectedSample();
-//            if (lodValue != null) {
-//                if (maxLod == null) {
-//                    maxLod=lodValue;
-//                }
-//                if (minLod == null) {
-//                    minLod=lodValue;
-//                }
-//
-//                if (lodValue.compareTo(maxLod) > 0) {
-//                    maxLod = lodValue;
-//                }
-//                if (lodValue.compareTo(minLod) < 0) {
-//                    minLod = lodValue;
-//                }
-//            }
-//        }
-//        levelOfDetection = new LevelOfDetection(minLod, maxLod);
-//    }
-
-//
-//    @Transient
-//    private LevelOfDetection levelOfDetection;
-//
-//    public LevelOfDetection getLevelOfDetection() {
-//        if (levelOfDetection == null) {
-//            updateLodValues();
-//
-//        }
-//        return levelOfDetection;
-//    }
-//
-//    public Collection<PicardFingerprint> getPicardFingerprints() {
-//        return picardFingerprints;
-//    }
-//
-//    public void setPicardFingerprints(Collection<PicardFingerprint> picardFingerprints) {
-//        this.picardFingerprints = picardFingerprints;
-//    }
-//
-//    public AggregationReadGroup getAggregationReadGroups() {
-//        return aggregationReadGroups;
-//    }
-//
-//    public void setAggregationReadGroups(AggregationReadGroup aggregationReadGroups) {
-//        this.aggregationReadGroups = aggregationReadGroups;
-//    }
-
 }

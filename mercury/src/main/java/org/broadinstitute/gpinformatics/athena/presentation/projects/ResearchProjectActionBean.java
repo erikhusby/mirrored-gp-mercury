@@ -895,6 +895,8 @@ public class ResearchProjectActionBean extends CoreActionBean {
                     submissionSamples.add(submissionData);
                 }
             } else {
+
+                // When getting cached submissions always update the submissionStatus.
                 submissionDtoFetcher.refreshSubmissionStatuses(submissionSamples);
                 log.info("submissionSamples retrieved from cache.");
             }
@@ -903,13 +905,14 @@ public class ResearchProjectActionBean extends CoreActionBean {
     }
 
     /**
-     * Clear existing sampleData from the session and add new samples for businessKey.
+     * Clear existing sampleData from the session and add new sampleData keyed on businessKey.
      *
      * @param businessKey The research project businessKey
      * @param sampleData  A list of SampleData to add to the cache.
      */
     private void addSamplesToCache(String businessKey, List<SubmissionData> sampleData) {
-        // remove
+
+        // First remove all items from the cache, this will prevent the cache accumulating data from other RP's.
         getContext().getSession().removeAttribute(SESSION_SAMPLES_KEY);
         String jsonBean;
         ObjectMapper objectMapper = new ObjectMapper();
@@ -919,7 +922,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
                 throw new RuntimeJsonMappingException("Could not serialize sampleData");
             }
             Map<String, String> submissionMap = new HashMap<>();
-            submissionMap.put(researchProject, jsonBean);
+            submissionMap.put(businessKey, jsonBean);
             getContext().getSession().setAttribute(SESSION_SAMPLES_KEY, submissionMap);
 
         } catch (IOException e) {
@@ -944,7 +947,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
         Map<String, String> submissionSamplesMap =
                 (Map<String, String>) getContext().getSession().getAttribute(SESSION_SAMPLES_KEY);
         if (submissionSamplesMap != null) {
-            String json = submissionSamplesMap.get(researchProject);
+            String json = submissionSamplesMap.get(businessKey);
             if (json != null) {
                 try {
                     ObjectMapper objectMapper = new ObjectMapper();
@@ -1037,7 +1040,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
                         submissionSample.updateStatusDetail(submissionDto.getStatusDetailBean());
                     }
                 }
-                addSamplesToCache(SESSION_SAMPLES_KEY, submissionSamples);
+                addSamplesToCache(researchProject, submissionSamples);
                 addMessage("The selected samples for submission have been successfully posted to NCBI.  See the " +
                            "Submission Requests tab for further details");
             } catch (InformaticsServiceException | ValidationException e) {

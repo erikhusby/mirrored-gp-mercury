@@ -12,9 +12,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.bass;
 
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
-import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionsService;
-import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionsServiceImpl;
-import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionsServiceStub;
 
 import javax.enterprise.context.RequestScoped;
 import javax.enterprise.inject.Default;
@@ -22,9 +19,6 @@ import javax.enterprise.inject.New;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 
-/**
- * TODO scottmat fill in javadoc!!!
- */
 public class BassSearchServiceProducer {
 
     @Inject

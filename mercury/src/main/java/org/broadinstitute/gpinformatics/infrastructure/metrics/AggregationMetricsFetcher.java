@@ -98,30 +98,6 @@ public class AggregationMetricsFetcher {
         fetchLod(aggregations);
         return aggregations;
     }
-    /*
-    public List<ProductOrder> findByWorkflow(@Nonnull Workflow workflow) {
-
-            EntityManager entityManager = getEntityManager();
-            CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
-
-            CriteriaQuery<ProductOrder> criteriaQuery = criteriaBuilder.createQuery(ProductOrder.class);
-
-            List<Predicate> predicates = new ArrayList<>();
-
-            Root<ProductOrder> productOrderRoot = criteriaQuery.from(ProductOrder.class);
-            Join<ProductOrder, Product> productJoin = productOrderRoot.join(ProductOrder_.product);
-
-            predicates.add(criteriaBuilder.equal(productJoin.get(Product_.workflowName), workflow.getWorkflowName()));
-
-            criteriaQuery.where(predicates.toArray(new Predicate[predicates.size()]));
-
-            try {
-                return entityManager.createQuery(criteriaQuery).getResultList();
-            } catch (NoResultException ignored) {
-                return null;
-            }
-        }
-     */
 
     @SuppressWarnings("unchecked")
     public void fetchLod(List<Aggregation> aggregations) {
@@ -140,7 +116,6 @@ public class AggregationMetricsFetcher {
         List<Predicate> predicates = new ArrayList<>();
         Set<Integer> aggregationIdList = new HashSet<>();
         for (Aggregation aggregation : aggregations) {
-//            aggregationIdList.add(aggregation.getId());
             predicates.add(queryBuilder
                     .equal(aggregationAggregationReadGroupsJoin.get(Aggregation_.id), aggregation.getId()));
         }
@@ -148,8 +123,6 @@ public class AggregationMetricsFetcher {
         Path<Integer> aggregationPath = aggregationAggregationReadGroupsJoin.get(Aggregation_.id);
         Expression<Double> minExpression = queryBuilder.min(root.get(PicardFingerprint_.lodExpectedSample));
         Expression<Double> maxExpression = queryBuilder.max(root.get(PicardFingerprint_.lodExpectedSample));
-
-//        aggregationAggregationReadGroupsJoin.equals(root.get(Aggregation_.id), aggregationIdList)
 
         CriteriaQuery<Tuple> multiselect = tupleQuery.multiselect(
                 aggregationPath, minExpression, maxExpression)
@@ -172,5 +145,4 @@ public class AggregationMetricsFetcher {
             }
         }
     }
-
 }

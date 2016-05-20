@@ -154,7 +154,7 @@ public class SubmissionDtoFetcher {
         List<String> samples = new ArrayList<>();
         List<Integer> versions = new ArrayList<>();
         for (BassDTO bassDTO : bassDTOMap.values()) {
-            log.debug(String.format("Fetching Metrics aggregations for project: %s, sample: %s, version: %d",
+            log.info(String.format("Fetching Metrics aggregations for project: %s, sample: %s, version: %d",
                     researchProject.getBusinessKey(), bassDTO.getSample(), bassDTO.getVersion()));
             projects.add(bassDTO.getProject());
             samples.add(bassDTO.getSample());
