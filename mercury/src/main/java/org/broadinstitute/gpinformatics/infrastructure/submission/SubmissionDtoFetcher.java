@@ -94,7 +94,7 @@ public class SubmissionDtoFetcher {
     }
 
     public List<SubmissionDto> fetch(@Nonnull ResearchProject researchProject) {
-        Map<String, Collection<ProductOrder>> sampleNameToPdos = getSampleNameToPdoMap(researchProject);
+        Map<String, Collection<ProductOrder>> sampleNameToPdos = getSamplesForProject(researchProject);
 
         Set<String> sampleNames = sampleNameToPdos.keySet();
 
@@ -116,10 +116,6 @@ public class SubmissionDtoFetcher {
     public Map<String, BassDTO> fetchBassDtos(ResearchProject researchProject, String ... samples) {
         List<BassDTO> bassDTOs = bassSearchService.runSearch(researchProject.getBusinessKey(),samples);
         return buildBassDtoMap(bassDTOs);
-    }
-
-    private Map<String, Collection<ProductOrder>> getSampleNameToPdoMap(@Nonnull ResearchProject researchProject) {
-        return getSamplesForProject(researchProject);
     }
 
     private Map<String, Collection<ProductOrder>> getSamplesForProject(ResearchProject researchProject) {
