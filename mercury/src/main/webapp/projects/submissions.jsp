@@ -16,7 +16,7 @@
     <style type="text/css">
         .columnCheckbox { width: 3em; }
         .columnDataType { width: 4em; }
-        .columnPDOs { width: 12em; }
+        .columnPDOs { width: 110px }
         .columnAggregationProject { width: 5em; }
         .columnLibraryDescriptor { min-width: 90px; }
         .columnFileType { width: 5em; }
@@ -311,21 +311,34 @@
                         }
                         return jQuery("<input/>", tagAttributes)[0].outerHTML;
                     }
-//                    if (type === 'sort') {
-//                        var selector = 'input[type="checkbox"][value="data"]'.replace("data", data);
-//                        var result = $j(selector).prop("checked");
-//                        if (result === undefined) {
-//                            result = 1;
-//                        }
-//                        return result;
-//                    }
+                    if (type === 'sort') {
+                        if (data === undefined || data === "") {
+                            return 1;
+                        }
+                        var selector = 'input[type="checkbox"][value="data"]'.replace("data", data);
+                        var result = $j(selector).prop("checked");
+                        if (result === undefined) {
+                            result = 1;
+                        }
+                        return result;
+                    }
                     return data;
                 }
 
-                function displayDataList(data, type, row) {
+                    function displayPdoList(data, type, row) {
                     if (type === 'display') {
                         if (Array.isArray(data)) {
-                            return data.join("<br/>");
+                            var pdos=[];
+                            for (var i = 0; i < data.length; i++) {
+                                pdoPair = data[i].split(/:\s+/);
+                                pdos.push( jQuery("<a/>", {
+                                    href: "${ctxpath}/orders/order.action?view=&productOrder=" + pdoPair[0],
+                                    class: "noWrap",
+                                    text: pdoPair[0],
+                                    title: pdoPair[1]
+                                })[0].outerHTML);
+                            }
+                            return pdos.join(", ");
                         }
                     }
                     return data;
@@ -365,13 +378,12 @@
                         {"bSearchable": true, "aTargets": ["_all"]}
                     ],
                     "aoColumns": [
-                        {"mData": "<%=SubmissionField.SAMPLE_NAME%>", "mRender": renderCheckbox},
+                        {"mData": "<%=SubmissionField.SAMPLE_NAME%>","asSorting": ["desc"], "mRender": renderCheckbox},
                         {"mData": "<%=SubmissionField.SAMPLE_NAME%>"},
                         {"mData": "<%=SubmissionField.SUBMISSION_SITE%>", "sWidth": "140px", "sClass": "ellipsis"},
                         {"mData": "<%=SubmissionField.LIBRARY_DESCRIPTOR%>", "sClass": "columnLibraryDescriptor"},
                         {"mData": "<%=SubmissionField.DATA_TYPE %>"},
-                        { "mData": "<%=SubmissionField.PRODUCT_ORDERS %>", "sWidth": "140px", "sClass": "ellipsis",
-                            "mRender": displayDataList },
+                        {"mData": "<%=SubmissionField.PRODUCT_ORDERS %>", "sWidth": "140px", "mRender": displayPdoList},
                         {"mData": "<%=SubmissionField.AGGREGATION_PROJECT %>"},
                         {"mData": "<%=SubmissionField.BIO_PROJECT%>"},
                         {"mData": "<%=SubmissionField.FILE_TYPE %>"},
@@ -418,11 +430,18 @@
                         function updateSearchText() {
                             var currentFullTextSearch = oTable.fnSettings().oPreviousSearch.sSearch;
                             if (currentFullTextSearch !== undefined) {
-                                var matchContent = "any text";
+                                var defaultText = "any text";
+                                var matchContent = defaultText;
                                 if (!isBlank(currentFullTextSearch)) {
                                     matchContent = currentFullTextSearch;
                                 }
-                                $j(".dtFilters").html("<b>Search text matches</b>: " + matchContent);
+                                var textJQuery= jQuery("<span></span>", {text:matchContent});
+                                textColor = "";
+                                if (matchContent !== defaultText){
+                                    textColor = "red";
+                                }
+                                textJQuery.css("color", textColor);
+                                $j(".dtFilters").html("<b>Search text matches</b>: " + textJQuery[0].outerHTML);
                             }
                         }
 
