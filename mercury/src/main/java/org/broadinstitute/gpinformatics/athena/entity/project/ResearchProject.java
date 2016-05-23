@@ -9,7 +9,6 @@ import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
-import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraProject;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
@@ -228,11 +227,6 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
 
     // todo: we can cache the submissiontrackers in a static map
     public SubmissionTracker getSubmissionTracker(SubmissionTuple submissionTuple) {
-        String libraryDescriptorName=null;
-        Collection<SubmissionLibraryDescriptor> libraryDescriptors = findLibraryDescriptors();
-        if (libraryDescriptors.size()==1){
-            libraryDescriptorName=libraryDescriptors.iterator().next().getName();
-        }
         Set<SubmissionTracker> foundSubmissionTrackers = new HashSet<>();
         for (SubmissionTracker submissionTracker : getSubmissionTrackers()) {
             if (submissionTracker.getTuple().equals(submissionTuple)) {
