@@ -487,7 +487,7 @@
         }
 
         // This function allows the shippingLocation input token to be able to automatically pass the selected
-        // collection id to filter the available shipping submissionRepositories to only ones in that collection.
+        // collection id to filter the available shipping sites to only ones in that collection.
         function getShippingLocationURL() {
             return "${ctxpath}/orders/order.action?shippingLocationAutocomplete=&bspGroupCollectionTokenInput.listOfKeys="
                     + $j("#kitCollection").val();
