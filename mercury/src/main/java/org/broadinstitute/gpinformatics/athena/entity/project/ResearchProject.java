@@ -13,7 +13,6 @@ import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtili
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraProject;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
-import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionLibraryDescriptor;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionRepository;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionsService;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
@@ -239,14 +238,6 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
             return null;
         }
         return foundSubmissionTrackers.iterator().next();
-    }
-
-    private Collection<SubmissionLibraryDescriptor> findLibraryDescriptors() {
-        Set<SubmissionLibraryDescriptor> submissionLibraryDescriptors = new HashSet<>();
-        for (ProductOrder productOrder : getProductOrders()) {
-            submissionLibraryDescriptors.add(productOrder.getProduct().getProductFamily().getSubmissionType());
-        }
-        return submissionLibraryDescriptors;
     }
 
     /**
