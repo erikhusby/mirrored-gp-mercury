@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.metrics;
 
+import edu.mit.broad.core.util.CollectionUtility;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
@@ -29,6 +30,7 @@ import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -49,6 +51,7 @@ public class AggregationMetricsFetcher {
     public static final String SAMPLE_COLUMN = "sample";
     public static final String PROJECT_COLUMN = "project";
     public static final String VERSION_COLUMN = "version";
+    private static final int MAX_AGGREGATION_FETCHER_QUERY_SIZE = 500;
 
     @PersistenceContext(unitName = "metrics_pu", type = PersistenceContextType.EXTENDED)
     private EntityManager entityManager;
@@ -58,44 +61,51 @@ public class AggregationMetricsFetcher {
         CriteriaQuery<Aggregation> criteriaQuery = criteriaBuilder.createQuery(Aggregation.class);
 
         Root<Aggregation> root = criteriaQuery.from(Aggregation.class);
-
-        List<Predicate> predicateOfOrs = new ArrayList<>();
-        Iterator<String> projectIterator = projects.iterator();
-        Iterator<String> sampleIterator = samples.iterator();
-        Iterator<Integer> versionIterator = versions.iterator();
-        while (projectIterator.hasNext() && sampleIterator.hasNext() && versionIterator.hasNext()) {
-            String project = projectIterator.next();
-            String sample = sampleIterator.next();
-            Integer version = versionIterator.next();
-            List<Predicate> predicate = new ArrayList<>();
-
-            predicate.add(criteriaBuilder.equal(root.get(Aggregation_.project), project));
-            if (sample != null) {
-                predicate.add(criteriaBuilder.equal(root.get(Aggregation_.sample), sample));
-            }
-            predicate.add(criteriaBuilder.equal(root.get(Aggregation_.version), version));
-
-        /*
-         * Look for the row where LIBRARY is NULL because otherwise there would be multiple results. Kathleen Tibbetts
-         * said that this is the way to narrow it down to one.
-         */
-
-//            predicate.add(criteriaBuilder.isNull(root.get("library")));
-
-            predicateOfOrs.add(criteriaBuilder.and(predicate.toArray(new Predicate[predicate.size()])));
-        }
-
-        criteriaQuery.where(criteriaBuilder.or(predicateOfOrs.toArray(new Predicate[predicateOfOrs.size()])),
-                criteriaBuilder.isNull(root.get("library")));
-
-        TypedQuery<Aggregation> query = entityManager.createQuery(criteriaQuery);
+        Collection<Collection<String>> samplesSublists = CollectionUtility.split(samples, MAX_AGGREGATION_FETCHER_QUERY_SIZE);
         List<Aggregation> aggregations = new ArrayList<>();
-        try {
-            aggregations = query.getResultList();
-        } catch (NoResultException e) {
-            log.info("Unable to retrieve aggregations based on given criteria");
+
+        for (Collection<String> samplesSublist : samplesSublists) {
+            TypedQuery<Aggregation> query = null;
+            List<Predicate> predicateOfOrs = new ArrayList<>();
+            Iterator<String> projectIterator = projects.iterator();
+            Iterator<String> sampleIterator = samplesSublist.iterator();
+            Iterator<Integer> versionIterator = versions.iterator();
+            while (projectIterator.hasNext() && sampleIterator.hasNext() && versionIterator.hasNext()) {
+                String project = projectIterator.next();
+                String sample = sampleIterator.next();
+                Integer version = versionIterator.next();
+                List<Predicate> predicate = new ArrayList<>();
+
+                predicate.add(criteriaBuilder.equal(root.get(Aggregation_.project), project));
+                if (sample != null) {
+                    predicate.add(criteriaBuilder.equal(root.get(Aggregation_.sample), sample));
+                }
+                predicate.add(criteriaBuilder.equal(root.get(Aggregation_.version), version));
+
+            /*
+             * Look for the row where LIBRARY is NULL because otherwise there would be multiple results. Kathleen Tibbetts
+             * said that this is the way to narrow it down to one.
+             */
+
+                //            predicate.add(criteriaBuilder.isNull(root.get("library")));
+
+                predicateOfOrs.add(criteriaBuilder.and(predicate.toArray(new Predicate[predicate.size()])));
+            }
+
+            criteriaQuery.where(criteriaBuilder.or(predicateOfOrs.toArray(new Predicate[predicateOfOrs.size()])),
+                    criteriaBuilder.isNull(root.get("library")));
+
+            List<Aggregation> aggregationResult = new ArrayList<>();
+            query = entityManager.createQuery(criteriaQuery);
+
+            try {
+                aggregationResult = query.getResultList();
+            } catch (NoResultException e) {
+                log.info("Unable to retrieve aggregations based on given criteria");
+            }
+            fetchLod(aggregationResult);
+            aggregations.addAll(aggregationResult);
         }
-        fetchLod(aggregations);
         return aggregations;
     }
 
