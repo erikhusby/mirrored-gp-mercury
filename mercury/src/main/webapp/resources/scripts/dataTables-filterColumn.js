@@ -29,59 +29,41 @@
             };
             var settings = $.extend({}, defaults, options);
             var inverseSelector = classSelector(settings.invertResultClass);
-
-
-            // oTable.fnSettings().aoStateLoadParams.push({
-            //     "fn": function (oSettings, oData) {
-            //         if (oSettings.oLoadedState.columnFilterState != undefined) {
-            //             selectedValues = oSettings.oLoadedState.columnFilterState;
-            //         }
-            //         if (oSettings.oLoadedState.columnFilterHideMatchingRows != undefined) {
-            //             invertName = oSettings.oLoadedState.columnFilterHideMatchingRows;
-            //         }
-            //         return oData + selectedValues;
-            //     },
-            //     "sName": "loadColumnFilterState"
-            // });
-            //
-            // oTable.fnSettings().aoStateSaveParams.push({
-            //     "fn": function (oS, sVal) {
-            //         var filterSelect = "select" + classSelector(settings.selectionClass)
-            //         var selectedOptions =  $(filterSelect).val() == undefined ? [] :  $(filterSelect).val();
-            //         if (selectedOptions !==undefined) {
-            //             return sVal + selectedOptions;
-            //         }
-            //     },
-            //     "sName": "columnFilterState"
-            // });
-            // oTable.fnSettings().aoStateSaveParams.push({
-            //     "fn": function (oS, sVal) {
-            //         inverseSelector = classSelector(settings.invertResultClass);
-            //         var invertResult = $(inverseSelector).val();
-            //         if (invertResult!==undefined) {
-            //             return sVal + invertResult;
-            //         }
-            //     },
-            //     "sName": "columnFilterHideMatchingRows"
-            // });
-
-
+            
             return this.each(function () {
+                oTable.fnSettings().aoStateSaveParams.push({
+                    "fn": function (oS, sVal) {
+                        inverseSelector = classSelector(settings.invertResultClass);
+                        var invertResult = $(inverseSelector).val();
+                        if (invertResult !== undefined) {
+                            sVal.invertResult = invertResult;
+                        }
+                        var selectedValues = $("select" + classSelector(settings.selectionClass)).val();
+                        if (selectedValues !== undefined) {
+                            sVal.selectedValues = selectedValues;
+                        }
+                        return sVal;
+                    },
+                    "sName": "columnFilterSaveParams"
+                });
+                oTable.fnSettings().aoStateLoadParams.push({
+                    "fn": function (oS, sVal) {                         
+                        if (sVal.selectedValues!==undefined) {
+                            settings.selectedValues = sVal.selectedValues;
+                        }
+                        if (sVal.invertResult!==undefined) {
+                            settings.invertResult = sVal.invertResult;
+                        }
+                        return sVal;
+                    },
+                    "sName": "columnFilterSaveParams"
+                });
+
+                oTable.fnSettings().fnStateLoad(oTable.fnSettings());
                 setData(columnIndexName, columnIndex());
                 getSelectOptions();
                 options = [];
-                // oSettings = oTable.fnSettings();
-                // if (oSettings.oFeatures.bStateSave && oSettings.oLoadedState !== null) {
-                //     if (oSettings.oLoadedState.columnFilterState != undefined) {
-                //         selectedValues = oSettings.oLoadedState.columnFilterState;
-                //     }
-                //     if (oSettings.oLoadedState.columnFilterHideMatchingRows != undefined) {
-                //         selectedValues = oSettings.oLoadedState.columnFilterHideMatchingRows;
-                //     }
-                //
-                // }
                 var filterSelect = "select" + classSelector(settings.selectionClass);
-
                 var chosen = $(filterSelect).chosen({"width": "auto"});
                 var infoSection;
                 chosen.ready(function () {
@@ -128,14 +110,15 @@
                         }
                         if (settings.filteringTextSelector !== undefined && settings.filteringTextSelector !== "") {
                             var filterStatusDivId = "columnFilterStatus";
-                            if ($(idSelector(filterStatusDivId)).length===0) {
-                                var filterTextDiv = jQuery("<div></div>", {id: filterStatusDivId});
-                                $(settings.filteringTextSelector).append(filterTextDiv);
+                            var filterStatusDiv = $(idSelector(filterStatusDivId));
+                            if (filterStatusDiv.length===0) {
+                                filterStatusDiv = jQuery("<div></div>", {id: filterStatusDivId});
+                                $(settings.filteringTextSelector).append(filterStatusDiv);
                             }
-                            $(idSelector(filterStatusDivId)).html(filterText);
+                            filterStatusDiv.html(filterText);
                             if (infoSection) {
                                 $(infoSection).hide();
-                                $(filterTextDiv).append(infoSection);
+                                filterStatusDiv.append(infoSection);
                                 $(infoSection).fadeIn();
                             }
                         }
