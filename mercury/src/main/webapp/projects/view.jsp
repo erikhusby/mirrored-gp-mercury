@@ -16,10 +16,12 @@
                     results = regex.exec(location.search);
                 return results == null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
             }
+            var paramterValue = getParameterByName("rpSelectedTab");
+            var activeTab = parseInt(paramterValue == undefined ? 0 : paramterValue) + 1;
 
             $j(document).ready(function () {
                 $j("#tabs").tabs({
-                    active: getParameterByName("rpSelectedTab")
+                    active: activeTab
                 });
 
                 $j('#addRegulatoryInfoDialog').dialog({
@@ -42,17 +44,12 @@
                 });
 
                 setupDialogs();
-
-                var selectedTabValue = '${actionBean.rpSelectedTab}';
-
-                if(selectedTabValue !== "") {
-                    $j("#tabs").tabs("load",'${actionBean.rpSelectedTab}');
-                    $j("#tabs").tabs({active: eval('${actionBean.rpSelectedTab}')});
-                }
             });
 
+            // $(window).load(...) is used here because the submissions.jsp dom is not ready
+            // when $j(document).ready() is called.
             $(window).load(function(){
-                $j("#tabs").data().tabs.active.find("a").click();
+                $j("#tabs ul li:nth-child(" + activeTab + ") a").trigger('click');
             });
 
             function showBeginCollaboration() {
