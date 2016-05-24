@@ -8,6 +8,7 @@
 <%--@elvariable id="buildInfoBean" type="org.broadinstitute.gpinformatics.athena.boundary.BuildInfoBean"--%>
 <%--@elvariable id="userBean" type="org.broadinstitute.gpinformatics.mercury.presentation.UserBean"--%>
 <%--@elvariable id="actionBean" type="org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean"--%>
+<%--@elvariable id="dataTablesVersion" type="java.lang.String"--%>
 
 <stripes:layout-definition>
 
@@ -41,8 +42,22 @@
         <script src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-alert.js"></script>
 
         <script src="${ctxpath}/resources/scripts/jquery.dateRangeSelector.js"></script>
-        <script src="${ctxpath}/resources/scripts/DataTables-1.9.4/media/js/jquery.dataTables.min.js"></script>
+        <c:choose>
+            <c:when test="${dataTablesVersion == '1.10'}">
+                <script src="${ctxpath}/resources/scripts/DataTables-1.10.12/js/jquery.dataTables.js"></script>
+                <link rel="stylesheet"
+                                      href="${ctxpath}/resources/scripts/DataTables-1.10.12/css/jquery.dataTables.css"/>
+            </c:when>
+            <c:otherwise>
+                <script src="${ctxpath}/resources/scripts/DataTables-1.9.4/media/js/jquery.dataTables.min.js"></script>
+                <link rel="stylesheet"
+                      href="${ctxpath}/resources/scripts/DataTables-1.9.4/media/css/jquery.dataTables.css"/>
+            </c:otherwise>
+        </c:choose>
+        <script src="${ctxpath}/resources/scripts/DataTables-1.9.4/extras/dataTables.fnSetFilteringDelay.js"></script>
         <script src="${ctxpath}/resources/scripts/DataTables-1.9.4/extras/TableTools/media/js/TableTools.min.js"></script>
+    <link rel="stylesheet"
+          href="${ctxpath}/resources/scripts/DataTables-1.9.4/extras/TableTools/media/css/TableTools.css"/>
         <script src="${ctxpath}/resources/scripts/DataTables-1.9.4/extras/RowGrouping/media/js/jquery.dataTables.rowGrouping.js"></script>
         <script src="${ctxpath}/resources/scripts/DataTables-1.9.4/extras/dataTables.fnSetFilteringDelay.js"></script>
         <script src="${ctxpath}/resources/scripts/DataTables-1.9.4/extras/fnGetHiddenNodes.js"></script>
@@ -56,8 +71,6 @@
 
         <link rel="stylesheet"  href="https://fonts.googleapis.com/css?family=Carrois+Gothic+SC"/>
         <link rel="stylesheet"  href="${ctxpath}/resources/css/bootstrap.css"/>
-        <link rel="stylesheet"  href="${ctxpath}/resources/scripts/DataTables-1.9.4/media/css/jquery.dataTables.css"/>
-        <link rel="stylesheet"  href="${ctxpath}/resources/scripts/DataTables-1.9.4/extras/TableTools/media/css/TableTools.css"/>
         <link rel="stylesheet"  href="${ctxpath}/resources/css/token-input.css"/>
         <link rel="stylesheet"  href="${ctxpath}/resources/css/jquery-ui-1.9.2.custom.min.css"/>
         <link rel="stylesheet"  href="${ctxpath}/resources/css/mercury.css"/>

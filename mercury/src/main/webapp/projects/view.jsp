@@ -7,7 +7,8 @@
 
 <stripes:layout-render name="/layout.jsp" pageTitle="View Research Project"
                        sectionTitle="View Project: ${actionBean.editResearchProject.title}"
-                       businessKeyValue="${actionBean.editResearchProject.businessKey}">
+                       businessKeyValue="${actionBean.editResearchProject.businessKey}"
+                       dataTablesVersion="1.10">
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
             function getParameterByName(name) {
