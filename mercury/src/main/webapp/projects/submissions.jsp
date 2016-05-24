@@ -15,16 +15,18 @@
 <head>
     <style type="text/css">
         .columnCheckbox { width: 3em; }
+        .columnBioSample{ width: 6em; }
         .columnDataType { width: 4em; }
-        .columnPDOs { width: 110px }
+        .columnPDOs { width: 11em; }
         .columnAggregationProject { width: 5em; }
-        .columnLibraryDescriptor { min-width: 90px; }
+        .columnRepository { max-width: 30em; }
+        .columnLibraryDescriptor { width: 11em; }
         .columnFileType { width: 5em; }
-        .columnVersion { width: 6em; }
-        .columnQualityMetric { width: 5em; }
+        .columnVersion { width: 2em; }
+        .columnQualityMetric { width: 3em; }
         .columnContamination { width: 5em; }
         .columnFingerprint { width: 6em; }
-        .columnLanesInAggregation { width: 5em; }
+        .columnLanesInAggregation { width: 2em; }
         .columnBioProject { width: 6em; }
         .columnSubmittedVersion { width: 6em; }
         .columnSubmissionStatus { width: 6em; }
@@ -378,12 +380,12 @@
                         {"bSearchable": true, "aTargets": ["_all"]}
                     ],
                     "aoColumns": [
-                        {"mData": "<%=SubmissionField.SAMPLE_NAME%>","asSorting": ["desc"], "mRender": renderCheckbox},
+                        {"mData": "<%=SubmissionField.SAMPLE_NAME%>","asSorting": ["desc", "asc"], "mRender": renderCheckbox},
                         {"mData": "<%=SubmissionField.SAMPLE_NAME%>"},
-                        {"mData": "<%=SubmissionField.SUBMISSION_SITE%>", "sWidth": "140px", "sClass": "ellipsis"},
-                        {"mData": "<%=SubmissionField.LIBRARY_DESCRIPTOR%>", "sClass": "columnLibraryDescriptor"},
+                        {"mData": "<%=SubmissionField.SUBMISSION_SITE%>", "sClass": "ellipsis"},
+                        {"mData": "<%=SubmissionField.LIBRARY_DESCRIPTOR%>"},
                         {"mData": "<%=SubmissionField.DATA_TYPE %>"},
-                        {"mData": "<%=SubmissionField.PRODUCT_ORDERS %>", "sWidth": "140px", "mRender": displayPdoList},
+                        {"mData": "<%=SubmissionField.PRODUCT_ORDERS %>", "mRender": displayPdoList},
                         {"mData": "<%=SubmissionField.AGGREGATION_PROJECT %>"},
                         {"mData": "<%=SubmissionField.BIO_PROJECT%>"},
                         {"mData": "<%=SubmissionField.FILE_TYPE %>"},
@@ -546,9 +548,9 @@
                 <input for="count" type="checkbox" class="checkAll"/>
                 <span id="count" class="checkedCount"></span>
             </th>
-            <th width="80">BioSample</th>
-            <th class="">Repository</th>
-            <th class="">Library</th>
+            <th class="columnBioSample">BioSample</th>
+            <th class="columnRepository">Repository</th>
+            <th class="columnLibraryDescriptor">Library</th>
             <th class="columnDataType">Data Type</th>
             <th class="columnPDOs">PDOs</th>
             <th class="columnAggregationProject">Agg. Project</th>
