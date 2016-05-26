@@ -68,22 +68,6 @@ public class AggregationReadGroup implements Serializable {
         return aggregation;
     }
 
-    public void setFlowcellBarcode(String flowcellBarcode) {
-        this.flowcellBarcode = flowcellBarcode;
-    }
-
-    public void setLane(long lane) {
-        this.lane = lane;
-    }
-
-    public void setLibraryName(String libraryName) {
-        this.libraryName = libraryName;
-    }
-
-    public void setAggregation(Aggregation aggregation) {
-        this.aggregation = aggregation;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) {

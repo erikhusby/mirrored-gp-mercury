@@ -13,7 +13,6 @@ package org.broadinstitute.gpinformatics.infrastructure.submission;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.codehaus.jackson.annotate.JsonProperty;
 
 import javax.xml.bind.annotation.XmlElement;
@@ -65,16 +64,14 @@ public class SubmissionLibraryDescriptor implements Serializable {
 
     @Override
     public boolean equals(Object other) {
-
-        if (this == other) {
+        if (!(other instanceof SubmissionLibraryDescriptor)){
+            return false;
+        }
+        SubmissionLibraryDescriptor castOther = (SubmissionLibraryDescriptor) other;
+        if (this == castOther) {
             return true;
         }
 
-        if (other == null || !OrmUtil.proxySafeIsInstance(other, SubmissionLibraryDescriptor.class)) {
-            return false;
-        }
-
-        SubmissionLibraryDescriptor castOther = OrmUtil.proxySafeCast(other, SubmissionLibraryDescriptor.class);
         return new EqualsBuilder().append(getName(), castOther.getName())
                 .append(getDescription(), castOther.getDescription()).isEquals();
     }
