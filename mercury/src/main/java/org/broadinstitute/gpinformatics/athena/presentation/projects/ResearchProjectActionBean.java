@@ -65,7 +65,6 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.ReferenceSe
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.map.RuntimeJsonMappingException;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -919,12 +918,12 @@ public class ResearchProjectActionBean extends CoreActionBean {
         try {
             jsonBean = objectMapper.writeValueAsString(new SubmissionDataBean(sampleData));
             if (jsonBean == null) {
-                throw new RuntimeJsonMappingException("Could not serialize sampleData");
+                log.error("Could not serialize sampleData");
+            } else {
+                Map<String, String> submissionMap = new HashMap<>();
+                submissionMap.put(businessKey, jsonBean);
+                getContext().getSession().setAttribute(SESSION_SAMPLES_KEY, submissionMap);
             }
-            Map<String, String> submissionMap = new HashMap<>();
-            submissionMap.put(businessKey, jsonBean);
-            getContext().getSession().setAttribute(SESSION_SAMPLES_KEY, submissionMap);
-
         } catch (IOException e) {
             log.error("Could not serialize sample data", e);
         }
