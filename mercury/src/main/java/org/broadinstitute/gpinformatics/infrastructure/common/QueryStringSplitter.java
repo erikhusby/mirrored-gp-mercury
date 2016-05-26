@@ -53,6 +53,15 @@ public class QueryStringSplitter implements Iterator<List<String>>, Iterable<Lis
         return URLEncodedUtils.format(nameValuePairs, CharEncoding.UTF_8).length();
     }
 
+    private int getParamSize(HashMap<String, List<String>> parameters) {
+        int size = 0;
+        for (Map.Entry<String, List<String>> parameterEntry : parameters.entrySet()) {
+            size += getParamSize(parameterEntry.getKey(),
+                    parameterEntry.getValue().toArray(new String[parameterEntry.getValue().size()]));
+        }
+        return size;
+    }
+
     @Override
     public Iterator<List<String>> iterator() {
         return this;
@@ -76,7 +85,8 @@ public class QueryStringSplitter implements Iterator<List<String>>, Iterable<Lis
     public List<Map<String, List<String>>> split(String name, List<String> values) {
         ArrayList<Map<String, List<String>>> parametersList = new ArrayList<>();
         HashMap<String, List<String>> parameters = makeBaseParameterMap();
-        int currentLength = baseUrlLength;
+        int baseParameterSize = getParamSize(parameters);
+        int currentLength = baseUrlLength + baseParameterSize;
         for (String value : values) {
             // +1 because '?' or '&' should be counted.
             int valueLength = getParamSize(name, value)+"?".length();
@@ -86,7 +96,7 @@ public class QueryStringSplitter implements Iterator<List<String>>, Iterable<Lis
             if (currentLength + valueLength > maxUrlLength) {
                 parametersList.add(parameters);
                 parameters = makeBaseParameterMap();
-                currentLength = baseUrlLength;
+                currentLength = baseUrlLength + baseParameterSize;
             }
             List<String> valueList = parameters.get(name);
             if (valueList == null) {

@@ -9,12 +9,9 @@ import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
-import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraProject;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
-import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionRepository;
-import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionsService;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 import org.hibernate.annotations.BatchSize;
@@ -215,9 +212,6 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
     @Column(name = "REPOSITORY_NAME")
     private String submissionRepositoryName;
 
-    @Transient
-    private SubmissionRepository submissionRepository;
-
     /**
      * The Buick ManifestSessions linked to this ResearchProject.
      */
@@ -379,28 +373,6 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
 
     public void setAccessControlEnabled(boolean accessControlEnabled) {
         this.accessControlEnabled = accessControlEnabled;
-    }
-
-    public SubmissionRepository getSubmissionRepository() {
-        if (submissionRepository == null) {
-            loadDefaultSubmissionSite();
-        }
-        return submissionRepository;
-    }
-
-    private void loadDefaultSubmissionSite() {
-        if (submissionRepositoryName == null) {
-            submissionRepositoryName = SubmissionRepository.DEFAULT_REPOSITORY_NAME;
-        }
-        SubmissionsService submissionsService = ServiceAccessUtility.getBean(SubmissionsService.class);
-        submissionRepository = submissionsService.findRepositoryByKey(submissionRepositoryName);
-    }
-
-    public void setSubmissionRepository(SubmissionRepository submissionRepository) {
-        if (submissionRepositoryName == null) {
-            loadDefaultSubmissionSite();
-        }
-        this.submissionRepositoryName = submissionRepository.getName();
     }
 
     public String getSubmissionRepositoryName() {

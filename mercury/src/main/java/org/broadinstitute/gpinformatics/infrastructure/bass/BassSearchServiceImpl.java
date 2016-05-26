@@ -73,15 +73,18 @@ public class BassSearchServiceImpl extends AbstractJerseyClientService implement
         WebResource resource = getJerseyClient().resource(url);
         resource.accept(MediaType.TEXT_PLAIN);
 
-        List<MultivaluedMap<String, String>> parameterMapList = new ArrayList<>();
-        MultivaluedMap<String, String> transformedParameterMap = transformParameterMap(parameters);
+        MultivaluedMap<String, String> modifiedParameters = transformParameterMap(parameters);
+        MultivaluedMap<String, String> fileTypeParam = getFileTypeParam(fileType);
+        modifiedParameters.putAll(fileTypeParam);
 
-        if (transformedParameterMap.containsKey(BassResultColumn.sample.name())) {
-            List<String> sampleList = transformedParameterMap.remove(BassResultColumn.sample.name());
+        List<MultivaluedMap<String, String>> parameterMapList = new ArrayList<>();
+
+        if (modifiedParameters.containsKey(BassResultColumn.sample.name())) {
+            List<String> sampleList = modifiedParameters.remove(BassResultColumn.sample.name());
 
             // If we are searching for samples use the QueryStringSplitter to ensure the URL length is within limits.
             QueryStringSplitter splitter =
-                    new QueryStringSplitter(url.length(), BassConfig.BASS_MAX_URL_LENGTH, transformedParameterMap);
+                    new QueryStringSplitter(url.length(), BassConfig.BASS_MAX_URL_LENGTH, modifiedParameters);
             for (Map<String, List<String>> splitParameterMap : splitter
                     .split(BassResultColumn.sample.name(), sampleList)) {
                 MultivaluedMap<String, String> entryMap = new MultivaluedMapImpl();
@@ -91,12 +94,11 @@ public class BassSearchServiceImpl extends AbstractJerseyClientService implement
                 parameterMapList.add(entryMap);
             }
         } else {
-            parameterMapList.add(transformedParameterMap);
+            parameterMapList.add(modifiedParameters);
         }
 
         List<BassDTO> bassResults = new ArrayList<>();
         for (MultivaluedMap<String, String> splitParameterMap : parameterMapList) {
-            splitParameterMap.putAll(getFileTypeParam(fileType));
             ClientResponse response = resource.queryParams(splitParameterMap).get(ClientResponse.class);
             if (!response.getClientResponseStatus().equals(ClientResponse.Status.OK)) {
                 String errorString = String.format(

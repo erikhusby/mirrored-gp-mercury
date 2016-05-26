@@ -324,8 +324,15 @@ public class ResearchProjectActionBean extends CoreActionBean {
                 }
             }
             if (submissionRepository == null) {
-                submissionRepository = editResearchProject.getSubmissionRepository();
-                selectedSubmissionRepository = submissionRepository.getName();
+                String lookupRepository = null;
+                if (StringUtils.isNotBlank(selectedSubmissionRepository)) {
+                    lookupRepository = selectedSubmissionRepository;
+                } else {
+                    lookupRepository = editResearchProject.getSubmissionRepositoryName();
+                }
+                if (!StringUtils.isBlank(lookupRepository)) {
+                    submissionRepository = submissionsService.findRepositoryByKey(lookupRepository);
+                }
             }
         } else {
             if (getUserBean().isValidBspUser()) {
