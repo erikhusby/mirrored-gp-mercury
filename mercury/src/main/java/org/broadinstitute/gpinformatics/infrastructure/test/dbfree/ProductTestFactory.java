@@ -23,12 +23,10 @@ public class ProductTestFactory {
 
     public static Product createDummyProduct(Workflow workflow, String partNumber, boolean addRisk,
                                              boolean pdmOrderableOnly) {
-        Product product = new Product("productName",
-                new ProductFamily(ProductFamily.ProductFamilyInfo.WHOLE_GENOME.getFamilyName()), "description",
-                partNumber, new Date(), new Date(), 12345678, 123456, 100, 96, "inputRequirements", "deliverables",
-                true, workflow, false, "an aggregation data type");
-        product.setPdmOrderableOnly(pdmOrderableOnly);
-
+        Product product =
+                new Product("productName", new ProductFamily("Test product family"), "description", partNumber,
+                        new Date(), new Date(), 12345678, 123456, 100, 96, "inputRequirements", "deliverables", true,
+                        workflow, pdmOrderableOnly, "an aggregation data type");
         if (addRisk) {
             product.addRiskCriteria(new RiskCriterion(RiskCriterion.RiskCriteriaType.MANUAL, Operator.IS, "true"));
         }
