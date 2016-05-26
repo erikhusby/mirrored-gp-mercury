@@ -1,16 +1,19 @@
 package org.broadinstitute.gpinformatics.infrastructure.common;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.hamcrest.Matcher;
 import org.testng.annotations.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
 
 @Test(groups = TestGroups.DATABASE_FREE)
@@ -25,6 +28,31 @@ public class QueryStringSplitterTest {
 
         assertThat(parametersList, hasSize(1));
         assertThat(parametersList.get(0).size(), equalTo(0));
+    }
+
+    public void testQueryStringSplitterFixedMap(){
+        final String fixedName = "a";
+        final List<String> mapValues = Collections.singletonList("1");
+
+        Map<String, List<String>> fixedParameterMap = new HashMap<String, List<String>>(){{
+            put(fixedName, mapValues);
+        }};
+
+        String name = "q";
+        List<String> values = Arrays.asList("2", "3", "4");
+
+        QueryStringSplitter splitter = new QueryStringSplitter(20, 30, fixedParameterMap);
+        List<Map<String, List<String>>> parametersList = splitter.split(name, values);
+
+        Matcher<Map<? extends String, ? extends List<String>>> fixedMapEntries = hasEntry(fixedName, mapValues);
+
+        assertThat(parametersList.get(0), fixedMapEntries);
+        assertThat(parametersList.get(1), fixedMapEntries);
+
+        assertThat(parametersList.get(0), hasEntry(name, Arrays.asList("2","3")));
+        assertThat(parametersList.get(1), hasEntry(name, Collections.singletonList("4")));
+
+        assertThat(parametersList, hasSize(2));
     }
 
     public void testThrowsExceptionWhenValueCannotFit() {

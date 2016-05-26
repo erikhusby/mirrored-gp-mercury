@@ -11,20 +11,18 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.bass;
 
+import com.google.common.base.Function;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.CharEncoding;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.utils.URLEncodedUtils;
-import org.apache.http.message.BasicNameValuePair;
 import org.broadinstitute.gpinformatics.infrastructure.common.QueryStringSplitter;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
@@ -32,10 +30,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO.BassResultColumn;
 
@@ -74,36 +70,33 @@ public class BassSearchServiceImpl extends AbstractJerseyClientService implement
     @Override
     public List<BassDTO> runSearch(Map<BassResultColumn, List<String>> parameters, BassFileType fileType) {
         String url = bassConfig.getWSUrl(ACTION_LIST);
-        MultivaluedMap<String, String> params = new MultivaluedMapImpl();
-        List<String> sampleList = new ArrayList<>();
-
-        for (Map.Entry<BassResultColumn, List<String>> queryPair : parameters.entrySet()) {
-            if (queryPair.getKey() == BassResultColumn.sample) {
-                sampleList.addAll(queryPair.getValue());
-            } else {
-                params.put(queryPair.getKey().name(), queryPair.getValue());
-            }
-        }
-        params.putAll(getFileTypeParam(fileType));
         WebResource resource = getJerseyClient().resource(url);
         resource.accept(MediaType.TEXT_PLAIN);
 
-        Set<MultivaluedMap<String, String>> splitParameterMapSet = new HashSet<>();
+        List<MultivaluedMap<String, String>> parameterMapList = new ArrayList<>();
+        MultivaluedMap<String, String> transformedParameterMap = transformParameterMap(parameters);
 
-        // If we are searching for samples use the QueryStringSplitter to ensure the URL length is within limits.
-        if (parameters.keySet().contains(BassResultColumn.sample)) {
-            int maxUrlSize= BassConfig.BASS_MAX_URL_LENGTH - getParamSize(params);
-            QueryStringSplitter splitter = new QueryStringSplitter(url.length(), maxUrlSize);
-            for (Map<String, List<String>> splitParams : splitter.split(BassResultColumn.sample.name(), sampleList)) {
-                MultivaluedMap<String, String> multiValueMap = new MultivaluedMapImpl(params);
-                multiValueMap.putAll(splitParams);
-                splitParameterMapSet.add(multiValueMap);
+        if (transformedParameterMap.containsKey(BassResultColumn.sample.name())) {
+            List<String> sampleList = transformedParameterMap.remove(BassResultColumn.sample.name());
+
+            // If we are searching for samples use the QueryStringSplitter to ensure the URL length is within limits.
+            QueryStringSplitter splitter =
+                    new QueryStringSplitter(url.length(), BassConfig.BASS_MAX_URL_LENGTH, transformedParameterMap);
+            for (Map<String, List<String>> splitParameterMap : splitter
+                    .split(BassResultColumn.sample.name(), sampleList)) {
+                MultivaluedMap<String, String> entryMap = new MultivaluedMapImpl();
+                for (Map.Entry<String, List<String>> parameterMapEntry : splitParameterMap.entrySet()) {
+                    entryMap.put(parameterMapEntry.getKey(), parameterMapEntry.getValue());
+                }
+                parameterMapList.add(entryMap);
             }
         } else {
-            splitParameterMapSet.add(params);
+            parameterMapList.add(transformedParameterMap);
         }
+
         List<BassDTO> bassResults = new ArrayList<>();
-        for (MultivaluedMap<String, String> splitParameterMap : splitParameterMapSet) {
+        for (MultivaluedMap<String, String> splitParameterMap : parameterMapList) {
+            splitParameterMap.putAll(getFileTypeParam(fileType));
             ClientResponse response = resource.queryParams(splitParameterMap).get(ClientResponse.class);
             if (!response.getClientResponseStatus().equals(ClientResponse.Status.OK)) {
                 String errorString = String.format(
@@ -117,14 +110,25 @@ public class BassSearchServiceImpl extends AbstractJerseyClientService implement
         return bassResults;
     }
 
-    private int getParamSize(MultivaluedMap<String, String> params) {
-        List<NameValuePair> nameValuePairs = new ArrayList<>();
-        for (Map.Entry<String, List<String>> paramEntry : params.entrySet()) {
-            for (String paramValue : paramEntry.getValue()) {
-                nameValuePairs.add(new BasicNameValuePair(paramEntry.getKey(), paramValue));
-            }
-        }
-        return URLEncodedUtils.format(nameValuePairs, CharEncoding.UTF_8).length();
+    /**
+     * Convert the input parameter map to a MultivaluedMap suitable for jersey.
+     */
+    private MultivaluedMap<String, String> transformParameterMap(Map<BassResultColumn, List<String>> parameters) {
+        Function<Map<BassResultColumn, List<String>>, MultivaluedMap<String, String>> transformFunction =
+                new Function<Map<BassResultColumn, List<String>>, MultivaluedMap<String, String>>() {
+                    @Override
+                    public MultivaluedMap<String, String> apply(
+                            @Nullable final Map<BassResultColumn, List<String>> input) {
+                        MultivaluedMap<String, String> result = new MultivaluedMapImpl();
+                        if (input != null) {
+                            for (Map.Entry<BassResultColumn, List<String>> inputEntrySet : input.entrySet()) {
+                                result.put(inputEntrySet.getKey().name(), inputEntrySet.getValue());
+                            }
+                        }
+                        return result;
+                    }
+                };
+        return transformFunction.apply(parameters);
     }
 
     protected MultivaluedMap<String, String> getFileTypeParam(BassFileType fileType) {
