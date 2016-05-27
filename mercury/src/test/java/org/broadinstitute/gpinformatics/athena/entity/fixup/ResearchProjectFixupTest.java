@@ -204,11 +204,10 @@ public class ResearchProjectFixupTest extends Arquillian {
 
         for (ResearchProject project : researchProjectList) {
             if (StringUtils.isNotBlank(project.getSubmissionRepositoryName())) {
-                String error = String.format(
-                        "Could not update Project '%s' with default value because it already has a SubmissionRepository defined ('%s')",
+                String message = String.format(
+                        "Default SubmissionRepository not set for Research Project '%s' Current Value: '%s')",
                         project.getName(), project.getSubmissionRepositoryName());
-                log.error(error);
-                throw new RuntimeException(error);
+                log.debug(message);
             } else {
                 project.setSubmissionRepositoryName(SubmissionRepository.DEFAULT_REPOSITORY_NAME);
             }
