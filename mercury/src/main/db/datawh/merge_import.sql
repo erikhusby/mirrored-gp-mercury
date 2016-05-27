@@ -73,6 +73,13 @@ AS
   AS
   BEGIN
 
+    DELETE FROM flowcell_designation
+     WHERE fct_starting_vessel_id IN (
+             SELECT fct_starting_vessel_id
+               FROM im_fct_create
+              WHERE is_delete = 'T' );
+    DBMS_OUTPUT.PUT_LINE( 'Deleted ' || SQL%ROWCOUNT || ' flowcell_designation (batch vessel ETL) rows' );
+
     -- For event fact table, a re-export of audited entity ids should replace existing ones.
     DELETE FROM LIBRARY_ANCESTRY
      WHERE CHILD_EVENT_ID IN (
@@ -1501,6 +1508,79 @@ AS
       SHOW_ETL_STATS(  V_UPD_COUNT, V_LIBRARY_INS_COUNT, 'library_lcset_sample_base (from library ancestry)' );
     END MERGE_LIBRARY_SAMPLE;
 
+  /*
+   * Links flowcell ticket batch vessels to flowcell barcodes
+   * See RPT-3539/GPLIM-4136 Make Designation from Mercury available for reporting
+   */
+  PROCEDURE MERGE_FLOWCELL_DESIGNATION
+  IS
+    V_INS_COUNT PLS_INTEGER;
+    -- Updated at flowcell transfer (or inserted in some
+    V_UPD_COUNT PLS_INTEGER;
+    BEGIN
+      V_INS_COUNT := 0;
+      V_UPD_COUNT := 0;
+      FOR new IN ( SELECT line_number, fct_starting_vessel_id, designation_id,
+                          fct_name, fct_type, denatured_library,
+                          dilution_library, creation_date,
+                          CAST( null AS VARCHAR2(255) ) as flowcell_barcode, flowcell_type, lane,
+                          concentration, is_pool_test, etl_date
+                     FROM im_fct_create
+                    WHERE is_delete = 'F'
+                   UNION ALL
+                   SELECT line_number, fct_starting_vessel_id, designation_id,
+                          fct_name, fct_type, denatured_library,
+                          dilution_library, creation_date,
+                          flowcell_barcode, flowcell_type, lane,
+                          concentration, is_pool_test, etl_date
+                     FROM im_fct_load
+                    WHERE is_delete = 'F'
+            )
+      LOOP
+        BEGIN
+          -- Update/Insert
+          UPDATE flowcell_designation
+             SET designation_id    = new.designation_id,
+                 fct_name          = new.fct_name,
+                 fct_type          = new.fct_type,
+                 denatured_library = new.denatured_library,
+                 dilution_library  = new.dilution_library,
+                 creation_date     = new.creation_date,
+                 flowcell_barcode  = NVL( new.flowcell_barcode, flowcell_barcode ),
+                 flowcell_type     = new.flowcell_type,
+                 lane              = new.lane,
+                 concentration     = new.concentration,
+                 is_pool_test      = new.is_pool_test,
+                 etl_date          = new.etl_date
+           WHERE fct_starting_vessel_id = new.fct_starting_vessel_id;
+
+          V_UPD_COUNT := V_UPD_COUNT + SQL%ROWCOUNT;
+
+          IF SQL%ROWCOUNT = 0 THEN
+            INSERT INTO flowcell_designation (
+              fct_starting_vessel_id, designation_id,
+              fct_name, fct_type, denatured_library,
+              dilution_library, creation_date, flowcell_barcode,
+              flowcell_type, lane, concentration,
+              is_pool_test, etl_date )
+            VALUES(
+              new.fct_starting_vessel_id, new.designation_id,
+              new.fct_name, new.fct_type, new.denatured_library,
+              new.dilution_library, new.creation_date, new.flowcell_barcode,
+              new.flowcell_type, new.lane, new.concentration,
+              new.is_pool_test, new.etl_date
+            );
+            V_INS_COUNT := V_INS_COUNT  + SQL%ROWCOUNT;
+          END IF;
+
+        EXCEPTION WHEN OTHERS THEN
+          errmsg := SQLERRM;
+          DBMS_OUTPUT.PUT_LINE( TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_flowcell_designation.dat (batch vessel ETL) line ' || new.line_number || '  ' || errmsg);
+          CONTINUE;
+        END;
+      END LOOP;
+      SHOW_ETL_STATS(  V_UPD_COUNT, V_INS_COUNT, 'flowcell_designation (batch vessel ETL)' );
+    END MERGE_FLOWCELL_DESIGNATION;
 
   PROCEDURE MERGE_PRODUCT_ORDER_STATUS
   IS
@@ -1939,6 +2019,7 @@ AS
     MERGE_EVENT_FACT();
     MERGE_ANCESTRY();
     MERGE_LIBRARY_SAMPLE();
+    MERGE_FLOWCELL_DESIGNATION();
 
     -- Level 3 (depends on level 2 tables)
     MERGE_PDO_SAMPLE_RISK();

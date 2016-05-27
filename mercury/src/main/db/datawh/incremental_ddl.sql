@@ -1,69 +1,78 @@
--------------------------------------------------------
--- https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-4085
--- Add ancestry relationships for DenatureToDilutionTransfer events
+/* ******* GPLIM-4136
+ * Make Designation from Mercury available for reporting
+ */
 
--- Uncomment and execute when ready to clear existing data prior to full refresh of related tables:
+BEGIN
+  execute immediate 'drop table flowcell_designation';
+  exception when others then null;
+END;
+/
 
---truncate table event_fact;
---truncate table library_ancestry;
---truncate table library_lcset_sample_base;
---drop sequence event_fact_id_seq;
---CREATE SEQUENCE event_fact_id_seq START WITH 1;
-
-
--------------------------------------------------------
--- https://gpinfojira.broadinstitute.org/jira/browse/RPT-3131
--- Mercury QC DM structural changes (Lab_Metric)
-
--- Prior to run:
--- Create backfill files from PROD release branch - record latest lab_metric_id value in last file (IDs not sequential in file - sort required)
--- Copy lab_metric.ctl file
-
-DROP TABLE im_lab_metric;
-
-CREATE TABLE im_lab_metric (
-  line_number      NUMERIC(9)  NOT NULL,
-  etl_date         DATE        NOT NULL,
-  is_delete        CHAR(1)     NOT NULL,
-  lab_metric_id    NUMERIC(19) NOT NULL,
-  quant_type       VARCHAR2(255),
-  quant_units      VARCHAR2(255),
-  quant_value      NUMBER(19,2),
-  run_name         VARCHAR2(255),
-  run_date         DATE,
-  lab_vessel_id    NUMERIC(19),
-  vessel_barcode   VARCHAR2(40),
-  rack_position    VARCHAR2(255),
-  decision         VARCHAR2(12),
-  decision_date    DATE,
-  decider          VARCHAR2(255),
-  override_reason  VARCHAR2(255)
+CREATE TABLE flowcell_designation (
+  fct_starting_vessel_id NUMERIC(19) NOT NULL,
+  designation_id         NUMERIC(19),
+  fct_name               VARCHAR2(255),
+  fct_type               VARCHAR2(8),
+  denatured_library      VARCHAR2(255),
+  dilution_library       VARCHAR2(255),
+  creation_date          DATE,
+  flowcell_barcode       VARCHAR2(255),
+  flowcell_type          VARCHAR2(255),
+  lane                   VARCHAR2(32),
+  concentration          NUMERIC(19,2),
+  is_pool_test           CHAR(1),
+  etl_date               DATE        NOT NULL
 );
 
+create unique index PK_flowcell_designation
+on flowcell_designation ( fct_starting_vessel_id );
 
-drop table lab_metric;
+alter table flowcell_designation
+add constraint pk_flowcell_designation primary key ( fct_starting_vessel_id);
 
-CREATE TABLE lab_metric (
-  lab_metric_id    NUMERIC(19) NOT NULL,
-  quant_type       VARCHAR2(255),
-  quant_units      VARCHAR2(255),
-  quant_value      NUMBER(19,2),
-  run_name         VARCHAR2(255),
-  run_date         DATE,
-  lab_vessel_id    NUMERIC(19),
-  vessel_barcode   VARCHAR2(40) NOT NULL,
-  rack_position    VARCHAR2(255),
-  decision         VARCHAR2(12),
-  decision_date    DATE,
-  decider          VARCHAR2(255),
-  override_reason  VARCHAR2(255),
-  etl_date         DATE NOT NULL,
-  constraint PK_LAB_METRIC PRIMARY KEY ( lab_metric_id )
+-- Other indexes TBD
+BEGIN
+  execute immediate 'drop table im_fct_create';
+  exception when others then null;
+END;
+/
+CREATE TABLE im_fct_create (
+  line_number            NUMERIC(9)  NOT NULL,
+  etl_date               DATE        NOT NULL,
+  is_delete              CHAR(1)     NOT NULL,
+  fct_starting_vessel_id NUMERIC(19) NOT NULL,
+  designation_id         NUMERIC(19),
+  fct_name               VARCHAR2(255),
+  fct_type               VARCHAR2(8),
+  denatured_library      VARCHAR2(255),
+  dilution_library       VARCHAR2(255),
+  creation_date          DATE,
+  flowcell_type          VARCHAR2(255),
+  lane                   VARCHAR2(32),
+  concentration          NUMERIC(19,2),
+  is_pool_test           CHAR(1)
 );
 
-CREATE INDEX lab_metric_vessel_idx1 ON lab_metric (vessel_barcode);
+BEGIN
+  execute immediate 'drop table im_fct_load';
+  exception when others then null;
+END;
+/
 
--- After run:
--- Execute merge_import.sql
--- Copy backfill files to datawh/prod/new folder
--- Execute backfill rest call against prod for all id's greater than the one recorded at pre-deploy backfill
+CREATE TABLE im_fct_load (
+  line_number            NUMERIC(9)  NOT NULL,
+  etl_date               DATE        NOT NULL,
+  is_delete              CHAR(1)     NOT NULL,
+  fct_starting_vessel_id NUMERIC(19) NOT NULL,
+  designation_id         NUMERIC(19),
+  fct_name               VARCHAR2(255),
+  fct_type               VARCHAR2(8),
+  denatured_library      VARCHAR2(255),
+  dilution_library       VARCHAR2(255),
+  creation_date          DATE,
+  flowcell_barcode       VARCHAR2(255),
+  flowcell_type          VARCHAR2(255),
+  lane                   VARCHAR2(32),
+  concentration          NUMERIC(19,2),
+  is_pool_test           CHAR(1)
+);
