@@ -7,7 +7,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserC
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -17,17 +16,15 @@ import java.util.Set;
 /**
  * This traversal evaluator is tied to an Infinium search term as part of an alternate search definition.
  * Expands an Infinium array process related vessel (PDO sample tube, DNA plate, amp plate, or Infinium chip) by
- * traversing events to obtain ancestor or descendant vessels of interest
+ *      traversing events to obtain ancestor DNA plates/DNA plate wells
  */
 public class  InfiniumPlateSourceEvaluator extends TraversalEvaluator {
 
-    List<LabEventType> infiniumEvents;
+    // All Infinium array search logic is based upon a DNA plate/DNA plate well as the source located by the target of
+    // ancestor event type
+    List<LabEventType> infiniumRootEventTypes = Collections.singletonList(LabEventType.ARRAY_PLATING_DILUTION);
 
-    public InfiniumPlateSourceEvaluator(){
-        infiniumEvents = Arrays.asList(
-                LabEventType.ARRAY_PLATING_DILUTION,
-                LabEventType.INFINIUM_AMPLIFICATION);
-    }
+    public InfiniumPlateSourceEvaluator(){}
 
     @Override
     public Set<Object> evaluate(List<? extends Object> rootEntities, SearchInstance searchInstance) {
@@ -58,11 +55,12 @@ public class  InfiniumPlateSourceEvaluator extends TraversalEvaluator {
 
         // Get the Infinium vessels by traversing descendant events of current PDO sample tubes
         TransferTraverserCriteria.VesselForEventTypeCriteria eventTypeCriteria
-                = new TransferTraverserCriteria.VesselForEventTypeCriteria(infiniumEvents, true);
+                = new TransferTraverserCriteria.VesselForEventTypeCriteria(infiniumRootEventTypes, true);
 
         for( LabVessel vessel : (List<LabVessel>) rootEntities ) {
             if( vessel.getContainerRole() != null ) {
-                vessel.getContainerRole().applyCriteriaToAllPositions(eventTypeCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
+                vessel.getContainerRole().applyCriteriaToAllPositions(eventTypeCriteria,
+                        TransferTraverserCriteria.TraversalDirection.Descendants);
             } else {
                 vessel.evaluateCriteria(eventTypeCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
             }
@@ -75,7 +73,8 @@ public class  InfiniumPlateSourceEvaluator extends TraversalEvaluator {
                     for(VesselContainer vesselContainer : eventVessel.getVesselContainers() ) {
                         infiniumVessels.add(vesselContainer.getEmbedder());
                     }
-                } else if (eventVessel.getContainerRole() == null || eventVessel.getContainerRole().getContainedVessels().isEmpty()) {
+                } else if (eventVessel.getContainerRole() == null ||
+                        eventVessel.getContainerRole().getContainedVessels().isEmpty()) {
                     infiniumVessels.add(eventVessel);
                 } else {
                     infiniumVessels.add( eventVessel.getContainerRole().getEmbedder() );
@@ -96,11 +95,12 @@ public class  InfiniumPlateSourceEvaluator extends TraversalEvaluator {
 
         // Get the Infinium vessels by traversing ancestor events of current entities
         TransferTraverserCriteria.VesselForEventTypeCriteria eventTypeCriteria
-                = new TransferTraverserCriteria.VesselForEventTypeCriteria(Collections.singletonList(LabEventType.ARRAY_PLATING_DILUTION), true);
+                = new TransferTraverserCriteria.VesselForEventTypeCriteria(infiniumRootEventTypes, true);
 
         for( LabVessel vessel : (List<LabVessel>) rootEntities ) {
             if( vessel.getContainerRole() != null ) {
-                vessel.getContainerRole().applyCriteriaToAllPositions(eventTypeCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
+                vessel.getContainerRole().applyCriteriaToAllPositions(eventTypeCriteria,
+                        TransferTraverserCriteria.TraversalDirection.Ancestors);
             } else {
                 vessel.evaluateCriteria(eventTypeCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
             }
