@@ -432,5 +432,166 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="GPLIM-4023-1" author="epolk">
+      <createTable schemaName="mercury" tableName="ATTRIBUTE_ARCHETYPE">
+	<column name="dtype" type="varchar2(31)">
+	  <constraints nullable="false"/>
+	</column>
+	<column name="archetype_id" type="number(19,0)">
+	  <constraints nullable="false"/>
+	</column>
+	<column name="archetype_name" type="varchar2(255)">
+	  <constraints nullable="false"/>
+	</column>
+	<column name="archetype_group" type="varchar2(255)">
+	  <constraints nullable="false"/>
+	</column>
+      </createTable>
+
+      <addPrimaryKey constraintName="PK_ATTRIBUTE_ARCHETYPE" tableName="ATTRIBUTE_ARCHETYPE"
+		     schemaName="mercury" columnNames="archetype_id"/>
+
+    </changeSet>
+
+    <changeSet id="GPLIM-4023-2" author="epolk">
+      <createTable schemaName="mercury" tableName="ATTRIBUTE_ARCHETYPE_AUD">
+	<column name="dtype" type="varchar2(31)">
+	  <constraints nullable="false"/>
+	</column>
+	<column name="archetype_id" type="number(19,0)">
+	  <constraints nullable="false"/>
+	</column>
+	<column name="rev" type="number(19,0)">
+	  <constraints nullable="false"/>
+	</column>
+	<column name="revtype" type="number(3,0)">
+	  <constraints nullable="false"/>
+	</column>
+	<column name="archetype_name" type="varchar2(255)"/>
+	<column name="archetype_group" type="varchar2(255)"/>
+      </createTable>
+
+      <addPrimaryKey constraintName="PK_ATTRIBUTE_ARCHETYPE_AUD" tableName="ATTRIBUTE_ARCHETYPE_AUD"
+		     schemaName="mercury"  columnNames="rev, archetype_id"/>
+
+      <createIndex indexName="IX_ATTRIBUTE_ARCHETYPE_AUD" tableName="ATTRIBUTE_ARCHETYPE_AUD" schemaName="mercury">
+	<column name="archetype_id"/>
+	<column name="rev"/>
+      </createIndex>
+
+    </changeSet>
+
+    <changeSet id="GPLIM-4023-3" author="epolk">
+      <createTable schemaName="mercury" tableName="ARCHETYPE_ATTRIBUTE">
+	<column name="attribute_id" type="number(19,0)">
+	  <constraints nullable="false"/>
+	</column>
+	<column name="attribute_name" type="varchar2(255)">
+	  <constraints nullable="false"/>
+	</column>
+	<column name="attribute_value" type="varchar2(255)"/>
+	<column name="archetype" type="number(19,0)"/>
+      </createTable>
+
+      <addPrimaryKey constraintName="PK_ARCHETYPE_ATTRIBUTE" tableName="ARCHETYPE_ATTRIBUTE"
+		     schemaName="mercury"  columnNames="attribute_id"/>
+
+      <addUniqueConstraint constraintName="U_ARCHETYPE_ATTRIBUTE" tableName="ARCHETYPE_ATTRIBUTE"
+			   schemaName="mercury" columnNames="archetype, attribute_name"/>
+
+    </changeSet>
+
+    <changeSet id="GPLIM-4023-4" author="epolk">
+      <createTable schemaName="mercury" tableName="ARCHETYPE_ATTRIBUTE_AUD">
+	<column name="attribute_id" type="number(19,0)">
+	  <constraints nullable="false"/>
+	</column>
+	<column name="rev" type="number(19,0)">
+	  <constraints nullable="false"/>
+	</column>
+	<column name="revtype" type="number(3,0)">
+	  <constraints nullable="false"/>
+	</column>
+	<column name="archetype" type="number(19,0)"/>
+	<column name="attribute_name" type="varchar2(255)"/>
+	<column name="attribute_value" type="varchar2(255)"/>
+      </createTable>
+
+      <addPrimaryKey constraintName="PK_ARCHETYPE_ATTRIBUTE_AUD" tableName="ARCHETYPE_ATTRIBUTE_AUD"
+		     schemaName="mercury"  columnNames="rev, attribute_id"/>
+
+      <createIndex indexName="IX_ARCHETYPE_ATTRIBUTE_AUD" tableName="ARCHETYPE_ATTRIBUTE_AUD" schemaName="mercury">
+	<column name="attribute_id"/>
+	<column name="rev"/>
+      </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-4023-6" author="epolk">
+      <createTable schemaName="mercury" tableName="ATTRIBUTE_DEFINITION">
+	<column name="attribute_definition_id" type="number(19,0)">
+	  <constraints nullable="false"/>
+	</column>
+	<column name="definition_type" type="varchar2(255)">
+	  <constraints nullable="false"/>
+	</column>
+	<column name="archetype_group" type="varchar2(255)">
+	  <constraints nullable="false"/>
+	</column>
+	<column name="attribute_name" type="varchar2(255)">
+	  <constraints nullable="false"/>
+	</column>
+	<column name="group_attribute_value" type="varchar2(255)"/>
+	<column name="is_group_attribute" type="number(1,0)"/>
+	<column name="is_displayable" type="number(1,0)"/>
+      </createTable>
+
+      <addPrimaryKey constraintName="PK_ATTRIBUTE_DEFINITION" tableName="ATTRIBUTE_DEFINITION"
+		     schemaName="mercury"  columnNames="attribute_definition_id"/>
+
+      <addUniqueConstraint constraintName="U_ATTRIBUTE_DEFINITION" tableName="ATTRIBUTE_DEFINITION"
+			   schemaName="mercury" columnNames="definition_type, archetype_group, attribute_name"/>
+
+    </changeSet>
+
+    <changeSet id="GPLIM-4023-7" author="epolk">
+      <createTable schemaName="mercury" tableName="ATTRIBUTE_DEFINITION_AUD">
+	<column name="attribute_definition_id" type="number(19,0)">
+	  <constraints nullable="false"/>
+	</column>
+	<column name="rev" type="number(19,0)">
+	  <constraints nullable="false"/>
+	</column>
+	<column name="revtype" type="number(3,0)">
+	  <constraints nullable="false"/>
+	</column>
+	<column name="definition_type" type="varchar2(255)"/>
+	<column name="archetype_group" type="varchar2(255)"/>
+	<column name="attribute_name" type="varchar2(255)"/>
+	<column name="group_attribute_value" type="varchar2(255)"/>
+	<column name="is_group_attribute" type="number(1,0)"/>
+	<column name="is_displayable" type="number(1,0)"/>
+     </createTable>
+
+      <addPrimaryKey constraintName="PK_ATTRIBUTE_DEFINITION_AUD" tableName="ATTRIBUTE_DEFINITION_AUD"
+		     schemaName="mercury"  columnNames="rev, attribute_definition_id"/>
+
+      <createIndex indexName="IX_ATTRIBUTE_DEFINITION_AUD" tableName="ATTRIBUTE_DEFINITION_AUD" schemaName="mercury">
+	<column name="attribute_definition_id"/>
+	<column name="rev"/>
+      </createIndex>
+
+    </changeSet>
+
+    <changeSet id="GPLIM-4023-8" author="epolk">
+      <addForeignKeyConstraint constraintName="FK_ARCHETYPE_ATTRIBUTE"
+			       baseTableName="ARCHETYPE_ATTRIBUTE" baseColumnNames="archetype"
+			       referencedTableName="attribute_archetype" referencedColumnNames="archetype_id"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-4023-9" author="epolk">
+      <createSequence sequenceName="seq_attribute_archetype" schemaName="mercury" startValue="1" incrementBy="50"/>
+      <createSequence sequenceName="seq_archetype_attribute" schemaName="mercury" startValue="1" incrementBy="50"/>
+      <createSequence sequenceName="seq_attribute_definition" schemaName="mercury" startValue="1" incrementBy="50"/>
+    </changeSet>
 
 </databaseChangeLog>

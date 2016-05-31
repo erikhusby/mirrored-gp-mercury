@@ -61,6 +61,7 @@ public class CrspPipelineUtils {
         put("Buick_v6_0_2014", "P-EX-0011");
         put("whole_exome_agilent_1.1_refseq_plus_3_boosters", "P-CLA-0001");
         put("whole_exome_illumina_coding_v1", "P-CLA-0003");
+        put("eMerge_Oct16_5pad_CDS", "P-VAL-0010");
     }};
 
     /**

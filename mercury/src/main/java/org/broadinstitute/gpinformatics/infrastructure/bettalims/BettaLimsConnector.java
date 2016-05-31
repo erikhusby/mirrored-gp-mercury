@@ -1,5 +1,9 @@
 package org.broadinstitute.gpinformatics.infrastructure.bettalims;
 
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.generated.LibraryQuantRunBean;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.generated.QpcrRunBean;
+
+import javax.ws.rs.core.Response;
 import java.io.Serializable;
 
 /**
@@ -25,4 +29,8 @@ public interface BettaLimsConnector extends Serializable {
     }
 
     BettaLimsResponse sendMessage(String message);
+
+    Response createQpcrRun(QpcrRunBean qpcrRunBean);
+
+    Response createLibraryQuants(LibraryQuantRunBean qpcrRunBean);
 }
