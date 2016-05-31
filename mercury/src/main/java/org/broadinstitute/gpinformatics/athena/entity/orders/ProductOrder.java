@@ -610,7 +610,8 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     /**
-     * Replace the current list of samples with a new list of samples. The order of samples is preserved.
+     * Replace the current list of samples with a new list of samples. The order of the provided samples collection is
+     * preserved, even if it contains a mix of existing and new instances.
      *
      * @param samples the samples to set
      */
@@ -622,10 +623,19 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
         // Only update samples if the new sample list is different from the old one.
         if (isSampleListDifferent(samples)) {
-            this.samples.clear();
-
+            removeAllSamples();
             addSamplesInternal(samples, 0);
         }
+    }
+
+    /**
+     * Remove all samples from this PDO and detach them from all other objects so they will be deleted.
+     */
+    private void removeAllSamples() {
+        for (ProductOrderSample sample : samples) {
+            sample.remove();
+        }
+        samples.clear();
     }
 
     private void addSamplesInternal(Collection<ProductOrderSample> newSamples, int samplePos) {
