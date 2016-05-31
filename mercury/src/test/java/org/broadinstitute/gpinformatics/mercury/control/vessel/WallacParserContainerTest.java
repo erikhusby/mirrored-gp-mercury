@@ -43,8 +43,8 @@ public class WallacParserContainerTest extends Arquillian {
     public static final String WALLAC_OUTPUT = "Wallac96WellOutput.xls";
 
     private static final SimpleDateFormat SIMPLE_DATE_FORMAT = new SimpleDateFormat("yyyyMMddHHmmss");
-    public static final int PLATE_1_BARCODE = 2408120;
-    public static final int PLATE_2_BARCODE = 2408020;
+    public static final String PLATE_1_BARCODE = "2408120";
+    public static final String PLATE_2_BARCODE = "2408020";
 
     @Inject
     private VesselEjb vesselEjb;
@@ -74,7 +74,7 @@ public class WallacParserContainerTest extends Arquillian {
         Assert.assertFalse(messageCollection.hasErrors());
         Assert.assertFalse(messageCollection.hasWarnings());
         Assert.assertNotNull(pair1.getLeft());
-        Assert.assertEquals(pair1.getLeft().getLabMetrics().size(), 96 * 2);
+        Assert.assertEquals(pair1.getLeft().getLabMetrics().size(), 96 * 3);
 
         // Should fail the pico redo due to previous quants of the same type.
         messageCollection.clearAll();
@@ -82,7 +82,7 @@ public class WallacParserContainerTest extends Arquillian {
                 messageCollection, !ACCEPT_PICO_REDO, !PERSIST_VESSELS);
 
         Assert.assertTrue(messageCollection.hasErrors());
-        Assert.assertTrue(messageCollection.getErrors().get(0).contains("Initial Pico was previously done"));
+        Assert.assertTrue(messageCollection.getErrors().get(0).contains("Pond Pico was previously done on tubes"));
         Assert.assertNull(pair2);
 
         // Should accept the pico redo when told to, despite previous quants.
@@ -94,17 +94,18 @@ public class WallacParserContainerTest extends Arquillian {
         Assert.assertFalse(messageCollection.hasErrors());
         Assert.assertFalse(messageCollection.hasWarnings());
         Assert.assertNotNull(pair3.getLeft());
-        Assert.assertEquals(pair3.getLeft().getLabMetrics().size(), 96 * 2);
+        Assert.assertEquals(pair3.getLeft().getLabMetrics().size(), 96 * 3);
     }
 
-    private Pair<LabMetricRun, String> makeWallac96Run(String plate1Barcode, String plate2Barcode, String namePrefix,
-                                                       MessageCollection messageCollection, boolean acceptRePico,
-                                                       boolean persistVessels)
+    private Pair<LabMetricRun, String> makeWallac96Run(String plate1Barcode, String plate2Barcode,
+                                                       String namePrefix, MessageCollection messageCollection,
+                                                       boolean acceptRePico, boolean persistVessels)
             throws Exception {
 
         Workbook workbook = WorkbookFactory.create(VarioskanParserTest.getSpreadsheet(WALLAC_OUTPUT));
         Sheet curveSheet = workbook.getSheet(WallacRowParser.MEASURE_DETAILS_TAB);
-        for (int i = 0; i < curveSheet.getLastRowNum(); i++) {
+        String runStartTime = new SimpleDateFormat("EEEE, MMMM d, yyyy HH:mm:ss a").format(new Date());
+        for (int i = 0; i <= curveSheet.getLastRowNum(); i++) {
             Row row = curveSheet.getRow(i);
             if (row != null) {
                 Cell cell = row.getCell(1);
@@ -115,26 +116,15 @@ public class WallacParserContainerTest extends Arquillian {
                         cell.setCellValue(plate1Barcode);
                     } else if (cellValue.equals(PLATE_2_BARCODE)) {
                         cell.setCellValue(plate2Barcode);
+                    } else if (cellValue.equals("Monday, August 06, 2012 3:14:08 PM")) {
+                        cell.setCellValue(runStartTime);
                     }
                 }
             }
         }
-        // Replace run started with timestamp to avoid clashes
-        Sheet generalSheet = workbook.getSheet(WallacRowParser.OVERVIEW_TAB);
-        for (int i = 0; i < generalSheet.getLastRowNum(); i++) {
-            Row row = generalSheet.getRow(i);
-            if (row != null) {
-                Cell nameCell = row.getCell(WallacRowParser.NAME_COLUMN);
-                if (nameCell != null && nameCell.getStringCellValue().equals(
-                        VarioskanRowParser.NameValue.RUN_STARTED.getFieldName())) {
-                    Cell valueCell = row.getCell(WallacRowParser.VALUE_COLUMN);
-                    valueCell.setCellValue(new SimpleDateFormat(
-                            WallacRowParser.NameValue.RUN_STARTED.getDateFormat()).format(new Date()));
-                }
-            }
-        }
-
+        String runName = namePrefix + "Wallac96Run";
         File tempFile = File.createTempFile("Wallac96", ".xls");
+        System.out.println(tempFile.getPath());
         workbook.write(new FileOutputStream(tempFile));
         Map<String, StaticPlate> mapBarcodeToPlate = new HashMap<>();
         Map<VesselPosition, BarcodedTube> mapPositionToTube = VarioskanParserTest.buildPicoTubesAndTransfers(
@@ -143,7 +133,7 @@ public class WallacParserContainerTest extends Arquillian {
             labVesselDao.persistAll(mapBarcodeToPlate.values());
             labVesselDao.persistAll(mapPositionToTube.values());
         }
-        return vesselEjb.createWallacRun(new FileInputStream(tempFile), LabMetric.MetricType.POND_PICO,
+        return vesselEjb.createWallacRun(new FileInputStream(tempFile), runName, LabMetric.MetricType.POND_PICO,
                 BSPManagerFactoryStub.QA_DUDE_USER_ID, messageCollection, acceptRePico);
     }
 }

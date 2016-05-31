@@ -422,7 +422,7 @@ public class VesselEjb {
      *         or null in case of error.
      * In case of a duplicate upload the returned LabMetricRun is the previously uploaded one.
      */
-    public Pair<LabMetricRun, String> createWallacRun(InputStream wallacSpreadsheet,
+    public Pair<LabMetricRun, String> createWallacRun(InputStream wallacSpreadsheet, String runName,
                                                       LabMetric.MetricType metricType, Long decidingUser,
                                                       MessageCollection messageCollection, boolean acceptRePico) {
         try {
@@ -461,9 +461,6 @@ public class VesselEjb {
                     messageCollection.addError("Cannot find the tube formation upstream of plates " +
                                                StringUtils.join(mapBarcodeToPlate.values(), ", "));
                 } else {
-                    // Run name must be unique.
-                    //TODO RUN_NAME doesn't exist, use timestamp...
-                    String runName = "ImARunName";
                     LabMetricRun labMetricRun = labMetricRunDao.findByName(runName);
                     if (labMetricRun != null) {
                         messageCollection.addError("This run has been uploaded previously.");
@@ -495,7 +492,7 @@ public class VesselEjb {
                                                            StringUtils.join(previousQuantedTubes, ", "));
                             } else {
                                 pair = createWallacRunDaoFree(mapNameValueToValue, metricType, wallacPlateProcessor,
-                                        mapBarcodeToPlate, decidingUser, messageCollection);
+                                        mapBarcodeToPlate, decidingUser, messageCollection, runName);
                                 if (messageCollection.hasErrors()) {
                                     ejbContext.setRollbackOnly();
                                 } else {
@@ -518,13 +515,12 @@ public class VesselEjb {
             Map<WallacRowParser.NameValue, String> mapNameValueToValue,
             LabMetric.MetricType metricType, PlateWellTableProcessor wallacPlateProcessor,
             Map<String, StaticPlate> mapBarcodeToPlate, Long decidingUser,
-            MessageCollection messageCollection) {
+            MessageCollection messageCollection, String runName) {
         SimpleDateFormat simpleDateFormat =
                 new SimpleDateFormat(WallacRowParser.NameValue.RUN_STARTED.getDateFormat());
         Date runStarted = parseRunDate(
                 simpleDateFormat, mapNameValueToValue.get(WallacRowParser.NameValue.RUN_STARTED));
-        LabMetricRun labMetricRun = new LabMetricRun(mapNameValueToValue.get(VarioskanRowParser.NameValue.RUN_NAME),
-                runStarted, metricType);
+        LabMetricRun labMetricRun = new LabMetricRun(runName, runStarted, metricType);
 
         labMetricRun.getMetadata().add(new Metadata(Metadata.Key.INSTRUMENT_NAME,
                 mapNameValueToValue.get(WallacRowParser.NameValue.INSTRUMENT_NAME)));

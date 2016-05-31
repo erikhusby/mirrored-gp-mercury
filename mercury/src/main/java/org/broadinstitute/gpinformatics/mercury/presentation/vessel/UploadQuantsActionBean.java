@@ -51,6 +51,7 @@ public class UploadQuantsActionBean extends CoreActionBean {
         VARIOSKAN("Varioskan"),
         WALLAC("Wallac"),
         CALIPER("Caliper"),
+        VIIA("VIIA"),
         GENERIC("Generic");
 
         private String displayName;
@@ -117,6 +118,8 @@ public class UploadQuantsActionBean extends CoreActionBean {
             break;
         case CALIPER:
             break;
+        case VIIA:
+            break;
         case GENERIC:
             MessageCollection messageCollection = new MessageCollection();
             quantEJB.storeQuants(labMetrics, quantType, messageCollection);
@@ -150,8 +153,21 @@ public class UploadQuantsActionBean extends CoreActionBean {
                 break;
             }
             case WALLAC: {
+                String filename = quantSpreadsheet.getFileName();
                 MessageCollection messageCollection = new MessageCollection();
-                Pair<LabMetricRun, String> pair = vesselEjb.createWallacRun(quantStream, getQuantType(),
+                Pair<LabMetricRun, String> pair = vesselEjb.createWallacRun(quantStream, filename, getQuantType(),
+                        userBean.getBspUser().getUserId(), messageCollection, acceptRePico);
+                if (pair != null) {
+                    labMetricRun = pair.getLeft();
+                    tubeFormationLabel = pair.getRight();
+                }
+                addMessages(messageCollection);
+                break;
+            }
+            case VIIA: {
+                String filename = quantSpreadsheet.getFileName();
+                MessageCollection messageCollection = new MessageCollection();
+                Pair<LabMetricRun, String> pair = vesselEjb.createWallacRun(quantStream, filename, getQuantType(),
                         userBean.getBspUser().getUserId(), messageCollection, acceptRePico);
                 if (pair != null) {
                     labMetricRun = pair.getLeft();
