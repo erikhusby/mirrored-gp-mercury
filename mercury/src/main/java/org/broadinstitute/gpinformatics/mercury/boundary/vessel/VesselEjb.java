@@ -10,7 +10,6 @@ import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.GetSampleDetails;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
@@ -28,7 +27,6 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDa
 import org.broadinstitute.gpinformatics.mercury.control.sample.SampleVesselProcessor;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.CaliperPlateProcessor;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactory;
-import org.broadinstitute.gpinformatics.mercury.control.vessel.PlateWellTableProcessor;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanPlateProcessor;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanRowParser;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.WallacPlateProcessor;
@@ -518,7 +516,7 @@ public class VesselEjb {
 
     private Pair<LabMetricRun, String> createWallacRunDaoFree(
             Map<WallacRowParser.NameValue, String> mapNameValueToValue,
-            LabMetric.MetricType metricType, PlateWellTableProcessor wallacPlateProcessor,
+            LabMetric.MetricType metricType, WallacPlateProcessor wallacPlateProcessor,
             Map<String, StaticPlate> mapBarcodeToPlate, Long decidingUser,
             MessageCollection messageCollection, String runName) {
         SimpleDateFormat simpleDateFormat =

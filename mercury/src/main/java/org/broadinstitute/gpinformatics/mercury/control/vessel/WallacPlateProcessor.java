@@ -12,9 +12,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * TODO Javadoc
+ * Processes plate information from a Wallac spreadsheet.
  */
-public class WallacPlateProcessor  extends TableProcessor implements PlateWellTableProcessor {
+public class WallacPlateProcessor  extends TableProcessor {
     private static final String PLATE_1_GROUP = "2";
     private static final String PLATE_2_GROUP = "3";
     private final String plateBarcode1;
