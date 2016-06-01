@@ -117,6 +117,39 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     private MercurySample mercurySample;
 
     /**
+     * Detach this ProductOrderSample from all other objects so it can be removed, most importantly MercurySample whose
+     * reference would otherwise keep this sample alive.
+     *
+     * For simplicity, it's currently not allowed to remove a sample that has any billing activity. If the ledgers are
+     * unbilled, then the quantity could be zeroed and the sample removed. If there are billed ledgers, the consequences
+     * on reporting and such would need to be explored before allowing this removal.
+     */
+    public void remove() {
+        if (ledgerItems != null && !ledgerItems.isEmpty()) {
+            throw new IllegalStateException("Samples with billing activity cannot be removed from their product order");
+        }
+
+        productOrder = null;
+
+        if (mercurySample != null) {
+            mercurySample.removeProductOrderSample(this);
+            /*
+             * MercurySample.removeProductOrderSample() should do this in order to be symmetric with
+             * MercurySample.addProductOrderSample(), but it's important enough that this happens to be defensive about
+             * it here.
+             */
+            mercurySample = null;
+        }
+
+        riskItems.clear();
+
+        for (SampleReceiptValidation validation : sampleReceiptValidations) {
+            validation.remove();
+        }
+        sampleReceiptValidations.clear();
+    }
+
+    /**
      * Whether to continue processing a sample if a quantification (e.g. Pico) is out of specification
      * (e.g. concentration is too low).
      */

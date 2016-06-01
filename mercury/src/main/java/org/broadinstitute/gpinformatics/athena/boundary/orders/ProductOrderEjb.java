@@ -969,6 +969,9 @@ public class ProductOrderEjb {
 
         // If removeAll returns false, no samples were removed -- should never happen.
         if (productOrder.getSamples().removeAll(samples)) {
+            for (ProductOrderSample sample : samples) {
+                sample.remove();
+            }
             String nameList = StringUtils.join(ProductOrderSample.getSampleNames(samples), ",");
             productOrder.prepareToSave(userBean.getBspUser());
             productOrderDao.persist(productOrder);
