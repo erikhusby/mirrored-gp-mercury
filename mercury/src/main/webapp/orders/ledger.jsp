@@ -383,7 +383,7 @@
 
         var billedFilter = function(oSettings, aData, iDataIndex) {
             // Assumes that the content is rendered as something indicating a check mark, i.e., "check.png"
-            return aData[10 + numPriceItems * 2].includes('check');
+            return aData[10 + numPriceItems * 2].indexOf('check') != -1;
         };
 
         var notBilledFilter = function (oSettings, aData, iDataIndex) {

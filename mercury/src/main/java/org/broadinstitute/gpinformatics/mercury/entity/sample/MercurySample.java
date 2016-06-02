@@ -225,9 +225,26 @@ public class MercurySample extends AbstractSample {
         return productOrderSamples;
     }
 
+    /**
+     * Attach the given ProductOrderSample to this MercurySample. While there is only one MercurySample for any sample
+     * ID, that sample can be added to multiple orders.
+     *
+     * @param productOrderSample    the PDO sample to attach
+     */
     public void addProductOrderSample(ProductOrderSample productOrderSample) {
         productOrderSamples.add(productOrderSample);
         productOrderSample.setMercurySample(this);
+    }
+
+    /**
+     * Detach the given ProductOrderSample from this MercurySample. This association is important, so detaching should
+     * only be done if the intent is to remove the ProductOrderSample.
+     *
+     * @param productOrderSample    the PDO sample to detach
+     */
+    public void removeProductOrderSample(ProductOrderSample productOrderSample) {
+        productOrderSamples.remove(productOrderSample);
+        productOrderSample.setMercurySample(null);
     }
 
     @Override
