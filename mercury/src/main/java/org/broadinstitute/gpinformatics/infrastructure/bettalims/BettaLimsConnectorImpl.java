@@ -3,9 +3,13 @@ package org.broadinstitute.gpinformatics.infrastructure.bettalims;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.generated.LibraryQuantRunBean;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.generated.QpcrRunBean;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import java.net.HttpURLConnection;
 
 /**
  * Implementation of connector to BettaLIMS
@@ -42,5 +46,27 @@ public class BettaLimsConnectorImpl implements BettaLimsConnector {
                 .entity(message)
                 .post(ClientResponse.class);
         return new BettaLimsResponse(response.getStatus(), response.getEntity(String.class));
+    }
+
+    @Override
+    public Response createQpcrRun(QpcrRunBean qpcrRunBean) {
+        ClientResponse response = Client.create().resource("http://" + bettaLimsConfig.getWsHost() + ":" +
+                                                           bettaLimsConfig.getWsPort() + "/libraryquant/qpcrrun")
+                .type(MediaType.APPLICATION_XML_TYPE)
+                .accept(MediaType.APPLICATION_XML)
+                .entity(qpcrRunBean)
+                .post(ClientResponse.class);
+        return Response.status(response.getStatus()).build();
+    }
+
+    @Override
+    public Response createLibraryQuants(LibraryQuantRunBean libraryQuantRunBean) {
+        ClientResponse response = Client.create().resource("http://" + bettaLimsConfig.getWsHost() + ":" +
+                                                           bettaLimsConfig.getWsPort() + "/libraryquant")
+                .type(MediaType.APPLICATION_XML_TYPE)
+                .accept(MediaType.APPLICATION_XML)
+                .entity(libraryQuantRunBean)
+                .post(ClientResponse.class);
+        return Response.status(response.getStatus()).build();
     }
 }

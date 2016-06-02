@@ -141,6 +141,33 @@
                 </div>
             </div>
 
+            <div class="view-control-group control-group">
+                <label class="control-label label-form">Genotyping Chip</label>
+                <div class="controls">
+                    <div class="form-value">
+                        <c:choose>
+                            <c:when test="${empty actionBean.genotypingChipInfo}">
+                                None.
+                            </c:when>
+                            <c:otherwise>
+                                <c:forEach items="${actionBean.genotypingChipInfo}" var="iterator">
+                                    <c:if test="${not empty iterator.right}">
+                                        When product order name contains "${iterator.right}":<br/>
+                                        &nbsp; &nbsp;
+                                    </c:if>
+                                    <c:if test="${empty iterator.right and (actionBean.genotypingChipInfo.size() > 1)}">
+                                        Otherwise:<br/>
+                                        &nbsp; &nbsp;
+                                    </c:if>
+                                    ${iterator.left} ${iterator.middle}
+                                    <br/>
+                                </c:forEach>
+                            </c:otherwise>
+                        </c:choose>
+                    </div>
+                </div>
+            </div>
+
             <security:authorizeBlock roles="<%= roles(Developer) %>">
                 <div class="view-control-group control-group">
                     <label class="control-label label-form">Billing</label>
