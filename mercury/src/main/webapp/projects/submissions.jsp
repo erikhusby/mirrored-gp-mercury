@@ -94,7 +94,7 @@
         }
 
         function hasSubmissionSamples() {
-            return $j('#submissionSamples tbody tr td').not('.dataTables_empty').length == 0;
+            return $j('#submissionSamples tbody tr td').not('.dataTables_empty').length > 0;
         }
 
         function initializeBarcodeEntryDialog() {
@@ -116,7 +116,7 @@
             });
 
             $j("#PasteBarcodesList").on("click", function () {
-                if (!hasSubmissionSamples()) {
+                if (hasSubmissionSamples()) {
                     clearBarcodesDialog();
                     dialog.dialog("open");
                 }
