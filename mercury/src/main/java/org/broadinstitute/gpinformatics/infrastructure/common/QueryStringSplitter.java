@@ -55,6 +55,7 @@ public class QueryStringSplitter implements Iterator<List<String>>, Iterable<Lis
 
     private int getParamSize(HashMap<String, List<String>> parameters) {
         int size = 0;
+
         for (Map.Entry<String, List<String>> parameterEntry : parameters.entrySet()) {
             size += getParamSize(parameterEntry.getKey(),
                     parameterEntry.getValue().toArray(new String[parameterEntry.getValue().size()]));
@@ -86,11 +87,21 @@ public class QueryStringSplitter implements Iterator<List<String>>, Iterable<Lis
         ArrayList<Map<String, List<String>>> parametersList = new ArrayList<>();
         HashMap<String, List<String>> parameters = makeBaseParameterMap();
         int baseParameterSize = getParamSize(parameters);
-        int currentLength = baseUrlLength + baseParameterSize;
+
+        // We need to account for the initial '?' character, It is optionally set when we test baseParameterSize.
+        int qSize = 0;
+
+        // add in the number of '&'s
+        if (baseParameterSize>0){
+            baseParameterSize+=parameters.size();
+            qSize=1;
+        }
+
+        int currentLength = baseUrlLength + qSize + baseParameterSize;
         for (String value : values) {
             // +1 because '?' or '&' should be counted.
             int valueLength = getParamSize(name, value)+"?".length();
-            if (baseUrlLength + valueLength > maxUrlLength) {
+            if (baseUrlLength + baseParameterSize + valueLength > maxUrlLength) {
                 throw new RuntimeException(String.format("Cannot construct a small enough URL for value '%s'", value));
             }
             if (currentLength + valueLength > maxUrlLength) {
