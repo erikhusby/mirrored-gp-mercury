@@ -78,41 +78,6 @@ public class ProductOrderSampleDao extends GenericDao {
     }
 
     /**
-     * Find by ProductOrder and sample name.
-     * @param productOrder ProductOrder.
-     * @param sampleName Name of sample.
-     * @return The matching ProductOrderSample.
-     */
-    public List<ProductOrderSample> findByOrderAndName(@Nonnull ProductOrder productOrder, @Nonnull String sampleName) {
-        if (productOrder == null) {
-            throw new NullPointerException("Null Product Order.");
-        }
-        if (sampleName == null) {
-            throw new NullPointerException("Null Sample Name.");
-        }
-
-        EntityManager entityManager = getEntityManager();
-        CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
-
-        CriteriaQuery<ProductOrderSample> criteriaQuery =
-                criteriaBuilder.createQuery(ProductOrderSample.class);
-
-        Root<ProductOrderSample> productOrderSampleRoot = criteriaQuery.from(ProductOrderSample.class);
-        Predicate[] predicates = new Predicate[] {
-                criteriaBuilder.equal(productOrderSampleRoot.get(ProductOrderSample_.productOrder), productOrder),
-                criteriaBuilder.equal(productOrderSampleRoot.get(ProductOrderSample_.sampleName), sampleName)
-        };
-
-        criteriaQuery.where(predicates);
-
-        try {
-            return entityManager.createQuery(criteriaQuery).getResultList();
-        } catch (NoResultException ignored) {
-            return null;
-        }
-    }
-
-    /**
      * For a list of sample names, return corresponding ProductOrderSamples
      * @param sampleNames list of sample names
      * @return map from sample name to List of ProductOrderSample entity.  The list is empty if none were found for
