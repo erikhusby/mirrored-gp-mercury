@@ -55,7 +55,7 @@ public class SubmissionsServiceImpl implements SubmissionsService {
         for (Map<String, List<String>> parameters : splitter.split("uuid", Arrays.asList(submissionIdentifiers))) {
             ClientResponse response = JerseyUtils.getWebResource(baseUrl, MediaType.APPLICATION_JSON_TYPE, parameters)
                     .accept(MediaType.APPLICATION_JSON_TYPE).get(ClientResponse.class);
-            handleErrorResponse(response, "Error while querying submission status");
+            validateResponseStatus("Error while querying submission status", response);
             SubmissionStatusResultBean result = response.getEntity(SubmissionStatusResultBean.class);
             allResults.addAll(result.getSubmissionStatuses());
         }
@@ -109,7 +109,7 @@ public class SubmissionsServiceImpl implements SubmissionsService {
                 .getWebResource(submissionsConfig.getWSUrl(SubmissionConfig.LIST_BIOPROJECTS_ACTION),
                         MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).get(ClientResponse.class);
 
-        handleErrorResponse(response, "Error while querying submission status");
+        validateResponseStatus("Error while querying submission status", response);
 
         BioProjects bioProjects = response.getEntity(BioProjects.class);
         return bioProjects.getBioprojects();
@@ -127,7 +127,7 @@ public class SubmissionsServiceImpl implements SubmissionsService {
                         MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).entity(submissions)
                            .post(ClientResponse.class);
 
-        handleErrorResponse(response, "Error received while posting submissions");
+        validateResponseStatus("Error received while posting submissions", response);
 
         return response.getEntity(SubmissionStatusResultBean.class).getSubmissionStatuses();
     }
@@ -140,7 +140,7 @@ public class SubmissionsServiceImpl implements SubmissionsService {
                 JerseyUtils.getWebResource(submissionsConfig.getWSUrl(SubmissionConfig.SUBMISSION_SAMPLES_ACTION),
                         MediaType.APPLICATION_JSON_TYPE, parameterMap).get(ClientResponse.class);
 
-        handleErrorResponse(response, "Error received while getting bio project samples");
+        validateResponseStatus("Error received while getting bio project samples", response);
 
         return response.getEntity(SubmissionSampleResultBean.class).getSubmittedSampleIds();
     }
@@ -150,7 +150,7 @@ public class SubmissionsServiceImpl implements SubmissionsService {
         ClientResponse response =
                 JerseyUtils.getWebResource(submissionsConfig.getWSUrl(SubmissionConfig.ALL_SUBMISSION_SITES), MediaType.APPLICATION_JSON_TYPE)
                         .get(ClientResponse.class);
-        handleErrorResponse(response, "receiving Submission Repositories");
+        validateResponseStatus("receiving Submission Repositories", response);
 
         return response.getEntity(SubmissionRepositories.class).getSubmissionRepositories();
     }
@@ -160,7 +160,7 @@ public class SubmissionsServiceImpl implements SubmissionsService {
         ClientResponse response =
                        JerseyUtils.getWebResource(submissionsConfig.getWSUrl(SubmissionConfig.SUBMISSION_TYPES),
                                MediaType.APPLICATION_JSON_TYPE).get(ClientResponse.class);
-        handleErrorResponse(response, "Receiving Submission Library Descriptors");
+        validateResponseStatus("receiving Submission Library Descriptors", response);
         return response.getEntity(SubmissionLibraryDescriptors.class).getSubmissionLibraryDescriptors();
     }
 
@@ -187,7 +187,7 @@ public class SubmissionsServiceImpl implements SubmissionsService {
         return null;
     }
 
-    private void handleErrorResponse(ClientResponse response, String contextMessage) {
+    protected void validateResponseStatus(String contextMessage, ClientResponse response) {
         if(response.getStatus() != Response.Status.OK.getStatusCode()) {
             String message = contextMessage + ": " + response.getEntity(String.class);
             log.error(message);
