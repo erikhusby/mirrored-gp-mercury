@@ -47,7 +47,6 @@ public class LevelOfDetection implements Serializable {
         return String.format("%2.2f/%2.2f", min, max);
     }
 
-    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -58,13 +57,23 @@ public class LevelOfDetection implements Serializable {
             return false;
         }
 
+        if (!(o instanceof LevelOfDetection)) {
+            return false;
+        }
+
         LevelOfDetection that = OrmUtil.proxySafeCast(o, LevelOfDetection.class);
 
-        return new EqualsBuilder().append(min, that.min).append(max, that.max).isEquals();
+        return new EqualsBuilder()
+                .append(getMin(), that.getMin())
+                .append(getMax(), that.getMax())
+                .isEquals();
     }
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder(17, 37).append(min).append(max).toHashCode();
+        return new HashCodeBuilder(17, 37)
+                .append(getMin())
+                .append(getMax())
+                .toHashCode();
     }
 }

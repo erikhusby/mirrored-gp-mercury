@@ -11,6 +11,10 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.metrics.entity;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -59,25 +63,31 @@ public class AggregationAlignment implements Serializable {
         if (this == o) {
             return true;
         }
+
+        if (o == null || (!OrmUtil.proxySafeIsInstance(o, AggregationAlignment.class))) {
+            return false;
+        }
+
         if (!(o instanceof AggregationAlignment)) {
             return false;
         }
+        AggregationAlignment that = OrmUtil.proxySafeCast(o, AggregationAlignment.class);
 
-        AggregationAlignment that = (AggregationAlignment) o;
-
-        if (!aggregationId.equals(that.aggregationId)) {
-            return false;
-        }
-        return !(category != null ? !category.equals(that.category) : that.category != null) && !(
-                pfAlignedBases != null ? !pfAlignedBases.equals(that.pfAlignedBases) : that.pfAlignedBases != null);
-
+        return new EqualsBuilder()
+                .append(aggregationId, that.aggregationId)
+                .append(getCategory(), that.getCategory())
+                .append(getPfAlignedBases(), that.getPfAlignedBases())
+                .append(getAggregation(), that.getAggregation())
+                .isEquals();
     }
 
     @Override
     public int hashCode() {
-        int result = aggregationId;
-        result = 31 * result + (category != null ? category.hashCode() : 0);
-        result = 31 * result + (pfAlignedBases != null ? pfAlignedBases.hashCode() : 0);
-        return result;
+        return new HashCodeBuilder(17, 37)
+                .append(aggregationId)
+                .append(getCategory())
+                .append(getPfAlignedBases())
+                .append(getAggregation())
+                .toHashCode();
     }
 }

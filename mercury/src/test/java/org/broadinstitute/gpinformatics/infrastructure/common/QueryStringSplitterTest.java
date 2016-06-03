@@ -87,7 +87,7 @@ public class QueryStringSplitterTest {
                     put(fixedKey, fixedValues);
                 }};
         List<String> values = new ArrayList<>();
-        for (List resultValue : resultValues) {
+        for (List<String> resultValue : resultValues) {
             values.addAll(resultValue);
         }
 

@@ -11,11 +11,13 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.metrics.entity;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import java.io.Serializable;
 
@@ -53,24 +55,26 @@ public class AggregationContam implements Serializable {
         if (this == o) {
             return true;
         }
+        if (o == null || (!OrmUtil.proxySafeIsInstance(o, AggregationContam.class))) {
+            return false;
+        }
         if (!(o instanceof AggregationContam)) {
             return false;
         }
 
-        AggregationContam that = (AggregationContam) o;
+        AggregationContam that = OrmUtil.proxySafeCast(o, AggregationContam.class);
 
-        if (aggregationId != null ? !aggregationId.equals(that.aggregationId) : that.aggregationId != null) {
-            return false;
-        }
-        return !(pctContamination != null ? !pctContamination.equals(that.pctContamination) :
-                that.pctContamination != null);
-
+        return new EqualsBuilder()
+                .append(getAggregationId(), that.getAggregationId())
+                .append(getPctContamination(), that.getPctContamination())
+                .isEquals();
     }
 
     @Override
     public int hashCode() {
-        int result = aggregationId != null ? aggregationId.hashCode() : 0;
-        result = 31 * result + (pctContamination != null ? pctContamination.hashCode() : 0);
-        return result;
+        return new HashCodeBuilder(17, 37)
+                .append(getAggregationId())
+                .append(getPctContamination())
+                .toHashCode();
     }
 }

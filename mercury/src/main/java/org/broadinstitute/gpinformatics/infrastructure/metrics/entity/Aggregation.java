@@ -11,7 +11,10 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.metrics.entity;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.hibernate.annotations.BatchSize;
 
 import javax.persistence.Column;
@@ -21,7 +24,6 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
-import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.text.MessageFormat;
@@ -222,72 +224,50 @@ public class Aggregation {
         if (this == o) {
             return true;
         }
+
+        if (o == null || (!OrmUtil.proxySafeIsInstance(o, Aggregation.class))) {
+            return false;
+        }
+
         if (!(o instanceof Aggregation)) {
             return false;
         }
 
-        Aggregation that = (Aggregation) o;
+        Aggregation that = OrmUtil.proxySafeCast(o, Aggregation.class);
 
-        if (!id.equals(that.id)) {
-            return false;
-        }
-        if (!version.equals(that.version)) {
-            return false;
-        }
-        if (aggregationAlignments != null ? !aggregationAlignments.equals(that.aggregationAlignments) :
-                that.aggregationAlignments != null) {
-            return false;
-        }
-        if (aggregationContam != null ? !aggregationContam.equals(that.aggregationContam) :
-                that.aggregationContam != null) {
-            return false;
-        }
-        if (aggregationHybridSelection != null ? !aggregationHybridSelection.equals(that.aggregationHybridSelection) :
-                that.aggregationHybridSelection != null) {
-            return false;
-        }
-        if (aggregationReadGroups != null ? !aggregationReadGroups.equals(that.aggregationReadGroups) :
-                that.aggregationReadGroups != null) {
-            return false;
-        }
-        if (aggregationWgs != null ? !aggregationWgs.equals(that.aggregationWgs) : that.aggregationWgs != null) {
-            return false;
-        }
-        if (dataType != null ? !dataType.equals(that.dataType) : that.dataType != null) {
-            return false;
-        }
-        if (levelOfDetection != null ? !levelOfDetection.equals(that.levelOfDetection) :
-                that.levelOfDetection != null) {
-            return false;
-        }
-        if (library != null ? !library.equals(that.library) : that.library != null) {
-            return false;
-        }
-        if (project != null ? !project.equals(that.project) : that.project != null) {
-            return false;
-        }
-        if (readGroupCount != null ? !readGroupCount.equals(that.readGroupCount) : that.readGroupCount != null) {
-            return false;
-        }
-        return !(sample != null ? !sample.equals(that.sample) : that.sample != null);
-
+        return new EqualsBuilder()
+                .append(getId(), that.getId())
+                .append(getProject(), that.getProject())
+                .append(getSample(), that.getSample())
+                .append(getLibrary(), that.getLibrary())
+                .append(getVersion(), that.getVersion())
+                .append(getReadGroupCount(), that.getReadGroupCount())
+                .append(getDataType(), that.getDataType())
+                .append(getAggregationAlignments(), that.getAggregationAlignments())
+                .append(getAggregationContam(), that.getAggregationContam())
+                .append(getAggregationHybridSelection(), that.getAggregationHybridSelection())
+                .append(getAggregationReadGroups(), that.getAggregationReadGroups())
+                .append(getAggregationWgs(), that.getAggregationWgs())
+                .append(getLevelOfDetection(), that.getLevelOfDetection())
+                .isEquals();
     }
 
     @Override
     public int hashCode() {
-        int result = id;
-        result = 31 * result + (project != null ? project.hashCode() : 0);
-        result = 31 * result + (sample != null ? sample.hashCode() : 0);
-        result = 31 * result + (library != null ? library.hashCode() : 0);
-        result = 31 * result + version;
-        result = 31 * result + (readGroupCount != null ? readGroupCount.hashCode() : 0);
-        result = 31 * result + (dataType != null ? dataType.hashCode() : 0);
-        result = 31 * result + (aggregationAlignments != null ? aggregationAlignments.hashCode() : 0);
-        result = 31 * result + (aggregationContam != null ? aggregationContam.hashCode() : 0);
-        result = 31 * result + (aggregationHybridSelection != null ? aggregationHybridSelection.hashCode() : 0);
-        result = 31 * result + (aggregationReadGroups != null ? aggregationReadGroups.hashCode() : 0);
-        result = 31 * result + (aggregationWgs != null ? aggregationWgs.hashCode() : 0);
-        result = 31 * result + (levelOfDetection != null ? levelOfDetection.hashCode() : 0);
-        return result;
+        return new HashCodeBuilder(17, 37)
+                .append(getId())
+                .append(getProject())
+                .append(getSample())
+                .append(getLibrary())
+                .append(getVersion())
+                .append(getReadGroupCount())
+                .append(getDataType())
+                .append(getAggregationAlignments())
+                .append(getAggregationContam())
+                .append(getAggregationHybridSelection())
+                .append(getAggregationReadGroups())
+                .append(getAggregationWgs())
+                .append(getLevelOfDetection())
+                .toHashCode();
     }
 }

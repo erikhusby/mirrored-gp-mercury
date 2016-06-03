@@ -11,6 +11,9 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.metrics.entity;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -42,21 +45,28 @@ public class AggregationWgs {
         if (this == o) {
             return true;
         }
-        if (o == null || getClass() != o.getClass()) {
+
+        if (o == null || (!OrmUtil.proxySafeIsInstance(o, AggregationWgs.class))) {
             return false;
         }
 
-        AggregationWgs that = (AggregationWgs) o;
-
-        if (meanCoverage != null ? !meanCoverage.equals(that.meanCoverage) : that.meanCoverage != null) {
+        if (!(o instanceof AggregationWgs)) {
             return false;
         }
 
-        return true;
+        AggregationWgs that = OrmUtil.proxySafeCast(o, AggregationWgs.class);
+
+        return new EqualsBuilder()
+                .append(aggregationId, that.aggregationId)
+                .append(getMeanCoverage(), that.getMeanCoverage())
+                .isEquals();
     }
 
     @Override
     public int hashCode() {
-        return meanCoverage != null ? meanCoverage.hashCode() : 0;
+        return new HashCodeBuilder(17, 37)
+                .append(aggregationId)
+                .append(getMeanCoverage())
+                .toHashCode();
     }
 }
