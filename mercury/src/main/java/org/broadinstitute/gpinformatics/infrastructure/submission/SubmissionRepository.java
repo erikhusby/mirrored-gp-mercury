@@ -16,7 +16,6 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 
-import javax.persistence.Transient;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
@@ -29,7 +28,6 @@ public class SubmissionRepository implements Serializable {
 
     private String name;
     private String description;
-    @Transient
     private boolean active;
 
     public SubmissionRepository(String name, String description, Boolean active) {
