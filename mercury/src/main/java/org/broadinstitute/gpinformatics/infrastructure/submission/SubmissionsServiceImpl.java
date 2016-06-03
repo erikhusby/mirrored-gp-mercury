@@ -126,7 +126,6 @@ public class SubmissionsServiceImpl implements SubmissionsService {
                 JerseyUtils.getWebResource(submissionsConfig.getWSUrl(SubmissionConfig.SUBMIT_ACTION),
                         MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).entity(submissions)
                            .post(ClientResponse.class);
-        validateResponseStatus("posting submissions", response);
 
         handleErrorResponse(response, "Error received while posting submissions");
 
@@ -141,7 +140,6 @@ public class SubmissionsServiceImpl implements SubmissionsService {
                 JerseyUtils.getWebResource(submissionsConfig.getWSUrl(SubmissionConfig.SUBMISSION_SAMPLES_ACTION),
                         MediaType.APPLICATION_JSON_TYPE, parameterMap).get(ClientResponse.class);
 
-        validateResponseStatus("receiving submission samples list", response);
         handleErrorResponse(response, "Error received while getting bio project samples");
 
         return response.getEntity(SubmissionSampleResultBean.class).getSubmittedSampleIds();
@@ -152,7 +150,7 @@ public class SubmissionsServiceImpl implements SubmissionsService {
         ClientResponse response =
                 JerseyUtils.getWebResource(submissionsConfig.getWSUrl(SubmissionConfig.ALL_SUBMISSION_SITES), MediaType.APPLICATION_JSON_TYPE)
                         .get(ClientResponse.class);
-        validateResponseStatus("receiving Submission Repositories", response);
+        handleErrorResponse(response, "receiving Submission Repositories");
 
         return response.getEntity(SubmissionRepositories.class).getSubmissionRepositories();
     }
@@ -162,18 +160,10 @@ public class SubmissionsServiceImpl implements SubmissionsService {
         ClientResponse response =
                        JerseyUtils.getWebResource(submissionsConfig.getWSUrl(SubmissionConfig.SUBMISSION_TYPES),
                                MediaType.APPLICATION_JSON_TYPE).get(ClientResponse.class);
-        validateResponseStatus("receiving Submission Library Descriptors", response);
+        handleErrorResponse(response, "Receiving Submission Library Descriptors");
         return response.getEntity(SubmissionLibraryDescriptors.class).getSubmissionLibraryDescriptors();
     }
 
-    protected void validateResponseStatus(String activityName, ClientResponse response) {
-        if (response.getStatus() != Response.Status.OK.getStatusCode()) {
-            String error = response.getEntity(String.class);
-            String errorMessage = String.format("Error received while %s: %s", activityName, error);
-            log.error(errorMessage);
-            throw new InformaticsServiceException(errorMessage);
-        }
-    }
 
     @Override
     public SubmissionRepository findRepositoryByKey(String key) {
