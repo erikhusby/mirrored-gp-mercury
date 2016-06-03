@@ -25,18 +25,15 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Expression;
 import javax.persistence.criteria.Join;
-import javax.persistence.criteria.JoinType;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Data access object for fetching Picard aggregation metrics.
@@ -81,14 +78,6 @@ public class AggregationMetricsFetcher {
                     predicate.add(criteriaBuilder.equal(root.get(Aggregation_.sample), sample));
                 }
                 predicate.add(criteriaBuilder.equal(root.get(Aggregation_.version), version));
-
-            /*
-             * Look for the row where LIBRARY is NULL because otherwise there would be multiple results. Kathleen Tibbetts
-             * said that this is the way to narrow it down to one.
-             */
-
-                //            predicate.add(criteriaBuilder.isNull(root.get("library")));
-
                 predicateOfOrs.add(criteriaBuilder.and(predicate.toArray(new Predicate[predicate.size()])));
             }
 
@@ -119,12 +108,12 @@ public class AggregationMetricsFetcher {
         CriteriaQuery<Tuple> tupleQuery = queryBuilder.createTupleQuery();
         Root<PicardFingerprint> root = tupleQuery.from(PicardFingerprint.class);
         Join<PicardFingerprint, PicardAnalysis> fingerPrintAnalysisJoin = root.join(PicardFingerprint_.picardAnalysis);
-        Join<PicardAnalysis, AggregationReadGroup> readGroupPicardAnalysisJoin = fingerPrintAnalysisJoin.join(PicardAnalysis_.aggregationReadGroups);
-        Join<AggregationReadGroup, Aggregation> aggregationAggregationReadGroupsJoin = readGroupPicardAnalysisJoin.join(AggregationReadGroup_.aggregation,
-                JoinType.INNER);
+        Join<PicardAnalysis, AggregationReadGroup> readGroupPicardAnalysisJoin =
+                fingerPrintAnalysisJoin.join(PicardAnalysis_.aggregationReadGroups);
+        Join<AggregationReadGroup, Aggregation> aggregationAggregationReadGroupsJoin =
+                readGroupPicardAnalysisJoin.join(AggregationReadGroup_.aggregation);
 
         List<Predicate> predicates = new ArrayList<>();
-        Set<Integer> aggregationIdList = new HashSet<>();
         for (Aggregation aggregation : aggregations) {
             predicates.add(queryBuilder
                     .equal(aggregationAggregationReadGroupsJoin.get(Aggregation_.id), aggregation.getId()));
