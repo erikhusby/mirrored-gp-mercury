@@ -186,19 +186,6 @@ public class SubmissionsServiceImpl implements SubmissionsService {
     }
 
     @Override
-    public SubmissionRepository repositorySearch(String searchString) {
-            if (StringUtils.isNotBlank(searchString)) {
-                for (SubmissionRepository submissionRepository : getSubmissionRepositories()) {
-                if (submissionRepository.getDescription().toLowerCase().contains(searchString.toLowerCase()) ||
-                    submissionRepository.getName().toLowerCase().contains(searchString.toLowerCase())) {
-                    return submissionRepository;
-                }
-            }
-        }
-        return null;
-    }
-
-    @Override
     public SubmissionLibraryDescriptor findLibraryDescriptorTypeByKey(String selectedSubmissionDescriptor) {
         if (StringUtils.isNotBlank(selectedSubmissionDescriptor)) {
             for (SubmissionLibraryDescriptor submissionLibraryDescriptor : getSubmissionLibraryDescriptors()) {

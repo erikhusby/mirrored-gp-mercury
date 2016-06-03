@@ -66,11 +66,6 @@ public class BioProjectServiceDownTest {
         }
 
         @Override
-        public SubmissionRepository repositorySearch(String siteName) {
-            return null;
-        }
-
-        @Override
         public SubmissionLibraryDescriptor findLibraryDescriptorTypeByKey(String selectedSubmissionDescriptor) {
             return null;
         }

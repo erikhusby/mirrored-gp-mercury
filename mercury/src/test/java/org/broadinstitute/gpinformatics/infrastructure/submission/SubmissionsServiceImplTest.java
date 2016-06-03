@@ -43,9 +43,9 @@ public class SubmissionsServiceImplTest {
 
     private static int sequenceNumber = 1;
 
-    public static final String BIO_PROJECT_ACCESSION_ID = "PRJNA75723";
-    public static final String SAMPLE1_ID = "4304714212_K";
-    public static final String SAMPLE2_ID = "4377315018_E";
+    private static final String BIO_PROJECT_ACCESSION_ID = "PRJNA75723";
+    private static final String SAMPLE1_ID = "4304714212_K";
+    private static final String SAMPLE2_ID = "4377315018_E";
 
     private SubmissionsService submissionsService;
 
@@ -200,31 +200,6 @@ public class SubmissionsServiceImplTest {
                 submissionsService.findRepositoryByKey("I'm making this up.");
         assertThat(repositoryByKey, nullValue());
 
-    }
-
-    public void testRepositorySearchPartialMatch() throws Exception {
-        String repositoryName = SubmissionRepository.DEFAULT_REPOSITORY_NAME;
-        String searchString = repositoryName.substring(repositoryName.length() - 3, repositoryName.length());
-        assertThat(searchString, not(equalTo(repositoryName)));
-
-        SubmissionRepository submissionRepository = submissionsService.repositorySearch(searchString);
-        assertThat(submissionRepository.getName(), equalTo(repositoryName));
-    }
-
-    public void testRepositorySearchPartialWrongCase() throws Exception {
-        SubmissionRepository submissionRepository =
-                submissionsService.repositorySearch(SubmissionRepository.DEFAULT_REPOSITORY_NAME.toLowerCase());
-        assertThat(submissionRepository.getName(), equalTo(SubmissionRepository.DEFAULT_REPOSITORY_NAME));
-    }
-
-    public void testRepositorySearchNoResultReturnsNull() throws Exception {
-        SubmissionRepository submissionRepository = submissionsService.repositorySearch("nunsuch");
-        assertThat(submissionRepository, nullValue());
-    }
-
-    public void testRepositorySearchNullSearchReturnsNull() throws Exception {
-        SubmissionRepository submissionRepository = submissionsService.repositorySearch(null);
-        assertThat(submissionRepository, nullValue());
     }
 
     public void testFindLibraryDescriptorTypeByKey() throws Exception {
