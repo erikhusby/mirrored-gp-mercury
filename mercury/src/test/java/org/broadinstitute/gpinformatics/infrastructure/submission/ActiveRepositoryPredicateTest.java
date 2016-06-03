@@ -23,7 +23,7 @@ import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
 
 @Test(groups = TestGroups.DATABASE_FREE)
-public class SubmissionRepositoryTest {
+public class ActiveRepositoryPredicateTest {
 
     public void testActiveRepositories(){
         SubmissionsService submissionsService = new SubmissionsServiceStub();
