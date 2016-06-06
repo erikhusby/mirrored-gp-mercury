@@ -165,6 +165,7 @@ public class SessionCache<T> {
                                 }
                             }
                             if (newValue.size() == maxCacheSize && !newValue.isEmpty()) {
+                                log.info(String.format("Removing %s from cache %s", newValue.peek().getKey(), namespace));
                                 newValue.remove();
                             }
                             if (!newValue.offer(cacheItem)) {
@@ -179,7 +180,7 @@ public class SessionCache<T> {
                     }
                 };
                 executeTask(task);
-                log.info(String.format("%s Data added to %s cache. Cache size now: %d", key, this.namespace, size()));
+                log.debug(String.format("%s Data added to %s cache. Cache size now: %d", key, this.namespace, size()));
             }
         } catch (IOException e) {
             throw new SessionCacheException(String.format("Could not serialize sampleData in %s", this.namespace), e);
