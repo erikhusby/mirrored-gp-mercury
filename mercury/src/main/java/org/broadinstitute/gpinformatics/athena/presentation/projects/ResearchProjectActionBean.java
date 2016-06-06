@@ -52,7 +52,6 @@ import org.broadinstitute.gpinformatics.infrastructure.collaborate.Collaboration
 import org.broadinstitute.gpinformatics.infrastructure.collaborate.CollaborationPortalException;
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionData;
-import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDataBean;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDto;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDtoFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionLibraryDescriptor;
@@ -64,7 +63,10 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.AlignerDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.ReferenceSequenceDao;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.cache.SessionCache;
+import org.broadinstitute.gpinformatics.mercury.presentation.cache.SessionCacheException;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.type.TypeReference;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -222,6 +224,8 @@ public class ResearchProjectActionBean extends CoreActionBean {
     @Inject
     private AlignerDao alignerDao;
 
+    private SessionCache<List<SubmissionData>> sessionCache;
+
     public Map<String, String> getBioSamples() {
         return bioSamples;
     }
@@ -308,6 +312,12 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public void init() throws Exception {
         researchProject = getContext().getRequest().getParameter(RESEARCH_PROJECT_PARAMETER);
         if (!StringUtils.isBlank(researchProject)) {
+            TypeReference<List<SubmissionData>> submissionSamplesTypeReference =
+                    new TypeReference<List<SubmissionData>>() { };
+
+            sessionCache = new SessionCache<>(getContext().getRequest().getSession(),
+                    VIEW_SUBMISSIONS_ACTION, submissionSamplesTypeReference);
+
             editResearchProject = researchProjectDao.findByBusinessKey(researchProject);
             try {
                 collaborationData = collaborationService.getCollaboration(researchProject);
@@ -894,82 +904,27 @@ public class ResearchProjectActionBean extends CoreActionBean {
     @SuppressWarnings("unchecked")
     private void updateSubmissionSamples() {
         if (editResearchProject != null) {
-            submissionSamples = getSamplesFromCache(researchProject);
-            if (submissionSamples.isEmpty()) {
-                for (SubmissionDto submissionDto : submissionDtoFetcher.fetch(editResearchProject)) {
-                    SubmissionData submissionData = submissionDto.submissionData();
-                    submissionSamples.add(submissionData);
-                }
-            } else {
-
-                // When getting cached submissions always update the submissionStatus.
-                submissionDtoFetcher.refreshSubmissionStatuses(submissionSamples);
-                log.info("submissionSamples retrieved from cache.");
-            }
-            addSamplesToCache(researchProject, submissionSamples);
-        }
-    }
-
-    /**
-     * Clear existing sampleData from the session and add new sampleData keyed on businessKey.
-     *
-     * @param businessKey The research project businessKey
-     * @param sampleData  A list of SampleData to add to the cache.
-     */
-    private void addSamplesToCache(String businessKey, List<SubmissionData> sampleData) {
-
-        // First remove all items from the cache, this will prevent the cache accumulating data from other RP's.
-        getContext().getSession().removeAttribute(SESSION_SAMPLES_KEY);
-        String jsonBean;
-        ObjectMapper objectMapper = new ObjectMapper();
-        try {
-            jsonBean = objectMapper.writeValueAsString(new SubmissionDataBean(sampleData));
-            if (jsonBean == null) {
-                log.error("Could not serialize sampleData");
-            } else {
-                Map<String, String> submissionMap = new HashMap<>();
-                submissionMap.put(businessKey, jsonBean);
-                getContext().getSession().setAttribute(SESSION_SAMPLES_KEY, submissionMap);
-            }
-        } catch (IOException e) {
-            log.error("Could not serialize sample data", e);
-        }
-        log.info(String.format("%d submissionSamples saved in session attribute %s.", sampleData.size(),
-                SESSION_SAMPLES_KEY));
-
-    }
-
-    /**
-     * Retrieve samples from the session
-     *
-     * @param businessKey The research project businessKey
-     *
-     * @return List of SubmissionData for this RP.
-     */
-    @SuppressWarnings("unchecked")
-    private List<SubmissionData> getSamplesFromCache(String businessKey) {
-        // Samples are stored as a Map<String, List<>> with the key being the businessKey.
-        // This ensures the samples returned are for this RP
-        Map<String, String> submissionSamplesMap =
-                (Map<String, String>) getContext().getSession().getAttribute(SESSION_SAMPLES_KEY);
-        if (submissionSamplesMap != null) {
-            String json = submissionSamplesMap.get(businessKey);
-            if (json != null) {
-                try {
-                    ObjectMapper objectMapper = new ObjectMapper();
-                    SubmissionDataBean submissionDataBean = objectMapper.readValue(json, SubmissionDataBean.class);
-                    if (submissionDataBean.getSubmissionData() != null) {
-                        List<SubmissionData> submissionData = submissionDataBean.getSubmissionData();
-                        log.info(String.format("%d submissionSamples retrieved from cache.", submissionData.size()));
-                        return submissionData;
+            try {
+                submissionSamples = sessionCache.get(researchProject);
+                if (submissionSamples == null) {
+                    submissionSamples = new ArrayList<>();
+                    for (SubmissionDto submissionDto : submissionDtoFetcher.fetch(editResearchProject)) {
+                        SubmissionData submissionData = submissionDto.submissionData();
+                        submissionSamples.add(submissionData);
                     }
-                } catch (IOException e) {
-                    log.error("Could not deserialize sample data", e);
                 }
+                if (!submissionSamples.isEmpty()) {
+
+                    // When getting cached submissions always update the submissionStatus.
+                    submissionDtoFetcher.refreshSubmissionStatuses(submissionSamples);
+                    sessionCache.put(researchProject, submissionSamples);
+                }
+            } catch (SessionCacheException e) {
+                log.error("Error retrieving samples from cache", e);
             }
         }
-        return new ArrayList<>();
     }
+
 
     /**
      * Edits a regulatory info record, specifically the title (alias, name). The ID of the regulatory info comes from
@@ -1036,7 +991,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
                 for (SubmissionDto selectedSubmission : selectedSubmissions) {
                     newSubmissionDtoMap.put(selectedSubmission.getBassDTO().getTuple(), selectedSubmission);
                 }
-                submissionSamples = getSamplesFromCache(researchProject);
+                submissionSamples = sessionCache.get(researchProject);
                 for (SubmissionData submissionSample : submissionSamples) {
                     SubmissionTuple tuple = new SubmissionTuple(submissionSample.getSampleName(),
                             BassFileType.byBassValue(submissionSample.getFileTypeString()),
@@ -1046,11 +1001,13 @@ public class ResearchProjectActionBean extends CoreActionBean {
                         submissionSample.updateStatusDetail(submissionDto.getStatusDetailBean());
                     }
                 }
-                addSamplesToCache(researchProject, submissionSamples);
+                sessionCache.put(researchProject, submissionSamples);
                 addMessage("The selected samples for submission have been successfully posted to NCBI.  See the " +
                            "Submission Requests tab for further details");
             } catch (InformaticsServiceException | ValidationException e) {
                 addGlobalValidationError(e.getMessage());
+            } catch (SessionCacheException e) {
+                log.error("Error accessing cache", e);
             }
         }
         return new RedirectResolution(ResearchProjectActionBean.class, VIEW_ACTION)
