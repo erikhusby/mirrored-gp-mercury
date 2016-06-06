@@ -88,16 +88,12 @@ public class QueryStringSplitter implements Iterator<List<String>>, Iterable<Lis
         HashMap<String, List<String>> parameters = makeBaseParameterMap();
         int baseParameterSize = getParamSize(parameters);
 
-        // We need to account for the initial '?' character, It is optionally set when we test baseParameterSize.
-        int qSize = 0;
-
         // add in the number of '&'s
         if (baseParameterSize>0){
-            baseParameterSize+=parameters.size();
-            qSize=1;
+            baseParameterSize+=parameters.size()*"&".length();
         }
 
-        int currentLength = baseUrlLength + qSize + baseParameterSize;
+        int currentLength = baseUrlLength + baseParameterSize;
         for (String value : values) {
             // +1 because '?' or '&' should be counted.
             int valueLength = getParamSize(name, value)+"?".length();

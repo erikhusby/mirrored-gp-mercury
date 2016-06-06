@@ -11,9 +11,6 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.metrics.entity;
 
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.hibernate.annotations.BatchSize;
 
 import javax.persistence.Column;
@@ -52,44 +49,6 @@ public class PicardAnalysis implements Serializable {
     @OneToMany(mappedBy = "picardAnalysis")
     @BatchSize(size = 100)
     private Collection<PicardFingerprint> picardFingerprints;
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-
-        if (o == null || (!OrmUtil.proxySafeIsInstance(o, PicardAnalysis.class))) {
-            return false;
-        }
-
-        if (!(o instanceof PicardAnalysis)) {
-            return false;
-        }
-
-        PicardAnalysis that = OrmUtil.proxySafeCast(o, PicardAnalysis.class);
-
-        return new EqualsBuilder()
-                .append(id, that.id)
-                .append(flowcellBarcode, that.flowcellBarcode)
-                .append(lane, that.lane)
-                .append(libraryName, that.libraryName)
-                .append(picardFingerprints, that.picardFingerprints)
-                .append(aggregationReadGroups, that.aggregationReadGroups)
-                .isEquals();
-    }
-
-    @Override
-    public int hashCode() {
-        return new HashCodeBuilder(17, 37)
-                .append(id)
-                .append(flowcellBarcode)
-                .append(lane)
-                .append(libraryName)
-                .append(picardFingerprints)
-                .append(aggregationReadGroups)
-                .toHashCode();
-    }
 
     @ManyToOne(optional = false)
     @BatchSize(size = 100)

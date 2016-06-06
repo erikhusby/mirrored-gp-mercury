@@ -11,10 +11,6 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.metrics.entity;
 
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
-
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -39,35 +35,5 @@ public class AggregationWgs {
 
     public Double getMeanCoverage() {
         return meanCoverage;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-
-        if (o == null || (!OrmUtil.proxySafeIsInstance(o, AggregationWgs.class))) {
-            return false;
-        }
-
-        if (!(o instanceof AggregationWgs)) {
-            return false;
-        }
-
-        AggregationWgs that = OrmUtil.proxySafeCast(o, AggregationWgs.class);
-
-        return new EqualsBuilder()
-                .append(aggregationId, that.aggregationId)
-                .append(getMeanCoverage(), that.getMeanCoverage())
-                .isEquals();
-    }
-
-    @Override
-    public int hashCode() {
-        return new HashCodeBuilder(17, 37)
-                .append(aggregationId)
-                .append(getMeanCoverage())
-                .toHashCode();
     }
 }

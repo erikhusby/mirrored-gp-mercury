@@ -11,10 +11,6 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.metrics.entity;
 
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
-
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -56,38 +52,5 @@ public class AggregationAlignment implements Serializable {
 
     public Aggregation getAggregation() {
         return aggregation;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-
-        if (o == null || (!OrmUtil.proxySafeIsInstance(o, AggregationAlignment.class))) {
-            return false;
-        }
-
-        if (!(o instanceof AggregationAlignment)) {
-            return false;
-        }
-        AggregationAlignment that = OrmUtil.proxySafeCast(o, AggregationAlignment.class);
-
-        return new EqualsBuilder()
-                .append(aggregationId, that.aggregationId)
-                .append(getCategory(), that.getCategory())
-                .append(getPfAlignedBases(), that.getPfAlignedBases())
-                .append(getAggregation(), that.getAggregation())
-                .isEquals();
-    }
-
-    @Override
-    public int hashCode() {
-        return new HashCodeBuilder(17, 37)
-                .append(aggregationId)
-                .append(getCategory())
-                .append(getPfAlignedBases())
-                .append(getAggregation())
-                .toHashCode();
     }
 }

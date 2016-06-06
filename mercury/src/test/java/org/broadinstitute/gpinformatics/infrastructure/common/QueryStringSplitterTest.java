@@ -59,9 +59,8 @@ public class QueryStringSplitterTest {
     public Iterator<Object[]> querySplitterLimits() {
         List<Object[]> testCases = new ArrayList<>();
         // baseUrl:         "https://bass.broadinstitute.org:443/list".length(); // 40
-        // fixedValues:     "https://bass.broadinstitute.org:443/list?&fixedName=fixedValue&".length(); // 63
+        // fixedValues:     "https://bass.broadinstitute.org:443/list?&fixedName=fixedValue".length(); // 62
         // One K,V pair &:  "https://bass.broadinstitute.org:443/list?&fixedName=fixedValue&q=x".length(); // 66
-        // One K,V pair:    "https://bass.broadinstitute.org:443/list?&fixedName=fixedValue&q=x&".length(); // 67
 
         String key = "q";
         int baseUrlLength = "https://bass.broadinstitute.org:443/list".length();
