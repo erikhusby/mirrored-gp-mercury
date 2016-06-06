@@ -1711,7 +1711,7 @@ public class LabEventTest extends BaseEventTest {
         LabBatch workflowBatch = new LabBatch("10X Batch",
                 new HashSet<LabVessel>(mapBarcodeToTube.values()),
                 LabBatch.LabBatchType.WORKFLOW);
-        workflowBatch.setWorkflow(Workflow.NONE);
+        workflowBatch.setWorkflow(Workflow.TEN_X);
         bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, "1");
 
         TubeFormation daughterTubeFormation = daughterPlateTransfer(mapBarcodeToTube, workflowBatch);
@@ -1720,8 +1720,12 @@ public class LabEventTest extends BaseEventTest {
         for (BarcodedTube barcodedTube : daughterTubeFormation.getContainerRole().getContainedVessels()) {
             mapBarcodeToDaughterTube.put(barcodedTube.getLabel(), barcodedTube);
         }
+        PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube,
+                String.valueOf(
+                        LabEventTest.NUM_POSITIONS_IN_RACK),
+                "1", true);
 
-        runTenXProcess(mapBarcodeToDaughterTube, "10X");
+        runTenXProcess(picoPlatingEntityBuilder.getNormBarcodeToTubeMap(), "10X");
     }
 
     /**

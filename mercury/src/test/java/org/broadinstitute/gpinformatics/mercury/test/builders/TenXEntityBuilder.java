@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
+import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import org.testng.Assert;
 
 import java.util.ArrayList;
@@ -45,6 +46,7 @@ public class TenXEntityBuilder {
         // Make Plate
         Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
         mapBarcodeToVessel.putAll(mapBarcodeToTube);
+        LabEventTest.validateWorkflow("10XMakePlate", mapBarcodeToTube.values());
         PlateTransferEventType makePlateJaxb = tenXJaxbBuilder.getTenXMakePlateJaxb();
         LabEvent makePlateEvent = labEventFactory.buildFromBettaLims(
                 makePlateJaxb, mapBarcodeToVessel);
@@ -52,12 +54,14 @@ public class TenXEntityBuilder {
         makePlate = (StaticPlate) makePlateEvent.getTargetLabVessels().iterator().next();
 
         // Chip Loading
+        LabEventTest.validateWorkflow("10XChipLoading", makePlate);
         mapBarcodeToVessel.clear();
         mapBarcodeToVessel.put(makePlate.getLabel(), makePlate);
         for (PlateTransferEventType chipLoadingJaxb : tenXJaxbBuilder.getChipLoadingJaxb()) {
             LabEvent chipLoadingEvent = labEventFactory.buildFromBettaLims(chipLoadingJaxb, mapBarcodeToVessel);
             labEventHandler.processEvent(chipLoadingEvent);
             StaticPlate chip = (StaticPlate) chipLoadingEvent.getTargetLabVessels().iterator().next();
+            LabEventTest.validateWorkflow("10XChipUnloading", chip);
             chips.add(chip);
         }
 
@@ -80,6 +84,7 @@ public class TenXEntityBuilder {
         }
 
         // Emulsion Breaking
+        LabEventTest.validateWorkflow("10XEmulsionBreaking", unloadingPlate);
         mapBarcodeToVessel.clear();
         mapBarcodeToVessel.put(unloadingPlate.getLabel(), unloadingPlate);
         LabEvent emulsionBreakingEvent = labEventFactory.buildFromBettaLimsPlateEventDbFree(
@@ -87,6 +92,7 @@ public class TenXEntityBuilder {
         labEventHandler.processEvent(emulsionBreakingEvent);
 
         // Dynabead Cleanup
+        LabEventTest.validateWorkflow("10XDynabeadCleanup", unloadingPlate);
         LabEvent dynabeadCleanupEvent = labEventFactory.buildFromBettaLims(tenXJaxbBuilder.getDynabeadCleanupJaxb(),
                 mapBarcodeToVessel);
         labEventHandler.processEvent(dynabeadCleanupEvent);
@@ -94,6 +100,7 @@ public class TenXEntityBuilder {
         StaticPlate cleanupPlate = (StaticPlate) dynabeadCleanupEvent.getTargetLabVessels().iterator().next();
 
         // Pre LC Spri
+        LabEventTest.validateWorkflow("10XPreLCSpri", cleanupPlate);
         mapBarcodeToVessel.clear();
         mapBarcodeToVessel.put(cleanupPlate.getLabel(), cleanupPlate);
         LabEvent preLcSpriEvent = labEventFactory.buildFromBettaLims(tenXJaxbBuilder.getPreLCSpriJaxb(),
