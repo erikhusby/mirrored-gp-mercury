@@ -42,13 +42,6 @@ public class SubmissionTupleTest {
         assertThat(tuple2, equalTo(tuple1));
     }
 
-    public void testNullEquals() {
-        SubmissionTuple tuple1 = null;
-        SubmissionTuple tuple2 = null;
-        assertThat(tuple1, equalTo(tuple2));
-        assertThat(tuple2, equalTo(tuple1));
-    }
-
     public void testFileNotEquals() {
         SubmissionTuple tuple1 = new SubmissionTuple("a", BassFileType.BAM, "c");
         SubmissionTuple tuple2 = new SubmissionTuple("a", BassFileType.PICARD, "c");
