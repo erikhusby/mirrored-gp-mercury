@@ -275,4 +275,19 @@
             <column name="FILE_TYPE" type="varchar2(255)"/>
         </addColumn>
     </changeSet>
+
+    <changeSet id="GPLIM-4060-POST_RELEASE-1" author="dryan">
+        <preConditions onFail="MARK_RAN">
+            <columnExists columnName="FILE_NAME" tableName="SUBMISSION_TRACKER" schemaName="ATHENA"/>
+        </preConditions>
+        <dropColumn columnName="FILE_NAME" tableName="SUBMISSION_TRACKER" schemaName="ATHENA"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-4060-POST_RELEASE-2" author="dryan">
+        <addNotNullConstraint tableName="SUBMISSION_TRACKER" columnName="FILE_TYPE" defaultNullValue="BAM" />
+    </changeSet>
+    <changeSet id="GPLIM-4060-POST_RELEASE-3" author="dryan">
+        <addUniqueConstraint tableName="SUBMISSION_TRACKER" constraintName="UNQ_SUBMISSION_TRACKER_TUPLE"
+                             schemaName="ATHENA" columnNames="RESEARCH_PROJECT_ID,SUBMITTED_SAMPLE_NAME, FILE_TYPE, VERSION" />
+    </changeSet>
 </databaseChangeLog>

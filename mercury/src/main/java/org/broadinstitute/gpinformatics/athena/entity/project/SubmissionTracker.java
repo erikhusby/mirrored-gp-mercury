@@ -47,13 +47,6 @@ public class SubmissionTracker {
     @Column(name = "SUBMITTED_SAMPLE_NAME")
     private String submittedSampleName;
 
-    /**
-     * File name and path for the data file being submitted
-     * TODO: Remove this field!
-     */
-    @Column(name = "FILE_NAME")
-    private String fileName;
-
     @Enumerated(EnumType.STRING)
     private BassFileType fileType;
     /**
@@ -119,15 +112,6 @@ public class SubmissionTracker {
 
     public String getSubmittedSampleName() {
         return submittedSampleName;
-    }
-
-    public String getFileName() {
-        return fileName;
-    }
-
-    @Deprecated
-    public void setFileName(String fileName) {
-        this.fileName = fileName;
     }
 
     public String getVersion() {

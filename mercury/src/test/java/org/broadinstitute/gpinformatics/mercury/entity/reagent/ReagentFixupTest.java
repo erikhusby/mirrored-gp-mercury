@@ -45,7 +45,6 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -876,7 +875,8 @@ public class ReagentFixupTest extends Arquillian {
                 "2015-11-12T12:52:23", "Ice2ndBaitPick", "03-17-2018", "15F24A0005",
         }, "Rapid Capture Kit Box 4 (Bait)");
 
-        genericReagentDao.persist(new FixupCommentary("GPLIM-3791 add missing bait reagents using the Bravo log records."));
+        genericReagentDao.persist(
+                new FixupCommentary("GPLIM-3791 add missing bait reagents using the Bravo log records."));
         genericReagentDao.flush();
         utx.commit();
     }
@@ -1095,6 +1095,70 @@ public class ReagentFixupTest extends Arquillian {
 
         genericReagentDao.persist(new FixupCommentary("GPLIM-4063 fixup create emerge bait reagent and specify columns"));
         genericReagentDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void gplim4120fixDate() throws Exception {
+        userBean.loginOSUser();
+        // Replaces wrong expiration for P5 Indexed Adapter Plate reagent.
+        // Reagent was newly created for the event and not used elsewhere so the
+        // code just needs to fix the Reagent entity.
+        Reagent reagent = genericReagentDao.findById(Reagent.class, 1195956L);
+        Assert.assertNotNull(reagent);
+        String lot = "000001805823";
+        Assert.assertEquals(lot, reagent.getLot());
+        Date expiration = new GregorianCalendar(2016, Calendar.MAY, 21).getTime();
+        System.out.println("Changing expiration date on reagent id " + reagent.getReagentId() + " to " + expiration);
+        reagent.setExpiration(expiration);
+        genericReagentDao.persist(new FixupCommentary("GPLIM-4120 fixup incorrect P5 adapter expiration"));
+        genericReagentDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim4130() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+        // Replaces reagent with one with the correct expiration. Preserves the original being used on other lab events.
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, 1308892L);
+        Reagent reagent = genericReagentDao.findById(Reagent.class, 1086959L);
+
+        // Finds and removes the labEventReagent
+        LabEventReagent foundLabEventReagent = null;
+        for (LabEventReagent labEventReagent : labEvent.getLabEventReagents()) {
+            if (labEventReagent.getReagent().equals(reagent)) {
+                foundLabEventReagent = labEventReagent;
+            }
+        }
+        Assert.assertNotNull(foundLabEventReagent);
+        labEvent.getLabEventReagents().remove(foundLabEventReagent);
+        genericReagentDao.remove(foundLabEventReagent);
+
+        Reagent newReagent = new GenericReagent(reagent.getName(), reagent.getLot(),
+                new GregorianCalendar(2018, Calendar.MAY, 13).getTime());
+
+        System.out.println("Replacing " + reagent.getName() + " on event " + labEvent.getLabEventId() +
+                           " with one expiring " + newReagent.getExpiration().toString());
+        labEvent.addReagent(newReagent);
+
+        genericReagentDao.persist(new FixupCommentary("GPLIM-4130 change reagent due to wrong expiration date."));
+        genericReagentDao.flush();
+        utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim4130a() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+        // Updates date from 5/13/18 to 4/13/18.
+        Reagent reagent = genericReagentDao.findById(Reagent.class, 1199001L);
+        Assert.assertNotNull(reagent);
+        reagent.setExpiration(new GregorianCalendar(2018, Calendar.APRIL, 13).getTime());
+        System.out.println("Updating reagent " + reagent.getReagentId() +
+                           " expiration to " + reagent.getExpiration().toString());
+
+        genericReagentDao.persist(new FixupCommentary("GPLIM-4130 fix expiration date."));
+        genericReagentDao.flush();
+        utx.commit();
     }
 
 }

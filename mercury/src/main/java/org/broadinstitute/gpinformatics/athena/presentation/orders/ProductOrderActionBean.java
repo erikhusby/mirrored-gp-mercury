@@ -642,23 +642,19 @@ public class ProductOrderActionBean extends CoreActionBean {
     private void validateQuoteDetails(String quoteId, final ErrorLevel errorLevel) {
         Quote quote = validateQuoteId(quoteId);
 
-        validateQuoteDetails(quote, errorLevel);
+        if (quote != null) {
+            validateQuoteDetails(quote, errorLevel);
+        }
     }
 
     private void validateQuoteDetails(Quote quote, ErrorLevel errorLevel) {
         if (!quote.getApprovalStatus().equals(ApprovalStatus.FUNDED)) {
-            String unFundedMessage = "A quote must be funded in order to be used for a product order.";
+            String unFundedMessage = "A quote should be funded in order to be used for a product order.";
             addMessageBasedOnErrorLevel(errorLevel, unFundedMessage);
         }
 
-        if (quote.getQuoteFunding().getFundingLevel().size() > 1) {
-            String multiFundingLevelMessage =
-                    "Quotes with split funding are inelligible to be used for funding a product order.";
-
-            addMessageBasedOnErrorLevel(errorLevel, multiFundingLevelMessage);
-        }
         double fundsRemaining = Double.parseDouble(quote.getQuoteFunding().getFundsRemaining());
-        double outstandingEstimate = estimateOutstandingOrders(quote.getName());
+        double outstandingEstimate = estimateOutstandingOrders(quote.getAlphanumericId());
         double valueOfCurrentOrder = 0;
         if(!editOrder.hasJiraTicketKey()) {
             valueOfCurrentOrder = getValueOfOpenOrders(Collections.singletonList(editOrder));
