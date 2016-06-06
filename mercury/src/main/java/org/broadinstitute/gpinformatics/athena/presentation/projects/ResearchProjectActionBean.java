@@ -225,6 +225,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
     private AlignerDao alignerDao;
 
     private SessionCache<List<SubmissionData>> sessionCache;
+    public static final TypeReference<List<SubmissionData>> SUBMISSION_SAMPLES_TYPE_REFERENCE =
+            new TypeReference<List<SubmissionData>>() {
+            };
 
     public Map<String, String> getBioSamples() {
         return bioSamples;
@@ -298,6 +301,11 @@ public class ResearchProjectActionBean extends CoreActionBean {
         Collections.sort(allResearchProjects, ResearchProject.BY_DATE);
     }
 
+    @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_SUBMISSIONS_ACTION, POST_SUBMISSIONS_ACTION})
+    public void initSessionCache(){
+        sessionCache = new SessionCache<>(getContext().getRequest().getSession(),
+                VIEW_SUBMISSIONS_ACTION, SUBMISSION_SAMPLES_TYPE_REFERENCE);
+    }
     /**
      * Initialize the project with the passed in key for display in the form.  Need to handle in @Before so we can
      * get the OriginalTitle on the project for validation. Create is needed so that token inputs don't have to check
@@ -312,11 +320,6 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public void init() throws Exception {
         researchProject = getContext().getRequest().getParameter(RESEARCH_PROJECT_PARAMETER);
         if (!StringUtils.isBlank(researchProject)) {
-            TypeReference<List<SubmissionData>> submissionSamplesTypeReference =
-                    new TypeReference<List<SubmissionData>>() { };
-
-            sessionCache = new SessionCache<>(getContext().getRequest().getSession(),
-                    VIEW_SUBMISSIONS_ACTION, submissionSamplesTypeReference);
 
             editResearchProject = researchProjectDao.findByBusinessKey(researchProject);
             try {

@@ -15,17 +15,11 @@ import net.sourceforge.stripes.mock.MockHttpSession;
 import net.sourceforge.stripes.mock.MockServletContext;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.codehaus.jackson.type.TypeReference;
-import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import javax.servlet.http.HttpSession;
 import java.io.Serializable;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -53,17 +47,8 @@ public class SessionCacheTest {
         cacheId = new AtomicInteger(1);
     }
 
-    @BeforeTest(alwaysRun= true)
-    public void setUp() throws Exception {
+    private SessionCache<TestData> buildSessionCache(final int maxCacheSize) throws Exception {
         session = new MockHttpSession(new MockServletContext("ctx"));
-    }
-
-    @AfterTest(alwaysRun = true)
-    public void tearDown() throws Exception {
-        session = null;
-    }
-
-    public SessionCache<TestData> buildSessionCache(final int maxCacheSize) throws Exception {
         return new SessionCache<>(session, NAMESPACE, maxCacheSize, TEST_DATA_TYPE_REFERENCE);
     }
 
@@ -84,9 +69,19 @@ public class SessionCacheTest {
         TestData differentData = new TestData("Some other testReplaceItemInCache");
         String cacheKey = getCacheKey();
         sessionCache.put(cacheKey, data);
-        sessionCache.replace(cacheKey, differentData);
+        sessionCache.put(cacheKey, differentData);
         TestData cachedData = sessionCache.get(cacheKey);
         assertThat(cachedData, equalTo(differentData));
+    }
+
+    @Test(threadPoolSize = THREADPOOL_SIZE, invocationCount = INVOCATION_COUNT)
+    public void testAddSameDataToCache() throws Exception {
+        SessionCache<TestData> sessionCache = buildSessionCache(THREADPOOL_SIZE);
+        TestData data = new TestData("testAddSameDataToCache");
+        String cacheKey = getCacheKey();
+        sessionCache.put(cacheKey, data);
+        TestData testData = sessionCache.get(cacheKey);
+        assertThat(testData, equalTo(data));
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
@@ -175,15 +170,6 @@ public class SessionCacheTest {
         assertThat(cachedData, nullValue());
 
         assertThat(sessionCache.isEmpty(), is(false));
-    }
-
-    @DataProvider(name = "numberProvider", parallel = true)
-    public Iterator<Object[]> numberProvider() {
-        Set<Object[]> testData = new HashSet<>();
-        for (int i = 0; i < 10; i++) {
-            testData.add(new Object[]{i});
-        }
-        return testData.iterator();
     }
 
     @Test(threadPoolSize = 10, invocationCount = INVOCATION_COUNT)
