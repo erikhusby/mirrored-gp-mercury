@@ -860,15 +860,16 @@ public class    ProductOrderFixupTest extends Arquillian {
         utx.begin();
 
         /*
-         * PDO-8953 was discovered by users. This was confirmed and a 2nd PDO found with this query:
+         * PDO-8953 was discovered by users. This was confirmed and 2 other PDOs found with this query:
                select po.JIRA_TICKET_KEY, pos.SAMPLE_POSITION, count(*)
                from athena.PRODUCT_ORDER po
                join athena.PRODUCT_ORDER_SAMPLE pos on po.PRODUCT_ORDER_ID = pos.PRODUCT_ORDER
                where po.JIRA_TICKET_KEY is not null
                group by po.JIRA_TICKET_KEY, pos.SAMPLE_POSITION
                having count(*) > 1
+               order by po.JIRA_TICKET_KEY, pos.SAMPLE_POSITION
          */
-        String[] orderKeys = new String[]{"PDO-8947", "PDO-8953"};
+        String[] orderKeys = new String[]{"PDO-8947", "PDO-8953", "PDO-9075"};
 
         for (String orderKey : orderKeys) {
             removeUnattachedSamples(orderKey);
