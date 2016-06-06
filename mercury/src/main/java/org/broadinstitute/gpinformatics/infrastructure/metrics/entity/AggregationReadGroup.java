@@ -11,10 +11,6 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.metrics.entity;
 
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
-
 import javax.persistence.Column;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
@@ -48,44 +44,6 @@ public class AggregationReadGroup implements Serializable {
     private Aggregation aggregation;
 
     public AggregationReadGroup() {
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-
-        if (o == null || (!OrmUtil.proxySafeIsInstance(o, AggregationReadGroup.class))) {
-            return false;
-        }
-
-        if (!(o instanceof AggregationReadGroup)) {
-            return false;
-        }
-
-        AggregationReadGroup that = OrmUtil.proxySafeCast(o, AggregationReadGroup.class);
-
-        return new EqualsBuilder()
-                .append(getLane(), that.getLane())
-                .append(aggregationReadGroupPK, that.aggregationReadGroupPK)
-                .append(aggregationId, that.aggregationId)
-                .append(getFlowcellBarcode(), that.getFlowcellBarcode())
-                .append(getLibraryName(), that.getLibraryName())
-                .append(getAggregation(), that.getAggregation())
-                .isEquals();
-    }
-
-    @Override
-    public int hashCode() {
-        return new HashCodeBuilder(17, 37)
-                .append(aggregationReadGroupPK)
-                .append(aggregationId)
-                .append(getFlowcellBarcode())
-                .append(getLane())
-                .append(getLibraryName())
-                .append(getAggregation())
-                .toHashCode();
     }
 
     public AggregationReadGroup(String flowcellBarcode, long lane, String libraryName) {

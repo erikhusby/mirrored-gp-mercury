@@ -11,10 +11,6 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.metrics.entity;
 
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
-
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
 import java.io.Serializable;
@@ -47,39 +43,5 @@ public class AggregationReadGroupPK implements Serializable {
 
     public String getLibraryName() {
         return libraryName;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-
-        if (o == null || (!OrmUtil.proxySafeIsInstance(o, AggregationReadGroupPK.class))) {
-            return false;
-        }
-
-        if (!(o instanceof AggregationReadGroupPK)) {
-            return false;
-        }
-
-        AggregationReadGroupPK that = OrmUtil.proxySafeCast(o, AggregationReadGroupPK.class);
-
-        return new EqualsBuilder()
-                .append(getAggregationId(), that.getAggregationId())
-                .append(getFlowcellBarcode(), that.getFlowcellBarcode())
-                .append(getLane(), that.getLane())
-                .append(getLibraryName(), that.getLibraryName())
-                .isEquals();
-    }
-
-    @Override
-    public int hashCode() {
-        return new HashCodeBuilder(17, 37)
-                .append(getAggregationId())
-                .append(getFlowcellBarcode())
-                .append(getLane())
-                .append(getLibraryName())
-                .toHashCode();
     }
 }

@@ -11,10 +11,6 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.metrics.entity;
 
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
-
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -36,37 +32,5 @@ public class PicardFingerprint {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(insertable = false, updatable = false, name = "PICARD_ANALYSIS_ID", referencedColumnName = "ID")
     private PicardAnalysis picardAnalysis;
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-
-        if (o == null || (!OrmUtil.proxySafeIsInstance(o, PicardFingerprint.class))) {
-            return false;
-        }
-
-        if (!(o instanceof PicardFingerprint)) {
-            return false;
-        }
-
-        PicardFingerprint that = OrmUtil.proxySafeCast(o, PicardFingerprint.class);
-
-        return new EqualsBuilder()
-                .append(lodExpectedSample, that.lodExpectedSample)
-                .append(picardAnalysisId, that.picardAnalysisId)
-                .append(picardAnalysis, that.picardAnalysis)
-                .isEquals();
-    }
-
-    @Override
-    public int hashCode() {
-        return new HashCodeBuilder(17, 37)
-                .append(picardAnalysisId)
-                .append(lodExpectedSample)
-                .append(picardAnalysis)
-                .toHashCode();
-    }
 }
 

@@ -12,9 +12,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.metrics.entity;
 
 import com.google.common.base.Optional;
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 
 import java.io.Serializable;
 
@@ -45,35 +42,5 @@ public class LevelOfDetection implements Serializable {
     @Override
     public String toString() {
         return String.format("%2.2f/%2.2f", min, max);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-
-        if (o == null || (!OrmUtil.proxySafeIsInstance(o, LevelOfDetection.class))) {
-            return false;
-        }
-
-        if (!(o instanceof LevelOfDetection)) {
-            return false;
-        }
-
-        LevelOfDetection that = OrmUtil.proxySafeCast(o, LevelOfDetection.class);
-
-        return new EqualsBuilder()
-                .append(getMin(), that.getMin())
-                .append(getMax(), that.getMax())
-                .isEquals();
-    }
-
-    @Override
-    public int hashCode() {
-        return new HashCodeBuilder(17, 37)
-                .append(getMin())
-                .append(getMax())
-                .toHashCode();
     }
 }

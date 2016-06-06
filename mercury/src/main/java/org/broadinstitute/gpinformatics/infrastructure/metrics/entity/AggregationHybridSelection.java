@@ -11,10 +11,6 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.metrics.entity;
 
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
-
 import javax.annotation.concurrent.Immutable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -41,35 +37,5 @@ public class AggregationHybridSelection implements Serializable {
 
     public Double getPctTargetBases20X() {
         return pctTargetBases20X;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-
-        if (o == null || (!OrmUtil.proxySafeIsInstance(o, AggregationHybridSelection.class))) {
-            return false;
-        }
-
-        if (!(o instanceof AggregationHybridSelection)) {
-            return false;
-        }
-
-        AggregationHybridSelection that = OrmUtil.proxySafeCast(o, AggregationHybridSelection.class);
-
-        return new EqualsBuilder()
-                .append(aggregationId, that.aggregationId)
-                .append(getPctTargetBases20X(), that.getPctTargetBases20X())
-                .isEquals();
-    }
-
-    @Override
-    public int hashCode() {
-        return new HashCodeBuilder(17, 37)
-                .append(aggregationId)
-                .append(getPctTargetBases20X())
-                .toHashCode();
     }
 }

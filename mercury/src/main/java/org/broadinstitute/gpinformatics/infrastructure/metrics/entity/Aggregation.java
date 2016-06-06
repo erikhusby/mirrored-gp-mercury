@@ -11,10 +11,7 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.metrics.entity;
 
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
-import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.hibernate.annotations.BatchSize;
 
 import javax.persistence.Column;
@@ -217,57 +214,5 @@ public class Aggregation {
 
     public void setLevelOfDetection(LevelOfDetection levelOfDetection) {
         this.levelOfDetection = levelOfDetection;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-
-        if (o == null || (!OrmUtil.proxySafeIsInstance(o, Aggregation.class))) {
-            return false;
-        }
-
-        if (!(o instanceof Aggregation)) {
-            return false;
-        }
-
-        Aggregation that = OrmUtil.proxySafeCast(o, Aggregation.class);
-
-        return new EqualsBuilder()
-                .append(getId(), that.getId())
-                .append(getProject(), that.getProject())
-                .append(getSample(), that.getSample())
-                .append(getLibrary(), that.getLibrary())
-                .append(getVersion(), that.getVersion())
-                .append(getReadGroupCount(), that.getReadGroupCount())
-                .append(getDataType(), that.getDataType())
-                .append(getAggregationAlignments(), that.getAggregationAlignments())
-                .append(getAggregationContam(), that.getAggregationContam())
-                .append(getAggregationHybridSelection(), that.getAggregationHybridSelection())
-                .append(getAggregationReadGroups(), that.getAggregationReadGroups())
-                .append(getAggregationWgs(), that.getAggregationWgs())
-                .append(getLevelOfDetection(), that.getLevelOfDetection())
-                .isEquals();
-    }
-
-    @Override
-    public int hashCode() {
-        return new HashCodeBuilder(17, 37)
-                .append(getId())
-                .append(getProject())
-                .append(getSample())
-                .append(getLibrary())
-                .append(getVersion())
-                .append(getReadGroupCount())
-                .append(getDataType())
-                .append(getAggregationAlignments())
-                .append(getAggregationContam())
-                .append(getAggregationHybridSelection())
-                .append(getAggregationReadGroups())
-                .append(getAggregationWgs())
-                .append(getLevelOfDetection())
-                .toHashCode();
     }
 }
