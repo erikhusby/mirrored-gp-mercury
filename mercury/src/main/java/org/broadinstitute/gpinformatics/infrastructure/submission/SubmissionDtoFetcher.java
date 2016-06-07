@@ -123,9 +123,15 @@ public class SubmissionDtoFetcher {
                 productOrderSampleDao.findByResearchProject(researchProject.getJiraTicketKey());
         ProductOrder.loadCollaboratorSampleName(productOrderSamples);
 
+        return getCollaboratorSampleNameToPdoMap(productOrderSamples);
+    }
+
+    Map<String, Collection<ProductOrder>> getCollaboratorSampleNameToPdoMap(List<ProductOrderSample> productOrderSamples) {
         HashMultimap<String, ProductOrder> results = HashMultimap.create();
         for (ProductOrderSample pdoSamples : productOrderSamples) {
-            results.put(pdoSamples.getSampleData().getCollaboratorsSampleName(), pdoSamples.getProductOrder());
+            if (StringUtils.isNotBlank(pdoSamples.getSampleData().getCollaboratorsSampleName())) {
+                results.put(pdoSamples.getSampleData().getCollaboratorsSampleName(), pdoSamples.getProductOrder());
+            }
         }
 
         return results.asMap();
