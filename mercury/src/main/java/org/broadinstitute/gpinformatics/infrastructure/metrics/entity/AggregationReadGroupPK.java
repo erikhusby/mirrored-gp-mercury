@@ -68,6 +68,7 @@ public class AggregationReadGroupPK implements Serializable {
         AggregationReadGroupPK that = OrmUtil.proxySafeCast(o, AggregationReadGroupPK.class);
 
         return new EqualsBuilder()
+                .append(getAggregationId(), that.getAggregationId())
                 .append(getFlowcellBarcode(), that.getFlowcellBarcode())
                 .append(getLane(), that.getLane())
                 .append(getLibraryName(), that.getLibraryName())
@@ -77,6 +78,7 @@ public class AggregationReadGroupPK implements Serializable {
     @Override
     public int hashCode() {
         return new HashCodeBuilder(17, 37)
+                .append(getAggregationId())
                 .append(getFlowcellBarcode())
                 .append(getLane())
                 .append(getLibraryName())
