@@ -7,9 +7,9 @@ import javax.enterprise.inject.Alternative;
 
 @Stub
 @Alternative
-public class SapIntegrationClientStub implements SapIntegrationClient {
+public class SapIntegrationClientStub implements SapIntegrationService {
     @Override
-    public String ageSubmission(String age) {
+    public String submitAge(String age) {
         return "What? Just "+age+" - Great !";
     }
 }

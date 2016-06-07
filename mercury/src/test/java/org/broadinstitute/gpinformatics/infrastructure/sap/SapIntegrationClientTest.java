@@ -23,7 +23,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.ST
 public class SapIntegrationClientTest extends Arquillian {
 
     @Inject
-    SapIntegrationClient sapIntegrationClient;
+    SapIntegrationService sapIntegrationClient;
 
     @BeforeMethod
     public void setUp() {
@@ -47,7 +47,7 @@ public class SapIntegrationClientTest extends Arquillian {
     @Test
     public void testConnection() throws IOException {
         String age = "42";
-        String result = sapIntegrationClient.ageSubmission(age);
+        String result = sapIntegrationClient.submitAge(age);
 
         Assert.assertEquals(result, "What? Just "+age+" - Great !");
     }
