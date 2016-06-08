@@ -158,7 +158,6 @@ public class ReworkEjbDBFreeTest extends BaseEventTest {
         List<ProductOrderSample> sampleList5 = ProductOrderSampleTestFactory.createDBFreeSampleList(
                 MercurySample.MetadataSource.BSP, "SM-test5");
         ProductOrder nonExomeExpressPdo = ProductOrderTestFactory.buildHybridSelectionProductOrder(1, "PDO-18");
-        ProductOrderSample nonExomeExpressSample5 = nonExomeExpressPdo.getSamples().get(0);
         nonExomeExpressPdo.setJiraTicketKey("PDO-18");
         nonExomeExpressPdo.setOrderStatus(ProductOrder.OrderStatus.Submitted);
         nonExomeExpressPdo.setSamples(sampleList5);
@@ -166,6 +165,7 @@ public class ReworkEjbDBFreeTest extends BaseEventTest {
         nonExomeExpressPdo.getProduct().setProductFamily(new ProductFamily(
                 ProductFamily.ProductFamilyName.EXOME.getFamilyName()));
 
+        ProductOrderSample nonExomeExpressSample5 = nonExomeExpressPdo.getSamples().get(0);
         sampleSet.add(nonExomeExpressSample5);
 
         Collection<ReworkEjb.BucketCandidate> candidates =
@@ -248,8 +248,6 @@ public class ReworkEjbDBFreeTest extends BaseEventTest {
                 MercurySample.MetadataSource.BSP, "SM-test5");
         ProductOrder nonExomeExpressPdo = ProductOrderTestFactory.buildHybridSelectionProductOrder(1, "PDO-18");
 
-        ProductOrderSample nonExomesample = nonExomeExpressPdo.getSamples().get(0);
-
         nonExomeExpressPdo.setJiraTicketKey("PDO-18");
         nonExomeExpressPdo.setSamples(sampleList5);
         nonExomeExpressPdo.setOrderStatus(ProductOrder.OrderStatus.Submitted);
@@ -257,6 +255,7 @@ public class ReworkEjbDBFreeTest extends BaseEventTest {
         nonExomeExpressPdo.getProduct().setProductFamily(new ProductFamily(
                 ProductFamily.ProductFamilyName.EXOME.getFamilyName()));
 
+        ProductOrderSample nonExomesample = nonExomeExpressPdo.getSamples().get(0);
         productOrderSampleSet.add(nonExomesample);
 
         BSPSampleDataFetcher mockFetcher = Mockito.mock(BSPSampleDataFetcher.class);
