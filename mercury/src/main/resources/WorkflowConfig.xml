@@ -2256,7 +2256,7 @@
             <sequencingConfigDefs>Resequencing-Pool-Amplicon</sequencingConfigDefs>
             <sequencingConfigDefs>Amplicon-Pool-Amplicon</sequencingConfigDefs>
             <sequencingConfigDefs>Resequencing-Production</sequencingConfigDefs>
-            <routingRule>MERCURY</routingRule>
+            <routingRule>SQUID</routingRule>
         </productWorkflowDefVersions>
     </productWorkflowDefs>
     <productWorkflowDefs>
@@ -2276,7 +2276,7 @@
             <sequencingConfigDefs>Resequencing-Pool-Amplicon</sequencingConfigDefs>
             <sequencingConfigDefs>Amplicon-Pool-Amplicon</sequencingConfigDefs>
             <sequencingConfigDefs>Resequencing-Production</sequencingConfigDefs>
-            <routingRule>MERCURY</routingRule>
+            <routingRule>SQUID</routingRule>
         </productWorkflowDefVersions>
     </productWorkflowDefs>
     <productWorkflowDefs>
