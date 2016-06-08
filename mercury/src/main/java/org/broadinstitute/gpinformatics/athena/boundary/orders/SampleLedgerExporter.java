@@ -16,7 +16,6 @@ import org.broadinstitute.gpinformatics.athena.entity.work.WorkCompleteMessage;
 import org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPLSIDUtil;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
@@ -107,9 +106,10 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
 
         List<PriceItem> allPriceItems = new ArrayList<>();
 
-        // First add the primary price item
+        // First add the primary price item.
         allPriceItems.add(product.getPrimaryPriceItem());
 
+        // Now add the replacement price items.
         // Get the replacement items from the quote cache.
         Collection<QuotePriceItem> quotePriceItems =
             priceItemListCache.getReplacementPriceItems(product.getPrimaryPriceItem());
@@ -206,6 +206,14 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
 
     private SortedSet<PriceItem> getHistoricalPriceItems(List<ProductOrder> productOrders, List<PriceItem> priceItems,
                                                          List<Product> addOns) {
+        return getHistoricalPriceItems(productOrders, priceItems, addOns, priceItemDao, priceListCache);
+    }
+
+    // TODO: this is static; move it somewhere else
+    public static SortedSet<PriceItem> getHistoricalPriceItems(List<ProductOrder> productOrders,
+                                                               List<PriceItem> priceItems, List<Product> addOns,
+                                                               PriceItemDao priceItemDao,
+                                                               PriceListCache priceListCache) {
         Set<PriceItem> addOnPriceItems = new HashSet<>();
         for (Product addOn : addOns) {
             addOnPriceItems.addAll(getPriceItems(addOn, priceItemDao, priceListCache));
@@ -391,18 +399,18 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
     private void writeCountsForPriceItems(Map<PriceItem, ProductOrderSample.LedgerQuantities> billCounts, PriceItem item) {
         ProductOrderSample.LedgerQuantities quantities = billCounts.get(item);
         if (quantities != null) {
-            // If the entry for billed is 0, then don't highlight it, but show a light yellow for anything with values.
             if (quantities.getBilled() == 0.0) {
                 getWriter().writeCell(quantities.getBilled());
             } else {
+                // Show a light yellow for anything with non-zero values.
                 getWriter().writeCell(quantities.getBilled(), getBilledAmountStyle());
             }
 
-            // If the entry represents a change, then highlight it with a light yellow.
-            if (MathUtils.isSame(quantities.getBilled(), quantities.getUploaded())) {
-                getWriter().writeCell(quantities.getUploaded());
+            if (MathUtils.isSame(quantities.getBilled(), quantities.getTotal())) {
+                getWriter().writeCell(quantities.getTotal());
             } else {
-                getWriter().writeCell(quantities.getUploaded(), getBilledAmountStyle());
+                // If the entry represents a change, then highlight it with a light yellow.
+                getWriter().writeCell(quantities.getTotal(), getBilledAmountStyle());
             }
         } else {
             // Write nothing for billed and new.

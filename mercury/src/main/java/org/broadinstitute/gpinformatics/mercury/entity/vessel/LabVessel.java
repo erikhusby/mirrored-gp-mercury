@@ -470,7 +470,11 @@ public abstract class LabVessel implements Serializable {
         for (VesselToVesselTransfer vesselToVesselTransfer : vesselToVesselTransfersThisAsSource) {
             transfersFrom.add(vesselToVesselTransfer.getLabEvent());
         }
+        for( VesselToSectionTransfer vesselToSectionTransfer : vesselToSectionTransfersThisAsSource ) {
+            transfersFrom.add(vesselToSectionTransfer.getLabEvent());
+        }
         if (getContainerRole() == null) {
+
             for (VesselContainer<?> vesselContainer : getVesselContainers()) {
                 transfersFrom.addAll(vesselContainer.getTransfersFrom());
             }

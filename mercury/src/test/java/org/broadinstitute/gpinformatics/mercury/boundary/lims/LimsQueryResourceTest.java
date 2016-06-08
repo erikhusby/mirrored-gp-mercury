@@ -22,6 +22,7 @@ import java.util.List;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.TEST;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
@@ -483,5 +484,20 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
                 .asList("barcode", "name", "onRigWorkflow", "onRigChemistry")) {
             assertThat(result, containsString(String.format("\"%s\":null,", varToTest)));
         }
+    }
+
+    @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testFindAllReagentsListedInEventWithReagent(@ArquillianResource URL baseUrl)
+            throws Exception {
+        WebResource resource = makeWebResource(baseUrl, "findAllReagentsListedInEventWithReagent")
+                .queryParam("name", "TruSeq Rapid SBS Kit").queryParam("lot", "15L03A0047")
+                .queryParam("expiration", "2016-06-28");
+        String result = get(resource);
+        assertThat(result, containsString("\"kitType\":\"Universal Sequencing Buffer 2\""));
+        assertThat(result, containsString("\"kitType\":\"Universal Sequencing Buffer 1\""));
+        assertThat(result, containsString("\"kitType\":\"Incorporation Master Mix\""));
+        assertThat(result, containsString("\"kitType\":\"Cleavage Reagent Master Mix\""));
+        assertThat(result, containsString("\"kitType\":\"Scan Reagent\","));
     }
 }

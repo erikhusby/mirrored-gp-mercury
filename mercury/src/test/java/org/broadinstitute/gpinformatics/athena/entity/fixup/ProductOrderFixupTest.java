@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProj
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
 import org.broadinstitute.gpinformatics.athena.entity.orders.RiskItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
@@ -43,6 +44,12 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.ParameterExpression;
 import javax.persistence.criteria.Root;
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.NotSupportedException;
+import javax.transaction.RollbackException;
+import javax.transaction.SystemException;
+import javax.transaction.UserTransaction;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -112,6 +119,9 @@ public class    ProductOrderFixupTest extends Arquillian {
 
     @Inject
     private RegulatoryInfoDao regulatoryInfoDao;
+
+    @Inject
+    private UserTransaction utx;
 
     // When you run this on prod, change to PROD and prod.
     @Deployment
@@ -832,6 +842,60 @@ public class    ProductOrderFixupTest extends Arquillian {
 
         productOrderDao.persist(
                 new FixupCommentary("SUPPORT-1573 Updating reg info for PDO-8181 as requested by Kristina Tracy"));
+    }
+
+    @Test(enabled = false)
+    public void gplim4155RemoveUnattachedPDOSamples()
+            throws SystemException, NotSupportedException, HeuristicRollbackException, HeuristicMixedException,
+            RollbackException {
+        userBean.loginOSUser();
+
+        /*
+         * Use a user transaction for this test because, unfortunately, ProductOrderDao and ProductOrderSampleDao have
+         * the default transaction attribute type of REQUIRED instead of explicitly requesting SUPPORTS like most of
+         * Mercury's other DAOs. Therefore, every call to a query method on these DAOs will begin and commit a
+         * transaction. Using a user transaction allows the whole test to be in one transaction, importantly including
+         * the FixupCommentary.
+         */
+        utx.begin();
+
+        /*
+         * PDO-8953 was discovered by users. This was confirmed and 2 other PDOs found with this query:
+               select po.JIRA_TICKET_KEY, pos.SAMPLE_POSITION, count(*)
+               from athena.PRODUCT_ORDER po
+               join athena.PRODUCT_ORDER_SAMPLE pos on po.PRODUCT_ORDER_ID = pos.PRODUCT_ORDER
+               where po.JIRA_TICKET_KEY is not null
+               group by po.JIRA_TICKET_KEY, pos.SAMPLE_POSITION
+               having count(*) > 1
+               order by po.JIRA_TICKET_KEY, pos.SAMPLE_POSITION
+         */
+        String[] orderKeys = new String[]{"PDO-8947", "PDO-8953", "PDO-9075"};
+
+        for (String orderKey : orderKeys) {
+            removeUnattachedSamples(orderKey);
+        }
+
+        productOrderDao.persist(new FixupCommentary(
+                "GPLIM-4155 Removed orphaned ProductOrderSamples for: " + StringUtils.join(orderKeys, ", ")));
+
+        utx.commit();
+    }
+
+    /**
+     * Find all samples that reference the given PDO, then remove the ones that the PDO doesn't reference.
+     *
+     * @param orderKey    the business key of the order to fix
+     */
+    private void removeUnattachedSamples(String orderKey) {
+        ProductOrder order = productOrderDao.findByBusinessKey(orderKey);
+        List<ProductOrderSample> samples =
+                productOrderSampleDao.findList(ProductOrderSample.class, ProductOrderSample_.productOrder, order);
+        samples.removeAll(order.getSamples());
+        for (ProductOrderSample sample : samples) {
+            sample.remove();
+            productOrderSampleDao.remove(sample);
+        }
+        System.out.println(String.format("Removed %d orphaned ProductOrderSamples for %s", samples.size(), orderKey));
     }
 
     private static class RegulatoryInfoSelection {

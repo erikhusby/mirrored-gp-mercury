@@ -19,6 +19,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent_;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -1223,4 +1224,122 @@ public class LabVesselFixupTest extends Arquillian {
         labVesselDao.flush();
         utx.commit();
     }
+
+    @Test(enabled = false)
+    public void fixupGplim3994() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+/*   *** Find unassigned positive controls
+     select lv.label, ms.sample_key,
+             m.value, to_char(lv.created_on, 'mm/dd/yyyy') as sample_tube_created
+        from mercury_sample ms
+           , mercury_sample_metadata msm
+           , metadata m
+           , lab_vessel lv
+           , lab_vessel_mercury_samples lvms
+           , batch_starting_vessels bsv
+       where m.key        = 'PATIENT_ID'
+         and m.value      = 'NA12878'
+         and msm.metadata = m.metadata_id
+         and ms.mercury_sample_id = msm.mercury_sample
+         and lvms.mercury_samples = ms.mercury_sample_id
+         and lv.lab_vessel_id     = lvms.lab_vessel
+         and bsv.lab_vessel(+)    = lv.lab_vessel_id
+         and bsv.lab_vessel is null
+       order by lv.created_on asc
+       ***         */
+
+        List<BarcodedTube> controlTubes = barcodedTubeDao.findListByBarcodes(Arrays.asList(
+                "0175336694", "0175336665", "0175336641", "0175336622", "0175336646",
+                "0175361649", "0175567677", "0175567678", "0175567674", "0175567661",
+                "0175567654", "0175567627", "0175567638", "0175567662", "0175567613",
+                "0175567607", "0175567589", "0175567584", "0175567603", "0175567633",
+                "0175567606", "0175567588", "0175567637", "0175567585", "0175567658",
+                "0175567653", "0175567609", "0175567602", "0175567626", "0175567650",
+                "0175567649", "0175567673", "0175567657", "0175568047", "0175568048",
+                "0175568055", "0175568031", "0175568061", "0175568029", "0175568034",
+                "0175568035", "0175568059", "0175568033", "0175568057", "0175568044",
+                "0175568032", "0175568056", "0175568028", "0175568342", "0175568281",
+                "0175568325", "0175568292", "0175568313", "0175568335", "0175568305",
+                "0175568295", "0175568287", "0175568328", "0175568337", "0175568306",
+                "0175568312", "0175568349", "0175568340", "0175568284", "0175568299",
+                "0175568334", "0175568345", "0175568289", "0175568323", "1124999980",
+                "1124999981", "1124999982", "1124999983", "1124999985", "1124999986",
+                "1124999987", "1124999988", "1124999989", "1125000003", "1125000002",
+                "1125000001", "1125000000", "1124999999", "1124999998", "1124999997",
+                "1124999996", "1124999995", "1124999994", "1125000004", "1125000005",
+                "1125000006", "1125000007", "1125000008", "1125000009", "1125000010",
+                "1125000011", "1125000012", "1124998772", "1125000027", "1125000026",
+                "1125000025", "1125000024", "1125000023", "1125000022", "1125000021",
+                "1125000020", "1125000019", "1125000018", "1125000016", "1125000028",
+                "1125000029", "1125000030", "1125000031", "1125000032", "1125000033",
+                "1125000034", "1125000035", "1125000036", "1125000037", "1125000038",
+                "1125000039", "1125000051", "1125000050", "1125000049", "1125000048",
+                "1125000047", "1125000046", "1125000045", "1125000044", "1125000043",
+                "1125000042", "1125000041", "1124998791", "1125000052", "1125000053",
+                "1125000054", "1125000055", "1125000056", "1125000057", "1125000058",
+                "1125000059", "1125000060", "1125000061", "1125000062", "1125000063",
+                "1125000075", "1125000074", "1125000073", "1125000072", "1125000071",
+                "1125000070", "1125000069", "1125000068", "1125000067", "1125000066"));
+
+        for( LabVessel controlTube : controlTubes ){
+            // Restrict logic to the existence of a ShearingAliquot transfer directly from the control vessel
+            for( LabEvent xferFrom : controlTube.getTransfersFrom() ) {
+                if( xferFrom.getLabEventType() == LabEventType.SHEARING_ALIQUOT ) {
+                    // Additionally restrict to an event with a single LCSET
+                    Set<LabBatch> lcsets = xferFrom.getComputedLcSets();
+                    if( lcsets.size() == 1 ) {
+                        LabBatch lcset = lcsets.iterator().next();
+                        controlTube.addNonReworkLabBatch(lcset);
+                        System.out.println("Tube: " + controlTube.getLabel() + ", LCSET: " + lcset.getBatchName() );
+                    }
+                    break;
+                }
+            }
+        }
+
+        FixupCommentary fixupCommentary = new FixupCommentary("GPLIM-3994 - Assign controls to applicable LCSETs");
+        barcodedTubeDao.persist(fixupCommentary);
+        barcodedTubeDao.flush();
+
+        utx.commit();
+
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim4165() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+        // Changes two tube positions in the destination container. Its label was obtained by Transfer Visualizer.
+        String tubeFormationLabel = "0ff71eadca9d4ee16abb37a987df13c1";
+        TubeFormation tubeFormation = tubeFormationDao.findByDigest(tubeFormationLabel);
+        Assert.assertNotNull(tubeFormation);
+        VesselContainer<?> vesselContainer = tubeFormation.getContainerRole();
+        Assert.assertNotNull(vesselContainer);
+
+        // Manipulating the position-vessel map alone only works for section transfers, so verify.
+        Assert.assertEquals(tubeFormation.getTransfersTo().size(), 1);
+        Assert.assertEquals(tubeFormation.getTransfersTo().iterator().next().getCherryPickTransfers().size(), 0);
+        Assert.assertEquals(tubeFormation.getTransfersTo().iterator().next().getSectionTransfers().size(), 1);
+
+        Map<VesselPosition, BarcodedTube> mapPositionToVessel =
+                (Map<VesselPosition, BarcodedTube>) vesselContainer.getMapPositionToVessel();
+
+        Assert.assertEquals(mapPositionToVessel.get(VesselPosition.A12).getLabel(), "0201127659");
+        changePosition(mapPositionToVessel, VesselPosition.A12, VesselPosition.A11);
+
+        Assert.assertEquals(mapPositionToVessel.get(VesselPosition.C12).getLabel(), "0201127638");
+        changePosition(mapPositionToVessel, VesselPosition.C12, VesselPosition.C11);
+
+        tubeFormation.setLabel(TubeFormation.makeDigest(mapPositionToVessel));
+
+        FixupCommentary fixupCommentary = new FixupCommentary("GPLIM-4165 Fixup tube positions.");
+        barcodedTubeDao.persist(fixupCommentary);
+        barcodedTubeDao.flush();
+
+        utx.commit();
+
+    }
+
 }

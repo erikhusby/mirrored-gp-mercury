@@ -57,6 +57,10 @@ public class ConfigurableListContainerTest extends Arquillian {
             labVessels.add(bucketEntry.getLabVessel());
         }
 
+        // List order of result columns is flexible, sort default is on first column, explicit sort on barcode.
+        int index = -1;
+        int barCodeColumnIndex = 0;
+
         ConfigurableSearchDefinition configurableSearchDef =
                 SearchDefinitionFactory.getForEntity( ColumnEntity.LAB_VESSEL.getEntityName());
         for (Map.Entry<String, List<ColumnTabulation>> groupListSearchTermEntry :
@@ -65,12 +69,16 @@ public class ConfigurableListContainerTest extends Arquillian {
                 // Some search terms are not available for selection in result list
                 // TODO Push method from SearchTerm to ColumnTabulation superclass (or consolidate)
                 if( !((SearchTerm) searchTerm).isExcludedFromResultColumns() ) {
+                    index++;
                     columnTabulations.add(searchTerm);
+                    if( searchTerm.getName().equals("Barcode")) {
+                        barCodeColumnIndex = index;
+                    }
                 }
             }
         }
 
-        ConfigurableList configurableList = new ConfigurableList(columnTabulations, 1, "ASC", ColumnEntity.LAB_VESSEL);
+        ConfigurableList configurableList = new ConfigurableList(columnTabulations, barCodeColumnIndex, "ASC", ColumnEntity.LAB_VESSEL);
 
         // Add any row listeners
         configurableList.addAddRowsListeners(configurableSearchDef);
@@ -144,7 +152,7 @@ public class ConfigurableListContainerTest extends Arquillian {
                 SearchDefinitionFactory.getForEntity( ColumnEntity.LAB_VESSEL.getEntityName());
 
         columnTabulations.add(configurableSearchDef.getSearchTerm("Barcode"));
-        columnTabulations.add(configurableSearchDef.getSearchTerm("Mercury Sample ID"));
+        columnTabulations.add(configurableSearchDef.getSearchTerm("Nearest Sample ID"));
         columnTabulations.add(configurableSearchDef.getSearchTerm("Imported Sample ID"));
         columnTabulations.add(configurableSearchDef.getSearchTerm("Imported Sample Tube Barcode"));
         columnTabulations.add(configurableSearchDef.getSearchTerm("Shearing Sample Barcode"));
@@ -168,7 +176,7 @@ public class ConfigurableListContainerTest extends Arquillian {
         // Test column values
         // Barcode
         Assert.assertEquals(resultRow.getRenderableCells().get(0), "1109099877");
-        // Mercury Sample ID
+        // Nearest Sample ID
         Assert.assertEquals(resultRow.getRenderableCells().get(1), "SM-7RDNO");
         // Imported Sample ID
         Assert.assertEquals(resultRow.getRenderableCells().get(2), "SM-9MRYP");

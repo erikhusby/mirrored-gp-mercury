@@ -2,14 +2,20 @@ package org.broadinstitute.gpinformatics.athena.entity.billing.fixup;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryFixupDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry_;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
+import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -18,12 +24,22 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.NotSupportedException;
+import javax.transaction.RollbackException;
+import javax.transaction.SystemException;
+import javax.transaction.UserTransaction;
+import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 
 @Test(groups = TestGroups.FIXUP)
 public class LedgerEntryFixupTest extends Arquillian {
@@ -31,11 +47,22 @@ public class LedgerEntryFixupTest extends Arquillian {
     private static final Log logger = LogFactory.getLog(LedgerEntryFixupTest.class);
 
     @Inject
+    private UserBean userBean;
+
+    @Inject
+    private UserTransaction utx;
+
+    @Inject
     private LedgerEntryFixupDao ledgerEntryFixupDao;
 
     @Inject
     private PriceListCache priceListCache;
 
+    @Inject
+    private ProductOrderSampleDao productOrderSampleDao;
+
+    @Inject
+    private ProductOrderEjb productOrderEjb;
 
     // Use (RC, "rc"), (PROD, "prod") to push the backfill to RC and production respectively.
     @Deployment
@@ -220,5 +247,39 @@ public class LedgerEntryFixupTest extends Arquillian {
 
         // Persist all the clears
         ledgerEntryFixupDao.persistAll(Collections.emptyList());
+    }
+
+    @Test(enabled = false)
+    public void gplim4143FixEntryBilledAsAddOnInsteadOfPrimary()
+            throws IOException, ProductOrderEjb.NoSuchPDOException, SystemException, NotSupportedException,
+            HeuristicRollbackException, HeuristicMixedException, RollbackException {
+        userBean.loginOSUser();
+
+        /*
+         * Use a user transaction for this test because it calls an EJB method. Without the user transaction, the EJB's
+         * transaction would save the entity modifications while the FixupCommentary would be persisted in a separate
+         * transaction with a different rev ID.
+         */
+        utx.begin();
+
+        String pdoKey = "PDO-8360";
+        String sample = "SM-4AZSZ";
+
+        List<ProductOrderSample> samples =
+                productOrderSampleDao.findByOrderKeyAndSampleNames(pdoKey, Collections.singleton(sample));
+        assertThat(samples, hasSize(1));
+        assertThat(samples.get(0).getLedgerItems(), hasSize(1));
+        LedgerEntry ledgerEntry = samples.get(0).getLedgerItems().iterator().next();
+
+        assertThat(ledgerEntry.getPriceItemType(), equalTo(LedgerEntry.PriceItemType.ADD_ON_PRICE_ITEM));
+        ledgerEntry.setPriceItemType(LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM);
+
+        MessageReporter.LogReporter reporter = new MessageReporter.LogReporter(logger);
+        productOrderEjb.updateOrderStatus(pdoKey, reporter);
+
+        ledgerEntryFixupDao.persist(new FixupCommentary(
+            String.format("GPLIM-4143 Correcting price item type for %s on %s", sample, pdoKey)));
+
+        utx.commit();
     }
 }

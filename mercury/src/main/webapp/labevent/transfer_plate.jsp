@@ -22,7 +22,7 @@ plate / rack.
         <label for="${source ? 'src' : 'dst'}PltBcd${stationEventIndex}">Barcode</label>
         <input type="text" id="${source ? 'src' : 'dst'}PltBcd${stationEventIndex}" autocomplete="off"
                 name="stationEvents[${stationEventIndex}].${source ? 'sourcePlate' : 'plate'}.barcode"
-                value="${plate.barcode}" class="clearable barcode unique" required/>
+                value="${plate.barcode}" class="clearable barcode unique" ${stationEventIndex == 0 ? "required" : ""}/>
     </c:if>
     <c:if test="${stationEvent.class.simpleName == 'PlateTransferEventType'}">
         <stripes:label for="${source ? 'src' : 'dst'}Section">Section</stripes:label>

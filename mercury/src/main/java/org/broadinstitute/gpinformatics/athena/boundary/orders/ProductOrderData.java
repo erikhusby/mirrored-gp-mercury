@@ -124,7 +124,6 @@ public class ProductOrderData {
         }
 
         numberOfSamples = productOrder.getSampleCount();
-        genoChipType = productOrder.getGenoChipType();
     }
 
     private static List<String> getSampleList(List<ProductOrderSample> productOrderSamples) {
