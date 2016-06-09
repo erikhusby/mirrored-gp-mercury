@@ -168,12 +168,13 @@
             $j('.filterButtonSet').buttonset();
 
             // Show everything to start, but allocate array with locations for specific filters.
-            ledgerTable.dataTableExt.afnFiltering = [allFilter, allFilter, allFilter, allFilter];
+            ledgerTable.dataTableExt.afnFiltering = [allFilter, allFilter, allFilter, allFilter, allFilter];
             var filterIndexes = {
                 'risk': 0,
                 'coverage': 1,
                 'billed': 2,
-                'modified': 3
+                'abandoned': 3,
+                'modified': 4
             };
             $j('#filters .filterOption').click(function(event) {
                 var target = $j(event.target);
@@ -365,7 +366,7 @@
 
         var allFilter = function(oSettings, aData, iDataIndex) { return true; };
 
-        var riskFilter = function (oSettings, aData, iDataIndex) {
+        var riskFilter = function(oSettings, aData, iDataIndex) {
             return aData[6] != '';
         };
 
@@ -386,11 +387,19 @@
             return aData[10 + numPriceItems * 2].indexOf('check') != -1;
         };
 
-        var notBilledFilter = function (oSettings, aData, iDataIndex) {
+        var notBilledFilter = function(oSettings, aData, iDataIndex) {
             return !billedFilter(oSettings, aData, iDataIndex);
         };
 
-        var modifiedFilter = function (oSettings, aData, iDataIndex) {
+        var abandonedFilter = function(oSettings, aData, iDataIndex) {
+            return aData[7] == 'Abandoned';
+        };
+
+        var notAbandonedFilter = function(oSettings, aData, iDataIndex) {
+            return !abandonedFilter(oSettings, aData, iDataIndex);
+        };
+
+        var modifiedFilter = function(oSettings, aData, iDataIndex) {
             /*
              * aData contains a copy of the original cell content which will not have any updates to the text inputs.
              * Therefore, we need to look at the actual rows to extract the current value.
@@ -409,9 +418,9 @@
             return false;
         };
 
-        function notModifiedFilter(oSettings, aData, iDataIndex) {
+        var notModifiedFilter = function(oSettings, aData, iDataIndex) {
             return !modifiedFilter(oSettings, aData, iDataIndex);
-        }
+        };
 
         function updateSubmitButton() {
 <c:if test="${!actionBean.productOrderListEntry.billing}">
@@ -507,6 +516,7 @@
             <li>On Risk</li>
             <li>Coverage Met</li>
             <li>Billed</li>
+            <li>Abandoned</li>
             <li>Modified (since page load)</li>
         </ul>
         <p>Also, the "Filter" input will filter samples by Sample ID and Collaborator Sample ID. Space-separated filter
@@ -618,7 +628,7 @@
 
         <%-- Datatable filters --%>
         <div id="filters" class="row-fluid" style="display: none;">
-            <div class="span10">
+            <div class="span11">
                 Risk:
                 <span id="riskRadios" class="filterButtonSet">
                     <input type="radio" id="riskOption" name="risk" value="riskFilter" class="filterOption">
@@ -646,6 +656,15 @@
                     <input type="radio" id="allBilledOption" name="billed" value="allFilter" class="filterOption" checked="checked">
                     <label for="allBilledOption">All</label>
                 </span>
+                Abandoned:
+                <span id="abandonedRadios" class="filterButtonSet">
+                    <input type="radio" id="abandonedOption" name="abandoned" value="abandonedFilter" class="filterOption">
+                    <label for="abandonedOption">Yes</label>
+                    <input type="radio" id="notAbandonedOption" name="abandoned" value="notAbandonedFilter" class="filterOption">
+                    <label for="notAbandonedOption">No</label>
+                    <input type="radio" id="allAbandonedOption" name="abandoned" value="allFilter" class="filterOption" checked="checked">
+                    <label for="allAbandonedOption">All</label>
+                </span>
                 Modified:
                 <span id="modifiedRadios" class="filterButtonSet">
                     <input type="radio" id="modifiedOption" name="modified" value="modifiedFilter" class="filterOption">
@@ -656,7 +675,7 @@
                     <label for="allModifiedOption">All</label>
                 </span>
             </div>
-            <div class="span2" style="text-align: right;">
+            <div class="span1" style="text-align: right;">
                 <c:choose>
                     <c:when test="${actionBean.productOrderListEntry.billing}">
                         <button id="updateLedgers" class="btn" title="No updates allowed while billing is in progress" disabled><strike>Update</strike></button>
