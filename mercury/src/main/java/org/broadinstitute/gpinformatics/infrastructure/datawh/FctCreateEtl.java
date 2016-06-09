@@ -10,7 +10,6 @@ import javax.inject.Inject;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
 import java.util.Collection;
-import java.util.Collections;
 
 /**
  * Tied to LabBatchStartingVessel entity
@@ -40,31 +39,31 @@ public class FctCreateEtl extends GenericEntityEtl<LabBatchStartingVessel,LabBat
 
     @Override
     Collection<String> dataRecords(String etlDateStr, boolean isDelete, Long entityId){
-        LabBatchStartingVessel batchStartingVessel = dao.findById(LabBatchStartingVessel.class, entityId);
-        if (batchStartingVessel == null ) {
-            return Collections.emptyList();
-        }
-
-        // Ignore all other batch types - this process is only interested in flowcell tickets
-        LabBatch labBatch = batchStartingVessel.getLabBatch();
-        LabBatch.LabBatchType labBatchType = labBatch.getLabBatchType();
-        if( labBatchType != LabBatch.LabBatchType.MISEQ && labBatchType != LabBatch.LabBatchType.FCT ) {
-            return Collections.emptyList();
-        }
-
         return dataRecords( etlDateStr, isDelete, dao.findById(LabBatchStartingVessel.class, entityId) );
     }
 
     @Override
     String dataRecord(String etlDateStr, boolean isDelete, LabBatchStartingVessel labBatchStartingVessel) {
+
+        if (labBatchStartingVessel == null ) {
+            return null;
+        }
+
+        // Ignore all other batch types - this process is only interested in flowcell tickets
         LabBatch labBatch = labBatchStartingVessel.getLabBatch();
+        LabBatch.LabBatchType labBatchType = labBatch.getLabBatchType();
+        if( labBatchType != LabBatch.LabBatchType.MISEQ && labBatchType != LabBatch.LabBatchType.FCT ) {
+            return null;
+        }
+
         return genericRecord(etlDateStr, isDelete,
                 labBatchStartingVessel.getBatchStartingVesselId(),
                 labBatch.getLabBatchId(),
                 format(labBatch.getBatchName()),
                 format(labBatch.getLabBatchType().toString()),
-                format(labBatchStartingVessel.getLabVessel().getLabel()),
-                format(labBatchStartingVessel.getDilutionVessel()!=null?labBatchStartingVessel.getDilutionVessel().getLabel():""),
+                format(   labBatchStartingVessel.getDilutionVessel() == null
+                        ? labBatchStartingVessel.getLabVessel().getLabel()
+                        : labBatchStartingVessel.getDilutionVessel().getLabel()),
                 format(labBatch.getCreatedOn()),
                 format(labBatch.getFlowcellType()!=null?labBatch.getFlowcellType().getDisplayName():""),
                 format(labBatchStartingVessel.getVesselPosition()!=null?labBatchStartingVessel.getVesselPosition().toString():""),

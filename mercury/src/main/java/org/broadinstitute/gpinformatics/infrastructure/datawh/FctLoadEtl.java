@@ -1,13 +1,11 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent_;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
@@ -22,11 +20,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
+import java.util.Set;
 
 /**
  * Tied to LabEvent entity, but is only interested in ETL of loaded flowcell tickets as created for MISEQ and FCT batch types.
@@ -35,11 +33,14 @@ import java.util.TreeMap;
 public class FctLoadEtl extends GenericEntityEtl<LabEvent,LabEvent> {
 
     // Events related to loading of FCT tickets that this process is only interested in
-    List<LabEventType> labEventTypes = Arrays.asList(
+    private List<LabEventType> labEventTypes = Arrays.asList(
             LabEventType.FLOWCELL_TRANSFER,
             LabEventType.DENATURE_TO_FLOWCELL_TRANSFER,
             LabEventType.DILUTION_TO_FLOWCELL_TRANSFER,
             LabEventType.REAGENT_KIT_TO_FLOWCELL_TRANSFER);
+
+    // Spare the overhead of recreating for the overwhelming percentage of events which are ignored
+    private Collection<String> emptyList = Collections.emptyList();
 
     public FctLoadEtl() {
     }
@@ -68,142 +69,53 @@ public class FctLoadEtl extends GenericEntityEtl<LabEvent,LabEvent> {
     @Override
     Collection<String> dataRecords(String etlDateStr, boolean isDelete, LabEvent labEvent) {
         if (labEvent == null ) {
-            return Collections.emptyList();
+            return emptyList;
         }
 
         // Ignore all other batch types - this process is only interested in flowcell tickets
         LabEventType labEventType = labEvent.getLabEventType();
         if( !labEventTypes.contains( labEventType )  ) {
-            return Collections.emptyList();
+            return emptyList;
+        }
+
+        Pair<IlluminaFlowcell,Set<LabVessel>> flowcellAndSourceTubes = getFlowcellAndSourceTubes( labEvent );
+        if( flowcellAndSourceTubes == null || flowcellAndSourceTubes.getRight().isEmpty() ) {
+            return emptyList;
         }
 
         Collection<String> records = new ArrayList<>();
-        // Typically DENATURE_TO_FLOWCELL_TRANSFER and DILUTION_TO_FLOWCELL_TRANSFER
-        for (VesselToSectionTransfer vesselToSectionTransfer : labEvent.getVesselToSectionTransfers()) {
-            LabVessel srcVessel = vesselToSectionTransfer.getSourceVessel();
-            LabVessel targetVessel = vesselToSectionTransfer.getTargetVesselContainer().getEmbedder();
-            IlluminaFlowcell flowcell = null;
-            String flowcellType = null;
-            if( OrmUtil.proxySafeIsInstance (targetVessel, IlluminaFlowcell.class) ){
-                flowcell = OrmUtil.proxySafeCast(targetVessel, IlluminaFlowcell.class);
-                flowcellType = flowcell.getFlowcellType().getDisplayName();
-            }
-            // Dilution/strip tubes are never re-used so for backfill or out of sequence data don't have to worry
-            //   about finding the latest FCT
-            // Legacy HiSeq 2500 Flowcell is only one row with no lanes - split into 2 rows, LANE1 and LANE2?
-            for (LabBatchStartingVessel labBatchStartingVessel : srcVessel.getDilutionReferences()) {
-                LabBatch labBatch = labBatchStartingVessel.getLabBatch();
-                if( labBatchStartingVessel.getVesselPosition()!= null ) {
+
+        for( LabVessel srcTube : flowcellAndSourceTubes.getRight() ) {
+
+            if( labEventType == LabEventType.REAGENT_KIT_TO_FLOWCELL_TRANSFER ) {
+                // MISEQ batch logic is driven exclusively from vessels registered in LabBatchStartingVessel#labVessel
+                Map<LabVessel,Long> latestBatchVessels = new HashMap<>();
+                for (LabBatchStartingVessel labBatchStartingVessel : srcTube.getLabBatchStartingVesselsByDate()) {
+                    LabBatch miseqBatch = labBatchStartingVessel.getLabBatch();
+                    // Need to check date so backfill doesn't override older miseq tickets
+                    if( miseqBatch.getLabBatchType() == LabBatch.LabBatchType.MISEQ &&
+                            miseqBatch.getCreatedOn().before(labEvent.getEventDate())) {
+                        latestBatchVessels.put(labBatchStartingVessel.getLabVessel(),labBatchStartingVessel.getBatchStartingVesselId());
+                    }
+                }
+                for( Long batchVesselId : latestBatchVessels.values()) {
                     records.add(genericRecord(etlDateStr, isDelete,
-                            labBatchStartingVessel.getBatchStartingVesselId(),
-                            labBatch.getLabBatchId(),
-                            format(labBatch.getBatchName()),
-                            format(labBatch.getLabBatchType().toString()),
-                            format(labBatchStartingVessel.getLabVessel().getLabel()),
-                            format(labBatchStartingVessel.getDilutionVessel() != null ? labBatchStartingVessel.getDilutionVessel().getLabel() : ""),
-                            format(labBatch.getCreatedOn()),
-                            format(targetVessel.getLabel()),
-                            format(labBatch.getFlowcellType() != null ? labBatch.getFlowcellType().getDisplayName() : flowcellType),
-                            format(labBatchStartingVessel.getVesselPosition() != null ? labBatchStartingVessel.getVesselPosition().toString() : ""),
-                            format(labBatchStartingVessel.getConcentration()),
-                            labBatch.getLabBatchType() != LabBatch.LabBatchType.MISEQ ? "N" : "Y"
+                            batchVesselId,
+                            format(flowcellAndSourceTubes.getLeft().getLabel())
                     ));
-                } else {
-                    // ***** FAIL duplicate labBatchStartingVessel.getBatchStartingVesselId() PK created
-                    for (VesselPosition vesselPosition : vesselToSectionTransfer.getTargetVesselContainer().getPositions()) {
-                        records.add(genericRecord(etlDateStr, isDelete,
-                                labBatchStartingVessel.getBatchStartingVesselId(),
-                                labBatch.getLabBatchId(),
-                                format(labBatch.getBatchName()),
-                                format(labBatch.getLabBatchType().toString()),
-                                format(labBatchStartingVessel.getLabVessel().getLabel()),
-                                format(labBatchStartingVessel.getDilutionVessel() != null ? labBatchStartingVessel.getDilutionVessel().getLabel() : ""),
-                                format(labBatch.getCreatedOn()),
-                                format(targetVessel.getLabel()),
-                                format(labBatch.getFlowcellType() != null ? labBatch.getFlowcellType().getDisplayName() : flowcellType),
-                                format(vesselPosition.toString()),
-                                format(labBatchStartingVessel.getConcentration()),
-                                labBatch.getLabBatchType() != LabBatch.LabBatchType.MISEQ ? "N" : "Y"
-                        ));
-                    }
-
                 }
-            }
-        }
-
-        // Skip section transfers if vessel to section transfer above had data,
-        //   there will never be a mix of vessel transfer types to a flowcell
-        if(records.size() == 0 ) {
-            // Typically FLOWCELL_TRANSFER, REAGENT_KIT_TO_FLOWCELL_TRANSFER
-            Map<LabBatch,List<LabBatchStartingVessel>> batches = new TreeMap<>(LabBatch.byDate);
-            Map<LabBatchStartingVessel,LabVessel> flowcellMap = new HashMap<>();
-            // Do a first pass to get all batches
-            for (SectionTransfer sectionTransfer : labEvent.getSectionTransfers()) {
-                LabVessel srcVessel = sectionTransfer.getSourceVesselContainer().getEmbedder();
-                LabVessel flowcell = sectionTransfer.getTargetVesselContainer().getEmbedder();
-                for (LabBatchStartingVessel labBatchStartingVessel : srcVessel.getLabBatchStartingVessels()) {
-                    if( !batches.containsKey(labBatchStartingVessel.getLabBatch())) {
-                        batches.put( labBatchStartingVessel.getLabBatch(), new ArrayList<LabBatchStartingVessel>());
-                    }
-                    batches.get(labBatchStartingVessel.getLabBatch()).add(labBatchStartingVessel);
-                    flowcellMap.put(labBatchStartingVessel,flowcell);
-                }
-            }
-
-            LabBatch latestValidBatch = null;
-            if (batches.size() == 1) {
-                latestValidBatch = batches.keySet().iterator().next();
-            } else if( batches.size() > 1 ) {
-                Date eventDate = labEvent.getEventDate();
-                for( LabBatch batch : batches.keySet() ) {
-                    if( batch.getCreatedOn().before(eventDate)) {
-                        latestValidBatch = batch;
-                    } else {
-                        // We're done
-                        break;
-                    }
-                }
-            }
-
-            List<LabBatchStartingVessel> batchVessels;
-            if( latestValidBatch != null ) {
-                batchVessels = batches.get(latestValidBatch);
-                LabVessel flowcell = flowcellMap.get(latestValidBatch);
-
-                for (LabBatchStartingVessel labBatchStartingVessel : batchVessels) {
-                    LabBatch labBatch = labBatchStartingVessel.getLabBatch();
-
+            } else {
+                // FCT logic is driven exclusively from vessels registered in LabBatchStartingVessel#dilutionVessel
+                // Older events with only denatured tubes registered in LabBatchStartingVessel#labVessel
+                //     produce non-deterministic flowcell barcodes
+                for (LabBatchStartingVessel labBatchStartingVessel : srcTube.getDilutionReferences()) {
                     records.add(genericRecord(etlDateStr, isDelete,
                             labBatchStartingVessel.getBatchStartingVesselId(),
-                            labBatch.getLabBatchId(),
-                            format(labBatch.getBatchName()),
-                            format(labBatch.getLabBatchType().toString()),
-                            format(labBatchStartingVessel.getLabVessel().getLabel()),
-                            format(labBatchStartingVessel.getDilutionVessel() != null ? labBatchStartingVessel.getDilutionVessel().getLabel() : ""),
-                            format(labBatch.getCreatedOn()),
-                            format(flowcell.getLabel()),
-                            format(labBatch.getFlowcellType() != null ? labBatch.getFlowcellType().getDisplayName() : flowcell.getType().getName()),
-                            format(labBatchStartingVessel.getVesselPosition() != null ? labBatchStartingVessel.getVesselPosition().toString() : ""),
-                            format(labBatchStartingVessel.getConcentration()),
-                            labBatch.getLabBatchType() != LabBatch.LabBatchType.MISEQ ? "N" : "Y"
+                            format(flowcellAndSourceTubes.getLeft().getLabel())
                     ));
                 }
             }
-        }
 
-        if(records.size() == 0 ) {
-            // Typically REAGENT_KIT_TO_FLOWCELL_TRANSFER
-            for (CherryPickTransfer cherryPickTransfer : labEvent.getCherryPickTransfers() ) {
-                LabVessel srcVessel = cherryPickTransfer.getSourceVesselContainer().getEmbedder();
-                LabVessel flowcell = cherryPickTransfer.getTargetVesselContainer().getEmbedder();
-                for (LabBatchStartingVessel labBatchStartingVessel : srcVessel.getLabBatchStartingVessels()) {
-//                    if( !batches.containsKey(labBatchStartingVessel.getLabBatch())) {
-//                        batches.put( labBatchStartingVessel.getLabBatch(), new ArrayList<LabBatchStartingVessel>());
-//                    }
-//                    batches.get(labBatchStartingVessel.getLabBatch()).add(labBatchStartingVessel);
-//                    flowcellMap.put(labBatchStartingVessel,flowcell);
-                }
-            }
         }
 
         return records;
@@ -213,4 +125,44 @@ public class FctLoadEtl extends GenericEntityEtl<LabEvent,LabEvent> {
     String dataRecord(String etlDateStr, boolean isDelete, LabEvent entity) {
         throw new RuntimeException("This method cannot apply to this etl class.");
     }
+
+    /**
+     * Get the event flowcell and the nearest source tubes transferred to the flowcell
+     * @param labEvent The event of interest
+     * @return
+     */
+    private Pair<IlluminaFlowcell,Set<LabVessel>> getFlowcellAndSourceTubes(LabEvent labEvent ) {
+        LabEventType labEventType = labEvent.getLabEventType();
+        IlluminaFlowcell flowcell = OrmUtil.proxySafeCast(labEvent.getTargetLabVessels().iterator().next(),
+                IlluminaFlowcell.class);
+        Set<LabVessel> dilutionTubes = new HashSet<>();
+
+        if( labEventType == LabEventType.REAGENT_KIT_TO_FLOWCELL_TRANSFER ) {
+            LabVessel reagentKit = labEvent.getSourceLabVessels().iterator().next();
+            // Preceded by LabEventType.DENATURE_TO_REAGENT_KIT_TRANSFER, get MiSeq flowcell
+            for( LabEvent ancestorEvent : reagentKit.getTransfersTo() ) {
+                if( ancestorEvent.getLabEventType() == LabEventType.DENATURE_TO_REAGENT_KIT_TRANSFER ) {
+                    dilutionTubes.addAll( ancestorEvent.getSourceVesselTubes() );
+                }
+            }
+        } else {
+            List<LabVessel.VesselEvent> ancestors = flowcell.getContainerRole().getAncestors(VesselPosition.LANE1);
+            // Strip tubes are registered in flowcell ticket as dilution vessels in a FLOWCELL_TRANSFER event
+            if (ancestors.get(0).getSourceVesselContainer() != null &&
+                    ancestors.get(0).getSourceVesselContainer().getEmbedder().getType() == LabVessel.ContainerType.STRIP_TUBE) {
+                dilutionTubes.add( ancestors.get(0).getSourceVesselContainer().getEmbedder() );
+            } else {
+                // Otherwise barcoded tubes are registered in flowcell ticket as dilution vessels
+                Map<VesselPosition,LabVessel> loadedVesselsAndPosition = flowcell.getNearestTubeAncestorsForLanes();
+                dilutionTubes.addAll(loadedVesselsAndPosition.values());
+            }
+        }
+
+        if( flowcell != null && dilutionTubes != null ) {
+            return Pair.of(flowcell,dilutionTubes);
+        } else {
+            return null;
+        }
+    }
+
 }
