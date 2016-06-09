@@ -874,9 +874,11 @@ public class ResearchProjectActionBean extends CoreActionBean {
     @HandlesEvent(VIEW_SUBMISSIONS_ACTION)
     public Resolution viewSubmissions() throws IOException, JSONException {
         ObjectMapper objectMapper = new ObjectMapper();
+        final List<String> messages = getFormattedMessages();
         Map<String, Object> submissionSamplesMap = new HashMap<String, Object>() {{
             put("aaData", submissionSamples);//iDisplayLength  iRecordsTotal
             put("iTotalRecords", submissionSamples.size());
+            put("stripesMessages", messages);
         }};
         String submissionSamplesData = objectMapper.writeValueAsString(submissionSamplesMap);
 
@@ -896,7 +898,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
         if (editResearchProject != null) {
             submissionSamples = getSamplesFromCache(researchProject);
             if (submissionSamples.isEmpty()) {
-                for (SubmissionDto submissionDto : submissionDtoFetcher.fetch(editResearchProject)) {
+                for (SubmissionDto submissionDto : submissionDtoFetcher.fetch(editResearchProject, this)) {
                     SubmissionData submissionData = submissionDto.submissionData();
                     submissionSamples.add(submissionData);
                 }

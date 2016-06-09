@@ -227,22 +227,22 @@
         function addStripesMessageDiv(alertType, fieldSelector) {
             var alertClass = 'alert-' + alertType;
             var messageBox = jQuery("<div></div>",{
-                "class":"alert alertClass".replace("alertClass", alertClass)
+                "class": "alert alertClass".replace("alertClass", alertClass),
+                "style": "width: 50em;position: absolute;"
             });
-
+            var button = jQuery("<button type='button' class='close' data-dismiss='alert'>&times;</button>");
+            messageBox.append(button);
             messageBox.append('<ul></ul>');
             if (fieldSelector != undefined) {
                 $j(fieldSelector).empty();
                 $j(fieldSelector).append(messageBox);
-            } else {
-                messageBox.append(jQuery("<button>&times;</button>", {
-                    "type": "button",
-                    "class": "close",
-                    "data-dismiss": "alert"
-                }));
-                messageBox.css({"margin-left": "20%", "margin-right": "20%"});
+            }
+            else {
                 $j('.page-body').before(messageBox);
             }
+            var left =window.innerWidth - messageBox.width() / 2;
+            messageBox.css("left", left);
+            messageBox.css("z-index", 1000);
             return messageBox;
         }
 
@@ -251,6 +251,7 @@
                 type = "success";
             }
             var messageBoxJquery = $j("div.alert-" + type);
+
             if (messageBoxJquery.length == 0) {
                 messageBoxJquery = addStripesMessageDiv(type, fieldSelector);
             }
@@ -366,7 +367,14 @@
                             "dataType": 'json',
                             "url": sSource,
                             "data": aoData,
-                            "success": fnCallback,
+                            "success": function (jqXHR, textStatus, response) {
+                                if (response.responseText) {
+                                    outerDiv = jQuery("<div></div>", { "id":"stripesMessageOuter","style":"position: relative;"});
+                                    $j("#submissionsTab").before(outerDiv);
+                                    addStripesMessage(jqXHR.stripesMessages, textStatus, "#stripesMessageOuter");
+                                }
+                                fnCallback(jqXHR);
+                            },
                             "error": function (jqXHR, textStatus, errorThrown) {
                                 addStripesMessage("Error receiving submission data: " + errorThrown, "error", ".dataTables_processing");
                             }

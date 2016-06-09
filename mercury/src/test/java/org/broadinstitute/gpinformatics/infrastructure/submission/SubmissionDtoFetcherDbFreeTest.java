@@ -15,18 +15,20 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.broadinstitute.gpinformatics.mercury.samples.MercurySampleData;
 import org.testng.annotations.Test;
 
-import java.util.Arrays;
+import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.everyItem;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.isEmptyOrNullString;
@@ -38,18 +40,40 @@ public class SubmissionDtoFetcherDbFreeTest {
         SubmissionDtoFetcher submissionDtoFetcher = new SubmissionDtoFetcher(null, null, null, null, null, null);
 
         Set<Metadata> nullMetadata = Collections.singleton(new Metadata(Metadata.Key.SAMPLE_ID, (String)null));
-        SampleData sampleData = new MercurySampleData("SM-234", nullMetadata);
-        ProductOrderSample productOrderSample = new ProductOrderSample("SM-234", sampleData);
+        String noCollaboratorSampleId = "SM-NONE";
+        SampleData sampleData = new MercurySampleData(noCollaboratorSampleId, nullMetadata);
+        ProductOrderSample productOrderSample = new ProductOrderSample(noCollaboratorSampleId, sampleData);
+
+        ProductOrder productOrder = ProductOrderTestFactory.createDummyProductOrder("PDO-1");
+        productOrder.addSample(productOrderSample);
+
 
         Set<Metadata> okMetadata = Collections.singleton(new Metadata(Metadata.Key.SAMPLE_ID, "collabSample"));
         SampleData moreSampleData = new MercurySampleData("SM-OK", okMetadata);
-        ProductOrderSample moreProductOrderSample = new ProductOrderSample("SM-OK", moreSampleData);
-
-        List<ProductOrderSample> productOrderSamples = Arrays.asList(productOrderSample, moreProductOrderSample);
+        ProductOrderSample okSample = productOrder.getSamples().iterator().next();
+        okSample.setSampleData(moreSampleData);
+         MessageCollector messageReporter = new  MessageCollector();
         Map<String, Collection<ProductOrder>> collaboratorSampleNameToPdoMap =
-                submissionDtoFetcher.getCollaboratorSampleNameToPdoMap(productOrderSamples);
+                submissionDtoFetcher.getCollaboratorSampleNameToPdoMap(productOrder.getSamples(), messageReporter);
 
+        assertThat(messageReporter.getFormattedMessage(), containsString(noCollaboratorSampleId));
+        assertThat(messageReporter.getFormattedMessage(), not(containsString(okSample.getBusinessKey())));
         assertThat(collaboratorSampleNameToPdoMap.keySet(), hasSize(1));
         assertThat(collaboratorSampleNameToPdoMap.keySet(), everyItem(not(isEmptyOrNullString())));
     }
+
+    class MessageCollector implements MessageReporter {
+        private String formattedMessage;
+
+        @Override
+        public String addMessage(String message, Object... arguments) {
+            formattedMessage = MessageFormat.format(message, arguments);
+            return formattedMessage;
+        }
+
+        public String getFormattedMessage() {
+            return formattedMessage;
+        }
+    }
+    
 }

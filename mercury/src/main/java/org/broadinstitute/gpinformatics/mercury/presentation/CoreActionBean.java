@@ -384,6 +384,17 @@ public abstract class CoreActionBean implements ActionBean, MessageReporter {
     }
 
     /**
+     * @return formatted messages collected in the context
+     */
+    protected List<String> getFormattedMessages() {
+        final List<String> formattedMessages = new ArrayList<>();
+        for (Message message : getContext().getMessages()) {
+            formattedMessages.add(message.getMessage(getContext().getLocale()));;
+        }
+        return formattedMessages;
+    }
+
+    /**
      * Get the build info bean.
      *
      * @return the injected BuildInfoBean
