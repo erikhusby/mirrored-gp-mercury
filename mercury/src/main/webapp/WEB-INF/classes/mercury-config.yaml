@@ -221,7 +221,7 @@ bettaLimsServer:
 datawhEtl:
 
     DEV:
-        datawhEtlDirRoot: C:\projects\IdeaProjects\mercury\datawh
+        datawhEtlDirRoot: /seq/lims/datawh/dev
 
     QA:
         datawhEtlDirRoot: /seq/lims/datawh/qa
