@@ -915,12 +915,13 @@ public class ResearchProjectActionBean extends CoreActionBean {
                         SubmissionData submissionData = submissionDto.submissionData();
                         submissionSamples.add(submissionData);
                     }
-                }
-                if (!submissionSamples.isEmpty()) {
+                } else {
+                    if (!submissionSamples.isEmpty()) {
 
-                    // When getting cached submissions always update the submissionStatus.
-                    submissionDtoFetcher.refreshSubmissionStatuses(submissionSamples);
-                    sessionCache.put(researchProject, submissionSamples);
+                        // When getting cached submissions always update the submissionStatus.
+                        submissionDtoFetcher.refreshSubmissionStatuses(submissionSamples);
+                        sessionCache.put(researchProject, submissionSamples);
+                    }
                 }
             } catch (SessionCacheException e) {
                 log.error("Error retrieving samples from cache", e);
