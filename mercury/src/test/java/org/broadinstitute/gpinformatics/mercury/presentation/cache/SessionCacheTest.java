@@ -13,6 +13,8 @@ package org.broadinstitute.gpinformatics.mercury.presentation.cache;
 
 import net.sourceforge.stripes.mock.MockHttpSession;
 import net.sourceforge.stripes.mock.MockServletContext;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.codehaus.jackson.type.TypeReference;
 import org.testng.annotations.BeforeClass;
@@ -264,24 +266,25 @@ public class SessionCacheTest {
             if (this == o) {
                 return true;
             }
+
             if (o == null || getClass() != o.getClass()) {
                 return false;
             }
 
             TestData testData = (TestData) o;
 
-            if (!nanoTime.equals(testData.nanoTime)) {
-                return false;
-            }
-            return data != null ? data.equals(testData.data) : testData.data == null;
-
+            return new EqualsBuilder()
+                    .append(getNanoTime(), testData.getNanoTime())
+                    .append(getData(), testData.getData())
+                    .isEquals();
         }
 
         @Override
         public int hashCode() {
-            int result = (int) (nanoTime ^ (nanoTime >>> 32));
-            result = 31 * result + (data != null ? data.hashCode() : 0);
-            return result;
+            return new HashCodeBuilder(17, 37)
+                    .append(getNanoTime())
+                    .append(getData())
+                    .toHashCode();
         }
     }
 }
