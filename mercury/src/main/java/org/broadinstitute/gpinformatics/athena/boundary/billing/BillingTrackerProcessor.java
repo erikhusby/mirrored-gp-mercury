@@ -291,6 +291,9 @@ public class BillingTrackerProcessor extends TableProcessor {
             "the billed quantity in the spreadsheet is '%f', indicating the Billed column of this spreadsheet has " +
             "accidentally been edited.";
 
+    private static final String BEING_BILLED =
+            "%s for sample %s is currently being billed. Accepting this tracker now could result in double billing. Please wait for the billing session to be completed and reapply your billing changes to a freshly downloaded tracker.";
+
     private static final String SAMPLE_EMPTY_VALUE =
             "Found empty %s value for updated sample %s in %s, price item '%s'";
 
@@ -314,6 +317,7 @@ public class BillingTrackerProcessor extends TableProcessor {
 
         for (BillableRef billableRef : currentBillableRefs) {
             PriceItem priceItem = currentPriceItemsByName.get(billableRef.getPriceItemName());
+            ProductOrderSample.LedgerQuantities sampleQuantities = billCounts.get(priceItem);
 
             double trackerBilled = 0;
 
@@ -325,7 +329,6 @@ public class BillingTrackerProcessor extends TableProcessor {
                 trackerBilled = Double.parseDouble(dataRow.get(billedKey));
 
                 double sampleBilled = 0;
-                ProductOrderSample.LedgerQuantities sampleQuantities = billCounts.get(priceItem);
                 if (sampleQuantities != null) {
                     sampleBilled = sampleQuantities.getBilled();
                 } else {
@@ -341,6 +344,13 @@ public class BillingTrackerProcessor extends TableProcessor {
                     addDataMessage(String.format(BILLED_IS_SAME, sampleBilled, productOrderSample.getSampleKey(),
                             currentProductOrder.getBusinessKey(), priceItemName, trackerBilled), dataRowIndex);
                 }
+            }
+
+            // Make sure the sample isn't currently being billed.
+            if (sampleQuantities != null && sampleQuantities.isBeingBilled()) {
+                addDataMessage(
+                        makeBeingBilledMessage(currentProductOrder.getBusinessKey(), productOrderSample.getSampleKey()),
+                        dataRowIndex);
             }
 
             doUpdate(dataRow, dataRowIndex, productOrderSample, pdoSummaryStatsMap, billableRef, priceItem,
@@ -448,6 +458,10 @@ public class BillingTrackerProcessor extends TableProcessor {
                                                          String productOrderKey) {
         return MessageFormat.format("Invalid work complete date: {0} for sample ''{1}'' in PDO ''{2}'' ",
                 workCompleteDateString, sampleKey, productOrderKey);
+    }
+
+    public static String makeBeingBilledMessage(String productOrderKey, String sampleKey) {
+        return String.format(BEING_BILLED, productOrderKey, sampleKey);
     }
 
     public List<ProductOrder> getUpdatedProductOrders() {
