@@ -17,4 +17,8 @@ public class SessionCacheException extends RuntimeException {
     public SessionCacheException(String message, Throwable cause) {
         super(message, cause);
     }
+
+    public SessionCacheException(String message) {
+        super(message);
+    }
 }

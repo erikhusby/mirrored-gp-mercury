@@ -11,6 +11,7 @@
 
 package org.broadinstitute.gpinformatics.mercury.presentation.cache;
 
+import org.apache.commons.collections4.queue.CircularFifoQueue;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -27,23 +28,14 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.AbstractMap.SimpleEntry;
-import java.util.Queue;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 /**
  * Class for caching and compressing data in HTTP Sessions.
  * <p>
- * A SessionCache holds a type-safe mapping of key value pairs which are stored in their own namespace.
+ * A SessionCache holds a type-safe mapping of cacheKey value pairs which are stored in their own namespace.
  * The SessionCache can hold up to maxCacheSize items within a namespace. When new elements are added to the
  * sessionCache and the cache size reaches maxCacheSize, the oldest element is removed. Additionally, the
  * data stored in the cache is compressed.
@@ -55,17 +47,11 @@ import java.util.zip.GZIPOutputStream;
 public class SessionCache<T> {
     private final HttpSession session;
     private final String namespace;
-    private final int maxCacheSize;
     private final TypeReference<T> objectTypeReference;
-    private static ExecutorService executorService = Executors.newCachedThreadPool();
-
-    private final AtomicReference<LinkedBlockingQueue<SimpleEntry<String, byte[]>>> sessionCacheReference;
+    private final CircularFifoQueue<SimpleEntry<String, byte[]>> sessionQueue;
 
     private static final int DEFAULT_MAX_CACHE_SIZE = 3;
-    private static final int TIMEOUT = 10;
-
     private static final Log log = LogFactory.getLog(SessionCache.class);
-
     /**
      * Construct a new SessionCache
      *
@@ -85,21 +71,22 @@ public class SessionCache<T> {
         }
         this.session = session;
         this.namespace = namespace;
-        this.maxCacheSize = maxCacheSize;
         this.objectTypeReference = typeReference;
 
-        synchronized (this.session) {
-            @SuppressWarnings("unchecked")
-            AtomicReference<LinkedBlockingQueue<SimpleEntry<String, byte[]>>> existingReference =
-                    (AtomicReference<LinkedBlockingQueue<SimpleEntry<String, byte[]>>>) session.getAttribute(namespace);
-
-            if (existingReference == null) {
-                LinkedBlockingQueue<SimpleEntry<String, byte[]>> cacheItems = new LinkedBlockingQueue<>(maxCacheSize);
-                sessionCacheReference = new AtomicReference<>(cacheItems);
-            } else {
-                sessionCacheReference = existingReference;
+            synchronized (this.session) {
+                @SuppressWarnings("unchecked")
+                CircularFifoQueue<SimpleEntry<String, byte[]>> sessionAttribute =
+                        (CircularFifoQueue<SimpleEntry<String, byte[]>>) session.getAttribute(namespace);
+                if (sessionAttribute == null) {
+                    sessionQueue = new CircularFifoQueue<>(maxCacheSize);
+                    session.setAttribute(namespace, sessionQueue);
+                } else {
+                    sessionQueue = sessionAttribute;
+                }
             }
-            session.setAttribute(namespace, sessionCacheReference);
+
+        if (sessionQueue == null) {
+            throw new SessionCacheException(String.format("Could not initialize cache in namespace '%s'", namespace));
         }
     }
 
@@ -122,68 +109,71 @@ public class SessionCache<T> {
     /**
      * Retrieve data from session.
      *
-     * @param sessionKey the identifier the data is keyed off of.
+     * @param cacheKey the identifier the data is keyed off of.
      *
      * @return Item retrieved by cache, or null if it isn't in the cache. This is true even in cases where
      * objectTypeReference is a Collection.
      */
     @Nullable
-    public T get(@Nonnull String sessionKey) {
-        SimpleEntry<String, byte[]> sessionCache = getEntry(sessionKey);
-        if (sessionCache != null) {
-            byte[] compressed = sessionCache.getValue();
-            if (ArrayUtils.isNotEmpty(compressed)) {
-                log.info(String.format("%s Cache hit for %s", sessionKey, this.namespace));
-                try {
-                    return decompress(compressed);
-                } catch (IOException e) {
-                    throw new SessionCacheException("Could not retrieve item from cache", e);
+    public T get(@Nonnull String cacheKey) {
+        if (cacheKey == null) {
+            throw new IllegalArgumentException(String.format("Cache key is null in '%s'", namespace));
+        }
+        synchronized (sessionQueue) {
+            for (SimpleEntry<String, byte[]> cacheItem : sessionQueue) {
+                if (cacheItem.getKey().equals(cacheKey)) {
+                    byte[] compressed = cacheItem.getValue();
+                    if (ArrayUtils.isNotEmpty(compressed)) {
+                        log.info(String.format("Cache hit for '%s' in '%s'", cacheKey, this.namespace));
+                        try {
+                            return decompress(compressed);
+                        } catch (IOException e) {
+                            throw new SessionCacheException("Could not retrieve item from cache", e);
+                        }
+                    }
                 }
             }
         }
-
         return null;
     }
 
     /**
-     * Add data identified by key to the cache.
+     * Add data identified by cacheKey to the cache.
      */
-    public void put(@Nonnull final String key, @Nonnull T data) {
-        try {
-            final byte[] compressed = compress(data);
-            if (compressed != null) {
-                final SimpleEntry<String, byte[]> cacheItem = new SimpleEntry<>(key, compressed);
-                Runnable task = new Runnable() {
-                    @Override
-                    public void run() {
-                        while (true) {
-                            LinkedBlockingQueue<SimpleEntry<String, byte[]>> oldValue = sessionCacheReference.get();
-                            LinkedBlockingQueue<SimpleEntry<String, byte[]>> newValue = newQueue(oldValue);
-                            for (SimpleEntry<String, byte[]> entry : newValue) {
-                                if (entry.getKey().equals(key)) {
-                                    newValue.remove(entry);
-                                }
-                            }
-                            if (newValue.size() == maxCacheSize && !newValue.isEmpty()) {
-                                log.info(String.format("Removing %s from cache %s", newValue.peek().getKey(), namespace));
-                                newValue.remove();
-                            }
-                            if (!newValue.offer(cacheItem)) {
-                                log.debug(String.format("%s wasn't added to the cache.", cacheItem));
-                            } else {
-                                log.debug(String.format("%s added to the cache", cacheItem));
-                            }
-                            if (sessionCacheReference.compareAndSet(oldValue, newValue)) {
-                                break;
-                            }
-                        }
+    public void put(@Nonnull final String cacheKey, @Nonnull T data) {
+        if (cacheKey == null) {
+            throw new IllegalArgumentException(String.format("Cache cacheKey is null in '%s'", namespace));
+        }
+
+        synchronized (sessionQueue) {
+            try {
+                final byte[] compressed = compress(data);
+                if (compressed != null) {
+                    final SimpleEntry<String, byte[]> cacheItem = new SimpleEntry<>(cacheKey, compressed);
+                    boolean remove = false;
+                    if (hasCacheEntry(cacheKey)) {
+                        remove = remove(cacheKey);
                     }
-                };
-                executeTask(task);
-                log.debug(String.format("%s Data added to %s cache. Cache size now: %d", key, this.namespace, size()));
+                    sessionQueue.add(cacheItem);
+                    String verb = remove ? "Replacing" : "Adding";
+                    log.debug(String.format("%s '%s' to '%s' cache. Cache size now: %d", verb, cacheKey, namespace, size()));
+                }
+
+            } catch (IOException e) {
+                String error = String.format("Could not serialize sampleData in '%s'", namespace);
+                throw new SessionCacheException(error, e);
             }
-        } catch (IOException e) {
-            throw new SessionCacheException(String.format("Could not serialize sampleData in %s", this.namespace), e);
+        }
+    }
+
+    private boolean hasCacheEntry(String cacheKey) {
+        synchronized (sessionQueue) {
+            for (SimpleEntry<String, byte[]> cacheEntry : sessionQueue) {
+                if (cacheEntry.getKey().equals(cacheKey)) {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 
@@ -192,18 +182,10 @@ public class SessionCache<T> {
      */
     public void remove() {
         log.debug(String.format("Removing all items from cache namespace %s", namespace));
-        Runnable task = new Runnable() {
-            @Override
-            public void run() {
-                while (true) {
-                    if (sessionCacheReference.compareAndSet(sessionCacheReference.get(), null)) {
-                        break;
-                    }
-                }
-            }
-        };
-
-        executeTask(task);
+        synchronized (sessionQueue) {
+            sessionQueue.clear();
+            session.removeAttribute(namespace);
+        }
     }
 
 
@@ -218,69 +200,35 @@ public class SessionCache<T> {
      * @return the current number of elements in the cache.
      */
     public int size() {
-        Queue<SimpleEntry<String, byte[]>> cacheItems = sessionCacheReference.get();
-        int size = 0;
-        if (cacheItems != null) {
-            size = cacheItems.size();
+        synchronized (sessionQueue) {
+            return sessionQueue.size();
         }
-        return size;
     }
 
     /**
-     * @return true if the cache contains element with specified key, or false if it doesn't.
+     * @return true if the cache contains element with specified cacheKey, or false if it doesn't.
      */
-    public boolean containsKey(String key) {
-        return get(key) != null;
+    public boolean containsKey(String cacheKey) {
+        return get(cacheKey) != null;
     }
 
     /**
      * Remove item with cacheKey from the cache. The namespace attribute on the session is not removed.
      */
-    public void remove(final String cacheKey) {
-        log.info(String.format("Removing %s items from cache namespace %s", cacheKey, namespace));
-        Runnable task = new Runnable() {
-            @Override
-            public void run() {
-                while (true) {
-                    LinkedBlockingQueue<SimpleEntry<String, byte[]>> oldValue = sessionCacheReference.get();
-                    LinkedBlockingQueue<SimpleEntry<String, byte[]>> newValue = newQueue(oldValue);
-
-                    for (SimpleEntry<String, byte[]> cacheItem : newValue) {
-                        if (cacheItem.getKey().equals(cacheKey)) {
-                            newValue.remove(cacheItem);
-                        }
-                    }
-
-                    if (sessionCacheReference.compareAndSet(oldValue, newValue)) {
-                        break;
-                    }
+    public boolean remove(final String cacheKey) {
+        synchronized (sessionQueue) {
+            boolean removed=false;
+            log.debug(String.format("Removing %s from cache namespace %s", cacheKey, namespace));
+            for (SimpleEntry<String, byte[]> cacheItem : sessionQueue) {
+                if (cacheItem.getKey().equals(cacheKey)) {
+                    removed = sessionQueue.remove(cacheItem);
+                    String negateValue = removed ? "removed" : "not removed";
+                    log.debug(String.format("%s was %s from cache namespace %s", cacheKey, negateValue,namespace));
                 }
             }
-        };
-        executeTask(task);
-    }
-
-    private SimpleEntry<String, byte[]> getEntry(@Nonnull final String cacheKey) {
-        //noinspection ConstantConditions
-        if (cacheKey == null) {
-            throw new IllegalArgumentException("Required Parameter 'cacheKey' missing");
+            return removed;
         }
-        Callable<SimpleEntry<String, byte[]>> callable = new Callable<SimpleEntry<String, byte[]>>() {
-            @Override
-            public SimpleEntry<String, byte[]> call() {
-                Queue<SimpleEntry<String, byte[]>> cacheQueue = sessionCacheReference.get();
-
-                for (SimpleEntry<String, byte[]> cacheItem : cacheQueue) {
-                    if (cacheItem.getKey().equals(cacheKey)) {
-                        return cacheItem;
-                    }
-                }
-                return null;
-            }
-        };
-        return executeTask(callable);
     }
-
 
     /**
      * Compress input data using GZIP.
@@ -342,47 +290,5 @@ public class SessionCache<T> {
         return objectMapper.writeValueAsString(data);
     }
 
-
-    /**
-     * Create a new Queue initialized with cacheItems.
-     */
-    private LinkedBlockingQueue<SimpleEntry<String, byte[]>> newQueue(Queue<SimpleEntry<String, byte[]>> cacheItems) {
-        LinkedBlockingQueue<SimpleEntry<String, byte[]>> queue = new LinkedBlockingQueue<>(maxCacheSize);
-        if (cacheItems != null) {
-            queue.addAll(cacheItems);
-        }
-        return queue;
-    }
-
-    /**
-     * Execute Callable task
-     *
-     * @see SessionCache#TIMEOUT
-     * @see TimeUnit#SECONDS
-     */
-    private SimpleEntry<String, byte[]> executeTask(Callable<SimpleEntry<String, byte[]>> task) {
-        Future<SimpleEntry<String, byte[]>> future = executorService.submit(task);
-        try {
-            return future.get(TIMEOUT, TimeUnit.SECONDS);
-        } catch (InterruptedException | ExecutionException | TimeoutException e) {
-            log.error(e);
-        }
-        return null;
-    }
-
-    /**
-     * Execute Runnable task.
-     *
-     * @see SessionCache#TIMEOUT
-     * @see TimeUnit#SECONDS
-     */
-    private void executeTask(Runnable task) {
-        Future future = executorService.submit(task);
-        try {
-            future.get(TIMEOUT, TimeUnit.SECONDS);
-        } catch (Exception e) {
-            log.error(e);
-        }
-    }
 
 }

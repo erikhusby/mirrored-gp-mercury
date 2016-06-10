@@ -18,9 +18,9 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.codehaus.jackson.type.TypeReference;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import javax.servlet.http.HttpSession;
 import java.io.Serializable;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -31,32 +31,36 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 
 
-@Test(groups = TestGroups.DATABASE_FREE)
+@Test(groups = TestGroups.DATABASE_FREE /*, threadPoolSize = THREADPOOL_SIZE, invocationCount = INVOCATION_COUNT*/)
 public class SessionCacheTest {
-    private static final String NAMESPACE = "NAMESPACE";
-
-    private static final int THREADPOOL_SIZE = 10;
-    private static final int INVOCATION_COUNT = 50;
+    static final int THREADPOOL_SIZE = 50;
+    static final int INVOCATION_COUNT = 50;
     private static final TypeReference<TestData>
             TEST_DATA_TYPE_REFERENCE = new TypeReference<TestData>() {
     };
     private static final int MAX_CACHE_SIZE = 5;
-    private HttpSession session = null;
     private AtomicInteger cacheId;
+    private AtomicInteger uniqueId;
+    private static final MockServletContext context = new MockServletContext("ctx");
+    private MockHttpSession session = null;
 
     @BeforeClass(alwaysRun = true)
     public void beforeClass() {
         cacheId = new AtomicInteger(1);
+        uniqueId = new AtomicInteger(1);
     }
 
-    private SessionCache<TestData> buildSessionCache(final int maxCacheSize) throws Exception {
-        session = new MockHttpSession(new MockServletContext("ctx"));
-        return new SessionCache<>(session, NAMESPACE, maxCacheSize, TEST_DATA_TYPE_REFERENCE);
+    @BeforeMethod
+    public void setUp() throws Exception {
+        session = new MockHttpSession(context);
     }
 
-    @Test(threadPoolSize = THREADPOOL_SIZE, alwaysRun = true, invocationCount = INVOCATION_COUNT)
+    private SessionCache<TestData> buildSessionCache(final int maxCacheSize, String namespace) throws Exception {
+        return new SessionCache<>(session, namespace, maxCacheSize, TEST_DATA_TYPE_REFERENCE);
+    }
+
     public void testSingleItemCache() throws Exception {
-        SessionCache<TestData> sessionCache = buildSessionCache(MAX_CACHE_SIZE);
+        SessionCache<TestData> sessionCache = buildSessionCache(MAX_CACHE_SIZE, newNamespace());
         TestData data = new TestData("testSingleItemCache");
         String cacheKey = getCacheKey();
         sessionCache.put(cacheKey, data);
@@ -64,69 +68,49 @@ public class SessionCacheTest {
         assertThat(cachedData, equalTo(data));
     }
 
-    @Test(threadPoolSize = THREADPOOL_SIZE, alwaysRun = true, invocationCount = INVOCATION_COUNT)
+
     public void testReplaceItemInCache() throws Exception {
-        SessionCache<TestData> sessionCache = buildSessionCache(MAX_CACHE_SIZE);
-        TestData data = new TestData("testReplaceItemInCache");
-        TestData differentData = new TestData("Some other testReplaceItemInCache");
-        String cacheKey = getCacheKey();
+        String namespace = newNamespace();
+        SessionCache<TestData> sessionCache = buildSessionCache(MAX_CACHE_SIZE, namespace);
+        final TestData data = new TestData("testReplaceItemInCache");
+        final TestData differentData = new TestData("Some other testReplaceItemInCache");
+        final String cacheKey = getCacheKey();
         sessionCache.put(cacheKey, data);
         sessionCache.put(cacheKey, differentData);
         TestData cachedData = sessionCache.get(cacheKey);
         assertThat(cachedData, equalTo(differentData));
     }
 
-    @Test(threadPoolSize = THREADPOOL_SIZE, invocationCount = INVOCATION_COUNT)
-    public void testAddSameDataToCache() throws Exception {
-        SessionCache<TestData> sessionCache = buildSessionCache(THREADPOOL_SIZE);
-        TestData data = new TestData("testAddSameDataToCache");
-        String cacheKey = getCacheKey();
-        sessionCache.put(cacheKey, data);
-        TestData testData = sessionCache.get(cacheKey);
-        assertThat(testData, equalTo(data));
-    }
-
-    @Test(expectedExceptions = IllegalArgumentException.class)
+    @Test(threadPoolSize = THREADPOOL_SIZE, invocationCount = INVOCATION_COUNT, expectedExceptions = IllegalArgumentException.class)
     public void testAddToCacheNullNamespaceKey() throws Exception {
-        SessionCache<TestData> sessionCache = new SessionCache<>(session, null, TEST_DATA_TYPE_REFERENCE);
-        String key = getCacheKey();
-        TestData data = new TestData("testAddToCacheNullNamespaceKey");
-        sessionCache.put(key, data);
-        TestData cachedData = sessionCache.get(key);
-
-        assertThat(cachedData, nullValue());
+        new SessionCache<>(session, null, TEST_DATA_TYPE_REFERENCE);
     }
 
-    @Test(expectedExceptions = IllegalArgumentException.class)
+    @Test(threadPoolSize = THREADPOOL_SIZE, invocationCount = INVOCATION_COUNT, expectedExceptions = IllegalArgumentException.class)
     public void testAddToCacheNullCacheKey() throws Exception {
-        SessionCache<TestData> sessionCache = buildSessionCache(MAX_CACHE_SIZE);
-
+        SessionCache<TestData> sessionCache = buildSessionCache(MAX_CACHE_SIZE, newNamespace());
+        String cacheKey = null;
         TestData data = new TestData("testAddToCacheNullNamespaceKey");
-        sessionCache.put(null, data);
+        sessionCache.put(cacheKey, data);
+
         TestData cachedData = sessionCache.get(null);
 
         assertThat(cachedData, nullValue());
     }
 
-    @Test(threadPoolSize = THREADPOOL_SIZE, invocationCount = INVOCATION_COUNT)
     public void testMaxCacheSize() throws Exception {
-        String key1 = getCacheKey();
-        String key2 = getCacheKey();
-        String key3 = getCacheKey();
         int maxSize = 2;
-        SessionCache<TestData> sessionCache = buildSessionCache(maxSize);
+        String namespace = newNamespace();
+        SessionCache<TestData> sessionCache = buildSessionCache(maxSize, namespace);
 
         String dataName1 = generateDataName("testSingleItemCacheIsSingleItemCache", 1);
-        TestData data1 = new TestData(dataName1);
-        sessionCache.put(key1, data1);
+        String key1 = addTestDataToCache(sessionCache, dataName1);
 
         String dataName2 = generateDataName("testSingleItemCacheIsSingleItemCache", 2);
-        TestData data2 = new TestData(dataName2);
-        sessionCache.put(key2, data2);
+        addTestDataToCache(sessionCache, dataName2);
 
         String dataName3 = generateDataName("testSingleItemCacheIsSingleItemCache", 3);
-        TestData data3 = new TestData(dataName3);
-        sessionCache.put(key3, data3);
+        addTestDataToCache(sessionCache, dataName3);
 
         assertThat(sessionCache.size(), equalTo(maxSize));
         TestData fetchedData = sessionCache.get(key1);
@@ -137,35 +121,29 @@ public class SessionCacheTest {
         return String.format("%s %d", name, itemNumber);
     }
 
-    @Test(threadPoolSize = THREADPOOL_SIZE, invocationCount = INVOCATION_COUNT)
-    public void testMultiItemCache() throws Exception {
-        SessionCache<TestData> cache = buildSessionCache(MAX_CACHE_SIZE);
 
+    public void testMultiItemCache() throws Exception {
         String key1 = getCacheKey();
+        SessionCache<TestData> sessionCache = buildSessionCache(MAX_CACHE_SIZE, newNamespace());
         TestData data = new TestData("testMultiItemCache 1");
-        cache.put(key1, data);
+        sessionCache.put(key1, data);
 
         TestData data2 = new TestData("testMultiItemCache 2");
         String key2 = getCacheKey();
-        cache.put(key2, data2);
+        sessionCache.put(key2, data2);
 
-        TestData cachedData = cache.get(key1);
+        TestData cachedData = sessionCache.get(key1);
         assertThat(cachedData, equalTo(data));
 
-        cachedData = cache.get(key2);
+        cachedData = sessionCache.get(key2);
         assertThat(cachedData, equalTo(data2));
     }
 
-    @Test(threadPoolSize = THREADPOOL_SIZE, invocationCount = INVOCATION_COUNT)
-    public void testMultiItemDeleteFromCache() throws Exception {
-        SessionCache<TestData> sessionCache = buildSessionCache(MAX_CACHE_SIZE);
-        String key1 = getCacheKey();
-        TestData data = new TestData("testMultiItemDeleteFromCache");
-        sessionCache.put(key1, data);
 
-        TestData data2 = new TestData("more data");
-        String key2 = getCacheKey();
-        sessionCache.put(key2, data2);
+    public void testMultiItemDeleteFromCache() throws Exception {
+        SessionCache<TestData> sessionCache = buildSessionCache(MAX_CACHE_SIZE, newNamespace());
+        String key1 = addTestDataToCache(sessionCache, "testMultiItemDeleteFromCache");
+        addTestDataToCache(sessionCache, "more data");
 
         sessionCache.remove(key1);
         TestData cachedData = sessionCache.get(key1);
@@ -174,33 +152,58 @@ public class SessionCacheTest {
         assertThat(sessionCache.isEmpty(), is(false));
     }
 
-    @Test(threadPoolSize = 10, invocationCount = INVOCATION_COUNT)
-    public void testDeleteFromCache() throws Exception {
-        final String key = getCacheKey();
+    public void testSameDataMultipleNamespace() throws Exception {
+        String namespace = newNamespace();
+        SessionCache<TestData> cache1 = buildSessionCache(MAX_CACHE_SIZE, namespace);
 
-        SessionCache<TestData> sessionCache = buildSessionCache(MAX_CACHE_SIZE);
-        TestData data = new TestData("testDeleteFromCache");
-        sessionCache.put(key, data);
+        namespace = newNamespace();
+        SessionCache<TestData> cache2 = buildSessionCache(MAX_CACHE_SIZE, namespace);
+        String cacheKey = getCacheKey();
+        TestData data1 = new TestData("testSingleKeysMultipleNamespace 1");
+
+        cache1.put(cacheKey, data1);
+        assertThat(cache2.get(cacheKey), is(nullValue()));
+    }
+
+    private String newNamespace() {
+        return String.format("NAMESPACE_%d", uniqueId.incrementAndGet());
+    }
+
+    public void testDeleteFromCache() throws Exception {
+        SessionCache<TestData> sessionCache = buildSessionCache(MAX_CACHE_SIZE, newNamespace());
+        String key = addTestDataToCache(sessionCache, "testDeleteFromCache");
         assertThat(sessionCache.isEmpty(), is(false));
         sessionCache.remove(key);
         assertThat(sessionCache.containsKey(key), is(false));
     }
 
-    public void testRemoveAllFromCache() throws Exception {
-        SessionCache<TestData> sessionCache = buildSessionCache(MAX_CACHE_SIZE);
-        TestData testData = new TestData("testRemoveFromCache");
+    private String addTestDataToCache(SessionCache<TestData> sessionCache, String stringData) {
         String cacheKey = getCacheKey();
-        sessionCache.put(cacheKey, testData);
+        TestData data = new TestData(stringData);
+        sessionCache.put(cacheKey, data);
+        return cacheKey;
+    }
+
+    public void testRemoveAllFromCache() throws Exception {
+        String cacheKey = getCacheKey();
+        TestData data = new TestData("testRemoveFromCache");
+
+        SessionCache<TestData> sessionCache = buildSessionCache(MAX_CACHE_SIZE, newNamespace());
+
+        sessionCache.put(cacheKey, data);
         sessionCache.remove();
         assertThat(sessionCache.isEmpty(), is(true));
     }
 
     public void testRemoveAllFromCacheAndAdd() throws Exception {
-        SessionCache<TestData> sessionCache = buildSessionCache(MAX_CACHE_SIZE);
-        TestData testData = new TestData("testRemoveFromCache");
         String cacheKey = getCacheKey();
+        TestData testData = new TestData("testRemoveFromCacheAndAdd");
+
+        SessionCache<TestData> sessionCache = buildSessionCache(MAX_CACHE_SIZE, newNamespace());
+
         sessionCache.put(cacheKey, testData);
         sessionCache.remove();
+
         sessionCache.put(cacheKey, testData);
         assertThat(sessionCache.size(), is(1));
     }
@@ -211,7 +214,7 @@ public class SessionCacheTest {
     }
 
     public void testCompressData() throws Exception {
-        SessionCache<TestData> sessionCache = buildSessionCache(MAX_CACHE_SIZE);
+        SessionCache<TestData> sessionCache = buildSessionCache(MAX_CACHE_SIZE, newNamespace());
         String stringData = "some string data";
         TestData data = new TestData(stringData);
         byte[] compressed = sessionCache.compress(data);
@@ -219,7 +222,7 @@ public class SessionCacheTest {
     }
 
     public void testUncompressData() throws Exception {
-        SessionCache<TestData> sessionCache = buildSessionCache(MAX_CACHE_SIZE);
+        SessionCache<TestData> sessionCache = buildSessionCache(MAX_CACHE_SIZE, newNamespace());
         String stringData = "some string data";
         TestData testData = new TestData(stringData);
         byte[] compressed = sessionCache.compress(testData);
@@ -230,7 +233,7 @@ public class SessionCacheTest {
     @SuppressWarnings("unused")
     private static class TestData implements Serializable {
         private static final long serialVersionUID = 6042529638002075037L;
-        private Long nanoTime = System.nanoTime();
+        private static final Long nanoTime = System.nanoTime();
         private String data;
 
         public TestData() {
@@ -248,12 +251,8 @@ public class SessionCacheTest {
             this.data = data;
         }
 
-        public Long getNanoTime() {
+        Long getNanoTime() {
             return nanoTime;
-        }
-
-        public void setNanoTime(Long nanoTime) {
-            this.nanoTime = nanoTime;
         }
 
         @Override
@@ -274,17 +273,12 @@ public class SessionCacheTest {
             TestData testData = (TestData) o;
 
             return new EqualsBuilder()
-                    .append(getNanoTime(), testData.getNanoTime())
-                    .append(getData(), testData.getData())
-                    .isEquals();
+                    .append(getNanoTime(), testData.getNanoTime()).append(getData(), testData.getData()).isEquals();
         }
 
         @Override
         public int hashCode() {
-            return new HashCodeBuilder(17, 37)
-                    .append(getNanoTime())
-                    .append(getData())
-                    .toHashCode();
+            return new HashCodeBuilder(17, 37).append(getNanoTime()).append(getData()).toHashCode();
         }
     }
 }
