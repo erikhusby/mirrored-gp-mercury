@@ -880,6 +880,7 @@ public class    ProductOrderFixupTest extends Arquillian {
         utx.commit();
     }
 
+    @Test(enabled = false)
     public void support1798FixRegulatoryInfo() throws Exception {
         userBean.loginOSUser();
         beginTransaction();
