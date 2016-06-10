@@ -92,10 +92,6 @@ public class SessionCacheTest {
         String cacheKey = null;
         TestData data = new TestData("testAddToCacheNullNamespaceKey");
         sessionCache.put(cacheKey, data);
-
-        TestData cachedData = sessionCache.get(null);
-
-        assertThat(cachedData, nullValue());
     }
 
     public void testMaxCacheSize() throws Exception {
