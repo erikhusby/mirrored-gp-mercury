@@ -46,6 +46,7 @@ public class CreateFCTActionBean extends CoreActionBean {
     public static final String CLINICAL = "Clinical";
     public static final String RESEARCH = "Research";
     public static final String MIXED = "Clinical and Research";
+    public static final String CONTROLS = "Controls";
 
     public static final List<IlluminaFlowcell.FlowcellType> FLOWCELL_TYPES;
 
@@ -226,7 +227,7 @@ public class CreateFCTActionBean extends CoreActionBean {
                     }
                     // Adds in the unbucketed positive controls.
                     for (LabVessel startingVessel : loadingTubeToUnbucketedBatchStartingVessel.get(loadingTube)) {
-                        productToStartingVessel.put("Controls", startingVessel.getLabel());
+                        productToStartingVessel.put(CONTROLS, startingVessel.getLabel());
                         numberSamples += startingVessel.getSampleNames().size();
                     }
 
@@ -238,7 +239,8 @@ public class CreateFCTActionBean extends CoreActionBean {
                     for (String productName : productNameList) {
                         List<String> startingVessels = new ArrayList<>(productToStartingVessel.get(productName));
                         Collections.sort(startingVessels);
-                        startingVesselList.add("Bucketed tubes for " + productName + ": " +
+                        startingVesselList.add((productName.equals(CONTROLS) ?
+                                productName : "Bucketed tubes for " + productName) + ": " +
                                                StringUtils.join(startingVessels, ", "));
                     }
 
