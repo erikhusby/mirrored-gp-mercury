@@ -1406,8 +1406,10 @@ public class LabVesselSearchDefinition {
                 } else {
                     vessel.getContainerRole().applyCriteriaToAllPositions(infiniumAncestorCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
                 }
-                for (Pair<LabVessel, VesselPosition> labVesselVesselPositionPair : infiniumAncestorCriteria.getPositions()) {
-                    LabVessel plateVessel = labVesselVesselPositionPair.getLeft();
+
+                for (Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions
+                        : infiniumAncestorCriteria.getPositions().asMap().entrySet()) {
+                    LabVessel plateVessel = labVesselAndPositions.getKey();
                     if( plateVessel.getType() == LabVessel.ContainerType.PLATE_WELL ) {
                         result = plateVessel.getContainers().iterator().next().getLabel();
                         break;
@@ -1439,8 +1441,9 @@ public class LabVesselSearchDefinition {
                         ampPlateEventTypes, true, true);
                 vessel.evaluateCriteria(infiniumAncestorCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
 
-                for (Pair<LabVessel, VesselPosition> labVesselVesselPositionPair : infiniumAncestorCriteria.getPositions()) {
-                    result = labVesselVesselPositionPair.getRight().toString();
+                for (Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions
+                        : infiniumAncestorCriteria.getPositions().asMap().entrySet()) {
+                    result = labVesselAndPositions.getValue().iterator().next().toString();
                     break;
                 }
 
@@ -1479,8 +1482,9 @@ public class LabVesselSearchDefinition {
                     }
                 }
 
-                for (Pair<LabVessel, VesselPosition> labVesselVesselPositionPair : infiniumAncestorCriteria.getPositions()) {
-                    result = labVesselVesselPositionPair.getLeft().getLabel();
+                for(Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions
+                        : infiniumAncestorCriteria.getPositions().asMap().entrySet()) {
+                    result = labVesselAndPositions.getKey().getLabel();
                     break;
                 }
 
@@ -1505,9 +1509,9 @@ public class LabVesselSearchDefinition {
                 }
 
                 // DNA plate well event/vessel looks to descendant for chip well (1:1)
-                for (Pair<LabVessel, VesselPosition> labVesselVesselPositionPair
-                        : getChipDetailsForDnaWell(vessel, chipEventTypes)) {
-                    result = labVesselVesselPositionPair.getRight().toString();
+                for (Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions
+                        : getChipDetailsForDnaWell(vessel, chipEventTypes).asMap().entrySet()) {
+                    result = labVesselAndPositions.getValue().iterator().next().toString();
                     break;
                 }
 
@@ -1527,9 +1531,10 @@ public class LabVesselSearchDefinition {
                     return null;
                 }
 
-                for (Pair<LabVessel, VesselPosition> labVesselVesselPositionPair
-                        : getChipDetailsForDnaWell(vessel, chipEventTypes)) {
-                    (result==null?result=new HashSet<>():result).add(labVesselVesselPositionPair.getLeft().getLabel());
+                for (Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions
+                        : getChipDetailsForDnaWell(vessel, chipEventTypes).asMap().entrySet()) {
+                    (result==null?result=new HashSet<>():result).add(labVesselAndPositions.getKey().getLabel());
+                    break;
                 }
 
                 return result;
@@ -1659,9 +1664,10 @@ public class LabVesselSearchDefinition {
                 LabVessel labVessel = (LabVessel) entity;
 
                 results = new ArrayList<>();
-                for (Pair<LabVessel, VesselPosition> labVesselVesselPositionPair
-                        : getChipDetailsForDnaWell( labVessel, chipEventTypes ) ) {
-                    String label = labVesselVesselPositionPair.getLeft().getLabel();
+
+                for (Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions
+                        : getChipDetailsForDnaWell(labVessel, chipEventTypes).asMap().entrySet()) {
+                    String label = labVesselAndPositions.getKey().getLabel();
                     if (context.getResultCellTargetPlatform() != null
                             && context.getResultCellTargetPlatform() == SearchContext.ResultCellTargetPlatform.WEB) {
                         Map<String, String[]> terms = new HashMap<>();
@@ -1835,13 +1841,14 @@ public class LabVesselSearchDefinition {
 
     /**
      * Given a LabVessel representing a DNA plate well, get details of the associated Infinium plate and position
-     * @param dnaPlateWell
-     * @param chipEventTypes
-     * @return
+     * @param dnaPlateWell The DNA plate well to get the downstream Infinium chip details for.
+     * @param chipEventTypes The downstream event type(s) to capture to get Infinium chip details <br />
+     *                       ( INFINIUM_HYBRIDIZATION, but allow for flexibility )
+     * @return All downstream vessels and associated positions, if initial vessel not a plate well, ignore and return empty Map
      */
-    private Set<Pair<LabVessel, VesselPosition>> getChipDetailsForDnaWell( LabVessel dnaPlateWell, List<LabEventType> chipEventTypes ) {
+    private MultiValuedMap<LabVessel, VesselPosition> getChipDetailsForDnaWell( LabVessel dnaPlateWell, List<LabEventType> chipEventTypes ) {
         if(dnaPlateWell.getType() != LabVessel.ContainerType.PLATE_WELL ) {
-            return null;
+            return new HashSetValuedHashMap<>();
         }
 
         // Every Infinium event/vessel looks to descendant for chip barcode
