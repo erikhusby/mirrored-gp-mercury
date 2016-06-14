@@ -121,11 +121,16 @@ public class SessionCache<T> {
         }
         byte[] compressed = null;
         synchronized (sessionQueue) {
+            SimpleEntry<String, byte[]> cachedEntry=null;
             for (SimpleEntry<String, byte[]> cacheItem : sessionQueue) {
                 if (cacheItem.getKey().equals(cacheKey)) {
                     compressed = cacheItem.getValue();
+                    cachedEntry = sessionQueue.poll();
                     break;
                 }
+            }
+            if (cachedEntry != null) {
+                sessionQueue.add(cachedEntry);
             }
         }
         if (ArrayUtils.isNotEmpty(compressed)) {
@@ -157,25 +162,26 @@ public class SessionCache<T> {
         synchronized (sessionQueue) {
             if (compressed != null) {
                 final SimpleEntry<String, byte[]> cacheItem = new SimpleEntry<>(cacheKey, compressed);
-                boolean remove = false;
-                if (hasCacheEntry(cacheKey)) {
-                    remove = remove(cacheKey);
+                boolean removed = false;
+                SimpleEntry<String, byte[]> cacheEntry = getCacheEntry(cacheKey);
+                if (cacheEntry!=null) {
+                    removed = sessionQueue.remove(cacheEntry);
                 }
                 sessionQueue.add(cacheItem);
-                String verb = remove ? "Replacing" : "Adding";
+                String verb = removed ? "Replacing" : "Adding";
                 log.debug(
                         String.format("%s '%s' to '%s' cache. Cache size now: %d", verb, cacheKey, namespace, size()));
             }
         }
     }
 
-    private boolean hasCacheEntry(String cacheKey) {
+    private SimpleEntry<String, byte[]> getCacheEntry(String cacheKey) {
         for (SimpleEntry<String, byte[]> cacheEntry : sessionQueue) {
             if (cacheEntry.getKey().equals(cacheKey)) {
-                return true;
+                return cacheEntry;
             }
         }
-        return false;
+        return null;
     }
 
     /**

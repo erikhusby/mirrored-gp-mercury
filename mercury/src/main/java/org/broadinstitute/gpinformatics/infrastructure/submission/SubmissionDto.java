@@ -340,6 +340,10 @@ public class SubmissionDto implements Serializable {
         return statusDetailBean;
     }
 
+    public void setUuid(String uuid) {
+        this.uuid = uuid;
+    }
+
     public class SubmissionField {
         public static final String SAMPLE_NAME = "sampleName";
         public static final String DATA_TYPE = "dataType";

@@ -1,11 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.presentation.projects;
 
-import com.google.common.base.Function;
-import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Maps;
 import net.sourceforge.stripes.action.After;
 import net.sourceforge.stripes.action.Before;
 import net.sourceforge.stripes.action.DefaultHandler;
@@ -74,7 +69,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import javax.annotation.Nullable;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.text.MessageFormat;
@@ -1005,7 +999,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
                         researchProjectEjb
                                 .processSubmissions(researchProject, new BioProject(selectedProject.getAccession()),
                                         selectedSubmissions, submissionRepository, submissionLibraryDescriptor);
-                updateSubmissionSamples(selectedSubmissions);
+                updateUuid(selectedSubmissions);
                 addMessage("The selected samples for submission have been successfully posted to NCBI.  See the " +
                            "Submission Requests tab for further details");
             } catch (InformaticsServiceException | ValidationException e) {
@@ -1020,37 +1014,26 @@ public class ResearchProjectActionBean extends CoreActionBean {
     }
 
     /**
-     * update submissionSamples with provided values
+     * Update the actionBean's UUIDs with values in provided selectedSubmissons
      */
-    private void updateSubmissionSamples(List<SubmissionDto> selectedSubmissions) {
+    private void updateUuid(List<SubmissionDto> selectedSubmissions) {
         populateSubmissionSamples(false);
 
-        Iterable<SubmissionDto> withTuple = Iterables.filter(selectedSubmissions, new Predicate<SubmissionDto>() {
-            @Override
-            public boolean apply(@Nullable SubmissionDto input) {
-                boolean notNull = false;
-                if (input != null && input.getSubmissionTuple() != null) {
-                    notNull = true;
-                }
-
-                return notNull;
-            }
-        });
-        ImmutableMap<SubmissionTuple, SubmissionDto> submissionByTuple =
-                Maps.uniqueIndex(withTuple, new Function<SubmissionDto, SubmissionTuple>() {
-                    @SuppressWarnings("ConstantConditions")
-                    @Override
-                    public SubmissionTuple apply(@Nullable SubmissionDto input) {
-                        return input.getSubmissionTuple();
-                    }
-                });
-
-        for (SubmissionDto submissionSample : submissionSamples) {
-            SubmissionDto submittedSubmissionDto = submissionByTuple.get(submissionSample.getSubmissionTuple());
-            if (submittedSubmissionDto != null) {
-                submissionSample.setStatusDetailBean(submittedSubmissionDto.getStatusDetailBean());
+        Map<SubmissionTuple, String> tupleToUuidMap = new HashMap<>(submissionSamples.size());
+        for (SubmissionDto selectedSubmission : selectedSubmissions) {
+            SubmissionTuple submissionTuple = selectedSubmission.getSubmissionTuple();
+            if (submissionTuple != null && StringUtils.isNotBlank(selectedSubmission.getUuid())) {
+                tupleToUuidMap.put(submissionTuple, selectedSubmission.getUuid());
             }
         }
+
+        for (SubmissionDto submissionSample : submissionSamples) {
+            String uuid = tupleToUuidMap.get(submissionSample.getSubmissionTuple());
+            if (uuid != null) {
+                submissionSample.setUuid(uuid);
+            }
+        }
+        sessionCache.put(researchProject, submissionSamples);
     }
 
     // Complete Data getters are for the prepopulates on the create.jsp

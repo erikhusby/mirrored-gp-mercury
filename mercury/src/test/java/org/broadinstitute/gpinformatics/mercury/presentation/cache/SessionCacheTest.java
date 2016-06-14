@@ -70,6 +70,30 @@ public class SessionCacheTest {
         assertThat(cachedData, equalTo(data));
     }
 
+    public void testLsuBehavior() throws Exception {
+        String namespace = newNamespace();
+        SessionCache<TestData> sessionCache = buildSessionCache(2, namespace);
+        final TestData data1 = new TestData("Data 1");
+        final TestData data2 = new TestData("Data 2");
+        final TestData data3 = new TestData("Data 3");
+        final String cacheKey1 = getCacheKey();
+        final String cacheKey2 = getCacheKey();
+        final String cacheKey3 = getCacheKey();
+
+        sessionCache.put(cacheKey1, data1);
+        sessionCache.put(cacheKey2, data2);
+        // Cache order is now 'cacheKey1', 'cacheKey2'
+
+        // getting cacheKey1 should cause it to bubble up to the top of the queue.
+        TestData cachedData = sessionCache.get(cacheKey1);
+        // The order of the queue should be 'cacheKey2', 'cacheKey1'
+
+        sessionCache.put(cacheKey3, data3);
+        // The order of the queue should be 'cacheKey3', 'cacheKey1'
+        // 'cacheKey2' should have been ejected since the cache can only hold two items
+        cachedData = sessionCache.get(cacheKey2);
+        assertThat(cachedData, nullValue(TestData.class));
+    }
 
     public void testReplaceItemInCache() throws Exception {
         String namespace = newNamespace();
