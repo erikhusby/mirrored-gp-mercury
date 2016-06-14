@@ -119,21 +119,24 @@ public class SessionCache<T> {
         if (cacheKey == null) {
             throw new IllegalArgumentException(String.format("Cache key is null in '%s'", namespace));
         }
+        byte[] compressed = null;
         synchronized (sessionQueue) {
             for (SimpleEntry<String, byte[]> cacheItem : sessionQueue) {
                 if (cacheItem.getKey().equals(cacheKey)) {
-                    byte[] compressed = cacheItem.getValue();
-                    if (ArrayUtils.isNotEmpty(compressed)) {
-                        log.info(String.format("Cache hit for '%s' in '%s'", cacheKey, this.namespace));
-                        try {
-                            return decompress(compressed);
-                        } catch (IOException e) {
-                            throw new SessionCacheException("Could not retrieve item from cache", e);
-                        }
-                    }
+                    compressed = cacheItem.getValue();
+                    break;
                 }
             }
         }
+        if (ArrayUtils.isNotEmpty(compressed)) {
+            log.info(String.format("Cache hit for '%s' in '%s'", cacheKey, this.namespace));
+            try {
+                return decompress(compressed);
+            } catch (IOException e) {
+                throw new SessionCacheException(String.format("Could not retrieve item '%s' from cache", cacheKey), e);
+            }
+        }
+
         return null;
     }
 
@@ -144,7 +147,7 @@ public class SessionCache<T> {
         if (cacheKey == null) {
             throw new IllegalArgumentException(String.format("Cache cacheKey is null in '%s'", namespace));
         }
-        byte[] compressed = null;
+        byte[] compressed;
         try {
             compressed = compress(data);
         } catch (IOException e) {
@@ -174,18 +177,6 @@ public class SessionCache<T> {
         }
         return false;
     }
-
-    /**
-     * Remove all items from the cache. The namespace attribute on the session is not removed.
-     */
-    public void remove() {
-        log.debug(String.format("Removing all items from cache namespace %s", namespace));
-        synchronized (sessionQueue) {
-            sessionQueue.clear();
-            session.removeAttribute(namespace);
-        }
-    }
-
 
     /**
      * @return true if the cache is empty, or false if the cache is not empty.
