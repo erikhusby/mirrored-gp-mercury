@@ -144,37 +144,35 @@ public class SessionCache<T> {
         if (cacheKey == null) {
             throw new IllegalArgumentException(String.format("Cache cacheKey is null in '%s'", namespace));
         }
-
+        byte[] compressed = null;
+        try {
+            compressed = compress(data);
+        } catch (IOException e) {
+            String error = String.format("Could not serialize sampleData in '%s'", namespace);
+            throw new SessionCacheException(error, e);
+        }
         synchronized (sessionQueue) {
-            try {
-                final byte[] compressed = compress(data);
-                if (compressed != null) {
-                    final SimpleEntry<String, byte[]> cacheItem = new SimpleEntry<>(cacheKey, compressed);
-                    boolean remove = false;
-                    if (hasCacheEntry(cacheKey)) {
-                        remove = remove(cacheKey);
-                    }
-                    sessionQueue.add(cacheItem);
-                    String verb = remove ? "Replacing" : "Adding";
-                    log.debug(String.format("%s '%s' to '%s' cache. Cache size now: %d", verb, cacheKey, namespace, size()));
+            if (compressed != null) {
+                final SimpleEntry<String, byte[]> cacheItem = new SimpleEntry<>(cacheKey, compressed);
+                boolean remove = false;
+                if (hasCacheEntry(cacheKey)) {
+                    remove = remove(cacheKey);
                 }
-
-            } catch (IOException e) {
-                String error = String.format("Could not serialize sampleData in '%s'", namespace);
-                throw new SessionCacheException(error, e);
+                sessionQueue.add(cacheItem);
+                String verb = remove ? "Replacing" : "Adding";
+                log.debug(
+                        String.format("%s '%s' to '%s' cache. Cache size now: %d", verb, cacheKey, namespace, size()));
             }
         }
     }
 
     private boolean hasCacheEntry(String cacheKey) {
-        synchronized (sessionQueue) {
-            for (SimpleEntry<String, byte[]> cacheEntry : sessionQueue) {
-                if (cacheEntry.getKey().equals(cacheKey)) {
-                    return true;
-                }
+        for (SimpleEntry<String, byte[]> cacheEntry : sessionQueue) {
+            if (cacheEntry.getKey().equals(cacheKey)) {
+                return true;
             }
-            return false;
         }
+        return false;
     }
 
     /**
@@ -289,6 +287,4 @@ public class SessionCache<T> {
         ObjectMapper objectMapper = new ObjectMapper();
         return objectMapper.writeValueAsString(data);
     }
-
-
 }

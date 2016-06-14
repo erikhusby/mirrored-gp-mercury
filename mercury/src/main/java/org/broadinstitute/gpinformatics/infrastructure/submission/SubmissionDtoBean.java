@@ -17,23 +17,23 @@ import java.util.ArrayList;
 import java.util.List;
 
 @XmlRootElement
-public class SubmissionDataBean implements Serializable {
+public class SubmissionDtoBean implements Serializable {
     private static final long serialVersionUID = 9052015315572483720L;
 
-    public SubmissionDataBean() {
+    public SubmissionDtoBean() {
     }
 
-    private List<SubmissionData> submissionData=new ArrayList<>();
+    private List<SubmissionDto> submissionData=new ArrayList<>();
 
-    public SubmissionDataBean(List<SubmissionData> submissionData) {
+    public SubmissionDtoBean(List<SubmissionDto> submissionData) {
         this.submissionData = submissionData;
     }
 
-    public List<SubmissionData> getSubmissionData() {
+    public List<SubmissionDto> getSubmissionData() {
         return submissionData;
     }
 
-    public void setSubmissionData(List<SubmissionData> submissionData) {
+    public void setSubmissionData(List<SubmissionDto> submissionData) {
         this.submissionData = submissionData;
     }
 }

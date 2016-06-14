@@ -204,11 +204,11 @@ public class SubmissionDtoFetcher {
         return sampleSubmissionMap;
     }
 
-    public void refreshSubmissionStatuses(List<SubmissionData> submissionDataList) {
-        Map<String, SubmissionData> uuIdSubmisisonDataMap = new HashMap<>(submissionDataList.size());
-        for (SubmissionData submissionData : submissionDataList) {
-            if (StringUtils.isNotBlank(submissionData.getUuid())) {
-                uuIdSubmisisonDataMap.put(submissionData.getUuid(), submissionData);
+    public void refreshSubmissionStatuses(List<SubmissionDto> submissionDataList) {
+        Map<String, SubmissionDto> uuIdSubmisisonDataMap = new HashMap<>(submissionDataList.size());
+        for (SubmissionDto submissionDto : submissionDataList) {
+            if (StringUtils.isNotBlank(submissionDto.getUuid())) {
+                uuIdSubmisisonDataMap.put(submissionDto.getUuid(), submissionDto);
             }
         }
         Set<String> uuIds = uuIdSubmisisonDataMap.keySet();
@@ -216,8 +216,8 @@ public class SubmissionDtoFetcher {
             Collection<SubmissionStatusDetailBean> submissionDetailBeans =
                     submissionsService.getSubmissionStatus(uuIds.toArray(new String[uuIds.size()]));
             for (SubmissionStatusDetailBean statusDetailBean : submissionDetailBeans) {
-                SubmissionData submissionData = uuIdSubmisisonDataMap.get(statusDetailBean.getUuid());
-                submissionData.updateStatusDetail(statusDetailBean);
+                SubmissionDto submissionDto = uuIdSubmisisonDataMap.get(statusDetailBean.getUuid());
+                submissionDto.setStatusDetailBean(statusDetailBean);
             }
         }
     }

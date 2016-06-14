@@ -1,6 +1,11 @@
 package org.broadinstitute.gpinformatics.athena.presentation.projects;
 
+import com.google.common.base.Function;
+import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
 import net.sourceforge.stripes.action.After;
 import net.sourceforge.stripes.action.Before;
 import net.sourceforge.stripes.action.DefaultHandler;
@@ -43,7 +48,6 @@ import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.Proje
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bass.BassFileType;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProjectList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
@@ -51,7 +55,6 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.collaborate.CollaborationNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.collaborate.CollaborationPortalException;
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
-import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionData;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDto;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDtoFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionLibraryDescriptor;
@@ -71,6 +74,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.text.MessageFormat;
@@ -193,7 +197,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     })
     private ResearchProject editResearchProject;
 
-    private List<SubmissionData> submissionSamples = new ArrayList<>();
+    private List<SubmissionDto> submissionSamples = new ArrayList<>();
     /*
      * The search query.
      */
@@ -224,9 +228,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
     @Inject
     private AlignerDao alignerDao;
 
-    private SessionCache<List<SubmissionData>> sessionCache;
-    public static final TypeReference<List<SubmissionData>> SUBMISSION_SAMPLES_TYPE_REFERENCE =
-            new TypeReference<List<SubmissionData>>() {
+    private SessionCache<List<SubmissionDto>> sessionCache;
+    public static final TypeReference<List<SubmissionDto>> SUBMISSION_SAMPLES_TYPE_REFERENCE =
+            new TypeReference<List<SubmissionDto>>() {
             };
 
     public Map<String, String> getBioSamples() {
@@ -908,25 +912,35 @@ public class ResearchProjectActionBean extends CoreActionBean {
     private void updateSubmissionSamples() {
         if (editResearchProject != null) {
             try {
-                submissionSamples = sessionCache.get(researchProject);
-                if (submissionSamples == null) {
-                    submissionSamples = new ArrayList<>();
-                    for (SubmissionDto submissionDto : submissionDtoFetcher.fetch(editResearchProject)) {
-                        SubmissionData submissionData = submissionDto.submissionData();
-                        submissionSamples.add(submissionData);
-                    }
-                } else {
-                    if (!submissionSamples.isEmpty()) {
-
-                        // When getting cached submissions always update the submissionStatus.
-                        submissionDtoFetcher.refreshSubmissionStatuses(submissionSamples);
-                        sessionCache.put(researchProject, submissionSamples);
-                    }
-                }
+                populateSubmissionSamples(true);
             } catch (SessionCacheException e) {
                 log.error("Error retrieving samples from cache", e);
             }
         }
+    }
+
+    /**
+     * Populate the submissionSamples variable with either cached or fresh values if they are not in the cache.
+     *
+     * @param refreshSubmissionStatus if true the SubmissionStatus is updated.
+     */
+    private void populateSubmissionSamples(boolean refreshSubmissionStatus) {
+        try {
+            submissionSamples = sessionCache.get(researchProject);
+        } catch (SessionCacheException e) {
+            submissionSamples = null;
+            log.error("Could not load samples from cache.", e);
+        }
+        if (submissionSamples == null) {
+            submissionSamples = submissionDtoFetcher.fetch(editResearchProject);
+        } else {
+
+            // When getting cached submissions update the submissionStatus if requested.
+            if (!submissionSamples.isEmpty() && refreshSubmissionStatus) {
+                submissionDtoFetcher.refreshSubmissionStatuses(submissionSamples);
+            }
+        }
+        sessionCache.put(researchProject, submissionSamples);
     }
 
 
@@ -991,21 +1005,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
                         researchProjectEjb
                                 .processSubmissions(researchProject, new BioProject(selectedProject.getAccession()),
                                         selectedSubmissions, submissionRepository, submissionLibraryDescriptor);
-                Map<SubmissionTuple, SubmissionDto> newSubmissionDtoMap = new HashMap<>(selectedSubmissions.size());
-                for (SubmissionDto selectedSubmission : selectedSubmissions) {
-                    newSubmissionDtoMap.put(selectedSubmission.getBassDTO().getTuple(), selectedSubmission);
-                }
-                submissionSamples = sessionCache.get(researchProject);
-                for (SubmissionData submissionSample : submissionSamples) {
-                    SubmissionTuple tuple = new SubmissionTuple(submissionSample.getSampleName(),
-                            BassFileType.byBassValue(submissionSample.getFileTypeString()),
-                            String.valueOf(submissionSample.getVersion()));
-                    SubmissionDto submissionDto = newSubmissionDtoMap.get(tuple);
-                    if (submissionDto != null) {
-                        submissionSample.updateStatusDetail(submissionDto.getStatusDetailBean());
-                    }
-                }
-                sessionCache.put(researchProject, submissionSamples);
+                updateSubmissionSamples(selectedSubmissions);
                 addMessage("The selected samples for submission have been successfully posted to NCBI.  See the " +
                            "Submission Requests tab for further details");
             } catch (InformaticsServiceException | ValidationException e) {
@@ -1017,6 +1017,40 @@ public class ResearchProjectActionBean extends CoreActionBean {
         return new RedirectResolution(ResearchProjectActionBean.class, VIEW_ACTION)
                 .addParameter(RESEARCH_PROJECT_PARAMETER, researchProject)
                 .addParameter(RESEARCH_PROJECT_TAB_PARAMETER, RESEARCH_PROJECT_SUBMISSIONS_TAB);
+    }
+
+    /**
+     * update submissionSamples with provided values
+     */
+    private void updateSubmissionSamples(List<SubmissionDto> selectedSubmissions) {
+        populateSubmissionSamples(false);
+
+        Iterable<SubmissionDto> withTuple = Iterables.filter(selectedSubmissions, new Predicate<SubmissionDto>() {
+            @Override
+            public boolean apply(@Nullable SubmissionDto input) {
+                boolean notNull = false;
+                if (input != null && input.getSubmissionTuple() != null) {
+                    notNull = true;
+                }
+
+                return notNull;
+            }
+        });
+        ImmutableMap<SubmissionTuple, SubmissionDto> submissionByTuple =
+                Maps.uniqueIndex(withTuple, new Function<SubmissionDto, SubmissionTuple>() {
+                    @SuppressWarnings("ConstantConditions")
+                    @Override
+                    public SubmissionTuple apply(@Nullable SubmissionDto input) {
+                        return input.getSubmissionTuple();
+                    }
+                });
+
+        for (SubmissionDto submissionSample : submissionSamples) {
+            SubmissionDto submittedSubmissionDto = submissionByTuple.get(submissionSample.getSubmissionTuple());
+            if (submittedSubmissionDto != null) {
+                submissionSample.setStatusDetailBean(submittedSubmissionDto.getStatusDetailBean());
+            }
+        }
     }
 
     // Complete Data getters are for the prepopulates on the create.jsp
@@ -1256,11 +1290,11 @@ public class ResearchProjectActionBean extends CoreActionBean {
         return validCollaborationPortal;
     }
 
-    public List<SubmissionData> getSubmissionSamples() {
+    public List<SubmissionDto> getSubmissionSamples() {
         return submissionSamples;
     }
 
-    public void setSubmissionSamples(List<SubmissionData> submissionSamples) {
+    public void setSubmissionSamples(List<SubmissionDto> submissionSamples) {
         this.submissionSamples = submissionSamples;
     }
 
