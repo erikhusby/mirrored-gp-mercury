@@ -334,6 +334,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
                 collaborationData = null;
                 validCollaborationPortal = false;
             }
+            setSubmissionLibraryDescriptors(submissionsService.getSubmissionLibraryDescriptors());
+            setSubmissionRepositories(submissionsService.getSubmissionRepositories());
+
             if (submissionLibraryDescriptor == null) {
                 submissionLibraryDescriptor = findDefaultSubmissionType(editResearchProject);
                 if (submissionLibraryDescriptor != null) {
@@ -341,14 +344,13 @@ public class ResearchProjectActionBean extends CoreActionBean {
                 }
             }
             if (submissionRepository == null) {
-                String lookupRepository = null;
-                if (StringUtils.isNotBlank(selectedSubmissionRepository)) {
-                    lookupRepository = selectedSubmissionRepository;
-                } else {
-                    lookupRepository = editResearchProject.getSubmissionRepositoryName();
+                if (StringUtils.isBlank(selectedSubmissionRepository)) {
+                    selectedSubmissionRepository = editResearchProject.getSubmissionRepositoryName();
                 }
-                if (!StringUtils.isBlank(lookupRepository)) {
-                    submissionRepository = submissionsService.findRepositoryByKey(lookupRepository);
+                if (StringUtils.isBlank(selectedSubmissionRepository)) {
+                    if (getActiveRepositories().size() == 1) {
+                        selectedSubmissionRepository = getActiveRepositories().iterator().next().getName();
+                    }
                 }
             }
         } else {
@@ -359,8 +361,6 @@ public class ResearchProjectActionBean extends CoreActionBean {
             }
         }
 
-        setSubmissionLibraryDescriptors(submissionsService.getSubmissionLibraryDescriptors());
-        setSubmissionRepositories(submissionsService.getSubmissionRepositories());
         populateTokenListsFromObjectData();
 
         if (StringUtils.isBlank(editResearchProject.getReferenceSequenceKey())) {
