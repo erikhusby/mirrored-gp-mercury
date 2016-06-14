@@ -1980,6 +1980,123 @@
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>Library Construction Hyper Prep</name>
+        <workflowProcessDefVersions>
+            <version>1.0</version>
+            <effectiveDate>2012-09-30T21:03:24.085-04:00</effectiveDate>
+            <workflowStepDefs>
+                <name>EndRepair</name>
+                <labEventTypes>END_REPAIR</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>PostEndRepairThermoCyclerLoaded</name>
+                <labEventTypes>POST_END_REPAIR_THERMO_CYCLER_LOADED</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Indexed Adaptor Ligation</name>
+                <labEventTypes>INDEXED_ADAPTER_LIGATION</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>PostIndexedAdapterLigationThermoCyclerLoaded</name>
+                <labEventTypes>POST_INDEXED_ADAPTER_LIGATION_THERMO_CYCLER_LOADED</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Adaptor Ligation Cleanup</name>
+                <labEventTypes>ADAPTER_LIGATION_CLEANUP</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Index P5 Pond Enrichment</name>
+                <labEventTypes>INDEX_P5_POND_ENRICHMENT</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Pond Registration</name>
+                <labEventTypes>POND_REGISTRATION</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>In Hyb Sel</statusTransition>
+                </jiraTransition>
+                <ancestryEtlFlag>true</ancestryEtlFlag>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Pond Pico</name>
+                <labEventTypes>POND_PICO</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>10X</name>
+        <workflowProcessDefVersions>
+            <version>1.0</version>
+            <effectiveDate>2016-06-06T10:03:24.085-04:00</effectiveDate>
+            <workflowStepDefs>
+                <name>10X Make Plate</name>
+                <labEventTypes>TENX_MAKE_PLATE</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>10X Chip Loading</name>
+                <labEventTypes>TENX_CHIP_LOADING</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>10X Chip Unloading</name>
+                <labEventTypes>TENX_CHIP_UNLOADING</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>10X Emulsion Breaking</name>
+                <labEventTypes>TENX_EMULSION_BREAKING</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>10X Dynabead Cleanup</name>
+                <labEventTypes>TENX_DYNABEAD_CLEANUP</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>10X Pre LC Spri</name>
+                <labEventTypes>TENX_PRE_LC_SPRI</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
     <productWorkflowDefs>
         <name>Agilent Exome Express</name>
         <productWorkflowDefVersions>
@@ -2126,6 +2243,26 @@
             <workflowProcessDefs>CRSP Ribo/Plating</workflowProcessDefs>
             <workflowProcessDefs>TruSeq Strand Specific</workflowProcessDefs>
             <workflowProcessDefs>QTP</workflowProcessDefs>
+            <workflowProcessDefs>HiSEQ</workflowProcessDefs>
+            <sequencingConfigDefs>Resequencing-Pool-Default</sequencingConfigDefs>
+            <sequencingConfigDefs>Amplicon-Pool-Default</sequencingConfigDefs>
+            <sequencingConfigDefs>Resequencing-Pool-Amplicon</sequencingConfigDefs>
+            <sequencingConfigDefs>Amplicon-Pool-Amplicon</sequencingConfigDefs>
+            <sequencingConfigDefs>Resequencing-Production</sequencingConfigDefs>
+            <routingRule>MERCURY</routingRule>
+            <inValidation>false</inValidation>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>10X</name>
+        <productWorkflowDefVersions>
+            <version>1.0</version>
+            <effectiveDate>2016-06-06T10:03:24.085-04:00</effectiveDate>
+            <workflowProcessDefs>Pico/Plating</workflowProcessDefs>
+            <workflowProcessDefs>10X</workflowProcessDefs>
+            <workflowProcessDefs>Library Construction Hyper Prep</workflowProcessDefs>
+            <workflowProcessDefs>QTP</workflowProcessDefs>
+            <workflowProcessDefs>MiSEQ</workflowProcessDefs>
             <workflowProcessDefs>HiSEQ</workflowProcessDefs>
             <sequencingConfigDefs>Resequencing-Pool-Default</sequencingConfigDefs>
             <sequencingConfigDefs>Amplicon-Pool-Default</sequencingConfigDefs>

@@ -24,6 +24,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -156,10 +157,16 @@ public class LabMetricSearchDefinition {
         searchTerm = new SearchTerm();
         searchTerm.setName("LCSET");
         criteriaPaths = new ArrayList<>();
+
+        // Mercury only cares about workflow batches
+        SearchTerm.ImmutableTermFilter workflowOnlyFilter = new SearchTerm.ImmutableTermFilter(
+                "labBatchType", SearchInstance.Operator.EQUALS, LabBatch.LabBatchType.WORKFLOW);
+
         // Non-reworks
         criteriaPath = new SearchTerm.CriteriaPath();
         criteriaPath.setCriteria(Arrays.asList("metricsVessel", "labBatches", "labBatch"));
         criteriaPath.setPropertyName("batchName");
+        criteriaPath.addImmutableTermFilter(workflowOnlyFilter);
         criteriaPath.setJoinFetch(Boolean.TRUE);
         criteriaPaths.add(criteriaPath);
         // Reworks
@@ -170,6 +177,7 @@ public class LabMetricSearchDefinition {
         criteriaPath.setCriteria(Arrays.asList("metricsVessel", "labMetrics"));
         criteriaPath.setNestedCriteriaPath(nestedCriteriaPath);
         criteriaPath.setPropertyName("batchName");
+        criteriaPath.addImmutableTermFilter(workflowOnlyFilter);
         criteriaPath.setJoinFetch(Boolean.TRUE);
         criteriaPaths.add(criteriaPath);
         searchTerm.setCriteriaPaths(criteriaPaths);
@@ -275,11 +283,10 @@ public class LabMetricSearchDefinition {
                 labMetric.getLabVessel().evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
 
                 Set<String> barcodes = null;
-                if (!eval.getPositions().isEmpty()) {
-                    barcodes = new HashSet<>();
-                    for( Pair<LabVessel,VesselPosition> positionPair : eval.getPositions() ) {
-                        barcodes.add(positionPair.getLeft().getLabel());
-                    }
+                for(Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions
+                        : eval.getPositions().asMap().entrySet()) {
+                        (barcodes==null?barcodes = new HashSet<>():barcodes)
+                                .add(labVesselAndPositions.getKey().getLabel());
                 }
                 return barcodes;
             }

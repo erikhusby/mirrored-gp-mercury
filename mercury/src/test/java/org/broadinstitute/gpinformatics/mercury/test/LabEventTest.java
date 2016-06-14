@@ -7,8 +7,13 @@ import org.apache.commons.collections4.map.LazySortedMap;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSetVolumeConcentration;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSetVolumeConcentrationProducer;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -25,9 +30,13 @@ import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferEntityGrapher;
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferVisualizer;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ChildVesselBean;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchResource;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ParentVesselBean;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.TubeBean;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexingSchemeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -36,6 +45,7 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactory;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.control.zims.ZimsIlluminaRunFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
@@ -86,6 +96,7 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.QtpJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.SageEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ShearingEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.StoolTNAEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.TruSeqStrandSpecificEntityBuilder;
 import org.easymock.EasyMock;
 import org.hamcrest.MatcherAssert;
@@ -1495,9 +1506,12 @@ public class LabEventTest extends BaseEventTest {
         // Use Standard Exome product, to verify that workflow is taken from LCSet, not Product
         int numSamples = NUM_POSITIONS_IN_RACK - 2;
         ProductOrder productOrder = ProductOrderTestFactory.buildIceProductOrder(numSamples);
+        productOrder.getResearchProject().setRegulatoryDesignation(
+                ResearchProject.RegulatoryDesignation.CLINICAL_DIAGNOSTICS);
         Date runDate = new Date();
         // todo jmt create bucket, then batch, rather than rack then batch then bucket
-        Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
+        Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R",
+                MercurySample.MetadataSource.MERCURY);
         LabBatch workflowBatch = new LabBatch("Exome Express Batch",
                 new HashSet<LabVessel>(mapBarcodeToTube.values()),
                 LabBatch.LabBatchType.WORKFLOW);
@@ -1619,6 +1633,46 @@ public class LabEventTest extends BaseEventTest {
     }
 
     /**
+     * Build object graph for stool extraction to TNA messages
+     */
+    @Test(groups = {TestGroups.DATABASE_FREE})
+    public void testStoolExtractionToTNA() {
+        expectedRouting = SystemRouter.System.MERCURY;
+        SimpleDateFormat sdf = new SimpleDateFormat("MMddHHmmss");
+        String suffix = sdf.format(new Date());
+
+        ArrayList<ChildVesselBean> childVesselBeans = new ArrayList<>();
+        childVesselBeans.add(new ChildVesselBean(null, "SM-1234" + suffix, "Well [200uL]", "A01"));
+        childVesselBeans.add(new ChildVesselBean(null, "SM-2345" + suffix, "Well [200uL]", "A02"));
+        ParentVesselBean parentVesselBean =
+                new ParentVesselBean("P1234" + suffix, null, "Plate96Well200PCR", childVesselBeans);
+
+        BSPUserList testUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
+        LabVesselFactory labVesselFactory = new LabVesselFactory();
+        labVesselFactory.setBspUserList(testUserList);
+
+        String batchId = "BP-" + suffix;
+        List<LabVessel> startingVessels = labVesselFactory.buildLabVesselDaoFree(
+                new HashMap<String, LabVessel>(), new HashMap<String, MercurySample>(),
+                new HashMap<String, Set<ProductOrderSample>>(), "jowalsh",
+                new Date(), Arrays.asList(parentVesselBean),
+                null, MercurySample.MetadataSource.BSP);
+        Set<LabVessel> labVesselSet = new HashSet<>(startingVessels);
+        LabBatch labBatch = new LabBatch(batchId, labVesselSet,
+                        LabBatch.LabBatchType.BSP);
+
+        StaticPlate sourcePlate = (StaticPlate) labBatch.getStartingBatchLabVessels().iterator().next();
+
+        int numSamples = childVesselBeans.size();
+        StoolTNAEntityBuilder stoolTNAEntityBuilder = runStoolExtractionToTNAProcess(
+                sourcePlate, numSamples, "StoolXTR");
+        Set<SampleInstanceV2> dnaSamples = stoolTNAEntityBuilder.getStoolDNATubeRack().getSampleInstancesV2();
+        Set<SampleInstanceV2> rnaSamples = stoolTNAEntityBuilder.getStoolRNATubeRack().getSampleInstancesV2();
+        Assert.assertEquals(dnaSamples.size(), numSamples, "Wrong number of sample instances");
+        Assert.assertEquals(rnaSamples.size(), numSamples, "Wrong number of sample instances");
+    }
+
+    /**
      * Build object graph for Array Plating messages
      */
     @Test(groups = {TestGroups.DATABASE_FREE})
@@ -1642,6 +1696,36 @@ public class LabEventTest extends BaseEventTest {
         }
 
         runArrayPlatingProcess(mapBarcodeToDaughterTube, "Infinium");
+    }
+
+    /**
+     * Build object graph for 10X messages
+     */
+    @Test(groups = {TestGroups.DATABASE_FREE})
+    public void testTenX() {
+        expectedRouting = SystemRouter.System.MERCURY;
+        int numSamples = NUM_POSITIONS_IN_RACK - 2;
+        ProductOrder productOrder = ProductOrderTestFactory.buildArrayPlatingProductOrder(numSamples);
+        Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
+
+        LabBatch workflowBatch = new LabBatch("10X Batch",
+                new HashSet<LabVessel>(mapBarcodeToTube.values()),
+                LabBatch.LabBatchType.WORKFLOW);
+        workflowBatch.setWorkflow(Workflow.TEN_X);
+        bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, "1");
+
+        TubeFormation daughterTubeFormation = daughterPlateTransfer(mapBarcodeToTube, workflowBatch);
+
+        Map<String, BarcodedTube> mapBarcodeToDaughterTube = new HashMap<>();
+        for (BarcodedTube barcodedTube : daughterTubeFormation.getContainerRole().getContainedVessels()) {
+            mapBarcodeToDaughterTube.put(barcodedTube.getLabel(), barcodedTube);
+        }
+        PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube,
+                String.valueOf(
+                        LabEventTest.NUM_POSITIONS_IN_RACK),
+                "1", true);
+
+        runTenXProcess(picoPlatingEntityBuilder.getNormBarcodeToTubeMap(), "10X");
     }
 
     /**

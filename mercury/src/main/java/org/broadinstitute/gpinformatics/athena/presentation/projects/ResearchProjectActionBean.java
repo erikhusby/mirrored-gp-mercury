@@ -876,6 +876,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
                 addMessage("The selected samples for submission have been successfully posted to NCBI.  See the " +
                            "Submission Requests tab for further details");
             } catch (InformaticsServiceException | ValidationException e) {
+                log.error(e.getMessage(), e);
                 addGlobalValidationError(e.getMessage());
             }
         }

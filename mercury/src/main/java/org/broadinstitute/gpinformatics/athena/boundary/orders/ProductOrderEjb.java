@@ -22,8 +22,10 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
+import org.broadinstitute.gpinformatics.athena.entity.orders.StaleLedgerUpdateException;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
+import org.broadinstitute.gpinformatics.infrastructure.ValidationWithRollbackException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPKitRequestService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
@@ -967,6 +969,9 @@ public class ProductOrderEjb {
 
         // If removeAll returns false, no samples were removed -- should never happen.
         if (productOrder.getSamples().removeAll(samples)) {
+            for (ProductOrderSample sample : samples) {
+                sample.remove();
+            }
             String nameList = StringUtils.join(ProductOrderSample.getSampleNames(samples), ",");
             productOrder.prepareToSave(userBean.getBspUser());
             productOrderDao.persist(productOrder);
@@ -1096,6 +1101,39 @@ public class ProductOrderEjb {
 //            pdoIssue.addComment(String.format("Work request %s is associated with LCSet %s",
 //                    createdWorkRequestResults.getWorkRequestId(), squidInput.getLcsetId()));
         }
+    }
+
+    /**
+     * Apply a collection of ledger updates for some product order samples. The update requests have the previous
+     * quantities as well as the new quantities being requested. The previous quantities represent those that were in
+     * effect when the decision to change the quantity was made. Across a sequence of web requests, it is possible that
+     * those quantities have changed for other reasons, so this protects users from making billing decisions based on
+     * outdated information.
+     *
+     * @param ledgerUpdates a map of PDO sample to a collection of ledger updates
+     * @throws StaleLedgerUpdateException if the previous quantity in any ledger update is out-of-date
+     */
+    public void updateSampleLedgers(Map<ProductOrderSample, Collection<ProductOrderSample.LedgerUpdate>> ledgerUpdates)
+            throws ValidationWithRollbackException {
+        List<String> errorMessages = new ArrayList<>();
+
+        for (Map.Entry<ProductOrderSample, Collection<ProductOrderSample.LedgerUpdate>> entry : ledgerUpdates
+                .entrySet()) {
+            ProductOrderSample productOrderSample = entry.getKey();
+            Collection<ProductOrderSample.LedgerUpdate> updates = entry.getValue();
+            for (ProductOrderSample.LedgerUpdate update : updates) {
+                try {
+                    productOrderSample.applyLedgerUpdate(update);
+                } catch (Exception e) {
+                    errorMessages.add(e.getMessage());
+                }
+            }
+        }
+
+        if (!errorMessages.isEmpty()) {
+            throw new ValidationWithRollbackException("Error updating ledger quantities", errorMessages);
+        }
+        productOrderDao.flush();
     }
 
     @Inject

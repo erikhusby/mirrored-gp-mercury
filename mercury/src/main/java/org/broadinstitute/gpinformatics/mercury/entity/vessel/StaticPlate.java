@@ -59,7 +59,8 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
         SpinColumn96SlotRack("SpinColumn96SlotRack", VesselGeometry.G12x8),
         InfiniumChip24("InfiniumChip24", VesselGeometry.INFINIUM_24_CHIP),
         InfiniumChip12("InfiniumChip12", VesselGeometry.INFINIUM_12_CHIP),
-        InfiniumChip8("InfiniumChip8", VesselGeometry.INFINIUM_8_CHIP);
+        InfiniumChip8("InfiniumChip8", VesselGeometry.INFINIUM_8_CHIP),
+        TenXChip("10XChip", VesselGeometry.TEN_X_CHIP);
 
         /**
          * The name that will be supplied by automation scripts.
