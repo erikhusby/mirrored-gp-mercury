@@ -18,7 +18,7 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.codehaus.jackson.type.TypeReference;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import java.io.Serializable;
@@ -52,7 +52,7 @@ public class SessionCacheTest {
         uniqueId = new AtomicInteger(1);
     }
 
-    @BeforeMethod
+    @BeforeTest
     public void setUp() throws Exception {
         session = new MockHttpSession(context);
     }
