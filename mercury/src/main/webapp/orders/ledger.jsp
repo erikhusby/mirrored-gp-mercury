@@ -80,6 +80,14 @@
             background-color: lawngreen;
         }
 
+        .oldDateComplete {
+            background-color: #FFCC66;
+        }
+
+        .futureDateComplete {
+            background-color: #FF9999;
+        }
+
         .changed.ui-state-disabled,
         .changed.hasDatepicker:disabled {
             background-color: springgreen;
@@ -101,6 +109,8 @@
 
         // Holds AJAX-fetched ledger data for the data table
         var ledgerDetails;
+
+        var dateCompleteWarningThreshold = new Date(${actionBean.threeMonthsAgo});
 
         $j(document).ready(function() {
 
@@ -194,7 +204,7 @@
             /*
              * Set up date pickers for date complete.
              */
-            $j('.dateComplete').datepicker({ dateFormat: 'M d, yy' }).datepicker('refresh');
+            $j('.dateComplete').datepicker({ dateFormat: 'M d, yy', maxDate: 0 }).datepicker('refresh');
 
             /**
              * When rows are selected and one "date complete" is changed, change all selected rows.
@@ -212,13 +222,22 @@
                             $selectedInput.val(value);
                             var changed = value != $selectedInput.attr('originalValue');
                             $selectedInput.toggleClass('changed', changed);
+                            updateDateCompleteValidation($selectedInput);
                         }
                     }
                 }
                 var changed = value != $input.attr('originalValue');
                 $input.toggleClass('changed', changed);
+                updateDateCompleteValidation($input);
+
                 updateSubmitButton();
             });
+
+            // Update display styles for all date complete inputs when the page loads.
+            var dateCompleteInputs = $j('.dateComplete');
+            for (var i = 0; i < dateCompleteInputs.length; i++) {
+                updateDateCompleteValidation(dateCompleteInputs.eq(i));
+            }
 
             /*
              * Set up hSpinner widgets for controlling ledger quantities.
@@ -454,6 +473,16 @@
         }
 
         /**
+         * Updates the style for date complete inputs based on range validation rules.
+         */
+        function updateDateCompleteValidation($input) {
+            var value = $input.val();
+            var date = new Date(value);
+            $input.toggleClass('oldDateComplete', date.getTime() < dateCompleteWarningThreshold.getTime());
+            $input.toggleClass('futureDateComplete', date.getTime() > new Date().getTime());
+        }
+
+        /**
          * Updates display/style for a sample based on whether or not there is (or will be after any modifications are
          * saved) any ledger entries that have not been billed yet. This is indicated both as a style on the quantity
          * and as an asterisk in the "Billed" column. This is an indication that whether or not the sample is billed is
@@ -474,7 +503,6 @@
                 datePicker.datepicker('disable');
             }
         }
-
 
         function autoFill() {
             $j('#ledger .autoFillQuantity').each(function() {
