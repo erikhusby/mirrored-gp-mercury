@@ -24,6 +24,8 @@ import org.testng.annotations.Test;
 import java.io.Serializable;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static org.broadinstitute.gpinformatics.mercury.presentation.cache.SessionCacheTest.INVOCATION_COUNT;
+import static org.broadinstitute.gpinformatics.mercury.presentation.cache.SessionCacheTest.THREADPOOL_SIZE;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
@@ -31,7 +33,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 
 
-@Test(groups = TestGroups.DATABASE_FREE /*, threadPoolSize = THREADPOOL_SIZE, invocationCount = INVOCATION_COUNT*/)
+@Test(groups = TestGroups.DATABASE_FREE, threadPoolSize = THREADPOOL_SIZE, invocationCount = INVOCATION_COUNT)
 public class SessionCacheTest {
     static final int THREADPOOL_SIZE = 50;
     static final int INVOCATION_COUNT = 50;
@@ -81,12 +83,12 @@ public class SessionCacheTest {
         assertThat(cachedData, equalTo(differentData));
     }
 
-    @Test(threadPoolSize = THREADPOOL_SIZE, invocationCount = INVOCATION_COUNT, expectedExceptions = IllegalArgumentException.class)
+    @Test(expectedExceptions = IllegalArgumentException.class)
     public void testAddToCacheNullNamespaceKey() throws Exception {
         new SessionCache<>(session, null, TEST_DATA_TYPE_REFERENCE);
     }
 
-    @Test(threadPoolSize = THREADPOOL_SIZE, invocationCount = INVOCATION_COUNT, expectedExceptions = IllegalArgumentException.class)
+    @Test(expectedExceptions = IllegalArgumentException.class)
     public void testAddToCacheNullCacheKey() throws Exception {
         SessionCache<TestData> sessionCache = buildSessionCache(MAX_CACHE_SIZE, newNamespace());
         String cacheKey = null;
