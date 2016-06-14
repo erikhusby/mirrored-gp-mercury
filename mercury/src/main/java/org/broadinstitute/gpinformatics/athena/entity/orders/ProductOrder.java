@@ -207,6 +207,9 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @Column(name = "squid_work_request")
     private String squidWorkRequest;
 
+    @Column(name = "sap_order_number")
+    private String sapOrderNumber;
+
     /**
      * Default no-arg constructor, also used when creating a new ProductOrder.
      */
@@ -1127,6 +1130,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
      */
     public boolean isSampleInitiation() {
         return getProduct() != null && getProduct().isSampleInitiationProduct();
+    }
+
+    public String getSapOrderNumber() {
+        return sapOrderNumber;
     }
 
     /**

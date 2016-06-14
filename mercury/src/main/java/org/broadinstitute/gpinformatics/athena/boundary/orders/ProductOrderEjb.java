@@ -39,6 +39,9 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.BadBusinessKeyExcepti
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceImpl;
+import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnector;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
@@ -103,6 +106,8 @@ public class ProductOrderEjb {
 
     private ProductOrderJiraUtil productOrderJiraUtil;
 
+    private SapIntegrationService sapService;
+
     // EJBs require a no arg constructor.
     @SuppressWarnings("unused")
     public ProductOrderEjb() {
@@ -118,7 +123,8 @@ public class ProductOrderEjb {
                            BucketEjb bucketEjb,
                            SquidConnector squidConnector,
                            MercurySampleDao mercurySampleDao,
-                           ProductOrderJiraUtil productOrderJiraUtil) {
+                           ProductOrderJiraUtil productOrderJiraUtil,
+                           SapIntegrationService sapService) {
         this.productOrderDao = productOrderDao;
         this.productDao = productDao;
         this.quoteService = quoteService;
@@ -129,6 +135,7 @@ public class ProductOrderEjb {
         this.squidConnector = squidConnector;
         this.mercurySampleDao = mercurySampleDao;
         this.productOrderJiraUtil = productOrderJiraUtil;
+        this.sapService = sapService;
     }
 
     private final Log log = LogFactory.getLog(ProductOrderEjb.class);
@@ -201,11 +208,19 @@ public class ProductOrderEjb {
 
                     } else {
                         editedProductOrder.getProductOrderKit().addKitOrderDetail(kitDetailUpdate);
+
                     }
                 }
             }
         } else {
             updateJiraIssue(editedProductOrder);
+
+            if(StringUtils.isEmpty(editedProductOrder.getSapOrderNumber())) {
+                sapService.createOrder(editedProductOrder);
+            } else {
+                sapService.updateOrder(editedProductOrder);
+
+            }
         }
         attachMercurySamples(editedProductOrder.getSamples());
         productOrderDao.persist(editedProductOrder);
