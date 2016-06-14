@@ -198,9 +198,7 @@ public class SessionCache<T> {
      * @return the current number of elements in the cache.
      */
     public int size() {
-        synchronized (sessionQueue) {
-            return sessionQueue.size();
-        }
+        return sessionQueue.size();
     }
 
     /**
