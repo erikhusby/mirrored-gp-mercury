@@ -182,30 +182,6 @@ public class SessionCacheTest {
         return cacheKey;
     }
 
-    public void testRemoveAllFromCache() throws Exception {
-        String cacheKey = getCacheKey();
-        TestData data = new TestData("testRemoveFromCache");
-
-        SessionCache<TestData> sessionCache = buildSessionCache(MAX_CACHE_SIZE, newNamespace());
-
-        sessionCache.put(cacheKey, data);
-        sessionCache.remove();
-        assertThat(sessionCache.isEmpty(), is(true));
-    }
-
-    public void testRemoveAllFromCacheAndAdd() throws Exception {
-        String cacheKey = getCacheKey();
-        TestData testData = new TestData("testRemoveFromCacheAndAdd");
-
-        SessionCache<TestData> sessionCache = buildSessionCache(MAX_CACHE_SIZE, newNamespace());
-
-        sessionCache.put(cacheKey, testData);
-        sessionCache.remove();
-
-        sessionCache.put(cacheKey, testData);
-        assertThat(sessionCache.size(), is(1));
-    }
-
     private String getCacheKey() {
         int nextId = cacheId.incrementAndGet();
         return String.format("cache_key_%d", nextId);
