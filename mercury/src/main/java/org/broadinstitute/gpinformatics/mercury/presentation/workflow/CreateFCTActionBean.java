@@ -30,6 +30,7 @@ import java.math.BigDecimal;
 import java.text.Format;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -45,6 +46,7 @@ public class CreateFCTActionBean extends CoreActionBean {
     public static final String CLINICAL = "Clinical";
     public static final String RESEARCH = "Research";
     public static final String MIXED = "Clinical and Research";
+    public static final String CONTROLS = "Controls";
 
     public static final List<IlluminaFlowcell.FlowcellType> FLOWCELL_TYPES;
 
@@ -107,7 +109,7 @@ public class CreateFCTActionBean extends CoreActionBean {
                     return loadingTubeType;
                 }
             }
-            throw new RuntimeException("No LoadingTypeType found for '" + eventName + "'");
+            throw new RuntimeException("No LoadingTubeType found for '" + eventName + "'");
         }
     }
 
@@ -168,18 +170,26 @@ public class CreateFCTActionBean extends CoreActionBean {
             if (!existingLcsetsAndEventTypes.contains(labBatch.getBatchName() + selectedEventTypeDisplay)) {
                 int previousRowDtoCount = rowDtos.size();
 
-                // Inverts the mappings to get event(s) and product(s) per loading tube, not per starting vessel.
-                Multimap<LabVessel, LabEvent> vesselToEvents = HashMultimap.create();
-                Multimap<LabVessel, BucketEntry> vesselToBucketEntries = HashMultimap.create();
+                Map<LabVessel, BucketEntry> batchStartingVesselToBucketEntry = new HashMap<>();
+                for (BucketEntry bucketEntry : labBatch.getBucketEntries()) {
+                    batchStartingVesselToBucketEntry.put(bucketEntry.getLabVessel(), bucketEntry);
+                }
+
+                Multimap<LabVessel, LabEvent> loadingTubeToLabEvent = HashMultimap.create();
+                Multimap<LabVessel, BucketEntry> loadingTubeToBucketEntry = HashMultimap.create();
+                Multimap<LabVessel, LabVessel> loadingTubeToUnbucketedBatchStartingVessel = HashMultimap.create();
+
                 for (LabVessel startingBatchVessel : labBatch.getStartingBatchLabVessels()) {
                     for (Map.Entry<LabEvent, Set<LabVessel>> entry :
                             startingBatchVessel.findVesselsForLabEventType(selectedEventType, true).entrySet()) {
                         for (LabVessel loadingTube : entry.getValue()) {
-                            vesselToEvents.put(loadingTube, entry.getKey());
-                            for (BucketEntry bucketEntry : labBatch.getBucketEntries()) {
-                                if (bucketEntry.getLabVessel().equals(startingBatchVessel)) {
-                                    vesselToBucketEntries.put(loadingTube, bucketEntry);
-                                }
+                            loadingTubeToLabEvent.put(loadingTube, entry.getKey());
+                            BucketEntry bucketEntry = batchStartingVesselToBucketEntry.get(startingBatchVessel);
+                            if (bucketEntry != null) {
+                                loadingTubeToBucketEntry.put(loadingTube, bucketEntry);
+                            } else {
+                                // A positive control is in a batch starting vessel but doesn't have a bucket entry.
+                                loadingTubeToUnbucketedBatchStartingVessel.put(loadingTube, startingBatchVessel);
                             }
                         }
                     }
@@ -187,13 +197,13 @@ public class CreateFCTActionBean extends CoreActionBean {
 
                 String lcsetUrl = labBatch.getJiraTicket().getBrowserUrl();
 
-                for (LabVessel loadingTube : vesselToEvents.keySet()) {
-                    // Gets products and starting batch vessels for each loading tube.
+                for (LabVessel loadingTube : loadingTubeToLabEvent.keySet()) {
+                    // Gets products and their batch starting vessels.
                     Multimap<String, String> productToStartingVessel = HashMultimap.create();
                     String regulatoryDesignation = null;
                     int numberSamples = 0;
 
-                    for (BucketEntry bucketEntry : vesselToBucketEntries.get(loadingTube)) {
+                    for (BucketEntry bucketEntry : loadingTubeToBucketEntry.get(loadingTube)) {
                         String productName = bucketEntry.getProductOrder().getProduct() != null ?
                                 bucketEntry.getProductOrder().getProduct().getProductName() :
                                 "[No product for " + bucketEntry.getProductOrder().getJiraTicketKey() + "]";
@@ -215,6 +225,12 @@ public class CreateFCTActionBean extends CoreActionBean {
                         }
                         numberSamples += bucketEntry.getLabVessel().getSampleNames().size();
                     }
+                    // Adds in the unbucketed positive controls.
+                    for (LabVessel startingVessel : loadingTubeToUnbucketedBatchStartingVessel.get(loadingTube)) {
+                        productToStartingVessel.put(CONTROLS, startingVessel.getLabel());
+                        numberSamples += startingVessel.getSampleNames().size();
+                    }
+
                     // Coordinate the display so for each loading tube, the list of products shown corresponds
                     // to a list of starting vessels. The UI will show the starting tubes for each product.
                     List<String> productNameList = new ArrayList<>(productToStartingVessel.keySet());
@@ -223,14 +239,14 @@ public class CreateFCTActionBean extends CoreActionBean {
                     for (String productName : productNameList) {
                         List<String> startingVessels = new ArrayList<>(productToStartingVessel.get(productName));
                         Collections.sort(startingVessels);
-                        startingVesselList.add("Bucketed tubes for " + productName + ": " +
+                        startingVesselList.add((productName.equals(CONTROLS) ?
+                                productName : "Bucketed tubes for " + productName) + ": " +
                                                StringUtils.join(startingVessels, ", "));
                     }
 
-
                     // Gets event dates.
                     Set<String> eventDates = new HashSet<>();
-                    for (LabEvent labEvent : vesselToEvents.get(loadingTube)) {
+                    for (LabEvent labEvent : loadingTubeToLabEvent.get(loadingTube)) {
                         eventDates.add(dateFormat.format(labEvent.getEventDate()));
                     }
 
