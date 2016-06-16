@@ -33,7 +33,8 @@ public class  InfiniumPlateSourceEvaluator extends TraversalEvaluator {
         Set<Object> vessels = new HashSet<>();
 
         // Search by Infinium PDO does not expand DNA plate wells and includes Amp plates and chips
-        if( searchInstance.getSearchValues().iterator().next().getName().equals("Infinium PDO") ){
+        if( LabVesselSearchDefinition.MultiRefTerm.INFINIUM_PDO
+                .isNamed(searchInstance.getSearchValues().iterator().next().getName()) ) {
             Set<LabVessel> infiniumVessels = getAllInfiniumVessels(rootEntities);
             vessels.addAll(infiniumVessels);
             return vessels;

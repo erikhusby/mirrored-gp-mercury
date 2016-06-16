@@ -373,13 +373,23 @@ public class SearchInstance implements Serializable {
             return propertyValues;
         }
 
-        public String evalDisplayExpression(Object root, SearchContext context) {
+        public String evalTextOutputExpression(Object root, SearchContext context) {
             context = addValueToContext(context);
             try {
-                return getSearchTerm().evalFormattedExpression(root, context);
+                return getSearchTerm().evalPlainTextOutputExpression(root, context);
             } catch (Exception e) {
-                throw new RuntimeException("Exception evaluating display expression for term "
+                throw new RuntimeException("Exception evaluating text display expression for term "
                                               + getSearchTerm().getName() + ", for object " + root, e);
+            }
+        }
+
+        public String evalUiOutputExpression(Object root, SearchContext context) {
+            context = addValueToContext(context);
+            try {
+                return getSearchTerm().evalUiDisplayOutputExpression(root, context);
+            } catch (Exception e) {
+                throw new RuntimeException("Exception evaluating UI display expression for term "
+                        + getSearchTerm().getName() + ", for object " + root, e);
             }
         }
 
@@ -499,8 +509,13 @@ public class SearchInstance implements Serializable {
         }
 
         @Override
-        public String evalFormattedExpression(Object value, SearchContext context) {
-            return evalDisplayExpression(value, context);
+        public String evalPlainTextOutputExpression(Object value, SearchContext context) {
+            return evalTextOutputExpression(value, context);
+        }
+
+        @Override
+        public String evalUiDisplayOutputExpression(Object value, SearchContext context) {
+            return evalUiOutputExpression(value, context);
         }
 
         @Override

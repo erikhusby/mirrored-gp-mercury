@@ -41,32 +41,9 @@ public class LabEventVesselTraversalEvaluator extends TraversalEvaluator {
         List<LabVessel> rootEventVessels = (List<LabVessel>) rootEntities;
         Set sortedSet = new TreeSet<>( LabEvent.BY_EVENT_DATE_LOC );
 
-        // True if "In-Place Vessel Barcode" search term is present
-        boolean inPlaceVesselsOnly = false;
-        // True if only events involving Infinium plates/chips should be returned
-        boolean infiniumEventsOnly = false;
-        for( SearchInstance.SearchValue searchValue : searchInstance.getSearchValues() ) {
-            if( searchValue.getName().equals("In-Place Vessel Barcode")) {
-                inPlaceVesselsOnly = true;
-                break;
-            } else if( searchValue.getName().equals("Infinium PDO")) {
-                infiniumEventsOnly = true;
-                break;
-            }
-        }
-
-        if( infiniumEventsOnly ) {
-            getInfiniumEventsForVessels( rootEventVessels, sortedSet );
-            return sortedSet;
-        }
-
         // Get base events for vessels
         for( LabVessel vessel : rootEventVessels ) {
-            if (inPlaceVesselsOnly) {
-                sortedSet.addAll(vessel.getInPlaceAndTransferToEvents());
-            } else {
-                sortedSet.addAll(vessel.getEvents());
-            }
+            sortedSet.addAll(vessel.getEvents());
         }
 
         if( searchInstance.getTraversalEvaluatorValues()
@@ -82,20 +59,6 @@ public class LabEventVesselTraversalEvaluator extends TraversalEvaluator {
         }
 
         return sortedSet;
-    }
-
-    private void getInfiniumEventsForVessels(List<LabVessel> rootEventVessels, Set<Object> events ) {
-
-        TransferTraverserCriteria.VesselForEventTypeCriteria eventTypeCriteria
-                = new TransferTraverserCriteria.VesselForEventTypeCriteria(INFINIUM_EVENT_TYPES, true);
-
-        // Always starts off with samples found via a PDO so do descendant search only
-        for( LabVessel initialVessel : rootEventVessels ) {
-            initialVessel.evaluateCriteria(eventTypeCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
-        }
-        for(Map.Entry<LabEvent, Set<LabVessel>> eventEntry : eventTypeCriteria.getVesselsForLabEventType().entrySet()) {
-            events.add(eventEntry.getKey());
-        }
     }
 
     /**

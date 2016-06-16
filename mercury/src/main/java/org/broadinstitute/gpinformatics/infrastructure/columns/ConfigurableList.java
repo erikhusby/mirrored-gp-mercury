@@ -553,7 +553,13 @@ public class ConfigurableList {
                 header = new Header(currentViewHeader, currentViewHeader, null, columnTabulation.getDbSortPath() );
                 headerGroup.getHeaderMap().put(currentViewHeader, header);
             }
-            String formattedString = columnTabulation.evalFormattedExpression(currentValue, context );
+
+            String formattedString;
+            if( context.getResultCellTargetPlatform() == SearchContext.ResultCellTargetPlatform.WEB ) {
+                formattedString = columnTabulation.evalUiDisplayOutputExpression(currentValue, context);
+            } else {
+                formattedString = columnTabulation.evalPlainTextOutputExpression(currentValue, context);
+            }
 
             Comparable<?> comparableValue =
                     columnTabulation.evalValueTypeExpression(entity,context)
@@ -589,7 +595,11 @@ public class ConfigurableList {
             List<String> cells = new ArrayList<>();
             for( ColumnTabulation nestedColumnTabulation : columnTabulation.getNestedEntityColumns() ) {
                 Object value = nestedColumnTabulation.evalValueExpression(entity, context);
-                cells.add(nestedColumnTabulation.evalFormattedExpression(value, context));
+                if( context.getResultCellTargetPlatform() == SearchContext.ResultCellTargetPlatform.WEB ) {
+                    cells.add(columnTabulation.evalUiDisplayOutputExpression(value, context));
+                } else {
+                    cells.add(columnTabulation.evalPlainTextOutputExpression(value, context));
+                }
             }
             ResultRow row = new ResultRow( emptySortableCells, cells, null );
             localRows.add(row);

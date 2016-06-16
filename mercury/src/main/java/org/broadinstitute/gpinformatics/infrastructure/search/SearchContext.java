@@ -19,9 +19,8 @@ public class SearchContext {
 
     // Need to know what to put in cells at rendering stage at ColumnTabulation#evalFormattedExpression(...)
     public enum ResultCellTargetPlatform {
-        WEB,   // Optional custom formatting, drill-down hyperlinks
+        WEB,  // Apply optional UI output formatting expression
         TEXT  // Raw text (default)
-        // EXCEL  TODO JMS - Need to have a way to integrate with Apache POI, meanwhile, TEXT will be used for download
     }
 
     private BSPUserList bspUserList;
