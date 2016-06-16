@@ -20,6 +20,8 @@ public enum Workflow {
     ICE_EXOME_EXPRESS("ICE Exome Express"),
     HYBRID_SELECTION("Hybrid Selection"),
     WHOLE_GENOME("Whole Genome"),
+    PCR_FREE("Whole Genome PCR Free"),
+    PCR_PLUS("Whole Genome PCR Plus"),
     ICE("ICE"),
     ICE_CRSP("ICE CRSP"),
     CLINICAL_WHOLE_BLOOD_EXTRACTION("Clinical Whole Blood Extraction"),

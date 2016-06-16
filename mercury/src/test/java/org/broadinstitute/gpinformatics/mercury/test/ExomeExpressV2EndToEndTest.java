@@ -20,7 +20,6 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransfe
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
-import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
@@ -284,7 +283,7 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
                 bettaLimsMessageTestFactory, labEventFactory, leHandler, shearingCleanupPlate,
                 postShearingTransferCleanupEntity.getTargetLabVessels().iterator().next().getLabel(),
                 shearPlate, LabEventTest.NUM_POSITIONS_IN_RACK, "testPrefix",
-                LibraryConstructionEntityBuilder.Indexing.DUAL).invoke();
+                LibraryConstructionEntityBuilder.Indexing.DUAL, LibraryConstructionEntityBuilder.PondType.REGULAR).invoke();
 
         //        // todo plates vs tubes?
         //        // - Deck calls web service to verify source barcodes?
