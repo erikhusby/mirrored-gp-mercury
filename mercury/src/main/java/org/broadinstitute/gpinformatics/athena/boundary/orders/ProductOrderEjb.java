@@ -39,9 +39,8 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.BadBusinessKeyExcepti
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
-import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationServiceImpl;
-import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnector;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
@@ -180,6 +179,15 @@ public class ProductOrderEjb {
                                     @Nonnull Collection<ProductOrderKitDetail> kitDetailCollection)
             throws IOException, QuoteNotFoundException {
 
+        persistProductOrder(saveType, editedProductOrder, deletedIds, kitDetailCollection, new MessageCollection());
+    }
+
+    public void persistProductOrder(ProductOrder.SaveType saveType, ProductOrder editedProductOrder,
+                                    @Nonnull Collection<String> deletedIds,
+                                    @Nonnull Collection<ProductOrderKitDetail> kitDetailCollection,
+                                    MessageCollection messageCollection)
+            throws IOException, QuoteNotFoundException {
+
         kitDetailCollection.removeAll(Collections.singleton(null));
         deletedIds.removeAll(Collections.singleton(null));
 
@@ -215,11 +223,16 @@ public class ProductOrderEjb {
         } else {
             updateJiraIssue(editedProductOrder);
 
-            if(StringUtils.isEmpty(editedProductOrder.getSapOrderNumber())) {
-                sapService.createOrder(editedProductOrder);
-            } else {
-                sapService.updateOrder(editedProductOrder);
-
+            if (!editedProductOrder.isPending() && !editedProductOrder.isDraft()) {
+                try {
+                    if (StringUtils.isEmpty(editedProductOrder.getSapOrderNumber())) {
+                        sapService.createOrder(editedProductOrder);
+                    } else {
+                        sapService.updateOrder(editedProductOrder);
+                    }
+                } catch (SAPInterfaceException e) {
+                    messageCollection.addError(e);
+                }
             }
         }
         attachMercurySamples(editedProductOrder.getSamples());
@@ -326,7 +339,8 @@ public class ProductOrderEjb {
      * Set the Proceed if Out of Spec indicator.
      */
     public void proceedOos(@Nonnull BspUser user, @Nonnull List<ProductOrderSample> orderSamples,
-            @Nonnull ProductOrder productOrder, @Nonnull ProductOrderSample.ProceedIfOutOfSpec proceedIfOutOfSpec) {
+                           @Nonnull ProductOrder productOrder,
+                           @Nonnull ProductOrderSample.ProceedIfOutOfSpec proceedIfOutOfSpec) {
 
         for (ProductOrderSample orderSample : orderSamples) {
             orderSample.setProceedIfOutOfSpec(proceedIfOutOfSpec);
@@ -403,7 +417,7 @@ public class ProductOrderEjb {
                 new PDOUpdateField(ProductOrder.JiraField.SAMPLE_IDS, productOrder.getSampleString(), true),
                 new PDOUpdateField(ProductOrder.JiraField.REPORTER,
                         new CreateFields.Reporter(userList.getById(productOrder.getCreatedBy())
-                                                          .getUsername()))));
+                                .getUsername()))));
 
         if (productOrder.getProduct().getSupportsNumberOfLanes()) {
             pdoUpdateFields.add(
@@ -802,6 +816,7 @@ public class ProductOrderEjb {
      * generated if the transition is not possible, or if the JIRA status already matches Mercury.
      *
      * @param order the order to transition
+     *
      * @throws IOException
      */
     private void transitionIssueToSameOrderStatus(@Nonnull ProductOrder order) throws IOException {
@@ -823,7 +838,7 @@ public class ProductOrderEjb {
      * @throws IOException
      */
     public void transitionJiraTicket(String jiraTicketKey, JiraResolution currentResolution, JiraTransition state,
-                                      @Nullable String transitionComments) throws IOException {
+                                     @Nullable String transitionComments) throws IOException {
         JiraIssue issue = jiraService.getIssue(jiraTicketKey);
         JiraResolution resolution = JiraResolution.fromString(issue.getResolution());
         if (currentResolution != resolution) {
@@ -883,7 +898,7 @@ public class ProductOrderEjb {
      * Un-abandon a list of samples and add a message to the JIRA ticket to reflect this change.
      *
      * @param jiraTicketKey the order's JIRA key
-     * @param sampleIds       the samples to un-abandon
+     * @param sampleIds     the samples to un-abandon
      * @param comment       optional user supplied comment about this action.
      */
     public void unAbandonSamples(@Nonnull String jiraTicketKey, @Nonnull Collection<Long> sampleIds,
@@ -911,10 +926,10 @@ public class ProductOrderEjb {
     /**
      * Update JIRA state of an order based on a sample change operation.
      * <ul>
-     *     <li>add a comment with the operation and the list of samples changed</li>
-     *     <li>update the Sample IDs and Number of Samples fields</li>
-     *     <li>output a message to the user about the operation</li>
-     *     <li>if necessary, update the order status based on the new list of samples</li>
+     * <li>add a comment with the operation and the list of samples changed</li>
+     * <li>update the Sample IDs and Number of Samples fields</li>
+     * <li>output a message to the user about the operation</li>
+     * <li>if necessary, update the order status based on the new list of samples</li>
      * </ul>
      */
     private void updateSamples(ProductOrder order, Collection<ProductOrderSample> samples, MessageReporter reporter,
@@ -1126,6 +1141,7 @@ public class ProductOrderEjb {
      * outdated information.
      *
      * @param ledgerUpdates a map of PDO sample to a collection of ledger updates
+     *
      * @throws StaleLedgerUpdateException if the previous quantity in any ledger update is out-of-date
      */
     public void updateSampleLedgers(Map<ProductOrderSample, Collection<ProductOrderSample.LedgerUpdate>> ledgerUpdates)

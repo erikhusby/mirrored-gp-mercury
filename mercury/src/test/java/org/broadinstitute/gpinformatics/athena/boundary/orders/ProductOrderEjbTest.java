@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceStub;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderSampleTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
@@ -58,7 +59,8 @@ public class ProductOrderEjbTest {
     public final MercurySampleDao mockMercurySampleDao = Mockito.mock(MercurySampleDao.class);
     ProductOrderEjb productOrderEjb = new ProductOrderEjb(productOrderDaoMock, null, null,
             JiraServiceProducer.stubInstance(), mockUserBean, null, null, null, mockMercurySampleDao,
-            new ProductOrderJiraUtil(JiraServiceProducer.stubInstance(), mockUserBean));
+            new ProductOrderJiraUtil(JiraServiceProducer.stubInstance(), mockUserBean),
+            Mockito.mock(SapIntegrationService.class));
     private static final String[] sampleNames = {"SM-1234", "SM-5678", "SM-9101", "SM-1112"};
     ProductOrder productOrder = null;
     private Log logger = LogFactory.getLog(ProductOrderEjbTest.class);

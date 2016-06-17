@@ -90,6 +90,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.infrastructure.security.Role;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
 import org.broadinstitute.gpinformatics.mercury.boundary.BucketException;
@@ -251,6 +252,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @Inject
     private PriceListCache priceListCache;
+
+    @Inject
+    private SapIntegrationService sapService;
 
     private List<ProductOrderListEntry> displayedProductOrderListEntries;
 
@@ -1175,10 +1179,20 @@ public class ProductOrderActionBean extends CoreActionBean {
             addMessage("Product Order \"{0}\" has been placed", editOrder.getTitle());
             originalBusinessKey = null;
 
-            addMessages(placeOrderMessageCollection);
-
             productOrderEjb.handleSamplesAdded(editOrder.getBusinessKey(), editOrder.getSamples(), this);
             productOrderDao.persist(editOrder);
+
+            //TODO SGM: need to account for exception handling
+            if (!editOrder.isPending() && !editOrder.isDraft()) {
+                if (StringUtils.isEmpty(editOrder.getSapOrderNumber())) {
+                    try {
+                        sapService.createOrder(editOrder);
+                    } catch (Exception e) {
+                        placeOrderMessageCollection.addError(e);
+                    }
+                }
+            }
+            addMessages(placeOrderMessageCollection);
 
         } catch (Exception e) {
 
@@ -1259,6 +1273,8 @@ public class ProductOrderActionBean extends CoreActionBean {
     @HandlesEvent(SAVE_ACTION)
     public Resolution save() throws Exception {
 
+        MessageCollection saveOrderMessageCollection = new MessageCollection();
+
         // Update the modified by and created by, if necessary.
         ProductOrder.SaveType saveType = ProductOrder.SaveType.UPDATING;
         if (isCreating()) {
@@ -1269,8 +1285,9 @@ public class ProductOrderActionBean extends CoreActionBean {
             updateRegulatoryInformation();
         }
         Set<String> deletedIdsConverted = new HashSet<>(Arrays.asList(deletedKits));
-        productOrderEjb.persistProductOrder(saveType, editOrder, deletedIdsConverted, kitDetails);
-
+        productOrderEjb.persistProductOrder(saveType, editOrder, deletedIdsConverted, kitDetails,
+                saveOrderMessageCollection);
+        addMessages(saveOrderMessageCollection);
         addMessage("Product Order \"{0}\" has been saved.", editOrder.getTitle());
         // Temporarily adding the quote validation when the order is saved to give the user a warning of upcoming
         // new restrictions
