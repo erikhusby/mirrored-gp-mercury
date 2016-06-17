@@ -1695,6 +1695,36 @@ public class LabEventTest extends BaseEventTest {
     }
 
     /**
+     * Build object graph for 10X messages
+     */
+    @Test(groups = {TestGroups.DATABASE_FREE})
+    public void testTenX() {
+        expectedRouting = SystemRouter.System.MERCURY;
+        int numSamples = NUM_POSITIONS_IN_RACK - 2;
+        ProductOrder productOrder = ProductOrderTestFactory.buildArrayPlatingProductOrder(numSamples);
+        Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
+
+        LabBatch workflowBatch = new LabBatch("10X Batch",
+                new HashSet<LabVessel>(mapBarcodeToTube.values()),
+                LabBatch.LabBatchType.WORKFLOW);
+        workflowBatch.setWorkflow(Workflow.TEN_X);
+        bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, "1");
+
+        TubeFormation daughterTubeFormation = daughterPlateTransfer(mapBarcodeToTube, workflowBatch);
+
+        Map<String, BarcodedTube> mapBarcodeToDaughterTube = new HashMap<>();
+        for (BarcodedTube barcodedTube : daughterTubeFormation.getContainerRole().getContainedVessels()) {
+            mapBarcodeToDaughterTube.put(barcodedTube.getLabel(), barcodedTube);
+        }
+        PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube,
+                String.valueOf(
+                        LabEventTest.NUM_POSITIONS_IN_RACK),
+                "1", true);
+
+        runTenXProcess(picoPlatingEntityBuilder.getNormBarcodeToTubeMap(), "10X");
+    }
+
+    /**
      * Build object graph for TruSeq SS messages, verify chain of events.
      */
     @Test(groups = {TestGroups.DATABASE_FREE})

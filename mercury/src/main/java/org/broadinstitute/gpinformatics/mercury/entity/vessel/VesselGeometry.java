@@ -462,6 +462,13 @@ public enum VesselGeometry {
                     VesselPosition.R04C01, VesselPosition.R05C01, VesselPosition.R06C01,
                     VesselPosition.R07C01,VesselPosition.R08C01}),
 
+    TEN_X_CHIP("1 x 8",
+            new String[] {"01"},
+            new String[] {"A","B","C","D","E","F","G","H"},
+            new VesselPosition[]{VesselPosition.A01, VesselPosition.B01,VesselPosition.C01,
+                    VesselPosition.D01, VesselPosition.E01, VesselPosition.F01,
+                    VesselPosition.G01,VesselPosition.H01}),
+
     // todo jmt change TubeFormation to VesselFormation so we can store formations of PlateType.InfiniumChip
     TEFLOW3x8("TeFlow 3 x 8",
             new String[]{"", "", ""},
