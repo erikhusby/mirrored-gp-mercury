@@ -227,8 +227,8 @@
         function addStripesMessageDiv(alertType, fieldSelector) {
             var alertClass = 'alert-' + alertType;
             var messageBox = jQuery("<div></div>",{
-                "class": "alert alertClass".replace("alertClass", alertClass),
-                "style": "width: 50em;position: absolute;"
+                "class": "alert alertClass center".replace("alertClass", alertClass),
+                "style": "width: 50em;"
             });
             var button = jQuery("<button type='button' class='close' data-dismiss='alert'>&times;</button>");
             messageBox.append(button);
@@ -236,13 +236,9 @@
             if (fieldSelector != undefined) {
                 $j(fieldSelector).empty();
                 $j(fieldSelector).append(messageBox);
-            }
-            else {
+            } else {
                 $j('.page-body').before(messageBox);
             }
-            var left =window.innerWidth - messageBox.width() / 2;
-            messageBox.css("left", left);
-            messageBox.css("z-index", 1000);
             return messageBox;
         }
 
@@ -251,7 +247,6 @@
                 type = "success";
             }
             var messageBoxJquery = $j("div.alert-" + type);
-
             if (messageBoxJquery.length == 0) {
                 messageBoxJquery = addStripesMessageDiv(type, fieldSelector);
             }
@@ -294,8 +289,22 @@
 
             var oTable;
             $j("${submissionsTabSelector}").click(function () {
-            if (oTable == undefined) {
-                function renderCheckbox(data, type, row) {
+                function buildMessage(jqXHR) {
+                    var responseText = jqXHR.responseJSON;
+                    if (responseText.stripesMessages) {
+                        outerDiv = jQuery("<div></div>", {
+                            "id": "stripesMessageOuter",
+                            "style": "position: relative;z-index:5",
+                            "class": "center"
+                        });
+                        $j("#submissionSamples_wrapper").prepend(outerDiv);
+                        $j("#submissionSamples_processing").hide();
+                        addStripesMessage(responseText.stripesMessages, responseText.messageType, "#stripesMessageOuter");
+                    }
+                }
+
+                if (oTable == undefined) {
+                    function renderCheckbox(data, type, row) {
                     if (type === 'display') {
                         var status = row.<%=SubmissionField.SUBMITTED_STATUS %>;
                         var tagAttributes = {};
@@ -367,18 +376,10 @@
                             "dataType": 'json',
                             "url": sSource,
                             "data": aoData,
-                            "success": function (jqXHR, textStatus, response) {
-                                if (response.responseText) {
-                                    outerDiv = jQuery("<div></div>", { "id":"stripesMessageOuter","style":"position: relative;"});
-                                    $j("#submissionsTab").before(outerDiv);
-                                    addStripesMessage(jqXHR.stripesMessages, textStatus, "#stripesMessageOuter");
-                                }
-                                fnCallback(jqXHR);
-                            },
-                            "error": function (jqXHR, textStatus, errorThrown) {
-                                addStripesMessage("Error receiving submission data: " + errorThrown, "error", ".dataTables_processing");
+                            "success": fnCallback,
+                            "complete": function (jqXHR) {
+                                buildMessage(jqXHR);
                             }
-
                         });
                     },
 

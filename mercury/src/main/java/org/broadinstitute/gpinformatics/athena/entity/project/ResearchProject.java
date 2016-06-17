@@ -66,6 +66,10 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
             + "does not involve human-derived samples, then neither ORSP nor IRB review is required. However your "
             + "order must identify the specific type of samples involved (e.g mouse cells, artificial DNA).";
 
+    public boolean isResearchOnly() {
+        return getRegulatoryDesignation() == RegulatoryDesignation.RESEARCH_ONLY;
+    }
+
     public enum RegulatoryDesignation {
         // changing enum names requires integration testing with the pipeline,
         // but descriptions can change without impacting the pipeline

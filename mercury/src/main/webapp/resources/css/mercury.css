@@ -196,3 +196,5 @@ legend + .control-group { margin-top: 0px; -webkit-margin-top-collapse: separate
 .graphEdgeLabel {font-family: Arial}
 .graphLabel { fill: black; stroke-width: 1px; font-family: Arial; font-size: 12px; text-anchor: middle; }
 .graphOverlay { fill: LightYellow; pointer-events: all; }
+.center { position: absolute; left: 50%; transform: translate(-50%, -50%);
+}

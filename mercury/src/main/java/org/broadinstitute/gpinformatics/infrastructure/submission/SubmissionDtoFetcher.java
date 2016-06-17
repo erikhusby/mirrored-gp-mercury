@@ -153,7 +153,7 @@ public class SubmissionDtoFetcher {
             }
             String somePreposition = missingPdoSampleMap.size() > 1 ? "some" : "a";
             String sampleNoun = Noun.pluralOf("sample", missingPdoSampleMap.size());
-            messageReporter.addMessage("'CollaboratorSampleId' not found for {0} {1}<ul><li>{2}</ul>",
+            messageReporter.addMessage("'Collaborator sample name' not found for {0} {1}<ul><li>{2}</ul>",
                     somePreposition, sampleNoun, StringUtils.join(notFoundMessages, "<li>"));
         }
 
