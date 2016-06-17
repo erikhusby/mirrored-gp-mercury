@@ -35,6 +35,10 @@
                         this.scrollIntoView({block: "start", behavior: "smooth"});
                     }
                 });
+                if (${! actionBean.projectAllowsSubmission}) {
+                    var index = $j("#tabs ul").find("[href='#submissionsTab']").closest("li").index();
+                    $j("#tabs").tabs("disable", index);
+                }
 
                 $j('#addRegulatoryInfoDialog').dialog({
                     autoOpen: false,
@@ -571,8 +575,8 @@
 
         <div id="tabs" class="simpletab extraSpace">
             <ul>
-                <li><a href="#ordersTab">Orders</a></li>
-                <li><a href="#submissionsTab">Submission Requests</a></li>
+                <li><a href="#ordersTab" title="View Product Orders">Orders</a></li>
+                <li><a href="#submissionsTab" title="${actionBean.submissionTabHelpText}">Submission Requests</a></li>
             </ul>
 
             <div id="ordersTab">

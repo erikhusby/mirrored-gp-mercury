@@ -931,7 +931,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
 
     @ValidationMethod(on = {VIEW_SUBMISSIONS_ACTION, POST_SUBMISSIONS_ACTION})
     public void validateViewSubmissions() {
-        if (!isResearchOnly()) {
+        if (!isSubmissionAllowed()) {
             addGlobalValidationError("Data submissions are available for research projects only.");
         }
     }
@@ -1298,6 +1298,9 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
      * @return true if the current user is allowed to request data submissions for the current research project
      */
     public boolean isSubmissionAllowed() {
+        if (!isProjectAllowsSubmission()) {
+            return false;
+        }
         if (getUserBean().isDeveloperUser()) {
             return true;
         }
@@ -1398,6 +1401,15 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         return false;
     }
 
+    /**
+     * Returns true if the research project allows submissions.
+     *
+     * Currently only "Research Grade" projects are allowed to submit data.
+     */
+    public boolean isProjectAllowsSubmission() {
+        return isResearchOnly();
+    }
+
     private boolean isResearchOnly() {
         return editResearchProject != null && editResearchProject.isResearchOnly();
     }
@@ -1469,5 +1481,13 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
             itemList.put(status.getLabel());
         }
         return itemList.toString();
+    }
+
+    public String getSubmissionTabHelpText() {
+        if (isProjectAllowsSubmission()) {
+            return "Click to view data submissions";
+        } else {
+            return "Data submissions are available for 'research grade' projects only.";
+        }
     }
 }
