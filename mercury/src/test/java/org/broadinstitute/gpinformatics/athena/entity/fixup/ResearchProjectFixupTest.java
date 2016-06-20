@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.hamcrest.Matchers;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -24,7 +25,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.google.inject.matcher.Matchers.not;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 
 /**
  * This "test" is an example of how to fixup some data.  Each fix method includes the JIRA ticket ID.
@@ -203,4 +208,20 @@ public class ResearchProjectFixupTest extends Arquillian {
 
         utx.commit();
     }
+
+    @Test(enabled = false)
+    public void fixupSupport1822() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+        ResearchProject researchProject = rpDao.findByBusinessKey("RP-1227");
+        assertThat(researchProject, is(notNullValue()));
+        researchProject.setTitle("Takeda Myeloid/Lymphoid v1 Panel Performance Assessment");
+
+        researchProjectEjb.updateJiraIssue(researchProject);
+        rpDao.persist(new FixupCommentary("SUPPORT 1822 changing title of RP"));
+        rpDao.flush();
+
+        utx.commit();
+    }
+
 }
