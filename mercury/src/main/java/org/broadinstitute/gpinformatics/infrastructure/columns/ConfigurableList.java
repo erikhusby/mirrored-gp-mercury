@@ -596,9 +596,9 @@ public class ConfigurableList {
             for( ColumnTabulation nestedColumnTabulation : columnTabulation.getNestedEntityColumns() ) {
                 Object value = nestedColumnTabulation.evalValueExpression(entity, context);
                 if( context.getResultCellTargetPlatform() == SearchContext.ResultCellTargetPlatform.WEB ) {
-                    cells.add(columnTabulation.evalUiDisplayOutputExpression(value, context));
+                    cells.add(nestedColumnTabulation.evalUiDisplayOutputExpression(value, context));
                 } else {
-                    cells.add(columnTabulation.evalPlainTextOutputExpression(value, context));
+                    cells.add(nestedColumnTabulation.evalPlainTextOutputExpression(value, context));
                 }
             }
             ResultRow row = new ResultRow( emptySortableCells, cells, null );
