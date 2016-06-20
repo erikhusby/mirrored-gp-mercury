@@ -20,9 +20,15 @@ import java.io.Serializable;
 
 public class SubmissionTuple implements Serializable {
     private static final long serialVersionUID = 1262062294730627888L;
-    private final String sampleName;
-    private final BassFileType fileType;
-    private final String version;
+    private String sampleName;
+    private BassFileType fileType;
+    private String version;
+
+    /**
+     * No-arg constructor needed for JSON deserialization.
+     */
+    SubmissionTuple() {
+    }
 
     public SubmissionTuple(String sampleName, BassFileType fileType, String version) {
         this.sampleName = sampleName;
