@@ -12,6 +12,8 @@
 package org.broadinstitute.gpinformatics.infrastructure.submission;
 
 import com.google.common.base.Function;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Collections2;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
@@ -127,8 +129,18 @@ public class SubmissionDtoFetcher {
 
     private Map<String, Collection<ProductOrder>> getSamplesForProject(ResearchProject researchProject,
                                                                        MessageReporter messageReporter) {
-        List<ProductOrderSample> productOrderSamples =
+        List<ProductOrderSample> unfilteredSamples =
                 productOrderSampleDao.findByResearchProject(researchProject.getJiraTicketKey());
+        List<ProductOrderSample> productOrderSamples
+                = new ArrayList<>(Collections2.filter(unfilteredSamples, new Predicate<ProductOrderSample>() {
+            @Override
+            public boolean apply(@Nullable ProductOrderSample input) {
+                if (input != null) {
+                    return !input.getProductOrder().isDraft();
+                }
+                return false;
+            }
+        }));
         ProductOrder.loadCollaboratorSampleName(productOrderSamples);
 
         return getCollaboratorSampleNameToPdoMap(productOrderSamples, messageReporter);
