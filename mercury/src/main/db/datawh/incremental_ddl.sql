@@ -64,3 +64,15 @@ CREATE TABLE im_fct_load (
   designation_id       NUMERIC(19) NOT NULL,
   flowcell_barcode     VARCHAR2(255)
 );
+
+-- 'PCR-Plus Norm Pond' shouldn't exist at deploy, but handle explicitly for consistency
+UPDATE LIBRARY_ANCESTRY
+SET ANCESTOR_LIBRARY_TYPE = case ancestor_library_type when 'PCR-Plus Norm Pond' then 'NormPond' else 'Pond' end
+WHERE ANCESTOR_LIBRARY_TYPE LIKE '%Pond';
+
+UPDATE LIBRARY_ANCESTRY
+SET CHILD_LIBRARY_TYPE = case ancestor_library_type when 'PCR-Plus Norm Pond' then 'NormPond' else 'Pond' end
+WHERE CHILD_LIBRARY_TYPE LIKE '%Pond';
+
+COMMIT;
+

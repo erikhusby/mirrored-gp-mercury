@@ -1624,15 +1624,15 @@ public enum LabEventType {
     }
 
     public enum LibraryType {
-        ENRICHED_POND("Enriched Pond"),
-        PCR_FREE_POND("PCR-Free Pond"),
-        PCR_PLUS_POND("PCR-Plus Pond"),
-        PCR_PLUS_NORMALIZED_POND("PCR-Plus Norm Pond"),
+        ENRICHED_POND("Enriched Pond", "Pond"),
+        PCR_FREE_POND("PCR-Free Pond", "Pond"),
+        PCR_PLUS_POND("PCR-Plus Pond", "Pond"),
+        PCR_PLUS_NORMALIZED_POND("PCR-Plus Norm Pond", "NormPond"),
         HYBRID_SELECTION_AGILENT_CATCH("Enriched Catch"),
         HYBRID_SELECTION_ICE_ENRICHED_CATCH("Enriched Catch"),
         NEXTERA_ENRICHED_LIBRARY("Nextera Enriched"),
-        NEXTERA_POOLED_NORMALIZED_LIBRARY("Nextera Pooled Normalized"),
-        NEXTERA_SPRI_CONCENTRATED_POOL("Nextera SPRI Concentrated Pool"),
+        NEXTERA_POOLED_NORMALIZED_LIBRARY("Nextera Pooled Normalized", "Pooled"),
+        NEXTERA_SPRI_CONCENTRATED_POOL("Nextera SPRI Concentrated Pool", "Pooled"),
         NEXOME_CATCH("Nexome Catch"),
         POOLED("Pooled"),
         MISEQ_FLOWCELL("MiSeq Flowcell"),
@@ -1642,24 +1642,27 @@ public enum LabEventType {
         DILUTED_DENATURE("Diluted Denature"),
         HISEQ_FLOWCELL("HiSeq Flowcell");
 
-        private LibraryType( String displayName ){
-            this.displayName = displayName;
+        LibraryType( String mercuryDisplayName, String etlDisplayName ){
+            this.mercuryDisplayName = mercuryDisplayName;
+            this.etlDisplayName = etlDisplayName;
         }
 
-        private String displayName;
-
-        public String getDisplayName() {
-            return displayName;
+        LibraryType( String displayName ){
+            this.mercuryDisplayName = displayName;
+            this.etlDisplayName = displayName;
         }
 
-        public LibraryType getTypeByName( String displayName ) {
-            for( LibraryType libraryType : values() ) {
-                if( libraryType.displayName.equals( displayName ) ) {
-                    return libraryType;
-                }
-            }
-            return null;
+        private String etlDisplayName;
+        private String mercuryDisplayName;
+
+        public String getEtlDisplayName() {
+            return etlDisplayName;
         }
+
+        public String getMercuryDisplayName() {
+            return mercuryDisplayName;
+        }
+
     }
 
     private LibraryType libraryType;
