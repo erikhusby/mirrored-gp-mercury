@@ -13,6 +13,8 @@ import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.SimpleError;
 import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidateNestedProperties;
+import net.sourceforge.stripes.validation.ValidationError;
+import net.sourceforge.stripes.validation.ValidationErrorHandler;
 import net.sourceforge.stripes.validation.ValidationErrors;
 import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.collections4.CollectionUtils;
@@ -88,7 +90,7 @@ import java.util.Set;
  */
 @SuppressWarnings("unused")
 @UrlBinding(ResearchProjectActionBean.ACTIONBEAN_URL_BINDING)
-public class ResearchProjectActionBean extends CoreActionBean {
+public class ResearchProjectActionBean extends CoreActionBean implements ValidationErrorHandler {
     private static final Log log = LogFactory.getLog(ResearchProjectActionBean.class);
 
     public static final String ACTIONBEAN_URL_BINDING = "/projects/project.action";
@@ -124,6 +126,10 @@ public class ResearchProjectActionBean extends CoreActionBean {
     // Reference sequence that will be used for Exome projects.
     private static final String DEFAULT_REFERENCE_SEQUENCE = "Homo_sapiens_assembly19|1";
     public static final String SESSION_SAMPLES_KEY = "SUBMISSIONS";
+    public static final String STRIPES_WARNING = "warning";
+    public static final String STRIPES_ERRORS = "error";
+    public static final String STRIPES_MESSAGES_KEY = "stripesMessages";
+    public static final String STRIPES_MESSAGE_TYPE = "messageType";
 
     @Inject
     private ResearchProjectDao researchProjectDao;
@@ -884,13 +890,45 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     @HandlesEvent(VIEW_SUBMISSIONS_ACTION)
     public Resolution viewSubmissions() throws IOException, JSONException {
-        ObjectMapper objectMapper = new ObjectMapper();
-        Map<String, Object> submissionSamplesMap = new HashMap<String, Object>() {{
-            put("aaData", submissionSamples);//iDisplayLength  iRecordsTotal
-            put("iTotalRecords", submissionSamples.size());
-        }};
-        String submissionSamplesData = objectMapper.writeValueAsString(submissionSamplesMap);
+        String submissionSamplesData = getSubmissionJson(getFormattedMessages(), STRIPES_WARNING);
+        return createTextResolution(submissionSamplesData);
+    }
 
+    private String getSubmissionJson(List<String> validationMessages, final String errorType) throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        Map<String, Object> submissionSamplesMap = new HashMap<>();
+        submissionSamplesMap.put("aaData", submissionSamples);
+        submissionSamplesMap.put("iTotalRecords", submissionSamples.size());
+        if (!validationMessages.isEmpty()) {
+            submissionSamplesMap.put(STRIPES_MESSAGES_KEY, validationMessages);
+            submissionSamplesMap.put(STRIPES_MESSAGE_TYPE, errorType);
+        }
+
+        return objectMapper.writeValueAsString(submissionSamplesMap);
+    }
+
+    @Override
+    public Resolution handleValidationErrors(ValidationErrors errors) throws Exception {
+        boolean isSubmission = false;
+        if (getContext().getRequest().getParameter(VIEW_SUBMISSIONS_ACTION) != null) {
+            isSubmission = true;
+        } else if (getContext().getRequest().getParameter(POST_SUBMISSIONS_ACTION) != null) {
+            isSubmission = true;
+        }
+        final List<String> errorList = new ArrayList<>();
+        if (isSubmission) {
+            String submissionSamplesData;
+            List<String> validationErrors = new ArrayList<>();
+            for (List<ValidationError> fieldErrors : errors.values()) {
+                for (ValidationError error : fieldErrors) {
+                    errorList.add(error.getMessage(getContext().getLocale()));
+                }
+            }
+        } else {
+            return null;
+        }
+
+        String submissionSamplesData = getSubmissionJson(errorList, STRIPES_ERRORS);
         return createTextResolution(submissionSamplesData);
     }
 
@@ -900,6 +938,13 @@ public class ResearchProjectActionBean extends CoreActionBean {
     @Before(stages = LifecycleStage.EventHandling, on = {VIEW_SUBMISSIONS_ACTION})
     public void initializeForSubmissions() {
         updateSubmissionSamples();
+    }
+
+    @ValidationMethod(on = {VIEW_SUBMISSIONS_ACTION, POST_SUBMISSIONS_ACTION})
+    public void validateViewSubmissions() {
+        if (!isSubmissionAllowed()) {
+            addGlobalValidationError("Data submissions are available for research projects only.");
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -1234,6 +1279,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
      * @return true if the current user is allowed to request data submissions for the current research project
      */
     public boolean isSubmissionAllowed() {
+        if (!isProjectAllowsSubmission()) {
+            return false;
+        }
         if (getUserBean().isDeveloperUser()) {
             return true;
         }
@@ -1328,12 +1376,23 @@ public class ResearchProjectActionBean extends CoreActionBean {
      * @return True if you can start a collaboration.
      */
     public boolean isCanBeginCollaborations() {
-        return isResearchOnly() && (getUserBean().isDeveloperUser() || getUserBean().isPMUser());
+        if (isResearchOnly()) {
+            return getUserBean().isDeveloperUser() || getUserBean().isPMUser();
+        }
+        return false;
+    }
+
+    /**
+     * Returns true if the research project allows submissions.
+     *
+     * Currently only "Research Grade" projects are allowed to submit data.
+     */
+    public boolean isProjectAllowsSubmission() {
+        return isResearchOnly();
     }
 
     private boolean isResearchOnly() {
-        return ((editResearchProject != null) &&
-               (editResearchProject.getRegulatoryDesignation() == ResearchProject.RegulatoryDesignation.RESEARCH_ONLY));
+        return editResearchProject != null && editResearchProject.isResearchOnly();
     }
 
     public SampleKitRecipient getSampleKitRecipient() {
@@ -1403,5 +1462,13 @@ public class ResearchProjectActionBean extends CoreActionBean {
             itemList.put(status.getLabel());
         }
         return itemList.toString();
+    }
+
+    public String getSubmissionTabHelpText() {
+        if (isProjectAllowsSubmission()) {
+            return "Click to view data submissions";
+        } else {
+            return "Data submissions are available for 'research grade' projects only.";
+        }
     }
 }

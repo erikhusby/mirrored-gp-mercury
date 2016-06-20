@@ -9,6 +9,15 @@
                        sectionTitle="View Project: ${actionBean.editResearchProject.title}"
                        businessKeyValue="${actionBean.editResearchProject.businessKey}">
     <stripes:layout-component name="extraHead">
+        <style type="text/css">
+            .extraSpace {
+                height: calc(100vh - 100px);
+            }
+            .extraSpace > .ui-tabs-panel {
+                height: auto;
+                min-height: 100%;
+            }
+        </style>
         <script type="text/javascript">
             function getParameterByName(name) {
                 name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
@@ -21,8 +30,15 @@
 
             $j(document).ready(function () {
                 $j("#tabs").tabs({
-                    active: activeTab
+                    active: activeTab,
+                    activate: function () {
+                        this.scrollIntoView({block: "start", behavior: "smooth"});
+                    }
                 });
+                if (${! actionBean.projectAllowsSubmission}) {
+                    var index = $j("#tabs ul").find("[href='#submissionsTab']").closest("li").index();
+                    $j("#tabs").tabs("disable", index);
+                }
 
                 $j('#addRegulatoryInfoDialog').dialog({
                     autoOpen: false,
@@ -49,7 +65,9 @@
             // $(window).load(...) is used here because the submissions.jsp dom is not ready
             // when $j(document).ready() is called.
             $(window).load(function(){
-                $j("#tabs ul li:nth-child(" + activeTab + ") a").trigger('click');
+                if (activeTab) {
+                    $j("#tabs ul li:nth-child(" + activeTab + ") a").trigger('click');
+                }
             });
 
             function showBeginCollaboration() {
@@ -552,10 +570,13 @@
             </table>
         </stripes:form>
 
-        <div id="tabs" class="simpletab">
+        <%-- extraSpace class adds about a page worth of blank at the bottom of the page so the --%>
+        <%-- submission entries aren't hidden when the ajax call returns --%>
+
+        <div id="tabs" class="simpletab extraSpace">
             <ul>
-                <li><a href="#ordersTab">Orders</a></li>
-                <li><a href="#submissionsTab">Submission Requests</a></li>
+                <li><a href="#ordersTab" title="View Product Orders">Orders</a></li>
+                <li><a href="#submissionsTab" title="${actionBean.submissionTabHelpText}">Submission Requests</a></li>
             </ul>
 
             <div id="ordersTab">
@@ -620,6 +641,8 @@
         </table>
             </div>
             <div id="submissionsTab">
+                <a name="#submissionsTab"></a>
+                <input type="hidden" name="_sourcePage" value="<%request.getServletPath();%>"/>
                 <stripes:layout-render name="<%=ResearchProjectActionBean.PROJECT_SUBMISSIONS_PAGE%>"
                                        event="viewSubmissions"
                                        submissionsTabSelector="a[href = '#submissionsTab']"

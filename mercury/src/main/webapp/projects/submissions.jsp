@@ -227,20 +227,16 @@
         function addStripesMessageDiv(alertType, fieldSelector) {
             var alertClass = 'alert-' + alertType;
             var messageBox = jQuery("<div></div>",{
-                "class":"alert alertClass".replace("alertClass", alertClass)
+                "class": "alert alertClass center".replace("alertClass", alertClass),
+                "style": "width: 50em;"
             });
-
+            var button = jQuery("<button type='button' class='close' data-dismiss='alert'>&times;</button>");
+            messageBox.append(button);
             messageBox.append('<ul></ul>');
             if (fieldSelector != undefined) {
                 $j(fieldSelector).empty();
                 $j(fieldSelector).append(messageBox);
             } else {
-                messageBox.append(jQuery("<button>&times;</button>", {
-                    "type": "button",
-                    "class": "close",
-                    "data-dismiss": "alert"
-                }));
-                messageBox.css({"margin-left": "20%", "margin-right": "20%"});
                 $j('.page-body').before(messageBox);
             }
             return messageBox;
@@ -293,8 +289,22 @@
 
             var oTable;
             $j("${submissionsTabSelector}").click(function () {
-            if (oTable == undefined) {
-                function renderCheckbox(data, type, row) {
+                function buildMessage(jqXHR) {
+                    var responseText = jqXHR.responseJSON;
+                    if (responseText.stripesMessages) {
+                        outerDiv = jQuery("<div></div>", {
+                            "id": "stripesMessageOuter",
+                            "style": "position: relative;z-index:5",
+                            "class": "center"
+                        });
+                        $j("#submissionSamples_wrapper").prepend(outerDiv);
+                        $j("#submissionSamples_processing").hide();
+                        addStripesMessage(responseText.stripesMessages, responseText.messageType, "#stripesMessageOuter");
+                    }
+                }
+
+                if (oTable == undefined) {
+                    function renderCheckbox(data, type, row) {
                     if (type === 'display') {
                         var status = row.<%=SubmissionField.SUBMITTED_STATUS %>;
                         var tagAttributes = {};
@@ -367,10 +377,9 @@
                             "url": sSource,
                             "data": aoData,
                             "success": fnCallback,
-                            "error": function (jqXHR, textStatus, errorThrown) {
-                                addStripesMessage("Error receiving submission data: " + errorThrown, "error", ".dataTables_processing");
+                            "complete": function (jqXHR) {
+                                buildMessage(jqXHR);
                             }
-
                         });
                     },
 

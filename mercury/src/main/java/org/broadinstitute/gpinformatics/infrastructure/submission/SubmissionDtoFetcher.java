@@ -14,6 +14,7 @@ package org.broadinstitute.gpinformatics.infrastructure.submission;
 import com.google.common.base.Function;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -34,6 +35,8 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.AggregationMetricsFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
+import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
+import org.jvnet.inflector.Noun;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -94,7 +97,11 @@ public class SubmissionDtoFetcher {
     }
 
     public List<SubmissionDto> fetch(@Nonnull ResearchProject researchProject) {
-        Map<String, Collection<ProductOrder>> sampleNameToPdos = getSamplesForProject(researchProject);
+        return fetch(researchProject, MessageReporter.UNUSED);
+    }
+
+    public List<SubmissionDto> fetch(@Nonnull ResearchProject researchProject, MessageReporter messageReporter) {
+        Map<String, Collection<ProductOrder>> sampleNameToPdos = getSamplesForProject(researchProject, messageReporter);
 
         Set<String> sampleNames = sampleNameToPdos.keySet();
 
@@ -118,14 +125,36 @@ public class SubmissionDtoFetcher {
         return buildBassDtoMap(bassDTOs);
     }
 
-    private Map<String, Collection<ProductOrder>> getSamplesForProject(ResearchProject researchProject) {
+    private Map<String, Collection<ProductOrder>> getSamplesForProject(ResearchProject researchProject,
+                                                                       MessageReporter messageReporter) {
         List<ProductOrderSample> productOrderSamples =
                 productOrderSampleDao.findByResearchProject(researchProject.getJiraTicketKey());
         ProductOrder.loadCollaboratorSampleName(productOrderSamples);
 
+        return getCollaboratorSampleNameToPdoMap(productOrderSamples, messageReporter);
+    }
+
+    Map<String, Collection<ProductOrder>> getCollaboratorSampleNameToPdoMap(
+            List<ProductOrderSample> productOrderSamples, MessageReporter messageReporter) {
         HashMultimap<String, ProductOrder> results = HashMultimap.create();
+        Multimap<String, String> missingPdoSampleMap = HashMultimap.create();
         for (ProductOrderSample pdoSamples : productOrderSamples) {
-            results.put(pdoSamples.getSampleData().getCollaboratorsSampleName(), pdoSamples.getProductOrder());
+            if (StringUtils.isNotBlank(pdoSamples.getSampleData().getCollaboratorsSampleName())) {
+                results.put(pdoSamples.getSampleData().getCollaboratorsSampleName(), pdoSamples.getProductOrder());
+            } else {
+                missingPdoSampleMap.put(pdoSamples.getProductOrder().getBusinessKey(), pdoSamples.getBusinessKey());
+            }
+        }
+        if (!missingPdoSampleMap.isEmpty()) {
+            Set<String> notFoundMessages = new HashSet<>();
+            for (String key : missingPdoSampleMap.keys()) {
+                Collection<String> missingSamples = missingPdoSampleMap.get(key);
+                notFoundMessages.add(String.format("%s: %s", key, missingSamples));
+            }
+            String somePreposition = missingPdoSampleMap.size() > 1 ? "some" : "a";
+            String sampleNoun = Noun.pluralOf("sample", missingPdoSampleMap.size());
+            messageReporter.addMessage("'Collaborator sample name' not found for {0} {1}<ul><li>{2}</ul>",
+                    somePreposition, sampleNoun, StringUtils.join(notFoundMessages, "<li>"));
         }
 
         return results.asMap();
