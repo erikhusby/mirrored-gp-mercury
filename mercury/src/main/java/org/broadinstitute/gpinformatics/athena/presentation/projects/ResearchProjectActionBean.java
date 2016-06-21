@@ -985,7 +985,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
             log.error("Could not load samples from cache.", e);
         }
         if (submissionSamples == null) {
-            submissionSamples = submissionDtoFetcher.fetch(editResearchProject);
+            submissionSamples = submissionDtoFetcher.fetch(editResearchProject, this);
         } else {
 
             // When getting cached submissions update the submissionStatus if requested.
