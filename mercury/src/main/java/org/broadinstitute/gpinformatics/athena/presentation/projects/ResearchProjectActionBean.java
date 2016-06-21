@@ -306,11 +306,6 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         Collections.sort(allResearchProjects, ResearchProject.BY_DATE);
     }
 
-    @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_SUBMISSIONS_ACTION, POST_SUBMISSIONS_ACTION})
-    public void initSessionCache(){
-        sessionCache = new SessionCache<>(getContext().getRequest().getSession(),
-                VIEW_SUBMISSIONS_ACTION, SUBMISSION_SAMPLES_TYPE_REFERENCE);
-    }
     /**
      * Initialize the project with the passed in key for display in the form.  Need to handle in @Before so we can
      * get the OriginalTitle on the project for validation. Create is needed so that token inputs don't have to check
@@ -358,6 +353,11 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
                     selectedSubmissionLibraryDescriptor = submissionLibraryDescriptor.getName();
                 }
             }
+            if (sessionCache == null) {
+                sessionCache = new SessionCache<>(getContext().getRequest().getSession(), VIEW_SUBMISSIONS_ACTION,
+                        SUBMISSION_SAMPLES_TYPE_REFERENCE);
+            }
+
         } else {
             if (getUserBean().isValidBspUser()) {
                 editResearchProject = new ResearchProject(getUserBean().getBspUser());
