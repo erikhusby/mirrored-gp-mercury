@@ -907,13 +907,27 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         return objectMapper.writeValueAsString(submissionSamplesMap);
     }
 
+    /**
+     * (Copied From {@link ValidationErrorHandler}) <br/>
+     * Implementing this interface gives ActionBeans the chance to modify what happens when the binding and/or
+     * validation phase(s) generate errors. <b>The handleValidationErrors method is invoked after all validation has
+     * completed</b> - i.e. after annotation based validation and any ValidationMethods that are applicable for the
+     * current request. Invocation only happens when one or more validation errors exist. Also, note that setContext()
+     * will always have been invoked prior to handleValidationErrors(ValidationErrors), allowing the bean access to the
+     * event name and other information.
+     *
+     * @see ValidationErrorHandler
+     */
     @Override
     public Resolution handleValidationErrors(ValidationErrors errors) throws Exception {
         boolean isSubmission = false;
-        if (getContext().getRequest().getParameter(VIEW_SUBMISSIONS_ACTION) != null) {
-            isSubmission = true;
-        } else if (getContext().getRequest().getParameter(POST_SUBMISSIONS_ACTION) != null) {
-            isSubmission = true;
+        String eventName = getContext().getEventName();
+        if (StringUtils.isNotBlank(eventName)) {
+            if (eventName.equals(VIEW_SUBMISSIONS_ACTION)) {
+                isSubmission = true;
+            } else if (eventName.equals(POST_SUBMISSIONS_ACTION)) {
+                isSubmission = true;
+            }
         }
         final List<String> errorList = new ArrayList<>();
         if (isSubmission) {
