@@ -348,8 +348,8 @@
                             <stripes:label for="submissionSite" class="control-label">Default Repository</stripes:label>
                             <div class="controls">
                                 <stripes:select name="editResearchProject.submissionRepositoryName">
-                                    <option>Choose...</option>
-                                    <stripes:options-collection label="description" value="name"
+                                    <stripes:option value="">Choose...</stripes:option>
+                                    <stripes:options-collection label="description" value="description"
                                                                 collection="${actionBean.activeRepositories}"/>
                                 </stripes:select>
                             </div>

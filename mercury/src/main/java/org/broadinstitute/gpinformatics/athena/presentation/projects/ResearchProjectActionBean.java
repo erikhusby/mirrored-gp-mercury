@@ -193,7 +193,8 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
             @Validate(field = "synopsis", label = "Synopsis", required = true, maxlength = 4000, on = {SAVE_ACTION}),
             @Validate(field = "irbNotes", label = "IRB Notes", required = false, maxlength = 255, on = {SAVE_ACTION}),
             @Validate(field = "comments", label = "Comments", maxlength = 2000, on = {SAVE_ACTION}),
-            @Validate(field = "regulatoryDesignation", label = "Regulatory Designation", required = true, on = {SAVE_ACTION})
+            @Validate(field = "regulatoryDesignation", label = "Regulatory Designation", required = true, on = {SAVE_ACTION}),
+            @Validate(field = "submissionRepositoryName", label = "Default Submission Repository", required = true, on = {SAVE_ACTION})
     })
     private ResearchProject editResearchProject;
 
@@ -323,6 +324,18 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
                     GET_SUBMISSION_STATUSES_ACTION})
     public void init() throws Exception {
         researchProject = getContext().getRequest().getParameter(RESEARCH_PROJECT_PARAMETER);
+
+        setSubmissionLibraryDescriptors(submissionsService.getSubmissionLibraryDescriptors());
+        setSubmissionRepositories(submissionsService.getSubmissionRepositories());
+
+        if (submissionRepository == null) {
+            if (StringUtils.isBlank(selectedSubmissionRepository)) {
+                if (getActiveRepositories().size() == 1) {
+                    selectedSubmissionRepository = getActiveRepositories().iterator().next().getDescription();
+                }
+            }
+        }
+
         if (!StringUtils.isBlank(researchProject)) {
 
             editResearchProject = researchProjectDao.findByBusinessKey(researchProject);
@@ -334,8 +347,10 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
                 collaborationData = null;
                 validCollaborationPortal = false;
             }
-            setSubmissionLibraryDescriptors(submissionsService.getSubmissionLibraryDescriptors());
-            setSubmissionRepositories(submissionsService.getSubmissionRepositories());
+
+            if (StringUtils.isNotBlank(editResearchProject.getSubmissionRepositoryName())) {
+                selectedSubmissionRepository = editResearchProject.getSubmissionRepositoryName();
+            }
 
             if (submissionLibraryDescriptor == null) {
                 submissionLibraryDescriptor = findDefaultSubmissionType(editResearchProject);
@@ -343,21 +358,14 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
                     selectedSubmissionLibraryDescriptor = submissionLibraryDescriptor.getName();
                 }
             }
-            if (submissionRepository == null) {
-                if (StringUtils.isBlank(selectedSubmissionRepository)) {
-                    selectedSubmissionRepository = editResearchProject.getSubmissionRepositoryName();
-                }
-                if (StringUtils.isBlank(selectedSubmissionRepository)) {
-                    if (getActiveRepositories().size() == 1) {
-                        selectedSubmissionRepository = getActiveRepositories().iterator().next().getName();
-                    }
-                }
-            }
         } else {
             if (getUserBean().isValidBspUser()) {
                 editResearchProject = new ResearchProject(getUserBean().getBspUser());
             } else {
                 editResearchProject = new ResearchProject();
+            }
+            if (StringUtils.isNotBlank(selectedSubmissionRepository)) {
+                editResearchProject.setSubmissionRepositoryName(selectedSubmissionRepository);
             }
         }
 
