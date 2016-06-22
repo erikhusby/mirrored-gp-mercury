@@ -150,8 +150,6 @@ public class ResearchProjectEjb {
                 listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.DESCRIPTION,
                         researchProject.getSynopsis()));
             }
-            listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.SUMMARY,
-                    researchProject.getTitle()));
 
             String username = userList.getById(researchProject.getCreatedBy()).getUsername();
 
