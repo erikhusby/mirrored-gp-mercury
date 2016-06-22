@@ -31,11 +31,11 @@ public class BassSearchServiceTest {
     protected static final String RP_12 = "RP-12";
     protected static final String COLLABORATOR_SAMPLE_ID = "BOT2365_T";
     public static final String TEST_BASS_ID = "BI7839509";
-    public BassSearchService bassSearchService;
+    public BassSearchServiceImpl bassSearchService;
 
     @BeforeMethod
     public void setUp() {
-        bassSearchService = new BassSearchService(new BassConfig(Deployment.DEV));
+        bassSearchService = new BassSearchServiceImpl(new BassConfig(Deployment.DEV));
     }
 
     public void testSearchBass() {
@@ -84,7 +84,7 @@ public class BassSearchServiceTest {
         try {
             bassSearchService.runSearch(parameters, BassFileType.BAM);
         } catch (Exception e) {
-            Assert.assertTrue(e.getMessage().contains(BassSearchService.ONLY_IDS_MAY_BE_SPECIFIED));
+            Assert.assertTrue(e.getMessage().contains(BassSearchServiceImpl.ONLY_IDS_MAY_BE_SPECIFIED));
         }
     }
 

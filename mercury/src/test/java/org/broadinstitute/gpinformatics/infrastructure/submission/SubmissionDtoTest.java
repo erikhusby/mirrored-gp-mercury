@@ -73,8 +73,8 @@ public class SubmissionDtoTest {
         assertThat(submissionDTO.getDataType(), equalTo(BassDTO.DATA_TYPE_EXOME));
         assertThat(submissionDTO.getProductOrders(), containsInAnyOrder(productOrders.toArray()));
         assertThat(submissionDTO.getAggregationProject(), equalTo(AGGREGATION_PROJECT));
-        assertThat(submissionDTO.getFileType(), equalTo(BAM_FILE));
-        assertThat(submissionDTO.getFileTypeEnum(), equalTo(BAM_ENUM));
+        assertThat(submissionDTO.getFileTypeString(), equalTo(BAM_FILE));
+        assertThat(submissionDTO.getFileType(), equalTo(BAM_ENUM));
         assertThat(submissionDTO.getVersion(), equalTo(VERSION));
         assertThat(submissionDTO.getQualityMetric(), equalTo(QUALITY_METRIC));
         assertThat(submissionDTO.getContamination(), equalTo(CONTAMINATION));

@@ -32,13 +32,13 @@ public class LevelOfDetectionTest {
     private static final Integer VERSION = 1;
 
     public void testConstructOK() throws Exception {
-        LevelOfDetection lod =new LevelOfDetection(PROJECT, SAMPLE, VERSION, SMALLER_DOUBLE, LARGER_DOUBLE);
+        LevelOfDetection lod =new LevelOfDetection(SMALLER_DOUBLE, LARGER_DOUBLE);
         assertThat(lod, is(notNullValue()));
     }
 
     public void testEquals() throws Exception {
-        LevelOfDetection aLOD =new LevelOfDetection(PROJECT, SAMPLE, VERSION, SMALLER_DOUBLE, LARGER_DOUBLE);
-        LevelOfDetection bLOD =new LevelOfDetection(PROJECT, SAMPLE, VERSION, SMALLER_DOUBLE, LARGER_DOUBLE);
+        LevelOfDetection aLOD =new LevelOfDetection(SMALLER_DOUBLE, LARGER_DOUBLE);
+        LevelOfDetection bLOD =new LevelOfDetection(SMALLER_DOUBLE, LARGER_DOUBLE);
         assertThat(aLOD, equalTo(bLOD));
     }
 
@@ -49,20 +49,20 @@ public class LevelOfDetectionTest {
     }
 
     public void testTransitiveEquals() throws Exception {
-        LevelOfDetection aLOD =new LevelOfDetection(PROJECT, SAMPLE, VERSION, SMALLER_DOUBLE, LARGER_DOUBLE);
-        LevelOfDetection bLOD =new LevelOfDetection(PROJECT, SAMPLE, VERSION, SMALLER_DOUBLE, LARGER_DOUBLE);
+        LevelOfDetection aLOD =new LevelOfDetection(SMALLER_DOUBLE, LARGER_DOUBLE);
+        LevelOfDetection bLOD =new LevelOfDetection(SMALLER_DOUBLE, LARGER_DOUBLE);
         assertThat(bLOD, equalTo(aLOD));
     }
 
     public void testNotEqual() throws Exception {
-        LevelOfDetection aLOD =new LevelOfDetection(PROJECT, SAMPLE, VERSION, SMALLER_DOUBLE, SMALLER_DOUBLE);
-        LevelOfDetection bLOD =new LevelOfDetection(PROJECT, SAMPLE, VERSION, LARGER_DOUBLE, LARGER_DOUBLE);
+        LevelOfDetection aLOD =new LevelOfDetection(SMALLER_DOUBLE, SMALLER_DOUBLE);
+        LevelOfDetection bLOD =new LevelOfDetection(LARGER_DOUBLE, LARGER_DOUBLE);
         assertThat(aLOD, not(equalTo(bLOD)));
     }
 
     public void testEqualsThisNull() throws Exception {
         LevelOfDetection lodThis=null;
-        LevelOfDetection lodThat=new LevelOfDetection(PROJECT, SAMPLE, VERSION, SMALLER_DOUBLE, LARGER_DOUBLE);
+        LevelOfDetection lodThat=new LevelOfDetection(SMALLER_DOUBLE, LARGER_DOUBLE);
 
         assertThat(lodThis, not(equalTo(lodThat)));
     }
@@ -76,7 +76,7 @@ public class LevelOfDetectionTest {
     @SuppressWarnings("unused")
     @Test(expectedExceptions = IllegalStateException.class)
     public void testInitializationException() throws Exception {
-        LevelOfDetection iWillNeverAmountToAnything = new LevelOfDetection(PROJECT, SAMPLE, VERSION, LARGER_DOUBLE, SMALLER_DOUBLE);
+        LevelOfDetection iWillNeverAmountToAnything = new LevelOfDetection(LARGER_DOUBLE, SMALLER_DOUBLE);
         Assert.fail("I should have thrown an IllegalStateException just now.");
     }
 }

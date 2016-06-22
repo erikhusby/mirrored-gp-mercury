@@ -53,7 +53,7 @@ public class BassDTO {
 
     // todo: should be in interface?
     public SubmissionTuple getTuple() {
-        return new SubmissionTuple(getSample(), BassFileType.byBassValue(getFileType()), getVersion().toString());
+        return new SubmissionTuple(getSample(), getFileTypeEnum(), getVersion().toString());
     }
 
     private String getFilePath() {
@@ -285,6 +285,10 @@ public class BassDTO {
 
     public String getFileType() {
         return getValue(BassResultColumn.file_type);
+    }
+
+    public BassFileType getFileTypeEnum() {
+        return BassFileType.byBassValue(getFileType());
     }
 
     public String getRpname() {

@@ -12,14 +12,21 @@
 package org.broadinstitute.gpinformatics.infrastructure.submission;
 
 import com.google.common.base.Function;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Collections2;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTracker;
+import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTuple;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassSearchService;
@@ -30,6 +37,8 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.AggregationMetricsFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
+import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
+import org.jvnet.inflector.Noun;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -48,7 +57,7 @@ public class SubmissionDtoFetcher {
     private BassSearchService bassSearchService;
     private BSPSampleDataFetcher bspSampleDataFetcher;
     private SubmissionsService submissionsService;
-
+    private ProductOrderSampleDao productOrderSampleDao;
     // TODO: fix tests so that this isn't needed
     private BSPConfig bspConfig;
 
@@ -58,12 +67,14 @@ public class SubmissionDtoFetcher {
     @Inject
     public SubmissionDtoFetcher(AggregationMetricsFetcher aggregationMetricsFetcher,
                                 BassSearchService bassSearchService, BSPSampleDataFetcher bspSampleDataFetcher,
-                                SubmissionsService submissionsService, BSPConfig bspConfig) {
+                                SubmissionsService submissionsService, BSPConfig bspConfig,
+                                ProductOrderSampleDao productOrderSampleDao) {
         this.aggregationMetricsFetcher = aggregationMetricsFetcher;
         this.bassSearchService = bassSearchService;
         this.bspSampleDataFetcher = bspSampleDataFetcher;
         this.submissionsService = submissionsService;
         this.bspConfig = bspConfig;
+        this.productOrderSampleDao = productOrderSampleDao;
     }
 
     private void updateBulkBspSampleInfo(Collection<ProductOrderSample> samples) {
@@ -88,28 +99,80 @@ public class SubmissionDtoFetcher {
     }
 
     public List<SubmissionDto> fetch(@Nonnull ResearchProject researchProject) {
-        List<SubmissionDto> results = new ArrayList<>();
+        return fetch(researchProject, MessageReporter.UNUSED);
+    }
 
-        Map<String, Set<ProductOrder>> sampleNameToPdos = buildSampleToPdoMap(researchProject);
+    public List<SubmissionDto> fetch(@Nonnull ResearchProject researchProject, MessageReporter messageReporter) {
+        Map<String, Collection<ProductOrder>> sampleNameToPdos = getSamplesForProject(researchProject, messageReporter);
 
-        List<String> submissionIds = collectSubmissionIdentifiers(researchProject);
+        Set<String> sampleNames = sampleNameToPdos.keySet();
+
+        Map<String, SubmissionTuple> submissionIds = collectSubmissionIdentifiers(researchProject);
 
         Map<String, SubmissionStatusDetailBean> sampleSubmissionMap = buildSampleToSubmissionMap(submissionIds);
 
-        Map<String, BassDTO> bassDTOMap = fetchBassDtos(researchProject);
+        Map<String, BassDTO> bassDTOMap =
+                fetchBassDtos(researchProject, sampleNames.toArray(new String[sampleNames.size()]));
 
         Map<String, Aggregation> aggregationMap = fetchAggregationDtos(researchProject, bassDTOMap);
 
+        List<SubmissionDto> results = new ArrayList<>();
         buildSubmissionDtosFromResults(results, sampleNameToPdos, sampleSubmissionMap, bassDTOMap, aggregationMap,
                 researchProject);
-
         return results;
     }
 
-    public Map<String, BassDTO> fetchBassDtos(ResearchProject researchProject) {
-        log.debug(String.format("Fetching bassDTOs for %s", researchProject.getBusinessKey()));
-        List<BassDTO> bassDTOs = bassSearchService.runSearch(researchProject.getBusinessKey());
-        log.debug(String.format("Fetched %d bassDTOs", bassDTOs.size()));
+    public Map<String, BassDTO> fetchBassDtos(ResearchProject researchProject, String ... samples) {
+        List<BassDTO> bassDTOs = bassSearchService.runSearch(researchProject.getBusinessKey(),samples);
+        return buildBassDtoMap(bassDTOs);
+    }
+
+    private Map<String, Collection<ProductOrder>> getSamplesForProject(ResearchProject researchProject,
+                                                                       MessageReporter messageReporter) {
+        List<ProductOrderSample> unfilteredSamples =
+                productOrderSampleDao.findByResearchProject(researchProject.getJiraTicketKey());
+        List<ProductOrderSample> productOrderSamples
+                = new ArrayList<>(Collections2.filter(unfilteredSamples, new Predicate<ProductOrderSample>() {
+            @Override
+            public boolean apply(@Nullable ProductOrderSample input) {
+                if (input != null) {
+                    return !input.getProductOrder().isDraft();
+                }
+                return false;
+            }
+        }));
+        ProductOrder.loadCollaboratorSampleName(productOrderSamples);
+
+        return getCollaboratorSampleNameToPdoMap(productOrderSamples, messageReporter);
+    }
+
+    Map<String, Collection<ProductOrder>> getCollaboratorSampleNameToPdoMap(
+            List<ProductOrderSample> productOrderSamples, MessageReporter messageReporter) {
+        HashMultimap<String, ProductOrder> results = HashMultimap.create();
+        Multimap<String, String> missingPdoSampleMap = HashMultimap.create();
+        for (ProductOrderSample pdoSamples : productOrderSamples) {
+            if (StringUtils.isNotBlank(pdoSamples.getSampleData().getCollaboratorsSampleName())) {
+                results.put(pdoSamples.getSampleData().getCollaboratorsSampleName(), pdoSamples.getProductOrder());
+            } else {
+                missingPdoSampleMap.put(pdoSamples.getProductOrder().getBusinessKey(), pdoSamples.getBusinessKey());
+            }
+        }
+        if (!missingPdoSampleMap.isEmpty()) {
+            Set<String> notFoundMessages = new HashSet<>();
+            for (String key : missingPdoSampleMap.keys()) {
+                Collection<String> missingSamples = missingPdoSampleMap.get(key);
+                notFoundMessages.add(String.format("%s: %s", key, missingSamples));
+            }
+            String somePreposition = missingPdoSampleMap.size() > 1 ? "some" : "a";
+            String sampleNoun = Noun.pluralOf("sample", missingPdoSampleMap.size());
+            messageReporter.addMessage("'Collaborator sample name' not found for {0} {1}<ul><li>{2}</ul>",
+                    somePreposition, sampleNoun, StringUtils.join(notFoundMessages, "<li>"));
+        }
+
+        return results.asMap();
+    }
+
+    private Map<String, BassDTO> buildBassDtoMap(List<BassDTO> bassDTOs) {
         Map<String, BassDTO> bassDTOMap = new HashMap<>();
         for (BassDTO bassDTO : bassDTOs) {
             if (bassDTOMap.containsKey(bassDTO.getSample())) {
@@ -128,7 +191,7 @@ public class SubmissionDtoFetcher {
         List<String> samples = new ArrayList<>();
         List<Integer> versions = new ArrayList<>();
         for (BassDTO bassDTO : bassDTOMap.values()) {
-            log.info(String.format("Fetching Metrics aggregations for project: %s, sample: %s, version: %d",
+            log.debug(String.format("Fetching Metrics aggregations for project: %s, sample: %s, version: %d",
                     researchProject.getBusinessKey(), bassDTO.getSample(), bassDTO.getVersion()));
             projects.add(bassDTO.getProject());
             samples.add(bassDTO.getSample());
@@ -146,12 +209,12 @@ public class SubmissionDtoFetcher {
     }
 
     public void buildSubmissionDtosFromResults(List<SubmissionDto> results,
-                                               Map<String, Set<ProductOrder>> sampleNameToPdos,
+                                               Map<String, Collection<ProductOrder>> sampleNameToPdos,
                                                Map<String, SubmissionStatusDetailBean> sampleSubmissionMap,
                                                Map<String, BassDTO> bassDTOMap,
                                                Map<String, Aggregation> aggregationMap,
                                                ResearchProject researchProject) {
-        for (Map.Entry<String, Set<ProductOrder>> sampleListMap : sampleNameToPdos.entrySet()) {
+        for (Map.Entry<String, Collection<ProductOrder>> sampleListMap : sampleNameToPdos.entrySet()) {
             String collaboratorSampleId = sampleListMap.getKey();
             if (aggregationMap.containsKey(collaboratorSampleId) && bassDTOMap.containsKey(collaboratorSampleId)) {
                 Aggregation aggregation = aggregationMap.get(collaboratorSampleId);
@@ -166,42 +229,47 @@ public class SubmissionDtoFetcher {
         }
     }
 
-    public Map<String, SubmissionStatusDetailBean> buildSampleToSubmissionMap(List<String> submissionIds) {
+    public Map<String, SubmissionStatusDetailBean> buildSampleToSubmissionMap(Map<String, SubmissionTuple> submissionTupleMap) {
         Map<String, SubmissionStatusDetailBean> sampleSubmissionMap = new HashMap<>();
 
+        Set<String> submissionIds = submissionTupleMap.keySet();
         if (CollectionUtils.isNotEmpty(submissionIds)) {
             Collection<SubmissionStatusDetailBean> submissionStatus =
                     submissionsService.getSubmissionStatus(submissionIds.toArray(new String[submissionIds.size()]));
             for (SubmissionStatusDetailBean submissionStatusDetailBean : submissionStatus) {
+                SubmissionTuple submissionTuple = submissionTupleMap.get(submissionStatusDetailBean.getUuid());
+                submissionStatusDetailBean.setSubmittedVersion(submissionTuple.getVersion());
                 sampleSubmissionMap.put(submissionStatusDetailBean.getUuid(), submissionStatusDetailBean);
             }
         }
         return sampleSubmissionMap;
     }
 
-    public List<String> collectSubmissionIdentifiers(ResearchProject researchProject) {
-        List<String> submissionIds = new ArrayList<>();
+    public void refreshSubmissionStatuses(List<SubmissionDto> submissionDataList) {
+        Map<String, SubmissionDto> uuIdSubmisisonDataMap = new HashMap<>(submissionDataList.size());
+        for (SubmissionDto submissionDto : submissionDataList) {
+            if (StringUtils.isNotBlank(submissionDto.getUuid())) {
+                uuIdSubmisisonDataMap.put(submissionDto.getUuid(), submissionDto);
+            }
+        }
+        Set<String> uuIds = uuIdSubmisisonDataMap.keySet();
+        if (!uuIds.isEmpty()) {
+            Collection<SubmissionStatusDetailBean> submissionDetailBeans =
+                    submissionsService.getSubmissionStatus(uuIds.toArray(new String[uuIds.size()]));
+            for (SubmissionStatusDetailBean statusDetailBean : submissionDetailBeans) {
+                SubmissionDto submissionDto = uuIdSubmisisonDataMap.get(statusDetailBean.getUuid());
+                submissionDto.setStatusDetailBean(statusDetailBean);
+            }
+        }
+    }
+
+    private Map<String, SubmissionTuple> collectSubmissionIdentifiers(ResearchProject researchProject) {
+        Map<String, SubmissionTuple> submissionIds = new HashMap<>();
         /** SubmissionTracker uses sampleName for accessionIdentifier
          @see: org/broadinstitute/gpinformatics/athena/boundary/projects/ ResearchProjectEjb.java:243 **/
         for (SubmissionTracker submissionTracker : researchProject.getSubmissionTrackers()) {
-            submissionIds.add(submissionTracker.createSubmissionIdentifier());
+            submissionIds.put(submissionTracker.createSubmissionIdentifier(), submissionTracker.getTuple());
         }
         return submissionIds;
-    }
-
-    public Map<String, Set<ProductOrder>> buildSampleToPdoMap(ResearchProject researchProject) {
-        Set<ProductOrderSample> productOrderSamples = researchProject.collectSamples();
-        updateBulkBspSampleInfo(productOrderSamples);
-        Map<String, Set<ProductOrder>> sampleNameToPdos = new HashMap<>();
-        for (ProductOrderSample productOrderSample : productOrderSamples) {
-            String pdoSampleName = productOrderSample.getSampleData().getCollaboratorsSampleName();
-            if (!pdoSampleName.isEmpty()) {
-                if (sampleNameToPdos.get(pdoSampleName) == null) {
-                    sampleNameToPdos.put(pdoSampleName, new HashSet<ProductOrder>());
-                }
-                sampleNameToPdos.get(pdoSampleName).add(productOrderSample.getProductOrder());
-            }
-        }
-        return sampleNameToPdos;
     }
 }

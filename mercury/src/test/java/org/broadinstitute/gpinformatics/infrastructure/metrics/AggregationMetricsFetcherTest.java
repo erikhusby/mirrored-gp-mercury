@@ -8,9 +8,13 @@ import org.hamcrest.Matchers;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import javax.persistence.criteria.CriteriaBuilder;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.closeTo;

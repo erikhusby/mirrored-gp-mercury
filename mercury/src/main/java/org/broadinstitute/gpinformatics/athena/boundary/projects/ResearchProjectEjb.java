@@ -46,6 +46,8 @@ import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionBean
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionBioSampleBean;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionContactBean;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDto;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionLibraryDescriptor;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionRepository;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionRequestBean;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionStatusDetailBean;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionsService;
@@ -247,13 +249,17 @@ public class ResearchProjectEjb {
      * @param researchProjectBusinessKey Unique key of the Research Project under which the
      * @param selectedBioProject         BioProject to be associated with all submissions
      * @param submissionDtos             Collection of submissionDTOs selected to be submitted
+     * @param repository                 Repository where submission will be sent.
+     * @param submissionLibraryDescriptor             The name of the library descriptor to be sent in the submission.
      *
      * @return the results from the post to the submission service
      */
     public Collection<SubmissionStatusDetailBean> processSubmissions(@Nonnull String researchProjectBusinessKey,
                                                                      @Nonnull BioProject selectedBioProject,
-                                                                     @Nonnull List<SubmissionDto> submissionDtos)
-            throws ValidationException {
+                                                                     @Nonnull List<SubmissionDto> submissionDtos,
+                                                                     @Nonnull SubmissionRepository repository,
+                                                                     @Nonnull SubmissionLibraryDescriptor
+                                                                     submissionLibraryDescriptor) throws ValidationException {
         validateSubmissionDto(researchProjectBusinessKey, submissionDtos);
         validateSubmissionSamples(selectedBioProject, submissionDtos);
 
@@ -263,7 +269,7 @@ public class ResearchProjectEjb {
 
         for (SubmissionDto submissionDto : submissionDtos) {
             SubmissionTracker tracker = new SubmissionTracker(submissionDto.getSampleName(),
-                    submissionDto.getFileTypeEnum(), String.valueOf(submissionDto.getVersion()));
+                    submissionDto.getFileType(), String.valueOf(submissionDto.getVersion()));
             submissionProject.addSubmissionTracker(tracker);
             submissionDtoMap.put(tracker, submissionDto);
         }
@@ -286,7 +292,8 @@ public class ResearchProjectEjb {
 
             SubmissionBean submissionBean =
                     new SubmissionBean(dtoByTracker.getKey().createSubmissionIdentifier(),
-                            userBean.getBspUser().getUsername(), submitBioProject, bioSampleBean);
+                            userBean.getBspUser().getUsername(), submitBioProject, bioSampleBean, repository,
+                            submissionLibraryDescriptor);
             submissionBeans.add(submissionBean);
         }
 
@@ -309,10 +316,13 @@ public class ResearchProjectEjb {
         List<String> errorMessages = new ArrayList<>();
 
         for (SubmissionStatusDetailBean status : submissionResults) {
+            SubmissionTracker submissionTracker = submissionIdentifierToTracker.get(status.getUuid());
             if (CollectionUtils.isNotEmpty(status.getErrors())) {
                 for(String errorMessage:status.getErrors()) {
-                    errorMessages.add(String.format("%s: %s", submissionIdentifierToTracker.get(status.getUuid()).getSubmittedSampleName(),errorMessage));
+                    errorMessages.add(String.format("%s: %s", submissionTracker.getSubmittedSampleName(), errorMessage));
                 }
+            }else {
+                submissionDtoMap.get(submissionTracker).setStatusDetailBean(status);
             }
         }
 

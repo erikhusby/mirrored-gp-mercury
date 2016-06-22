@@ -11,11 +11,16 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.submission;
 
+import com.sun.jersey.api.client.ClientResponse;
+import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
+import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.hamcrest.Matchers;
+import org.mockito.Mockito;
+import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -24,6 +29,7 @@ import java.util.Collection;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.emptyCollectionOf;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasItemInArray;
 import static org.hamcrest.Matchers.hasItems;
@@ -37,14 +43,16 @@ public class SubmissionsServiceImplTest {
 
     private static int sequenceNumber = 1;
 
-    public static final String BIO_PROJECT_ACCESSION_ID = "PRJNA75723";
-    public static final String SAMPLE1_ID = "4304714212_K";
-    public static final String SAMPLE2_ID = "4377315018_E";
+    private static final String BIO_PROJECT_ACCESSION_ID = "PRJNA75723";
+    private static final String SAMPLE1_ID = "4304714212_K";
+    private static final String SAMPLE2_ID = "4377315018_E";
 
     private SubmissionsService submissionsService;
 
     private BioProject bioProject;
     private SubmissionContactBean contactBean;
+    private SubmissionRepository submissionRepository;
+    private SubmissionLibraryDescriptor submissionLibraryDescriptor;
 
     @BeforeMethod
     public void setUp() throws Exception {
@@ -52,6 +60,38 @@ public class SubmissionsServiceImplTest {
         contactBean =
                 new SubmissionContactBean("Jeff", "A", "Gentry", "jgentry@broadinstitute.org", "617-555-9292", "homer");
         submissionsService = new SubmissionsServiceImpl(SubmissionConfig.produce(Deployment.DEV));
+        submissionRepository = submissionsService.getSubmissionRepositories().iterator().next();
+        submissionLibraryDescriptor =submissionsService.getSubmissionLibraryDescriptors().iterator().next();
+    }
+
+    public void testServerResponseBadRequest() {
+        ClientResponse clientResponse = Mockito.mock(ClientResponse.class);
+        Mockito.when(clientResponse.getStatus()).thenReturn(ClientResponse.Status.BAD_REQUEST.getStatusCode());
+        String activityName = "just testing y'all";
+        String exceptonMessage = "There was an error";
+        String errorMessage = String.format("Error received while %s: %s", activityName, exceptonMessage);
+        Mockito.when(clientResponse.getEntity(String.class)).thenReturn(exceptonMessage);
+        SubmissionsServiceImpl submissionsServiceImpl = ((SubmissionsServiceImpl) submissionsService);
+        try {
+            submissionsServiceImpl.validateResponseStatus(activityName, clientResponse);
+            Assert.fail("Should have thrown an exception but didn't");
+        } catch (InformaticsServiceException e) {
+            assertThat(e.getLocalizedMessage(), equalTo(errorMessage));
+        } catch (Exception e) {
+            Assert.fail("Wrong exception thrown: " + e.getClass().getName());
+
+        }
+    }
+
+    public void testServerResponseOK() {
+        ClientResponse clientResponse = Mockito.mock(ClientResponse.class);
+        Mockito.when(clientResponse.getStatus()).thenReturn(ClientResponse.Status.OK.getStatusCode());
+        SubmissionsServiceImpl submissionsServiceImpl = ((SubmissionsServiceImpl) submissionsService);
+        try {
+            submissionsServiceImpl.validateResponseStatus(null, clientResponse);
+        } catch (Exception e) {
+            Assert.fail("Wrong exception thrown: " + e.getClass().getName());
+        }
     }
 
     public void testGetAllBioProjects() throws Exception {
@@ -68,11 +108,22 @@ public class SubmissionsServiceImplTest {
         assertThat(submissionSamples, hasItems(expectedSampleNames));
     }
 
+    public void testSubmissionRepositoriesHaveActiveStatus(){
+        Collection<SubmissionRepository> submissionRepositories = submissionsService.getSubmissionRepositories();
+        for (SubmissionRepository repository : submissionRepositories) {
+            if (repository.getName().equals(SubmissionRepository.DEFAULT_REPOSITORY_NAME)) {
+                assertThat(repository.isActive(), is(true));
+            }
+        }
+    }
+
     public void testSubmit() {
         SubmissionBean submissionBean1 = new SubmissionBean(getTestUUID(), "jgentry",
-                bioProject, new SubmissionBioSampleBean(SAMPLE1_ID, "/some/funky/file.bam", contactBean));
+                bioProject, new SubmissionBioSampleBean(SAMPLE1_ID, "/some/funky/file.bam", contactBean),
+                submissionRepository, submissionLibraryDescriptor);
         SubmissionBean submissionBean2 = new SubmissionBean(getTestUUID(), "jgentry",
-                bioProject, new SubmissionBioSampleBean(SAMPLE2_ID, "/some/funky/file2.bam", contactBean));
+                bioProject, new SubmissionBioSampleBean(SAMPLE2_ID, "/some/funky/file2.bam", contactBean),
+                submissionRepository, submissionLibraryDescriptor);
         SubmissionRequestBean submissionRequestBean =
                 new SubmissionRequestBean(Arrays.asList(submissionBean1, submissionBean2));
         Collection<SubmissionStatusDetailBean>
@@ -103,7 +154,8 @@ public class SubmissionsServiceImplTest {
         String testUUID = getTestUUID();
 
         SubmissionBean submissionBean = new SubmissionBean(testUUID, "jgentry", bioProject,
-                new SubmissionBioSampleBean(SAMPLE1_ID, "/some/funky/file.bam", contactBean));
+                new SubmissionBioSampleBean(SAMPLE1_ID, "/some/funky/file.bam", contactBean), submissionRepository,
+                submissionLibraryDescriptor);
         SubmissionRequestBean submissionRequestBean = new SubmissionRequestBean(Arrays.asList(submissionBean));
         Collection<SubmissionStatusDetailBean> submissionResult =
                 submissionsService.postSubmissions(submissionRequestBean);
@@ -128,4 +180,46 @@ public class SubmissionsServiceImplTest {
     private static synchronized String getTestUUID() {
         return String.format("MERCURY_TEST_SUB_%d_%04d", System.currentTimeMillis(), sequenceNumber++);
     }
+
+    public void testFindRepositoryByKeyOK() throws Exception {
+        SubmissionRepository repositoryByKey =
+                submissionsService.findRepositoryByKey(SubmissionRepository.DEFAULT_REPOSITORY_NAME);
+
+        assertThat(repositoryByKey.getName(), equalTo(SubmissionRepository.DEFAULT_REPOSITORY_NAME));
+    }
+
+    public void testFindRepositoryByKeyNullInput() throws Exception {
+        SubmissionRepository repositoryByKey =
+                submissionsService.findRepositoryByKey(null);
+
+        assertThat(repositoryByKey, nullValue());
+    }
+
+    public void testFindRepositoryByKeyNoSuchKey() throws Exception {
+        SubmissionRepository repositoryByKey =
+                submissionsService.findRepositoryByKey("I'm making this up.");
+        assertThat(repositoryByKey, nullValue());
+
+    }
+
+    public void testFindLibraryDescriptorTypeByKey() throws Exception {
+        SubmissionLibraryDescriptor libraryDescriptorTypeByKey =
+                submissionsService.findLibraryDescriptorTypeByKey(SubmissionLibraryDescriptor.WHOLE_GENOME_NAME);
+
+        assertThat(libraryDescriptorTypeByKey, equalTo(ProductFamily.defaultLibraryDescriptor()));
+    }
+
+    public void testFindLibraryDescriptorTypeByKeyNoResultReturnsNull() throws Exception {
+        SubmissionLibraryDescriptor libraryDescriptorTypeByKey =
+                submissionsService.findLibraryDescriptorTypeByKey("nunsuch");
+
+        assertThat(libraryDescriptorTypeByKey, nullValue());
+    }
+    public void testFindLibraryDescriptorTypeByKeyNullInputReturnsNull() throws Exception {
+        SubmissionLibraryDescriptor libraryDescriptorTypeByKey =
+                submissionsService.findLibraryDescriptorTypeByKey(null);
+
+        assertThat(libraryDescriptorTypeByKey, nullValue());
+    }
+
 }

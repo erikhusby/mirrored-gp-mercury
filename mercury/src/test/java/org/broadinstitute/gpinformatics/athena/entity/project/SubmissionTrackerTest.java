@@ -20,7 +20,8 @@ public class SubmissionTrackerTest {
     public void testBuildSubmissionTracker() {
         Date testStartDate = new Date();
 
-        SubmissionTrackerStub tracker = new SubmissionTrackerStub(testAccessionID, testFileType, testVersion);
+        SubmissionTrackerStub tracker =
+                new SubmissionTrackerStub(testAccessionID, testFileType, testVersion);
 
         Assert.assertNotNull(tracker);
 

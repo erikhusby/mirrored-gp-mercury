@@ -63,7 +63,7 @@ public class ReworkEjbDBFreeTest extends BaseEventTest {
         testPdo1.setSamples(sampleList1);
         testPdo1.setOrderStatus(ProductOrder.OrderStatus.Submitted);
         testPdo1.getProduct().setProductFamily(new ProductFamily(
-                ProductFamily.ProductFamilyName.EXOME.getFamilyName()));
+                ProductFamily.ProductFamilyInfo.EXOME.getFamilyName()));
 
         sampleList2 = ProductOrderSampleTestFactory.createDBFreeSampleList(MercurySample.MetadataSource.BSP, "SM-test2");
         testPdo2 = ProductOrderTestFactory.buildExExProductOrder(1);
@@ -71,7 +71,7 @@ public class ReworkEjbDBFreeTest extends BaseEventTest {
         testPdo2.setSamples(sampleList2);
         testPdo2.setOrderStatus(ProductOrder.OrderStatus.Submitted);
         testPdo2.getProduct().setProductFamily(new ProductFamily(
-                ProductFamily.ProductFamilyName.EXOME.getFamilyName()));
+                ProductFamily.ProductFamilyInfo.EXOME.getFamilyName()));
 
         sampleList3 = ProductOrderSampleTestFactory.createDBFreeSampleList(MercurySample.MetadataSource.BSP, "SM-test3");
         testPdo3 = ProductOrderTestFactory.buildExExProductOrder(1);
@@ -79,14 +79,14 @@ public class ReworkEjbDBFreeTest extends BaseEventTest {
         testPdo3.setSamples(sampleList3);
         testPdo3.setOrderStatus(ProductOrder.OrderStatus.Submitted);
         testPdo3.getProduct().setProductFamily(new ProductFamily(
-                ProductFamily.ProductFamilyName.EXOME.getFamilyName()));
+                ProductFamily.ProductFamilyInfo.EXOME.getFamilyName()));
 
         sampleList4 = ProductOrderSampleTestFactory.createDBFreeSampleList(MercurySample.MetadataSource.BSP, "SM-test4");
         draftPDO = ProductOrderTestFactory.buildExExProductOrder(1);
         draftPDO.setJiraTicketKey("PDO-17");
         draftPDO.setSamples(sampleList4);
         draftPDO.getProduct().setProductFamily(new ProductFamily(
-                ProductFamily.ProductFamilyName.EXOME.getFamilyName()));
+                ProductFamily.ProductFamilyInfo.EXOME.getFamilyName()));
     }
 
     @Test
@@ -163,7 +163,7 @@ public class ReworkEjbDBFreeTest extends BaseEventTest {
         nonExomeExpressPdo.setSamples(sampleList5);
         nonExomeExpressPdo.getProduct().setWorkflow(Workflow.ICE_EXOME_EXPRESS);
         nonExomeExpressPdo.getProduct().setProductFamily(new ProductFamily(
-                ProductFamily.ProductFamilyName.EXOME.getFamilyName()));
+                ProductFamily.ProductFamilyInfo.EXOME.getFamilyName()));
 
         ProductOrderSample nonExomeExpressSample5 = nonExomeExpressPdo.getSamples().get(0);
         sampleSet.add(nonExomeExpressSample5);
@@ -253,7 +253,7 @@ public class ReworkEjbDBFreeTest extends BaseEventTest {
         nonExomeExpressPdo.setOrderStatus(ProductOrder.OrderStatus.Submitted);
         nonExomeExpressPdo.getProduct().setWorkflow(Workflow.ICE_EXOME_EXPRESS);
         nonExomeExpressPdo.getProduct().setProductFamily(new ProductFamily(
-                ProductFamily.ProductFamilyName.EXOME.getFamilyName()));
+                ProductFamily.ProductFamilyInfo.EXOME.getFamilyName()));
 
         ProductOrderSample nonExomesample = nonExomeExpressPdo.getSamples().get(0);
         productOrderSampleSet.add(nonExomesample);
@@ -289,7 +289,7 @@ public class ReworkEjbDBFreeTest extends BaseEventTest {
 
         ReworkEjb.BucketCandidate validCandidate = reworkEjb.getBucketCandidateConsideringProductFamily(
                 sampleList1.get(0), sampleList1.get(0).getSampleKey(), labVessel.getLabel(),
-                ProductFamily.ProductFamilyName.EXOME, labVessel, ""
+                ProductFamily.ProductFamilyInfo.EXOME, labVessel, ""
         );
 
         Assert.assertTrue(validCandidate.isValid());
