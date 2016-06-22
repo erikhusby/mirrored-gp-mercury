@@ -193,8 +193,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
             @Validate(field = "synopsis", label = "Synopsis", required = true, maxlength = 4000, on = {SAVE_ACTION}),
             @Validate(field = "irbNotes", label = "IRB Notes", required = false, maxlength = 255, on = {SAVE_ACTION}),
             @Validate(field = "comments", label = "Comments", maxlength = 2000, on = {SAVE_ACTION}),
-            @Validate(field = "regulatoryDesignation", label = "Regulatory Designation", required = true, on = {SAVE_ACTION}),
-            @Validate(field = "submissionRepositoryName", label = "Default Submission Repository", required = true, on = {SAVE_ACTION})
+            @Validate(field = "regulatoryDesignation", label = "Regulatory Designation", required = true, on = {SAVE_ACTION})
     })
     private ResearchProject editResearchProject;
 
