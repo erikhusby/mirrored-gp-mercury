@@ -22,6 +22,9 @@ import javax.persistence.Table;
 @Entity
 @Table(name = "PICARD_FINGERPRINT", schema = "METRICS")
 public class PicardFingerprint {
+    public PicardFingerprint() {
+    }
+
     @Id
     @Column(name = "PICARD_ANALYSIS_ID")
     private Long picardAnalysisId;
