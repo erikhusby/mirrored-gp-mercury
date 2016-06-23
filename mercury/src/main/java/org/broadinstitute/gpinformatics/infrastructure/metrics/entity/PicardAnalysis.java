@@ -43,7 +43,7 @@ public class PicardAnalysis implements Serializable {
     @Column(insertable = false, updatable = false, name = "LIBRARY_NAME")
     private String libraryName;
 
-    private PicardAnalysis() {
+    public PicardAnalysis() {
     }
 
     @OneToMany(mappedBy = "picardAnalysis")
