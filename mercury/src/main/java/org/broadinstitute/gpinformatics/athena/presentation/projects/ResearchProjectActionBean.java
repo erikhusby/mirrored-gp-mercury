@@ -322,11 +322,9 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         setSubmissionLibraryDescriptors(submissionsService.getSubmissionLibraryDescriptors());
         setSubmissionRepositories(submissionsService.getSubmissionRepositories());
 
-        if (submissionRepository == null) {
-            if (StringUtils.isBlank(selectedSubmissionRepository)) {
-                if (getActiveRepositories().size() == 1) {
-                    selectedSubmissionRepository = getActiveRepositories().iterator().next().getDescription();
-                }
+        if (submissionRepository == null && StringUtils.isBlank(selectedSubmissionRepository)) {
+            if (getActiveRepositories().size() == 1) {
+                selectedSubmissionRepository = getActiveRepositories().iterator().next().getDescription();
             }
         }
 
