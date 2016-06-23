@@ -55,7 +55,7 @@ public class SubmissionsServiceImpl implements SubmissionsService {
         for (Map<String, List<String>> parameters : splitter.split("uuid", Arrays.asList(submissionIdentifiers))) {
             ClientResponse response = JerseyUtils.getWebResource(baseUrl, MediaType.APPLICATION_JSON_TYPE, parameters)
                     .accept(MediaType.APPLICATION_JSON_TYPE).get(ClientResponse.class);
-            validateResponseStatus("Error while querying submission status", response);
+            validateResponseStatus("querying submission status", response);
             SubmissionStatusResultBean result = response.getEntity(SubmissionStatusResultBean.class);
             allResults.addAll(result.getSubmissionStatuses());
         }
@@ -109,7 +109,7 @@ public class SubmissionsServiceImpl implements SubmissionsService {
                 .getWebResource(submissionsConfig.getWSUrl(SubmissionConfig.LIST_BIOPROJECTS_ACTION),
                         MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).get(ClientResponse.class);
 
-        validateResponseStatus("Error while querying submission status", response);
+        validateResponseStatus("querying submission status", response);
 
         BioProjects bioProjects = response.getEntity(BioProjects.class);
         return bioProjects.getBioprojects();
