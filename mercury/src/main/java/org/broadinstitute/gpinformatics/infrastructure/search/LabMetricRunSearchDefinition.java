@@ -398,7 +398,7 @@ public class LabMetricRunSearchDefinition {
                 Map<String, String[]> terms = new HashMap<>();
                 terms.put(drillDownIdSearchTerm, new String[]{labMetricRunId.toString()});
                 terms.put(drillDownTubesSearchTerm, new String[]{"N/A"});
-                return SearchDefinitionFactory.buildDrillDownLink(labMetricRunId.toString(), ColumnEntity.LAB_METRIC, drillDownSearchName, terms, context);
+                return SearchDefinitionFactory.buildDrillDownLink(labMetricRun.getRunName(), ColumnEntity.LAB_METRIC, drillDownSearchName, terms, context);
             }
         });
 
