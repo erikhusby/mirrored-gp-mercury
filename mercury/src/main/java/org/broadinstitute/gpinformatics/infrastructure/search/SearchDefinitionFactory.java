@@ -1,6 +1,9 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
+import org.broadinstitute.gpinformatics.mercury.boundary.search.SearchRequestBean;
+import org.broadinstitute.gpinformatics.mercury.boundary.search.SearchValueBean;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -12,8 +15,12 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
+import org.broadinstitute.gpinformatics.mercury.presentation.search.ConfigurableSearchActionBean;
+import org.codehaus.jackson.map.ObjectMapper;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -66,6 +73,7 @@ public class SearchDefinitionFactory {
         fact.buildMercurySampleSearchDef();
         fact.buildReagentSearchDef();
         fact.buildLabMetricSearchDef();
+        fact.buildLabMetricRunSearchDef();
     }
 
     public static ConfigurableSearchDefinition getForEntity(String entity) {
@@ -78,6 +86,7 @@ public class SearchDefinitionFactory {
             fact.buildMercurySampleSearchDef();
             fact.buildReagentSearchDef();
             fact.buildLabMetricSearchDef();
+            fact.buildLabMetricRunSearchDef();
         }
 
         return MAP_NAME_TO_DEF.get(entity);
@@ -113,6 +122,12 @@ public class SearchDefinitionFactory {
         MAP_NAME_TO_DEF.put(ColumnEntity.LAB_METRIC.getEntityName(), configurableSearchDefinition);
     }
 
+    private void buildLabMetricRunSearchDef() {
+        ConfigurableSearchDefinition configurableSearchDefinition
+                = new LabMetricRunSearchDefinition().buildSearchDefinition();
+        MAP_NAME_TO_DEF.put(ColumnEntity.LAB_METRIC_RUN.getEntityName(), configurableSearchDefinition);
+    }
+
     static SearchTerm.Evaluator<Object> getLcsetInputConverter(){
         return lcsetConverter;
     }
@@ -144,6 +159,43 @@ public class SearchDefinitionFactory {
             vesselTypeName = vessel.getType().getName();
         }
         return vesselTypeName;
+    }
+
+    /**
+     * Builds a link for result cell to facilitate a drill down link to another UDS
+     * @param linkText The text to display in the anchor
+     * @param entityType The entity type of the targeted search
+     * @param selectedSearchName The name of a saved search to use (must exist)
+     * @param terms Terms and values as required to match saved search
+     * @param context Search instance context values
+     * @return Encoded HTML URL link to present in search result column
+     */
+    public static String buildDrillDownLink( String linkText, ColumnEntity entityType, String selectedSearchName, Map<String,String[]> terms, SearchContext context ) {
+
+        List<SearchValueBean> searchValues = new ArrayList<>();
+        for( Map.Entry<String,String[]> term : terms.entrySet()){
+            searchValues.add( new SearchValueBean( term.getKey(), Arrays.asList( term.getValue() ) ) );
+        }
+        SearchRequestBean searchRequest = new SearchRequestBean(entityType.getEntityName(), selectedSearchName, searchValues);
+
+        StringBuilder link = new StringBuilder()
+            .append("<a class=\"external\" target=\"new\" href=\"")
+            .append(context.getBaseSearchURL())
+            .append("/search/ConfigurableSearch.action?")
+            .append(ConfigurableSearchActionBean.DRILL_DOWN_EVENT)
+            .append("=&drillDownRequest=");
+
+        try {
+            link.append( StringEscapeUtils.escapeHtml4( new ObjectMapper().writeValueAsString(searchRequest) ) );
+        } catch (IOException e) {
+            throw new RuntimeException("Fail marshalling drill down configuration", e);
+        }
+
+        link.append("\">")
+            .append(StringEscapeUtils.escapeHtml4(linkText))
+            .append("</a>");
+
+        return link.toString();
     }
 
 

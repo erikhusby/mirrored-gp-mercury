@@ -36,12 +36,16 @@ import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearch
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConstrainedValueDao;
 import org.broadinstitute.gpinformatics.infrastructure.search.PaginationUtil;
+import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstanceEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
+import org.broadinstitute.gpinformatics.mercury.boundary.search.SearchRequestBean;
+import org.broadinstitute.gpinformatics.mercury.boundary.search.SearchValueBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.BSPLookupException;
 import org.broadinstitute.gpinformatics.mercury.presentation.vessel.RackScanActionBean;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -81,6 +85,7 @@ public class ConfigurableSearchActionBean extends RackScanActionBean {
     public static final String AJAX_SELECT_LAB_EVENT = "ajaxLabSelect";
     public static final String AJAX_SCAN_EVENT = "ajaxScan";
     public static final String RACK_SCAN_PAGE_TITLE = "Rack Scan Barcodes";
+    public static final String DRILL_DOWN_EVENT = "drillDown";
 
     @HandlesEvent(AJAX_SELECT_LAB_EVENT)
     public Resolution selectLab() {
@@ -276,6 +281,11 @@ public class ConfigurableSearchActionBean extends RackScanActionBean {
      */
     private ColumnEntity entityType;
 
+    /**
+     * Unmarshalled drill down link data
+     */
+    private SearchRequestBean drillDownRequest;
+
     // Dependencies
     @Inject
     private PreferenceDao preferenceDao;
@@ -332,6 +342,40 @@ public class ConfigurableSearchActionBean extends RackScanActionBean {
         searchInstance = new SearchInstance();
         searchInstance.addRequired(configurableSearchDef);
         return new ForwardResolution("/search/configurable_search.jsp");
+    }
+
+
+    @HandlesEvent(DRILL_DOWN_EVENT)
+    public Resolution drillDown() {
+        if( drillDownRequest == null ) {
+            addGlobalValidationError("Search drill down request is incomplete.");
+            return new ForwardResolution("/search/config_search_choose_entity.jsp");
+        }
+
+        entityType = ColumnEntity.getByName(drillDownRequest.getEntityName());
+        selectedSearchName = drillDownRequest.getSearchName();
+
+        Resolution ignoreIt = fetchSearch();
+
+        boolean isMissingValue = false;
+        for( SearchInstance.SearchValue searchValue : searchInstance.getSearchValues() ) {
+            for( SearchValueBean term : drillDownRequest.getSearchValueBeanList()) {
+                isMissingValue = true;
+                if( term.getTermName().equals(searchValue.getTermName() )) {
+                    searchValue.setValues(term.getValues());
+                    isMissingValue = false;
+                    break;
+                }
+            }
+            if(isMissingValue) {
+                addGlobalValidationError("A term value for term '" + searchValue.getTermName() + "' is missing." );
+                return new ForwardResolution("/search/configurable_search.jsp");
+            }
+        }
+
+        // Dependencies are built, hand off to standard search logic
+        return search();
+
     }
 
     private void getPreferences() {
@@ -561,6 +605,8 @@ public class ConfigurableSearchActionBean extends RackScanActionBean {
         searchInstance.getEvalContext().setBspSampleSearchService(bspSampleSearchService);
         searchInstance.getEvalContext().setOptionValueDao(constrainedValueDao);
         searchInstance.getEvalContext().setSearchInstance(searchInstance);
+        searchInstance.getEvalContext().setResultCellTargetPlatform(SearchContext.ResultCellTargetPlatform.WEB);
+        searchInstance.getEvalContext().setBaseSearchURL(getContext().getRequest().getRequestURL());
     }
 
     /**
@@ -799,6 +845,18 @@ public class ConfigurableSearchActionBean extends RackScanActionBean {
      */
     public boolean isAppendScanResults(){
         return true;
+    }
+
+    /**
+     * Unmarshall search drill down descriptor
+     * @param drillDownRequestString JSON data from link URL
+     */
+    public void setDrillDownRequest(String drillDownRequestString) {
+        try {
+            this.drillDownRequest = new ObjectMapper().readValue(drillDownRequestString, SearchRequestBean.class);
+        } catch (Exception ex ) {
+            throw new RuntimeException("Failure to parse drill down request", ex );
+        }
     }
 
 }
