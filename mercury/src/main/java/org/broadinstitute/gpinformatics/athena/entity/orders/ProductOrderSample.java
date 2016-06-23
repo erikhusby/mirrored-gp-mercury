@@ -429,8 +429,17 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         return simpleDateFormat.format(receiptDate);
     }
 
+    /**
+     * Determines whether or not a sample exists at the Broad. This includes containers that were sent to collaborators
+     * and sent back with samples as well as samples derived from those root samples.
+     *
+     * This is unlike BSP, which only considers root samples to have been received; child samples are effectively
+     * received because they came from a root sample, but they themselves are not "received".
+     *
+     * @return true if the sample is received or derived; false otherwise
+     */
     public boolean isSampleReceived() {
-        return (mercurySample!= null)?mercurySample.getReceivedDate() != null:getSampleData().isSampleReceived();
+        return (mercurySample != null && mercurySample.getReceivedDate() != null) || getSampleData().isSampleReceived();
     }
 
     public enum DeliveryStatus implements StatusType {
