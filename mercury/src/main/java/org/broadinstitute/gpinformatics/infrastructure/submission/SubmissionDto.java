@@ -174,9 +174,12 @@ public class SubmissionDto implements Serializable {
         initializeStatusDetailBean(statusDetailBean);
         submittedErrorsArray = submittedErrors.toArray(new String[submittedErrors.size()]);
 
-        productOrdersString = new HashSet<>(productOrders.size());
-        for (ProductOrder productOrder : productOrders) {
-            productOrdersString.add(String.format("%s: %s", productOrder.getJiraTicketKey(), productOrder.getTitle()));
+        productOrdersString = new HashSet<>();
+        if (productOrders != null) {
+            for (ProductOrder productOrder : productOrders) {
+                productOrdersString
+                        .add(String.format("%s: %s", productOrder.getJiraTicketKey(), productOrder.getTitle()));
+            }
         }
     }
 

@@ -12,6 +12,8 @@
 package org.broadinstitute.gpinformatics.infrastructure.metrics.entity;
 
 import com.google.common.base.Optional;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import java.io.Serializable;
 
@@ -37,6 +39,26 @@ public class LevelOfDetection implements Serializable {
 
     public Double getMax() {
         return max;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        LevelOfDetection that = (LevelOfDetection) o;
+
+        return new EqualsBuilder().append(getMin(), that.getMin()).append(getMax(), that.getMax()).isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37).append(getMin()).append(getMax()).toHashCode();
     }
 
     @Override
