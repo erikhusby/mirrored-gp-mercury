@@ -342,6 +342,7 @@ public class LabMetricRunSearchDefinition {
         searchTerm.setName("Metric Date");
         searchTerm.setDbSortPath("runDate");
         searchTerm.setValueType(ColumnValueType.DATE_TIME);
+        searchTerm.setIsDefaultResultColumn(Boolean.TRUE);
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Date evaluate(Object entity, SearchContext context) {
@@ -359,6 +360,7 @@ public class LabMetricRunSearchDefinition {
         searchTerm = new SearchTerm();
         searchTerm.setName("Metric Type");
         searchTerm.setDbSortPath("metricType");
+        searchTerm.setIsDefaultResultColumn(Boolean.TRUE);
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public String evaluate(Object entity, SearchContext context) {
@@ -382,6 +384,7 @@ public class LabMetricRunSearchDefinition {
         List<SearchTerm> searchTerms = new ArrayList<>();
         SearchTerm searchTerm = new SearchTerm();
         searchTerm.setName("Run Drill Down");
+        searchTerm.setIsDefaultResultColumn(Boolean.TRUE);
 
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
 
