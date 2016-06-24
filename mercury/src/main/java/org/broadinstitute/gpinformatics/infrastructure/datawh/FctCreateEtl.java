@@ -56,6 +56,11 @@ public class FctCreateEtl extends GenericEntityEtl<LabBatchStartingVessel,LabBat
             return null;
         }
 
+        String lane = "";
+        if( labBatchStartingVessel.getVesselPosition() != null ) {
+            lane = labBatchStartingVessel.getVesselPosition().toString().replace("LANE","");
+        }
+
         return genericRecord(etlDateStr, isDelete,
                 labBatchStartingVessel.getBatchStartingVesselId(),
                 labBatch.getLabBatchId(),
@@ -66,7 +71,7 @@ public class FctCreateEtl extends GenericEntityEtl<LabBatchStartingVessel,LabBat
                         : labBatchStartingVessel.getDilutionVessel().getLabel()),
                 format(labBatch.getCreatedOn()),
                 format(labBatch.getFlowcellType()!=null?labBatch.getFlowcellType().getDisplayName():""),
-                format(labBatchStartingVessel.getVesselPosition()!=null?labBatchStartingVessel.getVesselPosition().toString():""),
+                format(lane),
                 format(labBatchStartingVessel.getConcentration()),
                 labBatch.getLabBatchType() != LabBatch.LabBatchType.MISEQ?"N":"Y"
         );
