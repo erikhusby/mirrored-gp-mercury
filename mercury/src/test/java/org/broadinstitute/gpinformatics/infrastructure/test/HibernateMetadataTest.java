@@ -59,6 +59,7 @@ public class HibernateMetadataTest extends ContainerTest {
             AggregationHybridSelection.class.getName(),
             AggregationReadGroup.class.getName(),
             AggregationWgs.class.getName(),
+            SampleCoverageFirstMet.class.getName(),
             PicardAnalysis.class.getName(),
             PicardFingerprint.class.getName()
     };
