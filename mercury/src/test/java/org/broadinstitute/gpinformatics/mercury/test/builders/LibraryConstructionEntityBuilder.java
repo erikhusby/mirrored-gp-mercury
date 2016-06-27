@@ -183,7 +183,7 @@ public class LibraryConstructionEntityBuilder {
         List<Reagent> reagents = sampleInstance.getReagents();
         Assert.assertEquals(reagents.size(), 1, "Wrong number of reagents");
         MolecularIndexReagent molecularIndexReagent = (MolecularIndexReagent) reagents.iterator().next();
-        Assert.assertEquals(molecularIndexReagent.getMolecularIndexingScheme().getName(), "Illumina_P7-M",
+        Assert.assertEquals(molecularIndexReagent.getMolecularIndexingScheme().getName(), "Illumina_P7-Habab",
                                    "Wrong index");
 
         // PostIndexedAdapterLigationThermoCyclerLoaded
@@ -264,7 +264,7 @@ public class LibraryConstructionEntityBuilder {
         reagents = pondRegSampleInstance.getReagents();
         Assert.assertEquals(reagents.size(), 1, "Wrong number of reagents");
         molecularIndexReagent = (MolecularIndexReagent) reagents.iterator().next();
-        Assert.assertEquals(molecularIndexReagent.getMolecularIndexingScheme().getName(), "Illumina_P5-M_P7-M",
+        Assert.assertEquals(molecularIndexReagent.getMolecularIndexingScheme().getName(), "Illumina_P5-Habab_P7-Habab",
                 "Wrong index");
 
         pondRegRackBarcode = libraryConstructionJaxbBuilder.getPondRegRackBarcode();

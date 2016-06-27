@@ -2050,6 +2050,9 @@ public class LabEventTest extends BaseEventTest {
                     stringBuilder.append(bases[base4Ordinal % 4]);
                     base4Ordinal = base4Ordinal / 4;
                 }
+                while (stringBuilder.length() < 8) {
+                    stringBuilder.append(bases[0]);
+                }
 
                 // Re-use existing sequence, if any
                 String sequence = stringBuilder.toString();
@@ -2094,9 +2097,7 @@ public class LabEventTest extends BaseEventTest {
                 for (StaticPlate indexPlate : indexPlates) {
                     PlateWell well = indexPlate.getContainerRole().getVesselAtPosition(vesselPosition);
                     MolecularIndexingScheme molecularIndexingScheme = ((MolecularIndexReagent) well.
-                                                                                                           getReagentContents()
-                                                                                                   .iterator().next())
-                            .getMolecularIndexingScheme();
+                            getReagentContents().iterator().next()).getMolecularIndexingScheme();
                     mapPositionToIndex.putAll(molecularIndexingScheme.getIndexes());
                 }
                 new MolecularIndexingScheme(mapPositionToIndex);

@@ -177,7 +177,7 @@ public class TruSeqStrandSpecificEntityBuilder {
         List<Reagent> reagents = sampleInstance.getReagents();
         Assert.assertEquals(reagents.size(), 1, "Wrong number of reagents");
         MolecularIndexReagent molecularIndexReagent = (MolecularIndexReagent) reagents.iterator().next();
-        Assert.assertEquals(molecularIndexReagent.getMolecularIndexingScheme().getName(), "Illumina_P7-M",
+        Assert.assertEquals(molecularIndexReagent.getMolecularIndexingScheme().getName(), "Illumina_P7-Habab",
                 "Wrong index");
 
         //AdapterLigationCleanupTS
@@ -223,7 +223,7 @@ public class TruSeqStrandSpecificEntityBuilder {
         reagents = pondRegSampleInstance.getReagents();
         Assert.assertEquals(reagents.size(), 1, "Wrong number of reagents");
         molecularIndexReagent = (MolecularIndexReagent) reagents.iterator().next();
-        Assert.assertEquals(molecularIndexReagent.getMolecularIndexingScheme().getName(), "Illumina_P7-M",
+        Assert.assertEquals(molecularIndexReagent.getMolecularIndexingScheme().getName(), "Illumina_P7-Habab",
                 "Wrong index");
 
         return this;
