@@ -11,6 +11,7 @@
 
 package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
@@ -19,6 +20,8 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.MiSeqReagentKitDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -45,15 +48,15 @@ import java.util.Set;
 
 public class SequencingTemplateFactory {
     @Inject
-    IlluminaFlowcellDao illuminaFlowcellDao;
+    private IlluminaFlowcellDao illuminaFlowcellDao;
     @Inject
-    MiSeqReagentKitDao miSeqReagentKitDao;
+    private MiSeqReagentKitDao miSeqReagentKitDao;
 
     @Inject
-    LabVesselDao labVesselDao;
+    private LabVesselDao labVesselDao;
 
     @Inject
-    LabBatchDao labBatchDao;
+    private LabBatchDao labBatchDao;
 
     /**
      * What you will be searching for with the ID parameter in fetchSequencingTemplate.
@@ -181,18 +184,17 @@ public class SequencingTemplateFactory {
             sequencingTemplateName = fctBatch.getBatchName();
         }
 
-        SequencingTemplateType sequencingTemplate = LimsQueryObjectFactory.createSequencingTemplate(
-                sequencingTemplateName, null, isPoolTest, sequencingConfig.getInstrumentWorkflow().getValue(),
-                sequencingConfig.getChemistry().getValue(), sequencingConfig.getReadStructure().getValue());
         Set<LabBatchStartingVessel> startingFCTVessels = fctBatch.getLabBatchStartingVessels();
         List<SequencingTemplateLaneType> lanes = new ArrayList<>();
         Set<String> regulatoryDesignations = new HashSet<>();
         Set<String> productNames = new HashSet<>();
+        List<ProductType> productTypes = new ArrayList<>();
+        Set<String> readStructures = new HashSet<>();
         for (LabBatchStartingVessel startingVessel: startingFCTVessels) {
-            Iterator<String> positionNames;
             sequencingTemplate.setConcentration(startingVessel.getConcentration());
             Set<SampleInstanceV2> sampleInstances = startingVessel.getLabVessel().getSampleInstancesV2();
-            attachRegulatoryDesignationAndProductOrder(sampleInstances, sequencingTemplate, regulatoryDesignations, productNames);
+            attachRegulatoryDesignationAndProductOrder(sampleInstances, regulatoryDesignations, productNames,
+                    productTypes, readStructures);
             if (startingVessel.getVesselPosition() != null) {
                 SequencingTemplateLaneType lane =
                         LimsQueryObjectFactory.createSequencingTemplateLaneType(
@@ -206,6 +208,7 @@ public class SequencingTemplateFactory {
                             String.format("More than one starting denature tube for FCT ticket %s",
                                     fctBatch.getBatchName()));
                 }
+                Iterator<String> positionNames;
                 if (fctBatch.getFlowcellType() != null) {
                     positionNames = fctBatch.getFlowcellType().getVesselGeometry().getPositionNames();
                 } else if (isPoolTest) {
@@ -220,10 +223,13 @@ public class SequencingTemplateFactory {
                             LimsQueryObjectFactory.createSequencingTemplateLaneType(vesselPosition,
                                     startingVessel.getConcentration(), "",
                                     startingVessel.getLabVessel().getLabel());
-                    lanes.add(lane);
+                    lanes.add(lane); 
                 }
             }
         }
+        SequencingTemplateType sequencingTemplate = LimsQueryObjectFactory.createSequencingTemplate(
+                sequencingTemplateName, null, isPoolTest, sequencingConfig.getInstrumentWorkflow().getValue(),
+                sequencingConfig.getChemistry().getValue(), );
         sequencingTemplate.getRegulatoryDesignation().addAll(regulatoryDesignations);
         sequencingTemplate.getLanes().addAll(lanes);
         return sequencingTemplate;
@@ -283,7 +289,7 @@ public class SequencingTemplateFactory {
         SequencingTemplateType sequencingTemplate = LimsQueryObjectFactory
                 .createSequencingTemplate(sequencingTemplateName, flowcell.getLabel(), isPoolTest,
                         sequencingConfig.getInstrumentWorkflow().getValue(), sequencingConfig.getChemistry().getValue(),
-                        sequencingConfig.getReadStructure().getValue());
+                        xsequencingConfig.getReadStructure().getValue());
 
         sequencingTemplate.getLanes().addAll(lanes);
         Set<SampleInstanceV2> sampleInstances = flowcell.getSampleInstancesV2();
@@ -347,25 +353,39 @@ public class SequencingTemplateFactory {
                 denatureBarcodes.iterator().next()));
         return LimsQueryObjectFactory.createSequencingTemplate(null, null, isPoolTest,
                 sequencingConfig.getInstrumentWorkflow().getValue(), sequencingConfig.getChemistry().getValue(),
-                sequencingConfig.getReadStructure().getValue(),
+                xsequencingConfig.getReadStructure().getValue(),
                 lanes.toArray(new SequencingTemplateLaneType[lanes.size()]));
     }
 
     private void attachRegulatoryDesignationAndProductOrder(Set<SampleInstanceV2> sampleInstances,
-                                                            SequencingTemplateType sequencingTemplateType,
+//                                                            SequencingTemplateType sequencingTemplateType,
                                                             Set<String> regulatoryDesignations,
-                                                            Set<String> productNames) {
+                                                            Set<String> productNames,
+                                                            List<ProductType> productTypes,
+            Set<String> readStructures) {
         for(SampleInstanceV2 sampleInstance: sampleInstances) {
+            // todo what about controls?  Just ignore them?
             if (sampleInstance.getSingleBucketEntry() != null) {
                 String regulatoryDesignation = sampleInstance.getSingleBucketEntry().
                         getProductOrder().getResearchProject().getRegulatoryDesignation().name();
                 regulatoryDesignations.add(regulatoryDesignation);
-                String productName = sampleInstance.getSingleBucketEntry().getProductOrder().getProduct().getName();
+                Product product = sampleInstance.getSingleBucketEntry().getProductOrder().getProduct();
+                String productName = product.getName();
                 if (!productNames.contains(productName)) {
                     ProductType productType = new ProductType();
                     productType.setName(productName);
-                    sequencingTemplateType.getProducts().add(productType);
+                    productTypes.add(productType);
                     productNames.add(productName);
+                }
+                if (product.getReadLength() != null) {
+                    MolecularIndexingScheme molecularIndexingScheme = sampleInstance.getMolecularIndexingScheme();
+                    if (molecularIndexingScheme != null) {
+                        for (MolecularIndex molecularIndex : molecularIndexingScheme.getIndexes().values()) {
+                            molecularIndex.getSequence().length()
+                        }
+                    }
+
+                    readLengths.add(product.getReadLength());
                 }
             }
         }
