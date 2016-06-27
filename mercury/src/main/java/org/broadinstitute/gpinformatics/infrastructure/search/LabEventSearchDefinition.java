@@ -231,7 +231,11 @@ public class LabEventSearchDefinition {
             @Override
             public String evaluate(Object entity, SearchContext context) {
                 LabEvent labEvent = (LabEvent) entity;
-                return labEvent.getLabEventType().getName();
+                if( labEvent.getWorkflowQualifier() != null ) {
+                    return labEvent.getLabEventType().getName() + " (" + labEvent.getWorkflowQualifier() + ")";
+                } else {
+                    return labEvent.getLabEventType().getName();
+                }
             }
         });
         searchTerm.setConstrainedValuesExpression(new SearchDefinitionFactory.EventTypeValuesExpression());
