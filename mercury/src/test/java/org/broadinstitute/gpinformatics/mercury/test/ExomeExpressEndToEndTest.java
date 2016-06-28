@@ -66,6 +66,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.PreFlightEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ProductionFlowcellPath;
 import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
@@ -381,7 +382,7 @@ public class ExomeExpressEndToEndTest {
                                                          shearingEntityBuilder.getShearingPlate(),
                                                          mapBarcodeToTube.size(), "testPrefix",
                                                          LibraryConstructionEntityBuilder.Indexing.DUAL,
-                                                         LibraryConstructionEntityBuilder.PondType.REGULAR).invoke();
+                                                         LibraryConstructionJaxbBuilder.PondType.REGULAR).invoke();
 
             HybridSelectionEntityBuilder hybridSelectionEntityBuilder =
                     new HybridSelectionEntityBuilder(bettaLimsMessageTestFactory, labEventFactory,

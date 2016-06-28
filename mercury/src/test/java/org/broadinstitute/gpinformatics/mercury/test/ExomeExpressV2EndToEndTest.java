@@ -45,6 +45,7 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressSheari
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ProductionFlowcellPath;
 import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
@@ -283,7 +284,7 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
                 bettaLimsMessageTestFactory, labEventFactory, leHandler, shearingCleanupPlate,
                 postShearingTransferCleanupEntity.getTargetLabVessels().iterator().next().getLabel(),
                 shearPlate, LabEventTest.NUM_POSITIONS_IN_RACK, "testPrefix",
-                LibraryConstructionEntityBuilder.Indexing.DUAL, LibraryConstructionEntityBuilder.PondType.REGULAR).invoke();
+                LibraryConstructionEntityBuilder.Indexing.DUAL, LibraryConstructionJaxbBuilder.PondType.REGULAR).invoke();
 
         //        // todo plates vs tubes?
         //        // - Deck calls web service to verify source barcodes?

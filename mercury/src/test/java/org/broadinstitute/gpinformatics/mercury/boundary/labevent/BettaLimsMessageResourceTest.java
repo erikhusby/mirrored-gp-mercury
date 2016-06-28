@@ -453,7 +453,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
                 Arrays.asList(Triple.of("PEG", "0009753352", 2), Triple.of("70% Ethanol", "LCEtohTest", 3),
                         Triple.of("EB", "0009753452", 4), Triple.of("SPRI", "LCSpriTest", 5)),
                 Arrays.asList(Triple.of("KAPA Amp Kit", "0009753250", 6)),
-                LibraryConstructionEntityBuilder.PondType.REGULAR).invoke();
+                LibraryConstructionJaxbBuilder.PondType.REGULAR).invoke();
 
         for (BettaLIMSMessage bettaLIMSMessage : libraryConstructionJaxbBuilder.getMessageList()) {
             sendMessage(bettaLIMSMessage, bettaLimsMessageResource, appConfig.getUrl());
@@ -658,7 +658,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
                         Triple.of("EB", "0009753452", 4),
                         Triple.of("SPRI", "LCSpriTest", 5)),
                 Arrays.asList(Triple.of("KAPA Amp Kit", "0009753250", 6)),
-                LibraryConstructionEntityBuilder.PondType.REGULAR).invoke();
+                LibraryConstructionJaxbBuilder.PondType.REGULAR).invoke();
 
         for (BettaLIMSMessage bettaLIMSMessage : libraryConstructionJaxbBuilder.getMessageList()) {
             sendMessage(bettaLIMSMessage, bettalimsMessageResource, testMercuryUrl);
@@ -1098,7 +1098,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
                         Triple.of("EB", "0009753452", 4),
                         Triple.of("SPRI", "LCSpriTest", 5)),
                 Arrays.asList(Triple.of("KAPA Amp Kit", "0009753250", 6)),
-                LibraryConstructionEntityBuilder.PondType.REGULAR).invoke();
+                LibraryConstructionJaxbBuilder.PondType.REGULAR).invoke();
         for (BettaLIMSMessage bettaLIMSMessage : libraryConstructionExExJaxbBuilder.getMessageList()) {
             sendMessage(bettaLIMSMessage, bettaLimsMessageResource, appConfig.getUrl());
         }

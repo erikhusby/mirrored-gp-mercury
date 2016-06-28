@@ -50,13 +50,29 @@ public class LibraryConstructionJaxbBuilder {
     private final List<Triple<String, String, Integer>> endRepairReagents;
     private final List<Triple<String, String, Integer>> endRepairCleanupReagents;
     private final List<Triple<String, String, Integer>> pondEnrichmentReagents;
-    private LibraryConstructionEntityBuilder.PondType pondType;
+    private PondType pondType;
 
     public enum TargetSystem {
         /** Messages that might be routed to Squid must have pre-registered lab machines and reagent kit types. */
         SQUID_VIA_MERCURY,
         /** Mercury doesn't pre-register machines and reagent types, so the messages have fewer constraints. */
         MERCURY_ONLY
+    }
+
+    public enum PondType {
+        PCR_FREE("PCRFreePondRegistration"),
+        PCR_PLUS("PCRPlusPondRegistration"),
+        REGULAR("PondRegistration");
+
+        private String eventType;
+
+        PondType(String eventType) {
+            this.eventType = eventType;
+        }
+
+        public String getEventType() {
+            return eventType;
+        }
     }
 
     // todo jmt why do the reagents need to be parameters?  All callers supply the same values.
@@ -66,7 +82,7 @@ public class LibraryConstructionJaxbBuilder {
             List<Triple<String, String, Integer>> endRepairReagents,
             List<Triple<String, String, Integer>> endRepairCleanupReagents,
             List<Triple<String, String, Integer>> pondEnrichmentReagents,
-            LibraryConstructionEntityBuilder.PondType pondType) {
+            PondType pondType) {
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
         this.testPrefix = testPrefix;
         this.shearCleanPlateBarcode = shearCleanPlateBarcode;

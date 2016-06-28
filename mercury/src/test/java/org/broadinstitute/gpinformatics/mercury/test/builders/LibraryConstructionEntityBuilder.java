@@ -35,22 +35,6 @@ public class LibraryConstructionEntityBuilder {
         DUAL
     }
 
-    public enum PondType {
-        PCR_FREE("PCRFreePondRegistration"),
-        PCR_PLUS("PCRPlusPondRegistration"),
-        REGULAR("PondRegistration");
-
-        private String eventType;
-
-        PondType(String eventType) {
-            this.eventType = eventType;
-        }
-
-        public String getEventType() {
-            return eventType;
-        }
-    }
-
     private final BettaLimsMessageTestFactory bettaLimsMessageTestFactory;
     private final LabEventFactory             labEventFactory;
     private final LabEventHandler             labEventHandler;
@@ -63,14 +47,14 @@ public class LibraryConstructionEntityBuilder {
     private int numSamples;
     private String testPrefix;
     private Indexing indexing;
-    private PondType pondType;
+    private LibraryConstructionJaxbBuilder.PondType pondType;
 
     private final Map<String, BarcodedTube> mapBarcodeToPondRegTubes = new HashMap<>();
 
     public LibraryConstructionEntityBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
             LabEventFactory labEventFactory, LabEventHandler labEventHandler, StaticPlate shearingCleanupPlate,
             String shearCleanPlateBarcode, StaticPlate shearingPlate, int numSamples, String testPrefix,
-            Indexing indexing, PondType pondType) {
+            Indexing indexing, LibraryConstructionJaxbBuilder.PondType pondType) {
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
         this.labEventFactory = labEventFactory;
         this.labEventHandler = labEventHandler;

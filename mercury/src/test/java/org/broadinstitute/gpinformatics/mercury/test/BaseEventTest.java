@@ -454,7 +454,7 @@ public class BaseEventTest {
             String barcodeSuffix,
             int numSamples) {
         return runLibraryConstructionProcess(shearingCleanupPlate, shearCleanPlateBarcode, shearingPlate, barcodeSuffix,
-                numSamples, LibraryConstructionEntityBuilder.PondType.REGULAR);
+                numSamples, LibraryConstructionJaxbBuilder.PondType.REGULAR);
     }
 
     /**
@@ -474,7 +474,7 @@ public class BaseEventTest {
             StaticPlate shearingPlate,
             String barcodeSuffix,
             int numSamples,
-            LibraryConstructionEntityBuilder.PondType pondType) {
+            LibraryConstructionJaxbBuilder.PondType pondType) {
         return new LibraryConstructionEntityBuilder(
                 bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
                 shearingCleanupPlate, shearCleanPlateBarcode, shearingPlate, numSamples, barcodeSuffix,

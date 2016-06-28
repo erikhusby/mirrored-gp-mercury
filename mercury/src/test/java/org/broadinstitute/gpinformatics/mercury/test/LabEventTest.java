@@ -85,6 +85,7 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEnt
 import org.broadinstitute.gpinformatics.mercury.test.builders.IceEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.InfiniumEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.PreFlightEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ProductionFlowcellPath;
@@ -1825,7 +1826,7 @@ public class LabEventTest extends BaseEventTest {
                 shearingEntityBuilder.getShearingPlate(),
                 "1",
                 NUM_POSITIONS_IN_RACK,
-                LibraryConstructionEntityBuilder.PondType.PCR_FREE);
+                LibraryConstructionJaxbBuilder.PondType.PCR_FREE);
 
         QtpEntityBuilder qtpEntityBuilder = runQtpProcess(libraryConstructionEntityBuilder.getPondRegRack(),
                 libraryConstructionEntityBuilder.getPondRegTubeBarcodes(),
