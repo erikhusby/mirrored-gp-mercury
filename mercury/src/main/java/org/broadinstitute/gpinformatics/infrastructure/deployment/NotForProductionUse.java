@@ -12,10 +12,13 @@
 package org.broadinstitute.gpinformatics.infrastructure.deployment;
 
 /**
- * This class and enum within are used to help prevent test-only methods or constructors from being used in Production.
+ * This enum is used to help prevent test-only methods or constructors from being used in Production.
+ * <p/>
+ * For an example;
+ * <br/>
+ * actionBean = new ResearchProjectActionBean(NotForProductionUse.I_PROMISE, bspUserList, userBean, broadPiList);
  */
-public class NotForProductionUse {
-    public enum DoNotUse {
+public enum NotForProductionUse {
         I_PROMISE;
 
         @Override
@@ -23,10 +26,9 @@ public class NotForProductionUse {
             return "Do Not Use In Pro...duc...tion!!";
         }
 
-        public static void doAgree(DoNotUse iAttest) {
+        public static void doAgree(NotForProductionUse iAttest) {
             if (iAttest==null) {
-                throw new IllegalArgumentException(String.format("Really: %s", DoNotUse.I_PROMISE));
+                throw new IllegalArgumentException(String.format("Really: %s", NotForProductionUse.I_PROMISE));
             }
         }
-    }
 }

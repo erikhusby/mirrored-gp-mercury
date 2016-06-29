@@ -52,6 +52,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.collaborate.CollaborationNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.collaborate.CollaborationPortalException;
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.NotForProductionUse;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDto;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDtoFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionLibraryDescriptor;
@@ -85,8 +86,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.NotForProductionUse.DoNotUse;
 
 /**
  * This class is for research projects action bean / web page.
@@ -308,11 +307,10 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         Collections.sort(allResearchProjects, ResearchProject.BY_DATE);
     }
 
-    ResearchProjectActionBean(BSPUserList bspUserList, UserBean userBean, UserTokenInput broadPiList,
-                              @Nonnull DoNotUse iAttest) {
+    ResearchProjectActionBean(@Nonnull NotForProductionUse iAttest, BSPUserList bspUserList, UserBean userBean,
+                              UserTokenInput broadPiList) {
         this();
-        //noinspection ConstantConditions
-        DoNotUse.doAgree(iAttest);
+        NotForProductionUse.doAgree(iAttest);
         super.userBean=userBean;
         this.broadPiList = broadPiList;
         this.bspUserList=bspUserList;

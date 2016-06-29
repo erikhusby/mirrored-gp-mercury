@@ -85,8 +85,9 @@ public class ResearchProjectActionBeanTest {
             researchProject.addPeople(RoleType.PM, Collections.singleton(qaDudeUser));
         }
 
-        ResearchProjectActionBean actionBean = new ResearchProjectActionBean(bspUserList, userBean, broadPiList,
-                NotForProductionUse.DoNotUse.I_PROMISE);
+        ResearchProjectActionBean actionBean = new ResearchProjectActionBean(NotForProductionUse.I_PROMISE,
+                bspUserList, userBean, broadPiList
+        );
         actionBean.setEditResearchProject(researchProject);
         actionBean.setContext(new TestCoreActionBeanContext());
 
