@@ -11,6 +11,7 @@
 
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
+import org.apache.commons.lang3.tuple.ImmutableTriple;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
@@ -765,6 +766,302 @@ public class LabBatchFixUpTest extends Arquillian {
         labBatchDao.persist(new FixupCommentary(ticket + " change bucket entries to aliquot"));
         labBatchDao.flush();
         userTransaction.commit();
+    }
+
+    @Test(enabled = false)
+    public void fixupSupport1848() throws Exception{
+        List<String> tubeBarcodes = Arrays.asList(
+                "1131926708",
+                "1131929230",
+                "1131929231",
+                "1131929232",
+                "1131929233",
+                "1131929234",
+                "1131929235",
+                "1131929236",
+                "1131929237",
+                "1131929246",
+                "1131929247",
+                "1131929248",
+                "1131929249",
+                "1131929250",
+                "1131929251",
+                "1131929252",
+                "1131929253",
+                "1131929254",
+                "1131929255",
+                "1131929256",
+                "1131929257",
+                "1131929258",
+                "1131929259",
+                "1131929260",
+                "1131929261",
+                "1131929270",
+                "1131929272",
+                "1131929273",
+                "1131929274",
+                "1131929275",
+                "1131929276",
+                "1131929277",
+                "1131929278",
+                "1131929279",
+                "1131929280",
+                "1131929281",
+                "1131929282",
+                "1131929283",
+                "1131929284",
+                "1131929285",
+                "1131929294",
+                "1131929295",
+                "1131929296",
+                "1131929297",
+                "1131929298",
+                "1131929299",
+                "1131929300",
+                "1131929301",
+                "1131929302",
+                "1131929303",
+                "1131929304",
+                "1131929305",
+                "1131929306",
+                "1131929307",
+                "1131929308",
+                "1131929309",
+                "1131929320",
+                "1131929321",
+                "1131929322",
+                "1131929323",
+                "1131929324",
+                "1131929325");
+
+        changeBucketEntriesToAliquots(tubeBarcodes, 1371144L, "LCSET-9347", "SUPPORT-1848");
+    }
+
+    /**
+     * The first attempt used the wrong daughter plate event, so change the entries back, based on the log entries.
+     */
+    @Test(enabled = false)
+    public void fixupSupport1848_Try2a() throws Exception {
+        userBean.loginOSUser();
+        userTransaction.begin();
+
+        List<ImmutableTriple<Long, String, String>> bucketEntries = new ArrayList<>();
+        bucketEntries.add(new ImmutableTriple<>(160524L, "0174166000", "1131929255"));
+        bucketEntries.add(new ImmutableTriple<>(160518L, "0174166025", "1131929306"));
+        bucketEntries.add(new ImmutableTriple<>(160557L, "0174166012", "1131929274"));
+        bucketEntries.add(new ImmutableTriple<>(160541L, "0174166035", "1131929258"));
+        bucketEntries.add(new ImmutableTriple<>(160517L, "0174166021", "1131929246"));
+        bucketEntries.add(new ImmutableTriple<>(160554L, "0174165993", "1131929320"));
+        bucketEntries.add(new ImmutableTriple<>(160511L, "0174166028", "1131929301"));
+        bucketEntries.add(new ImmutableTriple<>(160549L, "0174166011", "1131929235"));
+        bucketEntries.add(new ImmutableTriple<>(160522L, "0174166070", "1131929324"));
+        bucketEntries.add(new ImmutableTriple<>(160510L, "0174166004", "1131929248"));
+        bucketEntries.add(new ImmutableTriple<>(160551L, "0174166064", "1131929261"));
+        bucketEntries.add(new ImmutableTriple<>(160512L, "0174166072", "1131929232"));
+        bucketEntries.add(new ImmutableTriple<>(160527L, "0174166071", "1131929284"));
+        bucketEntries.add(new ImmutableTriple<>(160505L, "0174166001", "1131929300"));
+        bucketEntries.add(new ImmutableTriple<>(160501L, "0174166076", "1131929307"));
+        bucketEntries.add(new ImmutableTriple<>(160533L, "0174165988", "1131929251"));
+        bucketEntries.add(new ImmutableTriple<>(160536L, "0174166039", "1131929237"));
+        bucketEntries.add(new ImmutableTriple<>(160553L, "0174166061", "1131929321"));
+        bucketEntries.add(new ImmutableTriple<>(160521L, "0174166026", "1131929236"));
+        bucketEntries.add(new ImmutableTriple<>(160559L, "0174166037", "1131929230"));
+        bucketEntries.add(new ImmutableTriple<>(160508L, "0174162698", "1131929276"));
+        bucketEntries.add(new ImmutableTriple<>(160509L, "0174166049", "1131929297"));
+        bucketEntries.add(new ImmutableTriple<>(160555L, "0174166062", "1131929296"));
+        bucketEntries.add(new ImmutableTriple<>(160516L, "0174165998", "1131929299"));
+        bucketEntries.add(new ImmutableTriple<>(160556L, "0174166036", "1131929259"));
+        bucketEntries.add(new ImmutableTriple<>(160506L, "0174162718", "1131929282"));
+        bucketEntries.add(new ImmutableTriple<>(160520L, "0174166003", "1131929247"));
+        bucketEntries.add(new ImmutableTriple<>(160545L, "0174166016", "1131929305"));
+        bucketEntries.add(new ImmutableTriple<>(160513L, "0174166022", "1131929253"));
+        bucketEntries.add(new ImmutableTriple<>(160542L, "0174166066", "1131929249"));
+        bucketEntries.add(new ImmutableTriple<>(160526L, "0174166074", "1131929275"));
+        bucketEntries.add(new ImmutableTriple<>(160560L, "0174166042", "1131929294"));
+        bucketEntries.add(new ImmutableTriple<>(160546L, "0174166063", "1131929260"));
+        bucketEntries.add(new ImmutableTriple<>(160558L, "0174166017", "1131929250"));
+        bucketEntries.add(new ImmutableTriple<>(160562L, "0174165991", "1131929273"));
+        bucketEntries.add(new ImmutableTriple<>(160552L, "0174166065", "1131929279"));
+        bucketEntries.add(new ImmutableTriple<>(160523L, "0174166052", "1131929302"));
+        bucketEntries.add(new ImmutableTriple<>(160519L, "0174166073", "1131929304"));
+        bucketEntries.add(new ImmutableTriple<>(160503L, "0174166024", "1131929254"));
+        bucketEntries.add(new ImmutableTriple<>(160531L, "0174166027", "1131929323"));
+        bucketEntries.add(new ImmutableTriple<>(160547L, "0174166040", "1131929281"));
+        bucketEntries.add(new ImmutableTriple<>(160561L, "0174166041", "1131929285"));
+        bucketEntries.add(new ImmutableTriple<>(160535L, "0174166015", "1131929322"));
+        bucketEntries.add(new ImmutableTriple<>(160530L, "0174166045", "1131929308"));
+        bucketEntries.add(new ImmutableTriple<>(160502L, "0174166069", "1131929234"));
+        bucketEntries.add(new ImmutableTriple<>(160507L, "0174165999", "1131929277"));
+        bucketEntries.add(new ImmutableTriple<>(160515L, "0174166002", "1131926708"));
+        bucketEntries.add(new ImmutableTriple<>(160534L, "0174166060", "1131929270"));
+        bucketEntries.add(new ImmutableTriple<>(160504L, "0174166075", "1131929283"));
+        bucketEntries.add(new ImmutableTriple<>(160539L, "0174166014", "1131929231"));
+        bucketEntries.add(new ImmutableTriple<>(160550L, "0174165989", "1131929303"));
+        bucketEntries.add(new ImmutableTriple<>(160528L, "0174166050", "1131929298"));
+        bucketEntries.add(new ImmutableTriple<>(160543L, "0174165987", "1131929256"));
+        bucketEntries.add(new ImmutableTriple<>(160537L, "0174166038", "1131929309"));
+        bucketEntries.add(new ImmutableTriple<>(160532L, "0174166059", "1131929295"));
+        bucketEntries.add(new ImmutableTriple<>(160548L, "0174166013", "1131929278"));
+        bucketEntries.add(new ImmutableTriple<>(160525L, "0174166023", "1131929257"));
+        bucketEntries.add(new ImmutableTriple<>(160514L, "0174166051", "1131929233"));
+        bucketEntries.add(new ImmutableTriple<>(160529L, "0174166046", "1131929325"));
+        bucketEntries.add(new ImmutableTriple<>(160540L, "0174166018", "1131929280"));
+        bucketEntries.add(new ImmutableTriple<>(160544L, "0174165992", "1131929272"));
+        bucketEntries.add(new ImmutableTriple<>(160538L, "0174165990", "1131929252"));
+
+        for (ImmutableTriple<Long, String, String> bucketEntryTriple : bucketEntries) {
+            BucketEntry bucketEntry = labVesselDao.findById(BucketEntry.class, bucketEntryTriple.getLeft());
+            Assert.assertEquals(bucketEntry.getLabVessel().getLabel(), bucketEntryTriple.getRight());
+            LabVessel labVessel = labVesselDao.findByIdentifier(bucketEntryTriple.getMiddle());
+            System.out.println("Change bucket entry " + bucketEntry.getBucketEntryId() + " from " +
+                    bucketEntry.getLabVessel().getLabel() + " to " + labVessel.getLabel());
+            bucketEntry.setLabVessel(labVessel);
+        }
+
+        List<ImmutableTriple<Long, String, String>> lbsvs = new ArrayList<>();
+        lbsvs.add(new ImmutableTriple<>(2312483L, "0174166040", "1131929281"));
+        lbsvs.add(new ImmutableTriple<>(2312432L, "0174166000", "1131929255"));
+        lbsvs.add(new ImmutableTriple<>(2312487L, "0174166018", "1131929280"));
+        lbsvs.add(new ImmutableTriple<>(2312497L, "0174166026", "1131929236"));
+        lbsvs.add(new ImmutableTriple<>(2312496L, "0174166015", "1131929322"));
+        lbsvs.add(new ImmutableTriple<>(2312476L, "0174166013", "1131929278"));
+        lbsvs.add(new ImmutableTriple<>(2312436L, "0174166051", "1131929233"));
+        lbsvs.add(new ImmutableTriple<>(2312472L, "0174166042", "1131929294"));
+        lbsvs.add(new ImmutableTriple<>(2312433L, "0174166038", "1131929309"));
+        lbsvs.add(new ImmutableTriple<>(2312456L, "0174166075", "1131929283"));
+        lbsvs.add(new ImmutableTriple<>(2312489L, "0174165993", "1131929320"));
+        lbsvs.add(new ImmutableTriple<>(2312437L, "0174166062", "1131929296"));
+        lbsvs.add(new ImmutableTriple<>(2312480L, "0174165998", "1131929299"));
+        lbsvs.add(new ImmutableTriple<>(2312457L, "0174166004", "1131929248"));
+        lbsvs.add(new ImmutableTriple<>(2312443L, "0174166023", "1131929257"));
+        lbsvs.add(new ImmutableTriple<>(2312474L, "0174166071", "1131929284"));
+        lbsvs.add(new ImmutableTriple<>(2312482L, "0174166045", "1131929308"));
+        lbsvs.add(new ImmutableTriple<>(2312431L, "0174166052", "1131929302"));
+        lbsvs.add(new ImmutableTriple<>(2312423L, "0174166002", "1131926708"));
+        lbsvs.add(new ImmutableTriple<>(2312493L, "0174166022", "1131929253"));
+        lbsvs.add(new ImmutableTriple<>(2312422L, "0174166011", "1131929235"));
+        lbsvs.add(new ImmutableTriple<>(2312479L, "0174166036", "1131929259"));
+        lbsvs.add(new ImmutableTriple<>(2312508L, "0174166017", "1131929250"));
+        lbsvs.add(new ImmutableTriple<>(2312473L, "0174166041", "1131929285"));
+        lbsvs.add(new ImmutableTriple<>(2312460L, "0174166061", "1131929321"));
+        lbsvs.add(new ImmutableTriple<>(2312445L, "0174166001", "1131929300"));
+        lbsvs.add(new ImmutableTriple<>(2312430L, "0174166035", "1131929258"));
+        lbsvs.add(new ImmutableTriple<>(2312427L, "0174166025", "1131929306"));
+        lbsvs.add(new ImmutableTriple<>(2312477L, "0174166065", "1131929279"));
+        lbsvs.add(new ImmutableTriple<>(2312458L, "0174166076", "1131929307"));
+        lbsvs.add(new ImmutableTriple<>(2312506L, "0174166039", "1131929237"));
+        lbsvs.add(new ImmutableTriple<>(2312461L, "0174165988", "1131929251"));
+        lbsvs.add(new ImmutableTriple<>(2312494L, "0174166027", "1131929323"));
+        lbsvs.add(new ImmutableTriple<>(2312424L, "0174166016", "1131929305"));
+        lbsvs.add(new ImmutableTriple<>(2312455L, "0174165992", "1131929272"));
+        lbsvs.add(new ImmutableTriple<>(2312481L, "0174165991", "1131929273"));
+        lbsvs.add(new ImmutableTriple<>(2312448L, "0174166059", "1131929295"));
+        lbsvs.add(new ImmutableTriple<>(2312454L, "0174166003", "1131929247"));
+        lbsvs.add(new ImmutableTriple<>(2312459L, "0174165990", "1131929252"));
+        lbsvs.add(new ImmutableTriple<>(2312468L, "0174166072", "1131929232"));
+        lbsvs.add(new ImmutableTriple<>(2312418L, "0174166070", "1131929324"));
+        lbsvs.add(new ImmutableTriple<>(2312466L, "0174166074", "1131929275"));
+        lbsvs.add(new ImmutableTriple<>(2312426L, "0174162698", "1131929276"));
+        lbsvs.add(new ImmutableTriple<>(2312504L, "0174166037", "1131929230"));
+        lbsvs.add(new ImmutableTriple<>(2312492L, "0174166063", "1131929260"));
+        lbsvs.add(new ImmutableTriple<>(2312446L, "0174166069", "1131929234"));
+        lbsvs.add(new ImmutableTriple<>(2312429L, "0174166021", "1131929246"));
+        lbsvs.add(new ImmutableTriple<>(2312470L, "0174166014", "1131929231"));
+        lbsvs.add(new ImmutableTriple<>(2312444L, "0174162718", "1131929282"));
+        lbsvs.add(new ImmutableTriple<>(2312419L, "0174166012", "1131929274"));
+        lbsvs.add(new ImmutableTriple<>(2312495L, "0174166064", "1131929261"));
+        lbsvs.add(new ImmutableTriple<>(2312416L, "0174166073", "1131929304"));
+        lbsvs.add(new ImmutableTriple<>(2312471L, "0174166046", "1131929325"));
+        lbsvs.add(new ImmutableTriple<>(2312463L, "0174166050", "1131929298"));
+        lbsvs.add(new ImmutableTriple<>(2312500L, "0174165999", "1131929277"));
+        lbsvs.add(new ImmutableTriple<>(2312509L, "0174166024", "1131929254"));
+        lbsvs.add(new ImmutableTriple<>(2312467L, "0174166028", "1131929301"));
+        lbsvs.add(new ImmutableTriple<>(2312486L, "0174166049", "1131929297"));
+        lbsvs.add(new ImmutableTriple<>(2312484L, "0174165989", "1131929303"));
+        lbsvs.add(new ImmutableTriple<>(2312450L, "0174166060", "1131929270"));
+        lbsvs.add(new ImmutableTriple<>(2312425L, "0174166066", "1131929249"));
+        lbsvs.add(new ImmutableTriple<>(2312501L, "0174165987", "1131929256"));
+
+        for (ImmutableTriple<Long, String, String> lbsvTriple : lbsvs) {
+            LabBatchStartingVessel labBatchStartingVessel = labVesselDao.findById(LabBatchStartingVessel.class, lbsvTriple.getLeft());
+            Assert.assertEquals(labBatchStartingVessel.getLabVessel().getLabel(), lbsvTriple.getRight());
+            LabVessel labVessel = labVesselDao.findByIdentifier(lbsvTriple.getMiddle());
+            System.out.println("Change lbsv " + labBatchStartingVessel.getBatchStartingVesselId() + " from " +
+                    labBatchStartingVessel.getLabVessel().getLabel() + " to " + labVessel.getLabel());
+            labBatchStartingVessel.setLabVessel(labVessel);
+        }
+        labBatchDao.persist(new FixupCommentary("SUPPORT-1848 change back bucket entries and lbsvs"));
+        labBatchDao.flush();
+        userTransaction.commit();
+    }
+
+    @Test(enabled = false)
+    public void fixupSupport1848_Try2b() throws Exception{
+        List<String> tubeBarcodes = Arrays.asList(
+                "1131926708",
+                "1131929230",
+                "1131929231",
+                "1131929232",
+                "1131929233",
+                "1131929234",
+                "1131929235",
+                "1131929236",
+                "1131929237",
+                "1131929246",
+                "1131929247",
+                "1131929248",
+                "1131929249",
+                "1131929250",
+                "1131929251",
+                "1131929252",
+                "1131929253",
+                "1131929254",
+                "1131929255",
+                "1131929256",
+                "1131929257",
+                "1131929258",
+                "1131929259",
+                "1131929260",
+                "1131929261",
+                "1131929270",
+                "1131929272",
+                "1131929273",
+                "1131929274",
+                "1131929275",
+                "1131929276",
+                "1131929277",
+                "1131929278",
+                "1131929279",
+                "1131929280",
+                "1131929281",
+                "1131929282",
+                "1131929283",
+                "1131929284",
+                "1131929285",
+                "1131929294",
+                "1131929295",
+                "1131929296",
+                "1131929297",
+                "1131929298",
+                "1131929299",
+                "1131929300",
+                "1131929301",
+                "1131929302",
+                "1131929303",
+                "1131929304",
+                "1131929305",
+                "1131929306",
+                "1131929307",
+                "1131929308",
+                "1131929309",
+                "1131929320",
+                "1131929321",
+                "1131929322",
+                "1131929323",
+                "1131929324",
+                "1131929325");
+
+        changeBucketEntriesToAliquots(tubeBarcodes, 1361856L, "LCSET-9347", "SUPPORT-1848");
     }
 
 }

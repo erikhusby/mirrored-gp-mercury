@@ -1406,26 +1406,17 @@ AS
                  WHERE is_delete = 'F') LOOP
       BEGIN
         INSERT INTO library_ancestry (
-          ancestor_event_id,
-          ancestor_library_id,
-          ancestor_library_type,
-          ancestor_library_creation,
-          child_event_id,
-          child_library_id,
-          child_library_type,
-          child_library_creation,
-          etl_date
-        ) VALUES (
-          new.ancestor_event_id,
-          new.ancestor_library_id,
-          new.ancestor_library_type,
-          new.ancestor_library_creation,
-          new.child_event_id,
-          new.child_library_id,
-          new.child_library_type,
-          new.child_library_creation,
+          ancestor_event_id, ancestor_library_id, ancestor_library_type, ancestor_library_creation,
+          child_event_id, child_library_id, child_library_type, child_library_creation,
+           etl_date )
+        SELECT
+          new.ancestor_event_id, new.ancestor_library_id, new.ancestor_library_type, new.ancestor_library_creation,
+          new.child_event_id, new.child_library_id, new.child_library_type, new.child_library_creation,
           new.etl_date
-        );
+        FROM DUAL WHERE NOT EXISTS (
+          SELECT 'Y' FROM library_ancestry
+           WHERE ancestor_library_id = new.ancestor_library_id
+             AND child_library_id    = new.child_library_id  );
         V_ANCEST_INS_COUNT := V_ANCEST_INS_COUNT + SQL%ROWCOUNT;
 
       EXCEPTION WHEN OTHERS THEN
