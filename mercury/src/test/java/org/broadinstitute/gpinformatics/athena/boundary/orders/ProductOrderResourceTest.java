@@ -49,7 +49,7 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
     private static final String MULTIPLE_RISK_SAMPLE = "SM-3RAE1";
 
     private static final String VALID_PDO_ID = "PDO-10";
-    private static final String WIDELY_USED_QUOTE_ID = "MMMAC1";
+    public static final String WIDELY_USED_QUOTE_ID = "MMMAC1";
     // This RP has a Cohort and has two PMs. Both features are needed for testing.
     private static final String RP_CONTAINING_COHORTS = "RP-40";
     private static final String RP_WITHOUT_COHORTS = "RP-32";
@@ -236,8 +236,7 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
         Assert.assertEquals(orders.getOrders().get(0).getProductOrderKey(), VALID_PDO_ID);
     }
 
-    // todo emp Reenable this test after running the genotyping mapping fixup test.
-    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = false)
+    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = true)
     @RunAsClient
     public void testGenotypingInfo(@ArquillianResource URL baseUrl) throws Exception {
         Map<String, String> map = new HashMap<String, String>() {{
