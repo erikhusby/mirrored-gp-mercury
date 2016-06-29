@@ -37,7 +37,7 @@ import static org.broadinstitute.gpinformatics.athena.entity.project.ResearchPro
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
-@Test(groups = TestGroups.STUBBY)
+@Test(groups = TestGroups.DATABASE_FREE)
 public class ResearchProjectActionBeanTest {
     @BeforeMethod(alwaysRun = true)
     public void setUp() throws Exception {
@@ -48,20 +48,20 @@ public class ResearchProjectActionBeanTest {
         List<Object[]> testCases = new ArrayList<>();
 
         // Test different project roles
-        testCases.add(new Object[]{RoleType.PM, RESEARCH_ONLY, IS_PROJECT_PM.TRUE, TEST_PASSES.TRUE});
-        testCases.add(new Object[]{RoleType.PM, RESEARCH_ONLY, IS_PROJECT_PM.FALSE, TEST_PASSES.FALSE});
+        testCases.add(new Object[]{RoleType.PM, RESEARCH_ONLY, IS_PROJECT_PM.TRUE, SUBMISSION_ALLOWED.TRUE});
+        testCases.add(new Object[]{RoleType.PM, RESEARCH_ONLY, IS_PROJECT_PM.FALSE, SUBMISSION_ALLOWED.FALSE});
 
         // Test non-PM roles
         for (RoleType roleType : RoleType.values()) {
             if (roleType != RoleType.PM) {
-                testCases.add(new Object[]{roleType, RESEARCH_ONLY, IS_PROJECT_PM.TRUE, TEST_PASSES.FALSE});
-                testCases.add(new Object[]{roleType, RESEARCH_ONLY, IS_PROJECT_PM.FALSE, TEST_PASSES.FALSE});
+                testCases.add(new Object[]{roleType, RESEARCH_ONLY, IS_PROJECT_PM.TRUE, SUBMISSION_ALLOWED.FALSE});
+                testCases.add(new Object[]{roleType, RESEARCH_ONLY, IS_PROJECT_PM.FALSE, SUBMISSION_ALLOWED.FALSE});
 
             }
         }
         // Test different regulatory designations
-        testCases.add(new Object[]{RoleType.PM, GENERAL_CLIA_CAP, IS_PROJECT_PM.FALSE, TEST_PASSES.FALSE});
-        testCases.add(new Object[]{RoleType.PM, CLINICAL_DIAGNOSTICS, IS_PROJECT_PM.FALSE, TEST_PASSES.FALSE});
+        testCases.add(new Object[]{RoleType.PM, GENERAL_CLIA_CAP, IS_PROJECT_PM.TRUE, SUBMISSION_ALLOWED.FALSE});
+        testCases.add(new Object[]{RoleType.PM, CLINICAL_DIAGNOSTICS, IS_PROJECT_PM.TRUE, SUBMISSION_ALLOWED.FALSE});
 
         return testCases.iterator();
     }
@@ -70,7 +70,8 @@ public class ResearchProjectActionBeanTest {
     @Test(dataProvider = "submissionDataProvider")
     public void testSubmissionsValidation(RoleType userRole,
                                           ResearchProject.RegulatoryDesignation regulatoryDesignation,
-                                          IS_PROJECT_PM userIsProjectPM, TEST_PASSES expectedToPass) throws Exception {
+                                          IS_PROJECT_PM userIsProjectPM, SUBMISSION_ALLOWED submissionAllowed)
+            throws Exception {
         BSPUserList bspUserList = Mockito.mock(BSPUserList.class);
         UserTokenInput broadPiList = new UserTokenInput(bspUserList);
         UserBean userBean = Mockito.mock(UserBean.class);
@@ -91,11 +92,11 @@ public class ResearchProjectActionBeanTest {
         actionBean.setEditResearchProject(researchProject);
         actionBean.setContext(new TestCoreActionBeanContext());
 
-        assertThat(actionBean.validateViewOrPostSubmissions(true), is(expectedToPass.booleanValue()));
-        assertThat(actionBean.getValidationErrors().isEmpty(), is(expectedToPass.booleanValue()));
+        assertThat(actionBean.validateViewOrPostSubmissions(true), is(submissionAllowed.booleanValue()));
+        assertThat(actionBean.getValidationErrors().isEmpty(), is(submissionAllowed.booleanValue()));
     }
 
-    private enum TEST_PASSES {
+    private enum SUBMISSION_ALLOWED {
         TRUE, FALSE;
 
         public boolean booleanValue() {
