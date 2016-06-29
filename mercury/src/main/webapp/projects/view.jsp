@@ -35,7 +35,7 @@
                         this.scrollIntoView({block: "start", behavior: "smooth"});
                     }
                 });
-                if (${! actionBean.projectAllowsSubmission}) {
+                if (${! actionBean.submissionAllowed}) {
                     var index = $j("#tabs ul").find("[href='#submissionsTab']").closest("li").index();
                     $j("#tabs").tabs("disable", index);
                 }

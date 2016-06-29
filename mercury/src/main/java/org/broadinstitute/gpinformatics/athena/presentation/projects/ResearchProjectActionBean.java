@@ -71,6 +71,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.text.MessageFormat;
@@ -84,6 +85,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.NotForProductionUse.DoNotUse;
 
 /**
  * This class is for research projects action bean / web page.
@@ -303,6 +306,16 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
     public void listInit() {
         allResearchProjects = researchProjectDao.findAllResearchProjects();
         Collections.sort(allResearchProjects, ResearchProject.BY_DATE);
+    }
+
+    ResearchProjectActionBean(BSPUserList bspUserList, UserBean userBean, UserTokenInput broadPiList,
+                              @Nonnull DoNotUse iAttest) {
+        this();
+        //noinspection ConstantConditions
+        DoNotUse.doAgree(iAttest);
+        super.userBean=userBean;
+        this.broadPiList = broadPiList;
+        this.bspUserList=bspUserList;
     }
 
     /**
@@ -960,10 +973,30 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
     }
 
     @ValidationMethod(on = {VIEW_SUBMISSIONS_ACTION, POST_SUBMISSIONS_ACTION})
-    public void validateViewSubmissions() {
-        if (!isSubmissionAllowed()) {
-            addGlobalValidationError("Data submissions are available for research projects only.");
+    public boolean validateViewOrPostSubmissions(boolean collectValidationMessages) {
+        if (getUserBean().isDeveloperUser()) {
+            return true;
         }
+        List<String> accessRestriction = new ArrayList<>();
+        if (!isProjectAllowsSubmission()) {
+            accessRestriction.add("research projects only");
+        }
+        Collection<Long> projectManagerIds = Arrays.asList(editResearchProject.getPeople(RoleType.PM));
+
+        // Test both the user's role and whether or not they are listed as a project manager in the project. This
+        // protects from the case where the user's role has been revoked, but the project people haven't been updated.
+        boolean isPm = getUserBean().isPMUser() && projectManagerIds.contains(getUserBean().getBspUser().getUserId());
+        if (!isPm) {
+            accessRestriction.add(String.format("Project Managers of %s", researchProject));
+        }
+        if (accessRestriction.isEmpty()) {
+            return true;
+        }
+        if (collectValidationMessages) {
+            addGlobalValidationError(
+                    String.format("Data submissions are available for %s.", StringUtils.join(accessRestriction, " and ")));
+        }
+        return false;
     }
 
     @SuppressWarnings("unchecked")
@@ -1299,14 +1332,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
      * @return true if the current user is allowed to request data submissions for the current research project
      */
     public boolean isSubmissionAllowed() {
-        if (!isProjectAllowsSubmission()) {
-            return false;
-        }
-        if (getUserBean().isDeveloperUser()) {
-            return true;
-        }
-        Collection<Long> projectManagerIds = Arrays.asList(editResearchProject.getPeople(RoleType.PM));
-        return getUserBean().isPMUser() && projectManagerIds.contains(getUserBean().getBspUser().getUserId());
+        return validateViewOrPostSubmissions(false);
     }
 
     public CollaborationData getCollaborationData() {
@@ -1485,10 +1511,15 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
     }
 
     public String getSubmissionTabHelpText() {
-        if (isProjectAllowsSubmission()) {
+        if (validateViewOrPostSubmissions(true)) {
             return "Click to view data submissions";
         } else {
-            return "Data submissions are available for 'research grade' projects only.";
+            return StringUtils.join(getFormattedErrors(), "<br/>");
         }
     }
+
+    void setEditResearchProject(ResearchProject editResearchProject) {
+        this.editResearchProject = editResearchProject;
+    }
+
 }

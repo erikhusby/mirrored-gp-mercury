@@ -567,6 +567,14 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
         return foundPersonList;
     }
 
+    /**
+     * Find all people in project with given RoleType.
+     * <p/>
+     * <b>Note</b> that it is possible for a ProjectPerson to have one role in the project but have a different role in
+     * their UserBean. A case where this could happen is when a user is a PM in a project and their Role is revoked
+     * for some reason. Because of this it is important  to check the project role and the individual's role when
+     * determining access.
+     */
     public Long[] getPeople(RoleType role) {
         List<Long> people = new ArrayList<>();
 
