@@ -16,7 +16,6 @@ import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.NotForProductionUse;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.broadinstitute.gpinformatics.mercury.presentation.TestCoreActionBeanContext;
@@ -86,13 +85,14 @@ public class ResearchProjectActionBeanTest {
             researchProject.addPeople(RoleType.PM, Collections.singleton(qaDudeUser));
         }
 
-        ResearchProjectActionBean actionBean = new ResearchProjectActionBean(NotForProductionUse.I_PROMISE,
-                bspUserList, userBean, broadPiList
-        );
+        ResearchProjectActionBean actionBean = new ResearchProjectActionBean();
+        actionBean.setUserBean(userBean);
+        actionBean.setBroadPiList(broadPiList);
+        actionBean.setBspUserList(bspUserList);
         actionBean.setEditResearchProject(researchProject);
         actionBean.setContext(new TestCoreActionBeanContext());
 
-        assertThat(actionBean.validateViewOrPostSubmissions(true), is(submissionAllowed.booleanValue()));
+        assertThat(actionBean.validateViewOrPostSubmissions(false), is(submissionAllowed.booleanValue()));
         assertThat(actionBean.getValidationErrors().isEmpty(), is(submissionAllowed.booleanValue()));
     }
 

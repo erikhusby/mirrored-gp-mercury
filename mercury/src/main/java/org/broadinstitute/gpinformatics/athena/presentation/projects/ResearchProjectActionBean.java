@@ -52,7 +52,6 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.collaborate.CollaborationNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.collaborate.CollaborationPortalException;
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.NotForProductionUse;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDto;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDtoFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionLibraryDescriptor;
@@ -72,7 +71,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.text.MessageFormat;
@@ -120,7 +118,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
     public static final String PROJECT_LIST_PAGE = "/projects/list.jsp";
     public static final String PROJECT_VIEW_PAGE = "/projects/view.jsp";
     public static final String PROJECT_SUBMISSIONS_PAGE = "/projects/submissions.jsp";
-
+    public boolean supressValidationErrors;
     private static final String BEGIN_COLLABORATION_ACTION = "beginCollaboration";
 
     private static final String RESEND_INVITATION_ACTION = "resendInvitation";
@@ -305,15 +303,6 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
     public void listInit() {
         allResearchProjects = researchProjectDao.findAllResearchProjects();
         Collections.sort(allResearchProjects, ResearchProject.BY_DATE);
-    }
-
-    ResearchProjectActionBean(@Nonnull NotForProductionUse iAttest, BSPUserList bspUserList, UserBean userBean,
-                              UserTokenInput broadPiList) {
-        this();
-        NotForProductionUse.doAgree(iAttest);
-        super.userBean=userBean;
-        this.broadPiList = broadPiList;
-        this.bspUserList=bspUserList;
     }
 
     /**
@@ -970,8 +959,13 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         updateSubmissionSamples();
     }
 
+    public boolean validateViewOrPostSubmissions(boolean suppressValidationErrors) {
+        this.supressValidationErrors=suppressValidationErrors;
+        return validateViewOrPostSubmissions();
+    }
+
     @ValidationMethod(on = {VIEW_SUBMISSIONS_ACTION, POST_SUBMISSIONS_ACTION})
-    public boolean validateViewOrPostSubmissions(boolean collectValidationMessages) {
+    public boolean validateViewOrPostSubmissions() {
         if (getUserBean().isDeveloperUser()) {
             return true;
         }
@@ -990,7 +984,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         if (accessRestriction.isEmpty()) {
             return true;
         }
-        if (collectValidationMessages) {
+        if (!supressValidationErrors) {
             addGlobalValidationError(
                     String.format("Data submissions are available for %s.", StringUtils.join(accessRestriction, " and ")));
         }
@@ -1166,7 +1160,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         return broadPiList;
     }
 
-    public void setBroadPiList(UserTokenInput broadPiList) {
+    void setBroadPiList(UserTokenInput broadPiList) {
         this.broadPiList = broadPiList;
     }
 
@@ -1324,13 +1318,6 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
     @Override
     public boolean isEditAllowed() {
         return getUserBean().isDeveloperUser() || getUserBean().isPMUser() || getUserBean().isPDMUser();
-    }
-
-    /**
-     * @return true if the current user is allowed to request data submissions for the current research project
-     */
-    public boolean isSubmissionAllowed() {
-        return validateViewOrPostSubmissions(false);
     }
 
     public CollaborationData getCollaborationData() {
@@ -1509,7 +1496,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
     }
 
     public String getSubmissionTabHelpText() {
-        if (validateViewOrPostSubmissions(true)) {
+        if (validateViewOrPostSubmissions(false)) {
             return "Click to view data submissions";
         } else {
             return StringUtils.join(getFormattedErrors(), "<br/>");
@@ -1520,4 +1507,19 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         this.editResearchProject = editResearchProject;
     }
 
+    void setUserBean(UserBean userBean) {
+        this.userBean = userBean;
+    }
+
+    void setBspUserList(BSPUserList bspUserList) {
+        this.bspUserList = bspUserList;
+    }
+
+    public boolean isSupressValidationErrors() {
+        return supressValidationErrors;
+    }
+
+    public void setSupressValidationErrors(boolean supressValidationErrors) {
+        this.supressValidationErrors = supressValidationErrors;
+    }
 }
