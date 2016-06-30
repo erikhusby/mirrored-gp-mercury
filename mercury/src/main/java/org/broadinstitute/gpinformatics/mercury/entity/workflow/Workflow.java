@@ -56,9 +56,10 @@ public enum Workflow {
     /**
      * Workflow processes that Mercury supports.
      */
+    // todo jmt make this a flag on the enum
     public static final EnumSet<Workflow> SUPPORTED_WORKFLOWS =
             EnumSet.of(AGILENT_EXOME_EXPRESS, ICE_EXOME_EXPRESS, ICE_CRSP, CLINICAL_WHOLE_BLOOD_EXTRACTION,
-                    DNA_RNA_EXTRACTION_CELL_PELLETS, TRU_SEQ_STRAND_SPECIFIC_CRSP
+                    DNA_RNA_EXTRACTION_CELL_PELLETS, TRU_SEQ_STRAND_SPECIFIC_CRSP, PCR_FREE, PCR_PLUS, TEN_X
             );
 
     public boolean isWorkflowSupportedByMercury() {

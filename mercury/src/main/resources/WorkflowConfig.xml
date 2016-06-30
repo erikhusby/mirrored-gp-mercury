@@ -2401,7 +2401,8 @@
         <productWorkflowDefVersions>
             <version>1.0</version>
             <effectiveDate>2012-09-30T22:04:23.932-04:00</effectiveDate>
-            <workflowProcessDefs>Shearing</workflowProcessDefs>
+            <workflowProcessDefs>Pico/Plating</workflowProcessDefs>
+            <workflowProcessDefs>Exome Express Shearing</workflowProcessDefs>
             <workflowProcessDefs>Library Construction</workflowProcessDefs>
             <workflowProcessDefs>PCR Free Pond</workflowProcessDefs>
             <workflowProcessDefs>QTP</workflowProcessDefs>
@@ -2419,7 +2420,8 @@
         <productWorkflowDefVersions>
             <version>1.0</version>
             <effectiveDate>2012-09-30T22:04:23.932-04:00</effectiveDate>
-            <workflowProcessDefs>Shearing</workflowProcessDefs>
+            <workflowProcessDefs>Pico/Plating</workflowProcessDefs>
+            <workflowProcessDefs>Exome Express Shearing</workflowProcessDefs>
             <workflowProcessDefs>Library Construction</workflowProcessDefs>
             <workflowProcessDefs>PCR Plus Pond</workflowProcessDefs>
             <workflowProcessDefs>QTP</workflowProcessDefs>
@@ -2464,6 +2466,7 @@
         <productWorkflowDefVersions>
             <version>2.0</version>
             <effectiveDate>2016-04-15T10:03:24.085-04:00</effectiveDate>
+            <workflowProcessDefs>Pico/Plating</workflowProcessDefs>
             <workflowProcessDefs>Nexome</workflowProcessDefs>
             <workflowProcessDefs>QTP</workflowProcessDefs>
             <workflowProcessDefs>HiSEQ</workflowProcessDefs>
