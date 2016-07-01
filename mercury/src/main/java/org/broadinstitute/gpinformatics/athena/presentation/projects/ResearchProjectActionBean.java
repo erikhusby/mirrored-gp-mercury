@@ -118,7 +118,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
     public static final String PROJECT_LIST_PAGE = "/projects/list.jsp";
     public static final String PROJECT_VIEW_PAGE = "/projects/view.jsp";
     public static final String PROJECT_SUBMISSIONS_PAGE = "/projects/submissions.jsp";
-
+    public boolean supressValidationErrors;
     private static final String BEGIN_COLLABORATION_ACTION = "beginCollaboration";
 
     private static final String RESEND_INVITATION_ACTION = "resendInvitation";
@@ -959,11 +959,36 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         updateSubmissionSamples();
     }
 
+    public boolean validateViewOrPostSubmissions(boolean suppressValidationErrors) {
+        this.supressValidationErrors=suppressValidationErrors;
+        return validateViewOrPostSubmissions();
+    }
+
     @ValidationMethod(on = {VIEW_SUBMISSIONS_ACTION, POST_SUBMISSIONS_ACTION})
-    public void validateViewSubmissions() {
-        if (!isSubmissionAllowed()) {
-            addGlobalValidationError("Data submissions are available for research projects only.");
+    public boolean validateViewOrPostSubmissions() {
+        if (getUserBean().isDeveloperUser()) {
+            return true;
         }
+        List<String> accessRestriction = new ArrayList<>();
+        if (!isProjectAllowsSubmission()) {
+            accessRestriction.add("research projects only");
+        }
+        Collection<Long> projectManagerIds = Arrays.asList(editResearchProject.getPeople(RoleType.PM));
+
+        // Test both the user's role and whether or not they are listed as a project manager in the project. This
+        // protects from the case where the user's role has been revoked, but the project people haven't been updated.
+        boolean isPm = getUserBean().isPMUser() && projectManagerIds.contains(getUserBean().getBspUser().getUserId());
+        if (!isPm) {
+            accessRestriction.add(String.format("Project Managers of %s", researchProject));
+        }
+        if (accessRestriction.isEmpty()) {
+            return true;
+        }
+        if (!supressValidationErrors) {
+            addGlobalValidationError(
+                    String.format("Data submissions are available for %s.", StringUtils.join(accessRestriction, " and ")));
+        }
+        return false;
     }
 
     @SuppressWarnings("unchecked")
@@ -1135,7 +1160,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         return broadPiList;
     }
 
-    public void setBroadPiList(UserTokenInput broadPiList) {
+    void setBroadPiList(UserTokenInput broadPiList) {
         this.broadPiList = broadPiList;
     }
 
@@ -1293,20 +1318,6 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
     @Override
     public boolean isEditAllowed() {
         return getUserBean().isDeveloperUser() || getUserBean().isPMUser() || getUserBean().isPDMUser();
-    }
-
-    /**
-     * @return true if the current user is allowed to request data submissions for the current research project
-     */
-    public boolean isSubmissionAllowed() {
-        if (!isProjectAllowsSubmission()) {
-            return false;
-        }
-        if (getUserBean().isDeveloperUser()) {
-            return true;
-        }
-        Collection<Long> projectManagerIds = Arrays.asList(editResearchProject.getPeople(RoleType.PM));
-        return getUserBean().isPMUser() && projectManagerIds.contains(getUserBean().getBspUser().getUserId());
     }
 
     public CollaborationData getCollaborationData() {
@@ -1485,10 +1496,30 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
     }
 
     public String getSubmissionTabHelpText() {
-        if (isProjectAllowsSubmission()) {
+        if (validateViewOrPostSubmissions(false)) {
             return "Click to view data submissions";
         } else {
-            return "Data submissions are available for 'research grade' projects only.";
+            return StringUtils.join(getFormattedErrors(), "<br/>");
         }
+    }
+
+    void setEditResearchProject(ResearchProject editResearchProject) {
+        this.editResearchProject = editResearchProject;
+    }
+
+    void setUserBean(UserBean userBean) {
+        this.userBean = userBean;
+    }
+
+    void setBspUserList(BSPUserList bspUserList) {
+        this.bspUserList = bspUserList;
+    }
+
+    public boolean isSupressValidationErrors() {
+        return supressValidationErrors;
+    }
+
+    public void setSupressValidationErrors(boolean supressValidationErrors) {
+        this.supressValidationErrors = supressValidationErrors;
     }
 }

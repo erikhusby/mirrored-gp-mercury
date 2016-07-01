@@ -9,6 +9,8 @@
  */
 package org.broadinstitute.gpinformatics.mercury.presentation;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Collections2;
 import net.sourceforge.stripes.action.ActionBean;
 import net.sourceforge.stripes.action.ActionBeanContext;
 import net.sourceforge.stripes.action.Before;
@@ -46,6 +48,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.http.HttpServletResponse;
@@ -387,9 +390,29 @@ public abstract class CoreActionBean implements ActionBean, MessageReporter {
      * @return formatted messages collected in the context
      */
     protected List<String> getFormattedMessages() {
+        return transformMessages(getContext().getMessages());
+    }
+
+    private List<String> transformMessages(List<? extends Message> messages) {
+        return new ArrayList<>(Collections2.transform(messages, new Function<Message, String>() {
+            @Override
+            public String apply(@Nullable Message input) {
+                if (input != null) {
+                    return input.getMessage(getContext().getLocale());
+                }
+                return null;
+            }
+        }));
+    }
+
+    /**
+     * @return formatted errors collected in the context
+     */
+    public List<String> getFormattedErrors() {
         final List<String> formattedMessages = new ArrayList<>();
-        for (Message message : getContext().getMessages()) {
-            formattedMessages.add(message.getMessage(getContext().getLocale()));;
+        for (String errorKey : getValidationErrors().keySet()) {
+            List<ValidationError> validationErrors = getValidationErrors().get(errorKey);
+            formattedMessages.addAll(transformMessages(validationErrors));
         }
         return formattedMessages;
     }

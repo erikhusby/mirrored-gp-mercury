@@ -544,7 +544,7 @@
     <div class="submissionControls">
         <stripes:submit name="<%=ResearchProjectActionBean.POST_SUBMISSIONS_ACTION%>"
                         value="Post Selected Submissions" class="btn submissionControls"
-                        disabled="${!actionBean.submissionAllowed}"/>
+                        disabled="${!actionBean.validateViewOrPostSubmissions(true)}"/>
         <a href="javascript:void(0)" id="PasteBarcodesList"
            title="Select samples using a pasted-in list of values.">Choose via list of samples...</a>
     </div>
@@ -580,7 +580,7 @@
     </table>
     <stripes:submit name="<%=ResearchProjectActionBean.POST_SUBMISSIONS_ACTION%>"
                     id="bottomSubmitButton" value="Post Selected Submissions" class="btn submissionControls"
-                    disabled="${!actionBean.submissionAllowed}" style="display:none;"/>
+                    disabled="${!actionBean.validateViewOrPostSubmissions(true)}" style="display:none;"/>
 
 </stripes:form>
     <div id="ListOfBarcodesForm">
