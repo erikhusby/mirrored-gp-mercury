@@ -1,23 +1,24 @@
 package org.broadinstitute.gpinformatics.athena.boundary.products;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingChipMapping;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.mercury.boundary.run.InfiniumRunResource;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.entity.run.AttributeArchetypeFixupTest;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
-import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
@@ -39,176 +40,111 @@ public class ProductEjbTest extends Arquillian {
     private AttributeArchetypeDao attributeArchetypeDao;
 
     @Inject
+    private ProductDao productDao;
+
+    @Inject
     private UserTransaction utx;
 
-    // The product part number that has both no pdo substring, and "Danish" pdo substring.
-    private String sharedPartNumber = null;
-    private String danishChipName = null;
-    private String nonDanishChipName = null;
-
-    @BeforeTest
-    public void init() {
-        for (String key : AttributeArchetypeFixupTest.INITIAL_PRODUCT_PART_TO_GENO_CHIP.keySet()) {
-            if (key.contains("Danish")) {
-                sharedPartNumber = key.split(GenotypingChipMapping.DELIMITER)[0];
-                danishChipName = AttributeArchetypeFixupTest.INITIAL_PRODUCT_PART_TO_GENO_CHIP.get(key);
-            }
-        }
-        // Gets the chip name mapped to the danish part number when pdo name does not contain "Danish".
-        nonDanishChipName = AttributeArchetypeFixupTest.INITIAL_PRODUCT_PART_TO_GENO_CHIP.get(sharedPartNumber);
-    }
-
-    // todo emp Reenable this test after running the genotyping mapping fixup test.
-    @Test(enabled = false)
-    public void testPdoNameMatching() throws Exception {
-        Assert.assertNotNull(sharedPartNumber);
-        Assert.assertNotNull(danishChipName);
-        Assert.assertNotNull(nonDanishChipName);
-
-        for (String key : AttributeArchetypeFixupTest.INITIAL_PRODUCT_PART_TO_GENO_CHIP.keySet()) {
-            String productPartNumber = key.split(GenotypingChipMapping.DELIMITER)[0];
-
-            Pair<String, String> chipFamilyAndName1 = productEjb.getGenotypingChip(productPartNumber,
-                    "pdo name", AttributeArchetypeFixupTest.EARLIEST_XSTAIN_DATE);
-            Pair<String, String> chipFamilyAndName2 = productEjb.getGenotypingChip(productPartNumber,
-                    "The Danish Study", AttributeArchetypeFixupTest.EARLIEST_XSTAIN_DATE);
-
-            Assert.assertEquals(chipFamilyAndName1.getLeft(), InfiniumRunResource.INFINIUM_GROUP);
-            Assert.assertEquals(chipFamilyAndName2.getLeft(), InfiniumRunResource.INFINIUM_GROUP);
-
-            if (productPartNumber.equals(sharedPartNumber)) {
-                Assert.assertEquals(chipFamilyAndName1.getRight(), nonDanishChipName);
-                Assert.assertEquals(chipFamilyAndName2.getRight(), danishChipName);
-            } else {
-                Assert.assertEquals(chipFamilyAndName1.getRight(),
-                        AttributeArchetypeFixupTest.INITIAL_PRODUCT_PART_TO_GENO_CHIP.get(key));
-                Assert.assertEquals(chipFamilyAndName2.getRight(), chipFamilyAndName1.getRight());
-            }
-        }
-    }
-
-    // todo emp Reenable this test after running the genotyping mapping fixup test.
-    @Test(enabled = false)
-    public void testPdoNameMatchingOrder() throws Exception {
-        utx.begin();
-
-        // Adds a new mapping for the shared part number but with an extended substring.
-        String chipName2 = "chip" + System.currentTimeMillis();
-        String mappingName = sharedPartNumber + GenotypingChipMapping.DELIMITER + "Danish2";
-        GenotypingChipMapping danish2Mapping = new GenotypingChipMapping(mappingName,
-                InfiniumRunResource.INFINIUM_GROUP, chipName2, AttributeArchetypeFixupTest.EARLIEST_XSTAIN_DATE);
-        attributeArchetypeDao.persist(danish2Mapping);
-        attributeArchetypeDao.flush();
-
-        // Should now have three mappings for the part number, depending on pdo name.
-        Assert.assertEquals(productEjb.getGenotypingChip(sharedPartNumber, "any name",
-                AttributeArchetypeFixupTest.EARLIEST_XSTAIN_DATE).getRight(), nonDanishChipName);
-        Assert.assertEquals(productEjb.getGenotypingChip(sharedPartNumber, "Danish",
-                AttributeArchetypeFixupTest.EARLIEST_XSTAIN_DATE).getRight(), danishChipName);
-        Assert.assertEquals(productEjb.getGenotypingChip(sharedPartNumber, "Danish2",
-                AttributeArchetypeFixupTest.EARLIEST_XSTAIN_DATE).getRight(), chipName2);
-
-        utx.rollback();
-    }
-
     @Test(enabled = true)
-    public void testDateLookup() throws Exception {
+    public void testPdoNameMatching() throws Exception {
         utx.begin();
+        try {
+            long now = System.currentTimeMillis();
+            String partNumber = "ABCD" + now;
+            String family = "tech" + now;
+            String[] chipNames = {"chip0" + now, "chip1" + now, "chip2" + now};
+            String[] pdoSubstrings = {"0" + now, "named0" + now, "PDO named1" + now};
 
-        long now = System.currentTimeMillis();
-        String partNumber = "ABCD" + now;
-        String family = "tech" + now;
-        String[] chipNames = {"name0" + now, "name1" + now, "name2" + now};
-
-        // Makes a sequence of three different chip mappings for the same product, each active at different times.
-        Date[] testDates = {new Date(now - 600000), new Date(now - 400000), new Date(now - 200000), new Date(now)};
-        Date[] chipDates = {new Date(now - 500000), new Date(now - 300000), new Date(now - 100000)};
-
-        GenotypingChipMapping[] mappings = {
-                new GenotypingChipMapping(partNumber, family, chipNames[0], chipDates[0]),
-                new GenotypingChipMapping(partNumber, family, chipNames[1], chipDates[1]),
-                new GenotypingChipMapping(partNumber, family, chipNames[2], chipDates[2])
-        };
-        // Inactivates the mappings so they don't overlap. Last mapping remains active.
-        mappings[0].setInactiveDate(chipDates[1]);
-        mappings[1].setInactiveDate(chipDates[2]);
-
-        for (int i = 0; i < mappings.length; ++i) {
-            attributeArchetypeDao.persist(mappings[i]);
-        }
-        attributeArchetypeDao.flush();
-
-        // Get all mappings should return the new ones.
-        boolean[] found = {false, false, false};
-        for (GenotypingChipMapping mapping : attributeArchetypeDao.findGenotypingChipMappings()) {
+            // Mappings based on different pdo substrings.
+            List<Triple<String, String, String>> genoChipInfos = new ArrayList<>();
             for (int i = 0; i < chipNames.length; ++i) {
-                if (mapping.getChipName().equals(chipNames[i])) {
-                    found[i] = true;
-                }
+                genoChipInfos.add(Triple.of(family, chipNames[i], pdoSubstrings[i]));
             }
-        }
-        Assert.assertTrue(found[0]);
-        Assert.assertTrue(found[1]);
-        Assert.assertTrue(found[2]);
+            productEjb.persistGenotypingChipMappings(partNumber, genoChipInfos);
+            attributeArchetypeDao.flush();
 
-        // Tests mapping right on the active/inactive date.
-        for (int i = 0; i < chipNames.length; ++i) {
-            Assert.assertEquals(productEjb.getGenotypingChip(partNumber, "pdo name", chipDates[i]).getRight(),
-                    chipNames[i], "At index " + i);
-        }
+            Date date0 = new Date();
+            Assert.assertEquals(productEjb.getGenotypingChip(partNumber,
+                    "A pdo named " + pdoSubstrings[0], date0).getRight(), chipNames[0]);
+            // This pdo name contains both pdoSubstrings[0] and pdoSubstrings[1], but since the
+            // latter is more complex (longer) it should be the one that is selected.
+            Assert.assertEquals(productEjb.getGenotypingChip(partNumber,
+                    "Another pdo named " + pdoSubstrings[1], date0).getRight(), chipNames[1]);
+            Assert.assertEquals(productEjb.getGenotypingChip(partNumber,
+                    "A pdo named " + pdoSubstrings[2], date0).getRight(), chipNames[2]);
 
-        // Tests which chip gets mapped at each test date.
-        for (int i = 0; i < testDates.length; ++i) {
-            Pair<String, String> chipFamilyAndName = productEjb.getGenotypingChip(partNumber, "pdo name", testDates[i]);
-            if (i == 0) {
-                Assert.assertNull(chipFamilyAndName.getLeft());
-                Assert.assertNull(chipFamilyAndName.getRight());
-            } else {
-                Assert.assertEquals(chipFamilyAndName.getLeft(), family);
-                Assert.assertEquals(chipFamilyAndName.getRight(), chipNames[i - 1]);
-            }
+        } finally {
+            utx.rollback();
         }
-
-        // Tests the current mapping for the test product.
-        String currentChip = null;
-        for (Triple<String, String, String> familyAndNameAndSubstring :
-                productEjb.getCurrentMappedGenotypingChips(partNumber)) {
-            if (familyAndNameAndSubstring.getLeft().equals(family)) {
-                Assert.assertNull(currentChip);
-                currentChip = familyAndNameAndSubstring.getMiddle();
-                Assert.assertNull(familyAndNameAndSubstring.getRight());
-            }
-        }
-        Assert.assertEquals(currentChip, chipNames[2]);
-
-        utx.rollback();
     }
 
     @Test(enabled = true)
     public void testDateOverlaps() throws Exception {
         utx.begin();
-
-        long now = System.currentTimeMillis();
-        String partNumber = "ABCD" + now;
-        String family = "tech" + now;
-        String[] chipNames = {"name0" + now, "name1" + now};
-        Date chipDate = new Date(now - 500000);
-
-        GenotypingChipMapping[] mappings = {
-                new GenotypingChipMapping(partNumber, family, chipNames[0], chipDate),
-                new GenotypingChipMapping(partNumber, family, chipNames[1], chipDate)
-        };
-        for (int i = 0; i < mappings.length; ++i) {
-            attributeArchetypeDao.persist(mappings[i]);
-        }
-        attributeArchetypeDao.flush();
-
-        // Detects the overlap since both chips are active.
         try {
-            productEjb.getGenotypingChip(partNumber, "", chipDate);
-            Assert.fail("Did not find overlapping active mappings.");
-        } catch (RuntimeException e) {
-            Assert.assertTrue(e.getMessage().toLowerCase().contains("multiple genotyping chip mappings"));
+            long now = System.currentTimeMillis();
+            String partNumber = "ABCD" + now;
+            String family = "tech" + now;
+            String[] chipNames = {"name0" + now, "name1" + now};
+            Date chipDate = new Date(now - 500000);
+
+            GenotypingChipMapping[] mappings = {
+                    new GenotypingChipMapping(partNumber, family, chipNames[0], chipDate),
+                    new GenotypingChipMapping(partNumber, family, chipNames[1], chipDate)
+            };
+            for (int i = 0; i < mappings.length; ++i) {
+                attributeArchetypeDao.persist(mappings[i]);
+            }
+            attributeArchetypeDao.flush();
+
+            boolean foundMapping0 = false;
+            boolean foundMapping1 = false;
+            for (GenotypingChipMapping mapping : attributeArchetypeDao.findGenotypingChipMappings()) {
+                if (mapping.getChipName().equals(chipNames[0])) {
+                    foundMapping0 = true;
+                }
+                if (mapping.getChipName().equals(chipNames[1])) {
+                    foundMapping1 = true;
+                }
+            }
+            Assert.assertTrue(foundMapping0 && foundMapping1);
+
+            // Detects the overlap since both mappings are active.
+            try {
+                productEjb.getGenotypingChip(partNumber, "", chipDate);
+                Assert.fail("Did not find overlapping active mappings.");
+            } catch (RuntimeException e) {
+                Assert.assertTrue(e.getMessage().toLowerCase().contains("multiple genotyping chip mappings"));
+            }
+        } finally {
+            utx.rollback();
+        }
+    }
+
+    @Test(enabled = true)
+    public void testMappingUpdate() throws Exception {
+        utx.begin();
+        try {
+            long now = System.currentTimeMillis();
+            String partNumber = "ABCD" + now;
+            String[] chipNames = {"name0" + now, "name1" + now};
+            Date[] dates = new Date[2];
+
+            for (int i = 0; i < chipNames.length; ++i) {
+                productEjb.persistGenotypingChipMappings(partNumber,
+                        Collections.singletonList(Triple.of("family" + now, chipNames[i], "")));
+                attributeArchetypeDao.flush();
+                dates[i] = new Date();
+                Thread.sleep(1000);
+            }
+
+            // An update should invalidate the old mapping but still leave it accessible, and make a new active one.
+            Assert.assertNull(productEjb.getGenotypingChip(partNumber, "", new Date(now - 10000)).getRight());
+            Assert.assertEquals(productEjb.getGenotypingChip(partNumber, "", dates[0]).getRight(), chipNames[0]);
+            Assert.assertEquals(productEjb.getGenotypingChip(partNumber, "", dates[1]).getRight(), chipNames[1]);
+
+        } finally {
+            utx.rollback();
         }
     }
 }

@@ -236,8 +236,7 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
         Assert.assertEquals(orders.getOrders().get(0).getProductOrderKey(), VALID_PDO_ID);
     }
 
-    // todo emp Reenable this test after running the genotyping mapping fixup test.
-    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = false)
+    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = true)
     @RunAsClient
     public void testGenotypingInfo(@ArquillianResource URL baseUrl) throws Exception {
         Map<String, String> map = new HashMap<String, String>() {{

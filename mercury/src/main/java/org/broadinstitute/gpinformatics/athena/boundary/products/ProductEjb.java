@@ -207,9 +207,13 @@ public class ProductEjb {
         return matches;
     }
 
-    // Updates, deletes, adds the mappings for a product part number to genotyping chips.
-    private void persistGenotypingChipMappings(String productPartNumber,
-                                               List<Triple<String, String, String>> genotypingChipInfo) {
+    /**
+     * Updates, deletes, adds the mappings for a product part number to genotyping chips.
+     * @param productPartNumber  the product part number to be mapped
+     * @param genotypingChipInfo (Chip family, chip name, PDO name substring) to be mapped
+     */
+    public void persistGenotypingChipMappings(String productPartNumber,
+                                              List<Triple<String, String, String>> genotypingChipInfo) {
         final Date now = new Date();
         SortedMap<String, GenotypingChipMapping> currentMappings = partNumberMatches(productPartNumber,
                 attributeArchetypeDao.getMappingsAsOf(now));
@@ -222,16 +226,25 @@ public class ProductEjb {
             String mappingName = productPartNumber + (StringUtils.isNotBlank(pdoSubstring) ?
                     GenotypingChipMapping.DELIMITER + pdoSubstring : "");
 
-            GenotypingChipMapping chip = currentMappings.remove(mappingName);
-            if (chip == null) {
+            // If no mapping exists for this product + pdo substring, it is created.
+            // If a mapping exists for this product + pdo substring, and the target chip is unchanged, it is
+            // kept as-is.
+            // If a mapping exists but with a new target chip, the mapping get inactivated and a new mapping
+            // gets created so that an old genotyping run will still use the mapping that was in effect
+            // when the run occurred.
+            GenotypingChipMapping currentMapping = currentMappings.get(mappingName);
+
+            if (currentMapping == null || !currentMapping.getChipFamily().equals(chipFamily) ||
+                !currentMapping.getChipName().equals(chipName)) {
+
                 attributeArchetypeDao.persist(new GenotypingChipMapping(mappingName, chipFamily, chipName, now));
             } else {
-                chip.setChipTechnology(chipFamily);
-                chip.setChipName(chipName);
+                // Removed from the collection so it doesn't get inactivated.
+                currentMappings.remove(currentMapping);
             }
         }
 
-        // Inactivates the remaining mappings which were not found in the given arrays.
+        // Inactivates existing mappings which were changed or deleted.
         for (GenotypingChipMapping mapping : currentMappings.values()) {
             mapping.setInactiveDate(now);
         }
