@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselLatestEventPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselMetadataPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselMetricPlugin;
+import org.broadinstitute.gpinformatics.infrastructure.columns.VesselMetricDetailsPlugin;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
@@ -84,6 +85,9 @@ public class LabVesselSearchDefinition {
 
         searchTerms = srchDef.buildMetricsTerms();
         mapGroupSearchTerms.put("Metrics", searchTerms);
+
+        searchTerms = buildVesselMetricDetailCols();
+        mapGroupSearchTerms.put("Quant Details", searchTerms);
 
         searchTerms = srchDef.buildLabVesselMultiCols();
         mapGroupSearchTerms.put("Multi-Columns", searchTerms);
@@ -872,9 +876,9 @@ public class LabVesselSearchDefinition {
         searchTerm.setName("Rack Barcode");
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public List<String> evaluate(Object entity, SearchContext context) {
+            public Set<String> evaluate(Object entity, SearchContext context) {
                 LabVessel labVessel = (LabVessel) entity;
-                List<String> results = new ArrayList<>();
+                Set<String> results = new HashSet<>();
 
                 for (LabVessel vessel : labVessel.getContainers()) {
                     if (OrmUtil.proxySafeIsInstance(vessel, TubeFormation.class)) {
@@ -893,9 +897,9 @@ public class LabVesselSearchDefinition {
         searchTerm.setName("Rack Position");
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public List<String> evaluate(Object entity, SearchContext context) {
+            public Set<String> evaluate(Object entity, SearchContext context) {
                 LabVessel labVessel = (LabVessel) entity;
-                List<String> results = new ArrayList<>();
+                Set<String> results = new HashSet<>();
 
                 for (LabVessel container : labVessel.getContainers()) {
                     results.add(container.getContainerRole().getPositionOfVessel(labVessel).toString());
@@ -1400,6 +1404,38 @@ public class LabVesselSearchDefinition {
         searchTerm.setName("Vessel Latest Event");
         searchTerm.setPluginClass(LabVesselLatestEventPlugin.class);
         searchTerms.add(searchTerm);
+
+        return searchTerms;
+    }
+
+    /**
+     * Build multi column search terms for lab vessel metrics details.
+     * @return List of search terms/column definitions, one for each LabMetric.MetricType
+     */
+    private List<SearchTerm> buildVesselMetricDetailCols() {
+        List<SearchTerm> searchTerms = new ArrayList<>();
+        SearchTerm searchTerm;
+        boolean first = true;
+
+        for( LabMetric.MetricType metricType : LabMetric.MetricType.values() ) {
+            // Only interested in concentration metrics
+            if( metricType.getCategory() != LabMetric.MetricType.Category.CONCENTRATION) {
+                continue;
+            }
+            // Names must be consistent!
+            searchTerm = new SearchTerm();
+            searchTerm.setName(metricType.getDisplayName());
+            searchTerm.setPluginClass(VesselMetricDetailsPlugin.class);
+            searchTerms.add(searchTerm);
+
+            // Add user popup note to first column in group
+            if( first ) {
+                searchTerm.setHelpText("This group of columns traverses ancestor and descendant vessels to locate" +
+                        " all metrics of the type specified.<br/>Data displayed in separate columns by metric run name.");
+                first = false;
+            }
+
+        }
 
         return searchTerms;
     }
