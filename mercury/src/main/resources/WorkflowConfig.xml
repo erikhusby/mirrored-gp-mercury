@@ -458,7 +458,7 @@
         <name>Regular Pond</name>
         <workflowProcessDefVersions>
             <version>1.0</version>
-            <effectiveDate>2012-09-30T21:03:24.085-04:00</effectiveDate>
+            <effectiveDate>2016-07-01T21:03:24.085-04:00</effectiveDate>
             <workflowStepDefs>
                 <name>Pond Registration</name>
                 <labEventTypes>POND_REGISTRATION</labEventTypes>
@@ -480,15 +480,11 @@
         <name>PCR Free Pond</name>
         <workflowProcessDefVersions>
             <version>1.0</version>
-            <effectiveDate>2012-09-30T21:03:24.085-04:00</effectiveDate>
+            <effectiveDate>2016-07-01T21:03:24.085-04:00</effectiveDate>
             <workflowStepDefs>
                 <name>PCR Free Pond Registration</name>
                 <labEventTypes>PCR_FREE_POND_REGISTRATION</labEventTypes>
                 <optional>false</optional>
-                <jiraTransition>
-                    <project>LCSET</project>
-                    <statusTransition>In Hyb Sel</statusTransition>
-                </jiraTransition>
                 <ancestryEtlFlag>true</ancestryEtlFlag>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -502,15 +498,11 @@
         <name>PCR Plus Pond</name>
         <workflowProcessDefVersions>
             <version>1.0</version>
-            <effectiveDate>2012-09-30T21:03:24.085-04:00</effectiveDate>
+            <effectiveDate>2016-07-01T21:03:24.085-04:00</effectiveDate>
             <workflowStepDefs>
                 <name>PCR Plus Pond Registration</name>
                 <labEventTypes>PCR_PLUS_POND_REGISTRATION</labEventTypes>
                 <optional>false</optional>
-                <jiraTransition>
-                    <project>LCSET</project>
-                    <statusTransition>In Hyb Sel</statusTransition>
-                </jiraTransition>
                 <ancestryEtlFlag>true</ancestryEtlFlag>
             </workflowStepDefs>
             <workflowStepDefs>
@@ -2400,7 +2392,7 @@
         <name>Whole Genome PCR Free</name>
         <productWorkflowDefVersions>
             <version>1.0</version>
-            <effectiveDate>2012-09-30T22:04:23.932-04:00</effectiveDate>
+            <effectiveDate>2016-07-01T22:04:23.932-04:00</effectiveDate>
             <workflowProcessDefs>Pico/Plating</workflowProcessDefs>
             <workflowProcessDefs>Exome Express Shearing</workflowProcessDefs>
             <workflowProcessDefs>Library Construction</workflowProcessDefs>
@@ -2419,7 +2411,7 @@
         <name>Whole Genome PCR Plus</name>
         <productWorkflowDefVersions>
             <version>1.0</version>
-            <effectiveDate>2012-09-30T22:04:23.932-04:00</effectiveDate>
+            <effectiveDate>2016-07-01T22:04:23.932-04:00</effectiveDate>
             <workflowProcessDefs>Pico/Plating</workflowProcessDefs>
             <workflowProcessDefs>Exome Express Shearing</workflowProcessDefs>
             <workflowProcessDefs>Library Construction</workflowProcessDefs>

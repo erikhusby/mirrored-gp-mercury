@@ -380,7 +380,7 @@ public class SequencingTemplateFactory {
             Set<String> regulatoryDesignations, Set<String> productNames, List<ProductType> productTypes,
             Set<String> readStructures, boolean isPoolTest) {
         for(SampleInstanceV2 sampleInstance: sampleInstances) {
-            // todo what about controls?  Just ignore them?
+            // Controls don't have bucket entries, but we assume that the non-control samples dominate.
             if (sampleInstance.getSingleBucketEntry() != null) {
                 String regulatoryDesignation = sampleInstance.getSingleBucketEntry().
                         getProductOrder().getResearchProject().getRegulatoryDesignation().name();
