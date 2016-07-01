@@ -46,7 +46,6 @@ public class LedgerEntry implements Serializable {
     @JoinColumn(name = "PRICE_ITEM_ID")
     private PriceItem priceItem;
 
-
     @ManyToOne
     @JoinColumn(name = "PRODUCT_ID")
     private Product product;

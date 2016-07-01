@@ -676,6 +676,10 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         return getProductFamily().isSupportsSkippingQuote();
     }
 
+    public boolean isExternalProduct() {
+        return getPartNumber().startsWith("XT");
+    }
+
     @Transient
     public static Comparator<Product> BY_PRODUCT_NAME = new Comparator<Product>() {
         @Override

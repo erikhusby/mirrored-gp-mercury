@@ -39,7 +39,6 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.BadBusinessKeyExcepti
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
-import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnector;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
@@ -230,8 +229,8 @@ public class ProductOrderEjb {
                     } else {
                         sapService.updateOrder(editedProductOrder);
                     }
-                } catch (SAPInterfaceException e) {
-                    messageCollection.addError(e);
+                } catch (org.broadinstitute.sap.services.SAPIntegrationException e) {
+                    e.printStackTrace();
                 }
             }
         }
