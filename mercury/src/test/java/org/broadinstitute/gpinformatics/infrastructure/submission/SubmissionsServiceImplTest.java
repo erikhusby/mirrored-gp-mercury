@@ -188,13 +188,6 @@ public class SubmissionsServiceImplTest {
         assertThat(repositoryByKey.getName(), equalTo(SubmissionRepository.DEFAULT_REPOSITORY_NAME));
     }
 
-    public void testFindRepositoryByDescriptionOK() throws Exception {
-        SubmissionRepository repositoryByKey =
-                submissionsService.findRepositoryByDescription(SubmissionRepository.DEFAULT_REPOSITORY_DESCRIPTOR);
-
-        assertThat(repositoryByKey.getDescription(), equalTo(SubmissionRepository.DEFAULT_REPOSITORY_DESCRIPTOR));
-    }
-
     public void testFindRepositoryByKeyNullInput() throws Exception {
         SubmissionRepository repositoryByKey =
                 submissionsService.findRepositoryByKey(null);

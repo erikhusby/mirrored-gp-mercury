@@ -120,8 +120,4 @@ public class SubmissionsServiceStub implements SubmissionsService {
         return null;
     }
 
-    @Override
-    public SubmissionRepository findRepositoryByDescription(String description) {
-        return null;
-    }
 }
