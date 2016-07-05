@@ -46,7 +46,7 @@
         <%-- Firefox select options allow this, Chrome quietly ignores --%>
        .help-option { background-image: url("${ctxpath}/images/help.png");
            background-repeat: no-repeat;
-           background-position: right; }
+           background-position: right top; }
     </style>
 </stripes:layout-component>
 <stripes:layout-component name="content">
@@ -671,6 +671,10 @@ function chooseColumnSet() {
         </c:if>
     </c:forEach>
 </c:forEach>
+<%-- A div with a unique ID for column group tool tips (column group can have help text)  --%>
+<c:forEach items="${actionBean.availableMapGroupToHelpText.entrySet()}" var="entry">
+    <div id="col_grp_${entry.key}_dscr" style="display: none;">${entry.value}</div>
+</c:forEach>
 
 <script type="text/javascript">
     $j(function(){
@@ -701,41 +705,36 @@ function chooseColumnSet() {
             return $j('#traversalOptionDescription').remove().html();
         });
 
-        <%-- Initialize search terms tool tips for result columns (if search term has help text)  --%>
+<%-- Initialize search terms tool tips for result columns (if search term has help text)  --%>
         <c:forEach items="${actionBean.availableMapGroupToColumnNames}" var="entry">
          <c:forEach items="${entry.value}" var="searchTerm">
           <c:if test="${not empty searchTerm.helpText}">
-    $j('#${searchTerm.uiId}_col').attr('title', function(){
-        // Don't remove, need to share...
-        return $j('#${searchTerm.uiId}_dscr').html();
-    });
-    $j('#${searchTerm.uiId}_col').tooltip({
-        position: { my: "left top",
-            at: "right+10 top+35",
-            of: "#sourceColumnDefNames" },
-        show: false
-    });
+        $j('#${searchTerm.uiId}_col').attr('title', function(){
+            // Don't remove, need to share...
+            return $j('#${searchTerm.uiId}_dscr').html();
+        });
+        $j('#${searchTerm.uiId}_col').tooltip({
+            position: { my: "left top",
+                at: "right+10 top+35",
+                of: "#sourceColumnDefNames" },
+            show: false
+        });
           </c:if>
          </c:forEach>
         </c:forEach>
 
-        <%-- Initialize search terms tool tips for search terms (if search term has help text)  --%>
-        <c:forEach items="${actionBean.configurableSearchDef.mapGroupSearchTerms}" var="entry">
-            <c:forEach items="${entry.value}" var="searchTerm">
-                <c:if test="${not empty searchTerm.helpText}">
-                    $j('#${searchTerm.uiId}_opt').attr('title', function(){
-                        // Don't remove, need to share...
-                        return $j('#${searchTerm.uiId}_dscr').html();
-                    });
-                    <%-- Firefox tooltip works for 1 line select list, Chrome needs to have size > 1 or quietly ignores functionality --%>
-                    $j('#${searchTerm.uiId}_opt').tooltip({
-                        position: { my: "left top",
-                            at: "left bottom-10",
-                            of: "#addTermBtn" },
-                        show: false
-                    });
-                </c:if>
-            </c:forEach>
+<%-- Initialize tool tips for groups of search terms --%>
+        <c:forEach items="${actionBean.availableMapGroupToHelpText.entrySet()}" var="entry">
+        $j('#col_grp_${entry.key}').attr('title', function(){
+            // Don't remove, need to share...
+            return $j('#col_grp_${entry.key}_dscr').html();
+        });
+        $j('#col_grp_${entry.key}').tooltip({
+            position: { my: "left top",
+                at: "right+10 top+35",
+                of: "#sourceColumnDefNames" },
+            show: false
+        });
         </c:forEach>
 
         $j(document).tooltip();

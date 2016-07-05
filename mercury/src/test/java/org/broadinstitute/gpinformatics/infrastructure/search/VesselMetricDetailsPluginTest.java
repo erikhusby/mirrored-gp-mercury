@@ -102,12 +102,12 @@ public class VesselMetricDetailsPluginTest extends Arquillian {
         // Empty Plating Ribo
         Assert.assertEquals(headers.get(16).getViewHeader(), LabMetric.MetricType.PLATING_RIBO.getDisplayName()
                 + " " + VesselMetricDetailsPlugin.MetricColumn.BARCODE.getDisplayName());
-        Assert.assertEquals(row.getRenderableCells().get(16), "");
-        Assert.assertEquals(row.getRenderableCells().get(17), "");
-        Assert.assertEquals(row.getRenderableCells().get(18), "");
+        Assert.assertNull(row.getRenderableCells().get(16));
+        Assert.assertNull(row.getRenderableCells().get(17));
+        Assert.assertNull(row.getRenderableCells().get(18));
         Assert.assertEquals(headers.get(19).getViewHeader(), LabMetric.MetricType.PLATING_RIBO.getDisplayName()
                 + " " + VesselMetricDetailsPlugin.MetricColumn.DATE.getDisplayName());
-        Assert.assertEquals(row.getRenderableCells().get(19), "");
+        Assert.assertNull(row.getRenderableCells().get(19));
 
     }
 

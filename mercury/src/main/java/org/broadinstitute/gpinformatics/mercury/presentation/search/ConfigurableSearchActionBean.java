@@ -632,6 +632,10 @@ public class ConfigurableSearchActionBean extends RackScanActionBean {
         return configurableSearchDef.getMapGroupToColumnTabulations();
     }
 
+    public Map<Integer,String> getAvailableMapGroupToHelpText() {
+        return configurableSearchDef.getMapGroupHelpText();
+    }
+
     public ConfigurableSearchDefinition getConfigurableSearchDef() {
         return configurableSearchDef;
     }

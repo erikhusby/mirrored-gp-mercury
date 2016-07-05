@@ -59,6 +59,7 @@ public class LabVesselSearchDefinition {
 
         LabVesselSearchDefinition srchDef = new LabVesselSearchDefinition();
         Map<String, List<SearchTerm>> mapGroupSearchTerms = new LinkedHashMap<>();
+        Map<String,String> mapGroupHelpText = new HashMap<>();
 
         List<SearchTerm> searchTerms = srchDef.buildLabVesselIds();
         mapGroupSearchTerms.put("IDs", searchTerms);
@@ -88,6 +89,8 @@ public class LabVesselSearchDefinition {
 
         searchTerms = buildVesselMetricDetailCols();
         mapGroupSearchTerms.put("Quant Details", searchTerms);
+        mapGroupHelpText.put("Quant Details", "This group of columns traverses ancestor and descendant vessels to locate" +
+                " all metrics types for the selected column.  Data is displayed in separate column sets for each metric run name oldest to newest from left to right.");
 
         searchTerms = srchDef.buildLabVesselMultiCols();
         mapGroupSearchTerms.put("Multi-Columns", searchTerms);
@@ -162,6 +165,9 @@ public class LabVesselSearchDefinition {
                         return listeners;
                     }
                 });
+
+        // Add user popup note to first column in group
+        configurableSearchDefinition.addColumnGroupHelpText(mapGroupHelpText);
 
         return configurableSearchDefinition;
     }
@@ -1414,8 +1420,7 @@ public class LabVesselSearchDefinition {
      */
     private List<SearchTerm> buildVesselMetricDetailCols() {
         List<SearchTerm> searchTerms = new ArrayList<>();
-        SearchTerm searchTerm;
-        boolean first = true;
+        SearchTerm searchTerm = null;
 
         for( LabMetric.MetricType metricType : LabMetric.MetricType.values() ) {
             // Only interested in concentration metrics
@@ -1427,14 +1432,6 @@ public class LabVesselSearchDefinition {
             searchTerm.setName(metricType.getDisplayName());
             searchTerm.setPluginClass(VesselMetricDetailsPlugin.class);
             searchTerms.add(searchTerm);
-
-            // Add user popup note to first column in group
-            if( first ) {
-                searchTerm.setHelpText("This group of columns traverses ancestor and descendant vessels to locate" +
-                        " all metrics of the type specified.<br/>Data displayed in separate columns by metric run name.");
-                first = false;
-            }
-
         }
 
         return searchTerms;
