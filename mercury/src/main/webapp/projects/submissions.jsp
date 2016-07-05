@@ -524,16 +524,17 @@
 
             <div class="controls">
                 <stripes:select id="submissionType" name="selectedSubmissionLibraryDescriptor">
-                    <option>Choose...</option>
+                    <stripes:option value="">Choose...</stripes:option>
                     <stripes:options-collection label="description" value="name"
-                                                collection="${actionBean.submissionLibraryDescriptors}"/></stripes:select>
+                                                collection="${actionBean.submissionLibraryDescriptors}"/>
+                </stripes:select>
             </div>
         </div>
         <div class="control-group">
-            <stripes:label for="submissionRepository"
+            <stripes:label for="selectedSubmissionRepository"
                            class="control-label label-form">Choose a Site *</stripes:label>
             <div class="controls">
-                <stripes:select id="submissionRepository" name="selectedSubmissionRepository">
+                <stripes:select id="selectedSubmissionRepository" name="selectedSubmissionRepository">
                     <stripes:option value="">Choose...</stripes:option>
                     <stripes:options-collection label="description" value="name"
                                                 collection="${actionBean.activeRepositories}"/>

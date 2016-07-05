@@ -508,7 +508,7 @@
 
                     <div class="controls">
                         <div class="form-value">
-                            <c:if test="${actionBean.submissionRepository != null}">
+                            <c:if test="${actionBean.editResearchProject.submissionRepositoryName != null}">
                                 ${actionBean.submissionRepository.description}
                             </c:if>
                         </div>

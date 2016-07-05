@@ -186,18 +186,6 @@ public class SubmissionsServiceImpl implements SubmissionsService {
         return null;
     }
 
-    @Override
-    public SubmissionRepository findRepositoryByDescription(String description) {
-        if (StringUtils.isNotBlank(description)) {
-            for (SubmissionRepository submissionRepository : getSubmissionRepositories()) {
-                if (submissionRepository.getDescription().equals(description)) {
-                    return submissionRepository;
-                }
-            }
-        }
-        return null;
-    }
-
     protected void validateResponseStatus(String activityName, ClientResponse response) {
         if(response.getStatus() != Response.Status.OK.getStatusCode()) {
             String error = response.getEntity(String.class);

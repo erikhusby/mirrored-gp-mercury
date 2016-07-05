@@ -70,10 +70,6 @@ public class BioProjectServiceDownTest {
             return null;
         }
 
-        @Override
-        public SubmissionRepository findRepositoryByDescription(String description) {
-            return null;
-        }
     }
 
 }
