@@ -1478,4 +1478,17 @@ public class LabEventFixupTest extends Arquillian {
         Assert.assertEquals(barcodedTube.getSampleInstancesV2().size(), 5);
         utx.commit();
     }
+
+    @Test(enabled = false)
+    public void fixupGplim4196() {
+        userBean.loginOSUser();
+
+        fixupVesselToVessel(1380583L, "SM-AZRN2", "1124988659");
+        fixupVesselToVessel(1380582L, "SM-AZRN3", "1124988660");
+        fixupVesselToVessel(1385966L, "SM-AZRNE", "1124988672");
+        fixupVesselToVessel(1385968L, "SM-AZRNQ", "1124988683");
+
+        labEventDao.persist(new FixupCommentary("GPLIM-4196 fixup extraction transfers"));
+        labEventDao.flush();
+    }
 }
