@@ -175,11 +175,23 @@ public class SubmissionsServiceImpl implements SubmissionsService {
     }
 
     @Override
-    public SubmissionLibraryDescriptor findLibraryDescriptorTypeByKey(String selectedSubmissionDescriptor) {
-        if (StringUtils.isNotBlank(selectedSubmissionDescriptor)) {
+    public SubmissionLibraryDescriptor findLibraryDescriptorTypeByKey(String name) {
+        if (StringUtils.isNotBlank(name)) {
             for (SubmissionLibraryDescriptor submissionLibraryDescriptor : getSubmissionLibraryDescriptors()) {
-                if (submissionLibraryDescriptor.getName().equals(selectedSubmissionDescriptor)) {
+                if (submissionLibraryDescriptor.getName().equals(name)) {
                     return submissionLibraryDescriptor;
+                }
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public SubmissionRepository findRepositoryByDescription(String description) {
+        if (StringUtils.isNotBlank(description)) {
+            for (SubmissionRepository submissionRepository : getSubmissionRepositories()) {
+                if (submissionRepository.getDescription().equals(description)) {
+                    return submissionRepository;
                 }
             }
         }
