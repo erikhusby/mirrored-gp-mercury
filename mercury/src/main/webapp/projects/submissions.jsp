@@ -534,7 +534,7 @@
             <stripes:label for="selectedSubmissionRepository"
                            class="control-label label-form">Choose a Site *</stripes:label>
             <div class="controls">
-                <stripes:select name="selectedSubmissionRepository">
+                <stripes:select id="selectedSubmissionRepository" name="selectedSubmissionRepository">
                     <stripes:option value="">Choose...</stripes:option>
                     <stripes:options-collection label="description" value="name"
                                                 collection="${actionBean.activeRepositories}"/>
