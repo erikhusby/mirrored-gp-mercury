@@ -767,4 +767,45 @@ public class LabBatchFixUpTest extends Arquillian {
         userTransaction.commit();
     }
 
+    /**
+     * At last step in extraction, the SM-ID was scanned, should have been the 2D barcode.
+     */
+    @Test(enabled = false)
+    public void fixupGplim4196() throws Exception {
+        userBean.loginOSUser();
+        userTransaction.begin();
+        LabBatch labBatch = labBatchDao.findByName("LCSET-9442");
+        Map<String, String> mapOldBarcodeToNew = new HashMap<String, String>(){{
+            put("SM-AZRN2", "1124988659");
+            put("SM-AZRN3", "1124988660");
+            put("SM-AZRNE", "1124988672");
+            put("SM-AZRNQ", "1124988683");
+        }};
+        fixBatchEntries(labBatch, mapOldBarcodeToNew);
+
+        labBatchDao.persist(new FixupCommentary("GPLIM-4196 replace vessels in batch"));
+        labBatchDao.flush();
+        userTransaction.commit();
+    }
+
+    private void fixBatchEntries(LabBatch labBatch, Map<String, String> mapOldBarcodeToNew) {
+        for (LabBatchStartingVessel labBatchStartingVessel : labBatch.getLabBatchStartingVessels()) {
+            String newBarcode = mapOldBarcodeToNew.get(labBatchStartingVessel.getLabVessel().getLabel());
+            if (newBarcode != null) {
+                LabVessel newLabVessel = labVesselDao.findByIdentifier(newBarcode);
+                System.out.println("Changing lbsv " + labBatchStartingVessel.getBatchStartingVesselId() + " from " +
+                        labBatchStartingVessel.getLabVessel().getLabel() + " to " + newLabVessel.getLabel());
+                labBatchStartingVessel.setLabVessel(newLabVessel);
+            }
+        }
+        for (BucketEntry bucketEntry : labBatch.getBucketEntries()) {
+            String newBarcode = mapOldBarcodeToNew.get(bucketEntry.getLabVessel().getLabel());
+            if (newBarcode != null) {
+                LabVessel newLabVessel = labVesselDao.findByIdentifier(newBarcode);
+                System.out.println("Changing bucket entry " + bucketEntry.getBucketEntryId() + " from " +
+                        bucketEntry.getLabVessel().getLabel() + " with " + newLabVessel.getLabel());
+                bucketEntry.setLabVessel(newLabVessel);
+            }
+        }
+    }
 }
