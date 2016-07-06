@@ -722,7 +722,24 @@ function chooseColumnSet() {
           </c:if>
          </c:forEach>
         </c:forEach>
-
+<%-- Initialize search terms tool tips for search terms (if search term has help text)  --%>
+        <c:forEach items="${actionBean.configurableSearchDef.mapGroupSearchTerms}" var="entry">
+        <c:forEach items="${entry.value}" var="searchTerm">
+        <c:if test="${not empty searchTerm.helpText}">
+        $j('#${searchTerm.uiId}_opt').attr('title', function(){
+            // Don't remove, need to share...
+            return $j('#${searchTerm.uiId}_dscr').html();
+        });
+        <%-- Firefox tooltip works for 1 line select list, Chrome needs to have size > 1 or quietly ignores functionality --%>
+        $j('#${searchTerm.uiId}_opt').tooltip({
+            position: { my: "left top",
+                at: "left bottom-10",
+                of: "#addTermBtn" },
+            show: false
+        });
+        </c:if>
+        </c:forEach>
+        </c:forEach>
 <%-- Initialize tool tips for groups of search terms --%>
         <c:forEach items="${actionBean.availableMapGroupToHelpText.entrySet()}" var="entry">
         $j('#col_grp_${entry.key}').attr('title', function(){

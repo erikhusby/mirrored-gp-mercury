@@ -59,6 +59,7 @@ public class LabVesselSearchDefinition {
 
         LabVesselSearchDefinition srchDef = new LabVesselSearchDefinition();
         Map<String, List<SearchTerm>> mapGroupSearchTerms = new LinkedHashMap<>();
+        // One or more option groups have mouseover popup help text
         Map<String,String> mapGroupHelpText = new HashMap<>();
 
         List<SearchTerm> searchTerms = srchDef.buildLabVesselIds();
@@ -166,7 +167,7 @@ public class LabVesselSearchDefinition {
                     }
                 });
 
-        // Add user popup note to first column in group
+        // Add user popup note to an entire option group
         configurableSearchDefinition.addColumnGroupHelpText(mapGroupHelpText);
 
         return configurableSearchDefinition;
@@ -1427,7 +1428,7 @@ public class LabVesselSearchDefinition {
             if( metricType.getCategory() != LabMetric.MetricType.Category.CONCENTRATION) {
                 continue;
             }
-            // Names must be consistent!
+            // Names must be consistent -  column name logic is used in plugin to filter metric types!
             searchTerm = new SearchTerm();
             searchTerm.setName(metricType.getDisplayName());
             searchTerm.setPluginClass(VesselMetricDetailsPlugin.class);
