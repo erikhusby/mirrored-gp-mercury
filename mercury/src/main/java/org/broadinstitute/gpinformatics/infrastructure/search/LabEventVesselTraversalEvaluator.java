@@ -1,13 +1,15 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -19,6 +21,9 @@ import java.util.TreeSet;
  * Directionality implemented in AncestorTraversalEvaluator and DescendantTraversalEvaluator nested classes
  */
 public class LabEventVesselTraversalEvaluator extends TraversalEvaluator {
+
+    public static List<LabEventType> INFINIUM_EVENT_TYPES = Arrays.asList(
+            LabEventType.ARRAY_PLATING_DILUTION, LabEventType.INFINIUM_AMPLIFICATION, LabEventType.INFINIUM_XSTAIN  );
 
     public LabEventVesselTraversalEvaluator(){ }
 
@@ -36,22 +41,9 @@ public class LabEventVesselTraversalEvaluator extends TraversalEvaluator {
         List<LabVessel> rootEventVessels = (List<LabVessel>) rootEntities;
         Set sortedSet = new TreeSet<>( LabEvent.BY_EVENT_DATE_LOC );
 
-        // True if "In-Place Vessel Barcode" search term is present
-        boolean inPlaceVesselsOnly = false;
-        for( SearchInstance.SearchValue searchValue : searchInstance.getSearchValues() ) {
-            if( searchValue.getName().equals("In-Place Vessel Barcode")) {
-                inPlaceVesselsOnly = true;
-                break;
-            }
-        }
-
         // Get base events for vessels
         for( LabVessel vessel : rootEventVessels ) {
-            if( inPlaceVesselsOnly ) {
-                sortedSet.addAll(vessel.getInPlaceAndTransferToEvents());
-            } else {
-                sortedSet.addAll(vessel.getEvents());
-            }
+            sortedSet.addAll(vessel.getEvents());
         }
 
         if( searchInstance.getTraversalEvaluatorValues()
@@ -107,14 +99,7 @@ public class LabEventVesselTraversalEvaluator extends TraversalEvaluator {
         return eventTraversalCriteria.getAllEvents();
     }
 
-    /**
-     * Traverse for chain of custody events against a starting lab vessel container
-     * @param eventTraversalCriteria  Gathers up all events in the chain of custody traversal
-     * @param vesselContainer The container from which to begin the traversal
-     *                        (traversal will include all positions in the container)
-     * @param traversalDirection Ancestors or descendants
-     */
-    private void traverseContainer( TransferTraverserCriteria.LabEventDescendantCriteria eventTraversalCriteria
+    private void traverseContainer(TransferTraverserCriteria.LabEventDescendantCriteria eventTraversalCriteria
             , VesselContainer<?> vesselContainer, TransferTraverserCriteria.TraversalDirection traversalDirection){
 
         // Add any container in place events

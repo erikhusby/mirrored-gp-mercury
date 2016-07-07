@@ -142,7 +142,7 @@ public class ConfigurableListContainerTest extends Arquillian {
 
 
     /**
-     * This test verifies the stability of the LabVesselSearchDefinition.VesselDescendantTraverserCriteria
+     * This test verifies the stability of the LabVesselSearchDefinition.VesselsForEventTraverserCriteria
      * Using a sample vessel, validate shearing tube and flowcell are found in the descendant traversal
      */
     public void testVesselDescendantLookups() {
