@@ -1808,23 +1808,26 @@ public class LabEventTest extends BaseEventTest {
                 LabBatch.LabBatchType.WORKFLOW);
         workflowBatch.setWorkflow(Workflow.PCR_FREE);
 
-        bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, "1");
+        String lcsetSuffix = "1";
+        bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, lcsetSuffix);
 
-        HashMap<VesselPosition, BarcodedTube> mapPositionToTube = new HashMap<>();
-        int i = 0;
-        for (Map.Entry<String, BarcodedTube> barcodeTubeEntry : mapBarcodeToTube.entrySet()) {
-            mapPositionToTube.put(VesselGeometry.G12x8.getVesselPositions()[i], barcodeTubeEntry.getValue());
-            i++;
+        TubeFormation daughterTubeFormation = daughterPlateTransfer(mapBarcodeToTube, workflowBatch);
+        Map<String, BarcodedTube> mapBarcodeToDaughterTube = new HashMap<>();
+        for (BarcodedTube barcodedTube : daughterTubeFormation.getContainerRole().getContainedVessels()) {
+            mapBarcodeToDaughterTube.put(barcodedTube.getLabel(), barcodedTube);
         }
 
-        ShearingEntityBuilder shearingEntityBuilder = runShearingProcess(mapBarcodeToTube,
-                new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96),
-                "S", "1");
+        PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToDaughterTube,
+                "P", lcsetSuffix, true);
+        ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder =
+                runExomeExpressShearingProcess(picoPlatingEntityBuilder.getNormBarcodeToTubeMap(),
+                        picoPlatingEntityBuilder.getNormTubeFormation(),
+                        picoPlatingEntityBuilder.getNormalizationBarcode(), lcsetSuffix);
         LibraryConstructionEntityBuilder libraryConstructionEntityBuilder = runLibraryConstructionProcess(
-                shearingEntityBuilder.getShearingCleanupPlate(),
-                shearingEntityBuilder.getShearCleanPlateBarcode(),
-                shearingEntityBuilder.getShearingPlate(),
-                "1",
+                exomeExpressShearingEntityBuilder.getShearingCleanupPlate(),
+                exomeExpressShearingEntityBuilder.getShearCleanPlateBarcode(),
+                exomeExpressShearingEntityBuilder.getShearingPlate(),
+                lcsetSuffix,
                 NUM_POSITIONS_IN_RACK,
                 LibraryConstructionJaxbBuilder.PondType.PCR_FREE);
 
@@ -1852,6 +1855,9 @@ public class LabEventTest extends BaseEventTest {
                 TransferTraverserCriteria.TraversalDirection.Descendants);
         List<String> labEventNames = transferTraverserCriteria.getAllEventNamesPerHop();
         String[] expectedEventNames = {
+                "SamplesDaughterPlateCreation",
+                "SamplesNormalizationTransfer",
+                "PicoPlatingPostNorm",
                 "ShearingTransfer",
                 "PostShearingTransferCleanup",
                 "ShearingQC",
