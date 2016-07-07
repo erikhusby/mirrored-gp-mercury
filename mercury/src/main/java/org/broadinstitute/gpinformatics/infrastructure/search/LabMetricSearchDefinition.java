@@ -24,6 +24,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -156,10 +157,16 @@ public class LabMetricSearchDefinition {
         searchTerm = new SearchTerm();
         searchTerm.setName("LCSET");
         criteriaPaths = new ArrayList<>();
+
+        // Mercury only cares about workflow batches
+        SearchTerm.ImmutableTermFilter workflowOnlyFilter = new SearchTerm.ImmutableTermFilter(
+                "labBatchType", SearchInstance.Operator.EQUALS, LabBatch.LabBatchType.WORKFLOW);
+
         // Non-reworks
         criteriaPath = new SearchTerm.CriteriaPath();
         criteriaPath.setCriteria(Arrays.asList("metricsVessel", "labBatches", "labBatch"));
         criteriaPath.setPropertyName("batchName");
+        criteriaPath.addImmutableTermFilter(workflowOnlyFilter);
         criteriaPath.setJoinFetch(Boolean.TRUE);
         criteriaPaths.add(criteriaPath);
         // Reworks
@@ -170,6 +177,7 @@ public class LabMetricSearchDefinition {
         criteriaPath.setCriteria(Arrays.asList("metricsVessel", "labMetrics"));
         criteriaPath.setNestedCriteriaPath(nestedCriteriaPath);
         criteriaPath.setPropertyName("batchName");
+        criteriaPath.addImmutableTermFilter(workflowOnlyFilter);
         criteriaPath.setJoinFetch(Boolean.TRUE);
         criteriaPaths.add(criteriaPath);
         searchTerm.setCriteriaPaths(criteriaPaths);
@@ -270,16 +278,15 @@ public class LabMetricSearchDefinition {
                 labEventTypes.add(LabEventType.DENATURE_TO_FLOWCELL_TRANSFER);
                 labEventTypes.add(LabEventType.DILUTION_TO_FLOWCELL_TRANSFER);
 
-                LabVesselSearchDefinition.VesselDescendantTraverserCriteria eval
-                        = new LabVesselSearchDefinition.VesselDescendantTraverserCriteria(labEventTypes );
+                LabVesselSearchDefinition.VesselsForEventTraverserCriteria eval
+                        = new LabVesselSearchDefinition.VesselsForEventTraverserCriteria(labEventTypes );
                 labMetric.getLabVessel().evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
 
                 Set<String> barcodes = null;
-                if (!eval.getPositions().isEmpty()) {
-                    barcodes = new HashSet<>();
-                    for( Pair<String,VesselPosition> positionPair : eval.getPositions() ) {
-                        barcodes.add(positionPair.getLeft());
-                    }
+                for(Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions
+                        : eval.getPositions().asMap().entrySet()) {
+                        (barcodes==null?barcodes = new HashSet<>():barcodes)
+                                .add(labVesselAndPositions.getKey().getLabel());
                 }
                 return barcodes;
             }
@@ -500,7 +507,11 @@ public class LabMetricSearchDefinition {
             @Override
             public String evaluate(Object entity, SearchContext context) {
                 LabMetric labMetric = (LabMetric) entity;
-                return labMetric.getLabMetricDecision().getDecision().toString();
+                if( labMetric.getLabMetricDecision() != null ) {
+                    return labMetric.getLabMetricDecision().getDecision().toString();
+                } else {
+                    return null;
+                }
             }
         });
         searchTerms.add(searchTerm);
@@ -512,7 +523,11 @@ public class LabMetricSearchDefinition {
             @Override
             public String evaluate(Object entity, SearchContext context) {
                 LabMetric labMetric = (LabMetric) entity;
-                return labMetric.getLabMetricDecision().getNote();
+                if( labMetric.getLabMetricDecision() != null ) {
+                    return labMetric.getLabMetricDecision().getNote();
+                } else {
+                    return null;
+                }
             }
         });
         searchTerms.add(searchTerm);
@@ -523,6 +538,11 @@ public class LabMetricSearchDefinition {
             @Override
             public String evaluate(Object entity, SearchContext context) {
                 LabMetric labMetric = (LabMetric) entity;
+                if( labMetric.getLabMetricDecision() == null ) {
+                    return null;
+                }
+                // TODO JMS Result column name may be misleading - displaying the user who made the decision.
+                // Adding lab event logic would get the user who created the metric.
                 BSPUserList bspUserList = context.getBspUserList();
                 Long userId = labMetric.getLabMetricDecision().getDeciderUserId();
                 BspUser bspUser = bspUserList.getById(userId);
@@ -542,7 +562,11 @@ public class LabMetricSearchDefinition {
             @Override
             public String evaluate(Object entity, SearchContext context) {
                 LabMetric labMetric = (LabMetric) entity;
-                return labMetric.getLabMetricDecision().getOverrideReason();
+                if( labMetric.getLabMetricDecision() != null ) {
+                    return labMetric.getLabMetricDecision().getOverrideReason();
+                } else {
+                    return null;
+                }
             }
         });
         searchTerms.add(searchTerm);
@@ -583,8 +607,8 @@ public class LabMetricSearchDefinition {
         searchTerm.setName("Product");
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public List<String> evaluate(Object entity, SearchContext context) {
-                List<String> products = new ArrayList<>();
+            public Set<String> evaluate(Object entity, SearchContext context) {
+                Set<String> products = new HashSet<>();
                 LabMetric labMetric = (LabMetric) entity;
                 for (SampleInstanceV2 sampleInstanceV2 : labMetric.getLabVessel().getSampleInstancesV2()) {
                     BucketEntry singleBucketEntry = sampleInstanceV2.getSingleBucketEntry();
@@ -602,8 +626,8 @@ public class LabMetricSearchDefinition {
         searchTerm.setName("Proceed if OOS");
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public List<String> evaluate(Object entity, SearchContext context) {
-                List<String> results = new ArrayList<>();
+            public Set<String> evaluate(Object entity, SearchContext context) {
+                Set<String> results = new HashSet<>();
                 LabMetric labMetric = (LabMetric) entity;
                 for (SampleInstanceV2 sampleInstanceV2 : labMetric.getLabVessel().getSampleInstancesV2()) {
                     List<ProductOrderSample> allProductOrderSamples = sampleInstanceV2.getAllProductOrderSamples();
@@ -612,9 +636,10 @@ public class LabMetricSearchDefinition {
                                 allProductOrderSamples.size() - 1);
                         ProductOrderSample.ProceedIfOutOfSpec proceedIfOutOfSpec =
                                 productOrderSample.getProceedIfOutOfSpec();
-                        if (proceedIfOutOfSpec != null) {
-                            results.add(proceedIfOutOfSpec.getDisplayName());
+                        if (proceedIfOutOfSpec == null) {
+                            proceedIfOutOfSpec = ProductOrderSample.ProceedIfOutOfSpec.NO;
                         }
+                        results.add(proceedIfOutOfSpec.getDisplayName());
                     }
                 }
                 return results;
@@ -626,9 +651,9 @@ public class LabMetricSearchDefinition {
         searchTerm.setName("Original Material Type");
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public List<String> evaluate(Object entity, SearchContext context) {
+            public Set<String> evaluate(Object entity, SearchContext context) {
                 LabMetric labMetric = (LabMetric) entity;
-                List<String> materialTypes = new ArrayList<>();
+                Set<String> materialTypes = new HashSet<>();
                 LabMetricSampleDataAddRowsListener rowsListener = (LabMetricSampleDataAddRowsListener) context.
                         getRowsListener(LabMetricSampleDataAddRowsListener.class.getSimpleName());
 
@@ -653,8 +678,11 @@ public class LabMetricSearchDefinition {
                 Map<LabMetric.MetricType, Set<LabMetric>> mapTypeToMetrics =
                         labMetric.getLabVessel().getMetricsForVesselAndAncestors();
                 Set<LabMetric> labMetrics = mapTypeToMetrics.get(LabMetric.MetricType.INITIAL_PICO);
-                LabMetric mostRecentLabMetric = AncestorLabMetricPlugin.findMostRecentLabMetric(labMetrics);
-                return mostRecentLabMetric.getTotalNg();
+                if (labMetrics != null) {
+                    LabMetric mostRecentLabMetric = AncestorLabMetricPlugin.findMostRecentLabMetric(labMetrics);
+                    return mostRecentLabMetric.getTotalNg();
+                }
+                return null;
             }
         });
         searchTerms.add(searchTerm);

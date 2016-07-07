@@ -1,48 +1,40 @@
 -------------------------------------------------------
--- https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-3557
--- Create Ancestry ETL
+-- https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-4168
+-- Remove and prevent duplicate library ancestry relationships
+SET SERVEROUTPUT ON SIZE UNLIMITED;
 
 DECLARE
-  V_YN CHAR;
+  TYPE NUM_ARR_TY IS TABLE OF NUMBER(19) INDEX BY PLS_INTEGER;
+  EVENT_ARR NUM_ARR_TY;
+  CHILD_AR NUM_ARR_TY;
+  ANCEST_ARR NUM_ARR_TY;
 BEGIN
-    SELECT 'Y' INTO V_YN FROM ALL_TABLES WHERE TABLE_NAME = 'LIBRARY_LCSET_SAMPLE_BASE';
-    EXECUTE IMMEDIATE 'DROP TABLE LIBRARY_LCSET_SAMPLE_BASE';
-  EXCEPTION WHEN NO_DATA_FOUND THEN NULL;
+
+  -- Delete duplicates associated with older lab events (by ID)
+  -- About 2600 so no need to limit batch size
+  SELECT min(la.child_event_id) as event_to_delete, la.child_library_id, la.ancestor_library_id
+    BULK COLLECT INTO EVENT_ARR, CHILD_AR, ANCEST_ARR
+    FROM library_ancestry la
+  GROUP BY la.child_library_id, la.ancestor_library_id
+  HAVING count( * ) > 1;
+
+  FORALL IDX IN EVENT_ARR.FIRST .. EVENT_ARR.LAST
+    DELETE FROM library_ancestry
+     WHERE child_event_id = EVENT_ARR(IDX)
+       AND child_library_id = CHILD_AR(IDX)
+       AND ancestor_library_id = ANCEST_ARR(IDX);
+
+  DBMS_OUTPUT.PUT_LINE('DELETED ' || SQL%ROWCOUNT || ' duplicate ancestry rows');
 END;
 /
 
-CREATE TABLE LIBRARY_LCSET_SAMPLE_BASE(
-  LIBRARY_LABEL VARCHAR2(40) NOT NULL,
-  LIBRARY_ID NUMBER(19) NOT NULL,
-  LIBRARY_TYPE VARCHAR2(255) NOT NULL,
-  LIBRARY_CREATION_DATE DATE NOT NULL,
-  LIBRARY_EVENT_ID NUMBER(19) NOT NULL );
+COMMIT;
 
-CREATE INDEX IDX_LIBRARY_LABEL_SAMPLE
-ON LIBRARY_LCSET_SAMPLE_BASE ( LIBRARY_LABEL, LIBRARY_TYPE );
+DROP INDEX PK_ANCESTRY;
+CREATE UNIQUE INDEX PK_ANCESTRY on library_ancestry (child_library_id, ancestor_library_id ) compute statistics;
+ALTER TABLE library_ancestry
+ADD CONSTRAINT PK_ANCESTRY PRIMARY KEY (child_library_id, ancestor_library_id ) USING INDEX PK_ANCESTRY;
 
-CREATE INDEX IDX_LIBRARY_ID_SAMPLE
-ON LIBRARY_LCSET_SAMPLE_BASE ( LIBRARY_ID, LIBRARY_TYPE );
-
-CREATE OR REPLACE VIEW LIBRARY_LCSET_SAMPLE
-AS
-  SELECT SB.LIBRARY_LABEL
-       --, SB.LIBRARY_ID
-       , EF.POSITION
-       , EF.LCSET_SAMPLE_NAME AS LCSET_SAMPLE
-       , EF.BATCH_NAME
-       , EF.MOLECULAR_INDEXING_SCHEME AS MOLECULAR_BARCODE
-       , PDO.JIRA_TICKET_KEY AS PRODUCT_ORDER_KEY
-       , EF.SAMPLE_NAME AS PRODUCT_ORDER_SAMPLE
-       , SB.LIBRARY_TYPE
-       , SB.LIBRARY_CREATION_DATE
-       --, SB.LIBRARY_EVENT_ID
-    FROM LIBRARY_LCSET_SAMPLE_BASE SB
-       , EVENT_FACT EF
-       , PRODUCT_ORDER PDO
-   WHERE EF.LAB_EVENT_ID = SB.LIBRARY_EVENT_ID
-     AND EF.LAB_VESSEL_ID = SB.LIBRARY_ID
-     AND PDO.PRODUCT_ORDER_ID(+) = EF.PRODUCT_ORDER_ID;
-
-
+DROP INDEX idx_ancestry_reverse;
+CREATE UNIQUE INDEX idx_ancestry_reverse on library_ancestry (ancestor_library_id, child_library_id ) compute statistics;
 

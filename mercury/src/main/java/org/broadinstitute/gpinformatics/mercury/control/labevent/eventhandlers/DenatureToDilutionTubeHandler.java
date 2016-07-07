@@ -102,21 +102,31 @@ public class DenatureToDilutionTubeHandler extends AbstractEventHandler {
              *      assigned, assign the cherry pick dilution tube to the batch association
              * -- If we find the Batch corresponding to the fct ticket and there is an existing dilution tube currently
              *     assigned, throw an exception
+             * -- If we find the batch corresponding to the fct ticket but we don't find the starting vessel
+             *     in the lab batch then check against the ancestor normalization tube
              * -- If we do not find any fct tickets associated with the denature, throw an exception that the
              *     association was not previously done
              */
             boolean foundTicket = false;
-            for (LabBatch denatureFctTicket : fctBatches) {
-                if (fctTicket.equals(denatureFctTicket.getBusinessKey())) {
+            for (LabBatch fctLabBatch : fctBatches) {
+                if (fctTicket.equals(fctLabBatch.getBusinessKey())) {
                     foundTicket = true;
-                    for (LabBatchStartingVessel fctVesselAssociation : denatureFctTicket.getLabBatchStartingVessels()) {
-                        if (denatureTube.equals(fctVesselAssociation.getLabVessel())) {
-
-                            if (fctVesselAssociation.getDilutionVessel() == null) {
-                                fctVesselAssociation.setDilutionVessel(dilutionTube);
-                            } else if (!fctVesselAssociation.getDilutionVessel().equals(dilutionTube)) {
-                                throw new ResourceException("This FCT is associated with a different dilution tube " +
-                                                            " for the given Denature", Response.Status.BAD_REQUEST);
+                    if (!updateLabBatch(fctLabBatch, denatureTube, dilutionTube)) {
+                        if (!denatureTube.getContainers().isEmpty()) {
+                            LabVessel denatureTubeFormation = denatureTube.getContainers().iterator().next();
+                            List<LabVessel.VesselEvent> ancestors =
+                                    denatureTubeFormation.getContainerRole().getAncestors(denatureTube);
+                            if (ancestors != null && !ancestors.isEmpty()) {
+                                LabVessel.VesselEvent denatureEvent = ancestors.get(0);
+                                LabVessel normTube = denatureEvent.getSourceLabVessel();
+                                if (!updateLabBatch(fctLabBatch, normTube, dilutionTube)) {
+                                    String errMsg = String.format(
+                                            "Neither the denature tube %s or its ancestor tube %s are associated"
+                                            + " with the given FCT.",
+                                            denatureTube.getLabel(), normTube.getLabel());
+                                    throw new ResourceException(
+                                            errMsg, Response.Status.BAD_REQUEST);
+                                }
                             }
                         }
                     }
@@ -128,5 +138,25 @@ public class DenatureToDilutionTubeHandler extends AbstractEventHandler {
                                             " is not associated with the given FCT.", Response.Status.NOT_FOUND);
             }
         }
+    }
+
+    private boolean updateLabBatch(LabBatch fctLabBatch, LabVessel loadingTube,
+                                   LabVessel dilutionTube) {
+        boolean foundStartTube = false;
+        for (LabBatchStartingVessel fctVesselAssociation : fctLabBatch
+                .getLabBatchStartingVessels()) {
+            if (loadingTube.equals(fctVesselAssociation
+                    .getLabVessel())) {
+                foundStartTube = true;
+                if (fctVesselAssociation.getDilutionVessel() == null) {
+                    fctVesselAssociation.setDilutionVessel(dilutionTube);
+                } else if (!fctVesselAssociation.getDilutionVessel().equals(dilutionTube)) {
+                    throw new ResourceException(
+                            "This FCT is associated with a different dilution tube " +
+                            " for the given Denature", Response.Status.BAD_REQUEST);
+                }
+            }
+        }
+        return foundStartTube;
     }
 }

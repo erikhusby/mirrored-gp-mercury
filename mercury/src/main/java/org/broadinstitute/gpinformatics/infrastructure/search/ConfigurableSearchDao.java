@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.hibernate.Criteria;
 import org.hibernate.Session;
+import org.hibernate.criterion.Conjunction;
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.DetachedCriteria;
 import org.hibernate.criterion.Disjunction;
@@ -236,14 +237,14 @@ public class ConfigurableSearchDao extends GenericDao {
                         // Create the base search criterion using operator and value(s)
                         // Note:  Regardless of depth of any nested criteria paths,
                         //    the criterion property name is attached to the root criteria path
-                        Criterion criterion = buildCriterion(searchValue);
+                        Criterion criterion = buildCriterion(searchValue, criteriaPath);
 
                         createCriteria( configurableSearchDefinition,
                                 mapPathToCriteria, criteriaPath,
                                 detachedCriteria, criterion );
 
                     } else {
-                        Criterion criterion = buildCriterion(searchValue);
+                        Criterion criterion = buildCriterion(searchValue, criteriaPath);
                         if (criterion != null) {
                             resultCriteria.add(criterion);
                         }
@@ -337,9 +338,10 @@ public class ConfigurableSearchDao extends GenericDao {
      * Create a Hibernate restriction, based on the operator
      *
      * @param searchValue contains operator chosen by user
+     * @param criteriaPath The criteria path used for this criterion (to obtain any optional hardcoded filters)
      * @return Hibernate restriction
      */
-    private Criterion buildCriterion(SearchInstance.SearchValue searchValue) {
+    private Criterion buildCriterion(SearchInstance.SearchValue searchValue, SearchTerm.CriteriaPath criteriaPath) {
         Criterion criterion;
         // Add the criterion for the search value
         List<Object> propertyValues = searchValue.convertSearchValue();
@@ -397,7 +399,64 @@ public class ConfigurableSearchDao extends GenericDao {
         } else {
             throw new RuntimeException("Unknown operator " + searchValue.getOperator());
         }
-        return criterion;
+
+        if( criteriaPath.getImmutableTermFilters() != null && criteriaPath.getImmutableTermFilters().size() > 0 ) {
+            return addFiltersToCriterion(criterion, criteriaPath);
+        } else {
+            return criterion;
+        }
+    }
+
+    /**
+     * Adds additional hardcoded filters to a search term criterion
+     * @param criterion The criterion created with the user entered operator and value(s)
+     * @param criteriaPath The criteria path which has a filter attached
+     * @return A junction containing the user criterion an all filters
+     */
+    private Criterion addFiltersToCriterion(Criterion criterion, SearchTerm.CriteriaPath criteriaPath){
+        Conjunction junction = new Conjunction();
+        junction.add(criterion);
+        for (SearchTerm.ImmutableTermFilter immutableTermFilter : criteriaPath.getImmutableTermFilters()) {
+            switch( immutableTermFilter.getOperator() ){
+                case EQUALS:
+                    junction.add(Restrictions.eq(immutableTermFilter.getPropertyName(), immutableTermFilter.getValues()[0]));
+                    break;
+                case GREATER_THAN:
+                    junction.add(Restrictions.gt(immutableTermFilter.getPropertyName(), immutableTermFilter.getValues()[0]));
+                    break;
+                case GREATER_THAN_EQUAL:
+                    junction.add(Restrictions.ge(immutableTermFilter.getPropertyName(), immutableTermFilter.getValues()[0]));
+                    break;
+                case LESS_THAN:
+                    junction.add(Restrictions.lt(immutableTermFilter.getPropertyName(), immutableTermFilter.getValues()[0]));
+                    break;
+                case LESS_THAN_EQUAL:
+                    junction.add(Restrictions.le(immutableTermFilter.getPropertyName(), immutableTermFilter.getValues()[0]));
+                    break;
+                case BETWEEN:
+                    junction.add(Restrictions.between(immutableTermFilter.getPropertyName(), immutableTermFilter.getValues()[0], immutableTermFilter.getValues()[1]));
+                    break;
+                case IN:
+                    junction.add(Restrictions.in(immutableTermFilter.getPropertyName(), immutableTermFilter.getValues()));
+                    break;
+                case LIKE:
+                    junction.add(Restrictions.ilike(immutableTermFilter.getPropertyName(), immutableTermFilter.getValues()[0]));
+                    break;
+                case NOT_EQUALS:
+                    junction.add(Restrictions.ne(immutableTermFilter.getPropertyName(), immutableTermFilter.getValues()[0]));
+                    break;
+                case NOT_IN:
+                    junction.add(Restrictions.not(Restrictions.in(immutableTermFilter.getPropertyName(), immutableTermFilter.getValues())));
+                    break;
+                case NOT_NULL:
+                    junction.add(Restrictions.isNotNull(immutableTermFilter.getPropertyName()));
+                    break;
+                default:
+                    throw new RuntimeException("Unknown criteria operator");
+            }
+
+        }
+        return junction;
     }
 
     /**

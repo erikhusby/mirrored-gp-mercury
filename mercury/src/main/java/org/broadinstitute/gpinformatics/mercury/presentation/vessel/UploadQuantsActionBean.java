@@ -49,6 +49,7 @@ public class UploadQuantsActionBean extends CoreActionBean {
 
     public enum QuantFormat {
         VARIOSKAN("Varioskan"),
+        WALLAC("Wallac"),
         CALIPER("Caliper"),
         GENERIC("Generic");
 
@@ -112,6 +113,8 @@ public class UploadQuantsActionBean extends CoreActionBean {
         switch (quantFormat) {
         case VARIOSKAN:
             break;
+        case WALLAC:
+            break;
         case CALIPER:
             break;
         case GENERIC:
@@ -146,6 +149,18 @@ public class UploadQuantsActionBean extends CoreActionBean {
                 addMessages(messageCollection);
                 break;
             }
+            case WALLAC: {
+                String filename = quantSpreadsheet.getFileName();
+                MessageCollection messageCollection = new MessageCollection();
+                Pair<LabMetricRun, String> pair = vesselEjb.createWallacRun(quantStream, filename, getQuantType(),
+                        userBean.getBspUser().getUserId(), messageCollection, acceptRePico);
+                if (pair != null) {
+                    labMetricRun = pair.getLeft();
+                    tubeFormationLabel = pair.getRight();
+                }
+                addMessages(messageCollection);
+                break;
+            }
             case CALIPER: {
                 MessageCollection messageCollection = new MessageCollection();
                 Pair<LabMetricRun, String> pair = vesselEjb.createRNACaliperRun(quantStream, getQuantType(),
@@ -158,7 +173,7 @@ public class UploadQuantsActionBean extends CoreActionBean {
                 break;
             }
             case GENERIC:
-                labMetrics = quantEJB.validateQuantsDontExist(quantStream, quantType);
+                labMetrics = quantEJB.validateQuantsDontExist(quantStream, quantType, acceptRePico);
                 break;
             }
         } catch (IOException e) {

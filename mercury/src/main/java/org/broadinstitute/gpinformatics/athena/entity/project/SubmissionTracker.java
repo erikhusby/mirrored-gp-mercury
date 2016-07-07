@@ -1,10 +1,13 @@
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
+import org.broadinstitute.gpinformatics.infrastructure.bass.BassFileType;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -13,7 +16,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import java.beans.Transient;
+import javax.persistence.Transient;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -44,12 +47,8 @@ public class SubmissionTracker {
     @Column(name = "SUBMITTED_SAMPLE_NAME")
     private String submittedSampleName;
 
-    /**
-     * File name and path for the data file being submitted
-     */
-    @Column(name = "FILE_NAME")
-    private String fileName;
-
+    @Enumerated(EnumType.STRING)
+    private BassFileType fileType;
     /**
      * version of the data file created
      */
@@ -68,16 +67,16 @@ public class SubmissionTracker {
     protected SubmissionTracker() {
     }
 
-    SubmissionTracker(Long submissionTrackerId, String submittedSampleName, String fileName, String version) {
+    SubmissionTracker(Long submissionTrackerId, String submittedSampleName, BassFileType fileType, String version) {
         this.submissionTrackerId = submissionTrackerId;
         this.submittedSampleName = submittedSampleName;
-        this.fileName = fileName;
+        this.fileType = fileType;
         this.version = version;
         requestDate = new Date();
     }
 
-    public SubmissionTracker(String submittedSampleName, String fileName, String version) {
-       this(null, submittedSampleName, fileName, version);
+    public SubmissionTracker(String submittedSampleName, BassFileType fileType, String version) {
+       this(null, submittedSampleName, fileType, version);
     }
 
     /**
@@ -103,14 +102,16 @@ public class SubmissionTracker {
         return id;
     }
 
+    public BassFileType getFileType() {
+        return fileType;
+    }
 
+    public void setFileType(BassFileType fileType) {
+        this.fileType = fileType;
+    }
 
     public String getSubmittedSampleName() {
         return submittedSampleName;
-    }
-
-    public String getFileName() {
-        return fileName;
     }
 
     public String getVersion() {
@@ -140,6 +141,6 @@ public class SubmissionTracker {
     // todo: should be in interface?
     @Transient
     public SubmissionTuple getTuple() {
-        return new SubmissionTuple(submittedSampleName, fileName, version);
+        return new SubmissionTuple(submittedSampleName, fileType, version);
     }
 }

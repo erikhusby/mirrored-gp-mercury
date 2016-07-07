@@ -42,7 +42,11 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.anyOf;
+import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 
@@ -72,6 +76,7 @@ public class ProductOrderSampleTest {
         sample.addLedgerItem(new Date(), billedPriceItem, 1);
         LedgerEntry entry = sample.getLedgerItems().iterator().next();
         entry.setPriceItemType(priceItemType);
+        new BillingSession(0L, Collections.singleton(entry));
         entry.setBillingMessage(BillingSession.SUCCESS);
 
         return sample;
@@ -547,6 +552,142 @@ public class ProductOrderSampleTest {
         childTube.addInPlaceEvent(receiptEvent);
 
         assertThat(productOrderSample.getReceiptDate(), nullValue());
+    }
+
+    /**
+     * Mercury won't always have a sample history to link extracted samples to their original root sample. However, any
+     * sample derived from another sample is considered by Mercury to be "received".
+     */
+    @Test
+    public void testSampleExtractedInBspIsReceived() {
+        ProductOrderSample productOrderSample = createProductOrderSample("SM-TEST", "0123");
+        productOrderSample.setSampleData(
+                new BspSampleData(Collections.singletonMap(BSPSampleSearchColumn.ROOT_SAMPLE, "SM-ROOT")));
+
+        assertThat(productOrderSample.isSampleReceived(), is(true));
+    }
+
+    /**
+     * All of these test cases must satisfy the equation:
+     *      expected resulting ready-to-bill = requested quantity - billed quantity
+     */
+    @DataProvider(name = "everything")
+    public Object[][] everything() {
+        // @formatter:off
+        return new Object[][]{
+            // billed       existing        requested       expected resulting
+            // quantity     ready-to-bill   quantity        ready-to-bill
+            {  0,           0,              0,              0              }, // no change (no existing billing)
+            {  0,           0,              1,              1              }, // request new billing
+            {  0,           0,              2,              2              }, // (redundant with "request new billing", but included for combinatorial completeness
+            {  0,           1,              0,              0              }, // cancel unbilled request (no existing billing)
+            {  0,           1,              1,              1              }, // no change (pending billing request)
+            {  0,           1,              2,              2              }, // update unbilled request (increase quantity, no existing billing)
+            {  1,           0,              0,             -1              }, // credit
+            {  1,           0,              1,              0              }, // no change (completed billing)
+            {  1,           0,              2,              1              }, // request more billing
+            {  1,           1,              0,             -1              }, // update unbilled request (change from charge to credit)
+            {  1,           1,              1,              0              }, // cancel unbilled request (completed billing)
+            {  1,           1,              2,              1              }  // no change (completed billing and pending billing request)
+        };
+        // @formatter:on
+    }
+
+    /**
+     * Test applying ledger updates in various scenarios. Variations include quantity fully billed, quantity requested
+     * to be billed (but hasn't been billed to Broad Quotes, SAP, etc. yet), and the quantity update being requested.
+     * The combination of these values also varies whether a quantity should be charged, credited, or if no changes are
+     * needed at all.
+     *
+     * @param quantityBilled
+     * @param quantityReadyToBill
+     * @param quantityRequested
+     * @param expectedQuantityReadyToBill
+     * @throws StaleLedgerUpdateException
+     */
+    @Test(dataProvider = "everything")
+    public void testEverything(int quantityBilled, double quantityReadyToBill, double quantityRequested,
+                               double expectedQuantityReadyToBill) throws StaleLedgerUpdateException {
+
+        /*
+         * The expected resulting unbilled ledger quantity must equal the new quantity being requested minus the
+         * quantity already billed. While the unbilled/ready-to-bill quantity affects the specifics of applying a
+         * ledger update, it does not factor into the expected result because unbilled records can be modified.
+         *
+         * This assertion is here both to document that point and as a guard against nonsensical test cases.
+         */
+        assertThat(expectedQuantityReadyToBill, equalTo(quantityRequested - quantityBilled));
+        assertThat(quantityBilled, anyOf(equalTo(0), equalTo(1)));
+
+        ProductOrderSample productOrderSample;
+        if (quantityBilled == 0) {
+            productOrderSample = createOrderedSample("TEST");
+        } else {
+            productOrderSample = createBilledSample("TEST");
+        }
+
+        PriceItem priceItem = productOrderSample.getProductOrder().getProduct().getPrimaryPriceItem();
+        if (quantityReadyToBill > 0) {
+            addUnbilledLedgerEntry(productOrderSample, priceItem, quantityReadyToBill);
+        }
+
+        ProductOrderSample.LedgerQuantities ledgerQuantities = productOrderSample.getLedgerQuantities().get(priceItem);
+        double quantityBefore = ledgerQuantities != null ? ledgerQuantities.getTotal() : 0;
+        double currentQuantity = quantityBefore; // these tests all assume no external changes
+        Date workCompleteDate = new Date();
+
+        ProductOrderSample.LedgerUpdate ledgerUpdate =
+                new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(), priceItem, quantityBefore,
+                        currentQuantity, quantityRequested, workCompleteDate);
+        productOrderSample.applyLedgerUpdate(ledgerUpdate);
+
+        LedgerEntry ledgerEntry = productOrderSample.findUnbilledLedgerEntryForPriceItem(priceItem);
+        if (expectedQuantityReadyToBill == 0) {
+            assertThat(ledgerEntry, nullValue());
+            assertThat(productOrderSample.getBillableLedgerItems(), empty());
+        } else {
+            assertThat(ledgerEntry.getQuantity(), equalTo(expectedQuantityReadyToBill));
+            assertThat(productOrderSample.getBillableLedgerItems(), hasSize(1));
+        }
+    }
+
+    private void addUnbilledLedgerEntry(ProductOrderSample productOrderSample, PriceItem priceItem,
+                                        double quantityReadyToBill) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.DAY_OF_MONTH, -1);
+        Date oldWorkCompleteDate = calendar.getTime();
+        productOrderSample.addLedgerItem(oldWorkCompleteDate, priceItem, quantityReadyToBill);
+    }
+
+    @Test
+    public void testApplyUpdateWithOutdatedInformationThrowsException() {
+        ProductOrderSample productOrderSample = createOrderedSample("TEST");
+        PriceItem priceItem = productOrderSample.getProductOrder().getProduct().getPrimaryPriceItem();
+
+        ProductOrderSample.LedgerUpdate ledgerUpdate =
+                new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(), priceItem, 1, 0, 2, new Date());
+        Exception caught = null;
+        try {
+            productOrderSample.applyLedgerUpdate(ledgerUpdate);
+        } catch (Exception e) {
+            caught = e;
+        }
+        assertThat(caught, instanceOf(StaleLedgerUpdateException.class));
+    }
+
+    public void testAddLedgerEntryWithNoWorkCompleteDateThrowsException() {
+        ProductOrderSample productOrderSample = createOrderedSample("TEST");
+        PriceItem priceItem = productOrderSample.getProductOrder().getProduct().getPrimaryPriceItem();
+
+        ProductOrderSample.LedgerUpdate ledgerUpdate =
+                new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(), priceItem, 0, 0, 1, null);
+        Exception caught = null;
+        try {
+            productOrderSample.applyLedgerUpdate(ledgerUpdate);
+        } catch (Exception e) {
+            caught = e;
+        }
+        assertThat(caught, instanceOf(IllegalArgumentException.class));
     }
 
     @NotNull

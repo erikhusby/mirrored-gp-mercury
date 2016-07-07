@@ -69,6 +69,8 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
                 "^\\w+ANXX$", "HiSeq", CreateFields.IssueType.FLOWCELL, LabBatch.LabBatchType.FCT, CreateFct.YES),
         HiSeq4000Flowcell("Flowcell8Lane4000", "HiSeq 4000 Flowcell", VesselGeometry.FLOWCELL1x8, "Illumina HiSeq 4000",
                 "^\\w+BBXX$", "HiSeq", CreateFields.IssueType.FLOWCELL, LabBatch.LabBatchType.FCT, CreateFct.YES),
+        HiSeqX10Flowcell("Flowcell8LaneX10", "HiSeq X 10 Flowcell", VesselGeometry.FLOWCELL1x8, "Illumina HiSeq X 10",
+                "^\\w+(CCXX|ALXX)$", "HiSeq", CreateFields.IssueType.FLOWCELL, LabBatch.LabBatchType.FCT, CreateFct.YES),
         OtherFlowcell("FlowcellUnknown", "Unknown Flowcell", VesselGeometry.FLOWCELL1x2, "Unknown Model", ".*", null,
                 null, null, CreateFct.NO);
 
@@ -231,6 +233,8 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
                 return HiSeq2500HighOutputFlowcell;
             } else if (FlowcellType.HiSeq4000Flowcell.getFlowcellTypeRegex().matcher(barcode).matches()) {
                 return HiSeq4000Flowcell;
+            } else if (FlowcellType.HiSeqX10Flowcell.getFlowcellTypeRegex().matcher(barcode).matches()) {
+                return HiSeqX10Flowcell;
             } else if (FlowcellType.HiSeqFlowcell.getFlowcellTypeRegex().matcher(barcode).matches()) {
                 return HiSeqFlowcell;
             }

@@ -181,6 +181,7 @@ public class LabMetric implements Comparable<LabMetric> {
         }),
         FINAL_LIBRARY_SIZE("Final Library Size", false, Category.DNA_LENGTH, null),
         ECO_QPCR("ECO QPCR", true, Category.CONCENTRATION, null),
+        VIIA_QPCR("VIIA QPCR", true, Category.CONCENTRATION, null),
         INITIAL_RNA_CALIPER("Initial RNA Caliper", true, Category.QUALITY, new Decider() {
             @Override
             public LabMetricDecision makeDecision(LabVessel labVessel, LabMetric labMetric, long decidingUser) {
@@ -336,6 +337,7 @@ public class LabMetric implements Comparable<LabMetric> {
         this.createdDate = createdDate;
     }
 
+    @Nullable
     public BigDecimal getTotalNg() {
         for (Metadata metadata : metadataSet) {
             if (metadata.getKey() == Metadata.Key.TOTAL_NG) {

@@ -28,8 +28,8 @@ import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo_;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.StripesMockTestUtils;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
 import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
@@ -67,9 +67,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.isEmptyOrNullString;
@@ -348,7 +346,7 @@ public class ProductOrderActionBeanTest {
     @Test(enabled = false)
     public void testQuoteOptOutAjaxCallStripes() throws Exception {
         Product product = createSimpleProduct("P-EX-0001",
-                ProductFamily.ProductFamilyName.SAMPLE_INITIATION_QUALIFICATION_CELL_CULTURE.getFamilyName());
+                ProductFamily.ProductFamilyInfo.SAMPLE_INITIATION_QUALIFICATION_CELL_CULTURE.getFamilyName());
         ProductDao productDao = EasyMock.createNiceMock(ProductDao.class);
         EasyMock.expect(productDao.findByBusinessKey((String) EasyMock.anyObject())).andReturn(product).atLeastOnce();
         EasyMock.replay(productDao);
@@ -390,7 +388,7 @@ public class ProductOrderActionBeanTest {
 
     public void testQuoteOptOutAllowed() throws Exception {
         Product product = createSimpleProduct("P-EX-0001",
-                ProductFamily.ProductFamilyName.SAMPLE_INITIATION_QUALIFICATION_CELL_CULTURE.getFamilyName());
+                ProductFamily.ProductFamilyInfo.SAMPLE_INITIATION_QUALIFICATION_CELL_CULTURE.getFamilyName());
         ProductDao productDao = setupMockProductDao(product);
 
         MockRoundtrip roundtrip = StripesMockTestUtils.createMockRoundtrip(ProductOrderActionBean.class, productDao);

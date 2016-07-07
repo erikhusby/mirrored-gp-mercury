@@ -9,6 +9,8 @@
  */
 package org.broadinstitute.gpinformatics.mercury.presentation;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Collections2;
 import net.sourceforge.stripes.action.ActionBean;
 import net.sourceforge.stripes.action.ActionBeanContext;
 import net.sourceforge.stripes.action.Before;
@@ -39,12 +41,14 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObjectFinder;
 import org.broadinstitute.gpinformatics.infrastructure.presentation.JiraLink;
 import org.broadinstitute.gpinformatics.infrastructure.presentation.PortalLink;
 import org.broadinstitute.gpinformatics.infrastructure.presentation.SampleLink;
+import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.http.HttpServletResponse;
@@ -121,6 +125,13 @@ public abstract class CoreActionBean implements ActionBean, MessageReporter {
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private QuoteService quoteService;
+
+
+    public enum ErrorLevel {
+        WARNING,
+        ERROR,
+        ;
+    }
 
     // Needed for managed bean.
     public CoreActionBean() {
@@ -376,6 +387,37 @@ public abstract class CoreActionBean implements ActionBean, MessageReporter {
     }
 
     /**
+     * @return formatted messages collected in the context
+     */
+    protected List<String> getFormattedMessages() {
+        return transformMessages(getContext().getMessages());
+    }
+
+    private List<String> transformMessages(List<? extends Message> messages) {
+        return new ArrayList<>(Collections2.transform(messages, new Function<Message, String>() {
+            @Override
+            public String apply(@Nullable Message input) {
+                if (input != null) {
+                    return input.getMessage(getContext().getLocale());
+                }
+                return null;
+            }
+        }));
+    }
+
+    /**
+     * @return formatted errors collected in the context
+     */
+    public List<String> getFormattedErrors() {
+        final List<String> formattedMessages = new ArrayList<>();
+        for (String errorKey : getValidationErrors().keySet()) {
+            List<ValidationError> validationErrors = getValidationErrors().get(errorKey);
+            formattedMessages.addAll(transformMessages(validationErrors));
+        }
+        return formattedMessages;
+    }
+
+    /**
      * Get the build info bean.
      *
      * @return the injected BuildInfoBean
@@ -592,14 +634,16 @@ public abstract class CoreActionBean implements ActionBean, MessageReporter {
         return createTitle;
     }
 
-    protected void validateQuoteId(String quoteId) {
+    protected Quote validateQuoteId(String quoteId) {
+        Quote quoteDetails = null;
         try {
-            quoteService.getQuoteByAlphaId(quoteId);
+            quoteDetails = quoteService.getQuoteByAlphaId(quoteId);
         } catch (QuoteServerException e) {
             addGlobalValidationError("The quote ''{2}'' is not valid: {3}", quoteId, e.getMessage());
         } catch (QuoteNotFoundException e) {
             addGlobalValidationError("The quote ''{2}'' was not found ", quoteId);
         }
+        return quoteDetails;
     }
 
     /**

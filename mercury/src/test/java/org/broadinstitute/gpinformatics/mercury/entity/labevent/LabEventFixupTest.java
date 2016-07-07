@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.labevent;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -10,6 +11,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeD
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanParserTest;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
@@ -1381,4 +1383,99 @@ public class LabEventFixupTest extends Arquillian {
         utx.commit();
     }
 
+    /**
+     * This test reads its parameters from a file, mercury/src/test/resources/testdata/DeleteLabEvents.txt, so it can
+     * be used for other similar fixups, without writing a new test.  Example contents of the file are:
+     * GPLIM-4104
+     * InfiniumHybridization
+     * 1278705
+     * 1278706
+     * 1278707
+     */
+    @Test(enabled = false)
+    public void fixupGplim4104() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        List<String> lines = IOUtils.readLines(VarioskanParserTest.getTestResource("DeleteLabEvents.txt"));
+        String jiraTicket = lines.get(0);
+        String eventType = lines.get(1);
+
+        for (String id : lines.subList(2, lines.size())) {
+            LabEvent labEvent = labEventDao.findById(LabEvent.class, Long.parseLong(id));
+            Assert.assertEquals(labEvent.getLabEventType().getName(), eventType);
+            System.out.println("Deleting lab event " + labEvent.getLabEventId());
+            labEventDao.remove(labEvent);
+        }
+
+        labEventDao.persist(new FixupCommentary(jiraTicket + " delete " + eventType));
+        labEventDao.flush();
+        utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim4046() throws Exception {
+        // Deletes shearing transfer event in order to resend a corrected bettalims message with an added rework tube.
+        userBean.loginOSUser();
+        utx.begin();
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, 1222203L);
+        for (LabEventReagent labEventReagent : labEvent.getLabEventReagents()) {
+            System.out.println("Removing labEventReagent " + labEventReagent.getLabEvent().getLabEventId() +
+                    ", " + labEventReagent.getReagent().getName());
+            labEventDao.remove(labEventReagent);
+        }
+        labEvent.getLabEventReagents().clear();
+        Assert.assertTrue(CollectionUtils.isEmpty(labEvent.getCherryPickTransfers()));
+        for (SectionTransfer sectionTransfer : labEvent.getSectionTransfers()) {
+            System.out.println("Removing sectionTransfer " + sectionTransfer.getVesselTransferId());
+            labEventDao.remove(sectionTransfer);
+        }
+        labEvent.getSectionTransfers().clear();
+        Assert.assertTrue(CollectionUtils.isEmpty(labEvent.getVesselToSectionTransfers()));
+        Assert.assertTrue(CollectionUtils.isEmpty(labEvent.getVesselToVesselTransfers()));
+        System.out.println("Removing " + labEvent.getLabEventType() + " " + labEvent.getLabEventId());
+        labEventDao.remove(labEvent);
+        labEventDao.persist(new FixupCommentary("GPLIM-4046 delete shearing transfer event."));
+        labEventDao.flush();
+        utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void fixupSupport1602() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        long[] ids = {1242543L, 1242544L, 1242545L, 1242546L, 1242547L};
+        for (long id : ids) {
+            LabEvent labEvent = labEventDao.findById(LabEvent.class, id);
+            System.out.println("Deleting lab event " + labEvent.getLabEventId());
+            labEventDao.remove(labEvent);
+        }
+
+        labEventDao.persist(new FixupCommentary("SUPPORT-1602 delete Infinium events"));
+        labEventDao.flush();
+        utx.commit();
+    }
+
+    /**
+     * Delete malformed DenatureTransfer
+     */
+    @Test(enabled = false)
+    public void fixupSupport1661() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        long[] ids = {1268180L};
+        for (long id : ids) {
+            LabEvent labEvent = labEventDao.findById(LabEvent.class, id);
+            System.out.println("Deleting lab event " + labEvent.getLabEventId());
+            labEventDao.remove(labEvent);
+        }
+
+        labEventDao.persist(new FixupCommentary("SUPPORT-1661 delete Denature transfer"));
+        labEventDao.flush();
+        BarcodedTube barcodedTube = barcodedTubeDao.findByBarcode("0193780863");
+        Assert.assertEquals(barcodedTube.getSampleInstancesV2().size(), 5);
+        utx.commit();
+    }
 }

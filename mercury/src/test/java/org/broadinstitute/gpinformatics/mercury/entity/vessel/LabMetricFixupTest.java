@@ -319,6 +319,46 @@ public class LabMetricFixupTest extends Arquillian {
         utx.commit();
     }
 
+    @Test(enabled = false)
+    public void fixupGplim4105() {
+        try {
+            utx.begin();
+            userBean.loginOSUser();
+            deleteRun("9059 FP pico", "GPLIM-4105 remove FP run which was uploaded as Initial");
+            utx.commit();
+        } catch (NotSupportedException | SystemException | RollbackException | HeuristicMixedException |
+                HeuristicRollbackException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test(enabled = false)
+    public void gplim4084ChangePondToShearingPico() {
+        try {
+            utx.begin();
+            userBean.loginOSUser();
+            deleteRun("8937_Pond_", "GPLIM-4084 remove Pico run, so lab can upload as Shearing with correct run name");
+            utx.commit();
+        } catch (NotSupportedException | SystemException | RollbackException | HeuristicMixedException |
+                HeuristicRollbackException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test(enabled = false)
+    public void fixupSupport1734() {
+        try {
+            utx.begin();
+            userBean.loginOSUser();
+            deleteRun("4-20-2016 IgFit Stock re-ribo",
+                    "SUPPORT-1734 remove Plating Ribo run, so lab can do initial ribo upload");
+            utx.commit();
+        } catch (NotSupportedException | SystemException | RollbackException | HeuristicMixedException |
+                HeuristicRollbackException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private void deleteRun(String runName, String reason) {
         LabMetricRun labMetricRun = dao.findByName(runName);
         for (LabMetric labMetric : labMetricRun.getLabMetrics()) {

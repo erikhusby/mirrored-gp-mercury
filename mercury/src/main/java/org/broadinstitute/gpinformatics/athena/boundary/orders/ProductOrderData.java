@@ -10,7 +10,6 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.LongDateTimeAdapter;
-import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 
 import javax.annotation.Nonnull;
 import javax.xml.bind.annotation.XmlElementWrapper;
@@ -125,7 +124,6 @@ public class ProductOrderData {
         }
 
         numberOfSamples = productOrder.getSampleCount();
-        genoChipType = productOrder.getGenoChipType();
     }
 
     private static List<String> getSampleList(List<ProductOrderSample> productOrderSamples) {
@@ -324,11 +322,6 @@ public class ProductOrderData {
         List<ProductOrderSample> productOrderSamples = new ArrayList<>(samples.size());
         for (String sample : samples) {
             productOrderSamples.add(new ProductOrderSample(sample));
-        }
-
-        // Make sure the required sample(s) are present FOR CLIA. For others, adding later is valid.
-        if (productOrderSamples.isEmpty() && ApplicationInstance.CRSP.isCurrent()) {
-            throw new NoSamplesException();
         }
 
         productOrder.addSamples(productOrderSamples);

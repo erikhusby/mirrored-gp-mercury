@@ -37,7 +37,6 @@ import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferVis
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferVisualizerV2;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.CrspPipelineUtils;
-import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
@@ -70,25 +69,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowD
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.presentation.transfervis.TransferVisualizerClient;
 import org.broadinstitute.gpinformatics.mercury.presentation.transfervis.TransferVisualizerFrame;
-import org.broadinstitute.gpinformatics.mercury.test.builders.ArrayPlatingEntityBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.CrspRiboPlatingEntityBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq4000FlowcellEntityBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.IceEntityBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.IceJaxbBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.InfiniumEntityBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.MiSeqReagentKitEntityBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.PreFlightEntityBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.ProductionFlowcellPath;
-import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.QtpJaxbBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.SageEntityBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.ShearingEntityBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.TruSeqStrandSpecificEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.*;
 import org.easymock.EasyMock;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -227,22 +208,27 @@ public class BaseEventTest {
                 Mockito.mock(MercurySampleDao.class));
     }
 
+    public Map<String, BarcodedTube> createInitialRack(ProductOrder productOrder, String tubeBarcodePrefix) {
+        return createInitialRack(productOrder, tubeBarcodePrefix, MercurySample.MetadataSource.BSP);
+    }
+
     /**
      * This method builds the initial tube rack for starting an event test.  This will log an error if you attempt to
      * create the rack from a product order than has more than NUM_POSITIONS_IN_RACK tubes.
      *
      * @param productOrder      The product order to create the initial rack from
      * @param tubeBarcodePrefix prefix for each tube barcode
-     *
+     * @param metadataSource    BSP or Mercury
      * @return Returns a map of String barcodes to their tube objects.
      */
-    public Map<String, BarcodedTube> createInitialRack(ProductOrder productOrder, String tubeBarcodePrefix) {
+    public Map<String, BarcodedTube> createInitialRack(ProductOrder productOrder, String tubeBarcodePrefix,
+            MercurySample.MetadataSource metadataSource) {
         Map<String, BarcodedTube> mapBarcodeToTube = new LinkedHashMap<>();
         int rackPosition = 1;
         for (ProductOrderSample poSample : productOrder.getSamples()) {
             String barcode = tubeBarcodePrefix + rackPosition;
             BarcodedTube bspAliquot = new BarcodedTube(barcode);
-            bspAliquot.addSample(new MercurySample(poSample.getName(), MercurySample.MetadataSource.BSP));
+            bspAliquot.addSample(new MercurySample(poSample.getName(), metadataSource));
             mapBarcodeToTube.put(barcode, bspAliquot);
             Map<BSPSampleSearchColumn, String> dataMap = new HashMap<>();
             dataMap.put(BSPSampleSearchColumn.SAMPLE_ID, poSample.getName());
@@ -577,13 +563,14 @@ public class BaseEventTest {
  *                               parallel
 *    @return Returns the entity builder that contains the entities after this process has been invoked.
      */
-    public HiSeq4000FlowcellEntityBuilder runHiSeq4000FlowcellProcess(TubeFormation denatureRack, String barcodeSuffix,
-                                                                      LabBatch fctTicket,
-                                                                      String designationName) {
+    public HiSeq4000FlowcellEntityBuilder runHiSeq4000FlowcellProcess(TubeFormation denatureRack, TubeFormation normRack,
+                                                                      String barcodeSuffix, LabBatch fctTicket,
+                                                                      String designationName,
+                                                                      HiSeq4000FlowcellEntityBuilder.FCTCreationPoint fctCreationPoint) {
         String flowcellBarcode = "flowcell" + new Date().getTime() + "BBXX";
         return new HiSeq4000FlowcellEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
                 denatureRack, flowcellBarcode, barcodeSuffix, fctTicket,
-                designationName, 8).invoke();
+                designationName, 8, normRack, fctCreationPoint).invoke();
     }
 
 
@@ -631,12 +618,24 @@ public class BaseEventTest {
                 labEventFactory, getLabEventHandler(), barcodeSuffix).invoke();
     }
 
+    public TenXEntityBuilder runTenXProcess(Map<String, BarcodedTube> mapBarcodeToTube,
+                                                    String barcodeSuffix) {
+        return new TenXEntityBuilder(mapBarcodeToTube, bettaLimsMessageTestFactory,
+                labEventFactory, getLabEventHandler(), barcodeSuffix).invoke();
+    }
+
     public CrspRiboPlatingEntityBuilder runRiboPlatingProcess(BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
                                                        LabEventFactory labEventFactory, LabEventHandler labEventHandler,
                                                        Map<String, BarcodedTube> mapBarcodeToTube, String rackBarcode,
                                                        String prefix) {
         return new CrspRiboPlatingEntityBuilder(bettaLimsMessageTestFactory,
                 labEventFactory, labEventHandler, mapBarcodeToTube, rackBarcode, prefix).invoke();
+    }
+
+    public StoolTNAEntityBuilder runStoolExtractionToTNAProcess(StaticPlate sourcePlate,
+                                                                int numSamples, String prefix) {
+        return new StoolTNAEntityBuilder(sourcePlate, numSamples, bettaLimsMessageTestFactory,
+                labEventFactory, getLabEventHandler(), prefix).invoke();
     }
 
     /**
@@ -874,7 +873,8 @@ public class BaseEventTest {
                 FileWriter fileWriter = new FileWriter(xfrVis);
                 transferVisualizerV2.jsonForVessels(
                         Collections.singletonList(labVessel),
-                        Collections.singletonList(TransferTraverserCriteria.TraversalDirection.Descendants),
+                        Arrays.asList(TransferTraverserCriteria.TraversalDirection.Ancestors,
+                                TransferTraverserCriteria.TraversalDirection.Descendants),
                         fileWriter,
                         Arrays.asList(TransferVisualizerV2.AlternativeIds.SAMPLE_ID,
                                 TransferVisualizerV2.AlternativeIds.LCSET));
@@ -964,7 +964,6 @@ public class BaseEventTest {
                 },
                 new SequencingTemplateFactory(),
                 productOrderDao,
-                new CrspControlsTestUtils().getMockResearchProjectDao(),
                 crspPipelineUtils
         );
     }

@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.infrastructure.deployment;
 
 
 import org.apache.commons.beanutils.BeanUtils;
-import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 
 import javax.annotation.Nonnull;
 import java.lang.reflect.InvocationTargetException;
@@ -14,9 +13,9 @@ import java.lang.reflect.InvocationTargetException;
  * fail to deploy with an error.
  */
 public abstract class AbstractConfig {
-    protected AbstractConfig(@Nonnull Deployment mercuryDeployment) {
-        if (mercuryDeployment != Deployment.STUBBY) {
-            AbstractConfig source = produce(getClass(), mercuryDeployment);
+    protected AbstractConfig(@Nonnull Deployment deploymentConfig) {
+        if (deploymentConfig != Deployment.STUBBY) {
+            AbstractConfig source = produce(getClass(), deploymentConfig);
             // Only get the properties if the configuration is supported.
             if (source != null) {
                 try {
@@ -27,7 +26,7 @@ public abstract class AbstractConfig {
             }
         }
 
-        this.mercuryDeployment = mercuryDeployment;
+        this.deploymentConfig = deploymentConfig;
     }
 
     /**
@@ -54,7 +53,7 @@ public abstract class AbstractConfig {
      * Useful for debugging.
      */
     @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"})
-    private final Deployment mercuryDeployment;
+    private final Deployment deploymentConfig;
 
     public void setExternalDeployment(Deployment externalDeployment) {
         this.externalDeployment = externalDeployment;
@@ -74,11 +73,11 @@ public abstract class AbstractConfig {
         return config;
     }
 
-    public Deployment getMercuryDeployment() {
-        return mercuryDeployment;
+    public Deployment getDeploymentConfig() {
+        return deploymentConfig;
     }
 
     public static String getHttpScheme() {
-        return (ApplicationInstance.CRSP.isCurrent())?"https://":"http://";
+        return "http://";
     }
 }

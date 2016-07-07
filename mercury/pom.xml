@@ -11,7 +11,7 @@
     <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
     <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
     <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
-    <version>1.69-SNAPSHOT</version>
+    <version>1.73-SNAPSHOT</version>
     <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
     <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
     <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
@@ -1340,7 +1340,7 @@ nodePrinter.print(webapp)
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-collections4</artifactId>
-            <version>4.0</version>
+            <version>4.1</version>
         </dependency>
 
         <dependency>
@@ -2057,6 +2057,23 @@ nodePrinter.print(webapp)
                             </packageName>
                             <!-- each execution must have a unique staleFile -->
                             <staleFile>${project.build.directory}/jaxb2/.VesselRegistrationXjcStaleFlag</staleFile>
+                            <!-- all executions, except the first, need clearOutputDir set to false -->
+                            <clearOutputDir>false</clearOutputDir>
+                        </configuration>
+                    </execution>
+                    <execution>
+
+                        <id>QpcrRunBean</id>
+                        <goals>
+                            <goal>xjc</goal>
+                        </goals>
+                        <configuration>
+                            <!-- each execution needs to specify the schemaFile(s) to use -->
+                            <schemaFiles>QpcrRunBean.xsd</schemaFiles>
+                            <schemaDirectory>src/main/webapp/xsd</schemaDirectory>
+                            <packageName>org.broadinstitute.gpinformatics.mercury.boundary.lims.generated</packageName>
+                            <!-- each execution must have a unique staleFile -->
+                            <staleFile>${project.build.directory}/jaxb2/.QpcrRunBeanXjcStaleFlag</staleFile>
                             <!-- all executions, except the first, need clearOutputDir set to false -->
                             <clearOutputDir>false</clearOutputDir>
                         </configuration>

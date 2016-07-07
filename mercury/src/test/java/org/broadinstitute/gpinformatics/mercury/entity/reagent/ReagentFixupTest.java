@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.GenericReagentDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
+import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventReagent;
@@ -43,9 +44,10 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
-import java.util.Iterator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
@@ -873,7 +875,8 @@ public class ReagentFixupTest extends Arquillian {
                 "2015-11-12T12:52:23", "Ice2ndBaitPick", "03-17-2018", "15F24A0005",
         }, "Rapid Capture Kit Box 4 (Bait)");
 
-        genericReagentDao.persist(new FixupCommentary("GPLIM-3791 add missing bait reagents using the Bravo log records."));
+        genericReagentDao.persist(
+                new FixupCommentary("GPLIM-3791 add missing bait reagents using the Bravo log records."));
         genericReagentDao.flush();
         utx.commit();
     }
@@ -1037,6 +1040,123 @@ public class ReagentFixupTest extends Arquillian {
 
         genericReagentDao.persist(new FixupCommentary(
                 "GPLIM-3849 add missing EEW reagents using the Bravo log records."));
+        genericReagentDao.flush();
+        utx.commit();
+    }
+
+@Test(enabled = false)
+    public void gplim4063EmergeBaitSpecifyColumn() throws Exception {
+        userBean.loginOSUser();
+        long firstHybBaitEventId = 1220422L;
+        long secondHybBaitEventId = 1220756L;
+
+        LabEvent firstBaitPickEvent = genericReagentDao.findById(LabEvent.class, firstHybBaitEventId);
+        Assert.assertNotNull(firstBaitPickEvent);
+
+        LabEvent secondBaitPickEvent = genericReagentDao.findById(LabEvent.class, secondHybBaitEventId);
+        Assert.assertNotNull(secondBaitPickEvent);
+
+        List<LabEvent> labEvents = Arrays.asList(firstBaitPickEvent, secondBaitPickEvent);
+
+        //Set well metadata for non-emerge bait reagent to every other well except A1
+        for (LabEvent labEvent : labEvents) {
+            Set<LabEventReagent> reagents = labEvent.getLabEventReagents();
+            Assert.assertTrue(reagents.size() == 1);
+            LabEventReagent labEventReagent = reagents.iterator().next();
+            Assert.assertEquals(labEventReagent.getReagent().getLot(), "16A07A0006");
+            Assert.assertTrue(labEventReagent.getMetadata().isEmpty());
+            Set<Metadata> nonEmergeMetadata = new HashSet<>();
+            for (String well : Arrays.asList("A3", "A5", "A7", "A9", "A11")) {
+                nonEmergeMetadata.add(new Metadata(Metadata.Key.BAIT_WELL, well));
+                System.out.println("Created Metadata key " + Metadata.Key.BAIT_WELL.getDisplayName() +
+                                   " value " + well + " for event " + labEvent.getLabEventId());
+            }
+            labEventReagent.setMetadata(nonEmergeMetadata);
+        }
+
+        //Create new emerge bait reagent
+        final SimpleDateFormat expDateFormat = new SimpleDateFormat("MM-dd-yyyy");
+        Date expiration = expDateFormat.parse("11-01-2016");
+        String lot = "20024869";
+        String type = "Rapid Capture Kit Box 4 (Bait)";
+
+        Assert.assertNull(genericReagentDao.findByReagentNameLotExpiration(type, lot, expiration));
+        Reagent emergeReagent = new GenericReagent(type, lot, expiration);
+        System.out.println("Created reagent " + type + " lot " + lot + " expiration " + expiration);
+
+        for (LabEvent labEvent: labEvents) {
+            Set<Metadata> metadataSet = new HashSet<>();
+            Metadata metadata = new Metadata(Metadata.Key.BAIT_WELL, "A1");
+            metadataSet.add(metadata);
+            labEvent.addReagentMetadata(emergeReagent, metadataSet);
+            System.out.println("Reagent " + emergeReagent.getReagentId() +
+                               " added to event " + labEvent.getLabEventId());
+        }
+
+        genericReagentDao.persist(new FixupCommentary("GPLIM-4063 fixup create emerge bait reagent and specify columns"));
+        genericReagentDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void gplim4120fixDate() throws Exception {
+        userBean.loginOSUser();
+        // Replaces wrong expiration for P5 Indexed Adapter Plate reagent.
+        // Reagent was newly created for the event and not used elsewhere so the
+        // code just needs to fix the Reagent entity.
+        Reagent reagent = genericReagentDao.findById(Reagent.class, 1195956L);
+        Assert.assertNotNull(reagent);
+        String lot = "000001805823";
+        Assert.assertEquals(lot, reagent.getLot());
+        Date expiration = new GregorianCalendar(2016, Calendar.MAY, 21).getTime();
+        System.out.println("Changing expiration date on reagent id " + reagent.getReagentId() + " to " + expiration);
+        reagent.setExpiration(expiration);
+        genericReagentDao.persist(new FixupCommentary("GPLIM-4120 fixup incorrect P5 adapter expiration"));
+        genericReagentDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim4130() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+        // Replaces reagent with one with the correct expiration. Preserves the original being used on other lab events.
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, 1308892L);
+        Reagent reagent = genericReagentDao.findById(Reagent.class, 1086959L);
+
+        // Finds and removes the labEventReagent
+        LabEventReagent foundLabEventReagent = null;
+        for (LabEventReagent labEventReagent : labEvent.getLabEventReagents()) {
+            if (labEventReagent.getReagent().equals(reagent)) {
+                foundLabEventReagent = labEventReagent;
+            }
+        }
+        Assert.assertNotNull(foundLabEventReagent);
+        labEvent.getLabEventReagents().remove(foundLabEventReagent);
+        genericReagentDao.remove(foundLabEventReagent);
+
+        Reagent newReagent = new GenericReagent(reagent.getName(), reagent.getLot(),
+                new GregorianCalendar(2018, Calendar.MAY, 13).getTime());
+
+        System.out.println("Replacing " + reagent.getName() + " on event " + labEvent.getLabEventId() +
+                           " with one expiring " + newReagent.getExpiration().toString());
+        labEvent.addReagent(newReagent);
+
+        genericReagentDao.persist(new FixupCommentary("GPLIM-4130 change reagent due to wrong expiration date."));
+        genericReagentDao.flush();
+        utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim4130a() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+        // Updates date from 5/13/18 to 4/13/18.
+        Reagent reagent = genericReagentDao.findById(Reagent.class, 1199001L);
+        Assert.assertNotNull(reagent);
+        reagent.setExpiration(new GregorianCalendar(2018, Calendar.APRIL, 13).getTime());
+        System.out.println("Updating reagent " + reagent.getReagentId() +
+                           " expiration to " + reagent.getExpiration().toString());
+
+        genericReagentDao.persist(new FixupCommentary("GPLIM-4130 fix expiration date."));
         genericReagentDao.flush();
         utx.commit();
     }

@@ -299,22 +299,23 @@ CREATE TABLE LIBRARY_LCSET_SAMPLE_BASE(
 CREATE OR REPLACE VIEW LIBRARY_LCSET_SAMPLE
 AS
   SELECT SB.LIBRARY_LABEL
-       --, SB.LIBRARY_ID
-       , EF.POSITION
-       , EF.LCSET_SAMPLE_NAME AS LCSET_SAMPLE
-       , EF.BATCH_NAME
-       , EF.MOLECULAR_INDEXING_SCHEME AS MOLECULAR_BARCODE
-       , PDO.JIRA_TICKET_KEY AS PRODUCT_ORDER_KEY
-       , EF.SAMPLE_NAME AS PRODUCT_ORDER_SAMPLE
-       , SB.LIBRARY_TYPE
-       , SB.LIBRARY_CREATION_DATE
-       --, SB.LIBRARY_EVENT_ID
-    FROM LIBRARY_LCSET_SAMPLE_BASE SB
-       , EVENT_FACT EF
-       , PRODUCT_ORDER PDO
-   WHERE EF.LAB_EVENT_ID = SB.LIBRARY_EVENT_ID
-     AND EF.LAB_VESSEL_ID = SB.LIBRARY_ID
-     AND PDO.PRODUCT_ORDER_ID(+) = EF.PRODUCT_ORDER_ID;
+    --, SB.LIBRARY_ID
+    , EF.POSITION
+    , EF.LCSET_SAMPLE_NAME AS LCSET_SAMPLE
+    , EF.BATCH_NAME
+    , EF.MOLECULAR_INDEXING_SCHEME AS MOLECULAR_BARCODE
+    , PDO.JIRA_TICKET_KEY AS PRODUCT_ORDER_KEY
+    , EF.SAMPLE_NAME AS PRODUCT_ORDER_SAMPLE
+    , SB.LIBRARY_TYPE
+    , SB.LIBRARY_CREATION_DATE
+  --, SB.LIBRARY_EVENT_ID
+  FROM LIBRARY_LCSET_SAMPLE_BASE SB
+    , EVENT_FACT EF
+    , PRODUCT_ORDER PDO
+  WHERE EF.LAB_EVENT_ID = SB.LIBRARY_EVENT_ID
+        AND EF.LAB_VESSEL_ID = SB.LIBRARY_ID
+        AND PDO.PRODUCT_ORDER_ID(+) = EF.PRODUCT_ORDER_ID
+        AND EF.LCSET_SAMPLE_NAME IS NOT NULL;
 
 
 --   Creates the import tables
@@ -736,8 +737,9 @@ CREATE INDEX event_fact_idx1 ON event_fact (event_date);
 CREATE INDEX event_fact_idx2 ON event_fact (product_order_id, sample_name);
 CREATE INDEX event_fact_idx3 ON event_fact (lab_event_id);
 CREATE INDEX IDX_EVENT_VESSEL ON EVENT_FACT( LAB_VESSEL_ID );
-CREATE UNIQUE INDEX PK_ANCESTRY on library_ancestry (child_library_id, ancestor_library_id, child_event_id, ancestor_event_id );
-CREATE INDEX idx_ancestry_reverse on library_ancestry (ancestor_library_id, child_library_id );
+CREATE UNIQUE INDEX PK_ANCESTRY on library_ancestry (child_library_id, ancestor_library_id );
+ALTER TABLE library_ancestry ADD CONSTRAINT PK_ANCESTRY PRIMARY KEY (child_library_id, ancestor_library_id ) USING INDEX PK_ANCESTRY;
+CREATE UNIQUE INDEX idx_ancestry_reverse on library_ancestry (ancestor_library_id, child_library_id );
 CREATE INDEX ix_parent_project ON research_project (parent_research_project_id);
 CREATE INDEX ix_root_project ON research_project (root_research_project_id);
 CREATE UNIQUE INDEX seq_sample_fact_idx1 ON sequencing_sample_fact (flowcell_barcode, lane, molecular_indexing_scheme);

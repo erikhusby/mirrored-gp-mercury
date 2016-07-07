@@ -1,7 +1,7 @@
 /*
  * The Broad Institute
  * SOFTWARE COPYRIGHT NOTICE AGREEMENT
- * This software and its documentation are copyright 2014 by the
+ * This software and its documentation are copyright 2016 by the
  * Broad Institute/Massachusetts Institute of Technology. All rights are reserved.
  *
  * This software is supplied without any warranty or guaranteed support
@@ -13,19 +13,31 @@ package org.broadinstitute.gpinformatics.athena.entity.project;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.bass.BassFileType;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 
 import java.io.Serializable;
 
 public class SubmissionTuple implements Serializable {
-    private final String sampleName;
-    private final String fileName;
-    private final String version;
+    private static final long serialVersionUID = 1262062294730627888L;
+    private String sampleName;
+    private BassFileType fileType;
+    private String version;
 
-    public SubmissionTuple(String sampleName, String fileName, String version) {
+    /**
+     * No-arg constructor needed for JSON deserialization.
+     */
+    SubmissionTuple() {
+    }
+
+    public SubmissionTuple(String sampleName, BassFileType fileType, String version) {
         this.sampleName = sampleName;
-        this.fileName = fileName;
+        this.fileType = fileType;
         this.version = version;
+    }
+
+    public String getVersion() {
+        return version;
     }
 
     @Override
@@ -40,12 +52,17 @@ public class SubmissionTuple implements Serializable {
         SubmissionTuple that = OrmUtil.proxySafeCast(o, SubmissionTuple.class);
         return new EqualsBuilder()
                 .append(this.sampleName, that.sampleName)
-                .append(this.fileName, that.fileName)
+                .append(this.fileType, that.fileType)
                 .append(this.version, that.version).isEquals();
     }
 
     @Override
+    public String toString() {
+        return String.format("{sampleName = %s; fileType = %s; version = %s}",sampleName, fileType, version);
+    }
+
+    @Override
     public int hashCode() {
-        return new HashCodeBuilder().append(this.sampleName).append(this.fileName).append(this.version).hashCode();
+        return new HashCodeBuilder().append(this.sampleName).append(this.fileType).append(this.version).hashCode();
     }
 }

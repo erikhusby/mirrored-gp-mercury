@@ -38,6 +38,7 @@ import java.util.Map;
 public class VarioskanParserTest {
 
     public static final String VARIOSKAN_OUTPUT = "VarioskanOutput.xls";
+    public static final String VARIOSKAN_384_OUTPUT = "VarioskanRiboOutput.xls";
     public static final String PLATE1_BARCODE = "000001234567";
     public static final String PLATE1_BARCODE_IN_SS = "1234567";
     public static final String PLATE2_BARCODE = "000002345678";
@@ -151,7 +152,7 @@ public class VarioskanParserTest {
                     LabMetric.MetricType.PLATING_RIBO, varioskanPlateProcessor, mapBarcodeToPlate, 101L,
                     messageCollection).getLeft();
             Assert.assertFalse(messageCollection.hasErrors());
-            Assert.assertEquals(labMetricRun.getLabMetrics().size(), 3 * 95 + 16);
+            Assert.assertEquals(labMetricRun.getLabMetrics().size(), 3 * 95 );
             Assert.assertEquals(mapPositionToTube.get(VesselPosition.A02).getMetrics().iterator().next().getValue(),
                     new BigDecimal("3.39"));
             Assert.assertEquals(mapPositionToTube.get(VesselPosition.A03).getMetrics().iterator().next().getValue(),

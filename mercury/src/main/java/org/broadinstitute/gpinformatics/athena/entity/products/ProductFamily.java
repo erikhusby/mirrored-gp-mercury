@@ -4,6 +4,7 @@ package org.broadinstitute.gpinformatics.athena.entity.products;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionLibraryDescriptor;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
@@ -35,7 +36,7 @@ public class ProductFamily implements Serializable, Comparable<ProductFamily> {
     public static final String RNA_FAMILY_NAME = "RNA";
     public static final String SAMPLE_INITIATION_QUALIFICATION_CELL_CULTURE_NAME = "Sample Initiation, Qualification & Cell Culture";
 
-    public enum ProductFamilyName {
+    public enum ProductFamilyInfo {
         RNA("RNA"),
         SMALL_DESIGN_VALIDATION_EXTENSION("Small Design, Validation & Extension"),
         SAMPLE_INITIATION_QUALIFICATION_CELL_CULTURE(SAMPLE_INITIATION_QUALIFICATION_CELL_CULTURE_NAME),
@@ -50,13 +51,37 @@ public class ProductFamily implements Serializable, Comparable<ProductFamily> {
         DATA_ANALYSIS("Data Analysis");
 
         private final String familyName;
-        ProductFamilyName(String familyName) {
+        private final SubmissionLibraryDescriptor submissionLibraryDescriptor;
+
+        ProductFamilyInfo(String familyName) {
+            this(familyName, ProductFamily.defaultLibraryDescriptor());
+        }
+
+        ProductFamilyInfo(String familyName, SubmissionLibraryDescriptor submissionLibraryDescriptor) {
             this.familyName = familyName;
+            this.submissionLibraryDescriptor = submissionLibraryDescriptor;
         }
 
         public String getFamilyName() {
             return familyName;
         }
+
+        public SubmissionLibraryDescriptor getSubmissionLibraryDescriptor() {
+            return submissionLibraryDescriptor;
+        }
+
+        public static ProductFamilyInfo byFamilyName(String familyName) {
+            for (ProductFamilyInfo productFamilyInfo : values()) {
+                if (familyName.equals(productFamilyInfo.familyName)) {
+                    return productFamilyInfo;
+                }
+            }
+            return null;
+        }
+    }
+
+    public static SubmissionLibraryDescriptor defaultLibraryDescriptor() {
+        return new SubmissionLibraryDescriptor(SubmissionLibraryDescriptor.WHOLE_GENOME_NAME, SubmissionLibraryDescriptor.WHOLE_GENOME_DESCRIPTION);
     }
 
     /**
@@ -78,6 +103,14 @@ public class ProductFamily implements Serializable, Comparable<ProductFamily> {
 
     public Long getProductFamilyId() {
         return productFamilyId;
+    }
+
+    public SubmissionLibraryDescriptor getSubmissionType() {
+        ProductFamilyInfo productFamilyInfo = ProductFamilyInfo.byFamilyName(name);
+        if (productFamilyInfo != null) {
+            return productFamilyInfo.getSubmissionLibraryDescriptor();
+        }
+        return null;
     }
 
     @Nonnull

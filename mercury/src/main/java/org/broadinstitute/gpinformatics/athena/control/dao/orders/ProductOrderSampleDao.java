@@ -4,6 +4,8 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject_;
 import org.broadinstitute.gpinformatics.infrastructure.common.BaseSplitter;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -14,6 +16,7 @@ import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
+import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Join;
@@ -71,41 +74,6 @@ public class ProductOrderSampleDao extends GenericDao {
             return entityManager.createQuery(criteriaQuery).getResultList();
         } catch (NoResultException ignored) {
             return Collections.emptyList();
-        }
-    }
-
-    /**
-     * Find by ProductOrder and sample name.
-     * @param productOrder ProductOrder.
-     * @param sampleName Name of sample.
-     * @return The matching ProductOrderSample.
-     */
-    public List<ProductOrderSample> findByOrderAndName(@Nonnull ProductOrder productOrder, @Nonnull String sampleName) {
-        if (productOrder == null) {
-            throw new NullPointerException("Null Product Order.");
-        }
-        if (sampleName == null) {
-            throw new NullPointerException("Null Sample Name.");
-        }
-
-        EntityManager entityManager = getEntityManager();
-        CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
-
-        CriteriaQuery<ProductOrderSample> criteriaQuery =
-                criteriaBuilder.createQuery(ProductOrderSample.class);
-
-        Root<ProductOrderSample> productOrderSampleRoot = criteriaQuery.from(ProductOrderSample.class);
-        Predicate[] predicates = new Predicate[] {
-                criteriaBuilder.equal(productOrderSampleRoot.get(ProductOrderSample_.productOrder), productOrder),
-                criteriaBuilder.equal(productOrderSampleRoot.get(ProductOrderSample_.sampleName), sampleName)
-        };
-
-        criteriaQuery.where(predicates);
-
-        try {
-            return entityManager.createQuery(criteriaQuery).getResultList();
-        } catch (NoResultException ignored) {
-            return null;
         }
     }
 
@@ -193,5 +161,35 @@ public class ProductOrderSampleDao extends GenericDao {
                     }
                 },
                 page * sampleBlockSize, sampleBlockSize);
+    }
+
+    /**
+     * Find all ProductOrderSamples in PDOs which are in a ResearchProject
+     *
+     * @param researchProjectKey The research project to search.
+     * @return List<ProductOrderSample> which are in ResearchProject with key researchProjectKey
+     */
+    public List<ProductOrderSample> findByResearchProject(String researchProjectKey) {
+        EntityManager entityManager = getEntityManager();
+        CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+
+        CriteriaQuery<ProductOrderSample> criteriaQuery =
+                criteriaBuilder.createQuery(ProductOrderSample.class);
+        Root<ProductOrderSample> productOrderSampleRoot = criteriaQuery.from(ProductOrderSample.class);
+        Join<ProductOrderSample, ProductOrder> productOrderJoin =
+                productOrderSampleRoot.join(ProductOrderSample_.productOrder);
+        Join<ProductOrder, ResearchProject> researchProjectrJoin = productOrderJoin.join(ProductOrder_.researchProject);
+
+        Predicate predicate =
+                criteriaBuilder.equal(researchProjectrJoin.get(ResearchProject_.jiraTicketKey), researchProjectKey);
+        criteriaQuery.where(predicate);
+        criteriaQuery.orderBy(criteriaBuilder.desc(productOrderJoin.get(ProductOrder_.placedDate)));
+
+        try {
+            TypedQuery<ProductOrderSample> query = entityManager.createQuery(criteriaQuery);
+            return query.getResultList();
+        } catch (NoResultException ignored) {
+            return null;
+        }
     }
 }

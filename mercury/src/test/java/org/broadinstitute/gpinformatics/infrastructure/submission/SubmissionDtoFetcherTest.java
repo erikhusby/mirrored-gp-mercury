@@ -11,17 +11,20 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.submission;
 
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTrackerTest;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassDtoTestFactory;
+import org.broadinstitute.gpinformatics.infrastructure.bass.BassFileType;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassSearchService;
+import org.broadinstitute.gpinformatics.infrastructure.bass.BassSearchServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.AggregationMetricsFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.AggregationTestFactory;
@@ -34,7 +37,6 @@ import org.hamcrest.Matchers;
 import org.mockito.Mockito;
 import org.testng.annotations.Test;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -57,15 +59,24 @@ public class SubmissionDtoFetcherTest {
     private static final String NCBI_ERROR = "And error was returned from NCBI";
 
     private static final Double QUALITY_METRIC = 1.2;
+
     public void testFetch() throws Exception {
         double contamination = 2.2d;
         LevelOfDetection fingerprintLod = new LevelOfDetection(-45d, -13d);
         ResearchProject researchProject = ResearchProjectTestFactory.createTestResearchProject(RESEARCH_PROJECT_ID);
 
         ProductOrder productOrder = ProductOrderTestFactory.buildExExProductOrder(0);
-        productOrder.addSample(new ProductOrderSample(TEST_SAMPLE));
+        productOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
+        ProductOrderSample productOrderSample = new ProductOrderSample(TEST_SAMPLE);
+        productOrderSample.setSampleData(new BspSampleData(new HashMap<BSPSampleSearchColumn, String>() {{
+            put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, COLLABORATOR_SAMPLE_ID);
+        }}));
+        productOrder.addSample(productOrderSample);
         researchProject.addProductOrder(productOrder);
-        researchProject.addSubmissionTracker(new SubmissionTrackerTest.SubmissionTrackerStub(1234L, COLLABORATOR_SAMPLE_ID, "bambam.bam", "1"));
+        researchProject.addSubmissionTracker(
+                new SubmissionTrackerTest.SubmissionTrackerStub(1234L, COLLABORATOR_SAMPLE_ID, BassFileType.BAM, "1"));
+        researchProject.addSubmissionTracker(new SubmissionTrackerTest.SubmissionTrackerStub(1234L, COLLABORATOR_SAMPLE_ID,
+                BassFileType.BAM, "1"));
         List<Aggregation> aggregation =
                 Collections.singletonList(AggregationTestFactory
                         .buildAggregation(RESEARCH_PROJECT_ID, COLLABORATOR_SAMPLE_ID, contamination,
@@ -76,8 +87,9 @@ public class SubmissionDtoFetcherTest {
         Mockito.when(aggregationMetricsFetcher.fetch(Mockito.anyListOf(String.class), Mockito.anyListOf(String.class),
                 Mockito.anyListOf(Integer.class))).thenReturn(aggregation);
 
-        BassSearchService bassSearchService = Mockito.mock(BassSearchService.class);
-        Mockito.when(bassSearchService.runSearch(Mockito.anyString())).thenReturn(Arrays.asList(bassResults));
+        BassSearchService bassSearchService = Mockito.mock(BassSearchServiceImpl.class);
+        Mockito.when(bassSearchService.runSearch(Mockito.anyString(), Mockito.<String>anyVararg()))
+                .thenReturn(Collections.singletonList(bassResults));
 
         Map<String, BspSampleData> bspSampleDataMap = new HashMap<>();
         HashMap<BSPSampleSearchColumn, String> dataMap = new HashMap<>();
@@ -93,9 +105,13 @@ public class SubmissionDtoFetcherTest {
 
         BSPConfig testBspConfig = new BSPConfig(Deployment.STUBBY);
 
+        ProductOrderSampleDao productOrderSampleDao = Mockito.mock(ProductOrderSampleDao.class);
+        Mockito.when(productOrderSampleDao.findByResearchProject(Mockito.anyString())).thenReturn(
+                Collections.singletonList(productOrderSample)
+        );
         SubmissionDtoFetcher submissionDtoFetcher =
                 new SubmissionDtoFetcher(aggregationMetricsFetcher, bassSearchService, bspSampleDataFetcher, submissionService,
-                        testBspConfig);
+                        testBspConfig, productOrderSampleDao);
         List<SubmissionDto> submissionDtoList = submissionDtoFetcher.fetch(researchProject);
 
         assertThat(submissionDtoList, is(not(empty())));
@@ -108,6 +124,9 @@ public class SubmissionDtoFetcherTest {
             assertThat(submissionDto.getLanesInAggregation(), Matchers.equalTo(2));
             assertThat(submissionDto.getSubmittedStatus(),
                     Matchers.equalTo(SubmissionStatusDetailBean.Status.FAILURE.getKey()));
+            assertThat(submissionDto.getSubmissionLibraryDescriptor(), equalTo(SubmissionLibraryDescriptor.WHOLE_GENOME_DESCRIPTION));
+            assertThat(submissionDto.getSubmissionRepositoryName(), equalTo(SubmissionRepository.DEFAULT_REPOSITORY_DESCRIPTOR));
+
             assertThat(submissionDto.getStatusDate(), Matchers.notNullValue());
             assertThat(submissionDto.getSubmittedErrors(), Matchers.contains(NCBI_ERROR));
         }

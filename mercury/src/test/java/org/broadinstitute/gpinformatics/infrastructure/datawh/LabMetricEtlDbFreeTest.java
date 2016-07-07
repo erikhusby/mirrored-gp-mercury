@@ -1,28 +1,20 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
-import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabMetricRunDao;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricDecision;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricRun;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
@@ -214,4 +206,3 @@ public class LabMetricEtlDbFreeTest {
     }
 
 }
-

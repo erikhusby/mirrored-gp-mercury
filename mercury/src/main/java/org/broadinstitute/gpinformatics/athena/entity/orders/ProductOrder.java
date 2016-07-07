@@ -1,6 +1,9 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
+import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Iterators;
 import com.google.common.collect.Multimap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -329,6 +332,14 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     /**
+     * Load CollaboratorSampleName for all the supplied ProductOrderSamples.
+     * @see SampleDataFetcher
+     */
+    public static void loadCollaboratorSampleName(List<ProductOrderSample> samples) {
+        loadSampleData(samples, BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID);
+    }
+
+    /**
      * Load SampleData for all the supplied ProductOrderSamples.
      * @see SampleDataFetcher
      */
@@ -607,7 +618,8 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     /**
-     * Replace the current list of samples with a new list of samples. The order of samples is preserved.
+     * Replace the current list of samples with a new list of samples. The order of the provided samples collection is
+     * preserved, even if it contains a mix of existing and new instances.
      *
      * @param samples the samples to set
      */
@@ -619,10 +631,19 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
         // Only update samples if the new sample list is different from the old one.
         if (isSampleListDifferent(samples)) {
-            this.samples.clear();
-
+            removeAllSamples();
             addSamplesInternal(samples, 0);
         }
+    }
+
+    /**
+     * Remove all samples from this PDO and detach them from all other objects so they will be deleted.
+     */
+    private void removeAllSamples() {
+        for (ProductOrderSample sample : samples) {
+            sample.remove();
+        }
+        samples.clear();
     }
 
     private void addSamplesInternal(Collection<ProductOrderSample> newSamples, int samplePos) {
@@ -1089,8 +1110,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         }
         OrderStatus newStatus = OrderStatus.Completed;
         for (ProductOrderSample sample : samples) {
-            if (sample.getDeliveryStatus() != ProductOrderSample.DeliveryStatus.ABANDONED
-                && !sample.isCompletelyBilled()) {
+            if (sample.isToBeBilled()) {
                 // Found an incomplete item.
                 newStatus = OrderStatus.Submitted;
                 break;
@@ -1658,29 +1678,6 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return regInfo;
     }
 
-    // todo jmt move this to a preference
-    private static final Map<String, String> mapProductPartToGenoChip = new HashMap<>();
-    static {
-        mapProductPartToGenoChip.put("P-EX-0017", "Broad_GWAS_supplemental_15061359_A1");
-        mapProductPartToGenoChip.put("P-WG-0022", "HumanOmni2.5-8v1_A");
-        mapProductPartToGenoChip.put("P-WG-0023", "HumanOmniExpressExome-8v1_B");
-        mapProductPartToGenoChip.put("P-WG-0025", "HumanExome-12v1-2_A");
-        mapProductPartToGenoChip.put("P-WG-0028", "HumanOmniExpress-24v1-1_A");
-        mapProductPartToGenoChip.put("P-WG-0029", "HumanExome-12v1-2_A");
-        mapProductPartToGenoChip.put("P-WG-0031", "HumanCoreExome-24v1-0_A");
-        mapProductPartToGenoChip.put("P-WG-0036", "PsychChip_15048346_B");
-        mapProductPartToGenoChip.put("P-WG-0053", "Broad_GWAS_supplemental_15061359_A1");
-        mapProductPartToGenoChip.put("P-WG-0055", "PsychChip_v1-1_15073391_A1");
-    }
-
-    public String getGenoChipType() {
-        String genoChipType = mapProductPartToGenoChip.get(getProduct().getPartNumber());
-        if (getProduct().getPartNumber().equals("P-WG-0036") && getTitle().contains("Danish")) {
-            genoChipType = "DBS_Wave_Psych";
-        }
-        return genoChipType;
-    }
-
     /**
      * A product can have more then one Workflow if its AddOns have workflows. This method returns a List of
      * AddOn workflows and the workflow of its Product.
@@ -1703,5 +1700,19 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             workflows.add(workflow);
         }
         return workflows;
+    }
+
+    public int getUnbilledSampleCount() {
+        Iterable<ProductOrderSample> filteredResults = null;
+
+            filteredResults = Iterables.filter(samples,
+                    new Predicate<ProductOrderSample>() {
+                        @Override
+                        public boolean apply(@Nullable ProductOrderSample productOrderSample) {
+                            return productOrderSample.isToBeBilled();
+                        }
+                    });
+
+        return (filteredResults != null)?Iterators.size(filteredResults.iterator()):0;
     }
 }

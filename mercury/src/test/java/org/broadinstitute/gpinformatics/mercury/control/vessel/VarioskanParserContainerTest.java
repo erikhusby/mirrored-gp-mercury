@@ -94,6 +94,97 @@ public class VarioskanParserContainerTest extends Arquillian {
 
     }
 
+    @Test
+    public void testPersistence384InDuplicate() throws Exception {
+        // Replace plate barcodes with timestamps, to avoid unique constraints
+        String timestamp = SIMPLE_DATE_FORMAT.format(new Date());
+        String plateBarcode = timestamp + "01";
+        MessageCollection messageCollection = new MessageCollection();
+        final boolean PERSIST_VESSELS = true;
+        final boolean ACCEPT_PICO_REDO = true;
+
+        Pair<LabMetricRun, String> pair1 = make384WellVarioskanRun(plateBarcode, timestamp,
+                messageCollection, !ACCEPT_PICO_REDO, PERSIST_VESSELS);
+
+        Assert.assertTrue(StringUtils.isNotBlank(pair1.getRight()));
+        Assert.assertFalse(messageCollection.hasErrors());
+        Assert.assertFalse(messageCollection.hasWarnings());
+        Assert.assertNotNull(pair1.getLeft());
+        Assert.assertEquals(pair1.getLeft().getLabMetrics().size(), 95 * 3);
+
+        // Should fail the pico redo due to previous quants of the same type.
+        messageCollection.clearAll();
+        Pair<LabMetricRun, String> pair2 = make384WellVarioskanRun(plateBarcode, timestamp + "2",
+                messageCollection, !ACCEPT_PICO_REDO, !PERSIST_VESSELS);
+
+        Assert.assertTrue(messageCollection.hasErrors());
+        Assert.assertTrue(messageCollection.getErrors().get(0).contains("Initial Ribo was previously done"));
+        Assert.assertNull(pair2);
+
+        // Should accept the pico redo when told to, despite previous quants.
+        messageCollection.clearAll();
+        Pair<LabMetricRun, String> pair3 = make384WellVarioskanRun(plateBarcode, timestamp + "3",
+                messageCollection, ACCEPT_PICO_REDO, !PERSIST_VESSELS);
+
+        Assert.assertTrue(StringUtils.isNotBlank(pair3.getRight()));
+        Assert.assertFalse(messageCollection.hasErrors());
+        Assert.assertFalse(messageCollection.hasWarnings());
+        Assert.assertNotNull(pair3.getLeft());
+        Assert.assertEquals(pair3.getLeft().getLabMetrics().size(), 95 * 3);
+    }
+
+    private Pair<LabMetricRun, String> make384WellVarioskanRun(String plateBarcode, String namePrefix,
+                                                              MessageCollection messageCollection, boolean acceptRePico,
+                                                              boolean persistVessels)
+            throws Exception {
+        Workbook workbook = WorkbookFactory.create(VarioskanParserTest.getSpreadsheet(VarioskanParserTest.VARIOSKAN_384_OUTPUT));
+        Sheet curveSheet = workbook.getSheet(VarioskanRowParser.QUANTITATIVE_CURVE_FIT1_TAB);
+        for (int i = 0; i < curveSheet.getLastRowNum(); i++) {
+            Row row = curveSheet.getRow(i);
+            if (row != null) {
+                Cell cell = row.getCell(0);
+                if (cell != null) {
+                    cell.setCellType(Cell.CELL_TYPE_STRING);
+                    String cellValue = cell.getStringCellValue();
+                    if (cellValue.equals("111222333")) {
+                        cell.setCellValue(plateBarcode);
+                    }
+                }
+            }
+        }
+
+        // Replace run name with timestamp, to avoid unique constraints
+        Sheet generalSheet = workbook.getSheet(VarioskanRowParser.GENERAL_INFO_TAB);
+        for (int i = 0; i < generalSheet.getLastRowNum(); i++) {
+            Row row = generalSheet.getRow(i);
+            if (row != null) {
+                Cell nameCell = row.getCell(VarioskanRowParser.NAME_COLUMN);
+                if (nameCell != null && nameCell.getStringCellValue().equals(
+                        VarioskanRowParser.NameValue.RUN_NAME.getFieldName())) {
+                    Cell valueCell = row.getCell(VarioskanRowParser.VALUE_COLUMN);
+                    valueCell.setCellValue(namePrefix + " Mike Test");
+                } else if (nameCell != null && nameCell.getStringCellValue().equals(
+                        VarioskanRowParser.NameValue.RUN_STARTED.getFieldName())) {
+                    Cell valueCell = row.getCell(VarioskanRowParser.VALUE_COLUMN);
+                    valueCell.setCellValue(new SimpleDateFormat(
+                            VarioskanRowParser.NameValue.RUN_STARTED.getDateFormat()).format(new Date()));
+                }
+            }
+        }
+
+        File tempFile = File.createTempFile("VarioskanRibo", ".xls");
+        workbook.write(new FileOutputStream(tempFile));
+        Map<String, StaticPlate> mapBarcodeToPlate = new HashMap<>();
+        Map<VesselPosition, BarcodedTube> mapPositionToTube = VarioskanParserTest.buildRiboTubesAndTransfers(
+                mapBarcodeToPlate, plateBarcode, namePrefix);
+        if (persistVessels) {
+            labVesselDao.persistAll(mapBarcodeToPlate.values());
+            labVesselDao.persistAll(mapPositionToTube.values());
+        }
+        return vesselEjb.createVarioskanRun(new FileInputStream(tempFile), LabMetric.MetricType.INITIAL_RIBO,
+                BSPManagerFactoryStub.QA_DUDE_USER_ID, messageCollection, acceptRePico);
+    }
+
     private Pair<LabMetricRun, String> makeVarioskanRun(String plate1Barcode, String plate2Barcode, String namePrefix,
                                                         MessageCollection messageCollection, boolean acceptRePico,
                                                         boolean persistVessels)

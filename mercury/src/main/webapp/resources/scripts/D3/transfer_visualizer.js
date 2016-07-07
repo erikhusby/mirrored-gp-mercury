@@ -11,9 +11,10 @@ function renderJson(json) {
                 return 'Add barcode ' + d.label;
             },
             action: function (element, d, i) {
-                var currentValue = d3.select("#barcodes").text();
+                var textArea = document.getElementById("barcodes");
+                var currentValue = textArea.value;
                 // d.id for racks and plates, d.label for tubes
-                d3.select("#barcodes").text(currentValue + " " + (d.id ? d.id : d.label));
+                textArea.value = currentValue + " " + (d.id ? d.id : d.label);
             }
         }
     ];
@@ -264,12 +265,14 @@ function renderJson(json) {
         .call(wrap,  150);
 
     // Pan to starting vessel.
-    var scale = 1;
-    var graphNode = dagreGraph.node(json.startId);
-    var panX = (graphNode.x * -scale) + (width / 2);
-    var panY = (graphNode.y * -scale) + (height / 2);
-    zoomBehavior.translate([panX, panY]).scale(1);
-    zoomBehavior.event(svg.transition().duration(500));
+    if (json.startId) {
+        var scale = 1;
+        var graphNode = dagreGraph.node(json.startId);
+        var panX = (graphNode.x * -scale) + (width / 2);
+        var panY = (graphNode.y * -scale) + (height / 2);
+        zoomBehavior.translate([panX, panY]).scale(1);
+        zoomBehavior.event(svg.transition().duration(500));
+    }
 
     // Creates tspan elements to break a long label across multiple lines.
     function wrap(text, width) {

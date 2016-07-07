@@ -43,7 +43,7 @@ public class BioProjectTokenInput extends TokenInput<BioProject> {
 
     @Override
     protected String getTokenName(BioProject bioProject) {
-        return String.format("%s<br/>accession: %s, alias: %s", bioProject.getProjectName(), bioProject.getAccession(), bioProject.getAlias());
+        return bioProject.getProjectName();
     }
 
     @Override
