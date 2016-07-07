@@ -414,7 +414,7 @@
                         {"mData": "<%=SubmissionField.LANES_IN_AGGREGATION %>"},
                         {"mData": "<%=SubmissionField.SUBMITTED_VERSION %>",
                             "mRender": function (data, type, row) {
-                                if (type === 'display') {
+                                if (type === 'display' && data) {
                                     var latestVersion = row.<%=SubmissionField.VERSION%>;
                                     if (latestVersion > data) {
                                         return createPopover(data+"*", "Submitted version: "+data, "A newer version is available: " + latestVersion);

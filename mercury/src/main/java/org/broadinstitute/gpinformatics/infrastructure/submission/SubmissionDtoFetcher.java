@@ -246,20 +246,11 @@ public class SubmissionDtoFetcher {
     }
 
     public void refreshSubmissionStatuses(ResearchProject editResearchProject, List<SubmissionDto> submissionDataList) {
-        Map<String, SubmissionDto> uuIdSubmissionDataMap = new HashMap<>(submissionDataList.size());
-        for (SubmissionDto submissionDto : submissionDataList) {
-            if (StringUtils.isNotBlank(submissionDto.getUuid())) {
-                uuIdSubmissionDataMap.put(submissionDto.getUuid(), submissionDto);
-            }
-        }
-        Set<String> uuIds = uuIdSubmissionDataMap.keySet();
         Map<String, SubmissionTuple> submissionTupleMap = collectSubmissionIdentifiers(editResearchProject);
         Map<String, SubmissionStatusDetailBean> sampleSubmissionMap = buildSampleToSubmissionMap(submissionTupleMap);
-        if (!uuIds.isEmpty()) {
-            for (String uuId : uuIds) {
-                SubmissionDto submissionDto = uuIdSubmissionDataMap.get(uuId);
-                SubmissionStatusDetailBean statusDetailBean = sampleSubmissionMap.get(uuId);
-                submissionDto.setStatusDetailBean(statusDetailBean);
+        for (SubmissionDto submissionDto : submissionDataList) {
+            if (StringUtils.isNotBlank(submissionDto.getUuid())) {
+                submissionDto.setStatusDetailBean(sampleSubmissionMap.get(submissionDto.getUuid()));
             }
         }
     }
