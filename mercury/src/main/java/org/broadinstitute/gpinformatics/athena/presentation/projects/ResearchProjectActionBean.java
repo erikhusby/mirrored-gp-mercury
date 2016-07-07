@@ -121,6 +121,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
     public static final String PROJECT_LIST_PAGE = "/projects/list.jsp";
     public static final String PROJECT_VIEW_PAGE = "/projects/view.jsp";
     public static final String PROJECT_SUBMISSIONS_PAGE = "/projects/submissions.jsp";
+    public static final String BIOPROJECT_PARAMETER = "bioProjectTokenInput.listOfKeys";
     public boolean supressValidationErrors;
     private static final String BEGIN_COLLABORATION_ACTION = "beginCollaboration";
 
@@ -1108,6 +1109,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         }
         return new RedirectResolution(ResearchProjectActionBean.class, VIEW_ACTION)
                 .addParameter(RESEARCH_PROJECT_PARAMETER, researchProject)
+                .addParameter(BIOPROJECT_PARAMETER, bioProjectTokenInput.getListOfKeys())
                 .addParameter(LIBRARY_DESCRIPTOR_PARAMETER, selectedSubmissionLibraryDescriptor)
                 .addParameter(REPOSITORY_PARAMETER, selectedSubmissionRepository)
                 .addParameter(SUBMISSION_SAMPLES_PARAMETER, selectedSubmissionSamples)
