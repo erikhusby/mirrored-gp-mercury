@@ -332,6 +332,14 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     /**
+     * Load CollaboratorSampleName for all the supplied ProductOrderSamples.
+     * @see SampleDataFetcher
+     */
+    public static void loadCollaboratorSampleName(List<ProductOrderSample> samples) {
+        loadSampleData(samples, BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID);
+    }
+
+    /**
      * Load SampleData for all the supplied ProductOrderSamples.
      * @see SampleDataFetcher
      */

@@ -49,4 +49,19 @@ public class RegulatoryInfoFixupTest extends Arquillian {
         regulatoryInfoDao.persist(new FixupCommentary(
                 "GPLIM-3765 Renaming RegulatoryInfo for IRB 1107004579 to ORSP-783 (which is a reference to IRB 1107004579)"));
     }
+
+    @Test(enabled = false)
+    public void support1823ChangeRegulatoryInfoForOrsp3569() {
+        userBean.loginOSUser();
+
+        List<RegulatoryInfo> regulatoryInfos = regulatoryInfoDao.findByIdentifier("ORSP-3569");
+        assertThat(regulatoryInfos, hasSize(1));
+        RegulatoryInfo regulatoryInfo = regulatoryInfos.get(0);
+        assertThat(regulatoryInfo.getType(), equalTo(RegulatoryInfo.Type.IRB));
+
+        regulatoryInfo.setType(RegulatoryInfo.Type.ORSP_NOT_HUMAN_SUBJECTS_RESEARCH);
+
+        regulatoryInfoDao.persist(new FixupCommentary("Support-1823 change type to Not Human Subjects Research"));
+
+    }
 }

@@ -1,7 +1,7 @@
 /*
  * The Broad Institute
  * SOFTWARE COPYRIGHT NOTICE AGREEMENT
- * This software and its documentation are copyright 2014 by the
+ * This software and its documentation are copyright 2016 by the
  * Broad Institute/Massachusetts Institute of Technology. All rights are reserved.
  *
  * This software is supplied without any warranty or guaranteed support
@@ -19,14 +19,25 @@ import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import java.io.Serializable;
 
 public class SubmissionTuple implements Serializable {
-    private final String sampleName;
-    private final BassFileType fileType;
-    private final String version;
+    private static final long serialVersionUID = 1262062294730627888L;
+    private String sampleName;
+    private BassFileType fileType;
+    private String version;
+
+    /**
+     * No-arg constructor needed for JSON deserialization.
+     */
+    SubmissionTuple() {
+    }
 
     public SubmissionTuple(String sampleName, BassFileType fileType, String version) {
         this.sampleName = sampleName;
         this.fileType = fileType;
         this.version = version;
+    }
+
+    public String getVersion() {
+        return version;
     }
 
     @Override

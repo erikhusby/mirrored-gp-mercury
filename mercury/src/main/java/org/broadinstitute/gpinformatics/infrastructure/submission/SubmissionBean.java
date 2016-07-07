@@ -10,24 +10,26 @@ import javax.xml.bind.annotation.XmlElement;
 import java.io.Serializable;
 
 public class SubmissionBean implements Serializable {
-
-    private static final long serialVersionUID = 1304022388798502284L;
+    private static final long serialVersionUID = 5575909517269494566L;
     private String uuid;
     private String studyContact;
     private BioProject bioproject;
     private SubmissionBioSampleBean biosample;
+    private String submissionRepository;
+    private String submissionType;
 
     public SubmissionBean() {
     }
 
 
-    public SubmissionBean(String uuid, String studyContact,
-                          BioProject bioproject,
-                          SubmissionBioSampleBean biosample) {
+    public SubmissionBean(String uuid, String studyContact, BioProject bioproject, SubmissionBioSampleBean biosample,
+                          SubmissionRepository submissionRepository, SubmissionLibraryDescriptor submissionLibraryDescriptor) {
         this.uuid = uuid;
         this.studyContact = studyContact;
         this.bioproject = bioproject;
         this.biosample = biosample;
+        this.submissionRepository = submissionRepository.getName();
+        this.submissionType = submissionLibraryDescriptor.getName();
     }
 
     public String getUuid() {
@@ -66,6 +68,25 @@ public class SubmissionBean implements Serializable {
         this.biosample = biosample;
     }
 
+    public String getSubmissionRepository() {
+        return submissionRepository;
+    }
+
+    @XmlElement(name="site")
+    public void setSubmissionRepository(String submissionRepository) {
+        this.submissionRepository = submissionRepository;
+    }
+
+    public String getSubmissionType() {
+        return submissionType;
+    }
+
+    @XmlElement(name="submissiondatatype")
+    public void setSubmissionType(String submissionType) {
+        this.submissionType = submissionType;
+    }
+
+    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     @Override
     public boolean equals(Object other) {
 
@@ -81,14 +102,14 @@ public class SubmissionBean implements Serializable {
         return new EqualsBuilder().append(getUuid(), castOther.getUuid())
                                   .append(getStudyContact(), castOther.getStudyContact())
                                   .append(getBioproject(), castOther.getBioproject())
-                                  .append(getBiosample(), castOther.getBiosample()).isEquals();
+                                  .append(getBiosample(), castOther.getBiosample())
+                                  .append(getSubmissionRepository(), castOther.getSubmissionRepository())
+                                  .append(getSubmissionType(), castOther.getSubmissionType()).isEquals();
     }
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder().append(getUuid())
-                                    .append(getStudyContact())
-                                    .append(getBioproject())
-                                    .append(getBiosample()).toHashCode();
+        return new HashCodeBuilder().append(getUuid()).append(getStudyContact()).append(getBioproject())
+                .append(getBiosample()).append(getSubmissionRepository()).append(getSubmissionType()).toHashCode();
     }
 }

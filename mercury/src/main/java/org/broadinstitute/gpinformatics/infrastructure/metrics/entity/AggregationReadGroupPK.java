@@ -11,12 +11,17 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.metrics.entity;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
 import java.io.Serializable;
 
 @Embeddable
 public class AggregationReadGroupPK implements Serializable {
+    private static final long serialVersionUID = -1792866235375615254L;
     @Column(name = "AGGREGATION_ID", nullable = false, insertable = false, updatable = false)
     private Integer aggregationId;
 
@@ -46,35 +51,37 @@ public class AggregationReadGroupPK implements Serializable {
     }
 
     @Override
+    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     public boolean equals(Object o) {
         if (this == o) {
             return true;
         }
-        if (o == null || getClass() != o.getClass()) {
+
+        if (o == null || (!OrmUtil.proxySafeIsInstance(o, AggregationReadGroupPK.class))) {
             return false;
         }
 
-        AggregationReadGroupPK that = (AggregationReadGroupPK) o;
+        if (!(o instanceof AggregationReadGroupPK)) {
+            return false;
+        }
 
-        if (!aggregationId.equals(that.aggregationId)) {
-            return false;
-        }
-        if (flowcellBarcode != null ? !flowcellBarcode.equals(that.flowcellBarcode) : that.flowcellBarcode != null) {
-            return false;
-        }
-        if (lane != null ? !lane.equals(that.lane) : that.lane != null) {
-            return false;
-        }
-        return !(libraryName != null ? !libraryName.equals(that.libraryName) : that.libraryName != null);
+        AggregationReadGroupPK that = OrmUtil.proxySafeCast(o, AggregationReadGroupPK.class);
 
+        return new EqualsBuilder()
+                .append(getAggregationId(), that.getAggregationId())
+                .append(getFlowcellBarcode(), that.getFlowcellBarcode())
+                .append(getLane(), that.getLane())
+                .append(getLibraryName(), that.getLibraryName())
+                .isEquals();
     }
 
     @Override
     public int hashCode() {
-        int result = aggregationId;
-        result = 31 * result + (flowcellBarcode != null ? flowcellBarcode.hashCode() : 0);
-        result = 31 * result + (lane != null ? lane.hashCode() : 0);
-        result = 31 * result + (libraryName != null ? libraryName.hashCode() : 0);
-        return result;
+        return new HashCodeBuilder(17, 37)
+                .append(getAggregationId())
+                .append(getFlowcellBarcode())
+                .append(getLane())
+                .append(getLibraryName())
+                .toHashCode();
     }
 }

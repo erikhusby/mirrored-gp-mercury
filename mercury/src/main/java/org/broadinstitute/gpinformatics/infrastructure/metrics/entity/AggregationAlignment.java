@@ -53,31 +53,4 @@ public class AggregationAlignment implements Serializable {
     public Aggregation getAggregation() {
         return aggregation;
     }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof AggregationAlignment)) {
-            return false;
-        }
-
-        AggregationAlignment that = (AggregationAlignment) o;
-
-        if (!aggregationId.equals(that.aggregationId)) {
-            return false;
-        }
-        return !(category != null ? !category.equals(that.category) : that.category != null) && !(
-                pfAlignedBases != null ? !pfAlignedBases.equals(that.pfAlignedBases) : that.pfAlignedBases != null);
-
-    }
-
-    @Override
-    public int hashCode() {
-        int result = aggregationId;
-        result = 31 * result + (category != null ? category.hashCode() : 0);
-        result = 31 * result + (pfAlignedBases != null ? pfAlignedBases.hashCode() : 0);
-        return result;
-    }
 }

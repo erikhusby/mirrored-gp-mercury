@@ -687,8 +687,8 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         return getProductFamily().isSupportsRin();
     }
 
-    public boolean isSameProductFamily(ProductFamily.ProductFamilyName productFamilyName) {
-        return productFamilyName.getFamilyName().equals(this.productFamily.getName());
+    public boolean isSameProductFamily(ProductFamily.ProductFamilyInfo productFamilyInfo) {
+        return productFamilyInfo.getFamilyName().equals(this.productFamily.getName());
     }
 
     public boolean getSupportsSkippingQuote() {
@@ -718,7 +718,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
      * @return Whether this is an exome express product or not.
      */
     public boolean isExomeExpress() {
-        return productFamily.getName().equals(ProductFamily.ProductFamilyName.EXOME.getFamilyName()) && productName.startsWith(EXOME_EXPRESS);
+        return productFamily.getName().equals(ProductFamily.ProductFamilyInfo.EXOME.getFamilyName()) && productName.startsWith(EXOME_EXPRESS);
     }
 
     public Boolean getExpectInitialQuantInMercury() {

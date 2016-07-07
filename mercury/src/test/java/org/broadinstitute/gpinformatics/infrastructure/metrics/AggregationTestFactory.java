@@ -19,7 +19,7 @@ import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregatio
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationWgs;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.LevelOfDetection;
 
-import java.util.Arrays;
+import java.util.Collections;
 
 public class AggregationTestFactory {
     public static Aggregation buildAggregation(String project, String sample, Double contamination,
@@ -35,7 +35,7 @@ public class AggregationTestFactory {
         Integer readGroupCount = 2;
 
         return new Aggregation(project, sample, null, null, readGroupCount, dataType,
-                Arrays.asList(aggregationAlignment), aggregationContam, aggregationHybridSelection,
-                Arrays.asList(aggregationReadGroup), aggregationWgs, fingerprintLod);
+                Collections.singleton(aggregationAlignment), aggregationContam, aggregationHybridSelection,
+                Collections.singleton(aggregationReadGroup), aggregationWgs, fingerprintLod);
     }
 }

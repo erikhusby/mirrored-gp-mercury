@@ -19,7 +19,7 @@ public class ProductFamilyDaoTest extends ContainerTest {
 
     public void testSingle() {
         // not sure if fixture data has been loaded into our test database yet, so this is just a smoke test
-        ProductFamily productFamily = dao.find(ProductFamily.ProductFamilyName.WHOLE_GENOME.getFamilyName());
+        ProductFamily productFamily = dao.find(ProductFamily.ProductFamilyInfo.WHOLE_GENOME.getFamilyName());
         Assert.assertNotNull(productFamily);
     }
 
