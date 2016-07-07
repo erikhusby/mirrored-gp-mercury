@@ -1028,7 +1028,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
 
             // When getting cached submissions update the submissionStatus if requested.
             if (!submissionSamples.isEmpty() && refreshSubmissionStatus) {
-                submissionDtoFetcher.refreshSubmissionStatuses(submissionSamples);
+                submissionDtoFetcher.refreshSubmissionStatuses(editResearchProject, submissionSamples);
             }
         }
         sessionCache.put(researchProject, submissionSamples);

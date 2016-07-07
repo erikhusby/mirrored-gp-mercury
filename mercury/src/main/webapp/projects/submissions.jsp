@@ -77,7 +77,7 @@
         .ui-accordion-content {
             overflow: visible;
         }
-        span.submission-status-tooltip{
+        div.submission-status-tooltip{
             position:relative;
             padding: 12px;
             left: -12px;
@@ -276,7 +276,7 @@
 
 
             function createPopover(data, title, errors) {
-                var span = jQuery("<span/>", {
+                var div = jQuery("<div></div>", {
                     "class":"submission-status-tooltip popover-dismiss",
                     "title":title,
                     "data-content":errors,
@@ -285,6 +285,7 @@
                     "data-placement":"top",
                     "text": data
                 });
+                return div[0].outerHTML;
             }
 
             var oTable;
@@ -413,7 +414,7 @@
                         {"mData": "<%=SubmissionField.LANES_IN_AGGREGATION %>"},
                         {"mData": "<%=SubmissionField.SUBMITTED_VERSION %>",
                             "mRender": function (data, type, row) {
-                                if (type === 'display') {
+                                if (type === 'display' && data) {
                                     var latestVersion = row.<%=SubmissionField.VERSION%>;
                                     if (latestVersion > data) {
                                         return createPopover(data+"*", "Submitted version: "+data, "A newer version is available: " + latestVersion);
@@ -430,7 +431,8 @@
                                 if (type === 'display') {
                                     var errors = row.<%=SubmissionField.SUBMITTED_ERRORS%>;
                                     if (errors) {
-                                        return createPopover(data, data, errors);
+                                        var popoverText = data + " (errors)";
+                                        return createPopover(popoverText, data, errors.join("<br/>"));
                                     }
                                 }
                                 return data;
