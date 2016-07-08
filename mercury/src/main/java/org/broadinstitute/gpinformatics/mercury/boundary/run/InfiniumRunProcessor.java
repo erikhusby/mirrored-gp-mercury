@@ -15,8 +15,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * User: jowalsh
- * Date: 4/2/16
+ * Scans run folder for the finished idat pairs for each sample well in a chip
  */
 public class InfiniumRunProcessor {
 
@@ -64,7 +63,7 @@ public class InfiniumRunProcessor {
         File[] files = runDirectory.listFiles(new FilenameFilter() {
             @Override
             public boolean accept(File file, String name) {
-                return name.endsWith(".idat");
+                return name.toLowerCase().endsWith(".idat");
             }
         });
 

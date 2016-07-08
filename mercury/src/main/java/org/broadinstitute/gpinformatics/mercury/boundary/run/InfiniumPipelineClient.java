@@ -22,8 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * User: jowalsh
- * Date: 4/3/16
+ * Forward finished Infinium chip wells to the pipeline for analysis.
  */
 public class InfiniumPipelineClient {
 

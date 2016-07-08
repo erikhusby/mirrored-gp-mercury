@@ -1512,4 +1512,8 @@ public class LabEventFactory implements Serializable {
     public void setBarcodedTubeDao(BarcodedTubeDao barcodedTubeDao) {
         this.barcodedTubeDao = barcodedTubeDao;
     }
+
+    public void setGapHandler(GapHandler gapHandler) {
+        this.gapHandler = gapHandler;
+    }
 }

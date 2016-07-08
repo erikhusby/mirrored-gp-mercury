@@ -11,21 +11,12 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * User: jowalsh
- * Date: 4/6/16
+ * Lists infinium chips pending autocall. E.g. chips with an xstain event but not an InfiniumAutoCallAllStarted.
  */
 public class InfiniumPendingChipFinder {
 
     @Inject
     private LabEventDao labEventDao;
-
-    public InfiniumPendingChipFinder() {
-    }
-
-    /** For Testing Purposes **/
-    public InfiniumPendingChipFinder(LabEventDao labEventDao) {
-
-    }
 
     public List<LabVessel> listPendingXStainChips() {
         List<LabVessel> list = new ArrayList<>();

@@ -76,8 +76,7 @@ public class InfiniumRunFinder implements Serializable {
             if (!autocallStarted && chipWellResults.getWellCompleteMap().get(vesselPosition)) {
                 if (callStarterOnWell(staticPlate, vesselPosition)) {
                     LabEventMetadata newMetadata = new LabEventMetadata();
-                    newMetadata
-                            .setLabEventMetadataType(LabEventMetadata.LabEventMetadataType.AutocallStarted);
+                    newMetadata.setLabEventMetadataType(LabEventMetadata.LabEventMetadataType.AutocallStarted);
                     newMetadata.setValue(vesselPosition.name());
                     someStartedEvent.addMetadata(newMetadata);
                 } else {
@@ -125,7 +124,7 @@ public class InfiniumRunFinder implements Serializable {
         PlateType plateType = new PlateType();
         plateType.setBarcode(staticPlate.getLabel());
         plateType.setPhysType(staticPlate.getPlateType().getAutomationName());
-        plateType.setSection("ALL96"); //TODO
+        plateType.setSection("ALL96"); //TODO what to put here? doesn't really matter
         plateEventType.setPlate(plateType);
         bettaLIMSMessage.getPlateEvent().add(plateEventType);
         ObjectMarshaller<BettaLIMSMessage> bettaLIMSMessageObjectMarshaller =
