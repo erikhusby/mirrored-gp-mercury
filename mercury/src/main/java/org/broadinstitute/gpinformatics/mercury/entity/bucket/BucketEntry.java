@@ -110,6 +110,7 @@ public class BucketEntry {
     /*
         TODO SGM:  Implement this as a separate join table to have the ranking associated directly with the Product
         order, and not duplicated across bucket entries
+        todo jmt can this be removed?
      */
     @Column(name = "product_order_ranking")
     private Integer productOrderRanking = 1;
