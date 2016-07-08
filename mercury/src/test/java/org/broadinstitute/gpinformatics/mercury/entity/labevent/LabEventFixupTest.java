@@ -1478,4 +1478,23 @@ public class LabEventFixupTest extends Arquillian {
         Assert.assertEquals(barcodedTube.getSampleInstancesV2().size(), 5);
         utx.commit();
     }
+
+    @Test(enabled = false)
+    public void fixupGplim4203() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        long[] ids = {1397778L, 1397779L };
+        for (long id : ids) {
+            LabEvent labEvent = labEventDao.findById(LabEvent.class, id);
+            Assert.assertEquals(labEvent.getLabEventType(), LabEventType.POND_PICO);
+            System.out.println("LabEvent " + id + " type " + labEvent.getLabEventType());
+            labEvent.setLabEventType(LabEventType.CATCH_PICO);
+            System.out.println("   updated to " + labEvent.getLabEventType());
+        }
+
+        labEventDao.persist(new FixupCommentary("GPLIM-4203 changing lab event type to catch pico"));
+        labEventDao.flush();
+        utx.commit();
+    }
 }
