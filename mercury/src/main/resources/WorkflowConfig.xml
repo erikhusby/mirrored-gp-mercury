@@ -514,6 +514,7 @@
                 <name>PCR Plus Pond Normalization</name>
                 <labEventTypes>PCR_PLUS_POND_NORMALIZATION</labEventTypes>
                 <optional>true</optional>
+                <ancestryEtlFlag>true</ancestryEtlFlag>
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>

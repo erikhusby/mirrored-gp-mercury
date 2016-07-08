@@ -341,7 +341,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
             this.eventDate = labEvent.getEventDate();
             this.programName = format(labEvent.getProgramName());
             this.libraryName = labEvent.getLabEventType().getLibraryType() == LabEventType.LibraryType.NONE_ASSIGNED ?
-                    null : labEvent.getLabEventType().getLibraryType().getDisplayName();
+                    null : labEvent.getLabEventType().getLibraryType().getEtlDisplayName();
             this.molecularIndexName = molecularIndexName;
             this.batchName = batchName == null ? NONE : batchName;
             this.workflowEffectiveDate = workflowEffectiveDate;
