@@ -171,7 +171,7 @@ public class FctCreateEtlDbFreeTest {
         assertEquals(parts[i++], libraryLabel);
         assertEquals(parts[i++], EtlTestUtilities.format(createdDate));
         assertEquals(parts[i++], flowcellType.getDisplayName());
-        assertEquals(parts[i++], flowcellLane.toString());
+        assertEquals(parts[i++], flowcellLane.toString().replace("LANE",""));
         assertEquals(parts[i++], concentration.toString());
         assertEquals(parts[i++], testFlag);
         assertEquals(parts.length, i);
