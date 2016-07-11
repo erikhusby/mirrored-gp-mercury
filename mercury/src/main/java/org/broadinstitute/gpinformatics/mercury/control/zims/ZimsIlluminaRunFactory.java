@@ -365,6 +365,7 @@ public class ZimsIlluminaRunFactory {
             boolean isCrspLane, String metadataSourceForPipelineAPI, Set<String> analysisTypes,
             Set<String> referenceSequenceKeys, Set<String> aggregationDataTypes,
             Set<ResearchProject> positiveControlProjects) {
+        // todo jmt insertSizes for positive controls?
 
         Format dateFormat = FastDateFormat.getInstance(ZimsIlluminaRun.DATE_FORMAT);
 
@@ -423,6 +424,9 @@ public class ZimsIlluminaRunFactory {
         if (productOrder != null) {
             // Product stuff.
             Product product = productOrder.getProduct();
+            if (product.getInsertSize() != null) {
+                expectedInsertSize = product.getInsertSize().toString();
+            }
             analysisType = product.getAnalysisTypeKey();
 
             // If there was no bait on the actual samples, use the one defined on the product.
