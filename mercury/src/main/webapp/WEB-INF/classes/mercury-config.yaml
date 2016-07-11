@@ -299,6 +299,7 @@ mercury:
       collaborate: DEV
       bass: PROD
       submission: DEV
+      infiniumStarter: DEV
 
 
     AUTO_BUILD:
@@ -318,6 +319,7 @@ mercury:
       collaborate: DEV
       bass: PROD
       submission: DEV
+      infiniumStarter: DEV
 
     TEST:
 
@@ -336,6 +338,7 @@ mercury:
       collaborate: DEV
       bass:     PROD
       submission: DEV
+      infiniumStarter: DEV
 
     QA:
       app:      QA
@@ -353,6 +356,7 @@ mercury:
       collaborate: RC
       bass:     PROD
       submission: DEV
+      infiniumStarter: QA
 
     RC:
 
@@ -371,6 +375,7 @@ mercury:
       collaborate: RC
       bass:     PROD
       submission: DEV
+      infiniumStarter: QA
 
 
     PROD:
@@ -390,4 +395,5 @@ mercury:
       collaborate: PROD
       bass:     PROD
       submission: PROD
+      infiniumStarter: PROD
 
