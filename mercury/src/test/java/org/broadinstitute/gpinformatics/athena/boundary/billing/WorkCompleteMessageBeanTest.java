@@ -202,7 +202,7 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
             WorkCompleteMessageBean workCompleteMessageBean = new WorkCompleteMessageBean(workCompleteMessageDao, sessionContextUtility);
             connection = getConnection();
             session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-            createMessage(session);
+            workCompleteMessageBean.processMessage(createMessage(session));
             workCompleteMessageDao.flush();
             workCompleteMessageDao.clear();
         } finally {
