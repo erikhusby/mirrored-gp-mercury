@@ -4,8 +4,7 @@ import javax.annotation.Nonnull;
 import javax.inject.Inject;
 
 /**
- * User: jowalsh
- * Date: 4/2/16
+ * Configuration for the infinium run starter processing.
  */
 @SuppressWarnings("UnusedDeclaration")
 @ConfigKey("infiniumStarter")

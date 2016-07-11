@@ -25,8 +25,7 @@ import java.util.Date;
 import java.util.Set;
 
 /**
- * User: jowalsh
- * Date: 4/2/16
+ * Finds pending infinium chip runs and forwards them on to analysis.
  */
 @RequestScoped
 public class InfiniumRunFinder implements Serializable {
