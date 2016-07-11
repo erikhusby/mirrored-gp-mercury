@@ -127,6 +127,13 @@ public class WorkflowDiagrammerDbFreeTest {
         diagrammer.setWorkflowLoader(workflowLoader);
     }
 
+    @Test(groups = {TestGroups.DATABASE_FREE})
+    public void testWorkflowConfig() throws Exception {
+        diagrammer.setWorkflowLoader( new WorkflowLoader());
+        //Load and verify WorkflowConfig file.
+        diagrammer.makeAllDiagramFiles();
+    }
+
     @Test
     public void testDates() {
         for (ProductWorkflowDef workflowDef : workflowConfig.getProductWorkflowDefs()) {
@@ -157,7 +164,8 @@ public class WorkflowDiagrammerDbFreeTest {
         }
     }
 
-    @Test
+
+        @Test
     public void testGraph() throws Exception {
         List<WorkflowDiagrammer.Graph> graphs = diagrammer.createGraphs();
         Assert.assertEquals(graphs.size(), 5);
