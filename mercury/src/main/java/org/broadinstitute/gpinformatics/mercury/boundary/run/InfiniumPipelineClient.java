@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.run;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.InfiniumStarterConfig;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
@@ -25,6 +27,8 @@ import java.util.Map;
  * Forward finished Infinium chip wells to the pipeline for analysis.
  */
 public class InfiniumPipelineClient {
+
+    private static final Log log = LogFactory.getLog(InfiniumPipelineClient.class);
 
     @Inject
     private InfiniumStarterConfig infiniumStarterConfig;
@@ -74,7 +78,7 @@ public class InfiniumPipelineClient {
                     connection.close();
                 }
             } catch (JMSException e) {
-                // do nothing
+                log.error("Exception occurred when closing JMS Session and connection", e);
             }
         }
     }
