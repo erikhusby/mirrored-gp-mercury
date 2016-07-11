@@ -3,6 +3,8 @@ package org.broadinstitute.gpinformatics.mercury.boundary.run;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.ObjectMarshaller;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
+import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateType;
@@ -42,7 +44,12 @@ public class InfiniumRunFinder implements Serializable {
     @Inject
     private InfiniumPendingChipFinder infiniumPendingChipFinder;
 
-    //TODO Email on failure
+    @Inject
+    private EmailSender emailSender;
+
+    @Inject
+    private AppConfig appConfig;
+
     public void find() {
         for (LabVessel labVessel : infiniumPendingChipFinder.listPendingXStainChips()) {
             try {
@@ -52,11 +59,14 @@ public class InfiniumRunFinder implements Serializable {
                 }
             } catch (Exception e) {
                 log.error("Failed to process chip " + labVessel.getLabel());
+                emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(),
+                        "[Mercury] Failed to process infinium chip", "For " + labVessel.getLabel() +
+                                                                     " with error: " + e.getMessage());
             }
         }
     }
 
-    public void processChip(StaticPlate staticPlate) throws Exception {
+    private void processChip(StaticPlate staticPlate) throws Exception {
         InfiniumRunProcessor.ChipWellResults chipWellResults = infiniumRunProcessor.process(staticPlate);
         LabEvent someStartedEvent = findOrCreateSomeStartedEvent(staticPlate);
         Set<LabEventMetadata> labEventMetadata = someStartedEvent.getLabEventMetadatas();
@@ -111,7 +121,7 @@ public class InfiniumRunFinder implements Serializable {
         return null;
     }
 
-    public LabEvent createEvent(StaticPlate staticPlate, LabEventType eventType) throws Exception {
+    private LabEvent createEvent(StaticPlate staticPlate, LabEventType eventType) throws Exception {
         BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
         bettaLIMSMessage.setMode(LabEventFactory.MODE_MERCURY);
         Date start = new Date();

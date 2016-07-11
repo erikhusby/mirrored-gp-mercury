@@ -53,7 +53,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /*
- * Database test testing the Infinium Run Finder logic
+ * Database test for the Infinium Run Finder logic
  */
 @Test(groups = TestGroups.STANDARD)
 public class InfiniumRunFinderContainerTest extends Arquillian {

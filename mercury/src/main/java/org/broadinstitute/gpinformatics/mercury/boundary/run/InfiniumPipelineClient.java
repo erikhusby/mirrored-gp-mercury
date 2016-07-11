@@ -34,7 +34,7 @@ public class InfiniumPipelineClient {
         return sendJmsMessage(chipWellBarcode);
     }
 
-    public boolean sendJmsMessage(String chipWellBarcode) {
+    private boolean sendJmsMessage(String chipWellBarcode) {
         Connection connection = null;
         Session session = null;
         try {

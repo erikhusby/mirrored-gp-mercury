@@ -24,8 +24,7 @@ import java.util.Date;
 import static javax.ejb.ConcurrencyManagementType.BEAN;
 
 /**
- * User: jowalsh
- * Date: 4/2/16
+ * Singleton to configure and schedule the timer for Infinium run starting activities.
  */
 @Startup
 @Singleton
@@ -80,10 +79,10 @@ public class InfiniumRunStarter {
     }
 
     /**
-     * Check Mercury configuration in the YAML file and see if the Data Warehouse system is enabled for this
+     * Check Mercury configuration in the YAML file and see if the Infinium Starter system is enabled for this
      * environment.  If it is not, then the configuration will be null.
      *
-     * @return true if it's an environment where ETL should be run
+     * @return true if it's an environment where the Infinium Starter should be run
      */
     private boolean isEnabled() {
         // Can't use @Inject for this object or we'll run into VFS protocol errors.
