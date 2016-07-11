@@ -259,7 +259,7 @@ public class AttributeArchetypeFixupTest extends Arquillian {
                 AttributeArchetype.class, 951L);
         Assert.assertEquals(genotypingChipMapping.getArchetypeName(), "P-EX-0021");
         // match created_date for PDO-8542, earliest PDO for P-EX-0021 Standard Exome Plus GWAS Supplement Array which
-        // was made available on 01-JUL-16/
+        // was made available on 01-JUL-16
         genotypingChipMapping.setActiveDate(new GregorianCalendar(2016, Calendar.APRIL, 5, 0, 0).getTime());
         System.out.println("Changing date for " + genotypingChipMapping.getArchetypeId() + " to " +
                 genotypingChipMapping.getActiveDate());
