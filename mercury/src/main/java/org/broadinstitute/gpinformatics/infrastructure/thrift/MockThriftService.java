@@ -32,6 +32,24 @@ public class MockThriftService implements ThriftService {
     }
 
     @Override
+    public TZamboniRun fetchRunByBarcode(String runBarcode) {
+        TZamboniRun run = null;
+
+        try {
+            run = ThriftFileAccessor.deserializeRun();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to deserialize run from local file", e);
+        }
+
+        if (runBarcode.equals(run.getRunBarcode())) {
+            return run;
+        }
+        else {
+            return null;
+        }
+    }
+
+    @Override
     public List<LibraryData> fetchLibraryDetailsByTubeBarcode(List<String> tubeBarcodes, boolean includeWorkRequestDetails) {
         return null;
     }

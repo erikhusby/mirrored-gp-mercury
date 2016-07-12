@@ -535,7 +535,7 @@ public class ZimsIlluminaRunFactoryTest {
                 assertThat(libraryBean.getSpecies(), equalTo("Hamster"));
                 assertThat(libraryBean.getLsid(), equalTo("ZimsIlluminaRunFactoryTest.testMakeLibraryBean.sampleDTO"));
                 assertThat(libraryBean.getParticipantId(), equalTo("Spencer"));
-    //xxx            assertThat(libraryBean.getLcSet(), equalTo("LCSET-1"));
+                assertThat(libraryBean.getLcSet(), equalTo("LCSET-1"));
                 assertThat(libraryBean.getProductOrderTitle(), equalTo("Test Order"));
                 assertThat(libraryBean.getProductOrderKey(), equalTo("TestPDO-1"));
                 assertThat(libraryBean.getResearchProjectName(), equalTo("Test Project"));
