@@ -106,12 +106,20 @@ public class InfiniumRunResource {
                     researchProjectIds.add(researchProjectId);
                 }
             }
-            boolean processControl = false;
+            boolean positiveControl = false;
+            boolean negativeControl = false;
+            Control processControl = null;
             if (chipTypes.isEmpty() || researchProjectIds.isEmpty()) {
-                Pair<Set<String>, Set<Long>> pair = evaluateAsControl(chip, sampleData);
-                chipTypes.addAll(pair.getLeft());
-                researchProjectIds.addAll(pair.getRight());
-                processControl = true;
+                Pair<Control, Set<String>> pair = evaluateAsControl(chip, sampleData);
+                chipTypes.addAll(pair.getRight());
+                processControl = pair.getLeft();
+                if (processControl != null) {
+                    if (processControl.getType() == Control.ControlType.POSITIVE) {
+                        positiveControl = true;
+                    } else if (processControl.getType() == Control.ControlType.NEGATIVE) {
+                        negativeControl = true;
+                    }
+                }
             }
             if (chipTypes.isEmpty()) {
                 throw new ResourceException("Found no chip types", Response.Status.INTERNAL_SERVER_ERROR);
@@ -119,16 +127,21 @@ public class InfiniumRunResource {
             if (chipTypes.size() != 1) {
                 throw new ResourceException("Found mix of chip types " + chipTypes, Response.Status.INTERNAL_SERVER_ERROR);
             }
-            if (researchProjectIds.isEmpty()) {
-                throw new ResourceException("Found no research projects", Response.Status.INTERNAL_SERVER_ERROR);
-            }
-            if (researchProjectIds.size() != 1) {
-                throw new ResourceException("Found mix of research projects " + chipTypes, Response.Status.INTERNAL_SERVER_ERROR);
+
+            // Controls have a null research project id.
+            Long researchProjectId = null;
+            if (processControl == null) {
+                if (researchProjectIds.isEmpty()) {
+                    throw new ResourceException("Found no research projects", Response.Status.INTERNAL_SERVER_ERROR);
+                }
+                if (researchProjectIds.size() != 1) {
+                    throw new ResourceException("Found mix of research projects " + researchProjectIds, Response.Status.INTERNAL_SERVER_ERROR);
+                }
+                researchProjectId = researchProjectIds.iterator().next();
             }
 
             String idatPrefix = DATA_PATH + "/" + chip.getLabel() + "_" + vesselPosition.name();
             String chipType = chipTypes.iterator().next();
-            Long researchProjectId = researchProjectIds.iterator().next();
             Config config = mapChipTypeToConfig.get(chipType);
             if (config == null) {
                 throw new ResourceException("No configuration for " + chipType, Response.Status.INTERNAL_SERVER_ERROR);
@@ -145,7 +158,8 @@ public class InfiniumRunResource {
                         sampleData.getGender(),
                         sampleData.getPatientId(),
                         researchProjectId,
-                        processControl);
+                        positiveControl,
+                        negativeControl);
             }
         } else {
             throw new RuntimeException("Expected 1 sample, found " + sampleInstancesAtPositionV2.size());
@@ -157,10 +171,10 @@ public class InfiniumRunResource {
      * No connection to a product was found for a specific sample, so determine if it's a control, then try to
      * get chip type from all samples.
      */
-    private Pair<Set<String>, Set<Long>> evaluateAsControl(LabVessel chip, SampleData sampleData) {
+    private Pair<Control, Set<String>> evaluateAsControl(LabVessel chip, SampleData sampleData) {
         Set<String> chipTypes = new HashSet<>();
-        Set<Long> researchProjectIds = new HashSet<>();
         List<Control> controls = controlDao.findAllActive();
+        Control processControl = null;
         for (Control control : controls) {
             if (control.getCollaboratorParticipantId().equals(sampleData.getCollaboratorParticipantId())) {
                 List<String> sampleNames = new ArrayList<>();
@@ -174,16 +188,12 @@ public class InfiniumRunResource {
                     if (chipType != null) {
                         chipTypes.add(chipType);
                     }
-                    Long researchProjectId =
-                            productOrderSample.getProductOrder().getResearchProject().getResearchProjectId();
-                    if (researchProjectId != null) {
-                        researchProjectIds.add(researchProjectId);
-                    }
                 }
+                processControl = control;
                 break;
             }
         }
-        return Pair.of(chipTypes, researchProjectIds);
+        return Pair.of(processControl, chipTypes);
     }
 
     private static class Config {

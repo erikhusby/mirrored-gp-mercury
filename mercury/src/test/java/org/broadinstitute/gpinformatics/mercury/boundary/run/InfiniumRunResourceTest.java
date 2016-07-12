@@ -39,8 +39,10 @@ public class InfiniumRunResourceTest extends RestServiceContainerTest {
                 accept(MediaType.APPLICATION_JSON_TYPE).
                 get(InfiniumRunBean.class);
         Assert.assertEquals(response.getCollaboratorSampleId(), "TREDAP123");
-        Assert.assertEquals(response.getParticipentId(), "PT-1RVAV");
-        Assert.assertFalse(response.isProcessControl());
+        Assert.assertEquals(response.getParticipantId(), "PT-1RVAV");
+        Assert.assertFalse(response.isPositiveControl());
+        Assert.assertFalse(response.isNegativeControl());
+        Assert.assertTrue(response.getResearchProjectId() == 26010L);
 
         // Test a control
         response = resource.queryParam("chipWellBarcode", "3999582166_R05C01").
@@ -48,7 +50,8 @@ public class InfiniumRunResourceTest extends RestServiceContainerTest {
                 accept(MediaType.APPLICATION_JSON_TYPE).
                 get(InfiniumRunBean.class);
         Assert.assertEquals(response.getCollaboratorSampleId(), "NA12878");
-        Assert.assertTrue(response.isProcessControl());
+        Assert.assertTrue(response.isPositiveControl());
+        Assert.assertNull(response.getResearchProjectId());
     }
 
     @Override
