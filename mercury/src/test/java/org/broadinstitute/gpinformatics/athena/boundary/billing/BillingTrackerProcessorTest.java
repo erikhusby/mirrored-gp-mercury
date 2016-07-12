@@ -119,7 +119,7 @@ public class BillingTrackerProcessorTest {
         processor.processRowDetails(dataRow, 0);
         List<String> messages = processor.getMessages();
         assertThat(messages,
-                hasItem(MESSAGE_PREFIX + BillingTrackerProcessor.makeBeingBilledMessage("Draft-null", TEST_SAMPLE_ID)));
+                hasItem(BillingTrackerProcessor.makeBeingBilledMessage("Draft-null")));
     }
 
     private Map<String, String> makeDataRow(String workCompleteDate) {
