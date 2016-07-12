@@ -246,7 +246,7 @@ public class ZimsIlluminaRunFactory {
         Set<String> analysisTypes = new HashSet<>();
         Set<String> referenceSequenceKeys = new HashSet<>();
         Set<String> aggregationDataTypes = new HashSet<>();
-        Set<String> productPartNumbers = new HashSet<>();
+        Set<Integer> insertSizes = new HashSet<>();
         Set<ResearchProject> positiveControlResearchProjects = new HashSet<>();
         for (SampleInstanceDto sampleInstanceDto : sampleInstanceDtos) {
             ProductOrder productOrder = (sampleInstanceDto.getProductOrderKey() != null) ?
@@ -259,10 +259,13 @@ public class ZimsIlluminaRunFactory {
                 if (!StringUtils.isBlank(project.getReferenceSequenceKey())) {
                     referenceSequenceKeys.add(project.getReferenceSequenceKey());
                 }
-                productPartNumbers.add(product.getPartNumber());
                 ResearchProject positiveControlResearchProject = product.getPositiveControlResearchProject();
                 if (positiveControlResearchProject != null) {
                     positiveControlResearchProjects.add(positiveControlResearchProject);
+                }
+                Integer insertSize = product.getInsertSize();
+                if (insertSize != null) {
+                    insertSizes.add(insertSize);
                 }
             }
         }
@@ -333,7 +336,7 @@ public class ZimsIlluminaRunFactory {
                     baitName, indexingSchemeEntity, catNames, sampleInstanceDto.getSampleInstance().getWorkflowName(),
                     indexingSchemeDto, mapNameToControl, sampleInstanceDto.getPdoSampleName(),
                     sampleInstanceDto.isCrspLane(), sampleInstanceDto.getMetadataSourceForPipelineAPI(), analysisTypes,
-                    referenceSequenceKeys, aggregationDataTypes, positiveControlResearchProjects));
+                    referenceSequenceKeys, aggregationDataTypes, positiveControlResearchProjects, insertSizes));
         }
 
         // Make order predictable.  Include library name because for ICE there are 8 ancestor catch tubes, all with
@@ -364,8 +367,7 @@ public class ZimsIlluminaRunFactory {
             Map<String, Control> mapNameToControl, String pdoSampleName,
             boolean isCrspLane, String metadataSourceForPipelineAPI, Set<String> analysisTypes,
             Set<String> referenceSequenceKeys, Set<String> aggregationDataTypes,
-            Set<ResearchProject> positiveControlProjects) {
-        // todo jmt insertSizes for positive controls?
+            Set<ResearchProject> positiveControlProjects, Set<Integer> insertSizes) {
 
         Format dateFormat = FastDateFormat.getInstance(ZimsIlluminaRun.DATE_FORMAT);
 
@@ -400,13 +402,19 @@ public class ZimsIlluminaRunFactory {
                 case POSITIVE:
                     positiveControl = true;
                     if (analysisTypes.size() == 1 && referenceSequenceKeys.size() == 1 &&
-                            aggregationDataTypes.size() == 1 && positiveControlProjects.size() == 1) {
+                            aggregationDataTypes.size() == 1 && positiveControlProjects.size() <= 1 &&
+                            insertSizes.size() <= 1) {
                         analysisType = analysisTypes.iterator().next();
                         String[] referenceSequenceValues = referenceSequenceKeys.iterator().next().split("\\|");
                         referenceSequence = referenceSequenceValues[0];
                         referenceSequenceVersion = referenceSequenceValues[1];
                         aggregationDataType = aggregationDataTypes.iterator().next();
-                        positiveControlProject = positiveControlProjects.iterator().next();
+                        if (positiveControlProjects.size() == 1) {
+                            positiveControlProject = positiveControlProjects.iterator().next();
+                        }
+                        if (insertSizes.size() == 1) {
+                            expectedInsertSize = insertSizes.iterator().next().toString();
+                        }
                     }
                     break;
                 case NEGATIVE:
