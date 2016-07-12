@@ -11,6 +11,7 @@ import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -268,6 +269,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         return deliverables;
     }
 
+    @Nullable
     public Integer getReadLength() {
         return readLength;
     }
@@ -276,6 +278,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         this.readLength = readLength;
     }
 
+    @Nullable
     public Integer getInsertSize() {
         return insertSize;
     }
