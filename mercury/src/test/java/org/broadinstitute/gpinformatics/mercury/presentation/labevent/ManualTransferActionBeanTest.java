@@ -58,6 +58,9 @@ public class ManualTransferActionBeanTest {
         Assert.assertEquals(plateEventType.getReagent().size(), numReagentFields);
     }
 
+    /**
+     * Simulate choosing an event, and return the resulting action bean.
+     */
     private ManualTransferActionBean chooseEvent(String eventType) {
         try {
             MockRoundtrip roundTrip = StripesMockTestUtils.createMockRoundtrip(ManualTransferActionBean.class);
@@ -73,6 +76,7 @@ public class ManualTransferActionBeanTest {
      * Test rack to plate transfer.
      */
     public void testShearingTransfer() {
+        // Get the skeleton station event
         String eventType = "ShearingTransfer";
         ManualTransferActionBean initActionBean = chooseEvent(eventType);
         List<StationEventType> stationEvents = initActionBean.getStationEvents();
@@ -80,28 +84,30 @@ public class ManualTransferActionBeanTest {
         ManualTransferActionBean actionBean = new ManualTransferActionBean();
         actionBean.setContext(new CoreActionBeanContext());
 
+        // The action bean needs the user, to set the operator field in the event
         UserBean userBean = Mockito.mock(UserBean.class);
         BspUser qaDudeUser = new BSPUserList.QADudeUser(RoleType.PM.name(), 1L);
         Mockito.when(userBean.getBspUser()).thenReturn(qaDudeUser);
         actionBean.setUserBean(userBean);
 
-        String sourceBarcode = "SourceRack";
         LabVesselDao labVesselDao = Mockito.mock(LabVesselDao.class);
-        Mockito.when(labVesselDao.findByIdentifier(sourceBarcode)).thenReturn(
-                new StaticPlate(sourceBarcode, StaticPlate.PlateType.Plate96Well200));
-        String destBarcode = "DestPlate";
-        Mockito.when(labVesselDao.findByIdentifier(destBarcode)).thenReturn(
-                new StaticPlate(destBarcode, StaticPlate.PlateType.Plate96Well200));
         actionBean.setLabVesselDao(labVesselDao);
 
+        // Set reagent
         actionBean.setManualTransferDetails(LabEventType.SHEARING_TRANSFER.getManualTransferDetails());
         PlateTransferEventType plateTransferEventType = (PlateTransferEventType) stationEvents.get(0);
         ReagentType reagentType = plateTransferEventType.getReagent().get(0);
         reagentType.setBarcode("asdf");
         reagentType.setExpiration(new Date());
 
+        // Set source rack, and mock DAO call
         PlateType sourcePlate = plateTransferEventType.getSourcePlate();
+        String sourceBarcode = "SourceRack";
         sourcePlate.setBarcode(sourceBarcode);
+        Mockito.when(labVesselDao.findByIdentifier(sourceBarcode)).thenReturn(
+                new StaticPlate(sourceBarcode, StaticPlate.PlateType.Plate96Well200));
+
+        // Add a tube
         PositionMapType sourcePositionMap = new PositionMapType();
         ReceptacleType receptacleType = new ReceptacleType();
         receptacleType.setPosition("A01");
@@ -119,8 +125,12 @@ public class ManualTransferActionBeanTest {
         sourcePositionMap.getReceptacle().add(receptacleType);
         plateTransferEventType.setSourcePositionMap(sourcePositionMap);
 
+        // Set destination plate, and mock DAO call
         PlateType destPlateType = plateTransferEventType.getPlate();
+        String destBarcode = "DestPlate";
         destPlateType.setBarcode(destBarcode);
+        Mockito.when(labVesselDao.findByIdentifier(destBarcode)).thenReturn(
+                new StaticPlate(destBarcode, StaticPlate.PlateType.Plate96Well200));
         actionBean.setStationEvents(stationEvents);
 
         BettaLIMSMessage bettaLIMSMessage = actionBean.buildBettaLIMSMessage();
