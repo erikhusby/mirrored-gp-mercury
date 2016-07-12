@@ -900,7 +900,7 @@ public class BaseEventTest {
                             TransferVisualizerV2.AlternativeIds.LCSET));
             fileWriter.flush();
             System.out.println("Copy contents of " + xfrVis.getAbsolutePath() + " into transfer_vis_test.json, " +
-                    "then open transfer_vis_test.html in a browser.");
+                    "then open transfer_vis_test.html in Firefox.");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

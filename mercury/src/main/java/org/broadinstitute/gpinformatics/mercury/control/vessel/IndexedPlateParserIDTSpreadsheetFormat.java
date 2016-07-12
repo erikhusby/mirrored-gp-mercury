@@ -21,7 +21,7 @@ public class IndexedPlateParserIDTSpreadsheetFormat implements IndexedPlateParse
 
     private final String technology = MolecularIndexingScheme.IndexPosition.ILLUMINA_P7.getTechnology();
 
-    abstract class ColumnParser {
+    abstract static class ColumnParser {
         public abstract int getColumnIndex();
         public abstract String getColumnName();
 
@@ -31,11 +31,11 @@ public class IndexedPlateParserIDTSpreadsheetFormat implements IndexedPlateParse
                 throw new RuntimeException(getColumnName() + " is empty in row " + row.getRowNum());
             }
 
-            return IndexedPlateParserIDTSpreadsheetFormat.this.getString(cell);
+            return IndexedPlateParserIDTSpreadsheetFormat.getString(cell);
         }
     }
 
-    private String getString(Cell cell) {
+    private static String getString(Cell cell) {
         switch (cell.getCellType()) {
             case Cell.CELL_TYPE_NUMERIC :
                 double value = cell.getNumericCellValue();
