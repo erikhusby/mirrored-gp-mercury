@@ -11,13 +11,16 @@ import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -249,4 +252,18 @@ public class AttributeArchetypeFixupTest extends Arquillian {
         utx.commit();
     }
 
+    @Test(enabled = false)
+    public void fixupSupport1877() {
+        userBean.loginOSUser();
+        GenotypingChipMapping genotypingChipMapping = (GenotypingChipMapping) attributeArchetypeDao.findById(
+                AttributeArchetype.class, 951L);
+        Assert.assertEquals(genotypingChipMapping.getArchetypeName(), "P-EX-0021");
+        // match created_date for PDO-8542, earliest PDO for P-EX-0021 Standard Exome Plus GWAS Supplement Array which
+        // was made available on 01-JUL-16
+        genotypingChipMapping.setActiveDate(new GregorianCalendar(2016, Calendar.APRIL, 5, 0, 0).getTime());
+        System.out.println("Changing date for " + genotypingChipMapping.getArchetypeId() + " to " +
+                genotypingChipMapping.getActiveDate());
+        attributeArchetypeDao.persist(new FixupCommentary("SUPPORT-1877 adjust Active date for chip mapping"));
+        attributeArchetypeDao.flush();
+    }
 }
