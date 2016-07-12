@@ -19,7 +19,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.ST
 /**
  * TODO scottmat fill in javadoc!!!
  */
-@Test(groups = STANDARD)
+@Test(groups = STANDARD, enabled = false)
 public class SapIntegrationClientTest extends Arquillian {
 
     @Inject
@@ -44,11 +44,4 @@ public class SapIntegrationClientTest extends Arquillian {
         return DeploymentBuilder.buildMercuryWar(DEV, "dev");
     }
 
-    @Test
-    public void testConnection() throws IOException {
-        String age = "42";
-        String result = sapIntegrationClient.submitAge(age);
-
-        Assert.assertEquals(result, "What? Just "+age+" - Great !");
-    }
 }

@@ -259,15 +259,14 @@ submission:
 
 sap:
     DEV:
-      baseUrl:    http://darwin:8000
-      wsdlUri:    /sap/bc/srt/wsdl/flv_10002A1011D1/bndg_url/sap/bc/srt/rfc/sap/ztry2/100/ztry2/ztry2?sap-client=100
       login:      GPCOMU
-      password:   Enj0ySAP!
+      password:   SAPERD300!
+    QA:
+      login:      GPCOMU
+      password:   SAPERQ300!
     PROD:
-      baseUrl:    http://sap.broadinstitute.org
-      wsdlUri:    /sap/bc/srt/wsdl/flv_10002A1011D1/bndg_url/sap/bc/srt/rfc/sap/ztry2/100/ztry2/ztry2?sap-client=400
       login:      GPCOMU
-      password:   Pr0duct10n!
+      password:   SAPERP300!
 # Mercury configuration, this describes how Mercury deployments are connected to external system deployments.
 mercury:
 

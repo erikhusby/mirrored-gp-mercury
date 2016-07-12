@@ -13,9 +13,6 @@ import java.io.Serializable;
 @ConfigKey("sap")
 public class SapConfig extends AbstractConfig implements LoginAndPassword, Serializable {
 
-    private String baseUrl;
-    private String wsdlUri;
-
     private String login;
     private String password;
 
@@ -32,26 +29,6 @@ public class SapConfig extends AbstractConfig implements LoginAndPassword, Seria
     @Override
     public String getPassword() {
         return password;
-    }
-
-    public String getWsdlPath() {
-        return baseUrl + wsdlUri;
-    }
-
-    public String getBaseUrl() {
-        return baseUrl;
-    }
-
-    public void setBaseUrl(String baseUrl) {
-        this.baseUrl = baseUrl;
-    }
-
-    public String getWsdlUri() {
-        return wsdlUri;
-    }
-
-    public void setWsdlUri(String wsdlUri) {
-        this.wsdlUri = wsdlUri;
     }
 
     public void setLogin(String login) {

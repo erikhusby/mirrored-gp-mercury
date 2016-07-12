@@ -73,7 +73,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         }
 
         wrappedClient = new SapIntegrationClientImpl(sapConfigIn.getLogin(), sapConfigIn.getPassword(),
-                sapConfigIn.getWsdlUri(),environment);
+                environment);
     }
 
     @Override
