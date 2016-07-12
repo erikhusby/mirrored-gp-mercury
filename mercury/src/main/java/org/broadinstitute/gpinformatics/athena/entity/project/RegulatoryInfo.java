@@ -108,6 +108,17 @@ public class RegulatoryInfo implements Serializable, BusinessObject {
         return type;
     }
 
+    /**
+     * Setter exists only for careful use from tests and admin management interfaces. The combination of identifier and
+     * type must be unique, as enforced by a database constraint. Callers of this setter must validate that this
+     * constraint will hold or else be tolerant or accepting of exceptions being thrown during transaction commit.
+     *
+     * @param type  the new type
+     */
+    public void setType(Type type) {
+        this.type = type;
+    }
+
     public String getIdentifier() {
         return identifier;
     }

@@ -79,6 +79,7 @@ public class BassDTOTest {
             throws IntrospectionException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
         BassDTO bassDTO = new BassDTO(new HashMap<BassDTO.BassResultColumn, String>() {{
             put(BassDTO.BassResultColumn.id, "id");
+            put(BassDTO.BassResultColumn.file_type, BassFileType.BAM.name());
         }});
 
         List<String> missingGetters = new ArrayList<>();

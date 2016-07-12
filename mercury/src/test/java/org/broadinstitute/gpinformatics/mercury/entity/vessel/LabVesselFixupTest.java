@@ -1307,4 +1307,62 @@ public class LabVesselFixupTest extends Arquillian {
 
     }
 
+    @Test(enabled = false)
+    public void fixupGplim4165() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+        // Changes two tube positions in the destination container. Its label was obtained by Transfer Visualizer.
+        String tubeFormationLabel = "0ff71eadca9d4ee16abb37a987df13c1";
+        TubeFormation tubeFormation = tubeFormationDao.findByDigest(tubeFormationLabel);
+        Assert.assertNotNull(tubeFormation);
+        VesselContainer<?> vesselContainer = tubeFormation.getContainerRole();
+        Assert.assertNotNull(vesselContainer);
+
+        // Manipulating the position-vessel map alone only works for section transfers, so verify.
+        Assert.assertEquals(tubeFormation.getTransfersTo().size(), 1);
+        Assert.assertEquals(tubeFormation.getTransfersTo().iterator().next().getCherryPickTransfers().size(), 0);
+        Assert.assertEquals(tubeFormation.getTransfersTo().iterator().next().getSectionTransfers().size(), 1);
+
+        Map<VesselPosition, BarcodedTube> mapPositionToVessel =
+                (Map<VesselPosition, BarcodedTube>) vesselContainer.getMapPositionToVessel();
+
+        Assert.assertEquals(mapPositionToVessel.get(VesselPosition.A12).getLabel(), "0201127659");
+        changePosition(mapPositionToVessel, VesselPosition.A12, VesselPosition.A11);
+
+        Assert.assertEquals(mapPositionToVessel.get(VesselPosition.C12).getLabel(), "0201127638");
+        changePosition(mapPositionToVessel, VesselPosition.C12, VesselPosition.C11);
+
+        tubeFormation.setLabel(TubeFormation.makeDigest(mapPositionToVessel));
+
+        FixupCommentary fixupCommentary = new FixupCommentary("GPLIM-4165 Fixup tube positions.");
+        barcodedTubeDao.persist(fixupCommentary);
+        barcodedTubeDao.flush();
+
+        utx.commit();
+
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim4202() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        List<BarcodedTube> tubes = barcodedTubeDao.findListByBarcodes(Arrays.asList(
+                "1125642961",
+                "1125642962",
+                "1125795498",
+                "1125795497"));
+
+        for (LabVessel labVessel : tubes) {
+            labVessel.setReceptacleWeight(new BigDecimal(".62"));
+            System.out.println("Setting tube initial tare weight: " + labVessel.getLabel() + " to .62");
+        }
+
+        FixupCommentary fixupCommentary = new FixupCommentary("GPLIM-4202 - Assign missing tare values to default");
+        barcodedTubeDao.persist(fixupCommentary);
+        barcodedTubeDao.flush();
+
+        utx.commit();
+    }
+
 }

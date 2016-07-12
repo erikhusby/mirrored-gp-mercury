@@ -11,6 +11,9 @@
 
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
+import org.apache.commons.logging.Log;
+import org.broadinstitute.gpinformatics.athena.control.dao.projects.SubmissionTrackerDao;
+import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.SubmissionTrackerDao;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassFileType;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
@@ -30,9 +33,14 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 @Test(groups = TestGroups.FIXUP)
 public class SubmissionTrackerFixupTest extends Arquillian {
     @Inject
-    private UserBean userBean;
-    @Inject
     private SubmissionTrackerDao submissionTrackerDao;
+
+    @Inject
+    private UserBean userBean;
+
+    @SuppressWarnings("CdiInjectionPointsInspection")
+    @Inject
+    private Log log;
 
     @Deployment
     public static WebArchive buildMercuryWar() {

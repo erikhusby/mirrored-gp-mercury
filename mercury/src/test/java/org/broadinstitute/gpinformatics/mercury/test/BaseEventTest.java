@@ -69,26 +69,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowD
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.presentation.transfervis.TransferVisualizerClient;
 import org.broadinstitute.gpinformatics.mercury.presentation.transfervis.TransferVisualizerFrame;
-import org.broadinstitute.gpinformatics.mercury.test.builders.ArrayPlatingEntityBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.CrspRiboPlatingEntityBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq4000FlowcellEntityBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.IceEntityBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.IceJaxbBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.InfiniumEntityBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.MiSeqReagentKitEntityBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.PreFlightEntityBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.ProductionFlowcellPath;
-import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.QtpJaxbBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.SageEntityBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.ShearingEntityBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.StoolTNAEntityBuilder;
-import org.broadinstitute.gpinformatics.mercury.test.builders.TruSeqStrandSpecificEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.*;
 import org.easymock.EasyMock;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -468,15 +449,37 @@ public class BaseEventTest {
      * @return Returns the entity builder that contains the entities after this process has been invoked.
      */
     public LibraryConstructionEntityBuilder runLibraryConstructionProcess(StaticPlate shearingCleanupPlate,
-                                                                          String shearCleanPlateBarcode,
-                                                                          StaticPlate shearingPlate,
-                                                                          String barcodeSuffix,
-                                                                          int numSamples) {
+            String shearCleanPlateBarcode,
+            StaticPlate shearingPlate,
+            String barcodeSuffix,
+            int numSamples) {
+        return runLibraryConstructionProcess(shearingCleanupPlate, shearCleanPlateBarcode, shearingPlate, barcodeSuffix,
+                numSamples, LibraryConstructionJaxbBuilder.PondType.REGULAR);
+    }
 
+    /**
+     * This method runs the entities through the library construction process.
+     *
+     * @param shearingCleanupPlate   The shearing cleanup plate from the shearing process.
+     * @param shearCleanPlateBarcode The shearing clean plate barcode.
+     * @param shearingPlate          The shearing plate from the shearing process.
+     * @param barcodeSuffix          Uniquifies the generated vessel barcodes. NOT date if test quickly invokes twice.
+     * @param numSamples             Number of samples run through the process.
+     * @param pondType               PCR Free, PCR Plus etc.
+     *
+     * @return Returns the entity builder that contains the entities after this process has been invoked.
+     */
+    public LibraryConstructionEntityBuilder runLibraryConstructionProcess(StaticPlate shearingCleanupPlate,
+            String shearCleanPlateBarcode,
+            StaticPlate shearingPlate,
+            String barcodeSuffix,
+            int numSamples,
+            LibraryConstructionJaxbBuilder.PondType pondType) {
         return new LibraryConstructionEntityBuilder(
                 bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
                 shearingCleanupPlate, shearCleanPlateBarcode, shearingPlate, numSamples, barcodeSuffix,
-                LibraryConstructionEntityBuilder.Indexing.DUAL).invoke();
+                LibraryConstructionEntityBuilder.Indexing.DUAL,
+                pondType).invoke();
     }
 
     /**
@@ -634,6 +637,12 @@ public class BaseEventTest {
     public ArrayPlatingEntityBuilder runArrayPlatingProcess( Map<String, BarcodedTube> mapBarcodeToTube,
                                                              String barcodeSuffix) {
         return new ArrayPlatingEntityBuilder(mapBarcodeToTube, bettaLimsMessageTestFactory,
+                labEventFactory, getLabEventHandler(), barcodeSuffix).invoke();
+    }
+
+    public TenXEntityBuilder runTenXProcess(Map<String, BarcodedTube> mapBarcodeToTube,
+                                                    String barcodeSuffix) {
+        return new TenXEntityBuilder(mapBarcodeToTube, bettaLimsMessageTestFactory,
                 labEventFactory, getLabEventHandler(), barcodeSuffix).invoke();
     }
 

@@ -107,6 +107,7 @@ public class ResearchProjectEjbSubmissionTest {
         }
     }
 
+    @SuppressWarnings("ArraysAsListWithZeroOrOneArgument")
     @DataProvider(name = "manyDtosManyTrackers")
     public Iterator<Object[]> manyDtosManyTrackers() {
         SubmissionDto bA = getSubmissionDto("A", BassFileType.BAM, TEST_VERSION_1);
@@ -114,7 +115,7 @@ public class ResearchProjectEjbSubmissionTest {
         SubmissionDto bApicard = getSubmissionDto("A", BassFileType.PICARD, TEST_VERSION_1);
 
         SubmissionTracker stA =
-                new SubmissionTracker(bA.getSampleName(), bA.getFileTypeEnum(), String.valueOf(bA.getVersion()));
+                new SubmissionTracker(bA.getSampleName(), bA.getFileType(), String.valueOf(bA.getVersion()));
 
         List<Object[]> testCases = new ArrayList<>();
         testCases.add(new Object[]{"TEST-1", Collections.singletonList(bA), Collections.emptyList(), true});

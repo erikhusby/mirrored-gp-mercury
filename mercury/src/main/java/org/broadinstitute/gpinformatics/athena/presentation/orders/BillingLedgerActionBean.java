@@ -28,7 +28,6 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEnt
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.cognos.SampleCoverageFirstMetFetcher;
@@ -41,6 +40,7 @@ import org.json.JSONException;
 import javax.inject.Inject;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -49,6 +49,11 @@ import java.util.Map;
 
 @UrlBinding("/orders/ledger.action")
 public class BillingLedgerActionBean extends CoreActionBean {
+
+    /**
+     * Date format used for displaying DCFM and the value of Date Complete inputs.
+     */
+    public static final String DATE_FORMAT = "MMM d, yyyy";
 
     private static final Log logger = LogFactory.getLog(BillingLedgerActionBean.class);
 
@@ -444,6 +449,18 @@ public class BillingLedgerActionBean extends CoreActionBean {
     }
 
     /**
+     * Return the date 3 months prior to now as a number representing number of milliseconds since January 1, 1970,
+     * 00:00:00 GMT. The intent is to pass this to <code>new Date()</code> in JavaScript to perform date range checks.
+     *
+     * @return the date 3 months ago as milliseconds since January 1, 1970, 00:00:00 GMT
+     */
+    public long getThreeMonthsAgo() {
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.MONTH, -3);
+        return calendar.getTime().getTime();
+    }
+
+    /**
      * Data used to render the billing ledger UI.
      */
     public static class ProductOrderSampleLedgerInfo {
@@ -538,7 +555,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
         }
 
         public String getCompleteDateFormatted() {
-            return workCompleteDate != null ? new SimpleDateFormat("MMM d, yyyy").format(workCompleteDate) : null;
+            return workCompleteDate != null ? new SimpleDateFormat(DATE_FORMAT).format(workCompleteDate) : null;
         }
 
         public void setWorkCompleteDate(Date workCompleteDate) {

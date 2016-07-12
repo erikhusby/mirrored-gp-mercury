@@ -3,11 +3,13 @@ package org.broadinstitute.gpinformatics.athena.entity.orders;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingTrackerProcessor;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.samples.SampleReceiptValidation;
+import org.broadinstitute.gpinformatics.athena.presentation.orders.BillingLedgerActionBean;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDTO;
@@ -427,8 +429,17 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         return simpleDateFormat.format(receiptDate);
     }
 
+    /**
+     * Determines whether or not a sample exists at the Broad. This includes containers that were sent to collaborators
+     * and sent back with samples as well as samples derived from those root samples.
+     *
+     * This is unlike BSP, which only considers root samples to have been received; child samples are effectively
+     * received because they came from a root sample, but they themselves are not "received".
+     *
+     * @return true if the sample is received or derived; false otherwise
+     */
     public boolean isSampleReceived() {
-        return (mercurySample!= null)?mercurySample.getReceivedDate() != null:getSampleData().isSampleReceived();
+        return (mercurySample != null && mercurySample.getReceivedDate() != null) || getSampleData().isSampleReceived();
     }
 
     public enum DeliveryStatus implements StatusType {
@@ -760,6 +771,10 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         public double getTotal() {
             return billed + inProgress + uploaded;
         }
+
+        public boolean isBeingBilled() {
+            return inProgress != 0.0;
+        }
     }
 
     public Map<PriceItem, LedgerQuantities> getLedgerQuantities() {
@@ -974,6 +989,14 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
                 throw new IllegalArgumentException(
                         "Work complete date is missing for sample " + ledgerUpdate.getSampleName());
             }
+            Date now = new Date();
+            if (now.before(ledgerUpdate.getWorkCompleteDate())) {
+                throw new IllegalArgumentException(BillingTrackerProcessor
+                        .makeCompletedDateFutureErrorMessage(ledgerUpdate.getSampleName(),
+                                new SimpleDateFormat(BillingLedgerActionBean.DATE_FORMAT)
+                                        .format(ledgerUpdate.getWorkCompleteDate())));
+            }
+
 
             // Update quantity, adding a new ledger entry if needed.
             if (ledgerUpdate.isQuantityChanging()) {

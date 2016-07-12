@@ -28,9 +28,8 @@ public class InfiniumRunResourceTest extends RestServiceContainerTest {
         return DeploymentBuilder.buildMercuryWar(DEV);
     }
 
-    // todo emp Reenable this test after running the genotyping mapping fixup test.
     @RunAsClient
-    @Test(dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, enabled = false)
+    @Test(dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, enabled = true)
     public void testBasics(@ArquillianResource URL baseUrl) throws Exception {
         WebResource resource = makeWebResource(baseUrl, "query");
 

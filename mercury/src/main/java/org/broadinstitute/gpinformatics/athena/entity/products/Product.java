@@ -102,6 +102,9 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     @Column(length = 2000)
     private String deliverables;
 
+    private Integer readLength;
+    private Integer insertSize;
+
     /**
      * A sample with MetadataSource.BSP can have its initial quant in Mercury, e.g. SONIC.  This flag avoids the
      * performance hit of looking for Mercury quants in Products that don't have them.
@@ -263,6 +266,22 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
 
     public String getDeliverables() {
         return deliverables;
+    }
+
+    public Integer getReadLength() {
+        return readLength;
+    }
+
+    public void setReadLength(Integer readLength) {
+        this.readLength = readLength;
+    }
+
+    public Integer getInsertSize() {
+        return insertSize;
+    }
+
+    public void setInsertSize(Integer insertSize) {
+        this.insertSize = insertSize;
     }
 
     public boolean isTopLevelProduct() {
@@ -668,8 +687,8 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         return getProductFamily().isSupportsRin();
     }
 
-    public boolean isSameProductFamily(ProductFamily.ProductFamilyName productFamilyName) {
-        return productFamilyName.getFamilyName().equals(this.productFamily.getName());
+    public boolean isSameProductFamily(ProductFamily.ProductFamilyInfo productFamilyInfo) {
+        return productFamilyInfo.getFamilyName().equals(this.productFamily.getName());
     }
 
     public boolean getSupportsSkippingQuote() {
@@ -699,7 +718,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
      * @return Whether this is an exome express product or not.
      */
     public boolean isExomeExpress() {
-        return productFamily.getName().equals(ProductFamily.ProductFamilyName.EXOME.getFamilyName()) && productName.startsWith(EXOME_EXPRESS);
+        return productFamily.getName().equals(ProductFamily.ProductFamilyInfo.EXOME.getFamilyName()) && productName.startsWith(EXOME_EXPRESS);
     }
 
     public Boolean getExpectInitialQuantInMercury() {

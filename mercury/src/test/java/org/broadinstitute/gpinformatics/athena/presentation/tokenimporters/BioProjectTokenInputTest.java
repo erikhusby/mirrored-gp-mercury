@@ -53,8 +53,6 @@ public class BioProjectTokenInputTest {
     public void testGetTokenName() throws Exception {
         String tokenName = bioProjectTokenInput.getTokenName(bioProject);
 
-        assertThat(tokenName, containsString("alias: " + bioProject.getAlias()));
-        assertThat(tokenName, containsString("accession: " + bioProject.getAccession()));
         assertThat(tokenName, containsString(bioProject.getProjectName()));
     }
 

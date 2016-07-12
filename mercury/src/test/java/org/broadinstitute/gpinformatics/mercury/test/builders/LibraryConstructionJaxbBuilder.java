@@ -50,6 +50,7 @@ public class LibraryConstructionJaxbBuilder {
     private final List<Triple<String, String, Integer>> endRepairReagents;
     private final List<Triple<String, String, Integer>> endRepairCleanupReagents;
     private final List<Triple<String, String, Integer>> pondEnrichmentReagents;
+    private PondType pondType;
 
     public enum TargetSystem {
         /** Messages that might be routed to Squid must have pre-registered lab machines and reagent kit types. */
@@ -58,12 +59,30 @@ public class LibraryConstructionJaxbBuilder {
         MERCURY_ONLY
     }
 
+    public enum PondType {
+        PCR_FREE("PCRFreePondRegistration"),
+        PCR_PLUS("PCRPlusPondRegistration"),
+        REGULAR("PondRegistration");
+
+        private String eventType;
+
+        PondType(String eventType) {
+            this.eventType = eventType;
+        }
+
+        public String getEventType() {
+            return eventType;
+        }
+    }
+
+    // todo jmt why do the reagents need to be parameters?  All callers supply the same values.
     public LibraryConstructionJaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory, String testPrefix,
-                                          String shearCleanPlateBarcode, String p7IndexPlateBarcode,
-                                          String p5IndexPlateBarcode, int numSamples, TargetSystem targetSystem,
-                                          List<Triple<String, String, Integer>> endRepairReagents,
-                                          List<Triple<String, String, Integer>> endRepairCleanupReagents,
-                                          List<Triple<String, String, Integer>> pondEnrichmentReagents) {
+            String shearCleanPlateBarcode, String p7IndexPlateBarcode,
+            String p5IndexPlateBarcode, int numSamples, TargetSystem targetSystem,
+            List<Triple<String, String, Integer>> endRepairReagents,
+            List<Triple<String, String, Integer>> endRepairCleanupReagents,
+            List<Triple<String, String, Integer>> pondEnrichmentReagents,
+            PondType pondType) {
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
         this.testPrefix = testPrefix;
         this.shearCleanPlateBarcode = shearCleanPlateBarcode;
@@ -74,6 +93,7 @@ public class LibraryConstructionJaxbBuilder {
         this.endRepairReagents = endRepairReagents;
         this.endRepairCleanupReagents = endRepairCleanupReagents;
         this.pondEnrichmentReagents = pondEnrichmentReagents;
+        this.pondType = pondType;
     }
 
     public PlateEventType getEndRepairJaxb() {
@@ -220,7 +240,7 @@ public class LibraryConstructionJaxbBuilder {
         for (int rackPosition = 1; rackPosition <= numSamples; rackPosition++) {
             pondRegTubeBarcodes.add(LabEventTest.POND_REGISTRATION_TUBE_PREFIX + testPrefix + rackPosition);
         }
-        pondRegistrationJaxb = bettaLimsMessageTestFactory.buildPlateToRack("PondRegistration", pondCleanupBarcode,
+        pondRegistrationJaxb = bettaLimsMessageTestFactory.buildPlateToRack(pondType.getEventType(), pondCleanupBarcode,
                 pondRegRackBarcode, pondRegTubeBarcodes);
         for (ReceptacleType receptacleType : pondRegistrationJaxb.getPositionMap().getReceptacle()) {
             receptacleType.setVolume(new BigDecimal("50"));

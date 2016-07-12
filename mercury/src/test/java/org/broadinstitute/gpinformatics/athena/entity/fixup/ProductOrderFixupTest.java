@@ -860,15 +860,16 @@ public class    ProductOrderFixupTest extends Arquillian {
         utx.begin();
 
         /*
-         * PDO-8953 was discovered by users. This was confirmed and a 2nd PDO found with this query:
+         * PDO-8953 was discovered by users. This was confirmed and 2 other PDOs found with this query:
                select po.JIRA_TICKET_KEY, pos.SAMPLE_POSITION, count(*)
                from athena.PRODUCT_ORDER po
                join athena.PRODUCT_ORDER_SAMPLE pos on po.PRODUCT_ORDER_ID = pos.PRODUCT_ORDER
                where po.JIRA_TICKET_KEY is not null
                group by po.JIRA_TICKET_KEY, pos.SAMPLE_POSITION
                having count(*) > 1
+               order by po.JIRA_TICKET_KEY, pos.SAMPLE_POSITION
          */
-        String[] orderKeys = new String[]{"PDO-8947", "PDO-8953"};
+        String[] orderKeys = new String[]{"PDO-8947", "PDO-8953", "PDO-9075"};
 
         for (String orderKey : orderKeys) {
             removeUnattachedSamples(orderKey);
@@ -878,6 +879,55 @@ public class    ProductOrderFixupTest extends Arquillian {
                 "GPLIM-4155 Removed orphaned ProductOrderSamples for: " + StringUtils.join(orderKeys, ", ")));
 
         utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void support1798FixRegulatoryInfo() throws Exception {
+        userBean.loginOSUser();
+        beginTransaction();
+
+        /*
+         * From SUPPORT-1798:
+         *  Remove ORSP-1525 from RP-867 and replace ORSP-1525 with ORSP-1565 for PDO-5326. ORSP-1525 can also be removed from PDO-5585.
+         *  ORSP-1565 should be left associated to RP-867. However, the ORSP-1565 "type" should be changed from "IRB Protocol" to "ORSP Not Engaged."
+         */
+
+        // Gather all of the entity instances involved in these changes
+        ProductOrder pdo5326 = productOrderDao.findByBusinessKey("PDO-5326");
+        ProductOrder pdo5585 = productOrderDao.findByBusinessKey("PDO-5585");
+        assertThat(pdo5326.getResearchProject().getBusinessKey(), equalTo("RP-867"));
+        assertThat(pdo5585.getResearchProject().getBusinessKey(), equalTo("RP-867"));
+        ResearchProject rp867 = pdo5585.getResearchProject();
+        List<RegulatoryInfo> regulatoryInfos = regulatoryInfoDao.findByIdentifier("ORSP-1525");
+        assertThat(regulatoryInfos, hasSize(1));
+        RegulatoryInfo orsp1525 = regulatoryInfos.get(0);
+        regulatoryInfos = regulatoryInfoDao.findByIdentifier("ORSP-1565");
+        assertThat(regulatoryInfos, hasSize(1));
+        RegulatoryInfo orsp1565 = regulatoryInfos.get(0);
+
+        // Make the changes
+        assertThat(pdo5326.getRegulatoryInfos(), hasSize(1));
+        assertThat(pdo5326.getRegulatoryInfos(), hasItem(orsp1525));
+        pdo5326.getRegulatoryInfos().remove(orsp1525);
+        pdo5326.getRegulatoryInfos().add(orsp1565);
+
+        assertThat(pdo5585.getRegulatoryInfos(), hasSize(2));
+        assertThat(pdo5585.getRegulatoryInfos(), hasItem(orsp1525));
+        assertThat(pdo5585.getRegulatoryInfos(), hasItem(orsp1565));
+        pdo5585.getRegulatoryInfos().remove(orsp1525);
+
+        assertThat(rp867.getRegulatoryInfos(), hasSize(2));
+        assertThat(rp867.getRegulatoryInfos(), hasItem(orsp1525));
+        assertThat(rp867.getRegulatoryInfos(), hasItem(orsp1565));
+        rp867.getRegulatoryInfos().remove(orsp1525);
+
+        assertThat(orsp1565.getType(), equalTo(RegulatoryInfo.Type.IRB));
+        orsp1565.setType(RegulatoryInfo.Type.ORSP_NOT_ENGAGED);
+
+        productOrderDao
+                .persist(new FixupCommentary("SUPPORT-1798 Updated regulatory info for RP-867 and related PDOs"));
+
+        commitTransaction();
     }
 
     /**
@@ -921,5 +971,21 @@ public class    ProductOrderFixupTest extends Arquillian {
         public RegulatoryInfo.Type getRegulatoryInfoType() {
             return regulatoryInfoType;
         }
+    }
+
+    /**
+     * Use a user transaction for these tests because, unfortunately, ProductOrderDao and ProductOrderSampleDao have
+     * the default transaction attribute type of REQUIRED instead of explicitly requesting SUPPORTS like most of
+     * Mercury's other DAOs. Therefore, every call to a query method on these DAOs will begin and commit a
+     * transaction. Using a user transaction allows the whole test to be in one transaction, importantly including
+     * the FixupCommentary.
+     */
+    private void beginTransaction() throws NotSupportedException, SystemException {
+        utx.begin();
+    }
+
+    private void commitTransaction()
+            throws RollbackException, HeuristicMixedException, HeuristicRollbackException, SystemException {
+        utx.commit();
     }
 }
