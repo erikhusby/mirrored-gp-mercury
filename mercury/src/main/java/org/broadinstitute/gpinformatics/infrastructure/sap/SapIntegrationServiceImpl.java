@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
@@ -59,16 +60,20 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     }
 
     private void initializeClient(SapConfig sapConfigIn) {
-        wrappedClient = new SapIntegrationClientImpl(sapConfigIn.getLogin(), sapConfigIn.getPassword(),
-                sapConfigIn.getBaseUrl(), sapConfigIn.getWsdlUri(), "/wsdl/sap/dev/sap_test_service.wsdl");
-    }
 
-    @Override
-    public String submitAge(String age) throws IOException {
-        if (wrappedClient == null) {
-            initializeClient(this.sapConfig);
+        SapIntegrationClientImpl.SAPEnvironment environment;
+
+        switch (sapConfigIn.getDeploymentConfig()) {
+        case PROD:
+            environment = SapIntegrationClientImpl.SAPEnvironment.PRODUCTION;
+            break;
+        default:
+            environment = SapIntegrationClientImpl.SAPEnvironment.QA;
+            break;
         }
-        return wrappedClient.ageSubmission(age);
+
+        wrappedClient = new SapIntegrationClientImpl(sapConfigIn.getLogin(), sapConfigIn.getPassword(),
+                sapConfigIn.getWsdlUri(),environment);
     }
 
     @Override
@@ -155,7 +160,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                 try {
                     customerNumber = wrappedClient.findCustomerNumber(funding.getPurchaseOrderContact(), companyCode);
                 } catch (SAPIntegrationException e) {
-                    if (e.getMessage().equals("e-mail id is missing in SAP or customer not created")) {
+                    if (e.getMessage().equals(SapIntegrationClientImpl.MISSING_CUSTOMER_RESULT)) {
                         throw new SAPIntegrationException(
                                 "Your order cannot be placed in SAP because the email address "
                                 + "specified on the Quote or Mercury PDO is not attached to "
@@ -179,9 +184,10 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                                 + "need to resubmit this order to ensure that your work is "
                                 + "properly processed.\n"
                                 + "For further questions please contact Mercury support");
+                    } else {
+                        throw e;
                     }
                 }
-
             }
         }
 
