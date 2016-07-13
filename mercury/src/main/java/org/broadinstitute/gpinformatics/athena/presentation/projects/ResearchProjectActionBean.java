@@ -96,6 +96,9 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
     public static final String ACTIONBEAN_URL_BINDING = "/projects/project.action";
     public static final String RESEARCH_PROJECT_PARAMETER = "researchProject";
     public static final String RESEARCH_PROJECT_TAB_PARAMETER = "rpSelectedTab";
+    private static final String LIBRARY_DESCRIPTOR_PARAMETER = "selectedSubmissionLibraryDescriptor";
+    private static final String REPOSITORY_PARAMETER = "selectedSubmissionRepository";
+    private static final String SUBMISSION_SAMPLES_PARAMETER = "selectedSubmissionSamples";
     public static final String RESEARCH_PROJECT_DEFAULT_TAB = "0";
     public static final String RESEARCH_PROJECT_SUBMISSIONS_TAB = "1";
 
@@ -118,6 +121,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
     public static final String PROJECT_LIST_PAGE = "/projects/list.jsp";
     public static final String PROJECT_VIEW_PAGE = "/projects/view.jsp";
     public static final String PROJECT_SUBMISSIONS_PAGE = "/projects/submissions.jsp";
+    public static final String BIOPROJECT_PARAMETER = "bioProjectTokenInput.listOfKeys";
     public boolean supressValidationErrors;
     private static final String BEGIN_COLLABORATION_ACTION = "beginCollaboration";
 
@@ -340,8 +344,13 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
                 validCollaborationPortal = false;
             }
 
+            String eventName = getContext().getEventName();
             if (StringUtils.isNotBlank(editResearchProject.getSubmissionRepositoryName())) {
                 selectedSubmissionRepository = editResearchProject.getSubmissionRepositoryName();
+                submissionRepository = submissionsService.findRepositoryByKey(selectedSubmissionRepository);
+                    if (submissionRepository!=null && !submissionRepository.isActive() && eventName.equals(VIEW_SUBMISSIONS_ACTION)) {
+                        addMessage("Selected submission site ''{0}'' is not active.", submissionRepository.getDescription());
+                    }
             }
 
             if (submissionLibraryDescriptor == null) {
@@ -1020,7 +1029,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
 
             // When getting cached submissions update the submissionStatus if requested.
             if (!submissionSamples.isEmpty() && refreshSubmissionStatus) {
-                submissionDtoFetcher.refreshSubmissionStatuses(submissionSamples);
+                submissionDtoFetcher.refreshSubmissionStatuses(editResearchProject, submissionSamples);
             }
         }
         sessionCache.put(researchProject, submissionSamples);
@@ -1063,14 +1072,14 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         }
         submissionLibraryDescriptor = submissionsService.findLibraryDescriptorTypeByKey(selectedSubmissionLibraryDescriptor);
         if (submissionLibraryDescriptor == null) {
-            addGlobalValidationError("You must select a submission type in order to post for submissions.");
+            addGlobalValidationError("You must select a submission library in order to post for submissions.");
             errors = true;
         }
 
         submissionRepository = submissionsService.findRepositoryByKey(selectedSubmissionRepository);
 
         if (submissionRepository == null) {
-            addGlobalValidationError("You must select a submission repository in order to post for submissions.");
+            addGlobalValidationError("You must select a submission site in order to post for submissions.");
             errors = true;
         }
         if (!errors) {
@@ -1100,6 +1109,10 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         }
         return new RedirectResolution(ResearchProjectActionBean.class, VIEW_ACTION)
                 .addParameter(RESEARCH_PROJECT_PARAMETER, researchProject)
+                .addParameter(BIOPROJECT_PARAMETER, bioProjectTokenInput.getListOfKeys())
+                .addParameter(LIBRARY_DESCRIPTOR_PARAMETER, selectedSubmissionLibraryDescriptor)
+                .addParameter(REPOSITORY_PARAMETER, selectedSubmissionRepository)
+                .addParameter(SUBMISSION_SAMPLES_PARAMETER, selectedSubmissionSamples)
                 .addParameter(RESEARCH_PROJECT_TAB_PARAMETER, RESEARCH_PROJECT_SUBMISSIONS_TAB);
     }
 
