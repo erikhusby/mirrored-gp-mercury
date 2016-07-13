@@ -887,26 +887,24 @@ public class BaseEventTest {
      * @param labVessel starting point in graph.
      */
     public static void runTransferVisualizer(LabVessel labVessel) {
-        try {
-            TransferVisualizerV2 transferVisualizerV2 = new TransferVisualizerV2();
-            File xfrVis = File.createTempFile("XfrVis", ".json");
-            FileWriter fileWriter = new FileWriter(xfrVis);
-            transferVisualizerV2.jsonForVessels(
-                    Collections.singletonList(labVessel),
-                    Arrays.asList(TransferTraverserCriteria.TraversalDirection.Ancestors,
-                            TransferTraverserCriteria.TraversalDirection.Descendants),
-                    fileWriter,
-                    Arrays.asList(TransferVisualizerV2.AlternativeIds.SAMPLE_ID,
-                            TransferVisualizerV2.AlternativeIds.LCSET));
-            fileWriter.flush();
-            System.out.println("Copy contents of " + xfrVis.getAbsolutePath() + " into transfer_vis_test.json, " +
-                    "then open transfer_vis_test.html in Firefox.");
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
         // Disabled by default, because it would block Bamboo tests.
         if (false) {
+            try {
+                TransferVisualizerV2 transferVisualizerV2 = new TransferVisualizerV2();
+                File xfrVis = File.createTempFile("XfrVis", ".json");
+                FileWriter fileWriter = new FileWriter(xfrVis);
+                transferVisualizerV2.jsonForVessels(
+                        Collections.singletonList(labVessel),
+                        Arrays.asList(TransferTraverserCriteria.TraversalDirection.Ancestors,
+                                TransferTraverserCriteria.TraversalDirection.Descendants),
+                        fileWriter,
+                        Arrays.asList(TransferVisualizerV2.AlternativeIds.SAMPLE_ID,
+                                TransferVisualizerV2.AlternativeIds.LCSET));
+                fileWriter.flush();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
             TransferEntityGrapher transferEntityGrapher = new TransferEntityGrapher();
             // "More Transfers" buttons won't work when there's no server, so render all vessels in first "request"
             transferEntityGrapher.setMaxNumVesselsPerRequest(10000);
