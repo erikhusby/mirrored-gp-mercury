@@ -138,18 +138,18 @@
                  * they are filtered out of the DOM when the page loads
                  */
                 'bStateSave': false,
-                'aaSorting': [[1, 'asc']],
+                'aaSorting': [[2, 'asc']],
                 'aoColumns': [
                     {'bSortable': false},                                                   // 0: checkbox
-                    {'bVisible': false},                                                    // 0: search text
-                    {'bSortable': true},                                                    // 1: sample position
-                    {'bSortable': false},                                                   // 2: expand
-                    {'bSortable': true},                                                    // 3: sample ID
-                    {'bSortable': true},                                                    // 4: collaborator sample ID
-                    {'bSortable': true},                                                    // 5: on risk
-                    {'bSortable': true},                                                    // 6: status
-                    {'bSortable': true},                                                    // 7: DCFM
-                    {'bSortable': true, 'sSortDataType': 'input-value', 'sType': 'date'},   // 8: date complete
+                    {'bVisible': false},                                                    // 1: search text
+                    {'bSortable': true},                                                    // 2: sample position
+                    {'bSortable': false},                                                   // 3: expand
+                    {'bSortable': true},                                                    // 4: sample ID
+                    {'bSortable': true},                                                    // 5: collaborator sample ID
+                    {'bSortable': true},                                                    // 6: on risk
+                    {'bSortable': true},                                                    // 7: status
+                    {'bSortable': true},                                                    // 8: DCFM
+                    {'bSortable': true, 'sSortDataType': 'input-value', 'sType': 'date'},   // 9: date complete
 
                     // price item columns
                     <c:forEach items="${actionBean.priceItems}" var="priceItem" varStatus="status">
