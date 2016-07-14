@@ -531,18 +531,46 @@ public class LabEventFactory implements Serializable {
             for (PlateType plateType : plateCherryPickEvent.getSourcePlate()) {
                 barcodes.add(plateType.getBarcode());
             }
-            extractBarcodes(barcodes, plateCherryPickEvent.getSourcePositionMap());
+            List<PositionMapType> extractSourcePositionMaps = extractPositionMapBarcodes(
+                    plateCherryPickEvent.getSourcePlate(), plateCherryPickEvent.getSourcePositionMap());
+            extractBarcodes(barcodes, extractSourcePositionMaps);
 
             for (PlateType plateType : plateCherryPickEvent.getPlate()) {
                 barcodes.add(plateType.getBarcode());
             }
-            extractBarcodes(barcodes, plateCherryPickEvent.getPositionMap());
+
+            List<PositionMapType> extractPositionMaps = extractPositionMapBarcodes(
+                    plateCherryPickEvent.getPlate(), plateCherryPickEvent.getPositionMap());
+            extractBarcodes(barcodes, extractPositionMaps);
 
             Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(barcodes);
             labEvent = buildFromBettaLims(plateCherryPickEvent, mapBarcodeToVessel);
         }
 
         return labEvent;
+    }
+
+    /**
+     * Find position maps from plates that may have receptacle barcodes that will need to be extracted
+     * to make a DAO call.
+     *
+     * @param plateTypes        list of plates to which to check if position map will need to be extracted
+     * @param positionMapTypes  list of possible positionMaps that may need barcodes extracted
+     */
+    private List<PositionMapType> extractPositionMapBarcodes(List<PlateType> plateTypes,
+                                                             List<PositionMapType> positionMapTypes) {
+        List<PositionMapType> extractPositionMaps = new ArrayList<>();
+        for (PlateType plateType: plateTypes) {
+            if (expectBarcodedReceptacleTypes(plateType)) {
+                for (PositionMapType positionMapType: positionMapTypes) {
+                    if (positionMapType.getBarcode().equals(plateType.getBarcode())) {
+                        extractPositionMaps.add(positionMapType);
+                        break;
+                    }
+                }
+            }
+        }
+        return extractPositionMaps;
     }
 
     /**
@@ -1024,6 +1052,9 @@ public class LabEventFactory implements Serializable {
             if (sourceContainer == null) {
                 throw new RuntimeException("Failed to find source " + plateTransferEvent.getSourcePlate().getBarcode());
             }
+            if (sourceContainer.getContainerRole() == null) {
+                throw new RuntimeException(plateTransferEvent.getSourcePlate().getBarcode() + " is not a container");
+            }
         } else {
             ancillarySourceLabVessel = mapBarcodeToVessel.get(plateTransferEvent.getSourcePlate().getBarcode());
         }
@@ -1034,6 +1065,9 @@ public class LabEventFactory implements Serializable {
             destinationContainer = mapBarcodeToVessel.get(plateTransferEvent.getPlate().getBarcode());
             if (destinationContainer == null) {
                 throw new RuntimeException("Failed to find destination " + plateTransferEvent.getPlate().getBarcode());
+            }
+            if (destinationContainer.getContainerRole() == null) {
+                throw new RuntimeException(plateTransferEvent.getPlate().getBarcode() + " is not a container");
             }
         } else {
             ancillaryDestinationLabVessel = mapBarcodeToVessel.get(plateTransferEvent.getPlate().getBarcode());

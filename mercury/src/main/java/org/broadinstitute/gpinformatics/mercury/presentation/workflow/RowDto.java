@@ -13,6 +13,7 @@ import java.util.Set;
 public class RowDto {
     private String barcode;
     private String lcset;
+    private String additionalLcsets;
     private int numberLanes = 0;
     private BigDecimal loadingConc;
     private String eventDate;
@@ -21,27 +22,33 @@ public class RowDto {
     private String startingBatchVessels;
     private String tubeType;
     private String lcsetUrl;
+    private String regulatoryDesignation;
+    private int numberSamples;
 
     public RowDto() {
     }
 
-    public RowDto(@Nonnull String barcode, @Nonnull String lcset, @Nonnull String eventDate, @Nonnull String product,
-                  @Nonnull String startingBatchVessels, @Nonnull String tubeType, @Nonnull BigDecimal loadingConc,
-                  String lcsetUrl) {
+    public RowDto(@Nonnull String barcode, @Nonnull String lcset, String additionalLcsets, @Nonnull String eventDate,
+                  @Nonnull String product, @Nonnull String startingBatchVessels, @Nonnull String tubeType,
+                  @Nonnull BigDecimal loadingConc, String lcsetUrl, @Nonnull String regulatoryDesignation,
+                  int numberSamples) {
         this.barcode = barcode;
         this.lcset = lcset;
+        this.additionalLcsets = additionalLcsets;
         this.eventDate = eventDate;
         this.product = product;
         this.startingBatchVessels = startingBatchVessels;
         this.tubeType = tubeType;
         this.loadingConc = loadingConc;
         this.lcsetUrl = lcsetUrl;
+        this.regulatoryDesignation = regulatoryDesignation;
+        this.numberSamples = numberSamples;
     }
 
     public RowDto(@Nonnull String barcode, @Nonnull String lcset, @Nonnull String eventDate, @Nonnull String product,
                   @Nonnull String startingBatchVessels, @Nonnull String tubeType, @Nonnull BigDecimal loadingConc,
                   int numberLanes) {
-        this(barcode, lcset, eventDate, product, startingBatchVessels, tubeType, loadingConc, null);
+        this(barcode, lcset, "", eventDate, product, startingBatchVessels, tubeType, loadingConc, null, "", 0);
         setNumberLanes(numberLanes);
     }
 
@@ -77,6 +84,14 @@ public class RowDto {
 
     public void setLcset(String lcset) {
         this.lcset = lcset;
+    }
+
+    public void setAdditionalLcsets(String additionalLcsets) {
+        this.additionalLcsets = additionalLcsets;
+    }
+
+    public String getAdditionalLcsets() {
+        return additionalLcsets;
     }
 
     public String getEventDate() {
@@ -141,6 +156,22 @@ public class RowDto {
 
     public void setLcsetUrl(String lcsetUrl) {
         this.lcsetUrl = lcsetUrl;
+    }
+
+    public String getRegulatoryDesignation() {
+        return regulatoryDesignation;
+    }
+
+    public void setRegulatoryDesignation(String regulatoryDesignation) {
+        this.regulatoryDesignation = regulatoryDesignation;
+    }
+
+    public int getNumberSamples() {
+        return numberSamples;
+    }
+
+    public void setNumberSamples(int numberSamples) {
+        this.numberSamples = numberSamples;
     }
 
     public static final Comparator BY_BARCODE = new Comparator() {

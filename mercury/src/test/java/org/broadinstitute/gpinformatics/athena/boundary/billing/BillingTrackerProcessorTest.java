@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
+import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
@@ -15,6 +16,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.*;
@@ -33,6 +35,7 @@ public class BillingTrackerProcessorTest {
     public static final String MESSAGE_PREFIX = "Sheet test, Row #0 ";
 
     private BillingTrackerProcessor processor;
+    private ProductOrder order;
 
     @BeforeMethod
     public void setUp() {
@@ -40,7 +43,7 @@ public class BillingTrackerProcessorTest {
         Product product = new Product();
         product.setPrimaryPriceItem(new PriceItem());
 
-        ProductOrder order = new ProductOrder();
+        order = new ProductOrder();
         order.addSample(new ProductOrderSample(TEST_SAMPLE_ID));
 
         // Set up mocks.
@@ -62,7 +65,8 @@ public class BillingTrackerProcessorTest {
         Map<String, String> dataRow = makeDataRow(nowString);
 
         processor.processRowDetails(dataRow, 0);
-        assertThat(processor.getMessages(),
+        List<String> messages = processor.getMessages();
+        assertThat(messages,
                 not(hasItem(MESSAGE_PREFIX + BillingTrackerProcessor.makeCompletedDateFutureErrorMessage(
                         TEST_SAMPLE_ID, nowString))));
     }
@@ -101,6 +105,21 @@ public class BillingTrackerProcessorTest {
         assertThat(processor.getMessages(), hasItem(MESSAGE_PREFIX +
                                                     BillingTrackerProcessor.makeCompletedDateInvalidMessage("Feb 31",
                                                             TEST_SAMPLE_ID, "Draft-null")));
+    }
+
+    public void testProcessRowDetailsBillingInProgress() {
+        ProductOrderSample sample = order.getSamples().get(0);
+        sample.addLedgerItem(new Date(), new PriceItem(), 1);
+        BillingSession billingSession = new BillingSession(0L, sample.getLedgerItems());
+
+        Date now = new Date();
+        String nowString = new SimpleDateFormat("MM/dd/yyyy").format(now);
+        Map<String, String> dataRow = makeDataRow(nowString);
+
+        processor.processRowDetails(dataRow, 0);
+        List<String> messages = processor.getMessages();
+        assertThat(messages,
+                hasItem(BillingTrackerProcessor.makeBeingBilledMessage("Draft-null")));
     }
 
     private Map<String, String> makeDataRow(String workCompleteDate) {

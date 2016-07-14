@@ -15,24 +15,29 @@ import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidateNestedProperties;
 import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Triple;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductPdfFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.DisplayableItem;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.PriceItemTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProductTokenInput;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.AnalysisTypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
@@ -42,11 +47,16 @@ import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.TreeSet;
 
 import static org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao.IncludePDMOnly;
@@ -94,6 +104,12 @@ public class ProductActionBean extends CoreActionBean {
     @Inject
     private ReagentDesignDao reagentDesignDao;
 
+    @Inject
+    private ResearchProjectDao researchProjectDao;
+
+    @Inject
+    private AttributeArchetypeDao attributeArchetypeDao;
+
     // Data needed for displaying the view.
     private List<ProductFamily> productFamilies;
     private List<Product> allProducts;
@@ -105,8 +121,19 @@ public class ProductActionBean extends CoreActionBean {
     private String[] operators = new String[0];
     private String[] values = new String[0];
 
+    // Genotyping chip name, pdo substring, chip technology for the current product.
+    private List<Triple<String, String, String>> genotypingChipInfo = new ArrayList<>();
+    private String[] genotypingChipTechnologies = new String[0];
+    private String[] genotypingChipNames = new String[0];
+    private String[] genotypingChipPdoSubstrings = new String[0];
+
+    // Map of chip technology to chip names, for populating UI dropdowns.
+    private Map<String, SortedSet<String>> availableChipTechnologyAndChipNames = new HashMap<>();
+
     @Validate(required = true, on = {SAVE_ACTION})
     private Long productFamilyId;
+
+    private String controlsProject;
 
     @ValidateNestedProperties({
             @Validate(field = "productName", required = true, maxlength = 255, on = {SAVE_ACTION},
@@ -144,9 +171,31 @@ public class ProductActionBean extends CoreActionBean {
     /**
      * Initialize the product with the passed in key for display in the form.
      */
-    @Before(stages = LifecycleStage.BindingAndValidation,
-            on = {VIEW_ACTION, EDIT_ACTION, CREATE_ACTION, SAVE_ACTION, "addOnsAutocomplete"})
-    public void init() {
+    @Before(stages = LifecycleStage.BindingAndValidation, on = {"addOnsAutocomplete"})
+    public void addOnsAutocompleteBindingAndValidation() {
+        initProduct();
+    }
+
+    @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION})
+    public void viewBindingAndValidation() {
+        initProduct();
+        initGenotypingInfo();
+    }
+
+    @Before(stages = LifecycleStage.BindingAndValidation, on = {EDIT_ACTION, CREATE_ACTION})
+    public void editCreateBindingAndValidation() {
+        initProduct();
+        initGenotypingInfo();
+        setupFamilies();
+    }
+
+    @Before(stages = LifecycleStage.BindingAndValidation, on = {SAVE_ACTION})
+    public void saveBindingAndValidation() {
+        initProduct();
+        setupFamilies();
+    }
+
+    private void initProduct() {
         product = getContext().getRequest().getParameter(PRODUCT_PARAMETER);
         if (!StringUtils.isBlank(product)) {
             editProduct = productDao.findByBusinessKey(product);
@@ -154,6 +203,17 @@ public class ProductActionBean extends CoreActionBean {
             // This must be a create, so construct a new top level product that has nothing else set
             editProduct = new Product(Product.TOP_LEVEL_PRODUCT);
         }
+        availableChipTechnologyAndChipNames = productEjb.findChipFamiliesAndNames();
+    }
+
+    private void initGenotypingInfo() {
+        genotypingChipInfo = productEjb.getCurrentMappedGenotypingChips(editProduct.getPartNumber());
+    }
+
+    @Before(stages = LifecycleStage.BindingAndValidation, on = {CREATE_ACTION, EDIT_ACTION, SAVE_ACTION})
+    private void setupFamilies() {
+        productFamilies = productFamilyDao.findAll();
+        Collections.sort(productFamilies);
     }
 
     @Before(stages = LifecycleStage.CustomValidation, on = SAVE_ACTION)
@@ -168,15 +228,12 @@ public class ProductActionBean extends CoreActionBean {
                 editProduct.getProductFamily().getProductFamilyId())) {
             editProduct.setProductFamily(productFamilyDao.find(productFamilyId));
         }
-    }
 
-    /**
-     * Need to get this for setting up create and edit and for any errors on save.
-     */
-    @Before(stages = LifecycleStage.BindingAndValidation, on = {CREATE_ACTION, EDIT_ACTION, SAVE_ACTION})
-    public void setupFamilies() {
-        productFamilies = productFamilyDao.findAll();
-        Collections.sort(productFamilies);
+        if (editProduct.getPositiveControlResearchProject() == null ||
+                !editProduct.getPositiveControlResearchProject().getBusinessKey().equals(controlsProject)) {
+            editProduct.setPositiveControlResearchProject(controlsProject == null ? null :
+                    researchProjectDao.findByBusinessKey(controlsProject));
+        }
     }
 
     /**
@@ -187,6 +244,9 @@ public class ProductActionBean extends CoreActionBean {
         if (editProduct != null) {
             if (editProduct.getProductFamily() != null) {
                 productFamilyId = editProduct.getProductFamily().getProductFamilyId();
+            }
+            if (editProduct.getPositiveControlResearchProject() != null) {
+                controlsProject = editProduct.getPositiveControlResearchProject().getBusinessKey();
             }
         }
     }
@@ -229,6 +289,27 @@ public class ProductActionBean extends CoreActionBean {
         }
 
         checkValidCriteria();
+
+        // Strips off "item" prefix.
+        List<String> nakedPdoSubstrings = new ArrayList<>();
+        for (String prefixedString : genotypingChipPdoSubstrings) {
+            String nakedString = StringUtils.trimToNull(StringUtils.substringAfter(prefixedString, " "));
+            // pdoSubstring must be unique since product part number + pdoSubstring must form a unique lookup key.
+            if (nakedPdoSubstrings.contains(nakedString)) {
+                addGlobalValidationError("Cannot have duplicate genotyping chip product order name substrings: " +
+                                         nakedString);
+            }
+            nakedPdoSubstrings.add(nakedString);
+        }
+        genotypingChipPdoSubstrings = nakedPdoSubstrings.toArray(new String[0]);
+
+        // Repacks genotyping parameters into a list for persistence and to redisplay in case of validation failure.
+        genotypingChipInfo.clear();
+        for (int i = 0; i < genotypingChipTechnologies.length; ++i) {
+            genotypingChipInfo.add(
+                    Triple.of(genotypingChipTechnologies[i], genotypingChipNames[i], genotypingChipPdoSubstrings[i]));
+        }
+
     }
 
     private void checkValidCriteria() {
@@ -327,9 +408,8 @@ public class ProductActionBean extends CoreActionBean {
 
     @HandlesEvent(SAVE_ACTION)
     public Resolution save() {
-        productEjb.saveProduct(
-                editProduct, addOnTokenInput, priceItemTokenInput,
-                allLengthsMatch(), criteria, operators, values);
+        productEjb.saveProduct(editProduct, addOnTokenInput, priceItemTokenInput, allLengthsMatch(),
+                criteria, operators, values, genotypingChipInfo);
         addMessage("Product \"" + editProduct.getProductName() + "\" has been saved");
         return new RedirectResolution(ProductActionBean.class, VIEW_ACTION).addParameter(PRODUCT_PARAMETER,
                 editProduct.getPartNumber());
@@ -523,6 +603,28 @@ public class ProductActionBean extends CoreActionBean {
     }
 
     /**
+     * Get the list of research projects for controls.
+     *
+     * @return List of strings representing research project names
+     */
+    public Collection<DisplayableItem> getControlsProjects() {
+        List<ResearchProject> researchProjects = researchProjectDao.findLikeTitle("Control");
+        Collections.sort(researchProjects, new Comparator<ResearchProject>() {
+            @Override
+            public int compare(ResearchProject o1, ResearchProject o2) {
+                return o1.getJiraTicketKey().compareTo(o2.getJiraTicketKey());
+            }
+        });
+        Collection<DisplayableItem> displayableItems = new ArrayList<>(researchProjects.size());
+
+        for (BusinessObject item : researchProjects) {
+            displayableItems.add(new DisplayableItem(item.getBusinessKey(),
+                    item.getBusinessKey() + " - " + item.getName()));
+        }
+        return displayableItems;
+    }
+
+    /**
      * Get the list of workflows.
      *
      * @return all workflows
@@ -542,5 +644,49 @@ public class ProductActionBean extends CoreActionBean {
 
     public void setAvailability(ProductDao.Availability availability) {
         this.availability = availability;
+    }
+
+    public String getControlsProject() {
+        return controlsProject;
+    }
+
+    public void setControlsProject(String controlsProject) {
+        this.controlsProject = controlsProject;
+    }
+
+    public String[] getGenotypingChipTechnologies() {
+        return genotypingChipTechnologies;
+    }
+
+    public void setGenotypingChipTechnologies(String[] genotypingChipTechnologies) {
+        this.genotypingChipTechnologies = genotypingChipTechnologies;
+    }
+
+    public String[] getGenotypingChipNames() {
+        return genotypingChipNames;
+    }
+
+    public void setGenotypingChipNames(String[] genotypingChipNames) {
+        this.genotypingChipNames = genotypingChipNames;
+    }
+
+    public String[] getGenotypingChipPdoSubstrings() {
+        return genotypingChipPdoSubstrings;
+    }
+
+    public void setGenotypingChipPdoSubstrings(String[] genotypingChipPdoSubstrings) {
+        this.genotypingChipPdoSubstrings = genotypingChipPdoSubstrings;
+    }
+
+    public List<Triple<String, String, String>> getGenotypingChipInfo() {
+        return genotypingChipInfo;
+    }
+
+    public void setGenotypingChipInfo(List<Triple<String, String, String>> genotypingChipInfo) {
+        this.genotypingChipInfo = genotypingChipInfo;
+    }
+
+    public Map<String, SortedSet<String>> getAvailableChipTechnologyAndChipNames() {
+        return availableChipTechnologyAndChipNames;
     }
 }

@@ -1,14 +1,9 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
-
 <%-- This page allows the user to select user defined search entity type --%>
-
 <stripes:layout-render name="/layout.jsp" pageTitle="User-Defined Search" sectionTitle="User-Defined Search">
-
 <stripes:layout-component name="extraHead">
-
 </stripes:layout-component>
-
 <stripes:layout-component name="content">
 
 <%--@elvariable id="actionBean" type="org.broadinstitute.gpinformatics.mercury.presentation.search.ConfigurableSearchActionBean"--%>
@@ -35,13 +30,16 @@
       --                                      '-> [Saved Search Names...]
     --%>
     <c:forEach items="${actionBean.allSearchInstances.entrySet()}" var="instanceEntrySet">
+    <div class="form-horizontal span5" style="padding-bottom: 20px">
+        <fieldset>
+            <legend><h4>${instanceEntrySet.key.displayName}</h4></legend>
         <c:forEach items="${instanceEntrySet.value.entrySet()}" var="scopeEntrySet">
-            <h5 style="margin: 5px 0 0 0">&nbsp;&nbsp;${scopeEntrySet.key.preferenceTypeName}</h5>
+            <h5 style="margin: 0 0 0 10px">${scopeEntrySet.key.preferenceTypeName}</h5>
+            <div style="margin: 0 0 0 20px">
             <c:if test="${empty scopeEntrySet.value}">
-                &nbsp;&nbsp;&nbsp;&nbsp;(None Available)
+                (None Available)
             </c:if>
             <c:forEach items="${scopeEntrySet.value}" var="searchName">
-                &nbsp;&nbsp;&nbsp;&nbsp;
                 <stripes:link event="fetchSearch"
                               beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.ConfigurableSearchActionBean"
                               style="font-size: 120%">
@@ -50,8 +48,10 @@
                     ${searchName}
                 </stripes:link><br />
             </c:forEach>
+            </div>
         </c:forEach>
-        <br />
+        </fieldset>
+        </div>
     </c:forEach>
 
 </stripes:form>

@@ -15,6 +15,8 @@ import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.StreamingResolution;
 import net.sourceforge.stripes.action.UrlBinding;
+import net.sourceforge.stripes.validation.ValidationError;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.rackscan.ScannerException;
@@ -34,12 +36,16 @@ import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearch
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConstrainedValueDao;
 import org.broadinstitute.gpinformatics.infrastructure.search.PaginationUtil;
+import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstanceEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
+import org.broadinstitute.gpinformatics.mercury.boundary.search.SearchRequestBean;
+import org.broadinstitute.gpinformatics.mercury.boundary.search.SearchValueBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.BSPLookupException;
 import org.broadinstitute.gpinformatics.mercury.presentation.vessel.RackScanActionBean;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -51,6 +57,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
 
@@ -78,6 +85,7 @@ public class ConfigurableSearchActionBean extends RackScanActionBean {
     public static final String AJAX_SELECT_LAB_EVENT = "ajaxLabSelect";
     public static final String AJAX_SCAN_EVENT = "ajaxScan";
     public static final String RACK_SCAN_PAGE_TITLE = "Rack Scan Barcodes";
+    public static final String DRILL_DOWN_EVENT = "drillDown";
 
     @HandlesEvent(AJAX_SELECT_LAB_EVENT)
     public Resolution selectLab() {
@@ -97,9 +105,14 @@ public class ConfigurableSearchActionBean extends RackScanActionBean {
         try {
             // Run the rack scanner and include the rack barcode in position map
             super.runRackScan(true);
+
+            // Should never happen
             if( rackScan == null || rackScan.isEmpty() ){
                 errors.append("No results from rack scan");
-            } else {
+            }
+
+            // Check for scan errors
+            if( getValidationErrors().isEmpty()) {
                 // Scan data can be persisted with a SearchInstance, keep track of who ran it and when
                 scannerData.put("scanDate", ColumnValueType.DATE_TIME.format(new Date(),""));
                 scannerData.put("scanUser", getUserBean().getLoginUserName());
@@ -111,27 +124,39 @@ public class ConfigurableSearchActionBean extends RackScanActionBean {
                         scannerData.put("rackBarcode", positionAndBarcode.getValue());
                         continue;
                     }
-
-                    scan.put( new JSONObject()
-                            .put("position", positionAndBarcode.getKey())
-                            .put("barcode",positionAndBarcode.getValue())
-                    );
+                    if( StringUtils.isNotEmpty( positionAndBarcode.getValue() ) ) {
+                        scan.put(new JSONObject()
+                                .put("position", positionAndBarcode.getKey())
+                                .put("barcode", positionAndBarcode.getValue())
+                        );
+                    }
+                }
+                if( scan.length() == 0 ){
+                    errors.append("No results from rack scan");
+                }
+            } else {
+                for( Map.Entry<String, List<ValidationError>> errorEntry : getValidationErrors().entrySet() ) {
+                    for( ValidationError error : errorEntry.getValue() ) {
+                        errors.append( error.getMessage(Locale.getDefault()) );
+                    }
                 }
             }
         } catch (Exception ex){
-            errors.append(ex.getMessage());
+            log.error(ex);
+            errors.append("Rack scan error occurred: " + ex.getMessage());
         }
 
         return new StreamingResolution("text/plain") {
             @Override
             public void stream(HttpServletResponse response) throws Exception {
+                ServletOutputStream out = response.getOutputStream();
                 if(errors.length() > 0 ) {
-                    response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, errors.toString());
+                    out.write("Failure: ".getBytes());
+                    out.write(errors.toString().getBytes());
                 } else {
-                    ServletOutputStream out = response.getOutputStream();
                     out.write(scannerData.toString().getBytes());
-                    out.close();
                 }
+                out.close();
             }
         };
     }
@@ -256,6 +281,11 @@ public class ConfigurableSearchActionBean extends RackScanActionBean {
      */
     private ColumnEntity entityType;
 
+    /**
+     * Unmarshalled drill down link data
+     */
+    private SearchRequestBean drillDownRequest;
+
     // Dependencies
     @Inject
     private PreferenceDao preferenceDao;
@@ -312,6 +342,40 @@ public class ConfigurableSearchActionBean extends RackScanActionBean {
         searchInstance = new SearchInstance();
         searchInstance.addRequired(configurableSearchDef);
         return new ForwardResolution("/search/configurable_search.jsp");
+    }
+
+
+    @HandlesEvent(DRILL_DOWN_EVENT)
+    public Resolution drillDown() {
+        if( drillDownRequest == null ) {
+            addGlobalValidationError("Search drill down request is incomplete.");
+            return new ForwardResolution("/search/config_search_choose_entity.jsp");
+        }
+
+        entityType = ColumnEntity.getByName(drillDownRequest.getEntityName());
+        selectedSearchName = drillDownRequest.getSearchName();
+
+        Resolution ignoreIt = fetchSearch();
+
+        boolean isMissingValue = false;
+        for( SearchInstance.SearchValue searchValue : searchInstance.getSearchValues() ) {
+            for( SearchValueBean term : drillDownRequest.getSearchValueBeanList()) {
+                isMissingValue = true;
+                if( term.getTermName().equals(searchValue.getTermName() )) {
+                    searchValue.setValues(term.getValues());
+                    isMissingValue = false;
+                    break;
+                }
+            }
+            if(isMissingValue) {
+                addGlobalValidationError("A term value for term '" + searchValue.getTermName() + "' is missing." );
+                return new ForwardResolution("/search/configurable_search.jsp");
+            }
+        }
+
+        // Dependencies are built, hand off to standard search logic
+        return search();
+
     }
 
     private void getPreferences() {
@@ -541,6 +605,8 @@ public class ConfigurableSearchActionBean extends RackScanActionBean {
         searchInstance.getEvalContext().setBspSampleSearchService(bspSampleSearchService);
         searchInstance.getEvalContext().setOptionValueDao(constrainedValueDao);
         searchInstance.getEvalContext().setSearchInstance(searchInstance);
+        searchInstance.getEvalContext().setResultCellTargetPlatform(SearchContext.ResultCellTargetPlatform.WEB);
+        searchInstance.getEvalContext().setBaseSearchURL(getContext().getRequest().getRequestURL());
     }
 
     /**
@@ -779,6 +845,18 @@ public class ConfigurableSearchActionBean extends RackScanActionBean {
      */
     public boolean isAppendScanResults(){
         return true;
+    }
+
+    /**
+     * Unmarshall search drill down descriptor
+     * @param drillDownRequestString JSON data from link URL
+     */
+    public void setDrillDownRequest(String drillDownRequestString) {
+        try {
+            this.drillDownRequest = new ObjectMapper().readValue(drillDownRequestString, SearchRequestBean.class);
+        } catch (Exception ex ) {
+            throw new RuntimeException("Failure to parse drill down request", ex );
+        }
     }
 
 }

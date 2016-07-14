@@ -332,6 +332,14 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     /**
+     * Load CollaboratorSampleName for all the supplied ProductOrderSamples.
+     * @see SampleDataFetcher
+     */
+    public static void loadCollaboratorSampleName(List<ProductOrderSample> samples) {
+        loadSampleData(samples, BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID);
+    }
+
+    /**
      * Load SampleData for all the supplied ProductOrderSamples.
      * @see SampleDataFetcher
      */
@@ -610,7 +618,8 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     /**
-     * Replace the current list of samples with a new list of samples. The order of samples is preserved.
+     * Replace the current list of samples with a new list of samples. The order of the provided samples collection is
+     * preserved, even if it contains a mix of existing and new instances.
      *
      * @param samples the samples to set
      */
@@ -622,10 +631,19 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
         // Only update samples if the new sample list is different from the old one.
         if (isSampleListDifferent(samples)) {
-            this.samples.clear();
-
+            removeAllSamples();
             addSamplesInternal(samples, 0);
         }
+    }
+
+    /**
+     * Remove all samples from this PDO and detach them from all other objects so they will be deleted.
+     */
+    private void removeAllSamples() {
+        for (ProductOrderSample sample : samples) {
+            sample.remove();
+        }
+        samples.clear();
     }
 
     private void addSamplesInternal(Collection<ProductOrderSample> newSamples, int samplePos) {
@@ -1658,34 +1676,6 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             regInfo.add(regulatoryInfo.printFriendlyValue());
         }
         return regInfo;
-    }
-
-    // todo jmt move this to a preference
-    private static final Map<String, String> mapProductPartToGenoChip = new HashMap<>();
-    static {
-        mapProductPartToGenoChip.put("P-EX-0017", "Broad_GWAS_supplemental_15061359_A1");
-        mapProductPartToGenoChip.put("P-WG-0022", "HumanOmni2.5-8v1_A");
-        mapProductPartToGenoChip.put("P-WG-0023", "HumanOmniExpressExome-8v1-3_A");
-        mapProductPartToGenoChip.put("P-WG-0025", "HumanExome-12v1-2_A");
-        mapProductPartToGenoChip.put("P-WG-0028", "HumanOmniExpress-24v1-1_A");
-        mapProductPartToGenoChip.put("P-WG-0029", "HumanExome-12v1-2_A");
-        mapProductPartToGenoChip.put("P-WG-0031", "HumanCoreExome-24v1-0_A");
-        mapProductPartToGenoChip.put("P-WG-0036", "PsychChip_15048346_B");
-        mapProductPartToGenoChip.put("P-WG-0053", "Broad_GWAS_supplemental_15061359_A1");
-        mapProductPartToGenoChip.put("P-WG-0055", "PsychChip_v1-1_15073391_A1");
-        mapProductPartToGenoChip.put("P-WG-0058", "Multi-EthnicGlobal-8_A1");
-    }
-
-    public static String genoChipTypeForPart(String partNumber) {
-        return mapProductPartToGenoChip.get(partNumber);
-    }
-
-    public String getGenoChipType() {
-        String genoChipType = mapProductPartToGenoChip.get(getProduct().getPartNumber());
-        if (getProduct().getPartNumber().equals("P-WG-0036") && getTitle().contains("Danish")) {
-            genoChipType = "DBS_Wave_Psych";
-        }
-        return genoChipType;
     }
 
     /**

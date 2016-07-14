@@ -12,6 +12,7 @@ package org.broadinstitute.gpinformatics.infrastructure.search;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
 
+import javax.annotation.Nullable;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -31,9 +32,12 @@ public class SearchTerm implements Serializable, ColumnTabulation {
      * Attached to various search term expressions to dynamically generate required properties.
      * @param <T>
      */
-    public abstract static class Evaluator <T> {
-        public abstract T evaluate(Object entity, SearchContext context);
-    }
+     public abstract static class Evaluator <T> {
+
+         public abstract T evaluate(Object entity, SearchContext context);
+
+
+     }
 
     /**
      * Defines Hibernate path from search result entity to the property being searched.
@@ -66,6 +70,11 @@ public class SearchTerm implements Serializable, ColumnTabulation {
          * Note:  Nested criteria path and child search terms are mutually exclusive
          */
         private CriteriaPath nestedCriteriaPath;
+
+        /**
+         * Optional non user-editable criteria to be used as a global filter for user entered search term criteria
+         */
+        private List<ImmutableTermFilter> immutableTermFilters;
 
         public List<String> getCriteria() {
             return criteria;
@@ -106,6 +115,54 @@ public class SearchTerm implements Serializable, ColumnTabulation {
         public void setNestedCriteriaPath( CriteriaPath nestedCriteriaPath ) {
             this.nestedCriteriaPath = nestedCriteriaPath;
         }
+
+        @Nullable
+        public List<ImmutableTermFilter> getImmutableTermFilters(){
+            return immutableTermFilters;
+        }
+
+        public void addImmutableTermFilter(ImmutableTermFilter immutableTermFilter){
+            if( immutableTermFilters == null ) {
+                immutableTermFilters = new ArrayList<>();
+            }
+            immutableTermFilters.add(immutableTermFilter);
+        }
+    }
+
+    /**
+     * Allow the case where one or more additional filters can be attached to a search term.
+     * Filters are not user editable so values must be type safe with entity values
+     */
+    public static class ImmutableTermFilter {
+        private String propertyName;
+        private SearchInstance.Operator operator;
+        private Object[] values;
+
+        /**
+         * Constructor for when one value is required to support operator
+         * @param propertyName A property of the search term entity to base the filter on
+         * @param operator Filter restriction operator
+         * @param values Filter values, 2 required for between operator, 1 or more for list operators
+         */
+        public ImmutableTermFilter(
+                String propertyName, SearchInstance.Operator operator, Object ... values ){
+            this.propertyName = propertyName;
+            this.operator     = operator;
+            this.values = values;
+        }
+
+        public String getPropertyName(){
+            return propertyName;
+        }
+
+        public SearchInstance.Operator getOperator(){
+            return operator;
+        }
+
+        public Object[] getValues() {
+            return values;
+        }
+
     }
 
     /**
@@ -179,6 +236,11 @@ public class SearchTerm implements Serializable, ColumnTabulation {
      * Expression to navigate to the property to generate value for display and sorting
      */
     private Evaluator<Object> displayValueExpression;
+
+    /**
+     * Optional expression to enhance UI presentation of result column value
+     */
+    private Evaluator<String> uiDisplayOutputExpression;
 
     /**
      * Header text (or expression to derive it) for displaying search results.
@@ -391,8 +453,25 @@ public class SearchTerm implements Serializable, ColumnTabulation {
         return displayValueExpression;
     }
 
+    /**
+     * Sets the expression implementation to extract value(s) from base entity object
+     * to use as the source of the result column value presented in UI or download.
+     *
+     * @param displayValueExpression The expression implementation to extract the value(s) from base entity
+     */
     public void setDisplayValueExpression(Evaluator<Object> displayValueExpression) {
         this.displayValueExpression = displayValueExpression;
+    }
+
+    /**
+     * Sets the expression implementation used to convert result column value(s) returned from displayValueExpression
+     * into a format for custom formatted display in UI (e.g. HTML CSS, Hyperlink)<br />
+     * Display output defaults to plain text if expression not set.
+     *
+     * @param uiDisplayOutputExpression Custom expression implementation to enhance UI format of display value
+     */
+    public void setUiDisplayOutputExpression(Evaluator<String> uiDisplayOutputExpression) {
+        this.uiDisplayOutputExpression = uiDisplayOutputExpression;
     }
 
     @Override
@@ -621,10 +700,19 @@ public class SearchTerm implements Serializable, ColumnTabulation {
     }
 
     @Override
-    public String evalFormattedExpression(Object value, SearchContext context) {
+    public String evalPlainTextOutputExpression(Object value, SearchContext context) {
         context = addTermToContext(context);
         String multiValueDelimiter = context.getMultiValueDelimiter();
         return evalValueTypeExpression(value, context).format(value, multiValueDelimiter);
+    }
+
+    @Override
+    public String evalUiDisplayOutputExpression(Object value, SearchContext context) {
+        context = addTermToContext(context);
+        if( uiDisplayOutputExpression == null ) {
+            return evalPlainTextOutputExpression(value, context);
+        }
+        return uiDisplayOutputExpression.evaluate(value, context);
     }
 
     @Override
@@ -639,7 +727,7 @@ public class SearchTerm implements Serializable, ColumnTabulation {
 
     /**
      * Get the collection of entities associated with parent row
-     * Convenience method to eliminate ambiguity of calling evalPlainTextExpression
+     * Convenience method to eliminate ambiguity of calling evalPlainTextOutputExpression
      * @param entity  root of object graph that expression navigates.
      * @param context Other objects which (may be) used in the expression.
      */

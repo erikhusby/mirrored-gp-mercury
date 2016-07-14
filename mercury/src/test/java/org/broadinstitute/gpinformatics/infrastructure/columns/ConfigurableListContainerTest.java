@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
+import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchTerm;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -21,6 +22,7 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -57,6 +59,10 @@ public class ConfigurableListContainerTest extends Arquillian {
             labVessels.add(bucketEntry.getLabVessel());
         }
 
+        // List order of result columns is flexible, sort default is on first column, explicit sort on barcode.
+        int index = -1;
+        int barCodeColumnIndex = 0;
+
         ConfigurableSearchDefinition configurableSearchDef =
                 SearchDefinitionFactory.getForEntity( ColumnEntity.LAB_VESSEL.getEntityName());
         for (Map.Entry<String, List<ColumnTabulation>> groupListSearchTermEntry :
@@ -65,17 +71,22 @@ public class ConfigurableListContainerTest extends Arquillian {
                 // Some search terms are not available for selection in result list
                 // TODO Push method from SearchTerm to ColumnTabulation superclass (or consolidate)
                 if( !((SearchTerm) searchTerm).isExcludedFromResultColumns() ) {
+                    index++;
                     columnTabulations.add(searchTerm);
+                    if( searchTerm.getName().equals("Barcode")) {
+                        barCodeColumnIndex = index;
+                    }
                 }
             }
         }
 
-        ConfigurableList configurableList = new ConfigurableList(columnTabulations, 1, "ASC", ColumnEntity.LAB_VESSEL);
-
+        ConfigurableList configurableList = new ConfigurableList(columnTabulations, barCodeColumnIndex, "ASC", ColumnEntity.LAB_VESSEL);
         // Add any row listeners
         configurableList.addAddRowsListeners(configurableSearchDef);
 
         SearchContext context = buildSearchContext();
+        context.setSearchInstance(buildDummyVesselSearchInstance(configurableSearchDef));
+
         configurableList.addRows(labVessels, context);
 
         ConfigurableList.ResultList resultList = configurableList.getResultList();
@@ -134,7 +145,7 @@ public class ConfigurableListContainerTest extends Arquillian {
 
 
     /**
-     * This test verifies the stability of the LabVesselSearchDefinition.VesselDescendantTraverserCriteria
+     * This test verifies the stability of the LabVesselSearchDefinition.VesselsForEventTraverserCriteria
      * Using a sample vessel, validate shearing tube and flowcell are found in the descendant traversal
      */
     public void testVesselDescendantLookups() {
@@ -144,7 +155,7 @@ public class ConfigurableListContainerTest extends Arquillian {
                 SearchDefinitionFactory.getForEntity( ColumnEntity.LAB_VESSEL.getEntityName());
 
         columnTabulations.add(configurableSearchDef.getSearchTerm("Barcode"));
-        columnTabulations.add(configurableSearchDef.getSearchTerm("Mercury Sample ID"));
+        columnTabulations.add(configurableSearchDef.getSearchTerm("Nearest Sample ID"));
         columnTabulations.add(configurableSearchDef.getSearchTerm("Imported Sample ID"));
         columnTabulations.add(configurableSearchDef.getSearchTerm("Imported Sample Tube Barcode"));
         columnTabulations.add(configurableSearchDef.getSearchTerm("Shearing Sample Barcode"));
@@ -156,6 +167,8 @@ public class ConfigurableListContainerTest extends Arquillian {
         configurableList.addAddRowsListeners(configurableSearchDef);
 
         SearchContext context = buildSearchContext();
+        context.setSearchInstance(buildDummyVesselSearchInstance(configurableSearchDef));
+
         configurableList.addRows(labVesselDao.findBySampleKey("SM-7RDNO"), context);
 
         ConfigurableList.ResultList resultList = configurableList.getResultList();
@@ -168,7 +181,7 @@ public class ConfigurableListContainerTest extends Arquillian {
         // Test column values
         // Barcode
         Assert.assertEquals(resultRow.getRenderableCells().get(0), "1109099877");
-        // Mercury Sample ID
+        // Nearest Sample ID
         Assert.assertEquals(resultRow.getRenderableCells().get(1), "SM-7RDNO");
         // Imported Sample ID
         Assert.assertEquals(resultRow.getRenderableCells().get(2), "SM-9MRYP");
@@ -190,5 +203,20 @@ public class ConfigurableListContainerTest extends Arquillian {
         evalContext.setBspUserList( bspUserList );
 
         return evalContext;
+    }
+
+    /**
+     * Some result display logic in LabVesselSearchDefinition requires a SearchInstance with a SearchValue in context. <br />
+     * (As of 07/2016, the display of Infinium array related column values will be quietly ignored) <br />
+     * SearchValue is ignored because this test validates ConfigurableList.addRows(...) with a list of entities
+     */
+    private SearchInstance buildDummyVesselSearchInstance( ConfigurableSearchDefinition configurableSearchDef){
+
+        SearchInstance searchInstance = new SearchInstance();
+        SearchInstance.SearchValue searchValue = searchInstance.addTopLevelTerm("Barcode",
+                configurableSearchDef);
+        searchValue.setOperator(SearchInstance.Operator.EQUALS);
+        searchValue.setValues(Arrays.asList("IGNORED"));
+        return searchInstance;
     }
 }

@@ -2,7 +2,6 @@
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
-<%@ page import="org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
@@ -814,6 +813,9 @@ function formatInput(item) {
                         &#160;
                         Upload not allowed while billing is in progress
                     </c:if>
+
+                    &nbsp;&nbsp;&nbsp;&nbsp;
+                    <stripes:link beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.BillingLedgerActionBean"><stripes:param name="orderId" value="${actionBean.editOrder.jiraTicketKey}"/>Online Billing Ledger</stripes:link>
                 </security:authorizeBlock>
 
             </c:if>
@@ -1222,12 +1224,6 @@ function formatInput(item) {
                     <stripes:button name="setRisk" value="Set Risk" class="btn"
                                     style="margin-left:5px;" onclick="showRiskDialog()"/>
 
-                    <security:authorizeBlock roles="<%= roles(All) %>"
-                                             context="<%= ApplicationInstance.CRSP %>">
-                        <stripes:button name="addSamplesToBucket" value="Add Samples to Bucket" class="btn"
-                                        style="margin-left:5px;" id="addToBucketButton"
-                                        onclick="showConfirm('addSamplesToBucket', 'add to bucket')"/>
-                    </security:authorizeBlock>
                 </security:authorizeBlock>
                 <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
                     <c:if test="${actionBean.editOrder.product.supportsNumberOfLanes}">

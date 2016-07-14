@@ -219,7 +219,7 @@ public class ReworkEjb {
                 String sampleKey = sample.getName();
                 String tubeBarcode = bspResult.get(sampleKey).getBarcodeForLabVessel();
                 bucketCandidates.add(getBucketCandidateConsideringProductFamily(sample, sampleKey,
-                        tubeBarcode, ProductFamily.ProductFamilyName.EXOME, null, ""));
+                        tubeBarcode, ProductFamily.ProductFamilyInfo.EXOME, null, ""));
             }
         }
         return bucketCandidates;
@@ -250,7 +250,7 @@ public class ReworkEjb {
                 String eventName = vessel.getLastEventName();
                 bucketCandidates.add(getBucketCandidateConsideringProductFamily(sample, sample.getName(),
                         vessel.getLabel(),
-                        ProductFamily.ProductFamilyName.EXOME, vessel, eventName));
+                        ProductFamily.ProductFamilyInfo.EXOME, vessel, eventName));
             }
         }
         return bucketCandidates;
@@ -273,7 +273,7 @@ public class ReworkEjb {
     public BucketCandidate getBucketCandidateConsideringProductFamily(@Nonnull ProductOrderSample sample,
                                                                       @Nonnull String sampleKey,
                                                                       @Nonnull String tubeBarcode,
-                                                                      @Nonnull ProductFamily.ProductFamilyName productFamily,
+                                                                      @Nonnull ProductFamily.ProductFamilyInfo productFamily,
                                                                       LabVessel labVessel, String lastEventStep) {
         BucketCandidate candidate = new BucketCandidate(sampleKey, tubeBarcode,
                 sample.getProductOrder(), labVessel, lastEventStep);

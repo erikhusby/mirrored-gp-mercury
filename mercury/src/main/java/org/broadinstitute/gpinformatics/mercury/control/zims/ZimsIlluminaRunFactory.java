@@ -9,7 +9,6 @@ import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
-import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -75,7 +74,6 @@ public class ZimsIlluminaRunFactory {
     private ControlDao controlDao;
     private SequencingTemplateFactory sequencingTemplateFactory;
     private ProductOrderDao productOrderDao;
-    private ResearchProjectDao researchProjectDao;
     private final CrspPipelineUtils crspPipelineUtils;
 
     private static final Log log = LogFactory.getLog(ZimsIlluminaRunFactory.class);
@@ -84,21 +82,16 @@ public class ZimsIlluminaRunFactory {
     public ZimsIlluminaRunFactory(SampleDataFetcher sampleDataFetcher,
                                   ControlDao controlDao, SequencingTemplateFactory sequencingTemplateFactory,
                                   ProductOrderDao productOrderDao,
-                                  ResearchProjectDao researchProjectDao,
                                   CrspPipelineUtils crspPipelineUtils) {
         this.sampleDataFetcher = sampleDataFetcher;
         this.controlDao = controlDao;
         this.sequencingTemplateFactory = sequencingTemplateFactory;
         this.productOrderDao = productOrderDao;
-        this.researchProjectDao = researchProjectDao;
         this.crspPipelineUtils = crspPipelineUtils;
     }
 
     public ZimsIlluminaRun makeZimsIlluminaRun(IlluminaSequencingRun illuminaRun) {
         RunCartridge flowcell = illuminaRun.getSampleCartridge();
-        ResearchProject crspPositiveControlsProject = researchProjectDao.findByBusinessKey(
-                crspPipelineUtils.getResearchProjectForCrspPositiveControls()
-        );
 
         List<List<SampleInstanceDto>> perLaneSampleInstanceDtos = new ArrayList<>();
         Set<String> sampleIds = new HashSet<>();
@@ -216,7 +209,7 @@ public class ZimsIlluminaRunFactory {
                 SampleInstanceDto sampleInstanceDto = sampleInstanceDtos.get(0);
                 short laneNumber = sampleInstanceDto.getLaneNumber();
                 libraryBeans.addAll(
-                        makeLibraryBeans(sampleInstanceDtos, mapSampleIdToDto, mapKeyToProductOrder, mapNameToControl,crspPositiveControlsProject));
+                        makeLibraryBeans(sampleInstanceDtos, mapSampleIdToDto, mapKeyToProductOrder, mapNameToControl));
                 String sequencedLibraryName = sampleInstanceDto.getSequencedLibraryName();
                 Date sequencedLibraryDate = sampleInstanceDto.getSequencedLibraryDate();
 
@@ -245,8 +238,7 @@ public class ZimsIlluminaRunFactory {
     public List<LibraryBean> makeLibraryBeans(List<SampleInstanceDto> sampleInstanceDtos,
                                               Map<String, SampleData> mapSampleIdToDto,
                                               Map<String, ProductOrder> mapKeyToProductOrder,
-                                              Map<String, Control> mapNameToControl,
-                                              ResearchProject crspPositiveControlProject) {
+                                              Map<String, Control> mapNameToControl) {
         List<LibraryBean> libraryBeans = new ArrayList<>();
 
         // Get distinct analysis types and reference sequences.  If there's only one distinct, it's used for the
@@ -254,6 +246,8 @@ public class ZimsIlluminaRunFactory {
         Set<String> analysisTypes = new HashSet<>();
         Set<String> referenceSequenceKeys = new HashSet<>();
         Set<String> aggregationDataTypes = new HashSet<>();
+        Set<Integer> insertSizes = new HashSet<>();
+        Set<ResearchProject> positiveControlResearchProjects = new HashSet<>();
         for (SampleInstanceDto sampleInstanceDto : sampleInstanceDtos) {
             ProductOrder productOrder = (sampleInstanceDto.getProductOrderKey() != null) ?
                     mapKeyToProductOrder.get(sampleInstanceDto.getProductOrderKey()) : null;
@@ -264,6 +258,14 @@ public class ZimsIlluminaRunFactory {
                 ResearchProject project = productOrder.getResearchProject();
                 if (!StringUtils.isBlank(project.getReferenceSequenceKey())) {
                     referenceSequenceKeys.add(project.getReferenceSequenceKey());
+                }
+                ResearchProject positiveControlResearchProject = product.getPositiveControlResearchProject();
+                if (positiveControlResearchProject != null) {
+                    positiveControlResearchProjects.add(positiveControlResearchProject);
+                }
+                Integer insertSize = product.getInsertSize();
+                if (insertSize != null) {
+                    insertSizes.add(insertSize);
                 }
             }
         }
@@ -333,9 +335,8 @@ public class ZimsIlluminaRunFactory {
             libraryBeans.add(createLibraryBean(sampleInstanceDto.getLabVessel(), productOrder, sampleData, lcSet,
                     baitName, indexingSchemeEntity, catNames, sampleInstanceDto.getSampleInstance().getWorkflowName(),
                     indexingSchemeDto, mapNameToControl, sampleInstanceDto.getPdoSampleName(),
-                    sampleInstanceDto.isCrspLane(), crspPositiveControlProject,
-                    sampleInstanceDto.getMetadataSourceForPipelineAPI(), analysisTypes, referenceSequenceKeys,
-                    aggregationDataTypes));
+                    sampleInstanceDto.isCrspLane(), sampleInstanceDto.getMetadataSourceForPipelineAPI(), analysisTypes,
+                    referenceSequenceKeys, aggregationDataTypes, positiveControlResearchProjects, insertSizes));
         }
 
         // Make order predictable.  Include library name because for ICE there are 8 ancestor catch tubes, all with
@@ -364,9 +365,9 @@ public class ZimsIlluminaRunFactory {
             MolecularIndexingScheme indexingSchemeEntity, List<String> catNames, String labWorkflow,
             edu.mit.broad.prodinfo.thrift.lims.MolecularIndexingScheme indexingSchemeDto,
             Map<String, Control> mapNameToControl, String pdoSampleName,
-            boolean isCrspLane, ResearchProject crspPositiveControlsProject,
-            String metadataSourceForPipelineAPI, Set<String> analysisTypes, Set<String> referenceSequenceKeys,
-            Set<String> aggregationDataTypes) {
+            boolean isCrspLane, String metadataSourceForPipelineAPI, Set<String> analysisTypes,
+            Set<String> referenceSequenceKeys, Set<String> aggregationDataTypes,
+            Set<ResearchProject> positiveControlProjects, Set<Integer> insertSizes) {
 
         Format dateFormat = FastDateFormat.getInstance(ZimsIlluminaRun.DATE_FORMAT);
 
@@ -388,6 +389,7 @@ public class ZimsIlluminaRunFactory {
         Collection<String> gssrBarcodes = null;
         String gssrSampleType = null;
         Boolean doAggregation = Boolean.TRUE;
+        ResearchProject positiveControlProject = null;
 
         String analysisType = null;
         String referenceSequence = null;
@@ -400,12 +402,19 @@ public class ZimsIlluminaRunFactory {
                 case POSITIVE:
                     positiveControl = true;
                     if (analysisTypes.size() == 1 && referenceSequenceKeys.size() == 1 &&
-                            aggregationDataTypes.size() == 1) {
+                            aggregationDataTypes.size() == 1 && positiveControlProjects.size() <= 1 &&
+                            insertSizes.size() <= 1) {
                         analysisType = analysisTypes.iterator().next();
                         String[] referenceSequenceValues = referenceSequenceKeys.iterator().next().split("\\|");
                         referenceSequence = referenceSequenceValues[0];
                         referenceSequenceVersion = referenceSequenceValues[1];
                         aggregationDataType = aggregationDataTypes.iterator().next();
+                        if (positiveControlProjects.size() == 1) {
+                            positiveControlProject = positiveControlProjects.iterator().next();
+                        }
+                        if (insertSizes.size() == 1) {
+                            expectedInsertSize = insertSizes.iterator().next().toString();
+                        }
                     }
                     break;
                 case NEGATIVE:
@@ -423,6 +432,9 @@ public class ZimsIlluminaRunFactory {
         if (productOrder != null) {
             // Product stuff.
             Product product = productOrder.getProduct();
+            if (product.getInsertSize() != null) {
+                expectedInsertSize = product.getInsertSize().toString();
+            }
             analysisType = product.getAnalysisTypeKey();
 
             // If there was no bait on the actual samples, use the one defined on the product.
@@ -451,10 +463,21 @@ public class ZimsIlluminaRunFactory {
                 catNames, productOrder, lcSet, sampleData, labWorkflow, libraryCreationDate, pdoSampleName,
                 metadataSourceForPipelineAPI, aggregationDataType);
         if (isCrspLane) {
-            crspPipelineUtils.setFieldsForCrsp(libraryBean, sampleData, crspPositiveControlsProject, lcSet,
-                    bait);
+            crspPipelineUtils.setFieldsForCrsp(libraryBean, sampleData, bait);
         }
-        return libraryBean;        
+        if (Boolean.TRUE.equals(libraryBean.isPositiveControl())) {
+            String participantWithLcSetName = libraryBean.getCollaboratorParticipantId() + "_" + lcSet;
+            libraryBean.setCollaboratorSampleId(participantWithLcSetName);
+            libraryBean.setCollaboratorParticipantId(participantWithLcSetName);
+
+            if (positiveControlProject != null) {
+                libraryBean.setResearchProjectId(positiveControlProject.getBusinessKey());
+                libraryBean.setResearchProjectName(positiveControlProject.getTitle());
+                libraryBean.setRegulatoryDesignation(positiveControlProject.getRegulatoryDesignationCodeForPipeline());
+            }
+        }
+
+        return libraryBean;
     }
 
     /**

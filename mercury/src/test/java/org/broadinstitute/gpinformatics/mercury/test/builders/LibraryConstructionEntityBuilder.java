@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.test.builders;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.LimsQueries;
@@ -11,6 +10,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexRea
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
@@ -47,11 +47,14 @@ public class LibraryConstructionEntityBuilder {
     private int numSamples;
     private String testPrefix;
     private Indexing indexing;
+    private LibraryConstructionJaxbBuilder.PondType pondType;
+
+    private final Map<String, BarcodedTube> mapBarcodeToPondRegTubes = new HashMap<>();
 
     public LibraryConstructionEntityBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
             LabEventFactory labEventFactory, LabEventHandler labEventHandler, StaticPlate shearingCleanupPlate,
             String shearCleanPlateBarcode, StaticPlate shearingPlate, int numSamples, String testPrefix,
-            Indexing indexing) {
+            Indexing indexing, LibraryConstructionJaxbBuilder.PondType pondType) {
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
         this.labEventFactory = labEventFactory;
         this.labEventHandler = labEventHandler;
@@ -61,6 +64,7 @@ public class LibraryConstructionEntityBuilder {
         this.numSamples = numSamples;
         this.testPrefix = testPrefix;
         this.indexing = indexing;
+        this.pondType = pondType;
     }
 
     public List<String> getPondRegTubeBarcodes() {
@@ -75,6 +79,10 @@ public class LibraryConstructionEntityBuilder {
         return pondRegRack;
     }
 
+    public Map<String, BarcodedTube> getMapBarcodeToPondRegTubes() {
+        return mapBarcodeToPondRegTubes;
+    }
+
     public LibraryConstructionEntityBuilder invoke() {
         final LibraryConstructionJaxbBuilder libraryConstructionJaxbBuilder = new LibraryConstructionJaxbBuilder(
                 bettaLimsMessageTestFactory, testPrefix, shearCleanPlateBarcode, "IndexPlateP7", "IndexPlateP5",
@@ -82,10 +90,9 @@ public class LibraryConstructionEntityBuilder {
                 Arrays.asList(Triple.of("KAPA Reagent Box", "0009753252", 1)),
                 Arrays.asList(Triple.of("PEG", "0009753352", 2), Triple.of("70% Ethanol", "LCEtohTest", 3),
                         Triple.of("EB", "0009753452", 4), Triple.of("SPRI", "LCSpriTest", 5)),
-                Arrays.asList(Triple.of("KAPA Amp Kit", "0009753250", 6))
+                Arrays.asList(Triple.of("KAPA Amp Kit", "0009753250", 6)),
+                pondType
         ).invoke();
-        pondRegRackBarcode = libraryConstructionJaxbBuilder.getPondRegRackBarcode();
-        pondRegTubeBarcodes = libraryConstructionJaxbBuilder.getPondRegTubeBarcodes();
 
         // EndRepair
         LabEventTest.validateWorkflow("EndRepair", shearingCleanupPlate);
@@ -160,7 +167,7 @@ public class LibraryConstructionEntityBuilder {
         List<Reagent> reagents = sampleInstance.getReagents();
         Assert.assertEquals(reagents.size(), 1, "Wrong number of reagents");
         MolecularIndexReagent molecularIndexReagent = (MolecularIndexReagent) reagents.iterator().next();
-        Assert.assertEquals(molecularIndexReagent.getMolecularIndexingScheme().getName(), "Illumina_P7-M",
+        Assert.assertEquals(molecularIndexReagent.getMolecularIndexingScheme().getName(), "Illumina_P7-Habab",
                                    "Wrong index");
 
         // PostIndexedAdapterLigationThermoCyclerLoaded
@@ -179,7 +186,7 @@ public class LibraryConstructionEntityBuilder {
         StaticPlate ligationCleanupPlate =
                 (StaticPlate) ligationCleanupEntity.getTargetLabVessels().iterator().next();
 
-        LimsQueries limsQueries = new LimsQueries(null, null, null);
+        LimsQueries limsQueries = new LimsQueries(null, null, null, null);
         List<String> plateParents = limsQueries.findImmediatePlateParents(ligationCleanupPlate);
         Assert.assertEquals(plateParents.size(), 1, "Wrong number of plate parents");
         Assert.assertEquals(plateParents.get(0), shearingCleanupPlate.getLabel(), "Wrong parent barcode");
@@ -220,7 +227,7 @@ public class LibraryConstructionEntityBuilder {
         StaticPlate pondCleanupPlate = (StaticPlate) pondCleanupEntity.getTargetLabVessels().iterator().next();
 
         // PondRegistration
-        LabEventTest.validateWorkflow("PondRegistration", pondCleanupPlate);
+        LabEventTest.validateWorkflow(pondType.getEventType(), pondCleanupPlate);
         mapBarcodeToVessel.clear();
         mapBarcodeToVessel.put(pondCleanupPlate.getLabel(), pondCleanupPlate);
         LabEvent pondRegistrationEntity = labEventFactory.buildFromBettaLims(
@@ -241,8 +248,15 @@ public class LibraryConstructionEntityBuilder {
         reagents = pondRegSampleInstance.getReagents();
         Assert.assertEquals(reagents.size(), 1, "Wrong number of reagents");
         molecularIndexReagent = (MolecularIndexReagent) reagents.iterator().next();
-        Assert.assertEquals(molecularIndexReagent.getMolecularIndexingScheme().getName(), "Illumina_P5-M_P7-M",
+        Assert.assertEquals(molecularIndexReagent.getMolecularIndexingScheme().getName(), "Illumina_P5-Habab_P7-Habab",
                 "Wrong index");
+
+        pondRegRackBarcode = libraryConstructionJaxbBuilder.getPondRegRackBarcode();
+        pondRegTubeBarcodes = libraryConstructionJaxbBuilder.getPondRegTubeBarcodes();
+
+        for (BarcodedTube barcodedTube : pondRegRack.getContainerRole().getContainedVessels()) {
+            mapBarcodeToPondRegTubes.put(barcodedTube.getLabel(), barcodedTube);
+        }
         return this;
     }
 }

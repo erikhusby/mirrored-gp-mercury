@@ -111,4 +111,8 @@ public abstract class Reagent {
     public void setExpiration(Date expiration) {
         this.expiration = expiration;
     }
+
+    public Set<LabEventReagent> getLabEventReagents() {
+        return labEventReagents;
+    }
 }

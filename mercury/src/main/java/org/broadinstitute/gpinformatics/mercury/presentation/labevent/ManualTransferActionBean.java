@@ -44,6 +44,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselTypeGeometry
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.vessel.RackScanActionBean;
 
 import javax.annotation.Nullable;
@@ -320,7 +321,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
         return new ForwardResolution(MANUAL_TRANSFER_PAGE);
     }
 
-    private void validateBarcodes(LabBatch labBatch, MessageCollection messageCollection) {
+    private void validateBarcodes(@Nullable LabBatch labBatch, MessageCollection messageCollection) {
         switch (manualTransferDetails.getMessageType()) {
             case PLATE_EVENT:
                 for (StationEventType stationEvent : stationEvents) {
@@ -477,7 +478,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
     }
 
     private Map<String, LabVessel> loadPlateFromDb(PlateType plateType, PositionMapType positionMapType,
-            boolean required, LabBatch labBatch, MessageCollection messageCollection, Direction direction) {
+            boolean required, @Nullable LabBatch labBatch, MessageCollection messageCollection, Direction direction) {
         Map<String, LabVessel> returnMapBarcodeToVessel = new HashMap<>();
         if (plateType != null) {
             String barcode = plateType.getBarcode();
@@ -521,12 +522,13 @@ public class ManualTransferActionBean extends RackScanActionBean {
                     } else {
                         messageCollection.addError(message);
                     }
-                    if (direction == Direction.SOURCE && !labVessel.getNearestWorkflowLabBatches().contains(labBatch)) {
+                    if (labBatch != null && direction == Direction.SOURCE &&
+                            !labVessel.getNearestWorkflowLabBatches().contains(labBatch)) {
                         messageCollection.addError(barcode + " is not in batch " + labBatch.getBatchName());
                     }
                 }
             }
-            if (required && barcodes.size() != labBatch.getLabBatchStartingVessels().size()) {
+            if (labBatch != null && required && barcodes.size() != labBatch.getLabBatchStartingVessels().size()) {
                 messageCollection.addWarning("Batch has " + labBatch.getLabBatchStartingVessels().size() +
                         " vessels, but " + barcodes.size() + " were scanned.");
             }
@@ -537,6 +539,24 @@ public class ManualTransferActionBean extends RackScanActionBean {
 
     @HandlesEvent(TRANSFER_ACTION)
     public Resolution transfer() {
+        BettaLIMSMessage bettaLIMSMessage = buildBettaLIMSMessage();
+
+        if (getContext().getValidationErrors().isEmpty()) {
+            try {
+                ObjectMarshaller<BettaLIMSMessage> bettaLIMSMessageObjectMarshaller =
+                        new ObjectMarshaller<>(BettaLIMSMessage.class);
+                bettaLimsMessageResource.storeAndProcess(bettaLIMSMessageObjectMarshaller.marshal(bettaLIMSMessage));
+                addMessage("Transfer recorded successfully.");
+            } catch (Exception e) {
+                log.error("Failed to process message", e);
+                addGlobalValidationError(e.getMessage());
+            }
+        }
+        return new ForwardResolution(MANUAL_TRANSFER_PAGE);
+    }
+
+    @Nullable
+    BettaLIMSMessage buildBettaLIMSMessage() {
         MessageCollection messageCollection = new MessageCollection();
         LabBatch labBatch = null;
         if (batchName != null) {
@@ -641,19 +661,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
                 eventIndex++;
             }
         }
-
-        if (getContext().getValidationErrors().isEmpty()) {
-            try {
-                ObjectMarshaller<BettaLIMSMessage> bettaLIMSMessageObjectMarshaller =
-                        new ObjectMarshaller<>(BettaLIMSMessage.class);
-                bettaLimsMessageResource.storeAndProcess(bettaLIMSMessageObjectMarshaller.marshal(bettaLIMSMessage));
-                addMessage("Transfer recorded successfully.");
-            } catch (Exception e) {
-                log.error("Failed to process message", e);
-                addGlobalValidationError(e.getMessage());
-            }
-        }
-        return new ForwardResolution(MANUAL_TRANSFER_PAGE);
+        return bettaLIMSMessage;
     }
 
     private void cleanupPositionMap(PositionMapType positionMapType, PlateType plate,
@@ -665,6 +673,9 @@ public class ManualTransferActionBean extends RackScanActionBean {
                 if (next.getBarcode() == null || next.getBarcode().isEmpty()) {
                     iterator.remove();
                 }
+            }
+            if (positionMapType.getReceptacle().isEmpty()) {
+                addGlobalValidationError("There must be at least one tube in the rack.");
             }
             String barcode;
             if (vesselTypeGeometry.isBarcoded()) {
@@ -776,5 +787,20 @@ public class ManualTransferActionBean extends RackScanActionBean {
 
     public LabEventType.ManualTransferDetails getManualTransferDetails() {
         return manualTransferDetails;
+    }
+
+    /** For testing. */
+    void setManualTransferDetails(LabEventType.ManualTransferDetails manualTransferDetails) {
+        this.manualTransferDetails = manualTransferDetails;
+    }
+
+    /** For testing. */
+    void setUserBean(UserBean userBean) {
+        this.userBean = userBean;
+    }
+
+    /** For testing. */
+    void setLabVesselDao(LabVesselDao labVesselDao) {
+        this.labVesselDao = labVesselDao;
     }
 }

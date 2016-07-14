@@ -18,15 +18,20 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.boundary.orders.PDOUpdateField;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.UpdateField;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.projects.SubmissionTrackerDao;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.ProjectPerson;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectFunding;
 import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTracker;
+import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTuple;
 import org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
+import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -43,6 +48,8 @@ import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionBean
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionBioSampleBean;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionContactBean;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDto;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionLibraryDescriptor;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionRepository;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionRequestBean;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionStatusDetailBean;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionsService;
@@ -81,17 +88,18 @@ public class ResearchProjectEjb {
     private final AppConfig appConfig;
     private final ResearchProjectDao researchProjectDao;
     private final SubmissionsService submissionsService;
+    private SubmissionTrackerDao submissionTrackerDao;
 
     // EJBs require a no arg constructor.
     @SuppressWarnings("unused")
     public ResearchProjectEjb() {
-        this(null, null, null, null, null, null, null);
+        this(null, null, null, null, null, null, null, null);
     }
 
     @Inject
     public ResearchProjectEjb(JiraService jiraService, UserBean userBean, BSPUserList userList,
                               BSPCohortList cohortList, AppConfig appConfig, ResearchProjectDao researchProjectDao,
-                              SubmissionsService submissionsService) {
+                              SubmissionsService submissionsService, SubmissionTrackerDao submissionTrackerDao) {
         this.jiraService = jiraService;
         this.userBean = userBean;
         this.userList = userList;
@@ -99,6 +107,7 @@ public class ResearchProjectEjb {
         this.appConfig = appConfig;
         this.researchProjectDao = researchProjectDao;
         this.submissionsService = submissionsService;
+        this.submissionTrackerDao = submissionTrackerDao;
     }
 
     /**
@@ -171,6 +180,9 @@ public class ResearchProjectEjb {
         researchProjectUpdateFields
                 .add(new ResearchProjectUpdateField(RequiredSubmissionFields.DESCRIPTION,
                         researchProject.getSynopsis()));
+        researchProjectUpdateFields.add(new ResearchProjectUpdateField(RequiredSubmissionFields.SUMMARY,
+                researchProject.getTitle()));
+
 
         List<String> fundingSources = new ArrayList<>();
         for (ResearchProjectFunding fundingSrc : researchProject.getProjectFunding()) {
@@ -216,7 +228,7 @@ public class ResearchProjectEjb {
         // something in the ResearchProject that is not reflected in JIRA.
         String comment = "\n" + researchProject.getJiraTicketKey() + " was edited by "
                          + userBean.getLoginUserName() + "\n\n"
-                         + (updateComment.isEmpty() ? "No JIRA Product Order fields were updated\n\n" : updateComment);
+                         + (updateComment.isEmpty() ? "No JIRA Research Project fields were updated\n\n" : updateComment);
 
         jiraService.postNewTransition(researchProject.getJiraTicketKey(), transition, customFields, comment);
     }
@@ -242,30 +254,31 @@ public class ResearchProjectEjb {
      * @param researchProjectBusinessKey Unique key of the Research Project under which the
      * @param selectedBioProject         BioProject to be associated with all submissions
      * @param submissionDtos             Collection of submissionDTOs selected to be submitted
+     * @param repository                 Repository where submission will be sent.
+     * @param submissionLibraryDescriptor             The name of the library descriptor to be sent in the submission.
      *
      * @return the results from the post to the submission service
      */
     public Collection<SubmissionStatusDetailBean> processSubmissions(@Nonnull String researchProjectBusinessKey,
                                                                      @Nonnull BioProject selectedBioProject,
-                                                                     @Nonnull List<SubmissionDto> submissionDtos)
-            throws ValidationException {
-
-        if (submissionDtos.isEmpty()) {
-            throw new InformaticsServiceException("At least one selection is needed to post submissions");
-        }
+                                                                     @Nonnull List<SubmissionDto> submissionDtos,
+                                                                     @Nonnull SubmissionRepository repository,
+                                                                     @Nonnull SubmissionLibraryDescriptor
+                                                                     submissionLibraryDescriptor) throws ValidationException {
+        validateSubmissionDto(researchProjectBusinessKey, submissionDtos);
+        validateSubmissionSamples(selectedBioProject, submissionDtos);
 
         ResearchProject submissionProject = researchProjectDao.findByBusinessKey(researchProjectBusinessKey);
 
         Map<SubmissionTracker, SubmissionDto> submissionDtoMap = new HashMap<>();
 
         for (SubmissionDto submissionDto : submissionDtos) {
-            SubmissionTracker tracker =
-                    new SubmissionTracker(submissionDto.getSampleName(), submissionDto.getFilePath(),
-                            String.valueOf(submissionDto.getVersion()));
+            SubmissionTracker tracker = new SubmissionTracker(submissionDto.getSampleName(),
+                    submissionDto.getFileType(), String.valueOf(submissionDto.getVersion()));
             submissionProject.addSubmissionTracker(tracker);
             submissionDtoMap.put(tracker, submissionDto);
         }
-        validateSubmissionSamples(selectedBioProject, submissionDtos);
+
         researchProjectDao.persist(submissionProject);
 
         List<SubmissionBean> submissionBeans = new ArrayList<>();
@@ -284,7 +297,8 @@ public class ResearchProjectEjb {
 
             SubmissionBean submissionBean =
                     new SubmissionBean(dtoByTracker.getKey().createSubmissionIdentifier(),
-                            userBean.getBspUser().getUsername(), submitBioProject, bioSampleBean);
+                            userBean.getBspUser().getUsername(), submitBioProject, bioSampleBean, repository,
+                            submissionLibraryDescriptor);
             submissionBeans.add(submissionBean);
         }
 
@@ -307,10 +321,13 @@ public class ResearchProjectEjb {
         List<String> errorMessages = new ArrayList<>();
 
         for (SubmissionStatusDetailBean status : submissionResults) {
+            SubmissionTracker submissionTracker = submissionIdentifierToTracker.get(status.getUuid());
             if (CollectionUtils.isNotEmpty(status.getErrors())) {
                 for(String errorMessage:status.getErrors()) {
-                    errorMessages.add(String.format("%s: %s", submissionIdentifierToTracker.get(status.getUuid()).getSubmittedSampleName(),errorMessage));
+                    errorMessages.add(String.format("%s: %s", submissionTracker.getSubmittedSampleName(), errorMessage));
                 }
+            }else {
+                submissionDtoMap.get(submissionTracker).setStatusDetailBean(status);
             }
         }
 
@@ -322,7 +339,56 @@ public class ResearchProjectEjb {
         return submissionResults;
     }
 
-    void validateSubmissionSamples(BioProject bioProject, Collection<SubmissionDto> submissionDtos)
+    /**
+     * Validates a list of submissionDTOs being submitted in a research project. SubmissionDTOs need to:
+     * <ul>
+     *     <li>Not be empty.</li>
+     *     <li>Have bassDTOs with distinct tuples </li>
+     *     <li>Have distinct tuples compared to previous Submissions</li>
+     * </ul>
+     * @param researchProjectKey
+     * @param submissionDtos
+     * @throws ValidationException
+     */
+    public void validateSubmissionDto(@Nonnull String researchProjectKey, @Nonnull List<SubmissionDto> submissionDtos)
+            throws ValidationException {
+
+        if (submissionDtos.isEmpty()) {
+            throw new InformaticsServiceException("At least one selection is needed to post submissions");
+        }
+
+        Set<String> errors = new HashSet<>();
+        Set<SubmissionTuple> tuples = new HashSet<>(submissionDtos.size());
+        for (SubmissionDto submissionDto : submissionDtos) {
+            BassDTO bassDTO = submissionDto.getBassDTO();
+            if (bassDTO != null) {
+                SubmissionTuple tuple = bassDTO.getTuple();
+                if (!tuples.add(tuple)) {
+                    errors.add(tuple.toString());
+                }
+            }
+        }
+
+        if (!errors.isEmpty()) {
+            throw new ValidationException(String.format("Attempt to submit duplicate samples: %s", errors));
+        }
+
+        if (tuples.isEmpty()) {
+            throw new ValidationException("No data was found in submission request.");
+        }
+
+        List<SubmissionTracker> submissionTrackers =
+                submissionTrackerDao.findSubmissionTrackers(researchProjectKey, submissionDtos);
+
+        for (SubmissionTracker submissionTracker : submissionTrackers) {
+            errors.add(submissionTracker.getTuple().toString());
+        }
+        if (!errors.isEmpty()) {
+            throw new ValidationException(String.format("Some samples have already been submitted: %s", errors));
+        }
+    }
+
+    public void validateSubmissionSamples(BioProject bioProject, Collection<SubmissionDto> submissionDtos)
             throws ValidationException {
         try {
             Collection<String> submissionSamples = submissionsService.getSubmissionSamples(bioProject);
@@ -355,6 +421,7 @@ public class ResearchProjectEjb {
         FUNDING_SOURCE("Funding Source"),
         MERCURY_URL("Mercury URL"),
         DESCRIPTION("Description"),
+        SUMMARY("Summary"),
         BROAD_PIS("Broad PI(s)");
 
         private final String fieldName;

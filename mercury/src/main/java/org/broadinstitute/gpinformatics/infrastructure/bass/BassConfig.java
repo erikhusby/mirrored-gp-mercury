@@ -24,6 +24,8 @@ import java.io.Serializable;
 @SuppressWarnings("UnusedDeclaration")
 @ConfigKey("bass")
 public class BassConfig extends AbstractConfig implements LoginAndPassword, Serializable {
+    public static final int BASS_MAX_URL_LENGTH  = 4096;
+
     private String login;
 
     private String password;

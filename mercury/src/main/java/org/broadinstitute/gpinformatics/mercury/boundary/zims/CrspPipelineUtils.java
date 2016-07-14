@@ -61,6 +61,9 @@ public class CrspPipelineUtils {
         put("Buick_v6_0_2014", "P-EX-0011");
         put("whole_exome_agilent_1.1_refseq_plus_3_boosters", "P-CLA-0001");
         put("whole_exome_illumina_coding_v1", "P-CLA-0003");
+        put("eMerge_Oct16_5pad_CDS", "P-VAL-0010");
+        put("Myeloid_Lymphoid_Panel_v1-88774", "P-VAL-0015");
+        put("eMerge_v2_83311", "P-VAL-0016");
     }};
 
     /**
@@ -69,8 +72,6 @@ public class CrspPipelineUtils {
     public void setFieldsForCrsp(
             LibraryBean libraryBean,
             SampleData sampleData,
-            ResearchProject positiveControlsProject,
-            String lcSet,
             String bait) {
         throwExceptionIfInProductionAndSampleIsNotABSPSample(sampleData.getSampleId());
         setBuickVisitAndCollectionDate(libraryBean, sampleData);
@@ -80,13 +81,6 @@ public class CrspPipelineUtils {
         libraryBean.setTestType(LibraryBean.CRSP_SOMATIC_TEST_TYPE);
 
         if (Boolean.TRUE.equals(libraryBean.isPositiveControl())) {
-            String participantWithLcSetName = libraryBean.getCollaboratorParticipantId() + "_" + lcSet;
-            libraryBean.setCollaboratorSampleId(participantWithLcSetName);
-            libraryBean.setCollaboratorParticipantId(participantWithLcSetName);
-
-            libraryBean.setResearchProjectId(positiveControlsProject.getBusinessKey());
-            libraryBean.setResearchProjectName(positiveControlsProject.getTitle());
-            libraryBean.setRegulatoryDesignation(positiveControlsProject.getRegulatoryDesignationCodeForPipeline());
             if (bait != null) {
                 libraryBean.setProductPartNumber(mapBaitToProductPartNumber.get(bait));
             }
@@ -122,11 +116,4 @@ public class CrspPipelineUtils {
         return bspSampleId.replaceFirst("S[MP]-", "org.broadinstitute:crsp:");
     }
 
-    /**
-     * Returns the hardcoded research project id (RP-XYZ)
-     * used for aggregating positive controls for CRSP
-     */
-    public static String getResearchProjectForCrspPositiveControls() {
-        return "RP-805";
-    }
 }

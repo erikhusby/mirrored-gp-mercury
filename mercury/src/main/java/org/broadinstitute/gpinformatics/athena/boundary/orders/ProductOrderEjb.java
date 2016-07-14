@@ -22,8 +22,10 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
+import org.broadinstitute.gpinformatics.athena.entity.orders.StaleLedgerUpdateException;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
+import org.broadinstitute.gpinformatics.infrastructure.ValidationWithRollbackException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPKitRequestService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
@@ -37,7 +39,6 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.BadBusinessKeyExcepti
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
-import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnector;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
@@ -206,6 +207,7 @@ public class ProductOrderEjb {
         } else {
             updateJiraIssue(editedProductOrder);
         }
+        attachMercurySamples(editedProductOrder.getSamples());
         productOrderDao.persist(editedProductOrder);
     }
 
@@ -423,12 +425,6 @@ public class ProductOrderEjb {
             pdoUpdateFields.add(new PDOUpdateField(ProductOrder.JiraField.PUBLICATION_DEADLINE,
                     JiraService.JIRA_DATE_FORMAT.format(
                             productOrder.getPublicationDeadline())));
-        }
-
-        // Add the Requisition name to the list of fields when appropriate.
-        if (ApplicationInstance.CRSP.isCurrent() && !StringUtils.isBlank(productOrder.getRequisitionName())) {
-            pdoUpdateFields.add(new PDOUpdateField(ProductOrder.JiraField.REQUISITION_NAME,
-                    productOrder.getRequisitionName()));
         }
 
         String[] customFieldNames = new String[pdoUpdateFields.size()];
@@ -935,21 +931,7 @@ public class ProductOrderEjb {
         ProductOrder order = findProductOrder(jiraTicketKey);
         order.addSamples(samples);
 
-        ImmutableListMultimap<String, ProductOrderSample> samplesBySampleId =
-                Multimaps.index(samples, new Function<ProductOrderSample, String>() {
-                    @Override
-                    public String apply(ProductOrderSample productOrderSample) {
-                        return productOrderSample.getSampleKey();
-                    }
-                });
-
-        Map<String, MercurySample> mercurySampleMap = mercurySampleDao.findMapIdToMercurySample(samplesBySampleId.keySet());
-
-        for (Map.Entry<String, ProductOrderSample> sampleMapEntry : samplesBySampleId.entries()) {
-            if (sampleMapEntry.getValue().getMercurySample() == null && mercurySampleMap.get(sampleMapEntry.getKey()) !=null) {
-                mercurySampleMap.get(sampleMapEntry.getKey()).addProductOrderSample(sampleMapEntry.getValue());
-            }
-        }
+        attachMercurySamples(samples);
 
         order.prepareToSave(userBean.getBspUser());
         productOrderDao.persist(order);
@@ -958,12 +940,38 @@ public class ProductOrderEjb {
         updateSamples(order, samples, reporter, "added");
     }
 
+    /**
+     * Makes the association between ProductOrderSample and MercurySample.
+     */
+    private void attachMercurySamples(@Nonnull List<ProductOrderSample> samples) {
+        ImmutableListMultimap<String, ProductOrderSample> samplesBySampleId =
+                Multimaps.index(samples, new Function<ProductOrderSample, String>() {
+                    @Override
+                    public String apply(ProductOrderSample productOrderSample) {
+                        return productOrderSample.getSampleKey();
+                    }
+                });
+
+        Map<String, MercurySample> mercurySampleMap = mercurySampleDao.findMapIdToMercurySample(
+                samplesBySampleId.keySet());
+
+        for (Map.Entry<String, ProductOrderSample> sampleMapEntry : samplesBySampleId.entries()) {
+            MercurySample mercurySample = mercurySampleMap.get(sampleMapEntry.getKey());
+            if (sampleMapEntry.getValue().getMercurySample() == null && mercurySample != null) {
+                mercurySample.addProductOrderSample(sampleMapEntry.getValue());
+            }
+        }
+    }
+
     public void removeSamples(@Nonnull String jiraTicketKey, @Nonnull Collection<ProductOrderSample> samples,
                               @Nonnull MessageReporter reporter) throws IOException, NoSuchPDOException {
         ProductOrder productOrder = findProductOrder(jiraTicketKey);
 
         // If removeAll returns false, no samples were removed -- should never happen.
         if (productOrder.getSamples().removeAll(samples)) {
+            for (ProductOrderSample sample : samples) {
+                sample.remove();
+            }
             String nameList = StringUtils.join(ProductOrderSample.getSampleNames(samples), ",");
             productOrder.prepareToSave(userBean.getBspUser());
             productOrderDao.persist(productOrder);
@@ -1093,6 +1101,39 @@ public class ProductOrderEjb {
 //            pdoIssue.addComment(String.format("Work request %s is associated with LCSet %s",
 //                    createdWorkRequestResults.getWorkRequestId(), squidInput.getLcsetId()));
         }
+    }
+
+    /**
+     * Apply a collection of ledger updates for some product order samples. The update requests have the previous
+     * quantities as well as the new quantities being requested. The previous quantities represent those that were in
+     * effect when the decision to change the quantity was made. Across a sequence of web requests, it is possible that
+     * those quantities have changed for other reasons, so this protects users from making billing decisions based on
+     * outdated information.
+     *
+     * @param ledgerUpdates a map of PDO sample to a collection of ledger updates
+     * @throws StaleLedgerUpdateException if the previous quantity in any ledger update is out-of-date
+     */
+    public void updateSampleLedgers(Map<ProductOrderSample, Collection<ProductOrderSample.LedgerUpdate>> ledgerUpdates)
+            throws ValidationWithRollbackException {
+        List<String> errorMessages = new ArrayList<>();
+
+        for (Map.Entry<ProductOrderSample, Collection<ProductOrderSample.LedgerUpdate>> entry : ledgerUpdates
+                .entrySet()) {
+            ProductOrderSample productOrderSample = entry.getKey();
+            Collection<ProductOrderSample.LedgerUpdate> updates = entry.getValue();
+            for (ProductOrderSample.LedgerUpdate update : updates) {
+                try {
+                    productOrderSample.applyLedgerUpdate(update);
+                } catch (Exception e) {
+                    errorMessages.add(e.getMessage());
+                }
+            }
+        }
+
+        if (!errorMessages.isEmpty()) {
+            throw new ValidationWithRollbackException("Error updating ledger quantities", errorMessages);
+        }
+        productOrderDao.flush();
     }
 
     @Inject

@@ -300,7 +300,7 @@ public class LabVesselFactory implements Serializable {
         }
 
         for (ProductOrderSample productOrderSample : productOrderSamples) {
-            productOrderSample.setMercurySample(mercurySample);
+            mercurySample.addProductOrderSample(productOrderSample);
         }
 
         return mercurySample;

@@ -12,24 +12,26 @@
 package org.broadinstitute.gpinformatics.infrastructure.metrics.entity;
 
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
+import org.hibernate.annotations.BatchSize;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
-import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "AGGREGATION", schema = "METRICS")
 public class Aggregation {
     @SuppressWarnings("unused")
-    @Id
+    @Id @Column(name = "ID")
     private Integer id;
 
     @Column(name="PROJECT")
@@ -51,19 +53,24 @@ public class Aggregation {
     @Transient
     private String dataType;
 
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "aggregation")
-    private Collection<AggregationAlignment> aggregationAlignments = new ArrayList<>();
+    @OneToMany(fetch = FetchType.EAGER, mappedBy = "aggregation")
+    @BatchSize(size = 100)
+    private Set<AggregationAlignment> aggregationAlignments = new HashSet<>();
 
-    @OneToOne(fetch = FetchType.LAZY, mappedBy = "aggregation", optional = false)
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "ID", referencedColumnName = "AGGREGATION_ID", insertable = false, updatable = false)
     private AggregationContam aggregationContam;
 
-    @OneToOne(fetch = FetchType.LAZY, mappedBy = "aggregation", optional = false)
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "ID", referencedColumnName = "AGGREGATION_ID", insertable = false, updatable = false)
     private AggregationHybridSelection aggregationHybridSelection;
 
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "aggregation")
-    private Collection<AggregationReadGroup> aggregationReadGroups = new ArrayList<>();
+    @OneToMany(fetch = FetchType.EAGER, mappedBy = "aggregation")
+    @BatchSize(size = 100)
+    private Set<AggregationReadGroup> aggregationReadGroups = new HashSet<>();
 
-    @OneToOne(mappedBy = "aggregation")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ID", referencedColumnName = "AGGREGATION_ID", insertable = false, updatable = false)
     private AggregationWgs aggregationWgs;
 
     @Transient
@@ -74,10 +81,10 @@ public class Aggregation {
 
     public Aggregation(String project, String sample, String library, Integer version, Integer readGroupCount,
                        String dataType,
-                       Collection<AggregationAlignment> aggregationAlignments,
+                       Set<AggregationAlignment> aggregationAlignments,
                        AggregationContam aggregationContam,
                        AggregationHybridSelection aggregationHybridSelection,
-                       Collection<AggregationReadGroup> aggregationReadGroups,
+                       Set<AggregationReadGroup> aggregationReadGroups,
                        AggregationWgs aggregationWgs,
                        LevelOfDetection levelOfDetection) {
         this.project = project;
@@ -138,6 +145,10 @@ public class Aggregation {
         }
     }
 
+    public Integer getId() {
+        return id;
+    }
+
     public String getLibrary() {
         return library;
     }
@@ -169,7 +180,7 @@ public class Aggregation {
         this.dataType = dataType;
     }
 
-    public Collection<AggregationAlignment> getAggregationAlignments() {
+    public Set<AggregationAlignment> getAggregationAlignments() {
         return aggregationAlignments;
     }
 
@@ -189,7 +200,7 @@ public class Aggregation {
         return aggregationHybridSelection;
     }
 
-    public Collection<AggregationReadGroup> getAggregationReadGroups() {
+    public Set<AggregationReadGroup> getAggregationReadGroups() {
         return aggregationReadGroups;
     }
 
@@ -203,79 +214,5 @@ public class Aggregation {
 
     public void setLevelOfDetection(LevelOfDetection levelOfDetection) {
         this.levelOfDetection = levelOfDetection;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof Aggregation)) {
-            return false;
-        }
-
-        Aggregation that = (Aggregation) o;
-
-        if (!id.equals(that.id)) {
-            return false;
-        }
-        if (!version.equals(that.version)) {
-            return false;
-        }
-        if (aggregationAlignments != null ? !aggregationAlignments.equals(that.aggregationAlignments) :
-                that.aggregationAlignments != null) {
-            return false;
-        }
-        if (aggregationContam != null ? !aggregationContam.equals(that.aggregationContam) :
-                that.aggregationContam != null) {
-            return false;
-        }
-        if (aggregationHybridSelection != null ? !aggregationHybridSelection.equals(that.aggregationHybridSelection) :
-                that.aggregationHybridSelection != null) {
-            return false;
-        }
-        if (aggregationReadGroups != null ? !aggregationReadGroups.equals(that.aggregationReadGroups) :
-                that.aggregationReadGroups != null) {
-            return false;
-        }
-        if (aggregationWgs != null ? !aggregationWgs.equals(that.aggregationWgs) : that.aggregationWgs != null) {
-            return false;
-        }
-        if (dataType != null ? !dataType.equals(that.dataType) : that.dataType != null) {
-            return false;
-        }
-        if (levelOfDetection != null ? !levelOfDetection.equals(that.levelOfDetection) :
-                that.levelOfDetection != null) {
-            return false;
-        }
-        if (library != null ? !library.equals(that.library) : that.library != null) {
-            return false;
-        }
-        if (project != null ? !project.equals(that.project) : that.project != null) {
-            return false;
-        }
-        if (readGroupCount != null ? !readGroupCount.equals(that.readGroupCount) : that.readGroupCount != null) {
-            return false;
-        }
-        return !(sample != null ? !sample.equals(that.sample) : that.sample != null);
-
-    }
-
-    @Override
-    public int hashCode() {
-        int result = id;
-        result = 31 * result + (project != null ? project.hashCode() : 0);
-        result = 31 * result + (sample != null ? sample.hashCode() : 0);
-        result = 31 * result + (library != null ? library.hashCode() : 0);
-        result = 31 * result + version;
-        result = 31 * result + (readGroupCount != null ? readGroupCount.hashCode() : 0);
-        result = 31 * result + (dataType != null ? dataType.hashCode() : 0);
-        result = 31 * result + (aggregationAlignments != null ? aggregationAlignments.hashCode() : 0);
-        result = 31 * result + (aggregationContam != null ? aggregationContam.hashCode() : 0);
-        result = 31 * result + (aggregationHybridSelection != null ? aggregationHybridSelection.hashCode() : 0);
-        result = 31 * result + (aggregationReadGroups != null ? aggregationReadGroups.hashCode() : 0);
-        result = 31 * result + (aggregationWgs != null ? aggregationWgs.hashCode() : 0);
-        result = 31 * result + (levelOfDetection != null ? levelOfDetection.hashCode() : 0);
-        return result;
     }
 }

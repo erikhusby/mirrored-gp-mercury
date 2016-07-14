@@ -231,7 +231,11 @@ public class LabEventSearchDefinition {
             @Override
             public String evaluate(Object entity, SearchContext context) {
                 LabEvent labEvent = (LabEvent) entity;
-                return labEvent.getLabEventType().getName();
+                if( labEvent.getWorkflowQualifier() != null ) {
+                    return labEvent.getLabEventType().getName() + " (" + labEvent.getWorkflowQualifier() + ")";
+                } else {
+                    return labEvent.getLabEventType().getName();
+                }
             }
         });
         searchTerm.setConstrainedValuesExpression(new SearchDefinitionFactory.EventTypeValuesExpression());
@@ -803,10 +807,8 @@ public class LabEventSearchDefinition {
                 if( inPlaceLabVessel != null ) {
                     if( OrmUtil.proxySafeIsInstance( inPlaceLabVessel, TubeFormation.class )) {
                         getLabelFromTubeFormation( labEvent, inPlaceLabVessel, results );
-                    } else {
-                        results.add( inPlaceLabVessel.getLabel() );
+                        return results;
                     }
-                    return results;
                 }
 
                 for (LabVessel vessel : labEvent.getTargetLabVessels()) {
@@ -816,17 +818,16 @@ public class LabEventSearchDefinition {
                         results.add(vessel.getLabel());
                     }
                 }
-                if( results.isEmpty() && labEvent.getInPlaceLabVessel() != null ) {
-                    if( labEvent.getInPlaceLabVessel().getContainerRole() != null ) {
-                        results.add( labEvent.getInPlaceLabVessel().getContainerRole().getEmbedder().getLabel() );
+                if( results.isEmpty() && inPlaceLabVessel != null ) {
+                    if( inPlaceLabVessel.getContainerRole() != null ) {
+                        results.add( inPlaceLabVessel.getContainerRole().getEmbedder().getLabel() );
                     } else {
-                        results.add( labEvent.getInPlaceLabVessel().getLabel() );
+                        results.add( inPlaceLabVessel.getLabel() );
                     }
                 }
 
                 return results;
             }
-
         });
         searchTerms.add(searchTerm);
 
@@ -836,6 +837,7 @@ public class LabEventSearchDefinition {
     /**
      * Build an alternate search definition to query for lab vessels
      *    and use programmatic logic to populate the lab event list
+     * These terms are mapped to user selectable terms by name.
      * @return
      */
     private ConfigurableSearchDefinition buildAlternateSearchDefByVessel() {
@@ -860,17 +862,24 @@ public class LabEventSearchDefinition {
         searchTerm.setName("LCSET");
 
         criteriaPaths = new ArrayList<>();
+
+        // Mercury only cares about workflow batches
+        SearchTerm.ImmutableTermFilter workflowOnlyFilter = new SearchTerm.ImmutableTermFilter(
+                "labBatchType", SearchInstance.Operator.EQUALS, LabBatch.LabBatchType.WORKFLOW);
+
         // Non-reworks
         criteriaPath = new SearchTerm.CriteriaPath();
         criteriaPath.setCriteria(Arrays.asList(/* LabVessel */ "labBatches", /* LabBatchStartingVessel */
                 "labBatch" /* LabBatch */));
         criteriaPath.setPropertyName("batchName");
+        criteriaPath.addImmutableTermFilter(workflowOnlyFilter);
         criteriaPaths.add(criteriaPath);
 
         // Reworks
         criteriaPath = new SearchTerm.CriteriaPath();
         criteriaPath.setCriteria(Arrays.asList(/* LabVessel */ "reworkLabBatches", /* LabBatch */ "reworkLabBatches"));
         criteriaPath.setPropertyName("batchName");
+        criteriaPath.addImmutableTermFilter(workflowOnlyFilter);
         criteriaPaths.add(criteriaPath);
         searchTerm.setCriteriaPaths(criteriaPaths);
         searchTerms.add(searchTerm);
@@ -926,6 +935,7 @@ public class LabEventSearchDefinition {
         ConfigurableSearchDefinition configurableSearchDefinition = new ConfigurableSearchDefinition(
                 ColumnEntity.LAB_VESSEL, criteriaProjections, mapGroupSearchTerms);
 
+        // Mandatory to convert a list of LabVessel entities to LabEvent entities
         configurableSearchDefinition.addTraversalEvaluator(ConfigurableSearchDefinition.ALTERNATE_DEFINITION_ID
                 , new LabEventVesselTraversalEvaluator() );
 

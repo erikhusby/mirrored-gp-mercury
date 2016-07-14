@@ -73,6 +73,7 @@ import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500JaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.IceJaxbBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.PreFlightJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ProductionFlowcellPath;
@@ -451,8 +452,8 @@ public class BettaLimsMessageResourceTest extends Arquillian {
                 Arrays.asList(Triple.of("KAPA Reagent Box", "0009753252", 1)),
                 Arrays.asList(Triple.of("PEG", "0009753352", 2), Triple.of("70% Ethanol", "LCEtohTest", 3),
                         Triple.of("EB", "0009753452", 4), Triple.of("SPRI", "LCSpriTest", 5)),
-                Arrays.asList(Triple.of("KAPA Amp Kit", "0009753250", 6))
-        ).invoke();
+                Arrays.asList(Triple.of("KAPA Amp Kit", "0009753250", 6)),
+                LibraryConstructionJaxbBuilder.PondType.REGULAR).invoke();
 
         for (BettaLIMSMessage bettaLIMSMessage : libraryConstructionJaxbBuilder.getMessageList()) {
             sendMessage(bettaLIMSMessage, bettaLimsMessageResource, appConfig.getUrl());
@@ -656,8 +657,8 @@ public class BettaLimsMessageResourceTest extends Arquillian {
                         Triple.of("70% Ethanol", "LCEtohTest", 3),
                         Triple.of("EB", "0009753452", 4),
                         Triple.of("SPRI", "LCSpriTest", 5)),
-                Arrays.asList(Triple.of("KAPA Amp Kit", "0009753250", 6))
-        ).invoke();
+                Arrays.asList(Triple.of("KAPA Amp Kit", "0009753250", 6)),
+                LibraryConstructionJaxbBuilder.PondType.REGULAR).invoke();
 
         for (BettaLIMSMessage bettaLIMSMessage : libraryConstructionJaxbBuilder.getMessageList()) {
             sendMessage(bettaLIMSMessage, bettalimsMessageResource, testMercuryUrl);
@@ -1096,8 +1097,8 @@ public class BettaLimsMessageResourceTest extends Arquillian {
                         Triple.of("70% Ethanol", "LCEtohTest", 3),
                         Triple.of("EB", "0009753452", 4),
                         Triple.of("SPRI", "LCSpriTest", 5)),
-                Arrays.asList(Triple.of("KAPA Amp Kit", "0009753250", 6))
-        ).invoke();
+                Arrays.asList(Triple.of("KAPA Amp Kit", "0009753250", 6)),
+                LibraryConstructionJaxbBuilder.PondType.REGULAR).invoke();
         for (BettaLIMSMessage bettaLIMSMessage : libraryConstructionExExJaxbBuilder.getMessageList()) {
             sendMessage(bettaLIMSMessage, bettaLimsMessageResource, appConfig.getUrl());
         }

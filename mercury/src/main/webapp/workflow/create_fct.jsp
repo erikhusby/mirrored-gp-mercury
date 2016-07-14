@@ -20,9 +20,11 @@
                         {"bSortable":true}, // barcode
                         {"bSortable":true},  // lcset
                         {"bSortable":true},  // tube (event) type
+                        {"bSortable":true},  // number of samples
                         {"bSortable":true},  // enter number lanes
                         {"bSortable":true},  // enter loading conc
                         {"bSortable":true},  // tube create (event) date
+                        {"bSortable":true},  // regulatory designation
                         {"bSortable":true},  // product
                     ]
                 });
@@ -100,7 +102,7 @@
             <input type="hidden" name="hasCrsp" value="${actionBean.hasCrsp}"/>
 
             <div class="control-group">
-                <stripes:label for="lcsetText" name="LCSet Names" class="control-label"/>
+                <stripes:label for="lcsetText" name="" class="control-label">LCSET Names</stripes:label>
                 <div class="controls">
                     <stripes:text id="lcsetText" name="lcsetNames"/>
                 </div>
@@ -137,9 +139,11 @@
                         <th class="fixedWidthColumn">Tube Barcode</th>
                         <th class="fixedWidthColumn">LCSET</th>
                         <th class="fixedWidthColumn">Tube Type</th>
+                        <th class="smallerWidthColumn">Number of Samples</th>
                         <th class="smallerWidthColumn">Number of Lanes</th>
                         <th class="smallerWidthColumn">Loading Conc</th>
                         <th class="widerFixedWidthColumn">Tube Created On</th>
+                        <th class="fixedWidthColumn">Regulatory Designation</th>
                         <th>Product</th>
                     </tr>
                     </thead>
@@ -154,19 +158,24 @@
                                 </stripes:link>
                             </td>
                             <td class="fixedWidthColumn">
-                                <a href="${rowDto.lcsetUrl}" target="JIRA">${rowDto.lcset}</a>
+                                <a href="${rowDto.lcsetUrl}" target="JIRA">${rowDto.lcset}</a>${rowDto.additionalLcsets}
                             </td>
                             <td class="fixedWidthColumn">${rowDto.tubeType}</td>
+                            <td class="smallerWidthColumn">${rowDto.numberSamples}</td>
                             <td class="smallerWidthColumn"><input style='width:5em' class="numLanes" name="rowDtos[${item.index}].numberLanes"
                                        value="${rowDto.numberLanes}" onkeyup="updateSumOfLanes()"/></td>
                             <td class="smallerWidthColumn"><input style='width:5em' class="loadConc" name="rowDtos[${item.index}].loadingConc"
                                        value="${rowDto.loadingConc}"/></td>
                             <td class="fixedWidthColumn">${rowDto.eventDate}</td>
+                            <td class="fixedWidthColumn">${rowDto.regulatoryDesignation}</td>
                             <td class="widerFixedWidthColumn"><span title="${rowDto.startingBatchVessels}">${rowDto.product}</span></td>
                             <input type="hidden" name="rowDtos[${item.index}].barcode" value="${rowDto.barcode}"/>
                             <input type="hidden" name="rowDtos[${item.index}].lcset" value="${rowDto.lcset}"/>
+                            <input type="hidden" name="rowDtos[${item.index}].additionalLcsets" value="${rowDto.additionalLcsets}"/>
                             <input type="hidden" name="rowDtos[${item.index}].tubeType" value="${rowDto.tubeType}"/>
+                            <input type="hidden" name="rowDtos[${item.index}].numberSamples" value="${rowDto.numberSamples}"/>
                             <input type="hidden" name="rowDtos[${item.index}].eventDate" value="${rowDto.eventDate}"/>
+                            <input type="hidden" name="rowDtos[${item.index}].regulatoryDesignation" value="${rowDto.regulatoryDesignation}"/>
                             <input type="hidden" name="rowDtos[${item.index}].product" value="${rowDto.product}"/>
                             <input type="hidden" name="rowDtos[${item.index}].startingBatchVessels" value="${rowDto.startingBatchVessels}"/>
                             <input type="hidden" name="rowDtos[${item.index}].lcsetUrl" value="${rowDto.lcsetUrl}"/>

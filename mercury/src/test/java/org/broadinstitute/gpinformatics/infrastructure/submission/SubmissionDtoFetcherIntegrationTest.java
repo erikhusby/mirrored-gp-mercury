@@ -69,7 +69,7 @@ public class SubmissionDtoFetcherIntegrationTest extends Arquillian {
         double lodMax = 55.771678;
         int version = 2;
         LevelOfDetection fingerprintLod =
-                new LevelOfDetection(RESEARCH_PROJECT_ID, COLLABORATOR_SAMPLE_ID, version, lodMin, lodMax);
+                new LevelOfDetection(lodMin, lodMax);
         ResearchProject researchProject = researchProjectDao.findByBusinessKey(RESEARCH_PROJECT_ID);
 
         List<SubmissionDto> submissionDtoList = submissionDtoFetcher.fetch(researchProject);

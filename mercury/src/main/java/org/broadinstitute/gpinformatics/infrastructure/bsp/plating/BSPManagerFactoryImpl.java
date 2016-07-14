@@ -13,7 +13,6 @@ import org.broadinstitute.bsp.client.workrequest.WorkRequestManager;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
-import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 
 import javax.inject.Inject;
 import java.lang.reflect.Constructor;
@@ -31,8 +30,7 @@ public class BSPManagerFactoryImpl implements BSPManagerFactory {
         try {
             Constructor<?> constructor = clazz.getConstructor(String.class, Integer.class, String.class, String.class, Boolean.class);
             return constructor.newInstance(BSPConfig.getHttpScheme()+params.getHost(), params.getPort(),
-                    params.getLogin(), params.getPassword(),
-                    (ApplicationInstance.CRSP.isCurrent() && (deployment != Deployment.PROD)));
+                    params.getLogin(), params.getPassword(),Boolean.FALSE);
         } catch (SecurityException | NoSuchMethodException | IllegalArgumentException | InstantiationException |
                 IllegalAccessException | InvocationTargetException e) {
             throw new RuntimeException(e);

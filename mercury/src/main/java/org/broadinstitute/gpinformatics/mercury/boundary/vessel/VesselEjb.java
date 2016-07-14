@@ -14,6 +14,10 @@ import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadsheetParser;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.generated.LibraryBeansType;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.generated.LibraryQuantBeanType;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.generated.LibraryQuantRunBean;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.generated.QpcrRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.sample.QuantificationEJB;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
@@ -25,6 +29,8 @@ import org.broadinstitute.gpinformatics.mercury.control.vessel.CaliperPlateProce
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactory;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanPlateProcessor;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.VarioskanRowParser;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.WallacPlateProcessor;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.WallacRowParser;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -168,7 +174,7 @@ public class VesselEjb {
      * Create LabVessels and MercurySamples from a spreadsheet (from BSP).
      */
     public List<LabVessel> createSampleVessels(InputStream samplesSpreadsheetStream, String loginUserName,
-            MessageCollection messageCollection, SampleVesselProcessor sampleVesselProcessor)
+                                               MessageCollection messageCollection, SampleVesselProcessor sampleVesselProcessor)
             throws InvalidFormatException, IOException, ValidationException {
         messageCollection.addErrors(PoiSpreadsheetParser.processSingleWorksheet(samplesSpreadsheetStream,
                 sampleVesselProcessor));
@@ -370,7 +376,7 @@ public class VesselEjb {
                     continue;
                 }
                 messageCollection.addError("Failed to find source tube for " + plateWellResult.getPlateBarcode() +
-                    " " + plateWellResult.getVesselPosition());
+                                           " " + plateWellResult.getVesselPosition());
             }
         }
 
@@ -410,12 +416,227 @@ public class VesselEjb {
         return Pair.of(labMetricRun, tubeFormationLabel);
     }
 
+    /**
+     * Create a LabMetricRun from a Wallac spreadsheet.  This method assumes that a rack of tubes was
+     * transferred into one or more plates, and the plates are in the spreadsheet.
+     *
+     * @param acceptRePico indicates when previous quants should be ignored and new quants processed.
+     * @return Pair of LabMetricRun and the label of the tubeFormation that sourced the plates listed in the upload,
+     *         or null in case of error.
+     * In case of a duplicate upload the returned LabMetricRun is the previously uploaded one.
+     */
+    public Pair<LabMetricRun, String> createWallacRun(InputStream wallacSpreadsheet, String runName,
+                                                      LabMetric.MetricType metricType, Long decidingUser,
+                                                      MessageCollection messageCollection, boolean acceptRePico) {
+        try {
+            Workbook workbook = WorkbookFactory.create(wallacSpreadsheet);
+            WallacRowParser wallacRowParser = new WallacRowParser(workbook);
+            Map<WallacRowParser.NameValue, String> mapNameValueToValue = wallacRowParser.getValues();
+
+            String plateBarcode1 = mapNameValueToValue.get(WallacRowParser.NameValue.PLATE_BARCODE_1);
+            String plateBarcode2 = mapNameValueToValue.get(WallacRowParser.NameValue.PLATE_BARCODE_2);
+            WallacPlateProcessor wallacPlateProcessor = new WallacPlateProcessor(WallacRowParser.RESULTS_TABLE_TAB, plateBarcode1, plateBarcode2);
+            PoiSpreadsheetParser parser = new PoiSpreadsheetParser(Collections.<String, TableProcessor>emptyMap());
+            parser.processRows(workbook.getSheet(WallacRowParser.RESULTS_TABLE_TAB), wallacPlateProcessor);
+
+            // Fetch the plates
+            Map<String, StaticPlate> mapBarcodeToPlate = new HashMap<>();
+            Pair<LabMetricRun, String> pair = null;
+
+            if (wallacPlateProcessor.getPlateWellResults().isEmpty()) {
+                messageCollection.addError("Didn't find any plate barcodes in the spreadsheet.");
+            } else {
+
+                for (VarioskanPlateProcessor.PlateWellResult plateWellResult :
+                        wallacPlateProcessor.getPlateWellResults()) {
+                    StaticPlate staticPlate = mapBarcodeToPlate.get(plateWellResult.getPlateBarcode());
+                    if (staticPlate == null) {
+                        staticPlate = staticPlateDao.findByBarcode(plateWellResult.getPlateBarcode());
+                        if (staticPlate == null) {
+                            messageCollection.addError("Failed to find plate " + plateWellResult.getPlateBarcode());
+                        } else {
+                            mapBarcodeToPlate.put(plateWellResult.getPlateBarcode(), staticPlate);
+                        }
+                    }
+                }
+                TubeFormation tubeFormation = getFirstTubeFormationFromPlates(mapBarcodeToPlate.values());
+                if (tubeFormation == null) {
+                    messageCollection.addError("Cannot find the tube formation upstream of plates " +
+                                               StringUtils.join(mapBarcodeToPlate.values(), ", "));
+                } else {
+                    LabMetricRun labMetricRun = labMetricRunDao.findByName(runName);
+                    if (labMetricRun != null) {
+                        messageCollection.addError("This run has been uploaded previously.");
+                        pair = Pair.of(labMetricRun, tubeFormation.getLabel());
+                    } else {
+                        // Run date must be unique so that a search can reveal the latest quant.
+                        SimpleDateFormat simpleDateFormat =
+                                new SimpleDateFormat(WallacRowParser.NameValue.RUN_STARTED.getDateFormat());
+                        Date runDate = parseRunDate(simpleDateFormat, mapNameValueToValue.get(
+                                WallacRowParser.NameValue.RUN_STARTED));
+                        List<LabMetricRun> sameDateRuns = labMetricRunDao.findSameDateRuns(runDate);
+                        if (CollectionUtils.isNotEmpty(sameDateRuns)) {
+                            messageCollection.addError("A previous upload has the same Run Started timestamp.");
+                            pair = Pair.of(sameDateRuns.iterator().next(), tubeFormation.getLabel());
+                        } else {
+                            // It's an error if previous quants exist, unless told to accept the rePico.
+                            List<String> previousQuantedTubes = null;
+                            if (!acceptRePico) {
+                                previousQuantedTubes = new ArrayList<>();
+                                for (BarcodedTube tube : tubeFormation.getContainerRole().getContainedVessels()) {
+                                    if (tube.findMostRecentLabMetric(metricType) != null) {
+                                        previousQuantedTubes.add(tube.getLabel());
+                                    }
+                                }
+                            }
+                            if (!acceptRePico && CollectionUtils.isNotEmpty(previousQuantedTubes)) {
+                                messageCollection.addError(metricType.getDisplayName() +
+                                                           " was previously done on tubes " +
+                                                           StringUtils.join(previousQuantedTubes, ", "));
+                            } else {
+                                pair = createWallacRunDaoFree(mapNameValueToValue, metricType, wallacPlateProcessor,
+                                        mapBarcodeToPlate, decidingUser, messageCollection, runName);
+                                if (messageCollection.hasErrors()) {
+                                    ejbContext.setRollbackOnly();
+                                } else {
+                                    labMetricRunDao.persist(pair.getLeft());
+                                    quantificationEjb.updateRisk(pair.getLeft().getLabMetrics(), metricType,
+                                            messageCollection);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return pair;
+        } catch(IOException | InvalidFormatException | ValidationException e){
+            throw new RuntimeException(e);
+        }
+    }
+
+    private Pair<LabMetricRun, String> createWallacRunDaoFree(
+            Map<WallacRowParser.NameValue, String> mapNameValueToValue,
+            LabMetric.MetricType metricType, WallacPlateProcessor wallacPlateProcessor,
+            Map<String, StaticPlate> mapBarcodeToPlate, Long decidingUser,
+            MessageCollection messageCollection, String runName) {
+        SimpleDateFormat simpleDateFormat =
+                new SimpleDateFormat(WallacRowParser.NameValue.RUN_STARTED.getDateFormat());
+        Date runStarted = parseRunDate(
+                simpleDateFormat, mapNameValueToValue.get(WallacRowParser.NameValue.RUN_STARTED));
+        LabMetricRun labMetricRun = new LabMetricRun(runName, runStarted, metricType);
+
+        labMetricRun.getMetadata().add(new Metadata(Metadata.Key.INSTRUMENT_NAME,
+                mapNameValueToValue.get(WallacRowParser.NameValue.INSTRUMENT_NAME)));
+
+        // Store raw values against plate wells
+        List<VarioskanPlateProcessor.PlateWellResult> plateWellResults = wallacPlateProcessor.getPlateWellResults();
+        String tubeFormationLabel = addPlateWellResults(labMetricRun, mapBarcodeToPlate, plateWellResults, false,
+                runStarted, metricType, decidingUser, messageCollection);
+
+        return Pair.of(labMetricRun, tubeFormationLabel);
+    }
+
+    private String addPlateWellResults(LabMetricRun labMetricRun, Map<String, StaticPlate> mapBarcodeToPlate,
+                                     List<VarioskanPlateProcessor.PlateWellResult> plateWellResults, boolean runFailed,
+                                     Date runStarted, LabMetric.MetricType metricType, long decidingUser,
+                                     MessageCollection messageCollection) {
+        Map<LabVessel, List<BigDecimal>> mapTubeToListValues = new HashMap<>();
+        Map<LabVessel, VesselPosition> mapTubeToPosition = new HashMap<>();
+        String tubeFormationLabel = null;
+        for (VarioskanPlateProcessor.PlateWellResult plateWellResult : plateWellResults) {
+            StaticPlate staticPlate = mapBarcodeToPlate.get(plateWellResult.getPlateBarcode());
+            LabMetric labMetric = new LabMetric(plateWellResult.getResult(), metricType, LabMetric.LabUnit.NG_PER_UL,
+                    plateWellResult.getVesselPosition().name(), runStarted);
+            labMetricRun.addMetric(labMetric);
+            PlateWell plateWell = staticPlate.getContainerRole().getVesselAtPosition(
+                    plateWellResult.getVesselPosition());
+            if (plateWell == null) {
+                plateWell = new PlateWell(staticPlate, plateWellResult.getVesselPosition());
+                staticPlate.getContainerRole().addContainedVessel(plateWell, plateWellResult.getVesselPosition());
+            }
+            plateWell.addMetric(labMetric);
+
+            LabVessel sourceTube = null;
+            boolean inSection = false;
+            for (SectionTransfer sectionTransfer : staticPlate.getContainerRole().getSectionTransfersTo()) {
+                int sectionIndex = sectionTransfer.getTargetSection().getWells().indexOf(
+                        plateWellResult.getVesselPosition());
+                if (sectionIndex > -1) {
+                    inSection = true;
+                    VesselPosition sourcePosition = sectionTransfer.getSourceSection().getWells().get(sectionIndex);
+                    VesselContainer vesselContainer = sectionTransfer.getSourceVesselContainer();
+                    if (tubeFormationLabel == null) {
+                        tubeFormationLabel = vesselContainer.getEmbedder().getLabel();
+                    }
+                    sourceTube = vesselContainer.getVesselAtPosition(sourcePosition);
+                    if (sourceTube != null) {
+                        mapTubeToPosition.put(sourceTube, sourcePosition);
+                        List<BigDecimal> valuesList = mapTubeToListValues.get(sourceTube);
+                        if (valuesList == null) {
+                            valuesList = new ArrayList<>();
+                            mapTubeToListValues.put(sourceTube, valuesList);
+                        }
+                        valuesList.add(plateWellResult.getResult());
+                    }
+                }
+            }
+            if (sourceTube == null) {
+                // RIBO includes the curve samples in the destination plate, but they are not in the sections involved
+                // in the transfers from the source tubes, so they should be ignored.
+                if (metricType == LabMetric.MetricType.PLATING_RIBO && !inSection) {
+                    continue;
+                }
+                messageCollection.addError("Failed to find source tube for " + plateWellResult.getPlateBarcode() +
+                                           " " + plateWellResult.getVesselPosition());
+            }
+        }
+
+        // Store average values against source tubes
+        for (Map.Entry<LabVessel, List<BigDecimal>> labVesselListEntry : mapTubeToListValues.entrySet()) {
+            LabVessel tube = labVesselListEntry.getKey();
+            List<BigDecimal> values = labVesselListEntry.getValue();
+            BigDecimal average = new BigDecimal(0);
+            for (BigDecimal value : values) {
+                average = average.add(value);
+            }
+            average = MathUtils.scaleTwoDecimalPlaces(average.divide(new BigDecimal(values.size())));
+            LabMetric labMetric = new LabMetric(average, metricType, LabMetric.LabUnit.NG_PER_UL,
+                    mapTubeToPosition.get(tube).name(), runStarted);
+
+            if (tube.getVolume() == null) {
+                messageCollection.addError("No volume for tube " + tube.getLabel());
+            } else {
+                labMetric.getMetadataSet().add(new Metadata(Metadata.Key.TOTAL_NG,
+                        labMetric.getValue().multiply(tube.getVolume())));
+            }
+            LabMetric.Decider decider = metricType.getDecider();
+            LabMetricDecision decision = null;
+            if (runFailed) {
+                decision = new LabMetricDecision(
+                        LabMetricDecision.Decision.RUN_FAILED, new Date(), decidingUser, labMetric);
+            } else if (decider != null) {
+                decision = decider.makeDecision(tube, labMetric, decidingUser);
+            }
+            if (decision != null) {
+                labMetric.setLabMetricDecision(decision);
+            }
+            tube.addMetric(labMetric);
+            labMetricRun.addMetric(labMetric);
+        }
+
+        return tubeFormationLabel;
+    }
+
     // Returns the quant spreadsheet's run started value as a Date.
     private Date parseRunDate(Map<VarioskanRowParser.NameValue, String> mapNameValueToValue) {
         SimpleDateFormat simpleDateFormat =
                 new SimpleDateFormat(VarioskanRowParser.NameValue.RUN_STARTED.getDateFormat());
+        return parseRunDate(simpleDateFormat, mapNameValueToValue.get(VarioskanRowParser.NameValue.RUN_STARTED));
+    }
+
+    private Date parseRunDate(SimpleDateFormat simpleDateFormat, String runDate) {
         try {
-            return simpleDateFormat.parse(mapNameValueToValue.get(VarioskanRowParser.NameValue.RUN_STARTED));
+            return simpleDateFormat.parse(runDate);
         } catch (ParseException e) {
             throw new RuntimeException(e);
         }
@@ -527,8 +748,8 @@ public class VesselEjb {
     @DaoFree
     public Pair<LabMetricRun, String> createRNACaliperRunDaoFree(LabMetric.MetricType metricType,
                                                                  CaliperPlateProcessor.CaliperRun caliperRun,
-                                             Map<String, StaticPlate> mapBarcodeToPlate, long decidingUser,
-                                             MessageCollection messageCollection) {
+                                                                 Map<String, StaticPlate> mapBarcodeToPlate, long decidingUser,
+                                                                 MessageCollection messageCollection) {
         LabMetricRun labMetricRun = new LabMetricRun(caliperRun.getRunName(),
                 caliperRun.getRunDate(), metricType);
         String tubeFormationLabel = null;
@@ -599,5 +820,129 @@ public class VesselEjb {
         }
 
         return Pair.of(labMetricRun, tubeFormationLabel);
+    }
+
+    public LabMetricRun createLibraryQuantsFromRunBean(LibraryQuantRunBean libraryQuantRun, MessageCollection messageCollection) {
+        LabMetricRun labMetricRun = labMetricRunDao.findByName(libraryQuantRun.getRunName());
+        if (labMetricRun != null) {
+            messageCollection.addError("This run has been uploaded previously.");
+        } else {
+            List<String> tubeBarcodes = new ArrayList<>();
+            Map<String, LibraryQuantBeanType> mapBarcodeToLibraryBean = new HashMap<>();
+            for (LibraryQuantBeanType libraryBean : libraryQuantRun.getLibraryQuantBeans()) {
+                tubeBarcodes.add(libraryBean.getTubeBarcode());
+                mapBarcodeToLibraryBean.put(libraryBean.getTubeBarcode(), libraryBean);
+            }
+            Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(tubeBarcodes);
+
+            List<LabMetricRun> sameDateRuns = labMetricRunDao.findSameDateRuns(libraryQuantRun.getRunDate());
+            if (CollectionUtils.isNotEmpty(sameDateRuns)) {
+                messageCollection.addError("A previous upload has the same Run Started timestamp.");
+            } else {
+                LabMetric.MetricType metricType = LabMetric.MetricType.getByDisplayName(libraryQuantRun.getQuantType());
+                labMetricRun = createLibraryQuantsFromRunBeanDaoFree(mapBarcodeToVessel, mapBarcodeToLibraryBean, metricType,
+                        messageCollection, libraryQuantRun);
+                if (messageCollection.hasErrors()) {
+                    ejbContext.setRollbackOnly();
+                } else {
+                    labMetricRunDao.persist(labMetricRun);
+                }
+            }
+        }
+
+        return labMetricRun;
+    }
+
+    @DaoFree
+    private LabMetricRun createLibraryQuantsFromRunBeanDaoFree(Map<String, LabVessel> mapBarcodeToVessel,
+                                                               Map<String, LibraryQuantBeanType> mapBarcodeToLibraryBean,
+                                                               LabMetric.MetricType metricType, MessageCollection messageCollection,
+                                                               LibraryQuantRunBean libraryQuantRun) {
+        LabMetricRun labMetricRun = new LabMetricRun(libraryQuantRun.getRunName(), libraryQuantRun.getRunDate(), metricType);
+        for (Map.Entry<String, LibraryQuantBeanType> barcodeAndQuant: mapBarcodeToLibraryBean.entrySet()) {
+            String vesselLabel = barcodeAndQuant.getKey();
+            LibraryQuantBeanType libraryBeans = barcodeAndQuant.getValue();
+            LabVessel labVessel = mapBarcodeToVessel.get(vesselLabel);
+            VesselPosition vesselPosition = VesselPosition.getByName(libraryBeans.getRackPositionName());
+            if (vesselPosition == null) {
+                messageCollection.addError("Failed to find position " + libraryBeans.getRackPositionName());
+                continue;
+            }
+
+            LabMetric labMetric = new LabMetric(libraryBeans.getValue(), metricType,
+                    LabMetric.LabUnit.NG_PER_UL, libraryBeans.getRackPositionName(), libraryQuantRun.getRunDate());
+            labMetricRun.addMetric(labMetric);
+            labVessel.addMetric(labMetric);
+        }
+        return labMetricRun;
+    }
+
+    public LabMetricRun createQpcrRunFromRunBean(QpcrRunBean qpcrRunBean, MessageCollection messageCollection,
+                                                 Long userId) {
+        LabMetricRun labMetricRun = labMetricRunDao.findByName(qpcrRunBean.getRunName());
+        if (labMetricRun != null) {
+            messageCollection.addError("This run has been uploaded previously.");
+        } else {
+            List<String> tubeBarcodes = new ArrayList<>();
+            Map<String, LibraryBeansType> mapBarcodeToLibraryBean = new HashMap<>();
+            for (LibraryBeansType libraryBean : qpcrRunBean.getLibraryBeans()) {
+                tubeBarcodes.add(libraryBean.getTubeBarcode());
+                mapBarcodeToLibraryBean.put(libraryBean.getTubeBarcode(), libraryBean);
+            }
+            Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(tubeBarcodes);
+
+            List<LabMetricRun> sameDateRuns = labMetricRunDao.findSameDateRuns(qpcrRunBean.getRunDate());
+            if (CollectionUtils.isNotEmpty(sameDateRuns)) {
+                messageCollection.addError("A previous upload has the same Run Started timestamp.");
+            } else {
+                labMetricRun = createQpcrRunDaoFree(mapBarcodeToVessel, mapBarcodeToLibraryBean,
+                        LabMetric.MetricType.VIIA_QPCR, userId ,messageCollection, qpcrRunBean);
+                if (messageCollection.hasErrors()) {
+                    ejbContext.setRollbackOnly();
+                } else {
+                    labMetricRunDao.persist(labMetricRun);
+                }
+            }
+        }
+
+        return labMetricRun;
+    }
+
+    /**
+     * Create a LabMetricRun from a QpcrRunBean.
+     */
+    @DaoFree
+    public LabMetricRun createQpcrRunDaoFree(Map<String, LabVessel> mapBarcodeToVessel,
+                                             Map<String, LibraryBeansType> mapBarcodeToLibraryBean,
+                                             LabMetric.MetricType metricType,
+                                             Long decidingUser, MessageCollection messageCollection,
+                                             QpcrRunBean qpcrRunBean) {
+        LabMetricRun labMetricRun = new LabMetricRun(qpcrRunBean.getRunName(), qpcrRunBean.getRunDate(), metricType);
+        for (Map.Entry<String, LibraryBeansType> barcodeAndQuant: mapBarcodeToLibraryBean.entrySet()) {
+            String vesselLabel = barcodeAndQuant.getKey();
+            LibraryBeansType libraryBeans = barcodeAndQuant.getValue();
+            LabVessel labVessel = mapBarcodeToVessel.get(vesselLabel);
+            VesselPosition vesselPosition = VesselPosition.getByName(libraryBeans.getWell());
+            if (vesselPosition == null) {
+                messageCollection.addError("Failed to find position " + libraryBeans.getWell());
+                continue;
+            }
+
+            LabMetric labMetric = new LabMetric(libraryBeans.getConcentration(), metricType,
+                    LabMetric.LabUnit.NG_PER_UL, libraryBeans.getWell(), qpcrRunBean.getRunDate());
+            labMetricRun.addMetric(labMetric);
+            labVessel.addMetric(labMetric);
+
+            LabMetricDecision labMetricDecision = null;
+            if (libraryBeans.isPass()) {
+                labMetricDecision = new LabMetricDecision(
+                        LabMetricDecision.Decision.PASS, qpcrRunBean.getRunDate(), decidingUser, labMetric);
+            } else {
+                labMetricDecision = new LabMetricDecision(
+                        LabMetricDecision.Decision.FAIL, qpcrRunBean.getRunDate(), decidingUser, labMetric);
+            }
+            labMetric.setLabMetricDecision(labMetricDecision);
+        }
+        return labMetricRun;
     }
 }

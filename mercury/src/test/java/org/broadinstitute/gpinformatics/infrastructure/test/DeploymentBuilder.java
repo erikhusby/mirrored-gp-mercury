@@ -4,7 +4,6 @@ import org.apache.commons.io.FileUtils;
 import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.DeploymentProducer;
-import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.StringAsset;
@@ -27,7 +26,6 @@ public class DeploymentBuilder {
 
     private static final String MERCURY_WAR = MERCURY_APP_NAME + ".war";
 
-
     /**
      * Called by default {@link #buildMercuryWar()}, and also useful explicitly in the rare case where you want an
      * in-container test to run as if it's really in another environment (for instance, to isolate a production bug).
@@ -48,7 +46,7 @@ public class DeploymentBuilder {
         WebArchive war = ShrinkWrap.create(ExplodedImporter.class, MERCURY_WAR)
                 .importDirectory("src/main/webapp")
                 .as(WebArchive.class)
-                .addAsWebInfResource(new File("src/test/resources/" + ((ApplicationInstance.CRSP.isCurrent()) ? "crsp-" : "") + "mercury-"
+                .addAsWebInfResource(new File("src/test/resources/" + "mercury-"
                                               + dataSourceEnvironment + "-ds.xml"))
                 .addAsWebInfResource(new File("src/test/resources/squid-" + dataSourceEnvironment + "-ds.xml"))
                 .addAsWebInfResource(new File("src/test/resources/metrics-prod-ds.xml"))
@@ -67,28 +65,12 @@ public class DeploymentBuilder {
         return war;
     }
 
-    /**
-     * Allows caller to specify environments for remote systems, and for the database.  This method also adds a flag
-     * to indicate that this is a deployment for CRSP
-     * @param deployment              maps to settings in mercury-config.yaml
-     * @param dataSourceEnvironment   which datasources to use: dev, qa or prod`
-     * @return war
-     *
-     * {@see #buildMercuryWar}
-     */
-    public static WebArchive buildCRSPMercuryWar(Deployment deployment, String dataSourceEnvironment) {
-        WebArchive war = buildMercuryWar(deployment, dataSourceEnvironment);
-
-        war.addAsWebInfResource(new StringAsset(DeploymentProducer.CRSP + "=true"), "classes/jndi.properties");
-
-        return war;
-    }
-
     private static WebArchive addWebResourcesTo(WebArchive archive, String directoryName) {
         final File webAppDirectory = new File(directoryName);
         for (File file : FileUtils.listFiles(webAppDirectory, null, true)) {
             if (!file.isDirectory()) {
-                archive.addAsResource(file, file.getPath().substring(directoryName.length()));
+                // Replace backslashes with forward slashes to avoid "file not found" error when deploying on Windows
+                archive.addAsResource(file, file.getPath().replace('\\', '/').substring(directoryName.length()));
             }
         }
         return archive;

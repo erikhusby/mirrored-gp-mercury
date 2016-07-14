@@ -12,6 +12,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.test;
 
 import org.apache.commons.lang3.ArrayUtils;
+import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.SampleCoverageFirstMet;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationAlignment;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationContam;
@@ -19,6 +20,8 @@ import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregatio
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationReadGroup;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationWgs;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.LevelOfDetection;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.PicardAnalysis;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.PicardFingerprint;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -56,6 +59,9 @@ public class HibernateMetadataTest extends ContainerTest {
             AggregationHybridSelection.class.getName(),
             AggregationReadGroup.class.getName(),
             AggregationWgs.class.getName(),
+            SampleCoverageFirstMet.class.getName(),
+            PicardAnalysis.class.getName(),
+            PicardFingerprint.class.getName()
     };
 
     /**
