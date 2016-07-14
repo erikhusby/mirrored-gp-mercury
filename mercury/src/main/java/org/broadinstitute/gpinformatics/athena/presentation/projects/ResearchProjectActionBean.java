@@ -153,9 +153,9 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
     @Inject
     private SubmissionsService submissionsService;
 
-    private List<SubmissionRepository> submissionRepositories;
+    private List<SubmissionRepository> submissionRepositories=new ArrayList<>();
 
-    private List<SubmissionLibraryDescriptor> submissionLibraryDescriptors;
+    private List<SubmissionLibraryDescriptor> submissionLibraryDescriptors=new ArrayList<>();
 
     private SubmissionLibraryDescriptor submissionLibraryDescriptor;
 
@@ -323,8 +323,13 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
     public void init() throws Exception {
         researchProject = getContext().getRequest().getParameter(RESEARCH_PROJECT_PARAMETER);
 
-        setSubmissionLibraryDescriptors(submissionsService.getSubmissionLibraryDescriptors());
-        setSubmissionRepositories(submissionsService.getSubmissionRepositories());
+        try {
+            setSubmissionLibraryDescriptors(submissionsService.getSubmissionLibraryDescriptors());
+            setSubmissionRepositories(submissionsService.getSubmissionRepositories());
+        } catch (InformaticsServiceException e) {
+            addMessage("Submissions are temporarily unavailable.");
+            log.error(e.getMessage(), e);
+        }
 
         if (submissionRepository == null && StringUtils.isBlank(selectedSubmissionRepository)) {
             if (getActiveRepositories().size() == 1) {

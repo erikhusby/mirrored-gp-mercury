@@ -12,6 +12,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.submission;
 
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
+import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 
 import javax.enterprise.inject.Alternative;
 import java.util.ArrayList;
@@ -51,5 +52,15 @@ public class SubmissionsWillAlwaysFailSubmissionsService extends SubmissionsServ
             results.add(statusDetailBean);
         }
         return results;
+    }
+
+    @Override
+    public List<SubmissionLibraryDescriptor> getSubmissionLibraryDescriptors() {
+        throw new InformaticsServiceException("error with getSubmissionLibraryDescriptors");
+    }
+
+    @Override
+    public List<SubmissionRepository> getSubmissionRepositories() {
+        throw new InformaticsServiceException("error with getSubmissionRepositories");
     }
 }
