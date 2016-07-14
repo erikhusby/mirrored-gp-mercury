@@ -290,4 +290,44 @@
         <addUniqueConstraint tableName="SUBMISSION_TRACKER" constraintName="UNQ_SUBMISSION_TRACKER_TUPLE"
                              schemaName="ATHENA" columnNames="RESEARCH_PROJECT_ID,SUBMITTED_SAMPLE_NAME, FILE_TYPE, VERSION" />
     </changeSet>
+    <changeSet id="GPLIM-3614-1" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="PRODUCT_ORDER" columnName="SAP_ORDER_NUMBER" schemaName="ATHENA" />
+            </not>
+        </preConditions>
+        <addColumn tableName="PRODUCT_ORDER" schemaName="ATHENA">
+            <column name="SAP_ORDER_NUMBER" type="varchar2(255)" />
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-3614-2" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="PRODUCT_ORDER_AUD" columnName="SAP_ORDER_NUMBER" schemaName="ATHENA" />
+            </not>
+        </preConditions>
+        <addColumn tableName="PRODUCT_ORDER_AUD" schemaName="ATHENA">
+            <column name="SAP_ORDER_NUMBER" type="varchar2(255)" />
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-3614-3" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="BILLING_LEDGER" columnName="PRODUCT_ID" schemaName="ATHENA" />
+            </not>
+        </preConditions>
+        <addColumn tableName="BILLING_LEDGER" schemaName="ATHENA">
+            <column name="PRODUCT_ID" type="number(19,0)" />
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-3614-4" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="BILLING_LEDGER_AUD" columnName="PRODUCT_ID" schemaName="ATHENA" />
+            </not>
+        </preConditions>
+        <addColumn tableName="BILLING_LEDGER_AUD" schemaName="ATHENA">
+            <column name="PRODUCT_ID" type="number(19,0)" />
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>
