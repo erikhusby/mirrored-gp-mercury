@@ -1405,7 +1405,9 @@ AS
               SAMPLE_TYPE,
               SAMPLE_RECEIPT,
               ORIGINAL_SAMPLE_TYPE,
-              etl_date
+              etl_date,
+              billing_etl_date,
+              risk_etl_date
             ) VALUES (
               new.product_order_sample_id,
               new.product_order_id,
@@ -1416,7 +1418,9 @@ AS
               new.SAMPLE_TYPE,
               new.SAMPLE_RECEIPT,
               new.ORIGINAL_SAMPLE_TYPE,
-              new.etl_date );
+              new.etl_date,
+              new.etl_date,
+              new.etl_date);
 
             V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;
             -- ELSE ignore older ETL extract
@@ -1643,13 +1647,13 @@ AS
               fct_name, fct_type,
               designation_library, creation_date,
               flowcell_type, lane, concentration,
-              is_pool_test, etl_date )
+              is_pool_test, etl_date, fcload_etl_date )
             VALUES(
               new.designation_id, new.fct_id,
                                   new.fct_name, new.fct_type,
                                   new.designation_library, new.creation_date,
                                   new.flowcell_type, new.lane, new.concentration,
-                                  new.is_pool_test, new.etl_date
+                                  new.is_pool_test, new.etl_date, new.etl_date
             );
             V_INS_COUNT := V_INS_COUNT  + SQL%ROWCOUNT;
             -- ELSE ignore older ETL extract
