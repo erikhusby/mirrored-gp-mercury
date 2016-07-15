@@ -22,4 +22,41 @@ SET FCLOAD_ETL_DATE = ETL_DATE;
 
 COMMIT;
 
+-- Clean up old status data that had a new row for every data change whether or not the status changed
+-- Only keep first status and first status change in a string of duplicates by date
+DELETE FROM PRODUCT_ORDER_STATUS
+WHERE ROWID
+      IN ( SELECT BASE_ROW
+           FROM ( SELECT ROWID AS BASE_ROW
+                    , STATUS
+                    , LAG ( STATUS ) OVER
+                        ( PARTITION BY PRODUCT_ORDER_ID ORDER BY STATUS_DATE, STATUS ) AS PREV_STATUS
+                  FROM PRODUCT_ORDER_STATUS )
+           WHERE PREV_STATUS IS NOT NULL AND STATUS = PREV_STATUS  );
+COMMIT;
+
+DELETE FROM RESEARCH_PROJECT_STATUS
+WHERE ROWID
+      IN ( SELECT BASE_ROW
+           FROM ( SELECT ROWID AS BASE_ROW
+                    , STATUS
+                    , LAG ( STATUS ) OVER
+             ( PARTITION BY RESEARCH_PROJECT_ID
+               ORDER BY STATUS_DATE, STATUS
+             ) AS PREV_STATUS
+                  FROM RESEARCH_PROJECT_STATUS )
+           WHERE PREV_STATUS IS NOT NULL AND STATUS = PREV_STATUS  );
+COMMIT;
+
+DELETE FROM PRODUCT_ORDER_SAMPLE_STATUS
+WHERE ROWID
+      IN ( SELECT BASE_ROW
+           FROM ( SELECT ROWID AS BASE_ROW
+                    , DELIVERY_STATUS
+                    , LAG ( DELIVERY_STATUS ) OVER
+             ( PARTITION BY PRODUCT_ORDER_SAMPLE_ID ORDER BY STATUS_DATE, DELIVERY_STATUS ) AS PREV_STATUS
+                  FROM PRODUCT_ORDER_SAMPLE_STATUS )
+           WHERE PREV_STATUS IS NOT NULL AND DELIVERY_STATUS = PREV_STATUS  );
+COMMIT;
+
 
