@@ -104,6 +104,7 @@ public class ResearchProjectActionBeanTest {
 
         ProductOrder productOrder = new ProductOrder("New PDO " + System.currentTimeMillis(), "No comment", "MMMAC1");
         productOrder.setResearchProject(researchProject);
+        assertThat(productOrder.getProduct(), nullValue());
 
         ResearchProjectActionBean actionBean = new ResearchProjectActionBean();
         assertThat(productOrder.getOrderStatus(), is(ProductOrder.OrderStatus.Draft));
