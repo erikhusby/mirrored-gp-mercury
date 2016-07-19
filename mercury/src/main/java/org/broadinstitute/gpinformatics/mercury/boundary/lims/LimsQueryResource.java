@@ -122,10 +122,10 @@ public class LimsQueryResource {
     @Path("/fetchConcentrationAndVolumeAndWeightForTubeBarcodes")
     public Map<String,ConcentrationAndVolumeAndWeightType> fetchConcentrationAndVolumeAndWeightForTubeBarcodes(
             @QueryParam("q") List<String> tubeBarcodes,
-            @DefaultValue("true") @QueryParam("includeLabMetrics") boolean includeLabMetrics) {
+            @DefaultValue("true") @QueryParam("labMetricsFirst") boolean labMetricsFirst) {
         switch (systemRouter.getSystemOfRecordForVesselBarcodes(tubeBarcodes)) {
         case MERCURY:
-            return limsQueries.fetchConcentrationAndVolumeAndWeightForTubeBarcodes(tubeBarcodes, includeLabMetrics);
+            return limsQueries.fetchConcentrationAndVolumeAndWeightForTubeBarcodes(tubeBarcodes, labMetricsFirst);
         case SQUID:
             Map<String, ConcentrationAndVolume> concentrationAndVolumeMap =
                     thriftService.fetchConcentrationAndVolumeForTubeBarcodes(tubeBarcodes);

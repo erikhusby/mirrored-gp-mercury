@@ -302,11 +302,13 @@ public class LimsQueries {
      * for each tube barcode specified.
      *
      * @param tubeBarcodes The barcodes of the tubes to up concentration and volume for.
+     * @param labMetricsFirst Check for uploaded LabMetrics before checking the concentration field
+     *                        on LabVessel when setting the concentration.
      *
      * @return Map of barcode to Concentration and Volume of the quant we are looking for.
      */
     public Map<String, ConcentrationAndVolumeAndWeightType> fetchConcentrationAndVolumeAndWeightForTubeBarcodes(
-            List<String> tubeBarcodes, boolean includeLabMetrics) {
+            List<String> tubeBarcodes, boolean labMetricsFirst) {
         Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(tubeBarcodes);
         List<String> bspBarcodes = new ArrayList<>();
         for (Map.Entry<String, LabVessel> entry: mapBarcodeToVessel.entrySet()) {
@@ -329,14 +331,14 @@ public class LimsQueries {
             mapBarcodeToInfo = bspSampleDataFetcher.fetchSampleDetailsByBarcode(bspBarcodes);
         }
         return fetchConcentrationAndVolumeAndWeightForTubeBarcodes(
-                mapBarcodeToVessel, mapBarcodeToInfo, includeLabMetrics);
+                mapBarcodeToVessel, mapBarcodeToInfo, labMetricsFirst);
     }
 
     @DaoFree
     public Map<String, ConcentrationAndVolumeAndWeightType> fetchConcentrationAndVolumeAndWeightForTubeBarcodes(
             Map<String, LabVessel> mapBarcodeToVessel,
             Map<String, GetSampleDetails.SampleInfo> mapBarcodeToInfo,
-            boolean includeLabMetrics) {
+            boolean labMetricsFirst) {
         Map<String, ConcentrationAndVolumeAndWeightType> concentrationAndVolumeAndWeightTypeMap = new HashMap<>();
         for (Map.Entry<String, LabVessel> entry: mapBarcodeToVessel.entrySet()) {
             String tubeBarcode = entry.getKey();
@@ -365,7 +367,7 @@ public class LimsQueries {
                     concentrationAndVolumeAndWeightType.setVolume(labVessel.getVolume());
                 }
 
-                if (!includeLabMetrics) {
+                if (!labMetricsFirst && labVessel.getConcentration() != null) {
                     concentrationAndVolumeAndWeightType.setConcentration(labVessel.getConcentration());
                 } else {
                     Set<LabMetric> metrics = labVessel.getConcentrationMetrics();

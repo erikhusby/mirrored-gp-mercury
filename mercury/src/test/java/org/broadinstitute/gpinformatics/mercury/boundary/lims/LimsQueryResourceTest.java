@@ -469,7 +469,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
         resource =
                 makeWebResource(baseUrl, "fetchConcentrationAndVolumeAndWeightForTubeBarcodes")
                         .queryParam("q", "1125628279")
-                        .queryParam("includeLabMetrics","false");
+                        .queryParam("labMetricsFirst","false");
         String result3 = get(resource);
         index = result3.indexOf("\"wasFound\":true");
         assertThat(index, not(equalTo(-1)));
@@ -480,7 +480,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
         resource =
                 makeWebResource(baseUrl, "fetchConcentrationAndVolumeAndWeightForTubeBarcodes")
                         .queryParam("q", "1125628279")
-                        .queryParam("includeLabMetrics","true");
+                        .queryParam("labMetricsFirst","true");
         String result4 = get(resource);
         index = result4.indexOf("\"wasFound\":true");
         assertThat(index, not(equalTo(-1)));
