@@ -41,18 +41,31 @@ public class SampleInstanceEtlData {
         SampleInstanceEtlData sampleInstanceData = new SampleInstanceEtlData();
         sampleInstanceData.includeNearestSample = includeNearestSample;
 
-        // Get latest PDO and the sample which matches it (the PDO and sample must match)
-        for (ProductOrderSample pdoSample : si.getAllProductOrderSamples()) {
-            // Get a valid PDO
-            sampleInstanceData.pdo = pdoSample.getProductOrder();
-            if (pdoSample.getMercurySample() != null) {
-                // And associate a sample with it if available
-                sampleInstanceData.pdoSample = pdoSample;
-                sampleInstanceData.pdoSampleId = pdoSample.getMercurySample().getSampleKey();
-                // getAllProductOrderSamples() sorts by closest first
-                // We've got the correct PDO data on the first PDO created before context date
-                if( sampleInstanceData.pdo.getCreatedDate().compareTo(contextDate) < 1 ) {
-                    break;
+        BucketEntry pdoBucketEntry = si.getSingleBucketEntry();
+        if( pdoBucketEntry != null ) {
+            sampleInstanceData.pdo = pdoBucketEntry.getProductOrder();
+        }
+
+        sampleInstanceData.pdoSample = si.getSingleProductOrderSample();
+        if( sampleInstanceData.pdoSample != null ) {
+            sampleInstanceData.pdoSampleId = sampleInstanceData.pdoSample.getMercurySample().getSampleKey();
+        }
+
+        // Does this ever happen?  Even a control would fail.
+        if( sampleInstanceData.pdoSample == null ) {
+            // Get latest PDO and the sample which matches it (the PDO and sample must match)
+            for (ProductOrderSample pdoSample : si.getAllProductOrderSamples()) {
+                // Get a valid PDO
+                sampleInstanceData.pdo = pdoSample.getProductOrder();
+                if (pdoSample.getMercurySample() != null) {
+                    // And associate a sample with it if available
+                    sampleInstanceData.pdoSample = pdoSample;
+                    sampleInstanceData.pdoSampleId = pdoSample.getMercurySample().getSampleKey();
+                    // getAllProductOrderSamples() sorts by closest first
+                    // We've got the correct PDO data on the first PDO created before context date
+                    if (sampleInstanceData.pdo.getCreatedDate().compareTo(contextDate) < 1) {
+                        break;
+                    }
                 }
             }
         }
