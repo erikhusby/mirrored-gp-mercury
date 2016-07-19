@@ -395,14 +395,16 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         progressFetcher = new CompletionStatusFetcher(productOrderDao.getProgress(productOrderIds));
     }
 
-    private SubmissionLibraryDescriptor findDefaultSubmissionType(ResearchProject researchProject) {
+    SubmissionLibraryDescriptor findDefaultSubmissionType(ResearchProject researchProject) {
         SubmissionLibraryDescriptor defaultSubmissionLibraryDescriptor = null;
         Set<SubmissionLibraryDescriptor> projectSubmissionLibraryDescriptors =new HashSet<>();
         for (ProductOrder productOrder : researchProject.getProductOrders()) {
-            SubmissionLibraryDescriptor submissionType =
-                    productOrder.getProduct().getProductFamily().getSubmissionType();
-            if (submissionType != null) {
-                projectSubmissionLibraryDescriptors.add(submissionType);
+            if (productOrder.getOrderStatus() != ProductOrder.OrderStatus.Draft) {
+                SubmissionLibraryDescriptor submissionType =
+                        productOrder.getProduct().getProductFamily().getSubmissionType();
+                if (submissionType != null) {
+                    projectSubmissionLibraryDescriptors.add(submissionType);
+                }
             }
         }
         if (projectSubmissionLibraryDescriptors.size() == 1) {

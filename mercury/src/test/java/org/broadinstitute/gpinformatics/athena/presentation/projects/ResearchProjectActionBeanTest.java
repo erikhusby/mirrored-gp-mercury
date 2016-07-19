@@ -12,10 +12,12 @@
 package org.broadinstitute.gpinformatics.athena.presentation.projects;
 
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionLibraryDescriptor;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.broadinstitute.gpinformatics.mercury.presentation.TestCoreActionBeanContext;
@@ -35,6 +37,7 @@ import static org.broadinstitute.gpinformatics.athena.entity.project.ResearchPro
 import static org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject.RegulatoryDesignation.RESEARCH_ONLY;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ResearchProjectActionBeanTest {
@@ -94,6 +97,20 @@ public class ResearchProjectActionBeanTest {
 
         assertThat(actionBean.validateViewOrPostSubmissions(false), is(submissionAllowed.booleanValue()));
         assertThat(actionBean.getValidationErrors().isEmpty(), is(submissionAllowed.booleanValue()));
+    }
+
+    public void testRpWithDraftPdoDoestThrowsException() {
+        ResearchProject researchProject = ResearchProjectTestFactory.createTestResearchProject();
+
+        ProductOrder productOrder = new ProductOrder("New PDO " + System.currentTimeMillis(), "No comment", "MMMAC1");
+        productOrder.setResearchProject(researchProject);
+        assertThat(productOrder.getProduct(), nullValue());
+
+        ResearchProjectActionBean actionBean = new ResearchProjectActionBean();
+        assertThat(productOrder.getOrderStatus(), is(ProductOrder.OrderStatus.Draft));
+
+        SubmissionLibraryDescriptor defaultSubmissionType = actionBean.findDefaultSubmissionType(researchProject);
+        assertThat(defaultSubmissionType, nullValue());
     }
 
     private enum SUBMISSION_ALLOWED {
