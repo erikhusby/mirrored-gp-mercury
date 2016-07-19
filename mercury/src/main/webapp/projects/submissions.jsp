@@ -410,7 +410,8 @@
                                 return data;
                             }
                         },
-                        {"mData": "<%=SubmissionField.FINGERPRINT_LOD %>"},
+                        {"mData": "<%=SubmissionField.FINGERPRINT_LOD_MIN %>"},
+                        {"mData": "<%=SubmissionField.FINGERPRINT_LOD_MAX %>"},
                         {"mData": "<%=SubmissionField.LANES_IN_AGGREGATION %>"},
                         {"mData": "<%=SubmissionField.SUBMITTED_VERSION %>",
                             "mRender": function (data, type, row) {
@@ -571,7 +572,8 @@
             <th class="columnVersion">Version</th>
             <th class="columnQualityMetric">Quality Metric</th>
             <th class="columnContamination">Contam.</th>
-            <th class="columnFingerprint">Fingerprint</th>
+            <th title="Fingerprint LOD (min)" class="columnFingerprint">LOD Min</th>
+            <th title="Fingerprint LOD (max)" class="columnFingerprint">LOD Max</th>
             <!-- add # lanes, # lanes blacklisted, notes -->
             <th class="columnLanesInAggregation">Lanes in Agg.</th>
             <th class="columnSubmittedVersion">Submitted Version</th>
