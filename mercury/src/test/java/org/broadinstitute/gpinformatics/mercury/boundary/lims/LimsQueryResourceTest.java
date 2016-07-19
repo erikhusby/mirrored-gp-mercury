@@ -465,6 +465,27 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
         assertThat(index, not(equalTo(-1)));
         index = result2.indexOf("\"wasFound\":false", index + 1);
         assertThat(index, equalTo(-1));
+
+        resource =
+                makeWebResource(baseUrl, "fetchConcentrationAndVolumeAndWeightForTubeBarcodes")
+                        .queryParam("q", "1125628279")
+                        .queryParam("includeLabMetrics","false");
+        String result3 = get(resource);
+        index = result3.indexOf("\"wasFound\":true");
+        assertThat(index, not(equalTo(-1)));
+        index = result3.indexOf("\"concentration\":3");
+        assertThat(index, not(equalTo(-1)));
+
+        // Based off most recent pico
+        resource =
+                makeWebResource(baseUrl, "fetchConcentrationAndVolumeAndWeightForTubeBarcodes")
+                        .queryParam("q", "1125628279")
+                        .queryParam("includeLabMetrics","true");
+        String result4 = get(resource);
+        index = result4.indexOf("\"wasFound\":true");
+        assertThat(index, not(equalTo(-1)));
+        index = result4.indexOf("\"concentration\":4.7");
+        assertThat(index, not(equalTo(-1)));
     }
 
     @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)

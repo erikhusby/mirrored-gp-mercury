@@ -30,6 +30,7 @@ import org.broadinstitute.gpinformatics.mercury.limsquery.generated.WellAndSourc
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -120,10 +121,11 @@ public class LimsQueryResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/fetchConcentrationAndVolumeAndWeightForTubeBarcodes")
     public Map<String,ConcentrationAndVolumeAndWeightType> fetchConcentrationAndVolumeAndWeightForTubeBarcodes(
-            @QueryParam("q") List<String> tubeBarcodes) {
+            @QueryParam("q") List<String> tubeBarcodes,
+            @DefaultValue("true") @QueryParam("includeLabMetrics") boolean includeLabMetrics) {
         switch (systemRouter.getSystemOfRecordForVesselBarcodes(tubeBarcodes)) {
         case MERCURY:
-            return limsQueries.fetchConcentrationAndVolumeAndWeightForTubeBarcodes(tubeBarcodes);
+            return limsQueries.fetchConcentrationAndVolumeAndWeightForTubeBarcodes(tubeBarcodes, includeLabMetrics);
         case SQUID:
             Map<String, ConcentrationAndVolume> concentrationAndVolumeMap =
                     thriftService.fetchConcentrationAndVolumeForTubeBarcodes(tubeBarcodes);
