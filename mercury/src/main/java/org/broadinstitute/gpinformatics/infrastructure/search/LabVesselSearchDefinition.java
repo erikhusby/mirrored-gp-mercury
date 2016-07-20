@@ -184,6 +184,9 @@ public class LabVesselSearchDefinition {
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("inPlaceLabVesselId", "labVesselId",
                 "inPlaceLabVesselId", LabEvent.class));
 
+        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection( "sequencingRun", "labVesselId",
+                "runCartridge", SequencingRun.class));
+
         ConfigurableSearchDefinition configurableSearchDefinition = new ConfigurableSearchDefinition(
                 ColumnEntity.LAB_VESSEL, criteriaProjections, mapGroupSearchTerms);
 
@@ -918,6 +921,12 @@ public class LabVesselSearchDefinition {
 
         searchTerm = new SearchTerm();
         searchTerm.setName("Sequencing Run Name");
+        criteriaPaths = new ArrayList<>();
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Collections.singletonList("sequencingRun"));
+        criteriaPath.setPropertyName("runName");
+        criteriaPaths.add(criteriaPath);
+        searchTerm.setCriteriaPaths(criteriaPaths);
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Set<String> evaluate(Object entity, SearchContext context) {
