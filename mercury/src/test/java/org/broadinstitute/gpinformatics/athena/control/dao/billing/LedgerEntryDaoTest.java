@@ -73,7 +73,7 @@ public class LedgerEntryDaoTest extends ContainerTest {
 
         // Create first ledger item.
         Date date1 = formatter.parse("12/5/12");
-        LedgerEntry unBilledLedger1 = new LedgerEntry(productOrderSample1, priceItem, date1, 1);
+        LedgerEntry unBilledLedger1 = new LedgerEntry(productOrderSample1, priceItem, date1, order.getProduct(), 1);
 
         // Add one ledger item to sample 1.
         productOrderSample1.getLedgerItems().add(unBilledLedger1);
@@ -91,8 +91,8 @@ public class LedgerEntryDaoTest extends ContainerTest {
 
         // Create two ledger items for the new order one for each productOrderSample different quantities.
         Date date2 = formatter.parse("12/6/12");
-        LedgerEntry unBilledLedger1ForDupes = new LedgerEntry(productOrderSample1ForDupes, priceItem, date2, 8);
-        LedgerEntry unBilledLedger2ForDupes = new LedgerEntry(productOrderSample2ForDupes, priceItem, date2, 16);
+        LedgerEntry unBilledLedger1ForDupes = new LedgerEntry(productOrderSample1ForDupes, priceItem, date2, productOrderSample1ForDupes.getProductOrder().getProduct(), 8);
+        LedgerEntry unBilledLedger2ForDupes = new LedgerEntry(productOrderSample2ForDupes, priceItem, date2, productOrderSample2ForDupes.getProductOrder().getProduct(), 16);
 
         // Add the ledger items one to each of the dupes samples.
         productOrderSample1ForDupes.getLedgerItems().add(unBilledLedger1ForDupes);

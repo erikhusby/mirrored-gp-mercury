@@ -56,9 +56,11 @@ public class BillingEjbJiraDownTest extends Arquillian {
         final ProductOrderSample sampleB = samplesByName.get(SM_B).iterator().next();
 
         LedgerEntry ledgerEntryA =
-                new LedgerEntry(sampleA, productOrder.getProduct().getPrimaryPriceItem(), new Date(), 3);
+                new LedgerEntry(sampleA, productOrder.getProduct().getPrimaryPriceItem(), new Date(),
+                        productOrder.getProduct(), 3);
         LedgerEntry ledgerEntryB =
-                new LedgerEntry(sampleB, productOrder.getProduct().getPrimaryPriceItem(), new Date(), 3);
+                new LedgerEntry(sampleB, productOrder.getProduct().getPrimaryPriceItem(), new Date(),
+                        productOrder.getProduct(), 3);
 
         BillingSession
                 billingSession = new BillingSession(-1L, Sets.newHashSet(ledgerEntryA, ledgerEntryB));

@@ -22,6 +22,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderLi
 import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
+import org.broadinstitute.gpinformatics.athena.entity.billing.ProductLedgerIndex;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry;
@@ -341,12 +342,13 @@ public class BillingLedgerActionBean extends CoreActionBean {
         for (int i = 0; i < ledgerData.size(); i++) {
             LedgerData data = ledgerData.get(i);
             ProductOrderSample productOrderSample = productOrder.getSamples().get(i);
-            Map<PriceItem, ProductOrderSample.LedgerQuantities> ledgerQuantitiesMap =
+            Map<ProductLedgerIndex, ProductOrderSample.LedgerQuantities> ledgerQuantitiesMap =
                     productOrderSample.getLedgerQuantities();
+            Map<PriceItem, ProductLedgerIndex> indexByPriceItem = SampleLedgerExporter.getPriceItemProductLedgerIndexMap(ledgerQuantitiesMap);
             for (Map.Entry<Long, ProductOrderSampleQuantities> entry : data.getQuantities().entrySet()) {
                 PriceItem priceItem = priceItemDao.findById(PriceItem.class, entry.getKey());
                 ProductOrderSampleQuantities quantities = entry.getValue();
-                ProductOrderSample.LedgerQuantities ledgerQuantities = ledgerQuantitiesMap.get(priceItem);
+                ProductOrderSample.LedgerQuantities ledgerQuantities = ledgerQuantitiesMap.get(indexByPriceItem.get(priceItem));
                 double currentQuantity = ledgerQuantities != null ? ledgerQuantities.getTotal() : 0;
                 ProductOrderSample.LedgerUpdate ledgerUpdate =
                         new ProductOrderSample.LedgerUpdate(productOrderSample.getSampleKey(), priceItem,
@@ -464,7 +466,7 @@ public class BillingLedgerActionBean extends CoreActionBean {
                 workCompleteDate = coverageFirstMet;
             }
 
-            ledgerQuantities = productOrderSample.getLedgerQuantities();
+            ledgerQuantities = productOrderSample.getLedgerQuantitiesByPriceItem();
 
             boolean primaryBilled = false;
             for (LedgerEntry ledgerEntry : productOrderSample.getLedgerItems()) {

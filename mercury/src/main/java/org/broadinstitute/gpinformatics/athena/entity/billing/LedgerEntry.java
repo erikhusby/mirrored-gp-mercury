@@ -80,7 +80,7 @@ public class LedgerEntry implements Serializable {
     @SuppressWarnings("UnusedDeclaration")
     protected LedgerEntry() {}
 
-    public LedgerEntry(@Nonnull ProductOrderSample productOrderSample,
+    private LedgerEntry(@Nonnull ProductOrderSample productOrderSample,
                        @Nonnull PriceItem priceItem,
                        @Nonnull Date workCompleteDate,
                        double quantity) {

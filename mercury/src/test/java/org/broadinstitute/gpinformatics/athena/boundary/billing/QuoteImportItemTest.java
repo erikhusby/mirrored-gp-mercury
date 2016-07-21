@@ -12,6 +12,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
@@ -66,12 +67,13 @@ public class QuoteImportItemTest {
 
     private ProductOrder createProductOrderWithLedgerEntry(String pdoJiraKey,int numSamples,double amountPerLedgerEntry,String workItem) {
         ProductOrder pdo = new ProductOrder();
+        pdo.setProduct(new Product());
         pdo.setJiraTicketKey(pdoJiraKey);
 
         for (int i = 0; i < numSamples; i++) {
             ProductOrderSample sample = new ProductOrderSample("sam" + System.currentTimeMillis() + "." + i);
             pdo.addSample(sample);
-            LedgerEntry ledgerEntry = new LedgerEntry(sample,new PriceItem(),new Date(),amountPerLedgerEntry);
+            LedgerEntry ledgerEntry = new LedgerEntry(sample,new PriceItem(),new Date(), pdo.getProduct(),amountPerLedgerEntry);
             ledgerEntry.setWorkItem(workItem);
             sample.getLedgerItems().add(ledgerEntry);
         }
@@ -127,7 +129,7 @@ public class QuoteImportItemTest {
     }
 
     public void testSingleWorkItem() {
-        LedgerEntry ledgerEntry = new LedgerEntry(new ProductOrderSample("blah"),new PriceItem(),new Date(),2);
+        LedgerEntry ledgerEntry = new LedgerEntry(new ProductOrderSample("blah"),new PriceItem(),new Date(), new Product(),2);
         ledgerEntry.setWorkItem(WORK_ITEM2);
         List<LedgerEntry> ledgerEntries = new ArrayList<>();
         ledgerEntries.add(ledgerEntry);

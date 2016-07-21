@@ -4,6 +4,7 @@ package org.broadinstitute.gpinformatics.athena.boundary.billing;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
@@ -30,7 +31,7 @@ public class BillingResultTest {
         List<LedgerEntry> ledgerEntries = new ArrayList<>();
         for (int i = 0; i < numEntries; i++) {
             ProductOrderSample pdoSample = new ProductOrderSample("SM-123" + i);
-            LedgerEntry ledgerEntry = new LedgerEntry(pdoSample,new PriceItem(),new Date(),3);
+            LedgerEntry ledgerEntry = new LedgerEntry(pdoSample,new PriceItem(),new Date(), new Product(),3);
             ledgerEntries.add(ledgerEntry);
         }
         return new QuoteImportItem(null,null,null,ledgerEntries,null);

@@ -39,7 +39,7 @@ public class CreateBillingData extends ContainerTest {
             for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
                 if (productOrderSample.getName().contains("A")) {
                     ledgerEntries.add(new LedgerEntry(productOrderSample, productOrder.getProduct().getPrimaryPriceItem(),
-                            new Date(), 0.5));
+                            new Date(),productOrder.getProduct(), 0.5));
                 }
             }
 
@@ -49,7 +49,7 @@ public class CreateBillingData extends ContainerTest {
             for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
                 if (productOrderSample.getName().contains("B")) {
                     productOrderDao.persist(new LedgerEntry(productOrderSample, productOrder.getProduct().getPrimaryPriceItem(),
-                            new Date(), 1.1));
+                            new Date(), productOrder.getProduct(), 1.1));
                 }
             }
 

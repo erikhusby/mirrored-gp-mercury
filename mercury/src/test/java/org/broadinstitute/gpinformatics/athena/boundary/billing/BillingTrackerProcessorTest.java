@@ -41,10 +41,12 @@ public class BillingTrackerProcessorTest {
     public void setUp() {
         // Set up test data.
         Product product = new Product();
+
         product.setPrimaryPriceItem(new PriceItem());
 
         order = new ProductOrder();
         order.addSample(new ProductOrderSample(TEST_SAMPLE_ID));
+        order.setProduct(product);
 
         // Set up mocks.
         ProductDao mockProductDao = mock(ProductDao.class);
@@ -109,7 +111,7 @@ public class BillingTrackerProcessorTest {
 
     public void testProcessRowDetailsBillingInProgress() {
         ProductOrderSample sample = order.getSamples().get(0);
-        sample.addLedgerItem(new Date(), new PriceItem(), 1);
+        sample.addLedgerItem(new Date(), new PriceItem(), 1, order.getProduct());
         BillingSession billingSession = new BillingSession(0L, sample.getLedgerItems());
 
         Date now = new Date();

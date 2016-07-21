@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.common.TestLogHandler;
 import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
@@ -220,11 +221,11 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
                     FAILING_PRICE_ITEM_NAME = replacementPriceItem.getName();
                     billingSessionDao.persist(replacementPriceItem);
 
-                    billingSessionEntries.add(new LedgerEntry(ledgerSample, replacementPriceItem, new Date(), 5));
+                    billingSessionEntries.add(new LedgerEntry(ledgerSample, replacementPriceItem, new Date(), ledgerSample.getProductOrder().getProduct(), 5));
                 } else {
                     billingSessionEntries.add(new LedgerEntry(ledgerSample,
                                                               productOrder.getProduct().getPrimaryPriceItem(),
-                                                              new Date(), 3));
+                                                              new Date(), ledgerSample.getProductOrder().getProduct(), 3));
                 }
             }
         }
@@ -269,11 +270,13 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
                     FAILING_PRICE_ITEM_NAME = replacementPriceItem.getName();
                     billingSessionDao.persist(replacementPriceItem);
 
-                    billingSessionEntries.add(new LedgerEntry(ledgerSample, replacementPriceItem, new Date(), 5));
+                    billingSessionEntries.add(new LedgerEntry(ledgerSample, replacementPriceItem, new Date(),
+                            ledgerSample.getProductOrder().getProduct(), 5));
                 } else {
                     billingSessionEntries.add(new LedgerEntry(ledgerSample,
                                                               productOrder.getProduct().getPrimaryPriceItem(),
-                                                              new Date(), 3));
+                                                              new Date(), ledgerSample.getProductOrder().getProduct(),
+                            3));
                 }
             }
         }
@@ -419,8 +422,11 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
     public void testBillingAdaptorLog() {
         BillingAdaptor adaptor = new BillingAdaptor();
         PriceItem priceItem = new PriceItem("quoteServerId", "myPlatform", "myCategory", "importItemName");
-        LedgerEntry ledgerEntry1 = new LedgerEntry(new ProductOrderSample("SM-1234"), priceItem, new Date(), 5);
-        LedgerEntry ledgerEntry2 = new LedgerEntry(new ProductOrderSample("SM-5678"), priceItem, new Date(), 5);
+        Product product = new Product();
+        LedgerEntry ledgerEntry1 = new LedgerEntry(new ProductOrderSample("SM-1234"), priceItem, new Date(),
+                product, 5);
+        LedgerEntry ledgerEntry2 = new LedgerEntry(new ProductOrderSample("SM-5678"), priceItem, new Date(),
+                product, 5);
         List<LedgerEntry> ledgerItems = Arrays.asList(ledgerEntry1, ledgerEntry2);
         QuoteImportItem quoteImportItem =
                 new QuoteImportItem("QUOTE-1", priceItem, "priceType", ledgerItems, new Date());

@@ -80,7 +80,7 @@ public class BillingTrackerImporterContainerTest extends Arquillian {
         return processors;
     }
 
-    @Test
+    @Test(groups = TestGroups.STANDARD)
     public void testImport() throws Exception {
 
         InputStream inputStream = null;

@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDa
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
+import org.broadinstitute.gpinformatics.athena.entity.billing.ProductLedgerIndex;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
@@ -313,11 +314,13 @@ public class BillingTrackerProcessor extends TableProcessor {
         // Get the stats for the order.
         Map<BillableRef, OrderBillSummaryStat> pdoSummaryStatsMap = chargesMapByPdo.get(rowPdoIdStr);
 
-        Map<PriceItem, ProductOrderSample.LedgerQuantities> billCounts = productOrderSample.getLedgerQuantities();
+        Map<ProductLedgerIndex, ProductOrderSample.LedgerQuantities> billCounts = productOrderSample.getLedgerQuantities();
 
         for (BillableRef billableRef : currentBillableRefs) {
             PriceItem priceItem = currentPriceItemsByName.get(billableRef.getPriceItemName());
-            ProductOrderSample.LedgerQuantities sampleQuantities = billCounts.get(priceItem);
+            Product productForPriceItem = productOrderSample.getProductForPriceItem(priceItem);
+            ProductOrderSample.LedgerQuantities sampleQuantities = billCounts.get(new ProductLedgerIndex(
+                    productForPriceItem,priceItem));
 
             double trackerBilled = 0;
 
@@ -354,13 +357,13 @@ public class BillingTrackerProcessor extends TableProcessor {
             }
 
             doUpdate(dataRow, dataRowIndex, productOrderSample, pdoSummaryStatsMap, billableRef, priceItem,
-                    trackerBilled, priceItemName);
+                    trackerBilled, priceItemName, productForPriceItem);
         }
     }
 
     private void doUpdate(Map<String, String> dataRow, int dataRowIndex, ProductOrderSample productOrderSample,
                           Map<BillableRef, OrderBillSummaryStat> pdoSummaryStatsMap, BillableRef billableRef,
-                          PriceItem priceItem, double trackerBilled, String priceItemName) {
+                          PriceItem priceItem, double trackerBilled, String priceItemName, Product product) {
 
         String updateToKey = BillingTrackerHeader.getPriceItemPartNumberHeader(priceItem, billableRef) + " "
                              + BillingTrackerHeader.UPDATE;
@@ -438,7 +441,7 @@ public class BillingTrackerProcessor extends TableProcessor {
                 // If there are no messages AND we are persisting, then update the ledger Item, which will
                 // persist the change..
                 if (CollectionUtils.isEmpty(getMessages()) && doPersist) {
-                    productOrderSample.addLedgerItem(workCompleteDate, priceItem, delta);
+                    productOrderSample.addLedgerItem(workCompleteDate, priceItem, delta, product);
                 }
             }
         }
