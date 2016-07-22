@@ -88,7 +88,9 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NoJ
 import org.broadinstitute.gpinformatics.infrastructure.quote.ApprovalStatus;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.infrastructure.security.Role;
@@ -99,6 +101,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean;
+import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.jvnet.inflector.Noun;
@@ -1182,15 +1185,17 @@ public class ProductOrderActionBean extends CoreActionBean {
             productOrderEjb.handleSamplesAdded(editOrder.getBusinessKey(), editOrder.getSamples(), this);
             productOrderDao.persist(editOrder);
 
-            //TODO SGM: need to account for exception handling
-            if (!editOrder.isPending() && !editOrder.isDraft()) {
-                if (StringUtils.isEmpty(editOrder.getSapOrderNumber())) {
-                    try {
+            try {
+                boolean eligibleForSAP = productOrderEjb.isOrderEligibleForSAP(editOrder);
+                if (eligibleForSAP && !editOrder.isPending() && !editOrder.isDraft()) {
+                    if (StringUtils.isEmpty(editOrder.getSapOrderNumber())) {
                         sapService.createOrder(editOrder);
-                    } catch (Exception e) {
-                        placeOrderMessageCollection.addError(e);
                     }
                 }
+            } catch (SAPIntegrationException e) {
+                placeOrderMessageCollection.addError("Unable to create this order in SAP at this point in time " + e.getMessage());
+            } catch (QuoteNotFoundException|QuoteServerException qe) {
+                placeOrderMessageCollection.addError("Unable to create this order in SAP at this point in time");
             }
             addMessages(placeOrderMessageCollection);
 

@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.boundary.products;
 
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
@@ -12,10 +13,12 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.PriceItemTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProductTokenInput;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.entity.run.GenotypingChip;
+import org.broadinstitute.sap.services.SAPIntegrationException;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
@@ -60,16 +63,20 @@ public class ProductEjb {
         this.productDao = productDao;
     }
 
+    @Inject
+    public SapIntegrationService sapService;
+
     /**
      * Using the product here because I need all the edited fields for both save and edit.
-     * @param product The product with all updated date (it was found for edit).
-     * @param addOnTokenInput The add ons
+     *
+     * @param product             The product with all updated date (it was found for edit).
+     * @param addOnTokenInput     The add ons
      * @param priceItemTokenInput The price items
-     * @param allLengthsMatch Do the lengths match
-     * @param criteria The risk criteria
-     * @param operators The operators
-     * @param values The values
-     * @param genotypingChipInfo Genotyping chips for this product
+     * @param allLengthsMatch     Do the lengths match
+     * @param criteria            The risk criteria
+     * @param operators           The operators
+     * @param values              The values
+     * @param genotypingChipInfo  Genotyping chips for this product
      */
     public void saveProduct(
             Product product, ProductTokenInput addOnTokenInput, PriceItemTokenInput priceItemTokenInput,
@@ -131,10 +138,10 @@ public class ProductEjb {
         Map<String, SortedSet<String>> map = new HashMap<>();
         for (GenotypingChip chip : attributeArchetypeDao.findGenotypingChips()) {
             SortedSet<String> names = map.get(chip.getChipTechnology());
-                if (names == null) {
-                    names = new TreeSet<>();
-                    map.put(chip.getChipTechnology(), names);
-                }
+            if (names == null) {
+                names = new TreeSet<>();
+                map.put(chip.getChipTechnology(), names);
+            }
             names.add(chip.getChipName());
         }
         return map;
@@ -143,6 +150,7 @@ public class ProductEjb {
 
     /**
      * Looks up a genotyping chip mapping that was active on the effective date.
+     *
      * @return (chip family, chip name) or (null, null) if no match was found.
      */
     public Pair<String, String> getGenotypingChip(ProductOrder productOrder, Date effectiveDate) {
@@ -153,6 +161,7 @@ public class ProductEjb {
 
     /**
      * Looks up a genotyping chip mapping that was active on the effective date.
+     *
      * @return (chip family, chip name) or (null, null) if no match was found.
      */
     public Pair<String, String> getGenotypingChip(String productPartNumber, String productOrderName,
@@ -183,16 +192,17 @@ public class ProductEjb {
             }
         }
         return (bestMatch != null) ?
-                Pair.of(bestMatch.getChipFamily(), bestMatch.getChipName()) : Pair.of((String)null, (String)null);
+                Pair.of(bestMatch.getChipFamily(), bestMatch.getChipName()) : Pair.of((String) null, (String) null);
     }
 
     /**
      * Returns the product configuration genotyping chip mappings that match on the part number,
      * ordered by decreasing pdoString, nulls last.
      *
-     * @param productPartNumber  part number to match
-     * @param allChips collection of archetypes and may include other namespaces and groups.
-     * @return  map of (product part number + delimiter + pdoString) -> archetype
+     * @param productPartNumber part number to match
+     * @param allChips          collection of archetypes and may include other namespaces and groups.
+     *
+     * @return map of (product part number + delimiter + pdoString) -> archetype
      */
     private SortedMap<String, GenotypingChipMapping> partNumberMatches(
             String productPartNumber, Collection<GenotypingChipMapping> allChips) {
@@ -242,8 +252,9 @@ public class ProductEjb {
      * distinguished from one another using pdoSubstring.
      *
      * @param productPartNumber is used to determine the returned info. Null returns no mappings.
+     *
      * @return List of chip family, chip name, pdo substring.  These are ordered the same way they
-     *         are used to lookup a mapping: by decreasing pdo substring with nulls last.
+     * are used to lookup a mapping: by decreasing pdo substring with nulls last.
      */
     public List<Triple<String, String, String>> getCurrentMappedGenotypingChips(String productPartNumber) {
         List<Triple<String, String, String>> chipInfo = new ArrayList<>();
@@ -272,5 +283,37 @@ public class ProductEjb {
             }
         });
         return chipInfo;
+    }
+
+
+    public void publishProductToSAP(Product productToPublish) throws SAPIntegrationException {
+        publishProductsToSAP(Collections.singleton(productToPublish));
+    }
+
+
+    /**
+     * Defined
+     * @param productsToPublish
+     * @throws SAPIntegrationException
+     */
+    public void publishProductsToSAP(Collection<Product> productsToPublish) throws SAPIntegrationException {
+        Set<String> errorMessages = new HashSet<>();
+        for (Product productToPublish : productsToPublish) {
+            try {
+                if (productToPublish.isSavedInSAP()) {
+                    sapService.changeProductInSAP(productToPublish);
+                } else {
+                    sapService.createProductInSAP(productToPublish);
+                }
+            } catch (SAPIntegrationException e) {
+                errorMessages.add(e.getMessage());
+            }
+            productToPublish.setSavedInSAP(true);
+
+            productDao.persist(productToPublish);
+        }
+        if (CollectionUtils.isNotEmpty(productsToPublish)) {
+            throw new SAPIntegrationException(errorMessages);
+        }
     }
 }

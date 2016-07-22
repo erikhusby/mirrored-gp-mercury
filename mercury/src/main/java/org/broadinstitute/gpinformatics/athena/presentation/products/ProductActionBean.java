@@ -35,6 +35,7 @@ import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.Produ
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.AnalysisTypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
@@ -43,6 +44,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowD
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.broadinstitute.sap.services.SAPIntegrationException;
+import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletResponse;
@@ -74,6 +77,7 @@ public class ProductActionBean extends CoreActionBean {
     public static final String PRODUCT_STRING = "Product";
     public static final String CREATE_PRODUCT = CoreActionBean.CREATE + PRODUCT_STRING;
     private static final String EDIT_PRODUCT = CoreActionBean.EDIT + PRODUCT_STRING;
+    public static final String PUBLISH_TO_SAP = "publishToSap";
 
     public static final String PRODUCT_CREATE_PAGE = "/products/create.jsp";
     public static final String PRODUCT_LIST_PAGE = "/products/list.jsp";
@@ -109,6 +113,9 @@ public class ProductActionBean extends CoreActionBean {
 
     @Inject
     private AttributeArchetypeDao attributeArchetypeDao;
+
+    @Inject
+    private SapIntegrationService sapService;
 
     // Data needed for displaying the view.
     private List<ProductFamily> productFamilies;
@@ -176,7 +183,7 @@ public class ProductActionBean extends CoreActionBean {
         initProduct();
     }
 
-    @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION})
+    @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION, PUBLISH_TO_SAP})
     public void viewBindingAndValidation() {
         initProduct();
         initGenotypingInfo();
@@ -411,6 +418,26 @@ public class ProductActionBean extends CoreActionBean {
         productEjb.saveProduct(editProduct, addOnTokenInput, priceItemTokenInput, allLengthsMatch(),
                 criteria, operators, values, genotypingChipInfo);
         addMessage("Product \"" + editProduct.getProductName() + "\" has been saved");
+        if(editProduct.isSavedInSAP()) {
+            try {
+                sapService.changeProductInSAP(editProduct);
+            } catch (SAPIntegrationException e) {
+                addGlobalValidationError("Unable to update the product in SAP. " + e.getMessage());
+            }
+        }
+
+        return new RedirectResolution(ProductActionBean.class, VIEW_ACTION).addParameter(PRODUCT_PARAMETER,
+                editProduct.getPartNumber());
+    }
+
+    @HandlesEvent(PUBLISH_TO_SAP)
+    public Resolution publishToSap() {
+        try {
+            productEjb.publishProductToSAP(editProduct);
+        } catch (SAPIntegrationException e) {
+            addGlobalValidationError("Unable to update the product in SAP. " + e.getMessage());
+        }
+
         return new RedirectResolution(ProductActionBean.class, VIEW_ACTION).addParameter(PRODUCT_PARAMETER,
                 editProduct.getPartNumber());
     }
@@ -688,5 +715,9 @@ public class ProductActionBean extends CoreActionBean {
 
     public Map<String, SortedSet<String>> getAvailableChipTechnologyAndChipNames() {
         return availableChipTechnologyAndChipNames;
+    }
+
+    public String getPublishSAPAction() {
+        return PUBLISH_TO_SAP;
     }
 }

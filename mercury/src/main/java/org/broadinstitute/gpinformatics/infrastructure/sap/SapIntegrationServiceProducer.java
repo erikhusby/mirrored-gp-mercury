@@ -33,13 +33,13 @@ public class SapIntegrationServiceProducer {
     }
 
     public static SapIntegrationService stubInstance() {
-        return new SapIntegrationClientStub();
+        return new SapIntegrationServiceStub();
     }
 
     @Produces
     @Default
     @RequestScoped
-    public SapIntegrationService produce(@New SapIntegrationClientStub sapStub, @New SapIntegrationServiceImpl svc) {
+    public SapIntegrationService produce(@New SapIntegrationServiceStub sapStub, @New SapIntegrationServiceImpl svc) {
         System.out.println("In the produce method for SAP Integration Service Producer");
         if(deployment == Deployment.STUBBY) {
             return sapStub;

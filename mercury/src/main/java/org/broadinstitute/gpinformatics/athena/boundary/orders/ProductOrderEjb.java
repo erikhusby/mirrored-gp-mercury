@@ -36,6 +36,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.IssueFieldsRes
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BadBusinessKeyException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
@@ -222,20 +223,27 @@ public class ProductOrderEjb {
         } else {
             updateJiraIssue(editedProductOrder);
 
-            if (!editedProductOrder.isPending() && !editedProductOrder.isDraft()) {
-                try {
+            try {
+                boolean eligibleForSAP = isOrderEligibleForSAP(editedProductOrder);
+                if (eligibleForSAP && !editedProductOrder.isPending() && !editedProductOrder.isDraft()) {
                     if (StringUtils.isEmpty(editedProductOrder.getSapOrderNumber())) {
                         sapService.createOrder(editedProductOrder);
                     } else {
                         sapService.updateOrder(editedProductOrder);
                     }
-                } catch (org.broadinstitute.sap.services.SAPIntegrationException e) {
-                    e.printStackTrace();
                 }
+            } catch (org.broadinstitute.sap.services.SAPIntegrationException|QuoteServerException  e) {
+                messageCollection.addError(e.getMessage());
             }
         }
         attachMercurySamples(editedProductOrder.getSamples());
         productOrderDao.persist(editedProductOrder);
+    }
+
+    public boolean isOrderEligibleForSAP(ProductOrder editedProductOrder)
+            throws QuoteServerException, QuoteNotFoundException {
+        Quote orderQuote = quoteService.getQuoteByAlphaId(editedProductOrder.getQuoteId());
+        return orderQuote.isEligibleForSAP();
     }
 
     /**

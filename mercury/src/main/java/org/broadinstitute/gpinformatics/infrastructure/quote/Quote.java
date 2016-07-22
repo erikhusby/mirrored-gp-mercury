@@ -121,4 +121,8 @@ public class Quote {
     public int hashCode() {
         return alphanumericId != null ? alphanumericId.hashCode() : 0;
     }
+
+    public boolean isEligibleForSAP() {
+        return !(quoteFunding.getFundingLevel().size() >1);
+    }
 }

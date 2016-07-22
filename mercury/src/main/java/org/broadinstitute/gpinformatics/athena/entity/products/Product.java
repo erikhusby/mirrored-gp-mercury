@@ -165,6 +165,12 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     @JoinColumn(name = "POSITIVE_CONTROL_RP_ID")
     private ResearchProject positiveControlResearchProject;
 
+    @Column(name ="EXTERNAL_ONLY_PRODUCT")
+    private boolean externalOnlyProduct;
+
+    @Column(name = "SAVED_IN_SAP")
+    private boolean savedInSAP;
+
     /**
      * Default no-arg constructor, also used when creating a new Product.
      */
@@ -712,5 +718,22 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
 
     public void setExpectInitialQuantInMercury(Boolean expectInitialQuantInMercury) {
         this.expectInitialQuantInMercury = expectInitialQuantInMercury;
+    }
+
+
+    public boolean isExternalOnlyProduct() {
+        return externalOnlyProduct;
+    }
+
+    public void setExternalOnlyProduct(boolean externalOnlyProduct) {
+        this.externalOnlyProduct = externalOnlyProduct;
+    }
+
+    public boolean isSavedInSAP() {
+        return savedInSAP;
+    }
+
+    public void setSavedInSAP(boolean savedInSAP) {
+        this.savedInSAP = savedInSAP;
     }
 }

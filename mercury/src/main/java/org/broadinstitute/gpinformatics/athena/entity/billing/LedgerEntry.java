@@ -74,6 +74,9 @@ public class LedgerEntry implements Serializable {
     @Column(name = "QUOTE_SERVER_WORK_ITEM")
     private String workItem;
 
+    @Column(name = "SAP_DELIVERY_DOCUMENT_ID")
+    private String sapDeliveryDocumentId;
+
     /**
      * Package private constructor for JPA use.
      */
@@ -225,6 +228,14 @@ public class LedgerEntry implements Serializable {
 
     public void setWorkItem(String workItem) {
         this.workItem = workItem;
+    }
+
+    public String getSapDeliveryDocumentId() {
+        return sapDeliveryDocumentId;
+    }
+
+    public void setSapDeliveryDocumentId(String sapDeliveryDocumentId) {
+        this.sapDeliveryDocumentId = sapDeliveryDocumentId;
     }
 
     @Override

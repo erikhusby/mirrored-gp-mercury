@@ -250,6 +250,9 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         newMaterial.setDeliverables(product.getDeliverables());
         newMaterial.setInputRequirements(product.getInputRequirements());
         newMaterial.setBaseUnitOfMeasure("1");
+        BigDecimal minimumOrderQuantity = product.getMinimumOrderSize()!= null?new BigDecimal(product.getMinimumOrderSize()):BigDecimal.ONE;
+        newMaterial.setMinimumOrderQuantity(minimumOrderQuantity);
+
 
         wrappedClient.createMaterial(newMaterial);
     }
@@ -257,17 +260,23 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     @Override
     public void changeProductInSAP(Product product) throws SAPIntegrationException {
 
-        SAPMaterial newMaterial = new SAPMaterial(product.getPartNumber(),
+        SAPMaterial existingMaterial = new SAPMaterial(product.getPartNumber(),
                 SapIntegrationClientImpl.SystemIdentifier.MERCURY, product.getAvailabilityDate(),
                 product.getAvailabilityDate());
-        newMaterial.setCompanyCode(
+        existingMaterial.setCompanyCode(
                 product.isExternalProduct() ? SapIntegrationClientImpl.BROAD_EXTERNAL_SERVICES_COMPANY_CODE :
                         SapIntegrationClientImpl.BROAD_COMPANY_CODE);
-        newMaterial.setDescription(product.getProductName());
-        newMaterial.setDeliverables(product.getDeliverables());
-        newMaterial.setInputRequirements(product.getInputRequirements());
+        existingMaterial.setDescription(product.getProductName());
+        existingMaterial.setDeliverables(product.getDeliverables());
+        existingMaterial.setInputRequirements(product.getInputRequirements());
 
-        wrappedClient.createMaterial(newMaterial);
+        if(product.isAvailable()) {
+            existingMaterial.setStatus(SAPMaterial.MaterialStatus.ENABLED);
+        } else {
+            existingMaterial.setStatus(SAPMaterial.MaterialStatus.DISABLED);
+        }
+
+        wrappedClient.createMaterial(existingMaterial);
     }
 
     private String determineCompanyCode(ProductOrder companyProductOrder) {

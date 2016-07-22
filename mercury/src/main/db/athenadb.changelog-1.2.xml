@@ -330,4 +330,66 @@
             <column name="PRODUCT_ID" type="number(19,0)" />
         </addColumn>
     </changeSet>
+    <changeSet id="GPLIM-3614-5" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="BILLING_LEDGER" columnName="SAP_DELIVERY_DOCUMENT_ID" schemaName="ATHENA" />
+            </not>
+        </preConditions>
+        <addColumn tableName="BILLING_LEDGER">
+            <column name="SAP_DELIVERY_DOCUMENT_ID" type="varchar2(255)" />
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-3614-6" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="BILLING_LEDGER_AUD" columnName="SAP_DELIVERY_DOCUMENT_ID" schemaName="ATHENA" />
+            </not>
+        </preConditions>
+        <addColumn tableName="BILLING_LEDGER">
+            <column name="SAP_DELIVERY_DOCUMENT_ID_AUD" type="varchar2(255)" />
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-3614-7" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="PRODUCT" columnName="EXTERNAL_ONLY_PRODUCT" schemaName="ATHENA" />
+            </not>
+        </preConditions>
+        <addColumn tableName="PRODUCT" schemaName="ATHENA">
+            <column name="EXTERNAL_ONLY_PRODUCT" type="number(1)" />
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-3614-8" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="PRODUCT_AUD" columnName="EXTERNAL_ONLY_PRODUCT" schemaName="ATHENA" />
+            </not>
+        </preConditions>
+        <addColumn tableName="PRODUCT_AUD" schemaName="ATHENA">
+            <column name="EXTERNAL_ONLY_PRODUCT" type="number(1)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-3614-9" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="PRODUCT" columnName="SAVED_IN_SAP" schemaName="ATHENA" />
+            </not>
+        </preConditions>
+        <addColumn tableName="PRODUCT" schemaName="ATHENA">
+            <column name="SAVED_IN_SAP" type="number(1)" />
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-3614-10" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="PRODUCT_AUD" columnName="SAVED_IN_SAP" schemaName="ATHENA" />
+            </not>
+        </preConditions>
+        <addColumn tableName="PRODUCT_AUD" schemaName="ATHENA">
+            <column name="SAVED_IN_SAP" type="number(1)" />
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>

@@ -216,6 +216,17 @@
         </div>
 
         <div class="form-horizontal span5">
+
+            <c:if test="${not actionBean.editProduct.savedInSAP}">
+                <stripes:link beanclass="${actionBean.class.name}" event="${actionBean.publishSAPAction}"
+                              title="Click to Publish Product to SAP" class="pull-right">
+                    <stripes:param name="${actionBean.editBusinessKeyName}"
+                                   value="${actionBean.editProduct.businessKey}"/>
+                    <span class="icon-pencil"></span>
+                    "Publish Product to SAP"
+                </stripes:link>
+            </c:if>
+
             <fieldset>
                 <legend><h4>Pipeline Analysis</h4></legend>
 

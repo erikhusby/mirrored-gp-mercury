@@ -11,7 +11,7 @@ import javax.enterprise.inject.Alternative;
 
 @Stub
 @Alternative
-public class SapIntegrationClientStub implements SapIntegrationService {
+public class SapIntegrationServiceStub implements SapIntegrationService {
 
     @Override
     public String createOrder(ProductOrder placedOrder) throws SAPIntegrationException {
