@@ -3,7 +3,7 @@
              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
              xsi:schemaLocation="http://java.sun.com/xml/ns/persistence http://java.sun.com/xml/ns/persistence/persistence_2_0.xsd">
     <persistence-unit name="mercury_pu" transaction-type="JTA">
-        <provider>org.hibernate.ejb.HibernatePersistence</provider>
+        <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
         <jta-data-source>java:jboss/jdbc/mercury_pool</jta-data-source>
         <properties>
             <!--            <property name="hibernate.dialect" value="org.hibernate.dialect.PostgresPlusDialect"/> -->
@@ -14,29 +14,17 @@
             <property name="hibernate.id.new_generator_mappings" value="true"/>
             <!-- todo jmt this doesn't seem to work -->
             <property name="org.hibernate.flushMode" value="COMMIT" />
-            <property name="hibernate.connection.url" value="jdbc:oracle:thin:@//ora01:1521/seqprod"/>
-            <property name="hibernate.connection.driver_class" value="oracle.jdbc.OracleDriver"/>
-            <property name="hibernate.connection.username" value="metrics_reader"/>
-            <property name="hibernate.connection.password" value="metrics_reader"/>
         </properties>
     </persistence-unit>
 
     <persistence-unit name="metrics_pu" transaction-type="JTA">
-        <provider>org.hibernate.ejb.HibernatePersistence</provider>
+        <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
         <jta-data-source>java:jboss/jdbc/metrics_pool</jta-data-source>
 
         <properties>
             <property name="hibernate.dialect" value="org.hibernate.dialect.Oracle10gDialect"/>
             <property name="hibernate.ejb.naming_strategy" value="org.hibernate.cfg.ImprovedNamingStrategy" />
-            <property name="hibernate.connection.url" value="jdbc:oracle:thin:@//ora01:1521/seqprod"/>
-            <property name="hibernate.connection.driver_class" value="oracle.jdbc.OracleDriver"/>
-            <property name="hibernate.connection.username" value="metrics_reader"/>
-            <property name="hibernate.connection.password" value="metrics_reader"/>
             <property name="hibernate.archive.autodetection" value="class"/>
-            <!-- this is set to false by default in Glassfish, and true by default in JBoss, so set it explicitly -->
-            <!--<property name="hibernate.id.new_generator_mappings" value="true"/>-->
-            <!-- todo jmt this doesn't seem to work -->
-            <!--<property name="org.hibernate.flushMode" value="COMMIT" />-->
         </properties>
     </persistence-unit>
 
