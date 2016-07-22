@@ -240,7 +240,7 @@ public class ProductEjb {
                 attributeArchetypeDao.persist(new GenotypingChipMapping(mappingName, chipFamily, chipName, now));
             } else {
                 // Removed from the collection so it doesn't get inactivated.
-                currentMappings.remove(currentMapping);
+                currentMappings.remove(mappingName);
             }
         }
 
