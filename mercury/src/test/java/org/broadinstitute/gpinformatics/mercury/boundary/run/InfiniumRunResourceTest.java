@@ -50,7 +50,7 @@ public class InfiniumRunResourceTest extends RestServiceContainerTest {
         Assert.assertEquals(response1.getCollaboratorSampleId(), "TREDAP123");
         Assert.assertFalse(response1.isPositiveControl());
         Assert.assertFalse(response1.isNegativeControl());
-        Assert.assertTrue(response1.getResearchProjectId() == 26010L);
+        Assert.assertEquals(response1.getResearchProjectId(), Long.valueOf(26010L));
 
         // Test a control
         InfiniumRunBean response2 = resource.queryParam("chipWellBarcode", "3999582166_R05C01").
