@@ -1388,8 +1388,7 @@ public class LabVesselSearchDefinition {
         searchTerm = new SearchTerm();
         searchTerm.setName(MultiRefTerm.INFINIUM_PDO.getTermRefName());
         searchTerm.setHelpText(
-                "Infinium PDO term will only locate events associated with Infinium arrays (InfiniumAmplification for plates, or InfiniumXStain for chips). "
-                        + "Traversal option(s) should be selected if chain of custody events are desired.<br>"
+                "Infinium PDO term locates DNA array plate vessels associated with the PDO.  Use array drill-down option result columns to obtain details of Amp plates and chips.<br>"
                         + "Note: The Infinium PDO term is exclusive, no other terms can be selected.");
         searchTerm.setSearchValueConversionExpression(SearchDefinitionFactory.getPdoInputConverter());
         searchTerm.setAlternateSearchDefinition(ARRAYS_ALT_SRCH_DEFINITION);
