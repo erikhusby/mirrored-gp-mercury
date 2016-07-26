@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.run;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
@@ -115,10 +116,25 @@ public class InfiniumRunResource {
             SampleInstanceV2 sampleInstanceV2 = sampleInstancesAtPositionV2.iterator().next();
             SampleData sampleData = sampleDataFetcher.fetchSampleData(
                     sampleInstanceV2.getRootOrEarliestMercurySampleName());
-            Set<GenotypingChip> chipTypes = findChipTypes(productOrderSampleDao.findBySamples(
-                    Collections.singletonList(sampleInstanceV2.getRootOrEarliestMercurySampleName())), effectiveDate);
+            List<ProductOrderSample> productOrderSamples = productOrderSampleDao.findBySamples(
+                    Collections.singletonList(sampleInstanceV2.getRootOrEarliestMercurySampleName()));
+            Set <GenotypingChip> chipTypes = findChipTypes(productOrderSamples, effectiveDate);
+            Set<Long> researchProjectIds = findResearchProjectIds(productOrderSamples);
+
+            boolean positiveControl = false;
+            boolean negativeControl = false;
+            Control processControl = null;
             if (chipTypes.isEmpty()) {
-                chipTypes = evaluateAsControl(chip, sampleData, effectiveDate);
+                Pair<Control, Set<GenotypingChip>> pair = evaluateAsControl(chip, sampleData, effectiveDate);
+                chipTypes = pair.getRight();
+                processControl = pair.getLeft();
+                if (processControl != null) {
+                    if (processControl.getType() == Control.ControlType.POSITIVE) {
+                        positiveControl = true;
+                    } else if (processControl.getType() == Control.ControlType.NEGATIVE) {
+                        negativeControl = true;
+                    }
+                }
             }
             if (chipTypes.isEmpty()) {
                 throw new ResourceException("Found no chip types for " + chip.getLabel() + " on " + effectiveDate,
@@ -127,6 +143,18 @@ public class InfiniumRunResource {
             if (chipTypes.size() != 1) {
                 throw new ResourceException("Found mix of chip types for " + chip.getLabel() + " on " + effectiveDate,
                         Response.Status.INTERNAL_SERVER_ERROR);
+            }
+
+            // Controls have a null research project id.
+            Long researchProjectId = null;
+            if (processControl == null) {
+                if (researchProjectIds.isEmpty()) {
+                    throw new ResourceException("Found no research projects", Response.Status.INTERNAL_SERVER_ERROR);
+                }
+                if (researchProjectIds.size() != 1) {
+                    throw new ResourceException("Found mix of research projects " + researchProjectIds, Response.Status.INTERNAL_SERVER_ERROR);
+                }
+                researchProjectId = researchProjectIds.iterator().next();
             }
 
             String idatPrefix = DATA_PATH + "/" + chip.getLabel() + "_" + vesselPosition.name();
@@ -145,7 +173,11 @@ public class InfiniumRunResource {
                     chipAttributes.get("zcall_threshold_unix"),
                     sampleData.getCollaboratorsSampleName(),
                     sampleData.getSampleLsid(),
-                    sampleData.getGender());
+                    sampleData.getGender(),
+                    sampleData.getPatientId(),
+                    researchProjectId,
+                    positiveControl,
+                    negativeControl);
         } else {
             throw new RuntimeException("Expected 1 sample, found " + sampleInstancesAtPositionV2.size());
         }
@@ -156,9 +188,10 @@ public class InfiniumRunResource {
      * No connection to a product was found for a specific sample, so determine if it's a control, then try to
      * get chip type from all samples.
      */
-    private Set<GenotypingChip> evaluateAsControl(LabVessel chip, SampleData sampleData, Date effectiveDate) {
+    private Pair<Control, Set<GenotypingChip>> evaluateAsControl(LabVessel chip, SampleData sampleData, Date effectiveDate) {
         Set<GenotypingChip> chipTypes = Collections.emptySet();
         List<Control> controls = controlDao.findAllActive();
+        Control processControl = null;
         for (Control control : controls) {
             if (control.getCollaboratorParticipantId().equals(sampleData.getCollaboratorParticipantId())) {
                 List<String> sampleNames = new ArrayList<>();
@@ -166,10 +199,11 @@ public class InfiniumRunResource {
                      sampleNames.add(sampleInstanceV2.getRootOrEarliestMercurySampleName());
                 }
                 chipTypes = findChipTypes(productOrderSampleDao.findBySamples(sampleNames), effectiveDate);
+                processControl = control;
                 break;
             }
         }
-        return chipTypes;
+        return Pair.of(processControl, chipTypes);
     }
 
     private Set<GenotypingChip> findChipTypes(List<ProductOrderSample> productOrderSamples, Date effectiveDate) {
@@ -189,5 +223,17 @@ public class InfiniumRunResource {
             }
         }
         return chips;
+    }
+
+    private Set<Long> findResearchProjectIds(List<ProductOrderSample> productOrderSamples) {
+        Set<Long> researchProjectIds = new HashSet<>();
+        for (ProductOrderSample productOrderSample : productOrderSamples) {
+            Long researchProjectId =
+                    productOrderSample.getProductOrder().getResearchProject().getResearchProjectId();
+            if (researchProjectId != null) {
+                researchProjectIds.add(researchProjectId);
+            }
+        }
+        return researchProjectIds;
     }
 }

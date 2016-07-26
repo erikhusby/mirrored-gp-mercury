@@ -21,6 +21,10 @@ public class InfiniumRunBean {
     private String collaboratorSampleId;
     private String sampleLsid;
     private String gender;
+    private String participantId;
+    private Long researchProjectId;
+    private boolean positiveControl;
+    private boolean negativeControl;
     // todo jmt this or something more REST-like?
     private String error;
 
@@ -29,8 +33,9 @@ public class InfiniumRunBean {
     }
 
     public InfiniumRunBean(String redIDatPath, String greenIDatPath, String chipManifestPath,
-            String beadPoolManifestPath, String clusterFilePath, String zCallThresholdsPath,
-            String collaboratorSampleId, String sampleLsid, String gender) {
+                           String beadPoolManifestPath, String clusterFilePath, String zCallThresholdsPath,
+                           String collaboratorSampleId, String sampleLsid, String gender, String participantId,
+                           Long researchProjectId, boolean positiveControl, boolean negativeControl) {
         this.redIDatPath = redIDatPath;
         this.greenIDatPath = greenIDatPath;
         this.chipManifestPath = chipManifestPath;
@@ -40,6 +45,10 @@ public class InfiniumRunBean {
         this.collaboratorSampleId = collaboratorSampleId;
         this.sampleLsid = sampleLsid;
         this.gender = gender;
+        this.participantId = participantId;
+        this.researchProjectId = researchProjectId;
+        this.positiveControl = positiveControl;
+        this.negativeControl = negativeControl;
     }
 
     public String getRedIDatPath() {
@@ -76,5 +85,21 @@ public class InfiniumRunBean {
 
     public String getGender() {
         return gender;
+    }
+
+    public String getParticipantId() {
+        return participantId;
+    }
+
+    public Long getResearchProjectId() {
+        return researchProjectId;
+    }
+
+    public Boolean isPositiveControl() {
+        return positiveControl;
+    }
+
+    public Boolean isNegativeControl() {
+        return negativeControl;
     }
 }
