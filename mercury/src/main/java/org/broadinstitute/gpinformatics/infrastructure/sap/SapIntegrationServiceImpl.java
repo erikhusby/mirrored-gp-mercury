@@ -2,14 +2,12 @@ package org.broadinstitute.gpinformatics.infrastructure.sap;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
-import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
+import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
@@ -26,12 +24,7 @@ import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 
 import javax.inject.Inject;
-import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
 @Impl
 public class SapIntegrationServiceImpl implements SapIntegrationService {
@@ -152,7 +145,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         } else {
 
             Funding funding = foundQuote.getQuoteFunding().getFundingLevel().iterator().next().getFunding();
-            if (funding.getFundingType().equals("Purchase Order")) {
+            if (funding.getFundingType().equals(Funding.PURCHASE_ORDER)) {
                 /*
                     TODO SGM:  This call will return more than just the customer number in terms of the error conditions.
                     Must account for the potential errors in this call to pass back to the user
@@ -195,47 +188,20 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     }
 
     @Override
-    public String billOrder(BillingSession sessionForBilling) throws SAPIntegrationException {
+    public String billOrder(QuoteImportItem quoteItemForBilling) throws SAPIntegrationException {
 
-        Map<ProductOrder, Set<LedgerEntry>> entriesByProductOrder = new HashMap<>();
+        SAPDeliveryDocument deliveryDocument =
+                new SAPDeliveryDocument(SapIntegrationClientImpl.SystemIdentifier.MERCURY,
+                        determineCompanyCode(quoteItemForBilling.getProductOrder()),
+                        quoteItemForBilling.getProductOrder().getSapOrderNumber());
 
-        // TODO only take ledger entries associated with quotes that can be billed to SAP
-        for (LedgerEntry currentEntry : sessionForBilling.getLedgerEntryItems()) {
-            if (!entriesByProductOrder.containsKey(currentEntry.getProductOrderSample().getProductOrder())) {
-                entriesByProductOrder
-                        .put(currentEntry.getProductOrderSample().getProductOrder(), new HashSet<LedgerEntry>());
-            }
-            entriesByProductOrder.get(currentEntry.getProductOrderSample().getProductOrder()).add(currentEntry);
-        }
+        SAPDeliveryItem lineItem =
+                new SAPDeliveryItem(quoteItemForBilling.getProduct().getPartNumber(),
+                        new BigDecimal(quoteItemForBilling.getQuantityForSAP()));
+        deliveryDocument.addDeliveryItem(lineItem);
 
-        for (Map.Entry<ProductOrder, Set<LedgerEntry>> ledgersetByPDO : entriesByProductOrder.entrySet()) {
-            Map<Product, BigDecimal> sampleCountByProduct = new HashMap<>();
 
-            for (LedgerEntry currentEntry : ledgersetByPDO.getValue()) {
-                if (!sampleCountByProduct.containsKey(currentEntry.getProduct())) {
-                    sampleCountByProduct.put(currentEntry.getProduct(), new BigDecimal(0));
-                }
-                BigDecimal oldValue = sampleCountByProduct.get(currentEntry.getProduct());
-                sampleCountByProduct
-                        .put(currentEntry.getProduct(), oldValue.add(new BigDecimal(currentEntry.getQuantity())));
-            }
-
-            SAPDeliveryDocument deliveryDocument =
-                    new SAPDeliveryDocument(SapIntegrationClientImpl.SystemIdentifier.MERCURY,
-                            determineCompanyCode(ledgersetByPDO.getKey()),
-                            ledgersetByPDO.getKey().getSapOrderNumber());
-
-            for (Map.Entry<Product, BigDecimal> quantityToMaterial : sampleCountByProduct.entrySet()) {
-                SAPDeliveryItem lineItem =
-                        new SAPDeliveryItem(quantityToMaterial.getKey().getPartNumber(), quantityToMaterial.getValue());
-                deliveryDocument.addDeliveryItem(lineItem);
-            }
-
-            wrappedClient.createDeliveryDocument(deliveryDocument);
-
-        }
-
-        return null;
+        return wrappedClient.createDeliveryDocument(deliveryDocument);
     }
 
     @Override

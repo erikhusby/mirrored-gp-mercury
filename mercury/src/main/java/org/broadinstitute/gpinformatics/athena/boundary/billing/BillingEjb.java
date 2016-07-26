@@ -48,6 +48,7 @@ public class BillingEjb {
         private String workId;
 
         private String errorMessage;
+        private String SAPBillingId;
 
         public BillingResult(@Nonnull QuoteImportItem quoteImportItem) {
             this.quoteImportItem = quoteImportItem;
@@ -75,6 +76,14 @@ public class BillingEjb {
 
         public boolean isError() {
             return errorMessage != null;
+        }
+
+        public void setSAPBillingId(String SAPBillingId) {
+            this.SAPBillingId = SAPBillingId;
+        }
+
+        public String getSAPBillingId() {
+            return SAPBillingId;
         }
     }
 
@@ -143,19 +152,21 @@ public class BillingEjb {
      * @param item                Representation of the quote and its ledger entries that are to be billed
      * @param quoteIsReplacing    Set if the price item is replacing a previously defined item.
      * @param quoteServerWorkItem the pointer back to the quote server transaction
+     * @param sapDeliveryId
      */
-    public void updateLedgerEntries(QuoteImportItem item, QuotePriceItem quoteIsReplacing, String quoteServerWorkItem) {
+    public void updateLedgerEntries(QuoteImportItem item, QuotePriceItem quoteIsReplacing, String quoteServerWorkItem,
+                                    String sapDeliveryId) {
 
         // Now that we have successfully billed, update the Ledger Entries associated with this QuoteImportItem
         // with the quote for the QuoteImportItem, add the priceItemType, and the success message.
         Collection<String> replacementPriceItemNames = new ArrayList<>();
         Collection<QuotePriceItem> replacementPriceItems =
-                priceListCache.getReplacementPriceItems(item.getProduct().getPrimaryPriceItem());
+                priceListCache.getReplacementPriceItems(item.getPrimaryProduct().getPrimaryPriceItem());
         for (QuotePriceItem replacementPriceItem : replacementPriceItems) {
             replacementPriceItemNames.add(replacementPriceItem.getName());
         }
         item.updateLedgerEntries(quoteIsReplacing, BillingSession.SUCCESS, quoteServerWorkItem,
-                replacementPriceItemNames);
+                replacementPriceItemNames, sapDeliveryId);
         billingSessionDao.flush();
     }
 

@@ -428,11 +428,13 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         LedgerEntry ledgerEntry2 = new LedgerEntry(new ProductOrderSample("SM-5678"), priceItem, new Date(),
                 product, 5);
         List<LedgerEntry> ledgerItems = Arrays.asList(ledgerEntry1, ledgerEntry2);
+        ProductOrder productOrder = new ProductOrder();
         QuoteImportItem quoteImportItem =
-                new QuoteImportItem("QUOTE-1", priceItem, "priceType", ledgerItems, new Date());
+                new QuoteImportItem("QUOTE-1", priceItem, "priceType", ledgerItems, new Date(), product, productOrder);
         QuotePriceItem quotePriceItem = new QuotePriceItem();
 
-        adaptor.logBilling("1243", quoteImportItem, quotePriceItem, new HashSet<>(Arrays.asList("PDO-1", "PDO-2")));
+        adaptor.logBilling("1243", quoteImportItem, quotePriceItem, new HashSet<>(Arrays.asList("PDO-1", "PDO-2")),
+                "SAP123");
         Assert.assertEquals(testLogHandler.getLogs().size(), 1);
         Assert.assertEquals(TestUtils.getFirst(testLogHandler.getLogs()).getLevel(), Level.INFO);
     }

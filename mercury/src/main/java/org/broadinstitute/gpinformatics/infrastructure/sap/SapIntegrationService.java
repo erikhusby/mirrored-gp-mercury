@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.sap;
 
+import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -19,7 +20,7 @@ public interface SapIntegrationService {
 
     String findCustomer(Quote foundQuote, String companyCode) throws SAPIntegrationException;
 
-    String billOrder(BillingSession sessionForBilling) throws SAPIntegrationException;
+    String billOrder(QuoteImportItem item) throws SAPIntegrationException;
 
     void createProductInSAP(Product product) throws SAPIntegrationException;
 

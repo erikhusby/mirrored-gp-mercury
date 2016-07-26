@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.sap;
 
+import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -29,7 +30,7 @@ public class SapIntegrationServiceStub implements SapIntegrationService {
     }
 
     @Override
-    public String billOrder(BillingSession sessionForBilling) throws SAPIntegrationException {
+    public String billOrder(QuoteImportItem item) throws SAPIntegrationException {
         return null;
     }
 

@@ -683,7 +683,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     }
 
     public boolean isExternalProduct() {
-        return getPartNumber().startsWith("XT");
+        return getPartNumber().startsWith("XT") || isExternalOnlyProduct();
     }
 
     @Transient
@@ -721,7 +721,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     }
 
 
-    public boolean isExternalOnlyProduct() {
+    private boolean isExternalOnlyProduct() {
         return externalOnlyProduct;
     }
 

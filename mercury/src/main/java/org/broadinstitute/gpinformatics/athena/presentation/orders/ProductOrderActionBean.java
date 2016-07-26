@@ -639,7 +639,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         String quoteId = editOrder.getQuoteId();
         Quote quote = validateQuoteId(quoteId);
-//        validateQuoteDetails(quote, ErrorLevel.ERROR);
+        validateQuoteDetails(quote, ErrorLevel.ERROR);
 
         if (editOrder != null) {
             validateRinScores(editOrder);
@@ -1296,7 +1296,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         addMessage("Product Order \"{0}\" has been saved.", editOrder.getTitle());
         // Temporarily adding the quote validation when the order is saved to give the user a warning of upcoming
         // new restrictions
-        validateQuoteDetails(editOrder.getQuoteId(), ErrorLevel.WARNING);
+//        validateQuoteDetails(editOrder.getQuoteId(), ErrorLevel.WARNING);
         return createViewResolution(editOrder.getBusinessKey());
     }
 
