@@ -10,6 +10,7 @@ $(document).ready(function () {
 
     jsPlumb.ready(function () {
 
+        //Initial jsPlumb setup of line types and endpoints.
         var arrowCommon = {foldback: 0.7, fillStyle: "blue", width: 14},
             overlays = [
                 ["Arrow", {location: 0.8}, arrowCommon]
@@ -30,8 +31,8 @@ $(document).ready(function () {
         });
 
         var endpointOptions = {isSource: true};
-
         var colorSpace;
+
         $('#PreviewButton').click(function ()
         {preview(false)});
 
@@ -301,6 +302,7 @@ $(document).ready(function () {
         }
     });
 
+    //Handle select all from source.
     $('#selectAllsrc').click(function () {
         for (i = 0; i < 97; i++) {
             text = "srcRcpBcd0_" + i.toString();
@@ -309,6 +311,7 @@ $(document).ready(function () {
         sourceIDs.splice($.inArray('selectAllsrc', sourceIDs), 1);
     });
 
+    //Handle select all from destination.
     $('#selectAlldest').click(function () {
         for (i = 0; i < 97; i++) {
             text = "destRcpBcd0_" + i.toString();
@@ -317,6 +320,7 @@ $(document).ready(function () {
         targetIDs.splice($.inArray('selectAlldest', targetIDs), 1);
     });
 
+    //Edit checking. This handles disabling select keys on empty fields.
     $(':text').keyup(function () {
         var $item_text = $(this).closest("td").find(":input[type='text']").attr('id');
         var $item = $(this).closest("td").find(".btn-primary ").attr('id');
