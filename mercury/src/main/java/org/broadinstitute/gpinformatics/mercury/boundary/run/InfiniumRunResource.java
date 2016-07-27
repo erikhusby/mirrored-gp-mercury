@@ -157,7 +157,7 @@ public class InfiniumRunResource {
                 researchProjectId = researchProjectIds.iterator().next();
             }
 
-            String idatPrefix = DATA_PATH + "/" + chip.getLabel() + "_" + vesselPosition.name();
+            String idatPrefix = DATA_PATH + "/" + chip.getLabel() + "/" + chip.getLabel() + "_" + vesselPosition.name();
             GenotypingChip chipType = chipTypes.iterator().next();
             Map<String, String> chipAttributes = chipType.getAttributeMap();
             if (chipType == null || chipAttributes.size() == 0) {
