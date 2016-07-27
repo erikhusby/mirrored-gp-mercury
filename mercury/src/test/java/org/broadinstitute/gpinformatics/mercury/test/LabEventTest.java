@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.athena.presentation.products.WorkflowDiagrammer;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSetVolumeConcentration;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSetVolumeConcentrationProducer;
@@ -388,7 +389,6 @@ public class LabEventTest extends BaseEventTest {
         Assert.assertEquals(graph.getMapIdToVertex().size(), 3276, "Wrong number of vertices");
 //        Controller.stopCPURecording();
     }
-
 
     /**
      * Build object graph for Exome Express messages, verify chain of events.
@@ -1104,7 +1104,7 @@ public class LabEventTest extends BaseEventTest {
 //        Controller.startCPURecording(true);
         expectedRouting = SystemRouter.System.MERCURY;
 
-        // Use Standard Exome product, to verify that workflow is taken from LCSet, not Product
+       // Use Standard Exome product, to verify that workflow is taken from LCSet, not Product
         ProductOrder productOrder = ProductOrderTestFactory.buildHybridSelectionProductOrder(NUM_POSITIONS_IN_RACK - 2,
                                                                                              "A");
         Date runDate = new Date();
@@ -1161,7 +1161,7 @@ public class LabEventTest extends BaseEventTest {
                         Workflow.ICE_EXOME_EXPRESS);
 
         IlluminaFlowcell illuminaFlowcell = hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell();
-        runTransferVisualizer(illuminaFlowcell);
+        runTransferVisualizer(denatureSource);
         Set<SampleInstanceV2> lane1SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPositionV2(
                 VesselPosition.LANE1);
         Assert.assertEquals(lane1SampleInstances.iterator().next().getReagents().size(), 3,

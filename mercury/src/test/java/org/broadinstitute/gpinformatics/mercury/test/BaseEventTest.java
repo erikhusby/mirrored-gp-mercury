@@ -866,7 +866,7 @@ public class BaseEventTest {
      */
     public static void runTransferVisualizer(LabVessel labVessel) {
         // Disabled by default, because it would block Bamboo tests.
-        if (false) {
+        if (true) {
             try {
                 TransferVisualizerV2 transferVisualizerV2 = new TransferVisualizerV2();
                 File xfrVis = File.createTempFile("XfrVis", ".json");
