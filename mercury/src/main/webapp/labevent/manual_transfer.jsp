@@ -33,10 +33,7 @@
                 font-size: 12px;
             }
         </style>
-        <%--<input type="button" value="Capacity Chart" id="MyButtonAll" >--%>
-        <%--
-                    <script src="${ctxpath}/resources/scripts/jquery-1.10.1.min.js"></script>
-                    <script src="${ctxpath}/resources/scripts/jquery-ui-1.9.2.custom.min.js"></script> --%>
+
             <script src="${ctxpath}/resources/scripts/jsPlumb-2.1.4.js"></script>
             <script type="text/javascript" src="${ctxpath}/resources/scripts/CherryPick.js"></script>
             <script src="${ctxpath}/resources/scripts/jquery.validate-1.14.0.min.js"></script>
@@ -157,8 +154,6 @@
                                     <c:set var="section" value="${actionBean.manualTransferDetails.sourceSection}" scope="request"/>
                                     <c:set var="source" value="${true}" scope="request"/>
                                     <c:set var="tableName" value="sourceTable" scope="request"/>
-                                    <%--&lt;%&ndash;<jsp:include page="transfer_plate.jsp"/>&ndash;%&gt;--%>
-
                                     <c:set var="transferType" value="${actionBean.stationEvents[stationEventStatus.index].eventType}"/>
 
                                     <c:choose>
