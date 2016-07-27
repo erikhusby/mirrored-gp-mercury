@@ -22,7 +22,7 @@ import java.util.Set;
  * A flattened structure of information needed to import an item into the quote server.
  */
 public class QuoteImportItem {
-    private static final String PDO_QUANTITY_FORMAT = "###,###,###.##";
+    public static final String PDO_QUANTITY_FORMAT = "###,###,###.##";
     private final String quoteId;
     private final PriceItem priceItem;
     private String quotePriceType;

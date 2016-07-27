@@ -73,7 +73,7 @@ public class SapIntegrationClientTest extends Arquillian {
         FundingLevel test3PurchaseOrderFundingLevel = new FundingLevel("50",test3POFundingDefined);
 
         Funding test3PO2FundingDefined = new Funding(Funding.PURCHASE_ORDER, null, null);
-        test3POFundingDefined.setPurchaseOrderContact("Second"+testUser);
+        test3PO2FundingDefined.setPurchaseOrderContact("Second"+testUser);
         FundingLevel test3PO2FundingLevel = new FundingLevel("50", test3PO2FundingDefined);
         QuoteFunding test3Funding = new QuoteFunding(Arrays.asList(new FundingLevel[]{test3PurchaseOrderFundingLevel,test3PO2FundingLevel}));
         Quote testMultipleLevelQuote = new Quote("GPTest", test3Funding, ApprovalStatus.FUNDED);
@@ -84,14 +84,14 @@ public class SapIntegrationClientTest extends Arquillian {
             String badUserNumber = sapIntegrationClient.findCustomer(testBadContactQuote , SapIntegrationClientImpl.BROAD_COMPANY_CODE);
             Assert.fail("This should have thrown a system error");
         } catch (SAPIntegrationException e) {
-            Assert.assertEquals(e.getMessage(), SapIntegrationClientImpl.MISSING_CUSTOMER_RESULT);
+            Assert.assertTrue(e.getMessage().contains("the email address specified on the Quote or Mercury PDO is not attached to any SAP Customer account."));
         }
 
         try {
             String badQuote = sapIntegrationClient.findCustomer(testMultipleLevelQuote, SapIntegrationClientImpl.BROAD_COMPANY_CODE);
             Assert.fail("Should not have been able to find a customer with multiple funding levels");
         } catch (SAPIntegrationException e) {
-            Assert.assertEquals(e.getMessage(), "Unable to continue with SAP.  The associated quote has multiple funding sources");
+            Assert.assertEquals(e.getMessage(),"Unable to continue with SAP.  The associated quote has multiple funding sources");
         }
 
         try {

@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -51,19 +52,18 @@ public class QuoteImportItemTest {
 
     ProductOrder pdo3;
 
-    List<QuoteImportItem> quoteImportItems = new ArrayList<>();
+    QuoteImportItem quoteImportItem;
 
     @BeforeMethod
     private void setUp() {
         pdo1 = createProductOrderWithLedgerEntry(PDO1,2,PDO1_AMOUNT_PER_LEDGER_ITEM,WORK_ITEM1);
+        updateProductOrderWithLedgerEntry(pdo1, 1, PDO2_AMOUNT_PER_LEDGER_ITEM, WORK_ITEM2, pdo1.getProduct().getPrimaryPriceItem());
+        updateProductOrderWithLedgerEntry(pdo1, 1, PDO3_AMOUNT_PER_LEDGER_ITEM, WORK_ITEM3, pdo1.getProduct().getPrimaryPriceItem());
         pdo2 = createProductOrderWithLedgerEntry(PDO2,1,PDO2_AMOUNT_PER_LEDGER_ITEM,WORK_ITEM2);
         pdo3 = createProductOrderWithLedgerEntry(PDO3,1,PDO3_AMOUNT_PER_LEDGER_ITEM,WORK_ITEM3);
-        quoteImportItems.add(new QuoteImportItem("Blah",new PriceItem(),"blah",getAllLedgerItems(pdo1),new Date(),
-                pdo1.getProduct(), pdo1));
-        quoteImportItems.add(new QuoteImportItem("Blah",new PriceItem(),"blah",getAllLedgerItems(pdo2),new Date(),
-                pdo2.getProduct(), pdo2));
-        quoteImportItems.add(new QuoteImportItem("Blah",new PriceItem(),"blah",getAllLedgerItems(pdo3),new Date(),
-                pdo3.getProduct(), pdo3));
+
+        quoteImportItem = new QuoteImportItem("Blah",new PriceItem(),"blah",getAllLedgerItems(pdo1),new Date(),
+                pdo1.getProduct(), pdo1);
     }
 
     private ProductOrder createProductOrderWithLedgerEntry(String pdoJiraKey, int numSamples,
@@ -74,15 +74,20 @@ public class QuoteImportItemTest {
         product.setPrimaryPriceItem(priceItem);
         pdo.setProduct(product);
         pdo.setJiraTicketKey(pdoJiraKey);
+        updateProductOrderWithLedgerEntry(pdo, numSamples, amountPerLedgerEntry, workItem, priceItem);
+        return pdo;
+    }
 
+    private void updateProductOrderWithLedgerEntry(ProductOrder pdo, int numSamples, double amountPerLedgerEntry,
+                                                   String workItem, PriceItem priceItem) {
         for (int i = 0; i < numSamples; i++) {
-            ProductOrderSample sample = new ProductOrderSample("sam" + System.currentTimeMillis() + "." + i);
+            ProductOrderSample sample = new ProductOrderSample("sam" + System.currentTimeMillis() + "." + i + pdo.getSamples().size());
             pdo.addSample(sample);
             LedgerEntry ledgerEntry = new LedgerEntry(sample, priceItem,new Date(), pdo.getProduct(),amountPerLedgerEntry);
             ledgerEntry.setWorkItem(workItem);
             sample.getLedgerItems().add(ledgerEntry);
         }
-        return pdo;
+
     }
 
     private List<LedgerEntry> getAllLedgerItems(ProductOrder... pdos) {
@@ -97,47 +102,45 @@ public class QuoteImportItemTest {
 
     public void testGetNumberOfSamples() {
         String errorText = "Billing session UI is probably not showing the right number of samples in the billing transaction";
-        assertThat(errorText, quoteImportItems.get(0).getNumberOfSamples(PDO1), is(pdo1.getSamples().size()));
-        assertThat(errorText,quoteImportItems.get(1).getNumberOfSamples(PDO2), is(pdo2.getSamples().size()));
+        assertThat(errorText, quoteImportItem.getNumberOfSamples(PDO1), is(pdo1.getSamples().size()));
+//        assertThat(errorText,quoteImportItems.get(1).getNumberOfSamples(PDO2), is(pdo2.getSamples().size()));
     }
 
     public void testGetWorkItems() {
         assertThat("Billing session UI is probably not showing the right work item links to the quote server.",
-                quoteImportItems.get(0).getWorkItems(),containsInAnyOrder(WORK_ITEM1));
-        assertThat("Billing session UI is probably not showing the right work item links to the quote server.",
-                quoteImportItems.get(1).getWorkItems(),containsInAnyOrder(WORK_ITEM2));
-        assertThat("Billing session UI is probably not showing the right work item links to the quote server.",
-                quoteImportItems.get(2).getWorkItems(),containsInAnyOrder(WORK_ITEM3));
+                quoteImportItem.getWorkItems(),containsInAnyOrder(WORK_ITEM1,WORK_ITEM2,WORK_ITEM3));
     }
 
     public void testGetPdoBusinessKeys() {
-        assertThat("Billing session UI is probably not displaying the right PDOs.",quoteImportItems.get(0).getOrderKeys(),containsInAnyOrder(
+        assertThat("Billing session UI is probably not displaying the right PDOs.",quoteImportItem.getOrderKeys(),containsInAnyOrder(
                 PDO1));
-        assertThat("Billing session UI is probably not displaying the right PDOs.",quoteImportItems.get(1).getOrderKeys(),containsInAnyOrder(
-                PDO2));
-        assertThat("Billing session UI is probably not displaying the right PDOs.",quoteImportItems.get(2).getOrderKeys(),containsInAnyOrder(
-                PDO3));
+//        assertThat("Billing session UI is probably not displaying the right PDOs.",quoteImportItems.get(1).getOrderKeys(),containsInAnyOrder(
+//                PDO2));
+//        assertThat("Billing session UI is probably not displaying the right PDOs.",quoteImportItems.get(2).getOrderKeys(),containsInAnyOrder(
+//                PDO3));
     }
 
     public void testGetChargedAmountForPdo() {
-        assertThat("Per-PDO rollup of quantity is broken.",quoteImportItems.get(0).getChargedAmountForPdo(PDO1), is(Double.toString(pdo1.getSamples().size() * PDO1_AMOUNT_PER_LEDGER_ITEM)));
-        assertThat("Rounding/formatting of per-PDO quantity seems to have changed.",quoteImportItems.get(1).getChargedAmountForPdo(PDO2), is(Double.toString(PDO2_ROUNDED_AMOUNT_PER_LEDGER_ITEM)));
+        assertThat("Per-PDO rollup of quantity is broken.",quoteImportItem.getChargedAmountForPdo(PDO1),
+                is(
+                        new DecimalFormat(QuoteImportItem.PDO_QUANTITY_FORMAT).format((2 * PDO1_AMOUNT_PER_LEDGER_ITEM) + (1 * PDO2_AMOUNT_PER_LEDGER_ITEM) + (1 * PDO3_AMOUNT_PER_LEDGER_ITEM))));
+//        assertThat("Rounding/formatting of per-PDO quantity seems to have changed.",quoteImportItems.get(1).getChargedAmountForPdo(PDO2), is(Double.toString(PDO2_ROUNDED_AMOUNT_PER_LEDGER_ITEM)));
     }
 
     public void testGetRoundedQuantity() {
-        double totalQuantity = quoteImportItems.get(0).getQuantity();
-        assertThat("Total precision is not high enough for this test.",Double.toString(totalQuantity).length(),greaterThan(3));
-        assertThat("Rounding/formatting of quantity seems to have changed.",quoteImportItems.get(0).getRoundedQuantity().length(), lessThan(
+        double totalQuantity = quoteImportItem.getQuantity();
+        assertThat("Total precision is not high enough for this test.",Double.toString(totalQuantity).length(),greaterThan(7));
+        assertThat("Rounding/formatting of quantity seems to have changed.",quoteImportItem.getRoundedQuantity().length(), lessThan(
                 5));
     }
 
     /*
     Revisit how to test this
      */
-    @Test(enabled = false)
+    @Test()
     public void testSingleWorkItemReturnsNullWhenThereAreMultipleWorkItems() {
         try {
-            assertThat(quoteImportItems.get(0).getSingleWorkItem(),is(nullValue()));
+            assertThat(quoteImportItem.getSingleWorkItem(),is(nullValue()));
         }
         catch(RuntimeException ignored) {}
     }

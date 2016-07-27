@@ -49,24 +49,33 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     }
 
     public SapIntegrationServiceImpl(SapConfig sapConfigIn) {
-        initializeClient(sapConfigIn);
+        if(sapConfig == null) {
+            this.sapConfig = sapConfigIn;
+        }
     }
 
-    private void initializeClient(SapConfig sapConfigIn) {
+    private SapIntegrationClientImpl initializeClient() {
 
-        SapIntegrationClientImpl.SAPEnvironment environment;
+        SapIntegrationClientImpl tempClient = wrappedClient;
 
-        switch (sapConfigIn.getDeploymentConfig()) {
-        case PROD:
-            environment = SapIntegrationClientImpl.SAPEnvironment.PRODUCTION;
-            break;
-        default:
-            environment = SapIntegrationClientImpl.SAPEnvironment.QA;
-            break;
+        if (tempClient == null) {
+            SapIntegrationClientImpl.SAPEnvironment environment;
+
+            switch (sapConfig.getDeploymentConfig()) {
+            case PROD:
+                environment = SapIntegrationClientImpl.SAPEnvironment.PRODUCTION;
+                break;
+            default:
+                environment = SapIntegrationClientImpl.SAPEnvironment.QA;
+                break;
+            }
+
+            tempClient = new SapIntegrationClientImpl(sapConfig.getLogin(), sapConfig.getPassword(),
+                    environment);
+            wrappedClient = tempClient;
         }
 
-        wrappedClient = new SapIntegrationClientImpl(sapConfigIn.getLogin(), sapConfigIn.getPassword(),
-                environment);
+        return tempClient;
     }
 
     @Override
@@ -74,7 +83,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
         SAPOrder newOrder = initializeSAPOrder(placedOrder);
 
-        return wrappedClient.createSAPOrder(newOrder);
+        return initializeClient().createSAPOrder(newOrder);
     }
 
     @Override
@@ -84,7 +93,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
         newOrder.setSapOrderNumber(placedOrder.getSapOrderNumber());
 
-        return wrappedClient.createSAPOrder(newOrder);
+        return initializeClient().createSAPOrder(newOrder);
     }
 
     private SAPOrder initializeSAPOrder(ProductOrder placedOrder) throws SAPIntegrationException {
@@ -146,12 +155,8 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
             Funding funding = foundQuote.getQuoteFunding().getFundingLevel().iterator().next().getFunding();
             if (funding.getFundingType().equals(Funding.PURCHASE_ORDER)) {
-                /*
-                    TODO SGM:  This call will return more than just the customer number in terms of the error conditions.
-                    Must account for the potential errors in this call to pass back to the user
-                */
                 try {
-                    customerNumber = wrappedClient.findCustomerNumber(funding.getPurchaseOrderContact(), companyCode);
+                    customerNumber = initializeClient().findCustomerNumber(funding.getPurchaseOrderContact(), companyCode);
                 } catch (SAPIntegrationException e) {
                     if (e.getMessage().equals(SapIntegrationClientImpl.MISSING_CUSTOMER_RESULT)) {
                         throw new SAPIntegrationException(
@@ -165,7 +170,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                                 + "to resubmit this order to ensure that your work is "
                                 + "properly processed.\n"
                                 + "For further questions please contact Mercury support");
-                    } else if (e.getMessage().equals("More than 1 customer exists with that email address")) {
+                    } else if (e.getMessage().equals(SapIntegrationClientImpl.TOO_MANY_ACCOUNTS_RESULT)) {
                         throw new SAPIntegrationException(
                                 "Your order cannot be placed because the email address specified "
                                 + "on the Quote or Mercury PDO is associated with more than 1 "
@@ -201,7 +206,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         deliveryDocument.addDeliveryItem(lineItem);
 
 
-        return wrappedClient.createDeliveryDocument(deliveryDocument);
+        return initializeClient().createDeliveryDocument(deliveryDocument);
     }
 
     @Override
@@ -220,7 +225,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         newMaterial.setMinimumOrderQuantity(minimumOrderQuantity);
 
 
-        wrappedClient.createMaterial(newMaterial);
+        initializeClient().createMaterial(newMaterial);
     }
 
     @Override
@@ -242,7 +247,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
             existingMaterial.setStatus(SAPMaterial.MaterialStatus.DISABLED);
         }
 
-        wrappedClient.createMaterial(existingMaterial);
+        initializeClient().createMaterial(existingMaterial);
     }
 
     private String determineCompanyCode(ProductOrder companyProductOrder) {
