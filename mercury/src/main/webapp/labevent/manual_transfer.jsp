@@ -35,7 +35,7 @@
         </style>
 
             <script src="${ctxpath}/resources/scripts/jsPlumb-2.1.4.js"></script>
-            <script type="text/javascript" src="${ctxpath}/resources/scripts/CherryPick.js"></script>
+            <script type="text/javascript" src="${ctxpath}/resources/scripts/cherryPick.js"></script>
             <script src="${ctxpath}/resources/scripts/jquery.validate-1.14.0.min.js"></script>
             <script type="text/javascript">
 

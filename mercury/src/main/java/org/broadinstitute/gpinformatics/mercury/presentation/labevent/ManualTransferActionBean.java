@@ -371,8 +371,8 @@ public class ManualTransferActionBean extends RackScanActionBean {
                     try {
                         cherryPickPositionMaps = mapper.readValue(srArrayList, new TypeReference<List<CherryPicksPositions>>(){});
                     } catch (IOException e) {
-                        log.error("Error deserialzing Json object for Cherry Pick ",e);
-                        throw new RuntimeException("Error deserialzing Json object " + e.getMessage());
+                        log.error("Error deserializing Json object for Cherry Pick ",e);
+                        throw new RuntimeException("Error deserializing Json object " + e.getMessage());
                     }
 
                     for (CherryPicksPositions item: cherryPickPositionMaps)
@@ -426,13 +426,16 @@ public class ManualTransferActionBean extends RackScanActionBean {
         }
     }
 
+    /**
+    * Parse well data positions from Cherry Pick Json result.
+    */
     private  String parseWellFromJson(String input)
     {
         if (input.length() >= 3)
            return input.substring(0, 3);
         else {
-            addGlobalValidationError("Cherrypick position imput mallformed " + input);
-            log.error("Cherrypick position imput mallformed ",null);
+            addGlobalValidationError("Cherrypick position imput malformed " + input);
+            log.error("Cherrypick position imput malformed ",null);
         }
         return null;
     }
