@@ -11,7 +11,7 @@
         beanclass="org.broadinstitute.gpinformatics.mercury.presentation.labevent.ManualTransferActionBean"/>
 
 <stripes:layout-render name="/layout.jsp" pageTitle="Manual Transfer" sectionTitle="Manual Transfer">
-
+    <input id="clickMe" type="button" value="clickme" onclick="doFunction();" />
     <stripes:layout-component name="extraHead">
         <%@ include file="/vessel/rack_scanner_list_with_sim_part1.jsp" %>
         <style type="text/css">
@@ -33,45 +33,53 @@
                 font-size: 12px;
             }
         </style>
+        <%--<input type="button" value="Capacity Chart" id="MyButtonAll" >--%>
+        <%--
+                    <script src="${ctxpath}/resources/scripts/jquery-1.10.1.min.js"></script>
+                    <script src="${ctxpath}/resources/scripts/jquery-ui-1.9.2.custom.min.js"></script> --%>
+            <script src="${ctxpath}/resources/scripts/jsPlumb-2.1.4.js"></script>
+            <script type="text/javascript" src="${ctxpath}/resources/scripts/CherryPick.js"></script>
+            <script src="${ctxpath}/resources/scripts/jquery.validate-1.14.0.min.js"></script>
+            <script type="text/javascript">
 
-        <script src="${ctxpath}/resources/scripts/jquery.validate-1.14.0.min.js"></script>
-        <script type="text/javascript">
-            $j(document).ready(function () {
-                $j.validator.addMethod("unique", function(value, element) {
-                    var parentForm = $j(element).closest('form');
-                    var timeRepeated = 0;
-                    if (value != '') {
-                        $j(parentForm.find(':text')).each(function () {
-                            if ($j(this).val() === value) {
-                                timeRepeated++;
+                    $j(document).ready(function () {
+                        $j.validator.addMethod("unique", function(value, element) {
+                            var parentForm = $j(element).closest('form');
+                            var timeRepeated = 0;
+                            if (value != '') {
+                                $j(parentForm.find(':text')).each(function () {
+                                    if ($j(this).val() === value) {
+                                        timeRepeated++;
+                                    }
+                                });
                             }
-                        });
-                    }
-                    return timeRepeated === 1 || timeRepeated === 0;
-                }, "* Duplicate");
-                $j.validator.classRuleSettings.unique = { unique: true };
-                $j("#transferForm").validate();
-            });
+                            return timeRepeated === 1 || timeRepeated === 0;
+                        }, "* Duplicate");
+                        $j.validator.classRuleSettings.unique = { unique: true };
+                        $j("#transferForm").validate();
+                    });
 
-            // Some scanners send carriage return, we don't want this to submit the form
-            $j(document).on("keypress", ":input:not(textarea)", function(event) {
-                return event.keyCode != 13;
-            });
-        </script>
-    </stripes:layout-component>
 
-    <stripes:layout-component name="content">
-        <c:if test="${empty actionBean.workflowStepDef}">
-            <stripes:form beanclass="${actionBean.class.name}" id="eventForm">
-                <stripes:select name="stationEvents[0].eventType" id="eventType">
-                    <stripes:options-collection collection="${actionBean.manualEventTypes}" label="name" value="name"/>
-                </stripes:select>
-                <stripes:submit name="chooseEventType" value="Choose Event Type" class="btn btn-primary"/>
-            </stripes:form>
-        </c:if>
 
-        <stripes:form beanclass="${actionBean.class.name}" id="transferForm">
-            <%-- See https://code.google.com/p/chromium/issues/detail?id=468153 --%>
+                    // Some scanners send carriage return, we don't want this to submit the form
+                    $j(document).on("keypress", ":input:not(textarea)", function(event) {
+                        return event.keyCode != 13;
+                    });
+                </script>
+            </stripes:layout-component>
+
+            <stripes:layout-component name="content">
+                <c:if test="${empty actionBean.workflowStepDef}">
+                    <stripes:form beanclass="${actionBean.class.name}" id="eventForm">
+                        <stripes:select name="stationEvents[0].eventType" id="eventType">
+                            <stripes:options-collection collection="${actionBean.manualEventTypes}" label="name" value="name"/>
+                        </stripes:select>
+                        <stripes:submit name="chooseEventType" value="Choose Event Type" class="btn btn-primary"/>
+                    </stripes:form>
+                </c:if>
+
+                <stripes:form beanclass="${actionBean.class.name}" id="transferForm">
+                    <%-- See https://code.google.com/p/chromium/issues/detail?id=468153 --%>
             <div style="display: none;">
                 <input type="text" id="PreventChromeAutocomplete" name="PreventChromeAutocomplete" autocomplete="address-level4" />
             </div>
@@ -122,7 +130,6 @@
                     </c:forEach>
                     </div>
                 </c:if>
-
                 <c:forEach items="${actionBean.stationEvents}" var="stationEvent" varStatus="stationEventStatus">
                     <input type="hidden" name="stationEvents[${stationEventStatus.index}].eventType"
                             value="${actionBean.stationEvents[stationEventStatus.index].eventType}"/>
@@ -132,11 +139,13 @@
                         <input type="hidden" name="stationEvents[${stationEventStatus.index}].metadata[0].value" value="${stationEventStatus.index + 1}"/>
                     </c:if>
                     <c:choose>
-                        <c:when test="${stationEvent.class.simpleName == 'PlateTransferEventType' or stationEvent.class.simpleName == 'PlateEventType'}">
+                        <c:when test="${stationEvent.class.simpleName == 'PlateTransferEventType' or stationEvent.class.simpleName == 'PlateEventType' or stationEvent.class.simpleName == 'PlateCherryPickEvent'}">
                             <c:set var="plateTransfer" value="${stationEvent}"/>
                             <%--@elvariable id="plateTransfer" type="org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType"--%>
-                            <c:if test="${stationEvent.class.simpleName == 'PlateTransferEventType'}">
+                            <c:if test="${stationEvent.class.simpleName == 'PlateTransferEventType' or stationEvent.class.simpleName == 'PlateCherryPickEvent'}">
+
                                 <c:if test="${empty actionBean.manualTransferDetails.secondaryEvent or not stationEventStatus.last}">
+
                                     <h4>Plate Transfer</h4>
                                     <h5>Source</h5>
 
@@ -147,7 +156,19 @@
                                     <c:set var="vesselTypeGeometry" value="${actionBean.manualTransferDetails.sourceVesselTypeGeometry}" scope="request"/>
                                     <c:set var="section" value="${actionBean.manualTransferDetails.sourceSection}" scope="request"/>
                                     <c:set var="source" value="${true}" scope="request"/>
-                                    <jsp:include page="transfer_plate.jsp"/>
+                                    <c:set var="tableName" value="sourceTable" scope="request"/>
+                                    <%--&lt;%&ndash;<jsp:include page="transfer_plate.jsp"/>&ndash;%&gt;--%>
+
+                                    <c:set var="transferType" value="${actionBean.stationEvents[stationEventStatus.index].eventType}"/>
+
+                                    <c:choose>
+                                        <c:when test="${transferType.equals('PoolingTransfer')}">
+                                            <jsp:include page="transfer_plate_cherry_pick.jsp"/>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <jsp:include page="transfer_plate.jsp"/>
+                                        </c:otherwise>
+                                    </c:choose>
 
                                 </c:if>
 
@@ -160,7 +181,15 @@
                             <c:set var="vesselTypeGeometry" value="${actionBean.manualTransferDetails.targetVesselTypeGeometry}" scope="request"/>
                             <c:set var="section" value="${actionBean.manualTransferDetails.targetSection}" scope="request"/>
                             <c:set var="source" value="${false}" scope="request"/>
-                            <jsp:include page="transfer_plate.jsp"/>
+
+                            <c:choose>
+                                <c:when test="${transferType.equals('PoolingTransfer')}">
+                                    <jsp:include page="transfer_plate_cherry_pick.jsp"/>
+                                </c:when>
+                                <c:otherwise>
+                                    <jsp:include page="transfer_plate.jsp"/>
+                                </c:otherwise>
+                            </c:choose>
 
                         </c:when> <%-- end PlateTransferEventType or PlateEventType--%>
 
@@ -228,6 +257,11 @@
                         </c:when> <%-- end ReceptacleEventType --%>
                     </c:choose>
                 </c:forEach>
+
+                <c:if test="${transferType=='PoolingTransfer'}">
+                    <input type="button" value="Preview" id="PreviewButton" name="PreviewButton" class="btn btn-primary" >
+                </c:if>
+
                 <stripes:submit name="fetchExisting" value="Validate Barcodes" class="btn"/>
                 <stripes:submit name="transfer" value="${actionBean.manualTransferDetails.buttonValue}"
                         class="btn btn-primary"/>

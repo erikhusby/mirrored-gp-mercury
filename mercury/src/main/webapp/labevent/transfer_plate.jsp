@@ -6,6 +6,7 @@ plate / rack.
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
+
 <%--@elvariable id="stationEvent" type="org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType"--%>
 <%--@elvariable id="plate" type="org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateType"--%>
 <%--@elvariable id="positionMap" type="org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType"--%>
@@ -14,7 +15,8 @@ plate / rack.
 <%--@elvariable id="section" type="org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection"--%>
 <%--@elvariable id="stationEventIndex" type="java.lang.Integer"--%>
 <%--@elvariable id="source" type="java.lang.Boolean"--%>
-<div class="control-group">
+
+<div class="control-group" id="container0">
     <label>Type </label>${plate.physType}
     <input type="hidden" name="stationEvents[${stationEventIndex}].${source ? 'sourcePlate' : 'plate'}.physType"
             value="${plate.physType}"/>
@@ -53,9 +55,9 @@ plate / rack.
                         onclick="this.form['scanIndex'].value='${stationEventIndex}';this.form['scanSource'].value='${source}';"
                         name="<%= ManualTransferActionBean.RACK_SCAN_EVENT %>"/>
             </div>
-            Or hand scan 2D barcodes.
+            Or hand scan 2D barcodes..
         </c:if>
-        <table>
+        <table id="${source ? 'src' : 'dest'}_${vesselTypeGeometry.vesselGeometry}">
             <c:forEach items="${geometry.rowNames}" var="rowName" varStatus="rowStatus">
                 <c:if test="${rowStatus.first}">
                     <tr>
@@ -66,8 +68,8 @@ plate / rack.
                     </tr>
                 </c:if>
                 <tr>
-                    <td>${rowName}</td>
-                    <c:forEach items="${geometry.columnNames}" var="columnName" varStatus="columnStatus">
+                        <td>${rowName}</td>
+                        <c:forEach items="${geometry.columnNames}" var="columnName" varStatus="columnStatus">
                         <c:set var="receptacleIndex"
                                 value="${rowStatus.index * geometry.columnCount + columnStatus.index}"/>
                         <td align="right">
