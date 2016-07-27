@@ -258,9 +258,6 @@ submission:
       port:     8080
 
 sap:
-    DEV:
-      login:      GPCOMU
-      password:   SAPERD300!
     QA:
       login:      GPCOMU
       password:   SAPERQ300!
@@ -287,7 +284,7 @@ mercury:
       collaborate: DEV
       bass: PROD
       submission: DEV
-      sap:  DEV
+      sap:  QA
 
 
     AUTO_BUILD:
@@ -307,7 +304,7 @@ mercury:
       collaborate: DEV
       bass: PROD
       submission: DEV
-      sap:  DEV
+      sap:  QA
 
     TEST:
 
@@ -326,7 +323,7 @@ mercury:
       collaborate: DEV
       bass:     PROD
       submission: DEV
-      sap:  DEV
+      sap:  QA
 
     QA:
       app:      QA
@@ -344,7 +341,7 @@ mercury:
       collaborate: RC
       bass:     PROD
       submission: DEV
-      sap:  DEV
+      sap:  QA
 
     RC:
 
@@ -363,7 +360,7 @@ mercury:
       collaborate: RC
       bass:     PROD
       submission: DEV
-      sap:  DEV
+      sap:  QA
 
 
     PROD:
