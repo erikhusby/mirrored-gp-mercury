@@ -46,7 +46,6 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     private final static Log log = LogFactory.getLog(SapIntegrationServiceImpl.class);
 
     public SapIntegrationServiceImpl() {
-        log.debug("Am in the default constructor");
     }
 
     public SapIntegrationServiceImpl(SapConfig sapConfigIn) {
@@ -55,6 +54,9 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         }
     }
 
+    /**
+     * Helper method to initialize the common client this service will utilize in order to communicate to SAP
+     */
     protected void initializeClient() {
 
         SapIntegrationClientImpl.SAPEnvironment environment;
@@ -72,6 +74,10 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                 environment);
     }
 
+    /**
+     * Getter for the common
+     * @return
+     */
     private SapIntegrationClientImpl getClient() {
         if(wrappedClient == null) {
             initializeClient();
