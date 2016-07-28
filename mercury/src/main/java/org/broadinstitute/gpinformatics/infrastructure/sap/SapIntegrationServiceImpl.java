@@ -75,7 +75,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     }
 
     /**
-     * Getter for the common
+     * Getter for the common sap client utilized to communicate to SAP
      * @return
      */
     private SapIntegrationClientImpl getClient() {
@@ -98,11 +98,22 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
         SAPOrder newOrder = initializeSAPOrder(placedOrder);
 
+        if(placedOrder.getSapOrderNumber() == null) {
+            throw new SAPIntegrationException("Cannot update an order in SAP since this product order does not have "
+                                              + "an SAP Order number with which to reference an order.");
+        }
         newOrder.setSapOrderNumber(placedOrder.getSapOrderNumber());
 
         return getClient().createSAPOrder(newOrder);
     }
 
+    /**
+     * Helper method to compile the order object which will be transmitted to SAP for either creation up to be
+     * updated
+     * @param placedOrder The ProductOrder from which a JAXB representation of an SAP order will be created
+     * @return JAXB representation of a Product Order
+     * @throws SAPIntegrationException
+     */
     private SAPOrder initializeSAPOrder(ProductOrder placedOrder) throws SAPIntegrationException {
         Quote foundQuote = null;
         try {
@@ -141,11 +152,19 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         return newOrder;
     }
 
-    private SAPOrderItem getOrderItem(ProductOrder placedOrder, Product primaryProduct) {
-        return new SAPOrderItem(primaryProduct.getPartNumber(),
-                priceListCache.findByKeyFields(primaryProduct.getPrimaryPriceItem().getPlatform(),
-                        primaryProduct.getPrimaryPriceItem().getCategory(),
-                        primaryProduct.getPrimaryPriceItem().getName()).getPrice(),
+    /**
+     * Helper method to extract the sub elements of a Product order to represent a product and the quantity of which
+     * is expected to be charged
+     * @param placedOrder Order from which the quantities are defined
+     * @param product Product that is to be eventually charged when work on the product order is completed
+     * @return JAXB sub element of the SAP order to represent the Product that will be charged and the quantity that
+     * is expected of it.
+     */
+    private SAPOrderItem getOrderItem(ProductOrder placedOrder, Product product) {
+        return new SAPOrderItem(product.getPartNumber(),
+                priceListCache.findByKeyFields(product.getPrimaryPriceItem().getPlatform(),
+                        product.getPrimaryPriceItem().getCategory(),
+                        product.getPrimaryPriceItem().getName()).getPrice(),
                 placedOrder.getSampleCount());
     }
 
@@ -257,6 +276,11 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         getClient().createMaterial(existingMaterial);
     }
 
+    /**
+     * Helper method to figure out which company code to associate with a given product order
+     * @param companyProductOrder Product Order from which the company code is to be determined
+     * @return an indicator that represents one of the configured companies within SAP
+     */
     private String determineCompanyCode(ProductOrder companyProductOrder) {
         String companyCode = SapIntegrationClientImpl.BROAD_COMPANY_CODE;
         if (companyProductOrder.getResearchProject().getRegulatoryDesignation()
