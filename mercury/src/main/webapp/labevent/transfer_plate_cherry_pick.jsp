@@ -98,15 +98,19 @@ plate / rack.
         <c:set var="geometry" value="${vesselTypeGeometry.vesselGeometry}"/>
         <%--@elvariable id="geometry" type="org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry"--%>
         <c:if test="${vesselTypeGeometry.displayName.startsWith('Matrix96')}">
-            <!-- Adds the dropdowns for lab and scanner, and possibly a file chooser. -->
-            <stripes:layout-render name="/vessel/rack_scanner_list_with_sim_part2.jsp" bean="${actionBean}"/>
+
+            <c:if test="${source}">
+                <!-- Adds the dropdowns for lab and scanner, and possibly a file chooser. -->
+                <stripes:layout-render name="/vessel/rack_scanner_list_with_sim_part2.jsp" bean="${actionBean}"/>
+            </c:if>
             <div class="controls">
-                <stripes:submit value="Scan" id="scanBtn" class="btn btn-primary"
+                <stripes:submit value="Scan" id="scanBtn_${source}" class="btn btn-primary"
                                 onclick="this.form['scanIndex'].value='${stationEventIndex}';this.form['scanSource'].value='${source}';"
                                 name="<%= ManualTransferActionBean.RACK_SCAN_EVENT %>"/>
             </div>
 
             Or hand scan 2D barcodes.
+
         </c:if>
         <table id="${source ? 'src' : 'dest'}_${vesselTypeGeometry.vesselGeometry}">
             <c:forEach items="${geometry.rowNames}" var="rowName" varStatus="rowStatus">

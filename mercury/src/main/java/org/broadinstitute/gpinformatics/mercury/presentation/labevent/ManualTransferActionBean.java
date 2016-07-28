@@ -294,8 +294,17 @@ public class ManualTransferActionBean extends RackScanActionBean {
     public Resolution rackScan() throws ScannerException {
         scan();
         StationEventType stationEventType = stationEvents.get(scanIndex);
-        PositionMapType positionMapType = scanSource ? ((PlateTransferEventType) stationEventType).getSourcePositionMap() :
-                ((PlateEventType) stationEventType).getPositionMap();
+        PositionMapType positionMapType = new PositionMapType();
+
+        if(stationEventType.getEventType().equals("PoolingTransfer")) {
+            positionMapType = scanSource ? ((PlateCherryPickEvent) stationEventType).getSourcePositionMap().get(0) :
+                    ((PlateCherryPickEvent) stationEventType).getPositionMap().get(0);
+        }
+        else {
+            positionMapType = scanSource ? ((PlateTransferEventType) stationEventType).getSourcePositionMap() :
+                    ((PlateEventType) stationEventType).getPositionMap();
+        }
+
         for (Map.Entry<String, String> positionBarcodeEntry : rackScan.entrySet()) {
             ReceptacleType receptacleAtPosition = findReceptacleAtPosition(positionMapType, positionBarcodeEntry.getKey());
             if (receptacleAtPosition == null) {
