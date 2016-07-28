@@ -28,7 +28,6 @@ import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -297,7 +296,7 @@ public class MercurySampleFixupTest extends Arquillian {
             } else {
                 currentFixup.getReceivedSample().getLabVessel().iterator()
                         .next().setReceiptEvent(bspUserList.getByUsername(currentFixup.getReceiptUserName()),
-                        currentFixup.getReceiptDate(), counter);
+                        currentFixup.getReceiptDate(), counter, LabEvent.UI_EVENT_LOCATION);
                 updatedSamples.add(currentFixup.getReceivedSample().getSampleKey());
             }
             lastDate = currentFixup.getReceiptDate();

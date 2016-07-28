@@ -302,7 +302,7 @@ public class ProductOrderSampleTest {
         LabEvent collaboratorTransferEvent =
                 new LabEvent(LabEventType.COLLABORATOR_TRANSFER, new Date(), "thisLocation", 0l, 0l, "testprogram");
         barcodedTube.addInPlaceEvent(collaboratorTransferEvent);
-        barcodedTube.setReceiptEvent(new BSPUserList.QADudeUser("LU", 1L),new Date(), 1L);
+        barcodedTube.setReceiptEvent(new BSPUserList.QADudeUser("LU", 1L),new Date(), 1L, LabEvent.UI_EVENT_LOCATION);
         testSample.addLabVessel(barcodedTube);
 
         sample.setMetadataSource(metadataSource);
@@ -485,7 +485,8 @@ public class ProductOrderSampleTest {
             }
             sourceSample.getLabVessel().add(barcodedTube);
             if (isSampleReceived) {
-                barcodedTube.setReceiptEvent(new BSPUserList.QADudeUser("LU", 1L), new Date(), 1L);
+                barcodedTube.setReceiptEvent(new BSPUserList.QADudeUser("LU", 1L), new Date(), 1L,
+                        LabEvent.UI_EVENT_LOCATION);
             }
         }
 

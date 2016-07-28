@@ -237,7 +237,7 @@
                             <c:if test="${!empty actionBean.editProduct.analysisTypeKey}">
                                 ${(actionBean.getAnalysisType(actionBean.editProduct.analysisTypeKey)).displayName}
                             </c:if>
-                        </div>
+                        </div>                                                                                                                m
                     </div>
                 </div>
 
