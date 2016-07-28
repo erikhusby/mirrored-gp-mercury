@@ -61,12 +61,12 @@ public class AggregationMetricsFetcher {
         Collection<Collection<String>> samplesSublists = CollectionUtility.split(samples, MAX_AGGREGATION_FETCHER_QUERY_SIZE);
         List<Aggregation> aggregations = new ArrayList<>();
 
+        Iterator<String> projectIterator = projects.iterator();
+        Iterator<Integer> versionIterator = versions.iterator();
         for (Collection<String> samplesSublist : samplesSublists) {
             TypedQuery<Aggregation> query = null;
             List<Predicate> predicateOfOrs = new ArrayList<>();
-            Iterator<String> projectIterator = projects.iterator();
             Iterator<String> sampleIterator = samplesSublist.iterator();
-            Iterator<Integer> versionIterator = versions.iterator();
             while (projectIterator.hasNext() && sampleIterator.hasNext() && versionIterator.hasNext()) {
                 String project = projectIterator.next();
                 String sample = sampleIterator.next();
