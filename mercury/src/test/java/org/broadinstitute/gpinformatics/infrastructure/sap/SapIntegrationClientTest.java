@@ -79,7 +79,6 @@ public class SapIntegrationClientTest extends Arquillian {
         Quote testMultipleLevelQuote = new Quote("GPTest", test3Funding, ApprovalStatus.FUNDED);
 
 
-
         try {
             String badUserNumber = sapIntegrationClient.findCustomer(testBadContactQuote , SapIntegrationClientImpl.BROAD_COMPANY_CODE);
             Assert.fail("This should have thrown a system error");
@@ -100,6 +99,5 @@ public class SapIntegrationClientTest extends Arquillian {
         } catch (SAPIntegrationException e) {
             Assert.fail(e.getMessage());
         }
-
     }
 }
