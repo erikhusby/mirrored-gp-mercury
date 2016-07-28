@@ -46,6 +46,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     private final static Log log = LogFactory.getLog(SapIntegrationServiceImpl.class);
 
     public SapIntegrationServiceImpl() {
+        log.debug("Am in the default constructor");
     }
 
     public SapIntegrationServiceImpl(SapConfig sapConfigIn) {
@@ -54,28 +55,28 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         }
     }
 
-    private SapIntegrationClientImpl initializeClient() {
+    protected void initializeClient() {
 
-        SapIntegrationClientImpl tempClient = wrappedClient;
+        SapIntegrationClientImpl.SAPEnvironment environment;
 
-        if (tempClient == null) {
-            SapIntegrationClientImpl.SAPEnvironment environment;
-
-            switch (sapConfig.getDeploymentConfig()) {
-            case PROD:
-                environment = SapIntegrationClientImpl.SAPEnvironment.PRODUCTION;
-                break;
-            default:
-                environment = SapIntegrationClientImpl.SAPEnvironment.QA;
-                break;
-            }
-
-            tempClient = new SapIntegrationClientImpl(sapConfig.getLogin(), sapConfig.getPassword(),
-                    environment);
-            wrappedClient = tempClient;
+        switch (sapConfig.getDeploymentConfig()) {
+        case PROD:
+            environment = SapIntegrationClientImpl.SAPEnvironment.PRODUCTION;
+            break;
+        default:
+            environment = SapIntegrationClientImpl.SAPEnvironment.QA;
+            break;
         }
 
-        return tempClient;
+        wrappedClient = new SapIntegrationClientImpl(sapConfig.getLogin(), sapConfig.getPassword(),
+                environment);
+    }
+
+    private SapIntegrationClientImpl getClient() {
+        if(wrappedClient == null) {
+            initializeClient();
+        }
+        return wrappedClient;
     }
 
     @Override
@@ -83,7 +84,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
         SAPOrder newOrder = initializeSAPOrder(placedOrder);
 
-        return initializeClient().createSAPOrder(newOrder);
+        return getClient().createSAPOrder(newOrder);
     }
 
     @Override
@@ -93,7 +94,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
         newOrder.setSapOrderNumber(placedOrder.getSapOrderNumber());
 
-        return initializeClient().createSAPOrder(newOrder);
+        return getClient().createSAPOrder(newOrder);
     }
 
     private SAPOrder initializeSAPOrder(ProductOrder placedOrder) throws SAPIntegrationException {
@@ -156,7 +157,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
             Funding funding = foundQuote.getQuoteFunding().getFundingLevel().iterator().next().getFunding();
             if (funding.getFundingType().equals(Funding.PURCHASE_ORDER)) {
                 try {
-                    customerNumber = initializeClient().findCustomerNumber(funding.getPurchaseOrderContact(), companyCode);
+                    customerNumber = getClient().findCustomerNumber(funding.getPurchaseOrderContact(), companyCode);
                 } catch (SAPIntegrationException e) {
                     if (e.getMessage().equals(SapIntegrationClientImpl.MISSING_CUSTOMER_RESULT)) {
                         throw new SAPIntegrationException(
@@ -206,7 +207,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         deliveryDocument.addDeliveryItem(lineItem);
 
 
-        return initializeClient().createDeliveryDocument(deliveryDocument);
+        return getClient().createDeliveryDocument(deliveryDocument);
     }
 
     @Override
@@ -225,7 +226,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         newMaterial.setMinimumOrderQuantity(minimumOrderQuantity);
 
 
-        initializeClient().createMaterial(newMaterial);
+        getClient().createMaterial(newMaterial);
     }
 
     @Override
@@ -247,7 +248,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
             existingMaterial.setStatus(SAPMaterial.MaterialStatus.DISABLED);
         }
 
-        initializeClient().createMaterial(existingMaterial);
+        getClient().createMaterial(existingMaterial);
     }
 
     private String determineCompanyCode(ProductOrder companyProductOrder) {
@@ -260,5 +261,4 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
         return companyCode;
     }
-
 }

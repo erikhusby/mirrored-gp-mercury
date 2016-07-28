@@ -44,6 +44,7 @@ public class SapIntegrationServiceProducer {
         if(deployment == Deployment.STUBBY) {
             return sapStub;
         }
+        svc.initializeClient();
 
         return svc;
     }
