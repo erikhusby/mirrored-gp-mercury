@@ -5,6 +5,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
 import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
@@ -115,11 +116,11 @@ public class InfiniumRunResource {
         if (sampleInstancesAtPositionV2.size() == 1) {
             SampleInstanceV2 sampleInstanceV2 = sampleInstancesAtPositionV2.iterator().next();
             SampleData sampleData = sampleDataFetcher.fetchSampleData(
-                    sampleInstanceV2.getRootOrEarliestMercurySampleName());
+                    sampleInstanceV2.getNearestMercurySampleName());
             List<ProductOrderSample> productOrderSamples = productOrderSampleDao.findBySamples(
                     Collections.singletonList(sampleInstanceV2.getRootOrEarliestMercurySampleName()));
             Set <GenotypingChip> chipTypes = findChipTypes(productOrderSamples, effectiveDate);
-            Set<Long> researchProjectIds = findResearchProjectIds(productOrderSamples);
+            Set<String> researchProjectIds = findResearchProjectIds(productOrderSamples);
 
             boolean positiveControl = false;
             boolean negativeControl = false;
@@ -146,7 +147,7 @@ public class InfiniumRunResource {
             }
 
             // Controls have a null research project id.
-            Long researchProjectId = null;
+            String researchProjectId = null;
             if (processControl == null) {
                 if (researchProjectIds.isEmpty()) {
                     throw new ResourceException("Found no research projects", Response.Status.INTERNAL_SERVER_ERROR);
@@ -225,13 +226,12 @@ public class InfiniumRunResource {
         return chips;
     }
 
-    private Set<Long> findResearchProjectIds(List<ProductOrderSample> productOrderSamples) {
-        Set<Long> researchProjectIds = new HashSet<>();
+    private Set<String> findResearchProjectIds(List<ProductOrderSample> productOrderSamples) {
+        Set<String> researchProjectIds = new HashSet<>();
         for (ProductOrderSample productOrderSample : productOrderSamples) {
-            Long researchProjectId =
-                    productOrderSample.getProductOrder().getResearchProject().getResearchProjectId();
-            if (researchProjectId != null) {
-                researchProjectIds.add(researchProjectId);
+            ResearchProject researchProject = productOrderSample.getProductOrder().getResearchProject();
+            if (researchProject != null) {
+                researchProjectIds.add(researchProject.getJiraTicketKey());
             }
         }
         return researchProjectIds;
