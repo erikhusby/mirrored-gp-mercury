@@ -223,27 +223,41 @@ public class ProductOrderEjb {
         } else {
             updateJiraIssue(editedProductOrder);
 
-            try {
-                boolean eligibleForSAP = isOrderEligibleForSAP(editedProductOrder);
-                if (eligibleForSAP && !editedProductOrder.isPending() && !editedProductOrder.isDraft()) {
-                    if (StringUtils.isEmpty(editedProductOrder.getSapOrderNumber())) {
-                        sapService.createOrder(editedProductOrder);
-                    } else {
-                        sapService.updateOrder(editedProductOrder);
-                    }
-                }
-            } catch (org.broadinstitute.sap.services.SAPIntegrationException|QuoteServerException  e) {
-                messageCollection.addError(e.getMessage());
-            }
+            publishProductOrderToSAP(editedProductOrder, messageCollection);
         }
         attachMercurySamples(editedProductOrder.getSamples());
         productOrderDao.persist(editedProductOrder);
     }
 
+    public void publishProductOrderToSAP(ProductOrder editedProductOrder, MessageCollection messageCollection)
+            throws QuoteNotFoundException {
+        try {
+            if (isOrderEligibleForSAP(editedProductOrder)) {
+                if (StringUtils.isEmpty(editedProductOrder.getSapOrderNumber())) {
+                    String sapOrderIdentifier = sapService.createOrder(editedProductOrder);
+                    editedProductOrder.setSapOrderNumber(sapOrderIdentifier);
+                } else {
+                    sapService.updateOrder(editedProductOrder);
+                }
+                productOrderDao.persist(editedProductOrder);
+            }
+        } catch (org.broadinstitute.sap.services.SAPIntegrationException|QuoteServerException e) {
+            StringBuilder errorMessage = new StringBuilder();
+            errorMessage.append("Unable to ");
+            if (StringUtils.isEmpty(editedProductOrder.getSapOrderNumber())) {
+                errorMessage.append("create ");
+            } else {
+                errorMessage.append("update ");
+            }
+            errorMessage.append("this order in SAP at this point in time ").append(e.getMessage());
+            messageCollection.addError(errorMessage + e.getMessage());
+        }
+    }
+
     public boolean isOrderEligibleForSAP(ProductOrder editedProductOrder)
             throws QuoteServerException, QuoteNotFoundException {
         Quote orderQuote = quoteService.getQuoteByAlphaId(editedProductOrder.getQuoteId());
-        return orderQuote.isEligibleForSAP();
+        return orderQuote.isEligibleForSAP() && !editedProductOrder.isDraft() && !editedProductOrder.isPending();
     }
 
     /**

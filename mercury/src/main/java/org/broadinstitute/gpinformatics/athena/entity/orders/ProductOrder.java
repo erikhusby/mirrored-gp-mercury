@@ -1136,6 +1136,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return sapOrderNumber;
     }
 
+    public void setSapOrderNumber(String sapOrderNumber) {
+        this.sapOrderNumber = sapOrderNumber;
+    }
+
     /**
      * This is used to help create or update a PDO's Jira ticket.
      */
@@ -1714,4 +1718,6 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
         return (filteredResults != null)?Iterators.size(filteredResults.iterator()):0;
     }
+
+    public boolean isSavedInSAP() {return StringUtils.isNotBlank(sapOrderNumber);}
 }

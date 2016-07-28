@@ -156,6 +156,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private static final String RECALCULATE_RISK = "recalculateRisk";
     protected static final String PLACE_ORDER_ACTION = "placeOrder";
     protected static final String VALIDATE_ORDER = "validate";
+    private static final String PUBLISH_PDO_TO_SAP = "publishProductOrderToSAP";
     // Search field constants
     private static final String FAMILY = "productFamily";
     private static final String PRODUCT = "product";
@@ -1165,6 +1166,18 @@ public class ProductOrderActionBean extends CoreActionBean {
         notificationListTokenInput.setup(editOrder.getProductOrderKit().getNotificationIds());
     }
 
+    @HandlesEvent(PUBLISH_PDO_TO_SAP)
+    public Resolution publishProductOrderToSAP() {
+        MessageCollection placeOrderMessageCollection = new MessageCollection();
+        try {
+            productOrderEjb.publishProductOrderToSAP(editOrder,placeOrderMessageCollection);
+        } catch (QuoteNotFoundException qne) {
+            addGlobalValidationError(qne.getMessage());
+        }
+        addMessages(placeOrderMessageCollection);
+        return createViewResolution(editOrder.getBusinessKey());
+    }
+
     @HandlesEvent(PLACE_ORDER_ACTION)
     public Resolution placeOrder() {
         String originalBusinessKey = editOrder.getBusinessKey();
@@ -1185,18 +1198,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             productOrderEjb.handleSamplesAdded(editOrder.getBusinessKey(), editOrder.getSamples(), this);
             productOrderDao.persist(editOrder);
 
-            try {
-                boolean eligibleForSAP = productOrderEjb.isOrderEligibleForSAP(editOrder);
-                if (eligibleForSAP && !editOrder.isPending() && !editOrder.isDraft()) {
-                    if (StringUtils.isEmpty(editOrder.getSapOrderNumber())) {
-                        sapService.createOrder(editOrder);
-                    }
-                }
-            } catch (SAPIntegrationException e) {
-                placeOrderMessageCollection.addError("Unable to create this order in SAP at this point in time " + e.getMessage());
-            } catch (QuoteNotFoundException|QuoteServerException qe) {
-                placeOrderMessageCollection.addError("Unable to create this order in SAP at this point in time");
-            }
+            productOrderEjb.publishProductOrderToSAP(editOrder, placeOrderMessageCollection);
             addMessages(placeOrderMessageCollection);
 
         } catch (Exception e) {
@@ -2464,5 +2466,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     public EnumSet<ProductOrder.OrderStatus> getOrderStatusNamesWhichCantBeAbandoned() {
         return EnumSet.complementOf (ProductOrder.OrderStatus.canAbandonStatuses);
     }
+
+    public String getPublishSAPAction() {return PUBLISH_PDO_TO_SAP;}
 
 }

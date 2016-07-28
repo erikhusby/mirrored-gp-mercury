@@ -1112,8 +1112,23 @@ function formatInput(item) {
 </div>
 </div>
 
-<c:if test="${actionBean.editOrder.sampleInitiation}">
     <div class="form-horizontal span5">
+
+        <security:authorizeBlock roles="<%= roles(PDM, LabManager, Developer) %>">
+
+        <c:if test="${not actionBean.editOrder.savedInSAP}">
+            <stripes:link beanclass="${actionBean.class.name}" event="${actionBean.publishSAPAction}"
+                          title="Click to Publish Product Order to SAP" class="pull-right">
+                <stripes:param name="${actionBean.editBusinessKeyName}"
+                               value="${actionBean.editOrder.businessKey}"/>
+                <span class="icon-pencil"></span>
+                "Publish Product Order to SAP"
+            </stripes:link>
+        </c:if>
+        </security:authorizeBlock>
+
+
+        <c:if test="${actionBean.editOrder.sampleInitiation}">
         <fieldset>
             <legend>
                 <h4>
@@ -1193,8 +1208,8 @@ function formatInput(item) {
                 </div>
             </div>
         </fieldset>
+        </c:if>
     </div>
-</c:if>
 </div>
 
 <c:if test="${!actionBean.editOrder.draft || !actionBean.editOrder.sampleInitiation}">
