@@ -22,7 +22,7 @@ public class InfiniumRunBean {
     private String sampleLsid;
     private String gender;
     private String participantId;
-    private Long researchProjectId;
+    private String researchProjectId;
     private boolean positiveControl;
     private boolean negativeControl;
     // todo jmt this or something more REST-like?
@@ -35,7 +35,7 @@ public class InfiniumRunBean {
     public InfiniumRunBean(String redIDatPath, String greenIDatPath, String chipManifestPath,
                            String beadPoolManifestPath, String clusterFilePath, String zCallThresholdsPath,
                            String collaboratorSampleId, String sampleLsid, String gender, String participantId,
-                           Long researchProjectId, boolean positiveControl, boolean negativeControl) {
+                           String researchProjectId, boolean positiveControl, boolean negativeControl) {
         this.redIDatPath = redIDatPath;
         this.greenIDatPath = greenIDatPath;
         this.chipManifestPath = chipManifestPath;
@@ -91,7 +91,7 @@ public class InfiniumRunBean {
         return participantId;
     }
 
-    public Long getResearchProjectId() {
+    public String getResearchProjectId() {
         return researchProjectId;
     }
 
