@@ -1478,4 +1478,79 @@ public class LabEventFixupTest extends Arquillian {
         Assert.assertEquals(barcodedTube.getSampleInstancesV2().size(), 5);
         utx.commit();
     }
+
+    /**
+     * Fix InfiniumHybridization transfers, columns 6 and 7.
+     */
+    @Test(enabled = false)
+    public void fixupSupport1908() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        String[] plateBarcodes = {
+                "000016838609",
+                "000016844109",
+                "000016841609",
+                "000016841509",
+                "000016837709",
+                "000016851109",
+                "000016838109",
+                "000016850309",
+                "000016840109",
+                "000016851009",
+                "000016852209",
+                "000016851309",
+                "000016844209",
+                "000016851609",
+                "000016849309",
+                "000016844309",
+                "000016839809",
+                "000016849009",
+                "000016849509",
+                "000016844709",
+                "000016841709",
+                "000016842209",
+                "000016839709",
+                "000016849109",
+                "000016845209",
+                "000016860809",
+                "000016863809",
+                "000016861809",
+                "000016849409",
+                "000016849809",
+                "000016839609",
+                "000016842609",
+                "000016839409"
+        };
+        Map<VesselPosition, VesselPosition> mapSourceToDest = new HashMap<VesselPosition, VesselPosition>() {{
+            put(VesselPosition.B06, VesselPosition.R02C01);
+            put(VesselPosition.C06, VesselPosition.R03C01);
+            put(VesselPosition.D06, VesselPosition.R04C01);
+            put(VesselPosition.E06, VesselPosition.R05C01);
+            put(VesselPosition.F06, VesselPosition.R06C01);
+            put(VesselPosition.G06, VesselPosition.R07C01);
+            put(VesselPosition.B07, VesselPosition.R02C01);
+            put(VesselPosition.C07, VesselPosition.R03C01);
+            put(VesselPosition.D07, VesselPosition.R04C01);
+            put(VesselPosition.E07, VesselPosition.R05C01);
+            put(VesselPosition.F07, VesselPosition.R06C01);
+            put(VesselPosition.G07, VesselPosition.R07C01);
+        }};
+        for (String plateBarcode : plateBarcodes) {
+            StaticPlate staticPlate = staticPlateDao.findByBarcode(plateBarcode);
+            for (CherryPickTransfer cherryPickTransfer : staticPlate.getContainerRole().getCherryPickTransfersFrom()) {
+                VesselPosition vesselPosition = mapSourceToDest.get(cherryPickTransfer.getSourcePosition());
+                if (vesselPosition != null) {
+                    System.out.println("For " + staticPlate.getLabel() + " changing transfer to " +
+                            cherryPickTransfer.getTargetVesselContainer().getEmbedder().getLabel() + " " +
+                            cherryPickTransfer.getTargetPosition() + " to " + vesselPosition);
+                    cherryPickTransfer.setTargetPosition(vesselPosition);
+                }
+            }
+        }
+
+        labEventDao.persist(new FixupCommentary("SUPPORT-1908 fix Infinium transfers"));
+        labEventDao.flush();
+        utx.commit();
+    }
 }
