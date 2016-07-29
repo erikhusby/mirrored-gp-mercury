@@ -5,16 +5,12 @@ $(document).ready(function () {
     var targetIDs = [];
     var direction="";
     var directionArr=[];
-
+    var maxRackSize = $( "[id^=src_G] td").length;
     StoreSessions();
 
     jsPlumb.ready(function () {
 
         //Initial jsPlumb setup of line types and endpoints.
-        var arrowCommon = {foldback: 0.7, fillStyle: "blue", width: 14},
-            overlays = [
-                ["Arrow", {location: 0.8}, arrowCommon]
-            ];
 
         var instance = jsPlumb.getInstance({
             Connector: "StateMachine",
@@ -37,10 +33,8 @@ $(document).ready(function () {
         {preview(false)});
 
         //Main handler for the preview feature.
-        function preview(reload)
+        function preview()
         {
-            if(direction != "")
-                directionArr.push(direction);
 
             instance.deleteEveryEndpoint();
             instance.detachEveryConnection();
@@ -49,16 +43,8 @@ $(document).ready(function () {
                 targetIDs: []
             };
 
-            if(direction == "src") {
-                newQueueObject.targetIDs = targetIDs.slice();
-                newQueueObject.sourceIDs = sourceIDs.slice();
-            }
-            else{
-                newQueueObject.sourceIDs = targetIDs.slice();
-                newQueueObject.targetIDs = sourceIDs.slice();
-            }
-
-            direction = "";
+            newQueueObject.targetIDs = targetIDs.slice();
+            newQueueObject.sourceIDs = sourceIDs.slice();
 
             //Delete any missing keys from the queue before it is sent to the server.
             for(key in workQueue) {
@@ -125,7 +111,6 @@ $(document).ready(function () {
                                 target: targetIDs,
                                 overlays: overlays,
                                 paintStyle: {strokeStyle: colorSpace, lineWidth: 3},
-                                //paintStyle:{ strokeStyle:"red", lineWidth:3 },
                                 connector: ["StateMachine", {proximityLimit: -5, curviness: getRandomCurve()}]
                             });
                         col++;
@@ -148,7 +133,6 @@ $(document).ready(function () {
                         itemCount++;
                     });
                 }
-
                 ++index;
             });
             targetIDs = [];
@@ -183,7 +167,7 @@ $(document).ready(function () {
             sourceIDs = [];
             targetIDs = queueItem.targetIDs.slice();
             sourceIDs = queueItem.sourceIDs.slice();
-            sourceIDs.forEach(function (item) {
+            sourceIDs.forEach(function () {
 
                 var sourceIndex = workQueue[queueCount].sourceIDs.indexOf(cell);
                 var targetIndex = workQueue[queueCount].targetIDs.indexOf(cell);
@@ -195,15 +179,10 @@ $(document).ready(function () {
                     workQueue[queueCount].targetIDs.splice(targetIndex, 1);
                     directionArr.splice(sourceIndex,1);
                 }
-
                 itemCount++;
             });
             queueCount++;
-
         });
-
-        //targetIDs = [];
-        //sourceIDs = [];
     }
 
     //Select rows and cols
@@ -257,9 +236,7 @@ $(document).ready(function () {
             }
         }
 
-
         if ($(this).attr("id") == 'btnRow1') {
-
             $('table tbody tr ').click(function () {
             });
         }
@@ -298,13 +275,12 @@ $(document).ready(function () {
             if ($("[id^=btn_dest_row_]")) {
                 $("[id^=btn_dest_row_]").css('background-color', '#ff8c1a');
             }
-
         }
     });
 
     //Handle select all from source.
     $('#selectAllsrc').click(function () {
-        for (i = 0; i < 97; i++) {
+        for (i = 0; i < maxRackSize; i++) {
             text = "srcRcpBcd0_" + i.toString();
             sourceIDs.push(text);
         }
@@ -313,7 +289,7 @@ $(document).ready(function () {
 
     //Handle select all from destination.
     $('#selectAlldest').click(function () {
-        for (i = 0; i < 97; i++) {
+        for (i = 0; i < maxRackSize; i++) {
             text = "destRcpBcd0_" + i.toString();
             targetIDs.push(text);
         }
@@ -335,128 +311,128 @@ $(document).ready(function () {
 
 
     //Row Column button select events.
-    $('#btn_src_col_01').click(function (e) {
+    $('#btn_src_col_01').click(function () {
         selectRow('.src_col_0');
     });
-    $('#btn_src_col_02').click(function (e) {
+    $('#btn_src_col_02').click(function () {
         selectRow('.src_col_1');
     });
-    $('#btn_src_col_03').click(function (e) {
+    $('#btn_src_col_03').click(function () {
         selectRow('.src_col_2');
     });
-    $('#btn_src_col_04').click(function (e) {
+    $('#btn_src_col_04').click(function () {
         selectRow('.src_col_3');
     });
-    $('#btn_src_col_05').click(function (e) {
+    $('#btn_src_col_05').click(function () {
         selectRow('.src_col_4');
     });
-    $('#btn_src_col_06').click(function (e) {
+    $('#btn_src_col_06').click(function () {
         selectRow('.src_col_5');
     });
-    $('#btn_src_col_07').click(function (e) {
+    $('#btn_src_col_07').click(function () {
         selectRow('.src_col_6');
     });
-    $('#btn_src_col_08').click(function (e) {
+    $('#btn_src_col_08').click(function () {
         selectRow('.src_col_7');
     });
-    $('#btn_src_col_09').click(function (e) {
+    $('#btn_src_col_09').click(function () {
         selectRow('.src_col_8');
     });
-    $('#btn_src_col_10').click(function (e) {
+    $('#btn_src_col_10').click(function () {
         selectRow('.src_col_9');
     });
-    $('#btn_src_col_11').click(function (e) {
+    $('#btn_src_col_11').click(function () {
         selectRow('.src_col_10');
     });
-    $('#btn_src_col_12').click(function (e) {
+    $('#btn_src_col_12').click(function () {
         selectRow('.src_col_11');
     });
 
 
-    $('#btn_dest_col_01').click(function (e) {
+    $('#btn_dest_col_01').click(function () {
         selectRow('.dest_col_0');
     });
-    $('#btn_dest_col_02').click(function (e) {
+    $('#btn_dest_col_02').click(function () {
         selectRow('.dest_col_1');
     });
-    $('#btn_dest_col_03').click(function (e) {
+    $('#btn_dest_col_03').click(function () {
         selectRow('.dest_col_2');
     });
-    $('#btn_dest_col_04').click(function (e) {
+    $('#btn_dest_col_04').click(function () {
         selectRow('.dest_col_3');
     });
-    $('#btn_dest_col_05').click(function (e) {
+    $('#btn_dest_col_05').click(function () {
         selectRow('.dest_col_4');
     });
-    $('#btn_dest_col_06').click(function (e) {
+    $('#btn_dest_col_06').click(function () {
         selectRow('.dest_col_5');
     });
-    $('#btn_dest_col_07').click(function (e) {
+    $('#btn_dest_col_07').click(function () {
         selectRow('.dest_col_6');
     });
-    $('#btn_dest_col_08').click(function (e) {
+    $('#btn_dest_col_08').click(function () {
         selectRow('.dest_col_7');
     });
-    $('#btn_dest_col_09').click(function (e) {
+    $('#btn_dest_col_09').click(function () {
         selectRow('.dest_col_8');
     });
-    $('#btn_dest_col_10').click(function (e) {
+    $('#btn_dest_col_10').click(function () {
         selectRow('.dest_col_9');
     });
-    $('#btn_dest_col_11').click(function (e) {
+    $('#btn_dest_col_11').click(function () {
         selectRow('.dest_col_10');
     });
-    $('#btn_dest_col_12').click(function (e) {
+    $('#btn_dest_col_12').click(function () {
         selectRow('.dest_col_11');
     });
 
 
-    $('#btn_src_row_A').click(function (e) {
+    $('#btn_src_row_A').click(function () {
         selectRow('.src_row_0');
     });
-    $('#btn_src_row_B').click(function (e) {
+    $('#btn_src_row_B').click(function () {
         selectRow('.src_row_1');
     });
-    $('#btn_src_row_C').click(function (e) {
+    $('#btn_src_row_C').click(function () {
         selectRow('.src_row_2');
     });
-    $('#btn_src_row_D').click(function (e) {
+    $('#btn_src_row_D').click(function () {
         selectRow('.src_row_3');
     });
-    $('#btn_src_row_E').click(function (e) {
+    $('#btn_src_row_E').click(function () {
         selectRow('.src_row_4');
     });
-    $('#btn_src_row_F').click(function (e) {
+    $('#btn_src_row_F').click(function () {
         selectRow('.src_row_5');
     });
-    $('#btn_src_row_G').click(function (e) {
+    $('#btn_src_row_G').click(function () {
         selectRow('.src_row_6');
     });
-    $('#btn_src_row_H').click(function (e) {
+    $('#btn_src_row_H').click(function () {
         selectRow('.src_row_7');
     });
-    $('#btn_dest_row_A').click(function (e) {
+    $('#btn_dest_row_A').click(function () {
         selectRow('.dest_row_0');
     });
-    $('#btn_dest_row_B').click(function (e) {
+    $('#btn_dest_row_B').click(function () {
         selectRow('.dest_row_1');
     });
-    $('#btn_dest_row_C').click(function (e) {
+    $('#btn_dest_row_C').click(function () {
         selectRow('.dest_row_2');
     });
-    $('#btn_dest_row_D').click(function (e) {
+    $('#btn_dest_row_D').click(function () {
         selectRow('.dest_row_3');
     });
-    $('#btn_dest_row_E').click(function (e) {
+    $('#btn_dest_row_E').click(function () {
         selectRow('.dest_row_4');
     });
-    $('#btn_dest_row_F').click(function (e) {
+    $('#btn_dest_row_F').click(function () {
         selectRow('.dest_row_5');
     });
-    $('#btn_dest_row_G').click(function (e) {
+    $('#btn_dest_row_G').click(function () {
         selectRow('.dest_row_6');
     });
-    $('#btn_dest_row_H').click(function (e) {
+    $('#btn_dest_row_H').click(function () {
         selectRow('.dest_row_7');
     });
 
@@ -490,6 +466,23 @@ $(document).ready(function () {
         }
 
     }
+
+    //Check all the fields after a scan and enable they if the contain data
+    for (i = 0; i < maxRackSize; i++) {
+        enableFields("src", i);
+        enableFields("dest", i);
+    }
+
+    function enableFields(rackTarget, index)
+    {
+        if($("#" + rackTarget + "RcpBcd0_" + index.toString()).val() !="")
+        {
+            var $button = $("[id$=_" + rackTarget + "_RcpBcd0_" + index.toString()+"]");
+            $($button).css('background-color', '#5a86de');
+            $($button).removeAttr('disabled');
+        }
+    }
+
 
 });
 

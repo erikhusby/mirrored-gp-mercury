@@ -374,14 +374,18 @@ public class ManualTransferActionBean extends RackScanActionBean {
                             true, labBatch, messageCollection,
                             Direction.TARGET);
 
+                    if(messageCollection.hasErrors())
+                        break;
+
                     String srArrayList = getContext().getRequest().getParameter("destPosList");
                     ObjectMapper mapper = new ObjectMapper();
                     List<CherryPicksPositions> cherryPickPositionMaps = null;
+
+                    //This handles barcode validation where no transfer connections have been made resulting in malformed Json.
                     try {
                         cherryPickPositionMaps = mapper.readValue(srArrayList, new TypeReference<List<CherryPicksPositions>>(){});
                     } catch (IOException e) {
-                        log.error("Error deserializing Json object for Cherry Pick ",e);
-                        throw new RuntimeException("Error deserializing Json object " + e.getMessage());
+                        break;
                     }
 
                     for (CherryPicksPositions item: cherryPickPositionMaps)

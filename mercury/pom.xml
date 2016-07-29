@@ -2269,7 +2269,6 @@ nodePrinter.print(webapp)
                 <version>2.2</version>
                 <configuration>
                     <webappDirectory>${project.build.directory}/${project.artifactId}.war</webappDirectory>
-                    <outputDirectory>C:\jboss-as-7.1.1.Final\standalone\deployments</outputDirectory>
                     <!-- We'll keep mercury-config-local.yaml in src/main/resources for now. We can add a local directory later if needed.
                                         <webResources>
                                             <resource>
@@ -2287,7 +2286,6 @@ nodePrinter.print(webapp)
                     -->
                 </configuration>
             </plugin>
-
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
