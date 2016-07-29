@@ -377,14 +377,15 @@ public class ManualTransferActionBean extends RackScanActionBean {
                     if(messageCollection.hasErrors())
                         break;
 
-                    String srArrayList = getContext().getRequest().getParameter("destPosList");
                     ObjectMapper mapper = new ObjectMapper();
                     List<CherryPicksPositions> cherryPickPositionMaps = null;
 
                     //This handles barcode validation where no transfer connections have been made resulting in malformed Json.
+                    String srArrayList = getContext().getRequest().getParameter("destPosList");
                     try {
                         cherryPickPositionMaps = mapper.readValue(srArrayList, new TypeReference<List<CherryPicksPositions>>(){});
                     } catch (IOException e) {
+                        messageCollection.addError("No valid connections exist");
                         break;
                     }
 
