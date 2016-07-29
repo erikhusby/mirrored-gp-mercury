@@ -1114,7 +1114,7 @@ function formatInput(item) {
 
     <div class="form-horizontal span5">
 
-        <security:authorizeBlock roles="<%= roles(PDM, LabManager, Developer) %>">
+        <security:authorizeBlock roles="<%= roles(PDM, PM, Developer) %>">
 
         <c:if test="${not actionBean.editOrder.savedInSAP}">
             <stripes:link beanclass="${actionBean.class.name}" event="${actionBean.publishSAPAction}"

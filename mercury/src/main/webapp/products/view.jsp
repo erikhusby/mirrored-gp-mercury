@@ -217,7 +217,7 @@
 
         <div class="form-horizontal span5">
 
-            <security:authorizeBlock roles="<%= roles(PDM, LabManager, Developer) %>">
+            <security:authorizeBlock roles="<%= roles(PDM, PM, Developer) %>">
 
             <c:if test="${not actionBean.editProduct.savedInSAP}">
                 <stripes:link beanclass="${actionBean.class.name}" event="${actionBean.publishSAPAction}"
