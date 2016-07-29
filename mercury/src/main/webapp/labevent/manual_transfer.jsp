@@ -11,7 +11,7 @@
         beanclass="org.broadinstitute.gpinformatics.mercury.presentation.labevent.ManualTransferActionBean"/>
 
 <stripes:layout-render name="/layout.jsp" pageTitle="Manual Transfer" sectionTitle="Manual Transfer">
-    <input id="clickMe" type="button" value="clickme" onclick="doFunction();" />
+
     <stripes:layout-component name="extraHead">
         <%@ include file="/vessel/rack_scanner_list_with_sim_part1.jsp" %>
         <style type="text/css">
@@ -34,49 +34,46 @@
             }
         </style>
 
-            <script src="${ctxpath}/resources/scripts/jsPlumb-2.1.4.js"></script>
-            <script type="text/javascript" src="${ctxpath}/resources/scripts/cherryPick.js"></script>
-            <script src="${ctxpath}/resources/scripts/jquery.validate-1.14.0.min.js"></script>
-            <script type="text/javascript">
-
-                    $j(document).ready(function () {
-                        $j.validator.addMethod("unique", function(value, element) {
-                            var parentForm = $j(element).closest('form');
-                            var timeRepeated = 0;
-                            if (value != '') {
-                                $j(parentForm.find(':text')).each(function () {
-                                    if ($j(this).val() === value) {
-                                        timeRepeated++;
-                                    }
-                                });
+        <script src="${ctxpath}/resources/scripts/jsPlumb-2.1.4.js"></script>
+        <script type="text/javascript" src="${ctxpath}/resources/scripts/cherryPick.js"></script>
+        <script src="${ctxpath}/resources/scripts/jquery.validate-1.14.0.min.js"></script>
+        <script type="text/javascript">
+            $j(document).ready(function () {
+                $j.validator.addMethod("unique", function(value, element) {
+                    var parentForm = $j(element).closest('form');
+                    var timeRepeated = 0;
+                    if (value != '') {
+                        $j(parentForm.find(':text')).each(function () {
+                            if ($j(this).val() === value) {
+                                timeRepeated++;
                             }
-                            return timeRepeated === 1 || timeRepeated === 0;
-                        }, "* Duplicate");
-                        $j.validator.classRuleSettings.unique = { unique: true };
-                        $j("#transferForm").validate();
-                    });
+                        });
+                    }
+                    return timeRepeated === 1 || timeRepeated === 0;
+                }, "* Duplicate");
+                $j.validator.classRuleSettings.unique = { unique: true };
+                $j("#transferForm").validate();
+            });
 
+            // Some scanners send carriage return, we don't want this to submit the form
+            $j(document).on("keypress", ":input:not(textarea)", function(event) {
+                return event.keyCode != 13;
+            });
+        </script>
+    </stripes:layout-component>
 
+    <stripes:layout-component name="content">
+        <c:if test="${empty actionBean.workflowStepDef}">
+            <stripes:form beanclass="${actionBean.class.name}" id="eventForm">
+                <stripes:select name="stationEvents[0].eventType" id="eventType">
+                    <stripes:options-collection collection="${actionBean.manualEventTypes}" label="name" value="name"/>
+                </stripes:select>
+                <stripes:submit name="chooseEventType" value="Choose Event Type" class="btn btn-primary"/>
+            </stripes:form>
+        </c:if>
 
-                    // Some scanners send carriage return, we don't want this to submit the form
-                    $j(document).on("keypress", ":input:not(textarea)", function(event) {
-                        return event.keyCode != 13;
-                    });
-                </script>
-            </stripes:layout-component>
-
-            <stripes:layout-component name="content">
-                <c:if test="${empty actionBean.workflowStepDef}">
-                    <stripes:form beanclass="${actionBean.class.name}" id="eventForm">
-                        <stripes:select name="stationEvents[0].eventType" id="eventType">
-                            <stripes:options-collection collection="${actionBean.manualEventTypes}" label="name" value="name"/>
-                        </stripes:select>
-                        <stripes:submit name="chooseEventType" value="Choose Event Type" class="btn btn-primary"/>
-                    </stripes:form>
-                </c:if>
-
-                <stripes:form beanclass="${actionBean.class.name}" id="transferForm">
-                    <%-- See https://code.google.com/p/chromium/issues/detail?id=468153 --%>
+        <stripes:form beanclass="${actionBean.class.name}" id="transferForm">
+            <%-- See https://code.google.com/p/chromium/issues/detail?id=468153 --%>
             <div style="display: none;">
                 <input type="text" id="PreventChromeAutocomplete" name="PreventChromeAutocomplete" autocomplete="address-level4" />
             </div>
@@ -142,7 +139,6 @@
                             <c:if test="${stationEvent.class.simpleName == 'PlateTransferEventType' or stationEvent.class.simpleName == 'PlateCherryPickEvent'}">
 
                                 <c:if test="${empty actionBean.manualTransferDetails.secondaryEvent or not stationEventStatus.last}">
-
                                     <h4>Plate Transfer</h4>
                                     <h5>Source</h5>
 

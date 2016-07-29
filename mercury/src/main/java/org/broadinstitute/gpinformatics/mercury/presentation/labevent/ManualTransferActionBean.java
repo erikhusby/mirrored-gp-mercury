@@ -106,7 +106,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
      */
     @Before(stages = LifecycleStage.BindingAndValidation)
     public void init() {
-            String eventType = getContext().getRequest().getParameter("stationEvents[0].eventType");
+        String eventType = getContext().getRequest().getParameter("stationEvents[0].eventType");
         if (eventType != null) {
             labEventType = LabEventType.getByName(eventType);
             String workflowEffectiveDateLocal = getContext().getRequest().getParameter("workflowEffectiveDate");
@@ -226,7 +226,6 @@ public class ManualTransferActionBean extends RackScanActionBean {
                     break;
                 case PLATE_CHERRY_PICK_EVENT:
                     PlateCherryPickEvent plateCherryPickEvent = (PlateCherryPickEvent) stationEvent;
-
                     //Source
                     PlateType sourcePlateCp = new PlateType();
                     VesselTypeGeometry sourceVesselTypeGeometryCp = manualTransferDetails.getSourceVesselTypeGeometry();
@@ -244,7 +243,6 @@ public class ManualTransferActionBean extends RackScanActionBean {
                     if (targetVesselTypeGeometryCp instanceof RackOfTubes.RackType) {
                         plateCherryPickEvent.getPositionMap().add(new PositionMapType());
                     }
-                    int x = 0;
                     break;
                 case RECEPTACLE_PLATE_TRANSFER_EVENT:
                     ReceptaclePlateTransferEvent receptaclePlateTransferEvent = (ReceptaclePlateTransferEvent) stationEvent;
@@ -369,14 +367,14 @@ public class ManualTransferActionBean extends RackScanActionBean {
                     Map<String, LabVessel> mapBarcodeToVessel = loadPlateFromDb(plateCherryPickEvent.getSourcePlate().get(0),
                             plateCherryPickEvent.getSourcePositionMap().get(0), true, labBatch, messageCollection,
                             Direction.SOURCE);
-                    LabEventType repeatedEvent = manualTransferDetails.getRepeatedEvent();
 
                     loadPlateFromDb(plateCherryPickEvent.getPlate().get(0), plateCherryPickEvent.getPositionMap().get(0),
                             true, labBatch, messageCollection,
                             Direction.TARGET);
 
-                    if(messageCollection.hasErrors())
+                    if(messageCollection.hasErrors()) {
                         break;
+                    }
 
                     ObjectMapper mapper = new ObjectMapper();
                     List<CherryPicksPositions> cherryPickPositionMaps = null;
