@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
 import com.google.common.collect.Sets;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
@@ -677,9 +676,9 @@ public abstract class LabVessel implements Serializable {
         return !doesChainOfCustodyInclude(LabEventType.COLLABORATOR_TRANSFER);
     }
 
-    public void setReceiptEvent(BspUser user, Date receivedDate, long disambiguator) {
+    public void setReceiptEvent(BspUser user, Date receivedDate, long disambiguator, String eventLocation) {
         LabEvent receiptEvent =
-                new LabEvent(LabEventType.SAMPLE_RECEIPT, receivedDate, LabEvent.UI_EVENT_LOCATION,
+                new LabEvent(LabEventType.SAMPLE_RECEIPT, receivedDate, eventLocation,
                         disambiguator, user.getUserId(), LabEvent.UI_PROGRAM_NAME);
         addInPlaceEvent(receiptEvent);
     }

@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -67,7 +68,8 @@ public class ProductOrderSampleTestFactory {
             if (createMercurySamples) {
                 MercurySample mercurySample = new MercurySample(sampleName, metadataSource);
                 LabVessel testVessel = new BarcodedTube(sampleName+"Tube", BarcodedTube.BarcodedTubeType.MatrixTube075);
-                testVessel.setReceiptEvent(new BSPUserList.QADudeUser("LU", counter++),new Date(), 1L);
+                testVessel.setReceiptEvent(new BSPUserList.QADudeUser("LU", counter++),new Date(), 1L,
+                        LabEvent.UI_EVENT_LOCATION);
                 mercurySample.addLabVessel(testVessel);
 
                 productOrderSample.setMercurySample(mercurySample);
