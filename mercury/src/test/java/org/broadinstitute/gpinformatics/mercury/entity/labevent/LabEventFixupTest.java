@@ -1484,6 +1484,36 @@ public class LabEventFixupTest extends Arquillian {
      */
     @Test(enabled = false)
     public void fixupSupport1908() throws Exception {
+        /*
+        Used this GAP query to map exported plate names to amp plate barcodes:
+        SELECT
+            m.plate_name,
+            sl.sample_list_name
+        FROM
+            esp.masterplate m
+            INNER JOIN esp.sample_list sl
+                ON   sl.plate_id = m.plate_id
+        WHERE
+            m.plate_name IN ('CVB_PTSD_BIZU_Mega_01', 'CVB_PTSD_BIZU_Mega_02',
+                            'CVB_PTSD_BIZU_Mega_06', 'CVB_PTSD_BIZU_Mega_07',
+                            'CVB_PTSD_BIZU_Mega_08', 'CVB_PTSD_BIZU_Mega_09',
+                            'CVB_PTSD_BIZU_Mega_10', 'CVB_PTSD_BIZU_Mega_11',
+                            'CVB_PTSD_BIZU_Mega_12', 'CVB_PTSD_BIZU_Mega_13',
+                            'CVB_PTSD_BIZU_Mega_14', 'CVB_PTSD_BIZU_Mega_15',
+                            'CVB_PTSD_BIZU_Mega_16', 'CVB_PTSD_BIZU_Mega_17',
+                            'CVB_PTSD_BIZU_Mega_18', 'CVB_PTSD_BIZU_Mega_19',
+                            'CVB_PTSD_BIZU_Mega_20', 'CVB_PTSD_BIZU_Mega_21',
+                            'CVB_PTSD_BIZU_Mega_22', 'CVB_PTSD_BIZU_Mega_23',
+                            'CVB_PTSD_BIZU_Mega_24', 'CVB_PTSD_BIZU_Mega_25',
+                            'CVB_PTSD_BIZU_Mega_26', 'CVB_PTSD_BIZU_Mega_27',
+                            'CVB_PTSD_BIZU_Mega_28', 'CVB_PTSD_BIZU_Mega_29',
+                            'CVB_PTSD_BIZU_Mega_30', 'CVB_PTSD_BIZU_Mega_31',
+                            'CVB_PTSD_BIZU_Mega_32', 'CVB_PTSD_BIZU_Mega_33',
+                            'CVB_PTSD_BIZU_Mega_34', 'CVB_PTSD_BIZU_Mega_35',
+                            'CVB_PTSD_BIZU_Mega_36')
+        ORDER BY
+            m.plate_name;
+         */
         userBean.loginOSUser();
         utx.begin();
 
