@@ -296,7 +296,8 @@ public class ManualTransferActionBean extends RackScanActionBean {
         StationEventType stationEventType = stationEvents.get(scanIndex);
         PositionMapType positionMapType = new PositionMapType();
 
-        if(stationEventType.getEventType().equals("PoolingTransfer")) {
+
+        if(manualTransferDetails.getMessageType().equals(LabEventType.MessageType.PLATE_CHERRY_PICK_EVENT)) {
             positionMapType = scanSource ? ((PlateCherryPickEvent) stationEventType).getSourcePositionMap().get(0) :
                     ((PlateCherryPickEvent) stationEventType).getPositionMap().get(0);
         }

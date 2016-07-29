@@ -157,7 +157,7 @@
                                     <c:set var="transferType" value="${actionBean.stationEvents[stationEventStatus.index].eventType}"/>
 
                                     <c:choose>
-                                        <c:when test="${transferType.equals('PoolingTransfer')}">
+                                        <c:when test="${ stationEvent.class.simpleName.equals('PlateCherryPickEvent')}">
                                             <jsp:include page="transfer_plate_cherry_pick.jsp"/>
                                         </c:when>
                                         <c:otherwise>
@@ -178,7 +178,7 @@
                             <c:set var="source" value="${false}" scope="request"/>
 
                             <c:choose>
-                                <c:when test="${transferType.equals('PoolingTransfer')}">
+                                <c:when test="${ stationEvent.class.simpleName.equals('PlateCherryPickEvent')}">
                                     <jsp:include page="transfer_plate_cherry_pick.jsp"/>
                                 </c:when>
                                 <c:otherwise>
@@ -253,7 +253,7 @@
                     </c:choose>
                 </c:forEach>
 
-                <c:if test="${transferType=='PoolingTransfer'}">
+                <c:if test="${stationEvent.class.simpleName.equals('PlateCherryPickEvent')}">
                     <input type="button" value="Preview" id="PreviewButton" name="PreviewButton" class="btn btn-primary" >
                 </c:if>
 
