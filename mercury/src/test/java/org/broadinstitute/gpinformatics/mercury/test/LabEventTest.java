@@ -8,7 +8,6 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.athena.presentation.products.WorkflowDiagrammer;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSetVolumeConcentration;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSetVolumeConcentrationProducer;
@@ -1104,7 +1103,7 @@ public class LabEventTest extends BaseEventTest {
 //        Controller.startCPURecording(true);
         expectedRouting = SystemRouter.System.MERCURY;
 
-       // Use Standard Exome product, to verify that workflow is taken from LCSet, not Product
+        // Use Standard Exome product, to verify that workflow is taken from LCSet, not Product
         ProductOrder productOrder = ProductOrderTestFactory.buildHybridSelectionProductOrder(NUM_POSITIONS_IN_RACK - 2,
                                                                                              "A");
         Date runDate = new Date();
