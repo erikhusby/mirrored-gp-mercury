@@ -289,7 +289,19 @@
             <div class="row">
                 <div class="form-horizontal span7" >
                 <stripes:hidden name="product"/>
-                <div class="control-group">
+
+                    <security:authorizeBlock roles="<%= roles(PDM, Developer) %>">
+                        <div class="control-group">
+                            <stripes:label for="externalOrderOnly" class="control-label">
+                                Ordered only externally
+                            </stripes:label>
+                            <div class="controls">
+                                <stripes:checkbox id="externalOrderOnly" name="editProduct.externalProduct" style="margin-top: 10px;"/>
+                            </div>
+                        </div>
+                    </security:authorizeBlock>
+
+                    <div class="control-group">
                     <stripes:label for="productFamily" class="control-label">
                         Product Family *
                     </stripes:label>

@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.products;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.comparators.BooleanComparator;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
@@ -166,10 +167,10 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     private ResearchProject positiveControlResearchProject;
 
     @Column(name ="EXTERNAL_ONLY_PRODUCT")
-    private boolean externalOnlyProduct;
+    private Boolean externalOnlyProduct = false;
 
     @Column(name = "SAVED_IN_SAP")
-    private boolean savedInSAP;
+    private Boolean savedInSAP = false;
 
     /**
      * Default no-arg constructor, also used when creating a new Product.
@@ -683,7 +684,11 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     }
 
     public boolean isExternalProduct() {
-        return getPartNumber().startsWith("XT") || isExternalOnlyProduct();
+        return isExternallyNamed() || isExternalOnlyProduct();
+    }
+
+    public boolean isExternallyNamed() {
+        return getPartNumber().startsWith("XT");
     }
 
     @Transient

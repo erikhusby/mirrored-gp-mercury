@@ -193,6 +193,17 @@
 
             <security:authorizeBlock roles="<%= roles(PDM, Developer) %>">
                 <div class="view-control-group control-group">
+                    <label class="control-label label-form">Ordered only externally</label>
+                    <div class="controls">
+                        <div class="form-value">
+                                ${actionBean.editProduct.externalProduct ? "Yes" : "No"}
+                        </div>
+                    </div>
+                </div>
+            </security:authorizeBlock>
+
+            <security:authorizeBlock roles="<%= roles(PDM, Developer) %>">
+                <div class="view-control-group control-group">
                     <label class="control-label label-form">Expect Initial Quant In Mercury</label>
                     <div class="controls">
                         <div class="form-value">

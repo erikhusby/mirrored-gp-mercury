@@ -116,6 +116,7 @@ public class ProductOrderTest {
                 .ignoreProperty("attestationConfirmed")
                 .ignoreProperty("regulatoryInfos")
                 .ignoreProperty("squidWorkRequest")
+                .ignoreProperty("sapOrderNumber")
                 .build();
         tester.testBean(ProductOrder.class, configuration);
 
