@@ -177,6 +177,10 @@ public abstract class TableProcessor implements Serializable {
         return prefix + "Row #" + (dataRowIndex) + " " + message;
     }
 
+    protected void addGeneralMessage(String message) {
+        validationMessages.add(message);
+    }
+
     protected void addDataMessage(String message, int dataRowIndex) {
         validationMessages.add(getPrefixedMessage(message, dataRowIndex));
     }

@@ -69,7 +69,8 @@ public class DeploymentBuilder {
         final File webAppDirectory = new File(directoryName);
         for (File file : FileUtils.listFiles(webAppDirectory, null, true)) {
             if (!file.isDirectory()) {
-                archive.addAsResource(file, file.getPath().substring(directoryName.length()));
+                // Replace backslashes with forward slashes to avoid "file not found" error when deploying on Windows
+                archive.addAsResource(file, file.getPath().replace('\\', '/').substring(directoryName.length()));
             }
         }
         return archive;

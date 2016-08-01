@@ -1,40 +1,78 @@
--------------------------------------------------------
--- https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-4168
--- Remove and prevent duplicate library ancestry relationships
-SET SERVEROUTPUT ON SIZE UNLIMITED;
+/* ******* GPLIM-4136
+ * Make Designation from Mercury available for reporting
+ */
 
-DECLARE
-  TYPE NUM_ARR_TY IS TABLE OF NUMBER(19) INDEX BY PLS_INTEGER;
-  EVENT_ARR NUM_ARR_TY;
-  CHILD_AR NUM_ARR_TY;
-  ANCEST_ARR NUM_ARR_TY;
 BEGIN
-
-  -- Delete duplicates associated with older lab events (by ID)
-  -- About 2600 so no need to limit batch size
-  SELECT min(la.child_event_id) as event_to_delete, la.child_library_id, la.ancestor_library_id
-    BULK COLLECT INTO EVENT_ARR, CHILD_AR, ANCEST_ARR
-    FROM library_ancestry la
-  GROUP BY la.child_library_id, la.ancestor_library_id
-  HAVING count( * ) > 1;
-
-  FORALL IDX IN EVENT_ARR.FIRST .. EVENT_ARR.LAST
-    DELETE FROM library_ancestry
-     WHERE child_event_id = EVENT_ARR(IDX)
-       AND child_library_id = CHILD_AR(IDX)
-       AND ancestor_library_id = ANCEST_ARR(IDX);
-
-  DBMS_OUTPUT.PUT_LINE('DELETED ' || SQL%ROWCOUNT || ' duplicate ancestry rows');
+  execute immediate 'drop table flowcell_designation';
+  exception when others then null;
 END;
 /
 
+CREATE TABLE flowcell_designation (
+  designation_id      NUMERIC(19) NOT NULL,
+  fct_id              NUMERIC(19),
+  fct_name            VARCHAR2(255),
+  fct_type            VARCHAR2(8),
+  designation_library VARCHAR2(255),
+  creation_date       DATE,
+  flowcell_barcode    VARCHAR2(255),
+  flowcell_type       VARCHAR2(255),
+  lane                VARCHAR2(32),
+  concentration       NUMERIC(19,2),
+  is_pool_test        CHAR(1),
+  etl_date            DATE        NOT NULL
+);
+
+create unique index PK_flowcell_designation
+on flowcell_designation ( designation_id );
+
+alter table flowcell_designation
+add constraint pk_flowcell_designation primary key ( designation_id) using index PK_flowcell_designation;
+
+-- Other indexes TBD
+BEGIN
+  execute immediate 'drop table im_fct_create';
+  exception when others then null;
+END;
+/
+CREATE TABLE im_fct_create (
+  line_number          NUMERIC(9)  NOT NULL,
+  etl_date             DATE        NOT NULL,
+  is_delete            CHAR(1)     NOT NULL,
+  designation_id       NUMERIC(19) NOT NULL,
+  fct_id               NUMERIC(19),
+  fct_name             VARCHAR2(255),
+  fct_type             VARCHAR2(8),
+  designation_library  VARCHAR2(255),
+  creation_date        DATE,
+  flowcell_type        VARCHAR2(255),
+  lane                 VARCHAR2(32),
+  concentration        NUMERIC(19,2),
+  is_pool_test         CHAR(1)
+);
+
+BEGIN
+  execute immediate 'drop table im_fct_load';
+  exception when others then null;
+END;
+/
+
+CREATE TABLE im_fct_load (
+  line_number          NUMERIC(9)  NOT NULL,
+  etl_date             DATE        NOT NULL,
+  is_delete            CHAR(1)     NOT NULL,
+  designation_id       NUMERIC(19) NOT NULL,
+  flowcell_barcode     VARCHAR2(255)
+);
+
+-- 'PCR-Plus Norm Pond' shouldn't exist at deploy, but handle explicitly for consistency
+UPDATE LIBRARY_ANCESTRY
+SET ANCESTOR_LIBRARY_TYPE = case ancestor_library_type when 'PCR-Plus Norm Pond' then 'Norm Pond' else 'Pond' end
+WHERE ANCESTOR_LIBRARY_TYPE LIKE '%Pond';
+
+UPDATE LIBRARY_ANCESTRY
+SET CHILD_LIBRARY_TYPE = case ancestor_library_type when 'PCR-Plus Norm Pond' then 'Norm Pond' else 'Pond' end
+WHERE CHILD_LIBRARY_TYPE LIKE '%Pond';
+
 COMMIT;
-
-DROP INDEX PK_ANCESTRY;
-CREATE UNIQUE INDEX PK_ANCESTRY on library_ancestry (child_library_id, ancestor_library_id ) compute statistics;
-ALTER TABLE library_ancestry
-ADD CONSTRAINT PK_ANCESTRY PRIMARY KEY (child_library_id, ancestor_library_id ) USING INDEX PK_ANCESTRY;
-
-DROP INDEX idx_ancestry_reverse;
-CREATE UNIQUE INDEX idx_ancestry_reverse on library_ancestry (ancestor_library_id, child_library_id ) compute statistics;
 

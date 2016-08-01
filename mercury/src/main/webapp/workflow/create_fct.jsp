@@ -102,7 +102,7 @@
             <input type="hidden" name="hasCrsp" value="${actionBean.hasCrsp}"/>
 
             <div class="control-group">
-                <stripes:label for="lcsetText" name="LCSet Names" class="control-label"/>
+                <stripes:label for="lcsetText" name="" class="control-label">LCSET Names</stripes:label>
                 <div class="controls">
                     <stripes:text id="lcsetText" name="lcsetNames"/>
                 </div>
@@ -158,7 +158,7 @@
                                 </stripes:link>
                             </td>
                             <td class="fixedWidthColumn">
-                                <a href="${rowDto.lcsetUrl}" target="JIRA">${rowDto.lcset}</a>
+                                <a href="${rowDto.lcsetUrl}" target="JIRA">${rowDto.lcset}</a>${rowDto.additionalLcsets}
                             </td>
                             <td class="fixedWidthColumn">${rowDto.tubeType}</td>
                             <td class="smallerWidthColumn">${rowDto.numberSamples}</td>
@@ -171,6 +171,7 @@
                             <td class="widerFixedWidthColumn"><span title="${rowDto.startingBatchVessels}">${rowDto.product}</span></td>
                             <input type="hidden" name="rowDtos[${item.index}].barcode" value="${rowDto.barcode}"/>
                             <input type="hidden" name="rowDtos[${item.index}].lcset" value="${rowDto.lcset}"/>
+                            <input type="hidden" name="rowDtos[${item.index}].additionalLcsets" value="${rowDto.additionalLcsets}"/>
                             <input type="hidden" name="rowDtos[${item.index}].tubeType" value="${rowDto.tubeType}"/>
                             <input type="hidden" name="rowDtos[${item.index}].numberSamples" value="${rowDto.numberSamples}"/>
                             <input type="hidden" name="rowDtos[${item.index}].eventDate" value="${rowDto.eventDate}"/>

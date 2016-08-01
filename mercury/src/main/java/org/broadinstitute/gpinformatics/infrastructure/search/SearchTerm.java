@@ -15,7 +15,6 @@ import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnValueType;
 import javax.annotation.Nullable;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -33,9 +32,12 @@ public class SearchTerm implements Serializable, ColumnTabulation {
      * Attached to various search term expressions to dynamically generate required properties.
      * @param <T>
      */
-    public abstract static class Evaluator <T> {
-        public abstract T evaluate(Object entity, SearchContext context);
-    }
+     public abstract static class Evaluator <T> {
+
+         public abstract T evaluate(Object entity, SearchContext context);
+
+
+     }
 
     /**
      * Defines Hibernate path from search result entity to the property being searched.
@@ -234,6 +236,11 @@ public class SearchTerm implements Serializable, ColumnTabulation {
      * Expression to navigate to the property to generate value for display and sorting
      */
     private Evaluator<Object> displayValueExpression;
+
+    /**
+     * Optional expression to enhance UI presentation of result column value
+     */
+    private Evaluator<String> uiDisplayOutputExpression;
 
     /**
      * Header text (or expression to derive it) for displaying search results.
@@ -446,8 +453,25 @@ public class SearchTerm implements Serializable, ColumnTabulation {
         return displayValueExpression;
     }
 
+    /**
+     * Sets the expression implementation to extract value(s) from base entity object
+     * to use as the source of the result column value presented in UI or download.
+     *
+     * @param displayValueExpression The expression implementation to extract the value(s) from base entity
+     */
     public void setDisplayValueExpression(Evaluator<Object> displayValueExpression) {
         this.displayValueExpression = displayValueExpression;
+    }
+
+    /**
+     * Sets the expression implementation used to convert result column value(s) returned from displayValueExpression
+     * into a format for custom formatted display in UI (e.g. HTML CSS, Hyperlink)<br />
+     * Display output defaults to plain text if expression not set.
+     *
+     * @param uiDisplayOutputExpression Custom expression implementation to enhance UI format of display value
+     */
+    public void setUiDisplayOutputExpression(Evaluator<String> uiDisplayOutputExpression) {
+        this.uiDisplayOutputExpression = uiDisplayOutputExpression;
     }
 
     @Override
@@ -676,10 +700,19 @@ public class SearchTerm implements Serializable, ColumnTabulation {
     }
 
     @Override
-    public String evalFormattedExpression(Object value, SearchContext context) {
+    public String evalPlainTextOutputExpression(Object value, SearchContext context) {
         context = addTermToContext(context);
         String multiValueDelimiter = context.getMultiValueDelimiter();
         return evalValueTypeExpression(value, context).format(value, multiValueDelimiter);
+    }
+
+    @Override
+    public String evalUiDisplayOutputExpression(Object value, SearchContext context) {
+        context = addTermToContext(context);
+        if( uiDisplayOutputExpression == null ) {
+            return evalPlainTextOutputExpression(value, context);
+        }
+        return uiDisplayOutputExpression.evaluate(value, context);
     }
 
     @Override
@@ -694,7 +727,7 @@ public class SearchTerm implements Serializable, ColumnTabulation {
 
     /**
      * Get the collection of entities associated with parent row
-     * Convenience method to eliminate ambiguity of calling evalPlainTextExpression
+     * Convenience method to eliminate ambiguity of calling evalPlainTextOutputExpression
      * @param entity  root of object graph that expression navigates.
      * @param context Other objects which (may be) used in the expression.
      */

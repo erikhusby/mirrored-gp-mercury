@@ -1478,4 +1478,141 @@ public class LabEventFixupTest extends Arquillian {
         Assert.assertEquals(barcodedTube.getSampleInstancesV2().size(), 5);
         utx.commit();
     }
+
+    @Test(enabled = false)
+    public void fixupGplim4196() {
+        userBean.loginOSUser();
+
+        fixupVesselToVessel(1380583L, "SM-AZRN2", "1124988659");
+        fixupVesselToVessel(1380582L, "SM-AZRN3", "1124988660");
+        fixupVesselToVessel(1385966L, "SM-AZRNE", "1124988672");
+        fixupVesselToVessel(1385968L, "SM-AZRNQ", "1124988683");
+
+        labEventDao.persist(new FixupCommentary("GPLIM-4196 fixup extraction transfers"));
+        labEventDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim4203() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        long[] ids = {1397778L, 1397779L };
+        for (long id : ids) {
+            LabEvent labEvent = labEventDao.findById(LabEvent.class, id);
+            Assert.assertEquals(labEvent.getLabEventType(), LabEventType.POND_PICO);
+            System.out.println("LabEvent " + id + " type " + labEvent.getLabEventType());
+            labEvent.setLabEventType(LabEventType.CATCH_PICO);
+            System.out.println("   updated to " + labEvent.getLabEventType());
+        }
+
+        labEventDao.persist(new FixupCommentary("GPLIM-4203 changing lab event type to catch pico"));
+        labEventDao.flush();
+        utx.commit();
+    }
+
+    /**
+     * Fix InfiniumHybridization transfers, columns 6 and 7.
+     */
+    @Test(enabled = false)
+    public void fixupSupport1908() throws Exception {
+        /*
+        Used this GAP query to map exported plate names to amp plate barcodes:
+        SELECT
+            m.plate_name,
+            sl.sample_list_name
+        FROM
+            esp.masterplate m
+            INNER JOIN esp.sample_list sl
+                ON   sl.plate_id = m.plate_id
+        WHERE
+            m.plate_name IN ('CVB_PTSD_BIZU_Mega_01', 'CVB_PTSD_BIZU_Mega_02',
+                            'CVB_PTSD_BIZU_Mega_06', 'CVB_PTSD_BIZU_Mega_07',
+                            'CVB_PTSD_BIZU_Mega_08', 'CVB_PTSD_BIZU_Mega_09',
+                            'CVB_PTSD_BIZU_Mega_10', 'CVB_PTSD_BIZU_Mega_11',
+                            'CVB_PTSD_BIZU_Mega_12', 'CVB_PTSD_BIZU_Mega_13',
+                            'CVB_PTSD_BIZU_Mega_14', 'CVB_PTSD_BIZU_Mega_15',
+                            'CVB_PTSD_BIZU_Mega_16', 'CVB_PTSD_BIZU_Mega_17',
+                            'CVB_PTSD_BIZU_Mega_18', 'CVB_PTSD_BIZU_Mega_19',
+                            'CVB_PTSD_BIZU_Mega_20', 'CVB_PTSD_BIZU_Mega_21',
+                            'CVB_PTSD_BIZU_Mega_22', 'CVB_PTSD_BIZU_Mega_23',
+                            'CVB_PTSD_BIZU_Mega_24', 'CVB_PTSD_BIZU_Mega_25',
+                            'CVB_PTSD_BIZU_Mega_26', 'CVB_PTSD_BIZU_Mega_27',
+                            'CVB_PTSD_BIZU_Mega_28', 'CVB_PTSD_BIZU_Mega_29',
+                            'CVB_PTSD_BIZU_Mega_30', 'CVB_PTSD_BIZU_Mega_31',
+                            'CVB_PTSD_BIZU_Mega_32', 'CVB_PTSD_BIZU_Mega_33',
+                            'CVB_PTSD_BIZU_Mega_34', 'CVB_PTSD_BIZU_Mega_35',
+                            'CVB_PTSD_BIZU_Mega_36')
+        ORDER BY
+            m.plate_name;
+         */
+        userBean.loginOSUser();
+        utx.begin();
+
+        String[] plateBarcodes = {
+                "000016838609",
+                "000016844109",
+                "000016841609",
+                "000016841509",
+                "000016837709",
+                "000016851109",
+                "000016838109",
+                "000016850309",
+                "000016840109",
+                "000016851009",
+                "000016852209",
+                "000016851309",
+                "000016844209",
+                "000016851609",
+                "000016849309",
+                "000016844309",
+                "000016839809",
+                "000016849009",
+                "000016849509",
+                "000016844709",
+                "000016841709",
+                "000016842209",
+                "000016839709",
+                "000016849109",
+                "000016845209",
+                "000016860809",
+                "000016863809",
+                "000016861809",
+                "000016849409",
+                "000016849809",
+                "000016839609",
+                "000016842609",
+                "000016839409"
+        };
+        Map<VesselPosition, VesselPosition> mapSourceToDest = new HashMap<VesselPosition, VesselPosition>() {{
+            put(VesselPosition.B06, VesselPosition.R02C01);
+            put(VesselPosition.C06, VesselPosition.R03C01);
+            put(VesselPosition.D06, VesselPosition.R04C01);
+            put(VesselPosition.E06, VesselPosition.R05C01);
+            put(VesselPosition.F06, VesselPosition.R06C01);
+            put(VesselPosition.G06, VesselPosition.R07C01);
+            put(VesselPosition.B07, VesselPosition.R02C01);
+            put(VesselPosition.C07, VesselPosition.R03C01);
+            put(VesselPosition.D07, VesselPosition.R04C01);
+            put(VesselPosition.E07, VesselPosition.R05C01);
+            put(VesselPosition.F07, VesselPosition.R06C01);
+            put(VesselPosition.G07, VesselPosition.R07C01);
+        }};
+        for (String plateBarcode : plateBarcodes) {
+            StaticPlate staticPlate = staticPlateDao.findByBarcode(plateBarcode);
+            for (CherryPickTransfer cherryPickTransfer : staticPlate.getContainerRole().getCherryPickTransfersFrom()) {
+                VesselPosition vesselPosition = mapSourceToDest.get(cherryPickTransfer.getSourcePosition());
+                if (vesselPosition != null) {
+                    System.out.println("For " + staticPlate.getLabel() + " changing transfer to " +
+                            cherryPickTransfer.getTargetVesselContainer().getEmbedder().getLabel() + " " +
+                            cherryPickTransfer.getTargetPosition() + " to " + vesselPosition);
+                    cherryPickTransfer.setTargetPosition(vesselPosition);
+                }
+            }
+        }
+
+        labEventDao.persist(new FixupCommentary("SUPPORT-1908 fix Infinium transfers"));
+        labEventDao.flush();
+        utx.commit();
+    }
 }

@@ -63,6 +63,7 @@ public class CrspPipelineUtils {
         put("whole_exome_illumina_coding_v1", "P-CLA-0003");
         put("eMerge_Oct16_5pad_CDS", "P-VAL-0010");
         put("Myeloid_Lymphoid_Panel_v1-88774", "P-VAL-0015");
+        put("eMerge_v2_83311", "P-VAL-0016");
     }};
 
     /**

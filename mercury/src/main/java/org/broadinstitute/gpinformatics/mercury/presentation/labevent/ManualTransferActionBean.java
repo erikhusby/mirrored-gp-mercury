@@ -27,6 +27,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.vessel.RackScanActionBean;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.type.TypeReference;
@@ -621,6 +622,24 @@ public class ManualTransferActionBean extends RackScanActionBean {
 
     @HandlesEvent(TRANSFER_ACTION)
     public Resolution transfer() {
+        BettaLIMSMessage bettaLIMSMessage = buildBettaLIMSMessage();
+
+        if (getContext().getValidationErrors().isEmpty()) {
+            try {
+                ObjectMarshaller<BettaLIMSMessage> bettaLIMSMessageObjectMarshaller =
+                        new ObjectMarshaller<>(BettaLIMSMessage.class);
+                bettaLimsMessageResource.storeAndProcess(bettaLIMSMessageObjectMarshaller.marshal(bettaLIMSMessage));
+                addMessage("Transfer recorded successfully.");
+            } catch (Exception e) {
+                log.error("Failed to process message", e);
+                addGlobalValidationError(e.getMessage());
+            }
+        }
+        return new ForwardResolution(MANUAL_TRANSFER_PAGE);
+    }
+
+    @Nullable
+    BettaLIMSMessage buildBettaLIMSMessage() {
         MessageCollection messageCollection = new MessageCollection();
         LabBatch labBatch = null;
         if (batchName != null) {
@@ -733,19 +752,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
                 eventIndex++;
             }
         }
-
-        if (getContext().getValidationErrors().isEmpty()) {
-            try {
-                ObjectMarshaller<BettaLIMSMessage> bettaLIMSMessageObjectMarshaller =
-                        new ObjectMarshaller<>(BettaLIMSMessage.class);
-                bettaLimsMessageResource.storeAndProcess(bettaLIMSMessageObjectMarshaller.marshal(bettaLIMSMessage));
-                addMessage("Transfer recorded successfully.");
-            } catch (Exception e) {
-                log.error("Failed to process message", e);
-                addGlobalValidationError(e.getMessage());
-            }
-        }
-        return new ForwardResolution(MANUAL_TRANSFER_PAGE);
+        return bettaLIMSMessage;
     }
 
     private void cleanupPositionMap(PositionMapType positionMapType, PlateType plate,
@@ -871,5 +878,20 @@ public class ManualTransferActionBean extends RackScanActionBean {
 
     public LabEventType.ManualTransferDetails getManualTransferDetails() {
         return manualTransferDetails;
+    }
+
+    /** For testing. */
+    void setManualTransferDetails(LabEventType.ManualTransferDetails manualTransferDetails) {
+        this.manualTransferDetails = manualTransferDetails;
+    }
+
+    /** For testing. */
+    void setUserBean(UserBean userBean) {
+        this.userBean = userBean;
+    }
+
+    /** For testing. */
+    void setLabVesselDao(LabVesselDao labVesselDao) {
+        this.labVesselDao = labVesselDao;
     }
 }

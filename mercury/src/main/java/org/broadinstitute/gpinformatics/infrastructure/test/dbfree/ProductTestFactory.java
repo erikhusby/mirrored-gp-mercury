@@ -27,6 +27,7 @@ public class ProductTestFactory {
                 new Product("productName", new ProductFamily("Test product family"), "description", partNumber,
                         new Date(), new Date(), 12345678, 123456, 100, 96, "inputRequirements", "deliverables", true,
                         workflow, pdmOrderableOnly, "an aggregation data type");
+        product.setReadLength(76);
         if (addRisk) {
             product.addRiskCriteria(new RiskCriterion(RiskCriterion.RiskCriteriaType.MANUAL, Operator.IS, "true"));
         }

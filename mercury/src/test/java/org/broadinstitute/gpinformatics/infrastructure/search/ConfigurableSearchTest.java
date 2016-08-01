@@ -70,7 +70,7 @@ public class ConfigurableSearchTest extends Arquillian {
 
         // Create instance
         SearchInstance searchInstance = new SearchInstance();
-        String entity = "LabEvent";
+        String entity = ColumnEntity.LAB_EVENT.getEntityName();
         ConfigurableSearchDefinition configurableSearchDef = SearchDefinitionFactory.getForEntity(entity);
         SearchInstance.SearchValue searchValue = searchInstance.addTopLevelTerm("EventDate",
                 configurableSearchDef);
@@ -232,7 +232,7 @@ public class ConfigurableSearchTest extends Arquillian {
 
         // Create instance
         SearchInstance searchInstance = new SearchInstance();
-        String entity = "MercurySample";
+        String entity = ColumnEntity.MERCURY_SAMPLE.getEntityName();
         ConfigurableSearchDefinition configurableSearchDef = SearchDefinitionFactory.getForEntity(entity);
         SearchInstance.SearchValue searchValue = searchInstance.addTopLevelTerm("LCSET",
                 configurableSearchDef);
@@ -344,7 +344,7 @@ public class ConfigurableSearchTest extends Arquillian {
     @Test
     public void testEventMaterialType() {
         SearchInstance searchInstance = new SearchInstance();
-        String entity = "LabVessel";
+        String entity = ColumnEntity.LAB_VESSEL.getEntityName();
         ConfigurableSearchDefinition configurableSearchDef = SearchDefinitionFactory.getForEntity(entity);
 
         SearchInstance.SearchValue searchValue = searchInstance.addTopLevelTerm("PDO", configurableSearchDef);
