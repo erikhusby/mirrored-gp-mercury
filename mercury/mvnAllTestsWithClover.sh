@@ -1,8 +1,11 @@
-#!/bin/bash -l
+#!/bin/bash
 #
 # Run all the unit tests using each of the several profiles.
 #
-use Maven-3.0
+source /broad/tools/scripts/useuse
+use Maven-3.1
+use Java-1.7
+
 if [ "x$JBOSS_HOME" == "x" ]
 then
     JBOSS_HOME=/prodinfolocal/jboss-as-7.1.1.Final/
@@ -13,24 +16,47 @@ then
     KEYSTORE_PASSWORD="changeit"
     SSL_OPTS="-DkeystoreFile=$KEYSTORE_FILE -DkeystorePassword=$KEYSTORE_PASSWORD"
 fi
-MAVEN_OPTS="-Xms4g -XX:MaxPermSize=1g $SSL_OPTS"
-OPTIONS="--offline -PArquillian-JBossAS7-Remote,BUILD,Clover.All -DtestFailureIgnore=true -Djava.awt.headless=true --batch-mode -Dmaven.download.meter=silent -Dmaven.clover.licenseLocation=/prodinfolocal/BambooHome/clover.license"
-PROFILES="Tests.ArqSuite.Standard Tests.ArqSuite.Stubby Tests.DatabaseFree Tests.ExternalIntegration Tests.Alternatives"
-#PROFILES="Tests.ArqSuite.Standard"
+if [ "x$BUILD_PROFILE" == "x" ]
+then
+    BUILD_PROFILE=BUILD
+fi
 
-cat <<EOF
-Using:
+MAVEN_OPTS="-Xms4g -XX:MaxPermSize=1g $SSL_OPTS"
+OPTIONS="-PArquillian-JBossAS7-Remote,$BUILD_PROFILE,Clover.All -Djava.awt.headless=true --batch-mode -Dmaven.download.meter=silent -Dmaven.clover.licenseLocation=/prodinfolocal/BambooHome/clover.license"
+PROFILES="Tests.ArqSuite.Standard Tests.ArqSuite.Stubby Tests.Multithreaded Tests.DatabaseFree Tests.ExternalIntegration Tests.Alternatives"
+#PROFILES="Tests.DatabaseFree Tests.Multithreaded"
+#PROFILES="Tests.Multithreaded"
+
+EXIT_STATUS=0
+
+if [ -f "tests.log" ]
+then
+    rm tests.log
+fi
+
+mvn clean | tee tests.log
+
+for PROFILE in $PROFILES
+do
+    cat <<EOF
+>>>>>
+
+Properties
 JBOSS_HOME=$JBOSS_HOME
 MAVEN_OPTS=$MAVEN_OPTS
 OPTIONS=$OPTIONS
-PROFIES=$PROFILES
+PROFILES=$PROFILES
+
+>>>> Executing profile $PROFILE
+
 EOF
 
-rm tests.log
-for PROFILE in $PROFILES
-do
-    echo "Using profile $PROFILE"
-    mvn $OPTIONS -P$PROFILE clover2:setup verify | tee -a tests.log
+    mvn $OPTIONS -P$PROFILE clover:setup verify | tee -a tests.log
+    if [ ${PIPESTATUS[0]} -ne 0 ]
+    then
+        EXIT_STATUS=${PIPESTATUS[0]}
+    fi
+
     if [ -e "target/clover/surefire-reports" ]
     then
         mv target/clover/surefire-reports target/clover/surefire-reports-$PROFILE
@@ -41,4 +67,10 @@ do
     fi
 done
 
-mvn $OPTIONS clover2:aggregate clover2:clover | tee -a tests.log
+mvn $OPTIONS clover:aggregate clover:clover | tee -a tests.log
+if [ ${PIPESTATUS[0]} -ne 0 ]
+then
+    EXIT_STATUS=${PIPESTATUS[0]}
+fi
+
+exit $EXIT_STATUS
