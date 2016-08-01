@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.sap;
 
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
@@ -243,13 +244,13 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         newMaterial.setCompanyCode(
                 product.isExternalProduct() ? SapIntegrationClientImpl.BROAD_EXTERNAL_SERVICES_COMPANY_CODE :
                         SapIntegrationClientImpl.BROAD_COMPANY_CODE);
-        newMaterial.setDescription(product.getProductName());
+        newMaterial.setMaterialName(product.getProductName());
+        newMaterial.setDescription(product.getDescription());
         newMaterial.setDeliverables(product.getDeliverables());
         newMaterial.setInputRequirements(product.getInputRequirements());
-        newMaterial.setBaseUnitOfMeasure("1");
+        newMaterial.setBaseUnitOfMeasure("EA");
         BigDecimal minimumOrderQuantity = product.getMinimumOrderSize()!= null?new BigDecimal(product.getMinimumOrderSize()):BigDecimal.ONE;
         newMaterial.setMinimumOrderQuantity(minimumOrderQuantity);
-
 
         getClient().createMaterial(newMaterial);
     }

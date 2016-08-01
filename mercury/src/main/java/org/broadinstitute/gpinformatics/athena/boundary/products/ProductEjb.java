@@ -305,12 +305,12 @@ public class ProductEjb {
                 } else {
                     sapService.createProductInSAP(productToPublish);
                 }
+                productToPublish.setSavedInSAP(true);
+
+                productDao.persist(productToPublish);
             } catch (SAPIntegrationException e) {
                 errorMessages.add(e.getMessage());
             }
-            productToPublish.setSavedInSAP(true);
-
-            productDao.persist(productToPublish);
         }
         if (CollectionUtils.isNotEmpty(productsToPublish)) {
             throw new SAPIntegrationException(errorMessages);
