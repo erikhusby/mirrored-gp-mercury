@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.products;
 
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.collections4.comparators.BooleanComparator;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
@@ -726,7 +725,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     }
 
 
-    private boolean isExternalOnlyProduct() {
+    public boolean isExternalOnlyProduct() {
         return externalOnlyProduct;
     }
 

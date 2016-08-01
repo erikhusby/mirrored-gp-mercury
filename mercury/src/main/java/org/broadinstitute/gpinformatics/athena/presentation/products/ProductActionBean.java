@@ -434,6 +434,7 @@ public class ProductActionBean extends CoreActionBean {
     public Resolution publishToSap() {
         try {
             productEjb.publishProductToSAP(editProduct);
+            addMessage("Product \"" + editProduct.getProductName() + "\" Successfully published to SAP");
         } catch (SAPIntegrationException e) {
             addGlobalValidationError("Unable to update the product in SAP. " + e.getMessage());
         }

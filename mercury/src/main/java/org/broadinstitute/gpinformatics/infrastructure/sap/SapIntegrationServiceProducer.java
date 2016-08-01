@@ -40,7 +40,6 @@ public class SapIntegrationServiceProducer {
     @Default
     @RequestScoped
     public SapIntegrationService produce(@New SapIntegrationServiceStub sapStub, @New SapIntegrationServiceImpl svc) {
-        System.out.println("In the produce method for SAP Integration Service Producer");
         if(deployment == Deployment.STUBBY) {
             return sapStub;
         }

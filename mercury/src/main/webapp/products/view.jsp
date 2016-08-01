@@ -196,7 +196,7 @@
                     <label class="control-label label-form">Ordered only externally</label>
                     <div class="controls">
                         <div class="form-value">
-                                ${actionBean.editProduct.externalProduct ? "Yes" : "No"}
+                                ${actionBean.editProduct.externalOnlyProduct ? "Yes" : "No"}
                         </div>
                     </div>
                 </div>

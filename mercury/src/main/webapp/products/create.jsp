@@ -296,7 +296,7 @@
                                 Ordered only externally
                             </stripes:label>
                             <div class="controls">
-                                <stripes:checkbox id="externalOrderOnly" name="editProduct.externalProduct" style="margin-top: 10px;"/>
+                                <stripes:checkbox id="externalOrderOnly" name="editProduct.externalOnlyProduct" style="margin-top: 10px;"/>
                             </div>
                         </div>
                     </security:authorizeBlock>
