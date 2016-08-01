@@ -13,6 +13,7 @@ import java.util.Set;
 public class RowDto {
     private String barcode;
     private String lcset;
+    private String additionalLcsets;
     private int numberLanes = 0;
     private BigDecimal loadingConc;
     private String eventDate;
@@ -27,11 +28,13 @@ public class RowDto {
     public RowDto() {
     }
 
-    public RowDto(@Nonnull String barcode, @Nonnull String lcset, @Nonnull String eventDate, @Nonnull String product,
-                  @Nonnull String startingBatchVessels, @Nonnull String tubeType, @Nonnull BigDecimal loadingConc,
-                  String lcsetUrl, @Nonnull String regulatoryDesignation, int numberSamples) {
+    public RowDto(@Nonnull String barcode, @Nonnull String lcset, String additionalLcsets, @Nonnull String eventDate,
+                  @Nonnull String product, @Nonnull String startingBatchVessels, @Nonnull String tubeType,
+                  @Nonnull BigDecimal loadingConc, String lcsetUrl, @Nonnull String regulatoryDesignation,
+                  int numberSamples) {
         this.barcode = barcode;
         this.lcset = lcset;
+        this.additionalLcsets = additionalLcsets;
         this.eventDate = eventDate;
         this.product = product;
         this.startingBatchVessels = startingBatchVessels;
@@ -45,7 +48,7 @@ public class RowDto {
     public RowDto(@Nonnull String barcode, @Nonnull String lcset, @Nonnull String eventDate, @Nonnull String product,
                   @Nonnull String startingBatchVessels, @Nonnull String tubeType, @Nonnull BigDecimal loadingConc,
                   int numberLanes) {
-        this(barcode, lcset, eventDate, product, startingBatchVessels, tubeType, loadingConc, null, "", 0);
+        this(barcode, lcset, "", eventDate, product, startingBatchVessels, tubeType, loadingConc, null, "", 0);
         setNumberLanes(numberLanes);
     }
 
@@ -81,6 +84,14 @@ public class RowDto {
 
     public void setLcset(String lcset) {
         this.lcset = lcset;
+    }
+
+    public void setAdditionalLcsets(String additionalLcsets) {
+        this.additionalLcsets = additionalLcsets;
+    }
+
+    public String getAdditionalLcsets() {
+        return additionalLcsets;
     }
 
     public String getEventDate() {

@@ -76,6 +76,13 @@ public class LiveThriftServiceTest {
     }
 
     @Test(groups = EXTERNAL_INTEGRATION)
+    public void testFetchRunByBarcode() throws Exception {
+        TZamboniRun run = thriftService.fetchRunByBarcode("C0GHCACXX120320");
+        assertThat(run, not(nullValue()));
+        assertThat(run.getRunName(), equalTo("120320_SL-HBN_0159_AFCC0GHCACXX"));
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION)
     public void testFetchRunNotFound() throws Exception {
         mockLog.info(eq(
                 "Run bogus run doesn't appear to have been registered yet.  Please try again later or contact the mercury team if the problem persists."));

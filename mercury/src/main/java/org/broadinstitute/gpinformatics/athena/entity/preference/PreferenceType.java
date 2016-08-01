@@ -63,6 +63,15 @@ public enum PreferenceType {
     USER_LAB_METRIC_COLUMN_SETS("User Lab Metric Column Sets", PreferenceScope.USER, 1,
             new ColumnSetsPreference.ColumnSetsPreferenceDefinitionCreator()),
 
+    GLOBAL_LAB_METRIC_RUN_SEARCH_INSTANCES("Global Lab Metric Run Search Instances", PreferenceScope.GLOBAL, 1,
+            new SearchInstanceList.SearchInstanceListPreferenceDefinitionCreator()),
+    GLOBAL_LAB_METRIC_RUN_COLUMN_SETS("Global Lab Metric Run Column Sets", PreferenceScope.GLOBAL, 1,
+            new ColumnSetsPreference.ColumnSetsPreferenceDefinitionCreator()),
+    USER_LAB_METRIC_RUN_SEARCH_INSTANCES("User Lab Metric Run Search Instances", PreferenceScope.USER, 1,
+            new SearchInstanceList.SearchInstanceListPreferenceDefinitionCreator()),
+    USER_LAB_METRIC_RUN_COLUMN_SETS("User Lab Metric Run Column Sets", PreferenceScope.USER, 1,
+            new ColumnSetsPreference.ColumnSetsPreferenceDefinitionCreator()),
+
     WORKFLOW_CONFIGURATION("Workflow Configuration", PreferenceScope.GLOBAL, 1,
             new WorkflowConfig.WorkflowConfigPreferenceDefinitionCreator());
 
@@ -71,7 +80,7 @@ public enum PreferenceType {
     private final PreferenceDefinitionCreator creator;
     private final int saveLimit;
 
-    private PreferenceType(
+    PreferenceType(
             String preferenceTypeName,
             PreferenceScope preferenceScope,
             int saveLimit,

@@ -65,6 +65,8 @@ public class IlluminaRunResourceTest extends Arquillian {
     private TZamboniRun zamboniRun;
 
     public static final String RUN_NAME = "120320_SL-HBN_0159_AFCC0GHCACXX"; // has bsp samples
+    public static final String RUN_BARCODE = "C0GHCACXX120320";
+    public static final String MERCURY_RUN_BARCODE = "H7821ADXX131218";
 
     private final String CHAMBER = "2";
 
@@ -110,6 +112,19 @@ public class IlluminaRunResourceTest extends Arquillian {
         ZimsIlluminaRun runBean = runLaneResource.getRun(RUN_NAME);
 
         doAssertions(zamboniRun, runBean, wrIdToPDO);
+    }
+
+    @Test(groups = ALTERNATIVES)
+    public void testFetchByBarcodeInContainer() throws Exception {
+        wrIdToPDO.put(29225L, pdoDao.findByBusinessKey(PDO_KEY));
+        ZimsIlluminaRun runBean = runLaneResource.getRunByBarcode(RUN_BARCODE);
+        doAssertions(zamboniRun, runBean, wrIdToPDO);
+    }
+
+    @Test(groups = ALTERNATIVES)
+    public void testFetchByBarcodeMercuryInContainer() throws Exception {
+        ZimsIlluminaRun runBean = runLaneResource.getRunByBarcode(MERCURY_RUN_BARCODE);
+        Assert.assertEquals(runBean.getName(), "131218_SL-HDJ_0267_BFCH7821ADXX");
     }
 
     /**
