@@ -385,7 +385,6 @@ public class LabEventTest extends BaseEventTest {
 //        Controller.stopCPURecording();
     }
 
-
     /**
      * Build object graph for Exome Express messages, verify chain of events.
      */
@@ -1157,7 +1156,7 @@ public class LabEventTest extends BaseEventTest {
                         Workflow.ICE_EXOME_EXPRESS);
 
         IlluminaFlowcell illuminaFlowcell = hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell();
-        runTransferVisualizer(illuminaFlowcell);
+        runTransferVisualizer(denatureSource);
         Set<SampleInstanceV2> lane1SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPositionV2(
                 VesselPosition.LANE1);
         Assert.assertEquals(lane1SampleInstances.iterator().next().getReagents().size(), 3,

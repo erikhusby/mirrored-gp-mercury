@@ -222,6 +222,8 @@ public enum LabEventType {
     POOLING_TRANSFER("PoolingTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            new ManualTransferDetails.Builder(MessageType.PLATE_CHERRY_PICK_EVENT, RackOfTubes.RackType.Matrix96,
+                    RackOfTubes.RackType.Matrix96).reagentNames(new String[]{"EB"}).build(),
             LibraryType.POOLED),
     ICE_POST_HYB_POOLING_TRANSFER("IcePostHybPoolingTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
