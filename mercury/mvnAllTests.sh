@@ -27,12 +27,6 @@ PROFILES="Tests.ArqSuite.Standard Tests.ArqSuite.Stubby Tests.Multithreaded Test
 #PROFILES="Tests.DatabaseFree"
 #PROFILES="Tests.Multithreaded"
 
-
-if [ `uname` == "Linux" ]
-then
-    OPTIONS="$OPTIONS -DargLine=-XX:ReservedCodeCacheSize=256m"
-fi
-
 EXIT_STATUS=0
 
 if [ -f "tests.log" ]
