@@ -294,7 +294,6 @@ public class ManualTransferActionBean extends RackScanActionBean {
         StationEventType stationEventType = stationEvents.get(scanIndex);
         PositionMapType positionMapType = new PositionMapType();
 
-
         if(manualTransferDetails.getMessageType().equals(LabEventType.MessageType.PLATE_CHERRY_PICK_EVENT)) {
             positionMapType = scanSource ? ((PlateCherryPickEvent) stationEventType).getSourcePositionMap().get(0) :
                     ((PlateCherryPickEvent) stationEventType).getPositionMap().get(0);
@@ -394,28 +393,28 @@ public class ManualTransferActionBean extends RackScanActionBean {
                         String destWell = "";
                         CherryPickSourceType cherryPickSourceType = new CherryPickSourceType();
                         if(item.sourceIDs.size() >= item.targetIDs.size() ) {
-                                destWell= parseWellFromJson(item.targetIDs.get(0));
-                                for (String sourceItem : item.sourceIDs) {
-                                    srcWell= parseWellFromJson(sourceItem);
-                                    cherryPickSourceType = new CherryPickSourceType();
-                                    cherryPickSourceType.setBarcode(plateCherryPickEvent.getSourcePlate().get(0).getBarcode());
-                                    cherryPickSourceType.setWell(srcWell);
-                                    cherryPickSourceType.setDestinationBarcode(plateCherryPickEvent.getPlate().get(0).getBarcode());
-                                    cherryPickSourceType.setDestinationWell(destWell);
-                                    plateCherryPickEvent.getSource().add(cherryPickSourceType);
-                                }
+                            destWell= parseWellFromJson(item.targetIDs.get(0));
+                            for (String sourceItem : item.sourceIDs) {
+                                srcWell= parseWellFromJson(sourceItem);
+                                cherryPickSourceType = new CherryPickSourceType();
+                                cherryPickSourceType.setBarcode(plateCherryPickEvent.getSourcePlate().get(0).getBarcode());
+                                cherryPickSourceType.setWell(srcWell);
+                                cherryPickSourceType.setDestinationBarcode(plateCherryPickEvent.getPlate().get(0).getBarcode());
+                                cherryPickSourceType.setDestinationWell(destWell);
+                                plateCherryPickEvent.getSource().add(cherryPickSourceType);
+                            }
                         }
                         if(item.targetIDs.size() >= item.sourceIDs.size() ) {
-                                srcWell= parseWellFromJson(item.sourceIDs.get(0));
-                                for (String targetItem : item.targetIDs) {
-                                    destWell= parseWellFromJson(targetItem);
-                                    cherryPickSourceType = new CherryPickSourceType();
-                                    cherryPickSourceType.setBarcode(plateCherryPickEvent.getSourcePlate().get(0).getBarcode());
-                                    cherryPickSourceType.setWell(srcWell);
-                                    cherryPickSourceType.setDestinationBarcode(plateCherryPickEvent.getPlate().get(0).getBarcode());
-                                    cherryPickSourceType.setDestinationWell(destWell);
-                                    plateCherryPickEvent.getSource().add(cherryPickSourceType);
-                                }
+                            srcWell= parseWellFromJson(item.sourceIDs.get(0));
+                            for (String targetItem : item.targetIDs) {
+                                destWell= parseWellFromJson(targetItem);
+                                cherryPickSourceType = new CherryPickSourceType();
+                                cherryPickSourceType.setBarcode(plateCherryPickEvent.getSourcePlate().get(0).getBarcode());
+                                cherryPickSourceType.setWell(srcWell);
+                                cherryPickSourceType.setDestinationBarcode(plateCherryPickEvent.getPlate().get(0).getBarcode());
+                                cherryPickSourceType.setDestinationWell(destWell);
+                                plateCherryPickEvent.getSource().add(cherryPickSourceType);
+                            }
                         }
                     }
                 }
@@ -560,8 +559,6 @@ public class ManualTransferActionBean extends RackScanActionBean {
         SOURCE,
         TARGET
     }
-
-
 
     private Map<String, LabVessel> loadPlateFromDb(PlateType plateType, PositionMapType positionMapType,
             boolean required, @Nullable LabBatch labBatch, MessageCollection messageCollection, Direction direction) {
@@ -720,7 +717,6 @@ public class ManualTransferActionBean extends RackScanActionBean {
                             manualTransferDetails.getTargetVesselTypeGeometry());
 
                     bettaLIMSMessage.getPlateCherryPickEvent().add((PlateCherryPickEvent) stationEvent);
-
                 } else if (stationEvent instanceof ReceptaclePlateTransferEvent) {
                     bettaLIMSMessage.getReceptaclePlateTransferEvent().add((ReceptaclePlateTransferEvent) stationEvent);
                 } else if (stationEvent instanceof ReceptacleTransferEventType) {

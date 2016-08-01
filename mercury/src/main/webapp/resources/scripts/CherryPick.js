@@ -1,5 +1,10 @@
 $(document).ready(function () {
 
+   /****************************************************
+    * This script is used for the manual pooling tranfer.
+    * It must be included in the manual_transfer.jsp page.
+    ****************************************************/
+
     var workQueue = [];
     var sourceIDs = [];
     var targetIDs = [];
@@ -11,7 +16,6 @@ $(document).ready(function () {
     jsPlumb.ready(function () {
 
         //Initial jsPlumb setup of line types and endpoints.
-
         var instance = jsPlumb.getInstance({
             Connector: "StateMachine",
             PaintStyle: {strokeStyle: "red", lineWidth: 3},
@@ -33,8 +37,7 @@ $(document).ready(function () {
         {preview(false)});
 
         //Main handler for the preview feature.
-        function preview()
-        {
+        function preview() {
 
             instance.deleteEveryEndpoint();
             instance.detachEveryConnection();
@@ -48,8 +51,7 @@ $(document).ready(function () {
 
             //Delete any missing keys from the queue before it is sent to the server.
             for(key in workQueue) {
-                if(workQueue[key].sourceIDs.length == 0 || workQueue[key].targetIDsength == 0)
-                {
+                if(workQueue[key].sourceIDs.length == 0 || workQueue[key].targetIDsength == 0) {
                     workQueue.splice(key,1);
                     directionArr.splice(key,1);
                 }
@@ -72,8 +74,6 @@ $(document).ready(function () {
                 sourceIDs = [];
                 targetIDs = queueItem.targetIDs.slice();
                 sourceIDs = queueItem.sourceIDs.slice();
-                //console.log(targetIDs);
-                //console.log(sourceIDs);
                 var es = document.getElementById("dataSrc");
                 es.value = sourceIDs.toString();
                 var ed = document.getElementById("dataDest");
@@ -188,6 +188,7 @@ $(document).ready(function () {
     //Select rows and cols
     function selectRow(id) {
 
+        id = id.replace("btn_",".");
         var termTableInputIDs = [];
         var count = 0;
         $(id).each(function () {
@@ -311,129 +312,18 @@ $(document).ready(function () {
 
 
     //Row Column button select events.
-    $('#btn_src_col_01').click(function () {
-        selectRow('.src_col_0');
-    });
-    $('#btn_src_col_02').click(function () {
-        selectRow('.src_col_1');
-    });
-    $('#btn_src_col_03').click(function () {
-        selectRow('.src_col_2');
-    });
-    $('#btn_src_col_04').click(function () {
-        selectRow('.src_col_3');
-    });
-    $('#btn_src_col_05').click(function () {
-        selectRow('.src_col_4');
-    });
-    $('#btn_src_col_06').click(function () {
-        selectRow('.src_col_5');
-    });
-    $('#btn_src_col_07').click(function () {
-        selectRow('.src_col_6');
-    });
-    $('#btn_src_col_08').click(function () {
-        selectRow('.src_col_7');
-    });
-    $('#btn_src_col_09').click(function () {
-        selectRow('.src_col_8');
-    });
-    $('#btn_src_col_10').click(function () {
-        selectRow('.src_col_9');
-    });
-    $('#btn_src_col_11').click(function () {
-        selectRow('.src_col_10');
-    });
-    $('#btn_src_col_12').click(function () {
-        selectRow('.src_col_11');
+    $('.xs-col').click(function () {
+        var item = $(this).closest("td").find(".btn-primary ").attr('id');
+        var index = (parseInt(item.slice(-2))-1) ;
+        item = (item.substr(0,item.length-2)+index);
+        selectRow(item);
     });
 
-
-    $('#btn_dest_col_01').click(function () {
-        selectRow('.dest_col_0');
-    });
-    $('#btn_dest_col_02').click(function () {
-        selectRow('.dest_col_1');
-    });
-    $('#btn_dest_col_03').click(function () {
-        selectRow('.dest_col_2');
-    });
-    $('#btn_dest_col_04').click(function () {
-        selectRow('.dest_col_3');
-    });
-    $('#btn_dest_col_05').click(function () {
-        selectRow('.dest_col_4');
-    });
-    $('#btn_dest_col_06').click(function () {
-        selectRow('.dest_col_5');
-    });
-    $('#btn_dest_col_07').click(function () {
-        selectRow('.dest_col_6');
-    });
-    $('#btn_dest_col_08').click(function () {
-        selectRow('.dest_col_7');
-    });
-    $('#btn_dest_col_09').click(function () {
-        selectRow('.dest_col_8');
-    });
-    $('#btn_dest_col_10').click(function () {
-        selectRow('.dest_col_9');
-    });
-    $('#btn_dest_col_11').click(function () {
-        selectRow('.dest_col_10');
-    });
-    $('#btn_dest_col_12').click(function () {
-        selectRow('.dest_col_11');
-    });
-
-
-    $('#btn_src_row_A').click(function () {
-        selectRow('.src_row_0');
-    });
-    $('#btn_src_row_B').click(function () {
-        selectRow('.src_row_1');
-    });
-    $('#btn_src_row_C').click(function () {
-        selectRow('.src_row_2');
-    });
-    $('#btn_src_row_D').click(function () {
-        selectRow('.src_row_3');
-    });
-    $('#btn_src_row_E').click(function () {
-        selectRow('.src_row_4');
-    });
-    $('#btn_src_row_F').click(function () {
-        selectRow('.src_row_5');
-    });
-    $('#btn_src_row_G').click(function () {
-        selectRow('.src_row_6');
-    });
-    $('#btn_src_row_H').click(function () {
-        selectRow('.src_row_7');
-    });
-    $('#btn_dest_row_A').click(function () {
-        selectRow('.dest_row_0');
-    });
-    $('#btn_dest_row_B').click(function () {
-        selectRow('.dest_row_1');
-    });
-    $('#btn_dest_row_C').click(function () {
-        selectRow('.dest_row_2');
-    });
-    $('#btn_dest_row_D').click(function () {
-        selectRow('.dest_row_3');
-    });
-    $('#btn_dest_row_E').click(function () {
-        selectRow('.dest_row_4');
-    });
-    $('#btn_dest_row_F').click(function () {
-        selectRow('.dest_row_5');
-    });
-    $('#btn_dest_row_G').click(function () {
-        selectRow('.dest_row_6');
-    });
-    $('#btn_dest_row_H').click(function () {
-        selectRow('.dest_row_7');
+    $('.xs-row').click(function () {
+        var item = $(this).closest("td").find(".btn-primary ").attr('id');
+        var index = item.slice(-1).charCodeAt(0) - 65; //Convert letters to numbers
+        item = item.substr(0,item.length-1) + index;
+        selectRow(item);
     });
 
 
@@ -441,26 +331,22 @@ $(document).ready(function () {
     function StoreSessions()
     {
         var data = localStorage.getItem("targetIDs");
-        if (data != null) //There's stored data
-        {
+        if (data != null) {
             targetIDs = JSON.parse(data);
             localStorage.removeItem("targetIDs");
         }
         data = localStorage.getItem("sourceIDs");
-        if (data != null) //There's stored data
-        {
+        if (data != null) {
             sourceIDs = JSON.parse(data);
             localStorage.removeItem("sourceIDs");
         }
         data = localStorage.getItem("workQueue");
-        if (data != null) //There's stored data
-        {
+        if (data != null) {
             workQueue = JSON.parse(data);
             localStorage.removeItem("workQueue");
         }
         data = localStorage.getItem("directionArr");
-        if (data != null) //There's stored data
-        {
+        if (data != null) {
             directionArr = JSON.parse(data);
             localStorage.removeItem("directionArr");
         }
@@ -475,15 +361,12 @@ $(document).ready(function () {
 
     function enableFields(rackTarget, index)
     {
-        if($("#" + rackTarget + "RcpBcd0_" + index.toString()).val() !="")
-        {
+        if($("#" + rackTarget + "RcpBcd0_" + index.toString()).val() !="") {
             var $button = $("[id$=_" + rackTarget + "_RcpBcd0_" + index.toString()+"]");
             $($button).css('background-color', '#5a86de');
             $($button).removeAttr('disabled');
         }
     }
-
-
 });
 
 
