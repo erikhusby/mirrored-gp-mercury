@@ -441,13 +441,12 @@ public class ManualTransferActionBean extends RackScanActionBean {
     /**
     * Parse well data positions from Cherry Pick Json result.
     */
-    private  String parseWellFromJson(String input)
-    {
+    private  String parseWellFromJson(String input) {
         if (input.length() >= 3)
            return input.substring(0, 3);
         else {
-            addGlobalValidationError("Cherrypick position imput malformed " + input);
-            log.error("Cherrypick position imput malformed ",null);
+            addGlobalValidationError("Cherrypick position input malformed " + input);
+            log.error("Cherrypick position input malformed ",null);
         }
         return null;
     }
