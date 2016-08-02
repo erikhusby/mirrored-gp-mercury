@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.sap;
 
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
-import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
@@ -20,8 +19,7 @@ public class SapIntegrationServiceStub implements SapIntegrationService {
     }
 
     @Override
-    public String updateOrder(ProductOrder placedOrder) throws SAPIntegrationException {
-        return null;
+    public void updateOrder(ProductOrder placedOrder) throws SAPIntegrationException {
     }
 
     @Override

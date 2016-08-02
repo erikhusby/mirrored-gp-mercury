@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.infrastructure.sap;
 
-import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
@@ -96,7 +95,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     }
 
     @Override
-    public String updateOrder(ProductOrder placedOrder) throws SAPIntegrationException {
+    public void updateOrder(ProductOrder placedOrder) throws SAPIntegrationException {
 
         SAPOrder newOrder = initializeSAPOrder(placedOrder);
 
@@ -106,7 +105,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         }
         newOrder.setSapOrderNumber(placedOrder.getSapOrderNumber());
 
-        return getClient().createSAPOrder(newOrder);
+        getClient().updateSAPOrder(newOrder);
     }
 
     /**

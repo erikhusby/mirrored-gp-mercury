@@ -1,13 +1,10 @@
 package org.broadinstitute.gpinformatics.infrastructure.sap;
 
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
-import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.sap.services.SAPIntegrationException;
-
-import java.io.IOException;
 
 /**
  *
@@ -36,7 +33,7 @@ public interface SapIntegrationService {
      * @return Unique order identifier of the sales/release order currently in SAP
      * @throws SAPIntegrationException
      */
-    String updateOrder(ProductOrder placedOrder) throws SAPIntegrationException;
+    void updateOrder(ProductOrder placedOrder) throws SAPIntegrationException;
 
     /**
      * For Phase 1 of the SAP/GP integration, Orders placed in SAP need to have reference to the customer number found
