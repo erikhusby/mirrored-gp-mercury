@@ -25,7 +25,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.STANDARD;
 
 @Test(groups = STANDARD)
-public class SapIntegrationClientTest extends Arquillian {
+public class SapIntegrationServiceImplTest extends Arquillian {
 
     @Inject
     SapIntegrationService sapIntegrationClient;
@@ -35,6 +35,8 @@ public class SapIntegrationClientTest extends Arquillian {
         if (sapIntegrationClient == null) {
             return;
         }
+
+
     }
 
     @AfterMethod
@@ -77,7 +79,6 @@ public class SapIntegrationClientTest extends Arquillian {
         FundingLevel test3PO2FundingLevel = new FundingLevel("50", test3PO2FundingDefined);
         QuoteFunding test3Funding = new QuoteFunding(Arrays.asList(new FundingLevel[]{test3PurchaseOrderFundingLevel,test3PO2FundingLevel}));
         Quote testMultipleLevelQuote = new Quote("GPTest", test3Funding, ApprovalStatus.FUNDED);
-
 
         try {
             String badUserNumber = sapIntegrationClient.findCustomer(testBadContactQuote , SapIntegrationClientImpl.BROAD_COMPANY_CODE);

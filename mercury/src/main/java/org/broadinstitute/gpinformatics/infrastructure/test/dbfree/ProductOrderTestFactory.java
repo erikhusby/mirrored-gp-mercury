@@ -70,6 +70,11 @@ public class ProductOrderTestFactory {
         Product dummyAddOnProduct =
                 ProductTestFactory.createDummyProduct(Workflow.NONE, "partNumber");
         dummyAddOnProduct.setProductName("addOnProduct");
+        PriceItem exExAddOnPriceItem =
+                new PriceItem(quoteId, PriceItem.PLATFORM_GENOMICS, PriceItem.CATEGORY_EXOME_SEQUENCING_ANALYSIS,
+                        PriceItem.NAME_STANDARD_WHOLE_EXOME);
+        dummyAddOnProduct.setPrimaryPriceItem(exExAddOnPriceItem);
+
 
         productOrder.updateAddOnProducts(Collections.singletonList(dummyAddOnProduct));
 

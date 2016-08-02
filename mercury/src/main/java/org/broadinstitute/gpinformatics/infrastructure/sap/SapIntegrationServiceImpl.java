@@ -23,6 +23,7 @@ import org.broadinstitute.sap.entity.SAPOrder;
 import org.broadinstitute.sap.entity.SAPOrderItem;
 import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.broadinstitute.sap.services.SapIntegrationClientImpl;
+import org.jetbrains.annotations.NotNull;
 
 import javax.inject.Inject;
 import java.math.BigDecimal;
@@ -115,7 +116,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
      * @return JAXB representation of a Product Order
      * @throws SAPIntegrationException
      */
-    private SAPOrder initializeSAPOrder(ProductOrder placedOrder) throws SAPIntegrationException {
+    protected SAPOrder initializeSAPOrder(ProductOrder placedOrder) throws SAPIntegrationException {
         Quote foundQuote = null;
         try {
             foundQuote = quoteService.getQuoteByAlphaId(placedOrder.getQuoteId());
@@ -160,12 +161,12 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
      * @return JAXB sub element of the SAP order to represent the Product that will be charged and the quantity that
      * is expected of it.
      */
-    private SAPOrderItem getOrderItem(ProductOrder placedOrder, Product product) {
+    protected SAPOrderItem getOrderItem(ProductOrder placedOrder, Product product) {
         return new SAPOrderItem(product.getPartNumber(),
                 priceListCache.findByKeyFields(product.getPrimaryPriceItem().getPlatform(),
                         product.getPrimaryPriceItem().getCategory(),
                         product.getPrimaryPriceItem().getName()).getPrice(),
-                placedOrder.getSampleCount());
+                placedOrder.getSamples().size());
     }
 
     @Override
@@ -237,6 +238,13 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
     @Override
     public void createProductInSAP(Product product) throws SAPIntegrationException {
+        SAPMaterial newMaterial = initializeSapMaterialObject(product);
+
+        getClient().createMaterial(newMaterial);
+    }
+
+    @NotNull
+    protected SAPMaterial initializeSapMaterialObject(Product product) {
         SAPMaterial newMaterial = new SAPMaterial(product.getPartNumber(),
                 SapIntegrationClientImpl.SystemIdentifier.MERCURY, product.getAvailabilityDate(),
                 product.getAvailabilityDate());
@@ -248,30 +256,22 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         newMaterial.setDeliverables(product.getDeliverables());
         newMaterial.setInputRequirements(product.getInputRequirements());
         newMaterial.setBaseUnitOfMeasure("EA");
-        BigDecimal minimumOrderQuantity = product.getMinimumOrderSize()!= null?new BigDecimal(product.getMinimumOrderSize()):BigDecimal.ONE;
+        BigDecimal minimumOrderQuantity = product.getMinimumOrderSize() != null?new BigDecimal(product.getMinimumOrderSize()):BigDecimal.ONE;
         newMaterial.setMinimumOrderQuantity(minimumOrderQuantity);
 
-        getClient().createMaterial(newMaterial);
+        if(product.isAvailable()) {
+            newMaterial.setStatus(SAPMaterial.MaterialStatus.ENABLED);
+        } else {
+            newMaterial.setStatus(SAPMaterial.MaterialStatus.DISABLED);
+        }
+
+        return newMaterial;
     }
 
     @Override
     public void changeProductInSAP(Product product) throws SAPIntegrationException {
 
-        SAPMaterial existingMaterial = new SAPMaterial(product.getPartNumber(),
-                SapIntegrationClientImpl.SystemIdentifier.MERCURY, product.getAvailabilityDate(),
-                product.getAvailabilityDate());
-        existingMaterial.setCompanyCode(
-                product.isExternalProduct() ? SapIntegrationClientImpl.BROAD_EXTERNAL_SERVICES_COMPANY_CODE :
-                        SapIntegrationClientImpl.BROAD_COMPANY_CODE);
-        existingMaterial.setDescription(product.getProductName());
-        existingMaterial.setDeliverables(product.getDeliverables());
-        existingMaterial.setInputRequirements(product.getInputRequirements());
-
-        if(product.isAvailable()) {
-            existingMaterial.setStatus(SAPMaterial.MaterialStatus.ENABLED);
-        } else {
-            existingMaterial.setStatus(SAPMaterial.MaterialStatus.DISABLED);
-        }
+        SAPMaterial existingMaterial = initializeSapMaterialObject(product);
 
         getClient().changeMaterialDetails(existingMaterial);
     }
@@ -290,5 +290,21 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         }
 
         return companyCode;
+    }
+
+    protected void setQuoteService(QuoteService quoteService) {
+        this.quoteService = quoteService;
+    }
+
+    protected void setBspUserList(BSPUserList bspUserList) {
+        this.bspUserList = bspUserList;
+    }
+
+    protected void setWrappedClient(SapIntegrationClientImpl wrappedClient) {
+        this.wrappedClient = wrappedClient;
+    }
+
+    public void setPriceListCache(PriceListCache priceListCache) {
+        this.priceListCache = priceListCache;
     }
 }
