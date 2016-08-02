@@ -229,8 +229,7 @@ public class ProductOrderEjb {
         productOrderDao.persist(editedProductOrder);
     }
 
-    public void publishProductOrderToSAP(ProductOrder editedProductOrder, MessageCollection messageCollection)
-            throws QuoteNotFoundException {
+    public void publishProductOrderToSAP(ProductOrder editedProductOrder, MessageCollection messageCollection) {
         try {
             if (isOrderEligibleForSAP(editedProductOrder)) {
                 if (StringUtils.isEmpty(editedProductOrder.getSapOrderNumber())) {
@@ -241,7 +240,7 @@ public class ProductOrderEjb {
                 }
                 productOrderDao.persist(editedProductOrder);
             }
-        } catch (org.broadinstitute.sap.services.SAPIntegrationException|QuoteServerException e) {
+        } catch (org.broadinstitute.sap.services.SAPIntegrationException|QuoteServerException|QuoteNotFoundException e) {
             StringBuilder errorMessage = new StringBuilder();
             errorMessage.append("Unable to ");
             if (StringUtils.isEmpty(editedProductOrder.getSapOrderNumber())) {

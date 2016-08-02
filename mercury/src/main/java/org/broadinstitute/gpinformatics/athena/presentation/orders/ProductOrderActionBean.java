@@ -1169,11 +1169,9 @@ public class ProductOrderActionBean extends CoreActionBean {
     @HandlesEvent(PUBLISH_PDO_TO_SAP)
     public Resolution publishProductOrderToSAP() {
         MessageCollection placeOrderMessageCollection = new MessageCollection();
-        try {
-            productOrderEjb.publishProductOrderToSAP(editOrder,placeOrderMessageCollection);
-        } catch (QuoteNotFoundException qne) {
-            addGlobalValidationError(qne.getMessage());
-        }
+
+        productOrderEjb.publishProductOrderToSAP(editOrder,placeOrderMessageCollection);
+
         addMessages(placeOrderMessageCollection);
         return createViewResolution(editOrder.getBusinessKey());
     }

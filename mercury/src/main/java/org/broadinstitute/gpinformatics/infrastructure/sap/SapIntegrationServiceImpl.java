@@ -123,8 +123,6 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
             throw new SAPIntegrationException("Unable to get information for the Quote from the quote server", e);
         }
 
-        String customerNumber = findCustomer(foundQuote, determineCompanyCode(placedOrder));
-
         SAPOrder newOrder =
                 new SAPOrder(SapIntegrationClientImpl.SystemIdentifier.MERCURY, determineCompanyCode(placedOrder),
                         placedOrder.getQuoteId(), bspUserList.getUserFullName(placedOrder.getCreatedBy()));
@@ -135,11 +133,12 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
         if (funding.getFundingType().equals(Funding.PURCHASE_ORDER)) {
             newOrder.setFundingSource(funding.getPurchaseOrderNumber(), SAPOrder.FundingType.PURCHASE_ORDER);
+            String customerNumber = findCustomer(foundQuote, determineCompanyCode(placedOrder));
+
+            newOrder.setSapCustomerNumber(customerNumber);
         } else {
             newOrder.setFundingSource(funding.getFundsReservationNumber(), SAPOrder.FundingType.FUNDS_RESERVATION);
         }
-
-        newOrder.setSapCustomerNumber(customerNumber);
 
         newOrder.setResearchProjectNumber(placedOrder.getResearchProject().getJiraTicketKey());
 
@@ -274,7 +273,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
             existingMaterial.setStatus(SAPMaterial.MaterialStatus.DISABLED);
         }
 
-        getClient().createMaterial(existingMaterial);
+        getClient().changeMaterialDetails(existingMaterial);
     }
 
     /**

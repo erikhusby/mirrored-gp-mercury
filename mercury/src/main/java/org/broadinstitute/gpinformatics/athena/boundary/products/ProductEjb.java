@@ -312,7 +312,7 @@ public class ProductEjb {
                 errorMessages.add(e.getMessage());
             }
         }
-        if (CollectionUtils.isNotEmpty(productsToPublish)) {
+        if (CollectionUtils.isNotEmpty(errorMessages)) {
             throw new SAPIntegrationException(errorMessages);
         }
     }
