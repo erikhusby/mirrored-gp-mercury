@@ -84,6 +84,7 @@
         }
 
     </style>
+    <script src="${ctxpath}/resources/scripts/paste_to_select.js" type="text/javascript"></script>
     <link rel="stylesheet" href="${ctxpath}/resources/scripts/chosen_v1.5.1/chosen.min.css">
     <script type="text/javascript" src="${ctxpath}/resources/scripts/chosen_v1.5.1/chosen.jquery.min.js"></script>
     <script type="text/javascript" src="${ctxpath}/resources/scripts/dataTables-filterColumn.js"></script>
@@ -93,174 +94,13 @@
             return "<li>" + item.dropdownItem + extraCount + '</li>';
         }
 
-        function hasSubmissionSamples() {
-            return $j('#submissionSamples tbody tr td').not('.dataTables_empty').length > 0;
-        }
-
-        function initializeBarcodeEntryDialog() {
-            dialog = $j("#ListOfBarcodesForm").dialog({
-                autoOpen: false,
-                height: 400,
-                width: 250,
-                modal: false,
-                buttons: {
-                    "ApplyBarcodesButton": {
-                        id: "applyBarcodes",
-                        text: "Select Samples",
-                        click: applyBarcodes
-                    },
-                    Cancel: function () {
-                        dialog.dialog("close");
-                    }
-                }
-            });
-
-            $j("#PasteBarcodesList").on("click", function () {
-                if (hasSubmissionSamples()) {
-                    clearBarcodesDialog();
-                    dialog.dialog("open");
-                }
-            });
-
-            hideBarcodeEntryDialog();
-        }
-
-        function addAmbiguousEntryError(barcode) {
-            // todo avoid showing duplicate strings
-            $j('#AmbiguousEntries tbody').append(
-                    "<tr><td>" + barcode + "</td></tr>"
-            );
-        }
-
-
-        function addBarcodeNotFoundError(barcode) {
-            // todo avoid showing duplicate strings
-            $j('#BarcodeErrors tbody').append(
-                    "<tr><td>" + barcode + "</td></tr>"
-            );
-        }
-
-        function showBarcodeErrors() {
-            $j('#BarcodeErrors').show();
-        }
-
-        function showNoEntriesErrors() {
-            showBarcodeErrors();
-            $j('#NoEntriesErrors').show();
-        }
-
-        function showAmbiguousEntryErrors() {
-            showBarcodeErrors();
-            $j('#AmbiguousEntriesErrors').show();
-        }
-
-        function clearBarcodesDialogErrors() {
-            $j('#NoEntries tbody tr').remove();
-            $j('#AmbiguousEntries tbody tr').remove();
-
-            $j('#NoEntriesErrors').hide();
-            $j('#AmbiguousEntriesErrors').hide();
-        }
-
-        function clearBarcodesDialog() {
-            $j('#barcodes').val('');
-            $j('#BarcodeErrors').hide();
-            clearBarcodesDialogErrors();
-        }
-
-        function uncheckedInputByValue(barcode) {
-            return 'input[value="' + barcode + '"]';
-        }
-
-        function applyBarcodes() {
-            clearBarcodesDialogErrors();
-
-            var hasBarcodes = barcodes.value.trim().length > 0;
-            var splitBarcodes = barcodes.value.trim().split(/\s+/);
-            var hasAmbiguousEntryErrors = false;
-            var hasBarcodesNotFoundErrors = false;
-
-            if (!hasBarcodes) {
-                alert("No barcodes were entered.");
-                return;
-            }
-
-            for (var i = 0; i < splitBarcodes.length; i++) {
-                var barcode = splitBarcodes[i];
-                var barcodeInputSelector = uncheckedInputByValue(barcode);
-                var numMatchingRows = $j(barcodeInputSelector).length;
-
-                if (numMatchingRows > 1) {
-                    hasAmbiguousEntryErrors = true;
-                    addAmbiguousEntryError(barcode);
-                }
-                else if (numMatchingRows == 0) {
-                    hasBarcodesNotFoundErrors = true;
-                    addBarcodeNotFoundError(barcode);
-                }
-            }
-
-            if (!hasAmbiguousEntryErrors && !hasBarcodesNotFoundErrors) {
-                for (var i = 0; i < splitBarcodes.length; i++) {
-                    var barcodeInputSelector = uncheckedInputByValue(splitBarcodes[i]);
-                    var numMatchingRows = $j(barcodeInputSelector).length;
-
-                    if (numMatchingRows == 1) {
-                        // todo event handler for enter
-                        var barcodeCheckbox = $j(barcodeInputSelector).not(":checked");
-                        barcodeCheckbox.click();
-                    }
-                }
-                dialog.dialog("close");
-                addStripesMessage(splitBarcodes.length + " submissions chosen.");
-            }
-            else {
-                if (hasAmbiguousEntryErrors) {
-                    showAmbiguousEntryErrors();
-                }
-                if (hasBarcodesNotFoundErrors) {
-                    showNoEntriesErrors();
-                }
-            }
-        }
-
-        function addStripesMessageDiv(alertType, fieldSelector) {
-            var alertClass = 'alert-' + alertType;
-            var messageBox = jQuery("<div></div>",{
-                "class": "alert alertClass center".replace("alertClass", alertClass),
-                "style": "width: 50em;"
-            });
-            var button = jQuery("<button type='button' class='close' data-dismiss='alert'>&times;</button>");
-            messageBox.append(button);
-            messageBox.append('<ul></ul>');
-            if (fieldSelector != undefined) {
-                $j(fieldSelector).empty();
-                $j(fieldSelector).append(messageBox);
-            } else {
-                $j('.page-body').before(messageBox);
-            }
-            return messageBox;
-        }
-
-        function addStripesMessage(message, type, fieldSelector) {
-            if (type == undefined) {
-                type = "success";
-            }
-            var messageBoxJquery = $j("div.alert-" + type);
-            if (messageBoxJquery.length == 0) {
-                messageBoxJquery = addStripesMessageDiv(type, fieldSelector);
-            }
-            messageBoxJquery.find("ul").append("<li>" + message + "</li>");
-        }
-
-        function hideBarcodeEntryDialog() {
-            $j('#BarcodeErrors').hide();
-            $j('#NoEntriesErrors').hide();
-            $j('#AmbiguousEntriesErrors').hide();
-        }
-
         $j(document).ready(function () {
-            initializeBarcodeEntryDialog();
+            pasteToSelect.initialize("#submissionSamples ", {
+                columnNames: ["Sample Name"],
+                noun: "Submission",
+                pluralNoun: "Submissions"
+            });
+
             $j("#bioProject").tokenInput(
                     "${ctxpath}/projects/project.action?bioProjectAutocomplete=", {
                         hintText: "Type a Study Name",
@@ -300,7 +140,7 @@
                         });
                         $j("#submissionSamples_wrapper").prepend(outerDiv);
                         $j("#submissionSamples_processing").hide();
-                        addStripesMessage(responseText.stripesMessages, responseText.messageType, "#stripesMessageOuter");
+                        stripesMessage.set(responseText.stripesMessages, responseText.messageType, "#stripesMessageOuter");
                     }
                 }
 
@@ -505,8 +345,7 @@
             }
             });
         });
-
-    </script>
+</script>
 </head>
 
 
@@ -588,36 +427,4 @@
                     disabled="${!actionBean.validateViewOrPostSubmissions(true)}" style="display:none;"/>
 
 </stripes:form>
-    <div id="ListOfBarcodesForm">
-        <form>
-            <div class="control-group">
-                <label for="barcodes" class="control-label">Enter BioSample IDs, one per line</label>
-                <textarea name="barcodes" id="barcodes" class="defaultText" cols="12" rows="5"></textarea>
-            </div>
-            <div id="BarcodeErrors">
-                <p>We're sorry, but Mercury could not automatically choose submission entries
-                    because of the following errors.</p>
-                <div id="NoEntriesErrors">
-                    <table id="NoEntries">
-                        <thead>
-                        <tr>
-                            <th>No submission entries match</th>
-                        </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-                <div id="AmbiguousEntriesErrors">
-                    <table id="AmbiguousEntries">
-                        <thead>
-                        <tr>
-                            <th>Ambiguous submission entries</th>
-                        </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-            </div>
-        </form>
-    </div>
 </stripes:layout-definition>

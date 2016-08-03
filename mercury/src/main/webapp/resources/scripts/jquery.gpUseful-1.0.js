@@ -283,3 +283,49 @@ jQuery.extend( jQuery.fn.dataTableExt.oSort, {
     }
 });
 
+
+(function ($) {
+    return stripesMessage = {
+        set: function (message, alertType, fieldSelector) {
+            alertClass = "." + getAlertClass(alertType);
+            $(alertClass).remove();
+            addStripesMessage(message, alertType, fieldSelector);
+        },
+        add: function(message, alertType, fieldSelector) {
+            addStripesMessage(message, alertType, fieldSelector);
+        },
+    };
+
+    function getAlertClass(alertType) {
+        if (alertType == undefined) {
+            alertType = "success";
+        }
+        return 'alert-' + alertType;
+    }
+
+    function addStripesMessageDiv(alertType, fieldSelector) {
+        var alertClass = getAlertClass(alertType);
+        var messageBox = $(document.createElement("div"));
+        messageBox.css({"margin-left": "20%", "margin-right": "20%"});
+        messageBox.addClass("alert").addClass(alertClass);
+        if (fieldSelector != undefined) {
+            $(fieldSelector).addClass(alertType);
+        }
+        messageBox.append('<button type="button" class="close" data-dismiss="alert">&times;</button>')
+        messageBox.append('<ul></ul>');
+
+        $('.page-body').before(messageBox);
+        return messageBox;
+    }
+
+    function addStripesMessage(message, type, fieldSelector) {
+        var messageBoxJquery = $("div.alert-" + type);
+        if (messageBoxJquery.length == 0) {
+            messageBoxJquery = addStripesMessageDiv(type, fieldSelector);
+        }
+        messageBoxJquery.find("ul").append("<li>" + message + "</li>");
+    }
+
+})(jQuery);
+
+
