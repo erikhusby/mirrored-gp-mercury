@@ -1116,7 +1116,7 @@ function formatInput(item) {
 
         <security:authorizeBlock roles="<%= roles(PDM, PM, Developer) %>">
 
-        <c:if test="${not actionBean.editOrder.savedInSAP}">
+        <c:if test="${!actionBean.editOrder.savedInSAP && !actionBean.editOrder.pending && !actionBean.editOrder.draft}">
             <stripes:link beanclass="${actionBean.class.name}" event="${actionBean.publishSAPAction}"
                           title="Click to Publish Product Order to SAP" class="pull-right">
                 <stripes:param name="${actionBean.editBusinessKeyName}"
