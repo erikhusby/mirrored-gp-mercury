@@ -39,12 +39,11 @@ public class GZipFilter implements Filter {
             // Check to see if the browser supports compression before doing it.
             if (acceptEncoding != null && acceptEncoding.contains("gzip")) {
                 GZIPResponseWrapper wrappedResponse = new GZIPResponseWrapper(response);
-                chain.doFilter(req, wrappedResponse);
                 wrappedResponse.finishResponse();
-                return;
+                chain.doFilter(req, wrappedResponse);
+            } else {
+                chain.doFilter(req, res);
             }
-
-            chain.doFilter(req, res);
         }
     }
 
