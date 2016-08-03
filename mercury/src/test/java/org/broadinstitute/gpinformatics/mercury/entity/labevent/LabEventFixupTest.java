@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.labevent;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
@@ -36,6 +37,9 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.persistence.Query;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Root;
 import javax.transaction.HeuristicMixedException;
 import javax.transaction.HeuristicRollbackException;
 import javax.transaction.NotSupportedException;
@@ -1476,6 +1480,36 @@ public class LabEventFixupTest extends Arquillian {
         labEventDao.flush();
         BarcodedTube barcodedTube = barcodedTubeDao.findByBarcode("0193780863");
         Assert.assertEquals(barcodedTube.getSampleInstancesV2().size(), 5);
+        utx.commit();
+    }
+
+    /**
+     * Fixup Pico transfers with source and destination sections of different sizes.
+     */
+    @Test(enabled = false)
+    public void fixupGplim4250() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        List<SectionTransfer> sectionTransfers = labEventDao.findAll(SectionTransfer.class,
+                new GenericDao.GenericDaoCallback<SectionTransfer>() {
+                    @Override
+                    public void callback(CriteriaQuery<SectionTransfer> criteriaQuery, Root<SectionTransfer> root) {
+                        CriteriaBuilder criteriaBuilder = labEventDao.getEntityManager().getCriteriaBuilder();
+                        criteriaQuery.where(
+                                criteriaBuilder.equal(root.get(SectionTransfer_.sourceSection), SBSSection.ALL384),
+                                criteriaBuilder.notEqual(root.get(SectionTransfer_.targetSection), SBSSection.ALL384));
+                    }
+                });
+        for (SectionTransfer sectionTransfer : sectionTransfers) {
+            Assert.assertEquals(sectionTransfer.getLabEvent().getLabEventType(), LabEventType.PICO_MICROFLUOR_TRANSFER);
+            System.out.println("In " + sectionTransfer.getLabEvent().getLabEventId() + " changing source " +
+                    sectionTransfer.getSourceSection() + " to " + sectionTransfer.getTargetSection());
+            sectionTransfer.setSourceSection(sectionTransfer.getTargetSection());
+        }
+
+        labEventDao.persist(new FixupCommentary("GPLIM-4250 fix pico sections"));
+        labEventDao.flush();
         utx.commit();
     }
 }
