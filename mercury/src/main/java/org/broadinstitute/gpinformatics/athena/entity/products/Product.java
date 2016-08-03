@@ -72,6 +72,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     private String productName;
 
     @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST}, optional = false)
+    @JoinColumn(name="PRODUCT_FAMILY")
     private ProductFamily productFamily;
 
     @Column(name = "DESCRIPTION", length = 2000)
@@ -122,10 +123,13 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
      * Primary price item for the product.
      */
     @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST}, optional = false)
+    @JoinColumn(name="PRIMARY_PRICE_ITEM")
     private PriceItem primaryPriceItem;
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
-    @JoinTable(schema = "athena")
+    @JoinTable(schema = "athena", name = "PRODUCT_ADD_ONS"
+            , joinColumns = {@JoinColumn(name = "PRODUCT")}
+            , inverseJoinColumns = {@JoinColumn(name = "ADD_ONS")})
     private final Set<Product> addOns = new HashSet<>();
 
     // If we store this as Workflow in the database, we need to determine the best way to store 'no workflow'.

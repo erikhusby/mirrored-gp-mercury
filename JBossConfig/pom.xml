@@ -11,8 +11,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <oracle.version>6-11.2.0.1.0</oracle.version>
-        <postgresql.version>9.1-901.jdbc4</postgresql.version>
+        <oracle.version>7-12.1.0.2</oracle.version>
         <billing.log.dir>${env.JBOSS_HOME}/standalone/log</billing.log.dir>
         <crowdJaas.version>1.3.1.4</crowdJaas.version>
         <crowd.application.name>mercury</crowd.application.name>
@@ -33,6 +32,17 @@
             <name>Prodinfo Maven Repository</name>
             <url>http://prodinfosvn.broadinstitute.org:8000/m2-repository</url>
         </repository>
+        <repository>
+            <id>maven.oracle.com</id>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+            <url>https://maven.oracle.com</url>
+            <layout>default</layout>
+        </repository>
     </repositories>
 
     <dependencies>
@@ -41,12 +51,6 @@
             <artifactId>ojdbc</artifactId>
             <version>${oracle.version}</version>
         </dependency>
-        <dependency>
-            <groupId>postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <version>${postgresql.version}</version>
-        </dependency>
-
         <dependency>
             <groupId>com.atlassian.crowd.application</groupId>
             <artifactId>CrowdJaasLoginModule</artifactId>
@@ -142,13 +146,6 @@
                                     <outputDirectory>${project.build.directory}/modules/com/oracle/main
                                     </outputDirectory>
                                 </artifactItem>
-                                <artifactItem>
-                                    <groupId>postgresql</groupId>
-                                    <artifactId>postgresql</artifactId>
-                                    <version>${postgresql.version}</version>
-                                    <outputDirectory>${project.build.directory}/modules/org/postgresql/main
-                                    </outputDirectory>
-                                </artifactItem>
                             </artifactItems>
                         </configuration>
                     </execution>
@@ -178,8 +175,7 @@
                                     <fileset dir="${project.build.directory}/modules"/>
                                 </copy>
                                 <echo message="Updating standalone configuration"/>
-                                <property name="jboss.standalone.dir">${env.JBOSS_HOME}/standalone</property>
-                                <copy todir="${jboss.standalone.dir}" overwrite="true" verbose="true">
+                                <copy todir="${env.JBOSS_HOME}/standalone" overwrite="true" verbose="true">
                                     <fileset dir="${project.build.directory}/standalone"/>
                                 </copy>
                                 <copy todir="${env.JBOSS_HOME}" overwrite="true" verbose="true"

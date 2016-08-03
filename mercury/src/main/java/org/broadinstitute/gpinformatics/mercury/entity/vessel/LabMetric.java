@@ -284,6 +284,7 @@ public class LabMetric implements Comparable<LabMetric> {
      * The run that generated this metric
      */
     @ManyToOne
+    @JoinColumn(name = "LAB_METRIC_RUN")
     private LabMetricRun labMetricRun;
 
     /**
@@ -305,6 +306,7 @@ public class LabMetric implements Comparable<LabMetric> {
     private LabUnit labUnit;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "LAB_VESSEL")
     private LabVessel labVessel;
 
     //todo jmt convert to enum?
@@ -320,6 +322,7 @@ public class LabMetric implements Comparable<LabMetric> {
 
     /** This is actually OneToOne, but using ManyToOne to avoid N+1 selects */
     @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.EAGER)
+    @JoinColumn(name = "LAB_METRIC_DECISION")
     private LabMetricDecision labMetricDecision;
 
     /**

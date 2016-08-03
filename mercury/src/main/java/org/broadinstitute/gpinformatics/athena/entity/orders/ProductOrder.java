@@ -136,9 +136,11 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     private String title = "";
 
     @ManyToOne(cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "RESEARCH_PROJECT")
     private ResearchProject researchProject;
 
     @ManyToOne(cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "PRODUCT")
     private Product product;
 
     @Enumerated(EnumType.STRING)
@@ -179,10 +181,13 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     // this should not cause n+1 select performance issue if it is LAZY and mandatory
     @OneToOne(optional = false, fetch = FetchType.LAZY, cascade = {CascadeType.ALL}, orphanRemoval = true)
+    @JoinColumn(name = "PRODUCT_ORDER_KIT")
     private ProductOrderKit productOrderKit;
 
     @ManyToMany(cascade = CascadeType.PERSIST)
-    @JoinTable(schema = "athena", name = "PDO_REGULATORY_INFOS", joinColumns = {@JoinColumn(name = "PRODUCT_ORDER")})
+    @JoinTable(schema = "athena", name = "PDO_REGULATORY_INFOS"
+            , joinColumns = {@JoinColumn(name = "PRODUCT_ORDER", referencedColumnName = "PRODUCT_ORDER_ID")}
+            , inverseJoinColumns = {@JoinColumn(name = "REGULATORY_INFOS", referencedColumnName = "REGULATORY_INFO_ID")})
     private Collection<RegulatoryInfo> regulatoryInfos = new ArrayList<>();
 
     // This is used for edit to keep track of changes to the object.

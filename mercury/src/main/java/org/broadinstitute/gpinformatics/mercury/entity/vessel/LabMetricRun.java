@@ -28,7 +28,7 @@ import java.util.Set;
 @Entity
 @Audited
 @Table(schema = "mercury",
-        uniqueConstraints = @UniqueConstraint(name = "UK_LMR_NAME_TYPE", columnNames = {"runName", "runDate"}))
+        uniqueConstraints = @UniqueConstraint(name = "UK_LMR_NAME_TYPE", columnNames = {"run_name", "run_date"}))
 public class LabMetricRun {
 
     @SequenceGenerator(name = "SEQ_LAB_METRIC_RUN", schema = "mercury", sequenceName = "SEQ_LAB_METRIC_RUN")

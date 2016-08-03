@@ -6,6 +6,7 @@ import org.hibernate.envers.Audited;
 import javax.annotation.Nullable;
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import java.util.Date;
 
@@ -18,6 +19,7 @@ import java.util.Date;
 public class ControlReagent  extends Reagent {
 
     @ManyToOne(cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "CONTROL")
     private Control control;
 
     public ControlReagent(@Nullable String reagentName, @Nullable String lot, @Nullable Date expiration,

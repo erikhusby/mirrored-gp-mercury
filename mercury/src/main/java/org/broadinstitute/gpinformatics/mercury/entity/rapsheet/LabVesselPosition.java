@@ -15,7 +15,21 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.hibernate.envers.Audited;
 
-import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -38,8 +52,11 @@ public class LabVesselPosition {
     @OneToOne(mappedBy = "labVesselPosition", optional = false, fetch = FetchType.LAZY)
     private RapSheetEntry rapSheetEntry;
 
-    @Column(nullable = false)
+    @Column(nullable = false, name = "MERCURY_SAMPLES")
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @JoinTable( schema = "MERCURY", name = "LV_POS_MERCURY_SAMPLES"
+            , joinColumns = {@JoinColumn(name = "LV_POS")}
+            ,inverseJoinColumns = {@JoinColumn(name = "MERCURY_SAMPLES")})
     private List<MercurySample> mercurySamples = new ArrayList<>();
 
     @Column(nullable = false)

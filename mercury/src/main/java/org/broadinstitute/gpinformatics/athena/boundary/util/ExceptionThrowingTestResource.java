@@ -15,8 +15,6 @@ import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceExcep
 import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
 
 import javax.ejb.EJBException;
-import javax.ejb.Stateful;
-import javax.enterprise.context.RequestScoped;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -50,14 +48,5 @@ public class ExceptionThrowingTestResource {
     @Path("/throwsEJBException")
     public List<String> throwsEJBException() {
         throw new EJBException("Oopsie, I threw an EJBException");
-    }
-
-    /**
-     * This class is the EJB version of ExceptionThrowingTestResource. The only difference are the annotations.
-     */
-    @Path("/test-ejb")
-    @Stateful
-    @RequestScoped
-    public static class EjbExceptionThrowingTestResource extends ExceptionThrowingTestResource {
     }
 }

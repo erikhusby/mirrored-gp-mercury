@@ -131,13 +131,15 @@ public class MercuryConfiguration {
      * @return the ServletContext.
      */
     private static ServletContext getServletContext() {
-        return CacheFilter.getServletContext();
+        return AppInitServlet.getInitServletContext();
     }
 
     private static Class<? extends AbstractConfig> getConfigClass(String configKey) {
         if (configKeyToClassMap == null) {
 
             ServletContext servletContext = getServletContext();
+
+
 
             // Check if we have a ServletContext to determine if running inside the container.
             URL classPathUrl = (servletContext == null) ?

@@ -20,7 +20,7 @@ import javax.persistence.UniqueConstraint;
 
 @Entity
 @Audited
-@Table(schema = "mercury", uniqueConstraints = @UniqueConstraint(columnNames = {"definitionType", "archetype_group", "attributeName"}))
+@Table(schema = "mercury", uniqueConstraints = @UniqueConstraint(columnNames = {"definition_type", "archetype_group", "attribute_name"}))
 public class AttributeDefinition {
 
     public enum DefinitionType {

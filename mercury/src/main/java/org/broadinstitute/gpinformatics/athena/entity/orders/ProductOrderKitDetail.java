@@ -43,10 +43,11 @@ public class ProductOrderKitDetail implements Serializable {
     @SequenceGenerator(name = "SEQ_PRODUCT_ORDER_KIT_DETAIL", schema = "athena",
             sequenceName = "SEQ_PRODUCT_ORDER_KIT_DETAIL")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_PRODUCT_ORDER_KIT_DETAIL")
-    @Column(name = "product_order_kit_detail_id", unique = true, nullable = false)
+    @Column(name = "PRODUCT_ORDER_KIT_DETAIL_ID")
     private Long productOrderKitDetailId;
 
     @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name="PRODUCT_ORDER_KIT")
     private ProductOrderKit productOrderKit;
 
     @Column(name = "number_samples")

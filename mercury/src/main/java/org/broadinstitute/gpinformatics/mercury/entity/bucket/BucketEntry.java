@@ -122,6 +122,7 @@ public class BucketEntry {
      * The batch into which the bucket was drained.
      */
     @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
+    @JoinColumn(name = "LAB_BATCH")
     private LabBatch labBatch;
 
     @Column(name = "ENTRY_TYPE", nullable = false)

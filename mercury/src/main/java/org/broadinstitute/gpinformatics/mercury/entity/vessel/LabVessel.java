@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
 import com.google.common.collect.Sets;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
@@ -112,7 +111,9 @@ public abstract class LabVessel implements Serializable {
     private BigDecimal receptacleWeight;
 
     @OneToMany(cascade = CascadeType.PERSIST) // todo jmt should this have mappedBy?
-    @JoinTable(schema = "mercury")
+    @JoinTable(schema = "mercury", name="LAB_VESSEL_TICKETS_CREATED"
+            , joinColumns = {@JoinColumn(name = "LAB_VESSEL")}
+            , inverseJoinColumns = {@JoinColumn(name = "TICKETS_CREATED")})
     @BatchSize(size = 100)
     private final Set<JiraTicket> ticketsCreated = new HashSet<>();
 
@@ -145,7 +146,9 @@ public abstract class LabVessel implements Serializable {
 
     // todo jmt separate role for containee?
     @ManyToMany(cascade = CascadeType.PERSIST)
-    @JoinTable(schema = "mercury")
+    @JoinTable(schema = "mercury", name="LAB_VESSEL_CONTAINERS"
+        , joinColumns = {@JoinColumn(name = "LAB_VESSEL")}
+        , inverseJoinColumns = {@JoinColumn(name = "CONTAINERS")})
     @BatchSize(size = 100)
     private Set<LabVessel> containers = new HashSet<>();
 
@@ -165,7 +168,9 @@ public abstract class LabVessel implements Serializable {
     private Set<LabEvent> inPlaceLabEvents = new HashSet<>();
 
     @OneToMany // todo jmt should this have mappedBy?
-    @JoinTable(schema = "mercury")
+    @JoinTable(schema = "mercury", name = "LAB_VESSEL_NOTES"
+            , joinColumns = {@JoinColumn(name = "LAB_VESSEL")}
+            , inverseJoinColumns = {@JoinColumn(name = "NOTES")})
     private Collection<StatusNote> notes = new HashSet<>();
 
     @OneToMany(mappedBy = "labVessel", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
@@ -185,6 +190,9 @@ public abstract class LabVessel implements Serializable {
 
     // todo jmt separate role for sample holder?
     @ManyToMany(cascade = CascadeType.PERSIST)
+    @JoinTable(schema = "mercury", name = "LAB_VESSEL_MERCURY_SAMPLES"
+            , joinColumns = {@JoinColumn(name = "LAB_VESSEL")}
+            , inverseJoinColumns = {@JoinColumn(name = "MERCURY_SAMPLES")})
     @BatchSize(size = 100)
     private Set<MercurySample> mercurySamples = new HashSet<>();
 

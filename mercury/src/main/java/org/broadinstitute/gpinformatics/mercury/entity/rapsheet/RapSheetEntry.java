@@ -13,7 +13,17 @@ package org.broadinstitute.gpinformatics.mercury.entity.rapsheet;
 
 import org.hibernate.envers.Audited;
 
-import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToOne;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
 import java.util.Comparator;
 
 /**
@@ -31,14 +41,16 @@ public abstract class RapSheetEntry  {
     private Long rapSheetEntryId;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, optional = false)
+    @JoinColumn(name = "RAP_SHEET")
     private RapSheet rapSheet;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JoinColumn(updatable = true, insertable = true, nullable = false)
+    @JoinColumn(updatable = true, insertable = true, nullable = false, name = "LAB_VESSEL_COMMENT")
     private LabVesselComment labVesselComment;
 
     // this should not cause n+1 select performance issue if it is LAZY and mandatory
     @OneToOne(optional = false, fetch = FetchType.LAZY, cascade = {CascadeType.ALL})
+    @JoinColumn(name = "LAB_VESSEL_POSITION")
     private LabVesselPosition labVesselPosition;
 
     public RapSheetEntry() {

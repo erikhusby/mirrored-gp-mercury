@@ -15,6 +15,7 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
@@ -32,15 +33,18 @@ public class LabBatchStartingVessel {
     private Long batchStartingVesselId;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "LAB_BATCH")
     private LabBatch labBatch;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "LAB_VESSEL")
     private LabVessel labVessel;
 
     @Column
     private BigDecimal concentration;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "DILUTION_VESSEL")
     private LabVessel dilutionVessel;
 
     @Enumerated(EnumType.STRING)

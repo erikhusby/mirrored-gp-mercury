@@ -187,10 +187,13 @@ public class LabEvent {
     private LabEventType labEventType;
 
     @ManyToOne(cascade = {CascadeType.PERSIST}, fetch = FetchType.LAZY)
+    @JoinColumn(name = "LAB_BATCH")
     private LabBatch labBatch;
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
-    @JoinTable(schema = "mercury", name = "le_lab_event_metadatas")
+    @JoinTable(schema = "mercury", name = "le_lab_event_metadatas"
+            , joinColumns = {@JoinColumn(name = "LAB_EVENT")}
+            , inverseJoinColumns = {@JoinColumn(name = "LAB_EVENT_METADATAS")})
     private Set<LabEventMetadata> labEventMetadatas = new HashSet<>();
 
     /**
@@ -206,6 +209,7 @@ public class LabEvent {
      * processed in multiple technologies.
      */
     @ManyToOne
+    @JoinColumn(name = "MANUAL_OVERRIDE_LC_SET")
     private LabBatch manualOverrideLcSet;
 
     private String workflowQualifier;

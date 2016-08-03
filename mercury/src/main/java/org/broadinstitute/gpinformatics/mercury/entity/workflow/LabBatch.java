@@ -51,7 +51,7 @@ import java.util.TreeMap;
  */
 @Entity
 @Audited
-@Table(schema = "mercury", uniqueConstraints = @UniqueConstraint(columnNames = {"batchName"}))
+@Table(schema = "mercury", uniqueConstraints = @UniqueConstraint(columnNames = {"batch_name"}))
 public class LabBatch {
 
     public static class VesselToLanesInfo {
@@ -108,7 +108,9 @@ public class LabBatch {
     @Deprecated
     @ManyToMany(cascade = CascadeType.PERSIST)
     // have to specify name, generated aud name is too long for Oracle
-    @JoinTable(schema = "mercury", name = "lb_starting_lab_vessels")
+    @JoinTable(schema = "MERCURY", name = "LB_STARTING_LAB_VESSELS"
+            , joinColumns = {@JoinColumn(name = "LAB_BATCH")}
+            , inverseJoinColumns = {@JoinColumn(name = "STARTING_LAB_VESSELS")})
     private Set<LabVessel> startingLabVessels = new HashSet<>();
 
     private boolean isActive = true;
@@ -116,6 +118,7 @@ public class LabBatch {
     private String batchName;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "JIRA_TICKET")
     private JiraTicket jiraTicket;
 
     // todo jmt get Hibernate to sort this
@@ -126,8 +129,9 @@ public class LabBatch {
      * Vessels in the batch that were added as rework from a previous batch.
      */
     @ManyToMany(cascade = CascadeType.ALL)
-    @JoinTable(name = "lab_batch_reworks", joinColumns = @JoinColumn(name = "lab_batch"),
-            inverseJoinColumns = @JoinColumn(name = "reworks"))
+    @JoinTable(schema = "MERCURY", name = "LAB_BATCH_REWORKS"
+            , joinColumns = @JoinColumn(name = "LAB_BATCH")
+            , inverseJoinColumns = @JoinColumn(name = "REWORKS"))
     private Collection<LabVessel> reworks = new HashSet<>();
 
     private Date createdOn;
