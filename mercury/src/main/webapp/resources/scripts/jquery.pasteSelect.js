@@ -71,16 +71,6 @@
                 $('#ambiguousEntriesErrors').hide();
             }
 
-
-            /**
-             *  Find the column index for supplied column header. Table columns are zero based.
-             */
-            function findColumnIndexForHeader(columnHeader) {
-                return $(table).find("tr th").filter(function () {
-                        return $(this).text() === columnHeader;
-                    }).index() + 1;
-            }
-
             function applyBarcodes(table) {
                 clearBarcodesDialogErrors();
                 var barcodes = $("#barcodes").val();
@@ -101,13 +91,13 @@
                     ambiguousBarcodes[barcode] = false;
                     settings.columnNames.forEach(function (column) {
                         if (!foundBarcodes[barcode] || !notFoundBarcodes[barcode] || !ambiguousBarcodes[barcode]) {
-                            var columnIndex = findColumnIndexForHeader(column);
+                            var columnIndex = $(table).columnIndexOfHeader(column);
                             if (columnIndex < 0) {
                                 // developer error
                                 return;
                             }
-                            var matchingRows = $(table).find("tr>td:nth-child($columnIndex):contains('$barcode$')"
-                                .replace("$columnIndex", columnIndex)
+                            var matchingRows = $(table).find("tr>td:nth-child($columnIndex$):contains('$barcode$')"
+                                .replace("$columnIndex$", columnIndex)
                                 .replace("$barcode$", barcode));
                             selector = $('td:first', $(matchingRows[columnIndex]).parents('tr'));
                             var numMatchingRows = matchingRows.length;
@@ -118,7 +108,7 @@
                                     }
                                     break;
                                 case 1:
-                                    var selector = $('td:first', $(matchingRows[0]).parents('tr'));
+                                    var selector = $("td:first", matchingRows.parent("tr"));
                                     foundBarcodes[barcode] = selector;
 
                                     ambiguousBarcodes[barcode] = false;
@@ -156,9 +146,9 @@
                     }
                 } else {
                     Object.keys(foundBarcodes).forEach(function (key) {
-                        var checkbox = $(foundBarcodes[key].find(":checkbox"));
-                        checkbox.prop('checked', true);
-                        checkbox.trigger('change');
+                        var checkbox = $(foundBarcodes[key]);
+                        checkbox.find(":checkbox").prop('checked', true);
+                        checkbox.click();
                     });
 
                     stripesMessage.set($(table).find("input:checked").length + " " + settings.pluralNoun + " chosen.");

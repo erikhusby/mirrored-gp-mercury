@@ -283,6 +283,17 @@ jQuery.extend( jQuery.fn.dataTableExt.oSort, {
     }
 });
 
+/**
+ *  Find the column index of the supplied column header.
+ */
+(function($) {
+    $.fn.columnIndexOfHeader = function (columnHeader) {
+        "use strict";
+        return $(this).find("tr th").filter(function () {
+                return $(this).text() === columnHeader;
+            }).index() + 1;
+    };
+})(jQuery);
 
 (function ($) {
     return stripesMessage = {
@@ -312,7 +323,7 @@ jQuery.extend( jQuery.fn.dataTableExt.oSort, {
         if (fieldSelector != undefined) {
             $(fieldSelector).addClass(alertType);
         }
-        messageBox.append('<button type="button" class="close" data-dismiss="alert">&times;</button>')
+        messageBox.append('<button type="button" class="close" data-dismiss="alert">&times;</button>');
         messageBox.append('<ul></ul>');
 
         $('.page-body').before(messageBox);

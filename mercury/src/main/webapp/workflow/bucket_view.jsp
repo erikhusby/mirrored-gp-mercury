@@ -44,7 +44,8 @@
 
         function findWorkflowsFromSelectedRows() {
             var selectedWorkflows = [];
-            var columnIndex = findColumnIndexForHeader("Workflow") + 1;
+            var columnIndex = $j("bucketEntryView").columnIndexOfHeader("Workflow");
+
             $j("#bucketEntryView tr td input[name='selectedEntryIds']:checked").closest("tr").each(function () {
                 var workflow = $j(this).find("td:nth-child(" + columnIndex + ")").text().trim();
                 if ($j.inArray(workflow, selectedWorkflows) == -1) {
