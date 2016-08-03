@@ -23,6 +23,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
@@ -35,13 +37,7 @@ import org.codehaus.jackson.type.TypeReference;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * A Stripes Action Bean to record manual transfers.
@@ -83,6 +79,8 @@ public class ManualTransferActionBean extends RackScanActionBean {
     private LabEventType.ManualTransferDetails manualTransferDetails;
     /** Makes unique the synthetic barcodes of racks. */
     private int anonymousRackDisambiguator = 1;
+    /** For testing Cherry Pick */
+    private String cherryPickJson;
 
     @Inject
     private BettaLimsMessageResource bettaLimsMessageResource;
@@ -379,12 +377,36 @@ public class ManualTransferActionBean extends RackScanActionBean {
                     ObjectMapper mapper = new ObjectMapper();
                     List<CherryPicksPositions> cherryPickPositionMaps = null;
 
+                    if(cherryPickJson == null)
+                        cherryPickJson = getContext().getRequest().getParameter("destPosList");
                     //This handles barcode validation where no transfer connections have been made resulting in malformed Json.
-                    String srArrayList = getContext().getRequest().getParameter("destPosList");
                     try {
-                        cherryPickPositionMaps = mapper.readValue(srArrayList, new TypeReference<List<CherryPicksPositions>>(){});
+                        cherryPickPositionMaps = mapper.readValue(cherryPickJson, new TypeReference<List<CherryPicksPositions>>(){});
                     } catch (IOException e) {
                         messageCollection.addError("No valid connections exist");
+                        break;
+                    }
+
+                    //Check for duplicate molecular indexes in source tubes.
+                    for (CherryPicksPositions cherryPicks : cherryPickPositionMaps) {
+                        if (cherryPicks.sourceIDs.size() > 1 && cherryPicks.targetIDs.size() == 1) {
+                            Set<Object> set = new HashSet<>();
+                            for (String sourceBarcode : cherryPicks.sourceBarcodes) {
+                                LabVessel currentLabVessel = mapBarcodeToVessel.get(sourceBarcode);
+                                if (currentLabVessel == null) {
+                                    continue;
+                                }
+                                String molIndex = getMolecularIndex(currentLabVessel, sourceBarcode);
+                                if (molIndex != null) {
+                                    if (!set.add(molIndex)) {
+                                        messageCollection.addError("Duplicate molecular index: " + molIndex);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if(messageCollection.hasErrors()) {
                         break;
                     }
 
@@ -437,6 +459,28 @@ public class ManualTransferActionBean extends RackScanActionBean {
                 }
                 break;
         }
+    }
+
+    /**
+     * Return the molecular index for a given barcode.
+     */
+    private String getMolecularIndex(LabVessel currentLabVessel, String sourceBarcode) {
+
+        for (LabEvent labEvent : currentLabVessel.getEvents()) {
+            LabVessel labVessel = labEvent.getInPlaceLabVessel();
+            if (labVessel == null) {
+                for (LabVessel srcVessel : labEvent.getSourceVesselTubes()) {
+                    if (srcVessel.getLabel().equals(sourceBarcode)) {
+                        for (SampleInstanceV2 sample : srcVessel.getSampleInstancesV2()) {
+                            if (sample.getMolecularIndexingScheme() != null) {
+                                return sample.getMolecularIndexingScheme().getName();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     /**
@@ -888,6 +932,11 @@ public class ManualTransferActionBean extends RackScanActionBean {
     /** For testing. */
     void setUserBean(UserBean userBean) {
         this.userBean = userBean;
+    }
+
+    /** For testing Cherry Pick Json. */
+    void setCherryPickJSON(String json) {
+        this.cherryPickJson = json;
     }
 
     /** For testing. */

@@ -43,11 +43,23 @@ $(document).ready(function () {
             instance.detachEveryConnection();
             var newQueueObject = {
                 sourceIDs: [],
-                targetIDs: []
+                targetIDs: [],
+                sourceBarcodes: [],
+                targetBarcodes: []
             };
 
             newQueueObject.targetIDs = targetIDs.slice();
             newQueueObject.sourceIDs = sourceIDs.slice();
+
+            targetIDs.forEach(getBarcodesTarget);
+            sourceIDs.forEach(getBarcodesSource);
+
+            function getBarcodesSource(element, index, array) {
+                newQueueObject.sourceBarcodes.push($('#'+element.slice(3).replace('_','').replace('_','')).val());
+            }
+            function getBarcodesTarget(element, index, array) {
+                newQueueObject.targetBarcodes.push($('#'+element.slice(3).replace('_','').replace('_','')).val());
+            }
 
             //Delete any missing keys from the queue before it is sent to the server.
             for(key in workQueue) {
