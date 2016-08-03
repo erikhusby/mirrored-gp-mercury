@@ -159,10 +159,9 @@
                         var checkbox = $(foundBarcodes[key].find(":checkbox"));
                         checkbox.prop('checked', true);
                         checkbox.trigger('change');
-                        // jQuery(checkbox)[0].click();
                     });
 
-                    stripesMessage.set(Object.keys(foundBarcodes).length + " " + settings.pluralNoun + " successfully chosen.");
+                    stripesMessage.set($(table).find("input:checked").length + " " + settings.pluralNoun + " chosen.");
                     dialog.dialog("close");
                 }
             }
