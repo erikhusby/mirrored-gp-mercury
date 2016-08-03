@@ -21,7 +21,7 @@
             white-space: nowrap;
         }
     </style>
-    <script src="${ctxpath}/resources/scripts/paste_to_select.js" type="text/javascript"></script>
+    <script src="${ctxpath}/resources/scripts/jquery.pasteSelect.js" type="text/javascript"></script>
     <script src="${ctxpath}/resources/scripts/jquery.jeditable.mini.js" type="text/javascript"></script>
     <script type="text/javascript">
         function submitBucket() {
@@ -130,12 +130,11 @@
         }
 
         $j(document).ready(function () {
-            pasteToSelect.initialize("#bucketEntryView ", {
+            $j("#bucketEntryView").pasteSelect({
                 columnNames: ["Vessel Name", "Sample Name"],
                 noun: "Bucket Entry",
                 pluralNoun: "Bucket Entries"
             });
-
             setupBucketEvents();
 
             // Hide the input form when there are no bucket entries.
@@ -397,7 +396,7 @@
             <stripes:submit name="removeFromBucket" value="Remove From Bucket" class="btn bucket-control"
                             disabled="true"/>
             <a href="javascript:void(0)" id="PasteBarcodesList" class="bucket-control"
-               title="Use a pasted-in list of tube barcodes to select samples">Choose via list of barcodes...</a>
+               title="Use a pasted-in list of tube barcodes to select samples">Choose via list of vessel or sample names...</a>
             <a href="#" id="cancel" onClick="submitBucket()" style="display: none;">Cancel</a>
         </div>
         <table id="bucketEntryView" class="bucket-checkbox table simple">

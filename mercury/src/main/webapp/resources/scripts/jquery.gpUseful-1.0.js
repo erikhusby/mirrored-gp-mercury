@@ -287,13 +287,15 @@ jQuery.extend( jQuery.fn.dataTableExt.oSort, {
 (function ($) {
     return stripesMessage = {
         set: function (message, alertType, fieldSelector) {
-            alertClass = "." + getAlertClass(alertType);
-            $(alertClass).remove();
+            stripesMessage.clear();
             addStripesMessage(message, alertType, fieldSelector);
         },
-        add: function(message, alertType, fieldSelector) {
+        add: function (message, alertType, fieldSelector) {
             addStripesMessage(message, alertType, fieldSelector);
         },
+        clear: function () {
+            $("[class ^= 'alert']").remove();
+        }
     };
 
     function getAlertClass(alertType) {
@@ -304,10 +306,9 @@ jQuery.extend( jQuery.fn.dataTableExt.oSort, {
     }
 
     function addStripesMessageDiv(alertType, fieldSelector) {
-        var alertClass = getAlertClass(alertType);
         var messageBox = $(document.createElement("div"));
         messageBox.css({"margin-left": "20%", "margin-right": "20%"});
-        messageBox.addClass("alert").addClass(alertClass);
+        messageBox.addClass("alert").addClass(alertType);
         if (fieldSelector != undefined) {
             $(fieldSelector).addClass(alertType);
         }
@@ -318,10 +319,11 @@ jQuery.extend( jQuery.fn.dataTableExt.oSort, {
         return messageBox;
     }
 
-    function addStripesMessage(message, type, fieldSelector) {
-        var messageBoxJquery = $("div.alert-" + type);
+    function addStripesMessage(message, alertType, fieldSelector) {
+        var alertClass = getAlertClass(alertType);
+        var messageBoxJquery = $("div.alert-" + alertClass);
         if (messageBoxJquery.length == 0) {
-            messageBoxJquery = addStripesMessageDiv(type, fieldSelector);
+            messageBoxJquery = addStripesMessageDiv(alertClass, fieldSelector);
         }
         messageBoxJquery.find("ul").append("<li>" + message + "</li>");
     }

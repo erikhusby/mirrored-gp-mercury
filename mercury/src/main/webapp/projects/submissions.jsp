@@ -84,7 +84,7 @@
         }
 
     </style>
-    <script src="${ctxpath}/resources/scripts/paste_to_select.js" type="text/javascript"></script>
+    <script src="${ctxpath}/resources/scripts/jquery.pasteSelect.js" type="text/javascript"></script>
     <link rel="stylesheet" href="${ctxpath}/resources/scripts/chosen_v1.5.1/chosen.min.css">
     <script type="text/javascript" src="${ctxpath}/resources/scripts/chosen_v1.5.1/chosen.jquery.min.js"></script>
     <script type="text/javascript" src="${ctxpath}/resources/scripts/dataTables-filterColumn.js"></script>
@@ -95,10 +95,9 @@
         }
 
         $j(document).ready(function () {
-            pasteToSelect.initialize("#submissionSamples ", {
-                columnNames: ["Sample Name"],
-                noun: "Submission",
-                pluralNoun: "Submissions"
+            $j("#submissionSamples").pasteSelect({
+                columnNames: ["BioSample"],
+                noun: "Sample"
             });
 
             $j("#bioProject").tokenInput(
