@@ -75,7 +75,7 @@ public class ReagentFixupTest extends Arquillian {
 
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWar(DEV, "dev");
+        return DeploymentBuilder.buildMercuryWar(DEV, "prod");
     }
 
     @Test(enabled = false)
@@ -1162,7 +1162,7 @@ public class ReagentFixupTest extends Arquillian {
         utx.commit();
     }
 
-    @Test(enabled = false)
+    @Test(enabled = true)
     public void gplim4252EmergeBaitLotFixup() throws Exception {
         userBean.loginOSUser();
         utx.begin();
@@ -1177,7 +1177,7 @@ public class ReagentFixupTest extends Arquillian {
 
         LabEvent labEvent = labEventDao.findById(LabEvent.class, 1434789L);
         Assert.assertEquals(labEvent.getLabEventType(), LabEventType.ICE_1S_TBAIT_PICK);
-        Assert.assertTrue(labEvent.getReagents().remove(undesired));
+        Assert.assertNotNull(labEvent.removeLabEventReagent(undesired));
         labEvent.addReagent(desired);
 
         genericReagentDao.persist(new FixupCommentary("GPLIM-4252 change reagent used on Ice 1st Bait Pick."));
