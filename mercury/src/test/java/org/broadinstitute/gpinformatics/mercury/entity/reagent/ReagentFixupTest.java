@@ -75,7 +75,7 @@ public class ReagentFixupTest extends Arquillian {
 
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWar(DEV, "prod");
+        return DeploymentBuilder.buildMercuryWar(DEV, "dev");
     }
 
     @Test(enabled = false)
@@ -1162,7 +1162,7 @@ public class ReagentFixupTest extends Arquillian {
         utx.commit();
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void gplim4252EmergeBaitLotFixup() throws Exception {
         userBean.loginOSUser();
         utx.begin();
