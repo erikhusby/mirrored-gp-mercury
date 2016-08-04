@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMes
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateType;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResource;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -22,6 +23,7 @@ import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -41,7 +43,7 @@ public class InfiniumRunFinder implements Serializable {
     private InfiniumPipelineClient infiniumPipelineClient;
 
     @Inject
-    private InfiniumPendingChipFinder infiniumPendingChipFinder;
+    private LabVesselDao labVesselDao;
 
     @Inject
     private EmailSender emailSender;
@@ -50,7 +52,10 @@ public class InfiniumRunFinder implements Serializable {
     private AppConfig appConfig;
 
     public void find() {
-        for (LabVessel labVessel : infiniumPendingChipFinder.listPendingXStainChips()) {
+        List<LabVessel> infiniumChips = labVesselDao
+                .findWithEventTypeButMissingEventType(LabEventType.INFINIUM_XSTAIN,
+                        LabEventType.INFINIUM_AUTOCALL_ALL_STARTED);
+        for (LabVessel labVessel : infiniumChips) {
             try {
                 if (OrmUtil.proxySafeIsInstance(labVessel, StaticPlate.class)) {
                     StaticPlate staticPlate = OrmUtil.proxySafeCast(labVessel, StaticPlate.class);
@@ -152,7 +157,7 @@ public class InfiniumRunFinder implements Serializable {
         this.infiniumPipelineClient = infiniumPipelineClient;
     }
 
-    public void setInfiniumPendingChipFinder(InfiniumPendingChipFinder infiniumPendingChipFinder) {
-        this.infiniumPendingChipFinder = infiniumPendingChipFinder;
+    public void setLabVesselDao(LabVesselDao labVesselDao) {
+        this.labVesselDao = labVesselDao;
     }
 }

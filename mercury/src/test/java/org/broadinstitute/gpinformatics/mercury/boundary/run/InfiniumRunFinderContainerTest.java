@@ -9,11 +9,9 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMes
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResource;
-import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.GapHandler;
-import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
@@ -23,14 +21,11 @@ import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import javax.transaction.UserTransaction;
 
 import java.io.File;
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -40,7 +35,6 @@ import java.util.List;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.STUBBY;
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -59,7 +53,7 @@ import static org.mockito.Mockito.when;
 public class InfiniumRunFinderContainerTest extends Arquillian {
 
     @Inject
-    private LabEventDao labEventDao;
+    private LabVesselDao labVesselDao;
 
     @Inject
     private InfiniumRunFinder infiniumRunFinder;
@@ -69,9 +63,6 @@ public class InfiniumRunFinderContainerTest extends Arquillian {
 
     @Inject
     private LabEventFactory labEventFactory;
-
-    @Inject
-    private InfiniumPendingChipFinder infiniumPendingChipFinder;
 
     private GapHandler mockGapHandler;
 
@@ -104,7 +95,8 @@ public class InfiniumRunFinderContainerTest extends Arquillian {
         sendHybAndXStainMessages(POST_PCR_PLATE, chipBarcode);
 
         //Test to see if can find as a 'Pending' Chip
-        List<LabVessel> pendingXStainChips = infiniumPendingChipFinder.listPendingXStainChips();
+        List<LabVessel> pendingXStainChips = labVesselDao.findWithEventTypeButMissingEventType(
+                LabEventType.INFINIUM_XSTAIN, LabEventType.INFINIUM_AUTOCALL_ALL_STARTED);
         LabVessel infiniumChip = null;
         boolean foundPendingChip = false;
         for (LabVessel labVessel: pendingXStainChips) {
@@ -134,10 +126,12 @@ public class InfiniumRunFinderContainerTest extends Arquillian {
             fGreen.createNewFile();
         }
 
-        //Mock chip finder so run finder doesn't grab every old run.
-        InfiniumPendingChipFinder mockChipFinder = mock(InfiniumPendingChipFinder.class);
-        when(mockChipFinder.listPendingXStainChips()).thenReturn(Arrays.asList(infiniumChip));
-        infiniumRunFinder.setInfiniumPendingChipFinder(mockChipFinder);
+        //Mock LabVesselDao so run finder doesn't grab every old run for this test.
+        LabVesselDao mockLabVesselDao = mock(LabVesselDao.class);
+        when(mockLabVesselDao.findWithEventTypeButMissingEventType(
+                LabEventType.INFINIUM_XSTAIN, LabEventType.INFINIUM_AUTOCALL_ALL_STARTED))
+                .thenReturn(Arrays.asList(infiniumChip));
+        infiniumRunFinder.setLabVesselDao(mockLabVesselDao);
 
         InfiniumStarterConfig config = new InfiniumStarterConfig(STUBBY);
         config.setMinimumIdatFileLength(-1);

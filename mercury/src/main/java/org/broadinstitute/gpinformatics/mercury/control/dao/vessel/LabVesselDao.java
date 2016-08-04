@@ -9,6 +9,9 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.JPASplitter;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry_;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent_;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample_;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -25,6 +28,7 @@ import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -155,5 +159,22 @@ public class LabVesselDao extends GenericDao {
             mapBarcodeToTube.put(result.getLabel(), result);
         }
         return mapBarcodeToTube;
+    }
+
+    public List<LabVessel> findWithEventTypeButMissingEventType(final LabEventType searchEventType, final LabEventType missingEventType) {
+        List<LabVessel> resultList = new ArrayList<>();
+        CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
+        final CriteriaQuery<LabVessel> criteriaQuery = criteriaBuilder.createQuery(LabVessel.class);
+        Root<LabVessel> root = criteriaQuery.from(LabVessel.class);
+        Join<LabVessel, LabEvent> labVessels = root.join(LabVessel_.inPlaceLabEvents);
+        Predicate eqPredicate = criteriaBuilder.equal(labVessels.get(LabEvent_.labEventType), searchEventType);
+        Predicate notEqPredicate = criteriaBuilder.notEqual(labVessels.get(LabEvent_.labEventType), missingEventType);
+        criteriaQuery.where(eqPredicate, notEqPredicate);
+        try {
+            resultList.addAll(getEntityManager().createQuery(criteriaQuery).getResultList());
+        } catch (NoResultException ignored) {
+            return resultList;
+        }
+        return resultList;
     }
 }

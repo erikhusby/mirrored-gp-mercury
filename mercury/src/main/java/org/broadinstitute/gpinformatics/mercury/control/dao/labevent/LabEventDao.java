@@ -43,13 +43,4 @@ public class LabEventDao extends GenericDao {
             }
         });
     }
-
-    public List<LabEvent> findByEventType(final LabEventType labEventType) {
-        return findAll(LabEvent.class, new GenericDaoCallback<LabEvent>() {
-            @Override
-            public void callback(CriteriaQuery<LabEvent> criteriaQuery, Root<LabEvent> root) {
-                criteriaQuery.where(getCriteriaBuilder().equal(root.get(LabEvent_.labEventType), labEventType));
-            }
-        });
-    }
 }
