@@ -462,7 +462,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
     }
 
     /**
-     * Return the molecular index for a given barcode.
+     * Return the molecular index for a given LabVessel.
      */
     private String getMolecularIndex(LabVessel currentLabVessel) {
 
