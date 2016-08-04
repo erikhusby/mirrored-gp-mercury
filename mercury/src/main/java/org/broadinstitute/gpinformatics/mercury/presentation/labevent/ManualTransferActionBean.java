@@ -23,7 +23,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -396,10 +395,14 @@ public class ManualTransferActionBean extends RackScanActionBean {
                                 if (currentLabVessel == null) {
                                     continue;
                                 }
-                                String molIndex = getMolecularIndex(currentLabVessel);
-                                if (molIndex != null) {
-                                    if (!set.add(molIndex)) {
-                                        messageCollection.addError("Duplicate molecular index: " + molIndex);
+                                for (SampleInstanceV2 sample : currentLabVessel.getSampleInstancesV2()) {
+                                    if (sample.getMolecularIndexingScheme() != null) {
+                                        String molIndex = sample.getMolecularIndexingScheme().getName();
+                                        if (molIndex != null) {
+                                            if (!set.add(molIndex)) {
+                                                messageCollection.addWarning("Duplicate molecular index: " + molIndex);
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -459,19 +462,6 @@ public class ManualTransferActionBean extends RackScanActionBean {
                 }
                 break;
         }
-    }
-
-    /**
-     * Return the molecular index for a given LabVessel.
-     */
-    private String getMolecularIndex(LabVessel currentLabVessel) {
-
-        for (SampleInstanceV2 sample : currentLabVessel.getSampleInstancesV2()) {
-            if (sample.getMolecularIndexingScheme() != null) {
-                return sample.getMolecularIndexingScheme().getName();
-            }
-        }
-        return null;
     }
 
     /**
