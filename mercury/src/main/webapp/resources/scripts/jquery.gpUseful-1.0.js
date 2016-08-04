@@ -288,7 +288,6 @@ jQuery.extend( jQuery.fn.dataTableExt.oSort, {
  */
 (function($) {
     $.fn.columnIndexOfHeader = function (columnHeader) {
-        "use strict";
         return $(this).find("tr th").filter(function () {
                 return $(this).text() === columnHeader;
             }).index() + 1;
