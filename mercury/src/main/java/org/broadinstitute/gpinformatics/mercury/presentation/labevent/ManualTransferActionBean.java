@@ -409,10 +409,6 @@ public class ManualTransferActionBean extends RackScanActionBean {
                         }
                     }
 
-                    if(messageCollection.hasErrors()) {
-                        break;
-                    }
-
                     for (CherryPicksPositions item: cherryPickPositionMaps)
                     {
                         String srcWell = "";
