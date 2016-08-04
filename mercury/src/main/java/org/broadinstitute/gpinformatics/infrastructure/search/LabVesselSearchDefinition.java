@@ -18,6 +18,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
+import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
@@ -181,6 +183,9 @@ public class LabVesselSearchDefinition {
 
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("inPlaceLabVesselId", "labVesselId",
                 "inPlaceLabVesselId", LabEvent.class));
+
+        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection( "sequencingRun", "labVesselId",
+                "runCartridge", SequencingRun.class));
 
         ConfigurableSearchDefinition configurableSearchDefinition = new ConfigurableSearchDefinition(
                 ColumnEntity.LAB_VESSEL, criteriaProjections, mapGroupSearchTerms);
@@ -570,6 +575,27 @@ public class LabVesselSearchDefinition {
         });
         searchTerms.add(searchTerm);
 
+        // Product
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Product");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Set<String> evaluate(Object entity, SearchContext context) {
+                Set<String> results = null;
+                LabVessel labVessel = (LabVessel) entity;
+                for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+                    for (ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples() ) {
+                        if( productOrderSample.getProductOrder().getProduct() != null ) {
+                            (results == null ? results = new HashSet<>() : results)
+                                    .add(productOrderSample.getProductOrder().getProduct().getDisplayName());
+                        }
+                    }
+                }
+                return results;
+            }
+        });
+        searchTerms.add(searchTerm);
+
         return searchTerms;
     }
 
@@ -862,6 +888,13 @@ public class LabVesselSearchDefinition {
                 LabVessel labVessel = (LabVessel) entity;
                 Set<String> barcodes = null;
 
+                // Handle the case where the flowcell itself is returned (e.g. flowcell barcode as search criteria)
+                if( OrmUtil.proxySafeIsInstance(labVessel, RunCartridge.class) ) {
+                    barcodes = new HashSet<>();
+                    barcodes.add(labVessel.getLabel());
+                    return barcodes;
+                }
+
                 List<LabEventType> labEventTypes = new ArrayList<>();
                 labEventTypes.add(LabEventType.FLOWCELL_TRANSFER);
                 labEventTypes.add(LabEventType.DENATURE_TO_FLOWCELL_TRANSFER);
@@ -869,14 +902,72 @@ public class LabVesselSearchDefinition {
 
                 VesselsForEventTraverserCriteria eval
                         = new VesselsForEventTraverserCriteria( labEventTypes );
-                labVessel.evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
+
+                if( labVessel.getContainerRole() != null ) {
+                    labVessel.getContainerRole().applyCriteriaToAllPositions(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
+                } else {
+                    labVessel.evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
+                }
 
                 for(Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions
                         : eval.getPositions().asMap().entrySet()) {
-                    (barcodes==null?barcodes=new HashSet<String>():barcodes)
+                    (barcodes==null?barcodes=new HashSet<>():barcodes)
                             .add(labVesselAndPositions.getKey().getLabel());
                 }
                 return barcodes;
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Sequencing Run Name");
+        criteriaPaths = new ArrayList<>();
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Collections.singletonList("sequencingRun"));
+        criteriaPath.setPropertyName("runName");
+        criteriaPaths.add(criteriaPath);
+        searchTerm.setCriteriaPaths(criteriaPaths);
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Set<String> evaluate(Object entity, SearchContext context) {
+
+                LabVessel labVessel = (LabVessel) entity;
+                Set<String> seqRunNames = null;
+
+                // Handle the case where the flowcell itself is returned (e.g. flowcell barcode as search criteria)
+                if( OrmUtil.proxySafeIsInstance(labVessel, RunCartridge.class) ) {
+                    RunCartridge flowCell = OrmUtil.proxySafeCast(labVessel, RunCartridge.class);
+                    for(SequencingRun run : flowCell.getSequencingRuns()) {
+                        (seqRunNames==null?seqRunNames=new HashSet<>():seqRunNames)
+                                .add(run.getRunName());
+                    }
+                    return seqRunNames;
+                }
+
+                List<LabEventType> labEventTypes = new ArrayList<>();
+                labEventTypes.add(LabEventType.FLOWCELL_TRANSFER);
+                labEventTypes.add(LabEventType.DENATURE_TO_FLOWCELL_TRANSFER);
+                labEventTypes.add(LabEventType.DILUTION_TO_FLOWCELL_TRANSFER);
+
+                VesselsForEventTraverserCriteria eval
+                        = new VesselsForEventTraverserCriteria( labEventTypes );
+
+                if( labVessel.getContainerRole() != null ) {
+                    labVessel.getContainerRole().applyCriteriaToAllPositions(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
+                } else {
+                    labVessel.evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
+                }
+
+                for(LabVessel flowCellVessel : eval.getPositions().keySet()) {
+                    if( OrmUtil.proxySafeIsInstance(flowCellVessel, RunCartridge.class) ) {
+                        RunCartridge flowCell = OrmUtil.proxySafeCast(flowCellVessel, RunCartridge.class);
+                        for(SequencingRun run : flowCell.getSequencingRuns()) {
+                            (seqRunNames==null?seqRunNames=new HashSet<>():seqRunNames)
+                                    .add(run.getRunName());
+                        }
+                    }
+                }
+                return seqRunNames;
             }
         });
         searchTerms.add(searchTerm);
