@@ -390,13 +390,13 @@ public class ManualTransferActionBean extends RackScanActionBean {
                     //Check for duplicate molecular indexes in source tubes.
                     for (CherryPicksPositions cherryPicks : cherryPickPositionMaps) {
                         if (cherryPicks.sourceIDs.size() > 1 && cherryPicks.targetIDs.size() == 1) {
-                            Set<Object> set = new HashSet<>();
+                            Set<String> set = new HashSet<>();
                             for (String sourceBarcode : cherryPicks.sourceBarcodes) {
                                 LabVessel currentLabVessel = mapBarcodeToVessel.get(sourceBarcode);
                                 if (currentLabVessel == null) {
                                     continue;
                                 }
-                                String molIndex = getMolecularIndex(currentLabVessel, sourceBarcode);
+                                String molIndex = getMolecularIndex(currentLabVessel);
                                 if (molIndex != null) {
                                     if (!set.add(molIndex)) {
                                         messageCollection.addError("Duplicate molecular index: " + molIndex);
@@ -464,20 +464,11 @@ public class ManualTransferActionBean extends RackScanActionBean {
     /**
      * Return the molecular index for a given barcode.
      */
-    private String getMolecularIndex(LabVessel currentLabVessel, String sourceBarcode) {
+    private String getMolecularIndex(LabVessel currentLabVessel) {
 
-        for (LabEvent labEvent : currentLabVessel.getEvents()) {
-            LabVessel labVessel = labEvent.getInPlaceLabVessel();
-            if (labVessel == null) {
-                for (LabVessel srcVessel : labEvent.getSourceVesselTubes()) {
-                    if (srcVessel.getLabel().equals(sourceBarcode)) {
-                        for (SampleInstanceV2 sample : srcVessel.getSampleInstancesV2()) {
-                            if (sample.getMolecularIndexingScheme() != null) {
-                                return sample.getMolecularIndexingScheme().getName();
-                            }
-                        }
-                    }
-                }
+        for (SampleInstanceV2 sample : currentLabVessel.getSampleInstancesV2()) {
+            if (sample.getMolecularIndexingScheme() != null) {
+                return sample.getMolecularIndexingScheme().getName();
             }
         }
         return null;
