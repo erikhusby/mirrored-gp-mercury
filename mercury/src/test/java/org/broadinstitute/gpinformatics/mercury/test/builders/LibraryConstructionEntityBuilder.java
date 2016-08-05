@@ -44,12 +44,16 @@ public class LibraryConstructionEntityBuilder {
     private String pondRegRackBarcode;
     private       List<String>                pondRegTubeBarcodes;
     private       TubeFormation               pondRegRack;
+    private String pondNormRackBarcode;
+    private List<String> pondNormTubeBarcodes;
+    private TubeFormation pondNormRack;
     private int numSamples;
     private String testPrefix;
     private Indexing indexing;
     private LibraryConstructionJaxbBuilder.PondType pondType;
 
     private final Map<String, BarcodedTube> mapBarcodeToPondRegTubes = new HashMap<>();
+    private final Map<String, BarcodedTube> mapBarcodeToPondNormTubes = new HashMap<>();
 
     public LibraryConstructionEntityBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
             LabEventFactory labEventFactory, LabEventHandler labEventHandler, StaticPlate shearingCleanupPlate,
@@ -81,6 +85,22 @@ public class LibraryConstructionEntityBuilder {
 
     public Map<String, BarcodedTube> getMapBarcodeToPondRegTubes() {
         return mapBarcodeToPondRegTubes;
+    }
+
+    public TubeFormation getPondNormRack() {
+        return pondNormRack;
+    }
+
+    public String getPondNormRackBarcode() {
+        return pondNormRackBarcode;
+    }
+
+    public List<String> getPondNormTubeBarcodes() {
+        return pondNormTubeBarcodes;
+    }
+
+    public Map<String, BarcodedTube> getMapBarcodeToPondNormTubes() {
+        return mapBarcodeToPondNormTubes;
     }
 
     public LibraryConstructionEntityBuilder invoke() {
@@ -233,8 +253,37 @@ public class LibraryConstructionEntityBuilder {
         LabEvent pondRegistrationEntity = labEventFactory.buildFromBettaLims(
                 libraryConstructionJaxbBuilder.getPondRegistrationJaxb(), mapBarcodeToVessel);
         labEventHandler.processEvent(pondRegistrationEntity);
-        // asserts
         pondRegRack = (TubeFormation) pondRegistrationEntity.getTargetLabVessels().iterator().next();
+
+        pondRegRackBarcode = libraryConstructionJaxbBuilder.getPondRegRackBarcode();
+        pondRegTubeBarcodes = libraryConstructionJaxbBuilder.getPondRegTubeBarcodes();
+
+        for (BarcodedTube barcodedTube : pondRegRack.getContainerRole().getContainedVessels()) {
+            mapBarcodeToPondRegTubes.put(barcodedTube.getLabel(), barcodedTube);
+        }
+
+        // PCRPlusPondNormalization
+        if (pondType == LibraryConstructionJaxbBuilder.PondType.PCR_PLUS) {
+            LabEventTest.validateWorkflow("PCRPlusPondNormalization", pondRegRack);
+            mapBarcodeToVessel.clear();
+            for (BarcodedTube barcodedTube : pondRegRack.getContainerRole().getContainedVessels()) {
+                mapBarcodeToVessel.put(barcodedTube.getLabel(), barcodedTube);
+            }
+            mapBarcodeToVessel.put(pondRegRack.getLabel(), pondRegRack);
+            LabEvent pondNormEntity = labEventFactory.buildFromBettaLims(
+                    libraryConstructionJaxbBuilder.getPondNormJaxb(), mapBarcodeToVessel);
+            labEventHandler.processEvent(pondNormEntity);
+            pondNormRack = (TubeFormation) pondNormEntity.getTargetLabVessels().iterator().next();
+
+            pondNormRackBarcode = libraryConstructionJaxbBuilder.getPondNormRackBarcode();
+            pondNormTubeBarcodes = libraryConstructionJaxbBuilder.getPondNormTubeBarcodes();
+
+            for (BarcodedTube barcodedTube : pondNormRack.getContainerRole().getContainedVessels()) {
+                mapBarcodeToPondNormTubes.put(barcodedTube.getLabel(), barcodedTube);
+            }
+        }
+
+        // asserts
         Assert.assertEquals(pondRegRack.getSampleInstancesV2().size(),
                 shearingPlate.getSampleInstancesV2().size(), "Wrong number of sample instances");
         Set<SampleInstanceV2> sampleInstancesInPondRegWell =
@@ -251,12 +300,6 @@ public class LibraryConstructionEntityBuilder {
         Assert.assertEquals(molecularIndexReagent.getMolecularIndexingScheme().getName(), "Illumina_P5-Habab_P7-Habab",
                 "Wrong index");
 
-        pondRegRackBarcode = libraryConstructionJaxbBuilder.getPondRegRackBarcode();
-        pondRegTubeBarcodes = libraryConstructionJaxbBuilder.getPondRegTubeBarcodes();
-
-        for (BarcodedTube barcodedTube : pondRegRack.getContainerRole().getContainedVessels()) {
-            mapBarcodeToPondRegTubes.put(barcodedTube.getLabel(), barcodedTube);
-        }
         return this;
     }
 }
