@@ -95,7 +95,7 @@ public class InfiniumRunFinderContainerTest extends Arquillian {
         sendHybAndXStainMessages(POST_PCR_PLATE, chipBarcode);
 
         //Test to see if can find as a 'Pending' Chip
-        List<LabVessel> pendingXStainChips = labVesselDao.findWithEventTypeButMissingEventType(
+        List<LabVessel> pendingXStainChips = labVesselDao.findAllWithEventButMissing(
                 LabEventType.INFINIUM_XSTAIN, LabEventType.INFINIUM_AUTOCALL_ALL_STARTED);
         LabVessel infiniumChip = null;
         boolean foundPendingChip = false;
@@ -128,7 +128,7 @@ public class InfiniumRunFinderContainerTest extends Arquillian {
 
         //Mock LabVesselDao so run finder doesn't grab every old run for this test.
         LabVesselDao mockLabVesselDao = mock(LabVesselDao.class);
-        when(mockLabVesselDao.findWithEventTypeButMissingEventType(
+        when(mockLabVesselDao.findAllWithEventButMissing(
                 LabEventType.INFINIUM_XSTAIN, LabEventType.INFINIUM_AUTOCALL_ALL_STARTED))
                 .thenReturn(Arrays.asList(infiniumChip));
         infiniumRunFinder.setLabVesselDao(mockLabVesselDao);

@@ -2,7 +2,9 @@ package org.broadinstitute.gpinformatics.mercury.boundary.run;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.ObjectMarshaller;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
@@ -18,7 +20,11 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
+import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.io.Serializable;
@@ -30,6 +36,7 @@ import java.util.Set;
  * Finds pending infinium chip runs and forwards them on to analysis.
  */
 @RequestScoped
+@Stateless
 public class InfiniumRunFinder implements Serializable {
     private static final Log log = LogFactory.getLog(InfiniumRunFinder.class);
 
@@ -51,9 +58,14 @@ public class InfiniumRunFinder implements Serializable {
     @Inject
     private AppConfig appConfig;
 
+    @Inject
+    private BSPUserList bspUserList;
+
+    @Inject
+    private UserBean userBean;
+
     public void find() {
-        List<LabVessel> infiniumChips = labVesselDao
-                .findWithEventTypeButMissingEventType(LabEventType.INFINIUM_XSTAIN,
+        List<LabVessel> infiniumChips = labVesselDao.findAllWithEventButMissing(LabEventType.INFINIUM_XSTAIN,
                         LabEventType.INFINIUM_AUTOCALL_ALL_STARTED);
         for (LabVessel labVessel : infiniumChips) {
             try {
@@ -125,6 +137,7 @@ public class InfiniumRunFinder implements Serializable {
         return null;
     }
 
+    @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
     private LabEvent createEvent(StaticPlate staticPlate, LabEventType eventType) throws Exception {
         BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
         bettaLIMSMessage.setMode(LabEventFactory.MODE_MERCURY);
@@ -138,13 +151,34 @@ public class InfiniumRunFinder implements Serializable {
         PlateType plateType = new PlateType();
         plateType.setBarcode(staticPlate.getLabel());
         plateType.setPhysType(staticPlate.getPlateType().getAutomationName());
-        plateType.setSection("ALL96"); //TODO what to put here? doesn't really matter
+        plateType.setSection("ALL96");
         plateEventType.setPlate(plateType);
         bettaLIMSMessage.getPlateEvent().add(plateEventType);
+
+        BspUser bspUser = getBspUser("seqsystem");
+        long operator = bspUser.getUserId();
+        LabEvent labEvent = new LabEvent(eventType, start, LabEvent.UI_PROGRAM_NAME, 1L, operator, LabEvent.UI_PROGRAM_NAME);
+        staticPlate.addInPlaceEvent(labEvent);
+        labEventDao.persist(labEvent);
+        labEventDao.flush();
+
         ObjectMarshaller<BettaLIMSMessage> bettaLIMSMessageObjectMarshaller =
                 new ObjectMarshaller<>(BettaLIMSMessage.class);
         bettaLimsMessageResource.storeAndProcess(bettaLIMSMessageObjectMarshaller.marshal(bettaLIMSMessage));
         return findLabEvent(staticPlate, eventType);
+    }
+
+    private BspUser getBspUser(String operator) {
+        BspUser bspUser = bspUserList.getByUsername(operator);
+        if (bspUser == null) {
+            throw new RuntimeException("Failed to find operator " + operator);
+        }
+        login(operator);
+        return bspUser;
+    }
+
+    private void login(String operator) {
+        userBean.login(operator);
     }
 
     public void setInfiniumRunProcessor(

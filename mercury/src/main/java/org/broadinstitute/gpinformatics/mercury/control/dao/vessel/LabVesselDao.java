@@ -161,7 +161,8 @@ public class LabVesselDao extends GenericDao {
         return mapBarcodeToTube;
     }
 
-    public List<LabVessel> findWithEventTypeButMissingEventType(final LabEventType searchEventType, final LabEventType missingEventType) {
+    public List<LabVessel> findAllWithEventButMissing(final LabEventType searchEventType,
+                                                      final LabEventType missingEventType) {
         List<LabVessel> resultList = new ArrayList<>();
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
         final CriteriaQuery<LabVessel> criteriaQuery = criteriaBuilder.createQuery(LabVessel.class);

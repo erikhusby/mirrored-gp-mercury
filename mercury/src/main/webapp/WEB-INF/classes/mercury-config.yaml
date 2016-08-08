@@ -239,7 +239,7 @@ infiniumStarter:
         jmsQueue: broad.arrays.enqueue
 
     QA:
-        dataPath: /humgen/illumina_data
+        dataPath: /humgen/illumina_data/qa
         minimumIdatFileLength: -1
         jmsHost: vpicard01
         jmsPort: 61616
@@ -395,5 +395,4 @@ mercury:
       collaborate: PROD
       bass:     PROD
       submission: PROD
-      infiniumStarter: PROD
 
