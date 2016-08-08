@@ -119,6 +119,7 @@ public class BettaLimsMessageResource {
     }
 
     @PostConstruct
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public void postConstructor() {
         // Does the one-time lab event setup that is needed when processing messages.
         LabEvent.setupEventTypesThatCanFollowBucket(workflowLoader);

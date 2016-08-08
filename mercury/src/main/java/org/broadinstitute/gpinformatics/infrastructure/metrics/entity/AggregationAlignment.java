@@ -22,12 +22,15 @@ import java.io.Serializable;
 @Entity
 @Table(name = "AGGREGATION_ALIGNMENT", schema = "METRICS")
 public class AggregationAlignment implements Serializable {
+
     @Id
     @Column(name = "AGGREGATION_ID", nullable = false, insertable = false, updatable = false)
     private Integer aggregationId;
+
     @Id
     private String category;
     @Column(name = "PF_ALIGNED_BASES") private Long pfAlignedBases;
+
     @ManyToOne
     @JoinColumn(name = "AGGREGATION_ID", referencedColumnName = "ID", nullable = false,  updatable = false, insertable = false)
     private Aggregation aggregation;
