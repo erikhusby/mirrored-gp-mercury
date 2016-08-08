@@ -67,12 +67,30 @@ CREATE TABLE im_fct_load (
 
 -- 'PCR-Plus Norm Pond' shouldn't exist at deploy, but handle explicitly for consistency
 UPDATE LIBRARY_ANCESTRY
-SET ANCESTOR_LIBRARY_TYPE = case ancestor_library_type when 'PCR-Plus Norm Pond' then 'Norm Pond' else 'Pond' end
-WHERE ANCESTOR_LIBRARY_TYPE LIKE '%Pond';
+   SET ANCESTOR_LIBRARY_TYPE = case ANCESTOR_LIBRARY_TYPE when 'PCR-Plus Norm Pond' then 'Norm Pond' else 'Pond' end
+ WHERE ANCESTOR_LIBRARY_TYPE LIKE '%Pond';
 
 UPDATE LIBRARY_ANCESTRY
-SET CHILD_LIBRARY_TYPE = case ancestor_library_type when 'PCR-Plus Norm Pond' then 'Norm Pond' else 'Pond' end
-WHERE CHILD_LIBRARY_TYPE LIKE '%Pond';
+   SET ANCESTOR_LIBRARY_TYPE = 'Catch'
+ WHERE ANCESTOR_LIBRARY_TYPE LIKE '%Catch';
+
+UPDATE LIBRARY_ANCESTRY
+   SET CHILD_LIBRARY_TYPE = case CHILD_LIBRARY_TYPE when 'PCR-Plus Norm Pond' then 'Norm Pond' else 'Pond' end
+ WHERE CHILD_LIBRARY_TYPE LIKE '%Pond';
+
+UPDATE LIBRARY_ANCESTRY
+   SET CHILD_LIBRARY_TYPE = 'Catch'
+ WHERE CHILD_LIBRARY_TYPE LIKE '%Catch';
+
+COMMIT;
+
+UPDATE LIBRARY_LCSET_SAMPLE_BASE
+   SET LIBRARY_TYPE = case LIBRARY_TYPE when 'PCR-Plus Norm Pond' then 'Norm Pond' else 'Pond' end
+ WHERE LIBRARY_TYPE LIKE '%Pond';
+
+UPDATE LIBRARY_LCSET_SAMPLE_BASE
+   SET LIBRARY_TYPE = 'Catch'
+ WHERE LIBRARY_TYPE LIKE '%Catch';
 
 COMMIT;
 
