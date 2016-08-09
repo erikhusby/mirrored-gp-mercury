@@ -47,8 +47,11 @@ public class SubmissionTracker {
     @Column(name = "SUBMITTED_SAMPLE_NAME")
     private String submittedSampleName;
 
+    private String project;
+
     @Enumerated(EnumType.STRING)
     private BassFileType fileType;
+
     /**
      * version of the data file created
      */
@@ -67,16 +70,18 @@ public class SubmissionTracker {
     protected SubmissionTracker() {
     }
 
-    SubmissionTracker(Long submissionTrackerId, String submittedSampleName, BassFileType fileType, String version) {
+    SubmissionTracker(Long submissionTrackerId, String submittedSampleName, String project, BassFileType fileType,
+                      String version) {
         this.submissionTrackerId = submissionTrackerId;
         this.submittedSampleName = submittedSampleName;
+        this.project = project;
         this.fileType = fileType;
         this.version = version;
         requestDate = new Date();
     }
 
-    public SubmissionTracker(String submittedSampleName, BassFileType fileType, String version) {
-       this(null, submittedSampleName, fileType, version);
+    public SubmissionTracker(String submittedSampleName, String project, BassFileType fileType, String version) {
+        this(null, submittedSampleName, project, fileType, version);
     }
 
     /**

@@ -90,8 +90,8 @@ public class ResearchProjectEjbSubmissionTest {
     public void testFileTypeVariationNoBassDTOFileType() throws Exception {
         // data setup for dao result.
         SubmissionDto submissionDto = getSubmissionDto(dummyProductOrder, BassFileType.BAM, "/some/file");
-        SubmissionTracker submissionTracker = new SubmissionTracker(submissionDto.getSampleName(), BassFileType.BAM,
-                        String.valueOf(submissionDto.getVersion()));
+        SubmissionTracker submissionTracker = new SubmissionTracker(submissionDto.getSampleName(), "P123",
+                BassFileType.BAM, String.valueOf(submissionDto.getVersion()));
 
         SubmissionTrackerDao submissionTrackerDao = Mockito.mock(SubmissionTrackerDao.class);
         setupSubmissionTrackerMock(submissionTrackerDao, Collections.singletonList(submissionTracker));
@@ -115,7 +115,7 @@ public class ResearchProjectEjbSubmissionTest {
         SubmissionDto bApicard = getSubmissionDto("A", BassFileType.PICARD, TEST_VERSION_1);
 
         SubmissionTracker stA =
-                new SubmissionTracker(bA.getSampleName(), bA.getFileType(), String.valueOf(bA.getVersion()));
+                new SubmissionTracker(bA.getSampleName(), "P123", bA.getFileType(), String.valueOf(bA.getVersion()));
 
         List<Object[]> testCases = new ArrayList<>();
         testCases.add(new Object[]{"TEST-1", Collections.singletonList(bA), Collections.emptyList(), true});

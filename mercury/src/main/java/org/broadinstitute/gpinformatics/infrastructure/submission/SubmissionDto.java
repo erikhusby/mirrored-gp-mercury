@@ -250,7 +250,7 @@ public class SubmissionDto implements Serializable {
         return productOrders;
     }
 
-    String getAggregationProject() {
+    public String getAggregationProject() {
         return project;
     }
 

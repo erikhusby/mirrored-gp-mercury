@@ -27,14 +27,8 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTracker;
 import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTuple;
-import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassSearchService;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.AggregationMetricsFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
@@ -55,51 +49,17 @@ public class SubmissionDtoFetcher {
     private static final Log log = LogFactory.getLog(SubmissionDtoFetcher.class);
     private AggregationMetricsFetcher aggregationMetricsFetcher;
     private BassSearchService bassSearchService;
-    private BSPSampleDataFetcher bspSampleDataFetcher;
     private SubmissionsService submissionsService;
     private ProductOrderSampleDao productOrderSampleDao;
-    // TODO: fix tests so that this isn't needed
-    private BSPConfig bspConfig;
-
-    public SubmissionDtoFetcher() {
-    }
 
     @Inject
     public SubmissionDtoFetcher(AggregationMetricsFetcher aggregationMetricsFetcher,
-                                BassSearchService bassSearchService, BSPSampleDataFetcher bspSampleDataFetcher,
-                                SubmissionsService submissionsService, BSPConfig bspConfig,
+                                BassSearchService bassSearchService, SubmissionsService submissionsService,
                                 ProductOrderSampleDao productOrderSampleDao) {
         this.aggregationMetricsFetcher = aggregationMetricsFetcher;
         this.bassSearchService = bassSearchService;
-        this.bspSampleDataFetcher = bspSampleDataFetcher;
         this.submissionsService = submissionsService;
-        this.bspConfig = bspConfig;
         this.productOrderSampleDao = productOrderSampleDao;
-    }
-
-    private void updateBulkBspSampleInfo(Collection<ProductOrderSample> samples) {
-        Set<String> sampleList = new HashSet<>();
-
-        for (ProductOrderSample sample : samples) {
-            String sampleName = sample.getName();
-            if (BSPUtil.isInBspFormat(sampleName)) {
-                sampleList.add(sampleName);
-            }
-        }
-
-        Map<String, BspSampleData> bulkInfo =
-                bspSampleDataFetcher.fetchSampleData(sampleList, BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID);
-
-        for (final ProductOrderSample sample : samples) {
-            SampleData sampleData = bulkInfo.get(sample.getName());
-            if (sampleData != null) {
-                sample.setSampleData(sampleData);
-            }
-        }
-    }
-
-    public List<SubmissionDto> fetch(@Nonnull ResearchProject researchProject) {
-        return fetch(researchProject, MessageReporter.UNUSED);
     }
 
     public List<SubmissionDto> fetch(@Nonnull ResearchProject researchProject, MessageReporter messageReporter) {
@@ -172,6 +132,7 @@ public class SubmissionDtoFetcher {
         return results.asMap();
     }
 
+    // TODO: allow for multiple BassDTOs for the same sample under different projects
     private Map<String, BassDTO> buildBassDtoMap(List<BassDTO> bassDTOs) {
         Map<String, BassDTO> bassDTOMap = new HashMap<>();
         for (BassDTO bassDTO : bassDTOs) {

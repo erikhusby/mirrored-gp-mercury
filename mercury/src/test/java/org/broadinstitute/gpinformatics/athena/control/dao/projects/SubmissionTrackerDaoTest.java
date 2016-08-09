@@ -168,8 +168,8 @@ public class SubmissionTrackerDaoTest extends ContainerTest {
 
     private SubmissionTracker addTracker(SubmissionDto submissionDto) {
         SubmissionTracker submissionTracker =
-                new SubmissionTracker(submissionDto.getSampleName(), submissionDto.getFileType(),
-                        String.valueOf(submissionDto.getVersion()));
+                new SubmissionTracker(submissionDto.getSampleName(), submissionDto.getAggregationProject(),
+                        submissionDto.getFileType(), String.valueOf(submissionDto.getVersion()));
         submissionTracker.setResearchProject(researchProject);
         return submissionTracker;
     }

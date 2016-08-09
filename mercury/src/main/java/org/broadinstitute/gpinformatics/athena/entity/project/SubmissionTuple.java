@@ -21,6 +21,7 @@ import java.io.Serializable;
 public class SubmissionTuple implements Serializable {
     private static final long serialVersionUID = 1262062294730627888L;
     private String sampleName;
+    private String project;
     private BassFileType fileType;
     private String version;
 
@@ -30,7 +31,15 @@ public class SubmissionTuple implements Serializable {
     SubmissionTuple() {
     }
 
+    @Deprecated
     public SubmissionTuple(String sampleName, BassFileType fileType, String version) {
+        this.sampleName = sampleName;
+        this.fileType = fileType;
+        this.version = version;
+    }
+
+    public SubmissionTuple(String sampleName, String project, BassFileType fileType, String version) {
+        this.project = project;
         this.sampleName = sampleName;
         this.fileType = fileType;
         this.version = version;
@@ -49,20 +58,23 @@ public class SubmissionTuple implements Serializable {
             return false;
         }
 
-        SubmissionTuple that = OrmUtil.proxySafeCast(o, SubmissionTuple.class);
+        SubmissionTuple that = (SubmissionTuple) o;
         return new EqualsBuilder()
                 .append(this.sampleName, that.sampleName)
+                .append(this.project, that.project)
                 .append(this.fileType, that.fileType)
                 .append(this.version, that.version).isEquals();
     }
 
     @Override
     public String toString() {
-        return String.format("{sampleName = %s; fileType = %s; version = %s}",sampleName, fileType, version);
+        return String.format("{sampleName = %s; project = %s; fileType = %s; version = %s}",
+                sampleName, project, fileType, version);
     }
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder().append(this.sampleName).append(this.fileType).append(this.version).hashCode();
+        return new HashCodeBuilder().append(this.sampleName).append(project).append(this.fileType).append(this.version)
+                .hashCode();
     }
 }
