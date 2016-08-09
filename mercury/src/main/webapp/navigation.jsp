@@ -102,6 +102,11 @@
                             </li>
                         </security:authorizeBlock>
                         <li>
+                            <stripes:link id="designationLoadingTubes"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.run.DesignationLoadingTubeActionBean"
+                                          event="view">Designate Loading Tubes</stripes:link>
+                        </li>
+                        <li>
                             <stripes:link id="createFCT"
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.CreateFCTActionBean"
                                           event="view">Create FCT Ticket</stripes:link>
