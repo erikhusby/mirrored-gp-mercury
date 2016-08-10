@@ -20,7 +20,6 @@ import javax.jms.JMSException;
 import javax.jms.MapMessage;
 import javax.jms.MessageProducer;
 import javax.jms.Session;
-import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
