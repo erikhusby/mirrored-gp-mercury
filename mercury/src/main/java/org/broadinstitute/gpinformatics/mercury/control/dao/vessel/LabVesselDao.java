@@ -26,6 +26,7 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Join;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
+import javax.persistence.criteria.Subquery;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
@@ -161,21 +162,32 @@ public class LabVesselDao extends GenericDao {
         return mapBarcodeToTube;
     }
 
-    public List<LabVessel> findAllWithEventButMissing(final LabEventType searchEventType,
-                                                      final LabEventType missingEventType) {
+    public List<LabVessel> findAllWithEventButMissingAnother(final LabEventType searchEventType,
+                                                             final LabEventType missingEventType) {
         List<LabVessel> resultList = new ArrayList<>();
-        CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
-        final CriteriaQuery<LabVessel> criteriaQuery = criteriaBuilder.createQuery(LabVessel.class);
-        Root<LabVessel> root = criteriaQuery.from(LabVessel.class);
-        Join<LabVessel, LabEvent> labVessels = root.join(LabVessel_.inPlaceLabEvents);
-        Predicate eqPredicate = criteriaBuilder.equal(labVessels.get(LabEvent_.labEventType), searchEventType);
-        Predicate notEqPredicate = criteriaBuilder.notEqual(labVessels.get(LabEvent_.labEventType), missingEventType);
-        criteriaQuery.where(eqPredicate, notEqPredicate);
+
+        CriteriaBuilder builder = getEntityManager().getCriteriaBuilder();
+        final CriteriaQuery<LabVessel> existsQuery = builder.createQuery(LabVessel.class);
+        Root<LabVessel> existsRoot = existsQuery.from(LabVessel.class);
+        Join<LabVessel, LabEvent> labVessels = existsRoot.join(LabVessel_.inPlaceLabEvents);
+
+        // Build sub query for all labvessels that have the 'missing' event to filter them out in the main query
+        Subquery<Long> missingQuery = existsQuery.subquery(Long.class);
+        Root<LabVessel> missingRoot = missingQuery.from(LabVessel.class);
+        Join<LabVessel, LabEvent> missingVesselJoin = missingRoot.join(LabVessel_.inPlaceLabEvents);
+        missingQuery.select(missingRoot.get(LabVessel_.labVesselId)).
+                where(builder.equal(missingVesselJoin.get(LabEvent_.labEventType), missingEventType));
+
+        // Put them together
+        existsQuery.select(existsRoot).where(builder.equal(labVessels.get(LabEvent_.labEventType), searchEventType),
+                        builder.in(existsRoot.get(LabVessel_.labVesselId)).value(missingQuery).not());
+
         try {
-            resultList.addAll(getEntityManager().createQuery(criteriaQuery).getResultList());
+            resultList.addAll(getEntityManager().createQuery(existsQuery).getResultList());
         } catch (NoResultException ignored) {
             return resultList;
         }
+
         return resultList;
     }
 }

@@ -3,16 +3,12 @@ package org.broadinstitute.gpinformatics.mercury.boundary.run;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
-import org.broadinstitute.gpinformatics.infrastructure.ObjectMarshaller;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateType;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResource;
+import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventMetadata;
@@ -20,13 +16,15 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
-import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
+import javax.annotation.Resource;
+import javax.ejb.EJBContext;
 import javax.ejb.Stateless;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
-import javax.enterprise.context.RequestScoped;
+import javax.ejb.TransactionManagement;
+import javax.ejb.TransactionManagementType;
 import javax.inject.Inject;
+import javax.transaction.SystemException;
+import javax.transaction.UserTransaction;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
@@ -35,8 +33,8 @@ import java.util.Set;
 /**
  * Finds pending infinium chip runs and forwards them on to analysis.
  */
-@RequestScoped
 @Stateless
+@TransactionManagement(value= TransactionManagementType.BEAN)
 public class InfiniumRunFinder implements Serializable {
     private static final Log log = LogFactory.getLog(InfiniumRunFinder.class);
 
@@ -53,6 +51,9 @@ public class InfiniumRunFinder implements Serializable {
     private LabVesselDao labVesselDao;
 
     @Inject
+    private LabEventDao labEventDao;
+
+    @Inject
     private EmailSender emailSender;
 
     @Inject
@@ -61,20 +62,24 @@ public class InfiniumRunFinder implements Serializable {
     @Inject
     private BSPUserList bspUserList;
 
-    @Inject
-    private UserBean userBean;
+    @Resource
+    private EJBContext ejbContext;
 
-    public void find() {
-        List<LabVessel> infiniumChips = labVesselDao.findAllWithEventButMissing(LabEventType.INFINIUM_XSTAIN,
-                        LabEventType.INFINIUM_AUTOCALL_ALL_STARTED);
+    public void find() throws SystemException {
+        List<LabVessel> infiniumChips = labVesselDao.findAllWithEventButMissingAnother(LabEventType.INFINIUM_XSTAIN,
+                LabEventType.INFINIUM_AUTOCALL_ALL_STARTED);
         for (LabVessel labVessel : infiniumChips) {
+            UserTransaction utx = ejbContext.getUserTransaction();
             try {
                 if (OrmUtil.proxySafeIsInstance(labVessel, StaticPlate.class)) {
+                    utx.begin();
                     StaticPlate staticPlate = OrmUtil.proxySafeCast(labVessel, StaticPlate.class);
                     processChip(staticPlate);
+                    utx.commit();
                 }
             } catch (Exception e) {
-                log.error("Failed to process chip " + labVessel.getLabel());
+                utx.rollback();
+                log.error("Failed to process chip " + labVessel.getLabel(), e);
                 emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(),
                         "[Mercury] Failed to process infinium chip", "For " + labVessel.getLabel() +
                                                                      " with error: " + e.getMessage());
@@ -137,35 +142,15 @@ public class InfiniumRunFinder implements Serializable {
         return null;
     }
 
-    @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
     private LabEvent createEvent(StaticPlate staticPlate, LabEventType eventType) throws Exception {
-        BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
-        bettaLIMSMessage.setMode(LabEventFactory.MODE_MERCURY);
         Date start = new Date();
-        PlateEventType plateEventType = new PlateEventType();
-        plateEventType.setOperator("seqsystem");
-        plateEventType.setProgram(LabEvent.UI_PROGRAM_NAME);
-        plateEventType.setDisambiguator(1L);
-        plateEventType.setStart(start);
-        plateEventType.setEventType(eventType.getName());
-        PlateType plateType = new PlateType();
-        plateType.setBarcode(staticPlate.getLabel());
-        plateType.setPhysType(staticPlate.getPlateType().getAutomationName());
-        plateType.setSection("ALL96");
-        plateEventType.setPlate(plateType);
-        bettaLIMSMessage.getPlateEvent().add(plateEventType);
-
         BspUser bspUser = getBspUser("seqsystem");
         long operator = bspUser.getUserId();
-        LabEvent labEvent = new LabEvent(eventType, start, LabEvent.UI_PROGRAM_NAME, 1L, operator, LabEvent.UI_PROGRAM_NAME);
+        LabEvent labEvent =
+                new LabEvent(eventType, start, LabEvent.UI_PROGRAM_NAME, 1L, operator, LabEvent.UI_PROGRAM_NAME);
         staticPlate.addInPlaceEvent(labEvent);
         labEventDao.persist(labEvent);
-        labEventDao.flush();
-
-        ObjectMarshaller<BettaLIMSMessage> bettaLIMSMessageObjectMarshaller =
-                new ObjectMarshaller<>(BettaLIMSMessage.class);
-        bettaLimsMessageResource.storeAndProcess(bettaLIMSMessageObjectMarshaller.marshal(bettaLIMSMessage));
-        return findLabEvent(staticPlate, eventType);
+        return labEvent;
     }
 
     private BspUser getBspUser(String operator) {
@@ -173,12 +158,7 @@ public class InfiniumRunFinder implements Serializable {
         if (bspUser == null) {
             throw new RuntimeException("Failed to find operator " + operator);
         }
-        login(operator);
         return bspUser;
-    }
-
-    private void login(String operator) {
-        userBean.login(operator);
     }
 
     public void setInfiniumRunProcessor(

@@ -2,10 +2,12 @@ package org.broadinstitute.gpinformatics.mercury.boundary.run;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.infrastructure.common.SessionContextUtility;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.InfiniumStarterConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfiguration;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
@@ -18,6 +20,7 @@ import javax.ejb.Timer;
 import javax.ejb.TimerConfig;
 import javax.ejb.TimerService;
 import javax.inject.Inject;
+import javax.transaction.SystemException;
 
 import java.util.Date;
 
@@ -48,6 +51,12 @@ public class InfiniumRunStarter {
     @Inject
     private InfiniumRunFinder infiniumRunFinder;
 
+    @Inject
+    private SessionContextUtility sessionContextUtility;
+
+    @Inject
+    private UserBean userBean;
+
     @PostConstruct
     public void initialize() {
         ScheduleExpression expression = new ScheduleExpression();
@@ -71,7 +80,17 @@ public class InfiniumRunStarter {
             Date nextTimeout = timer.getNextTimeout();
             if (nextTimeout.after(previousNextTimeout)) {
                 previousNextTimeout = nextTimeout;
-                infiniumRunFinder.find();
+                sessionContextUtility.executeInContext(new SessionContextUtility.Function() {
+                    @Override
+                    public void apply() {
+                        try {
+                            userBean.login("seqsystem");
+                            infiniumRunFinder.find();
+                        } catch (SystemException e) {
+                            log.error("Error finding infinium runs", e);
+                        }
+                    }
+                });
             } else {
                 log.trace("Skipping Infinium Starter timer retry");
             }

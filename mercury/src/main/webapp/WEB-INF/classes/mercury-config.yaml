@@ -109,6 +109,7 @@ collaborate:
 
 
 portal:
+
     TEST:
       urlBase:      http://gapdev:8111/portal
 
