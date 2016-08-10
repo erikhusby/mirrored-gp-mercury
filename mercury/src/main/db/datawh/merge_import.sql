@@ -73,6 +73,13 @@ AS
   AS
   BEGIN
 
+    DELETE FROM flowcell_designation
+     WHERE designation_id IN (
+             SELECT designation_id
+               FROM im_fct_create
+              WHERE is_delete = 'T' );
+    DBMS_OUTPUT.PUT_LINE( 'Deleted ' || SQL%ROWCOUNT || ' flowcell_designation (lab batch vessel ETL) rows' );
+
     -- For event fact table, a re-export of audited entity ids should replace existing ones.
     DELETE FROM LIBRARY_ANCESTRY
      WHERE CHILD_EVENT_ID IN (
@@ -1492,6 +1499,109 @@ AS
       SHOW_ETL_STATS(  V_UPD_COUNT, V_LIBRARY_INS_COUNT, 'library_lcset_sample_base (from library ancestry)' );
     END MERGE_LIBRARY_SAMPLE;
 
+  /*
+   * Links flowcell ticket batch vessels to flowcell barcodes
+   * See RPT-3539/GPLIM-4136 Make Designation from Mercury available for reporting
+   */
+  PROCEDURE MERGE_FCT_BATCH_CRUD
+  IS
+    V_INS_COUNT PLS_INTEGER;
+    V_UPD_COUNT PLS_INTEGER;
+
+    -- This loop populates the initial batch starting vessel modifications
+    BEGIN
+      V_INS_COUNT := 0;
+      V_UPD_COUNT := 0;
+      FOR new IN ( SELECT line_number, designation_id,
+                          fct_id, fct_name, fct_type,
+                          designation_library, creation_date,
+                          flowcell_type, lane,
+                          concentration, is_pool_test, etl_date
+                     FROM im_fct_create
+                    WHERE is_delete = 'F' )
+      LOOP
+        BEGIN
+          -- Update/Insert
+          UPDATE flowcell_designation
+             SET fct_id              = new.fct_id,
+                 fct_name            = new.fct_name,
+                 fct_type            = new.fct_type,
+                 designation_library = new.designation_library,
+                 creation_date       = new.creation_date,
+                 flowcell_type       = new.flowcell_type,
+                 lane                = new.lane,
+                 concentration       = new.concentration,
+                 is_pool_test        = new.is_pool_test,
+                 etl_date            = new.etl_date
+           WHERE designation_id      = new.designation_id;
+
+          V_UPD_COUNT := V_UPD_COUNT + SQL%ROWCOUNT;
+
+          IF SQL%ROWCOUNT = 0 THEN
+            INSERT INTO flowcell_designation (
+              designation_id, fct_id,
+              fct_name, fct_type,
+              designation_library, creation_date,
+              flowcell_type, lane, concentration,
+              is_pool_test, etl_date )
+            VALUES(
+              new.designation_id, new.fct_id,
+              new.fct_name, new.fct_type,
+              new.designation_library, new.creation_date,
+              new.flowcell_type, new.lane, new.concentration,
+              new.is_pool_test, new.etl_date
+            );
+            V_INS_COUNT := V_INS_COUNT  + SQL%ROWCOUNT;
+          END IF;
+
+        EXCEPTION WHEN OTHERS THEN
+          errmsg := SQLERRM;
+          DBMS_OUTPUT.PUT_LINE( TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || ' fct_create.dat (FCT batch vessel ETL) line '
+                                || new.line_number || '  ' || errmsg);
+          CONTINUE;
+        END;
+      END LOOP;
+      SHOW_ETL_STATS(  V_UPD_COUNT, V_INS_COUNT, 'fct_create (FCT batch vessel ETL)' );
+
+    END MERGE_FCT_BATCH_CRUD;
+
+  PROCEDURE MERGE_FCT_LOAD
+  IS
+    V_INS_COUNT CONSTANT PLS_INTEGER := 0;
+    -- Updated at flowcell transfer (or inserted in some
+    V_UPD_COUNT PLS_INTEGER;
+    -- This loop populates flowcell barcode from flowcell loading event
+  BEGIN
+    V_UPD_COUNT := 0;
+    FOR new IN ( SELECT line_number, designation_id, flowcell_barcode, etl_date
+                   FROM im_fct_load
+                  WHERE is_delete = 'F' )
+    LOOP
+      BEGIN
+        -- Update/Insert
+        UPDATE flowcell_designation
+           SET flowcell_barcode = new.flowcell_barcode,
+               etl_date         = new.etl_date
+         WHERE designation_id   = new.designation_id;
+
+        V_UPD_COUNT := V_UPD_COUNT + SQL%ROWCOUNT;
+
+        IF SQL%ROWCOUNT = 0 THEN
+          DBMS_OUTPUT.PUT_LINE( TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_fct_load.dat (FCT load event ETL) line '
+                                || new.line_number || ' - No lab batch vessel ID to update: ' || new.designation_id);
+        END IF;
+
+        EXCEPTION WHEN OTHERS THEN
+        errmsg := SQLERRM;
+        DBMS_OUTPUT.PUT_LINE( TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS') || '_fct_load.dat (FCT load event ETL) line '
+                              || new.line_number || '  ' || errmsg);
+        CONTINUE;
+      END;
+    END LOOP;
+    SHOW_ETL_STATS(  V_UPD_COUNT, V_INS_COUNT, 'fct_load (FCT load event ETL)' );
+
+  END MERGE_FCT_LOAD;
+
 
   PROCEDURE MERGE_PRODUCT_ORDER_STATUS
   IS
@@ -1930,6 +2040,8 @@ AS
     MERGE_EVENT_FACT();
     MERGE_ANCESTRY();
     MERGE_LIBRARY_SAMPLE();
+    MERGE_FCT_BATCH_CRUD();
+    MERGE_FCT_LOAD();
 
     -- Level 3 (depends on level 2 tables)
     MERGE_PDO_SAMPLE_RISK();

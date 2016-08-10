@@ -128,20 +128,23 @@ public class ProductEjbTest extends Arquillian {
             long now = System.currentTimeMillis();
             String partNumber = "ABCD" + now;
             String[] chipNames = {"name0" + now, "name1" + now};
-            Date[] dates = new Date[2];
+            Date[] dates = new Date[chipNames.length + 1];
 
-            for (int i = 0; i < chipNames.length; ++i) {
+            // Repeats the final iteration just to check that gratuitous updates get suppressed.
+            for (int i = 0; i < chipNames.length + 1; ++i) {
+                int idx = Math.min(i, chipNames.length - 1);
                 productEjb.persistGenotypingChipMappings(partNumber,
-                        Collections.singletonList(Triple.of("family" + now, chipNames[i], "")));
+                        Collections.singletonList(Triple.of("family" + now, chipNames[idx], "")));
                 attributeArchetypeDao.flush();
                 dates[i] = new Date();
                 Thread.sleep(1000);
             }
 
             // An update should invalidate the old mapping but still leave it accessible, and make a new active one.
-            Assert.assertNull(productEjb.getGenotypingChip(partNumber, "", new Date(now - 10000)).getRight());
+            Assert.assertNull(productEjb.getGenotypingChip(partNumber, "", new Date(now - 100000)).getRight());
             Assert.assertEquals(productEjb.getGenotypingChip(partNumber, "", dates[0]).getRight(), chipNames[0]);
             Assert.assertEquals(productEjb.getGenotypingChip(partNumber, "", dates[1]).getRight(), chipNames[1]);
+            Assert.assertEquals(productEjb.getGenotypingChip(partNumber, "", dates[2]).getRight(), chipNames[1]);
 
         } finally {
             utx.rollback();

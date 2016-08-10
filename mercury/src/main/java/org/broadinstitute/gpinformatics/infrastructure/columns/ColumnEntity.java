@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricRun;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 /**
@@ -60,7 +61,17 @@ public enum ColumnEntity {
             },
             PreferenceType.GLOBAL_LAB_METRIC_COLUMN_SETS, PreferenceType.USER_LAB_METRIC_COLUMN_SETS,
             new PreferenceType[]{PreferenceType.GLOBAL_LAB_METRIC_SEARCH_INSTANCES,
-                    PreferenceType.USER_LAB_METRIC_SEARCH_INSTANCES});
+                    PreferenceType.USER_LAB_METRIC_SEARCH_INSTANCES}),
+    LAB_METRIC_RUN("LabMetricRun", "Lab Metric Run", "labMetricRunId", LabMetricRun.class,
+            new IdGetter() {
+                @Override
+                public String getId(Object entity) {
+                    return ((LabMetricRun) entity).getLabMetricRunId().toString();
+                }
+            },
+            PreferenceType.GLOBAL_LAB_METRIC_RUN_COLUMN_SETS, PreferenceType.USER_LAB_METRIC_RUN_COLUMN_SETS,
+            new PreferenceType[]{PreferenceType.GLOBAL_LAB_METRIC_RUN_SEARCH_INSTANCES,
+                    PreferenceType.USER_LAB_METRIC_RUN_SEARCH_INSTANCES});
 
     private IdGetter idGetter;
     private String entityName;

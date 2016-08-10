@@ -135,11 +135,11 @@ public class EventAncestryEtlUtil {
                         ancestryFactDtos.add(new AncestryFactDto(
                                 ancestorLabEvent.getLabEventId(),
                                 containerVessel.getEmbedder(),
-                                ancestorLabEvent.getLabEventType().getLibraryType().getDisplayName(),
+                                ancestorLabEvent.getLabEventType().getLibraryType().getEtlDisplayName(),
                                 ancestorLabEvent.getEventDate(),
                                 labEvent.getLabEventId(),
                                 labVessel,
-                                labEvent.getLabEventType().getLibraryType().getDisplayName(),
+                                labEvent.getLabEventType().getLibraryType().getEtlDisplayName(),
                                 labEvent.getEventDate()));
                     } else {
                         // Use vessels at positions
@@ -152,11 +152,11 @@ public class EventAncestryEtlUtil {
                                 ancestryFactDtos.add(new AncestryFactDto(
                                         ancestorLabEvent.getLabEventId(),
                                         containedVessel,
-                                        ancestorLabEvent.getLabEventType().getLibraryType().getDisplayName(),
+                                        ancestorLabEvent.getLabEventType().getLibraryType().getEtlDisplayName(),
                                         ancestorLabEvent.getEventDate(),
                                         labEvent.getLabEventId(),
                                         labVessel,
-                                        labEvent.getLabEventType().getLibraryType().getDisplayName(),
+                                        labEvent.getLabEventType().getLibraryType().getEtlDisplayName(),
                                         labEvent.getEventDate()));
                             }
                         }
@@ -166,11 +166,11 @@ public class EventAncestryEtlUtil {
                     ancestryFactDtos.add(new AncestryFactDto(
                             ancestorLabEvent.getLabEventId(),
                             ancestorLabVessel,
-                            ancestorLabEvent.getLabEventType().getLibraryType().getDisplayName(),
+                            ancestorLabEvent.getLabEventType().getLibraryType().getEtlDisplayName(),
                             ancestorLabEvent.getEventDate(),
                             labEvent.getLabEventId(),
                             labVessel,
-                            labEvent.getLabEventType().getLibraryType().getDisplayName(),
+                            labEvent.getLabEventType().getLibraryType().getEtlDisplayName(),
                             labEvent.getEventDate()));
                 }
             }

@@ -175,6 +175,9 @@ function renderJson(json) {
     var links = [];
     json.links.forEach(function(l) {
         var sourceNode = dagreGraph.node(l.source);
+        if (!sourceNode) {
+            return;
+        }
         var sourceX = sourceNode.x;
         var sourceY = sourceNode.y;
         var i, len;

@@ -263,6 +263,24 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="view-control-group control-group">
+                    <label class="control-label label-form">Read Length</label>
+                    <div class="controls">
+                        <div class="form-value">
+                                ${actionBean.editProduct.readLength}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="view-control-group control-group">
+                    <label class="control-label label-form">Insert Size</label>
+                    <div class="controls">
+                        <div class="form-value">
+                                ${actionBean.editProduct.insertSize}
+                        </div>
+                    </div>
+                </div>
             </fieldset>
         </div>
 
