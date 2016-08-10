@@ -150,6 +150,7 @@ public class InfiniumRunFinder implements Serializable {
                 new LabEvent(eventType, start, LabEvent.UI_PROGRAM_NAME, 1L, operator, LabEvent.UI_PROGRAM_NAME);
         staticPlate.addInPlaceEvent(labEvent);
         labEventDao.persist(labEvent);
+        labEventDao.flush();
         return labEvent;
     }
 
