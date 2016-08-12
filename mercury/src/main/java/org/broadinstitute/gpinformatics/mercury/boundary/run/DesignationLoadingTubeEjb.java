@@ -27,6 +27,7 @@ import javax.persistence.Query;
 import javax.persistence.TemporalType;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -120,10 +121,11 @@ public class DesignationLoadingTubeEjb {
     @Inject
     private LabBatchDao labBatchDao;
 
-    public Map<DesignationRowDto, DesignationLoadingTube> update(List<DesignationRowDto> rowDtos) {
+    public Map<DesignationRowDto, DesignationLoadingTube> update(
+            List<DesignationRowDto> rowDtos, EnumSet<DesignationLoadingTube.Status> persistableStatuses) {
         Map<DesignationRowDto, DesignationLoadingTube> dtoAndTube = new HashMap<>();
         for (DesignationRowDto rowDto : rowDtos) {
-            if (rowDto.isSelected()) {
+            if (rowDto.isSelected() && persistableStatuses.contains(rowDto.getStatus())) {
                 if (rowDto.getDesignationId() == null) {
                     LabVessel loadingTube = barcodedTubeDao.findByBarcode(rowDto.getBarcode());
                     Set<LabBatch> lcsets = new HashSet<>();

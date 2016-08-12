@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import org.apache.commons.collections4.Factory;
 import org.apache.commons.collections4.map.LazyMap;
 import org.apache.commons.lang3.StringUtils;
@@ -39,6 +41,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
+import org.broadinstitute.gpinformatics.mercury.presentation.run.DesignationLoadingTubeActionBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.run.DesignationRowDto;
 import org.broadinstitute.gpinformatics.mercury.presentation.workflow.RowDto;
 
 import javax.annotation.Nonnull;
@@ -47,6 +51,7 @@ import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -616,27 +621,26 @@ public class LabBatchEjb {
     public void makeFcts(List<RowDto> rowDtos, IlluminaFlowcell.FlowcellType selectedFlowcellType, String userName,
             MessageReporter messageReporter) {
         // Collects all the selected rowDtos and their loading tubes.
-        List<Pair<RowDto, LabVessel>> rowDtoLabVessels = new ArrayList<>();
+        Collection<Pair<CreateFctDto, LabVessel>> dtoVessels = new ArrayList<>();
         for (RowDto rowDto : rowDtos) {
             if (rowDto.getNumberLanes() > 0) {
                 LabVessel labVessel = labVesselDao.findByIdentifier(rowDto.getBarcode());
-                rowDtoLabVessels.add(Pair.of(rowDto, labVessel));
+                dtoVessels.add(Pair.of(new CreateFctDto(rowDto), labVessel));
             }
         }
-        if (rowDtoLabVessels.isEmpty()) {
+        if (dtoVessels.isEmpty()) {
             messageReporter.addMessage("No lanes were selected.");
         } else {
-            List<Pair<LabBatch, Set<String>>> fctBatches = makeFctDaoFree(rowDtoLabVessels, selectedFlowcellType);
+            Multimap<LabBatch, String> fctBatches = makeFctDaoFree(dtoVessels, selectedFlowcellType);
             if (fctBatches.isEmpty()) {
                 messageReporter.addMessage("No FCTs were created.");
             } else {
                 StringBuilder createdBatchLinks = new StringBuilder("<ol>");
                 // For each batch, pushes the FCT to JIRA, makes the parent-child JIRA links,
                 // and makes a UI message.
-                for (Pair<LabBatch, Set<String>> pair : fctBatches) {
-                    LabBatch fctBatch = pair.getLeft();
+                for (LabBatch fctBatch : fctBatches.keys()) {
                     createLabBatch(fctBatch, userName, selectedFlowcellType.getIssueType(), messageReporter);
-                    for (String lcset : pair.getRight()) {
+                    for (String lcset : fctBatches.get(fctBatch)) {
                         linkJiraBatchToTicket(lcset, fctBatch);
                     }
                     createdBatchLinks.append("<li><a target=\"JIRA\" href=\"");
@@ -653,6 +657,105 @@ public class LabBatchEjb {
     }
 
     /**
+     * Creates FCTs from a collection of designation dtos.
+     *
+     * @param rowDtos DTOs that represent designations, one per loading tube, that have already been validated.
+     * @param userName
+     * @param messageReporter for action bean message display.
+     * @return DTO of FCT batch and url.
+     */
+    public List<DesignationLoadingTubeActionBean.FctDto> makeFcts(List<DesignationRowDto> rowDtos,
+                                                                  String userName, MessageReporter messageReporter) {
+        List<DesignationLoadingTubeActionBean.FctDto> fctDtos = new ArrayList<>();
+        // Maps flowcell type to yet another type of DTO.
+        Multimap<IlluminaFlowcell.FlowcellType, Pair<CreateFctDto, LabVessel>> typeMap = HashMultimap.create();
+        for (DesignationRowDto dto : rowDtos) {
+            if (dto.isSelected() && dto.getNumberLanes() > 0) {
+                LabVessel labVessel = labVesselDao.findByIdentifier(dto.getBarcode());
+                typeMap.put(dto.getSequencerModel(), Pair.of(new CreateFctDto(dto), labVessel));
+            }
+        }
+
+        // Processes dtos by sequencer model.
+        for (IlluminaFlowcell.FlowcellType flowcellType : typeMap.keySet()) {
+            Multimap<LabBatch, String> fctBatches = makeFctDaoFree(typeMap.get(flowcellType), flowcellType);
+            // For each flowcell batch, pushes the FCT to JIRA and makes the parent-child JIRA links.
+            for (LabBatch fctBatch : fctBatches.keys()) {
+                createLabBatch(fctBatch, userName, flowcellType.getIssueType(), messageReporter);
+                for (String lcset : fctBatches.get(fctBatch)) {
+                    linkJiraBatchToTicket(lcset, fctBatch);
+                }
+                fctDtos.add(new DesignationLoadingTubeActionBean.FctDto(fctBatch.getBatchName(),
+                        fctBatch.getJiraTicket().getBrowserUrl()));
+            }
+        }
+        return fctDtos;
+    }
+
+
+
+    public static class CreateFctDto {
+        private String barcode;
+        private String lcset;
+        private BigDecimal loadingConc;
+        private int numberLanes;
+
+        public CreateFctDto(String barcode, String lcset, BigDecimal loadingConc, int numberLanes) {
+            this.barcode = barcode;
+            this.lcset = lcset;
+            this.loadingConc = loadingConc;
+            this.numberLanes = numberLanes;
+        }
+
+        public CreateFctDto (RowDto rowDto) {
+            barcode = rowDto.getBarcode();
+            lcset = rowDto.getLcset();
+            loadingConc = rowDto.getLoadingConc();
+            numberLanes = rowDto.getNumberLanes();
+        }
+
+        public CreateFctDto (DesignationRowDto rowDto) {
+            barcode = rowDto.getBarcode();
+            lcset = rowDto.getPrimaryLcset();
+            loadingConc = rowDto.getLoadingConc();
+            numberLanes = rowDto.getNumberLanes();
+        }
+
+
+        public String getBarcode() {
+            return barcode;
+        }
+
+        public void setBarcode(String barcode) {
+            this.barcode = barcode;
+        }
+
+        public String getLcset() {
+            return lcset;
+        }
+
+        public void setLcset(String lcset) {
+            this.lcset = lcset;
+        }
+
+        public BigDecimal getLoadingConc() {
+            return loadingConc;
+        }
+
+        public void setLoadingConc(BigDecimal loadingConc) {
+            this.loadingConc = loadingConc;
+        }
+
+        public int getNumberLanes() {
+            return numberLanes;
+        }
+
+        public void setNumberLanes(int numberLanes) {
+            this.numberLanes = numberLanes;
+        }
+    }
+
+    /**
      * Allocates the loading tubes to flowcells.  A given lane only contains material from one
      * tube.  But a tube may span multiple lanes and multiple flowcells, depending on the
      * number of lanes requested for the tube.
@@ -661,56 +764,48 @@ public class LabBatchEjb {
      * @param flowcellType  the type of flowcells to create.
      * @return  the fct batches to be persisted, plus the set of lcset names to be linked to it.
      */
-    public List<Pair<LabBatch, Set<String>>> makeFctDaoFree(List<Pair<RowDto, LabVessel>> rowDtoLabVessels,
-            IlluminaFlowcell.FlowcellType flowcellType) {
-        List<Pair<LabBatch, Set<String>>> fctBatches = new ArrayList<>();
+    public Multimap<LabBatch, String> makeFctDaoFree(Collection<Pair<CreateFctDto, LabVessel>> rowDtoLabVessels,
+                                                     IlluminaFlowcell.FlowcellType flowcellType) {
+        Multimap<LabBatch, String> createdFcts = HashMultimap.create();
         int lanesPerFlowcell = flowcellType.getVesselGeometry().getRowCount();
         // These are per-flowcell accumulations, for one or more loading vessels.
         int laneIndex = 0;
-        Set<String> linkedLcsets = new HashSet<>();
         List<LabBatch.VesselToLanesInfo> fctVesselLaneInfo = new ArrayList<>();
 
         // Iterates on the RowDtos which represent the loading tubes. For each one, keeps allocating
         // lanes until the tube's requested Number of Lanes is fulfilled. When enough lanes exist an
         // FCT is allocated and put in the return multimap.
-        for (Pair<RowDto, LabVessel> rowDtoLabVessel : rowDtoLabVessels) {
-            RowDto rowDto = rowDtoLabVessel.getLeft();
+        for (Pair<CreateFctDto, LabVessel> dtoTube : rowDtoLabVessels) {
+            CreateFctDto fctDto = dtoTube.getLeft();
             LabBatch.VesselToLanesInfo vesselLaneInfo = null;
-            linkedLcsets.add(rowDto.getLcset());
-
             // Accumulates the lanes.
-            for (int i = 0; i < rowDto.getNumberLanes(); ++i) {
+            for (int i = 0; i < fctDto.getNumberLanes(); ++i) {
                 if (vesselLaneInfo == null) {
                     vesselLaneInfo = new LabBatch.VesselToLanesInfo(new ArrayList<VesselPosition>(),
-                            rowDto.getLoadingConc(), rowDtoLabVessel.getRight());
+                            fctDto.getLoadingConc(), dtoTube.getRight());
                     fctVesselLaneInfo.add(vesselLaneInfo);
-                }
-                if (linkedLcsets.isEmpty()) {
-                    linkedLcsets.add(rowDto.getLcset());
                 }
                 vesselLaneInfo.getLanes().add(VESSEL_POSITIONS[laneIndex++]);
                 // Are there are enough lanes to make a new FCT?
                 if (laneIndex == lanesPerFlowcell) {
                     // The batch name will be overwritten by the FCT-ID from JIRA, but if it's not made unique at
-                    // this point then there is a unique constraint violation.  Perhaps Hibernate does an insert then an
-                    // update, it's not clear why.
-                    LabBatch fctBatch = new LabBatch(rowDto.getBarcode() + " FCT ticket " + i, fctVesselLaneInfo,
+                    // this point then there is a unique constraint violation.  Perhaps Hibernate does an insert
+                    // then an update, it's not clear why.
+                    LabBatch fctBatch = new LabBatch(fctDto.getBarcode() + " FCT ticket " + i, fctVesselLaneInfo,
                             flowcellType.getBatchType(), flowcellType);
-                    fctBatch.setBatchDescription(rowDto.getBarcode() + " FCT ticket ");
-                    fctBatches.add(Pair.of(fctBatch, linkedLcsets));
+                    fctBatch.setBatchDescription(fctDto.getBarcode() + " FCT ticket ");
+                    createdFcts.put(fctBatch, fctDto.getLcset());
                     // Resets the accumulations.
                     laneIndex = 0;
                     fctVesselLaneInfo = new ArrayList<>();
-                    linkedLcsets = new HashSet<>();
                     vesselLaneInfo = null;
                 }
             }
         }
-
         if (laneIndex != 0) {
             throw new RuntimeException("A partially filled flowcell is not supported.");
         }
-        return fctBatches;
+        return createdFcts;
     }
 
     /*
@@ -765,4 +860,5 @@ public class LabBatchEjb {
     public void setLabVesselDao(LabVesselDao labVesselDao) {
         this.labVesselDao = labVesselDao;
     }
+
 }

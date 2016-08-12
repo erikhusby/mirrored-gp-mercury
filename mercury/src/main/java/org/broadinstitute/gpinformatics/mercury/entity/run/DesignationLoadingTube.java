@@ -92,8 +92,7 @@ public class DesignationLoadingTube {
     }
 
     public enum Status {
-        UNSAVED("Unsaved", true, false),
-        SAVED("Saved", true, true),
+        UNSAVED(" ", true, false),
         QUEUED("Queued", true, true),
         ABANDONED("Abandoned", true, true),
         IN_FCT("In Fct", false, false);

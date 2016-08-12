@@ -58,6 +58,7 @@ public class DesignationLoadingTubeActionBean extends CoreActionBean {
     public static final String SUBMIT_TUBE_LCSET_ACTION = "submitTubeLcsets";
     public static final String SET_MULTIPLE_ACTION = "setMultiple";
     public static final String PENDING_ACTION = "pending";
+    public static final String CREATE_FCT_ACTION = "createFct";
 
     public static final String CLINICAL = "Clinical";
     public static final String RESEARCH = "Research";
@@ -87,7 +88,7 @@ public class DesignationLoadingTubeActionBean extends CoreActionBean {
     private LabEventType selectedEventType;
     private List<DesignationRowDto> rowDtos = new ArrayList<>();
     private DesignationRowDto multiEdit = new DesignationRowDto();
-    private List<String> createdFcts = new ArrayList<>();
+    private List<FctDto> createdFcts = new ArrayList<>();
     private Set<LabBatch> loadLcsets = new HashSet<>();
     private Set<LabVessel> loadTubes = new HashSet<>();
     private List<TubeLcsetDto> tubeLcsetSelections = new ArrayList<>();
@@ -99,7 +100,10 @@ public class DesignationLoadingTubeActionBean extends CoreActionBean {
     private static final EnumSet DESCENDENTS = EnumSet.of(TransferTraverserCriteria.TraversalDirection.Descendants);
 
     {
-        setDateRange(new DateRangeSelector(DateRangeSelector.ONE_MONTH));
+        final long SIXTY_DAYS = 60 * 24 * 60 * 60 * 1000;
+        setDateRange(new DateRangeSelector(DateRangeSelector.CREATE_CUSTOM));
+        setDateRangeStart(new Date(System.currentTimeMillis() - SIXTY_DAYS));
+        setDateRangeEnd(new Date());
     }
 
     /**
@@ -199,7 +203,6 @@ public class DesignationLoadingTubeActionBean extends CoreActionBean {
             rowDtos.clear();
         }
         makeRowDtosFromDesignations(designationTubeEjb.existingDesignations(new ArrayList<DesignationLoadingTube.Status>(){{
-            add(DesignationLoadingTube.Status.SAVED);
             if (getShowAbandoned()) {
                 add(DesignationLoadingTube.Status.ABANDONED);
             }
@@ -214,23 +217,22 @@ public class DesignationLoadingTubeActionBean extends CoreActionBean {
     }
 
     /**
-     * Changes the UI rows and persists them.
+     * Changes the UI rows. If the row is queued or abandoned the changes are persisted.
      */
     @HandlesEvent(SET_MULTIPLE_ACTION)
     public Resolution setMultiple() {
         for (Iterator<DesignationRowDto> iter = rowDtos.iterator(); iter.hasNext(); ) {
             DesignationRowDto dto = iter.next();
-            if (dto.isSelected() && dto.getStatus() != DesignationLoadingTube.Status.IN_FCT) {
+            if (dto.isSelected()) {
                 if (multiEdit.getStatus() != null) {
-                    if (dto.getStatus() == null && multiEdit.getStatus() == DesignationLoadingTube.Status.ABANDONED) {
-                        // Abandoning an unsaved dto just removes it from the list, nothing gets persisted.
+                    // Abandoning an unsaved dto just removes it from the list and not persisted.
+                    if (dto.getStatus() == DesignationLoadingTube.Status.UNSAVED
+                        && multiEdit.getStatus() == DesignationLoadingTube.Status.ABANDONED) {
                         iter.remove();
                         continue;
                     } else {
                         dto.setStatus(multiEdit.getStatus());
                     }
-                } else if (dto.getStatus() == DesignationLoadingTube.Status.UNSAVED) {
-                    dto.setStatus(DesignationLoadingTube.Status.SAVED);
                 }
                 if (multiEdit.getPriority() != null) {
                     dto.setPriority(multiEdit.getPriority());
@@ -259,17 +261,13 @@ public class DesignationLoadingTubeActionBean extends CoreActionBean {
             }
         }
         multiEdit = new DesignationRowDto();
-        return update();
-    }
 
-    /**
-     * Updates designation loading tube parameters.
-     */
-    @HandlesEvent(SAVE_ACTION)
-    public Resolution update() {
-        // Persists the selected rows. After the hibernate flush the designation id can be updated on the dto.
+        // Queued and abandoned rows get persisted and unsaved dtos are modified only for the display.
+        EnumSet<DesignationLoadingTube.Status> persistableStatuses =
+                EnumSet.of(DesignationLoadingTube.Status.QUEUED, DesignationLoadingTube.Status.ABANDONED);
         for (Map.Entry<DesignationRowDto, DesignationLoadingTube> dtoAndTube :
-                designationTubeEjb.update(rowDtos).entrySet()) {
+                designationTubeEjb.update(rowDtos, persistableStatuses).entrySet()) {
+            // After Hibernate flushes new entities the dto can get the updated designation id.
             DesignationRowDto rowDto = dtoAndTube.getKey();
             DesignationLoadingTube designation = dtoAndTube.getValue();
             rowDto.setDesignationId(designation.getDesignationId());
@@ -277,6 +275,30 @@ public class DesignationLoadingTubeActionBean extends CoreActionBean {
         }
         return view();
     }
+
+    /**
+     * Creates FCTs from queued designations.
+     */
+    @HandlesEvent(CREATE_FCT_ACTION)
+    public Resolution createFct() {
+
+        List<DesignationLoadingTubeActionBean.FctDto> fctDtos = labBatchEjb.makeFcts(rowDtos,
+                userBean.getLoginUserName(), this);
+
+        createdFcts.addAll(fctDtos);
+        Collections.sort(createdFcts, new Comparator<FctDto>() {
+            @Override
+            public int compare(FctDto o1, FctDto o2) {
+                return o1.getName().compareTo(o2.getName());
+            }
+        });
+
+        return view();
+    }
+
+
+
+
 
     /**
      * This method is called after the user specifies the correct lcset(s)
@@ -624,7 +646,7 @@ public class DesignationLoadingTubeActionBean extends CoreActionBean {
                getDateRange().getEndTime().after(labEvent.getEventDate());
     }
 
-    public class TubeLcsetDto {
+    public static class TubeLcsetDto {
         private String barcode;
         private String lcsetName;
         private String lcsetUrl;
@@ -693,6 +715,35 @@ public class DesignationLoadingTubeActionBean extends CoreActionBean {
         }
     }
 
+    public static class FctDto {
+        private String name;
+        private String url;
+
+        public FctDto() {
+        }
+
+        public FctDto(String name, String url) {
+            this.name = name;
+            this.url = url;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public String getUrl() {
+            return url;
+        }
+
+        public void setUrl(String url) {
+            this.url = url;
+        }
+    }
+
     public DesignationLoadingTube.Priority[] getPriorityValues() {
         return DesignationLoadingTube.Priority.values();
     }
@@ -740,11 +791,11 @@ public class DesignationLoadingTubeActionBean extends CoreActionBean {
         this.multiEdit = multiEdit;
     }
 
-    public List<String> getCreatedFcts() {
+    public List<FctDto> getCreatedFcts() {
         return createdFcts;
     }
 
-    public void setCreatedFcts(List<String> createdFcts) {
+    public void setCreatedFcts(List<FctDto> createdFcts) {
         this.createdFcts = createdFcts;
     }
 

@@ -1,6 +1,7 @@
 
 package org.broadinstitute.gpinformatics.mercury.presentation.workflow;
 
+import com.google.common.collect.Multimap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -17,15 +18,13 @@ import org.testng.annotations.Test;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class CreateFCTActionBeanTest {
     private LabBatchEjb testBean = new LabBatchEjb();
     private List<LabVessel> stbTubes = new ArrayList<>();
-    private String eventDate = "today";
     private BigDecimal conc = new BigDecimal("7.0");
 
     @BeforeTest
@@ -37,161 +36,116 @@ public class CreateFCTActionBeanTest {
 
     @Test
     public void testAllocationOf32x1() {
-        List<Pair<RowDto, LabVessel>> rowDtoLabVessels = new ArrayList<>();
+        Collection<Pair<LabBatchEjb.CreateFctDto, LabVessel>> dtoVessels = new ArrayList<>();
         for (int i = 0; i < 32; ++i) {
-            rowDtoLabVessels.add(Pair.of(new RowDto(stbTubes.get(i).getLabel(), "lcset" + i, eventDate,
-                    "product" + i, "startTube" + i, "Denature", conc, 1),  stbTubes.get(i)));
+            LabVessel tube = stbTubes.get(i);
+            dtoVessels.add(Pair.of(new LabBatchEjb.CreateFctDto(tube.getLabel(), "lcset" + i, conc, 1), tube));
         }
         for (IlluminaFlowcell.FlowcellType flowcellType : IlluminaFlowcell.FlowcellType.values()) {
             if (flowcellType.getCreateFct() == IlluminaFlowcell.CreateFct.NO) {
                 continue;
             }
-            List<Pair<LabBatch, Set<String>>> fctBatches = allocateAndTest(rowDtoLabVessels, flowcellType);
-            checkLcsets(fctBatches);
+            Multimap<LabBatch, String> fctBatches = allocateAndTest(dtoVessels, flowcellType);
         }
     }
 
     @Test
     public void testAllocationOf32x8() {
-        List<Pair<RowDto, LabVessel>> rowDtoLabVessels = new ArrayList<>();
+        Collection<Pair<LabBatchEjb.CreateFctDto, LabVessel>> dtoVessels = new ArrayList<>();
         for (int i = 0; i < 32; ++i) {
-            rowDtoLabVessels.add(Pair.of(new RowDto(stbTubes.get(i).getLabel(), "lcset" + i, eventDate,
-                    "product" + i, "startTube" + i, "Denature", conc, 8),  stbTubes.get(i)));
+            LabVessel tube = stbTubes.get(i);
+            dtoVessels.add(Pair.of(new LabBatchEjb.CreateFctDto(tube.getLabel(), "lcset" + i, conc, 8), tube));
         }
         for (IlluminaFlowcell.FlowcellType flowcellType : IlluminaFlowcell.FlowcellType.values()) {
             if (flowcellType.getCreateFct() == IlluminaFlowcell.CreateFct.NO) {
                 continue;
             }
-            List<Pair<LabBatch, Set<String>>> fctBatches = allocateAndTest(rowDtoLabVessels, flowcellType);
-            checkLcsets(fctBatches);
+            Multimap<LabBatch, String> fctBatches = allocateAndTest(dtoVessels, flowcellType);
         }
     }
 
     @Test
     public void testAllocationOf2x2OneLane() {
-        List<Pair<RowDto, LabVessel>> rowDtoLabVessels = new ArrayList<>();
+        Collection<Pair<LabBatchEjb.CreateFctDto, LabVessel>> dtoVessels = new ArrayList<>();
         for (int i = 0; i < 2; ++i) {
-            rowDtoLabVessels.add(Pair.of(new RowDto(stbTubes.get(i).getLabel(), "lcset" + i, eventDate,
-                    "product" + i, "startTube" + i, "Denature", conc, 2),  stbTubes.get(i)));
+            LabVessel tube = stbTubes.get(i);
+            dtoVessels.add(Pair.of(new LabBatchEjb.CreateFctDto(tube.getLabel(), "lcset" + i, conc, 2), tube));
         }
-        List<Pair<LabBatch, Set<String>>> fctBatches = allocateAndTest(rowDtoLabVessels,
+        Multimap<LabBatch, String> fctBatches = allocateAndTest(dtoVessels,
                 IlluminaFlowcell.FlowcellType.MiSeqFlowcell);
-        checkLcsets(fctBatches);
     }
 
     @Test
     public void testSharedLcsets() {
-        List<Pair<RowDto, LabVessel>> rowDtoLabVessels = new ArrayList<>();
-        int tubeIdx = 0;
-        rowDtoLabVessels.add(Pair.of(new RowDto(stbTubes.get(tubeIdx).getLabel(), "lcset1", eventDate, "prod", "stube",
-                "Denature", conc, 5), stbTubes.get(tubeIdx)));
-        tubeIdx = 1;
-        rowDtoLabVessels.add(Pair.of(new RowDto(stbTubes.get(tubeIdx).getLabel(), "lcset2", eventDate, "prod", "stube",
-                "Denature", conc, 6), stbTubes.get(tubeIdx)));
-        tubeIdx = 2;
-        rowDtoLabVessels.add(Pair.of(new RowDto(stbTubes.get(tubeIdx).getLabel(), "lcset1", eventDate, "prod", "stube",
-                "Denature", conc, 2), stbTubes.get(tubeIdx)));
-        tubeIdx = 3;
-        rowDtoLabVessels.add(Pair.of(new RowDto(stbTubes.get(tubeIdx).getLabel(), "lcset3", eventDate, "prod", "stube",
-                "Denature", conc, 3), stbTubes.get(tubeIdx)));
+        Collection<Pair<LabBatchEjb.CreateFctDto, LabVessel>> dtoVessels = new ArrayList<>();
+
+        LabVessel tube = stbTubes.get(0);
+        dtoVessels.add(Pair.of(new LabBatchEjb.CreateFctDto(tube.getLabel(), "lcset0", conc, 5), tube));
+
+        tube = stbTubes.get(1);
+        dtoVessels.add(Pair.of(new LabBatchEjb.CreateFctDto(tube.getLabel(), "lcset1", conc, 6), tube));
+
+        tube = stbTubes.get(2);
+        dtoVessels.add(Pair.of(new LabBatchEjb.CreateFctDto(tube.getLabel(), "lcset2", conc, 2), tube));
+
+        tube = stbTubes.get(3);
+        dtoVessels.add(Pair.of(new LabBatchEjb.CreateFctDto(tube.getLabel(), "lcset3", conc, 3), tube));
 
         for (IlluminaFlowcell.FlowcellType flowcellType : IlluminaFlowcell.FlowcellType.values()) {
             if (flowcellType.getCreateFct() == IlluminaFlowcell.CreateFct.NO) {
                 continue;
             }
-            List<Pair<LabBatch, Set<String>>> fctBatches = allocateAndTest(rowDtoLabVessels, flowcellType);
-
-            for (Pair<LabBatch, Set<String>> pair : fctBatches) {
-                for (LabVessel labVessel : pair.getLeft().getStartingBatchLabVessels()) {
-                    int foundTubeIdx = findIndexByName(stbTubes, labVessel);
-                    switch (foundTubeIdx) {
-                    case 0:
-                    case 2:
-                        Assert.assertTrue(pair.getRight().contains("lcset1"));
-                        break;
-                    case 1:
-                        Assert.assertTrue(pair.getRight().contains("lcset2"));
-                        break;
-                    case 3:
-                        Assert.assertTrue(pair.getRight().contains("lcset3"));
-                        break;
-                    default:
-                        Assert.fail("Must not be here.");
-                    }
-                }
-            }
+            Multimap<LabBatch, String> fctBatches = allocateAndTest(dtoVessels, flowcellType);
         }
     }
 
-    private List<Pair<LabBatch, Set<String>>> allocateAndTest(List<Pair<RowDto, LabVessel>> rowDtoLabVessels,
-                                                              IlluminaFlowcell.FlowcellType flowcellType) {
+    private Multimap<LabBatch, String> allocateAndTest(Collection<Pair<LabBatchEjb.CreateFctDto, LabVessel>> dtoVessels,
+                                                       IlluminaFlowcell.FlowcellType flowcellType) {
 
         int expectedLaneCount = 0;
-        List<String> expectedStartingVesselBarcodes = new ArrayList<>();
-        for (Pair<RowDto, LabVessel> pair : rowDtoLabVessels) {
+        List<String> expectedBarcodeOnEachLane = new ArrayList<>();
+        for (Pair<LabBatchEjb.CreateFctDto, LabVessel> pair : dtoVessels) {
             expectedLaneCount += pair.getLeft().getNumberLanes();
             for (int i = 0; i < pair.getLeft().getNumberLanes(); ++i) {
-                expectedStartingVesselBarcodes.add(pair.getLeft().getBarcode());
+                expectedBarcodeOnEachLane.add(pair.getRight().getLabel());
             }
         }
+        List<String> expectedBatchStartingVesselBarcodes = new ArrayList<>(expectedBarcodeOnEachLane);
 
         int flowcellLaneCount = flowcellType.getVesselGeometry().getRowCount();
         Assert.assertEquals(expectedLaneCount % flowcellLaneCount, 0, "Bad test setup");
         int expectedBatchCount = expectedLaneCount / flowcellLaneCount;
 
         // Does the starting vessel to FCT allocation.
-        List<Pair<LabBatch, Set<String>>> fctBatches = testBean.makeFctDaoFree(rowDtoLabVessels, flowcellType);
+        Multimap<LabBatch, String> fctBatches = testBean.makeFctDaoFree(dtoVessels, flowcellType);
 
+        // Is the number of FCTs correct?
         Assert.assertEquals(fctBatches.size(), expectedBatchCount, flowcellType.getDisplayName());
 
-        for (Pair<LabBatch, Set<String>> pair : fctBatches) {
-            LabBatch fctBatch = pair.getLeft();
+        for (LabBatch fctBatch : fctBatches.keys()) {
             Assert.assertEquals(fctBatch.getLabBatchStartingVessels().size(), flowcellLaneCount);
 
             for (LabBatchStartingVessel batchStartingVessel : fctBatch.getLabBatchStartingVessels()) {
-                // Did we end up with same starting vessels?
-                Assert.assertTrue(expectedStartingVesselBarcodes.remove(batchStartingVessel.getLabVessel().getLabel()),
-                        "FCT starting vessel " + batchStartingVessel.getLabVessel().getLabel() + " is missing");
+                // Did batches end up with correct starting vessels?
+                String barcode = batchStartingVessel.getLabVessel().getLabel();
+                Assert.assertTrue(expectedBatchStartingVesselBarcodes.remove(barcode),
+                        "FCT batch has unexpected batch starting vessel " + barcode);
             }
             for (VesselPosition lane : flowcellType.getVesselGeometry().getVesselPositions()) {
+                // Did flowcell vessels end up with correct starting vessels?
                 LabVessel laneVessel = fctBatch.getStartingVesselByPosition(lane);
-                int foundIndex = findIndexByName(stbTubes, laneVessel);
-                Assert.assertTrue(foundIndex >= 0);
+                String barcode = laneVessel.getLabel();
+                Assert.assertTrue(expectedBarcodeOnEachLane.remove(barcode),
+                        "Flowcell has unexpected batch starting vessel " + barcode);
             }
         }
-        // Do the FCTs contain all the loading vessels?
-        Assert.assertTrue(expectedStartingVesselBarcodes.size() == 0,
-                "No FCT for tube(s) " + StringUtils.join(expectedStartingVesselBarcodes, ", "));
+        // Did all loading tube lanes get into the batches?
+        Assert.assertEquals(expectedBatchStartingVesselBarcodes.size(), 0,
+                "FCTs should have had " + StringUtils.join(expectedBatchStartingVesselBarcodes, ", "));
+        // Did all loading tube lanes get onto flowcell vessels?
+        Assert.assertTrue(expectedBarcodeOnEachLane.size() == 0,
+                "Flowcell vessel should have had " + StringUtils.join(expectedBarcodeOnEachLane, ", "));
 
         return fctBatches;
-    }
-
-    private void checkLcsets(List<Pair<LabBatch, Set<String>>> fctBatches) {
-        // Checks the linked lcsets
-        for (Pair<LabBatch, Set<String>> pair : fctBatches) {
-            LabBatch fctBatch = pair.getLeft();
-            Set<String> lcsetNames = pair.getRight();
-
-            Set<String> expectedLcsetNames = new HashSet<>();
-            for (LabVessel startingVessel : fctBatch.getStartingBatchLabVessels()) {
-                int foundIndex = findIndexByName(stbTubes, startingVessel);
-                Assert.assertTrue(foundIndex >= 0);
-                String name = "lcset" + foundIndex;
-                expectedLcsetNames.add(name);
-                Assert.assertTrue(lcsetNames.contains(name),
-                        "Cannot find '" + name + "' in (" + StringUtils.join(lcsetNames, ", ") + ")");
-            }
-            Assert.assertTrue(expectedLcsetNames.containsAll(lcsetNames));
-        }
-
-    }
-
-    private int findIndexByName(List<LabVessel> labVessels, LabVessel lookupVessel) {
-        for (int i = 0; i < labVessels.size(); ++i) {
-            if (labVessels.get(i).getLabel().equals(lookupVessel.getLabel())) {
-                return i;
-            }
-        }
-        return -1;
     }
 }

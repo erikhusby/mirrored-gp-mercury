@@ -39,8 +39,12 @@
 
                 // Clears fields.
                 $j('#lcsetBarcodeText').removeAttr('value');
-                $j('#multiPriority').removeAttr('value');
                 $j('#dateRangeDivNaturalLanguageString').value('Custom');
+                $j('#multiStatus').attr('value', '');
+                $j('#multiPriority').attr('value', '');
+                $j('#multiSeqModel').attr('value', '');
+                $j('#multiIndexType').attr('value', '');
+                $j('#multiPoolTest').attr('value', '');
             });
 
             function lcsetUpdated() {
@@ -53,8 +57,9 @@
                 }
             };
 
-            function rowUpdated() {
-                $j('#saveBtn').removeAttr("disabled");
+            function rowUpdated(rowIndex) {
+                checkboxId = 'checkbox' + rowIndex;
+                $j(checkboxId).attr("checked", "checked");
             };
 
         </script>
@@ -112,7 +117,7 @@
                 </div>
 
                 <div style="float: right; width: 33%;">
-                    <stripes:checkbox id="showQueued" name="showQueued"/>
+                    <stripes:checkbox id="showQueued" name="showQueued" checked="checked"/>
                     <stripes:label for="showQueued">Include In Queue</stripes:label>
                     <stripes:checkbox id="showProcessed" name="showProcessed"/>
                     <stripes:label for="showProcessed">Include On FCT</stripes:label>
@@ -231,8 +236,8 @@
                         <tr class="${dto.repeatedBarcode ? 'repeatedBarcode' : ''}">
                             <td class="tinyWidthColumn">
                                 <c:if test="${dto.status.modifiable && dto.regulatoryDesignation ne 'MIXED'}">
-                                    <stripes:checkbox class="shiftCheckbox" style="margin-left: 40%"
-                                                      name="rowDtos[${item.index}].selected" checked="rowDtos[${item.index}].selected"/>
+                                    <stripes:checkbox class="shiftCheckbox" style="margin-left: 40%" id="${'checkbox' + item.index}"
+                                                      name="rowDtos[${item.index}].selected"/>
                                 </c:if>
                             </td>
                             <td class="smallerWidthColumn">${dto.status.displayName}</td>
@@ -254,21 +259,21 @@
                             <td class="smallerWidthColumn">${dto.numberSamples}</td>
                             <td class="smallerWidthColumn">
                                 <input style='width:5em' class="numLanes" name="rowDtos[${item.index}].numberLanes" value="${dto.numberLanes}"
-                                    ${not dto.status.modifiable ? 'disabled' : ''} onkeypress="rowUpdated()"/>
+                                    ${not dto.status.modifiable ? 'disabled' : ''} onkeypress="rowUpdated(${item.index})"/>
                             </td>
                             <td class="smallerWidthColumn">
                                 <input style='width:5em' class="loadConc" name="rowDtos[${item.index}].loadingConc" value="${dto.loadingConc}"
-                                 ${not dto.status.modifiable ? 'disabled' : ''} onkeypress="rowUpdated()"/>
+                                 ${not dto.status.modifiable ? 'disabled' : ''} onkeypress="rowUpdated(${item.index})"/>
                             </td>
                             <td class="widerFixedWidthColumn">${dto.tubeDate}</td>
                             <td class="smallerWidthColumn">
                                 <input style='width:5em' class="readLength" name="rowDtos[${item.index}].readLength" value="${dto.readLength}"
-                                 ${not dto.status.modifiable ? 'disabled' : ''} onkeypress="rowUpdated()"/>
+                                 ${not dto.status.modifiable ? 'disabled' : ''} onkeypress="rowUpdated(${item.index})"/>
                             </td>
                             <td class="smallerWidthColumn">${dto.indexType}</td>
                             <td class="smallerWidthColumn">
                                 <input style='width:5em' class="numberCycles" name="rowDtos[${item.index}].numberCycles" value="${dto.numberCycles}"
-                                 ${not dto.status.modifiable ? 'disabled' : ''} onkeypress="rowUpdated()"/>
+                                 ${not dto.status.modifiable ? 'disabled' : ''} onkeypress="rowUpdated(${item.index})"/>
                             </td>
                             <td class="tinyWidthColumn">${dto.poolTest?'Yes':'No'}</td>
                             <td class="fixedWidthColumn">${dto.regulatoryDesignation}</td>
@@ -300,14 +305,25 @@
                 </table>
             </div>
 
-            <div class="control-group"  style="position: absolute; left: 30%; transform: translate(-50%, -50%);">
-                <stripes:submit id="saveBtn" name="save" value="Save" class="btn btn-primary" disabled="disabled"/>
+            <div class="control-group">
+                <stripes:submit id="createFctBtn" name="createFct" value="Create FCT" class="btn btn-primary"
+                                style="margin: 0; margin-left: 30%;"/>
             </div>
 
             <c:if test="${actionBean.createdFcts.size() > 0}">
                 <div class="control-group">
                     <hr style="margin: 0; margin-left: 50px"/>
                     <h5 style="margin-left: 50px;">Created FCT Tickets</h5>
+                    <ol>
+                        <c:forEach items="${actionBean.createdFcts}" var="fct" varStatus="item">
+                            <li>
+                                <a target="JIRA" href={$fct.url} class="external" target="JIRA"></a>${fct.name}
+                            </li>
+
+                            <input type="hidden" name="createdFcts[${item.index}].url" value="${fct.url}"/>
+                            <input type="hidden" name="createdFcts[${item.index}].name" value="${fct.name}"/>
+                        </c:forEach>
+                    </ol>
                 </div>
             </c:if>
 
