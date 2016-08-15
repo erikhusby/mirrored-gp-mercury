@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.search;
 
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
@@ -63,7 +64,27 @@ public class  InfiniumPlateSourceEvaluator extends TraversalEvaluator {
                 vessel.getContainerRole().applyCriteriaToAllPositions(eventTypeCriteria,
                         TransferTraverserCriteria.TraversalDirection.Descendants);
             } else {
-                vessel.evaluateCriteria(eventTypeCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
+                // In most cases, the PDO tube is plated directly, so we don't need to traverse.
+                boolean found = false;
+                for (LabVessel labVessel : vessel.getContainers()) {
+                    for (SectionTransfer sectionTransfer : labVessel.getContainerRole().getSectionTransfersFrom()) {
+                        if (sectionTransfer.getLabEvent().getLabEventType() == LabEventType.ARRAY_PLATING_DILUTION) {
+                            Set<LabVessel> labVessels = eventTypeCriteria.getVesselsForLabEventType().get(
+                                    sectionTransfer.getLabEvent());
+                            if (labVessels == null) {
+                                labVessels = new HashSet<>();
+                                eventTypeCriteria.getVesselsForLabEventType().put(sectionTransfer.getLabEvent(),
+                                        labVessels);
+                            }
+                            labVessels.add(sectionTransfer.getTargetVesselContainer().getEmbedder());
+                            found = true;
+                            break;
+                        }
+                    }
+                }
+                if (!found) {
+                    vessel.evaluateCriteria(eventTypeCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
+                }
             }
         }
 
