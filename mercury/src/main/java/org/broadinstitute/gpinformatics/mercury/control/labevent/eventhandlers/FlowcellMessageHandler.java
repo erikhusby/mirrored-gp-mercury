@@ -76,7 +76,8 @@ public class FlowcellMessageHandler extends AbstractEventHandler {
         try {
             for (LabBatch currentUpdateBatch : batchesToUpdate) {
                 Map<String, CustomFieldDefinition> mapNameToField = jiraService.getCustomFields(
-                        LabBatch.TicketFields.SUMMARY.getName(), LabBatch.TicketFields.SEQUENCING_STATION.getName());
+                        LabBatch.TicketFields.SUMMARY.getName(), LabBatch.TicketFields.SEQUENCING_STATION.getName(),
+                        LabBatch.TicketFields.CLUSTER_STATION.getName());
 
                 CustomField summaryCustomField = new CustomField(mapNameToField, LabBatch.TicketFields.SUMMARY,
                         flowcell.getLabel());
@@ -91,6 +92,12 @@ public class FlowcellMessageHandler extends AbstractEventHandler {
                                     flowcell.getFlowcellType().getSequencingStationName(), stationEvent.getStation());
                     jiraService.updateIssue(currentUpdateBatch.getBusinessKey(),
                             Collections.singleton(sequencingStationCustomField));
+                } else {
+                    CustomField clusterStationCustomField =
+                            new CustomField(mapNameToField, LabBatch.TicketFields.CLUSTER_STATION,
+                                    "cBot", stationEvent.getStation());
+                    jiraService.updateIssue(currentUpdateBatch.getBusinessKey(),
+                            Collections.singleton(clusterStationCustomField));
                 }
             }
 
