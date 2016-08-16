@@ -1342,4 +1342,64 @@ public class LabVesselFixupTest extends Arquillian {
 
     }
 
+    @Test(enabled = false)
+    public void fixupGplim4202() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        List<BarcodedTube> tubes = barcodedTubeDao.findListByBarcodes(Arrays.asList(
+                "1125642961",
+                "1125642962",
+                "1125795498",
+                "1125795497"));
+
+        for (LabVessel labVessel : tubes) {
+            labVessel.setReceptacleWeight(new BigDecimal(".62"));
+            System.out.println("Setting tube initial tare weight: " + labVessel.getLabel() + " to .62");
+        }
+
+        FixupCommentary fixupCommentary = new FixupCommentary("GPLIM-4202 - Assign missing tare values to default");
+        barcodedTubeDao.persist(fixupCommentary);
+        barcodedTubeDao.flush();
+
+        utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim4249() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        List<BarcodedTube> tubes = barcodedTubeDao.findListByBarcodes(Arrays.asList(
+                "1125641737",
+                "1125641736",
+                "1125641811",
+                "1125641735",
+                "1125642482",
+                "1125641738",
+                "1125641810",
+                "1125641759",
+                "1125641807",
+                "1125641761",
+                "1125641762",
+                "1125641760",
+                "1125641809",
+                "1125641808",
+                "1125641786",
+                "1125641785",
+                "1125641784",
+                "1125641783"));
+
+        for (LabVessel labVessel : tubes) {
+            labVessel.setReceptacleWeight(new BigDecimal(".62"));
+            System.out.println("Setting tube initial tare weight: " + labVessel.getLabel() + " to .62");
+        }
+
+        FixupCommentary fixupCommentary = new FixupCommentary("GPLIM-4249 - Assign missing tare values to default");
+        barcodedTubeDao.persist(fixupCommentary);
+        barcodedTubeDao.flush();
+
+        utx.commit();
+    }
+
 }

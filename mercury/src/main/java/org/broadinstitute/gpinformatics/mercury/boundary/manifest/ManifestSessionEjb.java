@@ -19,6 +19,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySample
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.crsp.generated.Sample;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestRecord;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestSession;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.ManifestStatus;
@@ -398,18 +399,10 @@ public class ManifestSessionEjb {
         targetSample.addMetadata(
                 Collections.singleton(new Metadata(Metadata.Key.RECEIPT_RECORD, session.getReceiptTicket())));
 
-        List<ManifestSession> otherReceiptSessions =
-                manifestSessionDao.getSessionsForReceiptTicket(session.getReceiptTicket());
-
-        otherReceiptSessions.remove(session);
-
         int disambiguator = sourceRecord.getSpreadsheetRowNumber();
 
-        for (ManifestSession sessionToAdd : otherReceiptSessions) {
-            disambiguator += sessionToAdd.getRecords().size();
-        }
-
-        targetVessel.setReceiptEvent(bspUserByUsername, receiptInfo.getCreated(), disambiguator);
+        targetVessel.setReceiptEvent(bspUserByUsername, receiptInfo.getCreated(), disambiguator,
+                LabEvent.UI_EVENT_LOCATION + " Accessioning--" + session.getSessionName());
     }
 
     private void transitionReceiptTicket(ManifestSession session, Set<String> accessionedSamples) {

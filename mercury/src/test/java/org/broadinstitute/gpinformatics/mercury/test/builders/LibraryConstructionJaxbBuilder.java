@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.test.builders;
 import org.apache.commons.lang3.tuple.Triple;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
@@ -50,6 +51,10 @@ public class LibraryConstructionJaxbBuilder {
     private final List<Triple<String, String, Integer>> endRepairReagents;
     private final List<Triple<String, String, Integer>> endRepairCleanupReagents;
     private final List<Triple<String, String, Integer>> pondEnrichmentReagents;
+    private PondType pondType;
+    private String pondNormRackBarcode;
+    private List<String> pondNormTubeBarcodes = new ArrayList<>();
+    private PlateCherryPickEvent pondNormJaxb;
 
     public enum TargetSystem {
         /** Messages that might be routed to Squid must have pre-registered lab machines and reagent kit types. */
@@ -58,12 +63,30 @@ public class LibraryConstructionJaxbBuilder {
         MERCURY_ONLY
     }
 
+    public enum PondType {
+        PCR_FREE("PCRFreePondRegistration"),
+        PCR_PLUS("PCRPlusPondRegistration"),
+        REGULAR("PondRegistration");
+
+        private String eventType;
+
+        PondType(String eventType) {
+            this.eventType = eventType;
+        }
+
+        public String getEventType() {
+            return eventType;
+        }
+    }
+
+    // todo jmt why do the reagents need to be parameters?  All callers supply the same values.
     public LibraryConstructionJaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory, String testPrefix,
-                                          String shearCleanPlateBarcode, String p7IndexPlateBarcode,
-                                          String p5IndexPlateBarcode, int numSamples, TargetSystem targetSystem,
-                                          List<Triple<String, String, Integer>> endRepairReagents,
-                                          List<Triple<String, String, Integer>> endRepairCleanupReagents,
-                                          List<Triple<String, String, Integer>> pondEnrichmentReagents) {
+            String shearCleanPlateBarcode, String p7IndexPlateBarcode,
+            String p5IndexPlateBarcode, int numSamples, TargetSystem targetSystem,
+            List<Triple<String, String, Integer>> endRepairReagents,
+            List<Triple<String, String, Integer>> endRepairCleanupReagents,
+            List<Triple<String, String, Integer>> pondEnrichmentReagents,
+            PondType pondType) {
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
         this.testPrefix = testPrefix;
         this.shearCleanPlateBarcode = shearCleanPlateBarcode;
@@ -74,6 +97,7 @@ public class LibraryConstructionJaxbBuilder {
         this.endRepairReagents = endRepairReagents;
         this.endRepairCleanupReagents = endRepairCleanupReagents;
         this.pondEnrichmentReagents = pondEnrichmentReagents;
+        this.pondType = pondType;
     }
 
     public PlateEventType getEndRepairJaxb() {
@@ -156,6 +180,18 @@ public class LibraryConstructionJaxbBuilder {
         return pondPico2Barcode;
     }
 
+    public PlateCherryPickEvent getPondNormJaxb() {
+        return pondNormJaxb;
+    }
+
+    public String getPondNormRackBarcode() {
+        return pondNormRackBarcode;
+    }
+
+    public List<String> getPondNormTubeBarcodes() {
+        return pondNormTubeBarcodes;
+    }
+
     public LibraryConstructionJaxbBuilder invoke() {
         endRepairJaxb = bettaLimsMessageTestFactory.buildPlateEvent("EndRepair", shearCleanPlateBarcode,
                 targetSystem == TargetSystem.MERCURY_ONLY ?
@@ -220,7 +256,7 @@ public class LibraryConstructionJaxbBuilder {
         for (int rackPosition = 1; rackPosition <= numSamples; rackPosition++) {
             pondRegTubeBarcodes.add(LabEventTest.POND_REGISTRATION_TUBE_PREFIX + testPrefix + rackPosition);
         }
-        pondRegistrationJaxb = bettaLimsMessageTestFactory.buildPlateToRack("PondRegistration", pondCleanupBarcode,
+        pondRegistrationJaxb = bettaLimsMessageTestFactory.buildPlateToRack(pondType.getEventType(), pondCleanupBarcode,
                 pondRegRackBarcode, pondRegTubeBarcodes);
         for (ReceptacleType receptacleType : pondRegistrationJaxb.getPositionMap().getReceptacle()) {
             receptacleType.setVolume(new BigDecimal("50"));
@@ -237,6 +273,27 @@ public class LibraryConstructionJaxbBuilder {
                 pondRegRackBarcode, pondRegTubeBarcodes, pondPico2Barcode);
         bettaLimsMessageTestFactory.addMessage(messageList, pondPico2Jaxb);
 
+        if (pondType == PondType.PCR_PLUS) {
+            pondNormRackBarcode = "PondNorm" + testPrefix;
+            pondNormTubeBarcodes = new ArrayList<>();
+            List<BettaLimsMessageTestFactory.CherryPick> cherryPicks = new ArrayList<>();
+            for (int rackPosition = 1; rackPosition <= numSamples; rackPosition++) {
+                pondNormTubeBarcodes.add("PondNorm" + testPrefix + rackPosition);
+                String sourceWell = bettaLimsMessageTestFactory.buildWellName(
+                        BettaLimsMessageTestFactory.NUMBER_OF_RACK_COLUMNS, rackPosition,
+                        BettaLimsMessageTestFactory.WellNameType.LONG);
+                cherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(pondRegRackBarcode, sourceWell,
+                        pondNormRackBarcode, sourceWell));
+            }
+            pondNormJaxb = bettaLimsMessageTestFactory.buildCherryPick("PCRPlusPondNormalization",
+                    Collections.singletonList(pondRegRackBarcode), Collections.singletonList(pondRegTubeBarcodes),
+                    Collections.singletonList(pondNormRackBarcode), Collections.singletonList(pondNormTubeBarcodes),
+                    cherryPicks);
+            for (ReceptacleType receptacleType : pondRegistrationJaxb.getPositionMap().getReceptacle()) {
+                receptacleType.setVolume(new BigDecimal("50"));
+            }
+            bettaLimsMessageTestFactory.addMessage(messageList, pondNormJaxb);
+        }
         return this;
     }
 }

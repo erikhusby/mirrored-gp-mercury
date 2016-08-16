@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -55,6 +54,32 @@ public class LabMetricSearchDefinition {
 
         public String getId(){
             return id;
+        }
+    }
+
+    // These search term and/or result column names need to be referenced multiple places during processing.
+    // Use an enum rather than having to reference via String values of term names
+    // TODO: JMS Create a shared interface that this implements then use this as a registry of all term names
+    public enum MultiRefTerm {
+        METRIC_RUN_ID("Metric Run ID"),
+        METRIC_TUBES_ONLY("Only Show Metrics for Tubes");
+
+        MultiRefTerm(String termRefName ) {
+            this.termRefName = termRefName;
+            if( termNameReference.put(termRefName,this) != null ) {
+                throw new RuntimeException( "Attempt to add a term with a duplicate name [" + termRefName + "]." );
+            }
+        }
+
+        private String termRefName;
+        private Map<String,MultiRefTerm> termNameReference = new HashMap<>();
+
+        public String getTermRefName() {
+            return termRefName;
+        }
+
+        public boolean isNamed(String termName ) {
+            return termRefName.equals(termName);
         }
     }
 
@@ -254,7 +279,7 @@ public class LabMetricSearchDefinition {
         // User-selectable filter to exclude plate wells from the results
         // Note: Accessed by name in LabMetricTraversalEvaluator to filter ancestors and descendants
         searchTerm = new SearchTerm();
-        searchTerm.setName("Only Show Metrics for Tubes");
+        searchTerm.setName(MultiRefTerm.METRIC_TUBES_ONLY.getTermRefName());
         searchTerm.setIsExcludedFromResultColumns(Boolean.TRUE);
         searchTerm.setValueType(ColumnValueType.NOT_NULL);
         criteriaPaths = new ArrayList<>();
@@ -438,6 +463,29 @@ public class LabMetricSearchDefinition {
         criteriaPath.setNestedCriteriaPath(nestedCriteriaPath);
 
         criteriaPath.setPropertyName("runName");
+        criteriaPaths.add(criteriaPath);
+        searchTerm.setCriteriaPaths(criteriaPaths);
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName(MultiRefTerm.METRIC_RUN_ID.getTermRefName());
+        searchTerm.setValueType(ColumnValueType.UNSIGNED);
+        searchTerm.setDbSortPath("labMetricRun.labMetricRunId");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Long evaluate(Object entity, SearchContext context) {
+                LabMetric labMetric = (LabMetric) entity;
+                return labMetric.getLabMetricRun() == null? null: labMetric.getLabMetricRun().getLabMetricRunId();
+            }
+        });
+        criteriaPaths = new ArrayList<>();
+        criteriaPath = new SearchTerm.CriteriaPath();
+
+        // Projected property of nested subquery
+        criteriaPath.setCriteria(Collections.singletonList("labMetricId"));
+        criteriaPath.setNestedCriteriaPath(nestedCriteriaPath);
+
+        criteriaPath.setPropertyName("labMetricRunId");
         criteriaPaths.add(criteriaPath);
         searchTerm.setCriteriaPaths(criteriaPaths);
         searchTerms.add(searchTerm);

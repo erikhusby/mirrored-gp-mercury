@@ -556,6 +556,22 @@
                                 </stripes:select>
                             </div>
                         </div>
+
+                        <div class="control-group">
+                            <stripes:label for="readLength" name="ReadLength" class="control-label"/>
+                            <div class="controls">
+                                <stripes:text id="readLength" name="editProduct.readLength"
+                                        class="defaultText" title="Enter length of template read"/>
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <stripes:label for="insertSize" name="InsertSize" class="control-label"/>
+                            <div class="controls">
+                                <stripes:text id="insertSize" name="editProduct.insertSize"
+                                        class="defaultText" title="Enter size of insert"/>
+                            </div>
+                        </div>
                     </fieldset>
                 </div>
             </div>

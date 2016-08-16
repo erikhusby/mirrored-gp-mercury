@@ -222,6 +222,8 @@ public enum LabEventType {
     POOLING_TRANSFER("PoolingTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            new ManualTransferDetails.Builder(MessageType.PLATE_CHERRY_PICK_EVENT, RackOfTubes.RackType.Matrix96,
+                    RackOfTubes.RackType.Matrix96).reagentNames(new String[]{"EB"}).build(),
             LibraryType.POOLED),
     ICE_POST_HYB_POOLING_TRANSFER("IcePostHybPoolingTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
@@ -1126,7 +1128,7 @@ public enum LabEventType {
     NEXTERA_PCR_CLEANUP("NexteraPCRCleanup",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            LibraryType.NONE_ASSIGNED),
+            LibraryType.NEXTERA_ENRICHED_LIBRARY),
     NEXOME_POND_PICO("NexomePondPico",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
@@ -1134,7 +1136,7 @@ public enum LabEventType {
     NEXOME_POOLING_TRANSFER("NexomePoolingTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            LibraryType.POOLED),
+            LibraryType.NEXTERA_POOLED_NORMALIZED_LIBRARY),
     NEXOME_POOL_TEST("NexomePoolTest",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
@@ -1142,7 +1144,7 @@ public enum LabEventType {
     NEXOME_SPRI_CONCENTRATION("NexomeSPRIConcentration",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            LibraryType.NONE_ASSIGNED),
+            LibraryType.NEXTERA_SPRI_CONCENTRATED_POOL),
     NEXOME_1ST_HYBRIDIZATION("Nexome1stHybridization",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
@@ -1182,7 +1184,7 @@ public enum LabEventType {
     NEXOME_CATCH_ENRICHMENT_CLEANUP("NexomeCatchEnrichmentCleanup",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.PCR, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            LibraryType.NONE_ASSIGNED),
+            LibraryType.NEXOME_CATCH),
     NEXOME_CATCH_PICO("NexomeCatchPico",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
@@ -1208,7 +1210,7 @@ public enum LabEventType {
     NEXOME_NORM_TRANSFER("NexomeNormTransfer",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            LibraryType.NONE_ASSIGNED),
+            LibraryType.NEXTERA_ENRICHED_LIBRARY),
     NEXOME_BAIT_ADDITION("NexomeBaitAddition",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
@@ -1228,30 +1230,31 @@ public enum LabEventType {
     TWO_PLATE_NEXOME_CATCH_ENRICHMENT("2PlateNexomeCatchEnrichment",
             ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.PCR, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            LibraryType.NONE_ASSIGNED),
+            LibraryType.NEXOME_CATCH),
 
     // PCRFree
+    // Set PipelineTransformation to PCR because this is the first tube after the first PCR
     PCR_FREE_POND_REGISTRATION("PCRFreePondRegistration",
-            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            LibraryType.NONE_ASSIGNED),
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.PCR, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.PCR_FREE_POND),
     PCR_FREE_08X_CLEANUP("PCRFree0.8xCleanup",
-            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID, CreateSources.FALSE,
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             LibraryType.NONE_ASSIGNED),
     PCR_FREE_3X_CLEANUP("PCRFree3.0xCleanup",
-            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID, CreateSources.FALSE,
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             LibraryType.NONE_ASSIGNED),
 
     PCR_PLUS_POND_REGISTRATION("PCRPlusPondRegistration",
-            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            LibraryType.NONE_ASSIGNED),
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.PCR, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.PCR_PLUS_POND),
     PCR_PLUS_POND_NORMALIZATION("PCRPlusPondNormalization",
-            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID, CreateSources.FALSE,
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            LibraryType.NONE_ASSIGNED),
+            LibraryType.PCR_PLUS_NORMALIZED_POND),
 
     /**
      * TODO SGM  the following names are place holders.  They will be re-evaluated as development of
@@ -1677,9 +1680,16 @@ public enum LabEventType {
     }
 
     public enum LibraryType {
-        ENRICHED_POND("Enriched Pond"),
-        HYBRID_SELECTION_AGILENT_CATCH("Enriched Catch"),
-        HYBRID_SELECTION_ICE_ENRICHED_CATCH("Enriched Catch"),
+        ENRICHED_POND("Enriched Pond", "Pond"),
+        PCR_FREE_POND("PCR-Free Pond", "Pond"),
+        PCR_PLUS_POND("PCR-Plus Pond", "Pond"),
+        PCR_PLUS_NORMALIZED_POND("PCR-Plus Norm Pond", "Norm Pond"),
+        HYBRID_SELECTION_AGILENT_CATCH("Enriched Catch", "Catch"),
+        HYBRID_SELECTION_ICE_ENRICHED_CATCH("Enriched Catch", "Catch"),
+        NEXTERA_ENRICHED_LIBRARY("Nextera Enriched"),
+        NEXTERA_POOLED_NORMALIZED_LIBRARY("Nextera Pooled Normalized", "Pooled"),
+        NEXTERA_SPRI_CONCENTRATED_POOL("Nextera SPRI Concentrated Pool", "Pooled"),
+        NEXOME_CATCH("Nexome Catch", "Catch"),
         POOLED("Pooled"),
         MISEQ_FLOWCELL("MiSeq Flowcell"),
         NONE_ASSIGNED(""),
@@ -1688,24 +1698,27 @@ public enum LabEventType {
         DILUTED_DENATURE("Diluted Denature"),
         HISEQ_FLOWCELL("HiSeq Flowcell");
 
-        private LibraryType( String displayName ){
-            this.displayName = displayName;
+        LibraryType( String mercuryDisplayName, String etlDisplayName ){
+            this.mercuryDisplayName = mercuryDisplayName;
+            this.etlDisplayName = etlDisplayName;
         }
 
-        private String displayName;
-
-        public String getDisplayName() {
-            return displayName;
+        LibraryType( String displayName ){
+            this.mercuryDisplayName = displayName;
+            this.etlDisplayName = displayName;
         }
 
-        public LibraryType getTypeByName( String displayName ) {
-            for( LibraryType libraryType : values() ) {
-                if( libraryType.displayName.equals( displayName ) ) {
-                    return libraryType;
-                }
-            }
-            return null;
+        private String etlDisplayName;
+        private String mercuryDisplayName;
+
+        public String getEtlDisplayName() {
+            return etlDisplayName;
         }
+
+        public String getMercuryDisplayName() {
+            return mercuryDisplayName;
+        }
+
     }
 
     private LibraryType libraryType;

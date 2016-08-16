@@ -338,4 +338,16 @@
                              schemaName="ATHENA" columnNames="RESEARCH_PROJECT_ID,SUBMITTED_SAMPLE_NAME, FILE_TYPE, VERSION" />
     </changeSet>
 
+    <changeSet author="thompson" id="GPLIM-4103-1">
+        <addColumn schemaName="ATHENA" tableName="PRODUCT">
+            <column name="READ_LENGTH" type="number(4,0)"/>
+            <column name="INSERT_SIZE" type="number(5,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="thompson" id="GPLIM-4103-2">
+        <addColumn schemaName="ATHENA" tableName="PRODUCT_AUD">
+            <column name="READ_LENGTH" type="number(4,0)"/>
+            <column name="INSERT_SIZE" type="number(5,0)"/>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>

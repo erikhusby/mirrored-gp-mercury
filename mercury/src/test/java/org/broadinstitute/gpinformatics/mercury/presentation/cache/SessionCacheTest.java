@@ -33,7 +33,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 
 
-@Test(groups = TestGroups.DATABASE_FREE, threadPoolSize = THREADPOOL_SIZE, invocationCount = INVOCATION_COUNT)
+@Test(groups = TestGroups.MULTITHREADED, threadPoolSize = THREADPOOL_SIZE, invocationCount = INVOCATION_COUNT)
 public class SessionCacheTest {
     static final int THREADPOOL_SIZE = 50;
     static final int INVOCATION_COUNT = 50;

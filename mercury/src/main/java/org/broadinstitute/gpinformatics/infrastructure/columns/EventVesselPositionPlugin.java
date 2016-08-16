@@ -267,7 +267,7 @@ public abstract class EventVesselPositionPlugin implements ListPlugin {
                     valueHolder.append("[No Data]");
                 } else {
                     valueHolder.append("[")
-                            .append(parentTerm.evalFormattedExpression(multiVal, context))
+                            .append(parentTerm.evalPlainTextOutputExpression(multiVal, context))
                             .append("]");
                 }
             } else {
@@ -275,7 +275,7 @@ public abstract class EventVesselPositionPlugin implements ListPlugin {
                     valueHolder.append("[No Data]");
                 } else {
                     valueHolder.append("[")
-                            .append(parentTerm.evalFormattedExpression(displayValue, context))
+                            .append(parentTerm.evalPlainTextOutputExpression(displayValue, context))
                             .append("]");
                 }
             }
