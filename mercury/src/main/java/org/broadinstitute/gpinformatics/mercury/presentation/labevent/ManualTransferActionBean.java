@@ -382,78 +382,77 @@ public class ManualTransferActionBean extends RackScanActionBean {
             case STATION_SETUP_EVENT:
                 break;
             case STRIP_TUBE_CHERRY_PICK_EVENT:
-                    for (StationEventType stationEvent : stationEvents) {
+                for (StationEventType stationEvent : stationEvents) {
+                    ObjectMapper mapper = new ObjectMapper();
+                    List<CherryPicksPositions> cherryPickPositionMaps = null;
 
-                        ObjectMapper mapper = new ObjectMapper();
-                        List<CherryPicksPositions> cherryPickPositionMaps = null;
+                    PlateCherryPickEvent plateCherryPickEvent = (PlateCherryPickEvent) stationEvent;
 
-                        PlateCherryPickEvent plateCherryPickEvent = (PlateCherryPickEvent) stationEvent;
+                    loadPlateFromDb(plateCherryPickEvent.getSourcePlate().get(0),
+                            plateCherryPickEvent.getSourcePositionMap().get(0), true, labBatch, messageCollection,
+                            Direction.SOURCE);
 
-                        loadPlateFromDb(plateCherryPickEvent.getSourcePlate().get(0),
-                                plateCherryPickEvent.getSourcePositionMap().get(0), true, labBatch, messageCollection,
-                                Direction.SOURCE);
+                    loadPlateFromDb(plateCherryPickEvent.getPlate().get(0), plateCherryPickEvent.getPositionMap().get(0),
+                            false, labBatch, messageCollection,
+                            Direction.TARGET);
 
-                        loadPlateFromDb(plateCherryPickEvent.getPlate().get(0), plateCherryPickEvent.getPositionMap().get(0),
-                                false, labBatch, messageCollection,
-                                Direction.TARGET);
+                    if (messageCollection.hasErrors()) {
+                        break;
+                    }
+                    if (cherryPickJson == null)
+                        cherryPickJson = getContext().getRequest().getParameter("destPosList");
+                    //This handles barcode validation where no transfer connections have been made resulting in malformed Json.
+                    try {
+                        cherryPickPositionMaps = mapper.readValue(cherryPickJson, new TypeReference<List<CherryPicksPositions>>() {
+                        });
+                    } catch (IOException e) {
+                        messageCollection.addError("No valid connections exist");
+                        break;
+                    }
 
-                        if(messageCollection.hasErrors()) {
-                            break;
-                        }
-                        if (cherryPickJson == null)
-                            cherryPickJson = getContext().getRequest().getParameter("destPosList");
-                        //This handles barcode validation where no transfer connections have been made resulting in malformed Json.
-                        try {
-                            cherryPickPositionMaps = mapper.readValue(cherryPickJson, new TypeReference<List<CherryPicksPositions>>() {
-                            });
-                        } catch (IOException e) {
-                            messageCollection.addError("No valid connections exist");
-                            break;
-                        }
+                    for (CherryPicksPositions item : cherryPickPositionMaps) {
+                        String srcWell = "";
+                        String destWell = "";
+                        CherryPickSourceType cherryPickSourceType = new CherryPickSourceType();
+                        if (item.targetIDs.size() >= item.sourceIDs.size()) {
+                            String targetRackBarcode = plateCherryPickEvent.getPlate().get(0).getBarcode();
+                            PlateType targetRack = new PlateType();
+                            targetRack.setBarcode(targetRackBarcode);
+                            targetRack.setPhysType(LabEventFactory.PHYS_TYPE_STRIP_TUBE_RACK_OF_12);
+                            targetRack.setSection(LabEventFactory.SECTION_ALL_96);
+                            plateCherryPickEvent.getPlate().remove(0);
+                            plateCherryPickEvent.getPlate().add(targetRack);
+                            PositionMapType targetPositionMap = new PositionMapType();
+                            targetPositionMap.setBarcode(targetRack.getBarcode());
+                            MetadataType metadataType = new MetadataType();
+                            metadataType.setName("FCT");
+                            metadataType.setValue(item.targetFCT.get(0));
 
-                        for (CherryPicksPositions item : cherryPickPositionMaps) {
-                            String srcWell = "";
-                            String destWell = "";
-                            CherryPickSourceType cherryPickSourceType = new CherryPickSourceType();
-                            if (item.targetIDs.size() >= item.sourceIDs.size()) {
-                                String targetRackBarcode = plateCherryPickEvent.getPlate().get(0).getBarcode();
-                                PlateType targetRack = new PlateType();
-                                targetRack.setBarcode(targetRackBarcode);
-                                targetRack.setPhysType(LabEventFactory.PHYS_TYPE_STRIP_TUBE_RACK_OF_12);
-                                targetRack.setSection(LabEventFactory.SECTION_ALL_96);
-                                plateCherryPickEvent.getPlate().remove(0);
-                                plateCherryPickEvent.getPlate().add(targetRack);
-                                PositionMapType targetPositionMap = new PositionMapType();
-                                targetPositionMap.setBarcode(targetRack.getBarcode());
-                                MetadataType metadataType = new MetadataType();
-                                metadataType.setName("FCT");
-                                metadataType.setValue(item.targetFCT.get(0));
-
-                                for (int targetWellPosition = 0; targetWellPosition < item.targetPositions.size(); targetWellPosition++) {
-                                    String targetBarcode = item.targetBarcodes.get(0);
-                                    ReceptacleType receptacleType = new ReceptacleType();
-                                    receptacleType.setReceptacleType(LabEventFactory.PHYS_TYPE_STRIP_TUBE);
-                                    receptacleType.getMetadata().add(metadataType);
-                                    receptacleType.setBarcode(targetBarcode);
-                                    receptacleType.setPosition(String.valueOf(item.targetPositions.get(targetWellPosition)));
-                                    targetPositionMap.getReceptacle().add(receptacleType);
-                                    plateCherryPickEvent.getPositionMap().remove(0);
-                                    plateCherryPickEvent.getPositionMap().add(targetPositionMap);
-                                }
-                                for (int targetWellPosition = 0; targetWellPosition < item.targetIDs.size(); targetWellPosition++) {
-                                    destWell = parseWellFromJson(item.targetIDs.get(targetWellPosition));
-                                    srcWell = parseWellFromJson(item.sourceIDs.get(0));
-                                    cherryPickSourceType = new CherryPickSourceType();
-                                    cherryPickSourceType.setBarcode(plateCherryPickEvent.getSourcePlate().get(0).getBarcode());
-                                    cherryPickSourceType.setWell(srcWell);
-                                    cherryPickSourceType.setDestinationBarcode(plateCherryPickEvent.getPlate().get(0).getBarcode());
-                                    cherryPickSourceType.setDestinationWell(destWell);
-                                    plateCherryPickEvent.getSource().add(cherryPickSourceType);
-                                }
+                            for (int targetWellPosition = 0; targetWellPosition < item.targetPositions.size(); targetWellPosition++) {
+                                String targetBarcode = item.targetBarcodes.get(0);
+                                ReceptacleType receptacleType = new ReceptacleType();
+                                receptacleType.setReceptacleType(LabEventFactory.PHYS_TYPE_STRIP_TUBE);
+                                receptacleType.getMetadata().add(metadataType);
+                                receptacleType.setBarcode(targetBarcode);
+                                receptacleType.setPosition(String.valueOf(item.targetPositions.get(targetWellPosition)));
+                                targetPositionMap.getReceptacle().add(receptacleType);
+                                plateCherryPickEvent.getPositionMap().remove(0);
+                                plateCherryPickEvent.getPositionMap().add(targetPositionMap);
+                            }
+                            for (int targetWellPosition = 0; targetWellPosition < item.targetIDs.size(); targetWellPosition++) {
+                                destWell = parseWellFromJson(item.targetIDs.get(targetWellPosition));
+                                srcWell = parseWellFromJson(item.sourceIDs.get(0));
+                                cherryPickSourceType = new CherryPickSourceType();
+                                cherryPickSourceType.setBarcode(plateCherryPickEvent.getSourcePlate().get(0).getBarcode());
+                                cherryPickSourceType.setWell(srcWell);
+                                cherryPickSourceType.setDestinationBarcode(plateCherryPickEvent.getPlate().get(0).getBarcode());
+                                cherryPickSourceType.setDestinationWell(destWell);
+                                plateCherryPickEvent.getSource().add(cherryPickSourceType);
                             }
                         }
                     }
-                    break;
+                }
+                break;
             case PLATE_CHERRY_PICK_EVENT:
                 for (StationEventType stationEvent : stationEvents) {
                     PlateCherryPickEvent plateCherryPickEvent = (PlateCherryPickEvent) stationEvent;
