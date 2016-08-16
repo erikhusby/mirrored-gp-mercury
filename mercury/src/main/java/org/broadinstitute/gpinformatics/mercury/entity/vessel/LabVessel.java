@@ -93,7 +93,6 @@ public abstract class LabVessel implements Serializable {
      * a logging level would require frequent checks in heavily used code.
      */
     public static final boolean DIAGNOSTICS = false;
-    public static final boolean EVENT_DIAGNOSTICS = false;
 
     @SequenceGenerator(name = "SEQ_LAB_VESSEL", schema = "mercury", sequenceName = "SEQ_LAB_VESSEL")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_LAB_VESSEL")
@@ -143,17 +142,16 @@ public abstract class LabVessel implements Serializable {
     private Integer reagentContentsCount = 0;
 
     // todo jmt separate role for containee?
-    @ManyToMany(cascade = CascadeType.PERSIST)
-    @JoinTable(schema = "mercury")
+    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "containee")
     @BatchSize(size = 100)
-    private Set<LabVessel> containers = new HashSet<>();
+    private Set<PositionToVesselMap> positionToVesselMaps = new HashSet<>();
 
     /**
      * Counts the number of rows in the many-to-many table.  Reference this count before fetching the collection, to
      * avoid an unnecessary database round trip
      */
     @NotAudited
-    @Formula("(select count(*) from lab_vessel_containers where lab_vessel_containers.lab_vessel = lab_vessel_id)")
+    @Formula("(select count(*) from LV_MAP_POSITION_TO_VESSEL where LV_MAP_POSITION_TO_VESSEL.MAP_POSITION_TO_VESSEL = lab_vessel_id)")
     private Integer containersCount = 0;
 
     /**
@@ -401,26 +399,21 @@ public abstract class LabVessel implements Serializable {
         reagentContentsCount++;
     }
 
-    public void addToContainer(VesselContainer<?> vesselContainer) {
-        containers.add(vesselContainer.getEmbedder());
-        if (containersCount == null) {
-            containersCount = 0;
-        }
-        containersCount++;
-    }
-
     public Set<LabVessel> getContainers() {
+        Set<LabVessel> containers = new HashSet<>();
         if (containersCount != null && containersCount > 0) {
-            return containers;
+            for (PositionToVesselMap positionToVesselMap : positionToVesselMaps) {
+                containers.add(positionToVesselMap.getContainer());
+            }
         }
-        return Collections.emptySet();
+        return Collections.unmodifiableSet(containers);
     }
 
     public Set<VesselContainer<?>> getVesselContainers() {
         Set<VesselContainer<?>> vesselContainers = new HashSet<>();
         if (containersCount != null && containersCount > 0) {
-            for (LabVessel container : containers) {
-                vesselContainers.add(container.getContainerRole());
+            for (PositionToVesselMap positionToVesselMap : positionToVesselMaps) {
+                vesselContainers.add(positionToVesselMap.getContainer().getContainerRole());
             }
         }
 
@@ -563,6 +556,11 @@ public abstract class LabVessel implements Serializable {
 
     public void setCreatedOn(Date createdOn) {
         this.createdOn = createdOn;
+    }
+
+    public void addPositionToVesselMap(PositionToVesselMap positionToVesselMap) {
+        positionToVesselMaps.add(positionToVesselMap);
+        containersCount += 1;
     }
 
     public Set<LabEvent> getInPlaceLabEvents() {
@@ -1466,7 +1464,7 @@ public abstract class LabVessel implements Serializable {
         if (containerRole != null) {
             containerRole.clearCaches();
         }
-        for (LabVessel container : containers) {
+        for (LabVessel container : getContainers()) {
             container.clearCaches();
             container.getContainerRole().clearCaches();
         }

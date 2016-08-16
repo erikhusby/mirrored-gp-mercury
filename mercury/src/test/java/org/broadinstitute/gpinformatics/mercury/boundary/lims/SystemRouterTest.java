@@ -400,9 +400,6 @@ public class SystemRouterTest extends BaseEventTest {
             put(VesselPosition.A02, tube1);
             put(VesselPosition.A03, tube2);
         }}, RackOfTubes.RackType.Matrix96);
-        controlWithoutWorkflow1.addToContainer(tubeFormation.getContainerRole());
-        tube1.addToContainer(tubeFormation.getContainerRole());
-        tube2.addToContainer(tubeFormation.getContainerRole());
 
         assertThat(controlWithoutWorkflow1.getSampleInstancesV2().iterator().next().getSingleBucketEntry(),
                 is(nullValue()));
@@ -419,8 +416,6 @@ public class SystemRouterTest extends BaseEventTest {
             put(VesselPosition.A01, tube1);
             put(VesselPosition.A02, controlWithoutWorkflow1);
         }}, RackOfTubes.RackType.Matrix96);
-        tube1.addToContainer(tubeFormation.getContainerRole());
-        controlWithoutWorkflow1.addToContainer(tubeFormation.getContainerRole());
 
         assertThat(controlWithoutWorkflow1.getSampleInstancesV2().iterator().next().getSingleBatch(),
                 is(nullValue()));
@@ -436,7 +431,6 @@ public class SystemRouterTest extends BaseEventTest {
         TubeFormation tubeFormation = new TubeFormation(new HashMap<VesselPosition, BarcodedTube>(){{
             put(VesselPosition.A01, controlWithoutWorkflow1);
         }}, RackOfTubes.RackType.Matrix96);
-        controlWithoutWorkflow1.addToContainer(tubeFormation.getContainerRole());
 
         assertThat(controlWithoutWorkflow1.getSampleInstancesV2().iterator().next().getSingleBatch(),
                 is(nullValue()));
@@ -464,11 +458,6 @@ public class SystemRouterTest extends BaseEventTest {
             put(VesselPosition.A03, tube1);
             put(VesselPosition.A04, tube2);
         }}, RackOfTubes.RackType.Matrix96);
-
-        controlWithoutWorkflow1.addToContainer(tubeFormation.getContainerRole());
-        controlWithoutWorkflow2.addToContainer(tubeFormation.getContainerRole());
-        tube1.addToContainer(tubeFormation.getContainerRole());
-        tube2.addToContainer(tubeFormation.getContainerRole());
 
         assertThat(controlWithoutWorkflow1.getSampleInstancesV2().iterator().next().getSingleBucketEntry(),
                 is(nullValue()));

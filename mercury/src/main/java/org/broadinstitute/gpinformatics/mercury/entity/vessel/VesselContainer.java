@@ -13,7 +13,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Parent;
 
@@ -21,11 +20,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.persistence.CascadeType;
 import javax.persistence.Embeddable;
-import javax.persistence.EnumType;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
-import javax.persistence.MapKeyColumn;
-import javax.persistence.MapKeyEnumerated;
 import javax.persistence.OneToMany;
 import javax.persistence.Transient;
 import java.util.ArrayList;
@@ -37,7 +31,6 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -50,6 +43,11 @@ import java.util.Set;
  * through inheritance.  Delegation is preferable, because a LabVessel could have multiple roles, but multiple
  * inheritance is not supported.  As an example of multiple roles, A Cryo straw is held in a visotube, which is held
  * in a goblet; a visotube is both a container and a containee.
+ * Examples of conters are: a rack holds tubes, tubes have barcodes and can be removed;
+ * a plate holds wells, wells can't be removed;
+ * a flowcell holds lanes;
+ * a smartpac holds smrtcells, smrtcells are removed, but not replaced;
+ * a striptube holds tubes, tubes can't be removed, don't have barcodes.
  */
 @SuppressWarnings("UnusedDeclaration")
 @Embeddable
@@ -65,24 +63,15 @@ public class VesselContainer<T extends LabVessel> {
         }
     };
 
-    /* rack holds tubes, tubes have barcodes and can be removed.
-    * plate holds wells, wells can't be removed.
-    * flowcell holds lanes.
-    * PTP holds regions.
-    * smartpac holds smrtcells, smrtcells are removed, but not replaced.
-    * striptube holds tubes, tubes can't be removed, don't have barcodes. */
-    @ManyToMany(targetEntity = LabVessel.class, cascade = CascadeType.PERSIST)
-    // have to specify name, generated name is too long for Oracle
-    @JoinTable(schema = "mercury", name = "lv_map_position_to_vessel")
-    @MapKeyEnumerated(EnumType.STRING)
-    // hbm2ddl always uses mapkey
-    @MapKeyColumn(name = "mapkey")
+    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "container")
     @BatchSize(size = 100)
-    // the map value has to be LabVessel, not T, because JPAMetaModelEntityProcessor can't handle type parameters
-    private final Map<VesselPosition, LabVessel> mapPositionToVessel = new LinkedHashMap<>();
+    private Set<PositionToVesselMap> positionToVesselMaps = new HashSet<>();
 
     @Transient
-    private Map<LabVessel, VesselPosition> vesselToMapPosition;
+    private Map<LabVessel, VesselPosition> mapVesselToPosition;
+
+    @Transient
+    private Map<VesselPosition, LabVessel> mapPositionToVessel;
 
     @OneToMany(mappedBy = "sourceVessel", cascade = CascadeType.PERSIST, orphanRemoval = true)
     @BatchSize(size = 100)
@@ -140,6 +129,12 @@ public class VesselContainer<T extends LabVessel> {
     @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     @Nullable
     public T getVesselAtPosition(VesselPosition position) {
+        if (mapPositionToVessel == null) {
+            mapPositionToVessel = new HashMap<>();
+            for (PositionToVesselMap positionToVesselMap : positionToVesselMaps) {
+                mapPositionToVessel.put(positionToVesselMap.getVesselPosition(), positionToVesselMap.getContainee());
+            }
+        }
         //noinspection unchecked
         return (T) mapPositionToVessel.get(position);
     }
@@ -165,7 +160,8 @@ public class VesselContainer<T extends LabVessel> {
     public Set<LabEvent> getTransfersToWithRearrays() {
         Set<LabEvent> transfersTo = getTransfersTo();
         // Need to follow Re-arrays, otherwise the chain of custody is broken.  Ignore re-arrays that add tubes
-        for (LabVessel labVessel : mapPositionToVessel.values()) {
+        for (PositionToVesselMap positionToVesselMap : positionToVesselMaps) {
+            LabVessel labVessel = positionToVesselMap.getContainee();
             for (VesselContainer<?> vesselContainer : labVessel.getVesselContainers()) {
                 Set<T> containedVessels = getContainedVessels();
                 Set<? extends LabVessel> containedVesselsOther = vesselContainer.getContainedVessels();
@@ -409,13 +405,13 @@ public class VesselContainer<T extends LabVessel> {
     @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public VesselPosition getPositionOfVessel(LabVessel vesselAtPosition) {
         //construct the reverse lookup map if it doesn't exist
-        if (vesselToMapPosition == null) {
-            vesselToMapPosition = new HashMap<>();
-            for (Map.Entry<VesselPosition, LabVessel> stringTEntry : mapPositionToVessel.entrySet()) {
-                vesselToMapPosition.put(stringTEntry.getValue(), stringTEntry.getKey());
+        if (mapVesselToPosition == null) {
+            mapVesselToPosition = new HashMap<>();
+            for (PositionToVesselMap positionToVesselMap : positionToVesselMaps) {
+                mapVesselToPosition.put(positionToVesselMap.getContainee(), positionToVesselMap.getVesselPosition());
             }
         }
-        return vesselToMapPosition.get(vesselAtPosition);
+        return mapVesselToPosition.get(vesselAtPosition);
     }
 
     /**
@@ -429,14 +425,22 @@ public class VesselContainer<T extends LabVessel> {
      */
     @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public Set<T> getContainedVessels() {
-        // Wrap in HashSet so equals works against other Sets
-        //noinspection unchecked
-        return new HashSet<>((Collection<? extends T>) mapPositionToVessel.values());
+        return (Set<T>) mapVesselToPosition.keySet();
     }
 
     public void addContainedVessel(T child, VesselPosition position) {
+        PositionToVesselMap positionToVesselMap = new PositionToVesselMap(getEmbedder(), child, position);
+        positionToVesselMaps.add(positionToVesselMap);
+        child.addPositionToVesselMap(positionToVesselMap);
+
+        if (mapPositionToVessel == null) {
+            mapPositionToVessel = new HashMap<>();
+        }
         mapPositionToVessel.put(position, child);
-        child.addToContainer(this);
+        if (mapVesselToPosition == null) {
+            mapVesselToPosition = new HashMap<>();
+        }
+        mapVesselToPosition.put(child, position);
     }
 
     @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
@@ -454,7 +458,6 @@ public class VesselContainer<T extends LabVessel> {
     }
 
     public Map<VesselPosition, T> getMapPositionToVessel() {
-        //noinspection unchecked
         return (Map<VesselPosition, T>) mapPositionToVessel;
     }
 
@@ -989,7 +992,7 @@ public class VesselContainer<T extends LabVessel> {
             // Get ancestor events
             List<LabVessel.VesselEvent> ancestorEvents;
             if (vesselAtPosition == null) {
-                if (mapPositionToVessel.isEmpty()) {
+                if (positionToVesselMaps.isEmpty()) {
                     ancestorEvents = getAncestors(vesselPosition);
                 } else {
                     ancestorEvents = Collections.emptyList();
