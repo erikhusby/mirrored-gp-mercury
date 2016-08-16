@@ -20,6 +20,15 @@ public enum VesselGeometry {
             new String[]{""},
             new String[]{""}),
 
+    STRIP_TUBE_RACK(
+            "12 x 8",
+            new String[]{"01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"},
+            new String[]{"A", "B", "C", "D", "E", "F", "G", "H","I"},
+            new VesselPosition[]{
+                    VesselPosition.A01, VesselPosition.A02, VesselPosition.A03, VesselPosition.A04, VesselPosition.A05, VesselPosition.A06, VesselPosition.A07, VesselPosition.A08, VesselPosition.A09, VesselPosition.A10, VesselPosition.A11, VesselPosition.A12,
+                    VesselPosition.B01, VesselPosition.B02, VesselPosition.B03, VesselPosition.B04, VesselPosition.B05, VesselPosition.B06, VesselPosition.B07, VesselPosition.B08, VesselPosition.B09, VesselPosition.B10, VesselPosition.B11, VesselPosition.B12
+            }),
+
     G12x8(
             "12 x 8",
             new String[]{"01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"},

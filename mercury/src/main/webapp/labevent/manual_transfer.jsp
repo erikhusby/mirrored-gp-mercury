@@ -170,11 +170,15 @@
                             <c:set var="positionMap" value="${plateTransfer.positionMap}" scope="request"/>
                             <c:set var="stationEventIndex" value="${stationEventStatus.index}" scope="request"/>
                             <c:set var="vesselTypeGeometry" value="${actionBean.manualTransferDetails.targetVesselTypeGeometry}" scope="request"/>
+                            <c:set var="eventType" value="${stationEvent.eventType}" scope="request"/>
                             <c:set var="section" value="${actionBean.manualTransferDetails.targetSection}" scope="request"/>
                             <c:set var="source" value="${false}" scope="request"/>
-
+                            ${eventType}
                             <c:choose>
-                                <c:when test="${ stationEvent.class.simpleName.equals('PlateCherryPickEvent')}">
+                                <c:when test = "${eventType.equals('StripTubeBTransfer')}">
+                                    <jsp:include page="transfer_plate_strip_tube.jsp"/>
+                                </c:when>
+                                <c:when test="${stationEvent.class.simpleName.equals('PlateCherryPickEvent')}">
                                     <jsp:include page="transfer_plate_cherry_pick.jsp"/>
                                 </c:when>
                                 <c:otherwise>

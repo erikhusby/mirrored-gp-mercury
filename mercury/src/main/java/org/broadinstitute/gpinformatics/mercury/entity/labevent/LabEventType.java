@@ -248,7 +248,9 @@ public enum LabEventType {
     STRIP_TUBE_B_TRANSFER("StripTubeBTransfer",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.FALSE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
-            LibraryType.NONE_ASSIGNED),
+            new ManualTransferDetails.Builder(MessageType.STRIP_TUBE_CHERRY_PICK_EVENT, RackOfTubes.RackType.Matrix96,
+                    RackOfTubes.RackType.StripTubes).reagentNames(new String[]{"EB"}).build(),
+            LibraryType.POOLED),
 
     // HiSeq 2000
     FLOWCELL_TRANSFER("FlowcellTransfer",
@@ -1674,6 +1676,7 @@ public enum LabEventType {
         PLATE_TRANSFER_EVENT,
         STATION_SETUP_EVENT,
         PLATE_CHERRY_PICK_EVENT,
+        STRIP_TUBE_CHERRY_PICK_EVENT,
         RECEPTACLE_PLATE_TRANSFER_EVENT,
         RECEPTACLE_EVENT,
         RECEPTACLE_TRANSFER_EVENT

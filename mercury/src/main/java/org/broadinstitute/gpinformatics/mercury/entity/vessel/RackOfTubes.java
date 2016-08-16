@@ -48,6 +48,7 @@ public class RackOfTubes extends LabVessel {
         HamiltonSampleCarrier32("HamiltonSampleCarrier32", VesselGeometry.G32x1),
         Matrix48SlotRack2mL("Matrix48SlotRack2mL", VesselGeometry.G12x8),
         Matrix96("Matrix96", VesselGeometry.G12x8),
+        StripTubes("StripTubes", VesselGeometry.STRIP_TUBE_RACK),
         Matrix96SlotRack040("Matrix96SlotRack040", VesselGeometry.G12x8),
         Matrix96SlotRack075("Matrix96SlotRack075", VesselGeometry.G12x8),
         Matrix96SlotRack14("Matrix96SlotRack14", VesselGeometry.G12x8),

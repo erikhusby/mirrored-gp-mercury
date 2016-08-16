@@ -112,8 +112,8 @@ plate / rack.
             Or hand scan 2D barcodes.
 
         </c:if>
-        <table id="${source ? 'src' : 'dest'}_${vesselTypeGeometry.vesselGeometry}">
-            <c:forEach items="${geometry.rowNames}" var="rowName" varStatus="rowStatus">
+        <table id="${source ? 'src' : 'dest'}_TABLE_${vesselTypeGeometry.vesselGeometry}">
+              <c:forEach items="${geometry.rowNames}" var="rowName" varStatus="rowStatus">
                 <c:if test="${rowStatus.first}">
                     <tr>
                         <td><div style="float:right;"><button id="selectAll${source ? 'src' : 'dest'}" type="button" class="btn btn-primary btn-xs xs-all">Select</button></div></td>
