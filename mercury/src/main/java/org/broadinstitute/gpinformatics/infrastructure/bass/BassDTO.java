@@ -60,7 +60,7 @@ public class BassDTO {
 
     // todo: should be in interface?
     public SubmissionTuple getTuple() {
-        return new SubmissionTuple(getProject(), getSample(), getFileTypeEnum(), getVersion().toString());
+        return new SubmissionTuple(getProject(), getSample(), getVersion().toString(), getFileTypeEnum());
     }
 
     private String getFilePath() {

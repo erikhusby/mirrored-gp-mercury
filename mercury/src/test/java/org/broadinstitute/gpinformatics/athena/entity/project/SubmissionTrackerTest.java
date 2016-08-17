@@ -22,7 +22,7 @@ public class SubmissionTrackerTest {
         Date testStartDate = new Date();
 
         SubmissionTrackerStub tracker =
-                new SubmissionTrackerStub(testAccessionID, testProjectId, testFileType, testVersion);
+                new SubmissionTrackerStub(testProjectId, testAccessionID, testVersion, testFileType);
 
         Assert.assertNotNull(tracker);
 
@@ -62,14 +62,14 @@ public class SubmissionTrackerTest {
             super();
         }
 
-        public SubmissionTrackerStub(String submittedSampleName, String project, BassFileType fileType,
-                                     String version) {
-            super(submittedSampleName, project, fileType, version);
+        public SubmissionTrackerStub(String project, String submittedSampleName, String version,
+                                     BassFileType fileType) {
+            super(project, submittedSampleName, version, fileType);
         }
 
-        public SubmissionTrackerStub(Long submissionTrackerId, String testAccessionID, String project,
-                                     BassFileType fileType, String testVersion) {
-            super(submissionTrackerId, testAccessionID, project, fileType, testVersion);
+        public SubmissionTrackerStub(Long submissionTrackerId, String project, String testAccessionID,
+                                     String testVersion, BassFileType fileType) {
+            super(submissionTrackerId, project, testAccessionID, testVersion, fileType);
         }
 
         @Override

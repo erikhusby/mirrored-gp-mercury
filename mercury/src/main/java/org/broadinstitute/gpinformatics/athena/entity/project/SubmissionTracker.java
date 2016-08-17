@@ -70,8 +70,8 @@ public class SubmissionTracker {
     protected SubmissionTracker() {
     }
 
-    SubmissionTracker(Long submissionTrackerId, String submittedSampleName, String project, BassFileType fileType,
-                      String version) {
+    SubmissionTracker(Long submissionTrackerId, String project, String submittedSampleName, String version,
+                      BassFileType fileType) {
         this.submissionTrackerId = submissionTrackerId;
         this.submittedSampleName = submittedSampleName;
         this.project = project;
@@ -80,8 +80,8 @@ public class SubmissionTracker {
         requestDate = new Date();
     }
 
-    public SubmissionTracker(String submittedSampleName, String project, BassFileType fileType, String version) {
-        this(null, submittedSampleName, project, fileType, version);
+    public SubmissionTracker(String project, String submittedSampleName, String version, BassFileType fileType) {
+        this(null, project, submittedSampleName, version, fileType);
     }
 
     /**
@@ -154,6 +154,6 @@ public class SubmissionTracker {
     // todo: should be in interface?
     @Transient
     public SubmissionTuple getTuple() {
-        return new SubmissionTuple(project, submittedSampleName, fileType, version);
+        return new SubmissionTuple(project, submittedSampleName, version, fileType);
     }
 }

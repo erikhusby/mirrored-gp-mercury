@@ -271,9 +271,9 @@ public class ResearchProjectEjb {
         Map<SubmissionTracker, SubmissionDto> submissionDtoMap = new HashMap<>();
 
         for (SubmissionDto submissionDto : submissionDtos) {
-            SubmissionTracker tracker = new SubmissionTracker(submissionDto.getSampleName(),
-                    submissionDto.getAggregationProject(), submissionDto.getFileType(),
-                    String.valueOf(submissionDto.getVersion()));
+            SubmissionTracker tracker = new SubmissionTracker(submissionDto.getAggregationProject(),
+                    submissionDto.getSampleName(), String.valueOf(submissionDto.getVersion()),
+                    submissionDto.getFileType());
             submissionProject.addSubmissionTracker(tracker);
             submissionDtoMap.put(tracker, submissionDto);
         }

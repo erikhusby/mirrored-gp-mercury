@@ -54,7 +54,7 @@ public class SubmissionTrackerContainerTest extends ContainerTest {
     public void testTrackerConfiguration() throws Exception {
         ResearchProject testProject = ResearchProjectTestFactory.createTestResearchProject();
         testProject.setJiraTicketKey("RP-testRP");
-        SubmissionTracker tracker = new SubmissionTracker(testAccessionID, testProjectId, testFileType, testVersion);
+        SubmissionTracker tracker = new SubmissionTracker(testProjectId, testAccessionID, testVersion, testFileType);
 
         testProject.addSubmissionTracker(tracker);
 

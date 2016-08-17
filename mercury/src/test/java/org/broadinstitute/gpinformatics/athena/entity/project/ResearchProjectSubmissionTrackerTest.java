@@ -26,12 +26,12 @@ public class ResearchProjectSubmissionTrackerTest {
     public void testGetSubmissionTracker() {
         ResearchProject testResearchProject = ResearchProjectTestFactory.createTestResearchProject();
         SubmissionTrackerStub tracker =
-                new SubmissionTrackerStub(testAccessionID, testProjectId, testFileType, testVersion);
+                new SubmissionTrackerStub(testProjectId, testAccessionID, testVersion, testFileType);
         SubmissionTrackerStub tracker2 =
-                new SubmissionTrackerStub(testAccessionID + 2, testProjectId, BassFileType.PICARD, testVersion + 2);
+                new SubmissionTrackerStub(testProjectId, testAccessionID + 2, testVersion + 2, BassFileType.PICARD);
         testResearchProject.addSubmissionTracker(tracker, tracker2);
         SubmissionTracker resultTracker = testResearchProject.getSubmissionTracker(new SubmissionTuple(testProjectId,
-                testAccessionID, testFileType, testVersion));
+                testAccessionID, testVersion, testFileType));
         assertThat(tracker, equalTo(resultTracker));
     }
 
@@ -39,19 +39,19 @@ public class ResearchProjectSubmissionTrackerTest {
     public void testGetSubmissionTrackerTwoResults() {
         ResearchProject testResearchProject = ResearchProjectTestFactory.createTestResearchProject();
         SubmissionTrackerStub tracker =
-                new SubmissionTrackerStub(testAccessionID, testProjectId, testFileType, testVersion);
+                new SubmissionTrackerStub(testProjectId, testAccessionID, testVersion, testFileType);
         testResearchProject.addSubmissionTracker(tracker, tracker);
         SubmissionTracker resultTracker = testResearchProject.getSubmissionTracker(new SubmissionTuple(testProjectId,
-                testAccessionID, testFileType, testVersion));
+                testAccessionID, testVersion, testFileType));
         assertThat(resultTracker, equalTo(resultTracker));
     }
 
     public void testGetSubmissionTrackerNoResults() {
         ResearchProject testResearchProject = ResearchProjectTestFactory.createTestResearchProject();
-        SubmissionTracker tracker = new SubmissionTracker(testAccessionID, testProjectId, testFileType, testVersion);
+        SubmissionTracker tracker = new SubmissionTracker(testProjectId, testAccessionID, testVersion, testFileType);
         testResearchProject.addSubmissionTracker(tracker);
         SubmissionTracker resultTracker = testResearchProject
-                .getSubmissionTracker(new SubmissionTuple("other", "using", BassFileType.PICARD, "arguments"));
+                .getSubmissionTracker(new SubmissionTuple("other", "using", "arguments", BassFileType.PICARD));
         assertThat(resultTracker, nullValue());
     }
 

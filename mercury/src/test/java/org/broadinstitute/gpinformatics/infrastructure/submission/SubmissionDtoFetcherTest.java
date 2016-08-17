@@ -122,8 +122,8 @@ public class SubmissionDtoFetcherTest {
      */
     public void testFetch() throws Exception {
         addBassFile(RESEARCH_PROJECT_ID, COLLABORATOR_SAMPLE_ID, 1);
-        researchProject.addSubmissionTracker(new SubmissionTrackerTest.SubmissionTrackerStub(1234L,
-                COLLABORATOR_SAMPLE_ID, RESEARCH_PROJECT_ID, BassFileType.BAM, "1"));
+        researchProject.addSubmissionTracker(new SubmissionTrackerTest.SubmissionTrackerStub(1234L, RESEARCH_PROJECT_ID,
+                COLLABORATOR_SAMPLE_ID, "1", BassFileType.BAM));
 
         List<SubmissionDto> submissionDtoList = submissionDtoFetcher.fetch(researchProject, MessageReporter.UNUSED);
 
@@ -154,7 +154,7 @@ public class SubmissionDtoFetcherTest {
 
         // Record submission of one of the BAMs
         researchProject.addSubmissionTracker(new SubmissionTrackerTest.SubmissionTrackerStub(1234L,
-                COLLABORATOR_SAMPLE_ID, submittedAggregationProjectId, BassFileType.BAM, "1"));
+                submittedAggregationProjectId, COLLABORATOR_SAMPLE_ID, "1", BassFileType.BAM));
 
         // Finally actually exercising the code under test
         List<SubmissionDto> submissionDtoList = submissionDtoFetcher.fetch(researchProject, MessageReporter.UNUSED);

@@ -30,7 +30,7 @@ public class SubmissionTuple implements Serializable {
     SubmissionTuple() {
     }
 
-    public SubmissionTuple(String project, String sampleName, BassFileType fileType, String version) {
+    public SubmissionTuple(String project, String sampleName, String version, BassFileType fileType) {
         this.project = project;
         this.sampleName = sampleName;
         this.fileType = fileType;

@@ -80,7 +80,7 @@ public class SubmissionDtoFetcher {
         Map<String, SubmissionStatusDetailBean> sampleSubmissionMap = buildSampleToSubmissionMap(submissionIds);
 
         Map<SubmissionTuple, BassDTO> bassDTOMap =
-                fetchBassDtos(researchProject, sampleNames.toArray(new String[sampleNames.size()]));
+                fetchBassDtos(researchProject.getBusinessKey(), sampleNames.toArray(new String[sampleNames.size()]));
 
         /*
          * Since Mercury currently only works with BAM files, always fetch aggregation metrics. If Mercury needs to
@@ -95,9 +95,8 @@ public class SubmissionDtoFetcher {
         return results;
     }
 
-    // TODO: Change to researchProjectId?
-    public Map<SubmissionTuple, BassDTO> fetchBassDtos(ResearchProject researchProject, String ... samples) {
-        List<BassDTO> bassDTOs = bassSearchService.runSearch(researchProject.getBusinessKey(),samples);
+    public Map<SubmissionTuple, BassDTO> fetchBassDtos(String researchProjectBusinessKey, String... samples) {
+        List<BassDTO> bassDTOs = bassSearchService.runSearch(researchProjectBusinessKey, samples);
         return buildBassDtoMap(bassDTOs);
     }
 

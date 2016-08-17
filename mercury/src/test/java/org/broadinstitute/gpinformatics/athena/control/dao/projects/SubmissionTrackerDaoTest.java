@@ -75,7 +75,7 @@ public class SubmissionTrackerDaoTest extends ContainerTest {
     }
 
     public void testFindSubmissionTrackersNoneExist() throws Exception {
-        SubmissionDto submissionDto = getSubmissionDto(PDO_ID, "P123", sampleName, BassFileType.BAM, 1, TEST_FILE);
+        SubmissionDto submissionDto = getSubmissionDto(PDO_ID, "P123", sampleName, 1, BassFileType.BAM, TEST_FILE);
         List<SubmissionTracker> submissionTrackers =
                 submissionTrackerDao.findSubmissionTrackers(RP_ID, Collections.singleton(submissionDto));
         assertThat(submissionTrackers, emptyCollectionOf(SubmissionTracker.class));
@@ -83,7 +83,7 @@ public class SubmissionTrackerDaoTest extends ContainerTest {
 
     public void testFindSubmissionTrackersWithResult() throws Exception {
         SubmissionDto submissionDto =
-                getSubmissionDto(PDO_ID, "P123", sampleName, BassFileType.BAM, DEFAULT_VERSION, null);
+                getSubmissionDto(PDO_ID, "P123", sampleName, DEFAULT_VERSION, BassFileType.BAM, null);
         SubmissionTracker submissionTracker = addTracker(submissionDto);
 
         persistTrackers(Collections.singleton(submissionTracker));
@@ -98,11 +98,11 @@ public class SubmissionTrackerDaoTest extends ContainerTest {
 
     public void testFindSubmissionTrackersWithNewVersion() throws Exception {
         SubmissionDto submissionDto1 =
-                getSubmissionDto(PDO_ID, "P123", sampleName, BassFileType.BAM, DEFAULT_VERSION, null);
+                getSubmissionDto(PDO_ID, "P123", sampleName, DEFAULT_VERSION, BassFileType.BAM, null);
         SubmissionTracker submissionTracker1 = addTracker(submissionDto1);
 
         int newVersion = DEFAULT_VERSION + 1;
-        SubmissionDto submissionDto2 = getSubmissionDto(PDO_ID, "P123", sampleName, BassFileType.BAM, newVersion, null);
+        SubmissionDto submissionDto2 = getSubmissionDto(PDO_ID, "P123", sampleName, newVersion, BassFileType.BAM, null);
         SubmissionTracker submissionTracker2 = addTracker(submissionDto2);
 
         persistTrackers(Arrays.asList(submissionTracker1, submissionTracker2));
@@ -123,11 +123,11 @@ public class SubmissionTrackerDaoTest extends ContainerTest {
         BassFileType picard = BassFileType.PICARD;
 
         // SubmissionTracker 1
-        SubmissionDto submissionDto1 = getSubmissionDto(PDO_ID, "P123", sampleName, bam, DEFAULT_VERSION, null);
+        SubmissionDto submissionDto1 = getSubmissionDto(PDO_ID, "P123", sampleName, DEFAULT_VERSION, bam, null);
         SubmissionTracker submissionTracker1 = addTracker(submissionDto1);
 
         // SubmissionTracker 2
-        SubmissionDto submissionDto2 = getSubmissionDto(PDO_ID, "P123", sampleName, picard, DEFAULT_VERSION, null);
+        SubmissionDto submissionDto2 = getSubmissionDto(PDO_ID, "P123", sampleName, DEFAULT_VERSION, picard, null);
         SubmissionTracker submissionTracker2 = addTracker(submissionDto2);
 
         persistTrackers(Arrays.asList(submissionTracker1, submissionTracker2));
@@ -158,7 +158,7 @@ public class SubmissionTrackerDaoTest extends ContainerTest {
     }
 
     private SubmissionDto getSubmissionDto(String productOrderId, final String project, final String sampleName,
-                                           final BassFileType fileType, final int version, final String path) {
+                                           final int version, final BassFileType fileType, final String path) {
         ProductOrder productOrder = ProductOrderTestFactory.createDummyProductOrder(1, productOrderId);
         /*
          * TODO: Allow this relationship to be set for these tests.
@@ -184,9 +184,8 @@ public class SubmissionTrackerDaoTest extends ContainerTest {
     }
 
     private SubmissionTracker addTracker(SubmissionDto submissionDto) {
-        SubmissionTracker submissionTracker =
-                new SubmissionTracker(submissionDto.getSampleName(), submissionDto.getAggregationProject(),
-                        submissionDto.getFileType(), String.valueOf(submissionDto.getVersion()));
+        SubmissionTracker submissionTracker = new SubmissionTracker(submissionDto.getAggregationProject(),
+                submissionDto.getSampleName(), String.valueOf(submissionDto.getVersion()), submissionDto.getFileType());
         submissionTracker.setResearchProject(researchProject);
         return submissionTracker;
     }
