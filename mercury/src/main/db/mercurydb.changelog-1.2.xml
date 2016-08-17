@@ -594,4 +594,56 @@
       <createSequence sequenceName="seq_attribute_definition" schemaName="mercury" startValue="1" incrementBy="50"/>
     </changeSet>
 
+    <changeSet id="GPLIM-4272-1" author="thompson">
+        <addColumn schemaName="mercury" tableName="LV_MAP_POSITION_TO_VESSEL">
+            <column name="LV_MAP_POSITION_TO_VESSEL_ID" type="NUMBER(19,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-4272-2" author="thompson">
+        <addColumn schemaName="mercury" tableName="LV_MAP_POSITION_TO_VESSEL_AUD">
+            <column name="LV_MAP_POSITION_TO_VESSEL_ID" type="NUMBER(19,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-4272-3" author="thompson">
+        <dropPrimaryKey tableName="LV_MAP_POSITION_TO_VESSEL"/>
+    </changeSet>
+    <changeSet id="GPLIM-4272-4" author="thompson">
+        <addUniqueConstraint tableName="LV_MAP_POSITION_TO_VESSEL" constraintName="UK_LV_MAP_POSITION_TO_VESSEL"
+                columnNames="LAB_VESSEL, MAP_POSITION_TO_VESSEL"/>
+    </changeSet>
+    <changeSet id="GPLIM-4272-5" author="thompson">
+        <createSequence schemaName="mercury" sequenceName="SEQ_LV_MAP_POSITION_TO_VESSEL" incrementBy="50"/>
+    </changeSet>
+    <changeSet id="GPLIM-4272-6" author="thompson">
+        <sql>
+            update LV_MAP_POSITION_TO_VESSEL set LV_MAP_POSITION_TO_VESSEL_ID = SEQ_LV_MAP_POSITION_TO_VESSEL.nextval;
+        </sql>
+    </changeSet>
+    <changeSet id="GPLIM-4272-7" author="thompson">
+        <sql>
+            update LV_MAP_POSITION_TO_VESSEL_AUD lmptva set LV_MAP_POSITION_TO_VESSEL_ID = (
+            select LV_MAP_POSITION_TO_VESSEL_ID from LV_MAP_POSITION_TO_VESSEL lmptv
+            where lmptv.LAB_VESSEL = lmptva.LAB_VESSEL and lmptv.MAP_POSITION_TO_VESSEL = lmptva.MAP_POSITION_TO_VESSEL);
+        </sql>
+    </changeSet>
+    <changeSet id="GPLIM-4272-8" author="thompson">
+        <!-- A few thousand audit rows no longer have counterparts in the main table, mostly due to deletes.  Set these
+         IDs arbitrarily, so we can create the primary key. -->
+        <sql>
+            update LV_MAP_POSITION_TO_VESSEL_AUD set LV_MAP_POSITION_TO_VESSEL_ID = SEQ_LV_MAP_POSITION_TO_VESSEL.nextval
+            where LV_MAP_POSITION_TO_VESSEL_ID is null;
+        </sql>
+    </changeSet>
+    <changeSet id="GPLIM-4272-9" author="thompson">
+        <addPrimaryKey tableName="LV_MAP_POSITION_TO_VESSEL" columnNames="LV_MAP_POSITION_TO_VESSEL_ID"
+                constraintName="PK_LV_MAP_POSITION_TO_VESSEL"/>
+    </changeSet>
+    <changeSet id="GPLIM-4272-10" author="thompson">
+        <dropPrimaryKey tableName="LV_MAP_POSITION_TO_VESSEL_AUD"/>
+    </changeSet>
+    <changeSet id="GPLIM-4272-11" author="thompson">
+        <addPrimaryKey tableName="LV_MAP_POSITION_TO_VESSEL_AUD" columnNames="REV, LV_MAP_POSITION_TO_VESSEL_ID"
+                constraintName="PK_LV_MAP_POS_TO_VESSEL_AUD"/>
+    </changeSet>
+
 </databaseChangeLog>
