@@ -139,16 +139,17 @@ public class BillingAdaptor implements Serializable {
                 BillingEjb.BillingResult result = new BillingEjb.BillingResult(item);
                 results.add(result);
 
-                Quote quote = new Quote();
-                quote.setAlphanumericId(item.getQuoteId());
-
-                // The price item that we are billing.
-                QuotePriceItem priceItemBeingBilled = QuotePriceItem.convertMercuryPriceItem(item.getPriceItem());
-
-                // Get the quote PriceItem that this is replacing, if it is a replacement.
-                QuotePriceItem primaryPriceItemIfReplacement = item.getPrimaryForReplacement(priceListCache);
-
+                Quote quote = null;
                 try {
+                    quote = quoteService.getQuoteByAlphaId(item.getQuoteId());
+                    quote.setAlphanumericId(item.getQuoteId());
+
+                    // The price item that we are billing.
+                    QuotePriceItem priceItemBeingBilled = QuotePriceItem.convertMercuryPriceItem(item.getPriceItem());
+
+                    // Get the quote PriceItem that this is replacing, if it is a replacement.
+                    QuotePriceItem primaryPriceItemIfReplacement = item.getPrimaryForReplacement(priceListCache);
+
                     // Get the quote items on the quote, adding to the quote item cache, if not there.
                     Collection<String> quoteItemNames = getQuoteItems(quoteItemsByQuote, item.getQuoteId());
 
