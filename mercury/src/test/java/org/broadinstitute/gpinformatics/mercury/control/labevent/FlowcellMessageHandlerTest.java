@@ -118,9 +118,11 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         JiraService mockJiraService = Mockito.mock(JiraService.class);
         JiraService mockJiraSource = JiraServiceProducer.stubInstance();
         Mockito.when(mockJiraService.getCustomFields(Mockito.eq(LabBatch.TicketFields.SUMMARY.getName()),
-                                                     Mockito.eq(LabBatch.TicketFields.SEQUENCING_STATION.getName())))
-               .thenReturn(mockJiraSource.getCustomFields(LabBatch.TicketFields.SUMMARY.getName(),
-                                                          LabBatch.TicketFields.SEQUENCING_STATION.getName()));
+                Mockito.eq(LabBatch.TicketFields.SEQUENCING_STATION.getName()),
+                Mockito.eq(LabBatch.TicketFields.CLUSTER_STATION.getName())))
+                .thenReturn(mockJiraSource.getCustomFields(LabBatch.TicketFields.SUMMARY.getName(),
+                        LabBatch.TicketFields.SEQUENCING_STATION.getName(),
+                        LabBatch.TicketFields.CLUSTER_STATION.getName()));
         AppConfig mockAppConfig = Mockito.mock(AppConfig.class);
 
         getLabEventFactory().getEventHandlerSelector().getFlowcellMessageHandler().setEmailSender(mockEmailSender);
@@ -175,7 +177,8 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
                                                                        Mockito.anyString(), Mockito.anyString(),
                                                                        Mockito.anyString());
         Mockito.verify(mockAppConfig, Mockito.never()).getWorkflowValidationEmail();
-        Mockito.verify(mockJiraService, Mockito.times(1)).getCustomFields(Mockito.anyString(), Mockito.anyString());
+        Mockito.verify(mockJiraService, Mockito.times(1)).getCustomFields(Mockito.anyString(), Mockito.anyString(),
+                                                                          Mockito.anyString());
         Mockito.verify(mockJiraService, Mockito.times(2)).updateIssue(Mockito.anyString(), Mockito.anyCollection());
 
 
@@ -187,7 +190,8 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
                .sendHtmlEmail((AppConfig) Mockito.anyObject(), Mockito.anyString(), Mockito.anyString(),
                               Mockito.anyString());
         Mockito.verify(mockAppConfig, Mockito.never()).getWorkflowValidationEmail();
-        Mockito.verify(mockJiraService, Mockito.times(2)).getCustomFields(Mockito.anyString(), Mockito.anyString());
+        Mockito.verify(mockJiraService, Mockito.times(2)).getCustomFields(Mockito.anyString(), Mockito.anyString(),
+                Mockito.anyString());
         Mockito.verify(mockJiraService, Mockito.times(4)).updateIssue(Mockito.anyString(), Mockito.anyCollection());
 
     }
@@ -263,9 +267,11 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         JiraService mockJiraService2 = Mockito.mock(JiraService.class);
         JiraService mockJiraSource2 = JiraServiceProducer.stubInstance();
         Mockito.when(mockJiraService2.getCustomFields(Mockito.eq(LabBatch.TicketFields.SUMMARY.getName()),
-                                                      Mockito.eq(LabBatch.TicketFields.SEQUENCING_STATION.getName())))
+                                                      Mockito.eq(LabBatch.TicketFields.SEQUENCING_STATION.getName()),
+                                                      Mockito.eq(LabBatch.TicketFields.CLUSTER_STATION.getName())))
                .thenReturn(mockJiraSource2.getCustomFields(LabBatch.TicketFields.SUMMARY.getName(),
-                                                           LabBatch.TicketFields.SEQUENCING_STATION.getName()));
+                                                           LabBatch.TicketFields.SEQUENCING_STATION.getName(),
+                                                           LabBatch.TicketFields.CLUSTER_STATION.getName()));
         AppConfig mockAppConfig2 = Mockito.mock(AppConfig.class);
 
         getLabEventFactory().getEventHandlerSelector().getFlowcellMessageHandler().setEmailSender(mockEmailSender2);
@@ -281,7 +287,8 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
                .sendHtmlEmail((AppConfig) Mockito.anyObject(), Mockito.anyString(), Mockito.anyString(),
                               Mockito.anyString());
         Mockito.verify(mockAppConfig2, Mockito.never()).getWorkflowValidationEmail();
-        Mockito.verify(mockJiraService2, Mockito.times(1)).getCustomFields(Mockito.anyString(), Mockito.anyString());
+        Mockito.verify(mockJiraService2, Mockito.times(1)).getCustomFields(Mockito.anyString(), Mockito.anyString(),
+                                                                           Mockito.anyString());
         Mockito.verify(mockJiraService2, Mockito.times(2)).updateIssue(Mockito.anyString(), Mockito.anyCollection());
 
     }
@@ -393,9 +400,11 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         JiraService mockJiraService = Mockito.mock(JiraService.class);
         JiraService mockJiraSource = JiraServiceProducer.stubInstance();
         Mockito.when(mockJiraService.getCustomFields(Mockito.eq(LabBatch.TicketFields.SUMMARY.getName()),
-                                                     Mockito.eq(LabBatch.TicketFields.SEQUENCING_STATION.getName())))
+                                                     Mockito.eq(LabBatch.TicketFields.SEQUENCING_STATION.getName()),
+                                                     Mockito.eq(LabBatch.TicketFields.CLUSTER_STATION.getName())))
                .thenReturn(mockJiraSource.getCustomFields(LabBatch.TicketFields.SUMMARY.getName(),
-                                                          LabBatch.TicketFields.SEQUENCING_STATION.getName()));
+                                                          LabBatch.TicketFields.SEQUENCING_STATION.getName(),
+                                                          LabBatch.TicketFields.CLUSTER_STATION.getName()));
         AppConfig mockAppConfig = Mockito.mock(AppConfig.class);
 
         getLabEventFactory().getEventHandlerSelector().getFlowcellMessageHandler().setEmailSender(mockEmailSender);
@@ -443,7 +452,8 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
                                                                        Mockito.anyString(), Mockito.anyString(),
                                                                        Mockito.anyString());
         Mockito.verify(mockAppConfig, Mockito.never()).getWorkflowValidationEmail();
-        Mockito.verify(mockJiraService, Mockito.times(1)).getCustomFields(Mockito.anyString(), Mockito.anyString());
+        Mockito.verify(mockJiraService, Mockito.times(1)).getCustomFields(Mockito.anyString(), Mockito.anyString(),
+                                                                          Mockito.anyString());
         Mockito.verify(mockJiraService, Mockito.times(2)).updateIssue(Mockito.anyString(), Mockito.anyCollection());
 
         EmailSender mockEmailSender2 = Mockito.mock(EmailSender.class);
@@ -581,9 +591,11 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         JiraService mockJiraService = Mockito.mock(JiraService.class);
         JiraService mockJiraSource = JiraServiceProducer.stubInstance();
         Mockito.when(mockJiraService.getCustomFields(Mockito.eq(LabBatch.TicketFields.SUMMARY.getName()),
-                                                     Mockito.eq(LabBatch.TicketFields.SEQUENCING_STATION.getName())))
-               .thenReturn(mockJiraSource.getCustomFields(LabBatch.TicketFields.SUMMARY.getName(),
-                                                          LabBatch.TicketFields.SEQUENCING_STATION.getName()));
+                Mockito.eq(LabBatch.TicketFields.SEQUENCING_STATION.getName()),
+                Mockito.eq(LabBatch.TicketFields.CLUSTER_STATION.getName())))
+                .thenReturn(mockJiraSource.getCustomFields(LabBatch.TicketFields.SUMMARY.getName(),
+                        LabBatch.TicketFields.SEQUENCING_STATION.getName(),
+                        LabBatch.TicketFields.CLUSTER_STATION.getName()));
         AppConfig mockAppConfig = Mockito.mock(AppConfig.class);
 
         getLabEventFactory().getEventHandlerSelector().getFlowcellMessageHandler().setEmailSender(mockEmailSender);
@@ -631,7 +643,8 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
                                                                        Mockito.anyString(), Mockito.anyString(),
                                                                        Mockito.anyString());
         Mockito.verify(mockAppConfig, Mockito.never()).getWorkflowValidationEmail();
-        Mockito.verify(mockJiraService, Mockito.times(1)).getCustomFields(Mockito.anyString(), Mockito.anyString());
+        Mockito.verify(mockJiraService, Mockito.times(1)).getCustomFields(Mockito.anyString(), Mockito.anyString(),
+                Mockito.anyString());
         Mockito.verify(mockJiraService, Mockito.times(2)).updateIssue(Mockito.anyString(), Mockito.anyCollection());
 
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
@@ -643,7 +656,8 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
                .sendHtmlEmail((AppConfig) Mockito.anyObject(), Mockito.anyString(), Mockito.anyString(),
                               Mockito.anyString());
         Mockito.verify(mockAppConfig, Mockito.never()).getWorkflowValidationEmail();
-        Mockito.verify(mockJiraService, Mockito.times(2)).getCustomFields(Mockito.anyString(), Mockito.anyString());
+        Mockito.verify(mockJiraService, Mockito.times(2)).getCustomFields(Mockito.anyString(), Mockito.anyString(),
+                Mockito.anyString());
         Mockito.verify(mockJiraService, Mockito.times(4)).updateIssue(Mockito.anyString(), Mockito.anyCollection());
     }
 
@@ -662,9 +676,11 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         JiraService mockJiraService = Mockito.mock(JiraService.class);
         JiraService mockJiraSource = JiraServiceProducer.stubInstance();
         Mockito.when(mockJiraService.getCustomFields(Mockito.eq(LabBatch.TicketFields.SUMMARY.getName()),
-                                                     Mockito.eq(LabBatch.TicketFields.SEQUENCING_STATION.getName())))
-               .thenReturn(mockJiraSource.getCustomFields(LabBatch.TicketFields.SUMMARY.getName(),
-                                                          LabBatch.TicketFields.SEQUENCING_STATION.getName()));
+                Mockito.eq(LabBatch.TicketFields.SEQUENCING_STATION.getName()),
+                Mockito.eq(LabBatch.TicketFields.CLUSTER_STATION.getName())))
+                .thenReturn(mockJiraSource.getCustomFields(LabBatch.TicketFields.SUMMARY.getName(),
+                        LabBatch.TicketFields.SEQUENCING_STATION.getName(),
+                        LabBatch.TicketFields.CLUSTER_STATION.getName()));
         Mockito.when(mockJiraService.getCustomFields(Mockito.eq(LabBatch.TicketFields.SEQUENCING_STATION.getName())))
                .thenReturn(mockJiraSource.getCustomFields(LabBatch.TicketFields.SEQUENCING_STATION.getName()));
         AppConfig mockAppConfig = Mockito.mock(AppConfig.class);
@@ -718,7 +734,8 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
                                                                        Mockito.anyString(), Mockito.anyString(),
                                                                        Mockito.anyString());
         Mockito.verify(mockAppConfig, Mockito.never()).getWorkflowValidationEmail();
-        Mockito.verify(mockJiraService, Mockito.times(1)).getCustomFields(Mockito.anyString(), Mockito.anyString());
+        Mockito.verify(mockJiraService, Mockito.times(1)).getCustomFields(Mockito.anyString(), Mockito.anyString(),
+                Mockito.anyString());
         Mockito.verify(mockJiraService, Mockito.times(2)).updateIssue(Mockito.anyString(), Mockito.anyCollection());
 
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
@@ -729,8 +746,9 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
                .sendHtmlEmail((AppConfig) Mockito.anyObject(), Mockito.anyString(), Mockito.anyString(),
                               Mockito.anyString());
         Mockito.verify(mockAppConfig, Mockito.never()).getWorkflowValidationEmail();
-        Mockito.verify(mockJiraService, Mockito.times(2)).getCustomFields(Mockito.anyString(), Mockito.anyString());
-        Mockito.verify(mockJiraService, Mockito.times(4)).updateIssue(Mockito.anyString(), Mockito.anyCollection());
+        Mockito.verify(mockJiraService, Mockito.times(2)).getCustomFields(Mockito.anyString(), Mockito.anyString(),
+                Mockito.anyString());
+        Mockito.verify(mockJiraService, Mockito.times(5)).updateIssue(Mockito.anyString(), Mockito.anyCollection());
     }
 
     @Test
@@ -748,9 +766,11 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         JiraService mockJiraService = Mockito.mock(JiraService.class);
         JiraService mockJiraSource = JiraServiceProducer.stubInstance();
         Mockito.when(mockJiraService.getCustomFields(Mockito.eq(LabBatch.TicketFields.SUMMARY.getName()),
-                Mockito.eq(LabBatch.TicketFields.SEQUENCING_STATION.getName())))
+                Mockito.eq(LabBatch.TicketFields.SEQUENCING_STATION.getName()),
+                Mockito.eq(LabBatch.TicketFields.CLUSTER_STATION.getName())))
                 .thenReturn(mockJiraSource.getCustomFields(LabBatch.TicketFields.SUMMARY.getName(),
-                        LabBatch.TicketFields.SEQUENCING_STATION.getName()));
+                        LabBatch.TicketFields.SEQUENCING_STATION.getName(),
+                        LabBatch.TicketFields.CLUSTER_STATION.getName()));
         Mockito.when(mockJiraService.getCustomFields(Mockito.eq(LabBatch.TicketFields.SEQUENCING_STATION.getName())))
                 .thenReturn(mockJiraSource.getCustomFields(LabBatch.TicketFields.SEQUENCING_STATION.getName()));
         AppConfig mockAppConfig = Mockito.mock(AppConfig.class);
@@ -781,7 +801,7 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
                 .sendHtmlEmail((AppConfig) Mockito.anyObject(), Mockito.anyString(), Mockito.anyString(),
                         Mockito.anyString());
         Mockito.verify(mockAppConfig, Mockito.never()).getWorkflowValidationEmail();
-        Mockito.verify(mockJiraService, Mockito.times(1)).updateIssue(Mockito.contains(FLOWCELL_4000_TICKET), Mockito.anyCollection());
+        Mockito.verify(mockJiraService, Mockito.times(2)).updateIssue(Mockito.contains(FLOWCELL_4000_TICKET), Mockito.anyCollection());
 
         //Test again with another striptube that finds FCT-4
         HiSeq4000FlowcellEntityBuilder secondFlowcellEntityBuilder =
@@ -792,6 +812,6 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
                 .sendHtmlEmail((AppConfig) Mockito.anyObject(), Mockito.anyString(), Mockito.anyString(),
                         Mockito.anyString());
         Mockito.verify(mockAppConfig, Mockito.never()).getWorkflowValidationEmail();
-        Mockito.verify(mockJiraService, Mockito.times(1)).updateIssue(Mockito.contains("FCT-4"), Mockito.anyCollection());
+        Mockito.verify(mockJiraService, Mockito.times(2)).updateIssue(Mockito.contains("FCT-4"), Mockito.anyCollection());
     }
 }

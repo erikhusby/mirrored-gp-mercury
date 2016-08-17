@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
 import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -1874,7 +1875,19 @@ public class LabVesselSearchDefinition {
         if( infiniumVessel.getContainerRole() == null ) {
             infiniumVessel.evaluateCriteria(infiniumAncestorCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
         } else {
-            infiniumVessel.getContainerRole().applyCriteriaToAllPositions(infiniumAncestorCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
+            // This coordinates with the directly plated shortcut in InfiniumPlateSourceEvaluator.getAllInfiniumVessels
+            boolean found = false;
+            for (SectionTransfer sectionTransfer : infiniumVessel.getContainerRole().getSectionTransfersTo()) {
+                if (sectionTransfer.getLabEvent().getLabEventType() == LabEventType.ARRAY_PLATING_DILUTION) {
+                    infiniumAncestorCriteria.getPositions().put(infiniumVessel, VesselPosition.A01);
+                    found = true;
+                }
+            }
+
+            if (!found) {
+                infiniumVessel.getContainerRole().applyCriteriaToAllPositions(infiniumAncestorCriteria,
+                        TransferTraverserCriteria.TraversalDirection.Ancestors);
+            }
         }
 
         for (Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions
@@ -1883,6 +1896,8 @@ public class LabVesselSearchDefinition {
             if( plateVessel.getType() == LabVessel.ContainerType.PLATE_WELL ) {
                 result = plateVessel.getContainers().iterator().next().getLabel();
                 break;
+            } else if( plateVessel.getType() == LabVessel.ContainerType.STATIC_PLATE ) {
+                result = plateVessel.getLabel();
             }
         }
 
@@ -1906,11 +1921,29 @@ public class LabVesselSearchDefinition {
                 infiniumVessel.evaluateCriteria(infiniumAncestorCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
             }
         } else {
-            infiniumVessel.getContainerRole().applyCriteriaToAllPositions(infiniumAncestorCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
-            // Try ancestors
-            if( infiniumAncestorCriteria.getPositions().isEmpty() ) {
-                infiniumAncestorCriteria.resetAllTraversed();
-                infiniumVessel.getContainerRole().applyCriteriaToAllPositions(infiniumAncestorCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
+            // This coordinates with the directly plated shortcut in InfiniumPlateSourceEvaluator.getAllInfiniumVessels
+            boolean found = false;
+            for (SectionTransfer sectionTransfer : infiniumVessel.getContainerRole().getSectionTransfersTo()) {
+                if (sectionTransfer.getLabEvent().getLabEventType() == LabEventType.ARRAY_PLATING_DILUTION) {
+                    for (SectionTransfer transfer : sectionTransfer.getTargetVesselContainer().getSectionTransfersFrom()) {
+                        if (transfer.getLabEvent().getLabEventType() == LabEventType.INFINIUM_AMPLIFICATION) {
+                            infiniumAncestorCriteria.getPositions().put(
+                                    transfer.getTargetVesselContainer().getEmbedder(), VesselPosition.A01);
+                            found = true;
+                        }
+                    }
+                }
+            }
+
+            if (!found) {
+                infiniumVessel.getContainerRole().applyCriteriaToAllPositions(infiniumAncestorCriteria,
+                        TransferTraverserCriteria.TraversalDirection.Descendants);
+                // Try ancestors
+                if( infiniumAncestorCriteria.getPositions().isEmpty() ) {
+                    infiniumAncestorCriteria.resetAllTraversed();
+                    infiniumVessel.getContainerRole().applyCriteriaToAllPositions(infiniumAncestorCriteria,
+                            TransferTraverserCriteria.TraversalDirection.Ancestors);
+                }
             }
         }
 
