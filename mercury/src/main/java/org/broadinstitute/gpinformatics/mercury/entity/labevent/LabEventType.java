@@ -254,6 +254,8 @@ public enum LabEventType {
     FLOWCELL_TRANSFER("FlowcellTransfer",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.FALSE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            new ManualTransferDetails.Builder(MessageType.PLATE_TRANSFER_EVENT, StaticPlate.PlateType.StripTube1x1,
+                    StaticPlate.PlateType.FlowCell8).reagentNames(new String[]{"CbotReagentKit"}).build(),
             LibraryType.NONE_ASSIGNED),
     FLOWCELL_LOADED("FlowcellLoaded",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.FALSE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
