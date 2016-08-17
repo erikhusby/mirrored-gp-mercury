@@ -11,6 +11,9 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.metrics.entity;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -55,5 +58,29 @@ public class AggregationAlignment implements Serializable {
 
     public Aggregation getAggregation() {
         return aggregation;
+    }
+
+    @Override
+    public boolean equals( Object obj){
+
+        if (obj == null) { return false; }
+        if (obj == this) { return true; }
+        if (obj.getClass() != getClass()) {
+            return false;
+        }
+        AggregationAlignment rhs = (AggregationAlignment) obj;
+        return new EqualsBuilder()
+                .appendSuper(super.equals(obj))
+                .append(aggregationId, rhs.aggregationId)
+                .append(category, rhs.category)
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37).
+                append(aggregationId).
+                append(category).
+                toHashCode();
     }
 }

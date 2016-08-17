@@ -866,7 +866,7 @@ public class ConfigurableList {
         /**
          * Each row may have a nested table
          */
-        private Map<String, ResultList> nestedTables = new HashMap<>();
+        private Map<String, ResultList> nestedTables = new LinkedHashMap<>();
 
         ResultRow(List<Comparable<?>> sortableCells, List<String> renderableCells, String resultId) {
             this.sortableCells = sortableCells;

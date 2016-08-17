@@ -24,6 +24,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.ST
 
 /**
  * Imports from Squid the pooling transfers that were done in the user interface, before this transfer was messaged.
+ * Wildfly rejects deploying with non-existing persistence unit - uncomment attribute if running
  */
 @Test(groups = TestGroups.STUBBY)
 public class CreatePoolingTransfersTest extends ContainerTest {
@@ -34,7 +35,7 @@ public class CreatePoolingTransfersTest extends ContainerTest {
     @Inject
     private LabEventDao labEventDao;
 
-    @PersistenceContext(unitName = "squid_pu")
+    //@PersistenceContext(unitName = "squid_pu")
     private EntityManager entityManager;
 
     @Inject

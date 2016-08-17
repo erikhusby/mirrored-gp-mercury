@@ -27,7 +27,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.STUBBY;
-import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 /**

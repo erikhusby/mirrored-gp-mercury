@@ -20,7 +20,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.AL
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.STANDARD;
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.STUBBY;
-import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.testng.Assert.fail;
 

@@ -7,15 +7,18 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.DeploymentProd
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.StringAsset;
+import org.jboss.shrinkwrap.api.formatter.Formatters;
 import org.jboss.shrinkwrap.api.importer.ExplodedImporter;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.jboss.shrinkwrap.resolver.api.maven.MavenDependency;
-import org.jboss.shrinkwrap.resolver.api.maven.MavenImporter;
-import org.jboss.shrinkwrap.resolver.api.maven.MavenResolutionFilter;
+import org.jboss.shrinkwrap.resolver.api.maven.Maven;
+import org.jboss.shrinkwrap.resolver.api.maven.MavenResolvedArtifact;
+import org.jboss.shrinkwrap.resolver.api.maven.ScopeType;
 
 import java.io.File;
-import java.util.Collection;
+import java.io.FileOutputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author breilly
@@ -47,12 +50,12 @@ public class DeploymentBuilder {
                 .importDirectory("src/main/webapp")
                 .as(WebArchive.class)
                 .addAsWebInfResource(new File("src/test/resources/" + "mercury-"
-                                              + dataSourceEnvironment + "-ds.xml"))
+                        + dataSourceEnvironment + "-ds.xml"))
                 .addAsWebInfResource(new File("src/test/resources/squid-" + dataSourceEnvironment + "-ds.xml"))
                 .addAsWebInfResource(new File("src/test/resources/metrics-prod-ds.xml"))
                 .addAsResource(new File("src/main/resources/META-INF/persistence.xml"), "META-INF/persistence.xml")
                 .addAsWebInfResource(new File("src/main/webapp/WEB-INF/ejb-jar.xml"))
-                        //TODO  Cherry Picking resources is not Ideal.  When we have more auto front end tests, we will need everything in resources.
+                //TODO  Cherry Picking resources is not Ideal.  When we have more auto front end tests, we will need everything in resources.
                 .addAsResource(new File("src/main/resources/WorkflowConfig.xml"), "WorkflowConfig.xml")
                 .addAsResource(new File("src/main/resources/templates/WorkflowValidation.ftl"),
                         "templates/WorkflowValidation.ftl")
@@ -62,8 +65,16 @@ public class DeploymentBuilder {
                         "classes/jndi.properties");
         addWebResourcesTo(war, TestUtils.TEST_DATA_LOCATION);
         war = addWarDependencies(war);
+        /*
+         *** Capture contents of war to troubleshoot dependencies
+        try {
+            war.writeTo(new FileOutputStream("/temp/Mercury-Arquillian.war.files.txt"), Formatters.VERBOSE);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }*/
         return war;
     }
+
 
     private static WebArchive addWebResourcesTo(WebArchive archive, String directoryName) {
         final File webAppDirectory = new File(directoryName);
@@ -173,34 +184,30 @@ public class DeploymentBuilder {
                 .addClass(BettaLimsMessageTestFactory.class);
     }
 
+    /**
+     * Import Maven dependencies to WEB-INF/lib folder
+     * @param archive The archive to build out with dependencies
+     * @return Same archive instance with added dependencies (why not use by reference and return void?)
+     */
     private static WebArchive addWarDependencies(WebArchive archive) {
-        MavenResolutionFilter resolutionFilter = new MavenResolutionFilter() {
-            @Override
-            public boolean accept(MavenDependency dependency) {
-                if (dependency == null) {
-                    return false;
-                }
-                // TODO: remove all test-scoped dependencies; optionally explicitly add certain test dependencies that we commit to supporting
-                // TODO: remove exclusion of xerces, which is a workaround until all test-scoped dependencies are removed
-                return
-//                        !dependency.getScope().equals("test") &&
-                        !dependency.getScope().equals("provided") &&
-                        !dependency.getCoordinates().contains("xerces");
+
+        // Import Maven runtime dependencies
+        List<File> artifacts = new ArrayList<>();
+
+        for (MavenResolvedArtifact artifact : Maven.resolver().loadPomFromFile("pom.xml")
+                .importDependencies(ScopeType.IMPORT, ScopeType.RUNTIME, ScopeType.TEST, ScopeType.COMPILE )
+                .resolve().withTransitivity().asResolvedArtifact()) {
+            // This is some old stuff I had to pull up to use new API and be consistent
+            // TODO: remove all test-scoped dependencies; optionally explicitly add certain test dependencies that we commit to supporting
+            // TODO: remove exclusion of xerces, which is a workaround until all test-scoped dependencies are removed
+            // TODO: remove exclusion of dom4j, WildFly problem with an older release in it's runtime classpath
+            if( artifact.getExtension().equals("jar")
+                    && !artifact.getCoordinate().getArtifactId().contains("xerces")
+                    // Pulled in with another dependency
+                    && !artifact.getCoordinate().getArtifactId().contains("dom4j") ) {
+                artifacts.add(artifact.asFile());
             }
-
-            @Override
-            public MavenResolutionFilter configure(Collection<MavenDependency> dependencies) {
-                return this;
-            }
-        };
-
-//        MavenDependencyResolver resolver = DependencyResolvers.use(MavenDependencyResolver.class).includeDependenciesFromPom("pom.xml");
-//        return archive.addAsLibraries(resolver.resolveAsFiles(resolutionFilter);
-
-        return archive
-                .as(MavenImporter.class)
-                .loadEffectivePom("pom.xml")
-                .importAnyDependencies(resolutionFilter)
-                .as(WebArchive.class);
+        }
+        return archive.addAsLibraries(artifacts.toArray(new File[0] ));
     }
 }

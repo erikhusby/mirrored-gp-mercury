@@ -1,13 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <datasources xmlns="http://www.jboss.org/ironjacamar/schema"
              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-             xsi:schemaLocation="
-        http://www.jboss.org/ironjacamar/schema
-        http://docs.jboss.org/ironjacamar/schema/datasources_1_0.xsd">
-    <xa-datasource jndi-name="java:jboss/jdbc/mercury_pool" pool-name="mercury_pool" enabled="true">
+             xsi:schemaLocation="http://www.jboss.org/ironjacamar/schema http://docs.jboss.org/ironjacamar/schema/datasources_1_1.xsd">
+    <xa-datasource jndi-name="java:jboss/jdbc/mercury_pool" pool-name="mercury_pool" enabled="true" jta="true">
+        <driver-class>oracle.jdbc.OracleDriver</driver-class>
+        <driver>oracle</driver>
         <xa-datasource-property name="URL">jdbc:oracle:thin:@vmgpinform:1521:gpinfdev</xa-datasource-property>
         <xa-datasource-class>oracle.jdbc.xa.client.OracleXADataSource</xa-datasource-class>
-        <driver>com.oracle</driver>
         <!-- For XA in Postgres, in data/postgresql.conf, set max_prepared_transactions = 10 and restart Postgres -->
 <!--
         <xa-datasource-property name="ServerName">localhost</xa-datasource-property>

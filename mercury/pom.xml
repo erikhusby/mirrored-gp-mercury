@@ -84,7 +84,6 @@
             <name>Broad's Maven Repository</name>
             <layout>default</layout>
             <url>http://maven.broadinstitute.org:8000/maven</url>
-
         </repository>
 
         <!-- JBoss Repository for Arquillian, Hibernate, etc. -->
@@ -113,10 +112,11 @@
                 </repository>
         -->
 
+        <!-- Maven central -->
         <repository>
-            <id>Sonatype-public</id>
-            <name>SnakeYAML repository</name>
-            <url>http://oss.sonatype.org/content/groups/public/</url>
+            <id>MavenCentral</id>
+            <name>Maven Central</name>
+            <url>https://repo1.maven.org/maven2</url>
         </repository>
 
     </repositories>
@@ -141,6 +141,12 @@
             <id>apache.snapshots</id>
             <url>http://repository.apache.org/snapshots/</url>
         </pluginRepository>
+
+        <pluginRepository>
+            <id>MavenCentral</id>
+            <name>Maven Central</name>
+            <url>https://repo1.maven.org/maven2</url>
+        </pluginRepository>
     </pluginRepositories>
 
     <properties>
@@ -150,7 +156,7 @@
         <clover.targetPercentage>15%</clover.targetPercentage>
 
 
-        <deltaspike.version>0.5</deltaspike.version>
+        <deltaspike.version>1.7.1</deltaspike.version>
         <!-- For site reports -->
         <jira.url>http://prodinfojira.broadinstitute.org:8080/jira</jira.url>
         <bamboo.url>http://prodinfobuild.broadinstitute.org:8085</bamboo.url>
@@ -170,7 +176,7 @@
         <postgresql.version>9.1-901.jdbc4</postgresql.version>
 
         <!-- todo jmt fix -->
-        <jbossas_7.version>7.2.0.Final</jbossas_7.version>
+        <wildfly.version>10.0.0.Final</wildfly.version>
 
         <!-- In order to ignore the UI tests by default but turn them on in the Tests.UI profile, we need to do this
         by using properties. The Tests.UI profile basically reverses these properties. Doing this from the command line
@@ -685,12 +691,11 @@
                 </plugins>
             </build>
         </profile>
-        <!-- default Java EE profile to include Java EE API dependencies in the absence of a specific container -->
+        <!-- A Java EE profile to include Java EE API dependencies
+             For WildFly, we globally use org.jboss.spec:jboss-javaee-7.0 in lieu of javax:javaee-api
+          -->
         <profile>
             <id>JavaEE</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
             <dependencies>
                 <dependency>
                     <groupId>javax</groupId>
@@ -704,16 +709,6 @@
         <profile>
             <id>Arquillian-Weld</id>
             <dependencies>
-                <!-- For Arquillian Weld embedded, use org.jboss.spec:jboss-javaee-6.0 in lieu of javax:javaee-api.
-                     see: https://community.jboss.org/wiki/WhatsTheCauseOfThisExceptionJavalangClassFormatErrorAbsentCode
-                -->
-                <dependency>
-                    <groupId>org.jboss.spec</groupId>
-                    <artifactId>jboss-javaee-7.0</artifactId>
-                    <version>1.0.0.Final</version>
-                    <type>pom</type>
-                    <scope>provided</scope>
-                </dependency>
                 <!-- todo jmt fix -->
                 <dependency>
                     <groupId>org.jboss.arquillian.container</groupId>
@@ -737,27 +732,22 @@
         </profile>
 
         <profile>
-            <id>Arquillian-JBossAS7-Managed</id>
+            <id>Arquillian-WildFly10-Managed</id>
             <dependencies>
                 <dependency>
-                    <groupId>org.jboss.spec</groupId>
-                    <artifactId>jboss-javaee-7.0</artifactId>
-                    <version>1.0.0.Final</version>
-                    <type>pom</type>
-                    <scope>provided</scope>
-                </dependency>
-                <!-- todo jmt fix -->
-                <dependency>
-                    <groupId>org.jboss.as</groupId>
-                    <artifactId>jboss-as-arquillian-container-managed</artifactId>
-                    <version>${jbossas_7.version}</version>
+                    <groupId>org.wildfly.arquillian</groupId>
+                    <artifactId>wildfly-arquillian-container-managed</artifactId>
+                    <version>2.0.0.Final</version>
                     <scope>test</scope>
                 </dependency>
+                <!--
                 <dependency>
-                    <groupId>org.jboss.arquillian.protocol</groupId>
-                    <artifactId>arquillian-protocol-servlet</artifactId>
+                    <groupId>org.wildfly.arquillian</groupId>
+                    <artifactId>wildfly-arquillian-testng-integration</artifactId>
+                    <version>2.0.0.Final</version>
                     <scope>test</scope>
                 </dependency>
+                -->
             </dependencies>
             <build>
                 <plugins>
@@ -766,7 +756,7 @@
                         <configuration>
                             <argLine>-Xmx2048m</argLine>
                             <systemProperties>
-                                <jboss.version>${jbossas_7.version}</jboss.version>
+                                <jboss.version>${wildfly.version}</jboss.version>
                                 <property>
                                     <name>jbossHttpsPort</name>
                                     <value>${jboss.socket.https}</value>
@@ -786,9 +776,9 @@
                                 <configuration>
                                     <artifactItems>
                                         <artifactItem>
-                                            <groupId>org.jboss.as</groupId>
-                                            <artifactId>jboss-as-dist</artifactId>
-                                            <version>${jbossas_7.version}</version>
+                                            <groupId>org.wildfly</groupId>
+                                            <artifactId>wildfly-dist</artifactId>
+                                            <version>10.0.0.Final</version>
                                             <type>zip</type>
                                             <overWrite>false</overWrite>
                                             <outputDirectory>${project.build.directory}</outputDirectory>
@@ -803,20 +793,70 @@
         </profile>
 
         <profile>
-            <id>Arquillian-JBossAS7-Remote</id>
+            <id>Arquillian-WildFly10-Remote</id>
+            <!-- These dependencies won't get bundled into shrinkwrapped Arquillian archive -->
             <dependencies>
                 <dependency>
-                    <groupId>org.jboss.spec</groupId>
-                    <artifactId>jboss-javaee-7.0</artifactId>
-                    <version>1.0.0.Final</version>
-                    <type>pom</type>
-                    <scope>provided</scope>
+                    <groupId>org.jboss.arquillian.testng</groupId>
+                    <artifactId>arquillian-testng-core</artifactId>
+                    <version>1.1.11.Final</version>
+                    <scope>test</scope>
                 </dependency>
-                <!-- todo jmt fix -->
                 <dependency>
-                    <groupId>org.jboss.as</groupId>
-                    <artifactId>jboss-as-arquillian-container-remote</artifactId>
-                    <version>${jbossas_7.version}</version>
+                    <groupId>org.jboss.arquillian.testng</groupId>
+                    <artifactId>arquillian-testng-container</artifactId>
+                    <version>1.1.11.Final</version>
+                    <scope>test</scope>
+                </dependency>
+                <!--
+                <dependency>
+                    <groupId>org.wildfly.arquillian</groupId>
+                    <artifactId>wildfly-arquillian-testng-integration</artifactId>
+                    <version>2.0.0.Final</version>
+                    <scope>test</scope>
+                </dependency>
+                -->
+
+                <dependency>
+                    <groupId>org.jboss.shrinkwrap.resolver</groupId>
+                    <artifactId>shrinkwrap-resolver-api</artifactId>
+                    <version>2.2.2</version>
+                    <scope>test</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.jboss.shrinkwrap.resolver</groupId>
+                    <artifactId>shrinkwrap-resolver-spi</artifactId>
+                    <version>2.2.2</version>
+                    <scope>test</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.jboss.shrinkwrap.resolver</groupId>
+                    <artifactId>shrinkwrap-resolver-api-maven</artifactId>
+                    <version>2.2.2</version>
+                    <scope>test</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.jboss.shrinkwrap.resolver</groupId>
+                    <artifactId>shrinkwrap-resolver-spi-maven</artifactId>
+                    <version>2.2.2</version>
+                    <scope>test</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.jboss.shrinkwrap.resolver</groupId>
+                    <artifactId>shrinkwrap-resolver-impl-maven</artifactId>
+                    <version>2.2.2</version>
+                    <scope>test</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.jboss.shrinkwrap.resolver</groupId>
+                    <artifactId>shrinkwrap-resolver-impl-maven-archive</artifactId>
+                    <version>2.2.2</version>
+                    <scope>test</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.wildfly.arquillian</groupId>
+                    <artifactId>wildfly-arquillian-container-remote</artifactId>
+                    <version>2.0.0.Final</version>
                     <scope>test</scope>
                 </dependency>
             </dependencies>
@@ -1171,22 +1211,18 @@ nodePrinter.print(webapp)
                 <artifactId>jersey-multipart</artifactId>
                 <version>${jersey.version}</version>
             </dependency>
-
+            
             <!-- todo jmt fix -->
+            <!--
             <dependency>
-                <groupId>org.jboss.arquillian</groupId>
-                <artifactId>arquillian-bom</artifactId>
-                <version>1.0.3.Final</version>
-                <type>pom</type>
-                <scope>import</scope>
+              <groupId>org.jboss.arquillian</groupId>
+              <artifactId>arquillian-bom</artifactId>
+              <version>1.1.11.Final</version>
+              <type>pom</type>
+              <scope>import</scope>
             </dependency>
-            <dependency>
-                <groupId>org.jboss.arquillian.extension</groupId>
-                <artifactId>arquillian-drone-bom</artifactId>
-                <version>1.0.0.Final</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
+            -->
+
             <dependency>
                 <groupId>org.eu.ingwar.tools</groupId>
                 <artifactId>arquillian-suite-extension</artifactId>
@@ -1204,15 +1240,16 @@ nodePrinter.print(webapp)
                             <type>pom</type>
                             <scope>import</scope>
                         </dependency>
-            -->
+-->
         </dependencies>
     </dependencyManagement>
 
     <dependencies>
 
-        <!-- Hibernate classes include but at deploy causes:
-         - java.lang.ClassCastException: org.dom4j.DocumentFactory cannot be cast to org.dom4j.DocumentFactory
-         - Explicitly exclude! -->
+        <!-- Hibernate classes include this but at deploy causes versioning error :
+           - java.lang.ClassCastException: org.dom4j.DocumentFactory cannot be cast to org.dom4j.DocumentFactory
+           - Exclude by declaring scope private and explicitly exclude jar in Arquillian shrinkwrap DeploymentBuilder!
+           -->
         <dependency>
             <groupId>dom4j</groupId>
             <artifactId>dom4j</artifactId>
@@ -1220,23 +1257,43 @@ nodePrinter.print(webapp)
             <scope>provided</scope>
         </dependency>
 
+
+        <!-- ***
+             * For WildFly, use org.jboss.spec:jboss-javaee-7.0 in lieu of javax:javaee-api.
+             * See: https://community.jboss.org/wiki/WhatsTheCauseOfThisExceptionJavalangClassFormatErrorAbsentCode
+             *** -->
+        <dependency>
+            <groupId>org.jboss.spec</groupId>
+            <artifactId>jboss-javaee-7.0</artifactId>
+            <version>1.0.0.Final</version>
+            <type>pom</type>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/org.hamcrest/java-hamcrest   -->
+        <dependency>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>java-hamcrest</artifactId>
+            <version>2.0.0.0</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.hamcrest/hamcrest-integration -->
+        <dependency>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>hamcrest-integration</artifactId>
+            <version>1.3</version>
+        </dependency>
+        
         <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
-            <version>6.1.1</version>
+            <version>6.8.5</version>
             <scope>test</scope>
         </dependency>
 
-        <dependency>
-            <groupId>org.hamcrest</groupId>
-            <artifactId>hamcrest-all</artifactId>
-            <version>1.3</version>
-        </dependency>
 
         <!-- uncomment this to enable squid integration -->
         <!--
         <dependency>
-
             <groupId>Squid</groupId>
             <artifactId>SquidEntities</artifactId>
             <version>${build.version}</version>
@@ -1249,68 +1306,149 @@ nodePrinter.print(webapp)
         </dependency>
         -->
 
+        <!-- TODO:  JMS:  These will get hoovered up by DeploymentBuilder and put into Arquillian shrinkwrap war
+           - Not sure which can be moved to WildFly10 profiles and which need to stay here for deploy with test
+           -->
         <dependency>
-            <groupId>org.jboss.arquillian.testng</groupId>
-            <artifactId>arquillian-testng-container</artifactId>
+            <groupId>org.jboss.arquillian.core</groupId>
+            <artifactId>arquillian-core-api</artifactId>
+            <version>1.1.11.Final</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.arquillian.core</groupId>
+            <artifactId>arquillian-core-spi</artifactId>
+            <version>1.1.11.Final</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.arquillian.core</groupId>
+            <artifactId>arquillian-core-impl-base</artifactId>
+            <version>1.1.11.Final</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.arquillian.config</groupId>
+            <artifactId>arquillian-config-api</artifactId>
+            <version>1.1.11.Final</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.arquillian.config</groupId>
+            <artifactId>arquillian-config-spi</artifactId>
+            <version>1.1.11.Final</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.arquillian.config</groupId>
+            <artifactId>arquillian-config-impl-base</artifactId>
+            <version>1.1.11.Final</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.arquillian.test</groupId>
+            <artifactId>arquillian-test-api</artifactId>
+            <version>1.1.11.Final</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.arquillian.test</groupId>
+            <artifactId>arquillian-test-spi</artifactId>
+            <version>1.1.11.Final</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.arquillian.test</groupId>
+            <artifactId>arquillian-test-impl-base</artifactId>
+            <version>1.1.11.Final</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.arquillian.container</groupId>
+            <artifactId>arquillian-container-spi</artifactId>
+            <version>1.1.11.Final</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.arquillian.container</groupId>
+            <artifactId>arquillian-container-impl-base</artifactId>
+            <version>1.1.11.Final</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.arquillian.container</groupId>
+            <artifactId>arquillian-container-test-api</artifactId>
+            <version>1.1.11.Final</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.arquillian.container</groupId>
+            <artifactId>arquillian-container-test-spi</artifactId>
+            <version>1.1.11.Final</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.arquillian.container</groupId>
+            <artifactId>arquillian-container-test-impl-base</artifactId>
+            <version>1.1.11.Final</version>
             <scope>test</scope>
         </dependency>
 
-        <!-- todo jmt fix -->
         <dependency>
-            <groupId>org.jboss.shrinkwrap.resolver</groupId>
-            <artifactId>shrinkwrap-resolver-api-maven</artifactId>
-            <version>1.1.0-alpha-3</version>
+            <groupId>org.jboss.arquillian.testenricher</groupId>
+            <artifactId>arquillian-testenricher-ejb</artifactId>
+            <version>1.1.11.Final</version>
             <scope>test</scope>
         </dependency>
-
+        
         <dependency>
-            <groupId>org.jboss.shrinkwrap.resolver</groupId>
-            <artifactId>shrinkwrap-resolver-impl-maven</artifactId>
-            <version>1.1.0-alpha-3</version>
+            <groupId>org.jboss.arquillian.testenricher</groupId>
+            <artifactId>arquillian-testenricher-cdi</artifactId>
+            <version>1.1.11.Final</version>
             <scope>test</scope>
         </dependency>
-
+        <dependency>
+            <groupId>org.jboss.arquillian.testenricher</groupId>
+            <artifactId>arquillian-testenricher-resource</artifactId>
+            <version>1.1.11.Final</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.arquillian.testenricher</groupId>
+            <artifactId>arquillian-testenricher-initialcontext</artifactId>
+            <version>1.1.11.Final</version>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>org.jboss.arquillian.protocol</groupId>
             <artifactId>arquillian-protocol-servlet</artifactId>
+            <version>1.1.11.Final</version>
             <scope>test</scope>
         </dependency>
-
+        <!-- End of dependencies for Arquillian shrinkwrap war -->
+            
         <dependency>
-            <groupId>org.jboss.arquillian.extension</groupId>
-            <artifactId>arquillian-drone-impl</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.jboss.arquillian.extension</groupId>
-            <artifactId>arquillian-drone-selenium</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.jboss.arquillian.extension</groupId>
-            <artifactId>arquillian-drone-webdriver</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.jboss.arquillian.extension</groupId>
-            <artifactId>arquillian-drone-selenium-server</artifactId>
-            <scope>test</scope>
+            <groupId>org.seleniumhq.selenium</groupId>
+            <artifactId>selenium-api</artifactId>
+            <version>2.46.0</version>
         </dependency>
 
         <dependency>
             <groupId>org.seleniumhq.selenium</groupId>
             <artifactId>selenium-java</artifactId>
-            <version>2.21.0</version>
+            <version>2.46.0</version>
         </dependency>
 
         <dependency>
             <groupId>org.seleniumhq.selenium</groupId>
             <artifactId>selenium-server</artifactId>
+            <version>2.46.0</version>
             <scope>test</scope>
             <exclusions>
+                <exclusion>
+                    <groupId>org.mortbay.jetty</groupId>
+                    <artifactId>servlet-api</artifactId>
+                </exclusion>
                 <exclusion>
                     <groupId>org.mortbay.jetty</groupId>
                     <artifactId>servlet-api-2.5</artifactId>
@@ -1318,21 +1456,16 @@ nodePrinter.print(webapp)
             </exclusions>
         </dependency>
 
-        <!-- ???
-                <dependency>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-simple</artifactId>
-                    <scope>test</scope>
-                </dependency>
-        -->
-
-        <!-- not really ready yet. following https://community.jboss.org/thread/197981
-                <dependency>
-                    <groupId>org.jboss.arquillian.extension</groupId>
-                    <artifactId>arquillian-jrebel-impl</artifactId>
-                    <version>1.0.0.Alpha1-SNAPSHOT</version>
-                </dependency>
-        -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-exec</artifactId>
+            <version>1.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20090211</version>
+        </dependency>
         <dependency>
             <groupId>net.sourceforge.stripes</groupId>
             <artifactId>stripes</artifactId>
@@ -1396,15 +1529,13 @@ nodePrinter.print(webapp)
             <version>1.1.3</version>
         </dependency>
 
-
-
+        <!-- Hibernate API dependencies -->
         <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-core</artifactId>
             <version>5.0.7.Final</version>
             <scope>provided</scope>
         </dependency>
-
         <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-entitymanager</artifactId>
@@ -1418,20 +1549,19 @@ nodePrinter.print(webapp)
                 </exclusion>
             </exclusions>
         </dependency>
-
         <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-jpamodelgen</artifactId>
             <version>5.0.7.Final</version>
             <scope>provided</scope>
         </dependency>
-
         <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-envers</artifactId>
             <version>5.0.7.Final</version>
             <scope>provided</scope>
         </dependency>
+        <!-- End of Hibernate API dependencies -->
 
         <dependency>
             <groupId>postgresql</groupId>
@@ -1471,6 +1601,7 @@ nodePrinter.print(webapp)
             <version>1.9.5</version>
             <scope>test</scope>
             <exclusions>
+                <!-- Uses an old hamcrest library incompatible with Arquillian -->
                 <exclusion>
                     <groupId>org.hamcrest</groupId>
                     <artifactId>hamcrest-core</artifactId>
@@ -1589,6 +1720,9 @@ nodePrinter.print(webapp)
             <scope>test</scope>
         </dependency>
 
+        <!--  BettaLimsMessageBeanTest and WorkCompleteMessageBeanTest
+        TODO: JMS: Convert to ActiveMQ
+          -->
         <dependency>
             <groupId>org.hornetq</groupId>
             <artifactId>hornetq-core-client</artifactId>
@@ -1601,22 +1735,6 @@ nodePrinter.print(webapp)
             <version>2.2.7.Final</version>
             <scope>compile</scope>
         </dependency>
-
-        <!-- todo jmt fix -->
-        <dependency>
-            <groupId>org.jboss.as</groupId>
-            <artifactId>jboss-as-ejb-client-bom</artifactId>
-            <version>7.1.1.Final</version>
-            <type>pom</type>
-        </dependency>
-        <!--
-        <dependency>
-            <groupId>org.jboss.as</groupId>
-            <artifactId>jboss-as-jms-client-bom</artifactId>
-            <version>7.1.1.Final</version>
-            <type>pom</type>
-        </dependency>
--->
 
         <dependency>
             <groupId>com.jgraph</groupId>
@@ -1631,13 +1749,7 @@ nodePrinter.print(webapp)
             <version>0.7.0</version>
         </dependency>
 
-        <!--
-                <dependency>
-                    <groupId>org.mvel</groupId>
-                    <artifactId>mvel2</artifactId>
-                    <version>2.1.4.Final</version>
-                </dependency>
-        -->
+        <!-- WildFly has newer version built in -->
         <dependency>
             <groupId>net.sf.scannotation</groupId>
             <artifactId>scannotation</artifactId>
@@ -1719,12 +1831,13 @@ nodePrinter.print(webapp)
             <version>3.2.2.Final</version>
         </dependency>
 
+        <!--
         <dependency>
             <groupId>org.jboss.aerogear.test.arquillian</groupId>
             <artifactId>arquillian-smart-url</artifactId>
             <version>0.2.0</version>
         </dependency>
-
+        -->
     </dependencies>
 
     <build>

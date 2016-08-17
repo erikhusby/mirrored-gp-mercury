@@ -24,8 +24,8 @@ import java.util.UUID;
 
 import static org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectIRB.IrbType.BROAD;
 import static org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectIRB.IrbType.FARBER;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 @Test(groups = TestGroups.STUBBY)

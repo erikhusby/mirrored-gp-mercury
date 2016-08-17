@@ -9,8 +9,8 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 import java.util.List;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 @Test(groups = TestGroups.STANDARD)
