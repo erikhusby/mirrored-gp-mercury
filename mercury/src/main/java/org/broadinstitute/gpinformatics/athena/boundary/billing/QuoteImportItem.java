@@ -115,7 +115,7 @@ public class QuoteImportItem {
     public double getQuantityForSAP() {
         double quantity = 0;
         for (LedgerEntry ledgerItem : ledgerItems) {
-            if (StringUtils.isNotBlank(ledgerItem.getSapDeliveryDocumentId())) {
+            if (StringUtils.isBlank(ledgerItem.getSapDeliveryDocumentId())) {
                 quantity += ledgerItem.getQuantity();
             }
         }
