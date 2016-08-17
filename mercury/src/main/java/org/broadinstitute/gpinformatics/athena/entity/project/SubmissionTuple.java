@@ -14,14 +14,13 @@ package org.broadinstitute.gpinformatics.athena.entity.project;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassFileType;
-import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 
 import java.io.Serializable;
 
 public class SubmissionTuple implements Serializable {
     private static final long serialVersionUID = 1262062294730627888L;
-    private String sampleName;
     private String project;
+    private String sampleName;
     private BassFileType fileType;
     private String version;
 
@@ -31,18 +30,19 @@ public class SubmissionTuple implements Serializable {
     SubmissionTuple() {
     }
 
-    @Deprecated
-    public SubmissionTuple(String sampleName, BassFileType fileType, String version) {
+    public SubmissionTuple(String project, String sampleName, BassFileType fileType, String version) {
+        this.project = project;
         this.sampleName = sampleName;
         this.fileType = fileType;
         this.version = version;
     }
 
-    public SubmissionTuple(String sampleName, String project, BassFileType fileType, String version) {
-        this.project = project;
-        this.sampleName = sampleName;
-        this.fileType = fileType;
-        this.version = version;
+    public String getProject() {
+        return project;
+    }
+
+    public String getSampleName() {
+        return sampleName;
     }
 
     public String getVersion() {
@@ -68,8 +68,8 @@ public class SubmissionTuple implements Serializable {
 
     @Override
     public String toString() {
-        return String.format("{sampleName = %s; project = %s; fileType = %s; version = %s}",
-                sampleName, project, fileType, version);
+        return String.format("{project = %s; sampleName = %s; version = %s; fileType = %s}",
+                project, sampleName, version, fileType);
     }
 
     @Override

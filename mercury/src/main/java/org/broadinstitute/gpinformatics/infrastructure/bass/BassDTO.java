@@ -25,7 +25,14 @@ import java.util.Date;
 import java.util.Map;
 
 /**
- * Holds values obtained from Bass
+ * Holds values obtained from Bass.
+ *
+ * The important identifying fields are "project", "sample", "rpid", "datatype", and sometimes "version". The
+ * combination of "project", "sample", and "datatype" make up a compound business key. If "project" != "rpid" then
+ * "project" and "sample" are sufficient while "datatype" is expected to be empty. However, if "project" == "rpid" then
+ * "datatype" is required and must be used to guarantee uniqueness. This business key uniquely identifies a single
+ * artifact but that artifact may have multiple versions. In that case, "version" must be included, for example when
+ * joining against aggregation metrics for BAMs.
  *
  * @see <a href="https://confluence.broadinstitute.org/display/BASS/Application+Programming+Interface">Bass API Documentation</a>
  * @see <a href="https://bass.broadinstitute.org/list?rpid=RP-200">Example call to Bass WS</a>
@@ -53,7 +60,7 @@ public class BassDTO {
 
     // todo: should be in interface?
     public SubmissionTuple getTuple() {
-        return new SubmissionTuple(getSample(), getFileTypeEnum(), getVersion().toString());
+        return new SubmissionTuple(getProject(), getSample(), getFileTypeEnum(), getVersion().toString());
     }
 
     private String getFilePath() {

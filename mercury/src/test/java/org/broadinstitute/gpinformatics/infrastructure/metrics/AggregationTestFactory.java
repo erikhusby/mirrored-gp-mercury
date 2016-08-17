@@ -22,7 +22,7 @@ import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.LevelOfDet
 import java.util.Collections;
 
 public class AggregationTestFactory {
-    public static Aggregation buildAggregation(String project, String sample, Double contamination,
+    public static Aggregation buildAggregation(String project, String sample, int version, Double contamination,
                                                LevelOfDetection fingerprintLod, String dataType,
                                                Double pctTargetBases20X, Long totalReadsAlignedInPairs,
                                                Double meanCoverageWgs) {
@@ -34,7 +34,7 @@ public class AggregationTestFactory {
         AggregationReadGroup aggregationReadGroup = new AggregationReadGroup(null, 2, null);
         Integer readGroupCount = 2;
 
-        return new Aggregation(project, sample, null, null, readGroupCount, dataType,
+        return new Aggregation(project, sample, null, version, readGroupCount, dataType,
                 Collections.singleton(aggregationAlignment), aggregationContam, aggregationHybridSelection,
                 Collections.singleton(aggregationReadGroup), aggregationWgs, fingerprintLod);
     }

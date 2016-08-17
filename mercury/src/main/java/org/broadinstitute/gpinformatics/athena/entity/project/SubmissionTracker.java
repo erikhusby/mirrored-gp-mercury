@@ -40,14 +40,14 @@ public class SubmissionTracker {
     @Column(name = "SUBMISSION_TRACKER_ID")
     private Long submissionTrackerId;
 
+    private String project;
+
     /**
      * Represents the name of the sample that has been submitted.  This field name may be changed based on the outcome
      * of discussions on what data to specifically send.
      */
     @Column(name = "SUBMITTED_SAMPLE_NAME")
     private String submittedSampleName;
-
-    private String project;
 
     @Enumerated(EnumType.STRING)
     private BassFileType fileType;
@@ -107,16 +107,24 @@ public class SubmissionTracker {
         return id;
     }
 
+    public String getSubmittedSampleName() {
+        return submittedSampleName;
+    }
+
+    public String getProject() {
+        return project;
+    }
+
+    public void setProject(String project) {
+        this.project = project;
+    }
+
     public BassFileType getFileType() {
         return fileType;
     }
 
     public void setFileType(BassFileType fileType) {
         this.fileType = fileType;
-    }
-
-    public String getSubmittedSampleName() {
-        return submittedSampleName;
     }
 
     public String getVersion() {
@@ -146,6 +154,6 @@ public class SubmissionTracker {
     // todo: should be in interface?
     @Transient
     public SubmissionTuple getTuple() {
-        return new SubmissionTuple(submittedSampleName, fileType, version);
+        return new SubmissionTuple(project, submittedSampleName, fileType, version);
     }
 }

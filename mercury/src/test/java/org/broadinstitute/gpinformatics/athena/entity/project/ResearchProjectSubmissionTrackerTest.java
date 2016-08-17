@@ -30,8 +30,8 @@ public class ResearchProjectSubmissionTrackerTest {
         SubmissionTrackerStub tracker2 =
                 new SubmissionTrackerStub(testAccessionID + 2, testProjectId, BassFileType.PICARD, testVersion + 2);
         testResearchProject.addSubmissionTracker(tracker, tracker2);
-        SubmissionTracker resultTracker = testResearchProject.getSubmissionTracker(new SubmissionTuple(testAccessionID,
-                testProjectId, testFileType, testVersion));
+        SubmissionTracker resultTracker = testResearchProject.getSubmissionTracker(new SubmissionTuple(testProjectId,
+                testAccessionID, testFileType, testVersion));
         assertThat(tracker, equalTo(resultTracker));
     }
 
@@ -41,8 +41,8 @@ public class ResearchProjectSubmissionTrackerTest {
         SubmissionTrackerStub tracker =
                 new SubmissionTrackerStub(testAccessionID, testProjectId, testFileType, testVersion);
         testResearchProject.addSubmissionTracker(tracker, tracker);
-        SubmissionTracker resultTracker = testResearchProject.getSubmissionTracker(new SubmissionTuple(testAccessionID,
-                testProjectId, testFileType, testVersion));
+        SubmissionTracker resultTracker = testResearchProject.getSubmissionTracker(new SubmissionTuple(testProjectId,
+                testAccessionID, testFileType, testVersion));
         assertThat(resultTracker, equalTo(resultTracker));
     }
 
@@ -51,7 +51,7 @@ public class ResearchProjectSubmissionTrackerTest {
         SubmissionTracker tracker = new SubmissionTracker(testAccessionID, testProjectId, testFileType, testVersion);
         testResearchProject.addSubmissionTracker(tracker);
         SubmissionTracker resultTracker = testResearchProject
-                .getSubmissionTracker(new SubmissionTuple("using", "other", BassFileType.PICARD, "arguments"));
+                .getSubmissionTracker(new SubmissionTuple("other", "using", BassFileType.PICARD, "arguments"));
         assertThat(resultTracker, nullValue());
     }
 
