@@ -239,6 +239,8 @@ public class ProductOrderEjb {
                     sapService.updateOrder(editedProductOrder);
                 }
                 productOrderDao.persist(editedProductOrder);
+            } else {
+                messageCollection.addInfo("This order is inelligible to post to SAP: ");
             }
         } catch (org.broadinstitute.sap.services.SAPIntegrationException|QuoteServerException|QuoteNotFoundException e) {
             StringBuilder errorMessage = new StringBuilder();

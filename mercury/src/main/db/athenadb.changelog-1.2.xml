@@ -346,8 +346,8 @@
                 <columnExists tableName="BILLING_LEDGER_AUD" columnName="SAP_DELIVERY_DOCUMENT_ID" schemaName="ATHENA" />
             </not>
         </preConditions>
-        <addColumn tableName="BILLING_LEDGER">
-            <column name="SAP_DELIVERY_DOCUMENT_ID_AUD" type="varchar2(255)" />
+        <addColumn tableName="BILLING_LEDGER_AUD">
+            <column name="SAP_DELIVERY_DOCUMENT_ID" type="varchar2(255)" />
         </addColumn>
     </changeSet>
     <changeSet id="GPLIM-3614-7" author="scottmat">

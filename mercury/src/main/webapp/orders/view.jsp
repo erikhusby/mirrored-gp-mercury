@@ -847,7 +847,24 @@ function formatInput(item) {
     </div>
 </div>
 
-<c:if test="${not empty actionBean.editOrder.requisitionName}">
+    <div class="view-control-group control-group">
+        <label class="control-label label-form">SAP Order ID</label>
+
+        <div class="controls">
+            <div class="form-value">
+                <c:choose>
+                    <c:when test="${actionBean.editOrder.draft} || ${actionBean.editOrder.pending} || !${actionBean.editOrder.savedInSAP}">
+                        &#160;
+                    </c:when>
+                    <c:otherwise>
+                        ${actionBean.editOrder.sapOrderNumber}
+                    </c:otherwise>
+                </c:choose>
+            </div>
+        </div>
+    </div>
+
+    <c:if test="${not empty actionBean.editOrder.requisitionName}">
     <div class="view-control-group control-group">
         <label class="control-label label-form">Requisition</label>
 
