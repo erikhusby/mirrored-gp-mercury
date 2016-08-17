@@ -235,8 +235,10 @@ public class ProductOrderEjb {
                 if (StringUtils.isEmpty(editedProductOrder.getSapOrderNumber())) {
                     String sapOrderIdentifier = sapService.createOrder(editedProductOrder);
                     editedProductOrder.setSapOrderNumber(sapOrderIdentifier);
+                    messageCollection.addInfo("Order "+editedProductOrder.getJiraTicketKey() + " has been successfully created in SAP");
                 } else {
                     sapService.updateOrder(editedProductOrder);
+                    messageCollection.addInfo("Order "+editedProductOrder.getJiraTicketKey() + " has been successfully updated in SAP");
                 }
                 productOrderDao.persist(editedProductOrder);
             } else {
