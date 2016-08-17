@@ -130,7 +130,7 @@ public class FlowcellMessageHandler extends AbstractEventHandler {
         }
 
         Map<VesselPosition, LabVessel> loadedVesselsAndPosition;
-        List<LabVessel.VesselEvent> ancestors = flowcell.getContainerRole().getAncestors(VesselPosition.LANE1);
+        List<LabVessel.VesselEvent> ancestors = flowcell.getContainerRole().getAncestors(null, VesselPosition.LANE1);
         if (ancestors.get(0).getSourceVesselContainer() != null &&
                 ancestors.get(0).getSourceVesselContainer().getEmbedder().getType() == LabVessel.ContainerType.STRIP_TUBE) {
             loadedVesselsAndPosition = new HashMap<>();

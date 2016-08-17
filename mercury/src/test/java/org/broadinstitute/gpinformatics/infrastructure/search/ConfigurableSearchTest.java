@@ -370,6 +370,8 @@ public class ConfigurableSearchTest extends Arquillian {
     @Test
     public void testInfinium() {
 //        Controller.startCPURecording(true);
+//        Controller.startProbeRecording(Controller.PROBE_NAME_JDBC, true);
+
         SearchInstance searchInstance = new SearchInstance();
         String entity = ColumnEntity.LAB_VESSEL.getEntityName();
         ConfigurableSearchDefinition configurableSearchDef = SearchDefinitionFactory.getForEntity(entity);
@@ -385,7 +387,10 @@ public class ConfigurableSearchTest extends Arquillian {
                 searchInstance, configurableSearchDef, null, 0, null, "ASC", entity);
         List<ConfigurableList.ResultRow> resultRows = firstPageResults.getResultList().getResultRows();
         Assert.assertEquals(resultRows.size(), 38);
+
+//        Controller.stopProbeRecording(Controller.PROBE_NAME_JDBC);
 //        Controller.stopCPURecording();
+
         Assert.assertEquals(resultRows.get(0).getRenderableCells().get(0), "CO-15138260");
         Assert.assertEquals(resultRows.get(1).getRenderableCells().get(0), "CO-18828951");
         Assert.assertEquals(resultRows.get(1).getRenderableCells().get(1), "000016825709");

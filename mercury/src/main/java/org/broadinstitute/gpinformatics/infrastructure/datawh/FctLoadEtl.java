@@ -146,7 +146,7 @@ public class FctLoadEtl extends GenericEntityEtl<LabEvent,LabEvent> {
                 }
             }
         } else {
-            List<LabVessel.VesselEvent> ancestors = flowcell.getContainerRole().getAncestors(VesselPosition.LANE1);
+            List<LabVessel.VesselEvent> ancestors = flowcell.getContainerRole().getAncestors(null, VesselPosition.LANE1);
             // Strip tubes are registered in flowcell ticket as dilution vessels in a FLOWCELL_TRANSFER event
             if (ancestors.get(0).getSourceVesselContainer() != null &&
                     ancestors.get(0).getSourceVesselContainer().getEmbedder().getType() == LabVessel.ContainerType.STRIP_TUBE) {

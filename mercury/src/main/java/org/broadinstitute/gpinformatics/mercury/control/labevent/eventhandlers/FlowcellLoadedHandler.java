@@ -55,7 +55,7 @@ public class FlowcellLoadedHandler extends AbstractEventHandler {
                         LabBatch.TicketFields.SEQUENCING_STATION.getName());
 
                 // This was already done in FlowcellMessageHandler if there was no strip tube B ancestor
-                List<LabVessel.VesselEvent> ancestors = flowcell.getContainerRole().getAncestors(VesselPosition.LANE1);
+                List<LabVessel.VesselEvent> ancestors = flowcell.getContainerRole().getAncestors(null, VesselPosition.LANE1);
                 VesselContainer<?> vesselContainer = ancestors.get(0).getSourceVesselContainer();
                 if (vesselContainer != null && vesselContainer.getEmbedder().getType() ==
                         LabVessel.ContainerType.STRIP_TUBE) {

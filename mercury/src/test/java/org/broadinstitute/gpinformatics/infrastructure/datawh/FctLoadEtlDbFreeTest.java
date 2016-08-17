@@ -111,7 +111,7 @@ public class FctLoadEtlDbFreeTest {
         // Flowcell transfer source
         // Dummy up with a null source container so falls through strip tube logic into dilution tube logic
         LabVessel.VesselEvent ancestorVesselEvent = new LabVessel.VesselEvent(dilutionTube, null,null,labEvent,flowcell, flowcellContainer, VesselPosition.LANE1);
-        expect(flowcellContainer.getAncestors(flowcellLane)).andReturn(Collections.singletonList(ancestorVesselEvent));
+        expect(flowcellContainer.getAncestors(null, flowcellLane)).andReturn(Collections.singletonList(ancestorVesselEvent));
         Map<VesselPosition,LabVessel> loadedVesselsAndPositions = new HashMap<>();
         loadedVesselsAndPositions.put(flowcellLane, dilutionTube);
         expect(flowcell.getNearestTubeAncestorsForLanes()).andReturn(loadedVesselsAndPositions);
@@ -146,7 +146,7 @@ public class FctLoadEtlDbFreeTest {
         // Strip tube source container will invoke strip tube logic
         LabVessel.VesselEvent ancestorVesselEvent = new LabVessel.VesselEvent(stripTube, stripTubeContainer, VesselPosition.TUBE1,
                 labEvent, flowcell, flowcellContainer, VesselPosition.LANE1);
-        expect(flowcellContainer.getAncestors(flowcellLane)).andReturn(Collections.singletonList(ancestorVesselEvent));
+        expect(flowcellContainer.getAncestors(null, flowcellLane)).andReturn(Collections.singletonList(ancestorVesselEvent));
         expect(stripTubeContainer.getEmbedder()).andReturn(stripTube).times(2);
         expect(stripTube.getType()).andReturn(LabVessel.ContainerType.STRIP_TUBE);
 

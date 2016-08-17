@@ -11,6 +11,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.PositionToVesselMap;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 
@@ -112,10 +114,12 @@ public class DenatureToDilutionTubeHandler extends AbstractEventHandler {
                 if (fctTicket.equals(fctLabBatch.getBusinessKey())) {
                     foundTicket = true;
                     if (!updateLabBatch(fctLabBatch, denatureTube, dilutionTube)) {
-                        if (!denatureTube.getContainers().isEmpty()) {
-                            LabVessel denatureTubeFormation = denatureTube.getContainers().iterator().next();
-                            List<LabVessel.VesselEvent> ancestors =
-                                    denatureTubeFormation.getContainerRole().getAncestors(denatureTube);
+                        if (!denatureTube.getPositionToVesselMaps().isEmpty()) {
+                            PositionToVesselMap positionToVesselMap =
+                                    denatureTube.getPositionToVesselMaps().iterator().next();
+                            VesselContainer<?> containerRole = positionToVesselMap.getContainer().getContainerRole();
+                            List<LabVessel.VesselEvent> ancestors = containerRole.getAncestors(denatureTube,
+                                    positionToVesselMap.getVesselPosition());
                             if (ancestors != null && !ancestors.isEmpty()) {
                                 LabVessel.VesselEvent denatureEvent = ancestors.get(0);
                                 LabVessel normTube = denatureEvent.getSourceLabVessel();

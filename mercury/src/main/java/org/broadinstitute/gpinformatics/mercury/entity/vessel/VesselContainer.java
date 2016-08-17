@@ -129,14 +129,8 @@ public class VesselContainer<T extends LabVessel> {
     @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     @Nullable
     public T getVesselAtPosition(VesselPosition position) {
-        if (mapPositionToVessel == null) {
-            mapPositionToVessel = new HashMap<>();
-            for (PositionToVesselMap positionToVesselMap : positionToVesselMaps) {
-                mapPositionToVessel.put(positionToVesselMap.getVesselPosition(), positionToVesselMap.getContainee());
-            }
-        }
         //noinspection unchecked
-        return (T) mapPositionToVessel.get(position);
+        return (T) getMapPositionToVessel().get(position);
     }
 
     @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
@@ -404,6 +398,11 @@ public class VesselContainer<T extends LabVessel> {
 
     @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public VesselPosition getPositionOfVessel(LabVessel vesselAtPosition) {
+        return getMapVesselToPosition().get(vesselAtPosition);
+    }
+
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
+    public Map<LabVessel, VesselPosition> getMapVesselToPosition() {
         //construct the reverse lookup map if it doesn't exist
         if (mapVesselToPosition == null) {
             mapVesselToPosition = new HashMap<>();
@@ -411,7 +410,7 @@ public class VesselContainer<T extends LabVessel> {
                 mapVesselToPosition.put(positionToVesselMap.getContainee(), positionToVesselMap.getVesselPosition());
             }
         }
-        return mapVesselToPosition.get(vesselAtPosition);
+        return mapVesselToPosition;
     }
 
     /**
@@ -425,7 +424,7 @@ public class VesselContainer<T extends LabVessel> {
      */
     @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public Set<T> getContainedVessels() {
-        return (Set<T>) mapVesselToPosition.keySet();
+        return (Set<T>) getMapVesselToPosition().keySet();
     }
 
     public void addContainedVessel(T child, VesselPosition position) {
@@ -457,7 +456,14 @@ public class VesselContainer<T extends LabVessel> {
         }
     }
 
+    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
     public Map<VesselPosition, T> getMapPositionToVessel() {
+        if (mapPositionToVessel == null) {
+            mapPositionToVessel = new HashMap<>();
+            for (PositionToVesselMap positionToVesselMap : positionToVesselMaps) {
+                mapPositionToVessel.put(positionToVesselMap.getVesselPosition(), positionToVesselMap.getContainee());
+            }
+        }
         return (Map<VesselPosition, T>) mapPositionToVessel;
     }
 
@@ -491,9 +497,7 @@ public class VesselContainer<T extends LabVessel> {
     }
 
     @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
-    public List<LabVessel.VesselEvent> getAncestors(VesselPosition targetPosition) {
-        LabVessel targetVessel = getVesselAtPosition(targetPosition);
-
+    public List<LabVessel.VesselEvent> getAncestors(LabVessel targetVessel, VesselPosition targetPosition) {
         List<LabVessel.VesselEvent> vesselEvents = new ArrayList<>();
 
         for (SectionTransfer sectionTransfer : sectionTransfersTo) {
@@ -542,13 +546,7 @@ public class VesselContainer<T extends LabVessel> {
     }
 
     @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
-    public List<LabVessel.VesselEvent> getAncestors(LabVessel containee) {
-        return getAncestors(getPositionOfVessel(containee));
-    }
-
-    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
-    public List<LabVessel.VesselEvent> getDescendants(VesselPosition sourcePosition) {
-        LabVessel sourceVessel = getVesselAtPosition(sourcePosition);
+    public List<LabVessel.VesselEvent> getDescendants(LabVessel sourceVessel, VesselPosition sourcePosition) {
 
         List<LabVessel.VesselEvent> vesselEvents = new ArrayList<>();
         for (SectionTransfer sectionTransfer : sectionTransfersFrom) {
@@ -578,11 +576,6 @@ public class VesselContainer<T extends LabVessel> {
         }
         Collections.sort(vesselEvents, LabVessel.VesselEvent.COMPARE_VESSEL_EVENTS_BY_DATE);
         return vesselEvents;
-    }
-
-    @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
-    public List<LabVessel.VesselEvent> getDescendants(LabVessel containee) {
-        return getDescendants(getPositionOfVessel(containee));
     }
 
     @Transient  // needed here to prevent VesselContainer_.class from including this as a persisted field.
@@ -993,7 +986,7 @@ public class VesselContainer<T extends LabVessel> {
             List<LabVessel.VesselEvent> ancestorEvents;
             if (vesselAtPosition == null) {
                 if (positionToVesselMaps.isEmpty()) {
-                    ancestorEvents = getAncestors(vesselPosition);
+                    ancestorEvents = getAncestors(null, vesselPosition);
                 } else {
                     ancestorEvents = Collections.emptyList();
                 }

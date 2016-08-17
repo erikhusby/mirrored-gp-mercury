@@ -558,6 +558,10 @@ public abstract class LabVessel implements Serializable {
         this.createdOn = createdOn;
     }
 
+    public Set<PositionToVesselMap> getPositionToVesselMaps() {
+        return positionToVesselMaps;
+    }
+
     public void addPositionToVesselMap(PositionToVesselMap positionToVesselMap) {
         positionToVesselMaps.add(positionToVesselMap);
         containersCount += 1;
@@ -790,8 +794,9 @@ public abstract class LabVessel implements Serializable {
                     this, null, null);
             vesselEvents.add(vesselEvent);
         }
-        for (LabVessel container : getContainers()) {
-            vesselEvents.addAll(container.getContainerRole().getAncestors(this));
+        for (PositionToVesselMap positionToVesselMap : positionToVesselMaps) {
+            vesselEvents.addAll(positionToVesselMap.getContainer().getContainerRole().getAncestors(
+                    this, positionToVesselMap.getVesselPosition()));
         }
         Collections.sort(vesselEvents, VesselEvent.COMPARE_VESSEL_EVENTS_BY_DATE);
         return vesselEvents;
@@ -813,8 +818,9 @@ public abstract class LabVessel implements Serializable {
                     vesselToSectionTransfer.getTargetVesselContainer().getEmbedder(), null, null);
             vesselEvents.add(vesselEvent);
         }
-        for (LabVessel container : getContainers()) {
-            vesselEvents.addAll(container.getContainerRole().getDescendants(this));
+        for (PositionToVesselMap positionToVesselMap : positionToVesselMaps) {
+            vesselEvents.addAll(positionToVesselMap.getContainer().getContainerRole().getDescendants(
+                    this, positionToVesselMap.getVesselPosition()));
         }
         Collections.sort(vesselEvents, VesselEvent.COMPARE_VESSEL_EVENTS_BY_DATE);
         return vesselEvents;
