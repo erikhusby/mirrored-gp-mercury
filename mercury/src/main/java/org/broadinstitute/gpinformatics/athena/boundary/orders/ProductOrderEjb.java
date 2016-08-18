@@ -246,14 +246,15 @@ public class ProductOrderEjb {
             }
         } catch (org.broadinstitute.sap.services.SAPIntegrationException|QuoteServerException|QuoteNotFoundException e) {
             StringBuilder errorMessage = new StringBuilder();
-            errorMessage.append("Unable to ");
+                errorMessage.append("Unable to ");
             if (StringUtils.isEmpty(editedProductOrder.getSapOrderNumber())) {
                 errorMessage.append("create ");
             } else {
                 errorMessage.append("update ");
             }
-            errorMessage.append("this order in SAP at this point in time ").append(e.getMessage());
-            messageCollection.addError(errorMessage + e.getMessage());
+            errorMessage.append("this order in SAP at this point in time: ").append(e.getMessage());
+            messageCollection.addError(errorMessage.toString());
+            log.error(errorMessage, e);
         }
     }
 
