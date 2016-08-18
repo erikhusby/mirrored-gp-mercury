@@ -102,9 +102,14 @@
                             </li>
                         </security:authorizeBlock>
                         <li>
-                            <stripes:link id="designationLoadingTubes"
-                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.run.DesignationLoadingTubeActionBean"
+                            <stripes:link id="flowcellDesignations"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.run.FlowcellDesignationActionBean"
                                           event="view">Designate Loading Tubes</stripes:link>
+                        </li>
+                        <li>
+                            <stripes:link id="designationFct"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.run.DesignationFctActionBean"
+                                          event="view">Create FCT from Queued Designated Loading Tubes</stripes:link>
                         </li>
                         <li>
                             <stripes:link id="createFCT"

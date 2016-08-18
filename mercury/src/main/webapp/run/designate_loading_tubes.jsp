@@ -2,7 +2,7 @@
 <%@ taglib prefix='fn' uri='http://java.sun.com/jsp/jstl/functions' %>
 
 <stripes:useActionBean var="actionBean"
-                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.run.DesignationLoadingTubeActionBean"/>
+                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.run.FlowcellDesignationActionBean"/>
 
 <stripes:layout-render name="/layout.jsp" pageTitle="Designate Loading Tubes" sectionTitle="Designate Loading Tubes">
 
@@ -18,9 +18,9 @@
                     ],
                     "aoColumns":[
                         {"bSortable":false},  // selected
-                        {"bSortable":false},  // status
-                        {"bSortable":false},  // priority
-                        {"bSortable":false},  // barcode
+                        {"bSortable":true},  // status
+                        {"bSortable":true},  // priority
+                        {"bSortable":true},  // barcode
                         {"bSortable":true},  // lcset
                         {"bSortable":true},  // tube type
                         {"bSortable":true},  // sequencer model
@@ -37,7 +37,7 @@
                     ]
                 });
 
-                // Clears fields.
+                // Set up fields.
                 $j('#lcsetBarcodeText').removeAttr('value');
                 $j('#dateRangeDivNaturalLanguageString').value('Custom');
                 $j('#multiStatus').attr('value', '');
@@ -45,6 +45,8 @@
                 $j('#multiSeqModel').attr('value', '');
                 $j('#multiIndexType').attr('value', '');
                 $j('#multiPoolTest').attr('value', '');
+                $j('#showQueued').prop('checked', true);
+                $j('.shiftCheckbox')[0].checked(false);
             });
 
             function lcsetUpdated() {
@@ -58,8 +60,8 @@
             };
 
             function rowUpdated(rowIndex) {
-                checkboxId = 'checkbox' + rowIndex;
-                $j(checkboxId).attr("checked", "checked");
+                checkboxId = '#checkbox_' + rowIndex;
+                $j(checkboxId).prop('checked', true);
             };
 
         </script>
@@ -117,8 +119,8 @@
                 </div>
 
                 <div style="float: right; width: 33%;">
-                    <stripes:checkbox id="showQueued" name="showQueued" checked="checked"/>
-                    <stripes:label for="showQueued">Include In Queue</stripes:label>
+                    <stripes:checkbox id="showQueued" name="showQueued"/>
+                    <stripes:label for="showQueued">Include Queued</stripes:label>
                     <stripes:checkbox id="showProcessed" name="showProcessed"/>
                     <stripes:label for="showProcessed">Include On FCT</stripes:label>
                     <stripes:checkbox id="showAbandoned" name="showAbandoned"/>
@@ -135,7 +137,7 @@
                 </div>
             </div>
 
-            <c:if test="${not empty actionBean.rowDtos}">
+            <c:if test="${not empty actionBean.dtos}">
                 <div class="control-group" style="padding-top: 50px;">
                     <table border="0">
                         <tr>
@@ -154,19 +156,20 @@
                             <td>
                                 <stripes:select style='width:8em' id="multiStatus" name="multiEdit.status">
                                     <stripes:option value=""/>
-                                    <stripes:options-collection label="displayName" collection="${actionBean.statusValues}"/>
+                                    <stripes:options-collection label="displayName"
+                                                                collection="${actionBean.utils.statusValues}"/>
                                 </stripes:select>
                             </td>
                             <td>
                                 <stripes:select style='width:8em' id="multiPriority" name="multiEdit.priority">
                                     <stripes:option value=""/>
-                                    <stripes:options-collection collection="${actionBean.priorityValues}"/>
+                                    <stripes:options-collection collection="${actionBean.utils.priorityValues}"/>
                                 </stripes:select>
                             </td>
                             <td>
                                 <stripes:select id="multiSeqModel" name="multiEdit.sequencerModel">
                                     <stripes:option value=""/>
-                                    <stripes:options-collection label="displayName" collection="${actionBean.flowcellValues}"/>
+                                    <stripes:options-collection label="displayName" collection="${actionBean.utils.flowcellValues}"/>
                                 </stripes:select>
                             </td>
                             <td>
@@ -181,7 +184,7 @@
                             <td>
                                 <stripes:select style='width:8em' id="multiIndexType" name="multiEdit.indexType">
                                     <stripes:option value=""/>
-                                    <stripes:options-collection collection="${actionBean.indexTypes}"/>
+                                    <stripes:options-collection collection="${actionBean.utils.indexTypes}"/>
                                 </stripes:select>
                             </td>
                             <td>
@@ -232,12 +235,12 @@
                     </tr>
                     </thead>
                     <tbody>
-                    <c:forEach items="${actionBean.rowDtos}" var="dto" varStatus="item">
+                    <c:forEach items="${actionBean.dtos}" var="dto" varStatus="item">
                         <tr class="${dto.repeatedBarcode ? 'repeatedBarcode' : ''}">
                             <td class="tinyWidthColumn">
                                 <c:if test="${dto.status.modifiable && dto.regulatoryDesignation ne 'MIXED'}">
-                                    <stripes:checkbox class="shiftCheckbox" style="margin-left: 40%" id="${'checkbox' + item.index}"
-                                                      name="rowDtos[${item.index}].selected"/>
+                                    <stripes:checkbox class="shiftCheckbox" style="margin-left: 40%" id="checkbox_${item.index}"
+                                                      name="dtos[${item.index}].selected"/>
                                 </c:if>
                             </td>
                             <td class="smallerWidthColumn">${dto.status.displayName}</td>
@@ -252,80 +255,58 @@
                             </td>
                             <!-- "Primary" LCSET with link to its JIRA ticket, and any additional LCSETs without links. -->
                             <td class="fixedWidthColumn">
-                                <a href="${dto.lcsetUrl}" target="JIRA">${dto.primaryLcset}</a><br/>${dto.additionalLcsetJoin}
+                                <a href="${dto.lcsetUrl}" target="JIRA">${dto.lcset}</a><br/>${dto.additionalLcsetJoin}
                             </td>
                             <td class="fixedWidthColumn">${dto.tubeType}</td>
                             <td class="widerFixedWidthColumn">${dto.sequencerModel.displayName}</td>
                             <td class="smallerWidthColumn">${dto.numberSamples}</td>
                             <td class="smallerWidthColumn">
-                                <input style='width:5em' class="numLanes" name="rowDtos[${item.index}].numberLanes" value="${dto.numberLanes}"
+                                <input style='width:5em' class="numLanes" name="dtos[${item.index}].numberLanes" value="${dto.numberLanes}"
                                     ${not dto.status.modifiable ? 'disabled' : ''} onkeypress="rowUpdated(${item.index})"/>
                             </td>
                             <td class="smallerWidthColumn">
-                                <input style='width:5em' class="loadConc" name="rowDtos[${item.index}].loadingConc" value="${dto.loadingConc}"
+                                <input style='width:5em' class="loadConc" name="dtos[${item.index}].loadingConc" value="${dto.loadingConc}"
                                  ${not dto.status.modifiable ? 'disabled' : ''} onkeypress="rowUpdated(${item.index})"/>
                             </td>
                             <td class="widerFixedWidthColumn">${dto.tubeDate}</td>
                             <td class="smallerWidthColumn">
-                                <input style='width:5em' class="readLength" name="rowDtos[${item.index}].readLength" value="${dto.readLength}"
+                                <input style='width:5em' class="readLength" name="dtos[${item.index}].readLength" value="${dto.readLength}"
                                  ${not dto.status.modifiable ? 'disabled' : ''} onkeypress="rowUpdated(${item.index})"/>
                             </td>
                             <td class="smallerWidthColumn">${dto.indexType}</td>
                             <td class="smallerWidthColumn">
-                                <input style='width:5em' class="numberCycles" name="rowDtos[${item.index}].numberCycles" value="${dto.numberCycles}"
+                                <input style='width:5em' class="numberCycles" name="dtos[${item.index}].numberCycles" value="${dto.numberCycles}"
                                  ${not dto.status.modifiable ? 'disabled' : ''} onkeypress="rowUpdated(${item.index})"/>
                             </td>
                             <td class="tinyWidthColumn">${dto.poolTest?'Yes':'No'}</td>
                             <td class="fixedWidthColumn">${dto.regulatoryDesignation}</td>
                             <td><span title="${dto.startingBatchVessels}">${dto.productNameJoin}</span></td>
 
-                            <input type="hidden" name="rowDtos[${item.index}].priority" value="${dto.priority}"/>
-                            <input type="hidden" name="rowDtos[${item.index}].status" value="${dto.status}"/>
-                            <input type="hidden" name="rowDtos[${item.index}].repeatedBarcode" value="${dto.repeatedBarcode}"/>
-                            <input type="hidden" name="rowDtos[${item.index}].createdOn" value="${dto.createdOn}"/>
-                            <input type="hidden" name="rowDtos[${item.index}].barcode" value="${dto.barcode}"/>
-                            <input type="hidden" name="rowDtos[${item.index}].primaryLcset" value="${dto.primaryLcset}"/>
-                            <input type="hidden" name="rowDtos[${item.index}].lcsetUrl" value="${dto.lcsetUrl}"/>
-                            <input type="hidden" name="rowDtos[${item.index}].additionalLcsetJoin" value="${dto.additionalLcsetJoin}"/>
-                            <input type="hidden" name="rowDtos[${item.index}].tubeType" value="${dto.tubeType}"/>
-                            <input type="hidden" name="rowDtos[${item.index}].sequencerModel" value="${dto.sequencerModel}"/>
-                            <input type="hidden" name="rowDtos[${item.index}].numberSamples" value="${dto.numberSamples}"/>
-                            <input type="hidden" name="rowDtos[${item.index}].tubeDate" value="${dto.tubeDate}"/>
-                            <input type="hidden" name="rowDtos[${item.index}].indexType" value="${dto.indexType}"/>
-                            <input type="hidden" name="rowDtos[${item.index}].poolTest" value="${dto.poolTest?'Yes':'No'}"/>
-                            <input type="hidden" name="rowDtos[${item.index}].regulatoryDesignation" value="${dto.regulatoryDesignation}"/>
-                            <input type="hidden" name="rowDtos[${item.index}].productNameJoin" value="${dto.productNameJoin}"/>
-                            <input type="hidden" name="rowDtos[${item.index}].startingBatchVessels" value="${dto.startingBatchVessels}"/>
+                            <input type="hidden" name="dtos[${item.index}].priority" value="${dto.priority}"/>
+                            <input type="hidden" name="dtos[${item.index}].status" value="${dto.status}"/>
+                            <input type="hidden" name="dtos[${item.index}].repeatedBarcode" value="${dto.repeatedBarcode}"/>
+                            <input type="hidden" name="dtos[${item.index}].createdOn" value="${dto.createdOn}"/>
+                            <input type="hidden" name="dtos[${item.index}].barcode" value="${dto.barcode}"/>
+                            <input type="hidden" name="dtos[${item.index}].lcset" value="${dto.lcset}"/>
+                            <input type="hidden" name="dtos[${item.index}].lcsetUrl" value="${dto.lcsetUrl}"/>
+                            <input type="hidden" name="dtos[${item.index}].additionalLcsetJoin" value="${dto.additionalLcsetJoin}"/>
+                            <input type="hidden" name="dtos[${item.index}].tubeType" value="${dto.tubeType}"/>
+                            <input type="hidden" name="dtos[${item.index}].sequencerModel" value="${dto.sequencerModel}"/>
+                            <input type="hidden" name="dtos[${item.index}].numberSamples" value="${dto.numberSamples}"/>
+                            <input type="hidden" name="dtos[${item.index}].tubeDate" value="${dto.tubeDate}"/>
+                            <input type="hidden" name="dtos[${item.index}].indexType" value="${dto.indexType}"/>
+                            <input type="hidden" name="dtos[${item.index}].poolTest" value="${dto.poolTest?'Yes':'No'}"/>
+                            <input type="hidden" name="dtos[${item.index}].regulatoryDesignation" value="${dto.regulatoryDesignation}"/>
+                            <input type="hidden" name="dtos[${item.index}].productNameJoin" value="${dto.productNameJoin}"/>
+                            <input type="hidden" name="dtos[${item.index}].startingBatchVessels" value="${dto.startingBatchVessels}"/>
 
-                            <input type="hidden" name="rowDtos[${item.index}].designationId" value="${dto.designationId}"/>
-                            <input type="hidden" name="rowDtos[${item.index}].tubeEventId" value="${dto.tubeEventId}"/>
+                            <input type="hidden" name="dtos[${item.index}].designationId" value="${dto.designationId}"/>
+                            <input type="hidden" name="dtos[${item.index}].tubeEventId" value="${dto.tubeEventId}"/>
                         </tr>
                     </c:forEach>
                     </tbody>
                 </table>
             </div>
-
-            <div class="control-group">
-                <stripes:submit id="createFctBtn" name="createFct" value="Create FCT" class="btn btn-primary"
-                                style="margin: 0; margin-left: 30%;"/>
-            </div>
-
-            <c:if test="${actionBean.createdFcts.size() > 0}">
-                <div class="control-group">
-                    <hr style="margin: 0; margin-left: 50px"/>
-                    <h5 style="margin-left: 50px;">Created FCT Tickets</h5>
-                    <ol>
-                        <c:forEach items="${actionBean.createdFcts}" var="fct" varStatus="item">
-                            <li>
-                                <a target="JIRA" href={$fct.url} class="external" target="JIRA"></a>${fct.name}
-                            </li>
-
-                            <input type="hidden" name="createdFcts[${item.index}].url" value="${fct.url}"/>
-                            <input type="hidden" name="createdFcts[${item.index}].name" value="${fct.name}"/>
-                        </c:forEach>
-                    </ol>
-                </div>
-            </c:if>
 
         </stripes:form>
     </stripes:layout-component>

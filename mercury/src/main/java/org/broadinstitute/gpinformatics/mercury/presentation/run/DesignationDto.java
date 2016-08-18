@@ -2,8 +2,9 @@ package org.broadinstitute.gpinformatics.mercury.presentation.run;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.run.DesignationLoadingTube;
+import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -21,13 +22,13 @@ import java.util.TreeSet;
 /**
  * Represents the UI data table row.
  */
-public class DesignationRowDto {
+public class DesignationDto implements LabBatchEjb.FctDto, Cloneable {
     private boolean selected = false;
-    private DesignationLoadingTube.Status status;
+    private FlowcellDesignation.Status status;
     private Date createdOn;
     private IlluminaFlowcell.FlowcellType sequencerModel;
-    private DesignationLoadingTube.IndexType indexType;
-    private DesignationLoadingTube.Priority priority;
+    private FlowcellDesignation.IndexType indexType;
+    private FlowcellDesignation.Priority priority;
     private Integer numberCycles;
     private Integer numberLanes;
     private Integer readLength;
@@ -35,7 +36,7 @@ public class DesignationRowDto {
     private Boolean poolTest;
     private String barcode;
     private String lcsetUrl;
-    private String primaryLcset;
+    private String lcset;
     private List<String> additionalLcsets = new ArrayList<>();
     private List<String> productNames = new ArrayList<>();
     private String startingBatchVessels;
@@ -47,23 +48,25 @@ public class DesignationRowDto {
     private Long designationId;
     private Long tubeEventId;
     private boolean repeatedBarcode;
+    private boolean allocated = false;
+    private int allocationOrder = 0;
 
     private final static String DELIMITER = "<br/>";
 
-    public DesignationRowDto() {
+    public DesignationDto() {
         createdOn = new Date();
-        status = DesignationLoadingTube.Status.UNSAVED;
+        status = FlowcellDesignation.Status.UNSAVED;
     }
 
-    public DesignationRowDto(LabVessel loadingLabVessel, Collection<LabEvent> labEvents,
-                             String lcsetUrl, LabBatch primaryLcset, Collection<String> additionalLcsets,
-                             Collection<String> productNames, String startingBatchVessels,
-                             String regulatoryDesignation, int numberSamples,
-                             IlluminaFlowcell.FlowcellType sequencerModel,
-                             DesignationLoadingTube.IndexType indexType,
-                             Integer numberCycles, Integer numberLanes, Integer readLength,
-                             BigDecimal loadingConc, Boolean poolTest, Date createdOn,
-                             DesignationLoadingTube.Status status) {
+    public DesignationDto(LabVessel loadingLabVessel, Collection<LabEvent> labEvents,
+                          String lcsetUrl, LabBatch lcset, Collection<String> additionalLcsets,
+                          Collection<String> productNames, String startingBatchVessels,
+                          String regulatoryDesignation, int numberSamples,
+                          IlluminaFlowcell.FlowcellType sequencerModel,
+                          FlowcellDesignation.IndexType indexType,
+                          Integer numberCycles, Integer numberLanes, Integer readLength,
+                          BigDecimal loadingConc, Boolean poolTest, Date createdOn,
+                          FlowcellDesignation.Status status) {
 
         this.barcode = loadingLabVessel.getLabel();
         SortedSet<String> tubeDates = new TreeSet<>();
@@ -77,7 +80,7 @@ public class DesignationRowDto {
             }
         }
         this.tubeDate = StringUtils.join(tubeDates, "<br/>");
-        this.primaryLcset = primaryLcset.getBatchName();
+        this.lcset = lcset.getBatchName();
         this.lcsetUrl = lcsetUrl;
         this.additionalLcsets.addAll(additionalLcsets);
         this.productNames.addAll(productNames);
@@ -90,13 +93,46 @@ public class DesignationRowDto {
         this.readLength = readLength;
         this.loadingConc = loadingConc;
         this.poolTest = poolTest;
-        this.priority = DesignationLoadingTube.Priority.NORMAL;
+        this.priority = FlowcellDesignation.Priority.NORMAL;
         this.regulatoryDesignation = regulatoryDesignation;
         this.numberSamples = numberSamples;
         this.createdOn = createdOn;
         this.status = status;
     }
 
+
+    /**
+     * Orders by barcode, then designation id (nulls last), then by descending created date (older ones last).
+     * This affects how duplicates are removed by the action bean.
+     */
+    public static Comparator<DesignationDto> BY_BARCODE_ID_DATE = new Comparator<DesignationDto>() {
+        @Override
+        public int compare(DesignationDto o1, DesignationDto o2) {
+            int barcodeCompare = o1.getBarcode().compareTo(o2.getBarcode());
+            int idCompare = o1.getDesignationId() == null ?
+                    (o2.getDesignationId() == null ? 0 : -1) :
+                    (o2.getDesignationId() == null ? 1 : o1.getDesignationId().compareTo(o2.getDesignationId()));
+            return barcodeCompare != 0 ? barcodeCompare : idCompare != 0 ? idCompare :
+                    o2.getCreatedOn().compareTo(o1.getCreatedOn());
+        }
+    };
+
+    /**
+     * Splits dto into two. The orignal gets the allocated lane count and the new one gets the unallocated count.
+     * @param allocatedLanes the new number of lanes on This.
+     * @return  a new dto like This but with null entity id and a lane count of the unallocated number of lanes.
+     */
+    public DesignationDto split(int allocatedLanes) {
+        try {
+            DesignationDto splitDto = (DesignationDto)this.clone();
+            splitDto.setDesignationId(null);
+            splitDto.setNumberLanes(this.getNumberLanes() - allocatedLanes);
+            setNumberLanes(allocatedLanes);
+            return splitDto;
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     public String getAdditionalLcsetJoin() {
         return StringUtils.join(additionalLcsets, DELIMITER);
@@ -113,22 +149,6 @@ public class DesignationRowDto {
     public void setProductNameJoin(String delimitedProductNames) {
         productNames = Arrays.asList(delimitedProductNames.split(DELIMITER));
     }
-
-    /**
-     * Orders by barcode, then designation id (nulls last), then by descending created date (older ones last).
-     * This affects how duplicates are removed by the action bean.
-     */
-    public static Comparator<DesignationRowDto> BY_BARCODE_ID_DATE = new Comparator<DesignationRowDto>() {
-        @Override
-        public int compare(DesignationRowDto o1, DesignationRowDto o2) {
-            int barcodeCompare = o1.getBarcode().compareTo(o2.getBarcode());
-            int idCompare = o1.getDesignationId() == null ?
-                    (o2.getDesignationId() == null ? 0 : -1) :
-                    (o2.getDesignationId() == null ? 1 : o1.getDesignationId().compareTo(o2.getDesignationId()));
-            return barcodeCompare != 0 ? barcodeCompare : idCompare != 0 ? idCompare :
-                    o2.getCreatedOn().compareTo(o1.getCreatedOn());
-        }
-    };
 
     public boolean isSelected() {
         return selected;
@@ -150,26 +170,26 @@ public class DesignationRowDto {
         return sequencerModel;
     }
 
-    public void setSequencerModel(
-            IlluminaFlowcell.FlowcellType sequencerModel) {
+    public void setSequencerModel(IlluminaFlowcell.FlowcellType sequencerModel) {
         this.sequencerModel = sequencerModel;
     }
 
-    public DesignationLoadingTube.IndexType getIndexType() {
+    public FlowcellDesignation.IndexType getIndexType() {
         return indexType;
     }
 
-    public void setIndexType(
-            DesignationLoadingTube.IndexType indexType) {
+    public void setIndexType(FlowcellDesignation.IndexType indexType) {
         this.indexType = indexType;
     }
 
-    public DesignationLoadingTube.Priority getPriority() {
+    public FlowcellDesignation.Priority getPriority() {
         return priority;
     }
 
-    public void setPriority(DesignationLoadingTube.Priority priority) {
+    public void setPriority(FlowcellDesignation.Priority priority) {
         this.priority = priority;
+        allocationOrder = (priority == FlowcellDesignation.Priority.HIGH ? 1 :
+                priority == FlowcellDesignation.Priority.LOW ? -1 : 0);
     }
 
     public Integer getNumberCycles() {
@@ -228,12 +248,12 @@ public class DesignationRowDto {
         this.lcsetUrl = lcsetUrl;
     }
 
-    public String getPrimaryLcset() {
-        return primaryLcset;
+    public String getLcset() {
+        return lcset;
     }
 
-    public void setPrimaryLcset(String primaryLcset) {
-        this.primaryLcset = primaryLcset;
+    public void setLcset(String lcset) {
+        this.lcset = lcset;
     }
 
     public List<String> getAdditionalLcsets() {
@@ -292,11 +312,11 @@ public class DesignationRowDto {
         this.numberSamples = numberSamples;
     }
 
-    public DesignationLoadingTube.Status getStatus() {
+    public FlowcellDesignation.Status getStatus() {
         return status;
     }
 
-    public void setStatus(DesignationLoadingTube.Status status) {
+    public void setStatus(FlowcellDesignation.Status status) {
         this.status = status;
     }
 
@@ -322,5 +342,19 @@ public class DesignationRowDto {
 
     public void setRepeatedBarcode(boolean repeatedBarcode) {
         this.repeatedBarcode = repeatedBarcode;
+    }
+
+    public boolean isAllocated() {
+        return allocated;
+    }
+
+    @Override
+    public void setAllocated(boolean allocated) {
+        this.allocated = allocated;
+    }
+
+    @Override
+    public int getAllocationOrder() {
+        return allocationOrder;
     }
 }

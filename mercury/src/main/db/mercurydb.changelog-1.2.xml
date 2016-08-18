@@ -595,9 +595,9 @@
     </changeSet>
 
     <changeSet id="GPLIM-4159-1" author="epolk">
-      <createTable schemaName="mercury" tableName="DESIGNATION_LOADING_TUBE">
+      <createTable schemaName="mercury" tableName="FLOWCELL_DESIGNATION">
 	<column name="designation_id" type="number(19,0)">
-	  <constraints nullable="false" primaryKey="true" primaryKeyName="PK_DESIG_LOADING_TUBE"/>
+	  <constraints nullable="false" primaryKey="true" primaryKeyName="PK_FLOWCELL_DESIGNATION"/>
 	</column>
 	<column name="clinical" type="number(1,0)">
 	  <constraints nullable="false"/>
@@ -607,25 +607,42 @@
 	<column name="loading_conc" type="number(19,2)"/>
 	<column name="number_cycles" type="number(10,0)"/>
 	<column name="number_lanes" type="number(10,0)"/>
+	<column name="number_samples" type="number(10,0)">
+	  <constraints nullable="false"/>
+	</column>
 	<column name="pool_test" type="number(1,0)">
 	  <constraints nullable="false"/>
 	</column>
+	<column name="priority" type="varchar(255)"/>
 	<column name="read_length" type="number(10,0)"/>
 	<column name="sequencer_model" type="varchar(255)"/>
-	<column name="priority" type="varchar(255)"/>
 	<column name="status" type="varchar(255)"/>
+	<column name="lcset" type="number(19,0)">
+	  <constraints foreignKeyName="FK_FLOWCELL_LCSET" references="LAB_BATCH(lab_batch_id)"/>
+	</column>
 	<column name="loading_tube" type="number(19,0)">
-	  <constraints foreignKeyName="FK_DESIG_LOADING_TUBE_VESSEL" references="LAB_VESSEL(lab_vessel_id)"/>
+	  <constraints foreignKeyName="FK_FLOWCELL_DESIG_TUBE" references="LAB_VESSEL(lab_vessel_id)"/>
 	</column>
 	<column name="loading_tube_event" type="number(19,0)">
-	  <constraints foreignKeyName="FK_DESIG_LOADING_TUBE_EVENT" references="LAB_EVENT(lab_event_id)"/>
+	  <constraints foreignKeyName="FK_FLOWCELL_DESIG_EVENT" references="LAB_EVENT(lab_event_id)"/>
 	</column>
-	<column name="number_samples" type="number(10,0)"/>
       </createTable>
     </changeSet>
 
     <changeSet id="GPLIM-4159-2" author="epolk">
-      <createTable schemaName="mercury" tableName="DESIGNATION_LOADING_TUBE_AUD">
+      <createIndex indexName="IX_FLOWCELL_DESIG_TUBE" tableName="FLOWCELL_DESIGNATION" schemaName="mercury">
+	<column name="loading_tube"/>
+      </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-4159-3" author="epolk">
+      <createIndex indexName="IX_FLOWCELL_DESIG_STATUS" tableName="FLOWCELL_DESIGNATION" schemaName="mercury">
+	<column name="status"/>
+      </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-4159-4" author="epolk">
+      <createTable schemaName="mercury" tableName="FLOWCELL_DESIGNATION_AUD">
 	<column name="designation_id" type="number(19,0)">
 	  <constraints nullable="false"/>
 	</column>
@@ -639,179 +656,84 @@
 	<column name="loading_conc" type="number(19,2)"/>
 	<column name="number_cycles" type="number(10,0)"/>
 	<column name="number_lanes" type="number(10,0)"/>
+	<column name="number_samples" type="number(10,0)"/>
 	<column name="pool_test" type="number(1,0)"/>
+	<column name="priority" type="varchar(255)"/>
 	<column name="read_length" type="number(10,0)"/>
 	<column name="sequencer_model" type="varchar(255)"/>
-	<column name="priority" type="varchar(255)"/>
 	<column name="status" type="varchar(255)"/>
+	<column name="lcset" type="number(19,0)"/>
 	<column name="loading_tube" type="number(19,0)"/>
 	<column name="loading_tube_event" type="number(19,0)"/>
-	<column name="number_samples" type="number(10,0)"/>
       </createTable>
     </changeSet>
 
-    <changeSet id="GPLIM-4159-3" author="epolk">
-      <addPrimaryKey constraintName="PK_DESIG_LOADING_TUBE_AUD"
-		     schemaName="mercury" tableName="DESIGNATION_LOADING_TUBE_AUD"
+    <changeSet id="GPLIM-4159-5" author="epolk">
+      <addPrimaryKey constraintName="PK_FLOWCELL_DESIGNATION_AUD"
+		     schemaName="mercury" tableName="FLOWCELL_DESIGNATION_AUD"
 		     columnNames="rev, designation_id"/>
     </changeSet>
 
-    <changeSet id="GPLIM-4159-4" author="epolk">
-      <createIndex indexName="IX_DESIG_LOADING_TUBE_AUD" tableName="DESIGNATION_LOADING_TUBE_AUD" schemaName="mercury">
+    <changeSet id="GPLIM-4159-6" author="epolk">
+      <createIndex indexName="IX_FLOWCELL_DESIGNATION_AUD" tableName="FLOWCELL_DESIGNATION_AUD" schemaName="mercury">
 	<column name="designation_id"/>
 	<column name="rev"/>
       </createIndex>
     </changeSet>
 
-
-    <changeSet id="GPLIM-4159-5" author="epolk">
-      <createTable tableName="DESIGNATION_FCT" schemaName="mercury">
-	<column name="designation_loading_tube" type="number(19,0)">
-	  <constraints nullable="false" foreignKeyName="FK_DESIG_FCT_DESIG" references="DESIGNATION_LOADING_TUBE(designation_id)"/>
-	</column>
-	<column name="fcts" type="number(19,0)">
-	  <constraints nullable="false" foreignKeyName="FK_DESIG_FCT_BATCH" references="LAB_BATCH(lab_batch_id)"/>
-	</column>
-      </createTable>
-    </changeSet>
-
-    <changeSet id="GPLIM-4159-6" author="epolk">
-      <addPrimaryKey constraintName="PK_DESIG_FCT" tableName="DESIGNATION_FCT" schemaName="mercury"
-		     columnNames="designation_loading_tube, fcts"/>
-    </changeSet>
-
     <changeSet id="GPLIM-4159-7" author="epolk">
-      <createTable schemaName="mercury" tableName="DESIGNATION_FCT_AUD">
-	<column name="rev" type="number(19,0)">
-	  <constraints nullable="false" foreignKeyName="FK_DESIG_FCT_AUD" references="REV_INFO(rev_info_id)"/>
+      <createTable schemaName="mercury" tableName="DESIGNATION_PRODUCT">
+	<column name="flowcell_designation" type="number(19,0)">
+	  <constraints nullable="false" foreignKeyName="FK_DESIG_PRODUCT_DESIG" references="FLOWCELL_DESIGNATION(designation_id)"/>
 	</column>
-	<column name="designation_loading_tube" type="number(19,0)">
+	<column name="products" type="number(19,0)">
 	  <constraints nullable="false"/>
 	</column>
-	<column name="fcts" type="number(19,0)">
-	  <constraints nullable="false"/>
-	</column>
-	<column name="revtype" type="number(3,0)"/>
       </createTable>
     </changeSet>
 
     <changeSet id="GPLIM-4159-8" author="epolk">
-      <addPrimaryKey constraintName="PK_DESIG_FCT_AUD" tableName="DESIGNATION_FCT_AUD" schemaName="mercury"
-		     columnNames="rev, designation_loading_tube, fcts"/>
+      <addPrimaryKey constraintName="PK_DESIGNATION_PRODUCT"
+		     schemaName="mercury" tableName="DESIGNATION_PRODUCT"
+		     columnNames="flowcell_designation, products"/>
     </changeSet>
 
     <changeSet id="GPLIM-4159-9" author="epolk">
-      <createIndex indexName="IX_DESIG_FCT_AUD" tableName="DESIGNATION_FCT_AUD" schemaName="mercury">
-	<column name="designation_loading_tube"/>
-	<column name="rev"/>
-      </createIndex>
-    </changeSet>
-
-    <changeSet id="GPLIM-4159-10" author="epolk">
-      <createTable schemaName="mercury" tableName="DESIGNATION_LCSET">
-	<column name="designation_loading_tube" type="number(19,0)">
-	  <constraints nullable="false" foreignKeyName="FK_DESIG_LCSET_DESIG" references="DESIGNATION_LOADING_TUBE(designation_id)"/>
-	</column>
-	<column name="lcsets" type="number(19,0)">
-	  <constraints nullable="false" foreignKeyName="FK_DESIG_LCSET_BATCH" references="LAB_BATCH(lab_batch_id)"/>
-	</column>
-      </createTable>
-    </changeSet>
-
-    <changeSet id="GPLIM-4159-11" author="epolk">
-      <addPrimaryKey constraintName="PK_DESIG_LCSET" schemaName="mercury" tableName="DESIGNATION_LCSET"
-		     columnNames="designation_loading_tube, lcsets"/>
-    </changeSet>
-
-    <changeSet id="GPLIM-4159-12" author="epolk">
-      <createTable schemaName="mercury" tableName="DESIGNATION_LCSET_AUD">
-	<column name="rev" type="number(19,0)">
-	  <constraints nullable="false" foreignKeyName="FK_DESIG_LCSET_AUD" references="REV_INFO(rev_info_id)"/>
-	</column>
-	<column name="designation_loading_tube" type="number(19,0)">
-	  <constraints nullable="false"/>
-	</column>
-	<column name="lcsets" type="number(19,0)">
-	  <constraints nullable="false"/>
-	</column>
-	<column name="revtype" type="number(3,0)"/>
-      </createTable>
-    </changeSet>
-
-    <changeSet id="GPLIM-4159-13" author="epolk">
-      <addPrimaryKey constraintName="PK_DESIG_LCSET_AUD"
-		     schemaName="mercury" tableName="DESIGNATION_LCSET_AUD"
-		     columnNames="rev, designation_loading_tube, lcsets"/>
-    </changeSet>
-
-    <changeSet id="GPLIM-4159-14" author="epolk">
-      <createIndex indexName="IX_DESIG_LCSET_AUD" tableName="DESIGNATION_LCSET_AUD" schemaName="mercury">
-	<column name="designation_loading_tube"/>
-	<column name="rev"/>
-      </createIndex>
-    </changeSet>
-
-
-
-    <changeSet id="GPLIM-4159-15" author="epolk">
-      <createTable schemaName="mercury" tableName="DESIGNATION_PRODUCT">
-	<column name="designation_loading_tube" type="number(19,0)">
-	  <constraints nullable="false" foreignKeyName="FK_DESIG_PRODUCT_DESIG" references="DESIGNATION_LOADING_TUBE(designation_id)"/>
-	</column>
-	<column name="products" type="number(19,0)">
-	  <constraints nullable="false"/>
-	</column>
-      </createTable>
-    </changeSet>
-
-    <changeSet id="GPLIM-4159-16" author="epolk">
-      <addPrimaryKey constraintName="PK_DESIG_PRODUCT"
-		     schemaName="mercury" tableName="DESIGNATION_PRODUCT"
-		     columnNames="designation_loading_tube, products"/>
-    </changeSet>
-
-    <changeSet id="GPLIM-4159-17" author="epolk">
       <createTable schemaName="mercury" tableName="DESIGNATION_PRODUCT_AUD">
 	<column name="rev" type="number(19,0)">
 	  <constraints nullable="false" foreignKeyName="FK_DESIG_PRODUCT_AUD" references="REV_INFO(rev_info_id)"/>
 	</column>
-	<column name="designation_loading_tube" type="number(19,0)">
+	<column name="revtype" type="number(3,0)"/>
+	<column name="flowcell_designation" type="number(19,0)">
 	  <constraints nullable="false"/>
 	</column>
 	<column name="products" type="number(19,0)">
 	  <constraints nullable="false"/>
 	</column>
-	<column name="revtype" type="number(3,0)"/>
       </createTable>
     </changeSet>
 
-    <changeSet id="GPLIM-4159-18" author="epolk">
-      <addPrimaryKey constraintName="PK_DESIG_PRODUCT_AUD"
+    <changeSet id="GPLIM-4159-10" author="epolk">
+      <addPrimaryKey constraintName="PK_DESIGNATION_PRODUCT_AUD"
 		     schemaName="mercury" tableName="DESIGNATION_PRODUCT_AUD"
-		     columnNames="rev, designation_loading_tube, products"/>
+		     columnNames="rev, flowcell_designation, products"/>
     </changeSet>
 
-    <changeSet id="GPLIM-4159-19" author="epolk">
-      <createIndex indexName="IX_DESIG_PRODUCT_AUD" tableName="DESIGNATION_PRODUCT_AUD" schemaName="mercury">
-	<column name="designation_loading_tube"/>
+    <changeSet id="GPLIM-4159-11" author="epolk">
+      <createIndex indexName="IX_DESIGNATION_PRODUCT_AUD" tableName="DESIGNATION_PRODUCT_AUD" schemaName="mercury">
+	<column name="flowcell_designation"/>
 	<column name="rev"/>
       </createIndex>
     </changeSet>
 
-    <changeSet id="GPLIM-4159-20" author="epolk">
+    <changeSet id="GPLIM-4159-12" author="epolk">
       <addForeignKeyConstraint constraintName="FK_DESIG_PRODUCT_PRODUCT"
 			       baseTableName="DESIGNATION_PRODUCT" baseColumnNames="products" baseTableSchemaName="mercury"
 			       referencedTableName="PRODUCT" referencedColumnNames="product_id" referencedTableSchemaName="athena"/>
     </changeSet>
 
-    <changeSet id="GPLIM-4159-21" author="epolk">
-      <createSequence sequenceName="seq_designation_tube" schemaName="mercury" startValue="1" incrementBy="50"/>
-    </changeSet>
-
-    <changeSet id="GPLIM-4159-22" author="epolk">
-      <createIndex indexName="IX_DESIG_LOADING_TUBE" tableName="DESIGNATION_LOADING_TUBE" schemaName="mercury">
-	<column name="loading_tube"/>
-      </createIndex>
+    <changeSet id="GPLIM-4159-13" author="epolk">
+      <createSequence sequenceName="SEQ_FLOWCELL_DESIGNATION" schemaName="mercury" startValue="1" incrementBy="50"/>
     </changeSet>
 
 </databaseChangeLog>

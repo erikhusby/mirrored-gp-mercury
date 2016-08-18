@@ -1,5 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.workflow;
 
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
+
 import javax.annotation.Nonnull;
 import java.math.BigDecimal;
 import java.util.Collection;
@@ -10,7 +13,7 @@ import java.util.Set;
 /**
  * Represents a table row in Create FCT page.
  */
-public class RowDto {
+public class CreateFctDto implements LabBatchEjb.FctDto, Cloneable {
     private String barcode;
     private String lcset;
     private String additionalLcsets;
@@ -24,14 +27,17 @@ public class RowDto {
     private String lcsetUrl;
     private String regulatoryDesignation;
     private int numberSamples;
+    private boolean allocated = false;
+    private int allocationOrder = 0;
 
-    public RowDto() {
+    public CreateFctDto() {
     }
 
-    public RowDto(@Nonnull String barcode, @Nonnull String lcset, String additionalLcsets, @Nonnull String eventDate,
-                  @Nonnull String product, @Nonnull String startingBatchVessels, @Nonnull String tubeType,
-                  @Nonnull BigDecimal loadingConc, String lcsetUrl, @Nonnull String regulatoryDesignation,
-                  int numberSamples) {
+    public CreateFctDto(@Nonnull String barcode, @Nonnull String lcset, String additionalLcsets,
+                        @Nonnull String eventDate,
+                        @Nonnull String product, @Nonnull String startingBatchVessels, @Nonnull String tubeType,
+                        @Nonnull BigDecimal loadingConc, String lcsetUrl, @Nonnull String regulatoryDesignation,
+                        int numberSamples) {
         this.barcode = barcode;
         this.lcset = lcset;
         this.additionalLcsets = additionalLcsets;
@@ -45,29 +51,38 @@ public class RowDto {
         this.numberSamples = numberSamples;
     }
 
-    public RowDto(@Nonnull String barcode, @Nonnull String lcset, @Nonnull String eventDate, @Nonnull String product,
-                  @Nonnull String startingBatchVessels, @Nonnull String tubeType, @Nonnull BigDecimal loadingConc,
-                  int numberLanes) {
-        this(barcode, lcset, "", eventDate, product, startingBatchVessels, tubeType, loadingConc, null, "", 0);
-        setNumberLanes(numberLanes);
+
+    public CreateFctDto(String barcode, String lcset, BigDecimal loadingConc, int numberLanes) {
+        this.barcode = barcode;
+        this.lcset = lcset;
+        this.loadingConc = loadingConc;
+        this.numberLanes = numberLanes;
     }
 
     /** Returns the unique combinations of lcset and tubeType which are just concatenated together. */
-    public static Set<String> allLcsetsAndTubeTypes(Collection<RowDto> rowDtos) {
+    public static Set<String> allLcsetsAndTubeTypes(Collection<CreateFctDto> createFctDtos) {
         Set<String> set = new HashSet<>();
-        for (RowDto rowDto : rowDtos) {
-            set.add(rowDto.getLcset() + rowDto.getTubeType());
+        for (CreateFctDto createFctDto : createFctDtos) {
+            set.add(createFctDto.getLcset() + createFctDto.getTubeType());
         }
         return set;
     }
 
     /** Returns the starting batch vessel barcodes. */
-    public static Set<String> allStartingBatchVessels(Collection<RowDto> rowDtos) {
+    public static Set<String> allStartingBatchVessels(Collection<CreateFctDto> createFctDtos) {
         Set<String> set = new HashSet<>();
-        for (RowDto rowDto : rowDtos) {
-            set.add(rowDto.getStartingBatchVessels());
+        for (CreateFctDto createFctDto : createFctDtos) {
+            set.add(createFctDto.getStartingBatchVessels());
         }
         return set;
+    }
+
+    /**
+     * Split is used for partial dto allocation. This is unsupported since it should never happen, since
+     * this type of dto is only used in the CreateFCT page that can only do complete flowcell fills.
+     */
+    public CreateFctDto split(int allocatedLanes) {
+        throw new RuntimeException("Expected to only do complete flowcell fills.");
     }
 
     public String getBarcode() {
@@ -126,7 +141,7 @@ public class RowDto {
         this.loadingConc = loadingConc;
     }
 
-    public int getNumberLanes() {
+    public Integer getNumberLanes() {
         return numberLanes;
     }
 
@@ -174,10 +189,26 @@ public class RowDto {
         this.numberSamples = numberSamples;
     }
 
+    /** Indicates if dto was allocated to a flowcell. */
+    public boolean isAllocated() {
+        return allocated;
+    }
+
+    @Override
+    public void setAllocated(boolean allocated) {
+        this.allocated = allocated;
+    }
+
+    /** Indicates the order in which multiple dtos are allocated to a flowcell. */
+    @Override
+    public int getAllocationOrder() {
+        return allocationOrder;
+    }
+
     public static final Comparator BY_BARCODE = new Comparator() {
         @Override
         public int compare(Object o1, Object o2) {
-            return ((RowDto)o1).getBarcode().compareTo(((RowDto)o2).getBarcode());
+            return ((CreateFctDto)o1).getBarcode().compareTo(((CreateFctDto)o2).getBarcode());
         }
     };
 
@@ -186,25 +217,25 @@ public class RowDto {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof RowDto)) {
+        if (!(o instanceof CreateFctDto)) {
             return false;
         }
 
-        RowDto rowDto = (RowDto) o;
+        CreateFctDto createFctDto = (CreateFctDto) o;
 
-        if (!barcode.equals(rowDto.barcode)) {
+        if (!barcode.equals(createFctDto.barcode)) {
             return false;
         }
-        if (!lcset.equals(rowDto.lcset)) {
+        if (!lcset.equals(createFctDto.lcset)) {
             return false;
         }
-        if (!eventDate.equals(rowDto.eventDate)) {
+        if (!eventDate.equals(createFctDto.eventDate)) {
             return false;
         }
-        if (!tubeType.equals(rowDto.tubeType)) {
+        if (!tubeType.equals(createFctDto.tubeType)) {
             return false;
         }
-        return product.equals(rowDto.product);
+        return product.equals(createFctDto.product);
 
     }
 

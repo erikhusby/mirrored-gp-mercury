@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
@@ -16,17 +17,16 @@ import javax.persistence.Id;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
- * DesignationLoadingTube represents a flowcell loading tube (norm, denature, or pooled norm) that is staged
+ * FlowcellDesignation represents a flowcell loading tube (norm, denature, or pooled norm) that is staged
  * for putting on a flowcell. Staging can happen in steps: tube selection, parameter editing, queueing,
  * and allocating to flowcell lanes. Probably not all in one session by one lab user.
  */
@@ -34,10 +34,10 @@ import java.util.Set;
 @Audited
 @Entity
 @Table(schema = "mercury")
-public class DesignationLoadingTube {
+public class FlowcellDesignation {
 
-    @SequenceGenerator(name = "seq_designation_tube", schema = "mercury", sequenceName = "seq_designation_tube")
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_designation_tube")
+    @SequenceGenerator(name = "seq_flowcell_designation", schema = "mercury", sequenceName = "seq_flowcell_designation")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_flowcell_designation")
     @Id
     private Long designationId;
 
@@ -45,20 +45,15 @@ public class DesignationLoadingTube {
     @ManyToOne
     private LabVessel loadingTube;
 
-    /** The LCSETs that this loading tube is part of. */
-    @ManyToMany
-    @JoinTable(schema = "mercury", name = "DESIGNATION_LCSET")
-    private Collection<LabBatch> lcsets = new ArrayList<>();
-
-    /** The FCTs that this loading tube has been allocated to. */
-    @ManyToMany
-    @JoinTable(schema = "mercury", name = "DESIGNATION_FCT")
-    private Collection<LabBatch> fcts = new ArrayList<>();
+    /** The LCSETs that this designation is part of. */
+    @Nonnull
+    @ManyToOne
+    private LabBatch lcset;
 
     /** The lab event that gave rise to the loading tube, typically normalization transfer, denature transfer,
      * or pooling transfer */
     @Nonnull
-    @ManyToOne
+    @OneToOne
     private LabEvent loadingTubeEvent;
 
     @Nonnull
@@ -92,7 +87,7 @@ public class DesignationLoadingTube {
     }
 
     public enum Status {
-        UNSAVED(" ", true, false),
+        UNSAVED("unsaved", true, false),
         QUEUED("Queued", true, true),
         ABANDONED("Abandoned", true, true),
         IN_FCT("In Fct", false, false);
@@ -156,16 +151,16 @@ public class DesignationLoadingTube {
     }
 
 
-    public DesignationLoadingTube() {
+    public FlowcellDesignation() {
     }
 
-    public DesignationLoadingTube(@Nonnull LabVessel loadingTube, Collection<LabBatch> lcsets,
-                                  @Nonnull LabEvent loadingTubeEvent, @Nonnull Collection<Product> products,
-                                  IndexType indexType, boolean poolTest, IlluminaFlowcell.FlowcellType sequencerModel,
-                                  Integer numberCycles, Integer numberLanes, Integer readLength, BigDecimal loadingConc,
-                                  boolean clinical, int numberSamples, Status status, Priority priority) {
+    public FlowcellDesignation(@Nonnull LabVessel loadingTube, LabBatch lcset,
+                               @Nonnull LabEvent loadingTubeEvent, @Nonnull Collection<Product> products,
+                               IndexType indexType, boolean poolTest, IlluminaFlowcell.FlowcellType sequencerModel,
+                               Integer numberCycles, Integer numberLanes, Integer readLength, BigDecimal loadingConc,
+                               boolean clinical, int numberSamples, Status status, Priority priority) {
         this.loadingTube = loadingTube;
-        this.lcsets.addAll(lcsets);
+        this.lcset = lcset;
         this.loadingTubeEvent = loadingTubeEvent;
         this.products = products;
         this.createdOn = new Date();
@@ -182,14 +177,6 @@ public class DesignationLoadingTube {
         this.priority = priority;
     }
 
-    public Set<String> getLcsetNames() {
-        Set<String> lcsetNames = new HashSet<>();
-        for (LabBatch lcset : lcsets) {
-            lcsetNames.add(lcset.getBatchName());
-        }
-        return lcsetNames;
-    }
-
     @Nonnull
     public LabVessel getLoadingTube() {
         return loadingTube;
@@ -199,20 +186,13 @@ public class DesignationLoadingTube {
         this.loadingTube = loadingTube;
     }
 
-    public Collection<LabBatch> getLcsets() {
-        return lcsets;
+    @Nonnull
+    public LabBatch getLcset() {
+        return lcset;
     }
 
-    public void setLcsets(Collection<LabBatch> lcsets) {
-        this.lcsets = lcsets;
-    }
-
-    public Collection<LabBatch> getFcts() {
-        return fcts;
-    }
-
-    public void setFcts(Collection<LabBatch> fcts) {
-        this.fcts = fcts;
+    public void setLcset(LabBatch lcset) {
+        this.lcset = lcset;
     }
 
     @Nonnull

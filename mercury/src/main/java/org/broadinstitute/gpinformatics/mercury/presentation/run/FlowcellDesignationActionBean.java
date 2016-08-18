@@ -11,17 +11,14 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
-import org.broadinstitute.gpinformatics.mercury.boundary.run.DesignationLoadingTubeEjb;
-import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
-import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
+import org.broadinstitute.gpinformatics.mercury.boundary.run.FlowcellDesignationEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.run.DesignationLoadingTube;
+import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
@@ -35,11 +32,12 @@ import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.EnumSet;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -47,8 +45,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@UrlBinding("/run/DesignationLoadingTube.action")
-public class DesignationLoadingTubeActionBean extends CoreActionBean {
+@UrlBinding("/run/FlowcellDesignation.action")
+public class FlowcellDesignationActionBean extends CoreActionBean implements DesignationUtils.Caller {
     private static final String VIEW_PAGE = "/run/designate_loading_tubes.jsp";
     private static final String TUBE_LCSET_PAGE = "/run/select_tube_lcsets.jsp";
 
@@ -58,51 +56,38 @@ public class DesignationLoadingTubeActionBean extends CoreActionBean {
     public static final String SUBMIT_TUBE_LCSET_ACTION = "submitTubeLcsets";
     public static final String SET_MULTIPLE_ACTION = "setMultiple";
     public static final String PENDING_ACTION = "pending";
-    public static final String CREATE_FCT_ACTION = "createFct";
 
-    public static final String CLINICAL = "Clinical";
-    public static final String RESEARCH = "Research";
-    public static final String MIXED = "Clinical and Research";
     public static final String CONTROLS = "Controls";
-
-    @SuppressWarnings("CdiInjectionPointsInspection")
-    @Inject
-    private JiraService jiraService;
 
     @Inject
     private LabBatchDao labBatchDao;
 
     @Inject
-    private LabBatchEjb labBatchEjb;
-
-    @Inject
     private BarcodedTubeDao barcodedTubeDao;
 
     @Inject
-    private BucketEntryDao bucketEntryDao;
-
-    @Inject
-    private DesignationLoadingTubeEjb designationTubeEjb;
+    private FlowcellDesignationEjb designationTubeEjb;
 
     private String lcsetsBarcodes;
     private LabEventType selectedEventType;
-    private List<DesignationRowDto> rowDtos = new ArrayList<>();
-    private DesignationRowDto multiEdit = new DesignationRowDto();
-    private List<FctDto> createdFcts = new ArrayList<>();
+    private List<DesignationDto> dtos = new ArrayList<>();
+    private DesignationDto multiEdit = new DesignationDto();
     private Set<LabBatch> loadLcsets = new HashSet<>();
     private Set<LabVessel> loadTubes = new HashSet<>();
-    private List<TubeLcsetDto> tubeLcsetSelections = new ArrayList<>();
+    private List<LcsetAssignmentDto> tubeLcsetAssignemnts = new ArrayList<>();
     private boolean showProcessed;
     private boolean showAbandoned;
-    private boolean showQueued;
+    private boolean showQueued = true;
     private boolean append;
+    private DesignationUtils utils = new DesignationUtils(this);
 
-    private static final EnumSet DESCENDENTS = EnumSet.of(TransferTraverserCriteria.TraversalDirection.Descendants);
+    private static final EnumSet DESCENDANTS = EnumSet.of(TransferTraverserCriteria.TraversalDirection.Descendants);
 
     {
-        final long SIXTY_DAYS = 60 * 24 * 60 * 60 * 1000;
+        GregorianCalendar startDate = new GregorianCalendar();
+        startDate.add(Calendar.MONTH, -2);
         setDateRange(new DateRangeSelector(DateRangeSelector.CREATE_CUSTOM));
-        setDateRangeStart(new Date(System.currentTimeMillis() - SIXTY_DAYS));
+        setDateRangeStart(startDate.getTime());
         setDateRangeEnd(new Date());
     }
 
@@ -112,30 +97,16 @@ public class DesignationLoadingTubeActionBean extends CoreActionBean {
     @HandlesEvent(VIEW_ACTION)
     @DefaultHandler
     public Resolution view() {
-        DesignationRowDto prev = null;
-        Collections.sort(rowDtos, DesignationRowDto.BY_BARCODE_ID_DATE);
-        for (Iterator<DesignationRowDto> iter = rowDtos.iterator(); iter.hasNext(); ) {
-            DesignationRowDto dto = iter.next();
-            if (!showAbandoned && dto.getStatus() == DesignationLoadingTube.Status.ABANDONED ||
-                !showProcessed && dto.getStatus() == DesignationLoadingTube.Status.IN_FCT ||
-                !showQueued && dto.getStatus() == DesignationLoadingTube.Status.QUEUED) {
+        for (Iterator<DesignationDto> iter = dtos.iterator(); iter.hasNext(); ) {
+            DesignationDto dto = iter.next();
+            if (!showAbandoned && dto.getStatus() == FlowcellDesignation.Status.ABANDONED ||
+                !showProcessed && dto.getStatus() == FlowcellDesignation.Status.IN_FCT ||
+                !showQueued && dto.getStatus() == FlowcellDesignation.Status.QUEUED) {
                 iter.remove();
                 continue;
             }
-            if (prev != null && prev.getBarcode().equals(dto.getBarcode())) {
-                // List is sorted by barcode and id. If adjacent rows have the same barcode, either
-                // remove the second row if it has the same designationId, or mark it as a repeat.
-                if (prev.getDesignationId() == null && dto.getDesignationId() == null ||
-                    prev.getDesignationId() != null && prev.getDesignationId().equals(dto.getDesignationId())) {
-                    iter.remove();
-                    continue;
-                }
-                if (prev != null && prev.getBarcode().equals(dto.getBarcode())) {
-                    dto.setRepeatedBarcode(true);
-                }
-            }
-            prev = dto;
         }
+        utils.markRepeatedBarcodes();
         return new ForwardResolution(VIEW_PAGE);
     }
 
@@ -168,8 +139,6 @@ public class DesignationLoadingTubeActionBean extends CoreActionBean {
 
     private Resolution loadAny() {
         clearValidationErrors();
-        // Map of barcoded tube to lcset(s).
-        Multimap<LabVessel, LabBatch> loadingTubeToLcsets = HashMultimap.create();
         if (StringUtils.isNotBlank(lcsetsBarcodes)) {
             // Parses the user input lcsets or tube barcodes into loadLcsets and loadTubes.
             parseLcsetsBarcodes();
@@ -180,16 +149,18 @@ public class DesignationLoadingTubeActionBean extends CoreActionBean {
         // If there are any barcodes, finds their lcset(s). In case there are
         // multiple lcsets per tube, the tube-lcset combinations get put in
         // tubeLcsetSelection to be resolved by user in the TUBE_LCSET_PAGE.
+        Map<LabVessel, LabBatch> loadingTubeLcset = new HashMap<>();
         if (CollectionUtils.isNotEmpty(loadTubes)) {
-            loadingTubeToLcsets = linkLcsetToSpecifiedTubes();
-            if (tubeLcsetSelections.size() > 0) {
+            loadingTubeLcset = linkLcsetToSpecifiedTubes();
+            if (tubeLcsetAssignemnts.size() > 0) {
                 return new ForwardResolution(TUBE_LCSET_PAGE);
             }
         }
         if (!append) {
-            rowDtos.clear();
+            dtos.clear();
         }
-        makeRowDtos(loadingTubeToLcsets);
+        // At this point there should be a single lcset per loading tube.
+        makeDtos(loadingTubeLcset);
         return view();
     }
 
@@ -200,127 +171,52 @@ public class DesignationLoadingTubeActionBean extends CoreActionBean {
     public Resolution loadPendingDesignations() {
         clearValidationErrors();
         if (!append) {
-            rowDtos.clear();
+            dtos.clear();
         }
-        makeRowDtosFromDesignations(designationTubeEjb.existingDesignations(new ArrayList<DesignationLoadingTube.Status>(){{
+        List <FlowcellDesignation.Status> statusesToShow = new ArrayList<FlowcellDesignation.Status>(){{
             if (getShowAbandoned()) {
-                add(DesignationLoadingTube.Status.ABANDONED);
+                add(FlowcellDesignation.Status.ABANDONED);
             }
             if (getShowQueued()) {
-                add(DesignationLoadingTube.Status.QUEUED);
+                add(FlowcellDesignation.Status.QUEUED);
             }
             if (getShowProcessed()) {
-                add(DesignationLoadingTube.Status.IN_FCT);
+                add(FlowcellDesignation.Status.IN_FCT);
             }
-        }}));
+        }};
+        utils.makeDtosFromDesignations(designationTubeEjb.existingDesignations(statusesToShow));
         return view();
     }
 
-    /**
-     * Changes the UI rows. If the row is queued or abandoned the changes are persisted.
-     */
+    /** Changes the selected UI rows. If the row is queued or abandoned the changes are persisted. */
     @HandlesEvent(SET_MULTIPLE_ACTION)
     public Resolution setMultiple() {
-        for (Iterator<DesignationRowDto> iter = rowDtos.iterator(); iter.hasNext(); ) {
-            DesignationRowDto dto = iter.next();
-            if (dto.isSelected()) {
-                if (multiEdit.getStatus() != null) {
-                    // Abandoning an unsaved dto just removes it from the list and not persisted.
-                    if (dto.getStatus() == DesignationLoadingTube.Status.UNSAVED
-                        && multiEdit.getStatus() == DesignationLoadingTube.Status.ABANDONED) {
-                        iter.remove();
-                        continue;
-                    } else {
-                        dto.setStatus(multiEdit.getStatus());
-                    }
-                }
-                if (multiEdit.getPriority() != null) {
-                    dto.setPriority(multiEdit.getPriority());
-                }
-                if (multiEdit.getSequencerModel() != null) {
-                    dto.setSequencerModel(multiEdit.getSequencerModel());
-                }
-                if (multiEdit.getNumberLanes() != null) {
-                    dto.setNumberLanes(multiEdit.getNumberLanes());
-                }
-                if (multiEdit.getLoadingConc() != null) {
-                    dto.setLoadingConc(multiEdit.getLoadingConc());
-                }
-                if (multiEdit.getReadLength() != null) {
-                    dto.setReadLength(multiEdit.getReadLength());
-                }
-                if (multiEdit.getIndexType() != null) {
-                    dto.setIndexType(multiEdit.getIndexType());
-                }
-                if (multiEdit.getNumberCycles() != null) {
-                    dto.setNumberCycles(multiEdit.getNumberCycles());
-                }
-                if (multiEdit.getPoolTest() != null) {
-                    dto.setPoolTest(multiEdit.getPoolTest());
-                }
-            }
-        }
-        multiEdit = new DesignationRowDto();
-
-        // Queued and abandoned rows get persisted and unsaved dtos are modified only for the display.
-        EnumSet<DesignationLoadingTube.Status> persistableStatuses =
-                EnumSet.of(DesignationLoadingTube.Status.QUEUED, DesignationLoadingTube.Status.ABANDONED);
-        for (Map.Entry<DesignationRowDto, DesignationLoadingTube> dtoAndTube :
-                designationTubeEjb.update(rowDtos, persistableStatuses).entrySet()) {
-            // After Hibernate flushes new entities the dto can get the updated designation id.
-            DesignationRowDto rowDto = dtoAndTube.getKey();
-            DesignationLoadingTube designation = dtoAndTube.getValue();
-            rowDto.setDesignationId(designation.getDesignationId());
-            rowDto.setSelected(false);
-        }
-        return view();
-    }
-
-    /**
-     * Creates FCTs from queued designations.
-     */
-    @HandlesEvent(CREATE_FCT_ACTION)
-    public Resolution createFct() {
-
-        List<DesignationLoadingTubeActionBean.FctDto> fctDtos = labBatchEjb.makeFcts(rowDtos,
-                userBean.getLoginUserName(), this);
-
-        createdFcts.addAll(fctDtos);
-        Collections.sort(createdFcts, new Comparator<FctDto>() {
-            @Override
-            public int compare(FctDto o1, FctDto o2) {
-                return o1.getName().compareTo(o2.getName());
-            }
-        });
-
+        utils.applyMultiEdit(DesignationUtils.TARGETABLE_STATUSES, designationTubeEjb);
         return view();
     }
 
 
-
-
-
     /**
-     * This method is called after the user specifies the correct lcset(s)
-     * for loading tube barcodes that had mulitple lcsets.
+     * This method is called after the user specifies the desired lcset
+     * for each loading tube barcode that had mulitple lcsets.
      */
     @HandlesEvent(SUBMIT_TUBE_LCSET_ACTION)
     public Resolution submitTubeLcsets() {
         clearValidationErrors();
         parseLcsetsBarcodes();
         // Collects the user-specified lcset mappings.
-        Multimap<LabVessel, LabBatch> loadingTubeToLcsets = HashMultimap.create();
-        for (TubeLcsetDto dto : tubeLcsetSelections) {
-            if (dto.isSelected()) {
-                LabVessel tube = barcodedTubeDao.findByBarcode(dto.getBarcode());
-                LabBatch lcset = labBatchDao.findByName(dto.getLcsetName());
-                loadingTubeToLcsets.put(tube, lcset);
+        Map<LabVessel, LabBatch> loadingTubeLcset = new HashMap<>();
+        for (LcsetAssignmentDto assignmentDto : tubeLcsetAssignemnts) {
+            if (StringUtils.isNotBlank(assignmentDto.getSelectedLcsetName())) {
+                LabVessel tube = barcodedTubeDao.findByBarcode(assignmentDto.getBarcode());
+                LabBatch lcset = labBatchDao.findByName(assignmentDto.getSelectedLcsetName());
+                loadingTubeLcset.put(tube, lcset);
             }
         }
         // Removes tubes that did not get an lcset assignment.
-        loadTubes.retainAll(loadingTubeToLcsets.keySet());
+        loadTubes.retainAll(loadingTubeLcset.keySet());
         // Resumes making the designation dto's to display.
-        makeRowDtos(loadingTubeToLcsets);
+        makeDtos(loadingTubeLcset);
         return view();
     }
 
@@ -352,60 +248,12 @@ public class DesignationLoadingTubeActionBean extends CoreActionBean {
         }
     }
 
-    /** Returns the primary and additional lcsets. */
-    private Pair<LabBatch, List<String>> sortLcsets(Collection<LabBatch> lcsets) {
-        List<String> lcsetNames = new ArrayList<>();
-        for (LabBatch lcset : lcsets) {
-            lcsetNames.add(lcset.getBatchName());
-        }
-        Collections.sort(lcsetNames);
-        // Puts the url on the latest lcset when there are multiple.
-        String primaryLcsetName = lcsetNames.remove(lcsetNames.size() - 1);
-        LabBatch primaryLcset = null;
-        for (LabBatch lcset : lcsets) {
-            if (primaryLcsetName.equals(lcset.getBatchName())) {
-                primaryLcset = lcset;
-            }
-        }
-        return Pair.of(primaryLcset, lcsetNames);
-    }
-
-    /** Makes dtos from existing designations. */
-    private void makeRowDtosFromDesignations(Collection<DesignationLoadingTube> designationLoadingTubes) {
-        for (DesignationLoadingTube designation : designationLoadingTubes) {
-
-            Pair<LabBatch, List<String>> pair = sortLcsets(designation.getLcsets());
-            LabBatch primaryLcset = pair.getLeft();
-            List<String> additionalLcsets = pair.getRight();
-
-            Set<String> productNames = new HashSet<>();
-            for (Product product : designation.getProducts()) {
-                productNames.add(product.getProductName());
-            }
-
-            DesignationRowDto designationDto = new DesignationRowDto(designation.getLoadingTube(),
-                    Collections.singletonList(designation.getLoadingTubeEvent()),
-                    primaryLcset.getJiraTicket().getBrowserUrl(), primaryLcset, additionalLcsets,
-                    productNames, "", designation.isClinical() ? CLINICAL : RESEARCH,
-                    designation.getNumberSamples(), designation.getSequencerModel(), designation.getIndexType(),
-                    designation.getNumberCycles(), designation.getNumberLanes(), designation.getReadLength(),
-                    designation.getLoadingConc(), designation.isPoolTest(), designation.getCreatedOn(),
-                    designation.getStatus());
-
-            designationDto.setDesignationId(designation.getDesignationId());
-            designationDto.setPriority(designation.getPriority());
-
-            rowDtos.add(designationDto);
-        }
-    }
-
-
     /**
      * Populates the UI's table of designation tubes from LCSETs and/or loading tube barcodes.
      *
-     * @param loadingTubeToLcsets  Map of user-specified barcoded tubes and their (possibly user-assigned) lcset.
+     * @param loadingTubeLcset  Map of barcoded tube and its lcset.
      */
-    private void makeRowDtos(@Nonnull Multimap<LabVessel, LabBatch> loadingTubeToLcsets) {
+    private void makeDtos(@Nonnull Map<LabVessel, LabBatch> loadingTubeLcset) {
         Date now = new Date();
         Map<LabVessel, BucketEntry> batchStartingVesselToBucketEntry = new HashMap<>();
         Multimap<LabVessel, LabEvent> loadingTubeToLabEvent = HashMultimap.create();
@@ -414,7 +262,7 @@ public class DesignationLoadingTubeActionBean extends CoreActionBean {
         boolean foundOutOfDateEvents = false;
 
         // Iterates on the barcoded loading tubes specified by the user.
-        for (LabVessel barcodedTube : loadingTubeToLcsets.keySet()) {
+        for (LabVessel barcodedTube : loadingTubeLcset.keySet()) {
             for (LabEvent labEvent : barcodedTube.getInPlaceAndTransferToEvents()) {
                 // Only uses loading tube events in the specified date range.
                 if (labEvent.getLabEventType() == LabEventType.DENATURE_TRANSFER ||
@@ -429,7 +277,7 @@ public class DesignationLoadingTubeActionBean extends CoreActionBean {
             }
             if (CollectionUtils.isNotEmpty(loadingTubeToLabEvent.get(barcodedTube))) {
                 // The single LCSET is already known.
-                LabBatch lcset = loadingTubeToLcsets.get(barcodedTube).iterator().next();
+                LabBatch lcset = loadingTubeLcset.get(barcodedTube);
                 for (SampleInstanceV2 sampleInstance : barcodedTube.getSampleInstancesV2()) {
                     // Finds bucket entries.
                     for (BucketEntry bucketEntry : sampleInstance.getAllBucketEntries()) {
@@ -463,15 +311,15 @@ public class DesignationLoadingTubeActionBean extends CoreActionBean {
             for (LabVessel startingBatchVessel : targetLcset.getStartingBatchLabVessels()) {
                 BucketEntry bucketEntry = batchStartingVesselToBucketEntry.get(startingBatchVessel);
                 Map<LabEvent, Set<LabVessel>> loadingEventsAndVessels = new HashMap<>(
-                        startingBatchVessel.findVesselsForLabEventType(selectedEventType, true, DESCENDENTS));
+                        startingBatchVessel.findVesselsForLabEventType(selectedEventType, true, DESCENDANTS));
 
                 for (LabEvent targetEvent : loadingEventsAndVessels.keySet()) {
                     // Only uses loading tube events in the specified date range.
                     if (isInDateRange(targetEvent)) {
                         for (LabVessel loadingTube : loadingEventsAndVessels.get(targetEvent)) {
-                            Set<LabBatch> bestLcsets = findBestLcset(loadLcsets, loadingTube);
+                            Set<LabBatch> bestLcsets = findBestLcset(Collections.singleton(targetLcset), loadingTube);
                             if (CollectionUtils.isNotEmpty(bestLcsets)) {
-                                loadingTubeToLcsets.putAll(loadingTube, bestLcsets);
+                                loadingTubeLcset.put(loadingTube, bestLcsets.iterator().next());
                                 loadingTubeToLabEvent.put(loadingTube, targetEvent);
                                 if (bucketEntry != null) {
                                     loadingTubeToBucketEntry.put(loadingTube, bucketEntry);
@@ -498,7 +346,7 @@ public class DesignationLoadingTubeActionBean extends CoreActionBean {
             Integer numberLanes = null;
             BigDecimal loadingConc = BigDecimal.ZERO;
             Boolean poolTest = false;
-            DesignationLoadingTube.IndexType indexType = DesignationLoadingTube.IndexType.DUAL;
+            FlowcellDesignation.IndexType indexType = FlowcellDesignation.IndexType.DUAL;
 
             // Gets product, regulatory designation, and number of samples from the bucket entries.
             for (BucketEntry bucketEntry : loadingTubeToBucketEntry.get(loadingTube)) {
@@ -506,22 +354,22 @@ public class DesignationLoadingTubeActionBean extends CoreActionBean {
                 String productName = product != null ? bucketEntry.getProductOrder().getProduct().getProductName() :
                         "[No product for " + bucketEntry.getProductOrder().getJiraTicketKey() + "]";
                 readLength = product != null ? product.getReadLength() : null;
-                // todo emp check for PDO read length override when it exists.
+                // todo emp check read length override when it exists in the ProductOrder.
                 numberCycles = readLength != null ? indexType.getIndexSize() + readLength : null;
                 productToStartingVessel.put(productName, bucketEntry.getLabVessel().getLabel());
                 // Sets the regulatory designation to Clinical, Research, or mixed.
                 if (bucketEntry.getProductOrder().getResearchProject().getRegulatoryDesignation().
                         isClinical()) {
                     if (regulatoryDesignation == null) {
-                        regulatoryDesignation = CLINICAL;
-                    } else if (!regulatoryDesignation.equals(CLINICAL)) {
-                        regulatoryDesignation = MIXED;
+                        regulatoryDesignation = DesignationUtils.CLINICAL;
+                    } else if (!regulatoryDesignation.equals(DesignationUtils.CLINICAL)) {
+                        regulatoryDesignation = DesignationUtils.MIXED;
                     }
                 } else {
                     if (regulatoryDesignation == null) {
-                        regulatoryDesignation = RESEARCH;
-                    } else if (!regulatoryDesignation.equals(RESEARCH)) {
-                        regulatoryDesignation = MIXED;
+                        regulatoryDesignation = DesignationUtils.RESEARCH;
+                    } else if (!regulatoryDesignation.equals(DesignationUtils.RESEARCH)) {
+                        regulatoryDesignation = DesignationUtils.MIXED;
                     }
                 }
                 numberSamples += bucketEntry.getLabVessel().getSampleNames().size();
@@ -543,19 +391,17 @@ public class DesignationLoadingTubeActionBean extends CoreActionBean {
                         productName : "Bucketed tubes for " + productName) + ": " +
                                        StringUtils.join(startingVessels, ", "));
             }
-            Pair<LabBatch, List<String>> pair = sortLcsets(loadingTubeToLcsets.get(loadingTube));
-            LabBatch primaryLcset = pair.getLeft();
-            List<String> additionalLcsets = pair.getRight();
+            LabBatch primaryLcset = loadingTubeLcset.get(loadingTube);
 
-            DesignationRowDto newDto = new DesignationRowDto(loadingTube, loadingTubeToLabEvent.get(loadingTube),
-                    primaryLcset.getJiraTicket().getBrowserUrl(), primaryLcset, additionalLcsets,
+            DesignationDto newDto = new DesignationDto(loadingTube, loadingTubeToLabEvent.get(loadingTube),
+                    primaryLcset.getJiraTicket().getBrowserUrl(), primaryLcset, Collections.<String>emptySet(),
                     productNames, StringUtils.join(startingVesselList, "\n"),
                     regulatoryDesignation, numberSamples,
-                    IlluminaFlowcell.FlowcellType.MiSeqFlowcell, DesignationLoadingTube.IndexType.DUAL,
+                    IlluminaFlowcell.FlowcellType.MiSeqFlowcell, FlowcellDesignation.IndexType.DUAL,
                     numberCycles, numberLanes, readLength, loadingConc, poolTest, now,
-                    DesignationLoadingTube.Status.UNSAVED);
+                    FlowcellDesignation.Status.UNSAVED);
 
-            rowDtos.add(newDto);
+            dtos.add(newDto);
         }
         if (foundOutOfDateEvents) {
             addMessage("Excluded some loading tube " + selectedEventType + " events not in the date range.");
@@ -563,11 +409,14 @@ public class DesignationLoadingTubeActionBean extends CoreActionBean {
     }
 
     /**
-     * Finds the best lcset for barcoded tubes. If there are multiple lcsets then the user must make the selection.
+     * Finds the best lcset for barcoded tubes.
+     *
+     * @return map of tube to its lcset when a single lcset is found. The tubes with multiple
+     * lcsets are put in tubeLcsetAssigntments.
      */
-    private Multimap<LabVessel, LabBatch> linkLcsetToSpecifiedTubes() {
-        tubeLcsetSelections.clear();
-        Multimap<LabVessel, LabBatch> loadingTubeToLcsets = HashMultimap.create();
+    private Map<LabVessel, LabBatch> linkLcsetToSpecifiedTubes() {
+        tubeLcsetAssignemnts.clear();
+        Map<LabVessel, LabBatch> loadingTubeLcset = new HashMap<>();
         boolean foundOutOfDateEvents = false;
 
         for (LabVessel targetTube : loadTubes) {
@@ -579,14 +428,10 @@ public class DesignationLoadingTubeActionBean extends CoreActionBean {
                     Set<LabBatch> lcsets = findBestLcset(null, targetTube);
                     if (CollectionUtils.isNotEmpty(lcsets)) {
                         if (lcsets.size() == 1) {
-                            loadingTubeToLcsets.putAll(targetTube, lcsets);
+                            loadingTubeLcset.put(targetTube, lcsets.iterator().next());
                         } else {
-                            for (LabBatch labBatch : lcsets) {
-                                // Tube-lcset combinations to be resolved by the user.
-                                tubeLcsetSelections.add(new TubeLcsetDto(targetTube.getLabel(),
-                                        targetTube.getCreatedOn(), labBatch.getBatchName(),
-                                        labBatch.getJiraTicket().getBrowserUrl(), false));
-                            }
+                            // Tube-lcset combinations to be resolved by the user.
+                            tubeLcsetAssignemnts.add(new LcsetAssignmentDto(targetTube, lcsets));
                         }
                     }
                 } else {
@@ -594,27 +439,11 @@ public class DesignationLoadingTubeActionBean extends CoreActionBean {
                 }
             }
         }
-        // Sorts the tubeLcsetSelections and calculates rowspan for each block of adjacent
-        // rows having the same barcode.
-        Collections.sort(tubeLcsetSelections, new Comparator<TubeLcsetDto>() {
-            @Override
-            public int compare(TubeLcsetDto o1, TubeLcsetDto o2) {
-                int barcodeCompare = o1.getBarcode().compareTo(o2.getBarcode());
-                return barcodeCompare != 0 ? barcodeCompare : o1.getLcsetName().compareTo(o2.getLcsetName());
-            }
-        });
-        int rowspanIdx = 0;
-        for (int i = 1; i < tubeLcsetSelections.size(); ++i) {
-            if (!tubeLcsetSelections.get(rowspanIdx).getBarcode().equals(tubeLcsetSelections.get(i).getBarcode())) {
-                rowspanIdx = i;
-            }
-            tubeLcsetSelections.get(rowspanIdx).setRowspan(i - rowspanIdx + 1);
-        }
-
+        LcsetAssignmentDto.sort(tubeLcsetAssignemnts);
         if (foundOutOfDateEvents) {
             addMessage("Excluded some loading tube " + selectedEventType + " events not in the date range.");
         }
-        return loadingTubeToLcsets;
+        return loadingTubeLcset;
     }
 
     /** Finds the best lcset(s) for the loading tube. */
@@ -646,24 +475,24 @@ public class DesignationLoadingTubeActionBean extends CoreActionBean {
                getDateRange().getEndTime().after(labEvent.getEventDate());
     }
 
-    public static class TubeLcsetDto {
+    /**
+     * Represents a UI row when prompting user to associate an LCSET with a loading tube.
+     */
+    public static class LcsetAssignmentDto {
         private String barcode;
-        private String lcsetName;
-        private String lcsetUrl;
-        private boolean selected = false;
         private Date tubeDate;
-        private int rowspan = 0;
+        private List<Pair<String, String>> lcsetNameUrls = new ArrayList<>();
+        private String selectedLcsetName = "";
 
-        public TubeLcsetDto() {
+        public LcsetAssignmentDto() {
         }
 
-        public TubeLcsetDto(String barcode, Date tubeDate, String lcsetName, String lcsetUrl, boolean selected) {
-            this.barcode = barcode;
-            this.lcsetName = lcsetName;
-            this.selected = false;
-            this.tubeDate = tubeDate;
-            this.lcsetUrl = lcsetUrl;
-            this.selected = selected;
+        public LcsetAssignmentDto(LabVessel targetTube, Set<LabBatch> lcsets) {
+            barcode = targetTube.getLabel();
+            tubeDate = targetTube.getCreatedOn();
+            for (LabBatch lcset : lcsets) {
+                lcsetNameUrls.add(Pair.of(lcset.getBatchName(), lcset.getJiraTicket().getBrowserUrl()));
+            }
         }
 
         public String getBarcode() {
@@ -674,22 +503,6 @@ public class DesignationLoadingTubeActionBean extends CoreActionBean {
             this.barcode = barcode;
         }
 
-        public String getLcsetName() {
-            return lcsetName;
-        }
-
-        public void setLcsetName(String lcsetName) {
-            this.lcsetName = lcsetName;
-        }
-
-        public boolean isSelected() {
-            return selected;
-        }
-
-        public void setSelected(boolean selected) {
-            this.selected = selected;
-        }
-
         public Date getTubeDate() {
             return tubeDate;
         }
@@ -698,73 +511,44 @@ public class DesignationLoadingTubeActionBean extends CoreActionBean {
             this.tubeDate = tubeDate;
         }
 
-        public String getLcsetUrl() {
-            return lcsetUrl;
+        public List<Pair<String, String>> getLcsetNameUrls() {
+            return lcsetNameUrls;
         }
 
-        public void setLcsetUrl(String lcsetUrl) {
-            this.lcsetUrl = lcsetUrl;
+        public String getSelectedLcsetName() {
+            return selectedLcsetName;
         }
 
-        public int getRowspan() {
-            return rowspan;
+        public void setSelectedLcsetName(String selectedLcsetName) {
+            this.selectedLcsetName = selectedLcsetName;
         }
 
-        public void setRowspan(int rowspan) {
-            this.rowspan = rowspan;
-        }
-    }
-
-    public static class FctDto {
-        private String name;
-        private String url;
-
-        public FctDto() {
-        }
-
-        public FctDto(String name, String url) {
-            this.name = name;
-            this.url = url;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public void setName(String name) {
-            this.name = name;
-        }
-
-        public String getUrl() {
-            return url;
-        }
-
-        public void setUrl(String url) {
-            this.url = url;
-        }
-    }
-
-    public DesignationLoadingTube.Priority[] getPriorityValues() {
-        return DesignationLoadingTube.Priority.values();
-    }
-
-    /** Returns the status values for designations that the user can edit, i.e. not the completed ones. */
-    public List<DesignationLoadingTube.Status> getStatusValues() {
-        List<DesignationLoadingTube.Status> statusValues = new ArrayList<>();
-        for (DesignationLoadingTube.Status status : DesignationLoadingTube.Status.values()) {
-            if (status.isTargetable()) {
-                statusValues.add(status);
+        /** Sorts the assignment dtos and their lcsets. */
+        public static void sort(List<LcsetAssignmentDto> assignmentDtos) {
+            // Sorts the lcset list on each dto.
+            for (LcsetAssignmentDto dto : assignmentDtos) {
+                Collections.sort(dto.lcsetNameUrls, new Comparator<Pair<String, String>>() {
+                    @Override
+                    public int compare(Pair<String, String> o1, Pair<String, String> o2) {
+                        return o1.getLeft().compareTo(o2.getLeft());
+                    }
+                });
             }
+            // Sorts the dtos by barcode, then first lcset.
+            Collections.sort(assignmentDtos, new Comparator<LcsetAssignmentDto>() {
+                @Override
+                public int compare(LcsetAssignmentDto o1, LcsetAssignmentDto o2) {
+                    int barcodeCompare = o1.getBarcode().compareTo(o2.getBarcode());
+                    return (barcodeCompare != 0 ||
+                            o1.getLcsetNameUrls().size() == 0 ||
+                            o2.getLcsetNameUrls().size() == 0)  ?
+
+                            barcodeCompare :  o1.getLcsetNameUrls().iterator().next().getLeft().compareTo(
+                            o2.getLcsetNameUrls().iterator().next().getLeft());
+                }
+            });
         }
-        return statusValues;
-    }
 
-    public IlluminaFlowcell.FlowcellType[] getFlowcellValues() {
-        return IlluminaFlowcell.FlowcellType.values();
-    }
-
-    public DesignationLoadingTube.IndexType[] getIndexTypes() {
-        return DesignationLoadingTube.IndexType.values();
     }
 
     public String getLcsetsBarcodes() {
@@ -775,28 +559,20 @@ public class DesignationLoadingTubeActionBean extends CoreActionBean {
         this.lcsetsBarcodes = lcsetsBarcodes;
     }
 
-    public List<DesignationRowDto> getRowDtos() {
-        return rowDtos;
+    public List<DesignationDto> getDtos() {
+        return dtos;
     }
 
-    public void setDesignationRowDtos(List<DesignationRowDto> rowDtos) {
-        this.rowDtos = rowDtos;
+    public void setDtos(List<DesignationDto> dtos) {
+        this.dtos = dtos;
     }
 
-    public DesignationRowDto getMultiEdit() {
+    public DesignationDto getMultiEdit() {
         return multiEdit;
     }
 
-    public void setMultiEdit(DesignationRowDto multiEdit) {
+    public void setMultiEdit(DesignationDto multiEdit) {
         this.multiEdit = multiEdit;
-    }
-
-    public List<FctDto> getCreatedFcts() {
-        return createdFcts;
-    }
-
-    public void setCreatedFcts(List<FctDto> createdFcts) {
-        this.createdFcts = createdFcts;
     }
 
     public Set<LabBatch> getLoadLcsets() {
@@ -815,12 +591,12 @@ public class DesignationLoadingTubeActionBean extends CoreActionBean {
         this.loadTubes = loadTubes;
     }
 
-    public List<TubeLcsetDto> getTubeLcsetSelections() {
-        return tubeLcsetSelections;
+    public List<LcsetAssignmentDto> getTubeLcsetAssignemnts() {
+        return tubeLcsetAssignemnts;
     }
 
-    public void setTubeLcsetSelections(List<TubeLcsetDto> tubeLcsetSelections) {
-        this.tubeLcsetSelections = tubeLcsetSelections;
+    public void setTubeLcsetAssignemnts(List<LcsetAssignmentDto> tubeLcsetAssignemnts) {
+        this.tubeLcsetAssignemnts = tubeLcsetAssignemnts;
     }
 
     public boolean getShowProcessed() {
@@ -867,12 +643,8 @@ public class DesignationLoadingTubeActionBean extends CoreActionBean {
         getDateRange().setRangeSelector(rangeSelector);
     }
 
-    public void setTubeLcsetSelectionCount(String count) {
-        // This is needed because Stripes is unable to create TubeLcsetDtos when it
-        // writes the tubeLcsetSelections array from within jsp input elements.
-        for (int i = 0; i < Integer.parseInt(count); ++i) {
-            tubeLcsetSelections.add(new TubeLcsetDto());
-        }
+    public DesignationUtils getUtils() {
+        return utils;
     }
 }
 

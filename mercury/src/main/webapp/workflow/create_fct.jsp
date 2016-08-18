@@ -148,7 +148,7 @@
                     </tr>
                     </thead>
                     <tbody>
-                    <c:forEach items="${actionBean.rowDtos}" var="dto" varStatus="item">
+                    <c:forEach items="${actionBean.createFctDtos}" var="dto" varStatus="item">
                         <tr>
                             <td class="fixedWidthColumn">
                                 <stripes:link id="transferVisualizer" event="view" target="_blank"
@@ -162,23 +162,23 @@
                             </td>
                             <td class="fixedWidthColumn">${dto.tubeType}</td>
                             <td class="smallerWidthColumn">${dto.numberSamples}</td>
-                            <td class="smallerWidthColumn"><input style='width:5em' class="numLanes" name="rowDtos[${item.index}].numberLanes"
+                            <td class="smallerWidthColumn"><input style='width:5em' class="numLanes" name="createFctDtos[${item.index}].numberLanes"
                                        value="${dto.numberLanes}" onkeyup="updateSumOfLanes()"/></td>
-                            <td class="smallerWidthColumn"><input style='width:5em' class="loadConc" name="rowDtos[${item.index}].loadingConc"
+                            <td class="smallerWidthColumn"><input style='width:5em' class="loadConc" name="createFctDtos[${item.index}].loadingConc"
                                        value="${dto.loadingConc}"/></td>
                             <td class="fixedWidthColumn">${dto.eventDate}</td>
                             <td class="fixedWidthColumn">${dto.regulatoryDesignation}</td>
                             <td class="widerFixedWidthColumn"><span title="${dto.startingBatchVessels}">${dto.product}</span></td>
-                            <input type="hidden" name="rowDtos[${item.index}].barcode" value="${dto.barcode}"/>
-                            <input type="hidden" name="rowDtos[${item.index}].lcset" value="${dto.lcset}"/>
-                            <input type="hidden" name="rowDtos[${item.index}].additionalLcsets" value="${dto.additionalLcsets}"/>
-                            <input type="hidden" name="rowDtos[${item.index}].tubeType" value="${dto.tubeType}"/>
-                            <input type="hidden" name="rowDtos[${item.index}].numberSamples" value="${dto.numberSamples}"/>
-                            <input type="hidden" name="rowDtos[${item.index}].eventDate" value="${dto.eventDate}"/>
-                            <input type="hidden" name="rowDtos[${item.index}].regulatoryDesignation" value="${dto.regulatoryDesignation}"/>
-                            <input type="hidden" name="rowDtos[${item.index}].product" value="${dto.product}"/>
-                            <input type="hidden" name="rowDtos[${item.index}].startingBatchVessels" value="${dto.startingBatchVessels}"/>
-                            <input type="hidden" name="rowDtos[${item.index}].lcsetUrl" value="${dto.lcsetUrl}"/>
+                            <input type="hidden" name="createFctDtos[${item.index}].barcode" value="${dto.barcode}"/>
+                            <input type="hidden" name="createFctDtos[${item.index}].lcset" value="${dto.lcset}"/>
+                            <input type="hidden" name="createFctDtos[${item.index}].additionalLcsets" value="${dto.additionalLcsets}"/>
+                            <input type="hidden" name="createFctDtos[${item.index}].tubeType" value="${dto.tubeType}"/>
+                            <input type="hidden" name="createFctDtos[${item.index}].numberSamples" value="${dto.numberSamples}"/>
+                            <input type="hidden" name="createFctDtos[${item.index}].eventDate" value="${dto.eventDate}"/>
+                            <input type="hidden" name="createFctDtos[${item.index}].regulatoryDesignation" value="${dto.regulatoryDesignation}"/>
+                            <input type="hidden" name="createFctDtos[${item.index}].product" value="${dto.product}"/>
+                            <input type="hidden" name="createFctDtos[${item.index}].startingBatchVessels" value="${dto.startingBatchVessels}"/>
+                            <input type="hidden" name="createFctDtos[${item.index}].lcsetUrl" value="${dto.lcsetUrl}"/>
                             </tr>
                     </c:forEach>
                     </tbody>

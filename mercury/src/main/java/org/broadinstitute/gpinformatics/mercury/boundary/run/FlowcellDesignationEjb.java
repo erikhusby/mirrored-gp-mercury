@@ -6,15 +6,13 @@ import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRang
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.run.DesignationLoadingTube;
-import org.broadinstitute.gpinformatics.mercury.entity.run.DesignationLoadingTube_;
+import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
+import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation_;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube_;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch_;
-import org.broadinstitute.gpinformatics.mercury.presentation.run.DesignationLoadingTubeActionBean;
-import org.broadinstitute.gpinformatics.mercury.presentation.run.DesignationRowDto;
+import org.broadinstitute.gpinformatics.mercury.presentation.run.DesignationDto;
+import org.broadinstitute.gpinformatics.mercury.presentation.run.DesignationUtils;
 import org.hibernate.SQLQuery;
 import org.hibernate.type.LongType;
 
@@ -39,7 +37,7 @@ import java.util.Set;
  */
 @Stateful
 @RequestScoped
-public class DesignationLoadingTubeEjb {
+public class FlowcellDesignationEjb {
     @Inject
     private BarcodedTubeDao barcodedTubeDao;
 
@@ -68,7 +66,7 @@ public class DesignationLoadingTubeEjb {
                 "  and normEvent.lab_event_type = 'NORMALIZATION_TRANSFER' " +
                 "  and normEvent.event_date >= :startDate " +
                 "  and normEvent.event_date <= :endDate " +
-                "and not exists (select 1 from designation_loading_tube dsg " +
+                "and not exists (select 1 from flowcell_designation dsg " +
                 "  where dsg.loading_tube = normTube.lab_vessel_id and pool_test = 0) " +
                 "and not exists (select 1 from batch_starting_vessels normFctTubes " +
                 "  join lab_batch normFct on normFctTubes.lab_batch = normFct.lab_batch_id " +
@@ -108,10 +106,10 @@ public class DesignationLoadingTubeEjb {
 
     /** Returns true if there was a pool test FCT for this tube and lcset. */
     private boolean hasPoolTest(@Nonnull LabVessel labVessel, @Nonnull String lcsetName) {
-        for (DesignationLoadingTube designation :
-                barcodedTubeDao.findList(DesignationLoadingTube.class, DesignationLoadingTube_.loadingTube, labVessel)) {
-            if (designation.isPoolTest() && designation.getLcsetNames().contains(lcsetName) &&
-                designation.getStatus() == DesignationLoadingTube.Status.IN_FCT) {
+        for (FlowcellDesignation designation :
+                barcodedTubeDao.findList(FlowcellDesignation.class, FlowcellDesignation_.loadingTube, labVessel)) {
+            if (designation.isPoolTest() && designation.getLcset().getBatchName().equals(lcsetName) &&
+                designation.getStatus() == FlowcellDesignation.Status.IN_FCT) {
                 return true;
             }
         }
@@ -121,48 +119,53 @@ public class DesignationLoadingTubeEjb {
     @Inject
     private LabBatchDao labBatchDao;
 
-    public Map<DesignationRowDto, DesignationLoadingTube> update(
-            List<DesignationRowDto> rowDtos, EnumSet<DesignationLoadingTube.Status> persistableStatuses) {
-        Map<DesignationRowDto, DesignationLoadingTube> dtoAndTube = new HashMap<>();
-        for (DesignationRowDto rowDto : rowDtos) {
-            if (rowDto.isSelected() && persistableStatuses.contains(rowDto.getStatus())) {
-                if (rowDto.getDesignationId() == null) {
-                    LabVessel loadingTube = barcodedTubeDao.findByBarcode(rowDto.getBarcode());
-                    Set<LabBatch> lcsets = new HashSet<>();
-                    lcsets.add(labBatchDao.findByBusinessKey(rowDto.getPrimaryLcset()));
-                    lcsets.addAll(labBatchDao.findListByList(LabBatch.class, LabBatch_.batchName,
-                            rowDto.getAdditionalLcsets()));
+    /**
+     * Persists each dto provided it is selected and has status that is targetable.
+     * If it has a null designation id it is persisted as a new entity.
+     *
+     * @param dtos
+     * @param targetableStatuses
+     * @return
+     */
+    public Map<DesignationDto, FlowcellDesignation> update(List<DesignationDto> dtos,
+                                                           EnumSet<FlowcellDesignation.Status> targetableStatuses) {
+        Map<DesignationDto, FlowcellDesignation> dtoAndTube = new HashMap<>();
+        for (DesignationDto dto : dtos) {
+            if (dto.isSelected() && targetableStatuses.contains(dto.getStatus())) {
+                if (dto.getDesignationId() == null) {
+                    LabVessel loadingTube = barcodedTubeDao.findByBarcode(dto.getBarcode());
                     Set<Product> products = new HashSet<>(labBatchDao.findListByList(Product.class,
-                            Product_.productName, rowDto.getProductNames()));
-                    LabEvent loadingTubeEvent = labBatchDao.findById(LabEvent.class, rowDto.getTubeEventId());
-                    DesignationLoadingTube designation = new DesignationLoadingTube(loadingTube, lcsets,
-                            loadingTubeEvent, products, rowDto.getIndexType(), rowDto.getPoolTest(),
-                            rowDto.getSequencerModel(), rowDto.getNumberCycles(),
-                            rowDto.getNumberLanes(), rowDto.getReadLength(), rowDto.getLoadingConc(),
-                            rowDto.getRegulatoryDesignation().equals(DesignationLoadingTubeActionBean.CLINICAL),
-                            rowDto.getNumberSamples(), rowDto.getStatus(), rowDto.getPriority());
+                            Product_.productName, dto.getProductNames()));
+                    LabEvent loadingTubeEvent = labBatchDao.findById(LabEvent.class, dto.getTubeEventId());
+                    FlowcellDesignation designation = new FlowcellDesignation(loadingTube,
+                            labBatchDao.findByBusinessKey(dto.getLcset()),
+                            loadingTubeEvent, products, dto.getIndexType(), dto.getPoolTest(),
+                            dto.getSequencerModel(), dto.getNumberCycles(),
+                            dto.getNumberLanes(), dto.getReadLength(), dto.getLoadingConc(),
+                            dto.getRegulatoryDesignation().equals(DesignationUtils.CLINICAL),
+                            dto.getNumberSamples(), dto.getStatus(), dto.getPriority());
                     labBatchDao.persist(designation);
-                    dtoAndTube.put(rowDto, designation);
+                    dtoAndTube.put(dto, designation);
                 } else {
-                    DesignationLoadingTube designation = barcodedTubeDao.findById(DesignationLoadingTube.class,
-                            rowDto.getDesignationId());
-                    designation.setPriority(rowDto.getPriority());
-                    designation.setSequencerModel(rowDto.getSequencerModel());
-                    designation.setNumberLanes(rowDto.getNumberLanes());
-                    designation.setLoadingConc(rowDto.getLoadingConc());
-                    designation.setReadLength(rowDto.getReadLength());
-                    designation.setIndexType(rowDto.getIndexType());
-                    designation.setNumberCycles(rowDto.getNumberCycles());
-                    designation.setPoolTest(rowDto.getPoolTest());
-                    designation.setStatus(rowDto.getStatus());
-                    dtoAndTube.put(rowDto, designation);
+                    FlowcellDesignation designation = barcodedTubeDao.findById(FlowcellDesignation.class,
+                            dto.getDesignationId());
+                    designation.setPriority(dto.getPriority());
+                    designation.setSequencerModel(dto.getSequencerModel());
+                    designation.setNumberLanes(dto.getNumberLanes());
+                    designation.setLoadingConc(dto.getLoadingConc());
+                    designation.setReadLength(dto.getReadLength());
+                    designation.setIndexType(dto.getIndexType());
+                    designation.setNumberCycles(dto.getNumberCycles());
+                    designation.setPoolTest(dto.getPoolTest());
+                    designation.setStatus(dto.getStatus());
+                    dtoAndTube.put(dto, designation);
                 }
             }
         }
         return dtoAndTube;
     }
 
-    public Collection<DesignationLoadingTube> existingDesignations(List<DesignationLoadingTube.Status> statuses) {
-        return labBatchDao.findListByList(DesignationLoadingTube.class, DesignationLoadingTube_.status, statuses);
+    public Collection<FlowcellDesignation> existingDesignations(List<FlowcellDesignation.Status> statuses) {
+        return labBatchDao.findListByList(FlowcellDesignation.class, FlowcellDesignation_.status, statuses);
     }
 }
