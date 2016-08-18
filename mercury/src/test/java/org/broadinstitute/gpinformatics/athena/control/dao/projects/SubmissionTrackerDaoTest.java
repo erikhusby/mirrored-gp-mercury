@@ -77,7 +77,7 @@ public class SubmissionTrackerDaoTest extends ContainerTest {
     public void testFindSubmissionTrackersNoneExist() throws Exception {
         SubmissionDto submissionDto = getSubmissionDto(PDO_ID, "P123", sampleName, 1, BassFileType.BAM, TEST_FILE);
         List<SubmissionTracker> submissionTrackers =
-                submissionTrackerDao.findSubmissionTrackers(RP_ID, Collections.singleton(submissionDto));
+                submissionTrackerDao.findSubmissionTrackers(Collections.singleton(submissionDto));
         assertThat(submissionTrackers, emptyCollectionOf(SubmissionTracker.class));
     }
 
@@ -89,7 +89,7 @@ public class SubmissionTrackerDaoTest extends ContainerTest {
         persistTrackers(Collections.singleton(submissionTracker));
 
         List<SubmissionTracker> submissionTrackers =
-                submissionTrackerDao.findSubmissionTrackers(RP_ID, Collections.singleton(submissionDto));
+                submissionTrackerDao.findSubmissionTrackers(Collections.singleton(submissionDto));
         assertThat(submissionTrackers, hasSize(1));
 
         assertThat(submissionTrackers.iterator().next().getTuple(),
@@ -108,7 +108,7 @@ public class SubmissionTrackerDaoTest extends ContainerTest {
         persistTrackers(Arrays.asList(submissionTracker1, submissionTracker2));
 
         List<SubmissionTracker> submissionTrackers =
-                submissionTrackerDao.findSubmissionTrackers(RP_ID, Collections.singleton(submissionDto1));
+                submissionTrackerDao.findSubmissionTrackers(Collections.singleton(submissionDto1));
         assertThat(submissionTrackers, hasSize(2));
 
         submissionTracker1 = submissionTrackers.get(0);
@@ -133,12 +133,12 @@ public class SubmissionTrackerDaoTest extends ContainerTest {
         persistTrackers(Arrays.asList(submissionTracker1, submissionTracker2));
 
         List<SubmissionTracker> submissionTrackers =
-                submissionTrackerDao.findSubmissionTrackers(RP_ID, Collections.singleton(submissionDto1));
+                submissionTrackerDao.findSubmissionTrackers(Collections.singleton(submissionDto1));
         assertThat(submissionTrackers, hasSize(1));
         submissionTracker1 = submissionTrackers.get(0);
 
         submissionTrackers =
-                submissionTrackerDao.findSubmissionTrackers(RP_ID, Collections.singleton(submissionDto2));
+                submissionTrackerDao.findSubmissionTrackers(Collections.singleton(submissionDto2));
         assertThat(submissionTrackers, hasSize(1));
         submissionTracker2 = submissionTrackers.get(0);
         // Tuples should be different.

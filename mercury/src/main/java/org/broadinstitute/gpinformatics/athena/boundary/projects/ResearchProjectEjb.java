@@ -263,7 +263,7 @@ public class ResearchProjectEjb {
                                                                      @Nonnull SubmissionRepository repository,
                                                                      @Nonnull SubmissionLibraryDescriptor
                                                                      submissionLibraryDescriptor) throws ValidationException {
-        validateSubmissionDto(researchProjectBusinessKey, submissionDtos);
+        validateSubmissionDto(submissionDtos);
         validateSubmissionSamples(selectedBioProject, submissionDtos);
 
         ResearchProject submissionProject = researchProjectDao.findByBusinessKey(researchProjectBusinessKey);
@@ -349,7 +349,7 @@ public class ResearchProjectEjb {
      * @param submissionDtos
      * @throws ValidationException
      */
-    public void validateSubmissionDto(@Nonnull String researchProjectKey, @Nonnull List<SubmissionDto> submissionDtos)
+    public void validateSubmissionDto(@Nonnull List<SubmissionDto> submissionDtos)
             throws ValidationException {
 
         if (submissionDtos.isEmpty()) {
@@ -376,8 +376,7 @@ public class ResearchProjectEjb {
             throw new ValidationException("No data was found in submission request.");
         }
 
-        List<SubmissionTracker> submissionTrackers =
-                submissionTrackerDao.findSubmissionTrackers(researchProjectKey, submissionDtos);
+        List<SubmissionTracker> submissionTrackers = submissionTrackerDao.findSubmissionTrackers(submissionDtos);
 
         for (SubmissionTracker submissionTracker : submissionTrackers) {
             errors.add(submissionTracker.getTuple().toString());
