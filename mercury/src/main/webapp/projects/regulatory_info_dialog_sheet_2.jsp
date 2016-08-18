@@ -4,7 +4,7 @@
 
 <c:choose>
     <c:when test="${not empty actionBean.searchResults}">
-        <p>Found existing regulatory information in Mercury.</p>
+        <p class="alert alert-block" style="font-weight: bold">Found existing regulatory information in Mercury.</p>
         <stripes:form beanclass="${actionBean.class.name}">
             <input type="hidden" name="addRegulatoryInfoToResearchProject"/>
             <stripes:hidden name="researchProject" value="${actionBean.editResearchProject.jiraTicketKey}"/>
@@ -32,7 +32,7 @@
         </stripes:form>
     </c:when>
     <c:when test="${actionBean.orspSearchResult != null}">
-        <p>Found existing regulatory information in ORSP Portal.</p>
+        <p class="alert alert-block" style="font-weight: bold">Found existing regulatory information in ORSP Portal.</p>
         <stripes:form beanclass="${actionBean.class.name}">
             <stripes:hidden name="researchProject" value="${actionBean.editResearchProject.jiraTicketKey}"/>
             <input type="hidden" id="regulatoryInfoId" name="regulatoryInfoId">
@@ -75,7 +75,7 @@
         </stripes:form>
     </c:when>
     <c:otherwise>
-        <p>No results found in Mercury or the ORSP Portal.</p>
+        <p class="alert alert-block" style="font-weight: bold">No results found in Mercury or the ORSP Portal.</p>
     </c:otherwise>
 </c:choose>
 
