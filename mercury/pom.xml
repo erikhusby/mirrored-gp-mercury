@@ -1675,7 +1675,7 @@ nodePrinter.print(webapp)
         <dependency>
             <groupId>commons-beanutils</groupId>
             <artifactId>commons-beanutils</artifactId>
-            <version>1.7.0</version>
+            <version>1.9.2</version>
         </dependency>
 
         <dependency>
@@ -1720,21 +1720,15 @@ nodePrinter.print(webapp)
             <scope>test</scope>
         </dependency>
 
-        <!--  BettaLimsMessageBeanTest and WorkCompleteMessageBeanTest
-        TODO: JMS: Convert to ActiveMQ
-          -->
+        <!--  BettaLimsMessageBeanTest and WorkCompleteMessageBeanTest -->
         <dependency>
-            <groupId>org.hornetq</groupId>
-            <artifactId>hornetq-core-client</artifactId>
-            <version>2.2.7.Final</version>
-            <scope>compile</scope>
+            <groupId>org.wildfly</groupId>
+            <artifactId>wildfly-jms-client-bom</artifactId>
+            <version>10.0.0.Final</version>
+            <type>pom</type>
+            <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.hornetq</groupId>
-            <artifactId>hornetq-jms-client</artifactId>
-            <version>2.2.7.Final</version>
-            <scope>compile</scope>
-        </dependency>
+
 
         <dependency>
             <groupId>com.jgraph</groupId>

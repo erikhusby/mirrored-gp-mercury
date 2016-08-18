@@ -1,17 +1,17 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
+import org.apache.activemq.artemis.api.core.TransportConfiguration;
+import org.apache.activemq.artemis.api.jms.ActiveMQJMSClient;
+import org.apache.activemq.artemis.api.jms.JMSFactoryType;
+import org.apache.activemq.artemis.core.remoting.impl.netty.NettyConnectorFactory;
+import org.apache.activemq.artemis.core.remoting.impl.netty.TransportConstants;
+import org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.work.WorkCompleteMessageDao;
 import org.broadinstitute.gpinformatics.athena.entity.work.WorkCompleteMessage;
 import org.broadinstitute.gpinformatics.infrastructure.common.SessionContextUtility;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.hornetq.api.core.TransportConfiguration;
-import org.hornetq.api.jms.HornetQJMSClient;
-import org.hornetq.api.jms.JMSFactoryType;
-import org.hornetq.core.remoting.impl.netty.NettyConnectorFactory;
-import org.hornetq.core.remoting.impl.netty.TransportConstants;
-import org.hornetq.jms.client.HornetQConnectionFactory;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -144,13 +144,33 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
         }
     }
 
-    public Session createSession() throws JMSException {
+    public Session createSession() throws JMSException{
         Connection connection = getConnection();
+        connection.start();
         return connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
     }
 
     private Connection getConnection() throws JMSException {
-        HornetQConnectionFactory cf = HornetQJMSClient.createConnectionFactoryWithoutHA(JMSFactoryType.CF,
+        /* ***
+         * A use-case where a message is sent from an EJB to an in-container JMS server
+         * should use jndi for ConnectionFactory lookup (and use an in-vm connection)
+         * JNDI method confirmed to work in Wildfly 10
+        ConnectionFactory cf = null;
+        try {
+            Context ctx = new InitialContext();
+            cf = (ConnectionFactory) ctx.lookup("java:/ConnectionFactory");
+        } catch (NamingException ne) {
+            throw new RuntimeException("Fail to obtain ActiveMQConnectionFactory from JNDI", ne );
+        }
+        // Parameters should not be set by client?
+        // cf.setClientFailureCheckPeriod(Long.MAX_VALUE);
+        // cf.setConnectionTTL(-1);
+        // This connection is never closed, which is probably Bad but it doesn't seem to break anything.
+        return cf.createConnection();
+         */
+
+        // Use network JMS connectivity
+        ActiveMQConnectionFactory cf = ActiveMQJMSClient.createConnectionFactoryWithoutHA(JMSFactoryType.CF,
                 new TransportConfiguration(NettyConnectorFactory.class.getName(),
                         new HashMap<String, Object>() {{
                             put(TransportConstants.PORT_PROP_NAME, appConfig.getJmsPort());
@@ -174,11 +194,12 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
 
         try {
             connection = getConnection();
+            connection.start();
             session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
             Destination destination = session.createQueue("broad.queue.athena.workreporting.dev");
             MessageProducer producer = session.createProducer(destination);
             Message message = createMessage(session, false);
-            producer.send(destination, message);
+            producer.send(message);
         } finally {
             if (session != null) {
                 session.close();
@@ -201,6 +222,7 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
         try {
             WorkCompleteMessageBean workCompleteMessageBean = new WorkCompleteMessageBean(workCompleteMessageDao, sessionContextUtility);
             connection = getConnection();
+            connection.start();
             session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
             workCompleteMessageBean.processMessage(createMessage(session));
             workCompleteMessageDao.flush();
