@@ -229,7 +229,7 @@ $(document).ready(function () {
         if ($table.indexOf("src_G") >= 0) {
             direction = "dest";
             sourceCell = $(this).attr("id").replace("btn_", "");
-            if (!sourceCell.includes('col') && !sourceCell.includes('row')) {
+            if (sourceCell.indexOf('col') == -1 && sourceCell.indexOf('row') == -1) {
                 sourceIDs.push(sourceCell);
                 if ($(this).text() == 'Selected') {
                     removeConnections(sourceCell);
@@ -240,7 +240,7 @@ $(document).ready(function () {
         if ($table.indexOf("dest_G") >= 0) {
             destCell = $(this).attr("id").replace("btn_", "");
             direction = "src";
-            if (!destCell.includes('col') && !destCell.includes('row')) {
+            if (destCell.indexOf('col') == -1 && destCell.indexOf('row') == -1) {
                 targetIDs.push(destCell);
                 if ($(this).text() == 'Selected') {
                     removeConnections(destCell);
