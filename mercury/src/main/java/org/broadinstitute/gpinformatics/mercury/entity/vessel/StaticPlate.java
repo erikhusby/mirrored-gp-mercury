@@ -135,6 +135,11 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
         this.plateType = plateType;
     }
 
+    public StaticPlate(String manufacturerBarcode, PlateType plateType, String plateName) {
+        this(manufacturerBarcode, plateType);
+        this.name = plateName;
+    }
+
     /** For Hibernate */
     protected StaticPlate() {
     }

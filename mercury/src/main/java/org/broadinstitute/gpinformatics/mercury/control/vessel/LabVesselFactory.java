@@ -195,7 +195,8 @@ public class LabVesselFactory implements Serializable {
                     StaticPlate staticPlate = (StaticPlate) mapBarcodeToVessel.get(
                             parentVesselBean.getManufacturerBarcode());
                     if (staticPlate == null) {
-                        staticPlate = new StaticPlate(parentVesselBean.getManufacturerBarcode(), plateType);
+                        staticPlate = new StaticPlate(parentVesselBean.getManufacturerBarcode(), plateType,
+                                parentVesselBean.getPlateName());
                     }
                     labVessels.add(staticPlate);
 
@@ -223,7 +224,8 @@ public class LabVesselFactory implements Serializable {
                         if (rackType == null) {
                             rackType = RackOfTubes.RackType.Matrix96;
                         }
-                        rackOfTubes = new RackOfTubes(parentVesselBean.getManufacturerBarcode(), rackType);
+                        rackOfTubes = new RackOfTubes(parentVesselBean.getManufacturerBarcode(), rackType,
+                                parentVesselBean.getPlateName());
                     }
                     Map<VesselPosition, BarcodedTube> mapPositionToTube = new HashMap<>();
                     for (ChildVesselBean childVesselBean : parentVesselBean.getChildVesselBeans()) {
