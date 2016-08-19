@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
@@ -165,7 +166,10 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                 priceListCache.findByKeyFields(product.getPrimaryPriceItem().getPlatform(),
                         product.getPrimaryPriceItem().getCategory(),
                         product.getPrimaryPriceItem().getName()).getPrice(),
-                placedOrder.getSamples().size());
+                (product.getProductFamily().getName().equals(ProductFamily.ProductFamilyName.SEQUENCE_ONLY.name()) &&
+                placedOrder.getLaneCount()>0)
+                        ?placedOrder.getSamples().size()*placedOrder.getLaneCount()
+                        :placedOrder.getSamples().size());
     }
 
     @Override
