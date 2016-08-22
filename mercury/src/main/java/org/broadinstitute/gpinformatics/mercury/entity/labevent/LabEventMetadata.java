@@ -32,7 +32,6 @@ public class LabEventMetadata {
         SimulationMode("SimulationMode"),  // If message is sent from a deck running in simulation.
         SensitivityFactor("SensitivityFactor"), // Combined w. Dilution Factor to calculate conc of a sample in BSP.
         VolumeRemoved("VolumeRemoved"), // Marks how much volume removed during a plate transfer.
-        SimulationMode("SimulationMode"),  // If message is sent from a deck running in simulation.
         AutocallStarted("AutocallStarted"); //If infinium chip well was forwarded to the pipeline.
 
         private static final Map<String, LabEventMetadataType> MAP_NAME_TO_METADATA_TYPE =
