@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.control.dao.labevent;
 
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent_;
 
 import javax.ejb.Stateful;
