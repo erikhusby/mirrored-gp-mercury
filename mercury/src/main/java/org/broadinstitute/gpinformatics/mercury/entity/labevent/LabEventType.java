@@ -249,8 +249,8 @@ public enum LabEventType {
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.FALSE, SystemOfRecord.WORKFLOW_DEPENDENT, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             new ManualTransferDetails.Builder(MessageType.STRIP_TUBE_CHERRY_PICK_EVENT, RackOfTubes.RackType.Matrix96,
-                    RackOfTubes.RackType.StripTubes).reagentNames(new String[]{"EB"}).build(),
-            LibraryType.POOLED),
+                    RackOfTubes.RackType.StripTubes).reagentNames(new String[]{"Hyb Buffer"}).build(),
+            LibraryType.NONE_ASSIGNED),
 
     // HiSeq 2000
     FLOWCELL_TRANSFER("FlowcellTransfer",

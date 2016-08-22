@@ -399,8 +399,9 @@ public class ManualTransferActionBean extends RackScanActionBean {
                     if (messageCollection.hasErrors()) {
                         break;
                     }
-                    if (cherryPickJson == null)
+                    if (cherryPickJson == null) {
                         cherryPickJson = getContext().getRequest().getParameter("destPosList");
+                    }
                     //This handles barcode validation where no transfer connections have been made resulting in malformed Json.
                     try {
                         cherryPickPositionMaps = mapper.readValue(cherryPickJson, new TypeReference<List<CherryPicksPositions>>() {
@@ -909,25 +910,25 @@ public class ManualTransferActionBean extends RackScanActionBean {
         return receptacleTypeReturn;
     }
 
-    public StripTubePoitions findStripTubeFctPositions(int position) {
+    public StripTubePositions findStripTubeFctPositions(int position) {
         ObjectMapper mapper = new ObjectMapper();
-        StripTubePoitions stripTubePoitions = new StripTubePoitions();
+        StripTubePositions stripTubePositions = new StripTubePositions();
         String stripTubeJSON = getContext().getRequest().getParameter("stripTubeList");
 
         if (stripTubeJSON == null) {
             return null;
         }
         try {
-            stripTubePoitions = mapper.readValue(stripTubeJSON, new TypeReference<StripTubePoitions>() {
+            stripTubePositions = mapper.readValue(stripTubeJSON, new TypeReference<StripTubePositions>() {
             });
         } catch (IOException e) {
             return null;
         }
 
-        StripTubePoitions stripTubePoitionsReturn = new StripTubePoitions();
-        stripTubePoitionsReturn.fctValue = stripTubePoitions.fct.get(position);
-        stripTubePoitionsReturn.barcodeValue = stripTubePoitions.stripTubeBarcode.get(position);
-        return stripTubePoitionsReturn;
+        StripTubePositions stripTubePositionsReturn = new StripTubePositions();
+        stripTubePositionsReturn.fctValue = stripTubePositions.fct.get(position);
+        stripTubePositionsReturn.barcodeValue = stripTubePositions.stripTubeBarcode.get(position);
+        return stripTubePositionsReturn;
     }
 
     public List<StationEventType> getStationEvents() {

@@ -7,7 +7,7 @@ import java.util.List;
  * Class to map & persist JSON data back to the transfer_plate_strip_tube JSP page.
  *
  */
-public class StripTubePoitions
+public class StripTubePositions
 {
     public List<String> fct = new ArrayList<String>();
     public List<String> stripTubeBarcode = new ArrayList<String>();
