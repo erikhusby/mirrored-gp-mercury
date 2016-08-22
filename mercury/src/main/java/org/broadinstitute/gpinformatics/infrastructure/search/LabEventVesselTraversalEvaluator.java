@@ -1,15 +1,13 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -21,9 +19,6 @@ import java.util.TreeSet;
  * Directionality implemented in AncestorTraversalEvaluator and DescendantTraversalEvaluator nested classes
  */
 public class LabEventVesselTraversalEvaluator extends TraversalEvaluator {
-
-    public static List<LabEventType> INFINIUM_EVENT_TYPES = Arrays.asList(
-            LabEventType.ARRAY_PLATING_DILUTION, LabEventType.INFINIUM_AMPLIFICATION, LabEventType.INFINIUM_XSTAIN  );
 
     public LabEventVesselTraversalEvaluator(){ }
 
@@ -40,6 +35,14 @@ public class LabEventVesselTraversalEvaluator extends TraversalEvaluator {
 
         List<LabVessel> rootEventVessels = (List<LabVessel>) rootEntities;
         Set sortedSet = new TreeSet<>( LabEvent.BY_EVENT_DATE_LOC );
+        List<String> lcsetNames = null;
+        for (SearchInstance.SearchValue searchValue : searchInstance.getSearchValues()) {
+            // todo jmt make this less fragile
+            if (searchValue.getSearchTerm().getName().equals("LCSET")) {
+                lcsetNames = searchValue.getValues();
+            }
+        }
+
 
         // Get base events for vessels
         for( LabVessel vessel : rootEventVessels ) {
@@ -49,13 +52,31 @@ public class LabEventVesselTraversalEvaluator extends TraversalEvaluator {
         if( searchInstance.getTraversalEvaluatorValues()
                 .get(LabEventSearchDefinition.TraversalEvaluatorName.ANCESTORS.getId()) ) {
             sortedSet.addAll(traverseRootVessels(rootEventVessels,
-                    TransferTraverserCriteria.TraversalDirection.Ancestors));
+                    TransferTraverserCriteria.TraversalDirection.Ancestors, lcsetNames));
         }
 
         if( searchInstance.getTraversalEvaluatorValues()
                 .get(LabEventSearchDefinition.TraversalEvaluatorName.DESCENDANTS.getId()) ) {
             sortedSet.addAll(traverseRootVessels(rootEventVessels,
-                    TransferTraverserCriteria.TraversalDirection.Descendants));
+                    TransferTraverserCriteria.TraversalDirection.Descendants, lcsetNames));
+        }
+
+        // Apply in-memory search terms from searchInstance
+        SearchTerm.Evaluator<Boolean> traversalFilterExpression = null;
+        for (SearchInstance.SearchValue searchValue : searchInstance.getSearchValues()) {
+            for (SearchTerm searchTerm : searchValue.getSearchTerm().getDependentSearchTerms()) {
+                traversalFilterExpression = searchTerm.getTraversalFilterExpression();
+                break;
+            }
+        }
+        if (traversalFilterExpression != null) {
+            Iterator<LabEvent> iterator = sortedSet.iterator();
+            while (iterator.hasNext()) {
+                LabEvent labEvent = iterator.next();
+                if (!traversalFilterExpression.evaluate(labEvent, searchInstance.getEvalContext())) {
+                    iterator.remove();
+                }
+            }
         }
 
         return sortedSet;
@@ -63,8 +84,6 @@ public class LabEventVesselTraversalEvaluator extends TraversalEvaluator {
 
     /**
      * Convert a collection of LabEvent objects to ids (Long)
-     * @param entities
-     * @return
      */
     @Override
     public List<Long> buildEntityIdList( Set entities ) {
@@ -79,12 +98,14 @@ public class LabEventVesselTraversalEvaluator extends TraversalEvaluator {
      * Gather all chain of custody events for a list of lab vessels
      * @param rootVessels The list of lab vessels produced by the alternate search definition criteria
      * @param traversalDirection The traversal direction to use for chain of custody events
+     * @param lcsetNames list of LCSETs by which to filter events, no filtering if empty
      * @return The chain of custody events resulting from traversal
      */
     private Set<LabEvent> traverseRootVessels(List<LabVessel> rootVessels,
-                                              TransferTraverserCriteria.TraversalDirection traversalDirection){
+            TransferTraverserCriteria.TraversalDirection traversalDirection, List<String> lcsetNames){
         TransferTraverserCriteria.LabEventDescendantCriteria eventTraversalCriteria =
                 new TransferTraverserCriteria.LabEventDescendantCriteria();
+        eventTraversalCriteria.setLcsetNames(lcsetNames);
 
         for (LabVessel startingEventVessel : rootVessels) {
             if (startingEventVessel.getContainerRole() != null) {

@@ -52,7 +52,8 @@ public class LabEventSearchDefinition {
      * Terms with alternate search definitions have to access user selected state of these options.
      */
     public enum TraversalEvaluatorName {
-        ANCESTORS("ancestorOptionEnabled"), DESCENDANTS("descendantOptionEnabled");
+        ANCESTORS("ancestorOptionEnabled"),
+        DESCENDANTS("descendantOptionEnabled");
 
         private final String id;
 
@@ -568,27 +569,43 @@ public class LabEventSearchDefinition {
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
             public Set<String> evaluate(Object entity, SearchContext context) {
-                LabEvent labEvent = (LabEvent) entity;
-                Set<String> results = null;
+                Set<String> results = new HashSet<>();
+                if( OrmUtil.proxySafeIsInstance( entity, LabEvent.class ) ) { 
+                    LabEvent labEvent = OrmUtil.proxySafeCast(entity, LabEvent.class);
 
-                Set<LabVessel> eventVessels = labEvent.getTargetLabVessels();
-                if( labEvent.getInPlaceLabVessel() != null ) {
-                    eventVessels.add(labEvent.getInPlaceLabVessel());
+                    Set<LabVessel> eventVessels = labEvent.getTargetLabVessels();
+                    if (labEvent.getInPlaceLabVessel() != null) {
+                        eventVessels.add(labEvent.getInPlaceLabVessel());
+                    }
+
+                    for (LabVessel labVessel : eventVessels) {
+                        results = getProduct(results, labVessel);
+                    }
+                } else if( OrmUtil.proxySafeIsInstance( entity, LabVessel.class ) ) {
+                    LabVessel labVessel = OrmUtil.proxySafeCast(entity, LabVessel.class);
+                    results = getProduct(results, labVessel);
+                } else {
+                    throw new RuntimeException("Unhandled display value type for 'Product': "
+                            + OrmUtil.getProxyObjectClass(entity).getSimpleName());
                 }
 
-                for( LabVessel labVessel : eventVessels ) {
-                    for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
-                        for (ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples() ) {
-                            if( productOrderSample.getProductOrder().getProduct() != null ) {
-                                (results == null ? results = new HashSet<>() : results)
-                                        .add(productOrderSample.getProductOrder().getProduct().getDisplayName());
-                            }
+                return results;
+            }
+
+            private Set<String> getProduct(Set<String> results, LabVessel labVessel) {
+                for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+                    for (ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples()) {
+                        if (productOrderSample.getProductOrder().getProduct() != null) {
+                            results.add(productOrderSample.getProductOrder().getProduct().getDisplayName());
                         }
                     }
                 }
                 return results;
             }
         });
+        for( SearchTerm nestedTableTerm : nestedTableTerms ) {
+            nestedTableTerm.addParentTermHandledByChild(searchTerm);
+        }
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
@@ -612,6 +629,22 @@ public class LabEventSearchDefinition {
         });
         searchTerm.setAlternateSearchDefinition(eventByVesselSearchDefinition);
         searchTerm.setCriteriaPaths(blankCriteriaPaths);
+
+        SearchTerm lcsetEventTerm = new SearchTerm();
+        lcsetEventTerm.setName("LCSET event type");
+        lcsetEventTerm.setConstrainedValuesExpression(new SearchDefinitionFactory.EventTypeValuesExpression());
+        lcsetEventTerm.setTraversalFilterExpression(new SearchTerm.Evaluator<Boolean>() {
+            @Override
+            public Boolean evaluate(Object entity, SearchContext context) {
+                // todo jmt support multiple
+                String eventTypeName = context.getSearchInstance().getSearchValues().iterator().next().getChildren().iterator().next().getValues().iterator().next();
+                return ((LabEvent)entity).getLabEventType().name().equals(eventTypeName);
+            }
+        });
+        List<SearchTerm> dependentSearchTerms = new ArrayList<>();
+        dependentSearchTerms.add(lcsetEventTerm);
+        searchTerm.setDependentSearchTerms(dependentSearchTerms);
+
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
