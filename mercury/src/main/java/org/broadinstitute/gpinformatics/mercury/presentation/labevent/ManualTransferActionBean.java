@@ -246,7 +246,6 @@ public class ManualTransferActionBean extends RackScanActionBean {
                     }
                     break;
                 case PLATE_CHERRY_PICK_EVENT:
-
                     PlateCherryPickEvent plateCherryPickEvent = (PlateCherryPickEvent) stationEvent;
                     //Source
                     PlateType sourcePlateCp = new PlateType();
@@ -463,7 +462,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
                             Direction.SOURCE);
 
                     loadPlateFromDb(plateCherryPickEvent.getPlate().get(0), plateCherryPickEvent.getPositionMap().get(0),
-                            true, labBatch, messageCollection,
+                            false, labBatch, messageCollection,
                             Direction.TARGET);
 
                     if(messageCollection.hasErrors()) {
