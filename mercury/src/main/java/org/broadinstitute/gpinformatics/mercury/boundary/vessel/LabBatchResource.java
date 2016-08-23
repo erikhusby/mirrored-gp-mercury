@@ -1,17 +1,28 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ListMultimap;
+import org.apache.commons.lang3.tuple.Pair;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
+import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactory;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
@@ -19,7 +30,8 @@ import javax.inject.Inject;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -54,17 +66,18 @@ public class LabBatchResource {
     @Inject
     private JiraService jiraService;
 
-    public LabBatchResource() {
-    }
+    @Inject
+    private ProductOrderDao productOrderDao;
 
-    /** Constructor used for test purposes. */
-    public LabBatchResource(LabVesselFactory labVesselFactory) {
-        this.labVesselFactory = labVesselFactory;
+    @Inject
+    private BucketEjb bucketEjb;
+
+    public LabBatchResource() {
     }
 
     @POST
     public String createLabBatch(LabBatchBean labBatchBean) {
-        LabBatch labBatch = null;
+        LabBatch labBatch;
         if (labBatchBean.getParentVesselBean() != null) {
             labBatch = createLabBatchByParentVessel(labBatchBean);
         } else {
@@ -84,7 +97,7 @@ public class LabBatchResource {
             labBatch = buildLabBatch(labBatchBean, mapBarcodeToTube, mapSampleToSample);
         }
 
-        if (!labBatchBean.getBatchId().startsWith(BSP_BATCH_PREFIX)) {
+        if (!labBatchBean.getBatchId().startsWith(BSP_BATCH_PREFIX)) { // todo jmt or ARRAY
             JiraTicket jiraTicket = new JiraTicket(jiraService, labBatchBean.getBatchId());
             labBatch.setJiraTicket(jiraTicket);
             jiraTicket.setLabBatch(labBatch);
@@ -98,15 +111,52 @@ public class LabBatchResource {
     /**
      * Build a LabBatch entity from a LabBatchBean with a ParentVesselBean
      */
-    public LabBatch createLabBatchByParentVessel(LabBatchBean labBatchBean) {
+    private LabBatch createLabBatchByParentVessel(LabBatchBean labBatchBean) {
         List<LabVessel> labVessels = labVesselFactory.buildLabVessels(
-                Arrays.asList(labBatchBean.getParentVesselBean()), labBatchBean.getUsername(),
+                Collections.singletonList(labBatchBean.getParentVesselBean()), labBatchBean.getUsername(),
                 new Date(), null, MercurySample.MetadataSource.BSP);
 
-        Set<LabVessel> labVesselSet = new HashSet<>(labVessels);
-        return new LabBatch(labBatchBean.getBatchId(), labVesselSet,
+        Set<LabVessel> labVesselSet = new HashSet<>();
+        Map<String, ProductOrder> mapIdToPdo = new HashMap<>();
+        ListMultimap<String, LabVessel> mapPdoToVessels = ArrayListMultimap.create();
+        for (ChildVesselBean childVesselBean : labBatchBean.getParentVesselBean().getChildVesselBeans()) {
+            if (childVesselBean.getProductOrder() != null) {
+                ProductOrder productOrder = mapIdToPdo.get(childVesselBean.getProductOrder());
+                if (productOrder == null) {
+                    productOrder = productOrderDao.findByBusinessKey(childVesselBean.getProductOrder());
+                    mapIdToPdo.put(childVesselBean.getProductOrder(), productOrder);
+                }
+                if (labVessels.size() == 1 /*todo && plate */) {
+                    StaticPlate staticPlate = (StaticPlate) labVessels.get(0);
+                    PlateWell plateWell = staticPlate.getContainerRole().getVesselAtPosition(
+                            VesselPosition.getByName(childVesselBean.getPosition()));
+                    labVesselSet.add(plateWell);
+                    mapPdoToVessels.put(childVesselBean.getProductOrder(), plateWell);
+                } else {
+
+                }
+            }
+        }
+
+        if (labVesselSet.isEmpty()) {
+            labVesselSet.addAll(labVessels);
+        }
+        LabBatch labBatch = new LabBatch(labBatchBean.getBatchId(), labVesselSet,
                 labBatchBean.getBatchId().startsWith(BSP_BATCH_PREFIX) ?
                         LabBatch.LabBatchType.BSP : LabBatch.LabBatchType.WORKFLOW);
+        for (Map.Entry<String, ProductOrder> stringProductOrderEntry : mapIdToPdo.entrySet()) {
+            Pair<ProductWorkflowDefVersion, Collection<BucketEntry>> workflowBucketEntriesPair =
+                    bucketEjb.applyBucketCriteria(mapPdoToVessels.get(stringProductOrderEntry.getKey()),
+                            stringProductOrderEntry.getValue(), labBatchBean.getUsername());
+            ProductWorkflowDefVersion productWorkflowDefVersion = workflowBucketEntriesPair.getLeft();
+            if (productWorkflowDefVersion == null) {
+                throw new RuntimeException("No workflow for " + stringProductOrderEntry.getValue().getJiraTicketKey());
+            }
+            labBatch.setWorkflowName(productWorkflowDefVersion.getProductWorkflowDef().getName());
+            bucketEjb.moveFromBucketToBatch(workflowBucketEntriesPair.getRight(), labBatch);
+        }
+
+        return labBatch;
     }
 
     /**
