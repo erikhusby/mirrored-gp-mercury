@@ -41,18 +41,14 @@ public class SampleInstanceEtlData {
         SampleInstanceEtlData sampleInstanceData = new SampleInstanceEtlData();
         sampleInstanceData.includeNearestSample = includeNearestSample;
 
-        BucketEntry pdoBucketEntry = si.getSingleBucketEntry();
-        if( pdoBucketEntry != null ) {
-            sampleInstanceData.pdo = pdoBucketEntry.getProductOrder();
-        }
-
-        sampleInstanceData.pdoSample = si.getSingleProductOrderSample();
-        if( sampleInstanceData.pdoSample != null ) {
-            sampleInstanceData.pdoSampleId = sampleInstanceData.pdoSample.getMercurySample().getSampleKey();
-        }
-
-        // Does this ever happen?  Even a control would fail.
-        if( sampleInstanceData.pdoSample == null ) {
+        // PDO/Sample logic
+        ProductOrderSample singlePdoSample = si.getSingleProductOrderSample();
+        if( singlePdoSample != null ) {
+            sampleInstanceData.pdo = singlePdoSample.getProductOrder();
+            sampleInstanceData.pdoSample = singlePdoSample;
+            sampleInstanceData.pdoSampleId = singlePdoSample.getMercurySample().getSampleKey();
+        } else {
+            // Does this ever happen?  Even a control would fail.
             // Get latest PDO and the sample which matches it (the PDO and sample must match)
             for (ProductOrderSample pdoSample : si.getAllProductOrderSamples()) {
                 // Get a valid PDO
