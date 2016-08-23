@@ -167,6 +167,11 @@ public class BillingAdaptor implements Serializable {
                     } else {
                         item.getPriceItem().setPrice(primaryPriceItemIfReplacement.getPrice());
                     }
+
+                    String workId = quoteService.registerNewWork(quote, priceItemBeingBilled, primaryPriceItemIfReplacement,
+                            item.getWorkCompleteDate(), item.getQuantity(),
+                            pageUrl, "billingSession", sessionKey);
+
                     String sapBillingId = quote.isEligibleForSAP()? null:"NotEligible";
 
                     if(quote.isEligibleForSAP()) {
@@ -181,10 +186,6 @@ public class BillingAdaptor implements Serializable {
                         }
                     }
 
-                    String workId = quoteService.registerNewWork(quote, priceItemBeingBilled, primaryPriceItemIfReplacement,
-                                                                 item.getWorkCompleteDate(), item.getQuantity(),
-                                                                 pageUrl, "billingSession", sessionKey);
-
                     // Not sure I see the point of the next two lines!!!!
                     result.setWorkId(workId);
                     result.setSAPBillingId(sapBillingId);
@@ -195,7 +196,8 @@ public class BillingAdaptor implements Serializable {
                 } catch (Exception ex) {
 
                     StringBuilder errorMessage = new StringBuilder();
-                    if (StringUtils.isBlank(item.getProductOrder().getSapOrderNumber()) && quote.isEligibleForSAP()) {
+                    if (StringUtils.isBlank(item.getProductOrder().getSapOrderNumber()) && quote != null &&
+                        quote.isEligibleForSAP()) {
                         errorMessage.append("A problem occured attempting to post to SAP for ")
                                 .append(billingSession.getBusinessKey()).append(".");
                     }
@@ -205,8 +207,10 @@ public class BillingAdaptor implements Serializable {
                                 .append(billingSession.getBusinessKey()).append(".");
                     } else {
                         errorMessage.append("A problem occurred saving the ledger entries for ")
-                        .append(billingSession.getBusinessKey()).append(" with work id of ").append(result.getWorkId())
-                                       .append(".  ")
+                        .append(billingSession.getBusinessKey()).append(" with an SAP ID of ")
+                                .append(result.getSAPBillingId()).append(",")
+                                .append(" with work id of ").append(result.getWorkId())
+                                .append(".  ")
                                 .append("The quote for this item may have been successfully sent to the quote server");
                     }
 

@@ -820,6 +820,18 @@ function formatInput(item) {
 
             </c:if>
 
+            <security:authorizeBlock roles="<%= roles(PDM, PM, Developer) %>">
+
+                <c:if test="${!actionBean.editOrder.savedInSAP && !actionBean.editOrder.pending && !actionBean.editOrder.draft}">
+                    &nbsp;&nbsp;&nbsp;&nbsp;
+                    <stripes:button name="${actionBean.publishSAPAction}" id="${actionBean.publishSAPAction}" value="Publish Product Order to SAP"
+                                    class="btn padright" title="Click to Publish Product Order to SAP"/>
+
+                </c:if>
+            </security:authorizeBlock>
+
+
+
         </c:otherwise>
     </c:choose>
 
@@ -1130,19 +1142,6 @@ function formatInput(item) {
 </div>
 
     <div class="form-horizontal span5">
-
-        <security:authorizeBlock roles="<%= roles(PDM, PM, Developer) %>">
-
-        <c:if test="${!actionBean.editOrder.savedInSAP && !actionBean.editOrder.pending && !actionBean.editOrder.draft}">
-            <stripes:link beanclass="${actionBean.class.name}" event="${actionBean.publishSAPAction}"
-                          title="Click to Publish Product Order to SAP" class="pull-right">
-                <stripes:param name="${actionBean.editBusinessKeyName}"
-                               value="${actionBean.editOrder.businessKey}"/>
-                <span class="icon-pencil"></span>
-                "Publish Product Order to SAP"
-            </stripes:link>
-        </c:if>
-        </security:authorizeBlock>
 
 
         <c:if test="${actionBean.editOrder.sampleInitiation}">

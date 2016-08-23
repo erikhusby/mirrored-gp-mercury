@@ -11,6 +11,23 @@
 
     <stripes:layout-component name="content">
 
+        <stripes:form action="/products/product.action" id="productViewForm" class="form-horizontal">
+            <stripes:hidden id="product" name="${actionBean.editBusinessKeyName}"
+                            value="${actionBean.editProduct.businessKey}"/>
+            <div class="actionButtons">
+
+                <security:authorizeBlock roles="<%= roles(PDM, PM, Developer) %>">
+
+                    <c:if test="${!actionBean.editProduct.savedInSAP}">
+                        <stripes:button name="${actionBean.publishSAPAction}" id="${actionBean.publishSAPAction}"
+                                        value="Publish Product to SAP"
+                                        class="btn padright" title="Click to Publish Product to SAP"/>
+                    </c:if>
+                </security:authorizeBlock>
+
+            </div>
+        </stripes:form>
+
         <div class="form-horizontal span7">
             <div class="view-control-group control-group">
                 <label class="control-label label-form">Part Number</label>
@@ -227,19 +244,6 @@
         </div>
 
         <div class="form-horizontal span5">
-
-            <security:authorizeBlock roles="<%= roles(PDM, PM, Developer) %>">
-
-            <c:if test="${not actionBean.editProduct.savedInSAP}">
-                <stripes:link beanclass="${actionBean.class.name}" event="${actionBean.publishSAPAction}"
-                              title="Click to Publish Product to SAP" class="pull-right">
-                    <stripes:param name="${actionBean.editBusinessKeyName}"
-                                   value="${actionBean.editProduct.businessKey}"/>
-                    <span class="icon-pencil"></span>
-                    "Publish Product to SAP"
-                </stripes:link>
-            </c:if>
-            </security:authorizeBlock>
 
             <fieldset>
                 <legend><h4>Pipeline Analysis</h4></legend>
