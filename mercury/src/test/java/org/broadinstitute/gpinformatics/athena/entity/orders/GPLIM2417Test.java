@@ -1,10 +1,10 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
-import junit.framework.Assert;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.infrastructure.common.BaseSplitter;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
