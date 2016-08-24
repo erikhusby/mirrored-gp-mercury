@@ -1,10 +1,13 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
@@ -15,14 +18,24 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 /**
  * Test creation of lab batches through the web service.
  */
-public class LabBatchResourceTest extends ContainerTest {
+@Test(groups = TestGroups.STANDARD)
+public class LabBatchResourceTest extends Arquillian {
     @Inject
     private LabBatchResource labBatchResource;
+
+    @Inject
+    private LabBatchDao labBatchDao;
+
+    @Deployment
+    public static WebArchive buildMercuryWar() {
+        return DeploymentBuilder.buildMercuryWar(DEV);
+    }
 
     @Test
     public void testBasics() {
         LabBatchBean labBatchBean = new LabBatchBean();
-        labBatchBean.setBatchId("ARRAY-6546");
+        String batchId = "ARRAY-" + System.currentTimeMillis();
+        labBatchBean.setBatchId(batchId);
         labBatchBean.setUsername("jowalsh");
 
         ArrayList<ChildVesselBean> childVesselBeans = new ArrayList<>();
@@ -35,5 +48,8 @@ public class LabBatchResourceTest extends ContainerTest {
                 childVesselBeans);
         labBatchBean.setParentVesselBean(parentVesselBean);
         labBatchResource.createLabBatch(labBatchBean);
+
+        LabBatch labBatch = labBatchDao.findByBusinessKey(batchId);
+        Assert.assertEquals(labBatch.getBucketEntries().size(), 2);
     }
 }

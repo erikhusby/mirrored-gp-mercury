@@ -144,6 +144,9 @@ public class LabBatchResource {
         LabBatch labBatch = new LabBatch(labBatchBean.getBatchId(), labVesselSet,
                 labBatchBean.getBatchId().startsWith(BSP_BATCH_PREFIX) ?
                         LabBatch.LabBatchType.BSP : LabBatch.LabBatchType.WORKFLOW);
+        if (!mapIdToPdo.isEmpty()) {
+            LabVessel.loadSampleDataForBuckets(labVesselSet);
+        }
         for (Map.Entry<String, ProductOrder> stringProductOrderEntry : mapIdToPdo.entrySet()) {
             Pair<ProductWorkflowDefVersion, Collection<BucketEntry>> workflowBucketEntriesPair =
                     bucketEjb.applyBucketCriteria(mapPdoToVessels.get(stringProductOrderEntry.getKey()),
