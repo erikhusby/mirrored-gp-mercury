@@ -344,10 +344,9 @@ public class BucketEjb {
                                                                           Collection<ProductOrderSample> samples) {
         boolean hasWorkflow=false;
         for (Workflow workflow : order.getProductWorkflows()) {
-            if (hasWorkflow = Workflow.SUPPORTED_WORKFLOWS.contains(workflow)) {
-                if (hasWorkflow){
-                    break;
-                }
+            hasWorkflow = workflow.isWorkflowSupportedByMercury();
+            if (hasWorkflow) {
+                break;
             }
         }
         if (!hasWorkflow) {

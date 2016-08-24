@@ -2,7 +2,9 @@ package org.broadinstitute.gpinformatics.mercury.boundary.bucket;
 
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -12,6 +14,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFac
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.BucketException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
@@ -34,6 +37,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.easymock.EasyMock;
+import org.easymock.EasyMockSupport;
 import org.easymock.IAnswer;
 import org.mockito.Mockito;
 import org.testng.Assert;
@@ -52,8 +56,6 @@ import java.util.List;
 import java.util.Map;
 
 import static org.easymock.EasyMock.anyObject;
-import static org.easymock.EasyMock.createMock;
-import static org.easymock.EasyMock.createNiceMock;
 import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
@@ -65,7 +67,9 @@ import static org.easymock.EasyMock.verify;
  */
 // singleThreaded because EasyMock mocks are not thread-safe during recording.
 @Test(enabled = true, groups = TestGroups.DATABASE_FREE, singleThreaded = true)
-public class BucketEjbDbFreeTest {
+public class BucketEjbDbFreeTest extends EasyMockSupport {
+    private static final Workflow SUPPORTED_WORKFLOW = Workflow.AGILENT_EXOME_EXPRESS;
+    private static final Workflow UNSUPPORTED_WORKFLOW = Workflow.ICE;
     private final LabEventType EVENT_TYPE = LabEventType.PICO_PLATING_BUCKET;
     private final String EVENT_LOCATION = LabEvent.UI_EVENT_LOCATION;
 
@@ -100,6 +104,8 @@ public class BucketEjbDbFreeTest {
     private void beforeClass() {
         bspUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
         pdoCreator = bspUserList.getById(BSPManagerFactoryStub.QA_DUDE_USER_ID).getUsername();
+        Assert.assertFalse(UNSUPPORTED_WORKFLOW.isWorkflowSupportedByMercury(), "Test is expecting an unsupported workflow;");
+        Assert.assertTrue(SUPPORTED_WORKFLOW.isWorkflowSupportedByMercury(), "Test is expecting a supported workflow;");
     }
 
     private void setUp(Workflow workflow) {
@@ -194,10 +200,7 @@ public class BucketEjbDbFreeTest {
 
     @Test(enabled = true, groups = TestGroups.DATABASE_FREE)
     public void testSamplesToPicoBucket() throws Exception {
-        for (Workflow workflow : (new Workflow[]{Workflow.AGILENT_EXOME_EXPRESS, Workflow.ICE})) {
-            if (!Workflow.SUPPORTED_WORKFLOWS.contains(workflow)) {
-                continue;
-            }
+        Workflow workflow = SUPPORTED_WORKFLOW;
             setupCoreMocks(workflow, true);
 
             expect(labEventFactory
@@ -209,22 +212,85 @@ public class BucketEjbDbFreeTest {
             expect(bspSampleDataFetcher.fetchSampleData(EasyMock.<Collection<String>>anyObject()))
                     .andReturn(bspSampleDataMap);
 
+        replay(mocks);
+
+        Map<String, Collection<ProductOrderSample>> samplesByBucket = bucketEjb.addSamplesToBucket(pdo);
+        Collection<ProductOrderSample> addedSamples = samplesByBucket.get("Pico/Plating Bucket");
+        Assert.assertEqualsNoOrder(addedSamples.toArray(), expectedSamples.toArray());
+
+        verify(mocks);
+    }
+
+    @Test(enabled = true, groups = TestGroups.DATABASE_FREE)
+    public void testSamplesToPicoBucketUnsuportedWorkflow() throws Exception {
+        Workflow workflow = UNSUPPORTED_WORKFLOW;
+
+        setUp(workflow);
+        Map<String, Collection<ProductOrderSample>> samplesByBucket = bucketEjb.addSamplesToBucket(pdo);
+        Assert.assertTrue(samplesByBucket.isEmpty());
+    }
+
+    @Test(enabled = true, groups = TestGroups.DATABASE_FREE)
+    public void testSamplesToPicoBucketMultipleWorkflowsOneUnsuported() throws Exception {
+        Workflow workflow = SUPPORTED_WORKFLOW;
+
+        setupCoreMocks(workflow, true);
+        Product addon =
+                ProductTestFactory.createDummyProduct(SUPPORTED_WORKFLOW, "abc1234");
+        pdo.getProduct().addAddOn(addon);
+        pdo.setProductOrderAddOns(Collections.singletonList(new ProductOrderAddOn(addon, pdo)));
+
+        expect(labEventFactory
+                .buildFromBatchRequests(EasyMock.<List<BucketEntry>>anyObject(), EasyMock.<String>anyObject(),
+                        EasyMock.<LabBatch>anyObject(), EasyMock.<String>anyObject(), EasyMock.<String>anyObject(),
+                        EasyMock.<LabEventType>anyObject())).andReturn(Collections.<LabEvent>emptyList()).anyTimes();
+
+        expect(bspSampleDataFetcher.fetchSampleData(EasyMock.<Collection<String>>anyObject()))
+                .andReturn(bspSampleDataMap);
+
             replay(mocks);
 
             Map<String, Collection<ProductOrderSample>> samplesByBucket = bucketEjb.addSamplesToBucket(pdo);
             Collection<ProductOrderSample> addedSamples = samplesByBucket.get("Pico/Plating Bucket");
-            Assert.assertEqualsNoOrder(addedSamples.toArray(), expectedSamples.toArray());
+        Assert.assertEqualsNoOrder(addedSamples.toArray(), expectedSamples.toArray());
 
             verify(mocks);
-        }
+
+    }
+
+    @Test(enabled = true, groups = TestGroups.DATABASE_FREE)
+    public void testSamplesToPicoBucketUnsuportedWorkflowWithSupportedAddon() throws Exception {
+        Workflow workflow = UNSUPPORTED_WORKFLOW;
+
+        setupCoreMocks(workflow, true);
+        Product addon =
+                ProductTestFactory.createDummyProduct(SUPPORTED_WORKFLOW, "abc1234");
+        pdo.getProduct().addAddOn(addon);
+        pdo.setProductOrderAddOns(Collections.singletonList(new ProductOrderAddOn(addon, pdo)));
+
+        expect(labEventFactory
+                .buildFromBatchRequests(EasyMock.<List<BucketEntry>>anyObject(), EasyMock.<String>anyObject(),
+                        EasyMock.<LabBatch>anyObject(), EasyMock.<String>anyObject(), EasyMock.<String>anyObject(),
+                        EasyMock.<LabEventType>anyObject())).andReturn(Collections.<LabEvent>emptyList()).anyTimes();
+
+        expect(bspSampleDataFetcher.fetchSampleData(EasyMock.<Collection<String>>anyObject()))
+                .andReturn(bspSampleDataMap);
+
+        replay(mocks);
+
+        Map<String, Collection<ProductOrderSample>> samplesByBucket = bucketEjb.addSamplesToBucket(pdo);
+        Collection<ProductOrderSample> addedSamples = samplesByBucket.get("Pico/Plating Bucket");
+        Assert.assertEqualsNoOrder(addedSamples.toArray(), expectedSamples.toArray());
+
+        verify(mocks);
+
     }
 
     @Test(enabled = true, groups = TestGroups.DATABASE_FREE, dataProvider = "badLabelProvider")
     public void testBadLabelSamplesToPicoBucket(String badLabelResult) throws Exception {
-        for (Workflow workflow : (new Workflow[]{Workflow.AGILENT_EXOME_EXPRESS, Workflow.ICE})) {
-            if (!Workflow.SUPPORTED_WORKFLOWS.contains(workflow)) {
-                continue;
-            }
+        Workflow workflow = SUPPORTED_WORKFLOW;
+
+
             setupCoreMocks(workflow, false);
 
             for (BspSampleData sampleDTO : bspSampleDataMap.values()) {
@@ -240,9 +306,6 @@ public class BucketEjbDbFreeTest {
                 bucketEjb.addSamplesToBucket(pdo);
                 Assert.fail("Blank barcodes for bsp samples should throw Bucket exception");
             } catch (BucketException expected) {
-
-            }
-
             verify(mocks);
         }
     }
@@ -258,7 +321,9 @@ public class BucketEjbDbFreeTest {
     }
 
     public void testApplyBucketCriteriaNoWorkflow(){
-        setupCoreMocks(Workflow.AGILENT_EXOME_EXPRESS, true);
+        Workflow workflow = SUPPORTED_WORKFLOW;
+
+        setupCoreMocks(workflow, true);
         pdo.getProduct().setWorkflow(Workflow.NONE);
 
         Collection<BucketEntry> bucketEntries = bucketEjb.applyBucketCriteria(mockVessels, pdo, "whatever");
@@ -266,7 +331,7 @@ public class BucketEjbDbFreeTest {
     }
 
     public void testDuplicateSamplesToPicoBucket() throws Exception {
-        Workflow workflow = Workflow.AGILENT_EXOME_EXPRESS;
+        Workflow workflow = SUPPORTED_WORKFLOW;
         setupCoreMocks(workflow, true);
 
         expect(bspSampleDataFetcher.fetchSampleData(EasyMock.<Collection<String>>anyObject()))
@@ -274,7 +339,7 @@ public class BucketEjbDbFreeTest {
 
         replay(mocks);
         WorkflowConfig workflowConfig = workflowLoader.load();
-        ProductWorkflowDef workflowDef = workflowConfig.getWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
+        ProductWorkflowDef workflowDef = workflowConfig.getWorkflow(workflow);
 
         WorkflowBucketDef picoBucket = workflowDef.getEffectiveVersion().findBucketDefByName("Pico/Plating Bucket");
 
