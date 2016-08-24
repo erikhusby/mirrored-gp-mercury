@@ -150,7 +150,7 @@ public class InfiniumRunFinderContainerTest extends Arquillian {
                 callStarterOnWell(any(StaticPlate.class), any(VesselPosition.class));
     }
 
-    public void sendHybAndXStainMessages(String ampPlate, String chipBarcode) {
+    private void sendHybAndXStainMessages(String ampPlate, String chipBarcode) {
 
         BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
         BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
