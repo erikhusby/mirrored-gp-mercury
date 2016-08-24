@@ -41,34 +41,42 @@ public class SampleInstanceEtlData {
         SampleInstanceEtlData sampleInstanceData = new SampleInstanceEtlData();
         sampleInstanceData.includeNearestSample = includeNearestSample;
 
-        // PDO/Sample logic
+        // Best source of lab batch and PDO is from single bucket entry
+        boolean foundSingleBucket = false;
+        BucketEntry singleBucketentry = si.getSingleBucketEntry();
+        if( singleBucketentry != null ) {
+            foundSingleBucket = true;
+            sampleInstanceData.labBatch = singleBucketentry.getLabBatch();
+            sampleInstanceData.pdo = singleBucketentry.getProductOrder();
+        }
+
+        // PDO Sample logic
         ProductOrderSample singlePdoSample = si.getSingleProductOrderSample();
         if( singlePdoSample != null ) {
-            sampleInstanceData.pdo = singlePdoSample.getProductOrder();
             sampleInstanceData.pdoSample = singlePdoSample;
             sampleInstanceData.pdoSampleId = singlePdoSample.getMercurySample().getSampleKey();
         } else {
             // Does this ever happen?  Even a control would fail.
             // Get latest PDO and the sample which matches it (the PDO and sample must match)
             for (ProductOrderSample pdoSample : si.getAllProductOrderSamples()) {
-                // Get a valid PDO
-                sampleInstanceData.pdo = pdoSample.getProductOrder();
+                // Get a valid PDO if none found from singleBucketEntry
+                if( !foundSingleBucket ) {
+                    sampleInstanceData.pdo = pdoSample.getProductOrder();
+                }
                 if (pdoSample.getMercurySample() != null) {
                     // And associate a sample with it if available
                     sampleInstanceData.pdoSample = pdoSample;
                     sampleInstanceData.pdoSampleId = pdoSample.getMercurySample().getSampleKey();
                     // getAllProductOrderSamples() sorts by closest first
                     // We've got the correct PDO data on the first PDO created before context date
-                    if (sampleInstanceData.pdo.getCreatedDate().compareTo(contextDate) < 1) {
+                    if (pdoSample.getProductOrder().getCreatedDate().compareTo(contextDate) < 1) {
                         break;
                     }
                 }
             }
         }
 
-        // Batch logic
-        sampleInstanceData.labBatch = si.getSingleBatch();
-
+        // Batch logic for cases of ambiguous LCSETs
         if (sampleInstanceData.labBatch == null) {
             // Use the newest non-extraction bucket which was created sometime before this event
             long eventTs = contextDate.getTime();
