@@ -34,6 +34,6 @@ public class CadencePicoDbFreeTest {
             bettaLimsMessageTestFactory, testSuffix, picoSampleTubeBarcodes, sourceRackBarcode, dilutionFactor
         ).invoke();
 
-        Assert.assertEquals(cadencePicoJaxbBuilder.getMessageList().size(), 3, "Wrong number of messages");
+        Assert.assertEquals(3, cadencePicoJaxbBuilder.getMessageList().size(), "Wrong number of messages");
     }
 }
