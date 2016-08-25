@@ -48,15 +48,15 @@ public class SampleInstanceEtlData {
             foundSingleBucket = true;
             sampleInstanceData.labBatch = singleBucketentry.getLabBatch();
             sampleInstanceData.pdo = singleBucketentry.getProductOrder();
+            ProductOrderSample pdoSample   = si.getProductOrderSampleForSingleBucket();
+            sampleInstanceData.pdoSample   = pdoSample;
+            if( pdoSample != null ) {
+                sampleInstanceData.pdoSampleId = pdoSample.getMercurySample().getSampleKey();
+            }
         }
 
-        // PDO Sample logic
-        ProductOrderSample singlePdoSample = si.getSingleProductOrderSample();
-        if( singlePdoSample != null ) {
-            sampleInstanceData.pdoSample = singlePdoSample;
-            sampleInstanceData.pdoSampleId = singlePdoSample.getMercurySample().getSampleKey();
-        } else {
-            // Does this ever happen?  Even a control would fail.
+        // Missing single bucket entry or PDO Sample not bucketed
+        if( sampleInstanceData.pdoSample == null ) {
             // Get latest PDO and the sample which matches it (the PDO and sample must match)
             for (ProductOrderSample pdoSample : si.getAllProductOrderSamples()) {
                 // Get a valid PDO if none found from singleBucketEntry
