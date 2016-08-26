@@ -28,6 +28,7 @@ import org.codehaus.jackson.map.annotate.JsonSerialize;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.Serializable;
+import java.text.NumberFormat;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -39,6 +40,8 @@ import java.util.List;
 public class SubmissionDto implements Serializable {
     private static final long serialVersionUID = 8359394045710346776L;
 
+    @JsonIgnore
+    NumberFormat numberFormat = NumberFormat.getInstance();
     @JsonIgnore
     public static final FastDateFormat DATE_FORMAT =
             FastDateFormat.getDateTimeInstance(FastDateFormat.MEDIUM, FastDateFormat.SHORT);
@@ -100,9 +103,6 @@ public class SubmissionDto implements Serializable {
     @JsonProperty(value = SubmissionDto.SubmissionField.CONTAMINATION_STRING)
     private String contaminationString="";
 
-    @JsonProperty(value = SubmissionDto.SubmissionField.FINGERPRINT_LOD)
-    private String fingerprintLOD="";
-
     @JsonProperty(value = SubmissionDto.SubmissionField.RESEARCH_PROJECT)
     private String rpid="";
 
@@ -133,6 +133,12 @@ public class SubmissionDto implements Serializable {
     @JsonProperty(value = SubmissionDto.SubmissionField.SUBMISSION_SITE)
     private String submissionSite="";
 
+    @JsonProperty(value = SubmissionDto.SubmissionField.FINGERPRINT_LOD_MIN)
+    private String fingerprintLodMin="";
+
+    @JsonProperty(value = SubmissionDto.SubmissionField.FINGERPRINT_LOD_MAX)
+    private String fingerprintLodMax="";
+
     public SubmissionDto() {
     }
 
@@ -143,6 +149,10 @@ public class SubmissionDto implements Serializable {
         this.aggregation = aggregation;
         this.productOrders = productOrders;
         this.statusDetailBean = statusDetailBean;
+
+        numberFormat.setMinimumFractionDigits(2);
+        numberFormat.setGroupingUsed(false);
+
         initializeFieldValues();
     }
 
@@ -167,7 +177,10 @@ public class SubmissionDto implements Serializable {
             qualityMetricString = aggregation.getQualityMetricString(bassDTO.getDatatype());
             pctContamination = aggregation.getAggregationContam().getPctContamination();
             levelOfDetection = aggregation.getLevelOfDetection();
-            fingerprintLOD = levelOfDetection.toString();
+            if (levelOfDetection != null) {
+                fingerprintLodMin = numberFormat.format(levelOfDetection.getMin());
+                fingerprintLodMax = numberFormat.format(levelOfDetection.getMax());
+            }
             readGroupCount = aggregation.getReadGroupCount();
             contaminationString = aggregation.getContaminationString();
         }
@@ -278,8 +291,12 @@ public class SubmissionDto implements Serializable {
         return levelOfDetection;
     }
 
-    public String getFingerprintLODString() {
-        return fingerprintLOD;
+    public String getFingerprintLodMax() {
+        return fingerprintLodMax;
+    }
+
+    public String getFingerprintLodMin(){
+        return fingerprintLodMin;
     }
 
     public String getResearchProject() {
@@ -357,7 +374,8 @@ public class SubmissionDto implements Serializable {
         public static final String VERSION = "version";
         public static final String QUALITY_METRIC = "qualityMetric";
         public static final String CONTAMINATION_STRING = "contaminationString";
-        public static final String FINGERPRINT_LOD = "fingerprintLOD";
+        public static final String FINGERPRINT_LOD_MIN = "fingerprintLodMin";
+        public static final String FINGERPRINT_LOD_MAX = "fingerprintLodMax";
         public static final String LANES_IN_AGGREGATION = "lanesInAggregation";
         public static final String SUBMITTED_VERSION = "submittedVersion";
         public static final String SUBMITTED_STATUS = "submittedStatus";

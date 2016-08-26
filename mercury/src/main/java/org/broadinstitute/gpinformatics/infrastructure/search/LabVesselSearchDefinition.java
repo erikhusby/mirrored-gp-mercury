@@ -12,12 +12,16 @@ import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselArrayMet
 import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselLatestEventPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselMetadataPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselMetricPlugin;
+import org.broadinstitute.gpinformatics.infrastructure.columns.VesselMetricDetailsPlugin;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
+import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
+import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
@@ -91,6 +95,8 @@ public class LabVesselSearchDefinition {
 
         LabVesselSearchDefinition srchDef = new LabVesselSearchDefinition();
         Map<String, List<SearchTerm>> mapGroupSearchTerms = new LinkedHashMap<>();
+        // One or more option groups have mouseover popup help text
+        Map<String,String> mapGroupHelpText = new HashMap<>();
 
         List<SearchTerm> searchTerms = srchDef.buildLabVesselIds();
         mapGroupSearchTerms.put("IDs", searchTerms);
@@ -117,6 +123,11 @@ public class LabVesselSearchDefinition {
 
         searchTerms = srchDef.buildMetricsTerms();
         mapGroupSearchTerms.put("Metrics", searchTerms);
+
+        searchTerms = buildVesselMetricDetailCols();
+        mapGroupSearchTerms.put("Quant Details", searchTerms);
+        mapGroupHelpText.put("Quant Details", "This group of columns traverses ancestor and descendant vessels to locate" +
+                " all metrics types for the selected column.  Data is displayed in separate column sets for each metric run name oldest to newest from left to right.");
 
         searchTerms = srchDef.buildArrayTerms();
         mapGroupSearchTerms.put("Arrays", searchTerms);
@@ -182,6 +193,9 @@ public class LabVesselSearchDefinition {
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("inPlaceLabVesselId", "labVesselId",
                 "inPlaceLabVesselId", LabEvent.class));
 
+        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection( "sequencingRun", "labVesselId",
+                "runCartridge", SequencingRun.class));
+
         ConfigurableSearchDefinition configurableSearchDefinition = new ConfigurableSearchDefinition(
                 ColumnEntity.LAB_VESSEL, criteriaProjections, mapGroupSearchTerms);
 
@@ -194,6 +208,9 @@ public class LabVesselSearchDefinition {
                         return listeners;
                     }
                 });
+
+        // Add user popup note to an entire option group
+        configurableSearchDefinition.addColumnGroupHelpText(mapGroupHelpText);
 
         return configurableSearchDefinition;
     }
@@ -570,6 +587,27 @@ public class LabVesselSearchDefinition {
         });
         searchTerms.add(searchTerm);
 
+        // Product
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Product");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Set<String> evaluate(Object entity, SearchContext context) {
+                Set<String> results = null;
+                LabVessel labVessel = (LabVessel) entity;
+                for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+                    for (ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples() ) {
+                        if( productOrderSample.getProductOrder().getProduct() != null ) {
+                            (results == null ? results = new HashSet<>() : results)
+                                    .add(productOrderSample.getProductOrder().getProduct().getDisplayName());
+                        }
+                    }
+                }
+                return results;
+            }
+        });
+        searchTerms.add(searchTerm);
+
         return searchTerms;
     }
 
@@ -862,6 +900,13 @@ public class LabVesselSearchDefinition {
                 LabVessel labVessel = (LabVessel) entity;
                 Set<String> barcodes = null;
 
+                // Handle the case where the flowcell itself is returned (e.g. flowcell barcode as search criteria)
+                if( OrmUtil.proxySafeIsInstance(labVessel, RunCartridge.class) ) {
+                    barcodes = new HashSet<>();
+                    barcodes.add(labVessel.getLabel());
+                    return barcodes;
+                }
+
                 List<LabEventType> labEventTypes = new ArrayList<>();
                 labEventTypes.add(LabEventType.FLOWCELL_TRANSFER);
                 labEventTypes.add(LabEventType.DENATURE_TO_FLOWCELL_TRANSFER);
@@ -869,14 +914,72 @@ public class LabVesselSearchDefinition {
 
                 VesselsForEventTraverserCriteria eval
                         = new VesselsForEventTraverserCriteria( labEventTypes );
-                labVessel.evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
+
+                if( labVessel.getContainerRole() != null ) {
+                    labVessel.getContainerRole().applyCriteriaToAllPositions(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
+                } else {
+                    labVessel.evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
+                }
 
                 for(Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions
                         : eval.getPositions().asMap().entrySet()) {
-                    (barcodes==null?barcodes=new HashSet<String>():barcodes)
+                    (barcodes==null?barcodes=new HashSet<>():barcodes)
                             .add(labVesselAndPositions.getKey().getLabel());
                 }
                 return barcodes;
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Sequencing Run Name");
+        criteriaPaths = new ArrayList<>();
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Collections.singletonList("sequencingRun"));
+        criteriaPath.setPropertyName("runName");
+        criteriaPaths.add(criteriaPath);
+        searchTerm.setCriteriaPaths(criteriaPaths);
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Set<String> evaluate(Object entity, SearchContext context) {
+
+                LabVessel labVessel = (LabVessel) entity;
+                Set<String> seqRunNames = null;
+
+                // Handle the case where the flowcell itself is returned (e.g. flowcell barcode as search criteria)
+                if( OrmUtil.proxySafeIsInstance(labVessel, RunCartridge.class) ) {
+                    RunCartridge flowCell = OrmUtil.proxySafeCast(labVessel, RunCartridge.class);
+                    for(SequencingRun run : flowCell.getSequencingRuns()) {
+                        (seqRunNames==null?seqRunNames=new HashSet<>():seqRunNames)
+                                .add(run.getRunName());
+                    }
+                    return seqRunNames;
+                }
+
+                List<LabEventType> labEventTypes = new ArrayList<>();
+                labEventTypes.add(LabEventType.FLOWCELL_TRANSFER);
+                labEventTypes.add(LabEventType.DENATURE_TO_FLOWCELL_TRANSFER);
+                labEventTypes.add(LabEventType.DILUTION_TO_FLOWCELL_TRANSFER);
+
+                VesselsForEventTraverserCriteria eval
+                        = new VesselsForEventTraverserCriteria( labEventTypes );
+
+                if( labVessel.getContainerRole() != null ) {
+                    labVessel.getContainerRole().applyCriteriaToAllPositions(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
+                } else {
+                    labVessel.evaluateCriteria(eval, TransferTraverserCriteria.TraversalDirection.Descendants);
+                }
+
+                for(LabVessel flowCellVessel : eval.getPositions().keySet()) {
+                    if( OrmUtil.proxySafeIsInstance(flowCellVessel, RunCartridge.class) ) {
+                        RunCartridge flowCell = OrmUtil.proxySafeCast(flowCellVessel, RunCartridge.class);
+                        for(SequencingRun run : flowCell.getSequencingRuns()) {
+                            (seqRunNames==null?seqRunNames=new HashSet<>():seqRunNames)
+                                    .add(run.getRunName());
+                        }
+                    }
+                }
+                return seqRunNames;
             }
         });
         searchTerms.add(searchTerm);
@@ -908,9 +1011,9 @@ public class LabVesselSearchDefinition {
         searchTerm.setName("Rack Barcode");
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public List<String> evaluate(Object entity, SearchContext context) {
+            public Set<String> evaluate(Object entity, SearchContext context) {
                 LabVessel labVessel = (LabVessel) entity;
-                List<String> results = new ArrayList<>();
+                Set<String> results = new HashSet<>();
 
                 for (LabVessel vessel : labVessel.getContainers()) {
                     if (OrmUtil.proxySafeIsInstance(vessel, TubeFormation.class)) {
@@ -929,9 +1032,9 @@ public class LabVesselSearchDefinition {
         searchTerm.setName("Rack Position");
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public List<String> evaluate(Object entity, SearchContext context) {
+            public Set<String> evaluate(Object entity, SearchContext context) {
                 LabVessel labVessel = (LabVessel) entity;
-                List<String> results = new ArrayList<>();
+                Set<String> results = new HashSet<>();
 
                 for (LabVessel container : labVessel.getContainers()) {
                     results.add(container.getContainerRole().getPositionOfVessel(labVessel).toString());
@@ -1388,8 +1491,7 @@ public class LabVesselSearchDefinition {
         searchTerm = new SearchTerm();
         searchTerm.setName(MultiRefTerm.INFINIUM_PDO.getTermRefName());
         searchTerm.setHelpText(
-                "Infinium PDO term will only locate events associated with Infinium arrays (InfiniumAmplification for plates, or InfiniumXStain for chips). "
-                        + "Traversal option(s) should be selected if chain of custody events are desired.<br>"
+                "Infinium PDO term locates DNA array plate vessels associated with the PDO.  Use array drill-down option result columns to obtain details of Amp plates and chips.<br>"
                         + "Note: The Infinium PDO term is exclusive, no other terms can be selected.");
         searchTerm.setSearchValueConversionExpression(SearchDefinitionFactory.getPdoInputConverter());
         searchTerm.setAlternateSearchDefinition(ARRAYS_ALT_SRCH_DEFINITION);
@@ -1756,6 +1858,29 @@ public class LabVesselSearchDefinition {
     }
 
     /**
+     * Build multi column search terms for lab vessel metrics details.
+     * @return List of search terms/column definitions, one for each LabMetric.MetricType
+     */
+    private List<SearchTerm> buildVesselMetricDetailCols() {
+        List<SearchTerm> searchTerms = new ArrayList<>();
+        SearchTerm searchTerm = null;
+
+        for( LabMetric.MetricType metricType : LabMetric.MetricType.values() ) {
+            // Only interested in concentration metrics
+            if( metricType.getCategory() != LabMetric.MetricType.Category.CONCENTRATION) {
+                continue;
+            }
+            // Names must be consistent -  column name logic is used in plugin to filter metric types!
+            searchTerm = new SearchTerm();
+            searchTerm.setName(metricType.getDisplayName());
+            searchTerm.setPluginClass(VesselMetricDetailsPlugin.class);
+            searchTerms.add(searchTerm);
+        }
+
+        return searchTerms;
+    }
+
+    /**
      * All Infinium related columns depend on search term being related to Infinium arrays.
      * @param context Used to determine if term has array alternate search definition attached
      * @return True if the search term is related to Infinium arrays
@@ -1784,7 +1909,19 @@ public class LabVesselSearchDefinition {
         if( infiniumVessel.getContainerRole() == null ) {
             infiniumVessel.evaluateCriteria(infiniumAncestorCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
         } else {
-            infiniumVessel.getContainerRole().applyCriteriaToAllPositions(infiniumAncestorCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
+            // This coordinates with the directly plated shortcut in InfiniumPlateSourceEvaluator.getAllInfiniumVessels
+            boolean found = false;
+            for (SectionTransfer sectionTransfer : infiniumVessel.getContainerRole().getSectionTransfersTo()) {
+                if (sectionTransfer.getLabEvent().getLabEventType() == LabEventType.ARRAY_PLATING_DILUTION) {
+                    infiniumAncestorCriteria.getPositions().put(infiniumVessel, VesselPosition.A01);
+                    found = true;
+                }
+            }
+
+            if (!found) {
+                infiniumVessel.getContainerRole().applyCriteriaToAllPositions(infiniumAncestorCriteria,
+                        TransferTraverserCriteria.TraversalDirection.Ancestors);
+            }
         }
 
         for (Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions
@@ -1793,6 +1930,8 @@ public class LabVesselSearchDefinition {
             if( plateVessel.getType() == LabVessel.ContainerType.PLATE_WELL ) {
                 result = plateVessel.getContainers().iterator().next().getLabel();
                 break;
+            } else if( plateVessel.getType() == LabVessel.ContainerType.STATIC_PLATE ) {
+                result = plateVessel.getLabel();
             }
         }
 
@@ -1816,11 +1955,29 @@ public class LabVesselSearchDefinition {
                 infiniumVessel.evaluateCriteria(infiniumAncestorCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
             }
         } else {
-            infiniumVessel.getContainerRole().applyCriteriaToAllPositions(infiniumAncestorCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
-            // Try ancestors
-            if( infiniumAncestorCriteria.getPositions().isEmpty() ) {
-                infiniumAncestorCriteria.resetAllTraversed();
-                infiniumVessel.getContainerRole().applyCriteriaToAllPositions(infiniumAncestorCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
+            // This coordinates with the directly plated shortcut in InfiniumPlateSourceEvaluator.getAllInfiniumVessels
+            boolean found = false;
+            for (SectionTransfer sectionTransfer : infiniumVessel.getContainerRole().getSectionTransfersTo()) {
+                if (sectionTransfer.getLabEvent().getLabEventType() == LabEventType.ARRAY_PLATING_DILUTION) {
+                    for (SectionTransfer transfer : sectionTransfer.getTargetVesselContainer().getSectionTransfersFrom()) {
+                        if (transfer.getLabEvent().getLabEventType() == LabEventType.INFINIUM_AMPLIFICATION) {
+                            infiniumAncestorCriteria.getPositions().put(
+                                    transfer.getTargetVesselContainer().getEmbedder(), VesselPosition.A01);
+                            found = true;
+                        }
+                    }
+                }
+            }
+
+            if (!found) {
+                infiniumVessel.getContainerRole().applyCriteriaToAllPositions(infiniumAncestorCriteria,
+                        TransferTraverserCriteria.TraversalDirection.Descendants);
+                // Try ancestors
+                if( infiniumAncestorCriteria.getPositions().isEmpty() ) {
+                    infiniumAncestorCriteria.resetAllTraversed();
+                    infiniumVessel.getContainerRole().applyCriteriaToAllPositions(infiniumAncestorCriteria,
+                            TransferTraverserCriteria.TraversalDirection.Ancestors);
+                }
             }
         }
 

@@ -65,6 +65,34 @@ public class LiveThriftService implements ThriftService {
     }
 
     @Override
+    public TZamboniRun fetchRunByBarcode(final String runBarcode) {
+        return thriftConnection.call(new ThriftConnection.Call<TZamboniRun>() {
+            @Override
+            public TZamboniRun call(LIMQueries.Client client) {
+                try {
+                    return client.fetchRunByBarcode(runBarcode);
+                } catch (TZIMSException e) {
+                    if (e.getDetails() != null) {
+                        if (e.getDetails().contains("ZIMs failed to find run")) {
+                            // this is a typical situation: the pipeline is asking for a run
+                            // a tad too early, and it hasn't been registered yet, so don't panic.
+                            log.info("Run having barcode " + runBarcode + " doesn't appear to have been registered yet.  Please try again later or contact the mercury team if the problem persists.");
+                        }
+                        return null;
+                    }
+                    String message = "Failed to fetch run by barcode: " + runBarcode;
+                    log.error(message, e);
+                    throw new RuntimeException(message, e);
+                } catch (TException e) {
+                    String message = "Failed to fetch run by barcode: " + runBarcode;
+                    log.error(message, e);
+                    throw new RuntimeException(message, e);
+                }
+            }
+        });
+    }
+
+    @Override
     public List<LibraryData> fetchLibraryDetailsByTubeBarcode(final List<String> tubeBarcodes, final boolean includeWorkRequestDetails) {
         return thriftConnection.call(new ThriftConnection.Call<List<LibraryData>>() {
             @Override

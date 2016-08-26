@@ -30,11 +30,13 @@ import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -117,6 +119,52 @@ public class IlluminaRunResource implements Serializable {
         return runBean;
     }
 
+    @GET
+    @Path("/query/runBarcode/{runBarcode}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public ZimsIlluminaRun getRunByBarcode(@PathParam("runBarcode") String runBarcode) {
+        ZimsIlluminaRun runBean = new ZimsIlluminaRun();
+        if (runBarcode == null) {
+            runBean.setError("runBarcode cannot be null");
+        } else {
+            Collection<IlluminaSequencingRun> runs = illuminaSequencingRunDao.findByBarcode(runBarcode);
+            SystemRouter.System systemOfRecordForVessel;
+            if (runs.size() == 0) {
+                systemOfRecordForVessel = SystemRouter.System.SQUID;
+            } else if (runs.size() > 1) {
+                String runNames = "";
+                for (IlluminaSequencingRun run : runs) {
+                    runNames += run.getRunName() + " ";
+                }
+                runBean.setError("Found multiple runNames : " + runNames);
+                return runBean;
+            } else {
+                systemOfRecordForVessel = systemRouter.getSystemOfRecordForVessel(
+                        runs.iterator().next().getSampleCartridge().getLabel());
+            }
+
+            switch (systemOfRecordForVessel) {
+            case MERCURY:
+                runBean = zimsIlluminaRunFactory.makeZimsIlluminaRun(runs.iterator().next());
+                break;
+            case SQUID:
+                runBean = new ZimsIlluminaRun();
+                try {
+                    runBean = getRunByBarcode(thriftService, runBarcode);
+                } catch (Throwable t) {
+                    String message = "Failed while running pipeline query for run by barcode " + runBarcode;
+                    LOG.error(message, t);
+                    runBean.setError(message + ": " + t.getMessage());
+                }
+                break;
+            default:
+                throw new RuntimeException("Ambiguous system of record for " +
+                                           runs.iterator().next().getSampleCartridge().getLabel());
+            }
+        }
+        return runBean;
+    }
+
     private ZimsIlluminaRun callThrift(String runName) {
         ZimsIlluminaRun runBean = new ZimsIlluminaRun();
         try {
@@ -185,6 +233,25 @@ public class IlluminaRunResource implements Serializable {
             runBean = getRun(tRun, lsidToBSPSample, new SquidThriftLibraryConverter(), pdoDao);
         } else {
             setErrorNoRun(runName, runBean);
+        }
+        return runBean;
+    }
+
+    /**
+     * Always returns a non-null {@link ZimsIlluminaRun).
+     *
+     * @param thriftService
+     * @param runName
+     * @return
+     */
+    ZimsIlluminaRun getRunByBarcode(ThriftService thriftService, @Nonnull String runBarcode) {
+        ZimsIlluminaRun runBean = new ZimsIlluminaRun();
+        TZamboniRun tRun = thriftService.fetchRunByBarcode(runBarcode);
+        if (tRun != null) {
+            Map<String, SampleData> lsidToBSPSample = fetchAllBSPDataAtOnce(tRun);
+            runBean = getRun(tRun, lsidToBSPSample, new SquidThriftLibraryConverter(), pdoDao);
+        } else {
+            setErrorNoRun(runBarcode, runBean);
         }
         return runBean;
     }
