@@ -99,7 +99,7 @@ public class WorkflowDiagrammer implements Serializable {
 
                             for (WorkflowStepDef step : process.getWorkflowStepDefs()) {
 
-                                if (!visitedProcessStep.add(processDef.getName() + "//" + step.getName())) {
+                                if (!visitedProcessStep.add(processDef.getName() + "//" + step.getName() + "//" + step.getWorkflowQualifier())) {
                                     throw new Exception("Workflow config contains a cyclic graph in process " +
                                                         processDef.getName() + " at step " + step.getName());
                                 }

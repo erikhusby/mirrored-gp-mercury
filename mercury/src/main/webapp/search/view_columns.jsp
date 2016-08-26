@@ -185,8 +185,8 @@ buttons to move columns from one to the other --%>
             <td rowspan="2" style="padding-left: 5px">
                 <select name="sourceColumnDefNames" id="sourceColumnDefNames"
                         multiple="true" size="10">
-                    <c:forEach items="${availableMapGroupToColumnNames}" var="entry">
-                        <optgroup label="${entry.key}">
+                    <c:forEach items="${availableMapGroupToColumnNames}" var="entry" varStatus="iter">
+                        <optgroup label="${entry.key}" id="col_grp_${iter.index}"<c:if test="${not empty actionBean.availableMapGroupToHelpText[iter.index]}"> class="help-option"</c:if>>
                             <c:forEach items="${entry.value}" var="columnConfig">
                                 <%-- Some criteria terms are excluded from result selection --%>
                                 <c:if test="${not columnConfig.isExcludedFromResultColumns()}">

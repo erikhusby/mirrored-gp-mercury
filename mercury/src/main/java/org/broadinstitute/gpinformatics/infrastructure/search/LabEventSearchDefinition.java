@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventMetadata;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
@@ -264,6 +265,26 @@ public class LabEventSearchDefinition {
             public List<ConstrainedValue> evaluate(Object entity, SearchContext context) {
                 ConstrainedValueDao constrainedValueDao = context.getOptionValueDao();
                 return constrainedValueDao.getLabEventProgramNameList();
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Simulation Mode");
+        searchTerm.setValueType(ColumnValueType.BOOLEAN);
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public String evaluate(Object entity, SearchContext context) {
+                LabEvent labEvent = (LabEvent) entity;
+                Boolean result = Boolean.FALSE;
+                for(LabEventMetadata meta : labEvent.getLabEventMetadatas() ) {
+                    if( meta.getLabEventMetadataType() == LabEventMetadata.LabEventMetadataType.SimulationMode ) {
+                        result = Boolean.valueOf(meta.getValue());
+                        break;
+                    }
+                }
+                return result?"Yes":"No";
+
             }
         });
         searchTerms.add(searchTerm);
@@ -539,6 +560,35 @@ public class LabEventSearchDefinition {
         });
         searchTerm.setAlternateSearchDefinition(eventByVesselSearchDefinition);
         searchTerm.setCriteriaPaths(blankCriteriaPaths);
+        searchTerms.add(searchTerm);
+
+        // Product
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Product");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Set<String> evaluate(Object entity, SearchContext context) {
+                LabEvent labEvent = (LabEvent) entity;
+                Set<String> results = null;
+
+                Set<LabVessel> eventVessels = labEvent.getTargetLabVessels();
+                if( labEvent.getInPlaceLabVessel() != null ) {
+                    eventVessels.add(labEvent.getInPlaceLabVessel());
+                }
+
+                for( LabVessel labVessel : eventVessels ) {
+                    for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+                        for (ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples() ) {
+                            if( productOrderSample.getProductOrder().getProduct() != null ) {
+                                (results == null ? results = new HashSet<>() : results)
+                                        .add(productOrderSample.getProductOrder().getProduct().getDisplayName());
+                            }
+                        }
+                    }
+                }
+                return results;
+            }
+        });
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();

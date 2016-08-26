@@ -151,8 +151,8 @@
 
     <properties>
         <!-- Clover -->
-        <clover.version>4.0.0</clover.version>
-        <clover.plugin.version>4.0.0</clover.plugin.version>
+        <clover.version>4.1.1</clover.version>
+        <clover.plugin.version>4.1.1</clover.plugin.version>
         <clover.targetPercentage>15%</clover.targetPercentage>
 
 
@@ -215,12 +215,23 @@
 
     <profiles>
         <profile>
+            <id>LinuxProperties</id>
+            <activation>
+                <os>
+                    <name>Linux</name>
+                </os>
+            </activation>
+            <properties>
+                <surefire.argLine>-XX:ReservedCodeCacheSize=256m -Xms4g -XX:MaxPermSize=1g </surefire.argLine>
+            </properties>
+        </profile>
+        <profile>
             <id>Clover.report</id>
             <build>
                 <plugins>
                     <plugin>
                         <groupId>com.atlassian.maven.plugins</groupId>
-                        <artifactId>maven-clover2-plugin</artifactId>
+                        <artifactId>clover-maven-plugin</artifactId>
                         <configuration>
                             <cloverDatabase>${project.build.directory}/clover/clover.db</cloverDatabase>
                             <historyDir>${user.home}/.clover/history/${project.artifactId}</historyDir>
@@ -253,7 +264,7 @@
                 <plugins>
                     <plugin>
                         <groupId>com.atlassian.maven.plugins</groupId>
-                        <artifactId>maven-clover2-plugin</artifactId>
+                        <artifactId>clover-maven-plugin</artifactId>
                     </plugin>
                 </plugins>
             </reporting>
@@ -264,7 +275,7 @@
                 <plugins>
                     <plugin>
                         <groupId>com.atlassian.maven.plugins</groupId>
-                        <artifactId>maven-clover2-plugin</artifactId>
+                        <artifactId>clover-maven-plugin</artifactId>
                         <configuration>
                             <cloverDatabase>${project.build.directory}/clover/clover.db</cloverDatabase>
                             <fullRunEvery>60</fullRunEvery>
@@ -294,7 +305,7 @@
                 <plugins>
                     <plugin>
                         <groupId>com.atlassian.maven.plugins</groupId>
-                        <artifactId>maven-clover2-plugin</artifactId>
+                        <artifactId>clover-maven-plugin</artifactId>
                         <configuration>
                             <cloverDatabase>${project.build.directory}/clover/clover.db</cloverDatabase>
                             <historyDir>${user.home}/.clover/history/${project.artifactId}</historyDir>
@@ -321,7 +332,7 @@
                 <plugins>
                     <plugin>
                         <groupId>com.atlassian.maven.plugins</groupId>
-                        <artifactId>maven-clover2-plugin</artifactId>
+                        <artifactId>clover-maven-plugin</artifactId>
                         <configuration>
                             <cloverDatabase>${project.build.directory}/clover/clover.db</cloverDatabase>
                             <historyDir>${user.home}/.clover/history/${project.artifactId}</historyDir>
@@ -360,7 +371,7 @@
                 <plugins>
                     <plugin>
                         <groupId>com.atlassian.maven.plugins</groupId>
-                        <artifactId>maven-clover2-plugin</artifactId>
+                        <artifactId>clover-maven-plugin</artifactId>
                         <version>${clover.plugin.version}</version>
                         <configuration>
                             <cloverDatabase>${project.build.directory}/clover/clover.db</cloverDatabase>
@@ -524,7 +535,9 @@
                                     <value>${jboss.socket.https}</value>
                                 </property>
                             </systemProperties>
-
+                            <argLine>${surefire.argLine}</argLine>
+<!--                            <forkCount>2</forkCount> -->
+<!--                            <reuseForks>true</reuseForks> -->
                             <!--<parallel>methods</parallel>-->
                             <!--<threadCount>10</threadCount>-->
                         </configuration>
@@ -533,6 +546,33 @@
             </build>
 
         </profile>
+        <profile>
+            <id>Tests.Multithreaded</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <groups>Multithreaded</groups>
+                            <systemProperties>
+                                <property>
+                                    <name>jbossHttpsPort</name>
+                                    <value>${jboss.socket.https}</value>
+                                </property>
+                            </systemProperties>
+                            <argLine>${surefire.argLine}</argLine>
+                            <!--                            <forkCount>2</forkCount> -->
+                            <!--                            <reuseForks>true</reuseForks> -->
+                            <!--<parallel>methods</parallel>-->
+                            <!--<threadCount>10</threadCount>-->
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+
+        </profile>
+
         <profile>
             <id>Tests.Parallel</id>
             <build>
@@ -1839,7 +1879,7 @@ nodePrinter.print(webapp)
             <plugins>
                 <plugin>
                     <groupId>com.atlassian.maven.plugins</groupId>
-                    <artifactId>maven-clover2-plugin</artifactId>
+                    <artifactId>clover-maven-plugin</artifactId>
                     <version>${clover.plugin.version}</version>
                 </plugin>
 

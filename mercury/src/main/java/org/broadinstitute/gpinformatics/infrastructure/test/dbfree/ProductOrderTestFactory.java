@@ -143,6 +143,10 @@ public class ProductOrderTestFactory {
         return buildProductOrder(maxSamples, SAMPLE_SUFFIX, Workflow.PCR_FREE);
     }
 
+    public static ProductOrder buildPcrPlusProductOrder(int maxSamples) {
+        return buildProductOrder(maxSamples, SAMPLE_SUFFIX, Workflow.PCR_PLUS);
+    }
+
     public static ProductOrder buildSampleInitiationProductOrder(int maxSamples) {
 
         ProductOrder sampleInitiationProductOrder = createDummyProductOrder(maxSamples, JIRA_KEY, Workflow.NONE,

@@ -109,6 +109,7 @@ collaborate:
 
 
 portal:
+
     TEST:
       urlBase:      http://gapdev:8111/portal
 
@@ -229,6 +230,28 @@ datawhEtl:
     PROD:
         datawhEtlDirRoot: /seq/lims/datawh/prod
 
+infiniumStarter:
+
+    DEV:
+        dataPath: /humgen/illumina_data/dev
+        minimumIdatFileLength: -1
+        jmsHost: vpicard01
+        jmsPort: 61616
+        jmsQueue: broad.arrays.enqueue
+
+    QA:
+        dataPath: /humgen/illumina_data/qa
+        minimumIdatFileLength: -1
+        jmsHost: vpicard01
+        jmsPort: 61616
+        jmsQueue: broad.arrays.enqueue
+
+    PROD:
+        dataPath: /humgen/illumina_data
+        minimumIdatFileLength: 15000000
+        jmsHost: vpicard03
+        jmsPort: 61616
+        jmsQueue: broad.arrays.enqueue
 
 hipchat:
     DEV:
@@ -277,6 +300,7 @@ mercury:
       collaborate: DEV
       bass: PROD
       submission: DEV
+      infiniumStarter: DEV
 
 
     AUTO_BUILD:
@@ -296,6 +320,7 @@ mercury:
       collaborate: DEV
       bass: PROD
       submission: DEV
+      infiniumStarter: DEV
 
     TEST:
 
@@ -314,6 +339,7 @@ mercury:
       collaborate: DEV
       bass:     PROD
       submission: DEV
+      infiniumStarter: DEV
 
     QA:
       app:      QA
@@ -331,6 +357,7 @@ mercury:
       collaborate: RC
       bass:     PROD
       submission: DEV
+      infiniumStarter: QA
 
     RC:
 
@@ -349,6 +376,7 @@ mercury:
       collaborate: RC
       bass:     PROD
       submission: DEV
+      infiniumStarter: QA
 
 
     PROD:

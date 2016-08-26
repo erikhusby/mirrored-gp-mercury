@@ -113,6 +113,13 @@ public class CherryPickTransfer extends VesselTransfer {
         return targetPosition;
     }
 
+    /**
+     * For fixups only.
+     */
+    void setTargetPosition(VesselPosition targetPosition) {
+        this.targetPosition = targetPosition;
+    }
+
     @Nullable
     public LabVessel getAncillaryTargetVessel() {
         return ancillaryTargetVessel;

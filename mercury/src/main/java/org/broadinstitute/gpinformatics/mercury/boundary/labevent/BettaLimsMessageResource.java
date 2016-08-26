@@ -454,6 +454,10 @@ public class BettaLimsMessageResource {
         }
     }
 
+    public void setLabEventFactory(LabEventFactory labEventFactory) {
+        this.labEventFactory = labEventFactory;
+    }
+
     /**
      * Allows documents that don't include a namespace
      */

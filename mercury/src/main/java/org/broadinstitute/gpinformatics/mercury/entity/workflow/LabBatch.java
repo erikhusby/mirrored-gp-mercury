@@ -510,6 +510,7 @@ public class LabBatch {
         LIMS_ACTIVITY_STREAM("LIMS Activity Stream", true),
         SUMMARY("Summary", false),
         SEQUENCING_STATION("Sequencing Station", true),
+        CLUSTER_STATION("Cluster Station", true),
         MATERIAL_TYPE("BATCH_TYPE", true),
         LANE_INFO("Lane Info", true);
 

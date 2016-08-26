@@ -455,10 +455,10 @@ public class ConfigurableList {
             }
             // Plugins for nested table processing handled on a row-by-row basis
             for (ColumnTabulation columnTabulation : pluginTabulations) {
+                context.setSearchTerm((SearchTerm) columnTabulation);
                 if( columnTabulation.isNestedParent() ) {
                     ListPlugin listPlugin = getPlugin(columnTabulation.getPluginClass());
                     // Nested table will never be a SearchValue ... cast to SearchTerm
-                    context.setSearchTerm((SearchTerm) columnTabulation);
                     ResultList nestedResultList = listPlugin.getNestedTableData(entity, columnTabulation, context);
                     if( nestedResultList != null ) {
                         row.getNestedTableEntities().put(columnTabulation, nestedResultList);
@@ -469,6 +469,7 @@ public class ConfigurableList {
 
         // Call the plugins, and add their data to the accumulated rows.
         for (ColumnTabulation columnTabulation : pluginTabulations) {
+            context.setSearchTerm((SearchTerm) columnTabulation);
             ListPlugin listPlugin = getPlugin(columnTabulation.getPluginClass());
             // Legacy plugin process from BSP
             if( !columnTabulation.isNestedParent() ) {

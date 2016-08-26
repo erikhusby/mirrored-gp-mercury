@@ -362,7 +362,7 @@ public class LimsQueryResourceUnitTest {
         replayAll();
 
         Map<String, ConcentrationAndVolumeAndWeightType> result =
-                resource.fetchConcentrationAndVolumeAndWeightForTubeBarcodes(barcodes);
+                resource.fetchConcentrationAndVolumeAndWeightForTubeBarcodes(barcodes, true);
         assertThat(result.get("barcode"), equalTo(concentrationAndVolumeType));
 
         verifyAll();
@@ -375,11 +375,11 @@ public class LimsQueryResourceUnitTest {
         Map<String, ConcentrationAndVolumeAndWeightType> map = new HashMap<>();
         ConcentrationAndVolumeAndWeightType concentrationAndVolume  = new ConcentrationAndVolumeAndWeightType();
         map.put("barcode", concentrationAndVolume);
-        expect(mockLimsQueries.fetchConcentrationAndVolumeAndWeightForTubeBarcodes(barcodes)).andReturn(map);
+        expect(mockLimsQueries.fetchConcentrationAndVolumeAndWeightForTubeBarcodes(barcodes, true)).andReturn(map);
         replayAll();
 
         Map<String, ConcentrationAndVolumeAndWeightType> result =
-                resource.fetchConcentrationAndVolumeAndWeightForTubeBarcodes(barcodes);
+                resource.fetchConcentrationAndVolumeAndWeightForTubeBarcodes(barcodes, true);
         assertThat(result.get("barcode"), equalTo(concentrationAndVolume));
 
         verifyAll();
