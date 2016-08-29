@@ -389,7 +389,7 @@ public abstract class CoreActionBean implements ActionBean, MessageReporter {
     /**
      * @return formatted messages collected in the context
      */
-    protected List<String> getFormattedMessages() {
+    public List<String> getFormattedMessages() {
         return transformMessages(getContext().getMessages());
     }
 

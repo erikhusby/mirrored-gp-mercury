@@ -323,13 +323,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
     public void init() throws Exception {
         researchProject = getContext().getRequest().getParameter(RESEARCH_PROJECT_PARAMETER);
 
-        try {
-            setSubmissionLibraryDescriptors(submissionsService.getSubmissionLibraryDescriptors());
-            setSubmissionRepositories(submissionsService.getSubmissionRepositories());
-        } catch (InformaticsServiceException e) {
-            addMessage("Submissions are temporarily unavailable.");
-            log.error(e.getMessage(), e);
-        }
+        loadSubmissionSelectLists();
 
         if (submissionRepository == null && StringUtils.isBlank(selectedSubmissionRepository)) {
             if (getActiveRepositories().size() == 1) {
@@ -393,6 +387,16 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         }
 
         progressFetcher = new CompletionStatusFetcher(productOrderDao.getProgress(productOrderIds));
+    }
+
+    void loadSubmissionSelectLists() {
+        try {
+            setSubmissionLibraryDescriptors(submissionsService.getSubmissionLibraryDescriptors());
+            setSubmissionRepositories(submissionsService.getSubmissionRepositories());
+        } catch (Exception e) {
+            addMessage("Submissions are temporarily unavailable.");
+            log.error(e.getMessage(), e);
+        }
     }
 
     SubmissionLibraryDescriptor findDefaultSubmissionType(ResearchProject researchProject) {
@@ -1533,6 +1537,10 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
 
     void setBspUserList(BSPUserList bspUserList) {
         this.bspUserList = bspUserList;
+    }
+
+    void setSubmissionsService(SubmissionsService submissionsService) {
+        this.submissionsService = submissionsService;
     }
 
     public boolean isSupressValidationErrors() {
