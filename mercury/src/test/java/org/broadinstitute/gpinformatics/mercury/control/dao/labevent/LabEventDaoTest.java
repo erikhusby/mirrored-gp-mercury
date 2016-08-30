@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.labevent;
 
+import org.apache.commons.lang.time.DateUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
@@ -13,6 +14,7 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import java.math.BigDecimal;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -42,7 +44,7 @@ public class LabEventDaoTest extends ContainerTest {
         List<LabEvent> labEvents = labEventDao.findByDate(eventDate, eventDate);
         Assert.assertEquals(labEvents.size(), 1);
         LabEvent labEvent1 = labEvents.get(0);
-        Assert.assertEquals(labEvent1.getEventDate(), eventDate);
+        Assert.assertTrue(DateUtils.truncatedEquals(labEvent1.getEventDate(), eventDate, Calendar.SECOND));
         Assert.assertEquals(labEvent1.getReagents().size(), 1);
         Assert.assertEquals(labEvent1.getLabEventReagents().size(), 1);
         LabEventReagent labEventReagent = labEvent1.getLabEventReagents().iterator().next();
@@ -67,7 +69,7 @@ public class LabEventDaoTest extends ContainerTest {
         List<LabEvent> labEvents = labEventDao.findByDate(eventDate, eventDate);
         Assert.assertEquals(labEvents.size(), 1);
         LabEvent labEvent1 = labEvents.get(0);
-        Assert.assertEquals(labEvent1.getEventDate(), eventDate);
+        Assert.assertTrue(DateUtils.truncatedEquals(labEvent1.getEventDate(), eventDate, Calendar.SECOND));
         Assert.assertEquals(labEvent1.getReagents().size(), 1);
         Assert.assertEquals(labEvent1.getLabEventReagents().size(), 1);
         LabEventReagent labEventReagent = labEvent1.getLabEventReagents().iterator().next();

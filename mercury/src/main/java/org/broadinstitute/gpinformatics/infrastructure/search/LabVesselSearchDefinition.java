@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselArrayMet
 import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselLatestEventPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselMetadataPlugin;
 import org.broadinstitute.gpinformatics.infrastructure.columns.LabVesselMetricPlugin;
+import org.broadinstitute.gpinformatics.infrastructure.columns.VesselMetricDetailsPlugin;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
@@ -94,6 +95,8 @@ public class LabVesselSearchDefinition {
 
         LabVesselSearchDefinition srchDef = new LabVesselSearchDefinition();
         Map<String, List<SearchTerm>> mapGroupSearchTerms = new LinkedHashMap<>();
+        // One or more option groups have mouseover popup help text
+        Map<String,String> mapGroupHelpText = new HashMap<>();
 
         List<SearchTerm> searchTerms = srchDef.buildLabVesselIds();
         mapGroupSearchTerms.put("IDs", searchTerms);
@@ -120,6 +123,11 @@ public class LabVesselSearchDefinition {
 
         searchTerms = srchDef.buildMetricsTerms();
         mapGroupSearchTerms.put("Metrics", searchTerms);
+
+        searchTerms = buildVesselMetricDetailCols();
+        mapGroupSearchTerms.put("Quant Details", searchTerms);
+        mapGroupHelpText.put("Quant Details", "This group of columns traverses ancestor and descendant vessels to locate" +
+                " all metrics types for the selected column.  Data is displayed in separate column sets for each metric run name oldest to newest from left to right.");
 
         searchTerms = srchDef.buildArrayTerms();
         mapGroupSearchTerms.put("Arrays", searchTerms);
@@ -200,6 +208,9 @@ public class LabVesselSearchDefinition {
                         return listeners;
                     }
                 });
+
+        // Add user popup note to an entire option group
+        configurableSearchDefinition.addColumnGroupHelpText(mapGroupHelpText);
 
         return configurableSearchDefinition;
     }
@@ -1000,9 +1011,9 @@ public class LabVesselSearchDefinition {
         searchTerm.setName("Rack Barcode");
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public List<String> evaluate(Object entity, SearchContext context) {
+            public Set<String> evaluate(Object entity, SearchContext context) {
                 LabVessel labVessel = (LabVessel) entity;
-                List<String> results = new ArrayList<>();
+                Set<String> results = new HashSet<>();
 
                 for (LabVessel vessel : labVessel.getContainers()) {
                     if (OrmUtil.proxySafeIsInstance(vessel, TubeFormation.class)) {
@@ -1021,9 +1032,9 @@ public class LabVesselSearchDefinition {
         searchTerm.setName("Rack Position");
         searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
             @Override
-            public List<String> evaluate(Object entity, SearchContext context) {
+            public Set<String> evaluate(Object entity, SearchContext context) {
                 LabVessel labVessel = (LabVessel) entity;
-                List<String> results = new ArrayList<>();
+                Set<String> results = new HashSet<>();
 
                 for (LabVessel container : labVessel.getContainers()) {
                     results.add(container.getContainerRole().getPositionOfVessel(labVessel).toString());
@@ -1842,6 +1853,29 @@ public class LabVesselSearchDefinition {
         searchTerm.setName("Vessel Latest Event");
         searchTerm.setPluginClass(LabVesselLatestEventPlugin.class);
         searchTerms.add(searchTerm);
+
+        return searchTerms;
+    }
+
+    /**
+     * Build multi column search terms for lab vessel metrics details.
+     * @return List of search terms/column definitions, one for each LabMetric.MetricType
+     */
+    private List<SearchTerm> buildVesselMetricDetailCols() {
+        List<SearchTerm> searchTerms = new ArrayList<>();
+        SearchTerm searchTerm = null;
+
+        for( LabMetric.MetricType metricType : LabMetric.MetricType.values() ) {
+            // Only interested in concentration metrics
+            if( metricType.getCategory() != LabMetric.MetricType.Category.CONCENTRATION) {
+                continue;
+            }
+            // Names must be consistent -  column name logic is used in plugin to filter metric types!
+            searchTerm = new SearchTerm();
+            searchTerm.setName(metricType.getDisplayName());
+            searchTerm.setPluginClass(VesselMetricDetailsPlugin.class);
+            searchTerms.add(searchTerm);
+        }
 
         return searchTerms;
     }
