@@ -97,7 +97,7 @@ public class LabBatchResource {
             labBatch = buildLabBatch(labBatchBean, mapBarcodeToTube, mapSampleToSample);
         }
 
-        if (!labBatchBean.getBatchId().startsWith(BSP_BATCH_PREFIX)) { // todo jmt or ARRAY
+        if (!labBatchBean.getBatchId().startsWith(BSP_BATCH_PREFIX)) {
             JiraTicket jiraTicket = new JiraTicket(jiraService, labBatchBean.getBatchId());
             labBatch.setJiraTicket(jiraTicket);
             jiraTicket.setLabBatch(labBatch);
@@ -109,13 +109,15 @@ public class LabBatchResource {
     }
 
     /**
-     * Build a LabBatch entity from a LabBatchBean with a ParentVesselBean
+     * Build a LabBatch entity from a LabBatchBean with a ParentVesselBean.  If the plate wells have product orders,
+     * create bucket entries and associate them with the batch.
      */
     private LabBatch createLabBatchByParentVessel(LabBatchBean labBatchBean) {
         List<LabVessel> labVessels = labVesselFactory.buildLabVessels(
                 Collections.singletonList(labBatchBean.getParentVesselBean()), labBatchBean.getUsername(),
                 new Date(), null, MercurySample.MetadataSource.BSP);
 
+        // Gather vessels for each PDO (if any)
         Set<LabVessel> labVesselSet = new HashSet<>();
         Map<String, ProductOrder> mapIdToPdo = new HashMap<>();
         ListMultimap<String, LabVessel> mapPdoToVessels = ArrayListMultimap.create();
@@ -126,14 +128,14 @@ public class LabBatchResource {
                     productOrder = productOrderDao.findByBusinessKey(childVesselBean.getProductOrder());
                     mapIdToPdo.put(childVesselBean.getProductOrder(), productOrder);
                 }
-                if (labVessels.size() == 1 /*todo && plate */) {
+                if (labVessels.size() == 1 && labVessels.get(0).getType() == LabVessel.ContainerType.STATIC_PLATE) {
                     StaticPlate staticPlate = (StaticPlate) labVessels.get(0);
                     PlateWell plateWell = staticPlate.getContainerRole().getVesselAtPosition(
                             VesselPosition.getByName(childVesselBean.getPosition()));
                     labVesselSet.add(plateWell);
                     mapPdoToVessels.put(childVesselBean.getProductOrder(), plateWell);
                 } else {
-
+                    throw new RuntimeException("Product Orders supported only for plates.");
                 }
             }
         }
@@ -144,6 +146,8 @@ public class LabBatchResource {
         LabBatch labBatch = new LabBatch(labBatchBean.getBatchId(), labVesselSet,
                 labBatchBean.getBatchId().startsWith(BSP_BATCH_PREFIX) ?
                         LabBatch.LabBatchType.BSP : LabBatch.LabBatchType.WORKFLOW);
+
+        // Create bucket entries (if any) and add to batch
         if (!mapIdToPdo.isEmpty()) {
             LabVessel.loadSampleDataForBuckets(labVesselSet);
         }

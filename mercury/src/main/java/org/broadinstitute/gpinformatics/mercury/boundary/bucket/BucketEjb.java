@@ -447,7 +447,6 @@ public class BucketEjb {
                     Collection<BucketEntry> entries = add(initialBucket, BucketEntry.BucketEntryType.PDO_ENTRY,
                             LabEvent.UI_PROGRAM_NAME, username, LabEvent.UI_EVENT_LOCATION, productOrder);
                     bucketEntries.addAll(entries);
-                    // todo jmt should this break?
                 }
             }
         }
