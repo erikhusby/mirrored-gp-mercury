@@ -1,9 +1,9 @@
 package org.broadinstitute.gpinformatics.mercury.test;
 
-import junit.framework.Assert;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.test.builders.CadencePicoJaxbBuilder;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.text.SimpleDateFormat;
@@ -34,6 +34,6 @@ public class CadencePicoDbFreeTest {
             bettaLimsMessageTestFactory, testSuffix, picoSampleTubeBarcodes, sourceRackBarcode, dilutionFactor
         ).invoke();
 
-        Assert.assertEquals("Wrong number of messages", 3, cadencePicoJaxbBuilder.getMessageList().size());
+        Assert.assertEquals(3, cadencePicoJaxbBuilder.getMessageList().size(), "Wrong number of messages");
     }
 }

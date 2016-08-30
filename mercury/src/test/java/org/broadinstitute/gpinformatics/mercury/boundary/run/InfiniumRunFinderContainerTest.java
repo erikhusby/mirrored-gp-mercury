@@ -21,6 +21,7 @@ import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
@@ -150,7 +151,60 @@ public class InfiniumRunFinderContainerTest extends Arquillian {
                 callStarterOnWell(any(StaticPlate.class), any(VesselPosition.class));
     }
 
-    public void sendHybAndXStainMessages(String ampPlate, String chipBarcode) {
+    @Test
+    public void testStainedChipPendingLoadShouldntComplete() throws Exception {
+        mockGapHandler = mock(GapHandler.class);
+        doNothing().when(mockGapHandler).postToGap(any(BettaLIMSMessage.class));
+        labEventFactory.setGapHandler(mockGapHandler);
+        bettaLimsMessageResource.setLabEventFactory(labEventFactory);
+
+        String chipSuffix = new SimpleDateFormat("MMddHHmmss").format(new Date());
+        String chipBarcode = "InfTestChip24" + chipSuffix;
+        sendHybAndXStainMessages(POST_PCR_PLATE, chipBarcode);
+
+        //Test to see if can find as a 'Pending' Chip
+        List<LabVessel> pendingXStainChips = labVesselDao.findAllWithEventButMissingAnother(
+                LabEventType.INFINIUM_XSTAIN, LabEventType.INFINIUM_AUTOCALL_ALL_STARTED);
+        LabVessel infiniumChip = null;
+        boolean foundPendingChip = false;
+        for (LabVessel labVessel: pendingXStainChips) {
+            if (labVessel.getLabel().equals(chipBarcode)) {
+                infiniumChip = labVessel;
+                foundPendingChip = true;
+                break;
+            }
+        }
+        assertThat(foundPendingChip, is(true));
+        assertThat(infiniumChip, notNullValue());
+
+        //Mock LabVesselDao so run finder doesn't grab every old run for this test.
+        LabVesselDao mockLabVesselDao = mock(LabVesselDao.class);
+        when(mockLabVesselDao.findAllWithEventButMissingAnother(
+                LabEventType.INFINIUM_XSTAIN, LabEventType.INFINIUM_AUTOCALL_ALL_STARTED))
+                .thenReturn(Arrays.asList(infiniumChip));
+        infiniumRunFinder.setLabVesselDao(mockLabVesselDao);
+
+        String tmpDirPath = System.getProperty("java.io.tmpdir");
+        tmpDir = new File(tmpDirPath);
+
+        InfiniumStarterConfig config = new InfiniumStarterConfig(STUBBY);
+        config.setMinimumIdatFileLength(-1);
+        config.setDataPath(tmpDir.getPath());
+        InfiniumRunProcessor runProcessor = new InfiniumRunProcessor(config);
+        infiniumRunFinder.setInfiniumRunProcessor(runProcessor);
+
+        InfiniumPipelineClient mockPipelineClient = mock(InfiniumPipelineClient.class);
+        when(mockPipelineClient.callStarterOnWell(any(StaticPlate.class), any(VesselPosition.class))).thenReturn(true);
+        infiniumRunFinder.setInfiniumPipelineClient(mockPipelineClient);
+
+        InfiniumRunFinder runFinderSpy = spy(infiniumRunFinder);
+        runFinderSpy.find();
+
+        verify(mockPipelineClient, times(0)).
+                callStarterOnWell(any(StaticPlate.class), any(VesselPosition.class));
+    }
+
+    private void sendHybAndXStainMessages(String ampPlate, String chipBarcode) {
 
         BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
         BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
