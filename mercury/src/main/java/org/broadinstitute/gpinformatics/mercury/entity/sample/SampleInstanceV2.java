@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.sample;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -300,13 +301,37 @@ public class SampleInstanceV2 {
     }
 
     /**
-     * Returns the nearest Product Order associated with samples in ancestor vessels.
+     * Returns the nearest Sample/Product Order associated with samples in ancestor vessels.
      */
     public ProductOrderSample getSingleProductOrderSample() {
         if (allProductOrderSamples.isEmpty()) {
             return null;
         }
         return allProductOrderSamples.get(allProductOrderSamples.size() - 1);
+    }
+
+    /**
+     * Returns the nearest Sample/Product Order associated with the PDO of the single bucket entry in ancestor vessels. <br />
+     * There are snapshots in time where a newer PDO sample may have been created but it hasn't been bucketed yet. <br />
+     * This functionality gets the Sample/PDO associated with the single bucket.
+     */
+    public ProductOrderSample getProductOrderSampleForSingleBucket() {
+        if (allProductOrderSamples.isEmpty() || singleBucketEntry == null ) {
+            return null;
+        }
+        ProductOrder bucketPDO = singleBucketEntry.getProductOrder();
+        // Shouldn't happen, but if so, return latest
+        if( bucketPDO == null ) {
+            return getSingleProductOrderSample();
+        }
+
+        for( int index = allProductOrderSamples.size() - 1; index >= 0 ; index-- ) {
+            if( bucketPDO.equals(allProductOrderSamples.get(index).getProductOrder())){
+                return allProductOrderSamples.get(index);
+            }
+        }
+        // No samples match bucket?  Let caller deal with null.
+        return null;
     }
 
     /**
