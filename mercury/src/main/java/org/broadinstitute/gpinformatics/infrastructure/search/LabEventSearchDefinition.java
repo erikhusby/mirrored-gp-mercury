@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -41,6 +42,31 @@ public class LabEventSearchDefinition {
      * Shared by terms in multiple groups (batch and vessel)
      */
     private final ConfigurableSearchDefinition eventByVesselSearchDefinition;
+
+    // These search term and/or result column names need to be referenced multiple places during processing.
+    // Use an enum rather than having to reference via String values of term names
+    // TODO: JMS Create a shared interface that this implements then use this as a registry of all term names
+    public enum MultiRefTerm {
+        LCSET("LCSET");
+
+        MultiRefTerm(String termRefName ) {
+            this.termRefName = termRefName;
+            if( termNameReference.put(termRefName, this) != null ) {
+                throw new RuntimeException( "Attempt to add a term with a duplicate name [" + termRefName + "]." );
+            }
+        }
+
+        private String termRefName;
+        private Map<String, MultiRefTerm> termNameReference = new HashMap<>();
+
+        public String getTermRefName() {
+            return termRefName;
+        }
+
+        public boolean isNamed(String termName ) {
+            return termRefName.equals(termName);
+        }
+    }
 
     public LabEventSearchDefinition(){
         eventByVesselSearchDefinition = buildAlternateSearchDefByVessel();
@@ -609,7 +635,7 @@ public class LabEventSearchDefinition {
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
-        searchTerm.setName("LCSET");
+        searchTerm.setName(MultiRefTerm.LCSET.getTermRefName());
         searchTerm.setHelpText(
                 "LCSET term will only locate events associated with batch or rework batch vessels.<br>"
                 + "Traversal option(s) should be selected if chain of custody events are desired.<br>"
@@ -636,9 +662,16 @@ public class LabEventSearchDefinition {
         lcsetEventTerm.setTraversalFilterExpression(new SearchTerm.Evaluator<Boolean>() {
             @Override
             public Boolean evaluate(Object entity, SearchContext context) {
-                // todo jmt support multiple
-                String eventTypeName = context.getSearchInstance().getSearchValues().iterator().next().getChildren().iterator().next().getValues().iterator().next();
-                return ((LabEvent)entity).getLabEventType().name().equals(eventTypeName);
+                for (SearchInstance.SearchValue searchValue : context.getSearchInstance().getSearchValues()) {
+                    if (searchValue.getSearchTerm().getName().equals(MultiRefTerm.LCSET.getTermRefName())) {
+                        for (String eventTypeName : searchValue.getChildren().iterator().next().getValues()) {
+                            if (eventTypeName.equals(((LabEvent)entity).getLabEventType().name())) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+                return false;
             }
         });
         List<SearchTerm> dependentSearchTerms = new ArrayList<>();
@@ -942,7 +975,7 @@ public class LabEventSearchDefinition {
 
         // By LCSET
         searchTerm = new SearchTerm();
-        searchTerm.setName("LCSET");
+        searchTerm.setName(MultiRefTerm.LCSET.getTermRefName());
 
         criteriaPaths = new ArrayList<>();
 

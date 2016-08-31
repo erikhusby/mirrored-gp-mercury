@@ -37,8 +37,8 @@ public class LabEventVesselTraversalEvaluator extends TraversalEvaluator {
         Set sortedSet = new TreeSet<>( LabEvent.BY_EVENT_DATE_LOC );
         List<String> lcsetNames = null;
         for (SearchInstance.SearchValue searchValue : searchInstance.getSearchValues()) {
-            // todo jmt make this less fragile
-            if (searchValue.getSearchTerm().getName().equals("LCSET")) {
+            if (searchValue.getSearchTerm().getName().equals(
+                    LabEventSearchDefinition.MultiRefTerm.LCSET.getTermRefName())) {
                 lcsetNames = searchValue.getValues();
             }
         }
@@ -64,8 +64,8 @@ public class LabEventVesselTraversalEvaluator extends TraversalEvaluator {
         // Apply in-memory search terms from searchInstance
         SearchTerm.Evaluator<Boolean> traversalFilterExpression = null;
         for (SearchInstance.SearchValue searchValue : searchInstance.getSearchValues()) {
-            for (SearchTerm searchTerm : searchValue.getSearchTerm().getDependentSearchTerms()) {
-                traversalFilterExpression = searchTerm.getTraversalFilterExpression();
+            for (SearchInstance.SearchValue value : searchValue.getChildren()) {
+                traversalFilterExpression = value.getSearchTerm().getTraversalFilterExpression();
                 break;
             }
         }
@@ -105,7 +105,8 @@ public class LabEventVesselTraversalEvaluator extends TraversalEvaluator {
             TransferTraverserCriteria.TraversalDirection traversalDirection, List<String> lcsetNames){
         TransferTraverserCriteria.LabEventDescendantCriteria eventTraversalCriteria =
                 new TransferTraverserCriteria.LabEventDescendantCriteria();
-        eventTraversalCriteria.setLcsetNames(lcsetNames);
+        // todo jmt enable this after Hibernate 5 upgrade, performance is poor with 4
+//        eventTraversalCriteria.setLcsetNames(lcsetNames);
 
         for (LabVessel startingEventVessel : rootVessels) {
             if (startingEventVessel.getContainerRole() != null) {
