@@ -108,7 +108,7 @@ public class SubmissionDtoFetcher {
                 = new ArrayList<>(Collections2.filter(unfilteredSamples, new Predicate<ProductOrderSample>() {
             @Override
             public boolean apply(@Nullable ProductOrderSample input) {
-                return !(input.getProductOrder().isDraft() || input.getDeliveryStatus().isAbandoned());
+                return input.canBeSubmitted();
             }
         }));
         ProductOrder.loadCollaboratorSampleName(productOrderSamples);
