@@ -398,6 +398,37 @@ public class BettaLimsMessageTestFactory {
         return plateCherryPickEvent;
     }
 
+    public PlateCherryPickEvent buildPlateToRackCherryPick(String eventType, List<String> sourcePlateBarcodes,
+                                                           String targetRackBarcode,
+                                                           List<List<String>> targetTubeBarcodes,
+                                                           List<CherryPick> cherryPicks) {
+        PlateCherryPickEvent plateCherryPickEvent = new PlateCherryPickEvent();
+        setStationEventData(eventType, plateCherryPickEvent);
+
+        for (String sourcePlateBarcode : sourcePlateBarcodes) {
+            plateCherryPickEvent.getSourcePlate().add(buildPlate(sourcePlateBarcode));
+        }
+
+        plateCherryPickEvent.getPlate().add(buildRack(targetRackBarcode));
+
+        for (int i = 0, targetTubeBarcodesSize = targetTubeBarcodes.size(); i < targetTubeBarcodesSize; i++) {
+            List<String> targetTubeBarcode = targetTubeBarcodes.get(i);
+            plateCherryPickEvent.getPositionMap()
+                    .add(buildPositionMap(targetRackBarcode, targetTubeBarcode));
+        }
+
+        for (CherryPick cherryPick : cherryPicks) {
+            CherryPickSourceType cherryPickSource = new CherryPickSourceType();
+            cherryPickSource.setBarcode(cherryPick.getSourceRackBarcode());
+            cherryPickSource.setWell(cherryPick.getSourceWell());
+            cherryPickSource.setDestinationBarcode(cherryPick.getDestinationRackBarcode());
+            cherryPickSource.setDestinationWell(cherryPick.getDestinationWell());
+            plateCherryPickEvent.getSource().add(cherryPickSource);
+        }
+
+        return plateCherryPickEvent;
+    }
+
     public PlateCherryPickEvent buildCherryPickToPlate(String eventType, String sourcePhysType, List<String> sourceRackBarcodes,
                                                 List<List<String>> sourceTubeBarcodes, List<String> targetPlateBarcodes,
                                                 List<CherryPick> cherryPicks) {
