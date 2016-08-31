@@ -410,47 +410,40 @@ public class ManualTransferActionBean extends RackScanActionBean {
                         break;
                     }
 
+                    PlateType targetRack = new PlateType();
+                    targetRack.setBarcode(plateCherryPickEvent.getPlate().get(0).getBarcode());
+                    //Strip tubes positions are set below based on cherry pick source->target connections.
+                    plateCherryPickEvent.getPositionMap().clear();
+                    plateCherryPickEvent.getPlate().clear();
+                    targetRack.setPhysType(LabEventFactory.PHYS_TYPE_STRIP_TUBE_RACK_OF_12);
+                    targetRack.setSection(LabEventFactory.SECTION_ALL_96);
+                    plateCherryPickEvent.getPlate().add(targetRack);
+                    PositionMapType targetPositionMap = new PositionMapType();
+                    targetPositionMap.setBarcode(targetRack.getBarcode());
+
                     for (CherryPicksPositions item : cherryPickPositionMaps) {
-                        String srcWell = "";
-                        String destWell = "";
                         CherryPickSourceType cherryPickSourceType = new CherryPickSourceType();
                         if (item.targetIDs.size() >= item.sourceIDs.size()) {
-                            String targetRackBarcode = plateCherryPickEvent.getPlate().get(0).getBarcode();
-                            PlateType targetRack = new PlateType();
-                            targetRack.setBarcode(targetRackBarcode);
-                            targetRack.setPhysType(LabEventFactory.PHYS_TYPE_STRIP_TUBE_RACK_OF_12);
-                            targetRack.setSection(LabEventFactory.SECTION_ALL_96);
-                            plateCherryPickEvent.getPlate().remove(0);
-                            plateCherryPickEvent.getPlate().add(targetRack);
-                            PositionMapType targetPositionMap = new PositionMapType();
-                            targetPositionMap.setBarcode(targetRack.getBarcode());
                             MetadataType metadataType = new MetadataType();
                             metadataType.setName("FCT");
                             metadataType.setValue(item.targetFCT.get(0));
-
                             for (int targetWellPosition = 0; targetWellPosition < item.targetPositions.size(); targetWellPosition++) {
-                                String targetBarcode = item.targetBarcodes.get(0);
                                 ReceptacleType receptacleType = new ReceptacleType();
                                 receptacleType.setReceptacleType(LabEventFactory.PHYS_TYPE_STRIP_TUBE);
                                 receptacleType.getMetadata().add(metadataType);
-                                receptacleType.setBarcode(targetBarcode);
+                                receptacleType.setBarcode(item.targetBarcodes.get(0));
                                 receptacleType.setPosition(String.valueOf(item.targetPositions.get(targetWellPosition)));
-                                targetPositionMap.getReceptacle().add(receptacleType);
-                                plateCherryPickEvent.getPositionMap().remove(0);
-                                plateCherryPickEvent.getPositionMap().add(targetPositionMap);
-                            }
-                            for (int targetWellPosition = 0; targetWellPosition < item.targetIDs.size(); targetWellPosition++) {
-                                destWell = parseWellFromJson(item.targetIDs.get(targetWellPosition));
-                                srcWell = parseWellFromJson(item.sourceIDs.get(0));
+                                targetPositionMap.getReceptacle().add(0, receptacleType);
                                 cherryPickSourceType = new CherryPickSourceType();
                                 cherryPickSourceType.setBarcode(plateCherryPickEvent.getSourcePlate().get(0).getBarcode());
-                                cherryPickSourceType.setWell(srcWell);
+                                cherryPickSourceType.setWell(parseWellFromJson(item.sourceIDs.get(0)));
                                 cherryPickSourceType.setDestinationBarcode(plateCherryPickEvent.getPlate().get(0).getBarcode());
-                                cherryPickSourceType.setDestinationWell(destWell);
+                                cherryPickSourceType.setDestinationWell(parseWellFromJson(item.targetIDs.get(targetWellPosition)));
                                 plateCherryPickEvent.getSource().add(cherryPickSourceType);
                             }
                         }
                     }
+                    plateCherryPickEvent.getPositionMap().add(targetPositionMap);
                 }
                 break;
             case PLATE_CHERRY_PICK_EVENT:
@@ -909,9 +902,10 @@ public class ManualTransferActionBean extends RackScanActionBean {
         return receptacleTypeReturn;
     }
 
+    //Handles validation and postback of strip tube manual transfers.
     public StripTubePositions findStripTubeFctPositions(int position) {
         ObjectMapper mapper = new ObjectMapper();
-        StripTubePositions stripTubePositions = new StripTubePositions();
+        StripTubePositions stripTubePositions;
         String stripTubeJSON = getContext().getRequest().getParameter("stripTubeList");
 
         if (stripTubeJSON == null) {

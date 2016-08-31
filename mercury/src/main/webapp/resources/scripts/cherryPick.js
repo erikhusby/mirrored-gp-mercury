@@ -383,7 +383,7 @@ $(document).ready(function () {
         }
 
        // Capture and persist values of strip tube flow cell tickets and barcodes to the transfer_plate_strip_tube JSP page.
-        if ($("#dest_TABLE_STRIP_TUBE_RACK").length) {
+        $("table[id*=STRIP_TUBE_]:visible").each(function() {
             $(document).ready(function () {
                 var stripTubeObject = {
                     fct: [],
@@ -399,7 +399,7 @@ $(document).ready(function () {
                     document.getElementById("stripTubeValidationList").value = JSON.stringify(stripTubeObject);
                 });
             });
-        }
+        });
     }
 
     //Check all the fields after a scan and enable they if the contain data

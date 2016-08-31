@@ -58,22 +58,22 @@ plate / rack.
 
 </style>
 
-
 <div class="control-group" id="container0">
-
-    <input type="hidden" name="stationEvents[${stationEventIndex}].${source ? 'sourcePlate[0]' : 'plate[0]'}.physType"
-           value="${plate[0].physType}"/>
     <c:if test="${vesselTypeGeometry.barcoded}">
-        <label for="${source ? 'src' : 'dst'}PltBcd${stationEventIndex}">Barcode</label>
-        <input type="text" id="${source ? 'src' : 'dst'}PltBcd${stationEventIndex}" autocomplete="off"
-               name="stationEvents[${stationEventIndex}].${source ? 'sourcePlate[0]' : 'plate[0]'}.barcode"
-               value="${plate[0].barcode}"
-               class="clearable barcode unique" ${stationEventIndex == 0 ? "required" : ""}/>
-
+        <input type="hidden"
+               name="stationEvents[${stationEventIndex}].${source ? 'sourcePlate[0]' : 'plate[0]'}.physType"
+               value="${plate[0].physType}"/>
+        <p>
+            <label for="${source ? 'src' : 'dst'}PltBcd${stationEventIndex}">  ${receptacleTransfer.receptacle.receptacleType}
+                Barcode</label>
+            <input type="text" id="${source ? 'src' : 'dst'}PltBcd${stationEventIndex}" autocomplete="off"
+                   name="stationEvents[${stationEventIndex}].${source ? 'sourcePlate[0]' : 'plate[0]'}.barcode"
+                   value="${plate[0].barcode}"
+                   class="clearable barcode unique" ${stationEventIndex == 0 ? "required" : ""}/>
+        </p>
         <input type="hidden" id="dataSrc" name="srcPos" value="A1">
         <input type="hidden" id="dataDest" name="destPos" value="A1">
         <input type="hidden" id="stripTubeValidationList" name="stripTubeList" value="A1">
-
     </c:if>
 
     <c:if test="${stationEvent.class.simpleName == 'PlateCherryPickEvent'}">
@@ -115,33 +115,25 @@ plate / rack.
         </c:if>
 
         <c:set var="count" value="0" scope="page"/>
-
-        <table id="${source ? 'src' : 'dest'}_TABLE_${vesselTypeGeometry.vesselGeometry}">
-
+        <table id="${source ? 'src' : 'dest'}_TABLE_STRIP_TUBE_${vesselTypeGeometry.vesselGeometry}">
             <c:forEach items="${geometry.rowNames}" var="rowName" varStatus="rowStatus">
-                <%--<c:set var="count" value="${count + 1}" scope="page"/>--%>
-                <c:if test="${rowStatus.first}">
-                    <tr>
-                        <c:forEach items="${geometry.columnNames}" var="columnName" varStatus="columnStatus">
-                            <td align="right">
-                                <div style="float:left;">STRIP ${columnName}</div>
-                                <div style="float:right;">
-                                    <button id="btn_${source ? 'src' : 'dest'}_col_${columnName}" type="button"
-                                            class="btn btn-primary btn-xs xs-col">Select
-                                    </button>
-                                </div>
-                            </td>
-                        </c:forEach>
-                    </tr>
-                </c:if>
                 <tr>
                     <c:forEach items="${geometry.columnNames}" var="columnName" varStatus="columnStatus">
-                        <c:set var="receptacleIndex"
-                               value="${rowStatus.index * geometry.columnCount + columnStatus.index}"/>
-                        <td align="right">
-                            <c:if test="${empty rowName}">${geometry.vesselPositions[receptacleIndex]}</c:if>
-                            <c:choose>
-                                <c:when test="${rowStatus.first}">
+                        <c:choose>
+                            <%--Select strip tube button--%>
+                            <c:when test="${rowStatus.count == 1}">
+                                <td align="right">
+                                    <div style="float:left;">STRIP ${columnName}</div>
+                                    <div style="float:right;">
+                                        <button id="btn_${source ? 'src' : 'dest'}_col_${columnName}" type="button"
+                                                class="btn btn-primary btn-xs xs-col">Select</button>
+                                    </div>
+                                </td>
+                            </c:when>
+                            <%--Strip tube barcode--%>
+                            <c:when test="${rowStatus.count == 2}">
+                                <c:set var="receptacleIndex" value="${columnStatus.index}"/>
+                                <td align="right">
                                     <div>BARCODE</div>
                                     <input type="text"
                                            id="${source ? 'src' : 'dest'}RcpBcd${stationEventIndex}_${receptacleIndex}"
@@ -150,34 +142,40 @@ plate / rack.
                                            class="clearable smalltext unique" autocomplete="off"/>
                                     <input type="hidden"
                                            name="stationEvents[${stationEventIndex}].${source ? 'sourcePositionMap[0]' : 'positionMap[0]'}.receptacle[${receptacleIndex}].position"
-                                           value="${geometry.vesselPositions[receptacleIndex]}"/>
-                                </c:when>
-                                <c:when test="${rowStatus.count == 2}">
+                                           value="${geometry.vesselPositions[rowStatus.index]}"/>
+                                </td>
+                            </c:when>
+                            <%--Strip tube flow cell ticket--%>
+                            <c:when test="${rowStatus.count == 3}">
+                                <c:set var="receptacleIndex" value="${columnStatus.index}"/>
+                                <td align="right">
                                     <div>FCT</div>
-                                    <input id="${source ? 'src' : 'dest'}RcpBcd${stationEventIndex}_${receptacleIndex - 12}_FCT"
+                                    <input id="${source ? 'src' : 'dest'}RcpBcd${stationEventIndex}_${receptacleIndex}_FCT"
                                            name="stationEvents[${stationEventIndex}].${source ? 'sourcePositionMap[0]' : 'positionMap[0]'}.receptacle[${receptacleIndex}].barcode"
                                            value="${actionBean.findStripTubeFctPositions(columnStatus.count -1).fctValue}"
                                            type="text" class="clearable smalltext unique" autocomplete="off"/>
-                                    <div>TUBE${rowStatus.count - 1}
-                                        <button id="${previousRowName}${columnName}_${source ? 'src' : 'dest'}_RcpBcd${stationEventIndex}_${columnStatus.index}"type="button" class="${source ? 'src' : 'dest'}_col_${columnStatus.index} ${source ? 'src' : 'dest'}_row_${rowStatus.index} btn btn-primary btn-xs">Select</button>
-                                    </div>
-                                </c:when>
-                                <c:otherwise>
                                     <input type="hidden"
-                                           id="${source ? 'src' : 'dest'}RcpBcd${stationEventIndex}_${receptacleIndex}"
-                                           name="stationEvents[${stationEventIndex}].${source ? 'sourcePositionMap[0]' : 'positionMap[0]'}.receptacle[${receptacleIndex}].barcode"
-                                           class="clearable smalltext unique" autocomplete="off" disabled/>
-                                    TUBE${rowStatus.count - 1}
-                                    <button id="${previousRowName}${columnName}_${source ? 'src' : 'dest'}_RcpBcd${stationEventIndex}_${columnStatus.index}"type="button" class="${source ? 'src' : 'dest'}_col_${columnStatus.index} ${source ? 'src' : 'dest'}_row_${rowStatus.index} btn btn-primary btn-xs">Select</button>
-                                </c:otherwise>
-                            </c:choose>
-                            <input type="hidden"
-                                   name="stationEvents[${stationEventIndex}].${source ? 'sourcePositionMap[0]' : 'positionMap[0]'}.receptacle[${receptacleIndex}].position"
-                                   value="${columnStatus.count - 1}"/>
+                                           name="stationEvents[${stationEventIndex}].${source ? 'sourcePositionMap[0]' : 'positionMap[0]'}.receptacle[${receptacleIndex+12}].position"
+                                           value="${geometry.vesselPositions[rowStatus.index]}"/>
+                                </td>
+                            </c:when>
+                        </c:choose>
+                    </c:forEach>
+                </tr>
+            </c:forEach>
+                <%--Buttons representing the individual tubes in the strip tube rack--%>
+            <c:forEach items="${geometry.rowNames}" var="rowName" varStatus="rowStatus">
+                <tr>
+                    <c:forEach items="${geometry.columnNames}" var="columnName" varStatus="columnStatus">
+                        <td>
+                            <div style="float:right;">
+                                <button id="${rowName}${columnName}_${source ? 'src' : 'dest'}_RcpBcd${stationEventIndex}_${columnStatus.index}"
+                                        type="button"
+                                        class="${source ? 'src' : 'dest'}_col_${columnStatus.index} ${source ? 'src' : 'dest'}_row_${rowStatus.index} btn btn-primary btn-xs">Select</button>
+                            </div>
                         </td>
                     </c:forEach>
                 </tr>
-                <c:set var="previousRowName" value="${rowName}"/>
             </c:forEach>
         </table>
     </c:if>
