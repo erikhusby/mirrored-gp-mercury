@@ -1408,7 +1408,7 @@ public class LabVesselFixupTest extends Arquillian {
     /**
      * Reads container barcodes and plate names from mercury/src/test/resources/testdata/FixupPlateNames.txt.
      */
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void fixupGplim4276() throws Exception {
         /*
         Use this BSP query to fill the file
