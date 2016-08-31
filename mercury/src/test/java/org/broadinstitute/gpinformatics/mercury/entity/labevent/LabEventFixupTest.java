@@ -1510,4 +1510,22 @@ public class LabEventFixupTest extends Arquillian {
         labEventDao.flush();
         utx.commit();
     }
+
+    @Test(enabled = false)
+    public void gplim4295fixupEventType() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+        long wrongEventId = 1478962L;
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, wrongEventId);
+        if (labEvent == null || labEvent.getLabEventType() != LabEventType.ICE_CATCH_ENRICHMENT_CLEANUP) {
+            throw new RuntimeException("cannot find " + wrongEventId + " or is not ICE_CATCH_ENRICHMENT_CLEANUP");
+        }
+        System.out.println("LabEvent " + wrongEventId + " type " + labEvent.getLabEventType());
+        labEvent.setLabEventType(LabEventType.POND_REGISTRATION);
+        System.out.println("   updated to " + labEvent.getLabEventType());
+        labEventDao.persist(new FixupCommentary(
+                "GPLIM-4295 incorrect protocol chosen caused wrong type of lab event."));
+        labEventDao.flush();
+        utx.commit();
+    }
 }
