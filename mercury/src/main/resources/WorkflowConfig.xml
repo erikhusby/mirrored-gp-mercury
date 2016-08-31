@@ -2253,6 +2253,19 @@
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
         </workflowProcessDefVersions>
+    <workflowProcessDefs>
+        <name>10X</name>
+        <workflowProcessDefVersions>
+            <version>1.0</version>
+            <effectiveDate>2016-08-31T10:03:24.085-04:00</effectiveDate>
+            <workflowStepDefs>
+                <name>FP PCR 1</name>
+                <labEventTypes>FP_PCR_1</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
     </workflowProcessDefs>
     <productWorkflowDefs>
         <name>Agilent Exome Express</name>
