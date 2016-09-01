@@ -11,7 +11,9 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.metrics.entity;
 
+import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTuple;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bass.BassFileType;
 import org.hibernate.annotations.BatchSize;
 
 import javax.persistence.Column;
@@ -105,6 +107,11 @@ public class Aggregation {
         this.project = project;
         this.sample = sample;
         this.version = version;
+    }
+
+    public SubmissionTuple getTuple() {
+        // These aggregation metrics are specific to BAM files, so the BassFileType is always BAM.
+        return new SubmissionTuple(getProject(), getSample(), getVersion().toString(), BassFileType.BAM);
     }
 
     public Double getQualityMetric(String dataType) {

@@ -520,11 +520,11 @@
         <div id="addRegulatoryInfoDialog" title="Add Regulatory Information for ${actionBean.editResearchProject.title} (${actionBean.editResearchProject.businessKey})" class="form-horizontal">
 
             <div id="addRegulatoryInfoDialogSheet1">
-                <p>Enter the IRB Protocol or ORSP Determination number to see if the regulatory information is already known to Mercury.</p>
+                <p>Enter the ORSP Determination number to see if the regulatory information is already known to Mercury.</p>
                 <stripes:form id="regulatoryInfoSearchForm" beanclass="${actionBean.class.name}">
                     <stripes:hidden name="researchProject" value="${actionBean.editResearchProject.jiraTicketKey}"/>
                     <div class="control-group">
-                        <stripes:label for="regulatoryInfoQuery" class="control-label">Identifier</stripes:label>
+                        <stripes:label for="regulatoryInfoQuery" class="control-label">ORSP #</stripes:label>
                         <div class="controls">
                             <input id="regulatoryInfoQuery" type="text" name="q" required>
                             <button id="regulatoryInfoSearchButton" class="btn btn-primary">Search</button>

@@ -266,6 +266,13 @@ public class SearchTerm implements Serializable, ColumnTabulation {
     private List<SearchTerm> dependentSearchTerms;
 
     /**
+     * Expression applied to results of traversal, to determine whether they should be included.  Allows a dependent
+     * search term (e.g lab event type) to be combined with a primary term (e.g. LCSET) and traversal results
+     * (e.g. descendants).
+     */
+    private Evaluator<Boolean> traversalFilterExpression;
+
+    /**
      * Expression to convert HTML form input value from String to property data type
      */
     private Evaluator<Object> searchValueConversionExpression;
@@ -602,6 +609,14 @@ public class SearchTerm implements Serializable, ColumnTabulation {
 
     public void setDependentSearchTerms(List<SearchTerm> dependentSearchTerms) {
         this.dependentSearchTerms = dependentSearchTerms;
+    }
+
+    public void setTraversalFilterExpression(Evaluator<Boolean> traversalFilterExpression) {
+        this.traversalFilterExpression = traversalFilterExpression;
+    }
+
+    public Evaluator<Boolean> getTraversalFilterExpression() {
+        return traversalFilterExpression;
     }
 
     public String getSqlRestriction() {

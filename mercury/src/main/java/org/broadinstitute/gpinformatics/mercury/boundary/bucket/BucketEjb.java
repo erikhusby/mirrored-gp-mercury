@@ -4,6 +4,8 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
@@ -400,7 +402,9 @@ public class BucketEjb {
             }
         }
 
-        Collection<BucketEntry> newBucketEntries = applyBucketCriteria(vessels, order, username);
+        Pair<ProductWorkflowDefVersion, Collection<BucketEntry>> workflowBucketEntriesPair = applyBucketCriteria(
+                vessels, order, username);
+        Collection<BucketEntry> newBucketEntries = workflowBucketEntriesPair.getRight();
 
         Map<String, Collection<ProductOrderSample>> samplesAdded = new HashMap<>();
         for (BucketEntry bucketEntry : newBucketEntries) {
@@ -420,7 +424,8 @@ public class BucketEjb {
     }
 
 
-    public Collection<BucketEntry> applyBucketCriteria(List<LabVessel> vessels, ProductOrder productOrder, String username) {
+    public Pair<ProductWorkflowDefVersion, Collection<BucketEntry>> applyBucketCriteria(
+            List<LabVessel> vessels, ProductOrder productOrder, String username) {
         Collection<BucketEntry> bucketEntries = new ArrayList<>(vessels.size());
         WorkflowConfig workflowConfig = workflowLoader.load();
         List<Product> possibleProducts = new ArrayList<>();
@@ -430,10 +435,11 @@ public class BucketEjb {
             }
         }
         possibleProducts.add(productOrder.getProduct());
+        ProductWorkflowDefVersion workflowDefVersion = null;
         for (Product product : possibleProducts) {
             if (product.getWorkflow() != Workflow.NONE) {
                 ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflow(product.getWorkflow());
-                ProductWorkflowDefVersion workflowDefVersion = productWorkflowDef.getEffectiveVersion();
+                workflowDefVersion = productWorkflowDef.getEffectiveVersion();
                 Map<WorkflowBucketDef, Collection<LabVessel>> initialBucket =
                         workflowDefVersion.getInitialBucket(productOrder, vessels);
 
@@ -444,7 +450,7 @@ public class BucketEjb {
                 }
             }
         }
-        return bucketEntries;
+        return new ImmutablePair<>(workflowDefVersion, bucketEntries);
     }
 
     /**

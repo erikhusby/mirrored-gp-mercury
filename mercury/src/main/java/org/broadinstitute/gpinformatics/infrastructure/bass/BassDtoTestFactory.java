@@ -15,15 +15,15 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class BassDtoTestFactory {
-    public static BassDTO buildBassResults(String project, String sample) {
+    public static BassDTO buildBassResults(String project, String sample, String version, String rpid) {
         Map<BassDTO.BassResultColumn, String> resultsMap = new HashMap<>();
         resultsMap.put(BassDTO.BassResultColumn.sample, sample);
         resultsMap.put(BassDTO.BassResultColumn.datatype, BassDTO.DATA_TYPE_EXOME);
         resultsMap.put(BassDTO.BassResultColumn.project, project);
-        resultsMap.put(BassDTO.BassResultColumn.rpid, project);
+        resultsMap.put(BassDTO.BassResultColumn.rpid, rpid);
         resultsMap.put(BassDTO.BassResultColumn.file_type, BassFileType.BAM.getBassValue());
         resultsMap.put(BassDTO.BassResultColumn.path, "bambam.bam");
-        resultsMap.put(BassDTO.BassResultColumn.version, "1");
+        resultsMap.put(BassDTO.BassResultColumn.version, version);
         return new BassDTO(resultsMap);
     }
 }

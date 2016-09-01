@@ -42,7 +42,8 @@ public class LabVesselEtl extends GenericEntityEtl<LabVessel, LabVessel> {
         return genericRecord(etlDateStr, isDelete,
                 entity.getLabVesselId(),
                 format(entity.getLabel()),
-                format(entity.getType().getName())
+                format(entity.getType().getName()),
+                format(entity.getName())
         );
     }
 }

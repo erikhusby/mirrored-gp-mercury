@@ -5,7 +5,9 @@
                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean"/>
 
 <c:if test="${actionBean.regulatoryInformationNew}">
-    <p id="addRegInfoInstructions">Fill in the details below to add new regulatory information to Mercury and this research project.</p>
+    <p id="addRegInfoInstructions" style="font-weight: bold">
+        Please contact the ORSP staff (<a href="mailto:orsp@broadinstitute.org" style="font-size: 12px;">orsp@broadinstitute.org</a>) for assistance with setting up an ORSP project. This will allow Mercury to automatically fetch the details instead of having them manually entered here. In the future, you will not be able to manually add regulatory information in Mercury. For now, you may still fill in the details below to add new regulatory information to Mercury and this research project, however this is not recommended.
+    </p>
 </c:if>
 
 <stripes:form id="regulatoryInfoCreateForm" beanclass="${actionBean.class.name}" class="form-horizontal">

@@ -25,6 +25,7 @@ public class SubmissionTrackerContainerTest extends ContainerTest {
     ResearchProjectDao researchProjectDao;
 
     private static String testAccessionID = "SA-2342";
+    private static String testProjectId = "P123";
     private static BassFileType testFileType = BassFileType.BAM;
     private static String testVersion = "v1";
 
@@ -53,7 +54,7 @@ public class SubmissionTrackerContainerTest extends ContainerTest {
     public void testTrackerConfiguration() throws Exception {
         ResearchProject testProject = ResearchProjectTestFactory.createTestResearchProject();
         testProject.setJiraTicketKey("RP-testRP");
-        SubmissionTracker tracker = new SubmissionTracker(testAccessionID, testFileType, testVersion);
+        SubmissionTracker tracker = new SubmissionTracker(testProjectId, testAccessionID, testVersion, testFileType);
 
         testProject.addSubmissionTracker(tracker);
 

@@ -1266,4 +1266,8 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         return getDeliveryStatus() != ProductOrderSample.DeliveryStatus.ABANDONED
         && !isCompletelyBilled();
     }
+
+    public boolean canBeSubmitted() {
+        return !(getProductOrder().isDraft() || getDeliveryStatus().isAbandoned());
+    }
 }

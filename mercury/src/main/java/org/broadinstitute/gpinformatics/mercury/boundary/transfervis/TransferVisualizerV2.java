@@ -118,6 +118,8 @@ public class TransferVisualizerV2 {
         private Writer writer;
         /** The stream to which to write JSON. */
         private JSONWriter jsonWriter;
+        /** Appended to JSON if an exception occurs. */
+        private String error;
         /** Accumulates JSON for graph edges (nodes are streamed).*/
         private JSONArray edgesJson = new JSONArray();
         /** Prevents vessels being rendered more than once. */
@@ -306,6 +308,10 @@ public class TransferVisualizerV2 {
         @Override
         public void evaluateVesselPostOrder(Context context) {
 
+        }
+
+        public void setError(String error) {
+            this.error = error;
         }
 
         private class Dimensions {
@@ -610,6 +616,7 @@ public class TransferVisualizerV2 {
                         .key("startId").value(startId)
                         .key("links").value(edgesJson)
                         .key("highlights").value(highlightBarcodeJson)
+                        .key("error").value(error)
                         .endObject();
                 writer.flush();
             } catch (JSONException | IOException e) {
@@ -628,8 +635,9 @@ public class TransferVisualizerV2 {
         if (traversalDirections.isEmpty()) {
             throw new IllegalArgumentException("Must supply at least one direction");
         }
+        Traverser traverser = null;
         try {
-            Traverser traverser = new Traverser(writer, alternativeIds);
+            traverser = new Traverser(writer, alternativeIds);
             for (LabVessel labVessel : labVessels) {
                 for (TransferTraverserCriteria.TraversalDirection traversalDirection : traversalDirections) {
                     VesselContainer<?> containerRole = labVessel.getContainerRole();
@@ -643,9 +651,15 @@ public class TransferVisualizerV2 {
                     traverser.resetAllTraversed();
                 }
             }
-            traverser.completeJson();
-        } catch (JSONException e) {
-            throw new RuntimeException(e);
+        } catch (Exception e) {
+            if (traverser == null) {
+                throw new RuntimeException(e);
+            }
+            traverser.setError(e.toString());
+        } finally {
+            if (traverser != null) {
+                traverser.completeJson();
+            }
         }
     }
 
