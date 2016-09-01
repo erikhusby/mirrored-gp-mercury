@@ -360,8 +360,13 @@ public class VesselContainer<T extends LabVessel> {
                     continue;
                 }
 
-                VesselPosition targetPosition = sectionTransfer.getTargetSection().getWells()
-                        .get(sourceWellIndex);
+                List<VesselPosition> wells = sectionTransfer.getTargetSection().getWells();
+                if (sourceWellIndex >= wells.size()) {
+                    throw new RuntimeException("For event " + sectionTransfer.getLabEvent().getLabEventId() +
+                            ", source section " + sectionTransfer.getSourceSection() + " is larger than destination " +
+                            sectionTransfer.getTargetSection());
+                }
+                VesselPosition targetPosition = wells.get(sourceWellIndex);
                 LabVessel targetVessel = targetVesselContainer.getVesselAtPosition(targetPosition);
                 LabVessel.VesselEvent vesselEvent = new LabVessel.VesselEvent(
                         sourceVessel, this, sourcePosition, sectionTransfer.getLabEvent(),
