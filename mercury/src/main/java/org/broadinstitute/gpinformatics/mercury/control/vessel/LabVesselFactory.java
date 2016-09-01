@@ -205,10 +205,13 @@ public class LabVesselFactory implements Serializable {
                         if (vesselPosition == null) {
                             throw new RuntimeException("Unknown vessel position " + childVesselBean.getPosition());
                         }
-                        PlateWell plateWell = new PlateWell(staticPlate, vesselPosition);
+                        PlateWell plateWell = staticPlate.getContainerRole().getVesselAtPosition(vesselPosition);
+                        if (plateWell == null) {
+                            plateWell = new PlateWell(staticPlate, vesselPosition);
+                            staticPlate.getContainerRole().addContainedVessel(plateWell, vesselPosition);
+                        }
                         plateWell.addSample(getMercurySample(mapIdToListMercurySample, mapIdToListPdoSamples,
                                 childVesselBean.getSampleId(), metadataSource));
-                        staticPlate.getContainerRole().addContainedVessel(plateWell, vesselPosition);
                     }
                     if (labEventType != null) {
                         staticPlate.addInPlaceEvent(new LabEvent(labEventType, eventDate, "BSP", disambiguator, operator,
