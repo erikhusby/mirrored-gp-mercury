@@ -173,7 +173,7 @@
                             <c:set var="eventType" value="${stationEvent.eventType}" scope="request"/>
                             <c:set var="section" value="${actionBean.manualTransferDetails.targetSection}" scope="request"/>
                             <c:set var="source" value="${false}" scope="request"/>
-                            ${eventType}
+
                             <c:choose>
                                 <c:when test = "${eventType.equals('StripTubeBTransfer')}">
                                     <jsp:include page="transfer_plate_strip_tube.jsp"/>
