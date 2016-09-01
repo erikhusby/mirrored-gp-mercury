@@ -189,7 +189,8 @@ public class SubmissionsServiceImpl implements SubmissionsService {
     protected void validateResponseStatus(String activityName, ClientResponse response) {
         if(response.getStatus() != Response.Status.OK.getStatusCode()) {
             String error = response.getEntity(String.class);
-            String errorMessage = String.format("Error received while %s: %d %s", activityName, response.getStatus(), error);
+            String errorMessage =
+                    String.format("Error received while %s: %s (%d)", activityName, error, response.getStatus());
             log.error(errorMessage);
             throw new InformaticsServiceException(errorMessage);
         }
