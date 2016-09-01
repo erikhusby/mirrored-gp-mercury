@@ -161,6 +161,11 @@ public class ProductOrderTestFactory {
         return sampleInitiationProductOrder;
     }
 
+    public static ProductOrder buildFPProductOrder(int maxSamples) {
+        return createDummyProductOrder(maxSamples, "PDO-1FP", Workflow.NONE, 101,
+                "Test RP", rpSynopsis, ResearchProject.IRB_ENGAGED, "P-FPtest-1232", SAMPLE_SUFFIX, "ExExQuoteId");
+    }
+
     public static ProductOrder buildInfiniumProductOrder(int maxSamples) {
         return createDummyProductOrder(maxSamples, "PDO-1INF", Workflow.NONE, 101,
                 "Test RP", rpSynopsis, ResearchProject.IRB_ENGAGED, "P-INFtest-1232", SAMPLE_SUFFIX, "ExExQuoteId");
