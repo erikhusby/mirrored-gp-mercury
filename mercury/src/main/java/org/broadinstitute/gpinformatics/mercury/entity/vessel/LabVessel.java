@@ -100,7 +100,11 @@ public abstract class LabVessel implements Serializable {
     @Id
     private Long labVesselId;
 
+    /** Typically a barcode. */
     private String label;
+
+    /** A human readable name e.g. BSP plate name. */
+    protected String name;
 
     private Date createdOn;
 
@@ -338,6 +342,15 @@ public abstract class LabVessel implements Serializable {
      */
     void setLabel(String label) {
         this.label = label;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    /** For fixups only. */
+    void setName(String name) {
+        this.name = name;
     }
 
     public Set<VesselToSectionTransfer> getVesselToSectionTransfersThisAsSource() {
