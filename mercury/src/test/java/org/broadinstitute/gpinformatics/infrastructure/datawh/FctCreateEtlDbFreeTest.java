@@ -36,8 +36,7 @@ public class FctCreateEtlDbFreeTest {
     private String fctName = "FCT-666";
     private LabBatch.LabBatchType fctBatchType = LabBatch.LabBatchType.FCT;
     private LabBatch.LabBatchType miseqBatchType = LabBatch.LabBatchType.MISEQ;
-    private String dilutionVesselLabel = "00012345678";
-    private String denatureVesselLabel = "AB12345678";
+    private String batchVesselLabel = "00012345678";
     private IlluminaFlowcell.FlowcellType flowcellType = IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell;
     private VesselPosition flowcellLane = VesselPosition.LANE1;
     private BigDecimal concentration = new BigDecimal("20.01");
@@ -48,10 +47,9 @@ public class FctCreateEtlDbFreeTest {
     private LabBatchDao dao = createMock(LabBatchDao.class);
     private LabBatchStartingVessel labBatchStartingVessel = createMock(LabBatchStartingVessel.class);
     private LabBatch labBatch = createMock(LabBatch.class);
-    private LabVessel dilutionVessel = createMock(LabVessel.class);
-    private LabVessel denatureVessel = createMock(LabVessel.class);
+    private LabVessel batchVessel = createMock(LabVessel.class);
 
-    private Object[] mocks = new Object[]{dao, labBatchStartingVessel, labBatch, dilutionVessel, denatureVessel };
+    private Object[] mocks = new Object[]{dao, labBatchStartingVessel, labBatch, batchVessel};
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void beforeMethod() {
@@ -109,8 +107,8 @@ public class FctCreateEtlDbFreeTest {
         expect(labBatch.getFlowcellType()).andReturn(flowcellType).times(2);
         expect(labBatch.getCreatedOn()).andReturn(createdDate);
 
-        expect(labBatchStartingVessel.getDilutionVessel()).andReturn(dilutionVessel).times(2);
-        expect(dilutionVessel.getLabel()).andReturn(dilutionVesselLabel);
+        expect(labBatchStartingVessel.getLabVessel()).andReturn(batchVessel);
+        expect(batchVessel.getLabel()).andReturn(batchVesselLabel);
 
         expect(labBatchStartingVessel.getVesselPosition()).andReturn(flowcellLane).times(2);
         expect(labBatchStartingVessel.getConcentration()).andReturn(concentration);
@@ -120,7 +118,7 @@ public class FctCreateEtlDbFreeTest {
         Collection<String> records = tst.dataRecords(etlDateString, false, entityId);
         assertEquals(records.size(), 1);
 
-        verifyRecord(records.iterator().next(), dilutionVesselLabel, "N");
+        verifyRecord(records.iterator().next(), batchVesselLabel, "N");
 
         verify(mocks);
     }
@@ -141,10 +139,8 @@ public class FctCreateEtlDbFreeTest {
         expect(labBatch.getFlowcellType()).andReturn(flowcellType).times(2);
         expect(labBatch.getCreatedOn()).andReturn(createdDate);
 
-        // MISEQ does not have dilution vessel registered, uses batch lab vessel
-        expect(labBatchStartingVessel.getDilutionVessel()).andReturn(null);
-        expect(labBatchStartingVessel.getLabVessel()).andReturn(denatureVessel);
-        expect(denatureVessel.getLabel()).andReturn(denatureVesselLabel);
+        expect(labBatchStartingVessel.getLabVessel()).andReturn(batchVessel);
+        expect(batchVessel.getLabel()).andReturn(batchVesselLabel);
 
         expect(labBatchStartingVessel.getVesselPosition()).andReturn(flowcellLane).times(2);
         expect(labBatchStartingVessel.getConcentration()).andReturn(concentration);
@@ -154,7 +150,7 @@ public class FctCreateEtlDbFreeTest {
         Collection<String> records = tst.dataRecords(etlDateString, false, entityId);
         assertEquals(records.size(), 1);
 
-        verifyRecord(records.iterator().next(), denatureVesselLabel, "Y");
+        verifyRecord(records.iterator().next(), batchVesselLabel, "Y");
 
         verify(mocks);
     }
