@@ -546,6 +546,7 @@ AS
             SET lab_vessel_id = new.lab_vessel_id,
               label = new.label,
               lab_vessel_type = new.lab_vessel_type,
+              name = new.name,
               etl_date = new.etl_date
             WHERE lab_vessel_id = new.lab_vessel_id;
 
@@ -556,11 +557,13 @@ AS
               lab_vessel_id,
               label,
               lab_vessel_type,
+              name,
               etl_date
             ) VALUES (
               new.lab_vessel_id,
               new.label,
               new.lab_vessel_type,
+              new.name,
               new.etl_date );
 
             V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;
