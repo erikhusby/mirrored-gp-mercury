@@ -1489,6 +1489,28 @@ public enum LabEventType {
             PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
             LibraryType.NONE_ASSIGNED),
 
+    // FP
+    FP_PCR_1("FP_PCR1",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    FP_INDEX_PRIMER_TRANSFER("FP_IndexPrimerTransfer",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    FP_PCR_TAIL_2("FP_PCRTail2",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.FALSE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    FP_PRE_SPRI_POOLING("FP_PreSPRIPooling",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+    FP_POOLING_TRANSFER("FP_PoolingTransfer",
+            ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE, ForwardMessage.NONE, VolumeConcUpdate.MERCURY_ONLY,
+            LibraryType.NONE_ASSIGNED),
+
     // Generic events that are qualified by workflow
     CENTRIFUGE("Centrifuge",
             ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY, CreateSources.FALSE,
