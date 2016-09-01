@@ -153,6 +153,9 @@ public class ManualTransferActionBean extends RackScanActionBean {
                     case RECEPTACLE_TRANSFER_EVENT:
                         stationEvent = new ReceptacleTransferEventType();
                         break;
+                    case STRIP_TUBE_CHERRY_PICK_EVENT:
+                        stationEvent = new PlateCherryPickEvent();
+                        break;
                     default:
                         throw new RuntimeException("Unknown labEventType " + manualTransferDetails.getMessageType());
                 }
@@ -221,6 +224,26 @@ public class ManualTransferActionBean extends RackScanActionBean {
                     break;
                 case STATION_SETUP_EVENT:
                     StationSetupEvent stationEventType = (StationSetupEvent) stationEvent;
+                    break;
+                case STRIP_TUBE_CHERRY_PICK_EVENT:
+                    //Source
+                    PlateCherryPickEvent stripTubeCherryPickEvent = (PlateCherryPickEvent) stationEvent;
+                    PlateType sourcePlateStripTube = new PlateType();
+                    VesselTypeGeometry sourceVesselTypeGeometryStripTube = manualTransferDetails.getSourceVesselTypeGeometry();
+                    sourcePlateStripTube.setPhysType(sourceVesselTypeGeometryStripTube.getDisplayName());
+                    stripTubeCherryPickEvent.getSourcePlate().add(sourcePlateStripTube);
+                    if (sourceVesselTypeGeometryStripTube instanceof RackOfTubes.RackType) {
+                        stripTubeCherryPickEvent.getSourcePositionMap().add(new PositionMapType());
+                    }
+
+                    //Target
+                    PlateType destinationPlateTypeStripTube = new PlateType();
+                    VesselTypeGeometry targetVesselTypeGeometryStripTube = manualTransferDetails.getTargetVesselTypeGeometry();
+                    destinationPlateTypeStripTube.setPhysType(targetVesselTypeGeometryStripTube.getDisplayName());
+                    stripTubeCherryPickEvent.getPlate().add(destinationPlateTypeStripTube);
+                    if (targetVesselTypeGeometryStripTube instanceof RackOfTubes.RackType) {
+                        stripTubeCherryPickEvent.getPositionMap().add(new PositionMapType());
+                    }
                     break;
                 case PLATE_CHERRY_PICK_EVENT:
                     PlateCherryPickEvent plateCherryPickEvent = (PlateCherryPickEvent) stationEvent;
@@ -357,6 +380,72 @@ public class ManualTransferActionBean extends RackScanActionBean {
                 break;
             case STATION_SETUP_EVENT:
                 break;
+            case STRIP_TUBE_CHERRY_PICK_EVENT:
+                for (StationEventType stationEvent : stationEvents) {
+                    ObjectMapper mapper = new ObjectMapper();
+                    List<CherryPicksPositions> cherryPickPositionMaps = null;
+
+                    PlateCherryPickEvent plateCherryPickEvent = (PlateCherryPickEvent) stationEvent;
+
+                    loadPlateFromDb(plateCherryPickEvent.getSourcePlate().get(0),
+                            plateCherryPickEvent.getSourcePositionMap().get(0), true, labBatch, messageCollection,
+                            Direction.SOURCE);
+
+                    loadPlateFromDb(plateCherryPickEvent.getPlate().get(0), plateCherryPickEvent.getPositionMap().get(0),
+                            false, labBatch, messageCollection,
+                            Direction.TARGET);
+
+                    if (messageCollection.hasErrors()) {
+                        break;
+                    }
+                    if (cherryPickJson == null) {
+                        cherryPickJson = getContext().getRequest().getParameter("destPosList");
+                    }
+                    //This handles barcode validation where no transfer connections have been made resulting in malformed Json.
+                    try {
+                        cherryPickPositionMaps = mapper.readValue(cherryPickJson, new TypeReference<List<CherryPicksPositions>>() {
+                        });
+                    } catch (IOException e) {
+                        messageCollection.addError("No valid connections exist");
+                        break;
+                    }
+
+                    PlateType targetRack = new PlateType();
+                    targetRack.setBarcode(plateCherryPickEvent.getPlate().get(0).getBarcode());
+                    //Strip tubes positions are set below based on cherry pick source->target connections.
+                    plateCherryPickEvent.getPositionMap().clear();
+                    plateCherryPickEvent.getPlate().clear();
+                    targetRack.setPhysType(LabEventFactory.PHYS_TYPE_STRIP_TUBE_RACK_OF_12);
+                    targetRack.setSection(LabEventFactory.SECTION_ALL_96);
+                    plateCherryPickEvent.getPlate().add(targetRack);
+                    PositionMapType targetPositionMap = new PositionMapType();
+                    targetPositionMap.setBarcode(targetRack.getBarcode());
+
+                    for (CherryPicksPositions item : cherryPickPositionMaps) {
+                        CherryPickSourceType cherryPickSourceType = new CherryPickSourceType();
+                        if (item.targetIDs.size() >= item.sourceIDs.size()) {
+                            MetadataType metadataType = new MetadataType();
+                            metadataType.setName("FCT");
+                            metadataType.setValue(item.targetFCT.get(0));
+                            for (int targetWellPosition = 0; targetWellPosition < item.targetPositions.size(); targetWellPosition++) {
+                                ReceptacleType receptacleType = new ReceptacleType();
+                                receptacleType.setReceptacleType(LabEventFactory.PHYS_TYPE_STRIP_TUBE);
+                                receptacleType.getMetadata().add(metadataType);
+                                receptacleType.setBarcode(item.targetBarcodes.get(0));
+                                receptacleType.setPosition(String.valueOf(item.targetPositions.get(targetWellPosition)));
+                                targetPositionMap.getReceptacle().add(0, receptacleType);
+                                cherryPickSourceType = new CherryPickSourceType();
+                                cherryPickSourceType.setBarcode(plateCherryPickEvent.getSourcePlate().get(0).getBarcode());
+                                cherryPickSourceType.setWell(parseWellFromJson(item.sourceIDs.get(0)));
+                                cherryPickSourceType.setDestinationBarcode(plateCherryPickEvent.getPlate().get(0).getBarcode());
+                                cherryPickSourceType.setDestinationWell(parseWellFromJson(item.targetIDs.get(targetWellPosition)));
+                                plateCherryPickEvent.getSource().add(cherryPickSourceType);
+                            }
+                        }
+                    }
+                    plateCherryPickEvent.getPositionMap().add(targetPositionMap);
+                }
+                break;
             case PLATE_CHERRY_PICK_EVENT:
                 for (StationEventType stationEvent : stationEvents) {
                     PlateCherryPickEvent plateCherryPickEvent = (PlateCherryPickEvent) stationEvent;
@@ -366,7 +455,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
                             Direction.SOURCE);
 
                     loadPlateFromDb(plateCherryPickEvent.getPlate().get(0), plateCherryPickEvent.getPositionMap().get(0),
-                            true, labBatch, messageCollection,
+                            false, labBatch, messageCollection,
                             Direction.TARGET);
 
                     if(messageCollection.hasErrors()) {
@@ -811,6 +900,28 @@ public class ManualTransferActionBean extends RackScanActionBean {
             }
         }
         return receptacleTypeReturn;
+    }
+
+    //Handles validation and postback of strip tube manual transfers.
+    public StripTubePositions findStripTubeFctPositions(int position) {
+        ObjectMapper mapper = new ObjectMapper();
+        StripTubePositions stripTubePositions;
+        String stripTubeJSON = getContext().getRequest().getParameter("stripTubeList");
+
+        if (stripTubeJSON == null) {
+            return null;
+        }
+        try {
+            stripTubePositions = mapper.readValue(stripTubeJSON, new TypeReference<StripTubePositions>() {
+            });
+        } catch (IOException e) {
+            return null;
+        }
+
+        StripTubePositions stripTubePositionsReturn = new StripTubePositions();
+        stripTubePositionsReturn.fctValue = stripTubePositions.fct.get(position);
+        stripTubePositionsReturn.barcodeValue = stripTubePositions.stripTubeBarcode.get(position);
+        return stripTubePositionsReturn;
     }
 
     public List<StationEventType> getStationEvents() {

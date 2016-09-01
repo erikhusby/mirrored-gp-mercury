@@ -1,7 +1,7 @@
 $(document).ready(function () {
 
    /****************************************************
-    * This script is used for the manual pooling tranfer.
+    * This script is used for the cherry pick manual tranfer.
     * It must be included in the manual_transfer.jsp page.
     ****************************************************/
 
@@ -10,7 +10,7 @@ $(document).ready(function () {
     var targetIDs = [];
     var direction="";
     var directionArr=[];
-    var maxRackSize = $( "[id^=src_G] td").length;
+    var maxRackSize = $( "[id^=src_TABLE] td").length;
     StoreSessions();
 
     jsPlumb.ready(function () {
@@ -45,7 +45,9 @@ $(document).ready(function () {
                 sourceIDs: [],
                 targetIDs: [],
                 sourceBarcodes: [],
-                targetBarcodes: []
+                targetBarcodes: [],
+                targetFCT: [],
+                targetPositions: []
             };
 
             newQueueObject.targetIDs = targetIDs.slice();
@@ -53,12 +55,22 @@ $(document).ready(function () {
 
             targetIDs.forEach(getBarcodesTarget);
             sourceIDs.forEach(getBarcodesSource);
+            targetIDs.forEach(getTargetFCT);
+            targetIDs.forEach(getTargetPositions);
 
             function getBarcodesSource(element, index, array) {
                 newQueueObject.sourceBarcodes.push($('#'+element.slice(3).replace('_','').replace('_','')).val());
             }
             function getBarcodesTarget(element, index, array) {
                 newQueueObject.targetBarcodes.push($('#'+element.slice(3).replace('_','').replace('_','')).val());
+            }
+            //Striptube manual transfer FCT ticket parsing.
+            function getTargetFCT(element, index, array) {
+                newQueueObject.targetFCT.push($("#destRcpBcd0_" + (parseInt(element.substring(1,3)) - 1).toString() + "_FCT").val());
+            }
+            //Striptube manual transfer. Gets the position of the chosen tube in the strip.
+            function getTargetPositions(element, index, array) {
+                newQueueObject.targetPositions.push(parseInt(element.substring(0).charCodeAt(0) - 65)+1);
             }
 
             //Delete any missing keys from the queue before it is sent to the server.
@@ -131,9 +143,9 @@ $(document).ready(function () {
 
                 //Single source to multiple destinations..
                 if (targetIDs.length > sourceIDs.length && sourceIDs.length == 1) {
-
                     targetIDs.forEach(function (item) {
-                        colorSpace = getRandomColor();
+                        if( $("#" + item).is(":visible")) { //Only attach to visible anchor points.
+                            colorSpace = getRandomColor();
                             var sourcePos = instance.addEndpoint(sourceIDs[0], endpointOptions);
                             instance.connect({
                                 source: sourcePos,
@@ -142,7 +154,8 @@ $(document).ready(function () {
                                 paintStyle: {strokeStyle: colorSpace, lineWidth: 3},
                                 connector: ["StateMachine", {proximityLimit: -5, curviness: getRandomCurve()}]
                             });
-                        itemCount++;
+                            itemCount++;
+                        }
                     });
                 }
                 ++index;
@@ -203,16 +216,21 @@ $(document).ready(function () {
         id = id.replace("btn_",".");
         var termTableInputIDs = [];
         var count = 0;
-        $(id).each(function () {
-            var $item_text = $(this).closest("td").find(":input[type='text']").attr('id');
-            if( $("#"+$item_text).val().length === 0 ) {
-                count++;
-            }
-        });
+        try {
+          $(id).each(function () {
+              var $item_text = $(this).closest("td").find(":input[type='text']").attr('id');
+              if ($("#" + $item_text).val().length === 0) {
+                  count++;
+              }
+          });
+        }
+        catch(err){
+        }
 
         if(count > 0) {
+            $('#'+$(document.activeElement).attr('id')).html('Select');
             alert('Barcodes must be present in every field');
-            return;
+            return false;
         }
 
         $(id).each(function () {
@@ -220,13 +238,14 @@ $(document).ready(function () {
             termTableInputIDs.push(id);
             $("#"+id).trigger('click');
         });
+        return true;
     }
 
     //Main event handler to process all button clicks
     $('.btn-xs').click(function () {
         var $table = $(this).closest('table').attr('id');
 
-        if ($table.indexOf("src_G") >= 0) {
+        if ($table.indexOf("src_TABLE") >= 0) {
             direction = "dest";
             sourceCell = $(this).attr("id").replace("btn_", "");
             if (sourceCell.indexOf('col') == -1 && sourceCell.indexOf('row') == -1) {
@@ -237,7 +256,7 @@ $(document).ready(function () {
                 }
             }
         }
-        if ($table.indexOf("dest_G") >= 0) {
+        if ($table.indexOf("dest_TABLE") >= 0) {
             destCell = $(this).attr("id").replace("btn_", "");
             direction = "src";
             if (destCell.indexOf('col') == -1 && destCell.indexOf('row') == -1) {
@@ -256,15 +275,15 @@ $(document).ready(function () {
 
         if ($(this).attr("id") == 'selectAllsrc') {
             if ($(this).text() == 'Selected') {
-                $('[id^=src_G] .btn-xs').text("Select");
-                $('[id^=src_G] .btn-xs').css('background-color', '#5a86de');
-                $('[id^=src_G] .xs-all').css('background-color', '#c266ff');
-                $('[id^=src_G] .xs-col').css('background-color', '#33cc00');
-                $('[id^=src_G] .xs-row').css('background-color', '#ff8c1a');
+                $('[id^=src_TABLE] .btn-xs').text("Select");
+                $('[id^=src_TABLE] .btn-xs').css('background-color', '#5a86de');
+                $('[id^=src_TABLE] .xs-all').css('background-color', '#c266ff');
+                $('[id^=src_TABLE] .xs-col').css('background-color', '#33cc00');
+                $('[id^=src_TABLE] .xs-row').css('background-color', '#ff8c1a');
             }
             else {
-                $('[id^=src_G] .btn-xs').text("Selected");
-                $('[id^=src_G] .btn-xs').css('background-color', 'red');
+                $('[id^=src_TABLE] .btn-xs').text("Selected");
+                $('[id^=src_TABLE] .btn-xs').css('background-color', 'red');
             }
         }
         else {
@@ -363,6 +382,24 @@ $(document).ready(function () {
             localStorage.removeItem("directionArr");
         }
 
+       // Capture and persist values of strip tube flow cell tickets and barcodes to the transfer_plate_strip_tube JSP page.
+        $("table[id*=STRIP_TUBE_]:visible").each(function() {
+            $(document).ready(function () {
+                var stripTubeObject = {
+                    fct: [],
+                    stripTubeBarcode: [],
+                    fctValue: "",
+                    barcodeValue: ""
+                };
+                $("form").submit(function (event) {
+                    for (i = 0; i < 12; i++) {
+                        stripTubeObject.fct.push($("#destRcpBcd0_" + i.toString() + "_FCT").val());
+                        stripTubeObject.stripTubeBarcode.push($("#destRcpBcd0_" + i.toString()).val());
+                    }
+                    document.getElementById("stripTubeValidationList").value = JSON.stringify(stripTubeObject);
+                });
+            });
+        });
     }
 
     //Check all the fields after a scan and enable they if the contain data
