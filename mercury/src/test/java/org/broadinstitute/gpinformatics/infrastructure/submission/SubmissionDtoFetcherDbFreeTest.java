@@ -37,7 +37,7 @@ import static org.hamcrest.Matchers.not;
 @Test(groups = TestGroups.DATABASE_FREE)
 public class SubmissionDtoFetcherDbFreeTest {
     public void testGetSamplesForProjectHasNoNullKeys() throws Exception {
-        SubmissionDtoFetcher submissionDtoFetcher = new SubmissionDtoFetcher(null, null, null, null, null, null);
+        SubmissionDtoFetcher submissionDtoFetcher = new SubmissionDtoFetcher(null, null, null, null);
 
         Set<Metadata> nullMetadata = Collections.singleton(new Metadata(Metadata.Key.SAMPLE_ID, (String)null));
         String noCollaboratorSampleId = "SM-NONE";

@@ -18,11 +18,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
-import org.broadinstitute.gpinformatics.athena.boundary.orders.PDOUpdateField;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.UpdateField;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.SubmissionTrackerDao;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.ProjectPerson;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
@@ -265,7 +263,7 @@ public class ResearchProjectEjb {
                                                                      @Nonnull SubmissionRepository repository,
                                                                      @Nonnull SubmissionLibraryDescriptor
                                                                      submissionLibraryDescriptor) throws ValidationException {
-        validateSubmissionDto(researchProjectBusinessKey, submissionDtos);
+        validateSubmissionDto(submissionDtos);
         validateSubmissionSamples(selectedBioProject, submissionDtos);
 
         ResearchProject submissionProject = researchProjectDao.findByBusinessKey(researchProjectBusinessKey);
@@ -273,8 +271,9 @@ public class ResearchProjectEjb {
         Map<SubmissionTracker, SubmissionDto> submissionDtoMap = new HashMap<>();
 
         for (SubmissionDto submissionDto : submissionDtos) {
-            SubmissionTracker tracker = new SubmissionTracker(submissionDto.getSampleName(),
-                    submissionDto.getFileType(), String.valueOf(submissionDto.getVersion()));
+            SubmissionTracker tracker = new SubmissionTracker(submissionDto.getAggregationProject(),
+                    submissionDto.getSampleName(), String.valueOf(submissionDto.getVersion()),
+                    submissionDto.getFileType());
             submissionProject.addSubmissionTracker(tracker);
             submissionDtoMap.put(tracker, submissionDto);
         }
@@ -350,7 +349,7 @@ public class ResearchProjectEjb {
      * @param submissionDtos
      * @throws ValidationException
      */
-    public void validateSubmissionDto(@Nonnull String researchProjectKey, @Nonnull List<SubmissionDto> submissionDtos)
+    public void validateSubmissionDto(@Nonnull List<SubmissionDto> submissionDtos)
             throws ValidationException {
 
         if (submissionDtos.isEmpty()) {
@@ -377,8 +376,7 @@ public class ResearchProjectEjb {
             throw new ValidationException("No data was found in submission request.");
         }
 
-        List<SubmissionTracker> submissionTrackers =
-                submissionTrackerDao.findSubmissionTrackers(researchProjectKey, submissionDtos);
+        List<SubmissionTracker> submissionTrackers = submissionTrackerDao.findSubmissionTrackers(submissionDtos);
 
         for (SubmissionTracker submissionTracker : submissionTrackers) {
             errors.add(submissionTracker.getTuple().toString());

@@ -1099,7 +1099,8 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         }
         if (!errors) {
             List<SubmissionDto> selectedSubmissions = new ArrayList<>();
-            Map<String, BassDTO> bassDtoMap = submissionDtoFetcher.fetchBassDtos(editResearchProject,
+            Map<SubmissionTuple, BassDTO> bassDtoMap = submissionDtoFetcher.fetchBassDtos(
+                    editResearchProject.getBusinessKey(),
                     selectedSubmissionSamples.toArray(new String[selectedSubmissionSamples.size()]));
             for (BassDTO bassDTO : bassDtoMap.values()) {
 
