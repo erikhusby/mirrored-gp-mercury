@@ -1380,10 +1380,10 @@ public class LabVesselFixupTest extends Arquillian {
                     TubeFormation tubeFormation = (TubeFormation) vesselContainer.getEmbedder();
                     Map<VesselPosition, BarcodedTube> mapPositionToVessel =
                             (Map<VesselPosition, BarcodedTube>) vesselContainer.getMapPositionToVessel();
-                    changePosition(mapPositionToVessel, VesselPosition.G03, VesselPosition.B11);
                     BarcodedTube barcodedTubeAtG3 = mapPositionToVessel.get(VesselPosition.G03);
                     Assert.assertEquals("0206882951", barcodedTubeAtG3.getLabel());
                     System.out.println("Moving tube " + barcodedTubeAtG3.getLabVesselId() + " from G03 to B11");
+                    changePosition(mapPositionToVessel, VesselPosition.G03, VesselPosition.B11);
                     tubeFormation.setLabel(TubeFormation.makeDigest(mapPositionToVessel));
                 }
             }
