@@ -1366,9 +1366,11 @@ public class LabVesselFixupTest extends Arquillian {
     }
 
     @Test(enabled = false)
-    public void fixupGplim4301() {
+    public void fixupGplim4301() throws Exception {
         // the source tubeformation for the ShearingTransfer doesn't seem to have been used in any other transfer,
         // so it can be altered
+        userBean.loginOSUser();
+        utx.begin();
         BarcodedTube barcodedTube = barcodedTubeDao.findByBarcode("0206882951");
         boolean found = false;
         for (VesselContainer<?> vesselContainer : barcodedTube.getVesselContainers()) {
@@ -1379,7 +1381,9 @@ public class LabVesselFixupTest extends Arquillian {
                     Map<VesselPosition, BarcodedTube> mapPositionToVessel =
                             (Map<VesselPosition, BarcodedTube>) vesselContainer.getMapPositionToVessel();
                     changePosition(mapPositionToVessel, VesselPosition.G03, VesselPosition.B11);
-
+                    BarcodedTube barcodedTubeAtG3 = mapPositionToVessel.get(VesselPosition.G03);
+                    Assert.assertEquals("0206882951", barcodedTubeAtG3.getLabel());
+                    System.out.println("Moving tube " + barcodedTubeAtG3.getLabVesselId() + " from G03 to B11");
                     tubeFormation.setLabel(TubeFormation.makeDigest(mapPositionToVessel));
                 }
             }
@@ -1387,7 +1391,11 @@ public class LabVesselFixupTest extends Arquillian {
         if (!found) {
             throw new RuntimeException("Failed to find tube formation for shearing transfer");
         }
+        FixupCommentary fixupCommentary = new FixupCommentary("GPLIM-4301 - Move sample from G03 to B11");
+        barcodedTubeDao.persist(fixupCommentary);
         barcodedTubeDao.flush();
+
+        utx.commit();
     }
 
 
