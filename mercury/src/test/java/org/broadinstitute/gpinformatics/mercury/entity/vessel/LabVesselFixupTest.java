@@ -1365,4 +1365,30 @@ public class LabVesselFixupTest extends Arquillian {
         utx.commit();
     }
 
+    @Test(enabled = false)
+    public void fixupGplim4301() {
+        // the source tubeformation for the ShearingTransfer doesn't seem to have been used in any other transfer,
+        // so it can be altered
+        BarcodedTube barcodedTube = barcodedTubeDao.findByBarcode("0206882951");
+        boolean found = false;
+        for (VesselContainer<?> vesselContainer : barcodedTube.getVesselContainers()) {
+            for (LabEvent labEvent : vesselContainer.getTransfersFrom()) {
+                if (labEvent.getLabEventType() == LabEventType.SHEARING_TRANSFER) {
+                    found = true;
+                    TubeFormation tubeFormation = (TubeFormation) vesselContainer.getEmbedder();
+                    Map<VesselPosition, BarcodedTube> mapPositionToVessel =
+                            (Map<VesselPosition, BarcodedTube>) vesselContainer.getMapPositionToVessel();
+                    changePosition(mapPositionToVessel, VesselPosition.G03, VesselPosition.B11);
+
+                    tubeFormation.setLabel(TubeFormation.makeDigest(mapPositionToVessel));
+                }
+            }
+        }
+        if (!found) {
+            throw new RuntimeException("Failed to find tube formation for shearing transfer");
+        }
+        barcodedTubeDao.flush();
+    }
+
+
 }
