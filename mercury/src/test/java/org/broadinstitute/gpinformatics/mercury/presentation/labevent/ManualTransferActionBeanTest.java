@@ -165,6 +165,7 @@ public class ManualTransferActionBeanTest {
         PositionMapType sourcePositionMap = new PositionMapType();
         ReceptacleType receptacleType = new ReceptacleType();
         receptacleType.setPosition("A02");
+
         final String tubeBarcode = "tube1";
         receptacleType.setBarcode(tubeBarcode);
         Mockito.when(labVesselDao.findByBarcodes(Arrays.asList(tubeBarcode))).thenReturn(
@@ -173,16 +174,13 @@ public class ManualTransferActionBeanTest {
                 }});
         sourcePositionMap.getReceptacle().add(receptacleType);
 
+
         // Add destination tubes. The test requires at least one valid tube position.
         PositionMapType positionMap = new PositionMapType();
         receptacleType = new ReceptacleType();
         receptacleType.setPosition("A04");
         final String barcode = "tube2";
-        receptacleType.setBarcode(tubeBarcode);
-        Mockito.when(labVesselDao.findByBarcodes(Arrays.asList(barcode))).thenReturn(
-                new HashMap<String, LabVessel>() {{
-                    put(barcode, new BarcodedTube(barcode, BarcodedTube.BarcodedTubeType.MatrixTube075));
-                }});
+        receptacleType.setBarcode(barcode);
         positionMap.getReceptacle().add(receptacleType);
 
         plateTransferEventType.getPositionMap().add(0, positionMap);
@@ -242,11 +240,7 @@ public class ManualTransferActionBeanTest {
         receptacleType = new ReceptacleType();
         receptacleType.setPosition("A04");
         final String barcode = "tube2";
-        receptacleType.setBarcode(tubeBarcode);
-        Mockito.when(labVesselDao.findByBarcodes(Arrays.asList(barcode))).thenReturn(
-                new HashMap<String, LabVessel>() {{
-                    put(barcode, new BarcodedTube(barcode, BarcodedTube.BarcodedTubeType.MatrixTube075));
-                }});
+        receptacleType.setBarcode(barcode);
         positionMap.getReceptacle().add(receptacleType);
 
         plateTransferEventType.getPositionMap().add(0, positionMap);
