@@ -83,7 +83,7 @@ public class SapIntegrationServiceImplTest extends Arquillian {
         Quote testMultipleLevelQuote = new Quote("GPTest", test3Funding, ApprovalStatus.FUNDED);
 
         try {
-            String badUserNumber = sapIntegrationClient.findCustomer(testBadContactQuote , SapIntegrationClientImpl.BROAD_COMPANY_CODE);
+            String badUserNumber = sapIntegrationClient.findCustomer(testBadContactQuote , SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
             Assert.fail("This should have thrown a system error");
         } catch (SAPIntegrationException e) {
             log.debug(e.getMessage());
@@ -91,14 +91,14 @@ public class SapIntegrationServiceImplTest extends Arquillian {
         }
 
         try {
-            String badQuote = sapIntegrationClient.findCustomer(testMultipleLevelQuote, SapIntegrationClientImpl.BROAD_COMPANY_CODE);
+            String badQuote = sapIntegrationClient.findCustomer(testMultipleLevelQuote, SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
             Assert.fail("Should not have been able to find a customer with multiple funding levels");
         } catch (SAPIntegrationException e) {
             Assert.assertEquals(e.getMessage(),"Unable to continue with SAP.  The associated quote has multiple funding sources");
         }
 
         try {
-            String goodUserNumber = sapIntegrationClient.findCustomer(testGoodQuote, SapIntegrationClientImpl.BROAD_COMPANY_CODE);
+            String goodUserNumber = sapIntegrationClient.findCustomer(testGoodQuote, SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
             Assert.assertEquals(goodUserNumber , "0000300325");
         } catch (SAPIntegrationException e) {
             Assert.fail(e.getMessage());

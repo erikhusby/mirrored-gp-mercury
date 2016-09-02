@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.sap.services.SAPIntegrationException;
+import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 
 /**
  *
@@ -51,7 +52,7 @@ public interface SapIntegrationService {
      * @return If this quote is eligible and backed by a purchase order, the customer number found in SAP is returned
      * @throws SAPIntegrationException
      */
-    String findCustomer(Quote foundQuote, String companyCode) throws SAPIntegrationException;
+    String findCustomer(Quote foundQuote, SapIntegrationClientImpl.SAPCompanyConfiguration companyCode) throws SAPIntegrationException;
 
     /**
      * This method will allow mercury to record completed work in SAP in order to complete the Billing process

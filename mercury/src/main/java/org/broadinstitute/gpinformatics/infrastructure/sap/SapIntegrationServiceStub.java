@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.sap.services.SAPIntegrationException;
+import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 
 import javax.enterprise.inject.Alternative;
 
@@ -23,7 +24,7 @@ public class SapIntegrationServiceStub implements SapIntegrationService {
     }
 
     @Override
-    public String findCustomer(Quote foundQuote, String companyCode) throws SAPIntegrationException {
+    public String findCustomer(Quote foundQuote, SapIntegrationClientImpl.SAPCompanyConfiguration companyCode) throws SAPIntegrationException {
         return null;
     }
 

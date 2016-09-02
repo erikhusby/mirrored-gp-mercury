@@ -173,7 +173,8 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
     }
 
     @Override
-    public String findCustomer(Quote foundQuote, String companyCode) throws SAPIntegrationException {
+    public String findCustomer(Quote foundQuote,
+                               SapIntegrationClientImpl.SAPCompanyConfiguration companyCode) throws SAPIntegrationException {
 
         String customerNumber = null;
         if (foundQuote.getQuoteFunding().getFundingLevel().size() > 1) {
@@ -252,8 +253,8 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                 SapIntegrationClientImpl.SystemIdentifier.MERCURY, product.getAvailabilityDate(),
                 product.getAvailabilityDate());
         newMaterial.setCompanyCode(
-                product.isExternalProduct() ? SapIntegrationClientImpl.BROAD_EXTERNAL_SERVICES_COMPANY_CODE :
-                        SapIntegrationClientImpl.BROAD_COMPANY_CODE);
+                product.isExternalProduct() ? SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES :
+                        SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD);
         newMaterial.setMaterialName(product.getProductName());
         newMaterial.setDescription(product.getDescription());
         newMaterial.setDeliverables(product.getDeliverables());
@@ -284,12 +285,12 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
      * @param companyProductOrder Product Order from which the company code is to be determined
      * @return an indicator that represents one of the configured companies within SAP
      */
-    private String determineCompanyCode(ProductOrder companyProductOrder) {
-        String companyCode = SapIntegrationClientImpl.BROAD_COMPANY_CODE;
+    private SapIntegrationClientImpl.SAPCompanyConfiguration determineCompanyCode(ProductOrder companyProductOrder) {
+        SapIntegrationClientImpl.SAPCompanyConfiguration companyCode = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD;
         if (companyProductOrder.getResearchProject().getRegulatoryDesignation()
             != ResearchProject.RegulatoryDesignation.RESEARCH_ONLY ||
             companyProductOrder.getProduct().isExternalProduct()) {
-            companyCode = SapIntegrationClientImpl.BROAD_EXTERNAL_SERVICES_COMPANY_CODE;
+            companyCode = SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD_EXTERNAL_SERVICES;
         }
 
         return companyCode;

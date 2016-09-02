@@ -94,7 +94,7 @@ public class SapIntegrationServiceImplDBFreeTest {
         integrationService.setBspUserList(mockUserList);
 
         SapIntegrationClientImpl mockIntegrationClient = Mockito.mock(SapIntegrationClientImpl.class);
-        Mockito.when(mockIntegrationClient.findCustomerNumber(Mockito.anyString(), Mockito.anyString())).thenReturn(
+        Mockito.when(mockIntegrationClient.findCustomerNumber(Mockito.anyString(), Mockito.any(SapIntegrationClientImpl.SAPCompanyConfiguration.class))).thenReturn(
                 MOCK_CUSTOMER_NUMBER);
 
         integrationService.setWrappedClient(mockIntegrationClient);
@@ -120,7 +120,7 @@ public class SapIntegrationServiceImplDBFreeTest {
 
         SAPOrder convertedOrder = integrationService.initializeSAPOrder(conversionPdo);
 
-        assertThat(convertedOrder.getCompanyCode(), equalTo(SapIntegrationClientImpl.BROAD_COMPANY_CODE));
+        assertThat(convertedOrder.getCompanyCode(), equalTo(SapIntegrationClientImpl.SAPCompanyConfiguration.BROAD));
         assertThat(convertedOrder.getSapCustomerNumber(), equalTo(MOCK_CUSTOMER_NUMBER));
         assertThat(convertedOrder.getQuoteNumber(), equalTo(testSingleSourceQuote.getAlphanumericId()));
         assertThat(convertedOrder.getExternalOrderNumber(), equalTo(conversionPdo.getBusinessKey()));
