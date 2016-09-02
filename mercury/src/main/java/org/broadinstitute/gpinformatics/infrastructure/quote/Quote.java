@@ -123,6 +123,13 @@ public class Quote {
     }
 
     public boolean isEligibleForSAP() {
-        return !(quoteFunding.getFundingLevel().size() >1);
+
+        int fundingSize = 0;
+        for(FundingLevel level : quoteFunding.getFundingLevel()) {
+            if(Integer.valueOf(level.getPercent()) >0) {
+                fundingSize++;
+            }
+        }
+        return !(fundingSize >1 || fundingSize==0);
     }
 }

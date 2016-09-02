@@ -18,6 +18,7 @@ public class QuoteItem {
     private String price;
     private String unit;
     private ReplacementItems replacementItems;
+    private String quantityComplete;
 
     public QuoteItem() {}
 
@@ -101,6 +102,15 @@ public class QuoteItem {
 
     public void setReplacementItems(ReplacementItems replacementItems) {
         this.replacementItems = replacementItems;
+    }
+
+    @XmlElement(name = "quantityComplete")
+    public String getQuantityComplete() {
+        return quantityComplete;
+    }
+
+    public void setQuantityComplete(String quantityComplete) {
+        this.quantityComplete = quantityComplete;
     }
 
     @Override

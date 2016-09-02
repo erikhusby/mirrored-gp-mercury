@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.sap;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.quote.ApprovalStatus;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
@@ -30,13 +32,13 @@ public class SapIntegrationServiceImplTest extends Arquillian {
     @Inject
     SapIntegrationService sapIntegrationClient;
 
+    private final static Log log = LogFactory.getLog(SapIntegrationServiceImplTest.class);
+
     @BeforeMethod
     public void setUp() {
         if (sapIntegrationClient == null) {
             return;
         }
-
-
     }
 
     @AfterMethod
@@ -84,6 +86,7 @@ public class SapIntegrationServiceImplTest extends Arquillian {
             String badUserNumber = sapIntegrationClient.findCustomer(testBadContactQuote , SapIntegrationClientImpl.BROAD_COMPANY_CODE);
             Assert.fail("This should have thrown a system error");
         } catch (SAPIntegrationException e) {
+            log.debug(e.getMessage());
             Assert.assertTrue(e.getMessage().contains("the email address specified on the Quote or Mercury PDO is not attached to any SAP Customer account."));
         }
 
