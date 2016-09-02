@@ -970,6 +970,19 @@ public class ProductOrderEjb {
         reporter.addMessage("{0} samples: {1}.", WordUtils.capitalize(operation), nameList);
 
         updateOrderStatus(order.getJiraTicketKey(), reporter);
+
+        MessageCollection collection = new MessageCollection();
+        publishProductOrderToSAP(order, collection);
+        for (String error : collection.getErrors()) {
+            reporter.addMessage(error);
+        }
+        for (String warn : collection.getWarnings()) {
+            reporter.addMessage("Warning: " + warn);
+        }
+        for (String info : collection.getInfos()) {
+            reporter.addMessage(info);
+        }
+
     }
 
     /**

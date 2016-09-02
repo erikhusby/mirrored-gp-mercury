@@ -1700,6 +1700,10 @@ public class ProductOrderActionBean extends CoreActionBean {
             addMessage("Abandoned samples: {0}.",
                     StringUtils.join(ProductOrderSample.getSampleNames(selectedProductOrderSamples), ", "));
             productOrderEjb.updateOrderStatus(editOrder.getJiraTicketKey(), this);
+
+            MessageCollection abandonSamplesMessageCollection = new MessageCollection();
+            productOrderEjb.publishProductOrderToSAP(editOrder, abandonSamplesMessageCollection);
+            addMessages(abandonSamplesMessageCollection);
         }
         return createViewResolution(editOrder.getBusinessKey());
     }
@@ -1718,6 +1722,11 @@ public class ProductOrderActionBean extends CoreActionBean {
                         editOrder.getBusinessKey());
             }
             productOrderEjb.updateOrderStatus(editOrder.getJiraTicketKey(), this);
+
+            MessageCollection abandonSamplesMessageCollection = new MessageCollection();
+            productOrderEjb.publishProductOrderToSAP(editOrder, abandonSamplesMessageCollection);
+            addMessages(abandonSamplesMessageCollection);
+
         }
 
         return createViewResolution(editOrder.getBusinessKey());

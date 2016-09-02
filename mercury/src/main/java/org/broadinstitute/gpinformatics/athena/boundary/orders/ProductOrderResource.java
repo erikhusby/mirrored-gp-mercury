@@ -318,6 +318,22 @@ public class ProductOrderResource {
             // any DB constraints have been enforced.
             productOrderDao.persist(productOrder);
             productOrderDao.flush();
+
+
+            MessageCollection messageCollection = new MessageCollection();
+            productOrderEjb.publishProductOrderToSAP(productOrder, messageCollection);
+
+            for (String error : messageCollection.getErrors()) {
+                log.error(error);
+            }
+            for (String warn : messageCollection.getWarnings()) {
+                log.info("Warning: " + warn);
+            }
+            for (String info : messageCollection.getInfos()) {
+                log.info(info);
+            }
+
+
         } catch (Exception e) {
             String keyText;
             if (productOrder.getJiraTicketKey() != null) {
