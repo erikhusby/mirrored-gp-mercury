@@ -179,7 +179,7 @@ public class EventEtlDbFreeTest {
                           + workflowId + "," + processId + ","
                           + LabEventType.A_BASE.getName() + ",,,,NONE,"
                           + location + ",,," + ExtractTransform.formatTimestamp(eventDate)
-                          + "," + programName + ",,E";
+                          + "," + programName + ",,,E";
 
         Assert.assertEquals(record, expected, "Record for no-vessel event is not as expected" );
 
@@ -640,7 +640,7 @@ public class EventEtlDbFreeTest {
         EtlTestUtilities.verifyRecord( record, etlDateStr, "F", String.valueOf(entityId),
                 String.valueOf(workflowId), String.valueOf(processId), eventName, String.valueOf(pdoId),
                 sampleKey, expectedLabBatchName.equals(LabEventEtl.NONE)?"":lcsetSampleKey, String.valueOf(expectedLabBatchName), location, String.valueOf(vesselId),
-                "", ExtractTransform.formatTimestamp(eventDate), programName, indexingSchemeName, "E");
+                "", ExtractTransform.formatTimestamp(eventDate), programName, indexingSchemeName, "", "E");
     }
 }
 
