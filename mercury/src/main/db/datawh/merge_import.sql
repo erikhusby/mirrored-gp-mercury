@@ -18,7 +18,6 @@ AS
   TYPE PK_ARR_TY IS TABLE OF NUMBER(19) INDEX BY BINARY_INTEGER;
   V_PK_ARR PK_ARR_TY;
 
-
   /* *****************************
    * Utility function to mimic typical (e.g. Java) split() functionality
    * Splits String output of java.util.Arrays.toString output into array of NUMBER(19)
@@ -81,58 +80,71 @@ AS
         WHERE is_delete = 'T' );
       DBMS_OUTPUT.PUT_LINE( 'Deleted ' || SQL%ROWCOUNT || ' flowcell_designation (lab batch vessel ETL) rows' );
 
-      -- Tables event_fact, library_ancestry, and library_lcset_sample_base require full refresh
-      --   Clear data ONLY IF newer ETL than already saved or hard delete.
-
-      SELECT DELS.lab_event_id
-      BULK COLLECT INTO V_PK_DEL_ARR
-      FROM (
-             SELECT im.lab_event_id
-             FROM im_event_fact im
-               , event_fact e
-             WHERE im.is_delete = 'F'
-                   AND e.lab_event_id = im.lab_event_id
-                   AND e.etl_date     < im.etl_date
-             UNION ALL
+      -- Process (rare - from fix-up tests) raw deletes related to events
+      DELETE FROM event_fact
+       WHERE lab_event_id IN (
              SELECT d.lab_event_id
-             FROM im_event_fact d
-             WHERE d.is_delete = 'T' ) DELS;
+               FROM im_event_fact d
+              WHERE d.is_delete = 'T' );
+      DBMS_OUTPUT.PUT_LINE( 'Deleted ' || SQL%ROWCOUNT || ' event_fact rows' );
 
-      -- For event fact table, a re-export of audited entity ids will replace existing ones.
-      -- BUT - only if newer ETL date
+      DELETE FROM LIBRARY_LCSET_SAMPLE_BASE
+       WHERE library_event_id IN (
+              SELECT d.lab_event_id
+                FROM im_event_fact d
+               WHERE d.is_delete = 'T' );
+      DBMS_OUTPUT.PUT_LINE( 'Deleted ' || SQL%ROWCOUNT || ' library_lcset_sample_base rows' );
+
+      DELETE FROM LIBRARY_ANCESTRY
+      WHERE CHILD_EVENT_ID IN (
+            SELECT d.lab_event_id
+              FROM im_event_fact d
+             WHERE d.is_delete = 'T' );
+      DBMS_OUTPUT.PUT_LINE( 'Deleted ' || SQL%ROWCOUNT || ' library_ancestry child rows' );
+
+      -- Tables event_fact, library_ancestry, and library_lcset_sample_base require full refresh
+      --   Clear data ONLY IF newer ETL than already saved.
+      SELECT DISTINCT im.lab_event_id
+      BULK COLLECT INTO V_PK_DEL_ARR
+        FROM event_fact e
+         --  Avoid quadratic joins
+          , ( SELECT DISTINCT lab_event_id, etl_date
+                FROM im_event_fact
+               WHERE is_delete = 'F' ) im
+       WHERE e.lab_event_id = im.lab_event_id
+         AND e.etl_date     < im.etl_date;
+
       IF V_PK_DEL_ARR.COUNT > 0 THEN
-        FORALL IDX IN V_PK_DEL_ARR.FIRST .. V_PK_DEL_ARR.LAST
-        DELETE FROM event_fact
-        WHERE lab_event_id = V_PK_DEL_ARR(IDX);
-        DBMS_OUTPUT.PUT_LINE( 'Deleted ' || SQL%ROWCOUNT || ' event_fact rows' );
-
-        -- Wipe out any ancestry links in LIBRARY_LCSET_SAMPLE_BASE - all to be re-imported
+        -- Wipe links in LIBRARY_LCSET_SAMPLE_BASE
         FORALL IDX IN V_PK_DEL_ARR.FIRST .. V_PK_DEL_ARR.LAST
         DELETE FROM LIBRARY_LCSET_SAMPLE_BASE
-        WHERE ( library_id, library_type )
-              IN (SELECT ancestor_library_id, ancestor_library_type
-                  FROM im_library_ancestry
-                  WHERE CHILD_EVENT_ID = V_PK_DEL_ARR(IDX)
-                  UNION
-                  SELECT child_library_id, child_library_type
-                  FROM im_library_ancestry
-                  WHERE CHILD_EVENT_ID = V_PK_DEL_ARR(IDX) );
-        DBMS_OUTPUT.PUT_LINE( 'Deleted ' || SQL%ROWCOUNT || ' library_lcset_sample_base rows' );
+         WHERE library_event_id = V_PK_DEL_ARR(IDX);
+        DBMS_OUTPUT.PUT_LINE( 'Pre-deleted ' || SQL%ROWCOUNT || ' updates to library_lcset_sample_base rows' );
 
+        -- Wipe child and all ancestors from LIBRARY_ANCESTRY
         FORALL IDX IN V_PK_DEL_ARR.FIRST .. V_PK_DEL_ARR.LAST
         DELETE FROM LIBRARY_ANCESTRY
-        WHERE CHILD_EVENT_ID = V_PK_DEL_ARR(IDX);
-        DBMS_OUTPUT.PUT_LINE( 'Deleted ' || SQL%ROWCOUNT || ' library_ancestry child rows' );
+         WHERE CHILD_EVENT_ID = V_PK_DEL_ARR(IDX);
+        DBMS_OUTPUT.PUT_LINE( 'Pre-deleted ' || SQL%ROWCOUNT || ' updates to library_ancestry child rows' );
+
+        -- Finally, delete from event_fact
+        FORALL IDX IN V_PK_DEL_ARR.FIRST .. V_PK_DEL_ARR.LAST
+        DELETE FROM EVENT_FACT
+        WHERE LAB_EVENT_ID = V_PK_DEL_ARR(IDX);
+        DBMS_OUTPUT.PUT_LINE( 'Pre-deleted ' || SQL%ROWCOUNT || ' updates to event_fact rows' );
       END IF;
+
+
       -- ****************
       -- Delete older event related rows from import tables
-      SELECT im.lab_event_id
+      SELECT DISTINCT im.lab_event_id
       BULK COLLECT INTO V_PK_DEL_ARR
-      FROM im_event_fact im
-        , event_fact e
-      WHERE im.is_delete = 'F'
-            AND e.lab_event_id = im.lab_event_id
-            AND e.etl_date    >= im.etl_date;
+      FROM event_fact e
+         , ( SELECT DISTINCT lab_event_id, etl_date
+               FROM im_event_fact
+              WHERE is_delete = 'F' ) im
+      WHERE e.lab_event_id = im.lab_event_id
+        AND e.etl_date    >= im.etl_date;
 
       IF V_PK_DEL_ARR.COUNT > 0 THEN
         FORALL IDX IN V_PK_DEL_ARR.FIRST .. V_PK_DEL_ARR.LAST
@@ -1448,7 +1460,8 @@ AS
             event_date,
             etl_date,
             program_name,
-            molecular_indexing_scheme
+            molecular_indexing_scheme,
+            library_name
           ) VALUES (
             event_fact_id_seq.nextval,
             new.lab_event_id,
@@ -1465,7 +1478,8 @@ AS
             new.event_date,
             new.etl_date,
             new.program_name,
-            new.molecular_indexing_scheme );
+            new.molecular_indexing_scheme,
+            new.library_name );
 
           V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;
           EXCEPTION
@@ -1527,33 +1541,15 @@ AS
     V_UPD_COUNT CONSTANT PLS_INTEGER := 0;
     BEGIN
       V_LIBRARY_INS_COUNT := 0;
-      FOR new IN (SELECT library_id, event_id
-                    , library_type, library_creation
-                    , MIN(line_number) as line_number, etl_date
-                  FROM (
-                    SELECT child_library_id AS library_id,
-                      -- Is there more than 1 event in this file for a vessel?
-                           MAX(child_event_id) KEEP ( DENSE_RANK LAST ORDER BY child_library_creation ) AS event_id,
-                           child_library_type as library_type,
-                           MAX(child_library_creation) as library_creation,
-                           MIN(line_number) as line_number,
-                           MAX(etl_date) AS etl_date
-                    FROM im_library_ancestry
-                    WHERE is_delete = 'F'
-                    GROUP BY child_library_id, child_library_type
-                    UNION
-                    SELECT ancestor_library_id,
-                      MAX(ancestor_event_id) KEEP ( DENSE_RANK LAST ORDER BY ancestor_library_creation ),
-                      ancestor_library_type,
-                      MAX(ancestor_library_creation),
-                      MIN(line_number) as line_number,
-                      MAX(etl_date) AS etl_date
-                    FROM im_library_ancestry
-                    WHERE is_delete = 'F'
-                    GROUP BY ancestor_library_id, ancestor_library_type
-                  )
-                  GROUP BY library_id, event_id
-                    , library_type, library_creation, etl_date
+      FOR new IN (SELECT lab_vessel_id as library_id
+                       , lab_event_id as event_id
+                       , library_name as library_type
+                       , event_date as library_creation
+                       , MIN(line_number) as line_number
+                       , etl_date
+                    FROM im_event_fact
+                   WHERE library_name IS NOT NULL
+                     AND is_delete = 'F'
       ) LOOP
         BEGIN
           -- Rows for libraries - we've already deleted any rows related to libraries
@@ -1563,8 +1559,7 @@ AS
           VALUES(
             ( SELECT label FROM lab_vessel where lab_vessel_id = new.library_id ),
             new.library_id,
-            new.library_type, new.library_creation, new.event_id
-          );
+            new.library_type, new.library_creation, new.event_id );
 
           V_LIBRARY_INS_COUNT := V_LIBRARY_INS_COUNT + SQL%ROWCOUNT;
 
