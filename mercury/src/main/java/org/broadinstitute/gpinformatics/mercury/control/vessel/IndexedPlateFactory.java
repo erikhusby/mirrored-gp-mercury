@@ -45,14 +45,26 @@ public class IndexedPlateFactory {
         ILLUMINA_SINGLE("Illumina (Single Index)",
                 new IndexedPlateParserIDTSpreadsheetFormat()),
         ILLUMINA_TSCA("Illumina (TSCA)",
-                new IndexedPlateParserTSCAFormat());
+                new IndexedPlateParserTSCAFormat()),
+        ILLUMINA_FP("Illumina (FP)",
+                new IndexedPlateParserTSCAFormat(), StaticPlate.PlateType.IndexedAdapterPlate384);
 
         private final String prettyName;
         private final IndexedPlateParser indexedPlateParser;
+        private final StaticPlate.PlateType plateType;
 
         TechnologiesAndParsers(String name, IndexedPlateParser indexedPlateParser) {
             prettyName = name;
             this.indexedPlateParser = indexedPlateParser;
+            this.plateType = StaticPlate.PlateType.IndexedAdapterPlate96;
+        }
+
+        TechnologiesAndParsers(String prettyName,
+                               IndexedPlateParser indexedPlateParser,
+                               StaticPlate.PlateType plateType) {
+            this.prettyName = prettyName;
+            this.indexedPlateParser = indexedPlateParser;
+            this.plateType = plateType;
         }
 
         public String getPrettyName() {
@@ -61,6 +73,10 @@ public class IndexedPlateFactory {
 
         public IndexedPlateParser getIndexedPlateParser() {
             return indexedPlateParser;
+        }
+
+        public StaticPlate.PlateType getPlateType() {
+            return plateType;
         }
     }
 
@@ -90,17 +106,19 @@ public class IndexedPlateFactory {
             } catch (IOException ignored) {
             }
         }
-        return uploadIndexedPlates(associations);
+        return uploadIndexedPlates(associations, technologiesAndParsers.getPlateType());
     }
 
-    public Map<String, StaticPlate> uploadIndexedPlates(List<PlateWellIndexAssociation> plateWellIndexes) {
+    public Map<String, StaticPlate> uploadIndexedPlates(List<PlateWellIndexAssociation> plateWellIndexes,
+                                                        StaticPlate.PlateType plateType) {
         Map<String, StaticPlate> platesByBarcode = new HashMap<>();
         Set<PlateWell> previousWells = new HashSet<>();
 
         for (PlateWellIndexAssociation plateWellIndex : plateWellIndexes) {
             StaticPlate plate = createOrGetPlate(
                     plateWellIndex,
-                    platesByBarcode);
+                    platesByBarcode,
+                    plateType);
             VesselPosition vesselPosition = VesselPosition.getByName(plateWellIndex.getWellName());
             PlateWell plateWell = new PlateWell(plate, vesselPosition);
             if (previousWells.contains(plateWell)) {
@@ -123,12 +141,12 @@ public class IndexedPlateFactory {
 
 
     private StaticPlate createOrGetPlate(PlateWellIndexAssociation plateWellIndex,
-            Map<String, StaticPlate> platesByBarcode) {
+                                         Map<String, StaticPlate> platesByBarcode, StaticPlate.PlateType plateType) {
 
         String formattedBarcode = StringUtils.leftPad(plateWellIndex.getPlateBarcode(), BARCODE_LENGTH, '0');
         StaticPlate plate = platesByBarcode.get(formattedBarcode);
         if (plate == null) {
-            plate = new StaticPlate(formattedBarcode, StaticPlate.PlateType.IndexedAdapterPlate96);
+            plate = new StaticPlate(formattedBarcode, plateType);
             plate.setCreatedOn(new Date());
             platesByBarcode.put(formattedBarcode, plate);
         }
