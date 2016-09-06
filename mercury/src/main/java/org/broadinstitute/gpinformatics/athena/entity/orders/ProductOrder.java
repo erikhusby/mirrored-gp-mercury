@@ -893,6 +893,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return updateSampleCounts().notReceivedAndNotAbandonedCount;
     }
 
+    public int getNonAbandonedCount() {
+        return updateSampleCounts().totalSampleCount - updateSampleCounts().abandonedCount;
+    }
+
     /**
      * Helper method that determines how many BSP samples registered to the product order are
      * in an Active state.
@@ -1321,6 +1325,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         private int missingBspMetaDataCount;
         private int uniqueSampleCount;
         private int uniqueParticipantCount;
+        private int abandonedCount;
 
         /**
          * This keeps track of unique and total samples per metadataSource.
@@ -1405,6 +1410,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             missingBspMetaDataCount = 0;
             onRiskCount = 0;
             notReceivedAndNotAbandonedCount = 0;
+            abandonedCount = 0;
             stockTypeCounter.clear();
             primaryDiseaseCounter.clear();
             genderCounter.clear();
@@ -1430,6 +1436,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                 receivedSampleCount++;
             } else if (!sample.getDeliveryStatus().isAbandoned()) {
                 notReceivedAndNotAbandonedCount++;
+            }
+
+            if(sample.getDeliveryStatus().isAbandoned()) {
+                abandonedCount++;
             }
 
             if (sampleData.isActiveStock()) {

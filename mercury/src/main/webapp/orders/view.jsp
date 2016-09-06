@@ -824,7 +824,7 @@ function formatInput(item) {
 
                 <c:if test="${!actionBean.editOrder.savedInSAP && !actionBean.editOrder.pending && !actionBean.editOrder.draft}">
                     &nbsp;&nbsp;&nbsp;&nbsp;
-                    <stripes:button name="${actionBean.publishSAPAction}" id="${actionBean.publishSAPAction}" value="Publish Product Order to SAP"
+                    <stripes:submit name="${actionBean.publishSAPAction}" id="${actionBean.publishSAPAction}" value="Publish Product Order to SAP"
                                     class="btn padright" title="Click to Publish Product Order to SAP"/>
 
                 </c:if>

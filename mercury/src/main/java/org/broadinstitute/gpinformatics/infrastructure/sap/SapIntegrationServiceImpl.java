@@ -168,8 +168,8 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                         product.getPrimaryPriceItem().getName()).getPrice(),
                 (product.getProductFamily().getName().equals(ProductFamily.ProductFamilyName.SEQUENCE_ONLY.name()) &&
                 placedOrder.getLaneCount()>0)
-                        ?placedOrder.getSamples().size()*placedOrder.getLaneCount()
-                        :placedOrder.getSamples().size());
+                        ?placedOrder.getNonAbandonedCount()*placedOrder.getLaneCount()
+                        :placedOrder.getNonAbandonedCount());
     }
 
     @Override
