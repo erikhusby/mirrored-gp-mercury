@@ -18,6 +18,7 @@ public class WorkflowBucketDef extends WorkflowStepDef {
     private static final Log log = LogFactory.getLog(WorkflowBucketDef.class);
 
     private WorkflowBucketEntryEvaluator bucketEntryEvaluator;
+    private Boolean autoBucketFromPdoSubmission;
 
     /** auto-drain rules - time / date based */
     private Double autoDrainDays;
@@ -85,5 +86,9 @@ public class WorkflowBucketDef extends WorkflowStepDef {
 
     public String findMissingRequirements(ProductOrder productOrder, MaterialType latestMaterialType) {
         return bucketEntryEvaluator.findMissingRequirements(productOrder, latestMaterialType);
+    }
+
+    public boolean isAutoBucketFromPdoSubmission() {
+        return autoBucketFromPdoSubmission == null ? true : autoBucketFromPdoSubmission;
     }
 }
