@@ -154,7 +154,8 @@ public class LabBatchResource {
         for (Map.Entry<String, ProductOrder> stringProductOrderEntry : mapIdToPdo.entrySet()) {
             Pair<ProductWorkflowDefVersion, Collection<BucketEntry>> workflowBucketEntriesPair =
                     bucketEjb.applyBucketCriteria(mapPdoToVessels.get(stringProductOrderEntry.getKey()),
-                            stringProductOrderEntry.getValue(), labBatchBean.getUsername());
+                            stringProductOrderEntry.getValue(), labBatchBean.getUsername(),
+                            ProductWorkflowDefVersion.BucketingSource.LAB_BATCH_WS);
             ProductWorkflowDefVersion productWorkflowDefVersion = workflowBucketEntriesPair.getLeft();
             if (productWorkflowDefVersion == null) {
                 throw new RuntimeException("No workflow for " + stringProductOrderEntry.getValue().getJiraTicketKey());

@@ -44,6 +44,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceExcep
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
@@ -347,7 +348,8 @@ public class ProductOrderEjb {
         ProductOrder order = productOrderDao.findByBusinessKey(productOrderKey);
         // Only add samples to the LIMS bucket if the order is ready for lab work.
         if (order.getOrderStatus().readyForLab()) {
-            Map<String, Collection<ProductOrderSample>> samples = bucketEjb.addSamplesToBucket(order, newSamples);
+            Map<String, Collection<ProductOrderSample>> samples = bucketEjb.addSamplesToBucket(order, newSamples,
+                    ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION);
             if (!samples.isEmpty()) {
                 Set<String> bucketedSampleNames = new HashSet<>();
                 for (Map.Entry<String, Collection<ProductOrderSample>> bucketSampleEntry : samples.entrySet()) {
