@@ -56,29 +56,6 @@ public class DesignationUtils {
         public List<DesignationDto> getDtos();
     }
 
-
-    /**
-     * Dtos are sorted by barcode and id. If adjacent rows have the same barcode, either
-     * removes the second row if it has the same designationId, or marks it as a repeat.
-     */
-    public void markRepeatedBarcodes() {
-        DesignationDto prev = null;
-        Collections.sort(caller.getDtos(), DesignationDto.BY_BARCODE_ID_DATE);
-        for (Iterator<DesignationDto> iter = caller.getDtos().iterator(); iter.hasNext(); ) {
-            DesignationDto dto = iter.next();
-            if (prev != null && prev.getBarcode().equals(dto.getBarcode())) {
-                if (prev.getDesignationId() == null && dto.getDesignationId() == null ||
-                    prev.getDesignationId() != null && prev.getDesignationId().equals(dto.getDesignationId())) {
-                    iter.remove();
-                } else {
-                    dto.setRepeatedBarcode(true);
-                }
-            } else {
-                prev = dto;
-            }
-        }
-    }
-
     /**
      * Changes the selected dto rows, and persists them if their status is persistable.
      */
@@ -130,12 +107,12 @@ public class DesignationUtils {
     }
 
     /**
-     * Persists existing and new designations from the list of dtos, and updates the dtos' entity ids.
-     * @param dtos The list of dtos. Persists those that have isSelected = true.
+     * Persists existing and new designations from the dtos, and updates the dtos' entity ids.
+     * @param dtos The dtos. Persists those that have isSelected = true.
      * @param persistableStatuses The dto status that permits persisting it.
      * @param designationTubeEjb
      */
-    public void updateDesignationsAndDtos(List<DesignationDto> dtos,
+    public void updateDesignationsAndDtos(Collection<DesignationDto> dtos,
                                           EnumSet<FlowcellDesignation.Status> persistableStatuses,
                                           FlowcellDesignationEjb designationTubeEjb) {
         for (Map.Entry<DesignationDto, FlowcellDesignation> dtoAndTube :

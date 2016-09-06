@@ -127,7 +127,7 @@ public class FlowcellDesignationEjb {
      * @param targetableStatuses
      * @return
      */
-    public Map<DesignationDto, FlowcellDesignation> update(List<DesignationDto> dtos,
+    public Map<DesignationDto, FlowcellDesignation> update(Collection<DesignationDto> dtos,
                                                            EnumSet<FlowcellDesignation.Status> targetableStatuses) {
         Map<DesignationDto, FlowcellDesignation> dtoAndTube = new HashMap<>();
         for (DesignationDto dto : dtos) {

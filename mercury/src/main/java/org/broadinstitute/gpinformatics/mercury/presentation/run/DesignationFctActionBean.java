@@ -21,10 +21,9 @@ import java.util.List;
 
 @UrlBinding("/run/DesignationFct.action")
 public class DesignationFctActionBean extends CoreActionBean implements DesignationUtils.Caller {
-    private static final String VIEW_PAGE = "/run/create_designation_fct.jsp";
+    private static final String VIEW_PAGE = "/run/designation_fct_create.jsp";
     public static final String CREATE_FCT_ACTION = "createFct";
     public static final String SET_MULTIPLE_ACTION = "setMultiple";
-    public static final String LOAD_ACTION = "reloadDesignations";
 
     @Inject
     private LabBatchEjb labBatchEjb;
@@ -55,18 +54,7 @@ public class DesignationFctActionBean extends CoreActionBean implements Designat
             utils.makeDtosFromDesignations(designationTubeEjb.existingDesignations(
                     Collections.singletonList(FlowcellDesignation.Status.QUEUED)));
         }
-        utils.markRepeatedBarcodes();
         return new ForwardResolution(VIEW_PAGE);
-    }
-
-    /**
-     * Clears the existing list of designations and reloads them.
-     */
-    @HandlesEvent(LOAD_ACTION)
-    public Resolution loadDesignations() {
-        clearValidationErrors();
-        dtos.clear();
-        return view();
     }
 
     /**
@@ -77,6 +65,7 @@ public class DesignationFctActionBean extends CoreActionBean implements Designat
         // Permits changing an IN_FCT designation since the only ones being displayed
         // will be one created just seconds ago by this user.
         utils.applyMultiEdit(fctTargetableStatuses, designationTubeEjb);
+        multiEdit = new DesignationDto();
         return view();
     }
 

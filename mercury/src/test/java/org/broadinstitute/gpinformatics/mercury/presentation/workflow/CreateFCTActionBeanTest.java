@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 import org.broadinstitute.gpinformatics.mercury.presentation.run.DesignationDto;
+import org.broadinstitute.gpinformatics.mercury.presentation.run.FctDto;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -39,10 +40,10 @@ public class CreateFCTActionBeanTest {
 
     @Test
     public void testAllocationOf32x1() {
-        Collection<Pair<LabBatchEjb.FctDto, LabVessel>> dtoVessels = new ArrayList<>();
+        Collection<Pair<FctDto, LabVessel>> dtoVessels = new ArrayList<>();
         for (int i = 0; i < 32; ++i) {
             LabVessel tube = stbTubes.get(i);
-            dtoVessels.add(Pair.of((LabBatchEjb.FctDto)new CreateFctDto(tube.getLabel(), "lcset" + i, conc, 1), tube));
+            dtoVessels.add(Pair.of((FctDto)new CreateFctDto(tube.getLabel(), "lcset" + i, conc, 1), tube));
         }
         for (IlluminaFlowcell.FlowcellType flowcellType : IlluminaFlowcell.FlowcellType.values()) {
             if (flowcellType.getCreateFct() == IlluminaFlowcell.CreateFct.NO) {
@@ -54,10 +55,10 @@ public class CreateFCTActionBeanTest {
 
     @Test
     public void testAllocationOf32x8() {
-        Collection<Pair<LabBatchEjb.FctDto, LabVessel>> dtoVessels = new ArrayList<>();
+        Collection<Pair<FctDto, LabVessel>> dtoVessels = new ArrayList<>();
         for (int i = 0; i < 32; ++i) {
             LabVessel tube = stbTubes.get(i);
-            dtoVessels.add(Pair.of((LabBatchEjb.FctDto)new CreateFctDto(tube.getLabel(), "lcset" + i, conc, 8), tube));
+            dtoVessels.add(Pair.of((FctDto)new CreateFctDto(tube.getLabel(), "lcset" + i, conc, 8), tube));
         }
         for (IlluminaFlowcell.FlowcellType flowcellType : IlluminaFlowcell.FlowcellType.values()) {
             if (flowcellType.getCreateFct() == IlluminaFlowcell.CreateFct.NO) {
@@ -69,11 +70,11 @@ public class CreateFCTActionBeanTest {
 
     @Test
     public void testDesignationOf32x8() {
-        Collection<Pair<LabBatchEjb.FctDto, LabVessel>> dtoVessels = new ArrayList<>();
+        Collection<Pair<FctDto, LabVessel>> dtoVessels = new ArrayList<>();
         for (int i = 0; i < 32; ++i) {
             LabVessel tube = stbTubes.get(i);
 
-            dtoVessels.add(Pair.of((LabBatchEjb.FctDto)new DesignationDto(tube, Collections.EMPTY_LIST,
+            dtoVessels.add(Pair.of((FctDto)new DesignationDto(tube, Collections.EMPTY_LIST,
                     "lcsetUrl", lcset, Collections.EMPTY_LIST, Collections.EMPTY_LIST,"", "", 1,
                     IlluminaFlowcell.FlowcellType.HiSeq4000Flowcell, FlowcellDesignation.IndexType.DUAL,
                     161, 8, 151, conc, false, new Date(), FlowcellDesignation.Status.QUEUED), tube));
@@ -87,7 +88,7 @@ public class CreateFCTActionBeanTest {
         // Makes 3 designations having numberLanes of 9, 10, and 11, same priority, but
         // their sizing should cause 11 and 10 to be fully allocated, and 9 gets split.
         List<DesignationDto> designationDtos = new ArrayList<>();
-        Collection<Pair<LabBatchEjb.FctDto, LabVessel>> dtoVessels = new ArrayList<>();
+        Collection<Pair<FctDto, LabVessel>> dtoVessels = new ArrayList<>();
         int[] numberLanes = {9, 10, 11};
         for (int idx = 0; idx < numberLanes.length; ++idx) {
             LabVessel tube = stbTubes.get(idx);
@@ -100,10 +101,10 @@ public class CreateFCTActionBeanTest {
             dto.setSelected(true);
 
             designationDtos.add(dto);
-            dtoVessels.add(Pair.of((LabBatchEjb.FctDto) dto, tube));
+            dtoVessels.add(Pair.of((FctDto) dto, tube));
         }
         // The 0th dto will get 3 lanes allocated and 6 lanes in the unallocated split dto.
-        LabBatchEjb.FctDto splitDto = new DesignationDto(stbTubes.get(0), Collections.EMPTY_LIST,
+        FctDto splitDto = new DesignationDto(stbTubes.get(0), Collections.EMPTY_LIST,
                 "lcsetUrl", lcset, Collections.EMPTY_LIST, Collections.EMPTY_LIST, "", "", 1,
                 IlluminaFlowcell.FlowcellType.HiSeq4000Flowcell, FlowcellDesignation.IndexType.DUAL,
                 161, 6, 151, conc, false, new Date(), FlowcellDesignation.Status.QUEUED);
@@ -131,7 +132,7 @@ public class CreateFCTActionBeanTest {
         // Should make two flowcells of 8 lanes.
         // 9 lane dto should be fully allocated, 10 should get split, and 1 should be unallocated.
         List<DesignationDto> designationDtos = new ArrayList<>();
-        Collection<Pair<LabBatchEjb.FctDto, LabVessel>> dtoVessels = new ArrayList<>();
+        Collection<Pair<FctDto, LabVessel>> dtoVessels = new ArrayList<>();
         int[] numberLanes = {1, 9, 10};
         for (int idx = 0; idx < numberLanes.length; ++idx) {
             LabVessel tube = stbTubes.get(idx);
@@ -148,7 +149,7 @@ public class CreateFCTActionBeanTest {
             }
 
             designationDtos.add(dto);
-            dtoVessels.add(Pair.of((LabBatchEjb.FctDto)dto, tube));
+            dtoVessels.add(Pair.of((FctDto)dto, tube));
         }
 
         // dto[2] should be split into 7 lanes (allocated) and 3 lanes (unallocated).
@@ -179,7 +180,7 @@ public class CreateFCTActionBeanTest {
     public void testDesignation21() {
         // Makes 2 designations having numberLanes of 2 and 1, neither of which will be allocated
         // since they won't fill an 8 lane flowcell.
-        Collection<Pair<LabBatchEjb.FctDto, LabVessel>> dtoVessels = new ArrayList<>();
+        Collection<Pair<FctDto, LabVessel>> dtoVessels = new ArrayList<>();
         List<DesignationDto> designationDtos = new ArrayList<>();
         for (int i = 0; i < 2; ++i) {
             LabVessel tube = stbTubes.get(i);
@@ -192,7 +193,7 @@ public class CreateFCTActionBeanTest {
             dto.setSelected(true);
 
             designationDtos.add(dto);
-            dtoVessels.add(Pair.of((LabBatchEjb.FctDto)dto, tube));
+            dtoVessels.add(Pair.of((FctDto)dto, tube));
         }
 
         List<String> unallocatedBarcodes = allocateAndTest(dtoVessels, IlluminaFlowcell.FlowcellType.HiSeq4000Flowcell,
@@ -211,10 +212,10 @@ public class CreateFCTActionBeanTest {
 
     @Test
     public void testAllocationOf2x2OneLane() {
-        Collection<Pair<LabBatchEjb.FctDto, LabVessel>> dtoVessels = new ArrayList<>();
+        Collection<Pair<FctDto, LabVessel>> dtoVessels = new ArrayList<>();
         for (int i = 0; i < 2; ++i) {
             LabVessel tube = stbTubes.get(i);
-            dtoVessels.add(Pair.of((LabBatchEjb.FctDto)new CreateFctDto(tube.getLabel(), "lcset" + i, conc, 2), tube));
+            dtoVessels.add(Pair.of((FctDto)new CreateFctDto(tube.getLabel(), "lcset" + i, conc, 2), tube));
         }
         Assert.assertTrue(CollectionUtils.isEmpty(allocateAndTest(dtoVessels,
                 IlluminaFlowcell.FlowcellType.MiSeqFlowcell, null)));
@@ -222,19 +223,19 @@ public class CreateFCTActionBeanTest {
 
     @Test
     public void testSharedLcsets() {
-        Collection<Pair<LabBatchEjb.FctDto, LabVessel>> dtoVessels = new ArrayList<>();
+        Collection<Pair<FctDto, LabVessel>> dtoVessels = new ArrayList<>();
 
         LabVessel tube = stbTubes.get(0);
-        dtoVessels.add(Pair.of((LabBatchEjb.FctDto)new CreateFctDto(tube.getLabel(), "lcset0", conc, 5), tube));
+        dtoVessels.add(Pair.of((FctDto)new CreateFctDto(tube.getLabel(), "lcset0", conc, 5), tube));
 
         tube = stbTubes.get(1);
-        dtoVessels.add(Pair.of((LabBatchEjb.FctDto)new CreateFctDto(tube.getLabel(), "lcset1", conc, 6), tube));
+        dtoVessels.add(Pair.of((FctDto)new CreateFctDto(tube.getLabel(), "lcset1", conc, 6), tube));
 
         tube = stbTubes.get(2);
-        dtoVessels.add(Pair.of((LabBatchEjb.FctDto)new CreateFctDto(tube.getLabel(), "lcset2", conc, 2), tube));
+        dtoVessels.add(Pair.of((FctDto)new CreateFctDto(tube.getLabel(), "lcset2", conc, 2), tube));
 
         tube = stbTubes.get(3);
-        dtoVessels.add(Pair.of((LabBatchEjb.FctDto)new CreateFctDto(tube.getLabel(), "lcset3", conc, 3), tube));
+        dtoVessels.add(Pair.of((FctDto)new CreateFctDto(tube.getLabel(), "lcset3", conc, 3), tube));
 
         for (IlluminaFlowcell.FlowcellType flowcellType : IlluminaFlowcell.FlowcellType.values()) {
             if (flowcellType.getCreateFct() == IlluminaFlowcell.CreateFct.NO) {
@@ -248,12 +249,12 @@ public class CreateFCTActionBeanTest {
      * Allocates and validates.
      * @return list of the unallocated tube barcodes.
      */
-    private List<String> allocateAndTest(Collection<Pair<LabBatchEjb.FctDto, LabVessel>> dtoVessels,
-                                         IlluminaFlowcell.FlowcellType flowcellType, LabBatchEjb.FctDto splitDto) {
+    private List<String> allocateAndTest(Collection<Pair<FctDto, LabVessel>> dtoVessels,
+                                         IlluminaFlowcell.FlowcellType flowcellType, FctDto splitDto) {
 
         int expectedLaneCount = 0;
         List<String> expectedBarcodeOnEachLane = new ArrayList<>();
-        for (Pair<LabBatchEjb.FctDto, LabVessel> pair : dtoVessels) {
+        for (Pair<FctDto, LabVessel> pair : dtoVessels) {
             expectedLaneCount += pair.getLeft().getNumberLanes();
             for (int i = 0; i < pair.getLeft().getNumberLanes(); ++i) {
                 expectedBarcodeOnEachLane.add(pair.getRight().getLabel());
@@ -271,7 +272,7 @@ public class CreateFCTActionBeanTest {
 
 
         // Does the starting vessel to FCT allocation.
-        Pair<Multimap<LabBatch, String>, LabBatchEjb.FctDto> fctBatches = testBean.makeFctDaoFree(dtoVessels,
+        Pair<Multimap<LabBatch, String>, FctDto> fctBatches = testBean.makeFctDaoFree(dtoVessels,
                 flowcellType, !isDesignationDto);
 
         // Checks the split dto.

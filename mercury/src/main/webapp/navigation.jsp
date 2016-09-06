@@ -103,13 +103,13 @@
                         </security:authorizeBlock>
                         <li>
                             <stripes:link id="flowcellDesignations"
-                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.run.FlowcellDesignationActionBean"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.run.DesignationActionBean"
                                           event="view">Designate Loading Tubes</stripes:link>
                         </li>
                         <li>
                             <stripes:link id="designationFct"
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.run.DesignationFctActionBean"
-                                          event="view">Create FCT from Queued Designated Loading Tubes</stripes:link>
+                                          event="view">Create FCT from Designations</stripes:link>
                         </li>
                         <li>
                             <stripes:link id="createFCT"

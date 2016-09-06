@@ -19,7 +19,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
-import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -46,9 +45,9 @@ import java.util.Map;
 import java.util.Set;
 
 @UrlBinding("/run/FlowcellDesignation.action")
-public class FlowcellDesignationActionBean extends CoreActionBean implements DesignationUtils.Caller {
-    private static final String VIEW_PAGE = "/run/designate_loading_tubes.jsp";
-    private static final String TUBE_LCSET_PAGE = "/run/select_tube_lcsets.jsp";
+public class DesignationActionBean extends CoreActionBean implements DesignationUtils.Caller {
+    private static final String VIEW_PAGE = "/run/designation_create.jsp";
+    private static final String TUBE_LCSET_PAGE = "/run/designation_lcset_select.jsp";
 
     public static final String LOAD_DENATURE_ACTION = "loadDenature";
     public static final String LOAD_NORM_ACTION = "loadNorm";
@@ -74,7 +73,7 @@ public class FlowcellDesignationActionBean extends CoreActionBean implements Des
     private DesignationDto multiEdit = new DesignationDto();
     private Set<LabBatch> loadLcsets = new HashSet<>();
     private Set<LabVessel> loadTubes = new HashSet<>();
-    private List<LcsetAssignmentDto> tubeLcsetAssignemnts = new ArrayList<>();
+    private List<LcsetAssignmentDto> tubeLcsetAssignments = new ArrayList<>();
     private boolean showProcessed;
     private boolean showAbandoned;
     private boolean showQueued = true;
@@ -97,6 +96,7 @@ public class FlowcellDesignationActionBean extends CoreActionBean implements Des
     @HandlesEvent(VIEW_ACTION)
     @DefaultHandler
     public Resolution view() {
+        // Filters out the unwanted dto's by status.
         for (Iterator<DesignationDto> iter = dtos.iterator(); iter.hasNext(); ) {
             DesignationDto dto = iter.next();
             if (!showAbandoned && dto.getStatus() == FlowcellDesignation.Status.ABANDONED ||
@@ -105,8 +105,11 @@ public class FlowcellDesignationActionBean extends CoreActionBean implements Des
                 iter.remove();
                 continue;
             }
+            dto.setSelected(false);
         }
-        utils.markRepeatedBarcodes();
+        Set<DesignationDto> uniqueDtos = new HashSet<>(dtos);
+        dtos.clear();
+        dtos.addAll(uniqueDtos);
         return new ForwardResolution(VIEW_PAGE);
     }
 
@@ -152,7 +155,7 @@ public class FlowcellDesignationActionBean extends CoreActionBean implements Des
         Map<LabVessel, LabBatch> loadingTubeLcset = new HashMap<>();
         if (CollectionUtils.isNotEmpty(loadTubes)) {
             loadingTubeLcset = linkLcsetToSpecifiedTubes();
-            if (tubeLcsetAssignemnts.size() > 0) {
+            if (tubeLcsetAssignments.size() > 0) {
                 return new ForwardResolution(TUBE_LCSET_PAGE);
             }
         }
@@ -192,6 +195,7 @@ public class FlowcellDesignationActionBean extends CoreActionBean implements Des
     @HandlesEvent(SET_MULTIPLE_ACTION)
     public Resolution setMultiple() {
         utils.applyMultiEdit(DesignationUtils.TARGETABLE_STATUSES, designationTubeEjb);
+        multiEdit = new DesignationDto();
         return view();
     }
 
@@ -206,7 +210,7 @@ public class FlowcellDesignationActionBean extends CoreActionBean implements Des
         parseLcsetsBarcodes();
         // Collects the user-specified lcset mappings.
         Map<LabVessel, LabBatch> loadingTubeLcset = new HashMap<>();
-        for (LcsetAssignmentDto assignmentDto : tubeLcsetAssignemnts) {
+        for (LcsetAssignmentDto assignmentDto : tubeLcsetAssignments) {
             if (StringUtils.isNotBlank(assignmentDto.getSelectedLcsetName())) {
                 LabVessel tube = barcodedTubeDao.findByBarcode(assignmentDto.getBarcode());
                 LabBatch lcset = labBatchDao.findByName(assignmentDto.getSelectedLcsetName());
@@ -396,8 +400,7 @@ public class FlowcellDesignationActionBean extends CoreActionBean implements Des
             DesignationDto newDto = new DesignationDto(loadingTube, loadingTubeToLabEvent.get(loadingTube),
                     primaryLcset.getJiraTicket().getBrowserUrl(), primaryLcset, Collections.<String>emptySet(),
                     productNames, StringUtils.join(startingVesselList, "\n"),
-                    regulatoryDesignation, numberSamples,
-                    IlluminaFlowcell.FlowcellType.MiSeqFlowcell, FlowcellDesignation.IndexType.DUAL,
+                    regulatoryDesignation, numberSamples, null, FlowcellDesignation.IndexType.DUAL,
                     numberCycles, numberLanes, readLength, loadingConc, poolTest, now,
                     FlowcellDesignation.Status.UNSAVED);
 
@@ -415,7 +418,7 @@ public class FlowcellDesignationActionBean extends CoreActionBean implements Des
      * lcsets are put in tubeLcsetAssigntments.
      */
     private Map<LabVessel, LabBatch> linkLcsetToSpecifiedTubes() {
-        tubeLcsetAssignemnts.clear();
+        tubeLcsetAssignments.clear();
         Map<LabVessel, LabBatch> loadingTubeLcset = new HashMap<>();
         boolean foundOutOfDateEvents = false;
 
@@ -431,7 +434,7 @@ public class FlowcellDesignationActionBean extends CoreActionBean implements Des
                             loadingTubeLcset.put(targetTube, lcsets.iterator().next());
                         } else {
                             // Tube-lcset combinations to be resolved by the user.
-                            tubeLcsetAssignemnts.add(new LcsetAssignmentDto(targetTube, lcsets));
+                            tubeLcsetAssignments.add(new LcsetAssignmentDto(targetTube, lcsets));
                         }
                     }
                 } else {
@@ -439,7 +442,7 @@ public class FlowcellDesignationActionBean extends CoreActionBean implements Des
                 }
             }
         }
-        LcsetAssignmentDto.sort(tubeLcsetAssignemnts);
+        LcsetAssignmentDto.sort(tubeLcsetAssignments);
         if (foundOutOfDateEvents) {
             addMessage("Excluded some loading tube " + selectedEventType + " events not in the date range.");
         }
@@ -591,12 +594,12 @@ public class FlowcellDesignationActionBean extends CoreActionBean implements Des
         this.loadTubes = loadTubes;
     }
 
-    public List<LcsetAssignmentDto> getTubeLcsetAssignemnts() {
-        return tubeLcsetAssignemnts;
+    public List<LcsetAssignmentDto> getTubeLcsetAssignments() {
+        return tubeLcsetAssignments;
     }
 
-    public void setTubeLcsetAssignemnts(List<LcsetAssignmentDto> tubeLcsetAssignemnts) {
-        this.tubeLcsetAssignemnts = tubeLcsetAssignemnts;
+    public void setTubeLcsetAssignments(List<LcsetAssignmentDto> tubeLcsetAssignments) {
+        this.tubeLcsetAssignments = tubeLcsetAssignments;
     }
 
     public boolean getShowProcessed() {

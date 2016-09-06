@@ -46,6 +46,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.broadinstitute.gpinformatics.mercury.presentation.run.DesignationDto;
 import org.broadinstitute.gpinformatics.mercury.presentation.run.DesignationUtils;
+import org.broadinstitute.gpinformatics.mercury.presentation.run.FctDto;
 import org.broadinstitute.gpinformatics.mercury.presentation.workflow.CreateFctDto;
 
 import javax.annotation.Nonnull;
@@ -54,11 +55,10 @@ import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.io.IOException;
-import java.math.BigDecimal;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -68,6 +68,8 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 
+import static org.broadinstitute.gpinformatics.mercury.presentation.run.FctDto.BY_ALLOCATION_ORDER;
+
 /**
  * Encapsulates the business logic related to {@link LabBatch}s.  This includes the creation
  * of a new batch entity and saving that to JIRA.
@@ -75,6 +77,10 @@ import java.util.Set;
 @Stateful
 @RequestScoped
 public class LabBatchEjb {
+    public static final String PARTIAL_FCT_MESSAGE = "{0} makes partially filled FCT with {1} empty lanes.";
+    public static final String SPLIT_DESIGNATION_MESSAGE =
+            "{0} designation for {1} got partially allocated. A newly created designation" +
+            " now represents the unallocated lanes.";
 
     private static final Log logger = LogFactory.getLog(LabBatchEjb.class);
 
@@ -675,58 +681,70 @@ public class LabBatchEjb {
      * @param messageReporter for action bean message display.
      * @return Pair of FCT batch name and JIRA url.
      */
-    public List<MutablePair<String, String>> makeFcts(List<DesignationDto> designationDtos, String userName,
+    public List<MutablePair<String, String>> makeFcts(Collection<DesignationDto> designationDtos, String userName,
                                                       MessageReporter messageReporter) {
+        boolean hasError = false;
 
-        // Groups the dtos according to the sequencer model. Excludes dtos that fail validation.
-        Multimap<IlluminaFlowcell.FlowcellType, Pair<FctDto, LabVessel>> typeMap = HashMultimap.create();
+        // Validates dtos and groups them by how they are permitted to be combined on a flowcell.
+        Multimap<DesignationDto.FctGrouping, Pair<FctDto, LabVessel>> typeMap = HashMultimap.create();
         for (DesignationDto designationDto : designationDtos) {
             if (designationDto.isSelected()) {
                 LabVessel labVessel = labVesselDao.findByIdentifier(designationDto.getBarcode());
                 if (isValidDto(designationDto, messageReporter)) {
-                    typeMap.put(designationDto.getSequencerModel(), Pair.of((FctDto)designationDto, labVessel));
+                    typeMap.put(new DesignationDto.FctGrouping(designationDto),
+                            Pair.of((FctDto)designationDto, labVessel));
+                } else {
+                    hasError = true;
                 }
             }
         }
 
-        // Processes the dtos in each sequencer model group.
+        // Processes the dtos by group.
         // Each flowcell batch has its FCT pushed to JIRA and makes the parent-child JIRA links to LCSET(s).
+        // Any invalid dtos will stop all FCT creation.
         List<MutablePair<String, String>> fctUrls = new ArrayList<>();
-        int unallocatedLaneCount = 0;
-        int splitCount = 0;
-        for (IlluminaFlowcell.FlowcellType flowcellType : typeMap.keySet()) {
-            Pair<Multimap<LabBatch, String>, FctDto> fctReturnPair = makeFctDaoFree(typeMap.get(flowcellType),
-                    flowcellType, false);
-            for (LabBatch fctBatch : fctReturnPair.getLeft().keySet()) {
-                createLabBatch(fctBatch, userName, flowcellType.getIssueType(), messageReporter);
-                for (String lcset : fctReturnPair.getLeft().get(fctBatch)) {
-                    linkJiraBatchToTicket(lcset, fctBatch);
+        if (!hasError) {
+            int unallocatedLaneCount = 0;
+            int splitCount = 0;
+            for (DesignationDto.FctGrouping fctGrouping : typeMap.keySet()) {
+                Pair<Multimap<LabBatch, String>, FctDto> fctReturnPair = makeFctDaoFree(typeMap.get(fctGrouping),
+                        fctGrouping.getFlowcellType(), false);
+                for (LabBatch fctBatch : fctReturnPair.getLeft().keySet()) {
+                    createLabBatch(fctBatch, userName, fctGrouping.getFlowcellType().getIssueType(), messageReporter);
+                    for (String lcset : fctReturnPair.getLeft().get(fctBatch)) {
+                        linkJiraBatchToTicket(lcset, fctBatch);
+                    }
+                    fctUrls.add(MutablePair.of(fctBatch.getBatchName(), fctBatch.getJiraTicket().getBrowserUrl()));
                 }
-                fctUrls.add(MutablePair.of(fctBatch.getBatchName(), fctBatch.getJiraTicket().getBrowserUrl()));
-            }
-            for (Pair<FctDto, LabVessel> pair : typeMap.get(flowcellType)) {
-                DesignationDto dto = (DesignationDto)pair.getLeft();
-                if (dto.isAllocated()) {
-                    dto.setStatus(FlowcellDesignation.Status.IN_FCT);
-                } else {
-                    unallocatedLaneCount += dto.getNumberLanes();
+                for (Pair<FctDto, LabVessel> pair : typeMap.get(fctGrouping)) {
+                    DesignationDto dto = (DesignationDto) pair.getLeft();
+                    if (dto.isAllocated()) {
+                        dto.setStatus(FlowcellDesignation.Status.IN_FCT);
+                    } else {
+                        unallocatedLaneCount += dto.getNumberLanes();
+                    }
+                }
+                // Any new split dto needs to be put in the UI's dto list, and all dtos persisted.
+                DesignationDto dtoSplit = (DesignationDto) fctReturnPair.getRight();
+                if (dtoSplit != null) {
+                    dtoSplit.setSelected(true);
+                    designationDtos.add(dtoSplit);
+                    ++splitCount;
+                }
+                designationUtils.updateDesignationsAndDtos(designationDtos,
+                        EnumSet.allOf(FlowcellDesignation.Status.class), designationTubeEjb);
+                if (unallocatedLaneCount > 0) {
+                    int emptyLaneCount = fctGrouping.getFlowcellType().getVesselGeometry().getVesselPositions().length
+                                         - unallocatedLaneCount;
+                    messageReporter.addMessage(MessageFormat.format(PARTIAL_FCT_MESSAGE, fctGrouping.toString(),
+                            emptyLaneCount));
+
+                }
+                if (splitCount > 0) {
+                    messageReporter.addMessage(MessageFormat.format(SPLIT_DESIGNATION_MESSAGE, splitCount,
+                            fctGrouping.toString()));
                 }
             }
-            // Any new split dto needs to be put in the UI's dto list, and all dtos persisted.
-            DesignationDto dtoSplit = (DesignationDto)fctReturnPair.getRight();
-            if (dtoSplit != null) {
-                dtoSplit.setSelected(true);
-                designationDtos.add(dtoSplit);
-                ++splitCount;
-            }
-            designationUtils.updateDesignationsAndDtos(designationDtos,
-                    EnumSet.allOf(FlowcellDesignation.Status.class), designationTubeEjb);
-        }
-        if (unallocatedLaneCount > 0) {
-            messageReporter.addMessage(unallocatedLaneCount + " lanes were not allocated due to partially full flowcell.");
-        }
-        if (splitCount > 0) {
-            messageReporter.addMessage(splitCount + " designations had only some lanes allocated and a new designation exists for the unallocated lanes.");
         }
         return fctUrls;
     }
@@ -735,27 +753,27 @@ public class LabBatchEjb {
         boolean isValid = true;
         String errorString = "Designated tube " + designationDto.getBarcode() + " has invalid ";
         if (designationDto.getStatus() == null || designationDto.getStatus() != FlowcellDesignation.Status.QUEUED) {
-            errorString += "status (" + designationDto.getStatus() + ") ";
+            errorString += (isValid ? "" : "and ") + "status (" + designationDto.getStatus() + ") ";
             isValid = false;
         }
         if (designationDto.getLoadingConc() == null || designationDto.getLoadingConc().doubleValue() <= 0) {
-            errorString += "loading conc (" + designationDto.getLoadingConc() + ") ";
+            errorString += (isValid ? "" : "and ") + "loading conc (" + designationDto.getLoadingConc() + ") ";
             isValid = false;
         }
         if (designationDto.getNumberCycles() == null || designationDto.getNumberCycles() <= 0) {
-            errorString += "number of cycles (" + designationDto.getNumberCycles() + ") ";
+            errorString += (isValid ? "" : "and ") + "number of cycles (" + designationDto.getNumberCycles() + ") ";
             isValid = false;
         }
         if (designationDto.getNumberLanes() == null || designationDto.getNumberLanes() <= 0) {
-            errorString += "number of lanes (" + designationDto.getNumberLanes() + ") ";
+            errorString += (isValid ? "" : "and ") + "number of lanes (" + designationDto.getNumberLanes() + ") ";
             isValid = false;
         }
         if (designationDto.getReadLength() == null || designationDto.getReadLength() <= 0) {
-            errorString += "read length (" + designationDto.getReadLength() + ") ";
+            errorString += (isValid ? "" : "and ") + "read length (" + designationDto.getReadLength() + ") ";
             isValid = false;
         }
         if (designationDto.getSequencerModel() == null) {
-            errorString += "sequencer model (null) ";
+            errorString += (isValid ? "" : "and ") + "sequencer model (null) ";
             isValid = false;
         }
         if (!isValid) {
@@ -764,31 +782,6 @@ public class LabBatchEjb {
         return isValid;
     }
 
-    /** This interface defines the subset of Dto data needed to create an FCT. */
-    public interface FctDto {
-        public String getBarcode();
-        public String getLcset();
-        public BigDecimal getLoadingConc();
-        public Integer getNumberLanes();
-        public boolean isAllocated();
-        public void setAllocated(boolean wasAllocated);
-        public int getAllocationOrder();
-        public FctDto split(int numberLanes);
-    }
-
-    private static final Comparator<Pair<FctDto, LabVessel>> BY_ALLOCATION_ORDER =
-            new Comparator<Pair<FctDto, LabVessel>>() {
-                @Override
-                public int compare(Pair<FctDto, LabVessel> o1, Pair<FctDto, LabVessel> o2) {
-                    // Puts highest allocationOrder first. If it's a tie, puts highest numberLanes first.
-                    if (o2.getLeft().getAllocationOrder() != o1.getLeft().getAllocationOrder()) {
-                        return o2.getLeft().getAllocationOrder() - o1.getLeft().getAllocationOrder();
-                    } else {
-                        return (o2.getLeft().getNumberLanes() != null & o1.getLeft().getNumberLanes() != null) ?
-                                o2.getLeft().getNumberLanes().compareTo(o1.getLeft().getNumberLanes()) : 0;
-                    }
-                }
-            };
 
     /**
      * Allocates the loading tubes to flowcells.  A given lane only contains material from one tube.

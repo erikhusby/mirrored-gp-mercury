@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
@@ -35,16 +36,24 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import java.math.BigDecimal;
+import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
+import static org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb.PARTIAL_FCT_MESSAGE;
+import static org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb.SPLIT_DESIGNATION_MESSAGE;
+import static org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation_.loadingTube;
+import static org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation_.numberLanes;
 
 /**
  * TODO scottmat fill in javadoc!!!
@@ -293,10 +302,9 @@ public class LabBatchEjbStandardTest extends Arquillian {
         Assert.assertEquals(testFind.getBatchName(), testFind.getJiraTicket().getTicketName());
     }
 
-
     @Test
     public void testFctsFromDesignations() throws Exception {
-        final List<DesignationDto> designationDtos = new ArrayList<>();
+        final Set<DesignationDto> designationDtos = new HashSet<>();
         final StringBuilder messages = new StringBuilder();
         final MessageReporter messageReporter = new MessageReporter() {
             @Override
@@ -335,6 +343,7 @@ public class LabBatchEjbStandardTest extends Arquillian {
                 new ArrayList<String>()
         };
         String splitDtoBarcode = null;
+        String splitDtoGrouping = null;
 
         // Makes action bean dtos that are queued designations.
         for (int idx = 0; idx < flowcellTypes.length; ++idx) {
@@ -354,6 +363,7 @@ public class LabBatchEjbStandardTest extends Arquillian {
                 if (numberLanes == 17) {
                     dto.setPriority(FlowcellDesignation.Priority.LOW);
                     splitDtoBarcode = dto.getBarcode();
+                    splitDtoGrouping = (new DesignationDto.FctGrouping(dto)).toString();
                 }
                 designationDtos.add(dto);
             }
@@ -371,14 +381,13 @@ public class LabBatchEjbStandardTest extends Arquillian {
         labBatchDao.flush();
 
         // Checks for the split dto.
-        boolean foundSplitDto = false;
+        int splitDtoCount = 0;
         for (DesignationDto dto : designationDtos) {
             if (dto.getBarcode().equals(splitDtoBarcode)) {
                 if (dto.isAllocated()) {
                     Assert.assertEquals((int)dto.getNumberLanes(), 11);
                 } else {
-                    Assert.assertFalse(foundSplitDto);
-                    foundSplitDto = true;
+                    ++splitDtoCount;
                     Assert.assertEquals((int)dto.getNumberLanes(), 6);
                     // Removes the split barcode from barcodes expected to be in FCTs.
                     for (int i = 0; i < 6; ++i) {
@@ -389,6 +398,7 @@ public class LabBatchEjbStandardTest extends Arquillian {
                 Assert.assertTrue(dto.isAllocated());
             }
         }
+        Assert.assertEquals(splitDtoCount, 1);
 
 
         for (MutablePair<String, String> fctUrl : fctUrls) {
@@ -424,8 +434,12 @@ public class LabBatchEjbStandardTest extends Arquillian {
             }
 
         }
-        // Verifies no error messages.
-        Assert.assertTrue(messages.length() == 0, "Unexpected messages: '" + messages.toString() + "'");
+
+        // Verifies the one action bean message is about the split dto.
+        String[] messageLines = messages.toString().split("\n");
+        Assert.assertEquals(messageLines.length, 1);
+        String splitMsg = MessageFormat.format(SPLIT_DESIGNATION_MESSAGE, splitDtoCount, splitDtoGrouping);
+        Assert.assertEquals(messageLines[0], splitMsg);
 
         // Verifies the allocated loading tube barcodes all matched up with the expected ones.
         for (int idx = 0; idx < flowcellTypes.length; ++idx) {
@@ -433,4 +447,76 @@ public class LabBatchEjbStandardTest extends Arquillian {
                     "at idx " + idx + " found " + StringUtils.join(tubeBarcodes[idx], " "));
         }
     }
+
+    // Tests grouping by numberCycles, readLength, indexType, regulatoryDesignation.
+    @Test
+    public void testDesignationFctGrouping() throws Exception {
+        final Set<DesignationDto> designationDtos = new HashSet<>();
+        final StringBuilder messages = new StringBuilder();
+        final MessageReporter messageReporter = new MessageReporter() {
+            @Override
+            public String addMessage(String message, Object... arguments) {
+                messages.append(String.format(message, arguments)).append("\n");
+                return "";
+            }
+        };
+        // Uses any old normalization transfer.
+        final LabEvent labEvent = labBatchDao.findById(LabEvent.class, 184671L);
+        final LabVessel loadingTube = mapBarcodeToTube.values().iterator().next();
+        final IlluminaFlowcell.FlowcellType flowcellType = IlluminaFlowcell.FlowcellType.HiSeqFlowcell;
+        final LabBatch lcset = new LabBatch("lcset0", Collections.EMPTY_SET, LabBatch.LabBatchType.WORKFLOW);
+
+        DesignationDto[] dtos = new DesignationDto[]{
+                new DesignationDto(loadingTube, Collections.singleton(labEvent), "lcsetUrl", lcset,
+                        Collections.<String>emptyList(), Collections.singleton("P-EX-0017"), "startingBatchVessels",
+                        "CLINICAL", 23, flowcellType, FlowcellDesignation.IndexType.DUAL, 167, 4, 151,
+                        BigDecimal.TEN, false, new Date(), FlowcellDesignation.Status.QUEUED),
+                new DesignationDto(loadingTube, Collections.singleton(labEvent), "lcsetUrl", lcset,
+                        Collections.<String>emptyList(), Collections.singleton("P-EX-0017"), "startingBatchVessels",
+                        "RESEARCH", 23, flowcellType, FlowcellDesignation.IndexType.DUAL, 167, 4, 151,
+                        BigDecimal.TEN, false, new Date(), FlowcellDesignation.Status.QUEUED),
+                new DesignationDto(loadingTube, Collections.singleton(labEvent), "lcsetUrl", lcset,
+                        Collections.<String>emptyList(), Collections.singleton("P-EX-0017"), "startingBatchVessels",
+                        "CLINICAL", 22, flowcellType, FlowcellDesignation.IndexType.DUAL, 167, 4, 151,
+                        BigDecimal.TEN, false, new Date(), FlowcellDesignation.Status.QUEUED),
+                new DesignationDto(loadingTube, Collections.singleton(labEvent), "lcsetUrl", lcset,
+                        Collections.<String>emptyList(), Collections.singleton("P-EX-0017"), "startingBatchVessels",
+                        "RESEARCH", 22, flowcellType, FlowcellDesignation.IndexType.DUAL, 167, 4, 151,
+                        BigDecimal.TEN, false, new Date(), FlowcellDesignation.Status.QUEUED),
+                new DesignationDto(loadingTube, Collections.singleton(labEvent), "lcsetUrl", lcset,
+                        Collections.<String>emptyList(), Collections.singleton("P-EX-0017"), "startingBatchVessels",
+                        "CLINICAL", 22, flowcellType, FlowcellDesignation.IndexType.DUAL, 168, 4, 151,
+                        BigDecimal.TEN, false, new Date(), FlowcellDesignation.Status.QUEUED),
+                new DesignationDto(loadingTube, Collections.singleton(labEvent), "lcsetUrl", lcset,
+                        Collections.<String>emptyList(), Collections.singleton("P-EX-0017"), "startingBatchVessels",
+                        "RESEARCH", 22, flowcellType, FlowcellDesignation.IndexType.DUAL, 168, 4, 151,
+                        BigDecimal.TEN, false, new Date(), FlowcellDesignation.Status.QUEUED),
+                new DesignationDto(loadingTube, Collections.singleton(labEvent), "lcsetUrl", lcset,
+                        Collections.<String>emptyList(), Collections.singleton("P-EX-0017"), "startingBatchVessels",
+                        "CLINICAL", 22, flowcellType, FlowcellDesignation.IndexType.DUAL, 168, 4, 152,
+                        BigDecimal.TEN, false, new Date(), FlowcellDesignation.Status.QUEUED),
+                new DesignationDto(loadingTube, Collections.singleton(labEvent), "lcsetUrl", lcset,
+                        Collections.<String>emptyList(), Collections.singleton("P-EX-0017"), "startingBatchVessels",
+                        "RESEARCH", 22, flowcellType, FlowcellDesignation.IndexType.DUAL, 168, 4, 152,
+                        BigDecimal.TEN, false, new Date(), FlowcellDesignation.Status.QUEUED),
+        };
+
+        for (DesignationDto dto : dtos) {
+            dto.setSelected(true);
+        }
+
+        // Should not combine any dto, so it should make no FCTs.
+        Assert.assertTrue(CollectionUtils.isEmpty(labBatchEJB.makeFcts(designationDtos, "epolk", messageReporter)));
+
+        // Verifies the 8 action bean messages are about the partial flowcells.
+        List<String> messageLines = Arrays.asList(messages.toString().split("\n"));
+        Assert.assertEquals(messageLines.size(), 8);
+        for (DesignationDto dto : dtos) {
+            String fctGroupingString = (new DesignationDto.FctGrouping(dto)).toString();
+            String partialMsg = MessageFormat.format(LabBatchEjb.PARTIAL_FCT_MESSAGE, fctGroupingString, 4);
+            Assert.assertTrue(messageLines.remove(partialMsg));
+        }
+        Assert.assertTrue(CollectionUtils.isEmpty(messageLines));
+    }
+
 }

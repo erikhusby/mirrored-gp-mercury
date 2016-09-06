@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.presentation.run;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
-import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
@@ -13,7 +12,6 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.SortedSet;
@@ -22,7 +20,7 @@ import java.util.TreeSet;
 /**
  * Represents the UI data table row.
  */
-public class DesignationDto implements LabBatchEjb.FctDto, Cloneable {
+public class DesignationDto implements Cloneable, FctDto {
     private boolean selected = false;
     private FlowcellDesignation.Status status;
     private Date createdOn;
@@ -47,7 +45,6 @@ public class DesignationDto implements LabBatchEjb.FctDto, Cloneable {
 
     private Long designationId;
     private Long tubeEventId;
-    private boolean repeatedBarcode;
     private boolean allocated = false;
     private int allocationOrder = 0;
 
@@ -100,25 +97,10 @@ public class DesignationDto implements LabBatchEjb.FctDto, Cloneable {
         this.status = status;
     }
 
-
     /**
-     * Orders by barcode, then designation id (nulls last), then by descending created date (older ones last).
-     * This affects how duplicates are removed by the action bean.
-     */
-    public static Comparator<DesignationDto> BY_BARCODE_ID_DATE = new Comparator<DesignationDto>() {
-        @Override
-        public int compare(DesignationDto o1, DesignationDto o2) {
-            int barcodeCompare = o1.getBarcode().compareTo(o2.getBarcode());
-            int idCompare = o1.getDesignationId() == null ?
-                    (o2.getDesignationId() == null ? 0 : -1) :
-                    (o2.getDesignationId() == null ? 1 : o1.getDesignationId().compareTo(o2.getDesignationId()));
-            return barcodeCompare != 0 ? barcodeCompare : idCompare != 0 ? idCompare :
-                    o2.getCreatedOn().compareTo(o1.getCreatedOn());
-        }
-    };
-
-    /**
-     * Splits dto into two. The orignal gets the allocated lane count and the new one gets the unallocated count.
+     * Splits dto into two so that the orignal gets the allocated lane count and
+     * the new one gets the unallocated lane count.
+     *
      * @param allocatedLanes the new number of lanes on This.
      * @return  a new dto like This but with null entity id and a lane count of the unallocated number of lanes.
      */
@@ -336,14 +318,6 @@ public class DesignationDto implements LabBatchEjb.FctDto, Cloneable {
         this.tubeEventId = tubeEventId;
     }
 
-    public boolean isRepeatedBarcode() {
-        return repeatedBarcode;
-    }
-
-    public void setRepeatedBarcode(boolean repeatedBarcode) {
-        this.repeatedBarcode = repeatedBarcode;
-    }
-
     public boolean isAllocated() {
         return allocated;
     }
@@ -357,4 +331,168 @@ public class DesignationDto implements LabBatchEjb.FctDto, Cloneable {
     public int getAllocationOrder() {
         return allocationOrder;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof DesignationDto)) {
+            return false;
+        }
+
+        DesignationDto that = (DesignationDto) o;
+
+        if (getStatus() != that.getStatus()) {
+            return false;
+        }
+        if (getSequencerModel() != that.getSequencerModel()) {
+            return false;
+        }
+        if (getIndexType() != that.getIndexType()) {
+            return false;
+        }
+        if (getPriority() != that.getPriority()) {
+            return false;
+        }
+        if (getNumberCycles() != null ? !getNumberCycles().equals(that.getNumberCycles()) :
+                that.getNumberCycles() != null) {
+            return false;
+        }
+        if (getNumberLanes() != null ? !getNumberLanes().equals(that.getNumberLanes()) :
+                that.getNumberLanes() != null) {
+            return false;
+        }
+        if (getReadLength() != null ? !getReadLength().equals(that.getReadLength()) : that.getReadLength() != null) {
+            return false;
+        }
+        if (getLoadingConc() != null ? !getLoadingConc().equals(that.getLoadingConc()) :
+                that.getLoadingConc() != null) {
+            return false;
+        }
+        if (getPoolTest() != null ? !getPoolTest().equals(that.getPoolTest()) : that.getPoolTest() != null) {
+            return false;
+        }
+        if (getBarcode() != null ? !getBarcode().equals(that.getBarcode()) : that.getBarcode() != null) {
+            return false;
+        }
+        if (getLcset() != null ? !getLcset().equals(that.getLcset()) : that.getLcset() != null) {
+            return false;
+        }
+        if (getDesignationId() != null ? !getDesignationId().equals(that.getDesignationId()) :
+                that.getDesignationId() != null) {
+            return false;
+        }
+        return getTubeEventId() != null ? getTubeEventId().equals(that.getTubeEventId()) :
+                that.getTubeEventId() == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = getStatus() != null ? getStatus().hashCode() : 0;
+        result = 31 * result + (getSequencerModel() != null ? getSequencerModel().hashCode() : 0);
+        result = 31 * result + (getIndexType() != null ? getIndexType().hashCode() : 0);
+        result = 31 * result + (getPriority() != null ? getPriority().hashCode() : 0);
+        result = 31 * result + (getNumberCycles() != null ? getNumberCycles().hashCode() : 0);
+        result = 31 * result + (getNumberLanes() != null ? getNumberLanes().hashCode() : 0);
+        result = 31 * result + (getReadLength() != null ? getReadLength().hashCode() : 0);
+        result = 31 * result + (getLoadingConc() != null ? getLoadingConc().hashCode() : 0);
+        result = 31 * result + (getPoolTest() != null ? getPoolTest().hashCode() : 0);
+        result = 31 * result + (getBarcode() != null ? getBarcode().hashCode() : 0);
+        result = 31 * result + (getLcset() != null ? getLcset().hashCode() : 0);
+        result = 31 * result + (getDesignationId() != null ? getDesignationId().hashCode() : 0);
+        result = 31 * result + (getTubeEventId() != null ? getTubeEventId().hashCode() : 0);
+        return result;
+    }
+
+
+    /** Defines how designations may be combined on a flowcell. */
+    public static class FctGrouping {
+        private IlluminaFlowcell.FlowcellType flowcellType;
+        private Integer numberCycles;
+        private Integer readLength;
+        private FlowcellDesignation.IndexType indexType;
+        private String regulatoryDesignation;
+
+        public FctGrouping(DesignationDto dto) {
+            flowcellType = dto.getSequencerModel();
+            numberCycles = dto.getNumberCycles();
+            readLength = dto.getReadLength();
+            indexType = dto.getIndexType();
+            regulatoryDesignation = dto.getRegulatoryDesignation();
+        }
+
+        public IlluminaFlowcell.FlowcellType getFlowcellType() {
+            return flowcellType;
+        }
+
+        public Integer getNumberCycles() {
+            return numberCycles;
+        }
+
+        public Integer getReadLength() {
+            return readLength;
+        }
+
+        public FlowcellDesignation.IndexType getIndexType() {
+            return indexType;
+        }
+
+        public String getRegulatoryDesignation() {
+            return regulatoryDesignation;
+        }
+
+        @Override
+        public String toString() {
+            return "FctGrouping{" +
+                   "flowcellType=" + flowcellType +
+                   ", numberCycles=" + numberCycles +
+                   ", readLength=" + readLength +
+                   ", indexType=" + indexType +
+                   ", regulatoryDesignation='" + regulatoryDesignation + '\'' +
+                   '}';
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (!(o instanceof FctGrouping)) {
+                return false;
+            }
+
+            FctGrouping that = (FctGrouping) o;
+
+            if (getFlowcellType() != that.getFlowcellType()) {
+                return false;
+            }
+            if (getNumberCycles() != null ? !getNumberCycles().equals(that.getNumberCycles()) :
+                    that.getNumberCycles() != null) {
+                return false;
+            }
+            if (getReadLength() != null ? !getReadLength().equals(that.getReadLength()) :
+                    that.getReadLength() != null) {
+                return false;
+            }
+            if (getIndexType() != that.getIndexType()) {
+                return false;
+            }
+            return getRegulatoryDesignation() != null ?
+                    getRegulatoryDesignation().equals(that.getRegulatoryDesignation()) :
+                    that.getRegulatoryDesignation() == null;
+
+        }
+
+        @Override
+        public int hashCode() {
+            int result = getFlowcellType() != null ? getFlowcellType().hashCode() : 0;
+            result = 31 * result + (getNumberCycles() != null ? getNumberCycles().hashCode() : 0);
+            result = 31 * result + (getReadLength() != null ? getReadLength().hashCode() : 0);
+            result = 31 * result + (getIndexType() != null ? getIndexType().hashCode() : 0);
+            result = 31 * result + (getRegulatoryDesignation() != null ? getRegulatoryDesignation().hashCode() : 0);
+            return result;
+        }
+    }
+
 }

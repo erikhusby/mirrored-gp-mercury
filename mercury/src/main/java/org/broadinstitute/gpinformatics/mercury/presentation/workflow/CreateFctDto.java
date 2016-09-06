@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.workflow;
 
-import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
-import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
+import org.broadinstitute.gpinformatics.mercury.presentation.run.FctDto;
 
 import javax.annotation.Nonnull;
 import java.math.BigDecimal;
@@ -13,7 +12,7 @@ import java.util.Set;
 /**
  * Represents a table row in Create FCT page.
  */
-public class CreateFctDto implements LabBatchEjb.FctDto, Cloneable {
+public class CreateFctDto implements FctDto, Cloneable {
     private String barcode;
     private String lcset;
     private String additionalLcsets;
