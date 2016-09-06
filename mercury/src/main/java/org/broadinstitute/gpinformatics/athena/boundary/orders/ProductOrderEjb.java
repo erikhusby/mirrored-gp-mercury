@@ -242,7 +242,7 @@ public class ProductOrderEjb {
                 }
                 productOrderDao.persist(editedProductOrder);
             } else {
-                messageCollection.addInfo("This order is inelligible to post to SAP: ");
+                messageCollection.addInfo("The quote "+ editedProductOrder.getQuoteId() +" makes this order inelligible to post to SAP: ");
             }
         } catch (org.broadinstitute.sap.services.SAPIntegrationException|QuoteServerException|QuoteNotFoundException e) {
             StringBuilder errorMessage = new StringBuilder();
