@@ -376,8 +376,6 @@ mercury:
       collaborate: RC
       bass:     PROD
       submission: DEV
-      infiniumStarter: QA
-
 
     PROD:
 
