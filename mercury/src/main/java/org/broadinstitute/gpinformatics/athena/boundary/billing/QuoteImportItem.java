@@ -31,6 +31,7 @@ public class QuoteImportItem {
     private Date startRange;
     private Date endRange;
     private final Set<String> workItems = new HashSet<>();
+    private final Set<String> sapItems = new HashSet<>();
     private Product product;
     private ProductOrder productOrder;
 
@@ -51,6 +52,7 @@ public class QuoteImportItem {
                 updateDateRange(ledger.getWorkCompleteDate());
                 if (StringUtils.isNotBlank(ledger.getWorkItem())) {
                     workItems.add(ledger.getWorkItem());
+                    sapItems.add(ledger.getSapDeliveryDocumentId());
                 }
             }
         }
@@ -59,6 +61,10 @@ public class QuoteImportItem {
     public Collection<String> getWorkItems() {
         return Collections.unmodifiableCollection(workItems);
     }
+    public Collection<String> getSapItems() {
+        return Collections.unmodifiableCollection(sapItems);
+    }
+
 
     public String getChargedAmountForPdo(@Nonnull String pdoBusinessKey) {
         double quantity = 0;

@@ -50,6 +50,7 @@ public class BillingResultTest {
         Assert.assertFalse(quoteImportItem.getLedgerItems().isEmpty(),"No ledger items were included in this test.  Who knows if the work items were saved?");
         for (LedgerEntry ledgerEntry : quoteImportItem.getLedgerItems()) {
             Assert.assertEquals(ledgerEntry.getWorkItem(),WORK_ITEM,"Work item from the quote server was not propagated to ledger entries.  The ability to compare quote server data with mercury may be broken.");
+            Assert.assertEquals(ledgerEntry.getSapDeliveryDocumentId(), SAP_DOC_ID, "Document Id from SAP was not propogated to ledger entries.");
         }
     }
 
