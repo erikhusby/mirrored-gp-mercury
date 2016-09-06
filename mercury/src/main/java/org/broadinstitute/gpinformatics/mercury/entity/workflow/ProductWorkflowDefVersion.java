@@ -303,21 +303,28 @@ public class ProductWorkflowDefVersion implements Serializable {
         return mapNameToLabEvents.get(eventTypeName);
     }
 
+    public enum BucketingSource {
+        PDO_SUBMISSION,
+        LAB_BATCH_WS
+    }
+
     /**
      * Scans the workflow's processes for a matching bucket.
      *
      * @return a map of buckets to vessels.
      */
     public Map<WorkflowBucketDef, Collection<LabVessel>> getInitialBucket(ProductOrder productOrder,
-                                                                          List<LabVessel> labVessels) {
+            List<LabVessel> labVessels, BucketingSource bucketingSource) {
 
         Multimap<WorkflowBucketDef, LabVessel> vesselBuckets = HashMultimap.create();
         for (WorkflowProcessDef workflowProcessDef : workflowProcessDefs) {
             for (WorkflowBucketDef bucketDef : workflowProcessDef.getEffectiveVersion().getBuckets()) {
-                for (LabVessel vessel : labVessels) {
-                    if (!vesselBuckets.containsValue(vessel)) {
-                        if (bucketDef.meetsBucketCriteria(vessel, productOrder)) {
-                            vesselBuckets.put(bucketDef, vessel);
+                if (bucketingSource != BucketingSource.PDO_SUBMISSION || bucketDef.isAutoBucketFromPdoSubmission()) {
+                    for (LabVessel vessel : labVessels) {
+                        if (!vesselBuckets.containsValue(vessel)) {
+                            if (bucketDef.meetsBucketCriteria(vessel, productOrder)) {
+                                vesselBuckets.put(bucketDef, vessel);
+                            }
                         }
                     }
                 }
