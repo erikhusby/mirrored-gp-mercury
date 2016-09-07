@@ -79,6 +79,7 @@ import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructur
 import org.broadinstitute.gpinformatics.mercury.test.builders.CrspPicoEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.CrspRiboPlatingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.FPEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.IceEntityBuilder;
@@ -1610,6 +1611,27 @@ public class LabEventTest extends BaseEventTest {
                                                                                       mapBarcodeToTube, indexPlate);
         fluidigmMessagesBuilder.buildJaxb();
         fluidigmMessagesBuilder.buildObjectGraph();
+    }
+
+    /**
+     * Build object graph for FP messages
+     */
+    @Test(groups = {TestGroups.DATABASE_FREE})
+    public void testFP() {
+        expectedRouting = SystemRouter.System.MERCURY;
+        int numSamples = NUM_POSITIONS_IN_RACK * 4;
+        ProductOrder productOrder = ProductOrderTestFactory.buildFPProductOrder(numSamples);
+        List<StaticPlate> sourcePlates = buildSamplePlates(productOrder, "FP_PCR1Plate");
+        int numSampleInstances = 0;
+        for (StaticPlate sourceplate: sourcePlates) {
+            int sampleInstances = sourceplate.getSampleInstancesV2().size();
+            numSampleInstances += sampleInstances;
+        }
+        FPEntityBuilder fpEntityBuilder = runFPProcess(sourcePlates, numSampleInstances, "FP");
+        LabVessel finalTube =
+                fpEntityBuilder.getFinalPoolingRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
+        Set<SampleInstanceV2> sampleInstancesV2 = finalTube.getSampleInstancesV2();
+        Assert.assertEquals(sampleInstancesV2.size(), numSampleInstances, "Wrong number of sample instances");
     }
 
     /**

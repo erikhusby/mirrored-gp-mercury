@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
+import com.opencsv.CSVReader;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
@@ -30,6 +31,8 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -1401,5 +1404,79 @@ public class LabVesselFixupTest extends Arquillian {
 
         utx.commit();
     }
+
+    /**
+     * Reads container barcodes and plate names from mercury/src/test/resources/testdata/FixupPlateNames.txt.
+     */
+    @Test(enabled = false)
+    public void fixupGplim4276() throws Exception {
+        /*
+        Use this BSP query to fill the file
+        SELECT DISTINCT
+            'CO-'||br.RECEPTACLE_ID,
+            br.RECEPTACLE_NAME
+        FROM
+            bsp.bsp_export_job bej
+            INNER JOIN bsp.bsp_receptacle br
+                ON   br.receptacle_id = bej.receptacle_id
+        WHERE
+            bej.export_type = 'MERCURY'
+        ORDER BY
+          1;
+         */
+        userBean.loginOSUser();
+        utx.begin();
+
+        InputStream csvInputStream = VarioskanParserTest.getTestResource("FixupPlateNames.txt");
+        CSVReader reader = new CSVReader(new InputStreamReader(csvInputStream));
+        String [] nextLine;
+        while ((nextLine = reader.readNext()) != null) {
+            LabVessel labVessel = labVesselDao.findByIdentifier(nextLine[0]);
+            if (labVessel == null) {
+                System.out.println(nextLine[0] + " not found");
+            } else {
+                System.out.println("updating " + nextLine[0]);
+                labVessel.setName(nextLine[1]);
+            }
+        }
+        FixupCommentary fixupCommentary = new FixupCommentary("GPLIM-4276 - set plate names from file");
+        barcodedTubeDao.persist(fixupCommentary);
+        barcodedTubeDao.flush();
+
+        utx.commit();
+    }
+    @Test(enabled = false)
+    public void fixupGplim4301() throws Exception {
+        // the source tubeformation for the ShearingTransfer doesn't seem to have been used in any other transfer,
+        // so it can be altered
+        userBean.loginOSUser();
+        utx.begin();
+        BarcodedTube barcodedTube = barcodedTubeDao.findByBarcode("0206882951");
+        boolean found = false;
+        for (VesselContainer<?> vesselContainer : barcodedTube.getVesselContainers()) {
+            for (LabEvent labEvent : vesselContainer.getTransfersFrom()) {
+                if (labEvent.getLabEventType() == LabEventType.SHEARING_TRANSFER) {
+                    found = true;
+                    TubeFormation tubeFormation = (TubeFormation) vesselContainer.getEmbedder();
+                    Map<VesselPosition, BarcodedTube> mapPositionToVessel =
+                            (Map<VesselPosition, BarcodedTube>) vesselContainer.getMapPositionToVessel();
+                    BarcodedTube barcodedTubeAtG3 = mapPositionToVessel.get(VesselPosition.G03);
+                    Assert.assertEquals("0206882951", barcodedTubeAtG3.getLabel());
+                    System.out.println("Moving tube " + barcodedTubeAtG3.getLabVesselId() + " from G03 to B11");
+                    changePosition(mapPositionToVessel, VesselPosition.G03, VesselPosition.B11);
+                    tubeFormation.setLabel(TubeFormation.makeDigest(mapPositionToVessel));
+                }
+            }
+        }
+        if (!found) {
+            throw new RuntimeException("Failed to find tube formation for shearing transfer");
+        }
+        FixupCommentary fixupCommentary = new FixupCommentary("GPLIM-4301 - Move sample from G03 to B11");
+        barcodedTubeDao.persist(fixupCommentary);
+        barcodedTubeDao.flush();
+
+        utx.commit();
+    }
+
 
 }

@@ -76,7 +76,6 @@ public abstract class TransferTraverserCriteria {
 
         /**
          * The vessel/event in the traversal path.
-         * @return
          */
         public LabVessel.VesselEvent getVesselEvent() {
             return vesselEvent;
@@ -831,21 +830,23 @@ public abstract class TransferTraverserCriteria {
      */
     public static class LabEventDescendantCriteria extends TransferTraverserCriteria {
 
-        private final Set<LabEvent> labEvents = new TreeSet<LabEvent>( LabEvent.BY_EVENT_DATE_LOC );
+        private final Set<LabEvent> labEvents = new TreeSet<>(LabEvent.BY_EVENT_DATE_LOC);
+        private List<String> lcsetNames;
 
         @Override
         public TraversalControl evaluateVesselPreOrder(Context context) {
             LabVessel contextVessel = context.getContextVessel();
-            VesselContainer contextVesselContainer = context.getContextVesselContainer();
+            VesselContainer<?> contextVesselContainer = context.getContextVesselContainer();
             LabVessel.VesselEvent contextVesselEvent = context.getVesselEvent();
 
             if(contextVesselEvent != null ) {
-                labEvents.add(contextVesselEvent.getLabEvent());
+                LabEvent labEvent = contextVesselEvent.getLabEvent();
+                filterLcset(labEvent);
             }
 
             if( contextVessel != null ) {
                 labEvents.addAll(contextVessel.getInPlaceLabEvents());
-                for (VesselContainer containerVessel : contextVessel.getVesselContainers()) {
+                for (VesselContainer<?> containerVessel : contextVessel.getVesselContainers()) {
                     // In place events may apply to containers
                     labEvents.addAll(containerVessel.getEmbedder().getInPlaceLabEvents());
                 }
@@ -859,10 +860,12 @@ public abstract class TransferTraverserCriteria {
 
                     // Look for what comes in from the side (e.g. IndexedAdapterLigation, BaitAddition)
                     for (LabEvent containerEvent : containerVessel.getTransfersTo()) {
-                        labEvents.add(containerEvent);
+                        filterLcset(containerEvent);
                         for (LabVessel ancestorLabVessel : containerEvent.getSourceLabVessels()) {
                             if( ancestorLabVessel.getContainerRole() != null ){
-                                labEvents.addAll(ancestorLabVessel.getContainerRole().getEmbedder().getTransfersTo());
+                                for (LabEvent labEvent : ancestorLabVessel.getContainerRole().getEmbedder().getTransfersTo()) {
+                                    filterLcset(labEvent);
+                                }
                             }
                         }
                     }
@@ -870,6 +873,19 @@ public abstract class TransferTraverserCriteria {
             }
 
             return TraversalControl.ContinueTraversing;
+        }
+
+        private void filterLcset(LabEvent labEvent) {
+            if (lcsetNames == null) {
+                labEvents.add(labEvent);
+            } else {
+                for (LabBatch labBatch : labEvent.getComputedLcSets()) {
+                    if (lcsetNames.contains(labBatch.getBatchName())) {
+                        labEvents.add(labEvent);
+                        break;
+                    }
+                }
+            }
         }
 
         @Override
@@ -880,5 +896,8 @@ public abstract class TransferTraverserCriteria {
             return labEvents;
         }
 
+        public void setLcsetNames(List<String> lcsetNames) {
+            this.lcsetNames = lcsetNames;
+        }
     }
 }

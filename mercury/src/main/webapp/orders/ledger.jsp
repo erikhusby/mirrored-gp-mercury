@@ -15,6 +15,42 @@
         #filters {
             margin-top: 6px;
         }
+        #filters .nav {
+            margin-bottom: 5px;
+        }
+        #filters .nav li.dropdown {
+            margin-right: 1em;
+        }
+        #filters .nav li {
+            font-size: 14px;
+        }
+        #filters .nav li.dropdown > span {
+            font-size: 14px;
+        }
+        #filters .nav > li > a {
+            font-size: 14px;
+            padding-top: 6px;
+            padding-bottom: 6px;
+            padding-left: 8px;
+            padding-right: 8px;
+            text-decoration: none;
+        }
+        #filters .nav .dropdownLabel {
+            line-height: 14px;
+            padding-top: 6px;
+            padding-bottom: 6px;
+            margin-top: 2px;
+            margin-bottom: 2px;
+        }
+        #filters .dropdown-menu a {
+            clear: none;
+            font-size: 14px;
+        }
+        #filters .dropdown-menu .checkContainer {
+            float: left;
+            padding-left: 3px;
+            padding-top: 2px;
+        }
 
         /* Prevent sample rows from wrapping so that they're all the same height. */
         .table th, .table td {
@@ -187,9 +223,16 @@
                 'modified': 4
             };
             $j('#filters .filterOption').click(function(event) {
-                var target = $j(event.target);
-                var filterIndex = filterIndexes[target.attr('name')];
-                var filterFunction = window[target.attr('value')];
+                var $target = $j(event.target);
+                var filterIndex = filterIndexes[$target.attr('name')];
+                var filterFunction = window[$target.attr('value')];
+                var filterText = $target.text()
+                var pill = $target.parentsUntil('li.dropdown').siblings('a');
+                var check = $target.siblings('div');
+                var allChecks = $target.parentsUntil('li.dropdown', 'ul.dropdown-menu').find('.checkContainer');
+                pill.html(filterText + ' <b class="caret">');
+                allChecks.html('');
+                check.html('<i class="icon-ok"></i>');
                 ledgerTable.dataTableExt.afnFiltering[filterIndex] = filterFunction;
                 ledgerTable.fnDraw();
                 event.preventDefault();
@@ -657,51 +700,53 @@
         <%-- Datatable filters --%>
         <div id="filters" class="row-fluid" style="display: none;">
             <div class="span11">
-                Risk:
-                <span id="riskRadios" class="filterButtonSet">
-                    <input type="radio" id="riskOption" name="risk" value="riskFilter" class="filterOption">
-                    <label for="riskOption">Yes</label>
-                    <input type="radio" id="noRiskOption" name="risk" value="noRiskFilter" class="filterOption">
-                    <label for="noRiskOption">No</label>
-                    <input type="radio" id="allRiskOption" name="risk" value="allFilter" class="filterOption" checked="checked">
-                    <label for="allRiskOption">All</label>
-                </span>
-                Coverage:
-                <span id="coverageRadios" class="filterButtonSet">
-                    <input type="radio" id="coverageMetOption" name="coverage" value="coverageMetFilter" class="filterOption">
-                    <label for="coverageMetOption">Met</label>
-                    <input type="radio" id="notCoverageMetOption" name="coverage" value="notCoverageMetFilter" class="filterOption">
-                    <label for="notCoverageMetOption">Not Met</label>
-                    <input type="radio" id="allCoverageOption" name="coverage" value="allFilter" class="filterOption" checked="checked">
-                    <label for="allCoverageOption">All</label>
-                </span>
-                Billed:
-                <span id="billedRadios" class="filterButtonSet">
-                    <input type="radio" id="billedOption" name="billed" value="billedFilter" class="filterOption">
-                    <label for="billedOption">Billed</label>
-                    <input type="radio" id="notBilledOption" name="billed" value="notBilledFilter" class="filterOption">
-                    <label for="notBilledOption">Not Billed</label>
-                    <input type="radio" id="allBilledOption" name="billed" value="allFilter" class="filterOption" checked="checked">
-                    <label for="allBilledOption">All</label>
-                </span>
-                Abandoned:
-                <span id="abandonedRadios" class="filterButtonSet">
-                    <input type="radio" id="abandonedOption" name="abandoned" value="abandonedFilter" class="filterOption">
-                    <label for="abandonedOption">Yes</label>
-                    <input type="radio" id="notAbandonedOption" name="abandoned" value="notAbandonedFilter" class="filterOption">
-                    <label for="notAbandonedOption">No</label>
-                    <input type="radio" id="allAbandonedOption" name="abandoned" value="allFilter" class="filterOption" checked="checked">
-                    <label for="allAbandonedOption">All</label>
-                </span>
-                Modified:
-                <span id="modifiedRadios" class="filterButtonSet">
-                    <input type="radio" id="modifiedOption" name="modified" value="modifiedFilter" class="filterOption">
-                    <label for="modifiedOption">Modified</label>
-                    <input type="radio" id="notModifiedOption" name="modified" value="notModifiedFilter" class="filterOption">
-                    <label for="notModifiedOption">Not Modified</label>
-                    <input type="radio" id="allModifiedOption" name="modified" value="allFilter" class="filterOption" checked="checked">
-                    <label for="allModifiedOption">All</label>
-                </span>
+                <ul class="nav nav-pills">
+                    <li class="dropdownLabel">Risk:</li>
+                    <li class="dropdown">
+                        <a class="dropdown-toggle" data-toggle="dropdown" href="#">Any <b class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                            <li><div class="checkContainer"><i class="icon-ok"></i></div><a tabindex="-1" href="#" class="filterOption" name="risk" value="allFilter">Any</a></li>
+                            <li><div class="checkContainer"></div><a tabindex="-1" href="#" class="filterOption" name="risk" value="riskFilter">Yes</a></li>
+                            <li><div class="checkContainer"></div><a tabindex="-1" href="#" class="filterOption" name="risk" value="noRiskFilter">No</a></li>
+                        </ul>
+                    </li>
+                    <li class="dropdownLabel">Coverage:</li>
+                    <li class="dropdown">
+                        <a class="dropdown-toggle" data-toggle="dropdown" href="#">Any <b class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                            <li><div class="checkContainer"><i class="icon-ok"></i></div><a tabindex="-1" href="#" class="filterOption" name="coverage" value="allFilter">Any</a></li>
+                            <li><div class="checkContainer"></div><a tabindex="-1" href="#" class="filterOption" name="coverage" value="coverageMetFilter">Met</a></li>
+                            <li><div class="checkContainer"></div><a tabindex="-1" href="#" class="filterOption" name="coverage" value="notCoverageMetFilter">Not Met</a></li>
+                        </ul>
+                    </li>
+                    <li class="dropdownLabel">Billed:</li>
+                    <li class="dropdown">
+                        <a class="dropdown-toggle" data-toggle="dropdown" href="#">Any <b class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                            <li><div class="checkContainer"><i class="icon-ok"></i></div><a tabindex="-1" href="#" class="filterOption" name="billed" value="allFilter">Any</a></li>
+                            <li><div class="checkContainer"></div><a tabindex="-1" href="#" class="filterOption" name="billed" value="billedFilter">Yes</a></li>
+                            <li><div class="checkContainer"></div><a tabindex="-1" href="#" class="filterOption" name="billed" value="notBilledFilter">No</a></li>
+                        </ul>
+                    </li>
+                    <li class="dropdownLabel">Abandoned:</li>
+                    <li class="dropdown">
+                        <a class="dropdown-toggle" data-toggle="dropdown" href="#">Any <b class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                            <li><div class="checkContainer"><i class="icon-ok"></i></div><a tabindex="-1" href="#" class="filterOption" name="abandoned" value="allFilter">Any</a></li>
+                            <li><div class="checkContainer"></div><a tabindex="-1" href="#" class="filterOption" name="abandoned" value="abandonedFilter">Yes</a></li>
+                            <li><div class="checkContainer"></div><a tabindex="-1" href="#" class="filterOption" name="abandoned" value="notAbandonedFilter">No</a></li>
+                        </ul>
+                    </li>
+                    <li class="dropdownLabel">Modified:</li>
+                    <li class="dropdown">
+                        <a class="dropdown-toggle" data-toggle="dropdown" href="#">Any <b class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                            <li><div class="checkContainer"><i class="icon-ok"></i></div><a tabindex="-1" href="#" class="filterOption" name="modified" value="allFilter">Any</a></li>
+                            <li><div class="checkContainer"></div><a tabindex="-1" href="#" class="filterOption" name="modified" value="modifiedFilter">Yes</a></li>
+                            <li><div class="checkContainer"></div><a tabindex="-1" href="#" class="filterOption" name="modified" value="notModifiedFilter">No</a></li>
+                        </ul>
+                    </li>
+                </ul>
             </div>
             <div class="span1" style="text-align: right;">
                 <c:choose>

@@ -81,6 +81,7 @@ public class LabBatchEjb {
     public static final String SPLIT_DESIGNATION_MESSAGE =
             "{0} designation for {1} got partially allocated. A newly created designation" +
             " now represents the unallocated lanes.";
+    public static final String DESIGNATION_ERROR_MSG = "Designated tube {0} has invalid ";
 
     private static final Log logger = LogFactory.getLog(LabBatchEjb.class);
 
@@ -686,13 +687,12 @@ public class LabBatchEjb {
         boolean hasError = false;
 
         // Validates dtos and groups them by how they are permitted to be combined on a flowcell.
-        Multimap<DesignationDto.FctGrouping, Pair<FctDto, LabVessel>> typeMap = HashMultimap.create();
+        Multimap<String, Pair<FctDto, LabVessel>> typeMap = HashMultimap.create();
         for (DesignationDto designationDto : designationDtos) {
             if (designationDto.isSelected()) {
-                LabVessel labVessel = labVesselDao.findByIdentifier(designationDto.getBarcode());
                 if (isValidDto(designationDto, messageReporter)) {
-                    typeMap.put(new DesignationDto.FctGrouping(designationDto),
-                            Pair.of((FctDto)designationDto, labVessel));
+                    LabVessel labVessel = labVesselDao.findByIdentifier(designationDto.getBarcode());
+                    typeMap.put(designationDto.fctGrouping(), Pair.of((FctDto)designationDto, labVessel));
                 } else {
                     hasError = true;
                 }
@@ -704,13 +704,16 @@ public class LabBatchEjb {
         // Any invalid dtos will stop all FCT creation.
         List<MutablePair<String, String>> fctUrls = new ArrayList<>();
         if (!hasError) {
-            int unallocatedLaneCount = 0;
-            int splitCount = 0;
-            for (DesignationDto.FctGrouping fctGrouping : typeMap.keySet()) {
+            for (String fctGrouping : typeMap.keySet()) {
+                int unallocatedLaneCount = 0;
+                int splitCount = 0;
+                DesignationDto firstDto = (DesignationDto)typeMap.get(fctGrouping).iterator().next().getLeft();
+                IlluminaFlowcell.FlowcellType flowcellType = firstDto.getSequencerModel();
+
                 Pair<Multimap<LabBatch, String>, FctDto> fctReturnPair = makeFctDaoFree(typeMap.get(fctGrouping),
-                        fctGrouping.getFlowcellType(), false);
+                        flowcellType, false);
                 for (LabBatch fctBatch : fctReturnPair.getLeft().keySet()) {
-                    createLabBatch(fctBatch, userName, fctGrouping.getFlowcellType().getIssueType(), messageReporter);
+                    createLabBatch(fctBatch, userName, flowcellType.getIssueType(), messageReporter);
                     for (String lcset : fctReturnPair.getLeft().get(fctBatch)) {
                         linkJiraBatchToTicket(lcset, fctBatch);
                     }
@@ -734,8 +737,8 @@ public class LabBatchEjb {
                 designationUtils.updateDesignationsAndDtos(designationDtos,
                         EnumSet.allOf(FlowcellDesignation.Status.class), designationTubeEjb);
                 if (unallocatedLaneCount > 0) {
-                    int emptyLaneCount = fctGrouping.getFlowcellType().getVesselGeometry().getVesselPositions().length
-                                         - unallocatedLaneCount;
+                    int emptyLaneCount = flowcellType.getVesselGeometry().getVesselPositions().length -
+                                         unallocatedLaneCount;
                     messageReporter.addMessage(MessageFormat.format(PARTIAL_FCT_MESSAGE, fctGrouping.toString(),
                             emptyLaneCount));
 
@@ -751,7 +754,8 @@ public class LabBatchEjb {
 
     private boolean isValidDto(DesignationDto designationDto, MessageReporter messageReporter) {
         boolean isValid = true;
-        String errorString = "Designated tube " + designationDto.getBarcode() + " has invalid ";
+        String errorString = MessageFormat.format(DESIGNATION_ERROR_MSG, designationDto.getBarcode());
+
         if (designationDto.getStatus() == null || designationDto.getStatus() != FlowcellDesignation.Status.QUEUED) {
             errorString += (isValid ? "" : "and ") + "status (" + designationDto.getStatus() + ") ";
             isValid = false;
@@ -776,6 +780,7 @@ public class LabBatchEjb {
             errorString += (isValid ? "" : "and ") + "sequencer model (null) ";
             isValid = false;
         }
+
         if (!isValid) {
             messageReporter.addMessage(errorString);
         }

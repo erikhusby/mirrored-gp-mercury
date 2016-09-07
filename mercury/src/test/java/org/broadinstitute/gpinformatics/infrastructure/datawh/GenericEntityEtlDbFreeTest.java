@@ -40,6 +40,7 @@ public class GenericEntityEtlDbFreeTest {
     private final long entityId = 1122334455L;
     private final String label = "012345678";
     private final LabVessel.ContainerType type = LabVessel.ContainerType.TUBE;
+    private String vesselName = "vessel_name";
 
     private final String datafileDir = System.getProperty("java.io.tmpdir");
 
@@ -93,6 +94,7 @@ public class GenericEntityEtlDbFreeTest {
         expect(obj.getLabVesselId()).andReturn(entityId).times(2);
         expect(obj.getLabel()).andReturn(label);
         expect(obj.getType()).andReturn(type);
+        expect(obj.getName()).andReturn(vesselName);
 
         auditReader.clear();
 
@@ -154,6 +156,7 @@ public class GenericEntityEtlDbFreeTest {
         expect(obj.getLabVesselId()).andReturn(entityId).times(2);
         expect(obj.getLabel()).andReturn(label).times(2);
         expect(obj.getType()).andReturn(type).times(2);
+        expect(obj.getName()).andReturn(vesselName).times(2);
         replay(mocks);
 
         tst.setAuditReaderDao(auditReader);

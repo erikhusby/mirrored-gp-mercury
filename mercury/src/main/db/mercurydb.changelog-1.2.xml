@@ -594,6 +594,17 @@
       <createSequence sequenceName="seq_attribute_definition" schemaName="mercury" startValue="1" incrementBy="50"/>
     </changeSet>
 
+    <changeSet id="GPLIM-4276-1" author="thompson">
+        <addColumn schemaName="mercury" tableName="lab_vessel">
+            <column name="name" type="varchar2(255)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-4276-2" author="thompson">
+        <addColumn schemaName="mercury" tableName="lab_vessel_aud">
+            <column name="name" type="varchar2(255)"/>
+        </addColumn>
+    </changeSet>
+
     <changeSet id="GPLIM-4159-1" author="epolk">
       <createTable schemaName="mercury" tableName="FLOWCELL_DESIGNATION">
 	<column name="designation_id" type="number(19,0)">
@@ -684,7 +695,8 @@
     <changeSet id="GPLIM-4159-7" author="epolk">
       <createTable schemaName="mercury" tableName="DESIGNATION_PRODUCT">
 	<column name="flowcell_designation" type="number(19,0)">
-	  <constraints nullable="false" foreignKeyName="FK_DESIG_PRODUCT_DESIG" references="FLOWCELL_DESIGNATION(designation_id)"/>
+	  <constraints nullable="false" foreignKeyName="FK_DESIG_PRODUCT_DESIG"
+		       references="FLOWCELL_DESIGNATION(designation_id)"/>
 	</column>
 	<column name="products" type="number(19,0)">
 	  <constraints nullable="false"/>
@@ -728,8 +740,10 @@
 
     <changeSet id="GPLIM-4159-12" author="epolk">
       <addForeignKeyConstraint constraintName="FK_DESIG_PRODUCT_PRODUCT"
-			       baseTableName="DESIGNATION_PRODUCT" baseColumnNames="products" baseTableSchemaName="mercury"
-			       referencedTableName="PRODUCT" referencedColumnNames="product_id" referencedTableSchemaName="athena"/>
+			       baseTableName="DESIGNATION_PRODUCT" baseColumnNames="products"
+			       baseTableSchemaName="mercury"
+			       referencedTableName="PRODUCT" referencedColumnNames="product_id"
+			       referencedTableSchemaName="athena"/>
     </changeSet>
 
     <changeSet id="GPLIM-4159-13" author="epolk">

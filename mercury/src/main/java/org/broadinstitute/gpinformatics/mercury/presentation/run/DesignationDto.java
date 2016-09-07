@@ -116,6 +116,13 @@ public class DesignationDto implements Cloneable, FctDto {
         }
     }
 
+
+    /** Defines how designations may be combined on a flowcell. */
+    public String fctGrouping() {
+        return "FctGrouping{" + getSequencerModel() + ", " + getNumberCycles() + " cycles, " +
+               getReadLength() + " readLength, " + getIndexType() + " index, " + getRegulatoryDesignation() + "}";
+    }
+
     public String getAdditionalLcsetJoin() {
         return StringUtils.join(additionalLcsets, DELIMITER);
     }
@@ -403,96 +410,6 @@ public class DesignationDto implements Cloneable, FctDto {
         result = 31 * result + (getDesignationId() != null ? getDesignationId().hashCode() : 0);
         result = 31 * result + (getTubeEventId() != null ? getTubeEventId().hashCode() : 0);
         return result;
-    }
-
-
-    /** Defines how designations may be combined on a flowcell. */
-    public static class FctGrouping {
-        private IlluminaFlowcell.FlowcellType flowcellType;
-        private Integer numberCycles;
-        private Integer readLength;
-        private FlowcellDesignation.IndexType indexType;
-        private String regulatoryDesignation;
-
-        public FctGrouping(DesignationDto dto) {
-            flowcellType = dto.getSequencerModel();
-            numberCycles = dto.getNumberCycles();
-            readLength = dto.getReadLength();
-            indexType = dto.getIndexType();
-            regulatoryDesignation = dto.getRegulatoryDesignation();
-        }
-
-        public IlluminaFlowcell.FlowcellType getFlowcellType() {
-            return flowcellType;
-        }
-
-        public Integer getNumberCycles() {
-            return numberCycles;
-        }
-
-        public Integer getReadLength() {
-            return readLength;
-        }
-
-        public FlowcellDesignation.IndexType getIndexType() {
-            return indexType;
-        }
-
-        public String getRegulatoryDesignation() {
-            return regulatoryDesignation;
-        }
-
-        @Override
-        public String toString() {
-            return "FctGrouping{" +
-                   "flowcellType=" + flowcellType +
-                   ", numberCycles=" + numberCycles +
-                   ", readLength=" + readLength +
-                   ", indexType=" + indexType +
-                   ", regulatoryDesignation='" + regulatoryDesignation + '\'' +
-                   '}';
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) {
-                return true;
-            }
-            if (!(o instanceof FctGrouping)) {
-                return false;
-            }
-
-            FctGrouping that = (FctGrouping) o;
-
-            if (getFlowcellType() != that.getFlowcellType()) {
-                return false;
-            }
-            if (getNumberCycles() != null ? !getNumberCycles().equals(that.getNumberCycles()) :
-                    that.getNumberCycles() != null) {
-                return false;
-            }
-            if (getReadLength() != null ? !getReadLength().equals(that.getReadLength()) :
-                    that.getReadLength() != null) {
-                return false;
-            }
-            if (getIndexType() != that.getIndexType()) {
-                return false;
-            }
-            return getRegulatoryDesignation() != null ?
-                    getRegulatoryDesignation().equals(that.getRegulatoryDesignation()) :
-                    that.getRegulatoryDesignation() == null;
-
-        }
-
-        @Override
-        public int hashCode() {
-            int result = getFlowcellType() != null ? getFlowcellType().hashCode() : 0;
-            result = 31 * result + (getNumberCycles() != null ? getNumberCycles().hashCode() : 0);
-            result = 31 * result + (getReadLength() != null ? getReadLength().hashCode() : 0);
-            result = 31 * result + (getIndexType() != null ? getIndexType().hashCode() : 0);
-            result = 31 * result + (getRegulatoryDesignation() != null ? getRegulatoryDesignation().hashCode() : 0);
-            return result;
-        }
     }
 
 }

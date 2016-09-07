@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.bucket;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
@@ -30,6 +31,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
@@ -261,7 +263,9 @@ public class BucketEjbDbFreeTest {
         setupCoreMocks(Workflow.AGILENT_EXOME_EXPRESS, true);
         pdo.getProduct().setWorkflow(Workflow.NONE);
 
-        Collection<BucketEntry> bucketEntries = bucketEjb.applyBucketCriteria(mockVessels, pdo, "whatever");
+        Pair<ProductWorkflowDefVersion, Collection<BucketEntry>> workflowBucketEntriesPair =
+                bucketEjb.applyBucketCriteria(mockVessels, pdo, "whatever");
+        Collection<BucketEntry> bucketEntries = workflowBucketEntriesPair.getRight();
         Assert.assertTrue(bucketEntries.isEmpty());
     }
 

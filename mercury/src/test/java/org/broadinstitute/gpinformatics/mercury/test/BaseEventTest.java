@@ -629,6 +629,11 @@ public class BaseEventTest {
                                      pondRegRackBarcode, pondRegRack, pondRegTubeBarcodes).invoke();
     }
 
+    public FPEntityBuilder runFPProcess(List<StaticPlate> sourcePlates, int numSamples, String barcodeSuffix) {
+        return new FPEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
+                sourcePlates, numSamples, barcodeSuffix).invoke();
+    }
+
     public InfiniumEntityBuilder runInfiniumProcess(StaticPlate sourcePlate, String barcodeSuffix) {
         return new InfiniumEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
                 sourcePlate, barcodeSuffix).invoke();

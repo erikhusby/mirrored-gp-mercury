@@ -20,6 +20,9 @@ import org.testng.annotations.Test;
 
 import java.util.Arrays;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.MatcherAssert.assertThat;
+
 @Test(groups = TestGroups.DATABASE_FREE)
 public class RegulatoryInfoTest {
     private ResearchProject researchProject=null;
@@ -65,5 +68,16 @@ public class RegulatoryInfoTest {
 
         Assert.assertTrue(researchProject.getRegulatoryInfos().contains(regulatoryInfo1));
         Assert.assertTrue(researchProject.getRegulatoryInfos().contains(regulatoryInfo2));
+    }
+
+    public void testRegulatoryInfoTypeForOrspServiceId() {
+        for (RegulatoryInfo.Type type : RegulatoryInfo.Type.values()) {
+            assertThat(RegulatoryInfo.Type.forOrspServiceId(type.getOrspServiceId()), equalTo(type));
+        }
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testRegulatoryInfoTypeForOrspServiceIdUnknown() {
+        RegulatoryInfo.Type.forOrspServiceId("unknown");
     }
 }

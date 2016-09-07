@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.metrics;
 import edu.mit.broad.core.util.CollectionUtility;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTuple;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationReadGroup;
@@ -53,39 +54,30 @@ public class AggregationMetricsFetcher {
     @PersistenceContext(unitName = "metrics_pu", type = PersistenceContextType.EXTENDED)
     private EntityManager entityManager;
 
-    public List<Aggregation> fetch(List<String> projects, List<String> samples, List<Integer> versions) {
+    public List<Aggregation> fetch(List<SubmissionTuple> tuples) {
         CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
         CriteriaQuery<Aggregation> criteriaQuery = criteriaBuilder.createQuery(Aggregation.class);
 
         Root<Aggregation> root = criteriaQuery.from(Aggregation.class);
-        Collection<Collection<String>> samplesSublists = CollectionUtility.split(samples, MAX_AGGREGATION_FETCHER_QUERY_SIZE);
+        Collection<Collection<SubmissionTuple>> splitTuples =
+                CollectionUtility.split(tuples, MAX_AGGREGATION_FETCHER_QUERY_SIZE);
+
         List<Aggregation> aggregations = new ArrayList<>();
-
-        Iterator<String> projectIterator = projects.iterator();
-        Iterator<Integer> versionIterator = versions.iterator();
-        for (Collection<String> samplesSublist : samplesSublists) {
-            TypedQuery<Aggregation> query = null;
-            List<Predicate> predicateOfOrs = new ArrayList<>();
-            Iterator<String> sampleIterator = samplesSublist.iterator();
-            while (projectIterator.hasNext() && sampleIterator.hasNext() && versionIterator.hasNext()) {
-                String project = projectIterator.next();
-                String sample = sampleIterator.next();
-                Integer version = versionIterator.next();
-                List<Predicate> predicate = new ArrayList<>();
-
-                predicate.add(criteriaBuilder.equal(root.get(Aggregation_.project), project));
-                if (sample != null) {
-                    predicate.add(criteriaBuilder.equal(root.get(Aggregation_.sample), sample));
-                }
-                predicate.add(criteriaBuilder.equal(root.get(Aggregation_.version), version));
-                predicateOfOrs.add(criteriaBuilder.and(predicate.toArray(new Predicate[predicate.size()])));
+        for (Collection<SubmissionTuple> subTuples : splitTuples) {
+            List<Predicate> predicates = new ArrayList<>();
+            for (SubmissionTuple tuple : subTuples) {
+                List<Predicate> tuplePredicates = new ArrayList<>();
+                tuplePredicates.add(criteriaBuilder.equal(root.get(Aggregation_.project), tuple.getProject()));
+                tuplePredicates.add(criteriaBuilder.equal(root.get(Aggregation_.sample), tuple.getSampleName()));
+                tuplePredicates.add(criteriaBuilder.equal(root.get(Aggregation_.version), tuple.getVersion()));
+                predicates.add(criteriaBuilder.and(tuplePredicates.toArray(new Predicate[tuplePredicates.size()])));
             }
 
-            criteriaQuery.where(criteriaBuilder.or(predicateOfOrs.toArray(new Predicate[predicateOfOrs.size()])),
-                    criteriaBuilder.isNull(root.get("library")));
+            criteriaQuery.where(criteriaBuilder.or(predicates.toArray(new Predicate[predicates.size()])),
+                    criteriaBuilder.isNull(root.get(Aggregation_.library)));
 
             List<Aggregation> aggregationResult = new ArrayList<>();
-            query = entityManager.createQuery(criteriaQuery);
+            TypedQuery<Aggregation> query = entityManager.createQuery(criteriaQuery);
 
             try {
                 aggregationResult = query.getResultList();

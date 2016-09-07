@@ -60,6 +60,8 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
         InfiniumChip24("InfiniumChip24", VesselGeometry.INFINIUM_24_CHIP),
         InfiniumChip12("InfiniumChip12", VesselGeometry.INFINIUM_12_CHIP),
         InfiniumChip8("InfiniumChip8", VesselGeometry.INFINIUM_8_CHIP),
+        FlowCell8("Flowcell", VesselGeometry.FLOWCELL1x8),
+        StripTube1x1("StripTube", VesselGeometry.STRIP_TUBE),
         TenXChip("10XChip", VesselGeometry.TEN_X_CHIP);
 
         /**
@@ -133,6 +135,11 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
     public StaticPlate(String label, PlateType plateType) {
         super(label);
         this.plateType = plateType;
+    }
+
+    public StaticPlate(String manufacturerBarcode, PlateType plateType, String plateName) {
+        this(manufacturerBarcode, plateType);
+        this.name = plateName;
     }
 
     /** For Hibernate */
