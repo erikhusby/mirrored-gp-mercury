@@ -264,7 +264,8 @@ public class BucketEjbDbFreeTest {
         pdo.getProduct().setWorkflow(Workflow.NONE);
 
         Pair<ProductWorkflowDefVersion, Collection<BucketEntry>> workflowBucketEntriesPair =
-                bucketEjb.applyBucketCriteria(mockVessels, pdo, "whatever");
+                bucketEjb.applyBucketCriteria(mockVessels, pdo, "whatever",
+                        ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION);
         Collection<BucketEntry> bucketEntries = workflowBucketEntriesPair.getRight();
         Assert.assertTrue(bucketEntries.isEmpty());
     }

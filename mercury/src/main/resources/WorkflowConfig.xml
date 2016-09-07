@@ -2261,13 +2261,15 @@
             <effectiveDate>2015-10-01T10:03:24.085-04:00</effectiveDate>
             <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
                 <name>Infinium Bucket</name>
-                <labEventTypes>PICO_PLATING_BUCKET</labEventTypes>
+                <labEventTypes>INFINIUM_BUCKET</labEventTypes>
                 <optional>true</optional>
                 <bucketEntryEvaluator>
                     <materialTypes>DNA</materialTypes>
                     <materialTypes>DNA_DNA_GENOMIC</materialTypes>
                     <materialTypes>DNA_DNA_SOMATIC</materialTypes>
                 </bucketEntryEvaluator>
+                <autoBucketFromPdoSubmission>false</autoBucketFromPdoSubmission>
+                <!-- No JIRA setup, because BSP creates ARRAY tickets -->
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>InfiniumAmplification</name>
