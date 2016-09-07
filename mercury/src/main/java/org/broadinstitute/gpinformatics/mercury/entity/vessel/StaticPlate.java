@@ -35,6 +35,7 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
         FilterPlate96("FilterPlate96", VesselGeometry.G12x8),
         Fluidigm48_48AccessArrayIFC("Fluidigm48.48AccessArrayIFC", VesselGeometry.FLUIDIGM_48_48),
         IndexedAdapterPlate96("IndexedAdapterPlate96", VesselGeometry.G12x8),
+        IndexedAdapterPlate384("IndexedAdapterPlate384", VesselGeometry.G24x16),
         Matrix96("Matrix96", VesselGeometry.G12x8),
         MiSeqReagentKit("MiseqReagentKit", VesselGeometry.MISEQ_REAGENT_KIT),
         MicrofluorPlate96Well("MicrofluorPlate96Well", VesselGeometry.G12x8),
