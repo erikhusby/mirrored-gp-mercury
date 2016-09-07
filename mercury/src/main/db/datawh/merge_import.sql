@@ -1550,6 +1550,7 @@ AS
                     FROM im_event_fact
                    WHERE library_name IS NOT NULL
                      AND is_delete = 'F'
+                  GROUP BY lab_vessel_id, lab_event_id, library_name, event_date, etl_date
       ) LOOP
         BEGIN
           -- Rows for libraries - we've already deleted any rows related to libraries
