@@ -15,6 +15,10 @@
                 // Set up fields.
                 $j('#lcsetBarcodeText').removeAttr('value');
                 $j('#dateRangeDivNaturalLanguageString').val('Custom');
+
+                $j('input.checkAll:checkbox').change(function(){
+                    rowSelected();
+                });
             });
 
             function lcsetUpdated() {

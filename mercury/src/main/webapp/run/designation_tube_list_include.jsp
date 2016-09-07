@@ -29,7 +29,8 @@
                         <tr>
                             <td class="tinyWidthColumn">
                                 <c:if test="${dto.status.modifiable && dto.regulatoryDesignation ne 'MIXED'}">
-                                    <input type="checkbox" class="shiftCheckbox" style="margin-left: 40%" id="checkbox_${item.index}"/>
+                                    <input type="checkbox" class="shiftCheckbox" style="margin-left: 40%"
+                                           onchange="rowSelected()" id="checkbox_${item.index}"/>
                                 </c:if>
                             </td>
                             <td class="smallerWidthColumn">${dto.status.displayName}</td>

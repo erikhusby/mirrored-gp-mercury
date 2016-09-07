@@ -11,6 +11,10 @@
 
             $j(document).ready(function () {
                 <%@ include file="/run/designation_tube_list_setup_include.jsp" %>
+
+                $j('input.checkAll:checkbox').change(function(){
+                    rowSelected();
+                });
             });
 
             <%@ include file="/run/designation_functions_include.jsp" %>
@@ -40,7 +44,7 @@
                 <c:if test="${not empty actionBean.dtos}">
                     <div class="control-group">
                         <stripes:submit id="createFctBtn" name="createFct" value="Create FCT"
-                                        class="btn btn-primary" onclick="updateHiddenInputs()"
+                                        class="btn btn-primary" onclick="updateHiddenInputs()" disabled="disabled"
                                         title="Creates FCTs from the selected rows."/>
                     </div>
                 </c:if>

@@ -66,8 +66,8 @@
                         </stripes:select>
                     </td>
                     <td>
-                        &nbsp;<stripes:submit id="setMultiple" name="setMultiple" value="Update Selected Rows"
-                                              class="btn btn-primary" onclick="updateHiddenInputs()"
+                        &nbsp;<stripes:submit id="setMultipleBtn" name="setMultiple" value="Update Selected Rows"
+                                              class="btn btn-primary" onclick="updateHiddenInputs()" disabled="disabled"
                                               title="Changes the selected rows and saves them.
  A blank edit field causes no change on the row."/>
                     </td>

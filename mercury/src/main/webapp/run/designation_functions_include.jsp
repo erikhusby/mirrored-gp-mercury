@@ -4,6 +4,18 @@
                 $j('#checkbox_' + rowIndex).prop('checked', true);
             };
 
+            // Enables/disables buttons depending of whether or not rows are selected.
+            function rowSelected() {
+                numberSelected = $j('#count').text();
+                if (numberSelected > 0) {
+                    $j('#setMultipleBtn').removeAttr("disabled");
+                    $j('#createFctBtn').removeAttr("disabled");
+                } else {
+                    $j('#setMultipleBtn').attr("disabled", "disabled");
+                    $j('#createFctBtn').attr("disabled", "disabled");
+                }
+            }
+
             // Copies the value of a control to a corresponding hidden input and then clears the control.
             // This decoupling of checkboxes and selects is necessary because if Stripes updates the
             // action bean using the control's name attribute, then Stripes repopulates the control in
