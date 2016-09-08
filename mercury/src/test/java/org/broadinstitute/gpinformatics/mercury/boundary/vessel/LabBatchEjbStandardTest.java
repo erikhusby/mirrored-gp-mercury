@@ -53,7 +53,6 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb.SPLIT_DESIGNATION_MESSAGE;
-import static org.osgi.util.measurement.Unit.s;
 
 /**
  * TODO scottmat fill in javadoc!!!
@@ -352,7 +351,7 @@ public class LabBatchEjbStandardTest extends Arquillian {
                     tubeBarcodes[idx].add(loadingTube.getLabel());
                 }
                 DesignationDto dto = new DesignationDto(loadingTube, Collections.singleton(labEvent),
-                        "lcsetUrl", lcsets[idx], Collections.<String>emptyList(),
+                        "lcsetUrl", lcsets[idx],
                         Collections.singleton("P-EX-0017"), "startingBatchVessels", "CLINICAL", 23,
                         flowcellTypes[idx], FlowcellDesignation.IndexType.DUAL,
                         167, numberLanes, 151, BigDecimal.TEN, false, new Date(),
@@ -480,7 +479,7 @@ public class LabBatchEjbStandardTest extends Arquillian {
                 int readLength = (index > 3) ? 151 : 152;
 
                 DesignationDto dto = new DesignationDto(loadingTube, Collections.singleton(labEvents.get(index)),
-                        "lcsetUrl", lcset, Collections.<String>emptyList(), Collections.singleton("P-EX-0017"),
+                        "lcsetUrl", lcset, Collections.singleton("P-EX-0017"),
                         "startingBatchVessels", regulatoryDesignation, 1, flowcellType, indexType, numberCycles,
                         numberLanes, readLength, BigDecimal.TEN, false, new Date(), FlowcellDesignation.Status.QUEUED);
                 dto.setSelected(true);
@@ -521,12 +520,12 @@ public class LabBatchEjbStandardTest extends Arquillian {
         final LabBatch lcset = new LabBatch("lcset0", Collections.EMPTY_SET, LabBatch.LabBatchType.WORKFLOW);
         List<DesignationDto> dtos = new ArrayList<DesignationDto>() {{
             add(new DesignationDto(loadingTube, Collections.singleton(labEvent), "lcsetUrl", lcset,
-                    Collections.<String>emptyList(), Collections.singleton("P-EX-0017"), "startingBatchVessels",
+                    Collections.singleton("P-EX-0017"), "startingBatchVessels",
                     "CLINICAL", 1, flowcellType, FlowcellDesignation.IndexType.DUAL, 167, 1, 151,
                     BigDecimal.TEN, false, new Date(), FlowcellDesignation.Status.QUEUED));
             // This dto has 0 lanes and should fail.
             add(new DesignationDto(loadingTube, Collections.singleton(labEvent), "lcsetUrl", lcset,
-                    Collections.<String>emptyList(), Collections.singleton("P-EX-0017"), "startingBatchVessels",
+                    Collections.singleton("P-EX-0017"), "startingBatchVessels",
                     "RESEARCH", 1, flowcellType, FlowcellDesignation.IndexType.DUAL, 167, 0, 151,
                     BigDecimal.TEN, false, new Date(), FlowcellDesignation.Status.QUEUED));
         }};

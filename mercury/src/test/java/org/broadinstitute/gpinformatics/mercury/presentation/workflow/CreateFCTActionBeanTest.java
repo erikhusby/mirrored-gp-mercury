@@ -75,7 +75,7 @@ public class CreateFCTActionBeanTest {
             LabVessel tube = stbTubes.get(i);
 
             dtoVessels.add(Pair.of((FctDto)new DesignationDto(tube, Collections.EMPTY_LIST,
-                    "lcsetUrl", lcset, Collections.EMPTY_LIST, Collections.EMPTY_LIST,"", "", 1,
+                    "lcsetUrl", lcset, Collections.EMPTY_LIST,"", "", 1,
                     IlluminaFlowcell.FlowcellType.HiSeq4000Flowcell, FlowcellDesignation.IndexType.DUAL,
                     161, 8, 151, conc, false, new Date(), FlowcellDesignation.Status.QUEUED), tube));
          }
@@ -94,7 +94,7 @@ public class CreateFCTActionBeanTest {
             LabVessel tube = stbTubes.get(idx);
 
             DesignationDto dto = new DesignationDto(tube, Collections.EMPTY_LIST,
-                    "lcsetUrl", lcset, Collections.EMPTY_LIST, Collections.EMPTY_LIST, "", "", 1,
+                    "lcsetUrl", lcset, Collections.EMPTY_LIST, "", "", 1,
                     IlluminaFlowcell.FlowcellType.HiSeq4000Flowcell, FlowcellDesignation.IndexType.DUAL,
                     161, numberLanes[idx], 151, conc, false, new Date(), FlowcellDesignation.Status.QUEUED);
             dto.setDesignationId((long)idx);
@@ -105,7 +105,7 @@ public class CreateFCTActionBeanTest {
         }
         // The 0th dto will get 3 lanes allocated and 6 lanes in the unallocated split dto.
         FctDto splitDto = new DesignationDto(stbTubes.get(0), Collections.EMPTY_LIST,
-                "lcsetUrl", lcset, Collections.EMPTY_LIST, Collections.EMPTY_LIST, "", "", 1,
+                "lcsetUrl", lcset, Collections.EMPTY_LIST, "", "", 1,
                 IlluminaFlowcell.FlowcellType.HiSeq4000Flowcell, FlowcellDesignation.IndexType.DUAL,
                 161, 6, 151, conc, false, new Date(), FlowcellDesignation.Status.QUEUED);
 
@@ -138,7 +138,7 @@ public class CreateFCTActionBeanTest {
             LabVessel tube = stbTubes.get(idx);
 
             DesignationDto dto = new DesignationDto(tube, Collections.EMPTY_LIST,
-                    "lcsetUrl", lcset, Collections.EMPTY_LIST, Collections.EMPTY_LIST, "", "", 1,
+                    "lcsetUrl", lcset, Collections.EMPTY_LIST, "", "", 1,
                     IlluminaFlowcell.FlowcellType.HiSeq4000Flowcell, FlowcellDesignation.IndexType.DUAL,
                     161, numberLanes[idx], 151, conc, false, new Date(), FlowcellDesignation.Status.QUEUED);
             dto.setDesignationId((long)idx);
@@ -154,7 +154,7 @@ public class CreateFCTActionBeanTest {
 
         // dto[2] should be split into 7 lanes (allocated) and 3 lanes (unallocated).
         DesignationDto splitDto = new DesignationDto(stbTubes.get(2), Collections.EMPTY_LIST,
-                "lcsetUrl", lcset, Collections.EMPTY_LIST, Collections.EMPTY_LIST, "", "", 1,
+                "lcsetUrl", lcset, Collections.EMPTY_LIST, "", "", 1,
                 IlluminaFlowcell.FlowcellType.HiSeq4000Flowcell, FlowcellDesignation.IndexType.DUAL,
                 161, 3, 151, conc, false, new Date(), FlowcellDesignation.Status.QUEUED);
 
@@ -186,7 +186,7 @@ public class CreateFCTActionBeanTest {
             LabVessel tube = stbTubes.get(i);
 
             DesignationDto dto = new DesignationDto(tube, Collections.EMPTY_LIST,
-                    "lcsetUrl", lcset, Collections.EMPTY_LIST, Collections.EMPTY_LIST, "", "", 1,
+                    "lcsetUrl", lcset, Collections.EMPTY_LIST, "", "", 1,
                     IlluminaFlowcell.FlowcellType.HiSeq4000Flowcell, FlowcellDesignation.IndexType.DUAL,
                     161, 2 - i, 151, conc, false, new Date(), FlowcellDesignation.Status.QUEUED);
             dto.setDesignationId((long)i);

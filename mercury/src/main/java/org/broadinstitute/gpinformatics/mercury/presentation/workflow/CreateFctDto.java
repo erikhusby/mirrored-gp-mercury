@@ -4,10 +4,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.run.FctDto;
 
 import javax.annotation.Nonnull;
 import java.math.BigDecimal;
-import java.util.Collection;
 import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Represents a table row in Create FCT page.
@@ -56,24 +53,6 @@ public class CreateFctDto implements FctDto, Cloneable {
         this.lcset = lcset;
         this.loadingConc = loadingConc;
         this.numberLanes = numberLanes;
-    }
-
-    /** Returns the unique combinations of lcset and tubeType which are just concatenated together. */
-    public static Set<String> allLcsetsAndTubeTypes(Collection<CreateFctDto> createFctDtos) {
-        Set<String> set = new HashSet<>();
-        for (CreateFctDto createFctDto : createFctDtos) {
-            set.add(createFctDto.getLcset() + createFctDto.getTubeType());
-        }
-        return set;
-    }
-
-    /** Returns the starting batch vessel barcodes. */
-    public static Set<String> allStartingBatchVessels(Collection<CreateFctDto> createFctDtos) {
-        Set<String> set = new HashSet<>();
-        for (CreateFctDto createFctDto : createFctDtos) {
-            set.add(createFctDto.getStartingBatchVessels());
-        }
-        return set;
     }
 
     /**

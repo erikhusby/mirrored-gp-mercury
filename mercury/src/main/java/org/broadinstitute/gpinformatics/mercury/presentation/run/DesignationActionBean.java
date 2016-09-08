@@ -348,20 +348,16 @@ public class DesignationActionBean extends CoreActionBean implements Designation
             String regulatoryDesignation = null;
             int numberSamples = 0;
             Integer readLength = null;
-            Integer numberCycles = null;
-            Integer numberLanes = null;
-            BigDecimal loadingConc = BigDecimal.ZERO;
-            Boolean poolTest = false;
-            FlowcellDesignation.IndexType indexType = FlowcellDesignation.IndexType.DUAL;
 
             // Gets product, regulatory designation, and number of samples from the bucket entries.
             for (BucketEntry bucketEntry : loadingTubeToBucketEntry.get(loadingTube)) {
                 Product product = bucketEntry.getProductOrder().getProduct();
                 String productName = product != null ? bucketEntry.getProductOrder().getProduct().getProductName() :
                         "[No product for " + bucketEntry.getProductOrder().getJiraTicketKey() + "]";
-                readLength = product != null ? product.getReadLength() : null;
-                // todo emp check read length override when it exists in the ProductOrder.
-                numberCycles = readLength != null ? indexType.getIndexSize() + readLength : null;
+                // todo emp get read length override when it exists in the ProductOrder.
+                if (readLength == null && product != null && product.getReadLength() != null) {
+                    readLength = product.getReadLength();
+                }
                 productToStartingVessel.put(productName, bucketEntry.getLabVessel().getLabel());
                 // Sets the regulatory designation to Clinical, Research, or mixed.
                 if (bucketEntry.getProductOrder().getResearchProject().getRegulatoryDesignation().
@@ -380,6 +376,7 @@ public class DesignationActionBean extends CoreActionBean implements Designation
                 }
                 numberSamples += bucketEntry.getLabVessel().getSampleNames().size();
             }
+
             // Adds in the unbucketed positive controls.
             for (LabVessel startingVessel : loadingTubeToUnbucketedBatchStartingVessel.get(loadingTube)) {
                 productToStartingVessel.put(CONTROLS, startingVessel.getLabel());
@@ -399,8 +396,14 @@ public class DesignationActionBean extends CoreActionBean implements Designation
             }
             LabBatch primaryLcset = loadingTubeLcset.get(loadingTube);
 
+            FlowcellDesignation.IndexType indexType = FlowcellDesignation.IndexType.DUAL;
+            Integer numberCycles = readLength != null ? indexType.getIndexSize() + readLength : null;
+            Integer numberLanes = null;
+            BigDecimal loadingConc = BigDecimal.ZERO;
+            Boolean poolTest = false;
+
             DesignationDto newDto = new DesignationDto(loadingTube, loadingTubeToLabEvent.get(loadingTube),
-                    primaryLcset.getJiraTicket().getBrowserUrl(), primaryLcset, Collections.<String>emptySet(),
+                    primaryLcset.getJiraTicket().getBrowserUrl(), primaryLcset,
                     productNames, StringUtils.join(startingVesselList, "\n"),
                     regulatoryDesignation, numberSamples, null, FlowcellDesignation.IndexType.DUAL,
                     numberCycles, numberLanes, readLength, loadingConc, poolTest, now,

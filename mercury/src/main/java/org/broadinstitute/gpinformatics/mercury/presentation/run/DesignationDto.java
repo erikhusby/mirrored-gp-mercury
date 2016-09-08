@@ -35,7 +35,6 @@ public class DesignationDto implements Cloneable, FctDto {
     private String barcode;
     private String lcsetUrl;
     private String lcset;
-    private List<String> additionalLcsets = new ArrayList<>();
     private List<String> productNames = new ArrayList<>();
     private String startingBatchVessels;
     private String tubeType;
@@ -56,9 +55,8 @@ public class DesignationDto implements Cloneable, FctDto {
     }
 
     public DesignationDto(LabVessel loadingLabVessel, Collection<LabEvent> labEvents,
-                          String lcsetUrl, LabBatch lcset, Collection<String> additionalLcsets,
-                          Collection<String> productNames, String startingBatchVessels,
-                          String regulatoryDesignation, int numberSamples,
+                          String lcsetUrl, LabBatch lcset, Collection<String> productNames,
+                          String startingBatchVessels, String regulatoryDesignation, int numberSamples,
                           IlluminaFlowcell.FlowcellType sequencerModel,
                           FlowcellDesignation.IndexType indexType,
                           Integer numberCycles, Integer numberLanes, Integer readLength,
@@ -79,7 +77,6 @@ public class DesignationDto implements Cloneable, FctDto {
         this.tubeDate = StringUtils.join(tubeDates, "<br/>");
         this.lcset = lcset.getBatchName();
         this.lcsetUrl = lcsetUrl;
-        this.additionalLcsets.addAll(additionalLcsets);
         this.productNames.addAll(productNames);
         this.startingBatchVessels = startingBatchVessels;
 
@@ -121,14 +118,6 @@ public class DesignationDto implements Cloneable, FctDto {
     public String fctGrouping() {
         return "FctGrouping{" + getSequencerModel() + ", " + getNumberCycles() + " cycles, " +
                getReadLength() + " readLength, " + getIndexType() + " index, " + getRegulatoryDesignation() + "}";
-    }
-
-    public String getAdditionalLcsetJoin() {
-        return StringUtils.join(additionalLcsets, DELIMITER);
-    }
-
-    public void setAdditionalLcsetJoin(String delimitedLcsetNames) {
-        additionalLcsets = Arrays.asList(delimitedLcsetNames.split(DELIMITER));
     }
 
     public String getProductNameJoin() {
@@ -243,14 +232,6 @@ public class DesignationDto implements Cloneable, FctDto {
 
     public void setLcset(String lcset) {
         this.lcset = lcset;
-    }
-
-    public List<String> getAdditionalLcsets() {
-        return additionalLcsets;
-    }
-
-    public void setAdditionalLcsets(List<String> additionalLcsets) {
-        this.additionalLcsets = additionalLcsets;
     }
 
     public List<String> getProductNames() {

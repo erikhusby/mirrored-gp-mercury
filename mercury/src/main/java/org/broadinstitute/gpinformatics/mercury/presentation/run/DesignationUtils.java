@@ -137,7 +137,7 @@ public class DesignationUtils {
 
             DesignationDto designationDto = new DesignationDto(designation.getLoadingTube(),
                     Collections.singletonList(designation.getLoadingTubeEvent()),
-                    lcset.getJiraTicket().getBrowserUrl(), lcset, Collections.<String>emptySet(), productNames, "",
+                    lcset.getJiraTicket().getBrowserUrl(), lcset, productNames, "",
                     // MIXED cannot be persisted, only CLINICAL or RESEARCH.
                     designation.isClinical() ? CLINICAL : RESEARCH,
                     designation.getNumberSamples(), designation.getSequencerModel(), designation.getIndexType(),

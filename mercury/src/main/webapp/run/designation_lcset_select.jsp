@@ -51,7 +51,6 @@
                 <input type="hidden" name="dtos[${item.index}].barcode" value="${dto.barcode}"/>
                 <input type="hidden" name="dtos[${item.index}].lcset" value="${dto.lcset}"/>
                 <input type="hidden" name="dtos[${item.index}].lcsetUrl" value="${dto.lcsetUrl}"/>
-                <input type="hidden" name="dtos[${item.index}].additionalLcsetJoin" value="${dto.additionalLcsetJoin}"/>
                 <input type="hidden" name="dtos[${item.index}].tubeType" value="${dto.tubeType}"/>
                 <input type="hidden" name="dtos[${item.index}].sequencerModel" value="${dto.sequencerModel}"/>
                 <input type="hidden" name="dtos[${item.index}].numberSamples" value="${dto.numberSamples}"/>

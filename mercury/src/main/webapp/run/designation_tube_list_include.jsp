@@ -43,9 +43,9 @@
                                     ${dto.barcode}
                                 </stripes:link>
                             </td>
-                            <!-- "Primary" LCSET with link to its JIRA ticket, and any additional LCSETs without links. -->
+                            <!-- LCSET with link to its JIRA ticket -->
                             <td class="fixedWidthColumn">
-                                <a href="${dto.lcsetUrl}" target="JIRA">${dto.lcset}</a><br/>${dto.additionalLcsetJoin}
+                                <a href="${dto.lcsetUrl}" target="JIRA">${dto.lcset}</a>
                             </td>
                             <td class="fixedWidthColumn">${dto.tubeType}</td>
                             <td class="widerFixedWidthColumn">${dto.sequencerModel.displayName}</td>
@@ -79,7 +79,6 @@
                             <input type="hidden" name="dtos[${item.index}].barcode" value="${dto.barcode}"/>
                             <input type="hidden" name="dtos[${item.index}].lcset" value="${dto.lcset}"/>
                             <input type="hidden" name="dtos[${item.index}].lcsetUrl" value="${dto.lcsetUrl}"/>
-                            <input type="hidden" name="dtos[${item.index}].additionalLcsetJoin" value="${dto.additionalLcsetJoin}"/>
                             <input type="hidden" name="dtos[${item.index}].tubeType" value="${dto.tubeType}"/>
                             <input type="hidden" name="dtos[${item.index}].sequencerModel" value="${dto.sequencerModel}"/>
                             <input type="hidden" name="dtos[${item.index}].numberSamples" value="${dto.numberSamples}"/>
