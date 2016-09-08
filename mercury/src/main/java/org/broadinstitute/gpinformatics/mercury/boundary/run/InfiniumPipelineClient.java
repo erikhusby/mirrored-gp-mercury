@@ -5,12 +5,12 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.InfiniumStarterConfig;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
-import org.hornetq.api.core.TransportConfiguration;
-import org.hornetq.api.jms.HornetQJMSClient;
-import org.hornetq.api.jms.JMSFactoryType;
-import org.hornetq.core.remoting.impl.netty.NettyConnectorFactory;
-import org.hornetq.core.remoting.impl.netty.TransportConstants;
-import org.hornetq.jms.client.HornetQConnectionFactory;
+import org.apache.activemq.artemis.api.core.TransportConfiguration;
+import org.apache.activemq.artemis.api.jms.ActiveMQJMSClient;
+import org.apache.activemq.artemis.api.jms.JMSFactoryType;
+import org.apache.activemq.artemis.core.remoting.impl.netty.NettyConnectorFactory;
+import org.apache.activemq.artemis.core.remoting.impl.netty.TransportConstants;
+import org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory;
 
 import javax.inject.Inject;
 import javax.jms.Connection;
@@ -47,7 +47,7 @@ public class InfiniumPipelineClient {
             connectionParams.put(TransportConstants.HOST_PROP_NAME, infiniumStarterConfig.getJmsHost());
             TransportConfiguration transportConfiguration = new TransportConfiguration(
                     NettyConnectorFactory.class.getName(), connectionParams);
-            HornetQConnectionFactory connectionFactory = HornetQJMSClient.createConnectionFactoryWithoutHA(
+            ActiveMQConnectionFactory connectionFactory = ActiveMQJMSClient.createConnectionFactoryWithoutHA(
                     JMSFactoryType.CF, transportConfiguration);
 
             connectionFactory.setConnectionTTL(-1);
