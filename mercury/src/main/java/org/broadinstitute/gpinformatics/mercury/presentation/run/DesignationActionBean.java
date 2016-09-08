@@ -303,6 +303,8 @@ public class DesignationActionBean extends CoreActionBean implements Designation
                         loadingTubeToUnbucketedBatchStartingVessel.putAll(barcodedTube, startingVessels);
                     }
                 }
+            } else {
+                addMessage("Tube " + barcodedTube.getLabel() + " has no denature, norm, or pooling event.");
             }
         }
 
@@ -434,7 +436,7 @@ public class DesignationActionBean extends CoreActionBean implements Designation
                             loadingTubeLcset.put(targetTube, lcsets.iterator().next());
                         } else {
                             // Tube-lcset combinations to be resolved by the user.
-                            tubeLcsetAssignments.add(new LcsetAssignmentDto(targetTube, lcsets));
+                            addTubeLcsetAssignment(targetTube, lcsets);
                         }
                     }
                 } else {
@@ -476,6 +478,32 @@ public class DesignationActionBean extends CoreActionBean implements Designation
     private boolean isInDateRange(LabEvent labEvent) {
         return getDateRange().getStartTime().before(labEvent.getEventDate()) &&
                getDateRange().getEndTime().after(labEvent.getEventDate());
+    }
+
+    /** Adds a tube-lcset assignment dto or merges into an existing one. Dtos should be unique on tube barcode. */
+    private void addTubeLcsetAssignment(LabVessel tube, Set<LabBatch> lcsets) {
+        boolean tubeIsPresent = false;
+        for (LcsetAssignmentDto dto : tubeLcsetAssignments) {
+            if (dto.getBarcode().equals(tube.getLabel())) {
+                tubeIsPresent = true;
+                // Adds the lcset name if it's not already present.
+                for (LabBatch lcset : lcsets) {
+                    boolean lcsetIsPresent = false;
+                    for (Pair<String, String> lcsetNameUrl : dto.getLcsetNameUrls()) {
+                        if (lcsetNameUrl.getLeft().equals(lcset.getBatchName())) {
+                            lcsetIsPresent = true;
+                        }
+                    }
+                    if (!lcsetIsPresent) {
+                        dto.getLcsetNameUrls().add(Pair.of(lcset.getBatchName(),
+                                lcset.getJiraTicket().getBrowserUrl()));
+                    }
+                }
+            }
+        }
+        if (!tubeIsPresent) {
+            tubeLcsetAssignments.add(new LcsetAssignmentDto(tube, lcsets));
+        }
     }
 
     /**
@@ -537,17 +565,11 @@ public class DesignationActionBean extends CoreActionBean implements Designation
                     }
                 });
             }
-            // Sorts the dtos by barcode, then first lcset.
+            // Sorts the dtos by barcode.
             Collections.sort(assignmentDtos, new Comparator<LcsetAssignmentDto>() {
                 @Override
                 public int compare(LcsetAssignmentDto o1, LcsetAssignmentDto o2) {
-                    int barcodeCompare = o1.getBarcode().compareTo(o2.getBarcode());
-                    return (barcodeCompare != 0 ||
-                            o1.getLcsetNameUrls().size() == 0 ||
-                            o2.getLcsetNameUrls().size() == 0)  ?
-
-                            barcodeCompare :  o1.getLcsetNameUrls().iterator().next().getLeft().compareTo(
-                            o2.getLcsetNameUrls().iterator().next().getLeft());
+                    return o1.getBarcode().compareTo(o2.getBarcode());
                 }
             });
         }
