@@ -105,8 +105,6 @@ public class LabBatchEjb {
 
     private LabVesselDao labVesselDao;
 
-    private DesignationUtils designationUtils = new DesignationUtils();
-
     private FlowcellDesignationEjb designationTubeEjb;
 
     private static final VesselPosition[] VESSEL_POSITIONS = {VesselPosition.LANE1, VesselPosition.LANE2,
@@ -734,7 +732,7 @@ public class LabBatchEjb {
                     designationDtos.add(dtoSplit);
                     ++splitCount;
                 }
-                designationUtils.updateDesignationsAndDtos(designationDtos,
+                DesignationUtils.updateDesignationsAndDtos(designationDtos,
                         EnumSet.allOf(FlowcellDesignation.Status.class), designationTubeEjb);
                 if (unallocatedLaneCount > 0) {
                     int emptyLaneCount = flowcellType.getVesselGeometry().getVesselPositions().length -

@@ -28,6 +28,7 @@ public class DesignationUtils {
             FlowcellDesignation.Status.class);
     public static final EnumSet<FlowcellDesignation.Status> TARGETABLE_STATUSES = EnumSet.noneOf(
             FlowcellDesignation.Status.class);
+    private Caller caller;
 
     static {
         for (FlowcellDesignation.Status status : FlowcellDesignation.Status.values()) {
@@ -40,14 +41,9 @@ public class DesignationUtils {
         }
     }
 
-
-    public DesignationUtils() {}
-
     public DesignationUtils(Caller caller) {
         this.caller = caller;
     }
-
-    private Caller caller;
 
     /** The calling class must implement this interface. */
     public interface Caller {
@@ -112,9 +108,9 @@ public class DesignationUtils {
      * @param persistableStatuses The dto status that permits persisting it.
      * @param designationTubeEjb
      */
-    public void updateDesignationsAndDtos(Collection<DesignationDto> dtos,
-                                          EnumSet<FlowcellDesignation.Status> persistableStatuses,
-                                          FlowcellDesignationEjb designationTubeEjb) {
+    public static void updateDesignationsAndDtos(Collection<DesignationDto> dtos,
+                                                 EnumSet<FlowcellDesignation.Status> persistableStatuses,
+                                                 FlowcellDesignationEjb designationTubeEjb) {
         for (Map.Entry<DesignationDto, FlowcellDesignation> dtoAndTube :
                 designationTubeEjb.update(dtos, persistableStatuses).entrySet()) {
             // After Hibernate flushes new entities the dto can get the updated designation id.

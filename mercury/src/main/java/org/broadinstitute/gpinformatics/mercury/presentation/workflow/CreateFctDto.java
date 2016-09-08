@@ -123,7 +123,7 @@ public class CreateFctDto implements FctDto, Cloneable {
         return numberLanes;
     }
 
-    public void setNumberLanes(int numberLanes) {
+    public void setNumberLanes(Integer numberLanes) {
         this.numberLanes = numberLanes;
     }
 
