@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionLibraryDescriptor;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionsWillAlwaysFailSubmissionsService;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.broadinstitute.gpinformatics.mercury.presentation.TestCoreActionBeanContext;
@@ -36,6 +37,7 @@ import static org.broadinstitute.gpinformatics.athena.entity.project.ResearchPro
 import static org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject.RegulatoryDesignation.GENERAL_CLIA_CAP;
 import static org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject.RegulatoryDesignation.RESEARCH_ONLY;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 
@@ -127,5 +129,16 @@ public class ResearchProjectActionBeanTest {
         public boolean booleanValue() {
             return this == TRUE;
         }
+    }
+
+    public void testSubmissionServiceDownDoesntPreventRpsBeingLoaded() throws Exception {
+        ResearchProjectActionBean actionBean = new ResearchProjectActionBean();
+        TestCoreActionBeanContext testContext = new TestCoreActionBeanContext();
+
+        actionBean.setContext(testContext);
+
+        actionBean.setSubmissionsService(new SubmissionsWillAlwaysFailSubmissionsService());
+        actionBean.loadSubmissionSelectLists();
+        assertThat(actionBean.getFormattedMessages(),contains("Submissions are temporarily unavailable."));
     }
 }

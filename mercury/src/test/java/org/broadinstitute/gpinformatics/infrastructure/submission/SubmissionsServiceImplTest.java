@@ -69,7 +69,8 @@ public class SubmissionsServiceImplTest {
         Mockito.when(clientResponse.getStatus()).thenReturn(ClientResponse.Status.BAD_REQUEST.getStatusCode());
         String activityName = "just testing y'all";
         String exceptonMessage = "There was an error";
-        String errorMessage = String.format("Error received while %s: %s", activityName, exceptonMessage);
+        String errorMessage = String.format("Error received while %s: %s (%d)", activityName, exceptonMessage,
+                ClientResponse.Status.BAD_REQUEST.getStatusCode());
         Mockito.when(clientResponse.getEntity(String.class)).thenReturn(exceptonMessage);
         SubmissionsServiceImpl submissionsServiceImpl = ((SubmissionsServiceImpl) submissionsService);
         try {

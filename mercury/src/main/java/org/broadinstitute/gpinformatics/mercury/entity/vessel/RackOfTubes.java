@@ -23,12 +23,6 @@ public class RackOfTubes extends LabVessel {
     @ManyToMany(cascade = CascadeType.PERSIST, mappedBy = "racksOfTubes")
     private Set<TubeFormation> tubeFormations = new HashSet<>();
 
-    /**
-     * For JPA
-     */
-    protected RackOfTubes() {
-    }
-
     public enum RackType implements VesselTypeGeometry {
         Abgene96SlotRack("Abgene96SlotRack", VesselGeometry.G12x8),
         CBSStraw_Box("CBSStraw_Box", VesselGeometry.G12x8),
@@ -48,6 +42,7 @@ public class RackOfTubes extends LabVessel {
         HamiltonSampleCarrier32("HamiltonSampleCarrier32", VesselGeometry.G32x1),
         Matrix48SlotRack2mL("Matrix48SlotRack2mL", VesselGeometry.G12x8),
         Matrix96("Matrix96", VesselGeometry.G12x8),
+        StripTubes("StripTubes", VesselGeometry.G12x8),
         Matrix96SlotRack040("Matrix96SlotRack040", VesselGeometry.G12x8),
         Matrix96SlotRack075("Matrix96SlotRack075", VesselGeometry.G12x8),
         Matrix96SlotRack14("Matrix96SlotRack14", VesselGeometry.G12x8),
@@ -110,9 +105,20 @@ public class RackOfTubes extends LabVessel {
     @Enumerated(EnumType.STRING)
     private RackType rackType;
 
+    /**
+     * For JPA
+     */
+    protected RackOfTubes() {
+    }
+
     public RackOfTubes(String label, RackType rackType) {
         super(label);
         this.rackType = rackType;
+    }
+
+    public RackOfTubes(String manufacturerBarcode, RackType rackType, String plateName) {
+        this(manufacturerBarcode, rackType);
+        this.name = plateName;
     }
 
     public RackType getRackType() {

@@ -23,7 +23,11 @@
                                     d3.select("#progress").html("Bytes loaded: " + d3.event.loaded);
                                 })
                                 .get(function (error, json) {
-                                    renderJson(json);
+                                    if (json.error) {
+                                        alert(json.error);
+                                    } else {
+                                        renderJson(json);
+                                    }
                                 });
                     }
             );

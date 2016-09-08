@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.bucket;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
@@ -20,6 +21,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MaterialType;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.test.ExomeExpressV2EndToEndTest;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -218,32 +220,42 @@ public class BucketEjbTest extends ContainerTest {
         bucket = bucketDao.findByName(PICO_PLATING_BUCKET);
         int originalBucketSize = bucket.getBucketEntries().size();
 
-        Collection<BucketEntry> testEntries1 = resource.applyBucketCriteria(
-                Collections.<LabVessel>singletonList(bspAliquot1), productOrder1, howieTest);
+        Pair<ProductWorkflowDefVersion, Collection<BucketEntry>> workflowBucketEntriesPair =
+                resource.applyBucketCriteria(Collections.<LabVessel>singletonList(bspAliquot1), productOrder1,
+                        howieTest, ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION);
+        Collection<BucketEntry> testEntries1 = workflowBucketEntriesPair.getRight();
         Assert.assertEquals(testEntries1.size(), 1);
         BucketEntry testEntry1 = testEntries1.iterator().next();
 
         Assert.assertEquals(originalBucketSize + 1, bucket.getBucketEntries().size());
         Assert.assertTrue(bucket.contains(testEntry1));
         
-        Collection<BucketEntry> testEntries2 = resource.applyBucketCriteria(
-                Collections.<LabVessel>singletonList(bspAliquot2), productOrder2, howieTest);
+        Pair<ProductWorkflowDefVersion, Collection<BucketEntry>> workflowBucketEntriesPair2 =
+                resource.applyBucketCriteria( Collections.<LabVessel>singletonList(bspAliquot2), productOrder2,
+                        howieTest, ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION);
+        Collection<BucketEntry> testEntries2 = workflowBucketEntriesPair2.getRight();
         Assert.assertEquals(testEntries2.size(), 1);
         BucketEntry testEntry2 = testEntries2.iterator().next();
 
-        Collection<BucketEntry> testEntries3 = resource.applyBucketCriteria(
-                Collections.<LabVessel>singletonList(bspAliquot3), productOrder3, howieTest);
+        Pair<ProductWorkflowDefVersion, Collection<BucketEntry>> workflowBucketEntriesPair3 =
+                resource.applyBucketCriteria(Collections.<LabVessel>singletonList(bspAliquot3), productOrder3,
+                        howieTest, ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION);
+        Collection<BucketEntry> testEntries3 = workflowBucketEntriesPair3.getRight();
         Assert.assertEquals(testEntries3.size(), 1);
         BucketEntry testEntry3 = testEntries3.iterator().next();
 
-        Collection<BucketEntry> testEntries4 = resource.applyBucketCriteria(
-                        Collections.<LabVessel>singletonList(bspAliquot4), productOrder3, howieTest);
-        
+        Pair<ProductWorkflowDefVersion, Collection<BucketEntry>> workflowBucketEntriesPair4 =
+                resource.applyBucketCriteria(Collections.<LabVessel>singletonList(bspAliquot4), productOrder3,
+                        howieTest, ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION);
+        Collection<BucketEntry> testEntries4 = workflowBucketEntriesPair4.getRight();
+
         Assert.assertEquals(testEntries4.size(), 1);
         BucketEntry testEntry4 = testEntries4.iterator().next();
 
-        Collection<BucketEntry> duplicateEntry = resource.applyBucketCriteria(
-                Collections.<LabVessel>singletonList(bspAliquot1), productOrder1, howieTest);
+        Pair<ProductWorkflowDefVersion, Collection<BucketEntry>> workflowBucketEntriesPair5 =
+                resource.applyBucketCriteria(Collections.<LabVessel>singletonList(bspAliquot1), productOrder1,
+                        howieTest, ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION);
+        Collection<BucketEntry> duplicateEntry = workflowBucketEntriesPair5.getRight();
         Assert.assertTrue(duplicateEntry.isEmpty());
         
         Assert.assertTrue(bucket.contains(testEntry2));
@@ -287,8 +299,10 @@ public class BucketEjbTest extends ContainerTest {
         bucket = bucketDao.findByName(PICO_PLATING_BUCKET);
         int originalBucketSize = bucket.getBucketEntries().size();
 
-        Collection<BucketEntry> testEntries1 = resource.applyBucketCriteria(
-                Collections.<LabVessel>singletonList(bspAliquot1), productOrder1, howieTest);
+        Pair<ProductWorkflowDefVersion, Collection<BucketEntry>> workflowBucketEntriesPair =
+                resource.applyBucketCriteria(Collections.<LabVessel>singletonList(bspAliquot1), productOrder1,
+                        howieTest, ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION);
+        Collection<BucketEntry> testEntries1 = workflowBucketEntriesPair.getRight();
         Assert.assertEquals(testEntries1.size(), 1);
         BucketEntry testEntry1 = testEntries1.iterator().next();
 
@@ -304,7 +318,8 @@ public class BucketEjbTest extends ContainerTest {
         Assert.assertTrue(Collections.addAll(bucketCreateBatch, bspAliquot2,
                 bspAliquot3, bspAliquot4));
 
-        resource.applyBucketCriteria(bucketCreateBatch, productOrder3, howieTest);
+        resource.applyBucketCriteria(bucketCreateBatch, productOrder3, howieTest,
+                ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION);
 
         bucketDao.flush();
         bucketDao.clear();
@@ -389,8 +404,10 @@ public class BucketEjbTest extends ContainerTest {
         bucket = bucketDao.findByName(PICO_PLATING_BUCKET);
         int originalBucketSize = bucket.getBucketEntries().size();
         
-        Collection<BucketEntry> testEntries1 = resource.applyBucketCriteria(
-                Collections.<LabVessel>singletonList(bspAliquot1), productOrder1, howieTest);
+        Pair<ProductWorkflowDefVersion, Collection<BucketEntry>> workflowBucketEntriesPair =
+                resource.applyBucketCriteria(Collections.<LabVessel>singletonList(bspAliquot1), productOrder1,
+                        howieTest, ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION);
+        Collection<BucketEntry> testEntries1 = workflowBucketEntriesPair.getRight();
 
         Assert.assertEquals(testEntries1.size(), 1);
         BucketEntry testEntry1 = testEntries1.iterator().next();
@@ -405,7 +422,8 @@ public class BucketEjbTest extends ContainerTest {
         List<LabVessel> bucketCreateBatch = new LinkedList<>();
 
         Assert.assertTrue(Collections.addAll(bucketCreateBatch, bspAliquot2, bspAliquot3, bspAliquot4));
-        resource.applyBucketCriteria(bucketCreateBatch, productOrder3, howieTest);
+        resource.applyBucketCriteria(bucketCreateBatch, productOrder3, howieTest,
+                ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION);
 
         bucketDao.flush();
         bucketDao.clear();

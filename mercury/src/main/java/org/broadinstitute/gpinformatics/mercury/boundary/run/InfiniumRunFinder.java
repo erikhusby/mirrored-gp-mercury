@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventMetadata;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
@@ -115,7 +116,31 @@ public class InfiniumRunFinder implements Serializable {
                 }
             }
         }
-        if (allComplete) {
+
+        // Check to see if autocall has now been started on all wells
+        boolean starterCalledOnAllWells = true;
+        for (VesselPosition vesselPosition: staticPlate.getVesselGeometry().getVesselPositions()) {
+            Set<SampleInstanceV2> sampleInstancesAtPositionV2 =
+                    staticPlate.getContainerRole().getSampleInstancesAtPositionV2(vesselPosition);
+            if (sampleInstancesAtPositionV2 != null && !sampleInstancesAtPositionV2.isEmpty()) {
+                boolean autocallStarted = false;
+                for (LabEventMetadata metadata : someStartedEvent.getLabEventMetadatas()) {
+                    if (metadata.getLabEventMetadataType() ==
+                        LabEventMetadata.LabEventMetadataType.AutocallStarted) {
+                        if (metadata.getValue().equals(vesselPosition.name())) {
+                            autocallStarted = true;
+                            break;
+                        }
+                    }
+                }
+                if (!autocallStarted) {
+                    starterCalledOnAllWells = false;
+                    break;
+                }
+            }
+        }
+
+        if (allComplete && starterCalledOnAllWells) {
             createEvent(staticPlate, LabEventType.INFINIUM_AUTOCALL_ALL_STARTED);
         }
     }

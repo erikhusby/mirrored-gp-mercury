@@ -52,7 +52,7 @@ public class ResearchProjectEjbSubmissionTest {
         ResearchProjectEjb researchProjectEjb = getResearchProjectEjb(null);
 
         try {
-            researchProjectEjb.validateSubmissionDto(PDO_99999, Collections.singletonList(submissionDto));
+            researchProjectEjb.validateSubmissionDto(Collections.singletonList(submissionDto));
             Assert.fail("The data sources for this submissionDTO are all null, why was an exception not thrown?");
         } catch (ValidationException e) {
             Assert.assertTrue(e.getMessage().contains("No data was found in submission request."));
@@ -62,7 +62,7 @@ public class ResearchProjectEjbSubmissionTest {
     public void testValidateSubmissionsEmptyDtoList() throws Exception {
         ResearchProjectEjb researchProjectEjb = getResearchProjectEjb(null);
         try {
-            researchProjectEjb.validateSubmissionDto(PDO_99999, Collections.<SubmissionDto>emptyList());
+            researchProjectEjb.validateSubmissionDto(Collections.<SubmissionDto>emptyList());
             Assert.fail("Since a list of empty submissionDTOs was passed in, an exception should have ben thrown.");
         } catch (InformaticsServiceException e) {
             Assert.assertTrue(e.getMessage().equals("At least one selection is needed to post submissions"));
@@ -77,7 +77,7 @@ public class ResearchProjectEjbSubmissionTest {
         SubmissionDto submissionDto = getSubmissionDto("ABC1234", BassFileType.BAM, 9);
 
         try {
-            researchProjectEjb.validateSubmissionDto("RP-1234", Collections.singletonList(submissionDto));
+            researchProjectEjb.validateSubmissionDto(Collections.singletonList(submissionDto));
         } catch (Exception e) {
             Assert.fail("A call to submissionTrackerDao.findSubmissionTrackers returning an empty list, " +
                         "should not have caused a submission failure.", e);
@@ -90,8 +90,8 @@ public class ResearchProjectEjbSubmissionTest {
     public void testFileTypeVariationNoBassDTOFileType() throws Exception {
         // data setup for dao result.
         SubmissionDto submissionDto = getSubmissionDto(dummyProductOrder, BassFileType.BAM, "/some/file");
-        SubmissionTracker submissionTracker = new SubmissionTracker(submissionDto.getSampleName(), BassFileType.BAM,
-                        String.valueOf(submissionDto.getVersion()));
+        SubmissionTracker submissionTracker = new SubmissionTracker("P123", submissionDto.getSampleName(),
+                String.valueOf(submissionDto.getVersion()), BassFileType.BAM);
 
         SubmissionTrackerDao submissionTrackerDao = Mockito.mock(SubmissionTrackerDao.class);
         setupSubmissionTrackerMock(submissionTrackerDao, Collections.singletonList(submissionTracker));
@@ -101,7 +101,7 @@ public class ResearchProjectEjbSubmissionTest {
         ResearchProjectEjb researchProjectEjb = getResearchProjectEjb(submissionTrackerDao);
 
         try {
-            researchProjectEjb.validateSubmissionDto("RP-1234", Collections.singletonList(newSubmissionDto));
+            researchProjectEjb.validateSubmissionDto(Collections.singletonList(newSubmissionDto));
         } catch (IllegalArgumentException e) {
             Assert.assertTrue(e.getMessage().contains("No enum constant for"));
         }
@@ -115,7 +115,7 @@ public class ResearchProjectEjbSubmissionTest {
         SubmissionDto bApicard = getSubmissionDto("A", BassFileType.PICARD, TEST_VERSION_1);
 
         SubmissionTracker stA =
-                new SubmissionTracker(bA.getSampleName(), bA.getFileType(), String.valueOf(bA.getVersion()));
+                new SubmissionTracker("P123", bA.getSampleName(), String.valueOf(bA.getVersion()), bA.getFileType());
 
         List<Object[]> testCases = new ArrayList<>();
         testCases.add(new Object[]{"TEST-1", Collections.singletonList(bA), Collections.emptyList(), true});
@@ -134,7 +134,7 @@ public class ResearchProjectEjbSubmissionTest {
         ResearchProjectEjb researchProjectEjb = getResearchProjectEjb(submissionTrackerDao);
 
         try {
-            researchProjectEjb.validateSubmissionDto(PDO_99999, submissionDTOs);
+            researchProjectEjb.validateSubmissionDto(submissionDTOs);
             if (!willPass) {
                 Assert.fail(String.format("ValidationException Expected on %s", label));
             }
@@ -160,7 +160,7 @@ public class ResearchProjectEjbSubmissionTest {
         ResearchProjectEjb researchProjectEjb = getResearchProjectEjb(submissionTrackerDao);
 
         try {
-            researchProjectEjb.validateSubmissionDto("RP-1234", Arrays.asList(submissionDto, submissionDto2));
+            researchProjectEjb.validateSubmissionDto(Arrays.asList(submissionDto, submissionDto2));
             Assert.fail(
                     "Since the tuples for these two BassDTOs should be equal, an exception should have been thrown.");
         } catch (ValidationException e) {
@@ -177,7 +177,7 @@ public class ResearchProjectEjbSubmissionTest {
         SubmissionTrackerDao submissionTrackerDao = Mockito.mock(SubmissionTrackerDao.class);
         ResearchProjectEjb researchProjectEjb = getResearchProjectEjb(submissionTrackerDao);
         try {
-            researchProjectEjb.validateSubmissionDto("RP-1234", Arrays.asList(submissionDto, submissionDto2));
+            researchProjectEjb.validateSubmissionDto(Arrays.asList(submissionDto, submissionDto2));
             Assert.fail("You should not be able to submit two duplicate submissions.");
         } catch (ValidationException e) {
             Assert.assertTrue(e.getMessage().contains(submissionDto.getBassDTO().getTuple().toString()));
@@ -217,12 +217,12 @@ public class ResearchProjectEjbSubmissionTest {
 
     private void setupSubmissionTrackerMock(SubmissionTrackerDao submissionTrackerDao,
                                             List<SubmissionTracker> submissionTrackers) {
-        Mockito.when(submissionTrackerDao.findSubmissionTrackers(Mockito.anyString(),
+        Mockito.when(submissionTrackerDao.findSubmissionTrackers(
                 Mockito.anyCollectionOf(SubmissionDto.class))).thenReturn(submissionTrackers);
     }
 
     private void verifySubmissionTrackerMock(SubmissionTrackerDao submissionTrackerDao) {
         Mockito.verify(submissionTrackerDao, Mockito.times(1)).
-                findSubmissionTrackers(Mockito.anyString(), Mockito.anyCollectionOf(SubmissionDto.class));
+                findSubmissionTrackers(Mockito.anyCollectionOf(SubmissionDto.class));
     }
 }

@@ -102,13 +102,15 @@ public class EventAncestryEtlUtil {
             ancestorEventTypesToFind.addAll(findAllAncestorEtlEventTypes(workflowStepList));
             // Build the ancestry dtos
             eventFact.addAllAncestryDtos(buildAncestryFacts(labEvent, labVessel, ancestorEventTypesToFind));
+            eventFact.setIsEtlLibrary();
             vesselsToSkip.add(labVessel);
         }
     }
 
     /**
      * Navigate the event vessel ancestry, find all ancestor events of the specified types,
-     *   and create ancestry records linking to labEvent
+     *   and create ancestry records linking to labEvent. <br />
+     * Note:  At this point, the labEvent has already been vetted as being flagged for ancestry
      * @param labEvent The event from which to start ancestry search
      * @param labVessel The vessel associated with the labEvent argument
      * @param ancestorEventTypes Event type(s) to search the ancestry for

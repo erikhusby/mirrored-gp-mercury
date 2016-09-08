@@ -49,6 +49,8 @@ import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProjectList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.cognos.OrspProjectDao;
+import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.OrspProject;
 import org.broadinstitute.gpinformatics.infrastructure.collaborate.CollaborationNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.collaborate.CollaborationPortalException;
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
@@ -173,6 +175,10 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
 
     @Inject
     private SubmissionDtoFetcher submissionDtoFetcher;
+
+    @Inject
+    private OrspProjectDao orspProjectDao;
+
     /**
      * The research project business key
      */
@@ -208,6 +214,8 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
     private String q;
 
     private List<RegulatoryInfo> searchResults;
+
+    private OrspProject orspSearchResult;
 
     private Long regulatoryInfoId;
 
@@ -323,13 +331,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
     public void init() throws Exception {
         researchProject = getContext().getRequest().getParameter(RESEARCH_PROJECT_PARAMETER);
 
-        try {
-            setSubmissionLibraryDescriptors(submissionsService.getSubmissionLibraryDescriptors());
-            setSubmissionRepositories(submissionsService.getSubmissionRepositories());
-        } catch (InformaticsServiceException e) {
-            addMessage("Submissions are temporarily unavailable.");
-            log.error(e.getMessage(), e);
-        }
+        loadSubmissionSelectLists();
 
         if (submissionRepository == null && StringUtils.isBlank(selectedSubmissionRepository)) {
             if (getActiveRepositories().size() == 1) {
@@ -393,6 +395,16 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         }
 
         progressFetcher = new CompletionStatusFetcher(productOrderDao.getProgress(productOrderIds));
+    }
+
+    void loadSubmissionSelectLists() {
+        try {
+            setSubmissionLibraryDescriptors(submissionsService.getSubmissionLibraryDescriptors());
+            setSubmissionRepositories(submissionsService.getSubmissionRepositories());
+        } catch (Exception e) {
+            addMessage("Submissions are temporarily unavailable.");
+            log.error(e.getMessage(), e);
+        }
     }
 
     SubmissionLibraryDescriptor findDefaultSubmissionType(ResearchProject researchProject) {
@@ -736,8 +748,16 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
      */
     @HandlesEvent(REGULATORY_INFO_QUERY_ACTION)
     public Resolution queryRegulatoryInfoReturnHtmlSnippet() {
-        searchResults = regulatoryInfoDao.findByIdentifier(q);
-        regulatoryInfoIdentifier = q;
+        String query = q.trim();
+        searchResults = regulatoryInfoDao.findByIdentifier(query);
+        if (searchResults.isEmpty()) {
+            orspSearchResult = orspProjectDao.findByKey(query);
+            if (orspSearchResult != null) {
+                regulatoryInfoType = orspSearchResult.getType();
+                regulatoryInfoAlias = orspSearchResult.getName();
+            }
+        }
+        regulatoryInfoIdentifier = query;
         return new ForwardResolution("regulatory_info_dialog_sheet_2.jsp");
     }
 
@@ -798,11 +818,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
      * @return true if the user should be allowed to create new regulatory info; false otherwise
      */
     public boolean isAddRegulatoryInfoAllowed() {
-        EnumSet<RegulatoryInfo.Type> types = EnumSet.allOf(RegulatoryInfo.Type.class);
-        for (RegulatoryInfo regulatoryInfo : searchResults) {
-            types.remove(regulatoryInfo.getType());
-        }
-        return !types.isEmpty();
+        return searchResults.isEmpty() && orspSearchResult == null;
     }
 
     /**
@@ -897,14 +913,6 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         } else if (regulatoryInfoAlias.length() > RegulatoryInfo.PROTOCOL_TITLE_MAX_LENGTH) {
             result = String.format("Protocol title exceeds maximum length of %d with %d.",
                     RegulatoryInfo.PROTOCOL_TITLE_MAX_LENGTH, regulatoryInfoAlias.length());
-        } else {
-            List<RegulatoryInfo> infos = regulatoryInfoDao.findByName(regulatoryInfoAlias);
-            for (RegulatoryInfo info : infos) {
-                if (!info.getRegulatoryInfoId().equals(regulatoryInfoId)) {
-                    result = String.format("Title is already in use. If you are adding an ORSP # to use in place of an IRB #, please try appending the ORSP # to the title.");
-                    break;
-                }
-            }
         }
         return createTextResolution(result);
     }
@@ -1091,7 +1099,8 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         }
         if (!errors) {
             List<SubmissionDto> selectedSubmissions = new ArrayList<>();
-            Map<String, BassDTO> bassDtoMap = submissionDtoFetcher.fetchBassDtos(editResearchProject,
+            Map<SubmissionTuple, BassDTO> bassDtoMap = submissionDtoFetcher.fetchBassDtos(
+                    editResearchProject.getBusinessKey(),
                     selectedSubmissionSamples.toArray(new String[selectedSubmissionSamples.size()]));
             for (BassDTO bassDTO : bassDtoMap.values()) {
 
@@ -1226,6 +1235,10 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
 
     public List<RegulatoryInfo> getSearchResults() {
         return searchResults;
+    }
+
+    public OrspProject getOrspSearchResult() {
+        return orspSearchResult;
     }
 
     public Long getRegulatoryInfoId() {
@@ -1533,6 +1546,10 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
 
     void setBspUserList(BSPUserList bspUserList) {
         this.bspUserList = bspUserList;
+    }
+
+    void setSubmissionsService(SubmissionsService submissionsService) {
+        this.submissionsService = submissionsService;
     }
 
     public boolean isSupressValidationErrors() {

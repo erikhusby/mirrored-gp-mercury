@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.projects;
 
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject_;
 import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTracker;
 import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTracker_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
@@ -33,12 +32,10 @@ public class SubmissionTrackerDao extends GenericDao {
      *     <li>File Type</li>
      *     <li>File Version</li>
      * </ul>
-     * @param researchProjectKey
      * @param submissionDtos
      * @return
      */
-    public List<SubmissionTracker> findSubmissionTrackers(String researchProjectKey,
-                                                          Collection<SubmissionDto> submissionDtos) {
+    public List<SubmissionTracker> findSubmissionTrackers(Collection<SubmissionDto> submissionDtos) {
         CriteriaBuilder submissionTrackerCriteria = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<SubmissionTracker> criteriaQuery = getCriteriaBuilder().createQuery(SubmissionTracker.class);
         Root<SubmissionTracker> root = criteriaQuery.from(SubmissionTracker.class);
@@ -47,10 +44,10 @@ public class SubmissionTrackerDao extends GenericDao {
         Collection<Predicate> predicates = new HashSet<>(submissionDtos.size());
         for (SubmissionDto submissionDto : submissionDtos) {
             predicates.add(submissionTrackerCriteria.and(
+                    submissionTrackerCriteria.equal(root.get(SubmissionTracker_.project), submissionDto.getAggregationProject()),
                     submissionTrackerCriteria.equal(root.get(SubmissionTracker_.submittedSampleName), submissionDto.getSampleName()),
-                    submissionTrackerCriteria.equal(root.get(SubmissionTracker_.fileType),submissionDto.getFileType()),
+                    submissionTrackerCriteria.equal(root.get(SubmissionTracker_.fileType),submissionDto.getFileType())
 //                    submissionTrackerCriteria.equal(root.get(SubmissionTracker_.version), submissionDto.getVersion()),
-                    submissionTrackerCriteria.equal(researchProjectJoin.get(ResearchProject_.jiraTicketKey), researchProjectKey)
             ));
         }
         Predicate orPredicate = submissionTrackerCriteria.or(predicates.toArray(new Predicate[predicates.size()]));

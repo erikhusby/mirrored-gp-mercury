@@ -594,4 +594,15 @@
       <createSequence sequenceName="seq_attribute_definition" schemaName="mercury" startValue="1" incrementBy="50"/>
     </changeSet>
 
+    <changeSet id="GPLIM-4276-1" author="thompson">
+        <addColumn schemaName="mercury" tableName="lab_vessel">
+            <column name="name" type="varchar2(255)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-4276-2" author="thompson">
+        <addColumn schemaName="mercury" tableName="lab_vessel_aud">
+            <column name="name" type="varchar2(255)"/>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>

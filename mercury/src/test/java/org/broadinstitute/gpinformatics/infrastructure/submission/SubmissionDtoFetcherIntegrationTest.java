@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.LevelOfDetection;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -72,7 +73,7 @@ public class SubmissionDtoFetcherIntegrationTest extends Arquillian {
                 new LevelOfDetection(lodMin, lodMax);
         ResearchProject researchProject = researchProjectDao.findByBusinessKey(RESEARCH_PROJECT_ID);
 
-        List<SubmissionDto> submissionDtoList = submissionDtoFetcher.fetch(researchProject);
+        List<SubmissionDto> submissionDtoList = submissionDtoFetcher.fetch(researchProject, MessageReporter.UNUSED);
 
         assertThat(submissionDtoList, is(not(empty())));
         for (SubmissionDto submissionDto : submissionDtoList) {
