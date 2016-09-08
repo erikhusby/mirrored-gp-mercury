@@ -27,6 +27,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.DisplayableItem;
@@ -45,7 +46,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.sap.services.SAPIntegrationException;
-import org.broadinstitute.sap.services.SapIntegrationClientImpl;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletResponse;
@@ -83,6 +83,7 @@ public class ProductActionBean extends CoreActionBean {
     public static final String PRODUCT_LIST_PAGE = "/products/list.jsp";
     public static final String PRODUCT_VIEW_PAGE = "/products/view.jsp";
     private static final String DOWNLOAD_PRODUCT_LIST = "downloadProductDescriptions";
+    private static final String PUBLISH_PRODUCTS_TO_SAP = "publishProductsToSap";
 
     @Inject
     private ProductFamilyDao productFamilyDao;
@@ -120,6 +121,11 @@ public class ProductActionBean extends CoreActionBean {
     // Data needed for displaying the view.
     private List<ProductFamily> productFamilies;
     private List<Product> allProducts;
+
+    private List<String> selectedProductPartNumbers;
+    private List<Product> selectedProducts;
+
+
 
     @Validate(required = true, on = {VIEW_ACTION, EDIT_ACTION})
     private String product;
@@ -430,6 +436,18 @@ public class ProductActionBean extends CoreActionBean {
                 editProduct.getPartNumber());
     }
 
+    @HandlesEvent(PUBLISH_PRODUCTS_TO_SAP)
+    public Resolution publishProductsToSap() {
+        selectedProducts = productDao.findListByList(Product.class, Product_.partNumber, selectedProductPartNumbers);
+        try {
+            productEjb.publishProductsToSAP(selectedProducts);
+            addMessage("The selected Products were successfully published to SAP");
+        } catch (SAPIntegrationException e) {
+            addGlobalValidationError("Unable to update the product in SAP. " + e.getMessage());
+        }
+        return new RedirectResolution(ProductActionBean.class,LIST_ACTION);
+    }
+
     @HandlesEvent(PUBLISH_TO_SAP)
     public Resolution publishToSap() {
         try {
@@ -720,5 +738,14 @@ public class ProductActionBean extends CoreActionBean {
 
     public String getPublishSAPAction() {
         return PUBLISH_TO_SAP;
+    }
+
+
+    public List<String> getSelectedProductPartNumbers() {
+        return selectedProductPartNumbers;
+    }
+
+    public void setSelectedProductPartNumbers(List<String> selectedProductPartNumbers) {
+        this.selectedProductPartNumbers = selectedProductPartNumbers;
     }
 }

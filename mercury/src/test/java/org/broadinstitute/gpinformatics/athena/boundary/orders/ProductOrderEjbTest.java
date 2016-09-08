@@ -16,6 +16,12 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
+import org.broadinstitute.gpinformatics.infrastructure.quote.ApprovalStatus;
+import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
+import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
+import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteFunding;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -30,6 +36,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.hamcrest.Matchers;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -57,7 +64,8 @@ public class ProductOrderEjbTest {
     private static final UserBean mockUserBean = Mockito.mock(UserBean.class);
     private ProductOrderDao productOrderDaoMock = Mockito.mock(ProductOrderDao.class);
     public final MercurySampleDao mockMercurySampleDao = Mockito.mock(MercurySampleDao.class);
-    ProductOrderEjb productOrderEjb = new ProductOrderEjb(productOrderDaoMock, null, null,
+    public final QuoteServiceImpl mockQuoteService = Mockito.mock(QuoteServiceImpl.class);
+    ProductOrderEjb productOrderEjb = new ProductOrderEjb(productOrderDaoMock, null, mockQuoteService,
             JiraServiceProducer.stubInstance(), mockUserBean, null, null, null, mockMercurySampleDao,
             new ProductOrderJiraUtil(JiraServiceProducer.stubInstance(), mockUserBean),
             Mockito.mock(SapIntegrationService.class));
@@ -229,6 +237,13 @@ public class ProductOrderEjbTest {
 
         Mockito.when(productOrderDaoMock.findByBusinessKey(Mockito.eq(jiraTicketKey))).thenReturn(order);
         Mockito.when(mockUserBean.getBspUser()).thenReturn(new BSPUserList.QADudeUser("PM", 2423L));
+        Funding funding = new Funding(Funding.PURCHASE_ORDER, "238293", null);
+        funding.setPurchaseOrderContact("Test@broad.com");
+        Set<FundingLevel> fundingLevels = Collections.singleton(new FundingLevel("100", funding));
+        QuoteFunding quoteFunding = new QuoteFunding(fundingLevels);
+        Quote mockQuote =  new Quote(order.getQuoteId(), quoteFunding, ApprovalStatus.FUNDED);
+        Mockito.when(mockQuoteService.getQuoteByAlphaId(Mockito.anyString())).thenReturn(
+                mockQuote);
 
         String[] sampleNames = {"SM-smpl1", "SM-smpl2", "SM-smpl3", "SM-smpl4", "SM-smpl5"};
         List<ProductOrderSample> samples = ProductOrderSampleTestFactory.createDBFreeSampleList(sampleNames);

@@ -10,7 +10,6 @@ import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 
 import javax.annotation.Nonnull;
@@ -49,11 +48,15 @@ public class ProductOrderTestFactory {
         }
 
         List<ProductOrderSample> productOrderSamples = new ArrayList<>(sampleCount);
+
+        List<String> sampleNameSet = new ArrayList<>();
         for (int sampleIndex = 1; sampleIndex <= sampleCount; sampleIndex++) {
-            String bspStock = "SM-" + String.valueOf(sampleIndex) + String.valueOf(sampleIndex + 1) +
-                              String.valueOf(sampleIndex + 3) + String.valueOf(sampleIndex + 2) + sampleSuffix;
-            productOrderSamples.add(new ProductOrderSample(bspStock, new BspSampleData()));
+            sampleNameSet .add("SM-" + String.valueOf(sampleIndex) + String.valueOf(sampleIndex + 1) +
+                              String.valueOf(sampleIndex + 3) + String.valueOf(sampleIndex + 2) + sampleSuffix);
         }
+
+        productOrderSamples =
+                ProductOrderSampleTestFactory.createSampleListWithMercurySamples(sampleNameSet.toArray(new String[sampleNameSet.size()]));
 
         ResearchProject researchProject = ResearchProjectTestFactory.createDummyResearchProject(
                 creatorId, rpTitle, rpSynopsis, irbNotEngaged);
@@ -68,7 +71,7 @@ public class ProductOrderTestFactory {
         }
 
         Product dummyAddOnProduct =
-                ProductTestFactory.createDummyProduct(Workflow.NONE, "partNumber");
+                ProductTestFactory.createDummyProduct(Workflow.NONE, productPartNumber+"-addon");
         dummyAddOnProduct.setProductName("addOnProduct");
         PriceItem exExAddOnPriceItem =
                 new PriceItem(quoteId, PriceItem.PLATFORM_GENOMICS, PriceItem.CATEGORY_EXOME_SEQUENCING_ANALYSIS,

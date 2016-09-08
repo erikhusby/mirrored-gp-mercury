@@ -308,7 +308,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         this.wrappedClient = wrappedClient;
     }
 
-    public void setPriceListCache(PriceListCache priceListCache) {
+    protected void setPriceListCache(PriceListCache priceListCache) {
         this.priceListCache = priceListCache;
     }
 }
