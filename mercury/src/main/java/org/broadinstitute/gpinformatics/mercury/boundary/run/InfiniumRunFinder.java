@@ -20,7 +20,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
 import javax.annotation.Resource;
 import javax.ejb.EJBContext;
-import javax.ejb.Stateless;
+import javax.ejb.Singleton;
 import javax.ejb.TransactionManagement;
 import javax.ejb.TransactionManagementType;
 import javax.inject.Inject;
@@ -30,11 +30,12 @@ import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Finds pending infinium chip runs and forwards them on to analysis.
  */
-@Stateless
+@Singleton
 @TransactionManagement(value= TransactionManagementType.BEAN)
 public class InfiniumRunFinder implements Serializable {
     private static final Log log = LogFactory.getLog(InfiniumRunFinder.class);
@@ -66,30 +67,44 @@ public class InfiniumRunFinder implements Serializable {
     @Resource
     private EJBContext ejbContext;
 
+    private AtomicBoolean busy = new AtomicBoolean(false);
+
     public void find() throws SystemException {
-        List<LabVessel> infiniumChips = labVesselDao.findAllWithEventButMissingAnother(LabEventType.INFINIUM_XSTAIN,
-                LabEventType.INFINIUM_AUTOCALL_ALL_STARTED);
-        for (LabVessel labVessel : infiniumChips) {
-            UserTransaction utx = ejbContext.getUserTransaction();
-            try {
-                if (OrmUtil.proxySafeIsInstance(labVessel, StaticPlate.class)) {
-                    utx.begin();
-                    StaticPlate staticPlate = OrmUtil.proxySafeCast(labVessel, StaticPlate.class);
-                    processChip(staticPlate);
-                    utx.commit();
+        if (!busy.compareAndSet(false, true)) {
+            return;
+        }
+
+        try {
+            List<LabVessel> infiniumChips = labVesselDao.findAllWithEventButMissingAnother(LabEventType.INFINIUM_XSTAIN,
+                    LabEventType.INFINIUM_AUTOCALL_ALL_STARTED);
+            for (LabVessel labVessel : infiniumChips) {
+                UserTransaction utx = ejbContext.getUserTransaction();
+                try {
+                    if (OrmUtil.proxySafeIsInstance(labVessel, StaticPlate.class)) {
+                        utx.begin();
+                        StaticPlate staticPlate = OrmUtil.proxySafeCast(labVessel, StaticPlate.class);
+                        processChip(staticPlate);
+                        utx.commit();
+                    }
+                } catch (Exception e) {
+                    utx.rollback();
+                    log.error("Failed to process chip " + labVessel.getLabel(), e);
+                    emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(),
+                            "[Mercury] Failed to process infinium chip", "For " + labVessel.getLabel() +
+                                                                         " with error: " + e.getMessage());
                 }
-            } catch (Exception e) {
-                utx.rollback();
-                log.error("Failed to process chip " + labVessel.getLabel(), e);
-                emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(),
-                        "[Mercury] Failed to process infinium chip", "For " + labVessel.getLabel() +
-                                                                     " with error: " + e.getMessage());
             }
+        } finally {
+            busy.set(false);
         }
     }
 
     private void processChip(StaticPlate staticPlate) throws Exception {
         InfiniumRunProcessor.ChipWellResults chipWellResults = infiniumRunProcessor.process(staticPlate);
+        if (!chipWellResults.isHasRunStarted()) {
+            return;
+        }
+        log.debug("Processing chip: " + staticPlate.getLabel());
         LabEvent someStartedEvent = findOrCreateSomeStartedEvent(staticPlate);
         Set<LabEventMetadata> labEventMetadata = someStartedEvent.getLabEventMetadatas();
         boolean allComplete = true;
