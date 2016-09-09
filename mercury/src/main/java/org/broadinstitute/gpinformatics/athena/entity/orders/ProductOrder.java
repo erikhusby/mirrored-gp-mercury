@@ -894,7 +894,13 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public int getNonAbandonedCount() {
-        return updateSampleCounts().totalSampleCount - updateSampleCounts().abandonedCount;
+        int count = 0;
+        for(ProductOrderSample sample:samples) {
+            if(sample.getDeliveryStatus() != ProductOrderSample.DeliveryStatus.ABANDONED) {
+                count++;
+            }
+        }
+        return count;
     }
 
     /**

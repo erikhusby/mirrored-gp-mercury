@@ -168,9 +168,17 @@ public class BillingAdaptor implements Serializable {
                         item.getPriceItem().setPrice(primaryPriceItemIfReplacement.getPrice());
                     }
 
-                    String workId = quoteService.registerNewWork(quote, priceItemBeingBilled, primaryPriceItemIfReplacement,
-                            item.getWorkCompleteDate(), item.getQuantity(),
-                            pageUrl, "billingSession", sessionKey);
+                    String workId;
+                    if(quote.isEligibleForSAP() && StringUtils.isNotBlank(item.getProductOrder().getSapOrderNumber())) {
+                        // TODO SGM -- Insert new SAP friendly web service call here when it is ready
+                        workId = quoteService.registerNewWork(quote, priceItemBeingBilled, primaryPriceItemIfReplacement,
+                                item.getWorkCompleteDate(), item.getQuantity(),
+                                pageUrl, "billingSession", sessionKey);
+                    } else {
+                        workId = quoteService.registerNewWork(quote, priceItemBeingBilled, primaryPriceItemIfReplacement,
+                                item.getWorkCompleteDate(), item.getQuantity(),
+                                pageUrl, "billingSession", sessionKey);
+                    }
 
                     String sapBillingId = quote.isEligibleForSAP()? null:"NotEligible";
 
