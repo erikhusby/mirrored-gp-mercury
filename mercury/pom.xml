@@ -1301,19 +1301,18 @@ nodePrinter.print(webapp)
            - Exclude by declaring scope private and explicitly exclude jar in Arquillian shrinkwrap DeploymentBuilder!
            -->
         <dependency>
-            <groupId>org.testng</groupId>
-            <artifactId>testng</artifactId>
-            <version>6.9.8</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
             <groupId>dom4j</groupId>
             <artifactId>dom4j</artifactId>
             <version>1.6.1</version>
             <scope>provided</scope>
         </dependency>
 
+        <dependency>
+            <groupId>org.testng</groupId>
+            <artifactId>testng</artifactId>
+            <version>6.9.8</version>
+            <scope>test</scope>
+        </dependency>
 
         <!-- ***
              * For WildFly, use org.jboss.spec:jboss-javaee-7.0 in lieu of javax:javaee-api.
@@ -1714,6 +1713,14 @@ nodePrinter.print(webapp)
             <artifactId>jaxws-rt</artifactId>
             <version>2.2.6</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>jaxrs-api</artifactId>
+            <version>3.0.12.Final</version>
+            <scope>test</scope>
+        </dependency>
+
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
