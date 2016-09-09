@@ -145,7 +145,7 @@ public class ProductOrderSampleTest {
         // credit the price item already billed
         PriceItem billedPriceItem = sample.getProductOrder().getProduct().getPrimaryPriceItem();
         sample.addLedgerItem(new Date(), billedPriceItem, -1);
-        LedgerEntry entry = sample.getLedgerItems().iterator().next();
+        LedgerEntry entry = sample.findUnbilledLedgerEntryForPriceItem(billedPriceItem);
         entry.setPriceItemType(LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM);
         entry.setBillingMessage(BillingSession.SUCCESS);
 
