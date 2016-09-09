@@ -258,6 +258,9 @@ submission:
       port:     8080
 
 sap:
+    DEV:
+      login:      GPCOMU
+      password:   SAPERD300!
     QA:
       login:      GPCOMU
       password:   SAPERQ300!
