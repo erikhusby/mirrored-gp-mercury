@@ -80,6 +80,8 @@ public class ManualTransferActionBean extends RackScanActionBean {
     private int anonymousRackDisambiguator = 1;
     /** For testing Cherry Pick */
     private String cherryPickJson;
+    /** Persist the validation event to prevent invalid connection warnings for plate and strip-tube cherry pick events */
+    private boolean isValidation = false;
 
     @Inject
     private BettaLimsMessageResource bettaLimsMessageResource;
@@ -343,6 +345,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
      */
     @HandlesEvent(FETCH_EXISTING_ACTION)
     public Resolution fetchExisting() {
+        isValidation = true;
         LabBatch labBatch = null;
         if (batchName != null) {
             labBatch = labBatchDao.findByName(batchName);
@@ -395,7 +398,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
                             false, labBatch, messageCollection,
                             Direction.TARGET);
 
-                    if (messageCollection.hasErrors()) {
+                    if (messageCollection.hasErrors() || isValidation) {
                         break;
                     }
                     if (cherryPickJson == null) {
@@ -458,7 +461,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
                             false, labBatch, messageCollection,
                             Direction.TARGET);
 
-                    if(messageCollection.hasErrors()) {
+                    if (messageCollection.hasErrors() || isValidation) {
                         break;
                     }
 
