@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -35,6 +36,7 @@ public class InfiniumRunProcessor {
         Map<VesselPosition, Boolean> wellCompleteMap = new HashMap<>();
         String chipBarcode = chip.getLabel();
         File runDirectory = getRunDirectory(chipBarcode);
+        boolean hasRunStarted = runDirectory.exists();
         boolean isChipCompleted = true;
         if (runDirectory.exists()) {
             List<String> idatFiles = listIdatFiles(runDirectory);
@@ -54,6 +56,7 @@ public class InfiniumRunProcessor {
             }
         }
 
+        chipWellResults.setHasRunStarted(hasRunStarted);
         chipWellResults.setCompleted(isChipCompleted);
         chipWellResults.setWellCompleteMap(wellCompleteMap);
         return chipWellResults;
@@ -86,6 +89,7 @@ public class InfiniumRunProcessor {
         private boolean completed;
         private Map<VesselPosition, Boolean> wellCompleteMap;
         private List<VesselPosition> positionWithSampleInstance;
+        private boolean hasRunStarted;
 
         public Map<VesselPosition, Boolean> getWellCompleteMap() {
             return wellCompleteMap;
@@ -107,6 +111,14 @@ public class InfiniumRunProcessor {
 
         public void setCompleted(boolean completed) {
             this.completed = completed;
+        }
+
+        public void setHasRunStarted(boolean hasRunStarted) {
+            this.hasRunStarted = hasRunStarted;
+        }
+
+        public boolean isHasRunStarted() {
+            return hasRunStarted;
         }
     }
 

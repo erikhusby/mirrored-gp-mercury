@@ -152,6 +152,7 @@ public class SubmissionStatusDetailBean implements Serializable {
         SUBMITTED("Submitted", "Submitted"),
         FAILURE("Failure", "Failure"),
         READY_FOR_SUBMISSION("ReadyForSubmission", "Ready For Submission"),
+        VALIDATED("Validated", "Validated"),
         PROCESSING("Processing", "Processing");
 
         Status(String key, String label) {
