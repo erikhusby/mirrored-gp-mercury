@@ -7,8 +7,7 @@
 
 <stripes:layout-render name="/layout.jsp" pageTitle="View Research Project"
                        sectionTitle="View Project: ${actionBean.editResearchProject.title}"
-                       businessKeyValue="${actionBean.editResearchProject.businessKey}"
-                       dataTablesVersion="1.10">
+                       businessKeyValue="${actionBean.editResearchProject.businessKey}">
     <stripes:layout-component name="extraHead">
         <style type="text/css">
             .extraSpace {
