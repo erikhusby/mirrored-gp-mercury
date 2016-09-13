@@ -59,6 +59,8 @@ public class ProductWorkflowDefVersion implements Serializable {
      */
     private String routingRule;
 
+    private String batchJiraIssueType;
+
     /**
      * True if a validation LCSET is expected in the near future.   When a product is first rolled out,
      * routingRule be BOTH, and inValidation will be false. After a few weeks, inValidation will be
@@ -67,6 +69,12 @@ public class ProductWorkflowDefVersion implements Serializable {
      */
     private Boolean inValidation;
 
+    /**
+     * For ProductWorkflow level Jira Issue types
+     */
+    public String getProductWorkflowDefBatchJiraIssueType() {
+        return batchJiraIssueType;
+    }
 
     /**
      * For JAXB
@@ -147,10 +155,29 @@ public class ProductWorkflowDefVersion implements Serializable {
 
     public List<WorkflowBucketDef> getBuckets() {
         List<WorkflowBucketDef> workflowBucketDefs = new ArrayList<>();
+        boolean override = false;
         for (WorkflowProcessDef workflowProcessDef : workflowProcessDefs) {
             workflowBucketDefs.addAll(workflowProcessDef.getEffectiveVersion().getBuckets());
+            //Set the default or override value for batchJiraIssueType
+            if (workflowProcessDef.getEffectiveVersion().getBatchJiraIssueType() != null && !override) {
+                override = true;
+            }
+            if (!override) {
+                workflowBucketDefs.get(workflowBucketDefs.size() - 1).setBatchJiraIssueType(getOverrideJiraIssueType(workflowProcessDef));
+            }
         }
         return workflowBucketDefs;
+    }
+    /**
+     Get the override batch Jira issue type from productWorkflowDefs with the one
+     from the workflowProcessDef if it exists
+     */
+    private String getOverrideJiraIssueType(WorkflowProcessDef workflowProcessDef) {
+        if (workflowProcessDef.getEffectiveVersion().getBatchJiraIssueType() != null) {
+            return workflowProcessDef.getEffectiveVersion().getBatchJiraIssueType();
+        } else {
+            return getProductWorkflowDefBatchJiraIssueType();
+        }
     }
 
     public List<WorkflowBucketDef> getCreationBuckets() {
