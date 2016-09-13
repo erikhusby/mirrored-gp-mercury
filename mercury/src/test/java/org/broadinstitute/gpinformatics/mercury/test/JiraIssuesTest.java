@@ -8,6 +8,9 @@ import org.testng.annotations.Test;
 
 import java.io.IOException;
 
+import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
+
+@Test(groups = EXTERNAL_INTEGRATION)
 public class JiraIssuesTest {
 
     private JiraService jiraService = JiraServiceProducer.testInstance();
