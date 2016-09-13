@@ -29,6 +29,7 @@ public class InfiniumEntityBuilder {
     private LabEvent amplifcationEvent;
     private StaticPlate amplificationPlate;
     private List<StaticPlate> hybChips = new ArrayList<>();
+    private List<LabEvent> xStainEvents = new ArrayList<>();
 
     public InfiniumEntityBuilder(
             BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
@@ -126,6 +127,7 @@ public class InfiniumEntityBuilder {
         for (PlateEventType plateEventType : infiniumJaxbBuilder.getInfiniumXStainJaxbs()) {
             LabEvent xstainEvent = labEventFactory.buildFromBettaLimsPlateEventDbFree(plateEventType, hybChips.get(i));
             labEventHandler.processEvent(xstainEvent);
+            xStainEvents.add(xstainEvent);
             i++;
         }
 
@@ -134,5 +136,9 @@ public class InfiniumEntityBuilder {
 
     public List<StaticPlate> getHybChips() {
         return hybChips;
+    }
+
+    public List<LabEvent> getxStainEvents() {
+        return xStainEvents;
     }
 }

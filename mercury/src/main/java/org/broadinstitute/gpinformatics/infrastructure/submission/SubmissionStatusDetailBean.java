@@ -4,6 +4,7 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 
 import javax.xml.bind.annotation.XmlElement;
@@ -25,13 +26,18 @@ public class SubmissionStatusDetailBean implements Serializable {
     private List<String> errors=new ArrayList<>();
     private Date lastStatusUpdate;
     private BioProject bioproject;
+    private String site;
+    private String submissiondatatype;
+    private String submittedVersion;
 
     public SubmissionStatusDetailBean() {
     }
 
-
-    public SubmissionStatusDetailBean(String uuid, String status, Date lastStatusUpdate, String... errors) {
+    public SubmissionStatusDetailBean(String uuid, String status, String site, String submissiondatatype,
+                                      Date lastStatusUpdate, String... errors) {
         this.uuid = uuid;
+        this.site = site;
+        this.submissiondatatype = submissiondatatype;
         this.lastStatusUpdate = lastStatusUpdate;
         setStatus(status);
         setErrors(Arrays.asList(errors));
@@ -85,6 +91,25 @@ public class SubmissionStatusDetailBean implements Serializable {
         this.bioproject = bioproject;
     }
 
+    public String getSite() {
+        return site;
+    }
+
+    @XmlElement(name = "site")
+    public void setSite(String site) {
+        this.site = site;
+    }
+
+
+    public String getSubmissiondatatype() {
+        return submissiondatatype;
+    }
+
+    @XmlElement(name = "submissiondatatype")
+    public void setSubmissiondatatype(String submissiondatatype) {
+        this.submissiondatatype = submissiondatatype;
+    }
+
     @Override
     public boolean equals(Object other) {
         if (this == other) {
@@ -109,6 +134,16 @@ public class SubmissionStatusDetailBean implements Serializable {
         return new HashCodeBuilder().append(getUuid()).append(getStatus()).append(getErrors())
                                     .append(getLastStatusUpdate()).append(getBioproject()).toHashCode();
     }
+
+    @JsonIgnore
+    public void setSubmittedVersion(String submittedVersion) {
+        this.submittedVersion = submittedVersion;
+    }
+
+    public String getSubmittedVersion() {
+        return submittedVersion;
+    }
+
     /**
      * TODO scottmat fill in javadoc!!!
      */

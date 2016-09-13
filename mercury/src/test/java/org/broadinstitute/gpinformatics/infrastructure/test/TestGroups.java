@@ -27,6 +27,9 @@ public class TestGroups {
     /** "Test" used only to perform a fixup on production data. */
     public static final String FIXUP = "Fixup";
 
+    /** Other types of tests */
+    public static final String MULTITHREADED = "Multithreaded";
+
     /**
      * This means ... ?
      */

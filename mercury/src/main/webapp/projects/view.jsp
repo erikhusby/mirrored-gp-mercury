@@ -10,6 +10,15 @@
                        businessKeyValue="${actionBean.editResearchProject.businessKey}"
                        dataTablesVersion="1.10">
     <stripes:layout-component name="extraHead">
+        <style type="text/css">
+            .extraSpace {
+                height: calc(100vh - 100px);
+            }
+            .extraSpace > .ui-tabs-panel {
+                height: auto;
+                min-height: 100%;
+            }
+        </style>
         <script type="text/javascript">
             function getParameterByName(name) {
                 name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
@@ -17,20 +26,20 @@
                     results = regex.exec(location.search);
                 return results == null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
             }
+            var paramterValue = getParameterByName("rpSelectedTab");
+            var activeTab = parseInt(paramterValue == undefined ? 0 : paramterValue) + 1;
 
             $j(document).ready(function () {
-                $j( "#tabs" ).tabs({
-                active: getParameterByName("rpSelectedTab"),
-                    beforeLoad: function(event, ui) {
-                        if (ui.panel.children('form').length == 0) {
-                            if (ui.panel.children('p.loading').length == 0) {
-                                $j('<p>').addClass('loading').append('Please wait. Gathering data from Mercury, Bass, and Picard. This may take a few minutes.').appendTo(ui.panel);
-                            }
-                        } else {
-                            event.preventDefault();
-                        }
+                $j("#tabs").tabs({
+                    active: activeTab,
+                    activate: function () {
+                        this.scrollIntoView({block: "start", behavior: "smooth"});
                     }
                 });
+                if (${! actionBean.validateViewOrPostSubmissions(true)}) {
+                    var index = $j("#tabs ul").find("[href='#submissionsTab']").closest("li").index();
+                    $j("#tabs").tabs("disable", index);
+                }
 
                 $j('#addRegulatoryInfoDialog').dialog({
                     autoOpen: false,
@@ -52,12 +61,13 @@
                 });
 
                 setupDialogs();
+            });
 
-                var selectedTabValue = '${actionBean.rpSelectedTab}';
-
-                if(selectedTabValue !== "") {
-                    $j("#tabs").tabs("load",'${actionBean.rpSelectedTab}');
-                    $j("#tabs").tabs({active: eval('${actionBean.rpSelectedTab}')});
+            // $(window).load(...) is used here because the submissions.jsp dom is not ready
+            // when $j(document).ready() is called.
+            $(window).load(function(){
+                if (activeTab) {
+                    $j("#tabs ul li:nth-child(" + activeTab + ") a").trigger('click');
                 }
             });
 
@@ -491,6 +501,21 @@
                     </div>
                 </div>
             </fieldset>
+
+            <fieldset>
+                <legend><h4>Data Submission</h4></legend>
+                <div class="control-group view-control-group">
+                    <label class="control-label label-form">Submission Repository</label>
+
+                    <div class="controls">
+                        <div class="form-value">
+                            <c:if test="${actionBean.editResearchProject.submissionRepositoryName != null}">
+                                ${actionBean.submissionRepository.description}
+                            </c:if>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
         </div>
 
         <div id="addRegulatoryInfoDialog" title="Add Regulatory Information for ${actionBean.editResearchProject.title} (${actionBean.editResearchProject.businessKey})" class="form-horizontal">
@@ -546,13 +571,13 @@
             </table>
         </stripes:form>
 
-        <div id="tabs" class="simpletab">
+        <%-- extraSpace class adds about a page worth of blank at the bottom of the page so the --%>
+        <%-- submission entries aren't hidden when the ajax call returns --%>
+
+        <div id="tabs" class="simpletab extraSpace">
             <ul>
-                <li><a href="#ordersTab">Orders</a></li>
-                <li><stripes:link beanclass="${actionBean.class.name}" event="viewSubmissions">Submission Requests
-                        <stripes:param name="researchProject" value="${actionBean.researchProject}" />
-                        <stripes:param name="rpSelectedTab" value="<%= ResearchProjectActionBean.RESEARCH_PROJECT_SUBMISSIONS_TAB%>" />
-                    </stripes:link></li>
+                <li><a href="#ordersTab" title="View Product Orders">Orders</a></li>
+                <li><a href="#submissionsTab" title="${actionBean.submissionTabHelpText}">Submission Requests</a></li>
             </ul>
 
             <div id="ordersTab">
@@ -615,6 +640,14 @@
                 </c:forEach>
             </tbody>
         </table>
+            </div>
+            <div id="submissionsTab">
+                <a name="#submissionsTab"></a>
+                <input type="hidden" name="_sourcePage" value="<%request.getServletPath();%>"/>
+                <stripes:layout-render name="<%=ResearchProjectActionBean.PROJECT_SUBMISSIONS_PAGE%>"
+                                       event="viewSubmissions"
+                                       submissionsTabSelector="a[href = '#submissionsTab']"
+                                       researchProject="${actionBean.editResearchProject.businessKey}"/>
             </div>
         </div>
 

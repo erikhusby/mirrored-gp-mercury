@@ -63,7 +63,7 @@ public class SectionTransfer extends VesselTransfer {
     protected SectionTransfer() {
     }
 
-    public VesselContainer getSourceVesselContainer() {
+    public VesselContainer<?> getSourceVesselContainer() {
         return sourceVessel.getContainerRole();
     }
 
@@ -84,7 +84,7 @@ public class SectionTransfer extends VesselTransfer {
         return ancillarySourceVessel;
     }
 
-    public VesselContainer getTargetVesselContainer() {
+    public VesselContainer<?> getTargetVesselContainer() {
         return targetVessel.getContainerRole();
     }
 

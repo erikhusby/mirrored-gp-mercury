@@ -302,7 +302,7 @@ public class ProductOrderSampleTest {
         LabEvent collaboratorTransferEvent =
                 new LabEvent(LabEventType.COLLABORATOR_TRANSFER, new Date(), "thisLocation", 0l, 0l, "testprogram");
         barcodedTube.addInPlaceEvent(collaboratorTransferEvent);
-        barcodedTube.setReceiptEvent(new BSPUserList.QADudeUser("LU", 1L),new Date(), 1L);
+        barcodedTube.setReceiptEvent(new BSPUserList.QADudeUser("LU", 1L),new Date(), 1L, LabEvent.UI_EVENT_LOCATION);
         testSample.addLabVessel(barcodedTube);
 
         sample.setMetadataSource(metadataSource);
@@ -485,7 +485,8 @@ public class ProductOrderSampleTest {
             }
             sourceSample.getLabVessel().add(barcodedTube);
             if (isSampleReceived) {
-                barcodedTube.setReceiptEvent(new BSPUserList.QADudeUser("LU", 1L), new Date(), 1L);
+                barcodedTube.setReceiptEvent(new BSPUserList.QADudeUser("LU", 1L), new Date(), 1L,
+                        LabEvent.UI_EVENT_LOCATION);
             }
         }
 
@@ -552,6 +553,19 @@ public class ProductOrderSampleTest {
         childTube.addInPlaceEvent(receiptEvent);
 
         assertThat(productOrderSample.getReceiptDate(), nullValue());
+    }
+
+    /**
+     * Mercury won't always have a sample history to link extracted samples to their original root sample. However, any
+     * sample derived from another sample is considered by Mercury to be "received".
+     */
+    @Test
+    public void testSampleExtractedInBspIsReceived() {
+        ProductOrderSample productOrderSample = createProductOrderSample("SM-TEST", "0123");
+        productOrderSample.setSampleData(
+                new BspSampleData(Collections.singletonMap(BSPSampleSearchColumn.ROOT_SAMPLE, "SM-ROOT")));
+
+        assertThat(productOrderSample.isSampleReceived(), is(true));
     }
 
     /**

@@ -28,9 +28,8 @@ public class InfiniumRunResourceTest extends RestServiceContainerTest {
         return DeploymentBuilder.buildMercuryWar(DEV);
     }
 
-    // todo emp Reenable this test after running the genotyping mapping fixup test.
     @RunAsClient
-    @Test(dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, enabled = false)
+    @Test(dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, enabled = true)
     public void testBasics(@ArquillianResource URL baseUrl) throws Exception {
         WebResource resource = makeWebResource(baseUrl, "query");
 
@@ -49,6 +48,9 @@ public class InfiniumRunResourceTest extends RestServiceContainerTest {
         Assert.assertEquals(response1.getzCallThresholdsPath(),
                 "/gap/illumina/beadstudio/Autocall/ChipInfo/Broad_GWAS_supplemental/thresholds.7.txt");
         Assert.assertEquals(response1.getCollaboratorSampleId(), "TREDAP123");
+        Assert.assertFalse(response1.isPositiveControl());
+        Assert.assertFalse(response1.isNegativeControl());
+        Assert.assertEquals(response1.getResearchProjectId(), "RP-313");
 
         // Test a control
         InfiniumRunBean response2 = resource.queryParam("chipWellBarcode", "3999582166_R05C01").
@@ -60,6 +62,9 @@ public class InfiniumRunResourceTest extends RestServiceContainerTest {
         Assert.assertEquals(response2.getClusterFilePath(), response1.getClusterFilePath());
         Assert.assertEquals(response2.getzCallThresholdsPath(), response1.getzCallThresholdsPath());
         Assert.assertEquals(response2.getCollaboratorSampleId(), "NA12878");
+        Assert.assertTrue(response2.isPositiveControl());
+        Assert.assertFalse(response2.isNegativeControl());
+        Assert.assertNull(response2.getResearchProjectId());
     }
 
     @Override

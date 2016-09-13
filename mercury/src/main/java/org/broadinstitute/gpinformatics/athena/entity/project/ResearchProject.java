@@ -66,6 +66,10 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
             + "does not involve human-derived samples, then neither ORSP nor IRB review is required. However your "
             + "order must identify the specific type of samples involved (e.g mouse cells, artificial DNA).";
 
+    public boolean isResearchOnly() {
+        return getRegulatoryDesignation() == RegulatoryDesignation.RESEARCH_ONLY;
+    }
+
     public enum RegulatoryDesignation {
         // changing enum names requires integration testing with the pipeline,
         // but descriptions can change without impacting the pipeline
@@ -209,6 +213,9 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
             orphanRemoval = true)
     private List<SubmissionTracker> submissionTrackers = new ArrayList<>();
 
+    @Column(name = "REPOSITORY_NAME")
+    private String submissionRepositoryName;
+
     /**
      * The Buick ManifestSessions linked to this ResearchProject.
      */
@@ -216,17 +223,16 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
     private Set<ManifestSession> manifestSessions = new HashSet<>();
 
     // todo: we can cache the submissiontrackers in a static map
-    public SubmissionTracker getSubmissionTracker(SubmissionTuple tuple){
+    public SubmissionTracker getSubmissionTracker(SubmissionTuple submissionTuple) {
         Set<SubmissionTracker> foundSubmissionTrackers = new HashSet<>();
         for (SubmissionTracker submissionTracker : getSubmissionTrackers()) {
-            if (submissionTracker.getTuple().equals(tuple)) {
-                if (!foundSubmissionTrackers.add(submissionTracker)) {
+            if (submissionTracker.getTuple().equals(submissionTuple)) {
+                if (!foundSubmissionTrackers.add(submissionTracker)){
                     throw new RuntimeException("More then one result found");
                 }
             }
         }
-
-        if (foundSubmissionTrackers.size() == 0) {
+        if (foundSubmissionTrackers.isEmpty()) {
             return null;
         }
         return foundSubmissionTrackers.iterator().next();
@@ -371,6 +377,14 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
 
     public void setAccessControlEnabled(boolean accessControlEnabled) {
         this.accessControlEnabled = accessControlEnabled;
+    }
+
+    public String getSubmissionRepositoryName() {
+        return submissionRepositoryName;
+    }
+
+    public void setSubmissionRepositoryName(String submissionSiteName) {
+        this.submissionRepositoryName = submissionSiteName;
     }
 
     public Collection<RegulatoryInfo> getRegulatoryInfos() {
@@ -553,6 +567,14 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
         return foundPersonList;
     }
 
+    /**
+     * Find all people in project with given RoleType.
+     * <p/>
+     * <b>Note</b> that it is possible for a ProjectPerson to have one role in the project but have a different role in
+     * their UserBean. A case where this could happen is when a user is a PM in a project and their Role is revoked
+     * for some reason. Because of this it is important  to check the project role and the individual's role when
+     * determining access.
+     */
     public Long[] getPeople(RoleType role) {
         List<Long> people = new ArrayList<>();
 

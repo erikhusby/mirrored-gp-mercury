@@ -3,18 +3,17 @@ package org.broadinstitute.gpinformatics.infrastructure.bioproject;
 
 import org.broadinstitute.gpinformatics.infrastructure.ConnectionException;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionRequestBean;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionRepository;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionStatusDetailBean;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionLibraryDescriptor;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionsService;
-import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.testng.Arquillian;
-import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.enterprise.inject.Alternative;
 import java.util.Collection;
+import java.util.List;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class BioProjectServiceDownTest {
@@ -50,5 +49,27 @@ public class BioProjectServiceDownTest {
         public Collection<String> getSubmissionSamples(BioProject bioProject) {
             throw CONNECTION_REFUSED_EXCEPTION;
         }
+
+        @Override
+        public List<SubmissionRepository> getSubmissionRepositories() {
+            return null;
+        }
+
+        @Override
+        public List<SubmissionLibraryDescriptor> getSubmissionLibraryDescriptors() {
+            return null;
+        }
+
+        @Override
+        public SubmissionRepository findRepositoryByKey(String key) {
+            return null;
+        }
+
+        @Override
+        public SubmissionLibraryDescriptor findLibraryDescriptorTypeByKey(String selectedSubmissionDescriptor) {
+            return null;
+        }
+
     }
+
 }

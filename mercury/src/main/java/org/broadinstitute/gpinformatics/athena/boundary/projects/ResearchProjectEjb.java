@@ -18,9 +18,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.boundary.orders.PDOUpdateField;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.UpdateField;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.SubmissionTrackerDao;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.ProjectPerson;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
@@ -46,6 +48,8 @@ import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionBean
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionBioSampleBean;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionContactBean;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDto;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionLibraryDescriptor;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionRepository;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionRequestBean;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionStatusDetailBean;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionsService;
@@ -176,6 +180,9 @@ public class ResearchProjectEjb {
         researchProjectUpdateFields
                 .add(new ResearchProjectUpdateField(RequiredSubmissionFields.DESCRIPTION,
                         researchProject.getSynopsis()));
+        researchProjectUpdateFields.add(new ResearchProjectUpdateField(RequiredSubmissionFields.SUMMARY,
+                researchProject.getTitle()));
+
 
         List<String> fundingSources = new ArrayList<>();
         for (ResearchProjectFunding fundingSrc : researchProject.getProjectFunding()) {
@@ -221,7 +228,7 @@ public class ResearchProjectEjb {
         // something in the ResearchProject that is not reflected in JIRA.
         String comment = "\n" + researchProject.getJiraTicketKey() + " was edited by "
                          + userBean.getLoginUserName() + "\n\n"
-                         + (updateComment.isEmpty() ? "No JIRA Product Order fields were updated\n\n" : updateComment);
+                         + (updateComment.isEmpty() ? "No JIRA Research Project fields were updated\n\n" : updateComment);
 
         jiraService.postNewTransition(researchProject.getJiraTicketKey(), transition, customFields, comment);
     }
@@ -247,13 +254,17 @@ public class ResearchProjectEjb {
      * @param researchProjectBusinessKey Unique key of the Research Project under which the
      * @param selectedBioProject         BioProject to be associated with all submissions
      * @param submissionDtos             Collection of submissionDTOs selected to be submitted
+     * @param repository                 Repository where submission will be sent.
+     * @param submissionLibraryDescriptor             The name of the library descriptor to be sent in the submission.
      *
      * @return the results from the post to the submission service
      */
     public Collection<SubmissionStatusDetailBean> processSubmissions(@Nonnull String researchProjectBusinessKey,
                                                                      @Nonnull BioProject selectedBioProject,
-                                                                     @Nonnull List<SubmissionDto> submissionDtos)
-            throws ValidationException {
+                                                                     @Nonnull List<SubmissionDto> submissionDtos,
+                                                                     @Nonnull SubmissionRepository repository,
+                                                                     @Nonnull SubmissionLibraryDescriptor
+                                                                     submissionLibraryDescriptor) throws ValidationException {
         validateSubmissionDto(researchProjectBusinessKey, submissionDtos);
         validateSubmissionSamples(selectedBioProject, submissionDtos);
 
@@ -263,7 +274,7 @@ public class ResearchProjectEjb {
 
         for (SubmissionDto submissionDto : submissionDtos) {
             SubmissionTracker tracker = new SubmissionTracker(submissionDto.getSampleName(),
-                    submissionDto.getFileTypeEnum(), String.valueOf(submissionDto.getVersion()));
+                    submissionDto.getFileType(), String.valueOf(submissionDto.getVersion()));
             submissionProject.addSubmissionTracker(tracker);
             submissionDtoMap.put(tracker, submissionDto);
         }
@@ -286,7 +297,8 @@ public class ResearchProjectEjb {
 
             SubmissionBean submissionBean =
                     new SubmissionBean(dtoByTracker.getKey().createSubmissionIdentifier(),
-                            userBean.getBspUser().getUsername(), submitBioProject, bioSampleBean);
+                            userBean.getBspUser().getUsername(), submitBioProject, bioSampleBean, repository,
+                            submissionLibraryDescriptor);
             submissionBeans.add(submissionBean);
         }
 
@@ -309,10 +321,13 @@ public class ResearchProjectEjb {
         List<String> errorMessages = new ArrayList<>();
 
         for (SubmissionStatusDetailBean status : submissionResults) {
+            SubmissionTracker submissionTracker = submissionIdentifierToTracker.get(status.getUuid());
             if (CollectionUtils.isNotEmpty(status.getErrors())) {
                 for(String errorMessage:status.getErrors()) {
-                    errorMessages.add(String.format("%s: %s", submissionIdentifierToTracker.get(status.getUuid()).getSubmittedSampleName(),errorMessage));
+                    errorMessages.add(String.format("%s: %s", submissionTracker.getSubmittedSampleName(), errorMessage));
                 }
+            }else {
+                submissionDtoMap.get(submissionTracker).setStatusDetailBean(status);
             }
         }
 
@@ -406,6 +421,7 @@ public class ResearchProjectEjb {
         FUNDING_SOURCE("Funding Source"),
         MERCURY_URL("Mercury URL"),
         DESCRIPTION("Description"),
+        SUMMARY("Summary"),
         BROAD_PIS("Broad PI(s)");
 
         private final String fieldName;

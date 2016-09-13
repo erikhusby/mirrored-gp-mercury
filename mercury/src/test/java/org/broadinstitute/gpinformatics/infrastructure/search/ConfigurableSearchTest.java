@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
+//import com.jprofiler.api.agent.Controller;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceDao;
 import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
@@ -70,7 +71,7 @@ public class ConfigurableSearchTest extends Arquillian {
 
         // Create instance
         SearchInstance searchInstance = new SearchInstance();
-        String entity = "LabEvent";
+        String entity = ColumnEntity.LAB_EVENT.getEntityName();
         ConfigurableSearchDefinition configurableSearchDef = SearchDefinitionFactory.getForEntity(entity);
         SearchInstance.SearchValue searchValue = searchInstance.addTopLevelTerm("EventDate",
                 configurableSearchDef);
@@ -232,7 +233,7 @@ public class ConfigurableSearchTest extends Arquillian {
 
         // Create instance
         SearchInstance searchInstance = new SearchInstance();
-        String entity = "MercurySample";
+        String entity = ColumnEntity.MERCURY_SAMPLE.getEntityName();
         ConfigurableSearchDefinition configurableSearchDef = SearchDefinitionFactory.getForEntity(entity);
         SearchInstance.SearchValue searchValue = searchInstance.addTopLevelTerm("LCSET",
                 configurableSearchDef);
@@ -344,7 +345,7 @@ public class ConfigurableSearchTest extends Arquillian {
     @Test
     public void testEventMaterialType() {
         SearchInstance searchInstance = new SearchInstance();
-        String entity = "LabVessel";
+        String entity = ColumnEntity.LAB_VESSEL.getEntityName();
         ConfigurableSearchDefinition configurableSearchDef = SearchDefinitionFactory.getForEntity(entity);
 
         SearchInstance.SearchValue searchValue = searchInstance.addTopLevelTerm("PDO", configurableSearchDef);
@@ -364,5 +365,29 @@ public class ConfigurableSearchTest extends Arquillian {
         Assert.assertEquals(resultRows.get(2).getRenderableCells().get(1), "0175568200");
         Assert.assertEquals(resultRows.get(3).getRenderableCells().get(0), "SM-A19Z9");
         Assert.assertEquals(resultRows.get(3).getRenderableCells().get(1), "E000000293 0175568179");
+    }
+
+    @Test
+    public void testInfinium() {
+//        Controller.startCPURecording(true);
+        SearchInstance searchInstance = new SearchInstance();
+        String entity = ColumnEntity.LAB_VESSEL.getEntityName();
+        ConfigurableSearchDefinition configurableSearchDef = SearchDefinitionFactory.getForEntity(entity);
+
+        SearchInstance.SearchValue searchValue = searchInstance.addTopLevelTerm("Infinium PDO", configurableSearchDef);
+        searchValue.setOperator(SearchInstance.Operator.EQUALS);
+        searchValue.setValues(Collections.singletonList("PDO-9246"));
+
+        searchInstance.getPredefinedViewColumns().add("Infinium DNA Plate Drill Down");
+        searchInstance.getPredefinedViewColumns().add("Infinium Amp Plate Drill Down");
+
+        ConfigurableListFactory.FirstPageResults firstPageResults = configurableListFactory.getFirstResultsPage(
+                searchInstance, configurableSearchDef, null, 0, null, "ASC", entity);
+        List<ConfigurableList.ResultRow> resultRows = firstPageResults.getResultList().getResultRows();
+        Assert.assertEquals(resultRows.size(), 38);
+//        Controller.stopCPURecording();
+        Assert.assertEquals(resultRows.get(0).getRenderableCells().get(0), "CO-15138260");
+        Assert.assertEquals(resultRows.get(1).getRenderableCells().get(0), "CO-18828951");
+        Assert.assertEquals(resultRows.get(1).getRenderableCells().get(1), "000016825709");
     }
 }

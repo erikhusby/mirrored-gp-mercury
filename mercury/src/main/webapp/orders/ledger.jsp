@@ -80,6 +80,14 @@
             background-color: lawngreen;
         }
 
+        .oldDateComplete {
+            background-color: #FFCC66;
+        }
+
+        .futureDateComplete {
+            background-color: #FF9999;
+        }
+
         .changed.ui-state-disabled,
         .changed.hasDatepicker:disabled {
             background-color: springgreen;
@@ -101,6 +109,8 @@
 
         // Holds AJAX-fetched ledger data for the data table
         var ledgerDetails;
+
+        var dateCompleteWarningThreshold = new Date(${actionBean.threeMonthsAgo});
 
         $j(document).ready(function() {
 
@@ -128,18 +138,18 @@
                  * they are filtered out of the DOM when the page loads
                  */
                 'bStateSave': false,
-                'aaSorting': [[1, 'asc']],
+                'aaSorting': [[2, 'asc']],
                 'aoColumns': [
                     {'bSortable': false},                                                   // 0: checkbox
-                    {'bVisible': false},                                                    // 0: search text
-                    {'bSortable': true},                                                    // 1: sample position
-                    {'bSortable': false},                                                   // 2: expand
-                    {'bSortable': true},                                                    // 3: sample ID
-                    {'bSortable': true},                                                    // 4: collaborator sample ID
-                    {'bSortable': true},                                                    // 5: on risk
-                    {'bSortable': true},                                                    // 6: status
-                    {'bSortable': true},                                                    // 7: DCFM
-                    {'bSortable': true, 'sSortDataType': 'input-value', 'sType': 'date'},   // 8: date complete
+                    {'bVisible': false},                                                    // 1: search text
+                    {'bSortable': true},                                                    // 2: sample position
+                    {'bSortable': false},                                                   // 3: expand
+                    {'bSortable': true},                                                    // 4: sample ID
+                    {'bSortable': true},                                                    // 5: collaborator sample ID
+                    {'bSortable': true},                                                    // 6: on risk
+                    {'bSortable': true},                                                    // 7: status
+                    {'bSortable': true},                                                    // 8: DCFM
+                    {'bSortable': true, 'sSortDataType': 'input-value', 'sType': 'date'},   // 9: date complete
 
                     // price item columns
                     <c:forEach items="${actionBean.priceItems}" var="priceItem" varStatus="status">
@@ -168,12 +178,13 @@
             $j('.filterButtonSet').buttonset();
 
             // Show everything to start, but allocate array with locations for specific filters.
-            ledgerTable.dataTableExt.afnFiltering = [allFilter, allFilter, allFilter, allFilter];
+            ledgerTable.dataTableExt.afnFiltering = [allFilter, allFilter, allFilter, allFilter, allFilter];
             var filterIndexes = {
                 'risk': 0,
                 'coverage': 1,
                 'billed': 2,
-                'modified': 3
+                'abandoned': 3,
+                'modified': 4
             };
             $j('#filters .filterOption').click(function(event) {
                 var target = $j(event.target);
@@ -193,7 +204,7 @@
             /*
              * Set up date pickers for date complete.
              */
-            $j('.dateComplete').datepicker({ dateFormat: 'M d, yy' }).datepicker('refresh');
+            $j('.dateComplete').datepicker({ dateFormat: 'M d, yy', maxDate: 0 }).datepicker('refresh');
 
             /**
              * When rows are selected and one "date complete" is changed, change all selected rows.
@@ -211,13 +222,22 @@
                             $selectedInput.val(value);
                             var changed = value != $selectedInput.attr('originalValue');
                             $selectedInput.toggleClass('changed', changed);
+                            updateDateCompleteValidation($selectedInput);
                         }
                     }
                 }
                 var changed = value != $input.attr('originalValue');
                 $input.toggleClass('changed', changed);
+                updateDateCompleteValidation($input);
+
                 updateSubmitButton();
             });
+
+            // Update display styles for all date complete inputs when the page loads.
+            var dateCompleteInputs = $j('.dateComplete');
+            for (var i = 0; i < dateCompleteInputs.length; i++) {
+                updateDateCompleteValidation(dateCompleteInputs.eq(i));
+            }
 
             /*
              * Set up hSpinner widgets for controlling ledger quantities.
@@ -365,7 +385,7 @@
 
         var allFilter = function(oSettings, aData, iDataIndex) { return true; };
 
-        var riskFilter = function (oSettings, aData, iDataIndex) {
+        var riskFilter = function(oSettings, aData, iDataIndex) {
             return aData[6] != '';
         };
 
@@ -383,14 +403,22 @@
 
         var billedFilter = function(oSettings, aData, iDataIndex) {
             // Assumes that the content is rendered as something indicating a check mark, i.e., "check.png"
-            return aData[10 + numPriceItems * 2].includes('check');
+            return aData[10 + numPriceItems * 2].indexOf('check') != -1;
         };
 
-        var notBilledFilter = function (oSettings, aData, iDataIndex) {
+        var notBilledFilter = function(oSettings, aData, iDataIndex) {
             return !billedFilter(oSettings, aData, iDataIndex);
         };
 
-        var modifiedFilter = function (oSettings, aData, iDataIndex) {
+        var abandonedFilter = function(oSettings, aData, iDataIndex) {
+            return aData[7] == 'Abandoned';
+        };
+
+        var notAbandonedFilter = function(oSettings, aData, iDataIndex) {
+            return !abandonedFilter(oSettings, aData, iDataIndex);
+        };
+
+        var modifiedFilter = function(oSettings, aData, iDataIndex) {
             /*
              * aData contains a copy of the original cell content which will not have any updates to the text inputs.
              * Therefore, we need to look at the actual rows to extract the current value.
@@ -409,9 +437,9 @@
             return false;
         };
 
-        function notModifiedFilter(oSettings, aData, iDataIndex) {
+        var notModifiedFilter = function(oSettings, aData, iDataIndex) {
             return !modifiedFilter(oSettings, aData, iDataIndex);
-        }
+        };
 
         function updateSubmitButton() {
 <c:if test="${!actionBean.productOrderListEntry.billing}">
@@ -445,6 +473,16 @@
         }
 
         /**
+         * Updates the style for date complete inputs based on range validation rules.
+         */
+        function updateDateCompleteValidation($input) {
+            var value = $input.val();
+            var date = new Date(value);
+            $input.toggleClass('oldDateComplete', date.getTime() < dateCompleteWarningThreshold.getTime());
+            $input.toggleClass('futureDateComplete', date.getTime() > new Date().getTime());
+        }
+
+        /**
          * Updates display/style for a sample based on whether or not there is (or will be after any modifications are
          * saved) any ledger entries that have not been billed yet. This is indicated both as a style on the quantity
          * and as an asterisk in the "Billed" column. This is an indication that whether or not the sample is billed is
@@ -465,7 +503,6 @@
                 datePicker.datepicker('disable');
             }
         }
-
 
         function autoFill() {
             $j('#ledger .autoFillQuantity').each(function() {
@@ -507,6 +544,7 @@
             <li>On Risk</li>
             <li>Coverage Met</li>
             <li>Billed</li>
+            <li>Abandoned</li>
             <li>Modified (since page load)</li>
         </ul>
         <p>Also, the "Filter" input will filter samples by Sample ID and Collaborator Sample ID. Space-separated filter
@@ -618,7 +656,7 @@
 
         <%-- Datatable filters --%>
         <div id="filters" class="row-fluid" style="display: none;">
-            <div class="span10">
+            <div class="span11">
                 Risk:
                 <span id="riskRadios" class="filterButtonSet">
                     <input type="radio" id="riskOption" name="risk" value="riskFilter" class="filterOption">
@@ -646,6 +684,15 @@
                     <input type="radio" id="allBilledOption" name="billed" value="allFilter" class="filterOption" checked="checked">
                     <label for="allBilledOption">All</label>
                 </span>
+                Abandoned:
+                <span id="abandonedRadios" class="filterButtonSet">
+                    <input type="radio" id="abandonedOption" name="abandoned" value="abandonedFilter" class="filterOption">
+                    <label for="abandonedOption">Yes</label>
+                    <input type="radio" id="notAbandonedOption" name="abandoned" value="notAbandonedFilter" class="filterOption">
+                    <label for="notAbandonedOption">No</label>
+                    <input type="radio" id="allAbandonedOption" name="abandoned" value="allFilter" class="filterOption" checked="checked">
+                    <label for="allAbandonedOption">All</label>
+                </span>
                 Modified:
                 <span id="modifiedRadios" class="filterButtonSet">
                     <input type="radio" id="modifiedOption" name="modified" value="modifiedFilter" class="filterOption">
@@ -656,7 +703,7 @@
                     <label for="allModifiedOption">All</label>
                 </span>
             </div>
-            <div class="span2" style="text-align: right;">
+            <div class="span1" style="text-align: right;">
                 <c:choose>
                     <c:when test="${actionBean.productOrderListEntry.billing}">
                         <button id="updateLedgers" class="btn" title="No updates allowed while billing is in progress" disabled><strike>Update</strike></button>

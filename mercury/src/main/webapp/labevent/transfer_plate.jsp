@@ -14,7 +14,7 @@ plate / rack.
 <%--@elvariable id="section" type="org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection"--%>
 <%--@elvariable id="stationEventIndex" type="java.lang.Integer"--%>
 <%--@elvariable id="source" type="java.lang.Boolean"--%>
-<div class="control-group">
+<div class="control-group" id="container0">
     <label>Type </label>${plate.physType}
     <input type="hidden" name="stationEvents[${stationEventIndex}].${source ? 'sourcePlate' : 'plate'}.physType"
             value="${plate.physType}"/>
@@ -55,7 +55,7 @@ plate / rack.
             </div>
             Or hand scan 2D barcodes.
         </c:if>
-        <table>
+        <table id="${source ? 'src' : 'dest'}_${vesselTypeGeometry.vesselGeometry}">
             <c:forEach items="${geometry.rowNames}" var="rowName" varStatus="rowStatus">
                 <c:if test="${rowStatus.first}">
                     <tr>

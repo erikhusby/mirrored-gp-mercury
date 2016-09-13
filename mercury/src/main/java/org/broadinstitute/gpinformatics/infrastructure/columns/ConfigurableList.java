@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.infrastructure.columns;
 
-import org.apache.commons.lang3.StringEscapeUtils;
 import org.broadinstitute.gpinformatics.athena.entity.preference.ColumnSetsPreference;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
@@ -356,11 +355,7 @@ public class ConfigurableList {
         Cell(Header header, Comparable<?> sortableValue, String formattedValue) {
             this.header = header;
             this.sortableValue = sortableValue;
-
-            // Protect against JS Injection by escaping the formatted value.
-            if ( formattedValue != null && !formattedValue.isEmpty() ) {
-                this.formattedValue = StringEscapeUtils.escapeXml(formattedValue);
-            }
+            this.formattedValue = formattedValue;
         }
 
         public Header getHeader() {
@@ -460,10 +455,10 @@ public class ConfigurableList {
             }
             // Plugins for nested table processing handled on a row-by-row basis
             for (ColumnTabulation columnTabulation : pluginTabulations) {
+                context.setSearchTerm((SearchTerm) columnTabulation);
                 if( columnTabulation.isNestedParent() ) {
                     ListPlugin listPlugin = getPlugin(columnTabulation.getPluginClass());
                     // Nested table will never be a SearchValue ... cast to SearchTerm
-                    context.setSearchTerm((SearchTerm) columnTabulation);
                     ResultList nestedResultList = listPlugin.getNestedTableData(entity, columnTabulation, context);
                     if( nestedResultList != null ) {
                         row.getNestedTableEntities().put(columnTabulation, nestedResultList);
@@ -474,6 +469,7 @@ public class ConfigurableList {
 
         // Call the plugins, and add their data to the accumulated rows.
         for (ColumnTabulation columnTabulation : pluginTabulations) {
+            context.setSearchTerm((SearchTerm) columnTabulation);
             ListPlugin listPlugin = getPlugin(columnTabulation.getPluginClass());
             // Legacy plugin process from BSP
             if( !columnTabulation.isNestedParent() ) {
@@ -558,7 +554,13 @@ public class ConfigurableList {
                 header = new Header(currentViewHeader, currentViewHeader, null, columnTabulation.getDbSortPath() );
                 headerGroup.getHeaderMap().put(currentViewHeader, header);
             }
-            String formattedString = columnTabulation.evalFormattedExpression(currentValue, context );
+
+            String formattedString;
+            if( context.getResultCellTargetPlatform() == SearchContext.ResultCellTargetPlatform.WEB ) {
+                formattedString = columnTabulation.evalUiDisplayOutputExpression(currentValue, context);
+            } else {
+                formattedString = columnTabulation.evalPlainTextOutputExpression(currentValue, context);
+            }
 
             Comparable<?> comparableValue =
                     columnTabulation.evalValueTypeExpression(entity,context)
@@ -594,7 +596,11 @@ public class ConfigurableList {
             List<String> cells = new ArrayList<>();
             for( ColumnTabulation nestedColumnTabulation : columnTabulation.getNestedEntityColumns() ) {
                 Object value = nestedColumnTabulation.evalValueExpression(entity, context);
-                cells.add(nestedColumnTabulation.evalFormattedExpression(value, context));
+                if( context.getResultCellTargetPlatform() == SearchContext.ResultCellTargetPlatform.WEB ) {
+                    cells.add(nestedColumnTabulation.evalUiDisplayOutputExpression(value, context));
+                } else {
+                    cells.add(nestedColumnTabulation.evalPlainTextOutputExpression(value, context));
+                }
             }
             ResultRow row = new ResultRow( emptySortableCells, cells, null );
             localRows.add(row);

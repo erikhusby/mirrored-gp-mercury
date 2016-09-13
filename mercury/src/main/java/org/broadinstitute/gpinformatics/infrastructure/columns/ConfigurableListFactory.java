@@ -18,6 +18,8 @@ import org.hibernate.Criteria;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.ejb.Stateful;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -28,6 +30,7 @@ import java.util.List;
  */
 @Stateful
 @RequestScoped
+@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 public class ConfigurableListFactory {
 
     @Inject
@@ -434,6 +437,7 @@ public class ConfigurableListFactory {
 
         // Get each page and add it to the configurable list
         SearchContext context = buildSearchContext(searchInstance, entityName);
+        context.setResultCellTargetPlatform(SearchContext.ResultCellTargetPlatform.TEXT);
         for (int i = 0; i < pagination.getNumberPages(); i++) {
             List<?> resultsPage = PaginationUtil.getPage(threadEntityManager.getEntityManager(), pagination, i);
             configurableList.addRows(resultsPage, context);

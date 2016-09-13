@@ -12,6 +12,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.submission;
 
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
+import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 
 import javax.enterprise.inject.Alternative;
 import java.util.ArrayList;
@@ -29,7 +30,8 @@ public class SubmissionsWillAlwaysFailSubmissionsService extends SubmissionsServ
         List<SubmissionStatusDetailBean> results = new ArrayList<>();
         for (SubmissionBean submissionBean : submission.getSubmissions()) {
             SubmissionStatusDetailBean bean = new SubmissionStatusDetailBean(submissionBean.getUuid(),
-                    SubmissionStatusDetailBean.Status.FAILURE.getKey(), new Date(), errors);
+                    SubmissionStatusDetailBean.Status.FAILURE.getKey(), SubmissionRepository.DEFAULT_REPOSITORY_DESCRIPTOR,
+                    SubmissionLibraryDescriptor.WHOLE_GENOME_DESCRIPTION, new Date(), errors);
             results.add(bean);
         }
         return results;
@@ -45,9 +47,20 @@ public class SubmissionsWillAlwaysFailSubmissionsService extends SubmissionsServ
         List<SubmissionStatusDetailBean> results = new ArrayList<>();
         for (String uuid : uuids) {
             SubmissionStatusDetailBean statusDetailBean = new SubmissionStatusDetailBean(uuid,
-                    SubmissionStatusDetailBean.Status.FAILURE.getKey(), new Date(), errors);
+                    SubmissionStatusDetailBean.Status.FAILURE.getKey(), SubmissionRepository.DEFAULT_REPOSITORY_DESCRIPTOR,
+                    SubmissionLibraryDescriptor.WHOLE_GENOME_DESCRIPTION, new Date(), errors);
             results.add(statusDetailBean);
         }
         return results;
+    }
+
+    @Override
+    public List<SubmissionLibraryDescriptor> getSubmissionLibraryDescriptors() {
+        throw new InformaticsServiceException("error with getSubmissionLibraryDescriptors");
+    }
+
+    @Override
+    public List<SubmissionRepository> getSubmissionRepositories() {
+        throw new InformaticsServiceException("error with getSubmissionRepositories");
     }
 }

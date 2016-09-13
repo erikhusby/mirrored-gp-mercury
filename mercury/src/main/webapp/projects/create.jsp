@@ -341,10 +341,21 @@
                                 </stripes:select>
                             </div>
                         </div>
-
+                    </fieldset>
+                    <fieldset>
+                        <legend><h4>Data Submission</h4></legend>
+                        <div class="control-group">
+                            <stripes:label for="submissionSite" class="control-label">Default Repository</stripes:label>
+                            <div class="controls">
+                                <stripes:select id="submissionSite" name="editResearchProject.submissionRepositoryName">
+                                    <stripes:option value="">Choose...</stripes:option>
+                                    <stripes:options-collection label="description" value="name"
+                                                                collection="${actionBean.activeRepositories}"/>
+                                </stripes:select>
+                            </div>
+                        </div>
                     </fieldset>
                 </div>
-            </div>
 
             <div class="row">
                 <div class="form-horizontal span12" >

@@ -128,6 +128,13 @@ public class WorkflowDiagrammerDbFreeTest {
     }
 
     @Test
+    public void testWorkflowConfig() throws Exception {
+        diagrammer.setWorkflowLoader( new WorkflowLoader());
+        //Load and verify WorkflowConfig file.
+        diagrammer.makeAllDiagramFiles();
+    }
+
+    @Test
     public void testDates() {
         for (ProductWorkflowDef workflowDef : workflowConfig.getProductWorkflowDefs()) {
             if (workflowDef.getName().equals(WORKFLOW_NAME_1)) {
@@ -156,6 +163,7 @@ public class WorkflowDiagrammerDbFreeTest {
             Assert.assertFalse(filename.contains(" "));
         }
     }
+
 
     @Test
     public void testGraph() throws Exception {

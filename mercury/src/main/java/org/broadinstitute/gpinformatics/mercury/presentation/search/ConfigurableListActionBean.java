@@ -117,7 +117,6 @@ public class ConfigurableListActionBean extends CoreActionBean {
                 .getAttribute(ConfigurableSearchActionBean.PAGINATION_PREFIX + sessionKey);
         SearchInstance searchInstance = (SearchInstance) getContext().getRequest().getSession()
                 .getAttribute(ConfigurableSearchActionBean.SEARCH_INSTANCE_PREFIX + sessionKey);
-
         ConfigurableList.ResultList resultList = configurableListFactory.fetchAllPages(pagination, searchInstance,
                 downloadColumnSetName, entityName);
         return streamResultList(resultList);
@@ -153,8 +152,12 @@ public class ConfigurableListActionBean extends CoreActionBean {
         // Get search instance
         SearchInstance searchInstance = (SearchInstance) getContext().getRequest().getSession()
                 .getAttribute(ConfigurableSearchActionBean.SEARCH_INSTANCE_PREFIX + sessionKey);
+
+        SearchContext searchContext = buildSearchContext(searchInstance);
+        searchContext.setResultCellTargetPlatform(SearchContext.ResultCellTargetPlatform.TEXT);
+
         ConfigurableList configurableListUtils = configurableListFactory.create(entityList, downloadColumnSetName,
-                ColumnEntity.getByName(entityName), buildSearchContext(searchInstance),
+                ColumnEntity.getByName(entityName), searchContext,
                 SearchDefinitionFactory.getForEntity(entityName));
 
         Object[][] data = configurableListUtils.getResultList(false).getAsArray();

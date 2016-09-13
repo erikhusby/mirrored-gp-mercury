@@ -211,11 +211,11 @@ public class GetSampleInstancesTest {
                 MolecularIndexingScheme molecularIndexingScheme =
                         ((MolecularIndexReagent) poolSampleInstance.getReagents().get(0)).getMolecularIndexingScheme();
                 switch (molecularIndexingScheme.getName()) {
-                case "Illumina_P5-U_P7-U":
+                case "Illumina_P5-Wabab_P7-Wabab":
                     Assert.assertEquals(poolSampleInstance.getSingleBatch().getBatchName(), LCSET_1);
                     matchedSamples++;
                     break;
-                case "Illumina_P5-C_P7-C":
+                case "Illumina_P5-Cabab_P7-Cabab":
                     //noinspection ConstantConditions
                     Assert.assertEquals(poolSampleInstance.getSingleBucketEntry().getLabBatch().getBatchName(),
                             LCSET_2);
@@ -341,7 +341,7 @@ public class GetSampleInstancesTest {
         Assert.assertEquals(sampleInstances.size(), 1);
         SampleInstanceV2 sampleInstance = sampleInstances.iterator().next();
         Assert.assertEquals(sampleInstance.getMercuryRootSampleName(), tube1RootSample);
-        verifyReagents(sampleInstance, lcsetNum == 1 ? "Illumina_P5-M_P7-M" : "Illumina_P5-C_P7-C");
+        verifyReagents(sampleInstance, lcsetNum == 1 ? "Illumina_P5-Habab_P7-Habab" : "Illumina_P5-Cabab_P7-Cabab");
         Assert.assertEquals(sampleInstance.getSingleBucketEntry(), bucketEntry1);
         List<LabBatchStartingVessel> importBatchVessels = new ArrayList<>();
         if (!tube1Rework) {
@@ -381,7 +381,7 @@ public class GetSampleInstancesTest {
         sampleInstances = shearingPlate.getContainerRole().getSampleInstancesAtPositionV2(position3);
         Assert.assertEquals(sampleInstances.size(), 1);
         sampleInstance = sampleInstances.iterator().next();
-        verifyReagents(sampleInstance, lcsetNum == 1 ? "Illumina_P5-V_P7-V" : "Illumina_P5-X_P7-X");
+        verifyReagents(sampleInstance, lcsetNum == 1 ? "Illumina_P5-Nabab_P7-Nabab" : "Illumina_P5-Xabab_P7-Xabab");
         Assert.assertNull(sampleInstance.getSingleBucketEntry());
         Assert.assertEquals(sampleInstance.getSingleBatch(), lcsetBatch);
 

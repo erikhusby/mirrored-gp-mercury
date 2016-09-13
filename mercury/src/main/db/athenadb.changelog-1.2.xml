@@ -276,6 +276,53 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="GPLIM-4021-3" author="dryan">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists columnName="FILE_TYPE" tableName="SUBMISSION_TRACKER" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="SUBMISSION_TRACKER" schemaName="athena">
+            <column name="FILE_TYPE" type="varchar2(255)" >
+                <constraints nullable="true"/>
+            </column>
+
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-4021-4" author="dryan">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists columnName="FILE_TYPE" tableName="SUBMISSION_TRACKER_AUD" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="SUBMISSION_TRACKER_AUD" schemaName="athena">
+            <column name="FILE_TYPE" type="varchar2(255)" >
+                <constraints nullable="true"/>
+            </column>
+
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-4021-1" author="dryan">
+         <preConditions onFail="MARK_RAN">
+             <not>
+                 <columnExists tableName="RESEARCH_PROJECT" columnName="REPOSITORY_NAME" schemaName="athena" />
+             </not>
+         </preConditions>
+         <addColumn tableName="RESEARCH_PROJECT" schemaName="athena">
+             <column name="REPOSITORY_NAME" type="varchar2(255)"/>
+         </addColumn>
+     </changeSet>
+     <changeSet id="GPLIM-4021-2" author="dryan">
+         <preConditions onFail="MARK_RAN">
+             <not>
+                 <columnExists tableName="RESEARCH_PROJECT_AUD" columnName="REPOSITORY_NAME" schemaName="athena" />
+             </not>
+         </preConditions>
+         <addColumn tableName="RESEARCH_PROJECT_AUD" schemaName="athena">
+             <column name="REPOSITORY_NAME" type="varchar(255)" />
+         </addColumn>
+     </changeSet>
     <changeSet id="GPLIM-4060-POST_RELEASE-1" author="dryan">
         <preConditions onFail="MARK_RAN">
             <columnExists columnName="FILE_NAME" tableName="SUBMISSION_TRACKER" schemaName="ATHENA"/>
@@ -289,5 +336,18 @@
     <changeSet id="GPLIM-4060-POST_RELEASE-3" author="dryan">
         <addUniqueConstraint tableName="SUBMISSION_TRACKER" constraintName="UNQ_SUBMISSION_TRACKER_TUPLE"
                              schemaName="ATHENA" columnNames="RESEARCH_PROJECT_ID,SUBMITTED_SAMPLE_NAME, FILE_TYPE, VERSION" />
+    </changeSet>
+
+    <changeSet author="thompson" id="GPLIM-4103-1">
+        <addColumn schemaName="ATHENA" tableName="PRODUCT">
+            <column name="READ_LENGTH" type="number(4,0)"/>
+            <column name="INSERT_SIZE" type="number(5,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="thompson" id="GPLIM-4103-2">
+        <addColumn schemaName="ATHENA" tableName="PRODUCT_AUD">
+            <column name="READ_LENGTH" type="number(4,0)"/>
+            <column name="INSERT_SIZE" type="number(5,0)"/>
+        </addColumn>
     </changeSet>
 </databaseChangeLog>

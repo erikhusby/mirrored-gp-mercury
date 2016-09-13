@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventMetadata;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
@@ -231,7 +232,11 @@ public class LabEventSearchDefinition {
             @Override
             public String evaluate(Object entity, SearchContext context) {
                 LabEvent labEvent = (LabEvent) entity;
-                return labEvent.getLabEventType().getName();
+                if( labEvent.getWorkflowQualifier() != null ) {
+                    return labEvent.getLabEventType().getName() + " (" + labEvent.getWorkflowQualifier() + ")";
+                } else {
+                    return labEvent.getLabEventType().getName();
+                }
             }
         });
         searchTerm.setConstrainedValuesExpression(new SearchDefinitionFactory.EventTypeValuesExpression());
@@ -260,6 +265,26 @@ public class LabEventSearchDefinition {
             public List<ConstrainedValue> evaluate(Object entity, SearchContext context) {
                 ConstrainedValueDao constrainedValueDao = context.getOptionValueDao();
                 return constrainedValueDao.getLabEventProgramNameList();
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Simulation Mode");
+        searchTerm.setValueType(ColumnValueType.BOOLEAN);
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public String evaluate(Object entity, SearchContext context) {
+                LabEvent labEvent = (LabEvent) entity;
+                Boolean result = Boolean.FALSE;
+                for(LabEventMetadata meta : labEvent.getLabEventMetadatas() ) {
+                    if( meta.getLabEventMetadataType() == LabEventMetadata.LabEventMetadataType.SimulationMode ) {
+                        result = Boolean.valueOf(meta.getValue());
+                        break;
+                    }
+                }
+                return result?"Yes":"No";
+
             }
         });
         searchTerms.add(searchTerm);
@@ -537,6 +562,35 @@ public class LabEventSearchDefinition {
         searchTerm.setCriteriaPaths(blankCriteriaPaths);
         searchTerms.add(searchTerm);
 
+        // Product
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Product");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Set<String> evaluate(Object entity, SearchContext context) {
+                LabEvent labEvent = (LabEvent) entity;
+                Set<String> results = null;
+
+                Set<LabVessel> eventVessels = labEvent.getTargetLabVessels();
+                if( labEvent.getInPlaceLabVessel() != null ) {
+                    eventVessels.add(labEvent.getInPlaceLabVessel());
+                }
+
+                for( LabVessel labVessel : eventVessels ) {
+                    for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+                        for (ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples() ) {
+                            if( productOrderSample.getProductOrder().getProduct() != null ) {
+                                (results == null ? results = new HashSet<>() : results)
+                                        .add(productOrderSample.getProductOrder().getProduct().getDisplayName());
+                            }
+                        }
+                    }
+                }
+                return results;
+            }
+        });
+        searchTerms.add(searchTerm);
+
         searchTerm = new SearchTerm();
         searchTerm.setName("LCSET");
         searchTerm.setHelpText(
@@ -803,10 +857,8 @@ public class LabEventSearchDefinition {
                 if( inPlaceLabVessel != null ) {
                     if( OrmUtil.proxySafeIsInstance( inPlaceLabVessel, TubeFormation.class )) {
                         getLabelFromTubeFormation( labEvent, inPlaceLabVessel, results );
-                    } else {
-                        results.add( inPlaceLabVessel.getLabel() );
+                        return results;
                     }
-                    return results;
                 }
 
                 for (LabVessel vessel : labEvent.getTargetLabVessels()) {
@@ -816,17 +868,16 @@ public class LabEventSearchDefinition {
                         results.add(vessel.getLabel());
                     }
                 }
-                if( results.isEmpty() && labEvent.getInPlaceLabVessel() != null ) {
-                    if( labEvent.getInPlaceLabVessel().getContainerRole() != null ) {
-                        results.add( labEvent.getInPlaceLabVessel().getContainerRole().getEmbedder().getLabel() );
+                if( results.isEmpty() && inPlaceLabVessel != null ) {
+                    if( inPlaceLabVessel.getContainerRole() != null ) {
+                        results.add( inPlaceLabVessel.getContainerRole().getEmbedder().getLabel() );
                     } else {
-                        results.add( labEvent.getInPlaceLabVessel().getLabel() );
+                        results.add( inPlaceLabVessel.getLabel() );
                     }
                 }
 
                 return results;
             }
-
         });
         searchTerms.add(searchTerm);
 
@@ -836,6 +887,7 @@ public class LabEventSearchDefinition {
     /**
      * Build an alternate search definition to query for lab vessels
      *    and use programmatic logic to populate the lab event list
+     * These terms are mapped to user selectable terms by name.
      * @return
      */
     private ConfigurableSearchDefinition buildAlternateSearchDefByVessel() {
@@ -933,6 +985,7 @@ public class LabEventSearchDefinition {
         ConfigurableSearchDefinition configurableSearchDefinition = new ConfigurableSearchDefinition(
                 ColumnEntity.LAB_VESSEL, criteriaProjections, mapGroupSearchTerms);
 
+        // Mandatory to convert a list of LabVessel entities to LabEvent entities
         configurableSearchDefinition.addTraversalEvaluator(ConfigurableSearchDefinition.ALTERNATE_DEFINITION_ID
                 , new LabEventVesselTraversalEvaluator() );
 

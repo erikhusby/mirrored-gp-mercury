@@ -1,69 +1,62 @@
--------------------------------------------------------
--- https://gpinfojira.broadinstitute.org/jira/browse/GPLIM-4085
--- Add ancestry relationships for DenatureToDilutionTransfer events
+-- These indexes are on single column which is already the first column in PK, they aren't required
+DROP INDEX RESEARCH_PROJECT_STATUS_IDX1;
+DROP INDEX PRODUCT_ORDER_STATUS_IDX1;
+DROP INDEX PDO_SAMPLE_STATUS_IDX1;
 
--- Uncomment and execute when ready to clear existing data prior to full refresh of related tables:
-
---truncate table event_fact;
---truncate table library_ancestry;
---truncate table library_lcset_sample_base;
---drop sequence event_fact_id_seq;
---CREATE SEQUENCE event_fact_id_seq START WITH 1;
-
-
--------------------------------------------------------
--- https://gpinfojira.broadinstitute.org/jira/browse/RPT-3131
--- Mercury QC DM structural changes (Lab_Metric)
-
--- Prior to run:
--- Create backfill files from PROD release branch - record latest lab_metric_id value in last file (IDs not sequential in file - sort required)
--- Copy lab_metric.ctl file
-
-DROP TABLE im_lab_metric;
-
-CREATE TABLE im_lab_metric (
-  line_number      NUMERIC(9)  NOT NULL,
-  etl_date         DATE        NOT NULL,
-  is_delete        CHAR(1)     NOT NULL,
-  lab_metric_id    NUMERIC(19) NOT NULL,
-  quant_type       VARCHAR2(255),
-  quant_units      VARCHAR2(255),
-  quant_value      NUMBER(19,2),
-  run_name         VARCHAR2(255),
-  run_date         DATE,
-  lab_vessel_id    NUMERIC(19),
-  vessel_barcode   VARCHAR2(40),
-  rack_position    VARCHAR2(255),
-  decision         VARCHAR2(12),
-  decision_date    DATE,
-  decider          VARCHAR2(255),
-  override_reason  VARCHAR2(255)
+ALTER TABLE PRODUCT_ORDER_SAMPLE ADD (
+    BILLING_ETL_DATE DATE DEFAULT SYSDATE
+  , RISK_ETL_DATE DATE DEFAULT SYSDATE
 );
 
+UPDATE PRODUCT_ORDER_SAMPLE
+   SET BILLING_ETL_DATE = ETL_DATE
+     , RISK_ETL_DATE = ETL_DATE;
 
-drop table lab_metric;
+COMMIT;
 
-CREATE TABLE lab_metric (
-  lab_metric_id    NUMERIC(19) NOT NULL,
-  quant_type       VARCHAR2(255),
-  quant_units      VARCHAR2(255),
-  quant_value      NUMBER(19,2),
-  run_name         VARCHAR2(255),
-  run_date         DATE,
-  lab_vessel_id    NUMERIC(19),
-  vessel_barcode   VARCHAR2(40) NOT NULL,
-  rack_position    VARCHAR2(255),
-  decision         VARCHAR2(12),
-  decision_date    DATE,
-  decider          VARCHAR2(255),
-  override_reason  VARCHAR2(255),
-  etl_date         DATE NOT NULL,
-  constraint PK_LAB_METRIC PRIMARY KEY ( lab_metric_id )
-);
+ALTER TABLE FLOWCELL_DESIGNATION
+ADD FCLOAD_ETL_DATE DATE DEFAULT SYSDATE;
 
-CREATE INDEX lab_metric_vessel_idx1 ON lab_metric (vessel_barcode);
+UPDATE FLOWCELL_DESIGNATION
+SET FCLOAD_ETL_DATE = ETL_DATE;
 
--- After run:
--- Execute merge_import.sql
--- Copy backfill files to datawh/prod/new folder
--- Execute backfill rest call against prod for all id's greater than the one recorded at pre-deploy backfill
+COMMIT;
+
+-- Clean up old status data that had a new row for every data change whether or not the status changed
+-- Only keep first status and first status change in a string of duplicates by date
+DELETE FROM PRODUCT_ORDER_STATUS
+WHERE ROWID
+      IN ( SELECT BASE_ROW
+           FROM ( SELECT ROWID AS BASE_ROW
+                    , STATUS
+                    , LAG ( STATUS ) OVER
+                        ( PARTITION BY PRODUCT_ORDER_ID ORDER BY STATUS_DATE, STATUS ) AS PREV_STATUS
+                  FROM PRODUCT_ORDER_STATUS )
+           WHERE PREV_STATUS IS NOT NULL AND STATUS = PREV_STATUS  );
+COMMIT;
+
+DELETE FROM RESEARCH_PROJECT_STATUS
+WHERE ROWID
+      IN ( SELECT BASE_ROW
+           FROM ( SELECT ROWID AS BASE_ROW
+                    , STATUS
+                    , LAG ( STATUS ) OVER
+             ( PARTITION BY RESEARCH_PROJECT_ID
+               ORDER BY STATUS_DATE, STATUS
+             ) AS PREV_STATUS
+                  FROM RESEARCH_PROJECT_STATUS )
+           WHERE PREV_STATUS IS NOT NULL AND STATUS = PREV_STATUS  );
+COMMIT;
+
+DELETE FROM PRODUCT_ORDER_SAMPLE_STATUS
+WHERE ROWID
+      IN ( SELECT BASE_ROW
+           FROM ( SELECT ROWID AS BASE_ROW
+                    , DELIVERY_STATUS
+                    , LAG ( DELIVERY_STATUS ) OVER
+             ( PARTITION BY PRODUCT_ORDER_SAMPLE_ID ORDER BY STATUS_DATE, DELIVERY_STATUS ) AS PREV_STATUS
+                  FROM PRODUCT_ORDER_SAMPLE_STATUS )
+           WHERE PREV_STATUS IS NOT NULL AND DELIVERY_STATUS = PREV_STATUS  );
+COMMIT;
+
+

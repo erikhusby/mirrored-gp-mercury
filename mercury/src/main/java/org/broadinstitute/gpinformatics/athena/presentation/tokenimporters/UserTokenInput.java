@@ -14,9 +14,13 @@ import java.util.List;
  * Token Input support for users.
  */
 public class UserTokenInput extends TokenInput<BspUser> {
+    private BSPUserList bspUserList;
 
     @Inject
-    private BSPUserList bspUserList;
+    public UserTokenInput(BSPUserList bspUserList) {
+        this();
+        this.bspUserList = bspUserList;
+    }
 
     public UserTokenInput() {
         super(DOUBLE_LINE_FORMAT);

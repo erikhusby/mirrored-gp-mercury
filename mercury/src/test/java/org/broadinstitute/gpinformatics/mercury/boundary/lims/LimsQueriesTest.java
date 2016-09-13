@@ -284,7 +284,7 @@ public class LimsQueriesTest {
         tube.addMetric(finalLibrarySizeMetric);
         Map<String, ConcentrationAndVolumeAndWeightType> concentrationAndVolumeTypeMap =
                 limsQueries.fetchConcentrationAndVolumeAndWeightForTubeBarcodes(mercuryTubes,
-                        Collections.<String, GetSampleDetails.SampleInfo>emptyMap());
+                        Collections.<String, GetSampleDetails.SampleInfo>emptyMap(), true);
         assertThat(concentrationAndVolumeTypeMap.size(), equalTo(1));
         ConcentrationAndVolumeAndWeightType concentrationAndVolumeType = concentrationAndVolumeTypeMap.get(barcode);
         assertThat(concentrationAndVolumeType.isWasFound(), equalTo(true));
@@ -301,7 +301,7 @@ public class LimsQueriesTest {
         tube.setReceptacleWeight(receptacleWeight);
 
         concentrationAndVolumeTypeMap = limsQueries.fetchConcentrationAndVolumeAndWeightForTubeBarcodes(mercuryTubes,
-                Collections.<String, GetSampleDetails.SampleInfo>emptyMap());
+                Collections.<String, GetSampleDetails.SampleInfo>emptyMap(), true);
         assertThat(concentrationAndVolumeTypeMap.size(), equalTo(1));
         concentrationAndVolumeType = concentrationAndVolumeTypeMap.get(barcode);
         assertThat(concentrationAndVolumeType.isWasFound(), equalTo(true));

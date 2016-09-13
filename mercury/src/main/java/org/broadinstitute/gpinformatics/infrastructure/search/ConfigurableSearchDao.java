@@ -19,6 +19,8 @@ import org.hibernate.ejb.HibernateEntityManager;
 import org.hibernate.sql.JoinFragment;
 
 import javax.ejb.Stateful;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import java.util.Calendar;
 import java.util.Collection;
@@ -42,6 +44,7 @@ import java.util.Set;
  */
 @Stateful
 @RequestScoped
+@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 public class ConfigurableSearchDao extends GenericDao {
     /**
      * The maximum allowed length for all {@code IN} queries in a single SQL statement.
