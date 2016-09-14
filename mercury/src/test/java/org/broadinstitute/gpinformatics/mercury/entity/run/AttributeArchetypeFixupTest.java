@@ -266,4 +266,18 @@ public class AttributeArchetypeFixupTest extends Arquillian {
         attributeArchetypeDao.persist(new FixupCommentary("SUPPORT-1877 adjust Active date for chip mapping"));
         attributeArchetypeDao.flush();
     }
+
+    /** Add earlier chip version, to support backfilled messages.  This is for dev only. */
+    @Test(enabled = false)
+    public void fixupGap1068() {
+        userBean.loginOSUser();
+        GenotypingChipMapping genotypingChipMapping = new GenotypingChipMapping("P-WG-0036", "Infinium",
+                "PsychChip_v1-1_15073391_A1", new GregorianCalendar(2015, Calendar.JANUARY, 1, 0, 0).getTime());
+        attributeArchetypeDao.persist(genotypingChipMapping);
+
+        System.out.println("Backfill " + genotypingChipMapping.getChipName() + " to " +
+                genotypingChipMapping.getActiveDate());
+        attributeArchetypeDao.persist(new FixupCommentary("GAP-1068 backfill chip type"));
+        attributeArchetypeDao.flush();
+    }
 }
