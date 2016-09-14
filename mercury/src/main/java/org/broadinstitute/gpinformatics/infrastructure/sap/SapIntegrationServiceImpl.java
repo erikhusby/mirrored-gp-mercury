@@ -196,8 +196,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                     if (e.getMessage().equals(SapIntegrationClientImpl.MISSING_CUSTOMER_RESULT)) {
                         throw new SAPIntegrationException(
                                 "Your order cannot be placed in SAP because the email address "
-                                + "specified on the Quote or Mercury PDO is not attached to "
-                                + "any SAP Customer account.\n"
+                                + "specified on the Quote is not attached to any SAP Customer account.\n"
                                 + "An email has been sent to Amber Kennedy in AR to initiate "
                                 + "this SAP Customer Creation process. Please contact Amber "
                                 + "Kennedy to follow this up.\n"
@@ -208,8 +207,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
                     } else if (e.getMessage().equals(SapIntegrationClientImpl.TOO_MANY_ACCOUNTS_RESULT)) {
                         throw new SAPIntegrationException(
                                 "Your order cannot be placed because the email address specified "
-                                + "on the Quote or Mercury PDO is associated with more than 1 "
-                                + "SAP Customer account.\n"
+                                + "on the Quote is associated with more than 1 SAP Customer account.\n"
                                 + "An email has been sent to Amber Kennedy in AR to initiate "
                                 + "this SAP Customer Creation process. Please contact Amber "
                                 + "Kennedy to follow this up.\n"
