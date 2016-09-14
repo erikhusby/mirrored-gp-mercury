@@ -745,7 +745,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
                 addMessage("Transfer recorded successfully.");
             } catch (Exception e) {
                 log.error("Failed to process message", e);
-                addGlobalValidationError(e.getMessage());
+                addGlobalValidationError(e.getCause().getMessage());
             }
         }
         return new ForwardResolution(MANUAL_TRANSFER_PAGE);
