@@ -864,14 +864,9 @@ function formatInput(item) {
 
         <div class="controls">
             <div class="form-value">
-                <c:choose>
-                    <c:when test="${actionBean.editOrder.draft} || ${actionBean.editOrder.pending} || !${actionBean.editOrder.savedInSAP}">
-                        &#160;
-                    </c:when>
-                    <c:otherwise>
+                    <c:if test="${!actionBean.editOrder.draft && !actionBean.editOrder.pending && actionBean.editOrder.savedInSAP}">
                         ${actionBean.editOrder.sapOrderNumber}
-                    </c:otherwise>
-                </c:choose>
+                    </c:if>
             </div>
         </div>
     </div>
