@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.run;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
@@ -117,10 +116,20 @@ public class InfiniumRunResource {
             SampleInstanceV2 sampleInstanceV2 = sampleInstancesAtPositionV2.iterator().next();
             SampleData sampleData = sampleDataFetcher.fetchSampleData(
                     sampleInstanceV2.getNearestMercurySampleName());
-            List<ProductOrderSample> productOrderSamples = productOrderSampleDao.findBySamples(
-                    Collections.singletonList(sampleInstanceV2.getRootOrEarliestMercurySampleName()));
+
+            List<ProductOrderSample> productOrderSamples;
+            Set<String> researchProjectIds;
+            ProductOrderSample productOrderSample = sampleInstanceV2.getProductOrderSampleForSingleBucket();
+            if (productOrderSample == null) {
+                productOrderSamples = productOrderSampleDao.findBySamples(
+                        Collections.singletonList(sampleInstanceV2.getRootOrEarliestMercurySampleName()));
+                researchProjectIds = findResearchProjectIds(productOrderSamples);
+            } else {
+                productOrderSamples = Collections.singletonList(productOrderSample);
+                researchProjectIds = Collections.singleton(
+                        productOrderSample.getProductOrder().getResearchProject().getBusinessKey());
+            }
             Set <GenotypingChip> chipTypes = findChipTypes(productOrderSamples, effectiveDate);
-            Set<String> researchProjectIds = findResearchProjectIds(productOrderSamples);
 
             boolean positiveControl = false;
             boolean negativeControl = false;
