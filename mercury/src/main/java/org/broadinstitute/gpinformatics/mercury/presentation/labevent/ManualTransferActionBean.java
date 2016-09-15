@@ -752,7 +752,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
                 log.error("Failed to process message", e);
                 //Reset the Json that holds connections.
                 cherryPickJson = null;
-                addGlobalValidationError(e.getMessage());
+                addGlobalValidationError(e.getCause().getMessage());
             }
         }
         return new ForwardResolution(MANUAL_TRANSFER_PAGE);
