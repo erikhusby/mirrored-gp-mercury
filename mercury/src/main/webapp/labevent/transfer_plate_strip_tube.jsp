@@ -74,6 +74,7 @@ plate / rack.
         <input type="hidden" id="dataSrc" name="srcPos" value="A1">
         <input type="hidden" id="dataDest" name="destPos" value="A1">
         <input type="hidden" id="stripTubeValidationList" name="stripTubeList" value="A1">
+        <input type="hidden" id="dataDestList" name="destPosList" value="${actionBean.getConnectionPositions()}">
     </c:if>
 
     <c:if test="${stationEvent.class.simpleName == 'PlateCherryPickEvent'}">
