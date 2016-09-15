@@ -273,6 +273,7 @@ public class AttributeArchetypeFixupTest extends Arquillian {
         userBean.loginOSUser();
         GenotypingChipMapping genotypingChipMapping = new GenotypingChipMapping("P-WG-0036", "Infinium",
                 "PsychChip_v1-1_15073391_A1", new GregorianCalendar(2015, Calendar.JANUARY, 1, 0, 0).getTime());
+        genotypingChipMapping.setInactiveDate(new GregorianCalendar(2015, Calendar.OCTOBER, 9, 11, 13).getTime());
         attributeArchetypeDao.persist(genotypingChipMapping);
 
         System.out.println("Backfill " + genotypingChipMapping.getChipName() + " to " +
