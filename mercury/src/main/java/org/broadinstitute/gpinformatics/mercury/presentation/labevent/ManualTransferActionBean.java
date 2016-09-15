@@ -49,6 +49,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
     public static final String CHOOSE_EVENT_TYPE_ACTION = "chooseEventType";
     public static final String TRANSFER_ACTION = "transfer";
     public static final String FETCH_EXISTING_ACTION = "fetchExisting";
+    public static final String CLEAR_CONNECTIONS_ACTION = "ClearConnectionsButton";
     public static final String ACTION_BEAN_URL = "/labevent/manualtransfer.action";
     public static final String PAGE_TITLE = "Manual Transfers";
     public static final String RACK_SCAN_EVENT = "rackScan";
@@ -398,12 +399,14 @@ public class ManualTransferActionBean extends RackScanActionBean {
                             false, labBatch, messageCollection,
                             Direction.TARGET);
 
-                    if (messageCollection.hasErrors() || isValidation) {
-                        break;
-                    }
                     if (cherryPickJson == null) {
                         cherryPickJson = getContext().getRequest().getParameter("destPosList");
                     }
+
+                    if (messageCollection.hasErrors() || isValidation) {
+                        break;
+                    }
+
                     //This handles barcode validation where no transfer connections have been made resulting in malformed Json.
                     try {
                         cherryPickPositionMaps = mapper.readValue(cherryPickJson, new TypeReference<List<CherryPicksPositions>>() {
@@ -461,6 +464,10 @@ public class ManualTransferActionBean extends RackScanActionBean {
                             false, labBatch, messageCollection,
                             Direction.TARGET);
 
+                    if(cherryPickJson == null) {
+                        cherryPickJson = getContext().getRequest().getParameter("destPosList");
+                    }
+
                     if (messageCollection.hasErrors() || isValidation) {
                         break;
                     }
@@ -468,8 +475,6 @@ public class ManualTransferActionBean extends RackScanActionBean {
                     ObjectMapper mapper = new ObjectMapper();
                     List<CherryPicksPositions> cherryPickPositionMaps = null;
 
-                    if(cherryPickJson == null)
-                        cherryPickJson = getContext().getRequest().getParameter("destPosList");
                     //This handles barcode validation where no transfer connections have been made resulting in malformed Json.
                     try {
                         cherryPickPositionMaps = mapper.readValue(cherryPickJson, new TypeReference<List<CherryPicksPositions>>(){});
@@ -745,6 +750,8 @@ public class ManualTransferActionBean extends RackScanActionBean {
                 addMessage("Transfer recorded successfully.");
             } catch (Exception e) {
                 log.error("Failed to process message", e);
+                //Reset the Json that holds connections.
+                cherryPickJson = null;
                 addGlobalValidationError(e.getMessage());
             }
         }
@@ -905,6 +912,23 @@ public class ManualTransferActionBean extends RackScanActionBean {
         return receptacleTypeReturn;
     }
 
+    /* Clears manual transfer connections */
+    @HandlesEvent(CLEAR_CONNECTIONS_ACTION)
+    public Resolution clearConnections() {
+        cherryPickJson = null;
+        return new ForwardResolution(MANUAL_TRANSFER_PAGE);
+    }
+
+    /* Persists and returns connection information */
+    public String getConnectionPositions() {
+       if(cherryPickJson == null) {
+           return null;
+       }
+       //Double quotes need to be replaced with * to allow Json string
+       //to be passed back to the Javascript.
+       return cherryPickJson.replace("\"", "*");
+    }
+
     //Handles validation and postback of strip tube manual transfers.
     public StripTubePositions findStripTubeFctPositions(int position) {
         ObjectMapper mapper = new ObjectMapper();
@@ -922,6 +946,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
         }
 
         StripTubePositions stripTubePositionsReturn = new StripTubePositions();
+        stripTubePositionsReturn.connectionPositions = getContext().getRequest().getParameter("destPosList");
         stripTubePositionsReturn.fctValue = stripTubePositions.fct.get(position);
         stripTubePositionsReturn.barcodeValue = stripTubePositions.stripTubeBarcode.get(position);
         return stripTubePositionsReturn;

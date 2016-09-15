@@ -11,10 +11,29 @@ $(document).ready(function () {
     var direction="";
     var directionArr=[];
     var maxRackSize = $( "[id^=src_TABLE] td").length;
+    var gPositionList = "";
+    var gPositionClearList = "";
     StoreSessions();
+
+        try {
+            gPositionList = document.getElementById("dataDestList");
+        }
+        catch (err) {
+        }
+
 
     jsPlumb.ready(function () {
 
+        $(document).ready(function () {
+            $(window).scroll(function () {
+                jsPlumb.repaintEverything();
+            });
+        });
+        if(gPositionList == null) {
+            gPositionList ="";
+        }
+
+        gPositionClearList = gPositionList;
         //Initial jsPlumb setup of line types and endpoints.
         var instance = jsPlumb.getInstance({
             Connector: "StateMachine",
@@ -33,8 +52,47 @@ $(document).ready(function () {
         var endpointOptions = {isSource: true};
         var colorSpace;
 
+        $('#ClearConnectionsButton').click(function () {
+            if(gPositionClearList != "") {
+                var paresdJson = findAndReplace(gPositionClearList.value, "*", '"');
+                workQueue = JSON.parse(paresdJson);
+                workQueue.forEach(function (queueItem) {
+                    targetIDs = queueItem.targetIDs.slice();
+                    targetIDs.forEach(function (queueItemTarget) {
+                        $("#" + queueItemTarget).click();
+                    });
+
+                });
+                workQueue = JSON.parse(paresdJson);
+                workQueue.forEach(function (queueItem) {
+                    sourceIDs = queueItem.sourceIDs.slice();
+                    $("#" + sourceIDs).click();
+                });
+
+            }
+            else
+            {
+                workQueue.forEach(function (queueItem) {
+                    targetIDs = queueItem.targetIDs.slice();
+                    targetIDs.forEach(function (queueItemTarget) {
+                        $("#" + queueItemTarget).click();
+                    });
+                });
+                workQueue.forEach(function (queueItem) {
+                    sourceIDs = queueItem.sourceIDs.slice();
+                    $("#" + sourceIDs).click();
+                });
+            }
+            gPositionList = "";
+            gPositionClearList = "";
+            preview(false)
+        });
+
         $('#PreviewButton').click(function ()
         {preview(false)});
+
+        if(gPositionList.value != "")
+           preview();
 
         //Main handler for the preview feature.
         function preview() {
@@ -49,48 +107,80 @@ $(document).ready(function () {
                 targetFCT: [],
                 targetPositions: []
             };
-
             newQueueObject.targetIDs = targetIDs.slice();
             newQueueObject.sourceIDs = sourceIDs.slice();
-
-            targetIDs.forEach(getBarcodesTarget);
-            sourceIDs.forEach(getBarcodesSource);
-            targetIDs.forEach(getTargetFCT);
-            targetIDs.forEach(getTargetPositions);
-
             function getBarcodesSource(element, index, array) {
-                newQueueObject.sourceBarcodes.push($('#'+element.slice(3).replace('_','').replace('_','')).val());
+                newQueueObject.sourceBarcodes.push($('#' + element.slice(3).replace('_', '').replace('_', '')).val());
             }
+
             function getBarcodesTarget(element, index, array) {
-                newQueueObject.targetBarcodes.push($('#'+element.slice(3).replace('_','').replace('_','')).val());
+                newQueueObject.targetBarcodes.push($('#' + element.slice(3).replace('_', '').replace('_', '')).val());
             }
+
             //Striptube manual transfer FCT ticket parsing.
             function getTargetFCT(element, index, array) {
-                newQueueObject.targetFCT.push($("#destRcpBcd0_" + (parseInt(element.substring(1,3)) - 1).toString() + "_FCT").val());
+                newQueueObject.targetFCT.push($("#destRcpBcd0_" + (parseInt(element.substring(1, 3)) - 1).toString() + "_FCT").val());
             }
+
             //Striptube manual transfer. Gets the position of the chosen tube in the strip.
             function getTargetPositions(element, index, array) {
-                newQueueObject.targetPositions.push(parseInt(element.substring(0).charCodeAt(0) - 65)+1);
+                newQueueObject.targetPositions.push(parseInt(element.substring(0).charCodeAt(0) - 65) + 1);
             }
 
-            //Delete any missing keys from the queue before it is sent to the server.
-            for(key in workQueue) {
-                if(workQueue[key].sourceIDs.length == 0 || workQueue[key].targetIDsength == 0) {
-                    workQueue.splice(key,1);
-                    directionArr.splice(key,1);
+            if(gPositionList == "" || gPositionList.value == "") {
+                if(targetIDs.length > 0) {
+                    targetIDs.forEach(getBarcodesTarget);
+                    targetIDs.forEach(getTargetFCT);
+                    targetIDs.forEach(getTargetPositions);
                 }
-                else {
+                if(sourceIDs.length > 0) {
+                    sourceIDs.forEach(getBarcodesSource);
+                }
+
+                //Delete any missing keys from the queue before it is sent to the server.
+                for (key in workQueue) {
+                    if (workQueue[key].sourceIDs.length == 0 || workQueue[key].targetIDsength == 0) {
+                        workQueue.splice(key, 1);
+                        directionArr.splice(key, 1);
+                    }
+                    else {
+                    }
+                }
+                try {
+                    if (newQueueObject.sourceIDs[0].length > 0 || newQueueObject.targetIDs[0].length)
+                        workQueue.push(newQueueObject);
+                }
+                catch (err) {
                 }
             }
+            else
+            {
+                var paresdJson =  findAndReplace(gPositionList.value,"*", '"');
+                workQueue = JSON.parse(paresdJson);
+                workQueue.forEach(function (queueItem) {
+                    targetIDs = queueItem.targetIDs.slice();
+                    targetIDs.forEach(function (queueItemTarget) {
+                        $("#"+ queueItemTarget).click();
+                    });
+
+                });
+                workQueue = JSON.parse(paresdJson);
+                workQueue.forEach(function (queueItem) {
+                    sourceIDs = queueItem.sourceIDs.slice();
+                    $("#"+ sourceIDs).click();
+                });
+
+                gPositionList="";
+            }
+
             try {
-                if(newQueueObject.sourceIDs[0].length > 0 || newQueueObject.targetIDs[0].length)
-                    workQueue.push(newQueueObject);
+                var edl = document.getElementById("dataDestList");
+                edl.value = JSON.stringify(workQueue);
             }
-            catch(err){}
+            catch (err) {}
 
-            var edl = document.getElementById("dataDestList");
-            edl.value = JSON.stringify(workQueue);
             var index = 0;
+
 
             workQueue.forEach(function (queueItem) {
                 var itemCount = 0;
@@ -181,6 +271,13 @@ $(document).ready(function () {
         return 100; //Hard-Wired to 100 since this seems to work best.
     }
 
+    function findAndReplace(string, target, replacement) {
+        var i = 0, length = string.length;
+        for (i; i < length; i++) {
+            string = string.replace(target, replacement);
+        }
+        return string;
+    }
     //Clear connections if user removes an item.
     function removeConnections(cell) {
         var itemCount = 0;
