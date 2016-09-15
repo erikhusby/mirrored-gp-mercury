@@ -126,6 +126,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         private String summary;
         private String description;
         private Map<String, Object> extraFields = new HashMap<>();
+        private List<String> subTasks = new ArrayList<>();
         private CreateFields.IssueType issueType;
         private Date dueDate;
         private Date created;
@@ -171,7 +172,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
     public JiraIssue getIssueInfo(String key, String... fields) throws IOException {
         String urlString = getBaseUrl() + "/issue/" + key;
 
-        StringBuilder fieldList = new StringBuilder("summary,description,duedate,created,reporter");
+        StringBuilder fieldList = new StringBuilder("summary,description,duedate,created,reporter,subtasks");
 
         if (null != fields) {
             for (String currField : fields) {
@@ -191,13 +192,13 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         issueResult.setDueDate(data.dueDate);
         issueResult.setCreated(data.created);
         issueResult.setReporter(data.reporter);
+        issueResult.setSubTasks(data.subTasks);
 
         if (null != fields) {
             for (String currField : fields) {
                 issueResult.addFieldValue(currField, data.extraFields.get(currField));
             }
         }
-
         return issueResult;
     }
 
@@ -225,7 +226,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
         parsedResults.description = (String) fields.get("description");
         parsedResults.summary = (String) fields.get("summary");
-
+        parsedResults.subTasks = JiraIssue.parseSubTasks((List<Object>) fields.get("subtasks"));
         String dueDateValue = (String) fields.get("duedate");
         String createdDateValue = (String) fields.get("created");
         Map<?, ?> reporterValues = (Map<?, ?>) fields.get("reporter");
