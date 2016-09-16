@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.athena.boundary.products;
 
 import org.apache.commons.lang3.tuple.Triple;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
-import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingChipMapping;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
@@ -78,48 +77,6 @@ public class ProductEjbTest extends Arquillian {
         }
     }
 
-    @Test(enabled = true)
-    public void testDateOverlaps() throws Exception {
-        utx.begin();
-        try {
-            long now = System.currentTimeMillis();
-            String partNumber = "ABCD" + now;
-            String family = "tech" + now;
-            String[] chipNames = {"name0" + now, "name1" + now};
-            Date chipDate = new Date(now - 500000);
-
-            GenotypingChipMapping[] mappings = {
-                    new GenotypingChipMapping(partNumber, family, chipNames[0], chipDate),
-                    new GenotypingChipMapping(partNumber, family, chipNames[1], chipDate)
-            };
-            for (int i = 0; i < mappings.length; ++i) {
-                attributeArchetypeDao.persist(mappings[i]);
-            }
-            attributeArchetypeDao.flush();
-
-            boolean foundMapping0 = false;
-            boolean foundMapping1 = false;
-            for (GenotypingChipMapping mapping : attributeArchetypeDao.findGenotypingChipMappings()) {
-                if (mapping.getChipName().equals(chipNames[0])) {
-                    foundMapping0 = true;
-                }
-                if (mapping.getChipName().equals(chipNames[1])) {
-                    foundMapping1 = true;
-                }
-            }
-            Assert.assertTrue(foundMapping0 && foundMapping1);
-
-            // Detects the overlap since both mappings are active.
-            try {
-                productEjb.getGenotypingChip(partNumber, "", chipDate);
-                Assert.fail("Did not find overlapping active mappings.");
-            } catch (RuntimeException e) {
-                Assert.assertTrue(e.getMessage().toLowerCase().contains("multiple genotyping chip mappings"));
-            }
-        } finally {
-            utx.rollback();
-        }
-    }
 
     @Test(enabled = true)
     public void testMappingUpdate() throws Exception {
@@ -133,6 +90,7 @@ public class ProductEjbTest extends Arquillian {
             // Repeats the final iteration just to check that gratuitous updates get suppressed.
             for (int i = 0; i < chipNames.length + 1; ++i) {
                 int idx = Math.min(i, chipNames.length - 1);
+                // Should invalidate the old mapping but still leave it accessible, and make a new active one.
                 productEjb.persistGenotypingChipMappings(partNumber,
                         Collections.singletonList(Triple.of("family" + now, chipNames[idx], "")));
                 attributeArchetypeDao.flush();
@@ -140,8 +98,12 @@ public class ProductEjbTest extends Arquillian {
                 Thread.sleep(1000);
             }
 
-            // An update should invalidate the old mapping but still leave it accessible, and make a new active one.
-            Assert.assertNull(productEjb.getGenotypingChip(partNumber, "", new Date(now - 100000)).getRight());
+            // A lookup with an effective date before the first mapping became active
+            // should return the earliest mapping.
+            Assert.assertEquals(productEjb.getGenotypingChip(partNumber, "", new Date(now - 100000)).getRight(),
+                    chipNames[0]);
+
+            // Lookup's effective date should determine which mapping is returned.
             Assert.assertEquals(productEjb.getGenotypingChip(partNumber, "", dates[0]).getRight(), chipNames[0]);
             Assert.assertEquals(productEjb.getGenotypingChip(partNumber, "", dates[1]).getRight(), chipNames[1]);
             Assert.assertEquals(productEjb.getGenotypingChip(partNumber, "", dates[2]).getRight(), chipNames[1]);

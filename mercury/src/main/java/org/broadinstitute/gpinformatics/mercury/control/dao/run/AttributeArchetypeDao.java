@@ -11,7 +11,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.GenotypingChip_;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.validation.constraints.NotNull;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
@@ -103,19 +105,46 @@ public class AttributeArchetypeDao extends GenericDao {
     }
 
     /**
-     * Returns genotyping chip mappings that were active on the effectiveDate.
+     * Returns one mapping for each of the lookup keys found in the genotyping chip mappings.
+     * The one mapping is the most recent one active before or on the effectiveDate.
+     * If the effective date precedes all active dates, the earliest one is used.
      *
      * @param effectiveDate comparison date
      * @return list of mappings
      */
     public Set<GenotypingChipMapping> getMappingsAsOf(Date effectiveDate) {
-        Set<GenotypingChipMapping> mappings = new HashSet<>();
+        Set<GenotypingChipMapping> activeMappings = new HashSet<>();
+
+        Map<String, List<GenotypingChipMapping>> lookupKeyMappings = new HashMap<>();
         for (GenotypingChipMapping mapping : findGenotypingChipMappings()) {
-            if (mapping.isActiveOn(effectiveDate)) {
-                mappings.add(mapping);
+            String lookupKey = mapping.getProductPartNumber() + "_/_" + mapping.getPdoSubstring();
+            List<GenotypingChipMapping> list = lookupKeyMappings.get(lookupKey);
+            if (list == null) {
+                list = new ArrayList<>();
+                lookupKeyMappings.put(lookupKey, list);
             }
+            list.add(mapping);
         }
-        return mappings;
+
+        // For each lookup key, sorts the mappings by date and finds the one active on the
+        // the effective date, or uses the earliest mapping.
+        for (List<GenotypingChipMapping> list : lookupKeyMappings.values()) {
+            Collections.sort(list, BY_DATE);
+            GenotypingChipMapping bestMapping = null;
+            for (GenotypingChipMapping mapping : list) {
+                if (bestMapping == null || mapping.isActiveOn(effectiveDate)) {
+                    bestMapping = mapping;
+                }
+            }
+            activeMappings.add(bestMapping);
+        }
+        return activeMappings;
     }
 
+    public Comparator<GenotypingChipMapping> BY_DATE = new Comparator<GenotypingChipMapping>() {
+        @Override
+        public int compare(GenotypingChipMapping o1, GenotypingChipMapping o2) {
+            return o1.getActiveDate().compareTo(o2.getActiveDate());
+        }
+    };
 }
