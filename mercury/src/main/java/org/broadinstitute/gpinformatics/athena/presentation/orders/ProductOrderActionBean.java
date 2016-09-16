@@ -34,6 +34,7 @@ import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusF
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporterFactory;
+import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
@@ -94,7 +95,10 @@ import org.broadinstitute.gpinformatics.infrastructure.security.Role;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
 import org.broadinstitute.gpinformatics.mercury.boundary.BucketException;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.BSPLookupException;
+import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.entity.run.AttributeArchetype;
+import org.broadinstitute.gpinformatics.mercury.entity.run.GenotypingChip;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean;
@@ -252,6 +256,12 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Inject
     private PriceListCache priceListCache;
 
+    @Inject
+    private AttributeArchetypeDao attributeArchetypeDao;
+
+    @Inject
+    private ProductEjb productEjb;
+
     private List<ProductOrderListEntry> displayedProductOrderListEntries;
 
     private String sampleList;
@@ -264,6 +274,10 @@ public class ProductOrderActionBean extends CoreActionBean {
     private CompletionStatusFetcher progressFetcher;
 
     private boolean skipRegulatoryInfo;
+
+    private GenotypingChip genotypingChip;
+
+    private AttributeArchetype callRateThreshold;
 
     /*
      * Due to certain items (namely as a result of token input fields) not properly being bound during the validation
@@ -2441,6 +2455,27 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public EnumSet<ProductOrder.OrderStatus> getOrderStatusNamesWhichCantBeAbandoned() {
         return EnumSet.complementOf (ProductOrder.OrderStatus.canAbandonStatuses);
+    }
+
+    public GenotypingChip getGenotypingChip() {
+        if (genotypingChip == null) {
+            Date effectiveDate =  editOrder.getCreatedDate();
+            Pair<String, String> chipFamilyAndName = productEjb.getGenotypingChip(editOrder,
+                    effectiveDate);
+            if (chipFamilyAndName.getLeft() != null && chipFamilyAndName.getRight() != null) {
+                GenotypingChip chip = attributeArchetypeDao.findGenotypingChip(chipFamilyAndName.getLeft(),
+                        chipFamilyAndName.getRight());
+            }
+        }
+        return genotypingChip;
+    }
+
+    public String getCallRateThreshold() {
+        if (getGenotypingChip() != null) {
+            Map<String, String> chipAttributes = genotypingChip.getAttributeMap();
+            return chipAttributes.get("zcall_threshold_unix");
+        }
+        return null;
     }
 
 }

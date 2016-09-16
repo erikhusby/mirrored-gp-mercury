@@ -1085,6 +1085,25 @@
                     </div>
                 </div>
 
+                <c:if test="${actionBean.editOrder.infinium}">
+                    <div class="control-group">
+                        <stripes:label for="callRateThreshold" class="control-label">
+                            Call Rate Threshold
+                        </stripes:label>
+                        <div class="controls">
+                            <stripes:text id="callRateThreshold" name="callRateThreshold" class="defaultText"/>
+                        </div>
+                    </div>
+                    <%--<div class="control-group">--%>
+                        <%--<stripes:label for="clusterFile" class="control-label">--%>
+                            <%--Cluster File--%>
+                        <%--</stripes:label>--%>
+                        <%--<div class="controls">--%>
+                            <%--<stripes:text id="clusterFile" name="editOrder.clusterFile" class="defaultText"/>--%>
+                        <%--</div>--%>
+                    <%--</div>--%>
+                </c:if>
+
                 <div class="control-group">
                     <stripes:label for="comments" class="control-label">
                         Description
