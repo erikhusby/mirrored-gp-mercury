@@ -435,8 +435,8 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
         UniformInterfaceException caught = getWithError(resource);
         assertThat(caught.getResponse().getStatus(), equalTo(500));
         assertThat(getResponseContent(caught),
-                startsWith(
-                        "Unable to extract parameter from http request: javax.ws.rs.QueryParam(\"idType\") value is 'THISWILLFAIL'"));
+                containsString(
+                        "Unable to extract parameter from http request: javax.ws.rs.QueryParam"));
     }
 
     @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)

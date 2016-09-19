@@ -182,11 +182,10 @@
         <seam.version>3.1.0.Final</seam.version>
         <jersey.version>1.11</jersey.version>
 
-        <oracle.version>6-11.2.0.1.0</oracle.version>
-        <postgresql.version>9.1-901.jdbc4</postgresql.version>
+        <oracle.version>12.1.0.2</oracle.version>
 
         <!-- todo jmt fix -->
-        <wildfly.version>10.0.0.Final</wildfly.version>
+        <wildfly.version>10.1.0.Final</wildfly.version>
 
         <!-- In order to ignore the UI tests by default but turn them on in the Tests.UI profile, we need to do this
         by using properties. The Tests.UI profile basically reverses these properties. Doing this from the command line
@@ -828,7 +827,7 @@
                                         <artifactItem>
                                             <groupId>org.wildfly</groupId>
                                             <artifactId>wildfly-dist</artifactId>
-                                            <version>10.0.0.Final</version>
+                                            <version>10.1.0.Final</version>
                                             <type>zip</type>
                                             <overWrite>false</overWrite>
                                             <outputDirectory>${project.build.directory}</outputDirectory>
@@ -1144,14 +1143,9 @@ nodePrinter.print(webapp)
                         <artifactId>sql-maven-plugin</artifactId>
                         <dependencies>
                             <dependency>
-                                <groupId>com.oracle</groupId>
-                                <artifactId>ojdbc</artifactId>
+                                <groupId>com.oracle.jdbc</groupId>
+                                <artifactId>ojdbc7</artifactId>
                                 <version>${oracle.version}</version>
-                            </dependency>
-                            <dependency>
-                                <groupId>postgresql</groupId>
-                                <artifactId>postgresql</artifactId>
-                                <version>${postgresql.version}</version>
                             </dependency>
                         </dependencies>
                         <configuration>
@@ -1581,13 +1575,13 @@ nodePrinter.print(webapp)
         <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-core</artifactId>
-            <version>5.0.7.Final</version>
+            <version>5.0.10.Final</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-entitymanager</artifactId>
-            <version>5.0.7.Final</version>
+            <version>5.0.10.Final</version>
             <scope>provided</scope>
             <exclusions>
                 <!-- using cglib-nodep instead -->
@@ -1600,26 +1594,20 @@ nodePrinter.print(webapp)
         <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-jpamodelgen</artifactId>
-            <version>5.0.7.Final</version>
+            <version>5.0.10.Final</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-envers</artifactId>
-            <version>5.0.7.Final</version>
+            <version>5.0.10.Final</version>
             <scope>provided</scope>
         </dependency>
         <!-- End of Hibernate API dependencies -->
 
         <dependency>
-            <groupId>postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <version>${postgresql.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.oracle</groupId>
-            <artifactId>ojdbc</artifactId>
+            <groupId>com.oracle.jdbc</groupId>
+            <artifactId>ojdbc7</artifactId>
             <version>${oracle.version}</version>
             <scope>provided</scope>
         </dependency>
@@ -1662,15 +1650,6 @@ nodePrinter.print(webapp)
             <artifactId>jersey-client</artifactId>
             <version>${jersey.version}</version>
         </dependency>
-
-        <!-- disable when deploying to JBoss AS 7 -->
-        <!--
-                <dependency>
-                    <groupId>com.sun.jersey</groupId>
-                    <artifactId>jersey-server</artifactId>
-                    <version>${jersey.version}</version>
-                </dependency>
-        -->
 
         <dependency>
             <groupId>com.sun.jersey</groupId>
@@ -1780,7 +1759,7 @@ nodePrinter.print(webapp)
         <dependency>
             <groupId>org.wildfly</groupId>
             <artifactId>wildfly-jms-client-bom</artifactId>
-            <version>10.0.0.Final</version>
+            <version>10.1.0.Final</version>
             <type>pom</type>
         </dependency>
 

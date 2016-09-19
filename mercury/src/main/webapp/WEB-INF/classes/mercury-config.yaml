@@ -300,7 +300,7 @@ mercury:
       collaborate: DEV
       bass: PROD
       submission: DEV
-      infiniumStarter: DEV
+#      infiniumStarter: DEV
 
 
     AUTO_BUILD:

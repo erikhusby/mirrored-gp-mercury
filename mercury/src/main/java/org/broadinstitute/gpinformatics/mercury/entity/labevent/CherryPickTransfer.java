@@ -31,7 +31,7 @@ public class CherryPickTransfer extends VesselTransfer {
     @JoinColumn(name = "TARGET_VESSEL")
     private LabVessel targetVessel;
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "LAB_EVENT")
     private LabEvent labEvent;
 

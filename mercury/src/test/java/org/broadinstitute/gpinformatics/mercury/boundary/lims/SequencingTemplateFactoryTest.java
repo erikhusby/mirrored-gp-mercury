@@ -438,7 +438,7 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
             LabBatch.VesselToLanesInfo laneInfo = null;
             if(vesselToLanesInfo.getLabVessel().getLabel().equals(lane.getDerivedVesselLabel())) {
                 laneInfo = vesselToLanesInfo;
-                assertThat(lane.getLoadingVesselLabel(), equalTo("DenatureTube10"));
+                assertThat(lane.getDerivedVesselLabel(), equalTo("DenatureTube10"));
             } else if(vesselToLanesInfo2.getLabVessel().getLabel().equals(lane.getDerivedVesselLabel())) {
                 laneInfo = vesselToLanesInfo2;
                 assertThat(lane.getLoadingVesselLabel(), equalTo("DenatureTube40000"));

@@ -55,6 +55,7 @@ public class DeploymentBuilder {
                 .addAsWebInfResource(new File("src/test/resources/metrics-prod-ds.xml"))
                 .addAsResource(new File("src/main/resources/META-INF/persistence.xml"), "META-INF/persistence.xml")
                 .addAsWebInfResource(new File("src/main/webapp/WEB-INF/ejb-jar.xml"))
+                .addAsWebInfResource(new File("src/main/webapp/WEB-INF/jboss-deployment-structure.xml"))
                 //TODO  Cherry Picking resources is not Ideal.  When we have more auto front end tests, we will need everything in resources.
                 .addAsResource(new File("src/main/resources/WorkflowConfig.xml"), "WorkflowConfig.xml")
                 .addAsResource(new File("src/main/resources/templates/WorkflowValidation.ftl"),
