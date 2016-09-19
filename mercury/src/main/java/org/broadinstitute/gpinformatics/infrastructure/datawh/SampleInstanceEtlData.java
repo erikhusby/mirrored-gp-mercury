@@ -53,6 +53,13 @@ public class SampleInstanceEtlData {
             if( pdoSample != null ) {
                 sampleInstanceData.pdoSampleId = pdoSample.getMercurySample().getSampleKey();
             }
+        } else {
+            sampleInstanceData.labBatch = si.getSingleBatch();
+        }
+
+        if( includeNearestSample ){
+            // This will capture controls
+            sampleInstanceData.nearestSampleID = si.getNearestMercurySampleName();
         }
 
         // Missing single bucket entry or PDO Sample not bucketed
@@ -96,9 +103,6 @@ public class SampleInstanceEtlData {
                     }
                 }
             }
-        } else if( includeNearestSample ){
-            // This will capture controls
-            sampleInstanceData.nearestSampleID = si.getNearestMercurySampleName();
         }
 
         sampleInstanceData.molecularIndexingSchemeName = si.getMolecularIndexingScheme() != null ?
