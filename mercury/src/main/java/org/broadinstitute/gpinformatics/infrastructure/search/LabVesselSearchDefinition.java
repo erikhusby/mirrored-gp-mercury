@@ -60,6 +60,8 @@ public class LabVesselSearchDefinition {
 
     // This singleton is used to determine if search is related specifically to Infinium arrays
     private static ConfigurableSearchDefinition ARRAYS_ALT_SRCH_DEFINITION;
+    public static final List<LabEventType> CHIP_EVENT_TYPES = Collections.singletonList(
+            LabEventType.INFINIUM_HYBRIDIZATION);
 
     // These search term and/or result column names need to be referenced multiple places during processing.
     // Use an enum rather than having to reference via String values of term names
@@ -1501,8 +1503,6 @@ public class LabVesselSearchDefinition {
                 = Collections.singletonList(LabEventType.ARRAY_PLATING_DILUTION);
         final List<LabEventType> ampPlateEventTypes
                 = Collections.singletonList(LabEventType.INFINIUM_AMPLIFICATION);
-        final List<LabEventType> chipEventTypes
-                = Collections.singletonList(LabEventType.INFINIUM_HYBRIDIZATION);
 
         // Not available in results - PDO should be used
         searchTerm = new SearchTerm();
@@ -1597,7 +1597,7 @@ public class LabVesselSearchDefinition {
 
                 // DNA plate well event/vessel looks to descendant for chip well (1:1)
                 for (Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions
-                        : getChipDetailsForDnaWell(vessel, chipEventTypes, context).asMap().entrySet()) {
+                        : getChipDetailsForDnaWell(vessel, CHIP_EVENT_TYPES, context).asMap().entrySet()) {
                     result = labVesselAndPositions.getValue().iterator().next().toString();
                     break;
                 }
@@ -1616,7 +1616,7 @@ public class LabVesselSearchDefinition {
                 LabVessel vessel = (LabVessel)entity;
 
                 for (Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions
-                        : getChipDetailsForDnaWell(vessel, chipEventTypes, context ).asMap().entrySet()) {
+                        : getChipDetailsForDnaWell(vessel, CHIP_EVENT_TYPES, context ).asMap().entrySet()) {
                     result = labVesselAndPositions.getKey().getLabel();
                     break;
                 }
@@ -1701,7 +1701,7 @@ public class LabVesselSearchDefinition {
                 LabVessel vessel = (LabVessel)entity;
 
                 for (Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions
-                        : getChipDetailsForDnaWell(vessel, chipEventTypes, context ).asMap().entrySet()) {
+                        : getChipDetailsForDnaWell(vessel, CHIP_EVENT_TYPES, context ).asMap().entrySet()) {
                     result = labVesselAndPositions.getKey().getLabel();
                     break;
                 }
@@ -2016,7 +2016,8 @@ public class LabVesselSearchDefinition {
      * @param context SearchContext containing values associated with search instance
      * @return All downstream vessels and associated positions, if initial vessel not a plate well, ignore and return empty Map
      */
-    private MultiValuedMap<LabVessel, VesselPosition> getChipDetailsForDnaWell( LabVessel dnaPlateWell, List<LabEventType> chipEventTypes, SearchContext context ) {
+    public static MultiValuedMap<LabVessel, VesselPosition> getChipDetailsForDnaWell(LabVessel dnaPlateWell,
+            List<LabEventType> chipEventTypes, SearchContext context ) {
         if(!isInfiniumSearch(context) || dnaPlateWell.getType() != LabVessel.ContainerType.PLATE_WELL ) {
             return new HashSetValuedHashMap<>();
         }
