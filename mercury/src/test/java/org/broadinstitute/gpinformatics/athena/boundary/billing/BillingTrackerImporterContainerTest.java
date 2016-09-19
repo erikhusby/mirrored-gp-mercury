@@ -35,7 +35,8 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 @Test(groups = TestGroups.STANDARD, enabled=true)
 public class BillingTrackerImporterContainerTest extends Arquillian {
 
-    public static final String BILLING_TRACKER_TEST_FILENAME = "BillingTracker-ContainerTest.xlsx";
+    public static final String GOOD_BILLING_TRACKER_TEST_FILENAME = "BillingTracker-ContainerTest.xlsx";
+    public static final String BAD_BILLING_TRACKER_TEST_FILENAME = "BillingTracker-ContainerTest-BadProductConfiguration.xlsx";
 
     @Inject
     private ProductDao productDao;
@@ -86,7 +87,8 @@ public class BillingTrackerImporterContainerTest extends Arquillian {
         InputStream inputStream = null;
 
         try {
-            inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(BILLING_TRACKER_TEST_FILENAME);
+            inputStream = Thread.currentThread().getContextClassLoader()
+                    .getResourceAsStream(GOOD_BILLING_TRACKER_TEST_FILENAME);
 
             // Should only be one sheet.
             List<String> sheetNames = PoiSpreadsheetParser.getWorksheetNames(inputStream);
@@ -97,7 +99,8 @@ public class BillingTrackerImporterContainerTest extends Arquillian {
             Map<String, BillingTrackerProcessor> processors = getProcessors(sheetNames);
             PoiSpreadsheetParser parser = new PoiSpreadsheetParser(processors);
 
-            inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(BILLING_TRACKER_TEST_FILENAME);
+            inputStream = Thread.currentThread().getContextClassLoader()
+                    .getResourceAsStream(GOOD_BILLING_TRACKER_TEST_FILENAME);
             parser.processUploadFile(inputStream);
 
             List<String> validationErrors = new ArrayList<> ();
@@ -110,37 +113,37 @@ public class BillingTrackerImporterContainerTest extends Arquillian {
                             StringUtils.join(validationErrors, "\n"));
             }
 
-            // Check the RNA Data
-            String rnaSheetName = "P-RNA-0004";
-            BillingTrackerProcessor processor = processors.get(rnaSheetName);
+            // Check the order data
+            String sheetName = "P-EX-0005";
+            BillingTrackerProcessor processor = processors.get(sheetName);
             List<ProductOrder> productOrders = processor.getUpdatedProductOrders();
             Assert.assertTrue(CollectionUtils.isNotEmpty(productOrders), "Should have products");
 
-            // There should be one Order for the RNA product data
+            // There should be one Order
             Assert.assertEquals(productOrders.size(), 1, "Should only be one product order");
 
-            String rnaOrderId = "PDO-23";
-            Assert.assertEquals(productOrders.get(0).getBusinessKey(), rnaOrderId, "Should have products");
+            String orderId = "PDO-5081";
+            Assert.assertEquals(productOrders.get(0).getBusinessKey(), orderId, "Should have products");
 
             // iterator().next() is OK here because there's only one PDO in the spreadsheet.
             Set<Map.Entry<BillableRef, OrderBillSummaryStat>> entries =
                 processor.getChargesMapByPdo().values().iterator().next().entrySet();
 
             // Primary Product data
-            String rnaPriceItemName = "Materials";
-            OrderBillSummaryStat productStatData = getOrderBillSummaryStat(entries, rnaPriceItemName);
+            String priceItemName = "Standard Whole Exome";
+            OrderBillSummaryStat productStatData = getOrderBillSummaryStat(entries, priceItemName);
             Assert.assertEquals(productStatData.getCharge(), 2.0, "Charge mismatch");
             Assert.assertEquals(productStatData.getCredit(), 0.0, "Credit mismatch");
 
             // First AddOn data
-            String rnaAddonPriceItemName = "DNA or RNA Extract from Fresh Frozen Tissue, Cell Pellet, Stool, Saliva";
-            productStatData = getOrderBillSummaryStat(entries, rnaAddonPriceItemName);
+            String addonPriceItemName = "HiSeq 2x76 Paired lane";
+            productStatData = getOrderBillSummaryStat(entries, addonPriceItemName);
             Assert.assertEquals(productStatData.getCharge(), 4.0, "Charge mismatch");
             Assert.assertEquals(productStatData.getCredit(), 0.0, "Credit mismatch");
 
             // Second AddOn data
-            String rnaSecondAddonPriceItemName = "RNA Extract from FFPE";
-            productStatData = getOrderBillSummaryStat(entries, rnaSecondAddonPriceItemName);
+            String secondAddonPriceItemName = "HiSeq 2500 up to 200 cycles";
+            productStatData = getOrderBillSummaryStat(entries, secondAddonPriceItemName);
             Assert.assertEquals(productStatData.getCharge(), 2.0, "Charge mismatch");
             Assert.assertEquals(productStatData.getCredit(), 0.0, "Credit mismatch");
         } catch (Exception e) {
@@ -151,8 +154,37 @@ public class BillingTrackerImporterContainerTest extends Arquillian {
         }
     }
 
+    /**
+     * In cases where a product is configured to have more than one price item with the same name, the tracker upload
+     * cannot currently differentiate between the two so it should fail. Price item names must be unique across the
+     * primary price item, replacement price items (configured in Broad Quotes), primary price items of add-ons, and
+     * replacement price items for add-on price items.
+     */
+    @Test
+    public void testImportWithRepeatedPriceItemName() {
+        InputStream inputStream = null;
+
+        try {
+            inputStream = Thread.currentThread().getContextClassLoader()
+                    .getResourceAsStream(BAD_BILLING_TRACKER_TEST_FILENAME);
+
+            // Should only be one sheet.
+            List<String> sheetNames = PoiSpreadsheetParser.getWorksheetNames(inputStream);
+            Assert.assertEquals(sheetNames.size(), 1, "Wrong number of worksheets");
+
+            IOUtils.closeQuietly(inputStream);
+
+            // Calling getProcessors will validate the price item names.
+            getProcessors(sheetNames);
+            Assert.fail("Expected an exception");
+        } catch (Exception expected) {
+        } finally {
+            IOUtils.closeQuietly(inputStream);
+        }
+    }
+
     private OrderBillSummaryStat getOrderBillSummaryStat(Set<Map.Entry<BillableRef, OrderBillSummaryStat>> entries,
-                                                         String rnaPriceItemName) {
+                                                         String priceItemName) {
         // Find the price item.
         Map.Entry<BillableRef, OrderBillSummaryStat> entry = null;
         Iterator<Map.Entry<BillableRef, OrderBillSummaryStat>> entryIterator = entries.iterator();
@@ -160,13 +192,13 @@ public class BillingTrackerImporterContainerTest extends Arquillian {
         while ((entry == null) && entryIterator.hasNext()) {
             entry = entryIterator.next();
             allPriceItemNames.add(entry.getKey().getPriceItemName());
-            if (!entry.getKey().getPriceItemName().equals(rnaPriceItemName)) {
+            if (!entry.getKey().getPriceItemName().equals(priceItemName)) {
                 entry = null;
             }
         }
         Assert.assertNotNull(entry,
                 String.format("Could not find the matching price item for: '%s'. Did not match any of [%s].",
-                        rnaPriceItemName, StringUtils.join(allPriceItemNames, ", ")));
+                        priceItemName, StringUtils.join(allPriceItemNames, ", ")));
         return entry.getValue();
     }
 

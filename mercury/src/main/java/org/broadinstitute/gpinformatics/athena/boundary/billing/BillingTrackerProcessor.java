@@ -83,7 +83,11 @@ public class BillingTrackerProcessor extends TableProcessor {
 
         List<PriceItem> priceItems = SampleLedgerExporter.getPriceItems(product, priceItemDao, priceListCache);
         for (PriceItem priceItem : priceItems) {
-            currentPriceItemsByName.put(priceItem.getName(), priceItem);
+            PriceItem existingPriceItem = currentPriceItemsByName.put(priceItem.getName(), priceItem);
+            if (existingPriceItem != null) {
+                throw new RuntimeException(
+                        "Multiple price items found named \"" + priceItem.getName() + "\". Billing tracker upload does not support any situation in which there are multiple price items with the same name.");
+            }
             billableRefs.add(new BillableRef(product.getPartNumber(), priceItem.getName()));
         }
     }
