@@ -61,6 +61,8 @@ public class ProductWorkflowDefVersion implements Serializable {
 
     private String batchJiraIssueType;
 
+    private String batchJiraProjectType;
+
     /**
      * True if a validation LCSET is expected in the near future.   When a product is first rolled out,
      * routingRule be BOTH, and inValidation will be false. After a few weeks, inValidation will be
@@ -74,6 +76,13 @@ public class ProductWorkflowDefVersion implements Serializable {
      */
     public String getProductWorkflowDefBatchJiraIssueType() {
         return batchJiraIssueType;
+    }
+
+    /**
+     * For ProductWorkflow level Jira Project types
+     */
+    public String getProductWorkflowDefBatchJiraProjectType() {
+        return batchJiraProjectType;
     }
 
     /**
@@ -155,15 +164,23 @@ public class ProductWorkflowDefVersion implements Serializable {
 
     public List<WorkflowBucketDef> getBuckets() {
         List<WorkflowBucketDef> workflowBucketDefs = new ArrayList<>();
-        boolean override = false;
+        boolean issueOverride = false;
+        boolean projectOverride = false;
         for (WorkflowProcessDef workflowProcessDef : workflowProcessDefs) {
             workflowBucketDefs.addAll(workflowProcessDef.getEffectiveVersion().getBuckets());
             //Set the default or override value for batchJiraIssueType
-            if (workflowProcessDef.getEffectiveVersion().getBatchJiraIssueType() != null && !override) {
-                override = true;
+            if (workflowProcessDef.getEffectiveVersion().getBatchJiraIssueType() != null && !issueOverride) {
+                issueOverride = true;
             }
-            if (!override) {
+            if (!issueOverride) {
                 workflowBucketDefs.get(workflowBucketDefs.size() - 1).setBatchJiraIssueType(getOverrideJiraIssueType(workflowProcessDef));
+            }
+            //Set the default or override value for batchJiraProjectsssType
+            if (workflowProcessDef.getEffectiveVersion().getBatchJiraProjectType() != null && !projectOverride) {
+                projectOverride = true;
+            }
+            if (!projectOverride) {
+                workflowBucketDefs.get(workflowBucketDefs.size() - 1).setBatchJiraProjectType(getOverrideJiraProjectType(workflowProcessDef));
             }
         }
         return workflowBucketDefs;
@@ -177,6 +194,18 @@ public class ProductWorkflowDefVersion implements Serializable {
             return workflowProcessDef.getEffectiveVersion().getBatchJiraIssueType();
         } else {
             return getProductWorkflowDefBatchJiraIssueType();
+        }
+    }
+
+    /**
+     Get the override batch Jira project type from productWorkflowDefs with the one
+     from the workflowProcessDef if it exists
+     */
+    private String getOverrideJiraProjectType(WorkflowProcessDef workflowProcessDef) {
+        if (workflowProcessDef.getEffectiveVersion().getBatchJiraProjectType() != null) {
+            return workflowProcessDef.getEffectiveVersion().getBatchJiraProjectType();
+        } else {
+            return getProductWorkflowDefBatchJiraProjectType();
         }
     }
 
