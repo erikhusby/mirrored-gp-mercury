@@ -59,6 +59,7 @@ import org.broadinstitute.gpinformatics.athena.entity.preference.NameValueDefini
 import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceDefinitionValue;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
+import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingProductOrderMapping;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
@@ -97,7 +98,8 @@ import org.broadinstitute.gpinformatics.mercury.boundary.BucketException;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.BSPLookupException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.entity.run.AttributeArchetype;
+import org.broadinstitute.gpinformatics.mercury.entity.run.ArchetypeAttribute;
+import org.broadinstitute.gpinformatics.mercury.entity.run.AttributeDefinition;
 import org.broadinstitute.gpinformatics.mercury.entity.run.GenotypingChip;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
@@ -124,6 +126,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import static org.broadinstitute.gpinformatics.mercury.entity.run.AttributeArchetype_.attributes;
 
 /**
  * This handles all the needed interface processing elements.
@@ -277,7 +281,14 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private GenotypingChip genotypingChip;
 
-    private AttributeArchetype callRateThreshold;
+    private GenotypingProductOrderMapping genotypingProductOrderMapping;
+
+    private Map<String, AttributeDefinition> overrideDefinitions = null;
+    private Map<String, AttributeDefinition> pdoSpecificDefinitions = null;
+
+    private Map<String, String> attributes = new HashMap<>();
+    private HashMap<String, String> chipDefaults = new HashMap<>();
+
 
     /*
      * Due to certain items (namely as a result of token input fields) not properly being bound during the validation
@@ -1009,6 +1020,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             ProductOrder.loadLabEventSampleData(editOrder.getSamples());
 
             sampleDataSourceResolver.populateSampleDataSources(editOrder);
+            populateAttributes(editOrder.getJiraTicketKey());
         }
     }
 
@@ -1289,6 +1301,25 @@ public class ProductOrderActionBean extends CoreActionBean {
         // Temporarily adding the quote validation when the order is saved to give the user a warning of upcoming
         // new restrictions
         validateQuoteDetails(editOrder.getQuoteId(), ErrorLevel.WARNING);
+
+        if (!chipDefaults.equals(attributes)) {
+            genotypingProductOrderMapping =
+                    productOrderEjb.findOrCreateGenotypingChipProductOrderMapping(editOrder.getJiraTicketKey());
+            if (genotypingProductOrderMapping != null) {
+                boolean foundChange = false;
+                for (ArchetypeAttribute existingAttribute: genotypingProductOrderMapping.getAttributes()) {
+                    String newValue = attributes.get(existingAttribute.getAttributeName());
+                    String oldValue = existingAttribute.getAttributeValue();
+                    if (oldValue == null && newValue != null || oldValue != null && !oldValue.equals(newValue)) {
+                        foundChange = true;
+                        existingAttribute.setAttributeValue(newValue);
+                    }
+                }
+                if (foundChange) {
+                    attributeArchetypeDao.persist(genotypingProductOrderMapping);
+                }
+            }
+        }
         return createViewResolution(editOrder.getBusinessKey());
     }
 
@@ -2463,19 +2494,152 @@ public class ProductOrderActionBean extends CoreActionBean {
             Pair<String, String> chipFamilyAndName = productEjb.getGenotypingChip(editOrder,
                     effectiveDate);
             if (chipFamilyAndName.getLeft() != null && chipFamilyAndName.getRight() != null) {
-                GenotypingChip chip = attributeArchetypeDao.findGenotypingChip(chipFamilyAndName.getLeft(),
+                genotypingChip= attributeArchetypeDao.findGenotypingChip(chipFamilyAndName.getLeft(),
                         chipFamilyAndName.getRight());
             }
         }
         return genotypingChip;
     }
 
+    public GenotypingProductOrderMapping getGenotypingProductOrderMapping() {
+        if (genotypingProductOrderMapping == null) {
+            genotypingProductOrderMapping =
+                    attributeArchetypeDao.findGenotypingProductOrderMapping(editOrder.getJiraTicketKey());
+        }
+        return genotypingProductOrderMapping;
+    }
+
+    private GenotypingProductOrderMapping findOrCreateGenotypingProductOrderMapping() {
+        if (genotypingProductOrderMapping == null) {
+            genotypingProductOrderMapping =
+                    productOrderEjb.findOrCreateGenotypingChipProductOrderMapping(editOrder.getJiraTicketKey());
+        }
+        return genotypingProductOrderMapping;
+    }
+
+    /**
+     * @return Overridden value of call rate threshold found in product orders genotyping chip mapping if one exists,
+     * else return the default value found on a genotyping chip.
+     */
     public String getCallRateThreshold() {
-        if (getGenotypingChip() != null) {
+        if (getGenotypingProductOrderMapping() != null &&
+            getGenotypingProductOrderMapping().getZCallThreshold() != null) {
+            return getGenotypingProductOrderMapping().getZCallThreshold();
+        } else if (getGenotypingChip() != null){
             Map<String, String> chipAttributes = genotypingChip.getAttributeMap();
             return chipAttributes.get("zcall_threshold_unix");
         }
         return null;
     }
 
+    /**
+     * If callRateThreshold overrides default found in GenotypingChip then set in GenotypingChipProductOrderMapping
+     */
+    public void setCallRateThreshold(String callRateThreshold) {
+        if (getGenotypingChip() != null) {
+            ArchetypeAttribute zcallThresholdUnix = getGenotypingChip().getAttribute("zcall_threshold_unix");
+            if (zcallThresholdUnix != null && zcallThresholdUnix.getAttributeValue() != null &&
+                    !zcallThresholdUnix.getAttributeValue().equals(callRateThreshold)) {
+                GenotypingProductOrderMapping mapping = findOrCreateGenotypingProductOrderMapping();
+                if (mapping != null) {
+                    mapping.setZCallThreshold(callRateThreshold);
+                }
+            }
+        }
+    }
+
+    /**
+     * @return Overridden value of call rate threshold found in product orders genotyping chip mapping if one exists,
+     * else return the default value found on a genotyping chip.
+     */
+    public String getClusterFile() {
+        if (getGenotypingProductOrderMapping() != null &&
+            getGenotypingProductOrderMapping().getClusterLocation() != null) {
+            return getGenotypingProductOrderMapping().getClusterLocation();
+        } else if (getGenotypingChip() != null){
+            Map<String, String> chipAttributes = genotypingChip.getAttributeMap();
+            return chipAttributes.get("cluster_location_unix");
+        }
+        return null;
+    }
+
+    /**
+     * If callRateThreshold overrides default found in GenotypingChip then set in GenotypingChipProductOrderMapping
+     */
+    public void setClusterFile(String clusterFile) {
+        if (getGenotypingChip() != null) {
+            ArchetypeAttribute zcallThresholdUnix = getGenotypingChip().getAttribute("cluster_location_unix");
+            if (zcallThresholdUnix != null && zcallThresholdUnix.getAttributeValue() != null &&
+                !zcallThresholdUnix.getAttributeValue().equals(clusterFile)) {
+                GenotypingProductOrderMapping mapping = findOrCreateGenotypingProductOrderMapping();
+                if (mapping != null) {
+                    mapping.setClusterLocation(clusterFile);
+                }
+            }
+        }
+    }
+
+    /**
+     * Override fields are group attributes set in AttributeDefinition
+     * @param jiraTicketKey
+     */
+    private void populateAttributes(String jiraTicketKey) {
+        // Set default values first from GenotypingChip
+        attributes.clear();
+        Map<String, AttributeDefinition> definitionsMap = getPdoSpecificDefinitions();
+        GenotypingChip chip = getGenotypingChip();
+        chipDefaults.clear();
+        if (chip != null && definitionsMap != null) {
+            for (Map.Entry<String, AttributeDefinition> entry: definitionsMap.entrySet()) {
+                AttributeDefinition pdoAttributeDefinition = entry.getValue();
+                //Group attributes of PDO Attribute Definition tell what overrides GenotypingChip Attributes
+                for (ArchetypeAttribute chipAttribute : chip.getAttributes()) {
+                    if (chipAttribute.getAttributeName().equals(pdoAttributeDefinition.getAttributeName())) {
+                        attributes.put(chipAttribute.getAttributeName(), chipAttribute.getAttributeValue());
+                        chipDefaults.put(chipAttribute.getAttributeName(), chipAttribute.getAttributeValue());
+                    }
+                }
+            }
+        }
+
+        // Check if a mapping exists for this pdo, if so override default values if not null
+        genotypingProductOrderMapping =
+                attributeArchetypeDao.findGenotypingProductOrderMapping(jiraTicketKey);
+        if (genotypingProductOrderMapping != null) {
+            for (ArchetypeAttribute attribute : genotypingProductOrderMapping.getAttributes()) {
+                AttributeDefinition definition = getPdoSpecificDefinitions().get(attribute.getAttributeName());
+                if (definition != null && definition.isDisplayable()) {
+                    if (attribute.getAttributeValue() != null) {
+                        attributes.put(attribute.getAttributeName(), attribute.getAttributeValue());
+                    }
+                }
+            }
+        }
+    }
+
+    private Map<String, AttributeDefinition> getOverrideDefinitions() {
+        if (overrideDefinitions == null) {
+            overrideDefinitions = attributeArchetypeDao.findAttributeGroupByTypeAndName(
+                    AttributeDefinition.DefinitionType.GENOTYPING_PRODUCT_ORDER_OVERRIDE,
+                    GenotypingProductOrderMapping.MAPPING_GROUP);
+        }
+        return overrideDefinitions;
+    }
+
+    private Map<String, AttributeDefinition> getPdoSpecificDefinitions() {
+        if (pdoSpecificDefinitions == null) {
+            pdoSpecificDefinitions = attributeArchetypeDao.findAttributeGroupByTypeAndName(
+                    AttributeDefinition.DefinitionType.GENOTYPING_PRODUCT_ORDER,
+                    GenotypingProductOrderMapping.ATTRIBUTES_GROUP);
+        }
+        return pdoSpecificDefinitions;
+    }
+
+    public Map<String, String> getAttributes() {
+        return attributes;
+    }
+
+    public HashMap<String, String> getChipDefaults() {
+        return chipDefaults;
+    }
 }

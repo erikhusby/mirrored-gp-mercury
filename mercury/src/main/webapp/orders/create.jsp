@@ -1086,22 +1086,19 @@
                 </div>
 
                 <c:if test="${actionBean.editOrder.infinium}">
-                    <div class="control-group">
-                        <stripes:label for="callRateThreshold" class="control-label">
-                            Call Rate Threshold
-                        </stripes:label>
-                        <div class="controls">
-                            <stripes:text id="callRateThreshold" name="callRateThreshold" class="defaultText"/>
+                    <c:forEach items="${actionBean.attributes}" var="item">
+                        <div class="control-group">
+                            <stripes:label for="attributes[${item.key}]" class="control-label">
+                            ${item.key}
+                            </stripes:label>
+                            <div class="controls">
+                                <stripes:text name="attributes[${item.key}]" value="${item.value}"/>
+                            </div>
                         </div>
-                    </div>
-                    <%--<div class="control-group">--%>
-                        <%--<stripes:label for="clusterFile" class="control-label">--%>
-                            <%--Cluster File--%>
-                        <%--</stripes:label>--%>
-                        <%--<div class="controls">--%>
-                            <%--<stripes:text id="clusterFile" name="editOrder.clusterFile" class="defaultText"/>--%>
-                        <%--</div>--%>
-                    <%--</div>--%>
+                    </c:forEach>
+                    <c:forEach items="${actionBean.chipDefaults}" var="item">
+                        <stripes:hidden name="chipDefaults[${item.key}]" value="${item.value}"/>
+                    </c:forEach>
                 </c:if>
 
                 <div class="control-group">

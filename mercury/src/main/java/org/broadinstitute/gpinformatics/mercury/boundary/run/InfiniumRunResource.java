@@ -1,10 +1,11 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.run;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingProductOrderMapping;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
@@ -14,6 +15,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.run.ArchetypeAttribute;
 import org.broadinstitute.gpinformatics.mercury.entity.run.GenotypingChip;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
@@ -32,6 +34,7 @@ import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -121,6 +124,8 @@ public class InfiniumRunResource {
                     Collections.singletonList(sampleInstanceV2.getRootOrEarliestMercurySampleName()));
             Set <GenotypingChip> chipTypes = findChipTypes(productOrderSamples, effectiveDate);
             Set<String> researchProjectIds = findResearchProjectIds(productOrderSamples);
+//            Collection<String> productOrderKeys = chip.getContainerRole().getNearestProductOrders();
+            Set<String> productOrderKeys = findProductOrderKeys(productOrderSamples);
 
             boolean positiveControl = false;
             boolean negativeControl = false;
@@ -146,6 +151,37 @@ public class InfiniumRunResource {
                         Response.Status.INTERNAL_SERVER_ERROR);
             }
 
+            if (productOrderKeys.isEmpty() && processControl == null) {
+                throw new ResourceException("Found no product orders for " + chip.getLabel(),
+                        Response.Status.INTERNAL_SERVER_ERROR);
+            }
+            Map<String, Set<String>> mappings = new HashMap<>();
+            GenotypingProductOrderMapping genotypingProductOrderMapping = null;
+            if (productOrderKeys.size() != 1) {
+                for (String pdoKey: productOrderKeys) {
+                    genotypingProductOrderMapping = attributeArchetypeDao.findGenotypingProductOrderMapping(pdoKey);
+                    if (genotypingProductOrderMapping != null) {
+                        for (ArchetypeAttribute archetypeAttribute: genotypingProductOrderMapping.getAttributes()) {
+                            if (mappings.containsKey(archetypeAttribute.getAttributeName())) {
+                                Set<String> attrValues = new HashSet<>();
+                                attrValues.add(archetypeAttribute.getAttributeValue());
+                                mappings.put(archetypeAttribute.getAttributeName(), attrValues);
+                            } else {
+                                Set<String> attrValues = mappings.get(archetypeAttribute.getAttributeName());
+                                attrValues.add(archetypeAttribute.getAttributeValue());
+                            }
+                        }
+                    }
+                }
+                for (Set<String> attrValueSets: mappings.values()) {
+                    if (attrValueSets.size() != 1) {
+                        throw new ResourceException(
+                                "Found mix of pdo genotyping chip overrides for " + chip.getLabel(),
+                                Response.Status.INTERNAL_SERVER_ERROR);
+                    }
+                }
+            }
+
             // Controls have a null research project id.
             String researchProjectId = null;
             if (processControl == null) {
@@ -165,6 +201,18 @@ public class InfiniumRunResource {
                 throw new ResourceException("Found no configuration for " + chipType.getChipName(),
                         Response.Status.INTERNAL_SERVER_ERROR);
             }
+
+            //Attempt to override default chip attributes if changed in product order
+            if (genotypingProductOrderMapping != null) {
+                for (ArchetypeAttribute archetypeAttribute : genotypingProductOrderMapping.getAttributes()) {
+                    if (chipAttributes.containsKey(archetypeAttribute.getAttributeName()) &&
+                        archetypeAttribute.getAttributeValue() != null) {
+                        chipAttributes.put(
+                                archetypeAttribute.getAttributeName(), archetypeAttribute.getAttributeValue());
+                    }
+                }
+            }
+
             infiniumRunBean = new InfiniumRunBean(
                     idatPrefix + "_Red.idat",
                     idatPrefix + "_Grn.idat",
@@ -235,5 +283,21 @@ public class InfiniumRunResource {
             }
         }
         return researchProjectIds;
+    }
+
+    private Set<String> findProductOrderKeys(List<ProductOrderSample> productOrderSamples) {
+        Set<String> productOrderKeys = new HashSet<>();
+        for (ProductOrderSample productOrderSample : productOrderSamples) {
+            ProductOrder productOrder = productOrderSample.getProductOrder();
+            if (productOrder != null) {
+                productOrderKeys.add(productOrder.getJiraTicketKey());
+            }
+        }
+        return productOrderKeys;
+    }
+
+    // For testing purposes
+    public void setAttributeArchetypeDao(AttributeArchetypeDao attributeArchetypeDao) {
+        this.attributeArchetypeDao = attributeArchetypeDao;
     }
 }

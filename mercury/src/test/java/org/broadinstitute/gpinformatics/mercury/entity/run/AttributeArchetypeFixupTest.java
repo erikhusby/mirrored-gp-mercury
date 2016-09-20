@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.run;
 
 import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingChipMapping;
+import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingProductOrderMapping;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
@@ -264,6 +265,28 @@ public class AttributeArchetypeFixupTest extends Arquillian {
         System.out.println("Changing date for " + genotypingChipMapping.getArchetypeId() + " to " +
                 genotypingChipMapping.getActiveDate());
         attributeArchetypeDao.persist(new FixupCommentary("SUPPORT-1877 adjust Active date for chip mapping"));
+        attributeArchetypeDao.flush();
+    }
+
+    @Test(enabled = true)
+    public void createInitialAttribtueDefinitiions() {
+        userBean.loginOSUser();
+
+        List<AttributeDefinition> definitions = new ArrayList<AttributeDefinition>() {{
+            add(new AttributeDefinition(AttributeDefinition.DefinitionType.GENOTYPING_PRODUCT_ORDER_OVERRIDE,
+                    GenotypingProductOrderMapping.MAPPING_GROUP,
+                    GenotypingProductOrderMapping.CALL_RATE_OVERRIDE_MAPPING,
+                    "zcall_threshold_unix"));
+            add(new AttributeDefinition(AttributeDefinition.DefinitionType.GENOTYPING_PRODUCT_ORDER_OVERRIDE,
+                    GenotypingProductOrderMapping.MAPPING_GROUP,
+                    GenotypingProductOrderMapping.CLUSTER_FILE_OVERRIDE_MAPPING,
+                    "cluster_location_unix"));
+            add(new AttributeDefinition(AttributeDefinition.DefinitionType.GENOTYPING_PRODUCT_ORDER_OVERRIDE,
+                    GenotypingProductOrderMapping.MAPPING_GROUP, GenotypingProductOrderMapping.ZCALL_THRESHOLD, true));
+            add(new AttributeDefinition(AttributeDefinition.DefinitionType.GENOTYPING_PRODUCT_ORDER_OVERRIDE,
+                    GenotypingProductOrderMapping.MAPPING_GROUP, GenotypingProductOrderMapping.CLUSTER_LOCATION, true));
+        }};
+        attributeArchetypeDao.persistAll(definitions);
         attributeArchetypeDao.flush();
     }
 }
