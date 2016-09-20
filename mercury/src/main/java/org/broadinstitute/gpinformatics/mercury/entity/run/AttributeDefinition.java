@@ -26,8 +26,7 @@ public class AttributeDefinition {
     public enum DefinitionType {
         GENOTYPING_CHIP,
         GENOTYPING_CHIP_MAPPING,
-        GENOTYPING_PRODUCT_ORDER,
-        GENOTYPING_PRODUCT_ORDER_OVERRIDE
+        GENOTYPING_PRODUCT_ORDER
     }
 
     @SequenceGenerator(name = "seq_attribute_definition", schema = "mercury", sequenceName = "seq_attribute_definition")

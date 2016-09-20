@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.run;
 
 import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingProductOrderMapping;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.entity.run.ArchetypeAttribute;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -24,6 +25,7 @@ import static org.mockito.Mockito.when;
 /*
  * Database test for the Infinium Run Resource
  */
+@Test(groups = TestGroups.STANDARD)
 public class InfiniumRunResourceContainerTest extends Arquillian {
 
     @Inject
@@ -56,9 +58,10 @@ public class InfiniumRunResourceContainerTest extends Arquillian {
         when(archetypeAttribute2.getAttributeValue()).thenReturn("clusteroverride");
 
         AttributeArchetypeDao spyAttributeArchetypeDao = spy(attributeArchetypeDao);
-        doReturn(mockGenotypingProductOrderMapping1).when(mockAttributeArchetypeDao).findGenotypingProductOrderMapping(anyString());
-        infiniumRunResource.setAttributeArchetypeDao(mockAttributeArchetypeDao);
-        InfiniumRunBean run = infiniumRunResource.getRun("3999582166_R01C01");
+        doReturn(mockGenotypingProductOrderMapping1)
+                .when(spyAttributeArchetypeDao).findGenotypingProductOrderMapping(anyString());
+        infiniumRunResource.setAttributeArchetypeDao(spyAttributeArchetypeDao);
+        InfiniumRunBean run = infiniumRunResource.getRun("200724570010_R01C01");
         Assert.assertEquals(run.getClusterFilePath(), "clusteroverride");
         Assert.assertEquals(run.getzCallThresholdsPath(), "zcalloverride");
     }

@@ -127,8 +127,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.broadinstitute.gpinformatics.mercury.entity.run.AttributeArchetype_.attributes;
-
 /**
  * This handles all the needed interface processing elements.
  */
@@ -283,7 +281,6 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private GenotypingProductOrderMapping genotypingProductOrderMapping;
 
-    private Map<String, AttributeDefinition> overrideDefinitions = null;
     private Map<String, AttributeDefinition> pdoSpecificDefinitions = null;
 
     private Map<String, String> attributes = new HashMap<>();
@@ -1302,21 +1299,23 @@ public class ProductOrderActionBean extends CoreActionBean {
         // new restrictions
         validateQuoteDetails(editOrder.getQuoteId(), ErrorLevel.WARNING);
 
-        if (!chipDefaults.equals(attributes)) {
-            genotypingProductOrderMapping =
-                    productOrderEjb.findOrCreateGenotypingChipProductOrderMapping(editOrder.getJiraTicketKey());
-            if (genotypingProductOrderMapping != null) {
-                boolean foundChange = false;
-                for (ArchetypeAttribute existingAttribute: genotypingProductOrderMapping.getAttributes()) {
-                    String newValue = attributes.get(existingAttribute.getAttributeName());
-                    String oldValue = existingAttribute.getAttributeValue();
-                    if (oldValue == null && newValue != null || oldValue != null && !oldValue.equals(newValue)) {
-                        foundChange = true;
-                        existingAttribute.setAttributeValue(newValue);
+        if (chipDefaults != null && attributes != null) {
+            if (!chipDefaults.equals(attributes)) {
+                genotypingProductOrderMapping =
+                        productOrderEjb.findOrCreateGenotypingChipProductOrderMapping(editOrder.getJiraTicketKey());
+                if (genotypingProductOrderMapping != null) {
+                    boolean foundChange = false;
+                    for (ArchetypeAttribute existingAttribute : genotypingProductOrderMapping.getAttributes()) {
+                        String newValue = attributes.get(existingAttribute.getAttributeName());
+                        String oldValue = existingAttribute.getAttributeValue();
+                        if (oldValue == null && newValue != null || oldValue != null && !oldValue.equals(newValue)) {
+                            foundChange = true;
+                            existingAttribute.setAttributeValue(newValue);
+                        }
                     }
-                }
-                if (foundChange) {
-                    attributeArchetypeDao.persist(genotypingProductOrderMapping);
+                    if (foundChange) {
+                        attributeArchetypeDao.persist(genotypingProductOrderMapping);
+                    }
                 }
             }
         }
@@ -2581,12 +2580,11 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     /**
      * Override fields are group attributes set in AttributeDefinition
-     * @param jiraTicketKey
      */
     private void populateAttributes(String jiraTicketKey) {
         // Set default values first from GenotypingChip
         attributes.clear();
-        Map<String, AttributeDefinition> definitionsMap = getPdoSpecificDefinitions();
+        Map<String, AttributeDefinition> definitionsMap = getPdoAttributeDefinitions();
         GenotypingChip chip = getGenotypingChip();
         chipDefaults.clear();
         if (chip != null && definitionsMap != null) {
@@ -2607,7 +2605,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                 attributeArchetypeDao.findGenotypingProductOrderMapping(jiraTicketKey);
         if (genotypingProductOrderMapping != null) {
             for (ArchetypeAttribute attribute : genotypingProductOrderMapping.getAttributes()) {
-                AttributeDefinition definition = getPdoSpecificDefinitions().get(attribute.getAttributeName());
+                AttributeDefinition definition = getPdoAttributeDefinitions().get(attribute.getAttributeName());
                 if (definition != null && definition.isDisplayable()) {
                     if (attribute.getAttributeValue() != null) {
                         attributes.put(attribute.getAttributeName(), attribute.getAttributeValue());
@@ -2617,16 +2615,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
-    private Map<String, AttributeDefinition> getOverrideDefinitions() {
-        if (overrideDefinitions == null) {
-            overrideDefinitions = attributeArchetypeDao.findAttributeGroupByTypeAndName(
-                    AttributeDefinition.DefinitionType.GENOTYPING_PRODUCT_ORDER_OVERRIDE,
-                    GenotypingProductOrderMapping.MAPPING_GROUP);
-        }
-        return overrideDefinitions;
-    }
-
-    private Map<String, AttributeDefinition> getPdoSpecificDefinitions() {
+    private Map<String, AttributeDefinition> getPdoAttributeDefinitions() {
         if (pdoSpecificDefinitions == null) {
             pdoSpecificDefinitions = attributeArchetypeDao.findAttributeGroupByTypeAndName(
                     AttributeDefinition.DefinitionType.GENOTYPING_PRODUCT_ORDER,

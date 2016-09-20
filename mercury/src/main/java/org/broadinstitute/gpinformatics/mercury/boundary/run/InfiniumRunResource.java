@@ -123,12 +123,21 @@ public class InfiniumRunResource {
 
             List<ProductOrderSample> productOrderSamples;
             Set<String> researchProjectIds;
+            GenotypingProductOrderMapping genotypingProductOrderMapping = null;
             ProductOrderSample productOrderSample = sampleInstanceV2.getProductOrderSampleForSingleBucket();
             if (productOrderSample == null) {
                 productOrderSamples = productOrderSampleDao.findBySamples(
                         Collections.singletonList(sampleInstanceV2.getRootOrEarliestMercurySampleName()));
                 researchProjectIds = findResearchProjectIds(productOrderSamples);
+                Set<String> productOrderKeys = findProductOrderKeys(productOrderSamples);
+                if (productOrderKeys != null && !productOrderKeys.isEmpty()) {
+                    genotypingProductOrderMapping = attributeArchetypeDao.findGenotypingProductOrderMapping(
+                            productOrderKeys.iterator().next()
+                    );
+                }
             } else {
+                genotypingProductOrderMapping = attributeArchetypeDao.findGenotypingProductOrderMapping(
+                        productOrderSample.getProductOrder().getJiraTicketKey());
                 productOrderSamples = Collections.singletonList(productOrderSample);
                 researchProjectIds = Collections.singleton(
                         productOrderSample.getProductOrder().getResearchProject().getBusinessKey());
@@ -260,5 +269,20 @@ public class InfiniumRunResource {
             }
         }
         return researchProjectIds;
+    }
+
+    private Set<String> findProductOrderKeys(List<ProductOrderSample> productOrderSamples) {
+        Set<String> productOrderKeys = new HashSet<>();
+        for (ProductOrderSample productOrderSample : productOrderSamples) {
+            ProductOrder productOrder = productOrderSample.getProductOrder();
+            if (productOrder != null) {
+                productOrderKeys.add(productOrder.getJiraTicketKey());
+            }
+        }
+        return productOrderKeys;
+    }
+
+    public void setAttributeArchetypeDao(AttributeArchetypeDao attributeArchetypeDao) {
+        this.attributeArchetypeDao = attributeArchetypeDao;
     }
 }

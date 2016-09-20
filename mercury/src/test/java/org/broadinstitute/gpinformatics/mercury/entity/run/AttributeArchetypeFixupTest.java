@@ -282,26 +282,4 @@ public class AttributeArchetypeFixupTest extends Arquillian {
         attributeArchetypeDao.persist(new FixupCommentary("GAP-1068 backfill chip type"));
         attributeArchetypeDao.flush();
     }
-
-    @Test(enabled = true)
-    public void createInitialAttribtueDefinitiions() {
-        userBean.loginOSUser();
-
-        List<AttributeDefinition> definitions = new ArrayList<AttributeDefinition>() {{
-            add(new AttributeDefinition(AttributeDefinition.DefinitionType.GENOTYPING_PRODUCT_ORDER_OVERRIDE,
-                    GenotypingProductOrderMapping.MAPPING_GROUP,
-                    GenotypingProductOrderMapping.CALL_RATE_OVERRIDE_MAPPING,
-                    "zcall_threshold_unix"));
-            add(new AttributeDefinition(AttributeDefinition.DefinitionType.GENOTYPING_PRODUCT_ORDER_OVERRIDE,
-                    GenotypingProductOrderMapping.MAPPING_GROUP,
-                    GenotypingProductOrderMapping.CLUSTER_FILE_OVERRIDE_MAPPING,
-                    "cluster_location_unix"));
-            add(new AttributeDefinition(AttributeDefinition.DefinitionType.GENOTYPING_PRODUCT_ORDER_OVERRIDE,
-                    GenotypingProductOrderMapping.MAPPING_GROUP, GenotypingProductOrderMapping.ZCALL_THRESHOLD, true));
-            add(new AttributeDefinition(AttributeDefinition.DefinitionType.GENOTYPING_PRODUCT_ORDER_OVERRIDE,
-                    GenotypingProductOrderMapping.MAPPING_GROUP, GenotypingProductOrderMapping.CLUSTER_LOCATION, true));
-        }};
-        attributeArchetypeDao.persistAll(definitions);
-        attributeArchetypeDao.flush();
-    }
 }
