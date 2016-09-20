@@ -774,6 +774,19 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
     }
 
     /**
+     * Determines whether or not the given regulatory information can be edited. The only property that can be changed
+     * is the name/title. However, if this record matches what is in the ORSP Portal, we don't want it to be changed.
+     *
+     * @param regulatoryInfo    the regulatory info to check
+     *
+     * @return true if the regulatory info can be edited; false otherwise
+     */
+    public boolean isRegulatoryInfoEditAllowed(RegulatoryInfo regulatoryInfo) {
+        OrspProject orspProject = orspProjectDao.findByKey(regulatoryInfo.getIdentifier());
+        return !(orspProject != null && regulatoryInfo.getName().equals(orspProject.getName()));
+    }
+
+    /**
      * Determines whether or not the given regulatory information is being used for a product order for the current
      * research project. This is used to determine whether regulatory information can be safely disassociated with the
      * project.
