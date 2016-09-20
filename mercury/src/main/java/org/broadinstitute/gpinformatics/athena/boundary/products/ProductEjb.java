@@ -12,7 +12,6 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.PriceItemTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProductTokenInput;
-import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.entity.run.GenotypingChip;
@@ -26,10 +25,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
@@ -158,22 +155,11 @@ public class ProductEjb {
     public Pair<String, String> getGenotypingChip(String productPartNumber, String productOrderName,
                                                   Date effectiveDate) {
 
-        // Retrieves the historical chip mappings and uses them to find the best match for the product part number
-        // and pdo name.
+        // Retrieves the historical chip mappings, one mapping for each product and pdo substring.
         Collection<GenotypingChipMapping> mappings = attributeArchetypeDao.getMappingsAsOf(effectiveDate);
 
-        // Only one of each mapping may be active for this date, i.e. mappings should be unique on product
-        // part number and pdo substring.
-        Set<String> uniquePartNumberAndSubstring = new HashSet<>();
-        for (GenotypingChipMapping mapping : mappings) {
-            if (!uniquePartNumberAndSubstring.add(mapping.getArchetypeName())) {
-                throw new RuntimeException("Multiple genotyping chip mappings for '" + mapping.getArchetypeName() +
-                                           "' on " + DateUtils.convertDateTimeToString(effectiveDate));
-            }
-        }
-
-        // Does substring matching on the product order name when there are multiple chips for a product part number.
-        // The map keys are in search order, same as shown in UI for Product chip mappings.
+        // Finds the best match for the product part number and pdo name.
+        // The map is sorted in search order, the same order as displayed in UI for Product chip mappings.
         SortedMap<String, GenotypingChipMapping> partialMatches = partNumberMatches(productPartNumber, mappings);
         GenotypingChipMapping bestMatch = null;
         for (Map.Entry<String, GenotypingChipMapping> entry : partialMatches.entrySet()) {

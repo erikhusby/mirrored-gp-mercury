@@ -120,12 +120,20 @@ public class InfiniumRunResource {
             SampleInstanceV2 sampleInstanceV2 = sampleInstancesAtPositionV2.iterator().next();
             SampleData sampleData = sampleDataFetcher.fetchSampleData(
                     sampleInstanceV2.getNearestMercurySampleName());
-            List<ProductOrderSample> productOrderSamples = productOrderSampleDao.findBySamples(
-                    Collections.singletonList(sampleInstanceV2.getRootOrEarliestMercurySampleName()));
+
+            List<ProductOrderSample> productOrderSamples;
+            Set<String> researchProjectIds;
+            ProductOrderSample productOrderSample = sampleInstanceV2.getProductOrderSampleForSingleBucket();
+            if (productOrderSample == null) {
+                productOrderSamples = productOrderSampleDao.findBySamples(
+                        Collections.singletonList(sampleInstanceV2.getRootOrEarliestMercurySampleName()));
+                researchProjectIds = findResearchProjectIds(productOrderSamples);
+            } else {
+                productOrderSamples = Collections.singletonList(productOrderSample);
+                researchProjectIds = Collections.singleton(
+                        productOrderSample.getProductOrder().getResearchProject().getBusinessKey());
+            }
             Set <GenotypingChip> chipTypes = findChipTypes(productOrderSamples, effectiveDate);
-            Set<String> researchProjectIds = findResearchProjectIds(productOrderSamples);
-//            Collection<String> productOrderKeys = chip.getContainerRole().getNearestProductOrders();
-            Set<String> productOrderKeys = findProductOrderKeys(productOrderSamples);
 
             boolean positiveControl = false;
             boolean negativeControl = false;
@@ -149,37 +157,6 @@ public class InfiniumRunResource {
             if (chipTypes.size() != 1) {
                 throw new ResourceException("Found mix of chip types for " + chip.getLabel() + " on " + effectiveDate,
                         Response.Status.INTERNAL_SERVER_ERROR);
-            }
-
-            if (productOrderKeys.isEmpty() && processControl == null) {
-                throw new ResourceException("Found no product orders for " + chip.getLabel(),
-                        Response.Status.INTERNAL_SERVER_ERROR);
-            }
-            Map<String, Set<String>> mappings = new HashMap<>();
-            GenotypingProductOrderMapping genotypingProductOrderMapping = null;
-            if (productOrderKeys.size() != 1) {
-                for (String pdoKey: productOrderKeys) {
-                    genotypingProductOrderMapping = attributeArchetypeDao.findGenotypingProductOrderMapping(pdoKey);
-                    if (genotypingProductOrderMapping != null) {
-                        for (ArchetypeAttribute archetypeAttribute: genotypingProductOrderMapping.getAttributes()) {
-                            if (mappings.containsKey(archetypeAttribute.getAttributeName())) {
-                                Set<String> attrValues = new HashSet<>();
-                                attrValues.add(archetypeAttribute.getAttributeValue());
-                                mappings.put(archetypeAttribute.getAttributeName(), attrValues);
-                            } else {
-                                Set<String> attrValues = mappings.get(archetypeAttribute.getAttributeName());
-                                attrValues.add(archetypeAttribute.getAttributeValue());
-                            }
-                        }
-                    }
-                }
-                for (Set<String> attrValueSets: mappings.values()) {
-                    if (attrValueSets.size() != 1) {
-                        throw new ResourceException(
-                                "Found mix of pdo genotyping chip overrides for " + chip.getLabel(),
-                                Response.Status.INTERNAL_SERVER_ERROR);
-                    }
-                }
             }
 
             // Controls have a null research project id.
@@ -283,21 +260,5 @@ public class InfiniumRunResource {
             }
         }
         return researchProjectIds;
-    }
-
-    private Set<String> findProductOrderKeys(List<ProductOrderSample> productOrderSamples) {
-        Set<String> productOrderKeys = new HashSet<>();
-        for (ProductOrderSample productOrderSample : productOrderSamples) {
-            ProductOrder productOrder = productOrderSample.getProductOrder();
-            if (productOrder != null) {
-                productOrderKeys.add(productOrder.getJiraTicketKey());
-            }
-        }
-        return productOrderKeys;
-    }
-
-    // For testing purposes
-    public void setAttributeArchetypeDao(AttributeArchetypeDao attributeArchetypeDao) {
-        this.attributeArchetypeDao = attributeArchetypeDao;
     }
 }

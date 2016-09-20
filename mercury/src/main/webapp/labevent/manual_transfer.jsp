@@ -254,13 +254,17 @@
                 </c:forEach>
 
                 <c:if test="${stationEvent.class.simpleName.equals('PlateCherryPickEvent')}">
-                    <input type="button" value="Preview" id="PreviewButton" name="PreviewButton" class="btn btn-primary" >
+                    <input type="button" value="Add Cherry Picks" id="PreviewButton" name="PreviewButton" class="btn btn-primary" >
                 </c:if>
 
                 <stripes:submit name="fetchExisting" value="Validate Barcodes" class="btn"/>
                 <stripes:submit name="transfer" value="${actionBean.manualTransferDetails.buttonValue}"
                         class="btn btn-primary"/>
-                <input type="button" onclick="$('.clearable').each(function (){$(this).val('');});" value="Clear non-reagent fields">
+                <c:if test="${stationEvent.class.simpleName.equals('PlateCherryPickEvent')}">
+                    <stripes:submit value="Clear Cherry Picks" id="ClearConnectionsButton" name="ClearConnectionsButton"  class="btn"/>
+                </c:if>
+                <input type="button" onclick="$('.clearable').each(function (){$(this).val('');});" value="Clear non-reagent fields" class="btn">
+
             </c:if>
         </stripes:form>
         <c:if test="${not empty actionBean.batchName}">
