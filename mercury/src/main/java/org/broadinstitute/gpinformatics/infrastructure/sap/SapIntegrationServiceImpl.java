@@ -63,7 +63,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
         SapIntegrationClientImpl.SAPEnvironment environment;
 
-        switch (sapConfig.getDeploymentConfig()) {
+        switch (sapConfig.getExternalDeployment()) {
         case PROD:
             environment = SapIntegrationClientImpl.SAPEnvironment.PRODUCTION;
             break;
@@ -75,6 +75,9 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
             environment = SapIntegrationClientImpl.SAPEnvironment.QA;
             break;
         }
+
+        log.debug("Config environment is: " + sapConfig.getExternalDeployment().name());
+        log.debug("Sending to SAP environment of: " + environment.name());
 
         wrappedClient = new SapIntegrationClientImpl(sapConfig.getLogin(), sapConfig.getPassword(),
                 environment);
@@ -265,10 +268,10 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
         BigDecimal minimumOrderQuantity = product.getMinimumOrderSize() != null?new BigDecimal(product.getMinimumOrderSize()):BigDecimal.ONE;
         newMaterial.setMinimumOrderQuantity(minimumOrderQuantity);
 
-        if(product.isAvailable()) {
-            newMaterial.setStatus(SAPMaterial.MaterialStatus.ENABLED);
-        } else {
+        if(product.isDiscontinued()) {
             newMaterial.setStatus(SAPMaterial.MaterialStatus.DISABLED);
+        } else {
+            newMaterial.setStatus(SAPMaterial.MaterialStatus.ENABLED);
         }
 
         return newMaterial;

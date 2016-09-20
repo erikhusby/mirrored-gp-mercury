@@ -428,6 +428,12 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
                 (discontinuedDate == null || discontinuedDate.compareTo(now) > 0);
     }
 
+    public boolean isDiscontinued() {
+        Date now = Calendar.getInstance().getTime();
+
+        return discontinuedDate != null && discontinuedDate.compareTo(now) < 0;
+    }
+
     public boolean isAvailableNowOrLater() {
         Date now = Calendar.getInstance().getTime();
 
