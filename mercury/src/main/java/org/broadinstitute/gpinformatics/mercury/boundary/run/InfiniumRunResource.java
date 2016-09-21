@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.run;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -20,6 +22,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
@@ -33,12 +38,22 @@ import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpression;
+import javax.xml.xpath.XPathFactory;
+import java.io.File;
+import java.io.FileInputStream;
 
 /**
  * A JAX-RS resource for Infinium genotyping runs.
@@ -47,6 +62,8 @@ import java.util.regex.Pattern;
 @Stateful
 @RequestScoped
 public class InfiniumRunResource {
+
+    private static final Log log = LogFactory.getLog(InfiniumRunResource.class);
 
     /** Extract barcode, row and column from e.g. 3999595020_R12C02 */
     private static final Pattern BARCODE_PATTERN = Pattern.compile("(\\d*)_(R\\d*)(C\\d*)");
@@ -191,13 +208,12 @@ public class InfiniumRunResource {
             }
 
             Date startDate = null;
-            String scannerName = null;
             for (LabEvent labEvent: chip.getInPlaceLabEvents()) {
                 if (labEvent.getLabEventType() == LabEventType.INFINIUM_AUTOCALL_SOME_STARTED) {
                     startDate = labEvent.getEventDate();
-                    scannerName = labEvent.getEventLocation();
                 }
             }
+            String scannerName = findScannerName(chip.getLabel(), vesselPosition.name());
 
             String batchName = null;
             if (sampleInstanceV2.getSingleBatch() != null) {
@@ -255,7 +271,7 @@ public class InfiniumRunResource {
             if (control.getCollaboratorParticipantId().equals(sampleData.getCollaboratorParticipantId())) {
                 List<String> sampleNames = new ArrayList<>();
                 for (SampleInstanceV2 sampleInstanceV2 : chip.getSampleInstancesV2()) {
-                     sampleNames.add(sampleInstanceV2.getRootOrEarliestMercurySampleName());
+                    sampleNames.add(sampleInstanceV2.getRootOrEarliestMercurySampleName());
                 }
                 chipTypes = findChipTypes(productOrderSampleDao.findBySamples(sampleNames), effectiveDate);
                 processControl = control;
@@ -303,5 +319,36 @@ public class InfiniumRunResource {
             productOrders.add(productOrder);
         }
         return productOrders;
+    }
+
+    private String findScannerName(String chipBarcode, String vesselPosition) {
+        try {
+
+            String redXml = String.format("%s_%s_01_Red.xml", chipBarcode, vesselPosition);
+            File redXmlFile = new File(redXml);
+            if (redXmlFile.exists()) {
+                DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
+                DocumentBuilder documentBuilder = builderFactory.newDocumentBuilder();
+                Document document = documentBuilder.parse(new FileInputStream(redXmlFile));
+                XPath xPath =  XPathFactory.newInstance().newXPath();
+                XPathExpression lcsetKeyExpr = xPath.compile("ImageHeader/ScannerID");
+                NodeList scannerIdNodeList = (NodeList) lcsetKeyExpr.evaluate(document,
+                        XPathConstants.NODESET);
+                Node elemNode = scannerIdNodeList.item(0);
+                String scannerId = elemNode.getFirstChild().getNodeValue();
+                return mapSerialNumberToMachineName.get(scannerId);
+            }
+        } catch (Exception e) {
+            log.error("Failed to find scanner name from filesystem for " + chipBarcode);
+        }
+        return null;
+    }
+
+    private static final Map<String, String> mapSerialNumberToMachineName = new HashMap<>();
+    static {
+        mapSerialNumberToMachineName.put("N296", "Practical Pig");
+        mapSerialNumberToMachineName.put("N370", "Big Bad Wolf");
+        mapSerialNumberToMachineName.put("N700", "Fiddler Pig");
+        mapSerialNumberToMachineName.put("N588", "Fiffer Pig");
     }
 }
