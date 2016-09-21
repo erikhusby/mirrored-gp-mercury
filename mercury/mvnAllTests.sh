@@ -4,7 +4,7 @@
 #
 source /broad/tools/scripts/useuse
 use Maven-3.1
-use Java-1.7
+use Java-1.8
 
 if [ "x$JBOSS_HOME" == "x" ]
 then
