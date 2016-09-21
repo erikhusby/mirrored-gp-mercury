@@ -137,7 +137,7 @@ public class SapIntegrationServiceImpl implements SapIntegrationService {
 
         newOrder.setExternalOrderNumber(placedOrder.getJiraTicketKey());
 
-        Funding funding = foundQuote.getQuoteFunding().getFundingLevel().iterator().next().getFunding();
+        Funding funding = foundQuote.getFirstRelevantFundingLevel().getFunding();
 
         if (funding.getFundingType().equals(Funding.PURCHASE_ORDER)) {
             newOrder.setFundingSource(funding.getPurchaseOrderNumber(), SAPOrder.FundingType.PURCHASE_ORDER);

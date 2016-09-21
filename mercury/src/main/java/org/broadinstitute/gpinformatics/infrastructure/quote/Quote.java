@@ -132,4 +132,16 @@ public class Quote {
         }
         return !(fundingSize >1 || fundingSize==0);
     }
+
+    public FundingLevel getFirstRelevantFundingLevel() {
+        FundingLevel funding = null;
+
+        for(FundingLevel level : quoteFunding.getFundingLevel()) {
+            if(Integer.valueOf(level.getPercent()) >0) {
+                funding = level;
+            }
+        }
+
+        return funding;
+    }
 }
