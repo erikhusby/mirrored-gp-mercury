@@ -266,4 +266,39 @@ public class AttributeArchetypeFixupTest extends Arquillian {
         attributeArchetypeDao.persist(new FixupCommentary("SUPPORT-1877 adjust Active date for chip mapping"));
         attributeArchetypeDao.flush();
     }
+
+    @Test(enabled = false)
+    public void support2099AddNewChipAttributes() throws Exception {
+        utx.begin();
+        userBean.loginOSUser();
+
+        final String chipFamily = InfiniumRunResource.INFINIUM_GROUP;
+
+        List<AttributeDefinition> definitions = new ArrayList<AttributeDefinition>() {{
+            add(new AttributeDefinition(AttributeDefinition.DefinitionType.GENOTYPING_CHIP,
+                    chipFamily, "call_rate_threshold", true));
+            add(new AttributeDefinition(AttributeDefinition.DefinitionType.GENOTYPING_CHIP,
+                    chipFamily, "gender_cluster_file", true));
+        }};
+
+        String megaGenderClusterFile =
+                "/gap/illumina/beadstudio/Autocall/ChipInfo/Multi-EthnicGlobal-8_A1/"
+                + "Multi-EthnicGlobal_A1_Gentrain_Genderest_ClusterFile_highmafX.egt";
+        Set<GenotypingChip> genotypingChips = attributeArchetypeDao.findGenotypingChips(chipFamily);
+        for (GenotypingChip genotypingChip: genotypingChips) {
+            genotypingChip.addOrSetAttribute("call_rate_threshold", "98");
+            if (genotypingChip.getChipName().equals("Multi-EthnicGlobal-8_A1")) {
+                genotypingChip.addOrSetAttribute("gender_cluster_file", megaGenderClusterFile);
+            } else {
+                genotypingChip.addOrSetAttribute("gender_cluster_file", null);
+            }
+        }
+
+        String fixupReason = "SUPPORT-2099 add call rate threshold and optional gender cluster file.";
+        attributeArchetypeDao.persist(new FixupCommentary(fixupReason));
+        attributeArchetypeDao.persistAll(definitions);
+        attributeArchetypeDao.persistAll(genotypingChips);
+        attributeArchetypeDao.flush();
+        utx.commit();
+    }
 }
