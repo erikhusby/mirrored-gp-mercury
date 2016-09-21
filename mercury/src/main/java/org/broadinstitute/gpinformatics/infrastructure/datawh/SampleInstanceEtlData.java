@@ -90,7 +90,8 @@ public class SampleInstanceEtlData {
             long bucketTs = 0L;
             for (BucketEntry bucketEntry : si.getAllBucketEntries()) {
                 if (bucketEntry.getLabBatch() != null
-                    && bucketEntry.getLabBatch().getBatchName().startsWith("LCSET")
+                    && ( bucketEntry.getLabBatch().getBatchName().startsWith("LCSET")
+                        ||  bucketEntry.getLabBatch().getBatchName().startsWith("ARRAY") )
                     && bucketEntry.getCreatedDate().getTime() > bucketTs
                     && bucketEntry.getCreatedDate().getTime() <= eventTs) {
                     sampleInstanceData.labBatch = bucketEntry.getLabBatch();
