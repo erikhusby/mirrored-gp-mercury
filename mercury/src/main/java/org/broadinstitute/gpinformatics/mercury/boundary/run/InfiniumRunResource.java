@@ -90,9 +90,6 @@ public class InfiniumRunResource {
     private ProductEjb productEjb;
 
     @Inject
-    private LabEventDao labEventDao;
-
-    @Inject
     private InfiniumStarterConfig infiniumStarterConfig;
 
     @GET
