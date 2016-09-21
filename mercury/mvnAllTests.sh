@@ -22,7 +22,7 @@ then
 fi
 
 MAVEN_OPTS="-Xms4g -XX:MaxPermSize=1g $SSL_OPTS"
-OPTIONS="-PArquillian-JBossAS7-Remote,$BUILD_PROFILE -Djava.awt.headless=true --batch-mode -Dmaven.download.meter=silent "
+OPTIONS="-PArquillian-WildFly10-Remote,$BUILD_PROFILE -Djava.awt.headless=true --batch-mode -Dmaven.download.meter=silent "
 PROFILES="Tests.ArqSuite.Standard Tests.ArqSuite.Stubby Tests.Multithreaded Tests.DatabaseFree Tests.ExternalIntegration Tests.Alternatives"
 #PROFILES="Tests.DatabaseFree"
 #PROFILES="Tests.Multithreaded"
