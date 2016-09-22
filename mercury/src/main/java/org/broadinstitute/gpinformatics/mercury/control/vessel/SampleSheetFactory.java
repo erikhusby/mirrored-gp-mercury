@@ -1,8 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
-import org.jboss.marshalling.Pair;
 
 import java.io.PrintStream;
 import java.util.List;
@@ -35,5 +35,39 @@ public class SampleSheetFactory {
         printStream.println("[Data]");
         printStream.println("Sample_ID,SentrixBarcode_A,SentrixPosition_A,Sample_Plate,Sample_Well,Sample_Group," +
                 "Gender,Sample_Name,Replicate,Parent1,Parent2,CallRate");
+        for (Pair<LabVessel, VesselPosition> vesselPositionPair : vesselPositionPairs) {
+            printStream.print(masterPlateName);
+            printStream.print("_");
+            printStream.print(masterPlatePosition);
+            printStream.print("_");
+            printStream.print(participantId);
+            printStream.print("_");
+            printStream.print(vesselPositionPair.getLeft().getLabel());
+            printStream.print("_");
+            printStream.print(vesselPositionPair.getRight());
+            printStream.print(",");
+
+            printStream.print(vesselPositionPair.getLeft().getLabel());
+            printStream.print(",");
+
+            printStream.print(vesselPositionPair.getRight());
+            printStream.print(",");
+
+            printStream.print(chemistryPlateName);
+            printStream.print(",");
+
+            printStream.print(chemistryPlatePosition);
+            printStream.print(",");
+
+            printStream.print(collabPtId);
+            printStream.print(",");
+
+            printStream.print(gender);
+            printStream.print(",");
+
+            printStream.print(participantId);
+            // todo jmt parent1, parent2, call rate
+            printStream.println(",,,");
+        }
     }
 }
