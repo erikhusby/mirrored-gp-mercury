@@ -232,7 +232,7 @@ public class InfiniumRunResource {
             infiniumRunBean = new InfiniumRunBean(
                     idatPrefix + "_Red.idat",
                     idatPrefix + "_Grn.idat",
-                    chipAttributes.get("norm_manifest_unix"),
+                    chipAttributes.get("illumina_manifest_unix"),
                     chipAttributes.get("manifest_location_unix"),
                     chipAttributes.get("cluster_location_unix"),
                     chipAttributes.get("zcall_threshold_unix"),
@@ -252,7 +252,9 @@ public class InfiniumRunResource {
                     partNumber,
                     batchName,
                     startDate,
-                    scannerName);
+                    scannerName,
+                    chipAttributes.get("norm_manifest_unix")
+                    );
         } else {
             throw new RuntimeException("Expected 1 sample, found " + sampleInstancesAtPositionV2.size());
         }

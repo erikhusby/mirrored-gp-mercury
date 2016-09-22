@@ -36,6 +36,7 @@ public class InfiniumRunBean {
     private String labBatch;
     private Date scanDate;
     private String scannerName;
+    private String csvBeadPoolManifestPath;
     // todo jmt this or something more REST-like?
     private String error;
 
@@ -49,7 +50,7 @@ public class InfiniumRunBean {
                            String researchProjectId, boolean positiveControl, boolean negativeControl,
                            String callRateThreshold, String genderClusterFile, String collaboratorParticpantId,
                            String productOrderId, String productName, String productFamily, String productPartNumber,
-                           String labBatch, Date scanDate, String scannerName) {
+                           String labBatch, Date scanDate, String scannerName, String csvBeadPoolManifestPath) {
         this.redIDatPath = redIDatPath;
         this.greenIDatPath = greenIDatPath;
         this.chipManifestPath = chipManifestPath;
@@ -73,6 +74,7 @@ public class InfiniumRunBean {
         this.labBatch = labBatch;
         this.scanDate = scanDate;
         this.scannerName = scannerName;
+        this.csvBeadPoolManifestPath = csvBeadPoolManifestPath;
     }
 
     public String getRedIDatPath() {
@@ -165,5 +167,9 @@ public class InfiniumRunBean {
 
     public String getScannerName() {
         return scannerName;
+    }
+
+    public String getCsvBeadPoolManifestPath() {
+        return csvBeadPoolManifestPath;
     }
 }
