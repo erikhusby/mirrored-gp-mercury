@@ -440,10 +440,13 @@ public class ProductActionBean extends CoreActionBean {
     public Resolution publishProductsToSap() {
         selectedProducts = productDao.findListByList(Product.class, Product_.partNumber, selectedProductPartNumbers);
         try {
-            productEjb.publishProductsToSAP(selectedProducts);
-            addMessage("The selected Products were successfully published to SAP");
+            for(Product selectedProduct:selectedProducts) {
+
+                productEjb.publishProductToSAP(selectedProduct);
+                addMessage(selectedProduct.getPartNumber() + " was successfully published to SAP");
+            }
         } catch (SAPIntegrationException e) {
-            addGlobalValidationError("Unable to update the product in SAP. " + e.getMessage());
+            addGlobalValidationError("Unable to publish some of the products to SAP. " + e.getMessage());
         }
         return new RedirectResolution(ProductActionBean.class,LIST_ACTION);
     }
@@ -454,7 +457,7 @@ public class ProductActionBean extends CoreActionBean {
             productEjb.publishProductToSAP(editProduct);
             addMessage("Product \"" + editProduct.getProductName() + "\" Successfully published to SAP");
         } catch (SAPIntegrationException e) {
-            addGlobalValidationError("Unable to update the product in SAP. " + e.getMessage());
+            addGlobalValidationError("Unable to publish the product to SAP. " + e.getMessage());
         }
 
         return new RedirectResolution(ProductActionBean.class, VIEW_ACTION).addParameter(PRODUCT_PARAMETER,
