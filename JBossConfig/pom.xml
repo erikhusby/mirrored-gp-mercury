@@ -37,6 +37,14 @@
             <name>Broad Maven Repository</name>
             <url>http://maven.broadinstitute.org:8000/maven</url>
         </repository>
+	<repository>
+	  <id>central</id>
+	  <url>https://m2proxy.atlassian.com/repository/public</url>
+	  <snapshots>
+	    <enabled>true</enabled>
+	    <updatePolicy>always</updatePolicy>
+	  </snapshots>
+	</repository>
     </repositories>
 
     <dependencies>
