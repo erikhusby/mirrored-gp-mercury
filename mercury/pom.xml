@@ -2523,10 +2523,10 @@ todo jmt revisit
                 </configuration>
             </plugin>
 
-            <plugin>
-                <groupId>org.jboss.as.plugins</groupId>
-                <artifactId>jboss-as-maven-plugin</artifactId>
-            </plugin>
+            <!--<plugin>-->
+                <!--<groupId>org.jboss.as.plugins</groupId>-->
+                <!--<artifactId>jboss-as-maven-plugin</artifactId>-->
+            <!--</plugin>-->
 
         </plugins>
 
