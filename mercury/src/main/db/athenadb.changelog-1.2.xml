@@ -372,4 +372,8 @@
                              schemaName="ATHENA" columnNames="PROJECT, SUBMITTED_SAMPLE_NAME, FILE_TYPE, VERSION"/>
     </changeSet>
 -->
+
+    <changeSet author="breilly" id="GPLIM-4333-1">
+        <dropUniqueConstraint schemaName="ATHENA" tableName="REGULATORY_INFO" constraintName="UNQ_REGULATORY_INFO_ALIAS"/>
+    </changeSet>
 </databaseChangeLog>

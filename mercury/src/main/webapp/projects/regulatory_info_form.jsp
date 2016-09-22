@@ -76,7 +76,7 @@
                     <input type="hidden" name="<%= ResearchProjectActionBean.ADD_NEW_REGULATORY_INFO_ACTION %>">
                 </c:when>
                 <c:otherwise>
-                    <stripes:submit id="editSubmit" name="editRegulatoryInfo" value="Edit" class="btn btn-primary"/>
+                    <stripes:submit id="editSubmit" name="editRegulatoryInfo" value="Save" class="btn btn-primary"/>
                     <%-- Hidden action is needed because of the validateTitle() submit handler. See below. --%>
                     <input type="hidden" name="<%= ResearchProjectActionBean.EDIT_REGULATORY_INFO_ACTION %>">
                 </c:otherwise>

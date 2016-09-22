@@ -562,7 +562,16 @@
                             <td>${regulatoryInfo.identifier}</td>
                             <td>${regulatoryInfo.name}</td>
                             <td>${regulatoryInfo.type.name}</td>
-                            <td style="text-align:center"><a href="#" onclick="return openRegulatoryInfoEditDialog(${regulatoryInfo.regulatoryInfoId});">Edit...</a></td>
+                            <td style="text-align:center">
+                                <c:choose>
+                                    <c:when test="${actionBean.isRegulatoryInfoEditAllowed(regulatoryInfo)}">
+                                        <a href="#" onclick="return openRegulatoryInfoEditDialog(${regulatoryInfo.regulatoryInfoId});" disabled="">Edit...</a>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <span class="disabled-link" style="font-size: 12px;" title="Editing regulatory information from the ORSP Portal is not allowed.">Edit...</span>
+                                    </c:otherwise>
+                                </c:choose>
+                            </td>
                             <td style="text-align:center"><stripes:submit name="remove" onclick="$j('#removeRegulatoryInfoId').val(${regulatoryInfo.regulatoryInfoId});" disabled="${actionBean.isRegulatoryInfoInProductOrdersForThisResearchProject(regulatoryInfo)}" class="btn">Remove</stripes:submit></td>
                         </tr>
                     </c:forEach>
