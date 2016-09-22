@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventReagent_;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent_;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.hibernate.SQLQuery;
@@ -1157,6 +1158,29 @@ public class ReagentFixupTest extends Arquillian {
                            " expiration to " + reagent.getExpiration().toString());
 
         genericReagentDao.persist(new FixupCommentary("GPLIM-4130 fix expiration date."));
+        genericReagentDao.flush();
+        utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void gplim4252EmergeBaitLotFixup() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        Reagent undesired = genericReagentDao.findByReagentNameLotExpiration("Rapid Capture Kit Box 4 (Bait)",
+                "16D29A0013", new GregorianCalendar(2018, Calendar.DECEMBER, 3).getTime());
+        Assert.assertNotNull(undesired);
+
+        Reagent desired = genericReagentDao.findByReagentNameLotExpiration("Rapid Capture Kit Box 4 (Bait)",
+                "4520044903", new GregorianCalendar(2017, Calendar.JUNE, 29).getTime());
+        Assert.assertNotNull(desired);
+
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, 1434789L);
+        Assert.assertEquals(labEvent.getLabEventType(), LabEventType.ICE_1S_TBAIT_PICK);
+        Assert.assertNotNull(labEvent.removeLabEventReagent(undesired));
+        labEvent.addReagent(desired);
+
+        genericReagentDao.persist(new FixupCommentary("GPLIM-4252 change reagent used on Ice 1st Bait Pick."));
         genericReagentDao.flush();
         utx.commit();
     }

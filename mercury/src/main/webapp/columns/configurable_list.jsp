@@ -83,6 +83,7 @@
         <%--@elvariable id="resultRow" type="org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList.ResultRow"--%>
         <%-- Break up the table every few hundred rows, because the browser uses unreasonable amounts of
         CPU to render large tables --%>
+        <%-- do headers need to be split?--%><c:set var="hasHeaderSplit" scope="page" value="${false}"/>
         <c:if test="${status.index % 500 == 0}">
             <thead>
             <tr>
@@ -90,35 +91,35 @@
                 <th width="5em"><c:if test="${status.index == 0}"><input for="count" type="checkbox" class="checkAll" id="checkAllTop" onclick="checkOtherAllBox('#checkAllBottom', this.checked );"><div id="count" class="checkedCount">0</div></c:if></th>
                 </c:if>
                 <c:forEach items="${resultList.headers}" var="resultListHeader" varStatus="status">
+                    <c:if test="${ not empty resultListHeader.downloadHeader2 }">
+                      <c:set var="headerDisplay" scope="page" value="${resultListHeader.downloadHeader1}"/>
+                      <c:set var="hasHeaderSplit" scope="page" value="${true}"/>
+                    </c:if>
+                    <c:if test="${ empty resultListHeader.downloadHeader2 }">
+                        <c:set var="headerDisplay" scope="page" value="${resultListHeader.viewHeader}"/>
+                    </c:if>
                     <%-- Render headers, and links for sorting by column --%>
                     <c:choose>
+                        <c:when test="${ not empty resultListHeader.downloadHeader2 }"><th>${headerDisplay}</th></c:when>
                         <c:when test="${not empty pagination and pagination.numberPages == 1}">
                             <%-- Results with only one page are sortable in-memory --%>
-                            <th class="sorting ${resultList.resultSortColumnIndex == status.index ?
-                            (resultList.resultSortDirection == 'ASC' ? 'sorting_asc' : 'sorting_desc' ) : ''}"
-                                    >
+                            <th class="sorting ${resultList.resultSortColumnIndex == status.index ? (resultList.resultSortDirection == 'ASC' ? 'sorting_asc' : 'sorting_desc' ) : ''}">
                                 <stripes:link
-                                        href="${action}?search=&entityName=${entityName}&sessionKey=${sessionKey}&columnSetName=${columnSetName}&sortColumnIndex=${status.index}&sortDirection=${resultList.resultSortColumnIndex == status.index && resultList.resultSortDirection == 'ASC' ? 'DSC' : 'ASC'}">
-                                    ${resultListHeader.viewHeader}</stripes:link>
+                                        href="${action}?search=&entityName=${entityName}&sessionKey=${sessionKey}&columnSetName=${columnSetName}&sortColumnIndex=${status.index}&sortDirection=${resultList.resultSortColumnIndex == status.index && resultList.resultSortDirection == 'ASC' ? 'DSC' : 'ASC'}">${headerDisplay}</stripes:link>
                             </th>
                         </c:when>
                         <c:otherwise>
                             <c:choose>
                                 <c:when test="${ ( not empty resultListHeader.sortPath ) and isDbSortAllowed}">
                                     <%-- Multi-page results are sortable in the database, if the column has a sort path --%>
-                                    <th class="sorting ${resultListHeader.sortPath == dbSortPath ?
-                                    (resultList.resultSortDirection == 'ASC' ? 'sorting_asc' : 'sorting_desc' ) : ''}"
-                                            >
+                                    <th class="sorting ${resultListHeader.sortPath == dbSortPath ? (resultList.resultSortDirection == 'ASC' ? 'sorting_asc' : 'sorting_desc' ) : ''}">
                                         <stripes:link
-                                                href="${action}?search=&entityName=${entityName}&sessionKey=${sessionKey}&columnSetName=${columnSetName}&dbSortPath=${resultListHeader.sortPath}&sortDirection=${resultListHeader.sortPath == dbSortPath && resultList.resultSortDirection == 'ASC' ? 'DSC' : 'ASC'}">
-                                            ${resultListHeader.viewHeader}</stripes:link>
+                                                href="${action}?search=&entityName=${entityName}&sessionKey=${sessionKey}&columnSetName=${columnSetName}&dbSortPath=${resultListHeader.sortPath}&sortDirection=${resultListHeader.sortPath == dbSortPath && resultList.resultSortDirection == 'ASC' ? 'DSC' : 'ASC'}">${headerDisplay}</stripes:link>
                                     </th>
                                 </c:when>
                                 <c:otherwise>
                                     <%-- No dbSortPath, therefore no sort link --%>
-                                    <th>
-                                        ${resultListHeader.viewHeader}
-                                    </th>
+                                    <th>${headerDisplay}</th>
                                 </c:otherwise>
                             </c:choose>
                         </c:otherwise>
@@ -128,6 +129,40 @@
                     <th>${resultList.conditionalCheckboxHeader}</th>
                 </c:if>
             </tr>
+            <c:if test="${hasHeaderSplit}">
+                <c:if test="${!dataTable}"><th>&nbsp</th></c:if>
+            <c:forEach items="${resultList.headers}" var="resultListHeader" varStatus="status">
+                <c:set var="headerDisplay" scope="page" value="${resultListHeader.downloadHeader2}"/>
+                <%-- Render headers, and links for sorting by column --%>
+                <c:choose>
+                    <c:when test="${empty headerDisplay}"><th>&nbsp</th></c:when>
+                    <c:when test="${not empty pagination and pagination.numberPages == 1}">
+                        <%-- Results with only one page are sortable in-memory --%>
+                        <th class="sorting ${resultList.resultSortColumnIndex == status.index ? (resultList.resultSortDirection == 'ASC' ? 'sorting_asc' : 'sorting_desc' ) : ''}">
+                            <stripes:link
+                                    href="${action}?search=&entityName=${entityName}&sessionKey=${sessionKey}&columnSetName=${columnSetName}&sortColumnIndex=${status.index}&sortDirection=${resultList.resultSortColumnIndex == status.index && resultList.resultSortDirection == 'ASC' ? 'DSC' : 'ASC'}">${headerDisplay}</stripes:link>
+                        </th>
+                    </c:when>
+                    <c:otherwise>
+                        <c:choose>
+                            <c:when test="${ ( not empty resultListHeader.sortPath ) and isDbSortAllowed}">
+                                <%-- Multi-page results are sortable in the database, if the column has a sort path --%>
+                                <th class="sorting ${resultListHeader.sortPath == dbSortPath ? (resultList.resultSortDirection == 'ASC' ? 'sorting_asc' : 'sorting_desc' ) : ''}">
+                                    <stripes:link
+                                            href="${action}?search=&entityName=${entityName}&sessionKey=${sessionKey}&columnSetName=${columnSetName}&dbSortPath=${resultListHeader.sortPath}&sortDirection=${resultListHeader.sortPath == dbSortPath && resultList.resultSortDirection == 'ASC' ? 'DSC' : 'ASC'}">${headerDisplay}</stripes:link>
+                                </th>
+                            </c:when>
+                            <c:otherwise>
+                                <%-- No dbSortPath, therefore no sort link --%>
+                                <th>${headerDisplay}</th>
+                            </c:otherwise>
+                        </c:choose>
+                    </c:otherwise>
+                </c:choose>
+            </c:forEach>
+            </c:if>
+            </tr>
+
             </thead>
             <tbody>
         </c:if>

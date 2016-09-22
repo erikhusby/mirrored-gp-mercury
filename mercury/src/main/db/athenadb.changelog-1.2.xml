@@ -350,4 +350,30 @@
             <column name="INSERT_SIZE" type="number(5,0)"/>
         </addColumn>
     </changeSet>
+
+    <changeSet author="breilly" id="GPLIM-4254-1">
+        <addColumn schemaName="ATHENA" tableName="SUBMISSION_TRACKER">
+            <column name="PROJECT" type="varchar2(255)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="breilly" id="GPLIM-4254-2">
+        <addColumn schemaName="ATHENA" tableName="SUBMISSION_TRACKER_AUD">
+            <column name="PROJECT" type="varchar2(255)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="breilly" id="GPLIM-4254-3">
+        <dropUniqueConstraint schemaName="ATHENA" tableName="SUBMISSION_TRACKER"
+                              constraintName="UNQ_SUBMISSION_TRACKER_TUPLE"/>
+    </changeSet>
+    <!-- This unique constraint can only be added after the column is added and back-filled. -->
+<!--
+    <changeSet author="breilly" id="GPLIM-4254-4-POST_RELEASE">
+        <addUniqueConstraint tableName="SUBMISSION_TRACKER" constraintName="UNQ_SUBMISSION_TRACKER_TUPLE"
+                             schemaName="ATHENA" columnNames="PROJECT, SUBMITTED_SAMPLE_NAME, FILE_TYPE, VERSION"/>
+    </changeSet>
+-->
+
+    <changeSet author="breilly" id="GPLIM-4333-1">
+        <dropUniqueConstraint schemaName="ATHENA" tableName="REGULATORY_INFO" constraintName="UNQ_REGULATORY_INFO_ALIAS"/>
+    </changeSet>
 </databaseChangeLog>

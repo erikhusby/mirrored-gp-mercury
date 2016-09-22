@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventMetadata;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
@@ -23,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -41,6 +43,31 @@ public class LabEventSearchDefinition {
      */
     private final ConfigurableSearchDefinition eventByVesselSearchDefinition;
 
+    // These search term and/or result column names need to be referenced multiple places during processing.
+    // Use an enum rather than having to reference via String values of term names
+    // TODO: JMS Create a shared interface that this implements then use this as a registry of all term names
+    public enum MultiRefTerm {
+        LCSET("LCSET");
+
+        MultiRefTerm(String termRefName ) {
+            this.termRefName = termRefName;
+            if( termNameReference.put(termRefName, this) != null ) {
+                throw new RuntimeException( "Attempt to add a term with a duplicate name [" + termRefName + "]." );
+            }
+        }
+
+        private String termRefName;
+        private Map<String, MultiRefTerm> termNameReference = new HashMap<>();
+
+        public String getTermRefName() {
+            return termRefName;
+        }
+
+        public boolean isNamed(String termName ) {
+            return termRefName.equals(termName);
+        }
+    }
+
     public LabEventSearchDefinition(){
         eventByVesselSearchDefinition = buildAlternateSearchDefByVessel();
     }
@@ -51,7 +78,8 @@ public class LabEventSearchDefinition {
      * Terms with alternate search definitions have to access user selected state of these options.
      */
     public enum TraversalEvaluatorName {
-        ANCESTORS("ancestorOptionEnabled"), DESCENDANTS("descendantOptionEnabled");
+        ANCESTORS("ancestorOptionEnabled"),
+        DESCENDANTS("descendantOptionEnabled");
 
         private final String id;
 
@@ -264,6 +292,26 @@ public class LabEventSearchDefinition {
             public List<ConstrainedValue> evaluate(Object entity, SearchContext context) {
                 ConstrainedValueDao constrainedValueDao = context.getOptionValueDao();
                 return constrainedValueDao.getLabEventProgramNameList();
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Simulation Mode");
+        searchTerm.setValueType(ColumnValueType.BOOLEAN);
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public String evaluate(Object entity, SearchContext context) {
+                LabEvent labEvent = (LabEvent) entity;
+                Boolean result = Boolean.FALSE;
+                for(LabEventMetadata meta : labEvent.getLabEventMetadatas() ) {
+                    if( meta.getLabEventMetadataType() == LabEventMetadata.LabEventMetadataType.SimulationMode ) {
+                        result = Boolean.valueOf(meta.getValue());
+                        break;
+                    }
+                }
+                return result?"Yes":"No";
+
             }
         });
         searchTerms.add(searchTerm);
@@ -541,8 +589,53 @@ public class LabEventSearchDefinition {
         searchTerm.setCriteriaPaths(blankCriteriaPaths);
         searchTerms.add(searchTerm);
 
+        // Product
         searchTerm = new SearchTerm();
-        searchTerm.setName("LCSET");
+        searchTerm.setName("Product");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Set<String> evaluate(Object entity, SearchContext context) {
+                Set<String> results = new HashSet<>();
+                if( OrmUtil.proxySafeIsInstance( entity, LabEvent.class ) ) { 
+                    LabEvent labEvent = OrmUtil.proxySafeCast(entity, LabEvent.class);
+
+                    Set<LabVessel> eventVessels = labEvent.getTargetLabVessels();
+                    if (labEvent.getInPlaceLabVessel() != null) {
+                        eventVessels.add(labEvent.getInPlaceLabVessel());
+                    }
+
+                    for (LabVessel labVessel : eventVessels) {
+                        results = getProduct(results, labVessel);
+                    }
+                } else if( OrmUtil.proxySafeIsInstance( entity, LabVessel.class ) ) {
+                    LabVessel labVessel = OrmUtil.proxySafeCast(entity, LabVessel.class);
+                    results = getProduct(results, labVessel);
+                } else {
+                    throw new RuntimeException("Unhandled display value type for 'Product': "
+                            + OrmUtil.getProxyObjectClass(entity).getSimpleName());
+                }
+
+                return results;
+            }
+
+            private Set<String> getProduct(Set<String> results, LabVessel labVessel) {
+                for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+                    for (ProductOrderSample productOrderSample : sampleInstanceV2.getAllProductOrderSamples()) {
+                        if (productOrderSample.getProductOrder().getProduct() != null) {
+                            results.add(productOrderSample.getProductOrder().getProduct().getDisplayName());
+                        }
+                    }
+                }
+                return results;
+            }
+        });
+        for( SearchTerm nestedTableTerm : nestedTableTerms ) {
+            nestedTableTerm.addParentTermHandledByChild(searchTerm);
+        }
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName(MultiRefTerm.LCSET.getTermRefName());
         searchTerm.setHelpText(
                 "LCSET term will only locate events associated with batch or rework batch vessels.<br>"
                 + "Traversal option(s) should be selected if chain of custody events are desired.<br>"
@@ -562,6 +655,29 @@ public class LabEventSearchDefinition {
         });
         searchTerm.setAlternateSearchDefinition(eventByVesselSearchDefinition);
         searchTerm.setCriteriaPaths(blankCriteriaPaths);
+
+        SearchTerm lcsetEventTerm = new SearchTerm();
+        lcsetEventTerm.setName("LCSET event type");
+        lcsetEventTerm.setConstrainedValuesExpression(new SearchDefinitionFactory.EventTypeValuesExpression());
+        lcsetEventTerm.setTraversalFilterExpression(new SearchTerm.Evaluator<Boolean>() {
+            @Override
+            public Boolean evaluate(Object entity, SearchContext context) {
+                for (SearchInstance.SearchValue searchValue : context.getSearchInstance().getSearchValues()) {
+                    if (searchValue.getSearchTerm().getName().equals(MultiRefTerm.LCSET.getTermRefName())) {
+                        for (String eventTypeName : searchValue.getChildren().iterator().next().getValues()) {
+                            if (eventTypeName.equals(((LabEvent)entity).getLabEventType().name())) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+                return false;
+            }
+        });
+        List<SearchTerm> dependentSearchTerms = new ArrayList<>();
+        dependentSearchTerms.add(lcsetEventTerm);
+        searchTerm.setDependentSearchTerms(dependentSearchTerms);
+
         searchTerms.add(searchTerm);
 
         searchTerm = new SearchTerm();
@@ -859,7 +975,7 @@ public class LabEventSearchDefinition {
 
         // By LCSET
         searchTerm = new SearchTerm();
-        searchTerm.setName("LCSET");
+        searchTerm.setName(MultiRefTerm.LCSET.getTermRefName());
 
         criteriaPaths = new ArrayList<>();
 

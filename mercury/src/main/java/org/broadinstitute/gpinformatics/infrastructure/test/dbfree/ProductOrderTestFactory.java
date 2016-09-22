@@ -143,6 +143,10 @@ public class ProductOrderTestFactory {
         return buildProductOrder(maxSamples, SAMPLE_SUFFIX, Workflow.PCR_FREE);
     }
 
+    public static ProductOrder buildPcrPlusProductOrder(int maxSamples) {
+        return buildProductOrder(maxSamples, SAMPLE_SUFFIX, Workflow.PCR_PLUS);
+    }
+
     public static ProductOrder buildSampleInitiationProductOrder(int maxSamples) {
 
         ProductOrder sampleInitiationProductOrder = createDummyProductOrder(maxSamples, JIRA_KEY, Workflow.NONE,
@@ -155,6 +159,11 @@ public class ProductOrderTestFactory {
         sampleInitiationProductOrder.getProduct().setProductFamily(sampleInitiationProductFamily);
         sampleInitiationProductOrder.setSkipQuoteReason(ProductOrderTestFactory.TEST_SKIP_QUOTE_REASON);
         return sampleInitiationProductOrder;
+    }
+
+    public static ProductOrder buildFPProductOrder(int maxSamples) {
+        return createDummyProductOrder(maxSamples, "PDO-1FP", Workflow.NONE, 101,
+                "Test RP", rpSynopsis, ResearchProject.IRB_ENGAGED, "P-FPtest-1232", SAMPLE_SUFFIX, "ExExQuoteId");
     }
 
     public static ProductOrder buildInfiniumProductOrder(int maxSamples) {

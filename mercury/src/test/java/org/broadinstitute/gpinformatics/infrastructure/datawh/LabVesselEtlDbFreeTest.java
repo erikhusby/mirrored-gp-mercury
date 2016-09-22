@@ -25,6 +25,7 @@ public class LabVesselEtlDbFreeTest {
     private long entityId = 1122334455L;
     private String vesselLabel = "8917538.0";
     private LabVessel.ContainerType vesselType = LabVessel.ContainerType.TUBE;
+    private String vesselName = "vessel_name";
     private LabVesselEtl tst;
 
     private AuditReaderDao auditReader = createMock(AuditReaderDao.class);
@@ -67,6 +68,7 @@ public class LabVesselEtlDbFreeTest {
         expect(obj.getLabVesselId()).andReturn(entityId);
         expect(obj.getLabel()).andReturn(vesselLabel);
         expect(obj.getType()).andReturn(vesselType);
+        expect(obj.getName()).andReturn(vesselName);
 
         replay(mocks);
 
@@ -85,6 +87,7 @@ public class LabVesselEtlDbFreeTest {
         assertEquals(parts[i++], String.valueOf(entityId));
         assertEquals(parts[i++], vesselLabel);
         assertEquals(parts[i++], vesselType.getName());
+        assertEquals(parts[i++], vesselName);
         assertEquals(parts.length, i);
     }
 }

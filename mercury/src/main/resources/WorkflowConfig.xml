@@ -2254,6 +2254,90 @@
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>Infinium</name>
+        <workflowProcessDefVersions>
+            <version>1.0</version>
+            <effectiveDate>2015-10-01T10:03:24.085-04:00</effectiveDate>
+            <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
+                <name>Infinium Bucket</name>
+                <labEventTypes>INFINIUM_BUCKET</labEventTypes>
+                <optional>true</optional>
+                <bucketEntryEvaluator>
+                    <materialTypes>DNA</materialTypes>
+                    <materialTypes>DNA_DNA_GENOMIC</materialTypes>
+                    <materialTypes>DNA_DNA_SOMATIC</materialTypes>
+                </bucketEntryEvaluator>
+                <autoBucketFromPdoSubmission>false</autoBucketFromPdoSubmission>
+                <!-- No JIRA setup, because BSP creates ARRAY tickets -->
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>InfiniumAmplification</name>
+                <labEventTypes>INFINIUM_AMPLIFICATION</labEventTypes>
+                <optional>false</optional>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>InfiniumAmplificationReagentAddition</name>
+                <labEventTypes>INFINIUM_AMPLIFICATION_REAGENT_ADDITION</labEventTypes>
+                <optional>false</optional>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>InfiniumFragmentation</name>
+                <labEventTypes>INFINIUM_FRAGMENTATION</labEventTypes>
+                <optional>false</optional>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>InfiniumPostFragmentationHybOvenLoaded</name>
+                <labEventTypes>INFINIUM_POST_FRAGMENTATION_HYB_OVEN_LOADED</labEventTypes>
+                <optional>false</optional>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>InfiniumPrecipitation</name>
+                <labEventTypes>INFINIUM_PRECIPITATION</labEventTypes>
+                <optional>false</optional>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>InfiniumPostPrecipitationHeatBlockLoaded</name>
+                <labEventTypes>INFINIUM_POST_PRECIPITATION_HEAT_BLOCK_LOADED</labEventTypes>
+                <optional>false</optional>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>InfiniumPrecipitationIsopropanolAddition</name>
+                <labEventTypes>INFINIUM_PRECIPITATION_ISOPROPANOL_ADDITION</labEventTypes>
+                <optional>false</optional>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>InfiniumResuspension</name>
+                <labEventTypes>INFINIUM_RESUSPENSION</labEventTypes>
+                <optional>false</optional>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>InfiniumPostResuspensionHybOven</name>
+                <labEventTypes>INFINIUM_POST_RESUSPENSION_HYB_OVEN</labEventTypes>
+                <optional>false</optional>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>InfiniumHybridization</name>
+                <labEventTypes>INFINIUM_HYBRIDIZATION</labEventTypes>
+                <optional>false</optional>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>InfiniumPostHybridizationHybOvenLoaded</name>
+                <labEventTypes>INFINIUM_POST_HYBRIDIZATION_HYB_OVEN_LOADED</labEventTypes>
+                <optional>false</optional>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>InfiniumHybChamberLoaded</name>
+                <labEventTypes>INFINIUM_HYB_CHAMBER_LOADED</labEventTypes>
+                <optional>false</optional>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>InfiniumXStain</name>
+                <labEventTypes>INFINIUM_XSTAIN</labEventTypes>
+                <optional>false</optional>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
     <productWorkflowDefs>
         <name>Agilent Exome Express</name>
         <productWorkflowDefVersions>
@@ -2488,6 +2572,16 @@
             <sequencingConfigDefs>Resequencing-Pool-Amplicon</sequencingConfigDefs>
             <sequencingConfigDefs>Amplicon-Pool-Amplicon</sequencingConfigDefs>
             <sequencingConfigDefs>Resequencing-Production</sequencingConfigDefs>
+            <routingRule>MERCURY</routingRule>
+            <inValidation>false</inValidation>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>Infinium</name>
+        <productWorkflowDefVersions>
+            <version>1.0</version>
+            <effectiveDate>2015-10-01T10:03:24.085-04:00</effectiveDate>
+            <workflowProcessDefs>Infinium</workflowProcessDefs>
             <routingRule>MERCURY</routingRule>
             <inValidation>false</inValidation>
         </productWorkflowDefVersions>

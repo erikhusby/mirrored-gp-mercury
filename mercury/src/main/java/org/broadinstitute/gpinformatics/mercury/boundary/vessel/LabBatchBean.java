@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Used to import racks from Squid
+ * Used to create BSP batches.
  */
 @XmlRootElement(namespace = Namespaces.VESSEL)
 @XmlType(namespace = Namespaces.VESSEL)

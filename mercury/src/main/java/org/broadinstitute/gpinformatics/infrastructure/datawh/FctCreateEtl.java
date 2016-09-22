@@ -66,9 +66,7 @@ public class FctCreateEtl extends GenericEntityEtl<LabBatchStartingVessel,LabBat
                 labBatch.getLabBatchId(),
                 format(labBatch.getBatchName()),
                 format(labBatch.getLabBatchType().toString()),
-                format(   labBatchStartingVessel.getDilutionVessel() == null
-                        ? labBatchStartingVessel.getLabVessel().getLabel()
-                        : labBatchStartingVessel.getDilutionVessel().getLabel()),
+                format(labBatchStartingVessel.getLabVessel().getLabel()),
                 format(labBatch.getCreatedOn()),
                 format(labBatch.getFlowcellType()!=null?labBatch.getFlowcellType().getDisplayName():""),
                 format(lane),

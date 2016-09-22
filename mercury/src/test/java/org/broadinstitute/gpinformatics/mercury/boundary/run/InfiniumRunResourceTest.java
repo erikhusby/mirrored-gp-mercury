@@ -48,6 +48,9 @@ public class InfiniumRunResourceTest extends RestServiceContainerTest {
         Assert.assertEquals(response1.getzCallThresholdsPath(),
                 "/gap/illumina/beadstudio/Autocall/ChipInfo/Broad_GWAS_supplemental/thresholds.7.txt");
         Assert.assertEquals(response1.getCollaboratorSampleId(), "TREDAP123");
+        Assert.assertFalse(response1.isPositiveControl());
+        Assert.assertFalse(response1.isNegativeControl());
+        Assert.assertEquals(response1.getResearchProjectId(), "RP-313");
 
         // Test a control
         InfiniumRunBean response2 = resource.queryParam("chipWellBarcode", "3999582166_R05C01").
@@ -59,6 +62,9 @@ public class InfiniumRunResourceTest extends RestServiceContainerTest {
         Assert.assertEquals(response2.getClusterFilePath(), response1.getClusterFilePath());
         Assert.assertEquals(response2.getzCallThresholdsPath(), response1.getzCallThresholdsPath());
         Assert.assertEquals(response2.getCollaboratorSampleId(), "NA12878");
+        Assert.assertTrue(response2.isPositiveControl());
+        Assert.assertFalse(response2.isNegativeControl());
+        Assert.assertNull(response2.getResearchProjectId());
     }
 
     @Override

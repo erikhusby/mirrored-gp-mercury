@@ -53,6 +53,11 @@ public class ConfigurableSearchDefinition /*extends PreferenceDefinition*/ {
     private Map<String, List<SearchTerm>> mapGroupSearchTerms = new LinkedHashMap<>();
 
     /**
+     * Map from group index to UI help text
+     */
+    private Map<Integer, String> mapGroupHelpText = new HashMap<>();
+
+    /**
      * Map from term name to search term, includes dependent terms
      */
     transient private Map<String, SearchTerm> mapNameToSearchTerm = new HashMap<>();
@@ -110,6 +115,31 @@ public class ConfigurableSearchDefinition /*extends PreferenceDefinition*/ {
                     new ArrayList<ColumnTabulation>(groupSearchListEntry.getValue()));
         }
         return mapGroupToColumnTabulations;
+    }
+
+    /**
+     * Allow UI help text to be displayed for an option group of columns
+     */
+    public void addColumnGroupHelpText( Map<String, String> nameHelpMap) {
+        int index = 0;
+        for( String groupName : mapGroupSearchTerms.keySet() ) {
+            for( Map.Entry<String,String> helpNameEntry : nameHelpMap.entrySet() ) {
+                if( helpNameEntry.getKey().equals(groupName) ) {
+                    mapGroupHelpText.put(index, helpNameEntry.getValue() );
+                    // Group name should never be duplicated
+                    break;
+                }
+            }
+            index++;
+        }
+    }
+
+    /**
+     * Allow UI help text to be displayed for an option group of columns
+     * @return  Map of group name to help text to display
+     */
+    public Map<Integer,String> getMapGroupHelpText( ) {
+        return mapGroupHelpText;
     }
 
     public List<SearchTerm> getRequiredSearchTerms() {

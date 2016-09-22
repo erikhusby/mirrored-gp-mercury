@@ -34,6 +34,8 @@
             }
         </style>
 
+        <script src="${ctxpath}/resources/scripts/jsPlumb-2.1.4.js"></script>
+        <script type="text/javascript" src="${ctxpath}/resources/scripts/cherryPick.js"></script>
         <script src="${ctxpath}/resources/scripts/jquery.validate-1.14.0.min.js"></script>
         <script type="text/javascript">
             $j(document).ready(function () {
@@ -122,7 +124,6 @@
                     </c:forEach>
                     </div>
                 </c:if>
-
                 <c:forEach items="${actionBean.stationEvents}" var="stationEvent" varStatus="stationEventStatus">
                     <input type="hidden" name="stationEvents[${stationEventStatus.index}].eventType"
                             value="${actionBean.stationEvents[stationEventStatus.index].eventType}"/>
@@ -132,10 +133,11 @@
                         <input type="hidden" name="stationEvents[${stationEventStatus.index}].metadata[0].value" value="${stationEventStatus.index + 1}"/>
                     </c:if>
                     <c:choose>
-                        <c:when test="${stationEvent.class.simpleName == 'PlateTransferEventType' or stationEvent.class.simpleName == 'PlateEventType'}">
+                        <c:when test="${stationEvent.class.simpleName == 'PlateTransferEventType' or stationEvent.class.simpleName == 'PlateEventType' or stationEvent.class.simpleName == 'PlateCherryPickEvent'}">
                             <c:set var="plateTransfer" value="${stationEvent}"/>
                             <%--@elvariable id="plateTransfer" type="org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType"--%>
-                            <c:if test="${stationEvent.class.simpleName == 'PlateTransferEventType'}">
+                            <c:if test="${stationEvent.class.simpleName == 'PlateTransferEventType' or stationEvent.class.simpleName == 'PlateCherryPickEvent'}">
+
                                 <c:if test="${empty actionBean.manualTransferDetails.secondaryEvent or not stationEventStatus.last}">
                                     <h4>Plate Transfer</h4>
                                     <h5>Source</h5>
@@ -147,7 +149,17 @@
                                     <c:set var="vesselTypeGeometry" value="${actionBean.manualTransferDetails.sourceVesselTypeGeometry}" scope="request"/>
                                     <c:set var="section" value="${actionBean.manualTransferDetails.sourceSection}" scope="request"/>
                                     <c:set var="source" value="${true}" scope="request"/>
-                                    <jsp:include page="transfer_plate.jsp"/>
+                                    <c:set var="tableName" value="sourceTable" scope="request"/>
+                                    <c:set var="transferType" value="${actionBean.stationEvents[stationEventStatus.index].eventType}"/>
+
+                                    <c:choose>
+                                        <c:when test="${ stationEvent.class.simpleName.equals('PlateCherryPickEvent')}">
+                                            <jsp:include page="transfer_plate_cherry_pick.jsp"/>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <jsp:include page="transfer_plate.jsp"/>
+                                        </c:otherwise>
+                                    </c:choose>
 
                                 </c:if>
 
@@ -158,9 +170,21 @@
                             <c:set var="positionMap" value="${plateTransfer.positionMap}" scope="request"/>
                             <c:set var="stationEventIndex" value="${stationEventStatus.index}" scope="request"/>
                             <c:set var="vesselTypeGeometry" value="${actionBean.manualTransferDetails.targetVesselTypeGeometry}" scope="request"/>
+                            <c:set var="eventType" value="${stationEvent.eventType}" scope="request"/>
                             <c:set var="section" value="${actionBean.manualTransferDetails.targetSection}" scope="request"/>
                             <c:set var="source" value="${false}" scope="request"/>
-                            <jsp:include page="transfer_plate.jsp"/>
+
+                            <c:choose>
+                                <c:when test = "${eventType.equals('StripTubeBTransfer')}">
+                                    <jsp:include page="transfer_plate_strip_tube.jsp"/>
+                                </c:when>
+                                <c:when test="${stationEvent.class.simpleName.equals('PlateCherryPickEvent')}">
+                                    <jsp:include page="transfer_plate_cherry_pick.jsp"/>
+                                </c:when>
+                                <c:otherwise>
+                                    <jsp:include page="transfer_plate.jsp"/>
+                                </c:otherwise>
+                            </c:choose>
 
                         </c:when> <%-- end PlateTransferEventType or PlateEventType--%>
 
@@ -228,10 +252,19 @@
                         </c:when> <%-- end ReceptacleEventType --%>
                     </c:choose>
                 </c:forEach>
+
+                <c:if test="${stationEvent.class.simpleName.equals('PlateCherryPickEvent')}">
+                    <input type="button" value="Add Cherry Picks" id="PreviewButton" name="PreviewButton" class="btn btn-primary" >
+                </c:if>
+
                 <stripes:submit name="fetchExisting" value="Validate Barcodes" class="btn"/>
                 <stripes:submit name="transfer" value="${actionBean.manualTransferDetails.buttonValue}"
                         class="btn btn-primary"/>
-                <input type="button" onclick="$('.clearable').each(function (){$(this).val('');});" value="Clear non-reagent fields">
+                <c:if test="${stationEvent.class.simpleName.equals('PlateCherryPickEvent')}">
+                    <stripes:submit value="Clear Cherry Picks" id="ClearConnectionsButton" name="ClearConnectionsButton"  class="btn"/>
+                </c:if>
+                <input type="button" onclick="$('.clearable').each(function (){$(this).val('');});" value="Clear non-reagent fields" class="btn">
+
             </c:if>
         </stripes:form>
         <c:if test="${not empty actionBean.batchName}">

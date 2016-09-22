@@ -40,6 +40,8 @@ public class SubmissionTracker {
     @Column(name = "SUBMISSION_TRACKER_ID")
     private Long submissionTrackerId;
 
+    private String project;
+
     /**
      * Represents the name of the sample that has been submitted.  This field name may be changed based on the outcome
      * of discussions on what data to specifically send.
@@ -49,6 +51,7 @@ public class SubmissionTracker {
 
     @Enumerated(EnumType.STRING)
     private BassFileType fileType;
+
     /**
      * version of the data file created
      */
@@ -67,16 +70,18 @@ public class SubmissionTracker {
     protected SubmissionTracker() {
     }
 
-    SubmissionTracker(Long submissionTrackerId, String submittedSampleName, BassFileType fileType, String version) {
+    SubmissionTracker(Long submissionTrackerId, String project, String submittedSampleName, String version,
+                      BassFileType fileType) {
         this.submissionTrackerId = submissionTrackerId;
         this.submittedSampleName = submittedSampleName;
+        this.project = project;
         this.fileType = fileType;
         this.version = version;
         requestDate = new Date();
     }
 
-    public SubmissionTracker(String submittedSampleName, BassFileType fileType, String version) {
-       this(null, submittedSampleName, fileType, version);
+    public SubmissionTracker(String project, String submittedSampleName, String version, BassFileType fileType) {
+        this(null, project, submittedSampleName, version, fileType);
     }
 
     /**
@@ -102,16 +107,24 @@ public class SubmissionTracker {
         return id;
     }
 
+    public String getSubmittedSampleName() {
+        return submittedSampleName;
+    }
+
+    public String getProject() {
+        return project;
+    }
+
+    public void setProject(String project) {
+        this.project = project;
+    }
+
     public BassFileType getFileType() {
         return fileType;
     }
 
     public void setFileType(BassFileType fileType) {
         this.fileType = fileType;
-    }
-
-    public String getSubmittedSampleName() {
-        return submittedSampleName;
     }
 
     public String getVersion() {
@@ -141,6 +154,6 @@ public class SubmissionTracker {
     // todo: should be in interface?
     @Transient
     public SubmissionTuple getTuple() {
-        return new SubmissionTuple(submittedSampleName, fileType, version);
+        return new SubmissionTuple(project, submittedSampleName, version, fileType);
     }
 }

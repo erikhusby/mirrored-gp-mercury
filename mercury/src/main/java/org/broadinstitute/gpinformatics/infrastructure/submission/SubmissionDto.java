@@ -250,7 +250,7 @@ public class SubmissionDto implements Serializable {
         return productOrders;
     }
 
-    String getAggregationProject() {
+    public String getAggregationProject() {
         return project;
     }
 
@@ -349,7 +349,7 @@ public class SubmissionDto implements Serializable {
 
     @JsonIgnore
     public SubmissionTuple getSubmissionTuple() {
-        return new SubmissionTuple(sample, getFileType(), String.valueOf(version));
+        return new SubmissionTuple(project, sample, String.valueOf(version), getFileType());
     }
 
     public void setStatusDetailBean(SubmissionStatusDetailBean statusDetailBean) {

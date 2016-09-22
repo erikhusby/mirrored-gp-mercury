@@ -49,6 +49,8 @@ import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProjectList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.cognos.OrspProjectDao;
+import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.OrspProject;
 import org.broadinstitute.gpinformatics.infrastructure.collaborate.CollaborationNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.collaborate.CollaborationPortalException;
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
@@ -173,6 +175,10 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
 
     @Inject
     private SubmissionDtoFetcher submissionDtoFetcher;
+
+    @Inject
+    private OrspProjectDao orspProjectDao;
+
     /**
      * The research project business key
      */
@@ -208,6 +214,8 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
     private String q;
 
     private List<RegulatoryInfo> searchResults;
+
+    private OrspProject orspSearchResult;
 
     private Long regulatoryInfoId;
 
@@ -740,8 +748,16 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
      */
     @HandlesEvent(REGULATORY_INFO_QUERY_ACTION)
     public Resolution queryRegulatoryInfoReturnHtmlSnippet() {
-        searchResults = regulatoryInfoDao.findByIdentifier(q);
-        regulatoryInfoIdentifier = q;
+        String query = q.trim();
+        searchResults = regulatoryInfoDao.findByIdentifier(query);
+        if (searchResults.isEmpty()) {
+            orspSearchResult = orspProjectDao.findByKey(query);
+            if (orspSearchResult != null) {
+                regulatoryInfoType = orspSearchResult.getType();
+                regulatoryInfoAlias = orspSearchResult.getName();
+            }
+        }
+        regulatoryInfoIdentifier = query;
         return new ForwardResolution("regulatory_info_dialog_sheet_2.jsp");
     }
 
@@ -755,6 +771,19 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
      */
     public boolean isRegulatoryInfoInResearchProject(RegulatoryInfo regulatoryInfo) {
         return editResearchProject.getRegulatoryInfos().contains(regulatoryInfo);
+    }
+
+    /**
+     * Determines whether or not the given regulatory information can be edited. The only property that can be changed
+     * is the name/title. However, if this record matches what is in the ORSP Portal, we don't want it to be changed.
+     *
+     * @param regulatoryInfo    the regulatory info to check
+     *
+     * @return true if the regulatory info can be edited; false otherwise
+     */
+    public boolean isRegulatoryInfoEditAllowed(RegulatoryInfo regulatoryInfo) {
+        OrspProject orspProject = orspProjectDao.findByKey(regulatoryInfo.getIdentifier());
+        return !(orspProject != null && regulatoryInfo.getName().equals(orspProject.getName()));
     }
 
     /**
@@ -802,11 +831,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
      * @return true if the user should be allowed to create new regulatory info; false otherwise
      */
     public boolean isAddRegulatoryInfoAllowed() {
-        EnumSet<RegulatoryInfo.Type> types = EnumSet.allOf(RegulatoryInfo.Type.class);
-        for (RegulatoryInfo regulatoryInfo : searchResults) {
-            types.remove(regulatoryInfo.getType());
-        }
-        return !types.isEmpty();
+        return searchResults.isEmpty() && orspSearchResult == null;
     }
 
     /**
@@ -901,14 +926,6 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         } else if (regulatoryInfoAlias.length() > RegulatoryInfo.PROTOCOL_TITLE_MAX_LENGTH) {
             result = String.format("Protocol title exceeds maximum length of %d with %d.",
                     RegulatoryInfo.PROTOCOL_TITLE_MAX_LENGTH, regulatoryInfoAlias.length());
-        } else {
-            List<RegulatoryInfo> infos = regulatoryInfoDao.findByName(regulatoryInfoAlias);
-            for (RegulatoryInfo info : infos) {
-                if (!info.getRegulatoryInfoId().equals(regulatoryInfoId)) {
-                    result = String.format("Title is already in use. If you are adding an ORSP # to use in place of an IRB #, please try appending the ORSP # to the title.");
-                    break;
-                }
-            }
         }
         return createTextResolution(result);
     }
@@ -1095,7 +1112,8 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         }
         if (!errors) {
             List<SubmissionDto> selectedSubmissions = new ArrayList<>();
-            Map<String, BassDTO> bassDtoMap = submissionDtoFetcher.fetchBassDtos(editResearchProject,
+            Map<SubmissionTuple, BassDTO> bassDtoMap = submissionDtoFetcher.fetchBassDtos(
+                    editResearchProject.getBusinessKey(),
                     selectedSubmissionSamples.toArray(new String[selectedSubmissionSamples.size()]));
             for (BassDTO bassDTO : bassDtoMap.values()) {
 
@@ -1230,6 +1248,10 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
 
     public List<RegulatoryInfo> getSearchResults() {
         return searchResults;
+    }
+
+    public OrspProject getOrspSearchResult() {
+        return orspSearchResult;
     }
 
     public Long getRegulatoryInfoId() {

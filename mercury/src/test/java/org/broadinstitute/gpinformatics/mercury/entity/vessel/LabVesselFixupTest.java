@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
+import com.opencsv.CSVReader;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
@@ -30,6 +31,8 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -1365,4 +1368,81 @@ public class LabVesselFixupTest extends Arquillian {
         utx.commit();
     }
 
+    @Test(enabled = false)
+    public void fixupGplim4249() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+
+        List<BarcodedTube> tubes = barcodedTubeDao.findListByBarcodes(Arrays.asList(
+                "1125641737",
+                "1125641736",
+                "1125641811",
+                "1125641735",
+                "1125642482",
+                "1125641738",
+                "1125641810",
+                "1125641759",
+                "1125641807",
+                "1125641761",
+                "1125641762",
+                "1125641760",
+                "1125641809",
+                "1125641808",
+                "1125641786",
+                "1125641785",
+                "1125641784",
+                "1125641783"));
+
+        for (LabVessel labVessel : tubes) {
+            labVessel.setReceptacleWeight(new BigDecimal(".62"));
+            System.out.println("Setting tube initial tare weight: " + labVessel.getLabel() + " to .62");
+        }
+
+        FixupCommentary fixupCommentary = new FixupCommentary("GPLIM-4249 - Assign missing tare values to default");
+        barcodedTubeDao.persist(fixupCommentary);
+        barcodedTubeDao.flush();
+
+        utx.commit();
+    }
+
+    /**
+     * Reads container barcodes and plate names from mercury/src/test/resources/testdata/FixupPlateNames.txt.
+     */
+    @Test(enabled = false)
+    public void fixupGplim4276() throws Exception {
+        /*
+        Use this BSP query to fill the file
+        SELECT DISTINCT
+            'CO-'||br.RECEPTACLE_ID,
+            br.RECEPTACLE_NAME
+        FROM
+            bsp.bsp_export_job bej
+            INNER JOIN bsp.bsp_receptacle br
+                ON   br.receptacle_id = bej.receptacle_id
+        WHERE
+            bej.export_type = 'MERCURY'
+        ORDER BY
+          1;
+         */
+        userBean.loginOSUser();
+        utx.begin();
+
+        InputStream csvInputStream = VarioskanParserTest.getTestResource("FixupPlateNames.txt");
+        CSVReader reader = new CSVReader(new InputStreamReader(csvInputStream));
+        String [] nextLine;
+        while ((nextLine = reader.readNext()) != null) {
+            LabVessel labVessel = labVesselDao.findByIdentifier(nextLine[0]);
+            if (labVessel == null) {
+                System.out.println(nextLine[0] + " not found");
+            } else {
+                System.out.println("updating " + nextLine[0]);
+                labVessel.setName(nextLine[1]);
+            }
+        }
+        FixupCommentary fixupCommentary = new FixupCommentary("GPLIM-4276 - set plate names from file");
+        barcodedTubeDao.persist(fixupCommentary);
+        barcodedTubeDao.flush();
+
+        utx.commit();
+    }
 }

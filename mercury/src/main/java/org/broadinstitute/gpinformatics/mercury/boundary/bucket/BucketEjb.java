@@ -4,6 +4,8 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
@@ -331,8 +333,10 @@ public class BucketEjb {
      *
      * @return the samples that were actually added to the bucket.
      */
+    // todo jmt called from tests only
     public Map<String, Collection<ProductOrderSample>> addSamplesToBucket(ProductOrder productOrder) {
-        return addSamplesToBucket(productOrder, productOrder.getSamples());
+        return addSamplesToBucket(productOrder, productOrder.getSamples(),
+                ProductWorkflowDefVersion.BucketingSource.PDO_SUBMISSION);
     }
 
     /**
@@ -341,7 +345,7 @@ public class BucketEjb {
      * @return the samples that were actually added to the bucket
      */
     public Map<String, Collection<ProductOrderSample>> addSamplesToBucket(ProductOrder order,
-                                                                          Collection<ProductOrderSample> samples) {
+            Collection<ProductOrderSample> samples, ProductWorkflowDefVersion.BucketingSource bucketingSource) {
         boolean hasWorkflow=false;
         for (Workflow workflow : order.getProductWorkflows()) {
             if (hasWorkflow = Workflow.SUPPORTED_WORKFLOWS.contains(workflow)) {
@@ -400,7 +404,9 @@ public class BucketEjb {
             }
         }
 
-        Collection<BucketEntry> newBucketEntries = applyBucketCriteria(vessels, order, username);
+        Pair<ProductWorkflowDefVersion, Collection<BucketEntry>> workflowBucketEntriesPair = applyBucketCriteria(
+                vessels, order, username, bucketingSource);
+        Collection<BucketEntry> newBucketEntries = workflowBucketEntriesPair.getRight();
 
         Map<String, Collection<ProductOrderSample>> samplesAdded = new HashMap<>();
         for (BucketEntry bucketEntry : newBucketEntries) {
@@ -420,7 +426,9 @@ public class BucketEjb {
     }
 
 
-    public Collection<BucketEntry> applyBucketCriteria(List<LabVessel> vessels, ProductOrder productOrder, String username) {
+    public Pair<ProductWorkflowDefVersion, Collection<BucketEntry>> applyBucketCriteria(
+            List<LabVessel> vessels, ProductOrder productOrder, String username,
+            ProductWorkflowDefVersion.BucketingSource bucketingSource) {
         Collection<BucketEntry> bucketEntries = new ArrayList<>(vessels.size());
         WorkflowConfig workflowConfig = workflowLoader.load();
         List<Product> possibleProducts = new ArrayList<>();
@@ -430,12 +438,13 @@ public class BucketEjb {
             }
         }
         possibleProducts.add(productOrder.getProduct());
+        ProductWorkflowDefVersion workflowDefVersion = null;
         for (Product product : possibleProducts) {
             if (product.getWorkflow() != Workflow.NONE) {
                 ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflow(product.getWorkflow());
-                ProductWorkflowDefVersion workflowDefVersion = productWorkflowDef.getEffectiveVersion();
+                workflowDefVersion = productWorkflowDef.getEffectiveVersion();
                 Map<WorkflowBucketDef, Collection<LabVessel>> initialBucket =
-                        workflowDefVersion.getInitialBucket(productOrder, vessels);
+                        workflowDefVersion.getInitialBucket(productOrder, vessels, bucketingSource);
 
                 if (!initialBucket.isEmpty()) {
                     Collection<BucketEntry> entries = add(initialBucket, BucketEntry.BucketEntryType.PDO_ENTRY,
@@ -444,7 +453,7 @@ public class BucketEjb {
                 }
             }
         }
-        return bucketEntries;
+        return new ImmutablePair<>(workflowDefVersion, bucketEntries);
     }
 
     /**

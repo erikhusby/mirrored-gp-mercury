@@ -35,6 +35,7 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
         FilterPlate96("FilterPlate96", VesselGeometry.G12x8),
         Fluidigm48_48AccessArrayIFC("Fluidigm48.48AccessArrayIFC", VesselGeometry.FLUIDIGM_48_48),
         IndexedAdapterPlate96("IndexedAdapterPlate96", VesselGeometry.G12x8),
+        IndexedAdapterPlate384("IndexedAdapterPlate384", VesselGeometry.G24x16),
         Matrix96("Matrix96", VesselGeometry.G12x8),
         MiSeqReagentKit("MiseqReagentKit", VesselGeometry.MISEQ_REAGENT_KIT),
         MicrofluorPlate96Well("MicrofluorPlate96Well", VesselGeometry.G12x8),
@@ -60,6 +61,8 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
         InfiniumChip24("InfiniumChip24", VesselGeometry.INFINIUM_24_CHIP),
         InfiniumChip12("InfiniumChip12", VesselGeometry.INFINIUM_12_CHIP),
         InfiniumChip8("InfiniumChip8", VesselGeometry.INFINIUM_8_CHIP),
+        FlowCell8("Flowcell", VesselGeometry.FLOWCELL1x8),
+        StripTube1x1("StripTube", VesselGeometry.STRIP_TUBE),
         TenXChip("10XChip", VesselGeometry.TEN_X_CHIP);
 
         /**
@@ -133,6 +136,11 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
     public StaticPlate(String label, PlateType plateType) {
         super(label);
         this.plateType = plateType;
+    }
+
+    public StaticPlate(String manufacturerBarcode, PlateType plateType, String plateName) {
+        this(manufacturerBarcode, plateType);
+        this.name = plateName;
     }
 
     /** For Hibernate */

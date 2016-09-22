@@ -100,6 +100,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                             ExtractTransform.formatTimestamp(fact.getEventDate()),
                             format(fact.getEventProgram()),
                             format(fact.getMolecularIndex()),
+                            format(fact.isEtlLibrary()?fact.getLibraryName():""),
                             "E"
                         )
                     );
@@ -329,6 +330,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
         private String barcode;
         private VesselPosition vesselPosition;
         private String rejectReason;
+        private boolean isEtlLibrary = false;
 
         EventFactDto(LabEvent labEvent, LabVessel labVessel, VesselPosition vesselPosition, String molecularIndexName, String batchName,
                      Date workflowEffectiveDate,
@@ -472,6 +474,16 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
 
         public List<EventAncestryEtlUtil.AncestryFactDto> getAncestryDtos(){
             return ancestryFactDtos;
+        }
+
+        /**
+         * Flags this event fact as of interest to analytics LIBRARY_LCSET_SAMPLE
+         */
+        public void setIsEtlLibrary(){
+            isEtlLibrary = true;
+        }
+        public boolean isEtlLibrary(){
+            return isEtlLibrary;
         }
 
         public void setRejectReason(String rejectReason ) {
