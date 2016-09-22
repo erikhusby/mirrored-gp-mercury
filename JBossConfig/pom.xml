@@ -194,7 +194,7 @@
                                     <arg value="-xzf"/>
                                     <arg value="${project.build.directory}/CrowdJaasLoginModule.tar.gz"/>
                                     <arg value="-C"/>
-                                    <arg value="${env._JHOME}/modules"/>
+                                    <arg value="${env.JBOSS_HOME}/modules"/>
                                 </exec>
                                 <echo>
 
