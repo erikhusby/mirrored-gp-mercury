@@ -2525,11 +2525,13 @@ todo jmt revisit
                 </configuration>
             </plugin>
 
+            <!-- Was org.jboss
             <plugin>
                 <groupId>org.wildfly.plugins</groupId>
                 <artifactId>wildfly-maven-plugin</artifactId>
                 <version>1.0.2.Final</version>
             </plugin>
+            -->
 
         </plugins>
 

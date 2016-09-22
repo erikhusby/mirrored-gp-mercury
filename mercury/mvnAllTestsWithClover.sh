@@ -4,7 +4,7 @@
 #
 source /broad/tools/scripts/useuse
 use Maven-3.1
-use Java-1.7
+use Java-1.8
 
 if [ "x$JBOSS_HOME" == "x" ]
 then
@@ -22,7 +22,7 @@ then
 fi
 
 MAVEN_OPTS="-Xms4g -XX:MaxPermSize=1g $SSL_OPTS"
-OPTIONS="-PArquillian-JBossAS7-Remote,$BUILD_PROFILE,Clover.All -Djava.awt.headless=true --batch-mode -Dmaven.download.meter=silent -Dmaven.clover.licenseLocation=/prodinfolocal/BambooHome/clover.license"
+OPTIONS="-PArquillian-WildFly10-Remote,$BUILD_PROFILE,Clover.All -Djava.awt.headless=true --batch-mode -Dmaven.download.meter=silent -Dmaven.clover.licenseLocation=/prodinfolocal/BambooHome/clover.license"
 PROFILES="Tests.ArqSuite.Standard Tests.ArqSuite.Stubby Tests.Multithreaded Tests.DatabaseFree Tests.ExternalIntegration Tests.Alternatives"
 #PROFILES="Tests.DatabaseFree Tests.Multithreaded"
 #PROFILES="Tests.Multithreaded"
@@ -51,7 +51,8 @@ PROFILES=$PROFILES
 
 EOF
 
-    mvn $OPTIONS -P$PROFILE clover:setup verify | tee -a tests.log
+# Adding the clean to deal with a known Java 1.8 bug when compling from Maven -- see JDK-8067747
+    mvn $OPTIONS -P$PROFILE clean clover:setup verify | tee -a tests.log
     if [ ${PIPESTATUS[0]} -ne 0 ]
     then
         EXIT_STATUS=${PIPESTATUS[0]}

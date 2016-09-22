@@ -13,7 +13,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <oracle.version>12.1.0.2</oracle.version>
         <billing.log.dir>${env.JBOSS_HOME}/standalone/log</billing.log.dir>
-        <crowdJaas.version>1.3.1.4</crowdJaas.version>
+        <crowdJaas.version>2.0-SNAPSHOT</crowdJaas.version>
         <crowd.application.name>mercury</crowd.application.name>
         <crowd.application.password>vx2hUJP4xB</crowd.application.password>
         <crowd.application.serverurl>https://crowd.broadinstitute.org:8443/crowd</crowd.application.serverurl>
@@ -33,15 +33,9 @@
             <url>http://prodinfosvn.broadinstitute.org:8000/m2-repository</url>
         </repository>
         <repository>
-            <id>maven.oracle.com</id>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-            <url>https://maven.oracle.com</url>
-            <layout>default</layout>
+            <id>BroadMaven</id>
+            <name>Broad Maven Repository</name>
+            <url>http://maven.broadinstitute.org:8000/maven</url>
         </repository>
     </repositories>
 
@@ -55,6 +49,8 @@
             <groupId>com.atlassian.crowd.application</groupId>
             <artifactId>CrowdJaasLoginModule</artifactId>
             <version>${crowdJaas.version}</version>
+            <type>tar.gz</type>
+            <classifier>deploy</classifier>
         </dependency>
     </dependencies>
 
@@ -123,7 +119,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
-                <version>2.6</version>
+                <version>2.10</version>
                 <executions>
                     <execution>
                         <id>CrowdJaas</id>
@@ -136,12 +132,15 @@
                                     <groupId>com.atlassian.crowd.application</groupId>
                                     <artifactId>CrowdJaasLoginModule</artifactId>
                                     <version>${crowdJaas.version}</version>
-                                    <outputDirectory>${project.build.directory}/modules/com/atlassian/crowd/main
-                                    </outputDirectory>
+                                    <type>tar.gz</type>
+                                    <classifier>deploy</classifier>
+                                    <outputDirectory>${project.build.directory}</outputDirectory>
+                                    <destFileName>CrowdJaasLoginModule.tar.gz</destFileName>
+
                                 </artifactItem>
                                 <artifactItem>
                                     <groupId>com.oracle.jdbc</groupId>
-                                    <artifactId>ojdbc</artifactId>
+                                    <artifactId>ojdbc7</artifactId>
                                     <version>${oracle.version}</version>
                                     <outputDirectory>${project.build.directory}/modules/com/oracle/main
                                     </outputDirectory>
@@ -180,19 +179,23 @@
                                 </copy>
                                 <copy todir="${env.JBOSS_HOME}" overwrite="true" verbose="true"
                                       file="src/main/resources/keystore/.keystore"/>
-
+                                <exec executable="tar">
+                                    <arg value="-xzf"/>
+                                    <arg value="${project.build.directory}/CrowdJaasLoginModule.tar.gz"/>
+                                    <arg value="-C"/>
+                                    <arg value="${env.JBOSS_HOME}/modules"/>
+                                </exec>
                                 <echo>
 
-                                    Your JBoss has been updated with the Mercury configurations.
+                                    Your Wildfly 10 has been updated with the Mercury configurations.
 
-                                    It is recommended that you increase the memory settings, in particular PERMGEN.
-                                    Put the heap to at least 1G. For example:
-                                    JAVA_OPTS="-Xms64m -Xmx4096M -XX:MaxPermSize=1G"
+                                    It is recommended that you increase the memory settings. For example:
+                                    JAVA_OPTS="-Xms64m -Xmx4096M "
 
                                     Edit ${env.JBOSS_HOME}/bin/standalone.conf (or
                                     ${env.JBOSS_HOME}/bin/standalone.conf.bat )
                                     * Change the value of JAVA_OPTS for memory.
-                                    * Change the value of jboss.server.default.conf to be standalone-full.xml
+                                    * Add the option  "-Djboss.server.default.conf=standalone-full.xml" to JAVA_OPTS
                                     * Add the contents of src/main/resources/keystore/keystoreOptions.conf (or
                                     keystoreOptions.conf.bat ) to enable use of the GPInfo keystore.
 
