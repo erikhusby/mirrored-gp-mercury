@@ -224,7 +224,7 @@ public class InfiniumRunResource {
             String productFamily = null;
             String partNumber = null;
             if (productOrder != null) {
-                productOrderId = productOrder.getProductOrderId().toString();
+                productOrderId = productOrder.getJiraTicketKey();
                 productName = productOrder.getProduct().getProductName();
                 productFamily = productOrder.getProduct().getProductFamily().getName();
                 partNumber = productOrder.getProduct().getPartNumber();

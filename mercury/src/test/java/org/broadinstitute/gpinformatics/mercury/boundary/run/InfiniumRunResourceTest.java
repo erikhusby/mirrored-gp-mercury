@@ -54,7 +54,7 @@ public class InfiniumRunResourceTest extends RestServiceContainerTest {
         Assert.assertEquals(response1.getProductPartNumber(), "P-EX-0017");
         Assert.assertEquals(response1.getProductFamily(), "Exome");
         Assert.assertEquals(response1.getProductName(), "G4L WES + Array v2");
-        Assert.assertEquals(response1.getProductOrderId(), "181117");
+        Assert.assertEquals(response1.getProductOrderId(), "PDO-7783");
         Assert.assertEquals(response1.getCollaboratorParticpantId(), "TREDAP123");
 
         // Test a control
