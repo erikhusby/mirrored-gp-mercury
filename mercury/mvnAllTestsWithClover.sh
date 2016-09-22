@@ -51,7 +51,8 @@ PROFILES=$PROFILES
 
 EOF
 
-    mvn $OPTIONS -P$PROFILE clover:setup verify | tee -a tests.log
+# Adding the clean to deal with a known Java 1.8 bug when compling from Maven -- see JDK-8067747
+    mvn $OPTIONS -P$PROFILE clean clover:setup verify | tee -a tests.log
     if [ ${PIPESTATUS[0]} -ne 0 ]
     then
         EXIT_STATUS=${PIPESTATUS[0]}

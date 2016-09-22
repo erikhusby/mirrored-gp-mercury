@@ -21,9 +21,10 @@ then
     BUILD_PROFILE=BUILD
 fi
 
-MAVEN_OPTS="-Xms4g -XX:MaxPermSize=1g $SSL_OPTS"
+MAVEN_OPTS="-Xms4g -XX:MaxMetaspaceSize=1g $SSL_OPTS"
 OPTIONS="-PArquillian-WildFly10-Remote,$BUILD_PROFILE -Djava.awt.headless=true --batch-mode -Dmaven.download.meter=silent "
 PROFILES="Tests.ArqSuite.Standard Tests.ArqSuite.Stubby Tests.Multithreaded Tests.DatabaseFree Tests.ExternalIntegration Tests.Alternatives"
+#PROFILES="Tests.ExternalIntegration"
 #PROFILES="Tests.DatabaseFree"
 #PROFILES="Tests.Multithreaded"
 
@@ -46,11 +47,13 @@ JBOSS_HOME=$JBOSS_HOME
 MAVEN_OPTS=$MAVEN_OPTS
 OPTIONS=$OPTIONS
 PROFILES=$PROFILES
+JAVA_HOME=$JAVA_HOME
 
 >>>> Executing profile $PROFILE
 
 EOF
-    mvn $OPTIONS -P$PROFILE test | tee -a tests.log
+# Adding the clean to deal with a known Java 1.8 bug when compling from Maven -- see JDK-8067747
+    mvn $OPTIONS -P$PROFILE clean test | tee -a tests.log
     if [ ${PIPESTATUS[0]} -ne 0 ]
     then
         EXIT_STATUS=${PIPESTATUS[0]}
