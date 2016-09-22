@@ -40,9 +40,11 @@ public class InfiniumRunResourceTest extends RestServiceContainerTest {
         Assert.assertTrue(response1.getRedIDatPath().startsWith("/humgen/illumina_data"));
         Assert.assertTrue(response1.getGreenIDatPath().startsWith("/humgen/illumina_data"));
         Assert.assertEquals(response1.getChipManifestPath(),
-                "/humgen/illumina_data/Broad_GWAS_supplemental_15061359_A1.bpm.csv");
+                "/humgen/affy_info/GAPProduction/prod/Broad_GWAS_supplemental_15061359_A1/Broad_GWAS_supplemental_15061359_A1.csv");
         Assert.assertEquals(response1.getBeadPoolManifestPath(),
                 "/gap/illumina/beadstudio/Autocall/ChipInfo/Broad_GWAS_supplemental/Broad_GWAS_supplemental_15061359_A1.bpm");
+        Assert.assertEquals(response1.getCsvBeadPoolManifestPath(),
+                "/humgen/illumina_data/Broad_GWAS_supplemental_15061359_A1.bpm.csv");
         Assert.assertEquals(response1.getClusterFilePath(),
                 "/gap/illumina/beadstudio/Autocall/ChipInfo/Broad_GWAS_supplemental/Broad_GWAS_supplemental_15061359_A1.egt");
         Assert.assertEquals(response1.getzCallThresholdsPath(),
