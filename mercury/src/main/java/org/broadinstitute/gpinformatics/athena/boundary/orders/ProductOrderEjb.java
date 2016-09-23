@@ -40,6 +40,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnector;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
@@ -143,7 +144,8 @@ public class ProductOrderEjb {
      * Remove all non-received samples from the order.
      */
     public void removeNonReceivedSamples(ProductOrder editOrder,
-                                         MessageReporter reporter) throws NoSuchPDOException, IOException {
+                                         MessageReporter reporter)
+            throws NoSuchPDOException, IOException, SAPInterfaceException {
         // Note that calling getReceivedSampleCount() will cause the sample data for all samples to be
         // fetched if it hasn't been already. This is good because without it each call to getSampleData() below
         // would fetch it one sample at a time.
@@ -177,7 +179,7 @@ public class ProductOrderEjb {
     public void persistProductOrder(ProductOrder.SaveType saveType, ProductOrder editedProductOrder,
                                     @Nonnull Collection<String> deletedIds,
                                     @Nonnull Collection<ProductOrderKitDetail> kitDetailCollection)
-            throws IOException, QuoteNotFoundException {
+            throws IOException, QuoteNotFoundException, SAPInterfaceException {
 
         persistProductOrder(saveType, editedProductOrder, deletedIds, kitDetailCollection, new MessageCollection());
     }
@@ -186,7 +188,7 @@ public class ProductOrderEjb {
                                     @Nonnull Collection<String> deletedIds,
                                     @Nonnull Collection<ProductOrderKitDetail> kitDetailCollection,
                                     MessageCollection messageCollection)
-            throws IOException, QuoteNotFoundException {
+            throws IOException, QuoteNotFoundException, SAPInterfaceException {
 
         kitDetailCollection.removeAll(Collections.singleton(null));
         deletedIds.removeAll(Collections.singleton(null));
@@ -223,20 +225,21 @@ public class ProductOrderEjb {
         } else {
             updateJiraIssue(editedProductOrder);
 
-            publishProductOrderToSAP(editedProductOrder, messageCollection);
+            publishProductOrderToSAP(editedProductOrder, messageCollection, false);
         }
         attachMercurySamples(editedProductOrder.getSamples());
         productOrderDao.persist(editedProductOrder);
     }
 
-    public void publishProductOrderToSAP(ProductOrder editedProductOrder, MessageCollection messageCollection) {
+    public void publishProductOrderToSAP(ProductOrder editedProductOrder, MessageCollection messageCollection,
+                                         boolean allowCreateOrder) throws SAPInterfaceException {
         try {
             if (isOrderEligibleForSAP(editedProductOrder)) {
-                if (StringUtils.isEmpty(editedProductOrder.getSapOrderNumber())) {
+                if (StringUtils.isEmpty(editedProductOrder.getSapOrderNumber()) && allowCreateOrder) {
                     String sapOrderIdentifier = sapService.createOrder(editedProductOrder);
                     editedProductOrder.setSapOrderNumber(sapOrderIdentifier);
                     messageCollection.addInfo("Order "+editedProductOrder.getJiraTicketKey() + " has been successfully created in SAP");
-                } else {
+                } else if(editedProductOrder.isSavedInSAP()){
                     sapService.updateOrder(editedProductOrder);
                     messageCollection.addInfo("Order "+editedProductOrder.getJiraTicketKey() + " has been successfully updated in SAP");
                 }
@@ -255,6 +258,9 @@ public class ProductOrderEjb {
             errorMessage.append("this order in SAP at this point in time: ").append(e.getMessage());
             messageCollection.addError(errorMessage.toString());
             log.error(errorMessage, e);
+            if(editedProductOrder.isSavedInSAP()) {
+                throw new SAPInterfaceException(errorMessage.toString(), e);
+            }
         }
     }
 
@@ -958,7 +964,7 @@ public class ProductOrderEjb {
      * </ul>
      */
     private void updateSamples(ProductOrder order, Collection<ProductOrderSample> samples, MessageReporter reporter,
-                               String operation) throws IOException, NoSuchPDOException {
+                               String operation) throws IOException, NoSuchPDOException, SAPInterfaceException {
         JiraIssue issue = jiraService.getIssue(order.getJiraTicketKey());
 
         String nameList = StringUtils.join(ProductOrderSample.getSampleNames(samples), ",");
@@ -967,12 +973,8 @@ public class ProductOrderEjb {
         productOrderJiraUtil.setCustomField(issue, ProductOrder.JiraField.SAMPLE_IDS, order.getSampleString());
         productOrderJiraUtil.setCustomField(issue, ProductOrder.JiraField.NUMBER_OF_SAMPLES, order.getSamples().size());
 
-        reporter.addMessage("{0} samples: {1}.", WordUtils.capitalize(operation), nameList);
-
-        updateOrderStatus(order.getJiraTicketKey(), reporter);
-
         MessageCollection collection = new MessageCollection();
-        publishProductOrderToSAP(order, collection);
+        publishProductOrderToSAP(order, collection, false);
         for (String error : collection.getErrors()) {
             reporter.addMessage(error);
         }
@@ -982,6 +984,11 @@ public class ProductOrderEjb {
         for (String info : collection.getInfos()) {
             reporter.addMessage(info);
         }
+
+        reporter.addMessage("{0} samples: {1}.", WordUtils.capitalize(operation), nameList);
+
+        updateOrderStatus(order.getJiraTicketKey(), reporter);
+
 
     }
 
@@ -995,7 +1002,8 @@ public class ProductOrderEjb {
      *                      ImmutableListMultiMap does not work correctly.
      */
     public void addSamples(@Nonnull String jiraTicketKey, @Nonnull List<ProductOrderSample> samples,
-                           @Nonnull MessageReporter reporter) throws NoSuchPDOException, IOException {
+                           @Nonnull MessageReporter reporter)
+            throws NoSuchPDOException, IOException, SAPInterfaceException {
         ProductOrder order = findProductOrder(jiraTicketKey);
         order.addSamples(samples);
 
@@ -1032,7 +1040,8 @@ public class ProductOrderEjb {
     }
 
     public void removeSamples(@Nonnull String jiraTicketKey, @Nonnull Collection<ProductOrderSample> samples,
-                              @Nonnull MessageReporter reporter) throws IOException, NoSuchPDOException {
+                              @Nonnull MessageReporter reporter)
+            throws IOException, NoSuchPDOException, SAPInterfaceException {
         ProductOrder productOrder = findProductOrder(jiraTicketKey);
 
         // If removeAll returns false, no samples were removed -- should never happen.

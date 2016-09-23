@@ -319,9 +319,7 @@ public class ProductOrderResource {
             productOrderDao.persist(productOrder);
             productOrderDao.flush();
 
-
             MessageCollection messageCollection = new MessageCollection();
-            productOrderEjb.publishProductOrderToSAP(productOrder, messageCollection);
 
             for (String error : messageCollection.getErrors()) {
                 log.error(error);

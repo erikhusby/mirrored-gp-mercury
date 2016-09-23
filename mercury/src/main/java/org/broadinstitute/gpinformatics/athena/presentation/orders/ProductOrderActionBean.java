@@ -90,8 +90,8 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
+import org.broadinstitute.gpinformatics.infrastructure.sap.SAPInterfaceException;
 import org.broadinstitute.gpinformatics.infrastructure.sap.SapIntegrationService;
 import org.broadinstitute.gpinformatics.infrastructure.security.Role;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
@@ -101,7 +101,6 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean;
-import org.broadinstitute.sap.services.SAPIntegrationException;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.jvnet.inflector.Noun;
@@ -1167,10 +1166,10 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     @HandlesEvent(PUBLISH_PDO_TO_SAP)
-    public Resolution publishProductOrderToSAP() {
+    public Resolution publishProductOrderToSAP() throws SAPInterfaceException {
         MessageCollection placeOrderMessageCollection = new MessageCollection();
 
-        productOrderEjb.publishProductOrderToSAP(editOrder,placeOrderMessageCollection);
+        productOrderEjb.publishProductOrderToSAP(editOrder,placeOrderMessageCollection, true);
 
         addMessages(placeOrderMessageCollection);
         return createViewResolution(editOrder.getBusinessKey());
@@ -1196,7 +1195,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             productOrderEjb.handleSamplesAdded(editOrder.getBusinessKey(), editOrder.getSamples(), this);
             productOrderDao.persist(editOrder);
 
-            productOrderEjb.publishProductOrderToSAP(editOrder, placeOrderMessageCollection);
+            productOrderEjb.publishProductOrderToSAP(editOrder, placeOrderMessageCollection, true);
             addMessages(placeOrderMessageCollection);
 
         } catch (Exception e) {
@@ -1290,10 +1289,14 @@ public class ProductOrderActionBean extends CoreActionBean {
             updateRegulatoryInformation();
         }
         Set<String> deletedIdsConverted = new HashSet<>(Arrays.asList(deletedKits));
-        productOrderEjb.persistProductOrder(saveType, editOrder, deletedIdsConverted, kitDetails,
-                saveOrderMessageCollection);
-        addMessages(saveOrderMessageCollection);
-        addMessage("Product Order \"{0}\" has been saved.", editOrder.getTitle());
+        try {
+            productOrderEjb.persistProductOrder(saveType, editOrder, deletedIdsConverted, kitDetails,
+                    saveOrderMessageCollection);
+            addMessages(saveOrderMessageCollection);
+            addMessage("Product Order \"{0}\" has been saved.", editOrder.getTitle());
+        } catch (SAPInterfaceException e) {
+            addGlobalValidationError(e.getMessage());
+        }
         // Temporarily adding the quote validation when the order is saved to give the user a warning of upcoming
         // new restrictions
 //        validateQuoteDetails(editOrder.getQuoteId(), ErrorLevel.WARNING);
@@ -1602,7 +1605,12 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent(DELETE_SAMPLES_ACTION)
     public Resolution deleteSamples() throws Exception {
-        productOrderEjb.removeSamples(editOrder.getBusinessKey(), selectedProductOrderSamples, this);
+        try {
+            productOrderEjb.removeSamples(editOrder.getBusinessKey(), selectedProductOrderSamples, this);
+        } catch (SAPInterfaceException e) {
+            logger.error("SAP error when attempting to delete samples", e);
+            addGlobalValidationError(e.getMessage());
+        }
         return createViewResolution(editOrder.getBusinessKey());
     }
 
@@ -1702,7 +1710,13 @@ public class ProductOrderActionBean extends CoreActionBean {
             productOrderEjb.updateOrderStatus(editOrder.getJiraTicketKey(), this);
 
             MessageCollection abandonSamplesMessageCollection = new MessageCollection();
-            productOrderEjb.publishProductOrderToSAP(editOrder, abandonSamplesMessageCollection);
+
+            try {
+                productOrderEjb.publishProductOrderToSAP(editOrder, abandonSamplesMessageCollection, false);
+            } catch (SAPInterfaceException e) {
+                logger.error("SAP Error when attempting to abandon samples", e);
+                addGlobalValidationError(e.getMessage());
+            }
             addMessages(abandonSamplesMessageCollection);
         }
         return createViewResolution(editOrder.getBusinessKey());
@@ -1724,13 +1738,15 @@ public class ProductOrderActionBean extends CoreActionBean {
             productOrderEjb.updateOrderStatus(editOrder.getJiraTicketKey(), this);
 
             MessageCollection abandonSamplesMessageCollection = new MessageCollection();
-            productOrderEjb.publishProductOrderToSAP(editOrder, abandonSamplesMessageCollection);
+            try {
+                productOrderEjb.publishProductOrderToSAP(editOrder, abandonSamplesMessageCollection, false);
+            } catch (SAPInterfaceException e) {
+                logger.error("SAP Error when attempting to abandon samples", e);
+                addGlobalValidationError(e.getMessage());
+            }
             addMessages(abandonSamplesMessageCollection);
-
         }
-
         return createViewResolution(editOrder.getBusinessKey());
-
     }
 
     @HandlesEvent(ADD_SAMPLES_ACTION)
@@ -1741,7 +1757,11 @@ public class ProductOrderActionBean extends CoreActionBean {
         } catch (BucketException e) {
             logger.error("Problem adding samples to bucket", e);
             addGlobalValidationError(e.getMessage());
+        } catch (SAPInterfaceException sie) {
+            logger.error("Error from SAP when attempting to add samples");
+            addGlobalValidationError(sie.getMessage());
         }
+
         return createViewResolution(editOrder.getBusinessKey());
     }
 
