@@ -57,7 +57,7 @@ public class InfiniumRunResourceTest extends RestServiceContainerTest {
         Assert.assertEquals(response1.getProductFamily(), "Exome");
         Assert.assertEquals(response1.getProductName(), "G4L WES + Array v2");
         Assert.assertEquals(response1.getProductOrderId(), "PDO-7783");
-        Assert.assertEquals(response1.getCollaboratorParticpantId(), "TREDAP123");
+        Assert.assertEquals(response1.getCollaboratorParticipantId(), "TREDAP123");
 
         // Test a control
         InfiniumRunBean response2 = resource.queryParam("chipWellBarcode", "3999582166_R05C01").
@@ -72,7 +72,7 @@ public class InfiniumRunResourceTest extends RestServiceContainerTest {
         Assert.assertTrue(response2.isPositiveControl());
         Assert.assertFalse(response2.isNegativeControl());
         Assert.assertNull(response2.getResearchProjectId());
-        Assert.assertEquals(response2.getCollaboratorParticpantId(), "NA12878");
+        Assert.assertEquals(response2.getCollaboratorParticipantId(), "NA12878");
         Assert.assertNull(response2.getProductPartNumber());
         Assert.assertNull(response2.getProductFamily());
         Assert.assertNull(response2.getProductName());

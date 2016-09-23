@@ -28,7 +28,7 @@ public class InfiniumRunBean {
     private boolean negativeControl;
     private String callRateThreshold;
     private String genderClusterFile;
-    private String collaboratorParticpantId;
+    private String collaboratorParticipantId;
     private String productOrderId;
     private String productName;
     private String productFamily;
@@ -66,7 +66,7 @@ public class InfiniumRunBean {
         this.negativeControl = negativeControl;
         this.callRateThreshold = callRateThreshold;
         this.genderClusterFile = genderClusterFile;
-        this.collaboratorParticpantId = collaboratorParticpantId;
+        this.collaboratorParticipantId = collaboratorParticpantId;
         this.productOrderId = productOrderId;
         this.productName = productName;
         this.productFamily = productFamily;
@@ -137,8 +137,8 @@ public class InfiniumRunBean {
         return genderClusterFile;
     }
 
-    public String getCollaboratorParticpantId() {
-        return collaboratorParticpantId;
+    public String getCollaboratorParticipantId() {
+        return collaboratorParticipantId;
     }
 
     public String getProductOrderId() {
