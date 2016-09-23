@@ -230,15 +230,17 @@ public class InfiniumRunResource {
                 productName = productOrder.getProduct().getProductName();
                 productFamily = productOrder.getProduct().getProductFamily().getName();
                 partNumber = productOrder.getProduct().getPartNumber();
-            }
 
-            //Attempt to override default chip attributes if changed in product order
-            if (genotypingProductOrderMapping != null) {
-                for (ArchetypeAttribute archetypeAttribute : genotypingProductOrderMapping.getAttributes()) {
-                    if (chipAttributes.containsKey(archetypeAttribute.getAttributeName()) &&
-                        archetypeAttribute.getAttributeValue() != null) {
-                        chipAttributes.put(
-                                archetypeAttribute.getAttributeName(), archetypeAttribute.getAttributeValue());
+                //Attempt to override default chip attributes if changed in product order
+                GenotypingProductOrderMapping genotypingProductOrderMapping =
+                        attributeArchetypeDao.findGenotypingProductOrderMapping(productOrder.getJiraTicketKey());
+                if (genotypingProductOrderMapping != null) {
+                    for (ArchetypeAttribute archetypeAttribute : genotypingProductOrderMapping.getAttributes()) {
+                        if (chipAttributes.containsKey(archetypeAttribute.getAttributeName()) &&
+                            archetypeAttribute.getAttributeValue() != null) {
+                            chipAttributes.put(
+                                    archetypeAttribute.getAttributeName(), archetypeAttribute.getAttributeValue());
+                        }
                     }
                 }
             }
