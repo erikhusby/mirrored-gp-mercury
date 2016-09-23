@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.run;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -9,7 +11,9 @@ import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingProduct
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.InfiniumStarterConfig;
 import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
+import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -21,6 +25,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
@@ -41,6 +48,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpression;
+import javax.xml.xpath.XPathFactory;
+import java.io.File;
+import java.io.FileInputStream;
 
 /**
  * A JAX-RS resource for Infinium genotyping runs.
@@ -49,6 +64,8 @@ import java.util.regex.Pattern;
 @Stateful
 @RequestScoped
 public class InfiniumRunResource {
+
+    private static final Log log = LogFactory.getLog(InfiniumRunResource.class);
 
     /** Extract barcode, row and column from e.g. 3999595020_R12C02 */
     private static final Pattern BARCODE_PATTERN = Pattern.compile("(\\d*)_(R\\d*)(C\\d*)");
@@ -73,6 +90,9 @@ public class InfiniumRunResource {
 
     @Inject
     private ProductEjb productEjb;
+
+    @Inject
+    private InfiniumStarterConfig infiniumStarterConfig;
 
     @GET
     @Path("/query")
@@ -123,21 +143,17 @@ public class InfiniumRunResource {
 
             List<ProductOrderSample> productOrderSamples;
             Set<String> researchProjectIds;
-            GenotypingProductOrderMapping genotypingProductOrderMapping = null;
+            Set<ProductOrder> productOrders;
             ProductOrderSample productOrderSample = sampleInstanceV2.getProductOrderSampleForSingleBucket();
+            ProductOrder productOrder = null;
             if (productOrderSample == null) {
                 productOrderSamples = productOrderSampleDao.findBySamples(
                         Collections.singletonList(sampleInstanceV2.getRootOrEarliestMercurySampleName()));
                 researchProjectIds = findResearchProjectIds(productOrderSamples);
-                Set<String> productOrderKeys = findProductOrderKeys(productOrderSamples);
-                if (productOrderKeys != null && !productOrderKeys.isEmpty()) {
-                    genotypingProductOrderMapping = attributeArchetypeDao.findGenotypingProductOrderMapping(
-                            productOrderKeys.iterator().next()
-                    );
-                }
+                productOrders = findProductOrders(productOrderSamples);
             } else {
-                genotypingProductOrderMapping = attributeArchetypeDao.findGenotypingProductOrderMapping(
-                        productOrderSample.getProductOrder().getJiraTicketKey());
+                productOrder = productOrderSample.getProductOrder();
+                productOrders = Collections.singleton(productOrder);
                 productOrderSamples = Collections.singletonList(productOrderSample);
                 researchProjectIds = Collections.singleton(
                         productOrderSample.getProductOrder().getResearchProject().getBusinessKey());
@@ -168,7 +184,7 @@ public class InfiniumRunResource {
                         Response.Status.INTERNAL_SERVER_ERROR);
             }
 
-            // Controls have a null research project id.
+            // Controls have a null research project id and product order.
             String researchProjectId = null;
             if (processControl == null) {
                 if (researchProjectIds.isEmpty()) {
@@ -178,6 +194,11 @@ public class InfiniumRunResource {
                     throw new ResourceException("Found mix of research projects " + researchProjectIds, Response.Status.INTERNAL_SERVER_ERROR);
                 }
                 researchProjectId = researchProjectIds.iterator().next();
+
+                if (productOrders.isEmpty()) {
+                    throw new ResourceException("Found no product orders", Response.Status.INTERNAL_SERVER_ERROR);
+                }
+                productOrder = productOrders.iterator().next();
             }
 
             String idatPrefix = DATA_PATH + "/" + chip.getLabel() + "/" + chip.getLabel() + "_" + vesselPosition.name();
@@ -186,6 +207,29 @@ public class InfiniumRunResource {
             if (chipType == null || chipAttributes.size() == 0) {
                 throw new ResourceException("Found no configuration for " + chipType.getChipName(),
                         Response.Status.INTERNAL_SERVER_ERROR);
+            }
+
+            Date startDate = null;
+            for (LabEvent labEvent: chip.getInPlaceLabEvents()) {
+                if (labEvent.getLabEventType() == LabEventType.INFINIUM_AUTOCALL_SOME_STARTED) {
+                    startDate = labEvent.getEventDate();
+                }
+            }
+            String scannerName = findScannerName(chip.getLabel(), vesselPosition.name());
+
+            String batchName = null;
+            if (sampleInstanceV2.getSingleBatch() != null) {
+                batchName = sampleInstanceV2.getSingleBatch().getBatchName();
+            }
+            String productOrderId = null;
+            String productName = null;
+            String productFamily = null;
+            String partNumber = null;
+            if (productOrder != null) {
+                productOrderId = productOrder.getJiraTicketKey();
+                productName = productOrder.getProduct().getProductName();
+                productFamily = productOrder.getProduct().getProductFamily().getName();
+                partNumber = productOrder.getProduct().getPartNumber();
             }
 
             //Attempt to override default chip attributes if changed in product order
@@ -202,7 +246,7 @@ public class InfiniumRunResource {
             infiniumRunBean = new InfiniumRunBean(
                     idatPrefix + "_Red.idat",
                     idatPrefix + "_Grn.idat",
-                    chipAttributes.get("norm_manifest_unix"),
+                    chipAttributes.get("illumina_manifest_unix"),
                     chipAttributes.get("manifest_location_unix"),
                     chipAttributes.get("cluster_location_unix"),
                     chipAttributes.get("zcall_threshold_unix"),
@@ -212,7 +256,19 @@ public class InfiniumRunResource {
                     sampleData.getPatientId(),
                     researchProjectId,
                     positiveControl,
-                    negativeControl);
+                    negativeControl,
+                    chipAttributes.get("call_rate_threshold"),
+                    chipAttributes.get("gender_cluster_file"),
+                    sampleData.getCollaboratorParticipantId(),
+                    productOrderId,
+                    productName,
+                    productFamily,
+                    partNumber,
+                    batchName,
+                    startDate,
+                    scannerName,
+                    chipAttributes.get("norm_manifest_unix")
+                    );
         } else {
             throw new RuntimeException("Expected 1 sample, found " + sampleInstancesAtPositionV2.size());
         }
@@ -231,7 +287,7 @@ public class InfiniumRunResource {
             if (control.getCollaboratorParticipantId().equals(sampleData.getCollaboratorParticipantId())) {
                 List<String> sampleNames = new ArrayList<>();
                 for (SampleInstanceV2 sampleInstanceV2 : chip.getSampleInstancesV2()) {
-                     sampleNames.add(sampleInstanceV2.getRootOrEarliestMercurySampleName());
+                    sampleNames.add(sampleInstanceV2.getRootOrEarliestMercurySampleName());
                 }
                 chipTypes = findChipTypes(productOrderSampleDao.findBySamples(sampleNames), effectiveDate);
                 processControl = control;
@@ -271,18 +327,54 @@ public class InfiniumRunResource {
         return researchProjectIds;
     }
 
-    private Set<String> findProductOrderKeys(List<ProductOrderSample> productOrderSamples) {
-        Set<String> productOrderKeys = new HashSet<>();
+
+    private Set<ProductOrder> findProductOrders(List<ProductOrderSample> productOrderSamples) {
+        Set<ProductOrder> productOrders = new HashSet<>();
         for (ProductOrderSample productOrderSample : productOrderSamples) {
             ProductOrder productOrder = productOrderSample.getProductOrder();
-            if (productOrder != null) {
-                productOrderKeys.add(productOrder.getJiraTicketKey());
-            }
+            productOrders.add(productOrder);
         }
-        return productOrderKeys;
+        return productOrders;
+    }
+
+    private String findScannerName(String chipBarcode, String vesselPosition) {
+        try {
+            if (infiniumStarterConfig != null) {
+                String redXml = String.format("%s_%s_1_Red.xml", chipBarcode, vesselPosition);
+                File chipDir = new File(infiniumStarterConfig.getDataPath(), chipBarcode);
+                File redXmlFile = new File(chipDir, redXml);
+                if (redXmlFile.exists()) {
+                    DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
+                    DocumentBuilder documentBuilder = builderFactory.newDocumentBuilder();
+                    Document document = documentBuilder.parse(new FileInputStream(redXmlFile));
+                    XPath xPath = XPathFactory.newInstance().newXPath();
+                    XPathExpression lcsetKeyExpr = xPath.compile("ImageHeader/ScannerID");
+                    NodeList scannerIdNodeList = (NodeList) lcsetKeyExpr.evaluate(document,
+                            XPathConstants.NODESET);
+                    Node elemNode = scannerIdNodeList.item(0);
+                    String scannerId = elemNode.getFirstChild().getNodeValue();
+                    return mapSerialNumberToMachineName.get(scannerId);
+                }
+            }
+        } catch (Exception e) {
+            log.error("Failed to find scanner name from filesystem for " + chipBarcode);
+        }
+        return null;
+    }
+
+    public void setInfiniumStarterConfig(InfiniumStarterConfig infiniumStarterConfig) {
+        this.infiniumStarterConfig = infiniumStarterConfig;
     }
 
     public void setAttributeArchetypeDao(AttributeArchetypeDao attributeArchetypeDao) {
         this.attributeArchetypeDao = attributeArchetypeDao;
+    }
+
+    private static final Map<String, String> mapSerialNumberToMachineName = new HashMap<>();
+    static {
+        mapSerialNumberToMachineName.put("N296", "Practical Pig");
+        mapSerialNumberToMachineName.put("N370", "Big Bad Wolf");
+        mapSerialNumberToMachineName.put("N700", "Fiddler Pig");
+        mapSerialNumberToMachineName.put("N588", "Fiffer Pig");
     }
 }
