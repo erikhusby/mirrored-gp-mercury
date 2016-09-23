@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadshee
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -81,9 +82,14 @@ public class BillingTrackerImporterContainerTest extends Arquillian {
         return processors;
     }
 
+    /**
+     * Make sure the test spreadsheet has the right worksheets. This type of check generally seems unnecessary, but can
+     * maybe be justified in this case because the test data is outside of this test and the effect of changing that
+     * spreadsheet may not be obvious. This check used to live in the test itself but is being moved into its own test
+     * to clarify the purpose.
+     */
     @Test
-    public void testImport() throws Exception {
-
+    public void testInputSpreadsheet() throws Exception {
         InputStream inputStream = null;
 
         try {
@@ -93,14 +99,29 @@ public class BillingTrackerImporterContainerTest extends Arquillian {
             // Should only be one sheet.
             List<String> sheetNames = PoiSpreadsheetParser.getWorksheetNames(inputStream);
             Assert.assertEquals(sheetNames.size(), 1, "Wrong number of worksheets");
-
+        } finally {
             IOUtils.closeQuietly(inputStream);
+        }
+    }
+
+    @Test
+    public void testImport() throws Exception {
+
+        InputStream inputStream = null;
+
+        try {
+            inputStream = Thread.currentThread().getContextClassLoader()
+                    .getResourceAsStream(GOOD_BILLING_TRACKER_TEST_FILENAME);
+
+            List<String> sheetNames = PoiSpreadsheetParser.getWorksheetNames(inputStream);
+
+            // Getting the worksheet names consumes the input stream so it needs to be closed and reopened.
+            IOUtils.closeQuietly(inputStream);
+            inputStream = Thread.currentThread().getContextClassLoader()
+                    .getResourceAsStream(GOOD_BILLING_TRACKER_TEST_FILENAME);
 
             Map<String, BillingTrackerProcessor> processors = getProcessors(sheetNames);
             PoiSpreadsheetParser parser = new PoiSpreadsheetParser(processors);
-
-            inputStream = Thread.currentThread().getContextClassLoader()
-                    .getResourceAsStream(GOOD_BILLING_TRACKER_TEST_FILENAME);
             parser.processUploadFile(inputStream);
 
             List<String> validationErrors = new ArrayList<> ();
@@ -161,23 +182,18 @@ public class BillingTrackerImporterContainerTest extends Arquillian {
      * replacement price items for add-on price items.
      */
     @Test
-    public void testImportWithRepeatedPriceItemName() {
+    public void testImportWithRepeatedPriceItemName() throws Exception {
         InputStream inputStream = null;
 
         try {
             inputStream = Thread.currentThread().getContextClassLoader()
                     .getResourceAsStream(BAD_BILLING_TRACKER_TEST_FILENAME);
-
-            // Should only be one sheet.
             List<String> sheetNames = PoiSpreadsheetParser.getWorksheetNames(inputStream);
-            Assert.assertEquals(sheetNames.size(), 1, "Wrong number of worksheets");
-
-            IOUtils.closeQuietly(inputStream);
 
             // Calling getProcessors will validate the price item names.
             getProcessors(sheetNames);
             Assert.fail("Expected an exception");
-        } catch (Exception expected) {
+        } catch (InformaticsServiceException expected) {
         } finally {
             IOUtils.closeQuietly(inputStream);
         }
