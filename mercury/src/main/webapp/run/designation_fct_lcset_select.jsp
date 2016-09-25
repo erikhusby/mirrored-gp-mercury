@@ -3,6 +3,6 @@
 <%@ taglib prefix='fn' uri='http://java.sun.com/jsp/jstl/functions' %>
 
 <stripes:useActionBean var="actionBean"
-                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.run.DesignationActionBean"/>
+                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.run.DesignationFctActionBean"/>
 
 <%@ include file="designation_lcset_select_include.jsp" %>

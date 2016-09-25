@@ -30,6 +30,7 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
@@ -105,6 +106,8 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
 
     private Integer readLength;
     private Integer insertSize;
+    private BigDecimal loadingConcentration;
+    private Boolean pairedEndRead;
 
     /**
      * A sample with MetadataSource.BSP can have its initial quant in Mercury, e.g. SONIC.  This flag avoids the
@@ -285,6 +288,24 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
 
     public void setInsertSize(Integer insertSize) {
         this.insertSize = insertSize;
+    }
+
+    @Nullable
+    public BigDecimal getLoadingConcentration() {
+        return loadingConcentration;
+    }
+
+    public void setLoadingConcentration(BigDecimal loadingConcentration) {
+        this.loadingConcentration = loadingConcentration;
+    }
+
+    @Nullable
+    public Boolean getPairedEndRead() {
+        return pairedEndRead;
+    }
+
+    public void setPairedEndRead(Boolean pairedEndRead) {
+        this.pairedEndRead = pairedEndRead;
     }
 
     public boolean isTopLevelProduct() {

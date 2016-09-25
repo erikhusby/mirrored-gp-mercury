@@ -7,6 +7,8 @@ import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.tuple.MutablePair;
+import org.apache.commons.lang3.tuple.Pair;
+import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.FlowcellDesignationEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
@@ -14,16 +16,23 @@ import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
 
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
+
 @UrlBinding("/run/DesignationFct.action")
 public class DesignationFctActionBean extends CoreActionBean implements DesignationUtils.Caller {
     private static final String VIEW_PAGE = "/run/designation_fct_create.jsp";
+    private static final String TUBE_LCSET_PAGE = "/run/designation_fct_lcset_select.jsp";
     public static final String CREATE_FCT_ACTION = "createFct";
     public static final String SET_MULTIPLE_ACTION = "setMultiple";
+    public static final String SUBMIT_TUBE_LCSETS_ACTION = "submitTubeLcsets";
+    public static final List<FlowcellDesignation.Status> ONLY_QUEUED = Collections.singletonList(
+            FlowcellDesignation.Status.QUEUED);
 
     @Inject
     private LabBatchEjb labBatchEjb;
@@ -35,6 +44,7 @@ public class DesignationFctActionBean extends CoreActionBean implements Designat
     private List<DesignationDto> dtos = new ArrayList<>();
     private List<MutablePair<String, String>> createdFcts = new ArrayList<>();
     private DesignationUtils utils = new DesignationUtils(this);
+    private List<DesignationUtils.LcsetAssignmentDto> tubeLcsetAssignments = new ArrayList<>();
 
     private final static EnumSet<FlowcellDesignation.Status> fctTargetableStatuses =
             EnumSet.noneOf(FlowcellDesignation.Status.class);
@@ -51,10 +61,40 @@ public class DesignationFctActionBean extends CoreActionBean implements Designat
     @DefaultHandler
     public Resolution view() {
         if (CollectionUtils.isEmpty(getDtos())) {
-            utils.makeDtosFromDesignations(designationTubeEjb.existingDesignations(
-                    Collections.singletonList(FlowcellDesignation.Status.QUEUED)));
+            MessageCollection messageCollection = new MessageCollection();
+            tubeLcsetAssignments = utils.makeDtosFromDesignations(designationTubeEjb.existingDesignations(ONLY_QUEUED),
+                    messageCollection);
+            if (!tubeLcsetAssignments.isEmpty()) {
+                return new ForwardResolution(TUBE_LCSET_PAGE);
+            }
+            addMessages(messageCollection);
         }
         return new ForwardResolution(VIEW_PAGE);
+    }
+
+    /**
+     * This method is called after the user specifies the desired lcset
+     * for each loading tube barcode that had mulitple lcsets.
+     */
+    @HandlesEvent(SUBMIT_TUBE_LCSETS_ACTION)
+    public Resolution submitTubeLcsets() {
+        clearValidationErrors();
+        List<Pair<Long, String>> designationIdLcsets = new ArrayList<>();
+        for (DesignationUtils.LcsetAssignmentDto assignmentDto : tubeLcsetAssignments) {
+            if (isNotBlank(assignmentDto.getSelectedLcsetName())) {
+                designationIdLcsets.add(
+                        Pair.of(assignmentDto.getDesignationId(), assignmentDto.getSelectedLcsetName()));
+            }
+        }
+
+        // Updates the designations based on user's lcset choice and makes dtos from the updated designations.
+        // If an lcset was not selected for a designation it remains in database but does not become a dto here.
+        Collection<FlowcellDesignation> updates = designationTubeEjb.updateChosenLcset(designationIdLcsets);
+        MessageCollection messageCollection = new MessageCollection();
+        utils.makeDtosFromDesignations(updates, messageCollection);
+        addMessages(messageCollection);
+
+        return view();
     }
 
     /**
@@ -120,4 +160,12 @@ public class DesignationFctActionBean extends CoreActionBean implements Designat
         this.multiEdit = multiEdit;
     }
 
+    public List<DesignationUtils.LcsetAssignmentDto> getTubeLcsetAssignments() {
+        return tubeLcsetAssignments;
+    }
+
+    public void setTubeLcsetAssignments(
+            List<DesignationUtils.LcsetAssignmentDto> tubeLcsetAssignments) {
+        this.tubeLcsetAssignments = tubeLcsetAssignments;
+    }
 }

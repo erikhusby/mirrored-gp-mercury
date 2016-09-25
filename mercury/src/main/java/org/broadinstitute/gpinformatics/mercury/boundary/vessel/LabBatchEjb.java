@@ -703,12 +703,15 @@ public class LabBatchEjb {
         List<MutablePair<String, String>> fctUrls = new ArrayList<>();
         if (!hasError) {
             for (String fctGrouping : typeMap.keySet()) {
+                Collection<Pair<FctDto, LabVessel>> dtoVesselPairs = typeMap.get(fctGrouping);
                 int unallocatedLaneCount = 0;
                 int splitCount = 0;
-                DesignationDto firstDto = (DesignationDto)typeMap.get(fctGrouping).iterator().next().getLeft();
+                DesignationDto firstDto = (DesignationDto)dtoVesselPairs.iterator().next().getLeft();
                 IlluminaFlowcell.FlowcellType flowcellType = firstDto.getSequencerModel();
 
-                Pair<Multimap<LabBatch, String>, FctDto> fctReturnPair = makeFctDaoFree(typeMap.get(fctGrouping),
+                // Allocates each designation dto to FctDto(s) depending on the designation's priority,
+                // number of lanes, and whether a full flowcell could be made or not.
+                Pair<Multimap<LabBatch, String>, FctDto> fctReturnPair = makeFctDaoFree(dtoVesselPairs,
                         flowcellType, false);
                 for (LabBatch fctBatch : fctReturnPair.getLeft().keySet()) {
                     createLabBatch(fctBatch, userName, flowcellType.getIssueType(), messageReporter);
@@ -717,7 +720,7 @@ public class LabBatchEjb {
                     }
                     fctUrls.add(MutablePair.of(fctBatch.getBatchName(), fctBatch.getJiraTicket().getBrowserUrl()));
                 }
-                for (Pair<FctDto, LabVessel> pair : typeMap.get(fctGrouping)) {
+                for (Pair<FctDto, LabVessel> pair : dtoVesselPairs) {
                     DesignationDto dto = (DesignationDto) pair.getLeft();
                     if (dto.isAllocated()) {
                         dto.setStatus(FlowcellDesignation.Status.IN_FCT);
@@ -725,15 +728,13 @@ public class LabBatchEjb {
                         unallocatedLaneCount += dto.getNumberLanes();
                     }
                 }
-                // Any new split dto needs to be put in the UI's dto list, and all dtos persisted.
+                // Any new split dto needs to be added to the UI's dto list and queues it.
                 DesignationDto dtoSplit = (DesignationDto) fctReturnPair.getRight();
                 if (dtoSplit != null) {
-                    dtoSplit.setSelected(true);
+                    dtoSplit.setStatus(FlowcellDesignation.Status.QUEUED);
                     designationDtos.add(dtoSplit);
                     ++splitCount;
                 }
-                DesignationUtils.updateDesignationsAndDtos(designationDtos,
-                        EnumSet.allOf(FlowcellDesignation.Status.class), designationTubeEjb);
                 if (unallocatedLaneCount > 0) {
                     int emptyLaneCount = flowcellType.getVesselGeometry().getVesselPositions().length -
                                          unallocatedLaneCount;
@@ -746,6 +747,12 @@ public class LabBatchEjb {
                             fctGrouping.toString()));
                 }
             }
+            // Persists all designations.
+            for (DesignationDto designationDto : designationDtos) {
+                designationDto.setSelected(true);
+            }
+            DesignationUtils.updateDesignationsAndDtos(designationDtos,
+                    EnumSet.allOf(FlowcellDesignation.Status.class), designationTubeEjb);
         }
         return fctUrls;
     }
@@ -762,10 +769,6 @@ public class LabBatchEjb {
             errorString += (isValid ? "" : "and ") + "loading conc (" + designationDto.getLoadingConc() + ") ";
             isValid = false;
         }
-        if (designationDto.getNumberCycles() == null || designationDto.getNumberCycles() <= 0) {
-            errorString += (isValid ? "" : "and ") + "number of cycles (" + designationDto.getNumberCycles() + ") ";
-            isValid = false;
-        }
         if (designationDto.getNumberLanes() == null || designationDto.getNumberLanes() <= 0) {
             errorString += (isValid ? "" : "and ") + "number of lanes (" + designationDto.getNumberLanes() + ") ";
             isValid = false;
@@ -776,6 +779,32 @@ public class LabBatchEjb {
         }
         if (designationDto.getSequencerModel() == null) {
             errorString += (isValid ? "" : "and ") + "sequencer model (null) ";
+            isValid = false;
+        }
+        if (designationDto.getIndexType() == null) {
+            errorString += (isValid ? "" : "and ") + "index type (null) ";
+            isValid = false;
+        }
+        if (designationDto.getPairedEndRead() == null) {
+            errorString += (isValid ? "" : "and ") + "paired end read (null) ";
+            isValid = false;
+        }
+        if (designationDto.getPoolTest() == null) {
+            errorString += (isValid ? "" : "and ") + "pool test (null) ";
+            isValid = false;
+        }
+        if (designationDto.getTubeEventId() == null) {
+            errorString += (isValid ? "" : "and ") + "tube event (null) ";
+            isValid = false;
+        }
+        if (StringUtils.isBlank(designationDto.getLcset())) {
+            errorString += (isValid ? "" : "and ") + "lcset (null) ";
+            isValid = false;
+        }
+        if (!DesignationUtils.RESEARCH.equals(designationDto.getRegulatoryDesignation()) &&
+            !DesignationUtils.CLINICAL.equals(designationDto.getRegulatoryDesignation())) {
+            errorString += (isValid ? "" : "and ") +
+                           "regulatory designation (" + designationDto.getRegulatoryDesignation() + ") ";
             isValid = false;
         }
 

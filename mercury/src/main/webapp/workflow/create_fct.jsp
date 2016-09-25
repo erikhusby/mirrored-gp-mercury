@@ -86,9 +86,9 @@
         <style type="text/css">
             /* Fixed width columns except for product name. */
             #tubeList { table-layout: fixed; }
-            .fixedWidthColumn { width: 8em; word-wrap: break-word; }
-            .smallerWidthColumn { width: 5em; }
-            .widerFixedWidthColumn { width: 10em; }
+            .width8 { width: 8em; word-wrap: break-word; }
+            .width4 { width: 5em; }
+            .width10 { width: 10em; }
         </style>
 
     </stripes:layout-component>

@@ -16,6 +16,7 @@
                         {"bSortable":true},  // read length
                         {"bSortable":true},  // index type
                         {"bSortable":true},  // number cycles
+                        {"bSortable":true},  // paired end
                         {"bSortable":true},  // pool test
                         {"bSortable":true},  // regulatory designation
                         {"bSortable":true},  // product

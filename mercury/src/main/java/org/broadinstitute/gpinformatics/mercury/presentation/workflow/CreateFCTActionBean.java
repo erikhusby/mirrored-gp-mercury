@@ -20,11 +20,11 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.run.DesignationUtils;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
@@ -191,20 +191,7 @@ public class CreateFCTActionBean extends CoreActionBean {
                 for (LabEvent targetEvent : loadingEventsAndVessels.keySet()) {
                     for (LabVessel loadingTube : loadingEventsAndVessels.get(targetEvent)) {
                         // Finds the best lcset(s) for the loading tube.
-                        Set<LabBatch> bestLcsets = new HashSet<>();
-                        Set<LabBatch> allLcsets = new HashSet<>();
-                        for (SampleInstanceV2 sampleInstance : loadingTube.getSampleInstancesV2()) {
-                            LabBatch singleBatch = sampleInstance.getSingleBatch();
-                            if (singleBatch != null) {
-                                // Multiple single lcsets can exist in one loading tube (e.g. norm tube 0185941254).
-                                bestLcsets.add(singleBatch);
-                            } else {
-                                allLcsets.addAll(sampleInstance.getAllWorkflowBatches());
-                            }
-                        }
-                        if (bestLcsets.isEmpty()) {
-                            bestLcsets.addAll(allLcsets);
-                        }
+                        Set<LabBatch> bestLcsets = DesignationUtils.findBestLcsets(loadingTube).getLeft();
                         // Only keeps the loading tube if the target lcset is found.
                         if (bestLcsets.contains(targetLcset)) {
                             loadingTubeToLcsets.put(loadingTube, bestLcsets);

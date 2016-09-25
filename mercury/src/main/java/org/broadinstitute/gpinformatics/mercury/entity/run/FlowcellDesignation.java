@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.entity.run;
 
-import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -13,15 +12,11 @@ import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
 
 /**
@@ -44,21 +39,18 @@ public class FlowcellDesignation {
     @ManyToOne
     private LabVessel loadingTube;
 
-    /** The LCSETs that this designation is part of. */
-    @Nonnull
+    /**
+     * The designation's lcset chosen by the user, i.e. there was no single
+     * LCSET returned after walking the chain of custody.
+     */
     @ManyToOne
-    private LabBatch lcset;
+    private LabBatch chosenLcset;
 
     /** The lab event that gave rise to the loading tube, typically normalization transfer, denature transfer,
      * or pooling transfer */
     @Nonnull
     @OneToOne
     private LabEvent loadingTubeEvent;
-
-    @Nonnull
-    @ManyToMany
-    @JoinTable(schema = "mercury", name = "DESIGNATION_PRODUCT")
-    private Collection<Product> products = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)
     private IndexType indexType;
@@ -73,13 +65,11 @@ public class FlowcellDesignation {
     private Priority priority;
 
     private Date createdOn;
-    private Integer numberCycles;
     private Integer numberLanes;
     private Integer readLength;
     private BigDecimal loadingConc;
-    private boolean clinical;
     private boolean poolTest;
-    private int numberSamples;
+    private boolean pairedEndRead;
 
     public enum Priority {
         LOW, NORMAL, HIGH;
@@ -153,25 +143,21 @@ public class FlowcellDesignation {
     public FlowcellDesignation() {
     }
 
-    public FlowcellDesignation(@Nonnull LabVessel loadingTube, LabBatch lcset,
-                               @Nonnull LabEvent loadingTubeEvent, @Nonnull Collection<Product> products,
+    public FlowcellDesignation(@Nonnull LabVessel loadingTube, LabBatch chosenLcset, @Nonnull LabEvent loadingTubeEvent,
                                IndexType indexType, boolean poolTest, IlluminaFlowcell.FlowcellType sequencerModel,
-                               Integer numberCycles, Integer numberLanes, Integer readLength, BigDecimal loadingConc,
-                               boolean clinical, int numberSamples, Status status, Priority priority) {
+                               Integer numberLanes, Integer readLength, BigDecimal loadingConc, boolean pairedEndRead,
+                               Status status, Priority priority) {
         this.loadingTube = loadingTube;
-        this.lcset = lcset;
+        this.chosenLcset = chosenLcset;
         this.loadingTubeEvent = loadingTubeEvent;
-        this.products = products;
         this.createdOn = new Date();
         this.indexType = indexType;
         this.poolTest = poolTest;
         this.sequencerModel = sequencerModel;
-        this.numberCycles = numberCycles;
         this.numberLanes = numberLanes;
         this.readLength = readLength;
         this.loadingConc = loadingConc;
-        this.clinical = clinical;
-        this.numberSamples = numberSamples;
+        this.pairedEndRead = pairedEndRead;
         this.status = status;
         this.priority = priority;
     }
@@ -186,12 +172,12 @@ public class FlowcellDesignation {
     }
 
     @Nonnull
-    public LabBatch getLcset() {
-        return lcset;
+    public LabBatch getChosenLcset() {
+        return chosenLcset;
     }
 
-    public void setLcset(LabBatch lcset) {
-        this.lcset = lcset;
+    public void setChosenLcset(LabBatch lcset) {
+        this.chosenLcset = lcset;
     }
 
     @Nonnull
@@ -201,16 +187,6 @@ public class FlowcellDesignation {
 
     public void setLoadingTubeEvent(@Nonnull LabEvent loadingTubeEvent) {
         this.loadingTubeEvent = loadingTubeEvent;
-    }
-
-    @Nonnull
-    public Collection<Product> getProducts() {
-        return products;
-    }
-
-    public void setProducts(
-            @Nonnull Collection<Product> products) {
-        this.products = products;
     }
 
     public Date getCreatedOn() {
@@ -225,8 +201,7 @@ public class FlowcellDesignation {
         return indexType;
     }
 
-    public void setIndexType(
-            IndexType indexType) {
+    public void setIndexType(IndexType indexType) {
         this.indexType = indexType;
     }
 
@@ -236,14 +211,6 @@ public class FlowcellDesignation {
 
     public void setStatus(Status status) {
         this.status = status;
-    }
-
-    public Integer getNumberCycles() {
-        return numberCycles;
-    }
-
-    public void setNumberCycles(Integer numberCycles) {
-        this.numberCycles = numberCycles;
     }
 
     public Integer getNumberLanes() {
@@ -268,14 +235,6 @@ public class FlowcellDesignation {
 
     public void setLoadingConc(BigDecimal loadingConc) {
         this.loadingConc = loadingConc;
-    }
-
-    public boolean isClinical() {
-        return clinical;
-    }
-
-    public void setClinical(boolean clinical) {
-        this.clinical = clinical;
     }
 
     public boolean isPoolTest() {
@@ -306,11 +265,11 @@ public class FlowcellDesignation {
         return designationId;
     }
 
-    public int getNumberSamples() {
-        return numberSamples;
+    public boolean isPairedEndRead() {
+        return pairedEndRead;
     }
 
-    public void setNumberSamples(int numberSamples) {
-        this.numberSamples = numberSamples;
+    public void setPairedEndRead(boolean pairedEndRead) {
+        this.pairedEndRead = pairedEndRead;
     }
 }

@@ -1,18 +1,25 @@
         <div class="control-group" style="padding-top: 50px;">
             <table border="0">
                 <tr>
-                    <th>Status</th>
-                    <th>Priority</th>
-                    <th>Sequencer Model</th>
-                    <th>Number Lanes</th>
-                    <th>Loading Conc</th>
-                    <th>Read Length</th>
-                    <th>Index Type</th>
-                    <th>Number Cycles</th>
-                    <th>Pool Test</th>
-                    <th>&nbsp;</th>
+                        <th class="width4"/>
+                        <th class="width8">Status</th>
+                        <th class="width8">Priority</th>
+                        <th class="width24"/>
+                        <th class="width16">Sequencer Model</th>
+                        <th class="width8"/>
+                        <th class="width4">Number Lanes</th>
+                        <th class="width4">Loading Conc</th>
+                        <th class="width16"/>
+                        <th class="width4">Read Length</th>
+                        <th class="width4">Index Type</th>
+                        <th class="width4">Paired End</th>
+                        <th class="width4"/>
+                        <th class="width4">Pool Test</th>
+                        <th class="width24"/>
+                        <th/>
                 </tr>
                 <tr>
+                    <td/>
                     <td>
                         <input type="hidden" id="multiStatusInput" name="multiEdit.status"/>
                         <stripes:select style='width:8em' id="multiStatus" class="multiEditSelect" name="" title=
@@ -31,35 +38,47 @@
                             <stripes:options-collection collection="${actionBean.utils.priorityValues}"/>
                         </stripes:select>
                     </td>
+                    <td/>
                     <td>
                         <input type="hidden" id="multiSeqModelInput" name="multiEdit.sequencerModel"/>
-                        <stripes:select id="multiSeqModel" class="multiEditSelect" name="">
+                        <stripes:select style='width:16em' id="multiSeqModel" class="multiEditSelect" name="">
                             <stripes:option value=""/>
                             <stripes:options-collection label="displayName" collection="${actionBean.utils.flowcellValues}"/>
                         </stripes:select>
                     </td>
+                    <td/>
                     <td>
-                        <input style='width:7em' class="multiNumberLanes" name="multiEdit.numberLanes"/>
+                        <input style='width:4em' class="multiNumberLanes" name="multiEdit.numberLanes"/>
                     </td>
                     <td>
-                        <input style='width:7em' class="multiLoadConc" name="multiEdit.loadingConc"/>
+                        <input style='width:4em' class="multiLoadConc" name="multiEdit.loadingConc"/>
                     </td>
+                    <td/>
                     <td>
-                        <input style='width:7em' class="multiReadLength" name="multiEdit.readLength"/>
+                        <input style='width:4em' class="multiReadLength" name="multiEdit.readLength"/>
                     </td>
                     <td>
                         <input type="hidden" id="multiIndexTypeInput" name="multiEdit.indexType"/>
-                        <stripes:select style='width:8em' id="multiIndexType" class="multiEditSelect" name="">
+                        <stripes:select style='width:8em' id="multiIndexType" class="multiEditSelect" name="" title=
+"Index type is used when generating the setup read structure,
+ when calculating the number of cycles, and when determining
+ which designations can be combined on one flowcell.">
                             <stripes:option value=""/>
                             <stripes:options-collection collection="${actionBean.utils.indexTypes}"/>
                         </stripes:select>
                     </td>
                     <td>
-                        <input style='width:7em' class="multiNumberCycles" name="multiEdit.numberCycles"/>
+                        <input type="hidden" id="multiPairedEndInput" name="multiEdit.pairedEnd"/>
+                        <stripes:select style='width:6em' id="multiPairedEnd" class="multiEditSelect" name="">
+                            <stripes:option value=""/>
+                            <stripes:option value="false">No</stripes:option>
+                            <stripes:option value="true">Yes</stripes:option>
+                        </stripes:select>
                     </td>
+                    <td/>
                     <td>
                         <input type="hidden" id="multiPoolTestInput" name="multiEdit.poolTest"/>
-                        <stripes:select style='width:7em' id="multiPoolTest" class="multiEditSelect" name="">
+                        <stripes:select style='width:6em' id="multiPoolTest" class="multiEditSelect" name="">
                             <stripes:option value=""/>
                             <stripes:option value="false">No</stripes:option>
                             <stripes:option value="true">Yes</stripes:option>

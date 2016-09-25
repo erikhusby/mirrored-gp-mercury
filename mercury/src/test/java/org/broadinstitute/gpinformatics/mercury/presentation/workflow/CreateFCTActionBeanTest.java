@@ -74,10 +74,13 @@ public class CreateFCTActionBeanTest {
         for (int i = 0; i < 32; ++i) {
             LabVessel tube = stbTubes.get(i);
 
-            dtoVessels.add(Pair.of((FctDto)new DesignationDto(tube, Collections.EMPTY_LIST,
-                    "lcsetUrl", lcset, Collections.EMPTY_LIST,"", "", 1,
-                    IlluminaFlowcell.FlowcellType.HiSeq4000Flowcell, FlowcellDesignation.IndexType.DUAL,
-                    161, 8, 151, conc, false, new Date(), FlowcellDesignation.Status.QUEUED), tube));
+            DesignationDto dto = new DesignationDto();
+            dto.setBarcode(tube.getLabel());
+            dto.setSequencerModel(IlluminaFlowcell.FlowcellType.HiSeq4000Flowcell);
+            dto.setNumberLanes(8);
+            dto.setStatus(FlowcellDesignation.Status.QUEUED);
+
+            dtoVessels.add(Pair.of((FctDto)dto, tube));
          }
         Assert.assertTrue(CollectionUtils.isEmpty(allocateAndTest(dtoVessels,
                 IlluminaFlowcell.FlowcellType.HiSeq4000Flowcell, null)));
@@ -93,23 +96,24 @@ public class CreateFCTActionBeanTest {
         for (int idx = 0; idx < numberLanes.length; ++idx) {
             LabVessel tube = stbTubes.get(idx);
 
-            DesignationDto dto = new DesignationDto(tube, Collections.EMPTY_LIST,
-                    "lcsetUrl", lcset, Collections.EMPTY_LIST, "", "", 1,
-                    IlluminaFlowcell.FlowcellType.HiSeq4000Flowcell, FlowcellDesignation.IndexType.DUAL,
-                    161, numberLanes[idx], 151, conc, false, new Date(), FlowcellDesignation.Status.QUEUED);
-            dto.setDesignationId((long)idx);
+            DesignationDto dto = new DesignationDto();
+            dto.setBarcode(tube.getLabel());
+            dto.setSequencerModel(IlluminaFlowcell.FlowcellType.HiSeq4000Flowcell);
+            dto.setNumberLanes(numberLanes[idx]);
+            dto.setStatus(FlowcellDesignation.Status.QUEUED);
             dto.setSelected(true);
 
             designationDtos.add(dto);
             dtoVessels.add(Pair.of((FctDto) dto, tube));
         }
         // The 0th dto will get 3 lanes allocated and 6 lanes in the unallocated split dto.
-        FctDto splitDto = new DesignationDto(stbTubes.get(0), Collections.EMPTY_LIST,
-                "lcsetUrl", lcset, Collections.EMPTY_LIST, "", "", 1,
-                IlluminaFlowcell.FlowcellType.HiSeq4000Flowcell, FlowcellDesignation.IndexType.DUAL,
-                161, 6, 151, conc, false, new Date(), FlowcellDesignation.Status.QUEUED);
+        DesignationDto splitDto = new DesignationDto();
+        splitDto.setBarcode(stbTubes.get(0).getLabel());
+        splitDto.setSequencerModel(IlluminaFlowcell.FlowcellType.HiSeq4000Flowcell);
+        splitDto.setNumberLanes(6);
 
-        List<String> unallocated = allocateAndTest(dtoVessels, IlluminaFlowcell.FlowcellType.HiSeq4000Flowcell, splitDto);
+        List<String> unallocated = allocateAndTest(dtoVessels, IlluminaFlowcell.FlowcellType.HiSeq4000Flowcell,
+                splitDto);
 
         // Split should have reduced the allocated number of lanes.
         Assert.assertEquals((int) designationDtos.get(0).getNumberLanes(), 3);
@@ -137,10 +141,11 @@ public class CreateFCTActionBeanTest {
         for (int idx = 0; idx < numberLanes.length; ++idx) {
             LabVessel tube = stbTubes.get(idx);
 
-            DesignationDto dto = new DesignationDto(tube, Collections.EMPTY_LIST,
-                    "lcsetUrl", lcset, Collections.EMPTY_LIST, "", "", 1,
-                    IlluminaFlowcell.FlowcellType.HiSeq4000Flowcell, FlowcellDesignation.IndexType.DUAL,
-                    161, numberLanes[idx], 151, conc, false, new Date(), FlowcellDesignation.Status.QUEUED);
+            DesignationDto dto = new DesignationDto();
+            dto.setBarcode(tube.getLabel());
+            dto.setSequencerModel(IlluminaFlowcell.FlowcellType.HiSeq4000Flowcell);
+            dto.setNumberLanes(numberLanes[idx]);
+            dto.setStatus(FlowcellDesignation.Status.QUEUED);
             dto.setDesignationId((long)idx);
             dto.setSelected(true);
             // Changes priority of the 9 lane dto.
@@ -153,10 +158,11 @@ public class CreateFCTActionBeanTest {
         }
 
         // dto[2] should be split into 7 lanes (allocated) and 3 lanes (unallocated).
-        DesignationDto splitDto = new DesignationDto(stbTubes.get(2), Collections.EMPTY_LIST,
-                "lcsetUrl", lcset, Collections.EMPTY_LIST, "", "", 1,
-                IlluminaFlowcell.FlowcellType.HiSeq4000Flowcell, FlowcellDesignation.IndexType.DUAL,
-                161, 3, 151, conc, false, new Date(), FlowcellDesignation.Status.QUEUED);
+        DesignationDto splitDto = new DesignationDto();
+        splitDto.setBarcode(stbTubes.get(2).getLabel());
+        splitDto.setSequencerModel(IlluminaFlowcell.FlowcellType.HiSeq4000Flowcell);
+        splitDto.setNumberLanes(3);
+        splitDto.setStatus(FlowcellDesignation.Status.QUEUED);
 
         List<String> unallocatedBarcodes = allocateAndTest(dtoVessels, IlluminaFlowcell.FlowcellType.HiSeq4000Flowcell,
                 splitDto);
@@ -185,11 +191,11 @@ public class CreateFCTActionBeanTest {
         for (int i = 0; i < 2; ++i) {
             LabVessel tube = stbTubes.get(i);
 
-            DesignationDto dto = new DesignationDto(tube, Collections.EMPTY_LIST,
-                    "lcsetUrl", lcset, Collections.EMPTY_LIST, "", "", 1,
-                    IlluminaFlowcell.FlowcellType.HiSeq4000Flowcell, FlowcellDesignation.IndexType.DUAL,
-                    161, 2 - i, 151, conc, false, new Date(), FlowcellDesignation.Status.QUEUED);
-            dto.setDesignationId((long)i);
+            DesignationDto dto = new DesignationDto();
+            dto.setBarcode(tube.getLabel());
+            dto.setSequencerModel(IlluminaFlowcell.FlowcellType.HiSeq4000Flowcell);
+            dto.setNumberLanes(2 - i);
+            dto.setStatus(FlowcellDesignation.Status.QUEUED);
             dto.setSelected(true);
 
             designationDtos.add(dto);
@@ -245,6 +251,28 @@ public class CreateFCTActionBeanTest {
         }
     }
 
+    @Test
+    public void testCycles() {
+        DesignationDto dto = new DesignationDto();
+
+        dto.setReadLength(151);
+        dto.setPairedEndRead(true);
+        dto.setIndexType(FlowcellDesignation.IndexType.DUAL);
+        Assert.assertEquals(dto.calculateCycles(), 318);
+
+        dto.setPairedEndRead(false);
+        Assert.assertEquals(dto.calculateCycles(), 167);
+
+        dto.setIndexType(FlowcellDesignation.IndexType.SINGLE);
+        Assert.assertEquals(dto.calculateCycles(), 159);
+
+        dto.setReadLength(null);
+        Assert.assertEquals(dto.calculateCycles(), 8);
+
+        dto.setIndexType(null);
+        Assert.assertEquals(dto.calculateCycles(), 0);
+    }
+
     /**
      * Allocates and validates.
      * @return list of the unallocated tube barcodes.
@@ -284,7 +312,6 @@ public class CreateFCTActionBeanTest {
             Assert.assertNotNull(splitDto);
             Assert.assertEquals(designationSplit.getAllocationOrder(), splitDto.getAllocationOrder());
             Assert.assertEquals(designationSplit.getBarcode(), splitDto.getBarcode());
-            Assert.assertEquals(designationSplit.getLcset(), splitDto.getLcset());
             Assert.assertEquals(designationSplit.getLoadingConc(), splitDto.getLoadingConc());
             Assert.assertEquals(designationSplit.getNumberLanes(), splitDto.getNumberLanes());
             Assert.assertNull(designationSplit.getDesignationId());

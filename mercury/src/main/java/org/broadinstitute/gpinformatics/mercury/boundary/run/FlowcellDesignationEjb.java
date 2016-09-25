@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.run;
 
-import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
@@ -11,26 +11,24 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation_;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube_;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.presentation.run.DesignationDto;
-import org.broadinstitute.gpinformatics.mercury.presentation.run.DesignationUtils;
 import org.hibernate.SQLQuery;
 import org.hibernate.type.LongType;
 
-import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.persistence.NoResultException;
 import javax.persistence.Query;
 import javax.persistence.TemporalType;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Data Access Object for designation tubes.
@@ -40,6 +38,9 @@ import java.util.Set;
 public class FlowcellDesignationEjb {
     @Inject
     private BarcodedTubeDao barcodedTubeDao;
+
+    @Inject
+    private LabBatchDao labBatchDao;
 
     /**
      * Returns barcoded normalization tubes that were not previously designated, or
@@ -104,21 +105,6 @@ public class FlowcellDesignationEjb {
         }
     }
 
-    /** Returns true if there was a pool test FCT for this tube and lcset. */
-    private boolean hasPoolTest(@Nonnull LabVessel labVessel, @Nonnull String lcsetName) {
-        for (FlowcellDesignation designation :
-                barcodedTubeDao.findList(FlowcellDesignation.class, FlowcellDesignation_.loadingTube, labVessel)) {
-            if (designation.isPoolTest() && designation.getLcset().getBatchName().equals(lcsetName) &&
-                designation.getStatus() == FlowcellDesignation.Status.IN_FCT) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    @Inject
-    private LabBatchDao labBatchDao;
-
     /**
      * Persists each dto provided it is selected and has status that is targetable.
      * If it has a null designation id it is persisted as a new entity.
@@ -134,16 +120,13 @@ public class FlowcellDesignationEjb {
             if (dto.isSelected() && targetableStatuses.contains(dto.getStatus())) {
                 if (dto.getDesignationId() == null) {
                     LabVessel loadingTube = barcodedTubeDao.findByBarcode(dto.getBarcode());
-                    Set<Product> products = new HashSet<>(labBatchDao.findListByList(Product.class,
-                            Product_.productName, dto.getProductNames()));
                     LabEvent loadingTubeEvent = labBatchDao.findById(LabEvent.class, dto.getTubeEventId());
-                    FlowcellDesignation designation = new FlowcellDesignation(loadingTube,
-                            labBatchDao.findByBusinessKey(dto.getLcset()),
-                            loadingTubeEvent, products, dto.getIndexType(), dto.getPoolTest(),
-                            dto.getSequencerModel(), dto.getNumberCycles(),
-                            dto.getNumberLanes(), dto.getReadLength(), dto.getLoadingConc(),
-                            dto.getRegulatoryDesignation().equals(DesignationUtils.CLINICAL),
-                            dto.getNumberSamples(), dto.getStatus(), dto.getPriority());
+                    LabBatch chosenLcset = StringUtils.isBlank(dto.getChosenLcset()) ?
+                            null : labBatchDao.findByName(dto.getChosenLcset());
+                    FlowcellDesignation designation = new FlowcellDesignation(loadingTube, chosenLcset,
+                            loadingTubeEvent, dto.getIndexType(), dto.getPoolTest(), dto.getSequencerModel(),
+                            dto.getNumberLanes(), dto.getReadLength(), dto.getLoadingConc(), dto.getPairedEndRead(),
+                            dto.getStatus(), dto.getPriority());
                     labBatchDao.persist(designation);
                     dtoAndTube.put(dto, designation);
                 } else {
@@ -155,7 +138,6 @@ public class FlowcellDesignationEjb {
                     designation.setLoadingConc(dto.getLoadingConc());
                     designation.setReadLength(dto.getReadLength());
                     designation.setIndexType(dto.getIndexType());
-                    designation.setNumberCycles(dto.getNumberCycles());
                     designation.setPoolTest(dto.getPoolTest());
                     designation.setStatus(dto.getStatus());
                     dtoAndTube.put(dto, designation);
@@ -163,6 +145,20 @@ public class FlowcellDesignationEjb {
             }
         }
         return dtoAndTube;
+    }
+
+    public Collection<FlowcellDesignation> updateChosenLcset(Collection<Pair<Long, String>> designationIdLcsets) {
+        List<FlowcellDesignation> updates = new ArrayList<>();
+        for (Pair<Long, String> designationIdLcset : designationIdLcsets) {
+            FlowcellDesignation designation = barcodedTubeDao.findById(FlowcellDesignation.class,
+                    designationIdLcset.getLeft());
+            LabBatch lcset = labBatchDao.findByBusinessKey(designationIdLcset.getRight());
+            if (designation != null) {
+                designation.setChosenLcset(lcset);
+                updates.add(designation);
+            }
+        }
+        return updates;
     }
 
     public Collection<FlowcellDesignation> existingDesignations(List<FlowcellDesignation.Status> statuses) {

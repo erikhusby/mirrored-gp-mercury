@@ -5,13 +5,12 @@ import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtil
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.SortedSet;
@@ -27,14 +26,15 @@ public class DesignationDto implements Cloneable, FctDto {
     private IlluminaFlowcell.FlowcellType sequencerModel;
     private FlowcellDesignation.IndexType indexType;
     private FlowcellDesignation.Priority priority;
-    private Integer numberCycles;
     private Integer numberLanes;
     private Integer readLength;
     private BigDecimal loadingConc;
     private Boolean poolTest;
+    private Boolean pairedEndRead;
     private String barcode;
     private String lcsetUrl;
     private String lcset;
+    private String chosenLcset = null;
     private List<String> productNames = new ArrayList<>();
     private String startingBatchVessels;
     private String tubeType;
@@ -52,22 +52,39 @@ public class DesignationDto implements Cloneable, FctDto {
     public DesignationDto() {
         createdOn = new Date();
         status = FlowcellDesignation.Status.UNSAVED;
+        priority = FlowcellDesignation.Priority.NORMAL;
+        indexType = FlowcellDesignation.IndexType.DUAL;
     }
 
-    public DesignationDto(LabVessel loadingLabVessel, Collection<LabEvent> labEvents,
-                          String lcsetUrl, LabBatch lcset, Collection<String> productNames,
-                          String startingBatchVessels, String regulatoryDesignation, int numberSamples,
-                          IlluminaFlowcell.FlowcellType sequencerModel,
-                          FlowcellDesignation.IndexType indexType,
-                          Integer numberCycles, Integer numberLanes, Integer readLength,
-                          BigDecimal loadingConc, Boolean poolTest, Date createdOn,
-                          FlowcellDesignation.Status status) {
+    public DesignationDto(FlowcellDesignation flowcellDesignation) {
+        this();
+        if (flowcellDesignation != null) {
+            setChosenLcset(flowcellDesignation.getChosenLcset() != null ?
+                    flowcellDesignation.getChosenLcset().getBatchName() : null);
+            setNumberLanes(flowcellDesignation.getNumberLanes());
+            setPoolTest(flowcellDesignation.isPoolTest());
+            setIndexType(flowcellDesignation.getIndexType());
+            setStatus(flowcellDesignation.getStatus());
+            setSequencerModel(flowcellDesignation.getSequencerModel());
+            setCreatedOn(flowcellDesignation.getCreatedOn());
+            setReadLength(flowcellDesignation.getReadLength());
+            setPairedEndRead(flowcellDesignation.isPairedEndRead());
+            setLoadingConc(flowcellDesignation.getLoadingConc());
+            setDesignationId(flowcellDesignation.getDesignationId());
+            setPriority(flowcellDesignation.getPriority());
+            setBarcode(flowcellDesignation.getLoadingTube().getLabel());
+            setEvents(Collections.singletonList(flowcellDesignation.getLoadingTubeEvent()));
+        }
+    }
 
-        this.barcode = loadingLabVessel.getLabel();
+    /**
+     * Updates the tube type and tube date based on the relevant lab events for the tube and lcset.
+     * There should be only one tube event of the relevant type, but if there are multiple, shows all
+     * event dates and keeps only the latest event id.
+     */
+    public void setEvents(Collection<LabEvent> labEvents) {
         SortedSet<String> tubeDates = new TreeSet<>();
         for (LabEvent labEvent : labEvents) {
-            // If a tube with a known lcset has multiple of the same type of event, captures all the event dates
-            // but only keeps the latest id.
             tubeDates.add(DateUtils.convertDateTimeToString(labEvent.getEventDate()));
             if (getTubeEventId() == null || labEvent.getLabEventId() > getTubeEventId()) {
                 tubeType = labEvent.getLabEventType().getName().replaceAll("Transfer", "");
@@ -75,23 +92,6 @@ public class DesignationDto implements Cloneable, FctDto {
             }
         }
         this.tubeDate = StringUtils.join(tubeDates, "<br/>");
-        this.lcset = lcset.getBatchName();
-        this.lcsetUrl = lcsetUrl;
-        this.productNames.addAll(productNames);
-        this.startingBatchVessels = startingBatchVessels;
-
-        this.sequencerModel = sequencerModel;
-        this.indexType = indexType;
-        this.numberCycles = numberCycles;
-        this.numberLanes = numberLanes;
-        this.readLength = readLength;
-        this.loadingConc = loadingConc;
-        this.poolTest = poolTest;
-        this.priority = FlowcellDesignation.Priority.NORMAL;
-        this.regulatoryDesignation = regulatoryDesignation;
-        this.numberSamples = numberSamples;
-        this.createdOn = createdOn;
-        this.status = status;
     }
 
     /**
@@ -105,6 +105,7 @@ public class DesignationDto implements Cloneable, FctDto {
         try {
             DesignationDto splitDto = (DesignationDto)this.clone();
             splitDto.setDesignationId(null);
+            splitDto.setAllocated(false);
             splitDto.setNumberLanes(this.getNumberLanes() - allocatedLanes);
             setNumberLanes(allocatedLanes);
             return splitDto;
@@ -116,8 +117,20 @@ public class DesignationDto implements Cloneable, FctDto {
 
     /** Defines how designations may be combined on a flowcell. */
     public String fctGrouping() {
-        return "FctGrouping{" + getSequencerModel() + ", " + getNumberCycles() + " cycles, " +
+        return "FctGrouping{" + getSequencerModel() + ", " + calculateCycles() + " cycles, " +
                getReadLength() + " readLength, " + getIndexType() + " index, " + getRegulatoryDesignation() + "}";
+    }
+
+    /** Calculates the number of cycles from read length, paired end read, and index type. */
+    public int calculateCycles() {
+        int numberCycles = readLength != null ? readLength : 0;
+        if (pairedEndRead != null && pairedEndRead) {
+            numberCycles *= 2;
+        }
+        if (indexType != null) {
+            numberCycles += indexType.getIndexSize();
+        }
+        return numberCycles;
     }
 
     public String getProductNameJoin() {
@@ -168,14 +181,6 @@ public class DesignationDto implements Cloneable, FctDto {
         this.priority = priority;
         allocationOrder = (priority == FlowcellDesignation.Priority.HIGH ? 1 :
                 priority == FlowcellDesignation.Priority.LOW ? -1 : 0);
-    }
-
-    public Integer getNumberCycles() {
-        return numberCycles;
-    }
-
-    public void setNumberCycles(Integer numberCycles) {
-        this.numberCycles = numberCycles;
     }
 
     public Integer getNumberLanes() {
@@ -310,6 +315,22 @@ public class DesignationDto implements Cloneable, FctDto {
         return allocated;
     }
 
+    public String getChosenLcset() {
+        return chosenLcset;
+    }
+
+    public void setChosenLcset(String chosenLcset) {
+        this.chosenLcset = chosenLcset;
+    }
+
+    public Boolean getPairedEndRead() {
+        return pairedEndRead;
+    }
+
+    public void setPairedEndRead(Boolean pairedEndRead) {
+        this.pairedEndRead = pairedEndRead;
+    }
+
     @Override
     public void setAllocated(boolean allocated) {
         this.allocated = allocated;
@@ -343,8 +364,8 @@ public class DesignationDto implements Cloneable, FctDto {
         if (getPriority() != that.getPriority()) {
             return false;
         }
-        if (getNumberCycles() != null ? !getNumberCycles().equals(that.getNumberCycles()) :
-                that.getNumberCycles() != null) {
+        if (getPairedEndRead() != null ? !getPairedEndRead().equals(that.getPairedEndRead()) :
+                that.getPairedEndRead() != null) {
             return false;
         }
         if (getNumberLanes() != null ? !getNumberLanes().equals(that.getNumberLanes()) :
@@ -381,7 +402,7 @@ public class DesignationDto implements Cloneable, FctDto {
         result = 31 * result + (getSequencerModel() != null ? getSequencerModel().hashCode() : 0);
         result = 31 * result + (getIndexType() != null ? getIndexType().hashCode() : 0);
         result = 31 * result + (getPriority() != null ? getPriority().hashCode() : 0);
-        result = 31 * result + (getNumberCycles() != null ? getNumberCycles().hashCode() : 0);
+        result = 31 * result + (getPairedEndRead() != null ? getPairedEndRead().hashCode() : 0);
         result = 31 * result + (getNumberLanes() != null ? getNumberLanes().hashCode() : 0);
         result = 31 * result + (getReadLength() != null ? getReadLength().hashCode() : 0);
         result = 31 * result + (getLoadingConc() != null ? getLoadingConc().hashCode() : 0);

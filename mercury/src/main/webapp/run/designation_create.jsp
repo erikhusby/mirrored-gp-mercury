@@ -35,11 +35,13 @@
 
         </script>
         <style type="text/css">
-            #tubeList
-            .fixedWidthColumn { width: 8em; word-wrap: break-word; }
-            .smallerWidthColumn { width: 4em; }
-            .tinyWidthColumn { width: 2em; }
-            .widerFixedWidthColumn { width: 10em; }
+            .width24 { width: 24em; }
+            .width16 { width: 16em; word-wrap: break-word; }
+            .width14 { width: 14em; word-wrap: break-word; }
+            .width10 { width: 10em; word-wrap: break-word; }
+            .width8 { width: 8em; word-wrap: break-word; }
+            .width4 { width: 4em; }
+            .width2 { width: 2em; }
         </style>
 
     </stripes:layout-component>
