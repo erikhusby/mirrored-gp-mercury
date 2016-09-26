@@ -50,6 +50,7 @@ public class DesignationActionBean extends CoreActionBean implements Designation
     public static final String LOAD_DENATURE_ACTION = "loadDenature";
     public static final String LOAD_NORM_ACTION = "loadNorm";
     public static final String LOAD_POOLNORM_ACTION = "loadPoolNorm";
+    public static final String LOAD_UNDESIGNATED_ACTION = "loadUndesignated";
     public static final String SUBMIT_TUBE_LCSET_ACTION = "submitTubeLcsets";
     public static final String SET_MULTIPLE_ACTION = "setMultiple";
     public static final String PENDING_ACTION = "pending";
@@ -117,6 +118,9 @@ public class DesignationActionBean extends CoreActionBean implements Designation
     @HandlesEvent(LOAD_DENATURE_ACTION)
     public Resolution loadDenature() {
         selectedEventType = LabEventType.DENATURE_TRANSFER;
+        clearValidationErrors();
+        // Parses the user input lcsets or tube barcodes into loadLcsets and loadTubes.
+        parseLcsetsBarcodes();
         return loadAny();
     }
 
@@ -126,6 +130,9 @@ public class DesignationActionBean extends CoreActionBean implements Designation
     @HandlesEvent(LOAD_NORM_ACTION)
     public Resolution loadNorm() {
         selectedEventType = LabEventType.NORMALIZATION_TRANSFER;
+        clearValidationErrors();
+        // Parses the user input lcsets or tube barcodes into loadLcsets and loadTubes.
+        parseLcsetsBarcodes();
         return loadAny();
     }
 
@@ -135,18 +142,25 @@ public class DesignationActionBean extends CoreActionBean implements Designation
     @HandlesEvent(LOAD_POOLNORM_ACTION)
     public Resolution loadPoolNorm() {
         selectedEventType = LabEventType.POOLING_TRANSFER;
+        clearValidationErrors();
+        // Parses the user input lcsets or tube barcodes into loadLcsets and loadTubes.
+        parseLcsetsBarcodes();
+        return loadAny();
+    }
+
+    /**
+     * Displays the list of undesignated norm tubes to select from.
+     */
+    @HandlesEvent(LOAD_UNDESIGNATED_ACTION)
+    public Resolution loadUndesignated() {
+        selectedEventType = LabEventType.POOLING_TRANSFER;
+        lcsetsBarcodes = "";
+        clearValidationErrors();
+        loadTubes.addAll(designationTubeEjb.eligibleDesignations(getDateRange()));
         return loadAny();
     }
 
     private Resolution loadAny() {
-        clearValidationErrors();
-        if (isNotBlank(lcsetsBarcodes)) {
-            // Parses the user input lcsets or tube barcodes into loadLcsets and loadTubes.
-            parseLcsetsBarcodes();
-        } else {
-            // When no user input lcset or barcodes, gets all undesignated loading tubes in the date range.
-            loadTubes.addAll(designationTubeEjb.eligibleDesignations(getDateRange()));
-        }
         // If there are any barcodes, finds their lcset(s). In case there are
         // multiple lcsets per tube, the tube-lcset combinations get put in
         // tubeLcsetSelection to be resolved by user in the TUBE_LCSET_PAGE.

@@ -21,16 +21,6 @@
                 });
             });
 
-            function lcsetUpdated() {
-                if (!($j('lcsetsBarcodes'.value).trim)) {
-                    $j('#loadDenatureBtn').removeAttr("disabled");
-                    $j('#loadPoolNormBtn').removeAttr("disabled");
-                } else {
-                    $j('#loadDenatureBtn').attr("disabled", "disabled");
-                    $j('#loadPoolNormBtn').attr("disabled", "disabled");
-                }
-            };
-
             <%@ include file="/run/designation_functions_include.jsp" %>
 
         </script>
@@ -53,16 +43,15 @@
                 <div style="float: left; width: 66%;">
                     <div style="float: left; width: 50%;">
                             <textarea style="width: 95%" id="lcsetBarcodeText" type="text" rows="3" name="lcsetsBarcodes"
-                                      placeholder='LCSETs, Loading Tube Barcodes, or leave blank for all undesignated tubes.'
-                                      onkeypress="lcsetUpdated()"></textarea>
+                                      placeholder='LCSETs, Loading Tube Barcodes, or leave blank for all undesignated tubes.'></textarea>
 
                         <div style="padding: 1em; padding-left: 10%;">
                             <stripes:submit id="loadNormBtn" name="loadNorm" value="Norm Tubes" class="btn btn-primary"
                                             title="Adds normalization tubes to the designation display."/>
                             <stripes:submit id="loadDenatureBtn" name="loadDenature" value="Denature Tubes" class="btn btn-primary"
-                                            title="Adds denature tubes to the designation display." disabled="disabled"/>
+                                            title="Adds denature tubes to the designation display."/>
                             <stripes:submit id="loadPoolNormBtn" name="loadPoolNorm" value="Pooled Norm Tubes" class="btn btn-primary"
-                                            title="Adds pooled normalization tubes to the designation display." disabled="disabled"/>
+                                            title="Adds pooled normalization tubes to the designation display."/>
                         </div>
                     </div>
 
@@ -73,7 +62,7 @@
                              endString="${actionBean.dateRange.endStr}">
                         </div>
                         <div class="control-group" style="padding-left: 20%;">
-                            <stripes:submit id="loadUndesignatedBtn" name="loadNorm" value="All Undesignated Tubes" class="btn btn-primary"
+                            <stripes:submit id="loadUndesignatedBtn" name="loadUndesignated" value="All Undesignated Tubes" class="btn btn-primary"
                                             title="Shows undesignated normalization tubes that are in the date range."/>
                         </div>
                     </div>
