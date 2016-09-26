@@ -23,8 +23,8 @@
                     <td>
                         <input type="hidden" id="multiStatusInput" name="multiEdit.status"/>
                         <stripes:select style='width:8em' id="multiStatus" class="multiEditSelect" name="" title=
-"Changes the status of the selected rows:
- Queued - the designation is ready for FCT creation.
+"unsaved - any changes to the row will not be saved.
+ Queued - the designation is saved and ready for FCT creation.
  Abandoned - the designation is hidden from further use.
  In FCT - the designation is on an FCT. It cannot be edited.">
                             <stripes:option value=""/>

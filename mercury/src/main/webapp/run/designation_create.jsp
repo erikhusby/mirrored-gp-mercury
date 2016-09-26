@@ -49,38 +49,35 @@
     <stripes:layout-component name="content">
         <stripes:form beanclass="${actionBean.class.name}" id="scanForm" class="form-horizontal">
 
-            <div class="control-group" syle="padding-bottom: 50px;">
+            <div class="control-group" style="padding-bottom: 50px;">
                 <div style="float: left; width: 66%;">
-                    <div class="control-group">
-                        <div style="float: left; width: 50%;">
+                    <div style="float: left; width: 50%;">
                             <textarea style="width: 95%" id="lcsetBarcodeText" type="text" rows="3" name="lcsetsBarcodes"
                                       placeholder='LCSETs, Loading Tube Barcodes, or leave blank for all undesignated tubes.'
-                                      onkeypress="lcsetUpdated()" title="LCSET names with or without the LCSET prefix, or loading tube
- barcodes, or both. Only shows tubes created in the date range.
+                                      onkeypress="lcsetUpdated()"></textarea>
 
- Alternatively, leave this input blank and click 'Norm Tubes' to
- get all the undesignated loading tubes created in the date range."
-                            ></textarea>
-                        </div>
-
-                        <div style="float: right; width: 50%">
-                            <div id="dateRangeDiv"
-                                 rangeSelector="${actionBean.dateRange.rangeSelector}"
-                                 startString="${actionBean.dateRange.startStr}"
-                                 endString="${actionBean.dateRange.endStr}">
-                            </div>
-                            <p>Only tubes created in this date range are shown.</p>
+                        <div style="padding: 1em; padding-left: 10%;">
+                            <stripes:submit id="loadNormBtn" name="loadNorm" value="Norm Tubes" class="btn btn-primary"
+                                            title="Adds normalization tubes to the designation display."/>
+                            <stripes:submit id="loadDenatureBtn" name="loadDenature" value="Denature Tubes" class="btn btn-primary"
+                                            title="Adds denature tubes to the designation display." disabled="disabled"/>
+                            <stripes:submit id="loadPoolNormBtn" name="loadPoolNorm" value="Pooled Norm Tubes" class="btn btn-primary"
+                                            title="Adds pooled normalization tubes to the designation display." disabled="disabled"/>
                         </div>
                     </div>
 
-                    <div class="control-group"  style="position: absolute; left: 30%; transform: translate(-50%, -50%);">
-                        <stripes:submit id="loadNormBtn" name="loadNorm" value="Norm Tubes" class="btn btn-primary"
-                                        title="Adds normalization tubes to the designation display."/>
-                        <stripes:submit id="loadDenatureBtn" name="loadDenature" value="Denature Tubes" class="btn btn-primary"
-                                        title="Adds denature tubes to the designation display." disabled="disabled"/>
-                        <stripes:submit id="loadPoolNormBtn" name="loadPoolNorm" value="Pooled Norm Tubes" class="btn btn-primary"
-                                        title="Adds pooled normalization tubes to the designation display." disabled="disabled"/>
+                    <div style="float: right; width: 50%">
+                        <div style="padding: 10px; padding-left: 10%;" id="dateRangeDiv" title="This date range is used when finding all undesignated tubes."
+                             rangeSelector="${actionBean.dateRange.rangeSelector}"
+                             startString="${actionBean.dateRange.startStr}"
+                             endString="${actionBean.dateRange.endStr}">
+                        </div>
+                        <div class="control-group" style="padding-left: 20%;">
+                            <stripes:submit id="loadUndesignatedBtn" name="loadNorm" value="All Undesignated Tubes" class="btn btn-primary"
+                                            title="Shows undesignated normalization tubes that are in the date range."/>
+                        </div>
                     </div>
+
                 </div>
 
                 <div style="float: right; width: 33%;">

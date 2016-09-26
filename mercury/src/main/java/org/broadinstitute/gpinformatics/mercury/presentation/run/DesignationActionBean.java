@@ -404,38 +404,22 @@ public class DesignationActionBean extends CoreActionBean implements Designation
     private Map<LabVessel, LabBatch> linkLcsetToSpecifiedTubes() {
         tubeLcsetAssignments.clear();
         Map<LabVessel, LabBatch> loadingTubeLcset = new HashMap<>();
-        boolean foundOutOfDateEvents = false;
 
         for (LabVessel targetTube : loadTubes) {
-            for (LabEvent targetEvent : targetTube.getInPlaceAndTransferToEvents()) {
-                // Only uses loading tube events in the specified date range.
-                if (isInDateRange(targetEvent)) {
-                    // Attempts to find the single lcset for the tube. Multiple lcsets will need to be
-                    // resolved by the user.
-                    Set<LabBatch> lcsets = DesignationUtils.findBestLcsets(targetTube).getLeft();
-                    if (CollectionUtils.isNotEmpty(lcsets)) {
-                        if (lcsets.size() == 1) {
-                            loadingTubeLcset.put(targetTube, lcsets.iterator().next());
-                        } else {
-                            // Tube-lcset combinations to be resolved by the user.
-                            addTubeLcsetAssignment(targetTube, lcsets);
-                        }
-                    }
+            // Attempts to find the single lcset for the tube. Multiple lcsets will need to be
+            // resolved by the user.
+            Set<LabBatch> lcsets = DesignationUtils.findBestLcsets(targetTube).getLeft();
+            if (CollectionUtils.isNotEmpty(lcsets)) {
+                if (lcsets.size() == 1) {
+                    loadingTubeLcset.put(targetTube, lcsets.iterator().next());
                 } else {
-                    foundOutOfDateEvents = true;
+                    // Tube-lcset combinations to be resolved by the user.
+                    addTubeLcsetAssignment(targetTube, lcsets);
                 }
             }
         }
         DesignationUtils.LcsetAssignmentDto.sort(tubeLcsetAssignments);
-        if (foundOutOfDateEvents) {
-            addMessage("Excluded some loading tube " + selectedEventType + " events not in the date range.");
-        }
         return loadingTubeLcset;
-    }
-
-    private boolean isInDateRange(LabEvent labEvent) {
-        return getDateRange().getStartTime().before(labEvent.getEventDate()) &&
-               getDateRange().getEndTime().after(labEvent.getEventDate());
     }
 
     /** Adds a tube-lcset assignment dto or merges into an existing one. Dtos should be unique on tube barcode. */
