@@ -266,4 +266,54 @@ public class AttributeArchetypeFixupTest extends Arquillian {
         attributeArchetypeDao.persist(new FixupCommentary("SUPPORT-1877 adjust Active date for chip mapping"));
         attributeArchetypeDao.flush();
     }
+
+    /** Add earlier chip version, to support backfilled messages.  This is for dev only. */
+    @Test(enabled = false)
+    public void fixupGap1068() {
+        userBean.loginOSUser();
+        GenotypingChipMapping genotypingChipMapping = new GenotypingChipMapping("P-WG-0036", "Infinium",
+                "PsychChip_v1-1_15073391_A1", new GregorianCalendar(2015, Calendar.JANUARY, 1, 0, 0).getTime());
+        genotypingChipMapping.setInactiveDate(new GregorianCalendar(2015, Calendar.OCTOBER, 9, 11, 13).getTime());
+        attributeArchetypeDao.persist(genotypingChipMapping);
+
+        System.out.println("Backfill " + genotypingChipMapping.getChipName() + " to " +
+                genotypingChipMapping.getActiveDate());
+        attributeArchetypeDao.persist(new FixupCommentary("GAP-1068 backfill chip type"));
+        attributeArchetypeDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void support2099AddNewChipAttributes() throws Exception {
+        utx.begin();
+        userBean.loginOSUser();
+
+        final String chipFamily = InfiniumRunResource.INFINIUM_GROUP;
+
+        List<AttributeDefinition> definitions = new ArrayList<AttributeDefinition>() {{
+            add(new AttributeDefinition(AttributeDefinition.DefinitionType.GENOTYPING_CHIP,
+                    chipFamily, "call_rate_threshold", true));
+            add(new AttributeDefinition(AttributeDefinition.DefinitionType.GENOTYPING_CHIP,
+                    chipFamily, "gender_cluster_file", true));
+        }};
+
+        String megaGenderClusterFile =
+                "/gap/illumina/beadstudio/Autocall/ChipInfo/Multi-EthnicGlobal-8_A1/"
+                + "Multi-EthnicGlobal_A1_Gentrain_Genderest_ClusterFile_highmafX.egt";
+        Set<GenotypingChip> genotypingChips = attributeArchetypeDao.findGenotypingChips(chipFamily);
+        for (GenotypingChip genotypingChip: genotypingChips) {
+            genotypingChip.addOrSetAttribute("call_rate_threshold", "98");
+            if (genotypingChip.getChipName().equals("Multi-EthnicGlobal-8_A1")) {
+                genotypingChip.addOrSetAttribute("gender_cluster_file", megaGenderClusterFile);
+            } else {
+                genotypingChip.addOrSetAttribute("gender_cluster_file", null);
+            }
+        }
+
+        String fixupReason = "SUPPORT-2099 add call rate threshold and optional gender cluster file.";
+        attributeArchetypeDao.persist(new FixupCommentary(fixupReason));
+        attributeArchetypeDao.persistAll(definitions);
+        attributeArchetypeDao.persistAll(genotypingChips);
+        attributeArchetypeDao.flush();
+        utx.commit();
+    }
 }

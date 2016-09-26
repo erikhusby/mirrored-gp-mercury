@@ -53,6 +53,13 @@ public class SampleInstanceEtlData {
             if( pdoSample != null ) {
                 sampleInstanceData.pdoSampleId = pdoSample.getMercurySample().getSampleKey();
             }
+        } else {
+            sampleInstanceData.labBatch = si.getSingleBatch();
+        }
+
+        if( includeNearestSample ){
+            // This will capture controls
+            sampleInstanceData.nearestSampleID = si.getNearestMercurySampleName();
         }
 
         // Missing single bucket entry or PDO Sample not bucketed
@@ -83,7 +90,8 @@ public class SampleInstanceEtlData {
             long bucketTs = 0L;
             for (BucketEntry bucketEntry : si.getAllBucketEntries()) {
                 if (bucketEntry.getLabBatch() != null
-                    && bucketEntry.getLabBatch().getBatchName().startsWith("LCSET")
+                    && ( bucketEntry.getLabBatch().getBatchName().startsWith("LCSET")
+                        ||  bucketEntry.getLabBatch().getBatchName().startsWith("ARRAY") )
                     && bucketEntry.getCreatedDate().getTime() > bucketTs
                     && bucketEntry.getCreatedDate().getTime() <= eventTs) {
                     sampleInstanceData.labBatch = bucketEntry.getLabBatch();
@@ -96,9 +104,6 @@ public class SampleInstanceEtlData {
                     }
                 }
             }
-        } else if( includeNearestSample ){
-            // This will capture controls
-            sampleInstanceData.nearestSampleID = si.getNearestMercurySampleName();
         }
 
         sampleInstanceData.molecularIndexingSchemeName = si.getMolecularIndexingScheme() != null ?

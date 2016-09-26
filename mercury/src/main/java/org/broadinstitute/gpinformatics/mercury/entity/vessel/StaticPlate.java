@@ -27,6 +27,75 @@ import static org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel.C
 @Audited
 public class StaticPlate extends LabVessel implements VesselContainerEmbedder<PlateWell>, Serializable {
 
+    /**
+     * This isolates the flow cell and strip tube manual types used for manual transfers,
+     * and prevents getByAutomationName in PlateType from returning anything for Flowcell.
+     */
+    public enum ManualTransferFlowCellType implements VesselTypeGeometry {
+        FlowCell8("Flowcell", VesselGeometry.FLOWCELL1x8),
+        StripTube1x1("StripTube", VesselGeometry.STRIP_TUBE);
+
+        /**
+         * The name that will be supplied by automation scripts.
+         */
+        private String automationName;
+
+        private VesselGeometry vesselGeometry;
+
+        /**
+         * Creates a PlateType.
+         *
+         * @param automationName    the name that will be supplied by automation scripts
+         * @param vesselGeometry    the vessel geometry
+         */
+        ManualTransferFlowCellType(String automationName, VesselGeometry vesselGeometry) {
+            this.automationName = automationName;
+            this.vesselGeometry = vesselGeometry;
+        }
+
+        /**
+         * Returns the name that will be supplied by automation scripts.
+         */
+        public String getAutomationName() {
+            return automationName;
+        }
+
+        private static Map<String, PlateType> mapAutomationNameToType = new HashMap<>();
+
+        static {
+            for (PlateType plateType : PlateType.values()) {
+                mapAutomationNameToType.put(plateType.getAutomationName(), plateType);
+            }
+        }
+
+        /**
+         * Returns the PlateType for the given automation name or null if none is found.
+         *
+         * @param automationName    the name supplied by automation scripts
+         * @return the PlateType or null
+         */
+        public static PlateType getByAutomationName(String automationName) {
+            return mapAutomationNameToType.get(automationName);
+        }
+
+
+        @Override
+        public String getDisplayName() {
+            return automationName;
+        }
+
+        @Override
+        public VesselGeometry getVesselGeometry() {
+            return vesselGeometry;
+        }
+
+        @Override
+        public boolean isBarcoded() {
+            return true;
+        }
+
+    }
+
     public enum PlateType implements VesselTypeGeometry {
         CovarisRack("CovarisRack", VesselGeometry.G12x8),
         Eco48("Eco48", VesselGeometry.G8x6),
@@ -61,8 +130,6 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
         InfiniumChip24("InfiniumChip24", VesselGeometry.INFINIUM_24_CHIP),
         InfiniumChip12("InfiniumChip12", VesselGeometry.INFINIUM_12_CHIP),
         InfiniumChip8("InfiniumChip8", VesselGeometry.INFINIUM_8_CHIP),
-        FlowCell8("Flowcell", VesselGeometry.FLOWCELL1x8),
-        StripTube1x1("StripTube", VesselGeometry.STRIP_TUBE),
         TenXChip("10XChip", VesselGeometry.TEN_X_CHIP);
 
         /**

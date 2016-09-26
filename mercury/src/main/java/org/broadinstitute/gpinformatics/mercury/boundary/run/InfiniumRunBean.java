@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.run;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
+import java.util.Date;
 
 /**
  * Bean returned by InfiniumRunResource.
@@ -25,6 +26,17 @@ public class InfiniumRunBean {
     private String researchProjectId;
     private boolean positiveControl;
     private boolean negativeControl;
+    private String callRateThreshold;
+    private String genderClusterFile;
+    private String collaboratorParticipantId;
+    private String productOrderId;
+    private String productName;
+    private String productFamily;
+    private String productPartNumber;
+    private String labBatch;
+    private Date scanDate;
+    private String scannerName;
+    private String csvBeadPoolManifestPath;
     // todo jmt this or something more REST-like?
     private String error;
 
@@ -35,7 +47,10 @@ public class InfiniumRunBean {
     public InfiniumRunBean(String redIDatPath, String greenIDatPath, String chipManifestPath,
                            String beadPoolManifestPath, String clusterFilePath, String zCallThresholdsPath,
                            String collaboratorSampleId, String sampleLsid, String gender, String participantId,
-                           String researchProjectId, boolean positiveControl, boolean negativeControl) {
+                           String researchProjectId, boolean positiveControl, boolean negativeControl,
+                           String callRateThreshold, String genderClusterFile, String collaboratorParticpantId,
+                           String productOrderId, String productName, String productFamily, String productPartNumber,
+                           String labBatch, Date scanDate, String scannerName, String csvBeadPoolManifestPath) {
         this.redIDatPath = redIDatPath;
         this.greenIDatPath = greenIDatPath;
         this.chipManifestPath = chipManifestPath;
@@ -49,6 +64,17 @@ public class InfiniumRunBean {
         this.researchProjectId = researchProjectId;
         this.positiveControl = positiveControl;
         this.negativeControl = negativeControl;
+        this.callRateThreshold = callRateThreshold;
+        this.genderClusterFile = genderClusterFile;
+        this.collaboratorParticipantId = collaboratorParticpantId;
+        this.productOrderId = productOrderId;
+        this.productName = productName;
+        this.productFamily = productFamily;
+        this.productPartNumber = productPartNumber;
+        this.labBatch = labBatch;
+        this.scanDate = scanDate;
+        this.scannerName = scannerName;
+        this.csvBeadPoolManifestPath = csvBeadPoolManifestPath;
     }
 
     public String getRedIDatPath() {
@@ -101,5 +127,49 @@ public class InfiniumRunBean {
 
     public Boolean isNegativeControl() {
         return negativeControl;
+    }
+
+    public String getCallRateThreshold() {
+        return callRateThreshold;
+    }
+
+    public String getGenderClusterFile() {
+        return genderClusterFile;
+    }
+
+    public String getCollaboratorParticipantId() {
+        return collaboratorParticipantId;
+    }
+
+    public String getProductOrderId() {
+        return productOrderId;
+    }
+
+    public String getProductName() {
+        return productName;
+    }
+
+    public String getProductFamily() {
+        return productFamily;
+    }
+
+    public String getProductPartNumber() {
+        return productPartNumber;
+    }
+
+    public String getLabBatch() {
+        return labBatch;
+    }
+
+    public Date getScanDate() {
+        return scanDate;
+    }
+
+    public String getScannerName() {
+        return scannerName;
+    }
+
+    public String getCsvBeadPoolManifestPath() {
+        return csvBeadPoolManifestPath;
     }
 }

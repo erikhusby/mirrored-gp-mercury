@@ -183,6 +183,14 @@
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.BatchWorkflowActionBean"
                                           event="view">Batch Workflow</stripes:link>
                         </li>
+                        <security:authorizeBlock roles="<%= roles(LabManager, PDM, PM, Developer) %>">
+                            <li>
+                                <stripes:link id="molecularIndexUpload"
+                                              beanclass="org.broadinstitute.gpinformatics.mercury.presentation.reagent.MolecularIndexPlateActionBean"
+                                              event="view">Upload Molecular Index Plate(s) from Manifest</stripes:link>
+                            </li>
+
+                        </security:authorizeBlock>
                     </ul>
                 </li>
             </security:authorizeBlock>

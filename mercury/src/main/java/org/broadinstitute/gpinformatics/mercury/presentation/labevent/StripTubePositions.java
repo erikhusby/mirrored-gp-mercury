@@ -13,6 +13,7 @@ public class StripTubePositions
     public List<String> stripTubeBarcode = new ArrayList<String>();
     public String barcodeValue;
     public String fctValue;
+    public String connectionPositions;
 
     /**
      * Gets the value of the fct property.

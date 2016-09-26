@@ -37,7 +37,6 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.AnalysisTypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.run.AttributeArchetypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
@@ -106,9 +105,6 @@ public class ProductActionBean extends CoreActionBean {
 
     @Inject
     private ResearchProjectDao researchProjectDao;
-
-    @Inject
-    private AttributeArchetypeDao attributeArchetypeDao;
 
     // Data needed for displaying the view.
     private List<ProductFamily> productFamilies;
