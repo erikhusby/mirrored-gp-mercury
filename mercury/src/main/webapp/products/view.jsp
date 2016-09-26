@@ -210,7 +210,7 @@
 
             <security:authorizeBlock roles="<%= roles(PDM, Developer) %>">
                 <div class="view-control-group control-group">
-                    <label class="control-label label-form">Ordered only externally</label>
+                    <label class="control-label label-form">Commercial Product?</label>
                     <div class="controls">
                         <div class="form-value">
                                 ${actionBean.editProduct.externalOnlyProduct ? "Yes" : "No"}

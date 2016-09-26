@@ -293,7 +293,7 @@
                     <security:authorizeBlock roles="<%= roles(PDM, Developer) %>">
                         <div class="control-group">
                             <stripes:label for="externalOrderOnly" class="control-label">
-                                Ordered only externally
+                                Commercial Product
                             </stripes:label>
                             <div class="controls">
                                 <stripes:checkbox id="externalOrderOnly" disabled="${actionBean.editProduct.savedInSAP}" name="editProduct.externalOnlyProduct" style="margin-top: 10px;"/>

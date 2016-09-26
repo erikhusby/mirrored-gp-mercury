@@ -424,6 +424,8 @@ AS
           product_family_name = new.product_family_name,
           primary_price_item_id = new.primary_price_item_id,
           aggregation_data_type = new.aggregation_data_type,
+          external_only_product = new.eexternal_only_product,
+          saved_in_sap = new.saved_in_sap,
           etl_date = new.etl_date
         WHERE product_id = new.product_id;
 
@@ -443,6 +445,8 @@ AS
           product_family_name,
           primary_price_item_id,
           aggregation_data_type,
+          external_only_product,
+          saved_in_sap,
           etl_date
         )
           SELECT
@@ -459,6 +463,8 @@ AS
             new.product_family_name,
             new.primary_price_item_id,
             new.aggregation_data_type,
+            new.external_only_product,
+            new.saved_in_sap,
             new.etl_date
           FROM DUAL
           WHERE NOT EXISTS(
@@ -844,6 +850,7 @@ AS
           owner = new.owner,
           placed_date = new.placed_date,
           skip_regulatory_reason = new.skip_regulatory_reason,
+          sap_order_number = new.sap_order_number
           etl_date = new.etl_date
         WHERE product_order_id = new.product_order_id;
 
@@ -877,6 +884,7 @@ AS
             new.owner,
             new.placed_date,
             new.skip_regulatory_reason,
+            new.sap_order_number,
             new.etl_date );
 
           V_INS_COUNT := V_INS_COUNT + SQL%ROWCOUNT;
