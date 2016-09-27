@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventMetadata;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
@@ -1725,6 +1726,54 @@ public class LabVesselSearchDefinition {
                 Map<String, String[]> terms = new HashMap<>();
                 terms.put(drillDownSearchTerm, new String[]{barcode});
                 return SearchDefinitionFactory.buildDrillDownLink(barcode, ColumnEntity.LAB_VESSEL, drillDownSearchName, terms, context);
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Hyb Chamber");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public String evaluate(Object entity, SearchContext context) {
+                String result = null;
+                LabVessel vessel = (LabVessel)entity;
+                TransferTraverserCriteria.VesselForEventTypeCriteria traverserCriteria =
+                        new TransferTraverserCriteria.VesselForEventTypeCriteria(Collections.singletonList(
+                                LabEventType.INFINIUM_HYB_CHAMBER_LOADED), true);
+                vessel.evaluateCriteria(traverserCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
+                for (LabEvent labEvent : traverserCriteria.getVesselsForLabEventType().keySet()) {
+                    result = labEvent.getEventLocation();
+                    break;
+                }
+
+                return result;
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Tecan Position");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public String evaluate(Object entity, SearchContext context) {
+                String result = null;
+                LabVessel vessel = (LabVessel)entity;
+                TransferTraverserCriteria.VesselForEventTypeCriteria traverserCriteria =
+                        new TransferTraverserCriteria.VesselForEventTypeCriteria(Collections.singletonList(
+                                LabEventType.INFINIUM_XSTAIN), true);
+                vessel.evaluateCriteria(traverserCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
+
+            events:
+                for (LabEvent labEvent : traverserCriteria.getVesselsForLabEventType().keySet()) {
+                    for (LabEventMetadata labEventMetadata : labEvent.getLabEventMetadatas()) {
+                        if (labEventMetadata.getLabEventMetadataType() ==
+                                LabEventMetadata.LabEventMetadataType.MessageNum) {
+                            result = labEventMetadata.getValue();
+                            break events;
+                        }
+                    }
+                }
+                return result;
             }
         });
         searchTerms.add(searchTerm);

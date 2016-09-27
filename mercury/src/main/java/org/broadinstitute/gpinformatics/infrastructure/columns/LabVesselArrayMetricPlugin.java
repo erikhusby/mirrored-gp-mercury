@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.columns;
 
 import org.broadinstitute.gpinformatics.infrastructure.analytics.ArraysQcDao;
 import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQc;
+import org.broadinstitute.gpinformatics.infrastructure.analytics.entity.ArraysQcFingerprint;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.search.LabVesselSearchDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchContext;
@@ -34,7 +35,8 @@ public class LabVesselArrayMetricPlugin implements ListPlugin {
         REPORTED_GENDER("Reported Gender"),
         GENDER_CONCORDANCE_PF("Gender Concordance PF"),
         P95_GREEN("P95 Green"),
-        P95_RED("P95 Red");
+        P95_RED("P95 Red"),
+        HAPLOTYPE_DIFF("Haplotype Difference");
 
         private String displayName;
         private ConfigurableList.Header resultHeader;
@@ -141,6 +143,12 @@ public class LabVesselArrayMetricPlugin implements ListPlugin {
 
             value = String.valueOf(arraysQc.getP95Red());
             row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.P95_RED.getResultHeader(),
+                    value, value));
+
+            ArraysQcFingerprint arraysQcFingerprint = arraysQc.getArraysQcFingerprints().iterator().next();
+            value = String.valueOf(Math.abs(arraysQcFingerprint.getHaplotypesConfidentlyChecked() -
+                    arraysQcFingerprint.getHaplotypesConfidentlyMatchin()));
+            row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.HAPLOTYPE_DIFF.getResultHeader(),
                     value, value));
 
             metricRows.add(row);
