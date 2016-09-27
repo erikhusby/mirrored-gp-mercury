@@ -67,6 +67,7 @@ import org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessi
 import org.broadinstitute.gpinformatics.athena.presentation.billing.BillingTrackerResolution;
 import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
 import org.broadinstitute.gpinformatics.athena.presentation.links.SquidLink;
+import org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.BspGroupCollectionTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.BspShippingLocationTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProductTokenInput;
@@ -74,11 +75,14 @@ import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.Proje
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataSourceResolver;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BspSampleData;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPKitRequestService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
+import org.broadinstitute.gpinformatics.infrastructure.cognos.OrspProjectDao;
+import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.OrspProject;
 import org.broadinstitute.gpinformatics.infrastructure.common.MercuryEnumUtils;
 import org.broadinstitute.gpinformatics.infrastructure.common.MercuryStringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
@@ -98,7 +102,9 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean;
+import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.jvnet.inflector.Noun;
 
@@ -251,6 +257,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @Inject
     private PriceListCache priceListCache;
+
+    @Inject
+    private OrspProjectDao orspProjectDao;
 
     private List<ProductOrderListEntry> displayedProductOrderListEntries;
 
@@ -1428,6 +1437,71 @@ public class ProductOrderActionBean extends CoreActionBean {
         return createTextResolution(itemList.toString());
     }
 
+    /**
+     * Suggest ORSP numbers based on the currently entered sample IDs. Results can include ORSP numbers that Mercury
+     * does not yet have stored in its database.
+     *
+     * First, fetch the samples' collection IDs from BSP. Then search ORSP for projects referencing consents for those
+     * collections. If there is an existing RegulatoryInfo record in Mercury, its primary key is included in the result.
+     *
+     * The JSON result is an array of objects containing the attributes "identifier", "name", and optionally
+     * "regulatoryInfoId".
+     *
+     * @return a resolution for the JSON results
+     */
+    @HandlesEvent("suggestRegulatoryInfo")
+    public Resolution suggestRegulatoryInfo() {
+        JSONArray results = new JSONArray();
+
+        // Access sample list directly in order to suggest based on possibly not-yet-saved sample IDs.
+        if (!getSampleList().isEmpty()) {
+            List<ProductOrderSample> productOrderSamples = stringToSampleListExisting(getSampleList());
+
+            // Bulk-fetch collection IDs for all samples to avoid having them fetched individually on demand.
+            ProductOrder.loadSampleData(productOrderSamples, BSPSampleSearchColumn.BSP_COLLECTION_BARCODE);
+
+            List<OrspProject> orspProjects = orspProjectDao.findBySamples(productOrderSamples);
+            if (!orspProjects.isEmpty()) {
+
+                // Fetching RP here instead of a @Before method to avoid the fetch when it won't be used.
+                ResearchProject researchProject = researchProjectDao.findByBusinessKey(researchProjectKey);
+                Map<String, RegulatoryInfo> regulatoryInfoByIdentifier = researchProject.getRegulatoryByIdentifier();
+
+                for (OrspProject orspProject : orspProjects) {
+                    RegulatoryInfo regulatoryInfo = regulatoryInfoByIdentifier.get(orspProject.getProjectKey());
+                    results.put(orspProjectToJson(orspProject, regulatoryInfo));
+                }
+            }
+        }
+
+        return createTextResolution(results.toString());
+    }
+
+    /**
+     * Constructs a JSONObject for an OrspProject. If regulatoryInfo is non-null, it is assumed to be an existing record
+     * with the same identifier associated with the research project in which case its primary key is also placed in the
+     * result. This allows client-side scripts to match these results with entries in a regulatory info selection
+     * widget.
+     *
+     * @param orspProject       the ORSP project to serialize
+     * @param regulatoryInfo    the matching RegulatoryInfo record (or null)
+     * @return a new JSONObject for the ORSP project
+     */
+    @NotNull
+    private JSONObject orspProjectToJson(OrspProject orspProject, RegulatoryInfo regulatoryInfo) {
+        JSONObject result = new JSONObject();
+        try {
+            result.put("identifier", orspProject.getProjectKey());
+            result.put("name", orspProject.getName());
+            if (regulatoryInfo != null) {
+                result.put("regulatoryInfoId", regulatoryInfo.getRegulatoryInfoId());
+            }
+        } catch (JSONException e) {
+            throw new RuntimeException("No, I didn't pass a null key to JSONObject.put()");
+        }
+        return result;
+    }
+
     @HandlesEvent("getPostReceiveOptions")
     public Resolution getPostReceiveOptions() throws Exception {
         JSONArray itemList = new JSONArray();
@@ -2256,6 +2330,10 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Override
     public boolean isEditAllowed() {
         return !editOrder.isDraft() && isCreateAllowed();
+    }
+
+    public boolean isEditResearchProjectAllowed() {
+        return ResearchProjectActionBean.isEditAllowed(getUserBean());
     }
 
     public ProductOrderListEntry.LedgerStatus[] getLedgerStatuses() {

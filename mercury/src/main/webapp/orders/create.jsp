@@ -40,6 +40,10 @@
             display: inline;
             vertical-align: bottom;
         }
+
+        .addRegulatoryInfo {
+            font-size: 12px;
+        }
     </style>
         <script type="text/javascript">
 
@@ -235,6 +239,11 @@
                     $j("#regulatorySelect").change(function () {
                         $j("#attestationConfirmed").attr("checked", false)
                     });
+
+                    <c:if test="${actionBean.editOrder.draft}">
+                    $j('#samplesToAdd').on('input', suggestRegulatoryInfo);
+                    suggestRegulatoryInfo();
+                    </c:if>
                 }
 
         );
@@ -348,6 +357,9 @@
 
             }
             handleUpdateRegulatory(skipRegulatory);
+            <c:if test="${actionBean.editOrder.draft}">
+            suggestRegulatoryInfo();
+            </c:if>
         }
 
         function populateRegulatorySelect() {
@@ -362,6 +374,23 @@
             });
             }
 
+        }
+
+        function suggestRegulatoryInfo() {
+            var projectKey = $j("#researchProject").val();
+            var sampleList = $j('#samplesToAdd').val();
+            if (projectKey && sampleList) {
+                $j.ajax({
+                    url: "${ctxpath}/orders/order.action?suggestRegulatoryInfo",
+                    data: {
+                        researchProjectKey: projectKey,
+                        sampleList: sampleList
+                    },
+                    dataType: 'json',
+                    method: 'POST',
+                    success: showRegulatoryInfoSuggestions
+                });
+            }
         }
 
         function updateUIForProductChoice() {
@@ -528,7 +557,7 @@
             } else {
                 var maxSize = 5;
                 var size = 0;
-                var multiSelectDiv = $j('<div class="multiselect"></div>"');
+                var multiSelectDiv = $j('<div class="multiselect"></div>');
                 $j.each(data, function (index, val) {
                     size++;
                     var projectName = val.group;
@@ -563,6 +592,46 @@
                     $j(".multiselect").multiselect();
                 });
                 selectDiv.fadeIn();
+            }
+        }
+
+        function showRegulatoryInfoSuggestions(data) {
+            var $suggestionDiv = $j('#regulatoryInfoSuggestions');
+            $suggestionDiv.empty();
+            if (data.length != 0) {
+                $j.each(data, function(index, value) {
+                    var itemDiv = $j('<div></div>');
+                    itemDiv.append(value.identifier + ': ');
+                    itemDiv.append(value.name);
+                    if (value.regulatoryInfoId == undefined) {
+                        itemDiv.prepend($j('<button disabled="disabled">select</button> '));
+                        itemDiv = itemDiv.wrap('<div></div>');
+                        var addDiv = $j('<div style="padding-left: 6em;"></div>');
+                        addDiv.append('Not configured for ' + $j("#researchProject").val() + '. ');
+                        <c:if test="${actionBean.editResearchProjectAllowed}">
+                        addDiv.append('<a href="#" class="addRegulatoryInfo" identifier="' + value.identifier + '">Add now...</a>');
+                        </c:if>
+                        itemDiv.append(addDiv);
+                    } else {
+                        itemDiv.prepend($j('<button name="' + value.regulatoryInfoId + '">select</button>'));
+                    }
+                    itemDiv.css('padding-top', '8px');
+                    $suggestionDiv.append(itemDiv);
+                });
+
+                $suggestionDiv.find('button').click(function(event) {
+                    event.preventDefault();
+                    $j('input[name=selectedRegulatoryIds][value=' + $j(this).attr('name') + ']').click();
+                });
+                $suggestionDiv.find('.addRegulatoryInfo').click(function(event) {
+                    event.preventDefault();
+                    var projectSelection = $j("#researchProject").tokenInput('get')[0];
+                    openRegulatoryInfoDialog(projectSelection.id, projectSelection.name, function() {
+                        closeRegulatoryInfoDialog();
+                        populateRegulatorySelect();
+                        suggestRegulatoryInfo();
+                    }, $j(this).attr('identifier'));
+                });
             }
         }
 
@@ -1116,7 +1185,7 @@
                 </div>
             </div>
 
-            <div id="sampleListEdit" class="help-block span4">
+            <div id="sampleListEdit" class="help-block span6">
                 <c:choose>
                     <c:when test="${actionBean.editOrder.draft}">
                         Enter sample names in this box, one per line. When you save the order, the view page will show
@@ -1129,6 +1198,7 @@
                 <br/>
                 <br/>
                 <stripes:textarea readonly="${!actionBean.editOrder.draft}" class="controlledText" id="samplesToAdd" name="sampleList" rows="15" cols="120"/>
+                <div id="regulatoryInfoSuggestions"></div>
             </div>
             <div id="sampleInitiationKitRequestEdit" class="help-block span4" style="display: none">
             <div class="form-horizontal span5">
@@ -1226,6 +1296,8 @@
                 </fieldset>
             </div>
         </stripes:form>
+
+        <stripes:layout-render name="/projects/regulatory_info_dialog.jsp"/>
 
     </stripes:layout-component>
 </stripes:layout-render>

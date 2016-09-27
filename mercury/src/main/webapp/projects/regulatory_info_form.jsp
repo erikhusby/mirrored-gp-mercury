@@ -1,8 +1,8 @@
-<%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
+<%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.RegulatoryInfoActionBean" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 <%@ taglib prefix="d-stripes" uri="http://stripes.sourceforge.net/stripes-dynattr.tld" %>
 <stripes:useActionBean var="actionBean"
-                       beanclass="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean"/>
+                       beanclass="org.broadinstitute.gpinformatics.athena.presentation.projects.RegulatoryInfoActionBean"/>
 
 <c:if test="${actionBean.regulatoryInformationNew}">
     <p id="addRegInfoInstructions" style="font-weight: bold">
@@ -11,7 +11,7 @@
 </c:if>
 
 <stripes:form id="regulatoryInfoCreateForm" beanclass="${actionBean.class.name}" class="form-horizontal">
-    <stripes:hidden name="researchProject" value="${actionBean.editResearchProject.jiraTicketKey}"/>
+    <stripes:hidden name="researchProjectKey" value="${actionBean.researchProject.jiraTicketKey}"/>
 
     <%-- regulatoryInfoId will be set if editing an existing regulatory info --%>
     <stripes:hidden id="editRegulatoryInfoId" name="regulatoryInfoId"/>
@@ -71,14 +71,14 @@
         <div class="controls">
             <c:choose>
                 <c:when test="${actionBean.regulatoryInformationNew}">
-                    <stripes:submit id="addNewSubmit" name="addNewRegulatoryInfo" value="Add" class="btn btn-primary"/>
-                    <%-- Hidden action is needed because of the validateTitle() submit handler. See below. --%>
-                    <input type="hidden" name="<%= ResearchProjectActionBean.ADD_NEW_REGULATORY_INFO_ACTION %>">
+                    <stripes:submit id="addNewSubmit" name="<%= RegulatoryInfoActionBean.ADD_NEW_REGULATORY_INFO_ACTION %>" value="Add" class="btn btn-primary"/>
+                    <%-- Hidden action is needed because the form is being submitted via AJAX and form serialization doesn't include submit buttons. --%>
+                    <input type="hidden" name="<%= RegulatoryInfoActionBean.ADD_NEW_REGULATORY_INFO_ACTION %>">
                 </c:when>
                 <c:otherwise>
-                    <stripes:submit id="editSubmit" name="editRegulatoryInfo" value="Edit" class="btn btn-primary"/>
-                    <%-- Hidden action is needed because of the validateTitle() submit handler. See below. --%>
-                    <input type="hidden" name="<%= ResearchProjectActionBean.EDIT_REGULATORY_INFO_ACTION %>">
+                    <stripes:submit id="editSubmit" name="<%= RegulatoryInfoActionBean.EDIT_REGULATORY_INFO_ACTION %>" value="Edit" class="btn btn-primary"/>
+                    <%-- Hidden action is needed because the form is being submitted via AJAX and form serialization doesn't include submit buttons. --%>
+                    <input type="hidden" name="<%= RegulatoryInfoActionBean.EDIT_REGULATORY_INFO_ACTION %>">
                 </c:otherwise>
             </c:choose>
         </div>
@@ -90,11 +90,11 @@
 
     function validateTitle(event) {
         event.preventDefault();
-        var form = this;
+        var $form = $j(this);
         $j.ajax({
-            url: '${ctxpath}/projects/project.action',
+            url: '${ctxpath}/projects/regulatoryInfo.action',
             data: {
-                validateTitle: '',
+                '<%= RegulatoryInfoActionBean.VALIDATE_TITLE_ACTION %>': '',
                 regulatoryInfoId: $j('#editRegulatoryInfoId').val(),
                 regulatoryInfoAlias: $j('#titleInput').val()
             },
@@ -103,12 +103,13 @@
                 if (result) {
                     $j('#titleValidationError').text(result);
                 } else {
-                    /*
-                     * When submitting the form this way, the submit button's name does not get submitted with the rest
-                     * of the form elements. Therefore, an alternate way of sending the stripes action event must be
-                     * used, which is the reason for the hidden inputs above.
-                     */
-                    form.submit();
+                    $j.ajax({
+                        url: $form.attr('action'),
+                        method: $form.attr('method'),
+                        data: $form.serialize(),
+                        success: successfulAddCallback,
+                        error: handleRegInfoAjaxError
+                    })
                 }
             }
         });
