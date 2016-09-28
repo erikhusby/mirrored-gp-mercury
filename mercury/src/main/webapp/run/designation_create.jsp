@@ -43,15 +43,15 @@
                 <div style="float: left; width: 66%;">
                     <div style="float: left; width: 50%;">
                             <textarea style="width: 95%" id="lcsetBarcodeText" type="text" rows="3" name="lcsetsBarcodes"
-                                      placeholder='LCSETs, Loading Tube Barcodes, or leave blank for all undesignated tubes.'></textarea>
+                                      placeholder='[LCSETs and/or loading tube barcodes]'></textarea>
 
                         <div style="padding: 1em; padding-left: 10%;">
                             <stripes:submit id="loadNormBtn" name="loadNorm" value="Norm Tubes" class="btn btn-primary"
-                                            title="Adds normalization tubes to the designation display."/>
+                                            title="Finds normalization tubes for the LCSETs or tube barcodes."/>
                             <stripes:submit id="loadDenatureBtn" name="loadDenature" value="Denature Tubes" class="btn btn-primary"
-                                            title="Adds denature tubes to the designation display."/>
+                                            title="Finds denature tubes for the LCSETs or tube barcodes."/>
                             <stripes:submit id="loadPoolNormBtn" name="loadPoolNorm" value="Pooled Norm Tubes" class="btn btn-primary"
-                                            title="Adds pooled normalization tubes to the designation display."/>
+                                            title="Finds pooled normalization tubes for the LCSETs or tube barcodes."/>
                         </div>
                     </div>
 
@@ -63,7 +63,7 @@
                         </div>
                         <div class="control-group" style="padding-left: 20%;">
                             <stripes:submit id="loadUndesignatedBtn" name="loadUndesignated" value="All Undesignated Tubes" class="btn btn-primary"
-                                            title="Shows undesignated normalization tubes that are in the date range."/>
+                                            title="Finds undesignated normalization tubes that are in the date range."/>
                         </div>
                     </div>
 
@@ -81,7 +81,7 @@
  or not when adding new designations to the display.">Append to the list</stripes:label>
 
                     <stripes:submit id="pending" name="pending" value="Show Designations" class="btn btn-primary"
-                                    title="Shows previously queued designations."/>
+                                    title="Shows previously saved designations."/>
                 </div>
             </div>
 
