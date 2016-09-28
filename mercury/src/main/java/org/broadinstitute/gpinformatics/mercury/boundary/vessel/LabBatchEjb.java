@@ -32,12 +32,14 @@ import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
+import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation_;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
@@ -105,7 +107,7 @@ public class LabBatchEjb {
 
     private LabVesselDao labVesselDao;
 
-    private FlowcellDesignationEjb designationTubeEjb;
+    private FlowcellDesignationEjb flowcellDesignationEjb;
 
     private static final VesselPosition[] VESSEL_POSITIONS = {VesselPosition.LANE1, VesselPosition.LANE2,
             VesselPosition.LANE3, VesselPosition.LANE4, VesselPosition.LANE5, VesselPosition.LANE6,
@@ -752,7 +754,7 @@ public class LabBatchEjb {
                 designationDto.setSelected(true);
             }
             DesignationUtils.updateDesignationsAndDtos(designationDtos,
-                    EnumSet.allOf(FlowcellDesignation.Status.class), designationTubeEjb);
+                    EnumSet.allOf(FlowcellDesignation.Status.class), flowcellDesignationEjb);
         }
         return fctUrls;
     }
@@ -962,8 +964,8 @@ public class LabBatchEjb {
     }
 
     @Inject
-    public void setDesignationTubeEjb(FlowcellDesignationEjb designationTubeEjb) {
-        this.designationTubeEjb = designationTubeEjb;
+    public void setFlowcellDesignationEjb(FlowcellDesignationEjb flowcellDesignationEjb) {
+        this.flowcellDesignationEjb = flowcellDesignationEjb;
     }
 
 
