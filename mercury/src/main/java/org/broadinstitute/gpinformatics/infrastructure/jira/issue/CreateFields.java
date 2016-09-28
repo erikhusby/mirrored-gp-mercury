@@ -161,8 +161,9 @@ public class CreateFields extends UpdateFields {
         ALLPREP("AllPrep"),
         DNA_EXTRACTION("DNA Extraction"),
         EXTRACTION_OTHER("Extraction (Other)"),
-        RNA_EXTRACTION("RNA Extraction");
-
+        RNA_EXTRACTION("RNA Extraction"),
+        HUMAN_PCR_FREE("Human PCR-Free"),
+        HUMAN_PCR_PLUS("Human PCR-Plus");
         private final String jiraName;
 
         IssueType(String jiraName) {

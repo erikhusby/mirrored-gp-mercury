@@ -2322,8 +2322,8 @@
         <name>Agilent Exome Express</name>
         <productWorkflowDefVersions>
             <version>3.0</version>
-            <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
             <batchJiraProjectType>LCSET</batchJiraProjectType>
+            <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
             <effectiveDate>2012-09-30T22:04:23.932-04:00</effectiveDate>
             <workflowProcessDefs>Pico/Plating</workflowProcessDefs>
             <workflowProcessDefs>Exome Express Shearing</workflowProcessDefs>
@@ -2343,8 +2343,8 @@
         </productWorkflowDefVersions>
         <productWorkflowDefVersions>
             <version>3.0</version>
-            <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
             <batchJiraProjectType>LCSET</batchJiraProjectType>
+            <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
             <effectiveDate>2013-07-25T00:00:00.000-04:00</effectiveDate>
             <workflowProcessDefs>Pico/Plating</workflowProcessDefs>
             <workflowProcessDefs>Exome Express Shearing</workflowProcessDefs>
@@ -2367,8 +2367,8 @@
       <name>ICE</name>
         <productWorkflowDefVersions>
             <version>4.0</version>
-            <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
             <batchJiraProjectType>LCSET</batchJiraProjectType>
+            <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
             <effectiveDate>2013-09-12T15:28:00.001-04:00</effectiveDate>
             <workflowProcessDefs>Pico/Plating</workflowProcessDefs>
             <routingRule>SQUID</routingRule>
@@ -2379,8 +2379,8 @@
       <name>ICE Exome Express</name>
         <productWorkflowDefVersions>
             <version>4.0</version>
-            <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
             <batchJiraProjectType>LCSET</batchJiraProjectType>
+            <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
             <effectiveDate>2014-03-04T00:00:00.000-04:00</effectiveDate>
             <workflowProcessDefs>Pico/Plating</workflowProcessDefs>
             <workflowProcessDefs>Exome Express Shearing</workflowProcessDefs>
@@ -2403,8 +2403,8 @@
       <name>ICE CRSP</name>
         <productWorkflowDefVersions>
             <version>4.0</version>
-            <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
             <batchJiraProjectType>LCSET</batchJiraProjectType>
+            <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
             <effectiveDate>2014-10-19T21:03:24.085-04:00</effectiveDate>
             <workflowProcessDefs>CRSP Pico/Plating</workflowProcessDefs>
             <workflowProcessDefs>Exome Express Shearing</workflowProcessDefs>
@@ -2427,8 +2427,8 @@
         <name>Hybrid Selection</name>
         <productWorkflowDefVersions>
             <version>1.0</version>
-            <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
             <batchJiraProjectType>LCSET</batchJiraProjectType>
+            <batchJiraIssueType>WHOLE_EXOME_HYBSEL</batchJiraIssueType>
             <effectiveDate>2012-09-30T22:04:23.932-04:00</effectiveDate>
             <workflowProcessDefs>Preflight</workflowProcessDefs>
             <workflowProcessDefs>Shearing</workflowProcessDefs>
@@ -2449,8 +2449,8 @@
         <name>Whole Genome</name>
         <productWorkflowDefVersions>
             <version>1.0</version>
-            <batchJiraIssueType>LCSET</batchJiraIssueType>
             <batchJiraProjectType>LCSET</batchJiraProjectType>
+            <batchJiraIssueType>LCSET</batchJiraIssueType>
             <effectiveDate>2012-09-30T22:04:23.932-04:00</effectiveDate>
             <workflowProcessDefs>Preflight</workflowProcessDefs>
             <workflowProcessDefs>Shearing</workflowProcessDefs>
@@ -2471,8 +2471,8 @@
         <name>Whole Genome PCR Free</name>
         <productWorkflowDefVersions>
             <version>1.0</version>
-            <batchJiraIssueType>LCSET</batchJiraIssueType>
             <batchJiraProjectType>LCSET</batchJiraProjectType>
+            <batchJiraIssueType>HUMAN_PCR_FREE</batchJiraIssueType>
             <effectiveDate>2016-07-01T22:04:23.932-04:00</effectiveDate>
             <workflowProcessDefs>Pico/Plating</workflowProcessDefs>
             <workflowProcessDefs>Exome Express Shearing</workflowProcessDefs>
@@ -2492,8 +2492,8 @@
         <name>Whole Genome PCR Plus</name>
         <productWorkflowDefVersions>
             <version>1.0</version>
-            <batchJiraIssueType>LCSET</batchJiraIssueType>
             <batchJiraProjectType>LCSET</batchJiraProjectType>
+            <batchJiraIssueType>HUMAN_PCR_PLUS</batchJiraIssueType>
             <effectiveDate>2016-07-01T22:04:23.932-04:00</effectiveDate>
             <workflowProcessDefs>Pico/Plating</workflowProcessDefs>
             <workflowProcessDefs>Exome Express Shearing</workflowProcessDefs>
@@ -2513,8 +2513,8 @@
         <name>Clinical Whole Blood Extraction</name>
         <productWorkflowDefVersions>
             <version>02</version>
-            <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
-            <batchJiraProjectType>LCSET</batchJiraProjectType>
+            <batchJiraProjectType>XTR</batchJiraProjectType>
+            <batchJiraIssueType>DNA_EXTRACTION</batchJiraIssueType>
             <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
             <workflowProcessDefs>Clinical Whole Blood Extraction</workflowProcessDefs>
             <routingRule>MERCURY</routingRule>
@@ -2524,8 +2524,8 @@
         <name>TruSeq Strand Specific CRSP</name>
         <productWorkflowDefVersions>
             <version>1.0</version>
-            <batchJiraIssueType>CDNA_TRUSEQ_SS</batchJiraIssueType>
             <batchJiraProjectType>LCSET</batchJiraProjectType>
+            <batchJiraIssueType>CDNA_TRUSEQ_SS</batchJiraIssueType>
             <effectiveDate>2015-08-13T10:03:24.085-04:00</effectiveDate>
             <workflowProcessDefs>CRSP Ribo/Plating</workflowProcessDefs>
             <workflowProcessDefs>TruSeq Strand Specific</workflowProcessDefs>
@@ -2544,8 +2544,8 @@
         <name>Nexome</name>
         <productWorkflowDefVersions>
             <version>2.0</version>
-            <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
             <batchJiraProjectType>LCSET</batchJiraProjectType>
+            <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
             <effectiveDate>2016-04-15T10:03:24.085-04:00</effectiveDate>
             <workflowProcessDefs>Pico/Plating</workflowProcessDefs>
             <workflowProcessDefs>Nexome</workflowProcessDefs>
@@ -2564,8 +2564,8 @@
         <name>10X</name>
         <productWorkflowDefVersions>
             <version>1.0</version>
-            <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
             <batchJiraProjectType>LCSET</batchJiraProjectType>
+            <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
             <effectiveDate>2016-06-06T10:03:24.085-04:00</effectiveDate>
             <workflowProcessDefs>Pico/Plating</workflowProcessDefs>
             <workflowProcessDefs>10X</workflowProcessDefs>
@@ -2586,8 +2586,8 @@
         <name>Infinium</name>
         <productWorkflowDefVersions>
             <version>1.0</version>
-            <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
-            <batchJiraProjectType>LCSET</batchJiraProjectType>
+            <!-- No JIRA setup, because BSP creates ARRAY tickets <batchJiraProjectType>LCSET</batchJiraProjectType>-->
+            <!-- No JIRA setup, because BSP creates ARRAY tickets <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType> -->
             <effectiveDate>2015-10-01T10:03:24.085-04:00</effectiveDate>
             <workflowProcessDefs>Infinium</workflowProcessDefs>
             <routingRule>MERCURY</routingRule>
@@ -2598,8 +2598,8 @@
         <name>DNA and RNA from Cell Pellets</name>
         <productWorkflowDefVersions>
             <version>01</version>
-            <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
-            <batchJiraProjectType>LCSET</batchJiraProjectType>
+            <batchJiraProjectType>XTR</batchJiraProjectType>
+            <batchJiraIssueType>ALLPREP</batchJiraIssueType>
             <effectiveDate>2014-08-05T00:00:00.000-04:00</effectiveDate>
             <workflowProcessDefs>DNA and RNA from Cell Pellets</workflowProcessDefs>
             <routingRule>MERCURY</routingRule>
