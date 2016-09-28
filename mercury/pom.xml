@@ -867,6 +867,7 @@
                 </dependency>
             </dependencies>
         </profile>
+
         <profile>
             <id>DEV</id>
             <properties>
@@ -880,6 +881,7 @@
                 </testResources>
             </build>
         </profile>
+
         <profile>
             <id>BUILD</id>
             <properties>
