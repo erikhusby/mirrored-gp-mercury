@@ -605,4 +605,17 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="GPLIM-4321-3" author="dwilson">
+        <addColumn schemaName="mercury" tableName="lab_vessel">
+            <column name="abandon_reason" type="varchar2(255)"/>
+            <column name="abandon_date" type="oracle.sql.TIMESTAMP"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-4321-4" author="dwilson">
+        <addColumn schemaName="mercury" tableName="lab_vessel_aud">
+            <column name="abandon_reason" type="varchar2(255)"/>
+            <column name="abandon_date" type="oracle.sql.TIMESTAMP"/>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>

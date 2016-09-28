@@ -54,6 +54,7 @@ import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -105,6 +106,10 @@ public abstract class LabVessel implements Serializable {
 
     /** A human readable name e.g. BSP plate name. */
     protected String name;
+
+    private String abandonReason;
+
+    private Date abandonDate;
 
     private Date createdOn;
 
@@ -322,6 +327,38 @@ public abstract class LabVessel implements Serializable {
         evaluateCriteria(materialTypeTraverserCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
         return materialTypeTraverserCriteria;
     }
+
+
+    public boolean isAbandoned()
+    {
+        if(abandonReason != null) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+    public String getAbandonReason()
+    { return abandonReason;}
+
+    public void  setAbandonReason(String abandonReason)
+    { this.abandonReason = abandonReason; }
+
+    public Date getAbandonDate()
+    { return abandonDate;}
+
+    public void  setAbandonDate(boolean toggle) {
+        if(toggle) {
+            this.abandonDate = new Date();
+        }
+        else {
+            this.abandonDate = null;
+        }
+    }
+
+
+
 
     /**
      * Well A01, Lane 3, Region 6 all might

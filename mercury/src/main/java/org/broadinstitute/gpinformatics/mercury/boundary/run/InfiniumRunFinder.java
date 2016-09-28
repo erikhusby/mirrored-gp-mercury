@@ -81,10 +81,13 @@ public class InfiniumRunFinder implements Serializable {
                 UserTransaction utx = ejbContext.getUserTransaction();
                 try {
                     if (OrmUtil.proxySafeIsInstance(labVessel, StaticPlate.class)) {
-                        utx.begin();
                         StaticPlate staticPlate = OrmUtil.proxySafeCast(labVessel, StaticPlate.class);
-                        processChip(staticPlate);
-                        utx.commit();
+                        //Do not process if the chip is marked as abandoned.
+                        if(!staticPlate.isAbandoned()) {
+                            utx.begin();
+                            processChip(staticPlate);
+                            utx.commit();
+                        }
                     }
                 } catch (Exception e) {
                     utx.rollback();
