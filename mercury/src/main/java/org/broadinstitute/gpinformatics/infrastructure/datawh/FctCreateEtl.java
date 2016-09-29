@@ -89,9 +89,4 @@ public class FctCreateEtl extends GenericEntityEtl<LabBatchStartingVessel,LabBat
                 poolTest ? "Y":"N"
         );
     }
-
-    /** Setter used for test purposes. */
-    public void setFlowcellDesignationEjb(FlowcellDesignationEjb flowcellDesignationEjb) {
-        this.flowcellDesignationEjb = flowcellDesignationEjb;
-    }
 }
