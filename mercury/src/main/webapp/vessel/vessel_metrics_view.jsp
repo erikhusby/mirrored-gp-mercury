@@ -8,7 +8,21 @@
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
             $j(document).ready(function () {
-
+                $j( "#heatField" ).change(function() {
+                    var selectedField = $j("select#heatField option:selected").val();
+                    console.log(selectedField);
+                    var metricsMap = $j("#metrics").val();
+                    console.log("MetricsMap= " + metricsMap);
+                    var positionsToValue = metricsMap[selectedField];
+                    if (positionsToValue != null) {
+                        for (var key in positionsToValue) {
+                            if (positionsToValue.hasOwnProperty(key)) {
+                                var value = positionsToValue[key];
+                                $j("#" + key).text(value);
+                            }
+                        }
+                    }
+                });
             });
         </script>
     </stripes:layout-component>
@@ -27,11 +41,33 @@
                     </div>
                 </div>
             </div>
+            <stripes:hidden id="metrics"  name="metricToPositionToValue"
+                            value="${actionBean.metricToPositionToValue}"/>
         </stripes:form>
         <div id="searchResults">
-            <c:if test="${actionBean.labVessel != null}">
-                Metric View For: ${actionBean.labVessel.label}
-                <stripes:layout-render name="/container/heat_map.jsp" actionBean="${actionBean}"/>
+            <c:if test="${actionBean.foundResults}">
+                <c:if test="${actionBean.labVessel != null}">
+                    <table class="platemap">
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <c:forEach items="${actionBean.labVessel.vesselGeometry.columnNames}" var="colName">
+                                    <th>${colName}</th>
+                                </c:forEach>
+                            </tr>
+                        </thead>
+                        <c:forEach items="${actionBean.labVessel.vesselGeometry.rowNames}" var="rowName">
+                            <tr>
+                                <th>${rowName}</th>
+                                <c:forEach items="${actionBean.labVessel.vesselGeometry.columnNames}" var="colName">
+                                    <%--<td>${actionBean.positionToQc[rowName.concat(colName)].callRate}</td>--%>
+                                    <td><span id="${rowName}${colName}"/></td>
+                                </c:forEach>
+                            </tr>
+                        </c:forEach>
+                    </table>
+                    <stripes:layout-render name="/container/heat_map.jsp" actionBean="${actionBean}"/>
+                </c:if>
             </c:if>
         </div>
     </stripes:layout-component>
