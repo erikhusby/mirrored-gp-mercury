@@ -20,7 +20,7 @@ public class GapHandler {
 
     public void postToGap(BettaLIMSMessage message) {
         // When backfilling messages from GAP to Mercury, avoid sending them to GAP
-        if (message.getMode() == null || !message.getMode().equals(LabEventFactory.MODE_MERCURY)) {
+        if (message.getMode() == null || !message.getMode().equals(LabEventFactory.MODE_BACKFILL)) {
             // Posts message to BSP using the specified REST url.
             String urlString = gapRestClient.getUrl("bettalims");
             WebResource webResource = gapRestClient.getWebResource(urlString);

@@ -127,6 +127,10 @@ public class LabEventFactory implements Serializable {
      */
     public static final String MODE_MERCURY = "Mercury";
     /**
+     * Used when backfilling messages from GAP, avoids forwarding them to GAP.
+     */
+    public static final String MODE_BACKFILL = "Backfill";
+    /**
      * Whether to create sources that are not found in the database.  Handling out of order messages requires this
      * to be true, but when running in parallel with Squid / BettaLIMS (which can't handle out of order messages)
      * we set this to false so Mercury fails in the same way as Squid / BettaLIMS.
