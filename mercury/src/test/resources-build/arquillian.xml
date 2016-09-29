@@ -48,7 +48,7 @@
     </extension>
 
 <!-- for Arquillian-JBossAS7-Managed with the BUILD profile. -->
-    <container qualifier="jbossas-7-managed" default="true">
+    <container qualifier="Arquillian-WildFly10-Remote" default="true">
         <configuration>
             <!--<property name="jbossHome">target/jboss-as-7.0.2.Final</property>-->
             <property name="managementAddress">${jboss.managementAddress}</property>
