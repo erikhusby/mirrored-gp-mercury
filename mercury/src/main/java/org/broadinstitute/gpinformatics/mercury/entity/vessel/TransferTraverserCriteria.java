@@ -13,7 +13,6 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -499,15 +498,12 @@ public abstract class TransferTraverserCriteria {
         }
 
         public Collection<LabVessel> getLabVesselDescendants() {
-            Set<LabVessel> allVessels = new HashSet<>();
+            Set<LabVessel> descendants = new LinkedHashSet<>();
+            // Vessel sets sorted by hop count
             for (List<LabVessel> vesselList : labVesselAtHopCount.values()) {
-                allVessels.addAll(vesselList);
+                descendants.addAll(vesselList);
             }
-            Map<Date, LabVessel> sortedTreeMap = new TreeMap<>();
-            for (LabVessel vessel : allVessels) {
-                sortedTreeMap.put(vessel.getCreatedOn(), vessel);
-            }
-            return new ArrayList<>(sortedTreeMap.values());
+            return descendants;
         }
     }
 
@@ -545,15 +541,12 @@ public abstract class TransferTraverserCriteria {
         }
 
         public Collection<LabVessel> getLabVesselAncestors() {
-            Set<LabVessel> allVessels = new HashSet<>();
+            LinkedHashSet<LabVessel> ancestors = new LinkedHashSet<>();
+            // Vessel sets sorted by hop count
             for (List<LabVessel> vesselList : labVesselAtHopCount.values()) {
-                allVessels.addAll(vesselList);
+                ancestors.addAll(vesselList);
             }
-            Map<Date, LabVessel> sortedTreeMap = new TreeMap<>();
-            for (LabVessel vessel : allVessels) {
-                sortedTreeMap.put(vessel.getCreatedOn(), vessel);
-            }
-            return new ArrayList<>(sortedTreeMap.values());
+            return ancestors;
         }
     }
 
