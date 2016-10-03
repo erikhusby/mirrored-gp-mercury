@@ -110,7 +110,7 @@ public class SampleSheetFactory {
             printStream.print(",");
 
             VesselAndPosition chemistryPlateAndPosition = traverserCriteria.getMapTypeToVesselPosition().get(
-                    LabEventType.INFINIUM_AMPLIFICATION);
+                    LabEventType.INFINIUM_HYBRIDIZATION);
             printStream.print(chemistryPlateAndPosition.getVessel().getLabel());
             printStream.print(",");
 
@@ -120,7 +120,7 @@ public class SampleSheetFactory {
             printStream.print(sampleData.getCollaboratorParticipantId());
             printStream.print(",");
 
-            printStream.print(sampleData.getGender());
+            printStream.print(sampleData.getGender().charAt(0));
             printStream.print(",");
 
             printStream.print(sampleData.getPatientId());

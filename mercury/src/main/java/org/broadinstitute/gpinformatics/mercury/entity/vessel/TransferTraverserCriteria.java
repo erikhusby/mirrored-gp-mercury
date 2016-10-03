@@ -912,10 +912,16 @@ public abstract class TransferTraverserCriteria {
 
         @Override
         public TraversalControl evaluateVesselPreOrder(Context context) {
-            LabEventType labEventType = context.getVesselEvent().getLabEvent().getLabEventType();
-            if (eventTypes.contains(labEventType)) {
-                mapTypeToVesselPosition.put(labEventType, new VesselAndPosition(
-                        context.getContextVesselAndPosition().getLeft(), context.getContextVesselAndPosition().getRight()));
+            if (context != null) {
+                LabVessel.VesselEvent vesselEvent = context.getVesselEvent();
+                if (vesselEvent != null) {
+                    LabEventType labEventType = vesselEvent.getLabEvent().getLabEventType();
+                    if (eventTypes.contains(labEventType)) {
+                        mapTypeToVesselPosition.put(labEventType, new VesselAndPosition(
+                                context.getContextVesselContainer().getEmbedder(),
+                                context.getContextVesselAndPosition().getRight()));
+                    }
+                }
             }
             return TraversalControl.ContinueTraversing;
         }
