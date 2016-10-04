@@ -13,7 +13,7 @@ import javax.persistence.Transient;
 @Entity
 public class GenotypingProductOrderMapping extends AttributeArchetype {
     public static final String GENOTYPING_CHIP_OVERRIDE_CONFIG = "Genotyping Chip Override";
-    public static final String ZCALL_THRESHOLD = "zcall_threshold_unix";
+    public static final String CALL_RATE_THRESHOLD = "call_rate_threshold";
     public static final String CLUSTER_LOCATION = "cluster_location_unix";
     public static final String MAPPING_GROUP = "genotypingProductOrderMapping";
     public static final String ATTRIBUTES_GROUP = "genotypingProductOrder";
@@ -23,19 +23,19 @@ public class GenotypingProductOrderMapping extends AttributeArchetype {
     public GenotypingProductOrderMapping() {
     }
 
-    public GenotypingProductOrderMapping(String mappingName, String zCallThreshold, String clusterLocation) {
+    public GenotypingProductOrderMapping(String mappingName, String callRateThreshold, String clusterLocation) {
         super(GENOTYPING_CHIP_OVERRIDE_CONFIG, mappingName);
-        addOrSetAttribute(ZCALL_THRESHOLD, zCallThreshold);
+        addOrSetAttribute(CALL_RATE_THRESHOLD, callRateThreshold);
         addOrSetAttribute(CLUSTER_LOCATION, clusterLocation);
     }
 
-    public String getZCallThreshold() {
-        return getAttributeMap().get(ZCALL_THRESHOLD);
+    public String getCallRateThreshold() {
+        return getAttributeMap().get(CALL_RATE_THRESHOLD);
     }
 
     @Transient
-    public void setZCallThreshold(String zCallThreshold) {
-        addOrSetAttribute(ZCALL_THRESHOLD, zCallThreshold);
+    public void setCallRateThreshold(String zCallThreshold) {
+        addOrSetAttribute(CALL_RATE_THRESHOLD, zCallThreshold);
     }
 
     public String getClusterLocation() {

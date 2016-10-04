@@ -2522,11 +2522,11 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     public String getCallRateThreshold() {
         if (getGenotypingProductOrderMapping() != null &&
-            getGenotypingProductOrderMapping().getZCallThreshold() != null) {
-            return getGenotypingProductOrderMapping().getZCallThreshold();
+            getGenotypingProductOrderMapping().getCallRateThreshold() != null) {
+            return getGenotypingProductOrderMapping().getCallRateThreshold();
         } else if (getGenotypingChip() != null){
             Map<String, String> chipAttributes = genotypingChip.getAttributeMap();
-            return chipAttributes.get("zcall_threshold_unix");
+            return chipAttributes.get("call_rate_threshold");
         }
         return null;
     }
@@ -2536,12 +2536,12 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     public void setCallRateThreshold(String callRateThreshold) {
         if (getGenotypingChip() != null) {
-            ArchetypeAttribute zcallThresholdUnix = getGenotypingChip().getAttribute("zcall_threshold_unix");
+            ArchetypeAttribute zcallThresholdUnix = getGenotypingChip().getAttribute("call_rate_threshold");
             if (zcallThresholdUnix != null && zcallThresholdUnix.getAttributeValue() != null &&
                     !zcallThresholdUnix.getAttributeValue().equals(callRateThreshold)) {
                 GenotypingProductOrderMapping mapping = findOrCreateGenotypingProductOrderMapping();
                 if (mapping != null) {
-                    mapping.setZCallThreshold(callRateThreshold);
+                    mapping.setCallRateThreshold(callRateThreshold);
                 }
             }
         }

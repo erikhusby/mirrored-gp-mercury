@@ -327,7 +327,7 @@ public class AttributeArchetypeFixupTest extends Arquillian {
 
         List<AttributeDefinition> definitions = new ArrayList<AttributeDefinition>() {{
             add(new AttributeDefinition(AttributeDefinition.DefinitionType.GENOTYPING_PRODUCT_ORDER,
-                    chipFamily, "zcall_threshold_unix", true));
+                    chipFamily, "call_rate_threshold", true));
             add(new AttributeDefinition(AttributeDefinition.DefinitionType.GENOTYPING_PRODUCT_ORDER,
                     chipFamily, "cluster_location_unix", true));
         }};
