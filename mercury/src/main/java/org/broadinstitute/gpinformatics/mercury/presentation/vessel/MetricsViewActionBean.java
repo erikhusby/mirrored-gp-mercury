@@ -196,8 +196,19 @@ public class MetricsViewActionBean extends HeatMapActionBean {
             dataset.setLabel("Call Rate");
             metricsTable.getDatasets().add(dataset);
 
-            // Build map of Metric -> Position -> Value
             ObjectMapper mapper = new ObjectMapper();
+            for (String metric : metrics) {
+                for (ArraysQc arraysQc: arraysQcList) {
+                    Map<String,Object> props = mapper.convertValue(arraysQc, Map.class);
+                    if (props.containsKey(metric)) {
+                        Data data = new Data();
+                        data.setValue(props.get(metric));
+
+                    }
+                }
+            }
+
+            // Build map of Metric -> Position -> Value
             List<Data> callRateData = new ArrayList<>();
             for (ArraysQc arraysQc: arraysQcList) {
                 Map<String,Object> props = mapper.convertValue(arraysQc, Map.class);
@@ -345,17 +356,15 @@ public class MetricsViewActionBean extends HeatMapActionBean {
 
     public class Data
     {
-        private String value;
+        private Object value;
 
         private String well;
 
-        public String getValue ()
-        {
+        public Object getValue() {
             return value;
         }
 
-        public void setValue (String value)
-        {
+        public void setValue(Object value) {
             this.value = value;
         }
 
