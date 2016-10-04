@@ -52,8 +52,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import static com.mxgraph.util.mxResources.add;
-
 public class SequencingTemplateFactory {
     @Inject
     private IlluminaFlowcellDao illuminaFlowcellDao;
