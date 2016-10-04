@@ -2450,7 +2450,7 @@
         <productWorkflowDefVersions>
             <version>1.0</version>
             <batchJiraProjectType>LCSET</batchJiraProjectType>
-            <batchJiraIssueType>LCSET</batchJiraIssueType>
+            <batchJiraIssueType>EXOME_EXPRESS</batchJiraIssueType>
             <effectiveDate>2012-09-30T22:04:23.932-04:00</effectiveDate>
             <workflowProcessDefs>Preflight</workflowProcessDefs>
             <workflowProcessDefs>Shearing</workflowProcessDefs>
