@@ -317,4 +317,26 @@ public class AttributeArchetypeFixupTest extends Arquillian {
         attributeArchetypeDao.flush();
         utx.commit();
     }
+
+    @Test(enabled = false)
+    public void gplim4320PdoOverrides() throws Exception {
+        utx.begin();
+        userBean.loginOSUser();
+
+        final String chipFamily = InfiniumRunResource.INFINIUM_GROUP;
+
+        List<AttributeDefinition> definitions = new ArrayList<AttributeDefinition>() {{
+            add(new AttributeDefinition(AttributeDefinition.DefinitionType.GENOTYPING_PRODUCT_ORDER,
+                    chipFamily, "zcall_threshold_unix", true));
+            add(new AttributeDefinition(AttributeDefinition.DefinitionType.GENOTYPING_PRODUCT_ORDER,
+                    chipFamily, "cluster_location_unix", true));
+        }};
+
+
+        String fixupReason = "GPLIM-4320 add pdo specific overrides.";
+        attributeArchetypeDao.persist(new FixupCommentary(fixupReason));
+        attributeArchetypeDao.persistAll(definitions);
+        attributeArchetypeDao.flush();
+        utx.commit();
+    }
 }
