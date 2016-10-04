@@ -8,21 +8,57 @@
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
             $j(document).ready(function () {
+
+                function applyHeatMapChange() {
+                    console.log("Applying Heat Map");
+                    // TODO really don't want heat map
+                    $j('.heatable').heatcolor(
+                            function () {
+                                return $j(this).text();
+                            },
+                            {
+                                lightness: $j("#amount").val() / 100,
+                                colorstyle: 'greentored',
+                                reverseOrder: true,
+                                maxval: 0,
+                                minval: 100 //TODO these need to be set dynamically
+                            }
+                    );
+                }
+
                 $j( "#heatField" ).change(function() {
                     var selectedField = $j("select#heatField option:selected").val();
-                    console.log(selectedField);
-                    var metricsMap = $j("#metrics").val();
-                    console.log("MetricsMap= " + metricsMap);
-                    var positionsToValue = metricsMap[selectedField];
-                    if (positionsToValue != null) {
-                        for (var key in positionsToValue) {
-                            if (positionsToValue.hasOwnProperty(key)) {
-                                var value = positionsToValue[key];
-                                $j("#" + key).text(value);
+                    var metricsMap =${actionBean.metricToPositionToValueJson};
+                    var plotTypes =${actionBean.metricToPlotJson};
+                    if (metricsMap != undefined) {
+                        var positionsToValue = metricsMap[selectedField];
+                        if (positionsToValue != null) {
+                            for (var key in positionsToValue) {
+                                if (positionsToValue.hasOwnProperty(key)) {
+                                    var value = positionsToValue[key];
+                                    if (value.toString().startsWith("0.")) {
+                                        value = parseFloat(value * 100).toFixed(2);
+                                    }
+                                    $j("#" + key).text(value);
+                                }
                             }
                         }
                     }
+                    applyHeatMapChange();
                 });
+
+                $j('#colorSlider').slider({
+                    range:"min",
+                    value:45,
+                    min:0,
+                    max:90,
+                    slide:function (event, ui) {
+                        applyHeatMapChange();
+                        $j('#amount').val(ui.value);
+                    }
+
+                });
+                $j('#amount').val($j('#colorSlider').slider('value'));
             });
         </script>
     </stripes:layout-component>
@@ -41,32 +77,47 @@
                     </div>
                 </div>
             </div>
-            <stripes:hidden id="metrics"  name="metricToPositionToValue"
-                            value="${actionBean.metricToPositionToValue}"/>
         </stripes:form>
         <div id="searchResults">
             <c:if test="${actionBean.foundResults}">
                 <c:if test="${actionBean.labVessel != null}">
+                    <div class="form-horizontal">
+                        <div class="control-group"
+                            <stripes:label for="selectedHeatField" class="control-label">
+                                Metric Type
+                            </stripes:label>
+                            <div class="controls">
+                                <select name="selectedHeatField" id="heatField">
+                                    <c:forEach items="${actionBean.heatMapFields}" var="field">
+                                        <option value="${field}">${field}</option>
+                                    </c:forEach>
+                                </select>
+                            </div>
+                            <stripes:label for="amount" name="Color Intensity" class="control-label"/>
+                            <div class="controls">
+                                <div id="colorSlider"></div>
+                                <input type="hidden" id="amount" disabled="true" size="3" value=".45">
+                            </div>
+                        </div>
+                    </div>
                     <table class="platemap">
                         <thead>
-                            <tr>
-                                <th></th>
-                                <c:forEach items="${actionBean.labVessel.vesselGeometry.columnNames}" var="colName">
-                                    <th>${colName}</th>
-                                </c:forEach>
-                            </tr>
+                        <tr>
+                            <th></th>
+                            <c:forEach items="${actionBean.labVessel.vesselGeometry.columnNames}" var="colName">
+                                <th>${colName}</th>
+                            </c:forEach>
+                        </tr>
                         </thead>
                         <c:forEach items="${actionBean.labVessel.vesselGeometry.rowNames}" var="rowName">
                             <tr>
                                 <th>${rowName}</th>
                                 <c:forEach items="${actionBean.labVessel.vesselGeometry.columnNames}" var="colName">
-                                    <%--<td>${actionBean.positionToQc[rowName.concat(colName)].callRate}</td>--%>
-                                    <td><span id="${rowName}${colName}"/></td>
+                                    <td><div class="heatable" id="${rowName}${colName}"></div></td>
                                 </c:forEach>
                             </tr>
                         </c:forEach>
                     </table>
-                    <stripes:layout-render name="/container/heat_map.jsp" actionBean="${actionBean}"/>
                 </c:if>
             </c:if>
         </div>

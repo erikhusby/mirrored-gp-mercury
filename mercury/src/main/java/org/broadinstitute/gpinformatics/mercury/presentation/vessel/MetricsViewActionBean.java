@@ -21,13 +21,15 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import javax.inject.Inject;
-import java.lang.reflect.Field;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -56,7 +58,10 @@ public class MetricsViewActionBean extends HeatMapActionBean {
 
     private LabVessel labVessel;
     private Map<String, Map<String, Object>> metricToPositionToValue;
+    private String metricToPositionToValueJson;
     private boolean foundResults;
+    private Map<String, Plot> metricToPlot;
+    private Map<String, Plot> metricToPlotJson;
 
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
@@ -75,7 +80,8 @@ public class MetricsViewActionBean extends HeatMapActionBean {
     }
 
     @ValidationMethod(on = SEARCH_ACTION)
-    public void validateData() throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+    public void validateData()
+            throws IllegalAccessException, InvocationTargetException, NoSuchMethodException, IOException {
         foundResults = false;
         setLabVessel(labVesselDao.findByIdentifier(labVesselIdentifier));
         if (getLabVessel() == null) {
@@ -176,27 +182,38 @@ public class MetricsViewActionBean extends HeatMapActionBean {
 
 
             List<ArraysQc> arraysQcList = arraysQcDao.findByBarcodes(new ArrayList<>(chipWellBarcodes));
-            Field[] fields = ArraysQc.class.getDeclaredFields();
-            for (Field field : fields) {
-                String name = field.getName();
-                if (!metricToPositionToValue.containsKey(name)) {
-                    metricToPositionToValue.put(name, new HashMap<String, Object>());
+            List<String> metrics = Arrays.asList("callRate", "autocallGender", "fpGender", "reportedGender",
+                    "genderConcordancePf", "hetPct");
+            for (String field : metrics) {
+                if (!metricToPositionToValue.containsKey(field)) {
+                    metricToPositionToValue.put(field, new HashMap<String, Object>());
                 }
             }
 
+            MetricsTable metricsTable = new MetricsTable();
+            Dataset dataset = new Dataset();
+            dataset.setType(ChartType.Category);
+            dataset.setLabel("Call Rate");
+            metricsTable.getDatasets().add(dataset);
+
             // Build map of Metric -> Position -> Value
             ObjectMapper mapper = new ObjectMapper();
+            List<Data> callRateData = new ArrayList<>();
             for (ArraysQc arraysQc: arraysQcList) {
                 Map<String,Object> props = mapper.convertValue(arraysQc, Map.class);
                 String sourcePosition = chipWellToSourcePosition.get(arraysQc.getChipWellBarcode());
                 for (Map.Entry<String, Object> entry: props.entrySet()) {
-                    if (!metricToPositionToValue.containsKey(entry.getKey())) {
-                        metricToPositionToValue.put(entry.getKey(), new HashMap<String, Object>());
+                    if (metrics.contains(entry.getKey())) {
+                        if (!metricToPositionToValue.containsKey(entry.getKey())) {
+                            metricToPositionToValue.put(entry.getKey(), new HashMap<String, Object>());
+                        }
+                        Map<String, Object> positionToValue = metricToPositionToValue.get(entry.getKey());
+                        positionToValue.put(sourcePosition, entry.getValue());
                     }
-                    Map<String, Object> positionToValue = metricToPositionToValue.get(entry.getKey());
-                    positionToValue.put(sourcePosition, entry.getValue());
                 }
             }
+            dataset.setData();
+            metricToPositionToValueJson = mapper.writeValueAsString(metricToPositionToValue);
         }
 
         setHeatMapFields(new ArrayList<>(metricToPositionToValue.keySet()));
@@ -222,13 +239,8 @@ public class MetricsViewActionBean extends HeatMapActionBean {
         this.labVessel = labVessel;
     }
 
-    public Map<String, Map<String, Object>> getMetricToPositionToValue() {
-        return metricToPositionToValue;
-    }
-
-    public void setMetricToPositionToValue(
-            Map<String, Map<String, Object>> metricToPositionToValue) {
-        this.metricToPositionToValue = metricToPositionToValue;
+    public String getMetricToPositionToValueJson() {
+        return metricToPositionToValueJson;
     }
 
     public boolean isFoundResults() {
@@ -238,4 +250,197 @@ public class MetricsViewActionBean extends HeatMapActionBean {
     public void setFoundResults(boolean foundResults) {
         this.foundResults = foundResults;
     }
+
+    public enum ChartType {
+        Category, Heatmap
+    }
+
+    // TODO JW schema
+    public class MetricsTable
+    {
+
+        private List<Dataset> datasets;
+
+        private VesselGeometry vesselGeometry;
+
+        public List<Dataset> getDatasets() {
+            if (datasets == null) {
+                datasets = new ArrayList<>();
+            }
+            return datasets;
+        }
+
+        public void setDatasets(
+                List<Dataset> datasets) {
+            this.datasets = datasets;
+        }
+
+        public VesselGeometry getVesselGeometry ()
+        {
+            return vesselGeometry;
+        }
+
+        public void setVesselGeometry (VesselGeometry vesselGeometry)
+        {
+            this.vesselGeometry = vesselGeometry;
+        }
+    }
+
+    public class Dataset
+    {
+        private String eval;
+
+        private List<Data> data;
+
+        private String label;
+
+        private ChartType type;
+
+        private List<Options> options;
+
+
+
+        public String getEval ()
+        {
+            return eval;
+        }
+
+        public void setEval (String eval)
+        {
+            this.eval = eval;
+        }
+
+        public List<Data> getData() {
+            return data;
+        }
+
+        public void setData(
+                List<Data> data) {
+            this.data = data;
+        }
+
+        public void setOptions(
+                List<Options> options) {
+            this.options = options;
+        }
+
+        public String getLabel ()
+        {
+            return label;
+        }
+
+        public void setLabel (String label)
+        {
+            this.label = label;
+        }
+
+        public ChartType getType() {
+            return type;
+        }
+
+        public void setType(ChartType type) {
+            this.type = type;
+        }
+    }
+
+    public class Data
+    {
+        private String value;
+
+        private String well;
+
+        public String getValue ()
+        {
+            return value;
+        }
+
+        public void setValue (String value)
+        {
+            this.value = value;
+        }
+
+        public String getWell ()
+        {
+            return well;
+        }
+
+        public void setWell (String well)
+        {
+            this.well = well;
+        }
+    }
+
+    public class Metadata
+    {
+        private String value;
+
+        private String label;
+
+        public String getValue ()
+        {
+            return value;
+        }
+
+        public void setValue (String value)
+        {
+            this.value = value;
+        }
+
+        public String getLabel ()
+        {
+            return label;
+        }
+
+        public void setLabel (String label)
+        {
+            this.label = label;
+        }
+    }
+
+    public class Options
+    {
+        private String color;
+
+        private String name;
+
+        private String value;
+
+        public String getColor ()
+        {
+            return color;
+        }
+
+        public void setColor (String color)
+        {
+            this.color = color;
+        }
+
+        public String getName ()
+        {
+            return name;
+        }
+
+        public void setName (String name)
+        {
+            this.name = name;
+        }
+
+        public String getValue ()
+        {
+            return value;
+        }
+
+        public void setValue (String value)
+        {
+            this.value = value;
+        }
+
+        @Override
+        public String toString()
+        {
+            return "ClassPojo [color = "+color+", name = "+name+", value = "+value+"]";
+        }
+    }
+
+
 }
