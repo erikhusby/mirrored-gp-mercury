@@ -4,22 +4,26 @@
  *
  * @author <a href="mailto:dinsmore@broadinstitute.org">Michael Dinsmore</a>
  */
+function isLegacyDataTables () {
+    return $j.fn.DataTable.version.match(/1.10.\d/)==undefined;
+}
 
 /*
  * Define the TableTools export resources and types.
  */
-var ttExportDefines = {
-    "sSwfPath": "/Mercury/resources/scripts/DataTables-1.9.4/extras/TableTools/media/swf/copy_csv_xls.swf",
-    "aButtons": [ "copy", "csv", "print" ]
-};
-
+if (isLegacyDataTables()) {
+    ttExportDefines = {
+        "sSwfPath": "/Mercury/resources/scripts/DataTables-1.9.4/extras/TableTools/media/swf/copy_csv_xls.swf",
+        "aButtons": ["copy", "csv", "print"]
+    };
+}
 var sDomNoTableToolsButtons = "lfrtip";
 
 /**
  *  Set the defaults for DataTables initialization
  */
 $j.extend( true, $j.fn.dataTable.defaults, {
-    "sDom": "<'row-fluid'<'span8'f><'span4'T>r>t<'row-fluid'<'span6'i><'span6'p>>",
+    "sDom": "<'row-fluid'<'span8'f><'span4'B>r>t<'row-fluid'<'span6'i><'span6'p>>",
     "bAutoWidth": false,
     "bInfo": false,
     "bStateSave": true,
@@ -30,8 +34,12 @@ $j.extend( true, $j.fn.dataTable.defaults, {
     "oLanguage": {
         "sLengthMenu": "_MENU_ records per page"
         }
-} );
-
+});
+if (isLegacyDataTables()) {
+    $j.extend(true, $j.fn.dataTable.defaults, {
+        "sDom": "<'row-fluid'<'span8'f><'span4'T>r>t<'row-fluid'<'span6'i><'span6'p>>",
+    });
+}
 
 /* Default class modification */
 $j.extend( $j.fn.dataTableExt.oStdClasses, {
@@ -236,35 +244,37 @@ $j.fn.dataTableExt.oApi.fnFilterClear = function (oSettings) {
  * TableTools Bootstrap compatibility
  * Required TableTools 2.1+
  */
-if ( $j.fn.DataTable.TableTools ) {
-    // Set the classes that TableTools uses to something suitable for Bootstrap
-    $j.extend( true, $j.fn.DataTable.TableTools.classes, {
-        "container": "DTTT btn-group",
-        "buttons": {
-            "normal": "btn btn-mini",
-            "disabled": "disabled"
-        },
-        "collection": {
-            "container": "DTTT_dropdown dropdown-menu",
+if (isLegacyDataTables()) {
+    if ($j.fn.DataTable.TableTools) {
+        // Set the classes that TableTools uses to something suitable for Bootstrap
+        $j.extend(true, $j.fn.DataTable.TableTools.classes, {
+            "container": "DTTT btn-group",
             "buttons": {
-                "normal": "",
+                "normal": "btn btn-mini",
                 "disabled": "disabled"
+            },
+            "collection": {
+                "container": "DTTT_dropdown dropdown-menu",
+                "buttons": {
+                    "normal": "",
+                    "disabled": "disabled"
+                }
+            },
+            "print": {
+                "info": "DTTT_print_info modal"
+            },
+            "select": {
+                "row": "active"
             }
-        },
-        "print": {
-            "info": "DTTT_print_info modal"
-        },
-        "select": {
-            "row": "active"
-        }
-    } );
+        });
 
-    // Have the collection use a bootstrap compatible dropdown
-    $j.extend( true, $j.fn.DataTable.TableTools.DEFAULTS.oTags, {
-        "collection": {
-            "container": "ul",
-            "button": "li",
-            "liner": "a"
-        }
-    } );
+        // Have the collection use a bootstrap compatible dropdown
+        $j.extend(true, $j.fn.DataTable.TableTools.DEFAULTS.oTags, {
+            "collection": {
+                "container": "ul",
+                "button": "li",
+                "liner": "a"
+            }
+        });
+    }
 }
