@@ -27,7 +27,7 @@ PROFILES="Tests.ArqSuite.Standard Tests.ArqSuite.Stubby Tests.Multithreaded Test
 #PROFILES="Tests.ExternalIntegration"
 #PROFILES="Tests.DatabaseFree"
 #PROFILES="Tests.Multithreaded"
-PROFILES="Tests.Alternatives"
+#PROFILES="Tests.Alternatives"
 
 EXIT_STATUS=0
 
