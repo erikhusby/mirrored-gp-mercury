@@ -27,7 +27,7 @@ PROFILES="Tests.ArqSuite.Standard Tests.ArqSuite.Stubby Tests.Multithreaded Test
 #PROFILES="Tests.ExternalIntegration"
 #PROFILES="Tests.DatabaseFree"
 #PROFILES="Tests.Multithreaded"
-#PROFILES="Tests.Alternatives"
+PROFILES="Tests.Alternatives"
 
 EXIT_STATUS=0
 
@@ -63,7 +63,7 @@ EOF
 #    echo -n 1>&2 "Press return to continue."; read CONTINUE
     if [ -e "target/surefire-reports" ]
     then
-        mv target/surefire-reports target/surefire-reports-$PROFILE
+        mv target/surefire-reports surefire-reports-$PROFILE
     fi
 done
 
