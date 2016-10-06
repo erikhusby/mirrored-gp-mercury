@@ -73,7 +73,10 @@ public enum PreferenceType {
             new ColumnSetsPreference.ColumnSetsPreferenceDefinitionCreator()),
 
     WORKFLOW_CONFIGURATION("Workflow Configuration", PreferenceScope.GLOBAL, 1,
-            new WorkflowConfig.WorkflowConfigPreferenceDefinitionCreator());
+            new WorkflowConfig.WorkflowConfigPreferenceDefinitionCreator()),
+    BUCKET_PREFERENCES("Bucket PagePreference", PreferenceScope.USER, 1,
+            new NameValueDefinitionValue.NameValuePreferenceDefinitionCreator()),
+    ;
 
     private final String preferenceTypeName;
     private final PreferenceScope preferenceScope;
