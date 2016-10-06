@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingProductOrderMapping;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
@@ -18,6 +19,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.run.ArchetypeAttribute;
 import org.broadinstitute.gpinformatics.mercury.entity.run.GenotypingChip;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
@@ -228,7 +230,21 @@ public class InfiniumRunResource {
                 productName = productOrder.getProduct().getProductName();
                 productFamily = productOrder.getProduct().getProductFamily().getName();
                 partNumber = productOrder.getProduct().getPartNumber();
+
+                //Attempt to override default chip attributes if changed in product order
+                GenotypingProductOrderMapping genotypingProductOrderMapping =
+                        attributeArchetypeDao.findGenotypingProductOrderMapping(productOrder.getJiraTicketKey());
+                if (genotypingProductOrderMapping != null) {
+                    for (ArchetypeAttribute archetypeAttribute : genotypingProductOrderMapping.getAttributes()) {
+                        if (chipAttributes.containsKey(archetypeAttribute.getAttributeName()) &&
+                            archetypeAttribute.getAttributeValue() != null) {
+                            chipAttributes.put(
+                                    archetypeAttribute.getAttributeName(), archetypeAttribute.getAttributeValue());
+                        }
+                    }
+                }
             }
+
             infiniumRunBean = new InfiniumRunBean(
                     idatPrefix + "_Red.idat",
                     idatPrefix + "_Grn.idat",
@@ -350,6 +366,10 @@ public class InfiniumRunResource {
 
     public void setInfiniumStarterConfig(InfiniumStarterConfig infiniumStarterConfig) {
         this.infiniumStarterConfig = infiniumStarterConfig;
+    }
+
+    public void setAttributeArchetypeDao(AttributeArchetypeDao attributeArchetypeDao) {
+        this.attributeArchetypeDao = attributeArchetypeDao;
     }
 
     private static final Map<String, String> mapSerialNumberToMachineName = new HashMap<>();

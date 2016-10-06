@@ -62,6 +62,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     public static final String EXOME_EXPRESS_V2_PART_NUMBER = "P-EX-0007";
     public static final String EXOME_EXPRESS = "Exome Express";
     public static final String EXOME = "Exome";
+    public static final String INFINIUM = "Infinium";
 
     @Id
     @SequenceGenerator(name = "SEQ_PRODUCT", schema = "athena", sequenceName = "SEQ_PRODUCT")

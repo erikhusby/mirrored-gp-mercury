@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.run;
 
 import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingChipMapping;
+import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingProductOrderMapping;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
@@ -313,6 +314,28 @@ public class AttributeArchetypeFixupTest extends Arquillian {
         attributeArchetypeDao.persist(new FixupCommentary(fixupReason));
         attributeArchetypeDao.persistAll(definitions);
         attributeArchetypeDao.persistAll(genotypingChips);
+        attributeArchetypeDao.flush();
+        utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void gplim4320PdoOverrides() throws Exception {
+        utx.begin();
+        userBean.loginOSUser();
+
+        final String chipFamily = InfiniumRunResource.INFINIUM_GROUP;
+
+        List<AttributeDefinition> definitions = new ArrayList<AttributeDefinition>() {{
+            add(new AttributeDefinition(AttributeDefinition.DefinitionType.GENOTYPING_PRODUCT_ORDER,
+                    chipFamily, "call_rate_threshold", true));
+            add(new AttributeDefinition(AttributeDefinition.DefinitionType.GENOTYPING_PRODUCT_ORDER,
+                    chipFamily, "cluster_location_unix", true));
+        }};
+
+
+        String fixupReason = "GPLIM-4320 add pdo specific overrides.";
+        attributeArchetypeDao.persist(new FixupCommentary(fixupReason));
+        attributeArchetypeDao.persistAll(definitions);
         attributeArchetypeDao.flush();
         utx.commit();
     }
