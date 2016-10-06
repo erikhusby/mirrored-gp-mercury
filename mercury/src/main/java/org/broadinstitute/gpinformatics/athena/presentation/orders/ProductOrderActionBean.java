@@ -2617,8 +2617,11 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public boolean isInfinium() {
         Date effectiveDate = editOrder.getCreatedDate();
-        Pair<String, String> chipPair = productEjb.getGenotypingChip(editOrder, effectiveDate);
-        return chipPair != null && chipPair.getLeft() != null && chipPair.getRight() != null;
+        if (effectiveDate != null) {
+            Pair<String, String> chipPair = productEjb.getGenotypingChip(editOrder, effectiveDate);
+            return chipPair != null && chipPair.getLeft() != null && chipPair.getRight() != null;
+        }
+        return false;
     }
 
     private Map<String, AttributeDefinition> getPdoAttributeDefinitions() {
