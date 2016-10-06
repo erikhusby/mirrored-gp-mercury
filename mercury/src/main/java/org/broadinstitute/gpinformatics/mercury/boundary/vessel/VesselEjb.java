@@ -105,7 +105,7 @@ public class VesselEjb {
      * @param tubeType either BarcodedTube.BarcodedTubeType.name or null (defaults to Matrix tube).
      */
     public void registerSamplesAndTubes(@Nonnull Collection<String> tubeBarcodes,
-                                        @Null String tubeType,
+                                        String tubeType,
                                         @Nonnull Map<String, GetSampleDetails.SampleInfo> sampleInfoMap) {
 
         // Determine which barcodes are already known to Mercury.

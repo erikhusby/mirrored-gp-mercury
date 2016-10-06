@@ -2,20 +2,30 @@
 #
 # Run all the unit tests using each of the several profiles.
 #
-source /broad/tools/scripts/useuse
-use Maven-3.1
-use Java-1.8
+if [ -e "/broad/tools/scripts/useuse" ]
+then
+    source /broad/tools/scripts/useuse
+    use Maven-3.1
+    use Java-1.8
+fi
 
 if [ "x$JBOSS_HOME" == "x" ]
 then
-    JBOSS_HOME=/prodinfolocal/jboss-as-7.1.1.Final/
+    cat <<EOF
+
+    You must define JBOSS_HOME to point to the Wildfly installation.
+
+EOF
+    exit 1
 fi
+
 if [ "x$SSL_OPTS" == "x" ]
 then
     KEYSTORE_FILE="../JBossConfig/src/main/resources/keystore/.keystore"
     KEYSTORE_PASSWORD="changeit"
     SSL_OPTS="-DkeystoreFile=$KEYSTORE_FILE -DkeystorePassword=$KEYSTORE_PASSWORD"
 fi
+
 if [ "x$BUILD_PROFILE" == "x" ]
 then
     BUILD_PROFILE=BUILD
@@ -27,6 +37,7 @@ PROFILES="Tests.ArqSuite.Standard Tests.ArqSuite.Stubby Tests.Multithreaded Test
 #PROFILES="Tests.ExternalIntegration"
 #PROFILES="Tests.DatabaseFree"
 #PROFILES="Tests.Multithreaded"
+#PROFILES="Tests.Alternatives"
 
 EXIT_STATUS=0
 
@@ -34,8 +45,6 @@ if [ -f "tests.log" ]
 then
     rm tests.log
 fi
-
-mvn clean | tee tests.log
 
 for PROFILE in $PROFILES
 do
@@ -62,7 +71,11 @@ EOF
 #    echo -n 1>&2 "Press return to continue."; read CONTINUE
     if [ -e "target/surefire-reports" ]
     then
-        mv target/surefire-reports target/surefire-reports-$PROFILE
+        if [ -e "surefire-reports-$PROFILE" ]
+        then
+            rm -rf surefire-reports-$PROFILE
+        fi
+        mv target/surefire-reports surefire-reports-$PROFILE
     fi
 done
 

@@ -220,6 +220,8 @@
         <jboss.socket.https>8443</jboss.socket.https>
 
         <bspclient.version>[1.3,)</bspclient.version>
+
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
     <profiles>
@@ -827,7 +829,7 @@
                                         <artifactItem>
                                             <groupId>org.wildfly</groupId>
                                             <artifactId>wildfly-dist</artifactId>
-                                            <version>10.1.0.Final</version>
+                                            <version>${wildfly.version}</version>
                                             <type>zip</type>
                                             <overWrite>false</overWrite>
                                             <outputDirectory>${project.build.directory}</outputDirectory>
@@ -1687,17 +1689,23 @@ nodePrinter.print(webapp)
             <!--<scope>test</scope>-->
         </dependency>
 
+        <!-- Application uses javax ws API
+           - See jboss-deployment-structure.xml
         <dependency>
             <groupId>com.sun.xml.ws</groupId>
             <artifactId>jaxws-rt</artifactId>
             <version>2.2.6</version>
+            <scope>provided</scope>
         </dependency>
+        -->
 
+        <!-- Support client ws testing, WildFly app uses module "javax.ws.rs.api" which references this
+           - See jboss-deployment-structure.xml  -->
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
-            <artifactId>jaxrs-api</artifactId>
-            <version>3.0.12.Final</version>
-            <scope>test</scope>
+            <artifactId>resteasy-jaxrs</artifactId>
+            <version>3.0.19.Final</version>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
@@ -1759,7 +1767,7 @@ nodePrinter.print(webapp)
         <dependency>
             <groupId>org.wildfly</groupId>
             <artifactId>wildfly-jms-client-bom</artifactId>
-            <version>10.1.0.Final</version>
+            <version>${wildfly.version}</version>
             <type>pom</type>
         </dependency>
 
@@ -1777,10 +1785,6 @@ nodePrinter.print(webapp)
             <version>0.7.0</version>
         </dependency>
 
-        <!-- WildFly 10 has newer version built in.
-           - Is it worth the effort to make scope provided
-           -   and declare as a module dependency in jboss-deployment-structure.xml?
-          -->
         <dependency>
             <groupId>net.sf.scannotation</groupId>
             <artifactId>scannotation</artifactId>
@@ -2523,10 +2527,13 @@ todo jmt revisit
                 </configuration>
             </plugin>
 
-            <!--<plugin>-->
-                <!--<groupId>org.jboss.as.plugins</groupId>-->
-                <!--<artifactId>jboss-as-maven-plugin</artifactId>-->
-            <!--</plugin>-->
+            <!-- Was org.jboss
+            <plugin>
+                <groupId>org.wildfly.plugins</groupId>
+                <artifactId>wildfly-maven-plugin</artifactId>
+                <version>1.0.2.Final</version>
+            </plugin>
+            -->
 
         </plugins>
 
