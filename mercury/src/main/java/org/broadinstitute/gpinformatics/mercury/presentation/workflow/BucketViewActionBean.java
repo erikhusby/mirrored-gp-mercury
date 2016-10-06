@@ -15,9 +15,15 @@ import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceEjb;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.preference.NameValueDefinitionValue;
+import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
+import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.JiraUserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
@@ -40,6 +46,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDe
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.datatables.Column;
+import org.broadinstitute.gpinformatics.mercury.presentation.datatables.State;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -50,7 +59,9 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -73,6 +84,11 @@ public class BucketViewActionBean extends CoreActionBean {
     private static final String CHANGE_PDO = "changePdo";
     private static final String FIND_PDO = "findPdo";
     public static final String VIEW_BUCKET_ACTION = "viewBucket";
+    public static final String SAVE_SEARCH_DATA = "saveSearchData";
+    public static final String LOAD_SEARCH_DATA = "loadSearchData";
+    public static final String SELECTED_BUCKET_KEY = "selectedBucket";
+    public static final String TABLE_STATE_KEY = "tableState";
+    public static final String GLOBAL_COLzUMNS_CONFIG = "global-columns";
 
     @Inject
     JiraUserTokenInput jiraUserTokenInput;
@@ -98,6 +114,11 @@ public class BucketViewActionBean extends CoreActionBean {
     private BucketEntryDao bucketEntryDao;
     @Inject
     LabVesselDao labVesselDao;
+    @Inject
+    private PreferenceEjb preferenceEjb;
+
+    private static final Log log = LogFactory.getLog(BucketViewActionBean.class);
+
     @Validate(required = true, on = {CREATE_BATCH_ACTION})
     private String selectedBucket;
     private String selectedWorkflow;
@@ -125,6 +146,13 @@ public class BucketViewActionBean extends CoreActionBean {
     private String jiraUserQuery;
     private Map<String, BucketCount> mapBucketToBucketEntryCount;
     private CreateFields.ProjectType projectType = null;
+    private String filterState;
+    private String tableState;
+
+    private String searchKey;
+    private static final List<String> PREFETCH_COLUMN_NAMES =
+            Arrays.asList("Material Type", "Workflow", "Received Date");
+    private Map<String, Boolean> headerVisibilityMap = new HashMap<>();
 
     @Before(stages = LifecycleStage.BindingAndValidation)
     public void init() {
@@ -147,6 +175,20 @@ public class BucketViewActionBean extends CoreActionBean {
             }
         }
         mapBucketToWorkflows = bucketWorkflows.asMap();
+
+        try {
+            NameValueDefinitionValue nameValueDefinitionValue = loadSearchData();
+            List<String> selectedBucketPreferenceValue = nameValueDefinitionValue.getDataMap().get(SELECTED_BUCKET_KEY);
+            if (CollectionUtils.isNotEmpty(selectedBucketPreferenceValue)) {
+                selectedBucket = selectedBucketPreferenceValue.iterator().next();
+                List<String> tableStatePreferenceValue = nameValueDefinitionValue.getDataMap().get(selectedBucket);
+                if (CollectionUtils.isNotEmpty(tableStatePreferenceValue)) {
+                    tableState = tableStatePreferenceValue.iterator().next();
+                }
+            }
+        } catch (Exception e) {
+            log.error("Load table state preference", e);
+        }
     }
 
     @Before(stages = LifecycleStage.ResolutionExecution)
@@ -212,6 +254,87 @@ public class BucketViewActionBean extends CoreActionBean {
         }
     }
 
+    @HandlesEvent(SAVE_SEARCH_DATA)
+    public Resolution saveSearchData() throws Exception {
+        JSONObject jsonObject = new JSONObject(tableState);
+
+        if (selectedBucket != null) {
+            saveSearchData(readTableState(tableState));
+        }
+        return new StreamingResolution("text", jsonObject.toString());
+    }
+
+    private void saveSearchData(State state) throws Exception {
+        NameValueDefinitionValue definitionValue = loadSearchData();
+        if (selectedBucket != null) {
+            definitionValue.put(SELECTED_BUCKET_KEY, selectedBucket);
+        }
+        definitionValue.put(selectedBucket, Collections.singletonList(writeTableState(state)));
+
+        preferenceEjb.add(userBean.getBspUser().getUserId(), PreferenceType.BUCKET_PREFERENCES, definitionValue);
+    }
+
+
+    protected static State readTableState(String tableState) throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        return objectMapper.readValue(tableState, State.class);
+    }
+
+    protected static String writeTableState(State state) throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        return objectMapper.writeValueAsString(state);
+    }
+
+
+    public NameValueDefinitionValue loadSearchData() throws Exception {
+        List<Preference> preferences = preferenceEjb.getPreferences(getUserBean().getBspUser().getUserId(),
+                PreferenceType.BUCKET_PREFERENCES);
+        if (!preferences.isEmpty()) {
+            Preference preference = preferences.iterator().next();
+            try {
+                NameValueDefinitionValue definitionValue =
+                        (NameValueDefinitionValue) preference.getPreferenceDefinition().getDefinitionValue();
+
+                return definitionValue;
+            } catch (Throwable t) {
+                addMessage("Could not read search preference");
+            }
+        }
+        return new NameValueDefinitionValue();
+    }
+
+    @HandlesEvent(LOAD_SEARCH_DATA)
+    public Resolution loadSearchJson() {
+        JSONObject jsonObject = new JSONObject();
+        if (selectedBucket != null) {
+            try {
+                HashMap<String, List<String>> dataMap = loadSearchData().getDataMap();
+                List<String> bucketList = dataMap.get(selectedBucket);
+                String tableStateJson = null;
+                if (bucketList != null) {
+                    tableStateJson = bucketList.iterator().next();
+                    if (true) {
+                        return new StreamingResolution("text", tableStateJson);
+                    }
+
+                    State state = readTableState(tableStateJson);
+                    for (Column column : state.getColumns()) {
+                        headerVisibilityMap.put(column.getHeaderName(), column.isVisible());
+                    }
+                    jsonObject.put(TABLE_STATE_KEY, writeTableState(state));
+                } else {
+                    jsonObject = new JSONObject();
+                }
+            } catch (Exception e) {
+                log.error("Could not load table state", e);
+            }
+
+        }
+
+        return new StreamingResolution("text", jsonObject.toString());
+    }
+
+    @DefaultHandler
     @HandlesEvent(VIEW_BUCKET_ACTION)
     public Resolution viewBucket() {
         if (selectedBucket != null) {
@@ -224,10 +347,25 @@ public class BucketViewActionBean extends CoreActionBean {
                 collectiveEntries.addAll(bucket.getReworkEntries());
                 String jiraProjectType = mapBucketToJiraProject.get(selectedBucket);
                 projectType = CreateFields.ProjectType.fromKeyPrefix(jiraProjectType);
-                preFetchSampleData(collectiveEntries);
+                if (shouldPrefetchEventData(headerVisibilityMap)) {
+                    preFetchSampleData(collectiveEntries);
+                }
             }
         }
-        return view();
+        return new ForwardResolution(VIEW_PAGE);
+    }
+
+    public boolean shouldPrefetchEventData(Map<String, Boolean> headerMap) {
+        if (true) {
+            return true;
+        }
+        for (String prefetchColumnName : PREFETCH_COLUMN_NAMES) {
+            boolean prefetchColumn = headerMap.containsKey(prefetchColumnName) && headerMap.get(prefetchColumnName);
+            if (prefetchColumn) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void preFetchSampleData(Set<BucketEntry> collectiveEntries) {
@@ -288,7 +426,7 @@ public class BucketViewActionBean extends CoreActionBean {
                     jiraUserTokenInput.getTokenBusinessKeys());
         } catch (ValidationException e) {
             addGlobalValidationError(e.getMessage());
-            return view();
+            return viewBucket();
         }
         String batchName = batch.getJiraTicket().getTicketName();
         String link = getLink(batchName);
@@ -514,6 +652,53 @@ public class BucketViewActionBean extends CoreActionBean {
 
     public void setJiraUserTokenInput(JiraUserTokenInput jiraUserTokenInput) {
         this.jiraUserTokenInput = jiraUserTokenInput;
+    }
+
+    public String getTableState() {
+        return tableState;
+    }
+
+    public void setTableState(String tableState) {
+        this.tableState = tableState;
+    }
+
+    public String getFilterState() {
+        return filterState;
+    }
+
+    public void setFilterState(String filterState) {
+        this.filterState = filterState;
+    }
+
+    public String getSearchKey() {
+        return searchKey;
+    }
+
+    public void setSearchKey(String searchKey) {
+        this.searchKey = searchKey;
+    }
+
+    public Map<String, Boolean> getHeaderVisibilityMap() {
+        return headerVisibilityMap;
+    }
+
+    public Collection<String> getWorkflowNames(BucketEntry bucketEntry) {
+        Collection<String> workflows = new HashSet<>();
+        Boolean showWorkflow = headerVisibilityMap.get("Workflow");
+        if (showWorkflow != null && showWorkflow) {
+            WorkflowConfig workflowConfig = workflowLoader.load();
+            for (Workflow workflow : bucketEntry.getProductOrder().getProductWorkflows()) {
+                ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflow(workflow);
+                for (WorkflowBucketDef workflowBucketDef : productWorkflowDef.getEffectiveVersion().getBuckets()) {
+                    if (workflowBucketDef
+                            .meetsBucketCriteria(bucketEntry.getLabVessel(), bucketEntry.getProductOrder())) {
+                        workflows.add(workflow.getWorkflowName());
+                    }
+                }
+            }
+        }
+        return workflows;
+
     }
 
     public List<String> bucketWorkflowNames(BucketEntry bucketEntry) {

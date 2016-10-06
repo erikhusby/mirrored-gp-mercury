@@ -2,11 +2,13 @@
 <%@ taglib uri="http://mercury.broadinstitute.org/Mercury/security" prefix="security" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
+<%@ page import="org.broadinstitute.gpinformatics.mercury.presentation.workflow.BucketViewActionBean" %>
 
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.BucketViewActionBean"/>
 <c:set var="addToBatchText" value="Enter if you are adding to an existing batch"/>
-<stripes:layout-render name="/layout.jsp" pageTitle="Bucket View" sectionTitle="Select Bucket">
+<stripes:layout-render name="/layout.jsp" pageTitle="Bucket View" dataTablesVersion="1.10" withColVis="true"
+                       sectionTitle="Select Bucket">
 <stripes:layout-component name="extraHead">
     <style type="text/css">
         .editable {
@@ -20,12 +22,126 @@
         td.nowrap {
             white-space: nowrap;
         }
+
+        .filtering-label {
+            font-weight: bold;
+            padding: 5px;
+        }
+
+        .filter-header-item {
+            color: #0088CC;
+            /*padding: 5px;*/
+        }
+
+        list .filtering-label img {
+            height: 10px;
+            width: 10px;
+            cursor: pointer;
+            padding-bottom: 2px;
+            padding-right: 2px;
+        }
+        ul.list li {
+            display: inline;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        li.filter-header-item  {
+            display: inline;
+            list-style-image:none;''
+        }
+
+        ul.filtered-items-header li:nth-child(2):before {
+            content: "Filtering columns: ";
+            font-weight: bold;
+            padding-left: 1.5em;
+        }
+
+        ul.list li:after {
+            content: ", ";
+            color: #aaa;
+        }
+
+        ul.list li:last-child:after {
+            content: "";
+        }
+
+        div.dt-buttons {
+            float: none;
+        }
+        a.dt-button.buttons-columnVisibility span {
+            padding-left: 12px;
+        }
+
+        a.dt-button.buttons-columnVisibility.active, a.dt-button.buttons-columnVisibility {
+            position: relative;
+            width: auto;
+            /**width: 230px;*/
+            text-align: left;
+            *zoom: expression(
+        this.runtimeStyle['zoom'] = '1',
+        this.insertBefore(document.createElement("div"),
+        this.childNodes[0]).className="before",
+        this.appendChild(document.createElement("div")).className="after");
+        }
+
+        a.dt-button.buttons-columnVisibility:before, a.dt-button.buttons-columnVisibility.active:after {
+            display: block;
+            position: absolute;
+            top: 1em;
+            margin-top: -6px;
+            margin-left: -6px;
+            width: 16px;
+            height: 16px;
+            box-sizing: border-box;
+        }
+
+        a.dt-button.buttons-columnVisibility:before {
+            content: ' ';
+            border: 1px solid black;
+            border-radius: 3px;
+        }
+
+        a.dt-button.buttons-columnVisibility.active:after {
+            font: 0.9em Arial;
+            content: '\2714';
+            text-align: center;
+        }
+
+        * a.dt-button.buttons-columnVisibility .before, * a.dt-button.buttons-columnVisibility.active .after, * a.dt-button.buttons-columnVisibility.active:hover .after {
+            position: absolute;
+            margin: 6px 0px 0px -6px;
+            width: 16px;
+            height: 16px;
+            background-image: url("${ctxpath}/resources/css/images/checkbox.png");
+            background-position: 0px 0px;
+        }
+
+        * a.dt-button.buttons-columnVisibility .before {
+            background-position: 0px 0px;
+        }
+
+        * a.dt-button.buttons-columnVisibility.active .before {
+            background-position: 0px 16px;
+        }
+
+        * a.dt-button.buttons-columnVisibility.active:hover .before {
+            background-position: 16px 0px;
+        }
+
     </style>
-    <script src="${ctxpath}/resources/scripts/jquery.pasteSelect.js" type="text/javascript"></script>
     <script src="${ctxpath}/resources/scripts/jquery.jeditable.mini.js" type="text/javascript"></script>
+
+    <script src="${ctxpath}/resources/scripts/hSpinner.js"></script>
+    <script src="${ctxpath}/resources/scripts/columnSelect.js"></script>
+    <script src="${ctxpath}/resources/scripts/chosen_v1.6.2/chosen.jquery.min.js" type="text/javascript"></script>
+    <link rel="stylesheet" type="text/css" href="${ctxpath}/resources/scripts/chosen_v1.6.2/chosen.min.css"/>
+
     <script type="text/javascript">
         function submitBucket() {
             $j("#spinner").show();
+            $j('#bucketForm').append('<input type="hidden" name="viewBucket"  />');
             $j('#bucketForm').submit();
         }
 
@@ -35,10 +151,11 @@
 
         // Enable or disable the form buttons when bucket entries are selected or deselected.
         function showOrHideControls() {
+            var inputControls = $j(".actionControls").find("input.bucket-control");
             if ($j("input[name='selectedEntryIds']:checked").length == 0) {
-                $j(".actionControls").find("input").attr("disabled", "disabled")
+                inputControls.attr("disabled", "disabled")
             } else {
-                $j(".actionControls").find("input").removeAttr("disabled");
+                inputControls.removeAttr("disabled");
             }
         }
 
@@ -118,7 +235,7 @@
                 $j("#cancel").show();
 
                 // hide dataTables filter
-                $j('.dataTables_filter').closest('.row-fluid').hide();
+//                $j('.column-filter').closest('.row-fluid').hide();
 
                 // hide pdo editable stuff
                 $j('#editable-text').hide();
@@ -131,11 +248,6 @@
         }
 
         $j(document).ready(function () {
-            $j("#bucketEntryView").pasteSelect({
-                columnNames: ["Vessel Name", "Sample Name"],
-                noun: "Bucket Entry",
-                pluralNoun: "Bucket Entries"
-            });
             setupBucketEvents();
 
             // Hide the input form when there are no bucket entries.
@@ -153,7 +265,7 @@
 
                 var editablePdo = function()  {
                 if (columnsEditable) {
-                    var oTable = $j('#bucketEntryView').dataTable();
+                    var oTable = $j('#bucketEntryView').DataTable();
                     $j("td.editable").editable('${ctxpath}/workflow/bucketView.action?changePdo', {
                         'loadurl': '${ctxpath}/workflow/bucketView.action?findPdo',
                         'callback': function (sValue, y) {
@@ -200,11 +312,64 @@
 
             };
 
-            oTable = $j('#bucketEntryView').dataTable({
-                "oTableTools":ttExportDefines,
+            var bucketName = $j('#bucketSelect :selected').val();
+            var colVis = {};
+            oTable = $j('#bucketEntryView').DataTable({
+                dom: "<'#filtering'>lript",
+                saveState: true,
+                paging: true,
+                info:true,
+                searchDelay: 10000,
+                displayLength: 100,
+                deferRender: true,
+                select: {
+                    items: 'cells',
+                    info: false
+                },
                 "aaSorting": [[1,'asc'], [7,'asc']],
-                "aoColumns":[
-                    {"bSortable":false},
+                stateSaveCallback: function (settings, data) {
+                    console.log("stateSave");
+                    var api = new $j.fn.dataTable.Api(settings);
+                    for (var index = 0; index < data.columns.length; index++) {
+                        var item = data.columns[index];
+                        var header = $j(api.data().column(index).header());
+                        if (header) {
+                            item.headerName = header.text().trim();
+                        }
+                    }
+
+                    if (bucketName !== '') {
+                        var stateData = {
+                            "<%= BucketViewActionBean.TABLE_STATE_KEY %>": JSON.stringify(data),
+                            "<%= BucketViewActionBean.SELECTED_BUCKET_KEY %>": bucketName
+                        };
+                        var serverData = {};
+                        $j.ajax({
+                            async: false,
+                            'url': "${ctxpath}/workflow/bucketView.action?<%= BucketViewActionBean.SAVE_SEARCH_DATA %>=",
+                            'data': stateData,
+                            dataType: 'json',
+                            type: 'POST',
+                            success(savedData){
+                                serverData = savedData;
+                            }
+                        });
+//                        return serverData;
+                    }
+                },
+                "stateLoaded": function (settings, data) {
+                    var dataTable = new $j.fn.dataTable.Api(settings);
+                    dataTable.draw();
+                    console.log("stateLoaded");
+                },
+                "stateLoadCallback": function (settings) {
+                    console.log("stateLoad");
+                    var serverData = '${actionBean.tableState}' === '' ? '' :${actionBean.tableState};
+                    return serverData;
+                },
+
+                "columns": [
+                    {"bSortable": false},
                     {"bSortable": true, "sClass": "nowrap"},
                     {"bSortable": true, "sClass": "nowrap"},
                     {"bSortable":true},
@@ -223,14 +388,55 @@
                     {"bSortable":true},
                     {"bSortable":true}
                 ],
-                "fnDrawCallback": editablePdo
+                "fnDrawCallback": editablePdo,
+                "initComplete": function (settings) {
+
+                    initColumnSelect(settings, [
+                        {"Vessel Name": 'text'},
+                        {"Sample Name": 'text'},
+                        {"PDO": 'select'},
+                        {"PDO Name": 'text'},
+                        {"PDO Owner": 'select'},
+                        {"Batch Name": 'text'},
+                        {"Product": 'select'},
+                        {"Add-ons": 'select'},
+                        {"Material Type": 'select'},
+                        {"Bucket Entry Type": 'select'},
+                        {"Rework Reason": 'select'},
+                        {"Rework Comment": 'text'},
+                        {"Rework User": 'select'},
+                        {"Workflow": 'select'}
+                    ], "#filtering", "column-filter", "${ctxpath}");
+
+                    $j("#filtering").accordion({
+                        "collapsible": true, "heightStyle": "content", 'active': false
+                    });
+
+                    $j("#filtering").css("z-index: 0");
+                    buildShowHideButton(settings);
+                }
+
+
             });
-            includeAdvancedFilter(oTable, "#bucketEntryView");
-            if ($j(".bucket-checkbox").is("visible")) {
-                $j("bucketEntryView_filter").hide();
-            } else {
-                $j("bucketEntryView_filter").show();
+
+            function buildShowHideButton(settings) {
+                var dataTable = new $j.fn.dataTable.Api(settings);
+                var buttons = new $j.fn.dataTable.Buttons(dataTable, {
+                    saveState: true,
+                    buttons: [
+                        {
+                            extend: 'colvis',
+                            columns: ':gt(0)'
+                        }
+                    ]
+                });
+                var buttonContainer=$j(buttons.container(), {css: "float: none;"});
+
+                buttonContainer.prependTo($j("#filtering ").parent());
             }
+
+
+            includeAdvancedFilter(oTable, "#bucketEntryView");
 
             $j('.bucket-checkbox').enableCheckboxRangeSelection({
                 checkAllClass:'bucket-checkAll',
@@ -242,6 +448,7 @@
             $j(".bucket-checkbox").on("click blur ready", function () {
                 showOrHideControls();
             });
+            $j("input[name='selectedEntryIds'], .bucket-checkAll").change(showOrHideControls);
 
             $j("#lcsetText").change(function () {
                 var jiraTicketId = $j("#lcsetText").val();
@@ -297,6 +504,15 @@
             $j("#bucketEntryForm :input:not(textarea)").keypress(function (event) {
                 return event.keyCode != 13;
             });
+
+            var hSpinner = $j("#batchSize").hSpinner();
+            $j("#chooseNbutton").click(function () {
+                var batchSize = $j("#batchSize").val();
+                if (batchSize > 0) {
+                    $j("#bucketEntryView").find("input[name='selectedEntryIds']:checked").click();
+                    $j("#bucketEntryView").find("input[name='selectedEntryIds']:lt(" + batchSize + ")").click();
+                }
+            })
         });
     </script>
 </stripes:layout-component>
@@ -397,11 +613,20 @@
             <stripes:submit name="addToBatch" value="Add to Batch" class="btn bucket-control" disabled="true"/>
             <stripes:submit name="removeFromBucket" value="Remove From Bucket" class="btn bucket-control"
                             disabled="true"/>
-            <a href="javascript:void(0)" id="PasteBarcodesList" class="bucket-control"
-               title="Use a pasted-in list of tube barcodes to select samples">Choose via list of vessel or sample names...</a>
+                <%--<a href="javascript:void(0)" id="PasteBarcodesList" class="bucket-control"--%>
+                <%--title="Use a pasted-in list of tube barcodes to select samples">Choose via list of vessel or sample names...</a>--%>
             <a href="#" id="cancel" onClick="submitBucket()" style="display: none;">Cancel</a>
+
+                <%--<br/><div class="control-label" style="margin-bottom: 20px;"> --%>
+            <br/>
+            Select Next <input value="92" style="width: 3em;" id="batchSize"/>&nbsp;<input
+                type="button" id="chooseNbutton" value="Select" class="btn"/>
+
+                <%--</div>--%>
+
         </div>
-        <table id="bucketEntryView" class="bucket-checkbox table simple">
+        <%--<p></p>--%>
+        <table id="bucketEntryView" class="bucket-checkbox table simple dt-responsive">
             <thead>
             <tr>
                 <th width="10" class="bucket-control">
@@ -465,7 +690,9 @@
                     </td>
                     <td>
                         <div class="ellipsis" style="max-width: 250px;">
-                                ${mercuryStatic:join(actionBean.bucketWorkflowNames(entry), "<br/>")}
+                            <c:if test="${! actionBean.headerVisibilityMap[selectedBucket]}">
+                                ${mercuryStatic:join(actionBean.getWorkflowNames(entry), "<br/>")}
+                            </c:if>
                         </div>
                     </td>
                     <td>
@@ -492,7 +719,7 @@
                             ${entry.reworkDetail.reason.reason}
                     </td>
                     <td>
-                            ${entry.reworkDetail.comment}
+                        <div class="ellipsis">${entry.reworkDetail.comment}</div>
                     </td>
                     <td>
                         <c:if test="${entry.reworkDetail != null}">
