@@ -116,8 +116,10 @@ public class MetricsViewActionBean extends HeatMapActionBean {
         setLabVessel(labVesselDao.findByIdentifier(labVesselIdentifier));
         if (getLabVessel() == null) {
             addValidationError("labVesselIdentifier", "Could not find lab vessel " + labVesselIdentifier);
+            return;
         } else if (!OrmUtil.proxySafeIsInstance(labVessel, StaticPlate.class)) {
             addValidationError("labVesselIdentifier", "Only plates or chips currently allowed");
+            return;
         }
 
         staticPlate = OrmUtil.proxySafeCast(labVessel, StaticPlate.class);
