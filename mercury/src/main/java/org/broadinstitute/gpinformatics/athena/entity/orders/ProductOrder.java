@@ -1138,15 +1138,6 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     /**
-     * Convenience method to determine whether or not the current PDO is for infinium.
-     *
-     * @return true if this is a sample initiation PDO; false otherwise
-     */
-    public boolean isInfinium() {
-        return getProduct() != null && getProduct().isInfiniumProduct();
-    }
-
-    /**
      * This is used to help create or update a PDO's Jira ticket.
      */
     public enum JiraField implements CustomField.SubmissionField {

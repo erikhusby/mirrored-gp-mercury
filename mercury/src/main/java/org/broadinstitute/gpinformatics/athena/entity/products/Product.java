@@ -595,10 +595,6 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         return partNumber.equals(SAMPLE_INITIATION_PART_NUMBER);
     }
 
-    public boolean isInfiniumProduct() {
-        return productName.startsWith(INFINIUM);
-    }
-
     public ResearchProject getPositiveControlResearchProject() {
         return positiveControlResearchProject;
     }

@@ -1103,7 +1103,7 @@ function formatInput(item) {
         </div>
     </div>
 </div>
-<c:if test="${actionBean.editOrder.infinium}">
+<c:if test="${actionBean.infinium}">
     <c:forEach items="${actionBean.attributes}" var="item">
         <div class="view-control-group control-group">
             <stripes:label for="attributes[${item.key}]" class="control-label label-form">

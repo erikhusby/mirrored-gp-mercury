@@ -1085,7 +1085,7 @@
                     </div>
                 </div>
 
-                <c:if test="${actionBean.editOrder.infinium}">
+                <c:if test="${actionBean.infinium}">
                     <c:forEach items="${actionBean.attributes}" var="item">
                         <div class="control-group">
                             <stripes:label for="attributes[${item.key}]" class="control-label">

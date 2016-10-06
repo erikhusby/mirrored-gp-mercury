@@ -2615,6 +2615,12 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
+    public boolean isInfinium() {
+        Date effectiveDate = editOrder.getCreatedDate();
+        Pair<String, String> chipPair = productEjb.getGenotypingChip(editOrder, effectiveDate);
+        return chipPair != null && chipPair.getLeft() != null && chipPair.getRight() != null;
+    }
+
     private Map<String, AttributeDefinition> getPdoAttributeDefinitions() {
         if (pdoSpecificDefinitions == null) {
             pdoSpecificDefinitions = attributeArchetypeDao.findAttributeGroupByTypeAndName(
