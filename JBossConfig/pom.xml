@@ -12,7 +12,6 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <oracle.version>12.1.0.2</oracle.version>
-        <billing.log.dir>${env.JBOSS_HOME}/standalone/log</billing.log.dir>
         <crowdJaas.version>2.0-SNAPSHOT</crowdJaas.version>
         <crowd.application.name>mercury</crowd.application.name>
         <crowd.application.password>vx2hUJP4xB</crowd.application.password>
@@ -49,7 +48,7 @@
             <groupId>com.atlassian.crowd.application</groupId>
             <artifactId>CrowdJaasLoginModule</artifactId>
             <version>${crowdJaas.version}</version>
-            <type>tar.gz</type>
+            <type>zip</type>
             <classifier>deploy</classifier>
         </dependency>
     </dependencies>
@@ -132,10 +131,10 @@
                                     <groupId>com.atlassian.crowd.application</groupId>
                                     <artifactId>CrowdJaasLoginModule</artifactId>
                                     <version>${crowdJaas.version}</version>
-                                    <type>tar.gz</type>
+                                    <type>zip</type>
                                     <classifier>deploy</classifier>
                                     <outputDirectory>${project.build.directory}</outputDirectory>
-                                    <destFileName>CrowdJaasLoginModule.tar.gz</destFileName>
+                                    <destFileName>CrowdJaasLoginModule.zip</destFileName>
 
                                 </artifactItem>
                                 <artifactItem>
@@ -167,7 +166,7 @@
                             <target>
                                 <property environment="env"/>
                                 <fail unless="env.JBOSS_HOME"
-                                      message="Please define the environment variable JBOSS_HOME"/>
+                                      message="Please define the environment variable JBOSS_HOME to point at Wildfly installation."/>
                                 <!-- Copy the modules -->
                                 <echo message="Copying modules"/>
                                 <copy todir="${env.JBOSS_HOME}/modules" overwrite="true" verbose="true">
@@ -179,25 +178,32 @@
                                 </copy>
                                 <copy todir="${env.JBOSS_HOME}" overwrite="true" verbose="true"
                                       file="src/main/resources/keystore/.keystore"/>
-                                <exec executable="tar">
-                                    <arg value="-xzf"/>
-                                    <arg value="${project.build.directory}/CrowdJaasLoginModule.tar.gz"/>
-                                    <arg value="-C"/>
-                                    <arg value="${env.JBOSS_HOME}/modules"/>
-                                </exec>
+
+                                <copy todir="${env.JBOSS_HOME}" overwrite="true" verbose="true">
+                                    <fileset dir="src/main/scripts"/>
+                                </copy>
+
+                                <unzip src="${project.build.directory}/CrowdJaasLoginModule.zip" dest="${env.JBOSS_HOME}/modules"/>
+
+                                <chmod perm="ugo+rx" dir="${env.JBOSS_HOME}" includes="*.sh"/>
+
                                 <echo>
 
                                     Your Wildfly 10 has been updated with the Mercury configurations.
 
                                     It is recommended that you increase the memory settings. For example:
-                                    JAVA_OPTS="-Xms64m -Xmx4096M "
+                                    JAVA_OPTS="-Xms64m -Xmx4096M -XMetaspace=4G"
 
                                     Edit ${env.JBOSS_HOME}/bin/standalone.conf (or
                                     ${env.JBOSS_HOME}/bin/standalone.conf.bat )
                                     * Change the value of JAVA_OPTS for memory.
-                                    * Add the option  "-Djboss.server.default.conf=standalone-full.xml" to JAVA_OPTS
                                     * Add the contents of src/main/resources/keystore/keystoreOptions.conf (or
                                     keystoreOptions.conf.bat ) to enable use of the GPInfo keystore.
+
+                                    If you use the ${env.JBOSS_HOME}/bin/standalone.sh procedure to start the server, you must
+                                    include the "-c standalone-full.xml" command line option.
+
+                                    You may also use the ${env.JBOSS_HOME}/wildfly.sh to start the server in the background.
 
                                     If you've made server configuration changes that need to be applied to the Mercury
                                     Production, QA, RC and DEV servers, please create or update a
