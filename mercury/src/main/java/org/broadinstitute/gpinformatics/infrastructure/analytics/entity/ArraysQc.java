@@ -18,7 +18,7 @@ public class ArraysQc {
     @Id
     private Long id;
     private String chipWellBarcode;
-    private String project;
+    private String researchProjectId;
     private String sampleAlias;
     private Long analysisVersion;
     private Boolean isLatest;
@@ -26,13 +26,15 @@ public class ArraysQc {
     private BigDecimal callRate;
     private Boolean autocallPf;
     private Date autocallDate;
+    private Date imagingDate;
     private Boolean isZcalled;
     private Character autocallGender;
     private Character fpGender;
     private Character reportedGender;
     private Boolean genderConcordancePf;
     private BigDecimal hetPct;
-    private String clusterFile;
+    private BigDecimal hetHomvarRatio;
+    private String clusterFileName;
     @Column(name = "P95_GREEN")
     private Long p95Green;
     @Column(name = "P95_GREEN_PF")
@@ -43,6 +45,16 @@ public class ArraysQc {
     private Boolean p95RedPf;
     private String autocallVersion;
     private String zcallVersion;
+    private Long totalAssays;
+    private Long totalSnps;
+    private Long totalIndels;
+    private Long numCalls;
+    private Long numNoCalls;
+    private Long numInDbSnp;
+    private Long novelSnps;
+    private Long filteredSnps;
+    private BigDecimal pctDbsnp;
+    private Long numSingletons;
     private Date createdAt;
     private Date modifiedAt;
 
@@ -60,8 +72,8 @@ public class ArraysQc {
         return chipWellBarcode;
     }
 
-    public String getProject() {
-        return project;
+    public String getResearchProjectId() {
+        return researchProjectId;
     }
 
     public String getSampleAlias() {
@@ -92,6 +104,10 @@ public class ArraysQc {
         return autocallDate;
     }
 
+    public Date getImagingDate() {
+        return imagingDate;
+    }
+
     public Boolean getZcalled() {
         return isZcalled;
     }
@@ -116,8 +132,12 @@ public class ArraysQc {
         return hetPct;
     }
 
-    public String getClusterFile() {
-        return clusterFile;
+    public BigDecimal getHetHomvarRatio() {
+        return hetHomvarRatio;
+    }
+
+    public String getClusterFileName() {
+        return clusterFileName;
     }
 
     public Long getP95Green() {
@@ -142,6 +162,46 @@ public class ArraysQc {
 
     public String getZcallVersion() {
         return zcallVersion;
+    }
+
+    public Long getTotalAssays() {
+        return totalAssays;
+    }
+
+    public Long getTotalSnps() {
+        return totalSnps;
+    }
+
+    public Long getTotalIndels() {
+        return totalIndels;
+    }
+
+    public Long getNumCalls() {
+        return numCalls;
+    }
+
+    public Long getNumNoCalls() {
+        return numNoCalls;
+    }
+
+    public Long getNumInDbSnp() {
+        return numInDbSnp;
+    }
+
+    public Long getNovelSnps() {
+        return novelSnps;
+    }
+
+    public Long getFilteredSnps() {
+        return filteredSnps;
+    }
+
+    public BigDecimal getPctDbsnp() {
+        return pctDbsnp;
+    }
+
+    public Long getNumSingletons() {
+        return numSingletons;
     }
 
     public Date getCreatedAt() {
