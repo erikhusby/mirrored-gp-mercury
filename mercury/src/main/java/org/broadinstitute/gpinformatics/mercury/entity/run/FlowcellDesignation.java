@@ -17,6 +17,7 @@ import javax.persistence.OneToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.math.BigDecimal;
+import java.util.Comparator;
 import java.util.Date;
 
 /**
@@ -272,4 +273,12 @@ public class FlowcellDesignation {
     public void setPairedEndRead(boolean pairedEndRead) {
         this.pairedEndRead = pairedEndRead;
     }
+
+    public static final Comparator<? super FlowcellDesignation> BY_DATE_DESC = new Comparator<FlowcellDesignation>() {
+        @Override
+        public int compare(FlowcellDesignation o1, FlowcellDesignation o2) {
+            return o2.getCreatedOn().compareTo(o1.getCreatedOn());
+        }
+    };
+
 }

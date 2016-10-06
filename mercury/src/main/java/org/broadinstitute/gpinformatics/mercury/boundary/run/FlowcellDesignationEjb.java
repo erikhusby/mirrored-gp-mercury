@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube_;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 import org.broadinstitute.gpinformatics.mercury.presentation.run.DesignationDto;
 import org.hibernate.SQLQuery;
 import org.hibernate.type.LongType;
@@ -25,6 +26,7 @@ import javax.persistence.TemporalType;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
@@ -164,4 +166,22 @@ public class FlowcellDesignationEjb {
     public Collection<FlowcellDesignation> existingDesignations(List<FlowcellDesignation.Status> statuses) {
         return labBatchDao.findListByList(FlowcellDesignation.class, FlowcellDesignation_.status, statuses);
     }
+
+    /** Returns the flowcell designations used in the FCT or MISEQ batch sorted by descending create date. */
+    public List<FlowcellDesignation> getFlowcellDesignations(LabBatch fct) {
+        List<LabVessel> loadingTubes = new ArrayList<>();
+        for (LabBatchStartingVessel labBatchStartingVessel : fct.getLabBatchStartingVessels()) {
+            loadingTubes.add(labBatchStartingVessel.getLabVessel());
+        }
+        return getFlowcellDesignations(loadingTubes);
+    }
+
+    /** Returns the flowcell designations for loading tubes sorted by descending create date. */
+    public List<FlowcellDesignation> getFlowcellDesignations(Collection<LabVessel> loadingTubes) {
+        List<FlowcellDesignation> list = labBatchDao.findListByList(FlowcellDesignation.class,
+                FlowcellDesignation_.loadingTube, loadingTubes);
+        Collections.sort(list, FlowcellDesignation.BY_DATE_DESC);
+        return list;
+    }
+
 }
