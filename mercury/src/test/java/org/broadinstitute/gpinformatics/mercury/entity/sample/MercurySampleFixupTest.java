@@ -41,6 +41,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Test(groups = TestGroups.FIXUP)
 public class MercurySampleFixupTest extends Arquillian {
@@ -104,10 +105,11 @@ public class MercurySampleFixupTest extends Arquillian {
         List<MercurySample> mercurySamples = mercurySampleDao.findBySampleKeys(sampleKeys);
         userBean.loginOSUser();
         for (MercurySample mercurySample : mercurySamples) {
-            List<LabVessel> labVessels = labVesselDao.findBySampleKey(mercurySample.getSampleKey());
+            Set<LabVessel> labVessels = mercurySample.getLabVessel();
             for (LabVessel labVessel : labVessels) {
                 labVessel.getMercurySamples().remove(mercurySample);
             }
+            mercurySampleDao.remove(mercurySample);
         }
         mercurySampleDao.persist(new FixupCommentary(
                 "GPLIM-4381: Delete BSP Samples from Mercury which were not created in BSP due to an exception."));
