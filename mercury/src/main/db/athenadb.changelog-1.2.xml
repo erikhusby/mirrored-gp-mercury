@@ -376,4 +376,18 @@
     <changeSet author="breilly" id="GPLIM-4333-1">
         <dropUniqueConstraint schemaName="ATHENA" tableName="REGULATORY_INFO" constraintName="UNQ_REGULATORY_INFO_ALIAS"/>
     </changeSet>
+
+    <changeSet author="epolk" id="GPLIM-4159-8">
+        <addColumn schemaName="ATHENA" tableName="PRODUCT">
+            <column name="loading_concentration" type="number(19,2)"/>
+            <column name="paired_end_read" type="number(1,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="epolk" id="GPLIM-4159-9">
+        <addColumn schemaName="ATHENA" tableName="PRODUCT_AUD">
+            <column name="loading_concentration" type="number(19,2)"/>
+            <column name="paired_end_read" type="number(1,0)"/>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>

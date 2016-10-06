@@ -4,17 +4,22 @@ import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.entity.envers.FixupCommentary;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import javax.transaction.UserTransaction;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_.product;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
 /**
@@ -31,6 +36,12 @@ public class ProductFixupTest extends Arquillian {
     @Inject
     ProductDao productDao;
 
+    @Inject
+    private UserBean userBean;
+
+    @Inject
+    private UserTransaction utx;
+
     /*
      * When applying this to Production, change the input to PROD, "prod"
      */
@@ -40,7 +51,7 @@ public class ProductFixupTest extends Arquillian {
     }
 
     // Required for Arquillian tests so it should remain enabled for sprint4.
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void addExomeExpressWorkflowName() {
 
         Product exExProduct = productDao.findByPartNumber("P-EX-0002");
@@ -77,5 +88,20 @@ public class ProductFixupTest extends Arquillian {
         productDao.persistAll(wgProducts);
     }
 
-
+    @Test(enabled = false)
+    public void gplim4159() throws Exception {
+        userBean.loginOSUser();
+        utx.begin();
+        for (Product product : productDao.findAll(Product.class)) {
+            if (product.getAggregationDataType() != null && product.getAggregationDataType().startsWith("Exome")) {
+                product.setLoadingConcentration(BigDecimal.valueOf(225));
+                product.setPairedEndRead(true);
+            } else if (product.getAggregationDataType() != null && product.getAggregationDataType().equals("WGS")) {
+                product.setLoadingConcentration(BigDecimal.valueOf(180));
+                product.setPairedEndRead(true);
+            }
+        }
+        productDao.persist(new FixupCommentary("GPLIM-4159 set initial values after adding new columns."));
+        utx.commit();
+    }
 }
