@@ -64,6 +64,7 @@
 
         <script src="${ctxpath}/resources/scripts/jquery.gpUseful-1.0.js"></script>
         <script src="${ctxpath}/resources/scripts/jquery.heatcolor.0.0.1.js"></script>
+        <script src="${ctxpath}/resources/scripts/plateMap.js"></script>
         <script src="${ctxpath}/resources/scripts/jquery.sparkline-2.1.2.min.js"></script>
         <script src="${ctxpath}/resources/scripts/jquery.headerPersist.1.0.js"></script>
 
