@@ -102,7 +102,6 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean;
-import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -1487,7 +1486,6 @@ public class ProductOrderActionBean extends CoreActionBean {
      * @param regulatoryInfo    the matching RegulatoryInfo record (or null)
      * @return a new JSONObject for the ORSP project
      */
-    @NotNull
     private JSONObject orspProjectToJson(OrspProject orspProject, RegulatoryInfo regulatoryInfo) {
         JSONObject result = new JSONObject();
         try {
