@@ -66,14 +66,6 @@
                 <script src="${ctxpath}/resources/scripts/DataTables-1.9.4/media/js/jquery.dataTables.min.js"></script>
                 <link rel="stylesheet"
                       href="${ctxpath}/resources/scripts/DataTables-1.9.4/media/css/jquery.dataTables.css"/>
-                <script src="${ctxpath}/resources/scripts/jquery-ui-1.9.2.custom.min.js"></script>
-
-                <script src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-dropdown.js"></script>
-                <script src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-tooltip.js"></script>
-                <script src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-popover.js"></script>
-                <script src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-alert.js"></script>
-
-                <script src="${ctxpath}/resources/scripts/jquery.dateRangeSelector.js"></script>
                 <script src="${ctxpath}/resources/scripts/DataTables-1.9.4/media/js/jquery.dataTables.min.js"></script>
                 <script src="${ctxpath}/resources/scripts/DataTables-1.9.4/extras/TableTools/media/js/TableTools.min.js"></script>
                 <link rel="stylesheet"
@@ -83,6 +75,14 @@
                 <script src="${ctxpath}/resources/scripts/DataTables-1.9.4/extras/fnGetHiddenNodes.js"></script>
             </c:otherwise>
         </c:choose>
+
+        <script src="${ctxpath}/resources/scripts/jquery-ui-1.9.2.custom.min.js"></script>
+        <script src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-dropdown.js"></script>
+        <script src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-tooltip.js"></script>
+        <script src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-popover.js"></script>
+        <script src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-alert.js"></script>
+
+        <script src="${ctxpath}/resources/scripts/jquery.dateRangeSelector.js"></script>
 
         <c:if test="${withColVis}">
             <script src="${ctxpath}/resources/scripts/DataTablesPlugins-1.10/Buttons-1.2.2/js/buttons.colVis.min.js"></script>
