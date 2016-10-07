@@ -81,7 +81,6 @@ public class MercurySampleFixupTest extends Arquillian {
         if (userBean == null) {
             return;
         }
-        userBean.loginOSUser();
         utx.begin();
     }
 
@@ -91,7 +90,6 @@ public class MercurySampleFixupTest extends Arquillian {
         if (userBean == null) {
             return;
         }
-        userBean.logout();
         utx.commit();
     }
 
