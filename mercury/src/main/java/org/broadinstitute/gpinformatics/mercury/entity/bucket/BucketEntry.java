@@ -4,6 +4,7 @@ import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -327,9 +328,10 @@ public class BucketEntry {
     }
 
     @Nonnull
-    private Collection<Workflow> findWorkflows() {
+    private Collection<Workflow> loadWorkflows() {
+        WorkflowLoader workflowLoader = ServiceAccessUtility.getBean(WorkflowLoader.class);
         Collection<Workflow> workflows = new HashSet<>();
-        WorkflowConfig workflowConfig = new WorkflowLoader().load();
+        WorkflowConfig workflowConfig = workflowLoader.load();
         for (Workflow workflow : getProductOrder().getProductWorkflows()) {
             ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflow(workflow);
             for (WorkflowBucketDef workflowBucketDef : productWorkflowDef.getEffectiveVersion().getBuckets()) {
@@ -348,7 +350,7 @@ public class BucketEntry {
     @Nonnull
     public Collection<Workflow> getWorkflows() {
         if (workflows == null) {
-            workflows = findWorkflows();
+            workflows = loadWorkflows();
         }
         return workflows;
     }
