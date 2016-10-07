@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventMetadata;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
@@ -60,6 +61,8 @@ public class LabVesselSearchDefinition {
 
     // This singleton is used to determine if search is related specifically to Infinium arrays
     private static ConfigurableSearchDefinition ARRAYS_ALT_SRCH_DEFINITION;
+    public static final List<LabEventType> CHIP_EVENT_TYPES = Collections.singletonList(
+            LabEventType.INFINIUM_HYBRIDIZATION);
 
     // These search term and/or result column names need to be referenced multiple places during processing.
     // Use an enum rather than having to reference via String values of term names
@@ -1501,8 +1504,6 @@ public class LabVesselSearchDefinition {
                 = Collections.singletonList(LabEventType.ARRAY_PLATING_DILUTION);
         final List<LabEventType> ampPlateEventTypes
                 = Collections.singletonList(LabEventType.INFINIUM_AMPLIFICATION);
-        final List<LabEventType> chipEventTypes
-                = Collections.singletonList(LabEventType.INFINIUM_HYBRIDIZATION);
 
         // Not available in results - PDO should be used
         searchTerm = new SearchTerm();
@@ -1597,7 +1598,7 @@ public class LabVesselSearchDefinition {
 
                 // DNA plate well event/vessel looks to descendant for chip well (1:1)
                 for (Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions
-                        : getChipDetailsForDnaWell(vessel, chipEventTypes, context).asMap().entrySet()) {
+                        : getChipDetailsForDnaWell(vessel, CHIP_EVENT_TYPES, context).asMap().entrySet()) {
                     result = labVesselAndPositions.getValue().iterator().next().toString();
                     break;
                 }
@@ -1616,7 +1617,7 @@ public class LabVesselSearchDefinition {
                 LabVessel vessel = (LabVessel)entity;
 
                 for (Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions
-                        : getChipDetailsForDnaWell(vessel, chipEventTypes, context ).asMap().entrySet()) {
+                        : getChipDetailsForDnaWell(vessel, CHIP_EVENT_TYPES, context ).asMap().entrySet()) {
                     result = labVesselAndPositions.getKey().getLabel();
                     break;
                 }
@@ -1701,7 +1702,7 @@ public class LabVesselSearchDefinition {
                 LabVessel vessel = (LabVessel)entity;
 
                 for (Map.Entry<LabVessel, Collection<VesselPosition>> labVesselAndPositions
-                        : getChipDetailsForDnaWell(vessel, chipEventTypes, context ).asMap().entrySet()) {
+                        : getChipDetailsForDnaWell(vessel, CHIP_EVENT_TYPES, context ).asMap().entrySet()) {
                     result = labVesselAndPositions.getKey().getLabel();
                     break;
                 }
@@ -1725,6 +1726,54 @@ public class LabVesselSearchDefinition {
                 Map<String, String[]> terms = new HashMap<>();
                 terms.put(drillDownSearchTerm, new String[]{barcode});
                 return SearchDefinitionFactory.buildDrillDownLink(barcode, ColumnEntity.LAB_VESSEL, drillDownSearchName, terms, context);
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Hyb Chamber");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public String evaluate(Object entity, SearchContext context) {
+                String result = null;
+                LabVessel vessel = (LabVessel)entity;
+                TransferTraverserCriteria.VesselForEventTypeCriteria traverserCriteria =
+                        new TransferTraverserCriteria.VesselForEventTypeCriteria(Collections.singletonList(
+                                LabEventType.INFINIUM_HYB_CHAMBER_LOADED), true);
+                vessel.evaluateCriteria(traverserCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
+                for (LabEvent labEvent : traverserCriteria.getVesselsForLabEventType().keySet()) {
+                    result = labEvent.getEventLocation();
+                    break;
+                }
+
+                return result;
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Tecan Position");
+        searchTerm.setDisplayValueExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public String evaluate(Object entity, SearchContext context) {
+                String result = null;
+                LabVessel vessel = (LabVessel)entity;
+                TransferTraverserCriteria.VesselForEventTypeCriteria traverserCriteria =
+                        new TransferTraverserCriteria.VesselForEventTypeCriteria(Collections.singletonList(
+                                LabEventType.INFINIUM_XSTAIN), true);
+                vessel.evaluateCriteria(traverserCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
+
+            events:
+                for (LabEvent labEvent : traverserCriteria.getVesselsForLabEventType().keySet()) {
+                    for (LabEventMetadata labEventMetadata : labEvent.getLabEventMetadatas()) {
+                        if (labEventMetadata.getLabEventMetadataType() ==
+                                LabEventMetadata.LabEventMetadataType.MessageNum) {
+                            result = labEventMetadata.getValue();
+                            break events;
+                        }
+                    }
+                }
+                return result;
             }
         });
         searchTerms.add(searchTerm);
@@ -2016,7 +2065,8 @@ public class LabVesselSearchDefinition {
      * @param context SearchContext containing values associated with search instance
      * @return All downstream vessels and associated positions, if initial vessel not a plate well, ignore and return empty Map
      */
-    private MultiValuedMap<LabVessel, VesselPosition> getChipDetailsForDnaWell( LabVessel dnaPlateWell, List<LabEventType> chipEventTypes, SearchContext context ) {
+    public static MultiValuedMap<LabVessel, VesselPosition> getChipDetailsForDnaWell(LabVessel dnaPlateWell,
+            List<LabEventType> chipEventTypes, SearchContext context ) {
         if(!isInfiniumSearch(context) || dnaPlateWell.getType() != LabVessel.ContainerType.PLATE_WELL ) {
             return new HashSetValuedHashMap<>();
         }
