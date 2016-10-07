@@ -1,14 +1,13 @@
 package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
 import org.apache.commons.io.output.ByteArrayOutputStream;
-import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -17,7 +16,7 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import java.io.PrintStream;
-import java.util.ArrayList;
+import java.util.List;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
@@ -33,6 +32,9 @@ public class SampleSheetFactoryTest extends Arquillian {
     @Inject
     private StaticPlateDao staticPlateDao;
 
+    @Inject
+    private ProductOrderDao productOrderDao;
+
     @Deployment
     public static WebArchive buildMercuryWar() {
         return DeploymentBuilder.buildMercuryWar(DEV);
@@ -40,13 +42,15 @@ public class SampleSheetFactoryTest extends Arquillian {
 
     @Test
     public void testBasics() {
+        List<Pair<LabVessel, VesselPosition>> vesselPositionPairs = sampleSheetFactory.loadByPdo(
+                productOrderDao.findByBusinessKey("PDO-6743"));
         MessageCollection messageCollection = new MessageCollection();
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        ArrayList<Pair<LabVessel, VesselPosition>> vesselPositionPairs = new ArrayList<>();
-        StaticPlate chip = staticPlateDao.findByBarcode("200598720152");
-        for (VesselPosition vesselPosition : chip.getVesselGeometry().getVesselPositions()) {
-            vesselPositionPairs.add(new ImmutablePair<LabVessel, VesselPosition>(chip, vesselPosition));
-        }
+//        List<Pair<LabVessel, VesselPosition>> vesselPositionPairs = new ArrayList<>();
+//        StaticPlate chip = staticPlateDao.findByBarcode("200598720152");
+//        for (VesselPosition vesselPosition : chip.getVesselGeometry().getVesselPositions()) {
+//            vesselPositionPairs.add(new ImmutablePair<LabVessel, VesselPosition>(chip, vesselPosition));
+//        }
         sampleSheetFactory.write(new PrintStream(byteArrayOutputStream), vesselPositionPairs, messageCollection);
         System.out.println(byteArrayOutputStream.toString());
         // todo jmt asserts

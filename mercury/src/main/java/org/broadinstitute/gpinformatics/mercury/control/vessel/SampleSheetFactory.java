@@ -1,10 +1,15 @@
 package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
@@ -14,6 +19,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import javax.inject.Inject;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -33,16 +39,49 @@ public class SampleSheetFactory {
     @Inject
     private SampleDataFetcher sampleDataFetcher;
 
+    public List<Pair<LabVessel, VesselPosition>> loadByPdo(ProductOrder productOrder) {
+        List<Pair<LabVessel, VesselPosition>> vesselPositionPairs = new ArrayList<>();
+        for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
+            MercurySample mercurySample = productOrderSample.getMercurySample();
+            if (mercurySample == null) {
+                continue;
+            }
+            for (LabVessel labVessel : mercurySample.getLabVessel()) {
+                // todo jmt this doesn't work, because the bucket entry is on the imported sample, not the PDO sample
+                for (BucketEntry bucketEntry : labVessel.getBucketEntries()) {
+                    if (bucketEntry.getProductOrder().equals(productOrder)) {
+                        TransferTraverserCriteria.VesselPositionForEvent transferTraverserCriteria =
+                                new TransferTraverserCriteria.VesselPositionForEvent(
+                                        Collections.singleton(LabEventType.INFINIUM_HYBRIDIZATION));
+                        labVessel.evaluateCriteria(transferTraverserCriteria,
+                                TransferTraverserCriteria.TraversalDirection.Descendants);
+
+                        VesselAndPosition vesselAndPosition = transferTraverserCriteria.getMapTypeToVesselPosition().
+                                get(LabEventType.INFINIUM_HYBRIDIZATION);
+                        if (vesselAndPosition != null) {
+                            vesselPositionPairs.add(new ImmutablePair<>(vesselAndPosition.getVessel(),
+                                    vesselAndPosition.getPosition()));
+                        }
+                    }
+                }
+            }
+        }
+        return vesselPositionPairs;
+    }
+
     public void write(PrintStream printStream, List<Pair<LabVessel, VesselPosition>> vesselPositionPairs,
             MessageCollection messageCollection) {
         // Write header
         printStream.println("[Header]");
         printStream.print("Investigator Name,");
+        // todo jmt RP PI?
         printStream.println();
         printStream.print("Project Name,");
+        // todo jmt RP name
         printStream.println();
         printStream.println("Experiment Name");
         printStream.print("Date,");
+        // todo jmt RP date?
         printStream.println();
 
         // Write manifests
@@ -55,6 +94,7 @@ public class SampleSheetFactory {
         printStream.println();
         printStream.println("[Manifests]");
         printStream.print("A,");
+        // todo jmt chip type
         printStream.println();
 
         // Write data columns
@@ -124,7 +164,7 @@ public class SampleSheetFactory {
             printStream.print(",");
 
             printStream.print(sampleData.getPatientId());
-            // todo jmt parent1, parent2, call rate
+            // todo jmt parent1, parent2, call rate?
             printStream.println(",,,");
         }
     }
