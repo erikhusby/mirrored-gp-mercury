@@ -13,7 +13,8 @@ import java.math.BigDecimal;
 public class ArraysQcFingerprint {
     @Id
     private Long arraysQcId;
-    private String expectedSample;
+    private String readGroup;
+    private String sample;
     private BigDecimal llExpectedSample;
     private BigDecimal llRandomSample;
     private BigDecimal lodExpectedSample;
@@ -28,8 +29,12 @@ public class ArraysQcFingerprint {
         return arraysQcId;
     }
 
-    public String getExpectedSample() {
-        return expectedSample;
+    public String getReadGroup() {
+        return readGroup;
+    }
+
+    public String getSample() {
+        return sample;
     }
 
     public BigDecimal getLlExpectedSample() {
