@@ -46,7 +46,7 @@ import java.util.Set;
 public class WorkflowValidator {
 
     private static final Log log = LogFactory.getLog(WorkflowValidator.class);
-    private final WorkflowLoader workflowLoader = new WorkflowLoader();
+    private WorkflowLoader workflowLoader;
 
     @Inject
     private LabVesselDao labVesselDao;
@@ -64,6 +64,14 @@ public class WorkflowValidator {
 
     @Inject
     private AppConfig appConfig;
+
+    public WorkflowValidator() {
+    }
+
+    @Inject
+    public WorkflowValidator(WorkflowLoader workflowLoader) {
+        this.workflowLoader=workflowLoader;
+    }
 
     public static class WorkflowException extends Exception {
         public WorkflowException(Throwable cause) {

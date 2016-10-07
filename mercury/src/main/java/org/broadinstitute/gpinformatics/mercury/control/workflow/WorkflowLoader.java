@@ -4,9 +4,12 @@ import org.broadinstitute.gpinformatics.athena.control.dao.preference.Preference
 import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
+import org.broadinstitute.gpinformatics.infrastructure.jmx.AbstractCache;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.xml.bind.JAXBContext;
@@ -18,7 +21,10 @@ import java.io.Serializable;
  * Loads a workflow configuration from the file system if outside a container (DBFree tests)
  *  or from preference table if called from within a container (Deployed app and Arquillian tests)
  */
-public class WorkflowLoader implements Serializable {
+@ApplicationScoped
+public class WorkflowLoader extends AbstractCache implements  Serializable {
+    @Inject
+    private WorkflowConfig workflowConfig;
 
     // Use file based configuration access for DBFree testing
     private static boolean IS_STANDALONE = false;
@@ -38,13 +44,26 @@ public class WorkflowLoader implements Serializable {
         }
     }
 
+    @Inject
+    public WorkflowLoader(@SuppressWarnings("CdiUnproxyableBeanTypesInspection") WorkflowConfig workflowConfig) {
+        this.workflowConfig = workflowConfig;
+    }
+
     public WorkflowLoader(){}
 
-    public WorkflowConfig load() {
+    public synchronized WorkflowConfig load() {
+        if (workflowConfig == null) {
+            refreshCache();
+        }
+        return workflowConfig;
+    }
+
+    @Override
+    public synchronized void refreshCache() {
         if( IS_STANDALONE ) {
-            return loadFromFile();
+            workflowConfig = loadFromFile();
         } else {
-            return loadFromPrefs();
+            workflowConfig = loadFromPrefs();
         }
     }
 
