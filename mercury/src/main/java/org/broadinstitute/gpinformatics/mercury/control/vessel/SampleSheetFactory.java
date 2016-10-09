@@ -1,15 +1,16 @@
 package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
 import org.broadinstitute.gpinformatics.infrastructure.SampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
@@ -39,50 +40,52 @@ public class SampleSheetFactory {
     @Inject
     private SampleDataFetcher sampleDataFetcher;
 
+    @Inject
+    private BSPUserList bspUserList;
+
     public List<Pair<LabVessel, VesselPosition>> loadByPdo(ProductOrder productOrder) {
         List<Pair<LabVessel, VesselPosition>> vesselPositionPairs = new ArrayList<>();
-        for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
-            MercurySample mercurySample = productOrderSample.getMercurySample();
-            if (mercurySample == null) {
-                continue;
-            }
-            for (LabVessel labVessel : mercurySample.getLabVessel()) {
-                // todo jmt this doesn't work, because the bucket entry is on the imported sample, not the PDO sample
-                for (BucketEntry bucketEntry : labVessel.getBucketEntries()) {
-                    if (bucketEntry.getProductOrder().equals(productOrder)) {
-                        TransferTraverserCriteria.VesselPositionForEvent transferTraverserCriteria =
-                                new TransferTraverserCriteria.VesselPositionForEvent(
-                                        Collections.singleton(LabEventType.INFINIUM_HYBRIDIZATION));
-                        labVessel.evaluateCriteria(transferTraverserCriteria,
-                                TransferTraverserCriteria.TraversalDirection.Descendants);
+        for (BucketEntry bucketEntry : productOrder.getBucketEntries()) {
+            TransferTraverserCriteria.VesselPositionForEvent transferTraverserCriteria =
+                    new TransferTraverserCriteria.VesselPositionForEvent(
+                            Collections.singleton(LabEventType.INFINIUM_HYBRIDIZATION));
+            // todo jmt limit to batch
+//            transferTraverserCriteria.setLabBatch(bucketEntry.getLabBatch());
+            bucketEntry.getLabVessel().evaluateCriteria(transferTraverserCriteria,
+                    TransferTraverserCriteria.TraversalDirection.Descendants);
 
-                        VesselAndPosition vesselAndPosition = transferTraverserCriteria.getMapTypeToVesselPosition().
-                                get(LabEventType.INFINIUM_HYBRIDIZATION);
-                        if (vesselAndPosition != null) {
-                            vesselPositionPairs.add(new ImmutablePair<>(vesselAndPosition.getVessel(),
-                                    vesselAndPosition.getPosition()));
-                        }
-                    }
-                }
+            VesselAndPosition vesselAndPosition = transferTraverserCriteria.getMapTypeToVesselPosition().
+                    get(LabEventType.INFINIUM_HYBRIDIZATION);
+            if (vesselAndPosition != null) {
+                vesselPositionPairs.add(new ImmutablePair<>(vesselAndPosition.getVessel(),
+                        vesselAndPosition.getPosition()));
             }
         }
+
         return vesselPositionPairs;
     }
 
     public void write(PrintStream printStream, List<Pair<LabVessel, VesselPosition>> vesselPositionPairs,
-            MessageCollection messageCollection) {
+            ResearchProject researchProject, MessageCollection messageCollection) {
         // Write header
         printStream.println("[Header]");
+
         printStream.print("Investigator Name,");
-        // todo jmt RP PI?
-        printStream.println();
+        String piName = "";
+        Long[] broadPIs = researchProject.getBroadPIs();
+        if (broadPIs != null && broadPIs.length > 0) {
+            piName = bspUserList.getById(broadPIs[0]).getFullName();
+        }
+        printStream.println(piName);
+
         printStream.print("Project Name,");
-        // todo jmt RP name
-        printStream.println();
+        printStream.println(researchProject.getName());
+
         printStream.println("Experiment Name");
+
         printStream.print("Date,");
-        // todo jmt RP date?
-        printStream.println();
+        // todo jmt format
+        printStream.println(researchProject.getCreatedDate());
 
         // Write manifests
         printStream.println();
@@ -136,7 +139,7 @@ public class SampleSheetFactory {
             printStream.print("_");
             SampleData sampleData = mapSampleNameToData.get(mapPairToSampleInstance.get(
                     vesselPositionPair).getNearestMercurySampleName());
-            printStream.print(sampleData.getPatientId());
+            printStream.print(sampleData.getCollaboratorParticipantId());
             printStream.print("_");
             printStream.print(labVessel.getLabel());
             printStream.print("_");
@@ -160,7 +163,9 @@ public class SampleSheetFactory {
             printStream.print(sampleData.getCollaboratorParticipantId());
             printStream.print(",");
 
-            printStream.print(sampleData.getGender().charAt(0));
+            if (!StringUtils.isBlank(sampleData.getGender())) {
+                printStream.print(sampleData.getGender().charAt(0));
+            }
             printStream.print(",");
 
             printStream.print(sampleData.getPatientId());

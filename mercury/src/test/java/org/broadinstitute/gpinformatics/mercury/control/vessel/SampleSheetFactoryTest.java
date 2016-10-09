@@ -1,9 +1,12 @@
 package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
+//import com.jprofiler.api.agent.Controller;
+
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
@@ -42,8 +45,11 @@ public class SampleSheetFactoryTest extends Arquillian {
 
     @Test
     public void testBasics() {
+//        Controller.startCPURecording(true);
+//        Controller.startProbeRecording(Controller.PROBE_NAME_JDBC, true);
+        ProductOrder productOrder = productOrderDao.findByBusinessKey("PDO-6743");
         List<Pair<LabVessel, VesselPosition>> vesselPositionPairs = sampleSheetFactory.loadByPdo(
-                productOrderDao.findByBusinessKey("PDO-6743"));
+                productOrder);
         MessageCollection messageCollection = new MessageCollection();
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 //        List<Pair<LabVessel, VesselPosition>> vesselPositionPairs = new ArrayList<>();
@@ -51,8 +57,11 @@ public class SampleSheetFactoryTest extends Arquillian {
 //        for (VesselPosition vesselPosition : chip.getVesselGeometry().getVesselPositions()) {
 //            vesselPositionPairs.add(new ImmutablePair<LabVessel, VesselPosition>(chip, vesselPosition));
 //        }
-        sampleSheetFactory.write(new PrintStream(byteArrayOutputStream), vesselPositionPairs, messageCollection);
+        sampleSheetFactory.write(new PrintStream(byteArrayOutputStream), vesselPositionPairs,
+                productOrder.getResearchProject(), messageCollection);
         System.out.println(byteArrayOutputStream.toString());
         // todo jmt asserts
+//        Controller.stopProbeRecording(Controller.PROBE_NAME_JDBC);
+//        Controller.stopCPURecording();
     }
 }
