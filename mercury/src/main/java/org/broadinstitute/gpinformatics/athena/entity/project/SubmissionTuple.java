@@ -13,15 +13,26 @@ package org.broadinstitute.gpinformatics.athena.entity.project;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassFileType;
+import org.codehaus.jackson.annotate.JsonProperty;
+import org.codehaus.jackson.map.ObjectMapper;
 
+import java.io.IOException;
 import java.io.Serializable;
 
 public class SubmissionTuple implements Serializable {
     private static final long serialVersionUID = 1262062294730627888L;
+    private static Log log = LogFactory.getLog(SubmissionTuple.class);
+
+    @JsonProperty
     private String project;
+    @JsonProperty
     private String sampleName;
+    @JsonProperty
     private BassFileType fileType;
+    @JsonProperty
     private String version;
 
     /**
@@ -64,6 +75,36 @@ public class SubmissionTuple implements Serializable {
                 .append(this.project, that.project)
                 .append(this.fileType, that.fileType)
                 .append(this.version, that.version).isEquals();
+    }
+
+    /**
+     * JSON Representation of this SubmissionTuple.
+     *
+     * @return JSON Representation of this SubmissionTuple.
+     */
+    public String jsonString() {
+        ObjectMapper objectMapper = new ObjectMapper();
+        String stringValue = null;
+        try {
+            stringValue = objectMapper.writeValueAsString(this);
+        } catch (IOException e) {
+            log.info("SubmissionTracker could not be converted to JSON String.", e);
+        }
+        return stringValue;
+    }
+
+    /**
+     * @return SubmissionTuple object from given jsonString
+     */
+    public static SubmissionTuple fromJson(String jsonString) {
+        SubmissionTuple submissionTuple = null;
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            submissionTuple = objectMapper.readValue(jsonString, SubmissionTuple.class);
+        } catch (IOException e) {
+            log.info(String.format("Could not map JSON String [%s] to SubmissionTuple", jsonString), e);
+        }
+        return submissionTuple;
     }
 
     @Override
