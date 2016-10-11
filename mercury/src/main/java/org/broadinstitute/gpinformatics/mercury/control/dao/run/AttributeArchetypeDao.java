@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.run;
 
 import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingChipMapping;
+import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingProductOrderMapping;
+import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingProductOrderMapping_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.entity.run.AttributeArchetype;
 import org.broadinstitute.gpinformatics.mercury.entity.run.AttributeDefinition;
@@ -147,4 +149,19 @@ public class AttributeArchetypeDao extends GenericDao {
             return o1.getActiveDate().compareTo(o2.getActiveDate());
         }
     };
+    public GenotypingProductOrderMapping findGenotypingProductOrderMapping(String jiraTicketKey) {
+        return findSingle(GenotypingProductOrderMapping.class, GenotypingProductOrderMapping_.archetypeName,
+                jiraTicketKey);
+    }
+
+    public Map<String, AttributeDefinition> findAttributeGroupByTypeAndName(
+            AttributeDefinition.DefinitionType definitionType, String group) {
+        Map<String, AttributeDefinition> map = new HashMap<>();
+        for (AttributeDefinition def : findAttributeDefinitions(definitionType)) {
+            if (group.equals(def.getGroup())) {
+                map.put(def.getAttributeName(), def);
+            }
+        }
+        return map;
+    }
 }

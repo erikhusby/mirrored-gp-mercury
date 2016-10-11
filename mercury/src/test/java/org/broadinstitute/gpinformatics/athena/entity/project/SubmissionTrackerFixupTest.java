@@ -93,7 +93,7 @@ public class SubmissionTrackerFixupTest extends Arquillian {
         submissionTrackerDao.persist(new FixupCommentary("GPLIM-4086 removed duplicate submissions"));
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void gplim4254BackfillProject() {
         userBean.loginOSUser();
 

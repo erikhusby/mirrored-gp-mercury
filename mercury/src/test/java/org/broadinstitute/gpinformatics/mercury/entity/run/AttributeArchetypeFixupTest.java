@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.run;
 
 import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingChipMapping;
+import org.broadinstitute.gpinformatics.athena.entity.products.GenotypingProductOrderMapping;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
@@ -280,5 +281,120 @@ public class AttributeArchetypeFixupTest extends Arquillian {
                 genotypingChipMapping.getActiveDate());
         attributeArchetypeDao.persist(new FixupCommentary("GAP-1068 backfill chip type"));
         attributeArchetypeDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void support2099AddNewChipAttributes() throws Exception {
+        utx.begin();
+        userBean.loginOSUser();
+
+        final String chipFamily = InfiniumRunResource.INFINIUM_GROUP;
+
+        List<AttributeDefinition> definitions = new ArrayList<AttributeDefinition>() {{
+            add(new AttributeDefinition(AttributeDefinition.DefinitionType.GENOTYPING_CHIP,
+                    chipFamily, "call_rate_threshold", true));
+            add(new AttributeDefinition(AttributeDefinition.DefinitionType.GENOTYPING_CHIP,
+                    chipFamily, "gender_cluster_file", true));
+        }};
+
+        String megaGenderClusterFile =
+                "/gap/illumina/beadstudio/Autocall/ChipInfo/Multi-EthnicGlobal-8_A1/"
+                + "Multi-EthnicGlobal_A1_Gentrain_Genderest_ClusterFile_highmafX.egt";
+        Set<GenotypingChip> genotypingChips = attributeArchetypeDao.findGenotypingChips(chipFamily);
+        for (GenotypingChip genotypingChip: genotypingChips) {
+            genotypingChip.addOrSetAttribute("call_rate_threshold", "98");
+            if (genotypingChip.getChipName().equals("Multi-EthnicGlobal-8_A1")) {
+                genotypingChip.addOrSetAttribute("gender_cluster_file", megaGenderClusterFile);
+            } else {
+                genotypingChip.addOrSetAttribute("gender_cluster_file", null);
+            }
+        }
+
+        String fixupReason = "SUPPORT-2099 add call rate threshold and optional gender cluster file.";
+        attributeArchetypeDao.persist(new FixupCommentary(fixupReason));
+        attributeArchetypeDao.persistAll(definitions);
+        attributeArchetypeDao.persistAll(genotypingChips);
+        attributeArchetypeDao.flush();
+        utx.commit();
+    }
+
+    @Test(enabled = false)
+    public void gplim4320PdoOverrides() throws Exception {
+        utx.begin();
+        userBean.loginOSUser();
+
+        final String chipFamily = InfiniumRunResource.INFINIUM_GROUP;
+
+        List<AttributeDefinition> definitions = new ArrayList<AttributeDefinition>() {{
+            add(new AttributeDefinition(AttributeDefinition.DefinitionType.GENOTYPING_PRODUCT_ORDER,
+                    chipFamily, "call_rate_threshold", true));
+            add(new AttributeDefinition(AttributeDefinition.DefinitionType.GENOTYPING_PRODUCT_ORDER,
+                    chipFamily, "cluster_location_unix", true));
+        }};
+
+
+        String fixupReason = "GPLIM-4320 add pdo specific overrides.";
+        attributeArchetypeDao.persist(new FixupCommentary(fixupReason));
+        attributeArchetypeDao.persistAll(definitions);
+        attributeArchetypeDao.flush();
+        utx.commit();
+    }
+
+
+    @Test(enabled = false)
+    public void gplim4350IlluminaManifestAttribute() throws Exception {
+        utx.begin();
+        userBean.loginOSUser();
+
+        final String chipFamily = InfiniumRunResource.INFINIUM_GROUP;
+
+        List<AttributeDefinition> definitions = new ArrayList<AttributeDefinition>() {{
+            add(new AttributeDefinition(AttributeDefinition.DefinitionType.GENOTYPING_CHIP,
+                    chipFamily, "illumina_manifest_unix", true));
+        }};
+
+        Map<String, String> chipToIlluminaManifest = new HashMap<String, String>() {{
+            put("PsychChip_v1-1_15073391_A1",
+                "/humgen/affy_info/GAPProduction/prod/PsychChip_v1-1_15073391_A1/PsychChip_v1-1_15073391_A1.csv");
+            put("PsychChip_15048346_B",
+                "/humgen/affy_info/GAPProduction/prod/PsychChip_15048346_B/PsychChip_15048346_B.csv");
+            put("HumanOmniExpressExome-8v1_B",
+                "/humgen/affy_info/GAPProduction/prod/HumanOmniExpressExome-8v1_B/HumanOmniExpressExome-8v1_B.csv");
+            put("HumanCoreExome-24v1-0_A",
+                "/humgen/affy_info/GAPProduction/prod/HumanCoreExome-24v1-0_A/HumanCoreExome-24v1-0_A.csv");
+            put("Broad_GWAS_supplemental_15061359_A1",
+                "/humgen/affy_info/GAPProduction/prod/Broad_GWAS_supplemental_15061359_A1/Broad_GWAS_supplemental_15061359_A1.csv");
+            put("DBS_Wave_Psych",
+                "/humgen/affy_info/GAPProduction/prod/DBS_Wave_Psych/DBS_Wave_Psych.csv");
+            put("HumanExome-12v1-2_A",
+                "/humgen/affy_info/GAPProduction/prod/HumanExome-12v1-2_A/HumanExome-12v1-2_A.csv");
+            put("HumanOmni2.5-8v1_A",
+                "/humgen/affy_info/GAPProduction/prod/HumanOmni2.5-8v1_A/HumanOmni2.5-8v1_A.csv ");
+            put("HumanOmniExpress-24v1-1_A",
+                "/humgen/affy_info/GAPProduction/prod/HumanOmniExpress-24v1-1_A/HumanOmniExpress-24v1-1_A.csv");
+            put("HumanOmniExpressExome-8v1-3_A",
+                "/humgen/illumina/Illumina_BeadLab/Infinium_WholeGenome/InfiniumOmniExpressExome-8v1-3_A/InfiniumOmniExpressExome-8v1-3_A.csv");
+            put("Multi-EthnicGlobal-8_A1",
+                "/humgen/affy_info/GAPProduction/prod/Multi-EthnicGlobal-8_A1/Multi-EthnicGlobal-8_A1.csv");
+        }};
+
+        Set<GenotypingChip> genotypingChips = attributeArchetypeDao.findGenotypingChips(chipFamily);
+        for (GenotypingChip genotypingChip: genotypingChips) {
+            if (chipToIlluminaManifest.containsKey(genotypingChip.getChipName())) {
+                String manifest = chipToIlluminaManifest.get(genotypingChip.getChipName());
+                genotypingChip.addOrSetAttribute("illumina_manifest_unix", manifest);
+                System.out.println("For chip: " + genotypingChip.getChipName() +
+                                   " set archetypeAttribute: illumina_manifest_unix to " + manifest);
+            } else {
+                throw new RuntimeException("Illumina manifest not found in map for chip " + genotypingChip.getChipName());
+            }
+        }
+
+        String fixupReason = "GPLIM-4350 add illumina manifest attribute.";
+        attributeArchetypeDao.persist(new FixupCommentary(fixupReason));
+        attributeArchetypeDao.persistAll(definitions);
+        attributeArchetypeDao.persistAll(genotypingChips);
+        attributeArchetypeDao.flush();
+        utx.commit();
     }
 }

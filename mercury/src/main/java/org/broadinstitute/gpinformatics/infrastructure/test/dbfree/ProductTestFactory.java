@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 
+import java.math.BigDecimal;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.UUID;
@@ -59,6 +60,7 @@ public class ProductTestFactory {
             product.addRiskCriteria(new RiskCriterion(RiskCriterion.RiskCriteriaType.PICO_AGE, Operator.IS, "true"));
             product.addRiskCriteria(
                     new RiskCriterion(RiskCriterion.RiskCriteriaType.TOTAL_DNA, Operator.LESS_THAN, ".250"));
+            product.setLoadingConcentration(BigDecimal.valueOf(225));
         } catch (ParseException e) {
 
         }

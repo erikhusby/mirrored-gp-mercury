@@ -17,6 +17,7 @@ public class ArraysQcGtConcordance implements Serializable {
     @Id
     private String variantType;
     private String truthSample;
+    private String callSample;
     private BigDecimal hetSensitivity;
     private BigDecimal hetPpv;
     private BigDecimal hetSpecificity;
@@ -26,8 +27,8 @@ public class ArraysQcGtConcordance implements Serializable {
     private BigDecimal varSensitivity;
     private BigDecimal varPpv;
     private BigDecimal varSpecificity;
-    private BigDecimal gtConcordance;
-    private BigDecimal nonRefGtConcordance;
+    private BigDecimal genotypeConcordance;
+    private BigDecimal nonRefGenotypeConcordance;
 
     public Long getArraysQcId() {
         return arraysQcId;
@@ -39,6 +40,10 @@ public class ArraysQcGtConcordance implements Serializable {
 
     public String getTruthSample() {
         return truthSample;
+    }
+
+    public String getCallSample() {
+        return callSample;
     }
 
     public BigDecimal getHetSensitivity() {
@@ -77,11 +82,11 @@ public class ArraysQcGtConcordance implements Serializable {
         return varSpecificity;
     }
 
-    public BigDecimal getGtConcordance() {
-        return gtConcordance;
+    public BigDecimal getGenotypeConcordance() {
+        return genotypeConcordance;
     }
 
-    public BigDecimal getNonRefGtConcordance() {
-        return nonRefGtConcordance;
+    public BigDecimal getNonRefGenotypeConcordance() {
+        return nonRefGenotypeConcordance;
     }
 }

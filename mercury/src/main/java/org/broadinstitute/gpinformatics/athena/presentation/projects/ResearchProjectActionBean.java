@@ -28,7 +28,6 @@ import org.broadinstitute.gpinformatics.athena.boundary.projects.RegulatoryInfoE
 import org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.SampleKitRecipient;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
-import org.broadinstitute.gpinformatics.athena.control.dao.projects.RegulatoryInfoDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
@@ -71,7 +70,6 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.type.TypeReference;
 import org.json.JSONArray;
 import org.json.JSONException;
-import org.json.JSONObject;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -108,13 +106,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
     public static final String CREATE_PROJECT = CoreActionBean.CREATE + PROJECT;
     public static final String EDIT_PROJECT = CoreActionBean.EDIT + PROJECT;
 
-    public static final String REGULATORY_INFO_QUERY_ACTION = "regulatoryInfoQuery";
-    public static final String ADD_REGULATORY_INFO_TO_RESEARCH_PROJECT_ACTION = "addRegulatoryInfoToResearchProject";
-    public static final String ADD_NEW_REGULATORY_INFO_ACTION = "addNewRegulatoryInfo";
     public static final String REMOVE_REGULATORY_INFO_ACTION = "removeRegulatoryInfo";
-    public static final String VIEW_REGULATORY_INFO_ACTION = "viewRegulatoryInfo";
-    public static final String EDIT_REGULATORY_INFO_ACTION = "editRegulatoryInfo";
-    public static final String VALIDATE_TITLE_ACTION = "validateTitle";
     public static final String VIEW_SUBMISSIONS_ACTION = "viewSubmissions";
     public static final String POST_SUBMISSIONS_ACTION = "postSubmissions";
     public static final String GET_SUBMISSION_STATUSES_ACTION = "getSubmissionStatuses";
@@ -166,10 +158,6 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
     private String selectedSubmissionLibraryDescriptor;
     private String selectedSubmissionRepository;
 
-    @Validate(required = true, on = {EDIT_ACTION, VIEW_ACTION, BEGIN_COLLABORATION_ACTION})
-    @Inject
-    private RegulatoryInfoDao regulatoryInfoDao;
-
     @Inject
     private RegulatoryInfoEjb regulatoryInfoEjb;
 
@@ -182,7 +170,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
     /**
      * The research project business key
      */
-    @Validate(required = true, on = {EDIT_ACTION, VIEW_ACTION})
+    @Validate(required = true, on = {EDIT_ACTION, VIEW_ACTION, BEGIN_COLLABORATION_ACTION})
     private String researchProject;
 
     private Long selectedCollaborator;
@@ -213,17 +201,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
      */
     private String q;
 
-    private List<RegulatoryInfo> searchResults;
-
-    private OrspProject orspSearchResult;
-
     private Long regulatoryInfoId;
-
-    private String regulatoryInfoIdentifier;
-
-    private RegulatoryInfo.Type regulatoryInfoType;
-
-    private String regulatoryInfoAlias;
 
     /**
      * All research projects, fetched once and stored per-request (as a result of this bean being @RequestScoped).
@@ -323,9 +301,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
      * for existence.
      */
     @Before(stages = LifecycleStage.BindingAndValidation,
-            on = {VIEW_ACTION, EDIT_ACTION, CREATE_ACTION, SAVE_ACTION, REGULATORY_INFO_QUERY_ACTION,
-                    ADD_REGULATORY_INFO_TO_RESEARCH_PROJECT_ACTION, ADD_NEW_REGULATORY_INFO_ACTION,
-                    REMOVE_REGULATORY_INFO_ACTION, EDIT_REGULATORY_INFO_ACTION, BEGIN_COLLABORATION_ACTION,
+            on = {VIEW_ACTION, EDIT_ACTION, CREATE_ACTION, SAVE_ACTION, BEGIN_COLLABORATION_ACTION,
                     RESEND_INVITATION_ACTION, VIEW_SUBMISSIONS_ACTION, POST_SUBMISSIONS_ACTION,
                     GET_SUBMISSION_STATUSES_ACTION})
     public void init() throws Exception {
@@ -357,7 +333,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
                 submissionRepository = submissionsService.findRepositoryByKey(selectedSubmissionRepository);
                     if (submissionRepository!=null && !submissionRepository.isActive() && eventName.equals(VIEW_SUBMISSIONS_ACTION)) {
                         addMessage("Selected submission site ''{0}'' is not active.", submissionRepository.getDescription());
-                    }
+                }
             }
 
             if (submissionLibraryDescriptor == null) {
@@ -744,33 +720,16 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
     }
 
     /**
-     * Handles an AJAX action event to search for regulatory information, case-insensitively, from the value in this.q.
-     */
-    @HandlesEvent(REGULATORY_INFO_QUERY_ACTION)
-    public Resolution queryRegulatoryInfoReturnHtmlSnippet() {
-        String query = q.trim();
-        searchResults = regulatoryInfoDao.findByIdentifier(query);
-        if (searchResults.isEmpty()) {
-            orspSearchResult = orspProjectDao.findByKey(query);
-            if (orspSearchResult != null) {
-                regulatoryInfoType = orspSearchResult.getType();
-                regulatoryInfoAlias = orspSearchResult.getName();
-            }
-        }
-        regulatoryInfoIdentifier = query;
-        return new ForwardResolution("regulatory_info_dialog_sheet_2.jsp");
-    }
-
-    /**
-     * Determines whether or not the given regulatory information is already associated with the current research
-     * project. This is used to determine whether an existing regulatory information can be added to a project.
+     * Determines whether or not the given regulatory information can be edited. The only property that can be changed
+     * is the name/title. However, if this record matches what is in the ORSP Portal, we don't want it to be changed.
      *
-     * @param regulatoryInfo the regulatory info to check
+     * @param regulatoryInfo    the regulatory info to check
      *
-     * @return true if the regulatory info is associated with the research project; false otherwise
+     * @return true if the regulatory info can be edited; false otherwise
      */
-    public boolean isRegulatoryInfoInResearchProject(RegulatoryInfo regulatoryInfo) {
-        return editResearchProject.getRegulatoryInfos().contains(regulatoryInfo);
+    public boolean isRegulatoryInfoEditAllowed(RegulatoryInfo regulatoryInfo) {
+        OrspProject orspProject = orspProjectDao.findByKey(regulatoryInfo.getIdentifier());
+        return !(orspProject != null && regulatoryInfo.getName().equals(orspProject.getName()));
     }
 
     /**
@@ -792,107 +751,6 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
     }
 
     /**
-     * Determines whether or not the regulatory information form represents a new record.
-     *
-     * @return true if creating a new regulatory information; false otherwise
-     */
-    public boolean isRegulatoryInformationNew() {
-        return regulatoryInfoId == null;
-    }
-
-    /**
-     * Returns all of the possible regulatory information types. This is used to access the enumeration values because
-     * stripes:options-enumeration does not support a "disabled" attribute.
-     *
-     * @return a collection of all values from the {@link RegulatoryInfo.Type} enum
-     */
-    public RegulatoryInfo.Type[] getAllTypes() {
-        return RegulatoryInfo.Type.values();
-    }
-
-    /**
-     * Determines whether or not there are any regulatory information types that can be added for the queried
-     * identifier. If there is already regulatory information for every type for the queried identifier, the UI should
-     * not prompt to create a new record.
-     *
-     * @return true if the user should be allowed to create new regulatory info; false otherwise
-     */
-    public boolean isAddRegulatoryInfoAllowed() {
-        return searchResults.isEmpty() && orspSearchResult == null;
-    }
-
-    /**
-     * Determines whether or not a regulatory information of the given type already exists with the queried identifier.
-     *
-     * @param type the type to check
-     *
-     * @return true if the type is already in use for the identifier; false otherwise
-     */
-    public boolean isTypeInUseForIdentifier(RegulatoryInfo.Type type) {
-        for (RegulatoryInfo searchResult : searchResults) {
-            if (searchResult.getType() == type) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Loads an existing regulatory information and pre-populates the regulatory information form.
-     *
-     * @return a resolution to the regulatory information form
-     */
-    @HandlesEvent(VIEW_REGULATORY_INFO_ACTION)
-    public Resolution viewRegulatoryInfo() {
-        RegulatoryInfo regulatoryInfo = regulatoryInfoDao.findById(RegulatoryInfo.class, regulatoryInfoId);
-        if (regulatoryInfo != null) {
-            regulatoryInfoIdentifier = regulatoryInfo.getIdentifier();
-            searchResults = regulatoryInfoDao.findByIdentifier(regulatoryInfoIdentifier);
-            regulatoryInfoType = regulatoryInfo.getType();
-            regulatoryInfoAlias = regulatoryInfo.getName();
-        }
-        return new ForwardResolution("regulatory_info_form.jsp");
-    }
-
-    private static JSONObject regulatoryInfoToJSONObject(RegulatoryInfo regulatoryInfo, boolean alreadyAdded)
-            throws JSONException {
-        JSONObject object = new JSONObject();
-        object.put("id", regulatoryInfo.getRegulatoryInfoId());
-        object.put("identifier", regulatoryInfo.getIdentifier());
-        object.put("type", regulatoryInfo.getType().getName());
-        object.put("alias", regulatoryInfo.getName());
-        object.put("alreadyAdded", alreadyAdded);
-        return object;
-    }
-
-    /**
-     * Associates regulatory information with a research project. The RegulatoryInformation is looked up by the value in
-     * this.regulatoryInfoId.
-     *
-     * @return a redirect to the research project view page
-     */
-    @HandlesEvent(ADD_REGULATORY_INFO_TO_RESEARCH_PROJECT_ACTION)
-    public Resolution addRegulatoryInfoToResearchProject() {
-        regulatoryInfoEjb.addRegulatoryInfoToResearchProject(regulatoryInfoId, editResearchProject);
-        return new RedirectResolution(ResearchProjectActionBean.class, VIEW_ACTION)
-                .addParameter(RESEARCH_PROJECT_PARAMETER, editResearchProject.getBusinessKey());
-    }
-
-    /**
-     * Creates a new regulatory information record and adds it to the research project currently being viewed.
-     *
-     * @return a redirect to the research project view page
-     */
-    @HandlesEvent(ADD_NEW_REGULATORY_INFO_ACTION)
-    public Resolution addNewRegulatoryInfo() {
-        RegulatoryInfo regulatoryInfo = regulatoryInfoEjb
-                .createRegulatoryInfo(regulatoryInfoIdentifier, regulatoryInfoType, regulatoryInfoAlias);
-        regulatoryInfoEjb.addRegulatoryInfoToResearchProject(regulatoryInfo.getRegulatoryInfoId(), editResearchProject);
-        return new RedirectResolution(ResearchProjectActionBean.class, VIEW_ACTION)
-                .addParameter(RESEARCH_PROJECT_PARAMETER, editResearchProject.getBusinessKey());
-    }
-
-    /**
      * Removes a regulatory info record from the current research project. The ID of the regulatory info comes from
      * this.regulatoryInfoId.
      *
@@ -900,21 +758,9 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
      */
     @HandlesEvent(REMOVE_REGULATORY_INFO_ACTION)
     public Resolution removeRegulatoryInfo() {
-        regulatoryInfoEjb.removeRegulatoryInfoFromResearchProject(regulatoryInfoId, editResearchProject);
+        regulatoryInfoEjb.removeRegulatoryInfoFromResearchProject(regulatoryInfoId, researchProject);
         return new RedirectResolution(ResearchProjectActionBean.class, VIEW_ACTION)
-                .addParameter(RESEARCH_PROJECT_PARAMETER, editResearchProject.getBusinessKey());
-    }
-
-    @HandlesEvent(VALIDATE_TITLE_ACTION)
-    public Resolution validateTitle() {
-        String result = "";
-        if (StringUtils.isBlank(regulatoryInfoAlias)) {
-            result = "Protocol Title is required.";
-        } else if (regulatoryInfoAlias.length() > RegulatoryInfo.PROTOCOL_TITLE_MAX_LENGTH) {
-            result = String.format("Protocol title exceeds maximum length of %d with %d.",
-                    RegulatoryInfo.PROTOCOL_TITLE_MAX_LENGTH, regulatoryInfoAlias.length());
-        }
-        return createTextResolution(result);
+                .addParameter(RESEARCH_PROJECT_PARAMETER, researchProject);
     }
 
     @HandlesEvent(VIEW_SUBMISSIONS_ACTION)
@@ -1050,19 +896,6 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         sessionCache.put(researchProject, submissionSamples);
     }
 
-
-    /**
-     * Edits a regulatory info record, specifically the title (alias, name). The ID of the regulatory info comes from
-     * this.regulatoryInfoId and the new title comes from this.regulatoryInfoAlias.
-     *
-     * @return a redirect to the research project view page
-     */
-    @HandlesEvent(EDIT_REGULATORY_INFO_ACTION)
-    public Resolution editRegulatoryInfo() {
-        regulatoryInfoEjb.editRegulatoryInfo(regulatoryInfoId, regulatoryInfoAlias);
-        return new RedirectResolution(ResearchProjectActionBean.class, VIEW_ACTION)
-                .addParameter(RESEARCH_PROJECT_PARAMETER, editResearchProject.getBusinessKey());
-    }
 
     /**
      * Handles a users request to submit samples to the submissions serverice
@@ -1233,44 +1066,12 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         this.q = q;
     }
 
-    public List<RegulatoryInfo> getSearchResults() {
-        return searchResults;
-    }
-
-    public OrspProject getOrspSearchResult() {
-        return orspSearchResult;
-    }
-
     public Long getRegulatoryInfoId() {
         return regulatoryInfoId;
     }
 
     public void setRegulatoryInfoId(Long regulatoryInfoId) {
         this.regulatoryInfoId = regulatoryInfoId;
-    }
-
-    public String getRegulatoryInfoIdentifier() {
-        return regulatoryInfoIdentifier;
-    }
-
-    public void setRegulatoryInfoIdentifier(String regulatoryInfoIdentifier) {
-        this.regulatoryInfoIdentifier = regulatoryInfoIdentifier;
-    }
-
-    public RegulatoryInfo.Type getRegulatoryInfoType() {
-        return regulatoryInfoType;
-    }
-
-    public void setRegulatoryInfoType(RegulatoryInfo.Type regulatoryInfoType) {
-        this.regulatoryInfoType = regulatoryInfoType;
-    }
-
-    public String getRegulatoryInfoAlias() {
-        return regulatoryInfoAlias;
-    }
-
-    public void setRegulatoryInfoAlias(String regulatoryInfoAlias) {
-        this.regulatoryInfoAlias = regulatoryInfoAlias;
     }
 
     public String getCollaborationQuoteId() {
@@ -1350,7 +1151,12 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
      */
     @Override
     public boolean isEditAllowed() {
-        return getUserBean().isDeveloperUser() || getUserBean().isPMUser() || getUserBean().isPDMUser();
+        UserBean userBean = getUserBean();
+        return isEditAllowed(userBean);
+    }
+
+    public static boolean isEditAllowed(UserBean userBean) {
+        return userBean.isDeveloperUser() || userBean.isPMUser() || userBean.isPDMUser();
     }
 
     public CollaborationData getCollaborationData() {

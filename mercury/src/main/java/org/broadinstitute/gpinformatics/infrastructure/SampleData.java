@@ -56,6 +56,8 @@ public interface SampleData {
 
     String getCollection();
 
+    String getCollectionId();
+
     String getCollaboratorsSampleName();
 
     String getContainerId();

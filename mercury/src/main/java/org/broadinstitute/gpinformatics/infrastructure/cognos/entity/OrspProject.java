@@ -5,8 +5,11 @@ import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -42,6 +45,9 @@ public class OrspProject {
 
     private String url;
 
+    @OneToMany(mappedBy = "orspProject")
+    private Collection<OrspProjectConsent> consents = new HashSet<>();
+
     /**
      * For JPA.
      */
@@ -52,7 +58,7 @@ public class OrspProject {
     /**
      * For tests.
      */
-    OrspProject(String projectKey, String rawLabel, String rawType, String status, String description, String url) {
+    public OrspProject(String projectKey, String rawLabel, String rawType, String status, String description, String url) {
         this.projectKey = projectKey;
         this.rawLabel = rawLabel;
         this.rawType = rawType;
@@ -140,5 +146,12 @@ public class OrspProject {
      */
     public String getUrl() {
         return url;
+    }
+
+    /**
+     * @return the project's consents (use restrictions) from the ORSP Portal
+     */
+    public Collection<OrspProjectConsent> getConsents() {
+        return consents;
     }
 }

@@ -34,12 +34,14 @@ import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Test(groups = TestGroups.FIXUP)
 public class MercurySampleFixupTest extends Arquillian {
@@ -79,7 +81,6 @@ public class MercurySampleFixupTest extends Arquillian {
         if (userBean == null) {
             return;
         }
-        userBean.loginOSUser();
         utx.begin();
     }
 
@@ -89,8 +90,27 @@ public class MercurySampleFixupTest extends Arquillian {
         if (userBean == null) {
             return;
         }
-        userBean.logout();
         utx.commit();
+    }
+
+    @Test(groups = TestGroups.FIXUP, enabled = false)
+    public void gplim4381DeleteOrphanedSamples() throws Exception {
+        List<String> sampleKeys = Arrays.asList(
+                "SM-CNSAY", "SM-CNSB2", "SM-CNSBA", "SM-CNSB8", "SM-CNSB7", "SM-CNSB5", "SM-CNSAX",
+                "SM-CNSBB", "SM-CNSAR", "SM-CNSAU", "SM-CNSBC", "SM-CNSB9", "SM-CNSAZ", "SM-CNSB3",
+                "SM-CNSB1", "SM-CNSAV", "SM-CNSAW", "SM-CNSAT", "SM-CNSAS"
+        );
+        List<MercurySample> mercurySamples = mercurySampleDao.findBySampleKeys(sampleKeys);
+        userBean.loginOSUser();
+        for (MercurySample mercurySample : mercurySamples) {
+            Set<LabVessel> labVessels = mercurySample.getLabVessel();
+            for (LabVessel labVessel : labVessels) {
+                labVessel.getMercurySamples().remove(mercurySample);
+            }
+            mercurySampleDao.remove(mercurySample);
+        }
+        mercurySampleDao.persist(new FixupCommentary(
+                "GPLIM-4381: Delete BSP Samples from Mercury which were not created in BSP due to an exception."));
     }
 
     /**

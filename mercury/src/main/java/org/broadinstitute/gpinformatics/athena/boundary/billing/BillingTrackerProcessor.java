@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
+import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 
 import java.text.MessageFormat;
 import java.text.ParseException;
@@ -83,7 +84,11 @@ public class BillingTrackerProcessor extends TableProcessor {
 
         List<PriceItem> priceItems = SampleLedgerExporter.getPriceItems(product, priceItemDao, priceListCache);
         for (PriceItem priceItem : priceItems) {
-            currentPriceItemsByName.put(priceItem.getName(), priceItem);
+            PriceItem existingPriceItem = currentPriceItemsByName.put(priceItem.getName(), priceItem);
+            if (existingPriceItem != null) {
+                throw new InformaticsServiceException(
+                        "Multiple price items found named \"" + priceItem.getName() + "\". Billing tracker upload does not support any situation in which there are multiple price items with the same name.");
+            }
             billableRefs.add(new BillableRef(product.getPartNumber(), priceItem.getName()));
         }
     }

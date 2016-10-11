@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.LibraryDataType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SampleInfoType;
+import org.hamcrest.CoreMatchers;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
@@ -20,12 +21,14 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 
+import static java.util.Arrays.asList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.TEST;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.startsWith;
@@ -55,7 +58,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
         WebResource resource = makeWebResource(baseUrl, "fetchLibraryDetailsByTubeBarcode")
                 .queryParam("includeWorkRequestDetails", "true");
 
-        String result1 = get(addQueryParam(resource, "q", Arrays.asList("0099443960", "406164")));
+        String result1 = get(addQueryParam(resource, "q", asList("0099443960", "406164")));
         assertThat(result1, notNullValue());
         int index = result1.indexOf("\"wasFound\":true");
         assertThat(index, not(equalTo(-1)));
@@ -64,7 +67,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
         index = result1.indexOf("\"wasFound\":true", index + 1);
         assertThat(index, equalTo(-1));
 
-        String result2 = get(addQueryParam(resource, "q", Arrays.asList("0099443960", "unknown_barcode")));
+        String result2 = get(addQueryParam(resource, "q", asList("0099443960", "unknown_barcode")));
         assertThat(result2, notNullValue());
         index = result2.indexOf("\"wasFound\":true");
         assertThat(index, not(equalTo(-1)));
@@ -117,10 +120,10 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
             throws Exception {
         WebResource resource = makeWebResource(baseUrl, "doesLimsRecognizeAllTubes");
 
-        String result1 = get(addQueryParam(resource, "q", Arrays.asList("0099443960", "406164")));
+        String result1 = get(addQueryParam(resource, "q", asList("0099443960", "406164")));
         assertThat(result1, equalTo("true"));
 
-        String result2 = get(addQueryParam(resource, "q", Arrays.asList("0099443960", "unknown_barcode")));
+        String result2 = get(addQueryParam(resource, "q", asList("0099443960", "unknown_barcode")));
         assertThat(result2, equalTo("false"));
     }
 
@@ -130,7 +133,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
             throws Exception {
         WebResource resource = makeWebResource(baseUrl, "fetchMaterialTypesForTubeBarcodes");
 
-        String result1 = get(addQueryParam(resource, "q", Arrays.asList("0099443960", "406164")));
+        String result1 = get(addQueryParam(resource, "q", asList("0099443960", "406164")));
         assertThat(result1,
                 equalTo("[\"454 Material-Diluted ssDNA Library\",\"454 Beads-Recovered Sequencing Beads\"]"));
     }
@@ -384,42 +387,70 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
         assertThat(result, equalTo("[{\"name\":\"21490_pg\",\"tubeBarcodes\":[\"0089526682\",\"0089526681\"]}]"));
     }
 
-
-    // todo: Re-enable when we have some test data
-    @Test(enabled = false, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = false) //todo emp enable after ProductFixupText.gplim4159()
     @RunAsClient
-    public void testFetchIlluminaSeqTemplateWithFlowCell(@ArquillianResource URL baseUrl)
-            throws Exception {
-        WebResource resource =
-                makeWebResource(baseUrl, "fetchIlluminaSeqTemplate").queryParam("id", "Flowcell0528112517")
-                        .queryParam("idType",
-                                "FLOWCELL").queryParam("isPoolTest", "true");
+    public void testFetchIlluminaSeqTemplateWithFlowCell(@ArquillianResource URL baseUrl) throws Exception {
+        WebResource resource = makeWebResource(baseUrl, "fetchIlluminaSeqTemplate").
+                queryParam("id", "HF7MVBBXX").queryParam("idType", "FLOWCELL").queryParam("isPoolTest", "false");
         String result = get(resource);
-        assertThat(result, containsString("\"barcode\":\"Flowcell0528112517\""));
-        assertThat(result, containsString("{\"laneName\":\"LANE1\""));
-        assertThat(result, containsString("{\"laneName\":\"LANE2\""));
-        for (String varToTest : Arrays
-                .asList("name", "pairedRun", "onRigWorkflow", "onRigChemistry", "readStructure")) {
-            assertThat(result, containsString(String.format("\"%s\":null,", varToTest)));
+        assertThat(result, containsString("\"barcode\":\"HF7MVBBXX\""));
+        assertThat(result, containsString("\"pairedRun\":true"));
+        assertThat(result, containsString("\"onRigWorkflow\":null"));
+        assertThat(result, containsString("\"onRigChemistry\":null"));
+        assertThat(result, containsString("\"concentration\":null"));
+        assertThat(result, containsString("\"name\":\"Express Human WES (Deep Coverage) v1\""));
+        assertThat(result, containsString("\"name\":\"NCP Human WES - Normal (150xMTC)\""));
+        assertThat(result, containsString("\"name\":\"NCP Human WES - Tumor (150xMTC)\""));
+        assertThat(result, containsString("\"name\":\"CP Human WES (85/50)\""));
+        assertThat(result, containsString("\"regulatoryDesignation\":[\"RESEARCH_ONLY\"]"));
+        assertThat(result, containsString("\"readStructure\":\"76T8B8B76T\""));
+        String[] lanes = result.split("\"laneName\"");
+        assertThat(lanes.length, CoreMatchers.equalTo(9));
+        for (int i = 1; i < lanes.length; ++i) {
+            assertThat(lanes[i], containsString("\"LANE"));
+            assertThat(lanes[i], containsString("\"loadingVesselLabel\":\"11283899"));  // the last two digits vary
+            assertThat(lanes[i], containsString("\"derivedVesselLabel\":\"0185941272\""));
+            assertThat(lanes[i], containsString("\"loadingConcentration\":225"));
         }
     }
 
-    // todo: Re-enable when we have some test data
-    @Test(enabled = false, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = false) //todo emp enable after ProductFixupText.gplim4159()
     @RunAsClient
-    public void testFetchIlluminaSeqTemplateWithStripTube(@ArquillianResource URL baseUrl)
-            throws Exception {
-        WebResource resource =
-                makeWebResource(baseUrl, "fetchIlluminaSeqTemplate").queryParam("id", "DenatureTube05131701450")
-                        .queryParam("idType",
-                                "STRIP_TUBE").queryParam("isPoolTest", "true");
+    public void testFetchIlluminaSeqTemplateWithStripTube(@ArquillianResource URL baseUrl) throws Exception {
+        WebResource resource = makeWebResource(baseUrl, "fetchIlluminaSeqTemplate").
+                queryParam("id", "000006113311").queryParam("idType", "TUBE").queryParam("isPoolTest", "false");
         String result = get(resource);
-        assertThat(result, containsString("{\"sequence\":\"CTACCAGG\",\"position\":\"P_7\"}"));
-        assertThat(result, containsString("{\"laneName\":\"A01\""));
-        assertThat(result, containsString("{\"laneName\":\"H12\""));
-        for (String varToTest : Arrays
-                .asList("barcode", "name", "pairedRun", "onRigWorkflow", "onRigChemistry", "readStructure")) {
-            assertThat(result, containsString(String.format("\"%s\":null,", varToTest)));
+        // A denature tube query would happen before the flowcell is loaded, so expect null flowcell barcode
+        // and loading vessels. But the setup read structure should be present along with the lane concentration.
+        assertThat(result, containsString("\"barcode\":null"));
+        assertThat(result, containsString("\"pairedRun\":true"));
+        assertThat(result, containsString("\"readStructure\":\"76T8B8B76T\""));
+        String[] lanes = result.split("\"laneName\"");
+        assertThat(lanes.length, CoreMatchers.equalTo(9));
+        for (int i = 1; i < lanes.length; ++i) {
+            assertThat(lanes[i], containsString("\"LANE"));
+            assertThat(lanes[i], containsString("\"loadingVesselLabel\":\"\""));
+            assertThat(lanes[i], containsString("\"derivedVesselLabel\":\"0185942015\""));
+            assertThat(lanes[i], containsString("\"loadingConcentration\":225"));
+        }
+    }
+
+    @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = false) //todo emp enable after ProductFixupText.gplim4159()
+    @RunAsClient
+    public void testFetchIlluminaSeqTemplatePoolTest(@ArquillianResource URL baseUrl) throws Exception {
+        WebResource resource = makeWebResource(baseUrl, "fetchIlluminaSeqTemplate").
+                queryParam("id", "000006113311").queryParam("idType", "TUBE").queryParam("isPoolTest", "true");
+        String result = get(resource);
+        assertThat(result, containsString("\"barcode\":null"));
+        assertThat(result, containsString("\"pairedRun\":true"));
+        assertThat(result, containsString("\"readStructure\":\"8B8B\""));
+        String[] lanes = result.split("\"laneName\"");
+        assertThat(lanes.length, CoreMatchers.equalTo(9));
+        for (int i = 1; i < lanes.length; ++i) {
+            assertThat(lanes[i], containsString("\"LANE"));
+            assertThat(lanes[i], containsString("\"loadingVesselLabel\":\"\""));
+            assertThat(lanes[i], containsString("\"derivedVesselLabel\":\"0185942015\""));
+            assertThat(lanes[i], containsString("\"loadingConcentration\":225"));
         }
     }
 
@@ -445,7 +476,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
             throws Exception {
         WebResource resource = makeWebResource(baseUrl, "fetchConcentrationAndVolumeAndWeightForTubeBarcodes");
 
-        String result1 = get(addQueryParam(resource, "q", Arrays.asList("1075671760", "1075671761")));
+        String result1 = get(addQueryParam(resource, "q", asList("1075671760", "1075671761")));
         assertThat(result1, notNullValue());
         int index = result1.indexOf("\"wasFound\":true");
         assertThat(index, not(equalTo(-1)));
@@ -454,7 +485,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
         index = result1.indexOf("\"wasFound\":true", index + 1);
         assertThat(index, equalTo(-1));
 
-        String result2 = get(addQueryParam(resource, "q", Arrays.asList("1075671760", "unknown_barcode")));
+        String result2 = get(addQueryParam(resource, "q", asList("1075671760", "unknown_barcode")));
         assertThat(result2, notNullValue());
         index = result2.indexOf("\"wasFound\":true");
         assertThat(index, not(equalTo(-1)));
@@ -501,8 +532,8 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
         assertThat(result, containsString("\"derivedVesselLabel\":\"AB56835527\""));
         assertThat(result, containsString("\"name\":\"Express Human WES (Deep Coverage) v1\""));
         assertThat(result, containsString("\"regulatoryDesignation\":[\"RESEARCH_ONLY\"]"));
-        for (String varToTest : Arrays
-                .asList("barcode", "name", "onRigWorkflow", "onRigChemistry")) {
+        for (String varToTest :
+                asList("barcode", "name", "onRigWorkflow", "onRigChemistry")) {
             assertThat(result, containsString(String.format("\"%s\":null,", varToTest)));
         }
     }
