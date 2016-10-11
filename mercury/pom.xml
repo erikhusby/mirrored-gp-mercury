@@ -220,6 +220,8 @@
         <jboss.socket.https>8443</jboss.socket.https>
 
         <bspclient.version>[1.3,)</bspclient.version>
+
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
     <profiles>

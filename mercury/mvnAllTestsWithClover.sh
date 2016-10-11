@@ -2,14 +2,24 @@
 #
 # Run all the unit tests using each of the several profiles.
 #
-source /broad/tools/scripts/useuse
-use Maven-3.1
-use Java-1.8
+if [ -e "/broad/tools/scripts/useuse" ]
+then
+    source /broad/tools/scripts/useuse
+    use Maven-3.1
+    use Java-1.8
+fi
+
 
 if [ "x$JBOSS_HOME" == "x" ]
 then
-    JBOSS_HOME=/prodinfolocal/jboss-as-7.1.1.Final/
+    cat <<EOF
+
+    You must define JBOSS_HOME to point to the Wildfly installation.
+
+EOF
+    exit 1
 fi
+
 if [ "x$SSL_OPTS" == "x" ]
 then
     KEYSTORE_FILE="../JBossConfig/src/main/resources/keystore/.keystore"
@@ -21,7 +31,7 @@ then
     BUILD_PROFILE=BUILD
 fi
 
-MAVEN_OPTS="-Xms4g -XX:MaxPermSize=1g $SSL_OPTS"
+MAVEN_OPTS="-Xms4g -XX:MaxMetaspaceSize=1g $SSL_OPTS"
 OPTIONS="-PArquillian-WildFly10-Remote,$BUILD_PROFILE,Clover.All -Djava.awt.headless=true --batch-mode -Dmaven.download.meter=silent -Dmaven.clover.licenseLocation=/prodinfolocal/BambooHome/clover.license"
 PROFILES="Tests.ArqSuite.Standard Tests.ArqSuite.Stubby Tests.Multithreaded Tests.DatabaseFree Tests.ExternalIntegration Tests.Alternatives"
 #PROFILES="Tests.DatabaseFree Tests.Multithreaded"
@@ -33,8 +43,6 @@ if [ -f "tests.log" ]
 then
     rm tests.log
 fi
-
-mvn clean | tee tests.log
 
 for PROFILE in $PROFILES
 do
@@ -60,13 +68,26 @@ EOF
 
     if [ -e "target/clover/surefire-reports" ]
     then
-        mv target/clover/surefire-reports target/clover/surefire-reports-$PROFILE
+        if [ -e "surefire-reports-clover-$PROFILE" ]
+        then
+            rm -rf surefire-reports-clover-$PROFILE
+        fi
+        mv target/clover/surefire-reports surefire-reports-clover-$PROFILE
     fi
+
     if [ -e "target/surefire-reports" ]
     then
-        mv target/surefire-reports target/surefire-reports-$PROFILE
+        if [ -e "surefire-reports-$PROFILE" ]
+        then
+            rm -rf surefire-reports-$PROFILE
+        fi
+        mv target/surefire-reports surefire-reports-$PROFILE
     fi
+
 done
+
+# Move the clover reports back under target/clover
+mv -v surefire-reports-clover-* target/clover
 
 mvn $OPTIONS clover:aggregate clover:clover | tee -a tests.log
 if [ ${PIPESTATUS[0]} -ne 0 ]
