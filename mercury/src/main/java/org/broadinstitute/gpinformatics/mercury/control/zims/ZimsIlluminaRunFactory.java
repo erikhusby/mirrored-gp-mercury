@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.control.zims;
 
 import edu.mit.broad.prodinfo.thrift.lims.IndexPosition;
 import edu.mit.broad.prodinfo.thrift.lims.TZDevExperimentData;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -159,7 +160,7 @@ public class ZimsIlluminaRunFactory {
                         // grouped by and therefore have the same flowcell parameters.
                         List<FlowcellDesignation> flowcellDesignations =
                                 flowcellDesignationEjb.getFlowcellDesignations(Collections.singleton(libraryVessel));
-                        if (!flowcellDesignations.isEmpty()) {
+                        if (CollectionUtils.isNotEmpty(flowcellDesignations)) {
                             flowcellDesignation = flowcellDesignations.get(0);
                         }
                     }

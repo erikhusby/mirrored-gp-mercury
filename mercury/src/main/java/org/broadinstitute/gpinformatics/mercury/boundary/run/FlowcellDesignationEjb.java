@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.run;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
@@ -170,8 +171,10 @@ public class FlowcellDesignationEjb {
     /** Returns the flowcell designations used in the FCT or MISEQ batch sorted by descending create date. */
     public List<FlowcellDesignation> getFlowcellDesignations(LabBatch fct) {
         List<LabVessel> loadingTubes = new ArrayList<>();
-        for (LabBatchStartingVessel labBatchStartingVessel : fct.getLabBatchStartingVessels()) {
-            loadingTubes.add(labBatchStartingVessel.getLabVessel());
+        if (CollectionUtils.isNotEmpty(fct.getLabBatchStartingVessels())) {
+            for (LabBatchStartingVessel labBatchStartingVessel : fct.getLabBatchStartingVessels()) {
+                loadingTubes.add(labBatchStartingVessel.getLabVessel());
+            }
         }
         return getFlowcellDesignations(loadingTubes);
     }
