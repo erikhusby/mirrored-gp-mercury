@@ -49,9 +49,10 @@ public class SessionContextUtility implements Serializable {
             // There seems to be a bug in JBoss AS 7.1.1 that causes Stateful RequestScoped beans not to be destroyed
             // at the end of onMessage.  This leads to a memory leak of org.hibernate.internal.util.collections.IdentityMap.
             // Until this bug is fixed, we manually end the Request scope.
-            ManagedContext context = (ManagedContext) beanManager.getContext(RequestScoped.class);
-            context.invalidate();
-            context.deactivate();
+            // Bug appears fixed in WildFly 10
+//            ManagedContext context = (ManagedContext) beanManager.getContext(RequestScoped.class);
+//            context.invalidate();
+//            context.deactivate();
 
             sessionContext.invalidate();
             sessionContext.deactivate();
