@@ -10,9 +10,11 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.SampleSheetFactory;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
@@ -24,6 +26,7 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -62,49 +65,66 @@ public class SampleSheetActionBean extends CoreActionBean {
     public Resolution download() {
         final List<Pair<LabVessel, VesselPosition>> vesselPositionPairs = new ArrayList<>();
 
-        String[] pdoKeys = pdoBusinessKeys.trim().split("\\s+");
         ResearchProject researchProject = null;
-        for (String pdoKey : pdoKeys) {
-            ProductOrder productOrder = productOrderDao.findByBusinessKey(pdoKey);
-            vesselPositionPairs.addAll(sampleSheetFactory.loadByPdo(productOrder));
-            // todo jmt error if multiple research projects
-            researchProject = productOrder.getResearchProject();
+        if (pdoBusinessKeys != null) {
+            String[] pdoKeys = pdoBusinessKeys.trim().split("\\s+");
+            for (String pdoKey : pdoKeys) {
+                ProductOrder productOrder = productOrderDao.findByBusinessKey(pdoKey);
+                vesselPositionPairs.addAll(sampleSheetFactory.loadByPdo(productOrder));
+                if (researchProject == null) {
+                    researchProject = productOrder.getResearchProject();
+                }
+            }
         }
 
-        String[] chipWellBarcodeArray = chipWellBarcodes.trim().split("\\s+");
-        if (chipWellBarcodeArray.length > 0) {
-            ArrayList<String> barcodes = new ArrayList<>();
-            for (String chipWellBarcode : chipWellBarcodeArray) {
-                Matcher matcher = BARCODE_PATTERN.matcher(chipWellBarcode);
-                if (matcher.matches()) {
-                    String chipBarcode = matcher.group(1);
-                    barcodes.add(chipBarcode);
-                } else {
-                    addValidationError("chipWellBarcodes", "Barcode " + chipWellBarcode +
-                            " is not of expected format");
+        if (chipWellBarcodes != null) {
+            String[] chipWellBarcodeArray = chipWellBarcodes.trim().split("\\s+");
+            if (chipWellBarcodeArray.length > 0) {
+                ArrayList<String> barcodes = new ArrayList<>();
+                for (String chipWellBarcode : chipWellBarcodeArray) {
+                    Matcher matcher = BARCODE_PATTERN.matcher(chipWellBarcode);
+                    if (matcher.matches()) {
+                        String chipBarcode = matcher.group(1);
+                        barcodes.add(chipBarcode);
+                    } else {
+                        addValidationError("chipWellBarcodes", "Barcode " + chipWellBarcode +
+                                " is not of expected format");
+                    }
                 }
-            }
-            Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(barcodes);
+                Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(barcodes);
 
-            for (String chipWellBarcode : chipWellBarcodeArray) {
-                Matcher matcher = BARCODE_PATTERN.matcher(chipWellBarcode);
-                if (matcher.matches()) {
-                    String chipBarcode = matcher.group(1);
-                    VesselPosition vesselPosition = null;
-                    try {
-                        vesselPosition = VesselPosition.valueOf(matcher.group(2));
-                    } catch (IllegalArgumentException e) {
-                        addValidationError("chipWellBarcodes", "Barcode " + chipWellBarcode +
-                                " has incorrect position");
+                for (String chipWellBarcode : chipWellBarcodeArray) {
+                    Matcher matcher = BARCODE_PATTERN.matcher(chipWellBarcode);
+                    if (matcher.matches()) {
+                        String chipBarcode = matcher.group(1);
+                        VesselPosition vesselPosition = null;
+                        try {
+                            vesselPosition = VesselPosition.valueOf(matcher.group(2));
+                        } catch (IllegalArgumentException e) {
+                            addValidationError("chipWellBarcodes", "Barcode " + chipWellBarcode +
+                                    " has incorrect position");
+                        }
+                        LabVessel labVessel = mapBarcodeToVessel.get(chipBarcode);
+                        if (labVessel == null) {
+                            addValidationError("chipWellBarcodes", "Barcode " + chipWellBarcode +
+                                    " not found");
+                        }
+                        vesselPositionPairs.add(new ImmutablePair<>(labVessel, vesselPosition));
+                        if (researchProject == null) {
+                            Set<SampleInstanceV2> sampleInstances =
+                                    labVessel.getContainerRole().getSampleInstancesAtPositionV2(vesselPosition);
+                            ProductOrderSample productOrderSample =
+                                    sampleInstances.iterator().next().getProductOrderSampleForSingleBucket();
+                            if (productOrderSample != null) {
+                                researchProject = productOrderSample.getProductOrder().getResearchProject();
+                            }
+                        }
                     }
-                    LabVessel labVessel = mapBarcodeToVessel.get(chipBarcode);
-                    if (labVessel == null) {
-                        addValidationError("chipWellBarcodes", "Barcode " + chipWellBarcode +
-                                " not found");
-                    }
-                    vesselPositionPairs.add(new ImmutablePair<>(labVessel, vesselPosition));
                 }
             }
+        }
+        if (researchProject == null) {
+            addGlobalValidationError("No research projects found.");
         }
 
         if (hasErrors()) {

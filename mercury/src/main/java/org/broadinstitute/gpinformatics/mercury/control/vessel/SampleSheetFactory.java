@@ -51,12 +51,12 @@ public class SampleSheetFactory {
 
     public List<Pair<LabVessel, VesselPosition>> loadByPdo(ProductOrder productOrder) {
         List<Pair<LabVessel, VesselPosition>> vesselPositionPairs = new ArrayList<>();
+        // todo jmt include controls?
         for (BucketEntry bucketEntry : productOrder.getBucketEntries()) {
             TransferTraverserCriteria.VesselPositionForEvent transferTraverserCriteria =
                     new TransferTraverserCriteria.VesselPositionForEvent(
-                            Collections.singleton(LabEventType.INFINIUM_HYBRIDIZATION));
-            // todo jmt limit to batch
-//            transferTraverserCriteria.setLabBatch(bucketEntry.getLabBatch());
+                            Collections.singleton(LabEventType.INFINIUM_HYBRIDIZATION),
+                            bucketEntry.getLabBatch());
             bucketEntry.getLabVessel().evaluateCriteria(transferTraverserCriteria,
                     TransferTraverserCriteria.TraversalDirection.Descendants);
 

@@ -9,14 +9,19 @@
         <stripes:form beanclass="${actionBean.class.name}" id="uploadForm" class="form-horizontal">
             <div class="form-horizontal">
                 <div class="control-group">
-                    <stripes:label for="pdoBusinessKeys" class="control-label">Product Orders (from same Research Project)</stripes:label>
+                    <stripes:label for="pdoBusinessKeys"
+                            class="control-label">Product Orders (from same Research Project)</stripes:label>
                     <div class="controls">
-                        <stripes:text name="pdoBusinessKeys"/>
+                        <stripes:textarea rows="2" name="pdoBusinessKeys"/>
                     </div>
+                </div>
+                <div class="control-group">
                     <stripes:label for="chipWellBarcodes" class="control-label">Chip Well Barcodes</stripes:label>
                     <div class="controls">
-                        <stripes:textarea rows="20" name="chipWellBarcodes"/>
+                        <stripes:textarea rows="10" name="chipWellBarcodes"/>
                     </div>
+                </div>
+                <div class="control-group">
                     <div class="controls">
                         <stripes:submit name="download" value="Download" class="btn btn-primary"/>
                     </div>

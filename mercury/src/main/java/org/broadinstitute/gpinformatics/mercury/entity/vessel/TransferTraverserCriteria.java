@@ -904,10 +904,16 @@ public abstract class TransferTraverserCriteria {
     public static class VesselPositionForEvent extends TransferTraverserCriteria {
 
         private Set<LabEventType> eventTypes;
+        private LabBatch labBatch;
         private Map<LabEventType, VesselAndPosition> mapTypeToVesselPosition = new HashMap<>();
 
         public VesselPositionForEvent(Set<LabEventType> eventTypes) {
             this.eventTypes = eventTypes;
+        }
+
+        public VesselPositionForEvent(Set<LabEventType> eventTypes, LabBatch labBatch) {
+            this.eventTypes = eventTypes;
+            this.labBatch = labBatch;
         }
 
         @Override
@@ -915,11 +921,14 @@ public abstract class TransferTraverserCriteria {
             if (context != null) {
                 LabVessel.VesselEvent vesselEvent = context.getVesselEvent();
                 if (vesselEvent != null) {
-                    LabEventType labEventType = vesselEvent.getLabEvent().getLabEventType();
+                    LabEvent labEvent = vesselEvent.getLabEvent();
+                    LabEventType labEventType = labEvent.getLabEventType();
                     if (eventTypes.contains(labEventType)) {
-                        mapTypeToVesselPosition.put(labEventType, new VesselAndPosition(
-                                context.getContextVesselContainer().getEmbedder(),
-                                context.getContextVesselAndPosition().getRight()));
+                        if (labBatch == null || labEvent.getComputedLcSets().contains(labBatch)) {
+                            mapTypeToVesselPosition.put(labEventType, new VesselAndPosition(
+                                    context.getContextVesselContainer().getEmbedder(),
+                                    context.getContextVesselAndPosition().getRight()));
+                        }
                     }
                 }
             }
