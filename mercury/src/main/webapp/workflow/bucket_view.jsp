@@ -355,8 +355,8 @@
 //                dom: "B<'row-fluid<'#filtering.accordion'>" +
 //                "<'row-fluid't>>" +
 //                "<'row-fluid'<'span12'p>>",
-//                dom: "<'row-fluid' <'#filtering.accordion'>Bt>",
-                dom: "<'#filtering'>lript",
+                dom: "<'row-fluid' <'#filtering'>t>",
+//                dom: "<'#filtering'>lript",
 //                buttons: [{
 //                    text: "Show or Hide Columns",
 //                    extend: 'colvis',
@@ -374,34 +374,34 @@
                 },
                 "aaSorting": [[1,'asc'], [7,'asc']],
                 stateSaveCallback: function (settings, data) {
-                    console.log("stateSave");
-                    var api = new $j.fn.dataTable.Api(settings);
-                    for (var index = 0; index < data.columns.length; index++) {
-                        var item = data.columns[index];
-                        var header = $j(api.data().column(index).header());
-                        if (header) {
-                            item.headerName = header.text().trim();
-                        }
-                    }
-
-                    if (bucketName !== '') {
-                        var stateData = {
-                            "<%= BucketViewActionBean.TABLE_STATE_KEY %>": JSON.stringify(data),
-                            "<%= BucketViewActionBean.SELECTED_BUCKET_KEY %>": bucketName
-                        };
-                        var serverData = {};
-                        $j.ajax({
-                            async: false,
-                            'url': "${ctxpath}/workflow/bucketView.action?<%= BucketViewActionBean.SAVE_SEARCH_DATA %>=",
-                            'data': stateData,
-                            dataType: 'json',
-                            type: 'POST',
-                            success(savedData){
-                                serverData = savedData;
+                        console.log("stateSave");
+                        var api = new $j.fn.dataTable.Api(settings);
+                        for (var index = 0; index < data.columns.length; index++) {
+                            var item = data.columns[index];
+                            var header = $j(api.data().column(index).header());
+                            if (header) {
+                                item.headerName = header.text().trim();
                             }
-                        });
-//                        return serverData;
-                    }
+                        }
+
+                        if (bucketName !== '') {[]
+                            var stateData = {
+                                "<%= BucketViewActionBean.TABLE_STATE_KEY %>": JSON.stringify(data),
+                                "<%= BucketViewActionBean.SELECTED_BUCKET_KEY %>": bucketName
+                            };
+                            var serverData = {};
+                            $j.ajax({
+                                async: false,
+                                'url': "${ctxpath}/workflow/bucketView.action?<%= BucketViewActionBean.SAVE_SEARCH_DATA %>=",
+                                'data': stateData,
+                                dataType: 'json',
+                                type: 'POST',
+                                success(savedData){
+                                    serverData = savedData;
+                                }
+                            });
+//                            return serverData;
+                        }
                 },
                 "stateLoaded": function (settings, data) {
                     var dataTable = new $j.fn.dataTable.Api(settings);
@@ -409,9 +409,11 @@
                     console.log("stateLoaded");
                 },
                 "stateLoadCallback": function (settings) {
-                    console.log("stateLoad");
-                    var serverData = '${actionBean.tableState}' === '' ? '' :${actionBean.tableState};
-                    return serverData;
+                        console.log("stateLoad");
+                        var serverData = '${actionBean.tableState}' === '' ? '' : '${actionBean.tableState}';
+                        if (serverData) {
+                            return JSON.parse(serverData);
+                        }
                 },
 
                 "columns": [

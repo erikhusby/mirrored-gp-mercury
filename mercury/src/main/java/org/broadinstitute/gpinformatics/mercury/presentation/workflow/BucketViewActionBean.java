@@ -89,7 +89,6 @@ public class BucketViewActionBean extends CoreActionBean {
     public static final String LOAD_SEARCH_DATA = "loadSearchData";
     public static final String SELECTED_BUCKET_KEY = "selectedBucket";
     public static final String TABLE_STATE_KEY = "tableState";
-    public static final String GLOBAL_COLzUMNS_CONFIG = "global-columns";
 
     @Inject
     WorkflowConfig workflowConfig;
@@ -179,7 +178,7 @@ public class BucketViewActionBean extends CoreActionBean {
             List<String> selectedBucketPreferenceValue = nameValueDefinitionValue.getDataMap().get(SELECTED_BUCKET_KEY);
             if (CollectionUtils.isNotEmpty(selectedBucketPreferenceValue)) {
                 selectedBucket = selectedBucketPreferenceValue.iterator().next();
-                List<String> tableStatePreferenceValue = nameValueDefinitionValue.getDataMap().get(selectedBucket);
+                List<String> tableStatePreferenceValue = nameValueDefinitionValue.getDataMap().get(TABLE_STATE_KEY);
                 if (CollectionUtils.isNotEmpty(tableStatePreferenceValue)) {
                     tableState = tableStatePreferenceValue.iterator().next();
                 }
@@ -262,7 +261,7 @@ public class BucketViewActionBean extends CoreActionBean {
         if (selectedBucket != null) {
             definitionValue.put(SELECTED_BUCKET_KEY, selectedBucket);
         }
-        definitionValue.put(selectedBucket, Collections.singletonList(writeTableState(state)));
+        definitionValue.put(TABLE_STATE_KEY, Collections.singletonList(writeTableState(state)));
 
         preferenceEjb.add(userBean.getBspUser().getUserId(), PreferenceType.BUCKET_PREFERENCES, definitionValue);
     }

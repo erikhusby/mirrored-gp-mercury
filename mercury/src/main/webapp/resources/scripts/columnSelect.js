@@ -134,14 +134,11 @@ function initColumnSelect(settings, columnNames, filterStatusSelector, columnFil
             var doUpdateFilter = $j.fn.dataTable.util.throttle(
                 function (where, what) {
                     updateFilter(where, what)
-                }, 400);
+                }, 800);
 
-            $j(textInput).on('blur change', function () {
-                updateFilterInfo(headerText, $j(this).val().trim());
-            });
-
-            $j(textInput).on('keyup', function () {
+            $j(textInput).on('keyup change blur', function () {
                 doUpdateFilter(column, $j(this).val().trim());
+                updateFilterInfo(headerText, $j(this).val().trim());
             });
         }
         if (selectType === 'select' && filterColumn) {
