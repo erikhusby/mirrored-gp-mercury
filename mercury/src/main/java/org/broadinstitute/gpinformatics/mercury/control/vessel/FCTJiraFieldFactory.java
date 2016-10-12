@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
@@ -18,9 +19,8 @@ import java.util.Map;
 import java.util.Set;
 
 public class FCTJiraFieldFactory extends AbstractBatchJiraFieldFactory {
-
-    public FCTJiraFieldFactory(@Nonnull LabBatch batch) {
-        super(batch, CreateFields.ProjectType.FCT_PROJECT);
+    public FCTJiraFieldFactory(@Nonnull LabBatch batch, WorkflowConfig workflowConfig) {
+        super(batch, CreateFields.ProjectType.FCT_PROJECT, workflowConfig);
     }
 
     @Override

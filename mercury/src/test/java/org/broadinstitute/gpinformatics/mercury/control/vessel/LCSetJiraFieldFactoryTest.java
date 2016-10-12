@@ -128,6 +128,7 @@ public class LCSetJiraFieldFactoryTest {
                                           LabBatch.LabBatchType.WORKFLOW);
         testBatch.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
         testBatch.setBatchDescription("Batch Test Description");
+        WorkflowConfig workflowConfig = new WorkflowLoader().load();
 
         Set<LabVessel> reworks = new HashSet<>();
         reworks.add(new BarcodedTube("Rework1"));
@@ -137,7 +138,7 @@ public class LCSetJiraFieldFactoryTest {
         int numSamples = testBatch.getStartingBatchLabVessels().size();
 
         AbstractBatchJiraFieldFactory testBuilder = AbstractBatchJiraFieldFactory.getInstance(
-                CreateFields.ProjectType.LCSET_PROJECT, testBatch, productOrderDao);
+                CreateFields.ProjectType.LCSET_PROJECT, testBatch, productOrderDao, workflowConfig);
 
         Assert.assertEquals("1 sample with material types [] from MyResearchProject PDO-7\n5 samples with material types [] from MyResearchProject PDO-999\n",
                             testBuilder.generateDescription());
@@ -176,8 +177,6 @@ public class LCSetJiraFieldFactoryTest {
                                     ((CustomField.ValueContainer) field.getValue()).getValue());
             }
             if (fieldDefinitionName.equals(LabBatch.TicketFields.PROTOCOL.getName())) {
-                WorkflowLoader workflowLoader = new WorkflowLoader();
-                WorkflowConfig workflowConfig = workflowLoader.load();
 
                 ProductWorkflowDef workflowDef = workflowConfig.getWorkflow(
                         testProductOrder.getProduct().getWorkflow());

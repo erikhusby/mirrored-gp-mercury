@@ -24,7 +24,6 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowc
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.MiSeqReagentKitDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
@@ -70,6 +69,8 @@ public class SequencingTemplateFactory {
 
     @Inject
     private FlowcellDesignationEjb flowcellDesignationEjb;
+
+    private WorkflowConfig workflowConfig;
 
     /** Defines the type of entity to query. */
     public static enum QueryVesselType {
@@ -243,7 +244,7 @@ public class SequencingTemplateFactory {
                 isPairedEnd = true;
             }
         }
-        SequencingConfigDef sequencingConfig = getSequencingConfig(isPoolTest);
+        SequencingConfigDef sequencingConfig = getSequencingConfig(isPoolTest, workflowConfig);
         String readStructure =  makeReadStructure(readLength, isPoolTest, molecularIndexReadStructures, isPairedEnd);
         if (StringUtils.isBlank(readStructure)) {
             readStructure = sequencingConfig.getReadStructure().getValue();
@@ -344,7 +345,7 @@ public class SequencingTemplateFactory {
                 isPairedEnd = true;
             }
         }
-        SequencingConfigDef sequencingConfig = getSequencingConfig(isPoolTest);
+        SequencingConfigDef sequencingConfig = getSequencingConfig(isPoolTest, workflowConfig);
         String readStructure =  makeReadStructure(readLength, isPoolTest, molecularIndexReadStructures, isPairedEnd);
         if (StringUtils.isBlank(readStructure)) {
             readStructure = sequencingConfig.getReadStructure().getValue();
@@ -433,7 +434,7 @@ public class SequencingTemplateFactory {
                 IlluminaFlowcell.FlowcellType.MiSeqFlowcell.getVesselGeometry().getRowNames()[0],
                 loadingConcentration, "", loadingTubes.iterator().next().getLabel()));
 
-        SequencingConfigDef sequencingConfig = getSequencingConfig(isPoolTest);
+        SequencingConfigDef sequencingConfig = getSequencingConfig(isPoolTest, workflowConfig);
 
         return LimsQueryObjectFactory.createSequencingTemplate(null, null, isPairedEnd,
                 sequencingConfig.getInstrumentWorkflow().getValue(), sequencingConfig.getChemistry().getValue(),
@@ -497,9 +498,7 @@ public class SequencingTemplateFactory {
         return strandCode + indexCode + (isPairedEnd  ? strandCode : "");
     }
 
-    private static SequencingConfigDef getSequencingConfig(boolean isPoolTest) {
-        WorkflowLoader workflowLoader = new WorkflowLoader();
-        WorkflowConfig workflowConfig = workflowLoader.load();
+    private static SequencingConfigDef getSequencingConfig(boolean isPoolTest, WorkflowConfig workflowConfig) {
         if (isPoolTest) {
             return workflowConfig.getSequencingConfigByName("Resequencing-Pool-Default");
         } else {
@@ -511,4 +510,10 @@ public class SequencingTemplateFactory {
     public void setFlowcellDesignationEjb(FlowcellDesignationEjb testEjb) {
         flowcellDesignationEjb = testEjb;
     }
+
+    @Inject
+    public void setWorkflowConfig(WorkflowConfig workflowConfig) {
+        this.workflowConfig = workflowConfig;
+    }
+
 }

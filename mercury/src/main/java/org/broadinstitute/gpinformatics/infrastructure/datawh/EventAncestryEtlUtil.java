@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -11,6 +10,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 
+import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -32,17 +32,15 @@ import java.util.Set;
  *
  */
 public class EventAncestryEtlUtil {
-
-    public EventAncestryEtlUtil() {
-        WorkflowLoader workflowLoader = new WorkflowLoader();
-        wfconfig = workflowLoader.load();
-    }
-
-    // Costly and unnecessary to load this more than once per instance
-    private WorkflowConfig wfconfig = null;
+    private WorkflowConfig workflowConfig;
 
     // Avoid the repeated overhead of parsing workflow for the same event if it is not flagged for ancestry
     Set<Long> ignoreAncestryForEventList = new HashSet();
+
+    @Inject
+    public EventAncestryEtlUtil(WorkflowConfig workflowConfig) {
+        this.workflowConfig = workflowConfig;
+    }
 
     /**
      * Examines the event hierarchy for events flagged for ancestry ETL and appends ancestors to event facts.
@@ -84,7 +82,7 @@ public class EventAncestryEtlUtil {
 
             // No need to keep re-parsing workflow for the same event ...
             if( !eventFact.getEventId().equals(previousEventId)) {
-                workflowStepList = getWorkflowStepsUpToEvent(eventFact, wfconfig);
+                workflowStepList = getWorkflowStepsUpToEvent(eventFact, workflowConfig);
                 previousEventId = eventFact.getEventId();
                 // Clear out vessels to skip upon hitting new event
                 vesselsToSkip.clear();

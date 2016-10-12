@@ -69,6 +69,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.presentation.transfervis.TransferVisualizerClient;
 import org.broadinstitute.gpinformatics.mercury.presentation.transfervis.TransferVisualizerFrame;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ArrayPlatingEntityBuilder;
@@ -203,7 +204,7 @@ public class BaseEventTest {
             }
         });
         labBatchEJB.setProductOrderDao(mockProductOrderDao);
-        labBatchEJB.setWorkflowLoader(new WorkflowLoader());
+        labBatchEJB.setWorkflowConfig(new WorkflowLoader().load());
 
         BSPUserList testUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
         BSPSetVolumeConcentration bspSetVolumeConcentration = BSPSetVolumeConcentrationProducer.stubInstance();
@@ -970,11 +971,13 @@ public class BaseEventTest {
     }
 
     public static void validateWorkflow(String nextEventTypeName, List<LabVessel> labVessels) {
-        SystemRouter systemRouter = new SystemRouter(null, new WorkflowLoader(), null);
+        WorkflowConfig workflowConfig = new WorkflowLoader().load();
+        SystemRouter systemRouter = new SystemRouter(null, workflowConfig, null);
         SystemRouter.System system = systemRouter.routeForVesselsDaoFree(labVessels, SystemRouter.Intent.ROUTE);
         Assert.assertEquals(system, expectedRouting);
 
-        WorkflowValidator workflowValidator = new WorkflowValidator(new WorkflowLoader());
+        WorkflowValidator workflowValidator = new WorkflowValidator();
+        workflowValidator.setWorkflowConfig(workflowConfig);
         ProductOrderDao mockProductOrderDao = Mockito.mock(ProductOrderDao.class);
         Mockito.when(mockProductOrderDao.findByBusinessKey(Mockito.anyString())).then(new Answer<Object>() {
             @Override

@@ -9,7 +9,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDe
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
 import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
+import javax.enterprise.inject.Default;
+import javax.enterprise.inject.Produces;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.xml.bind.JAXBContext;
@@ -22,9 +23,7 @@ import java.io.Serializable;
  *  or from preference table if called from within a container (Deployed app and Arquillian tests)
  */
 @ApplicationScoped
-public class WorkflowLoader extends AbstractCache implements  Serializable {
-    @Inject
-    private WorkflowConfig workflowConfig;
+public class WorkflowLoader extends AbstractCache implements Serializable {
 
     // Use file based configuration access for DBFree testing
     private static boolean IS_STANDALONE = false;
@@ -44,29 +43,28 @@ public class WorkflowLoader extends AbstractCache implements  Serializable {
         }
     }
 
-    @Inject
-    public WorkflowLoader(@SuppressWarnings("CdiUnproxyableBeanTypesInspection") WorkflowConfig workflowConfig) {
-        this.workflowConfig = workflowConfig;
-    }
+    private WorkflowConfig workflowConfig;
 
     public WorkflowLoader(){}
 
-    public synchronized WorkflowConfig load() {
-        if (workflowConfig == null) {
+    @Produces
+    @Default
+    public WorkflowConfig load() {
+        if (workflowConfig==null){
             refreshCache();
         }
         return workflowConfig;
     }
 
     @Override
-    public synchronized void refreshCache() {
-        if( IS_STANDALONE ) {
+    public void refreshCache() {
+        if (IS_STANDALONE) {
             workflowConfig = loadFromFile();
         } else {
             workflowConfig = loadFromPrefs();
         }
-    }
 
+    }
     /**
      * Pull workflow configuration from preferences when running in container
      * TODO JMS This is an expensive reload for rarely changing data.  A 30 minute cache would be nice...
@@ -113,4 +111,5 @@ public class WorkflowLoader extends AbstractCache implements  Serializable {
         }
         return workflowConfigFromFile;
     }
+
 }

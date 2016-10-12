@@ -23,6 +23,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.VesselSearchActionBean;
 
@@ -47,8 +48,6 @@ import java.util.Set;
 public class WorkflowValidator {
 
     private static final Log log = LogFactory.getLog(WorkflowValidator.class);
-    private WorkflowLoader workflowLoader;
-
     @Inject
     private LabVesselDao labVesselDao;
 
@@ -61,18 +60,12 @@ public class WorkflowValidator {
     @Inject
     private EmailSender emailSender;
 
+    private WorkflowConfig workflowConfig;
+
     private ProductOrderDao productOrderDao;
 
     @Inject
     private AppConfig appConfig;
-
-    public WorkflowValidator() {
-    }
-
-    @Inject
-    public WorkflowValidator(WorkflowLoader workflowLoader) {
-        this.workflowLoader=workflowLoader;
-    }
 
     public static class WorkflowException extends Exception {
         public WorkflowException(Throwable cause) {
@@ -240,7 +233,7 @@ public class WorkflowValidator {
                     is what will happen if the batch is not found (Sample exists in multiple batches)
                  */
                 if (workflowName != null && effectiveBatch != null) {
-                    ProductWorkflowDefVersion workflowVersion = workflowLoader.load().getWorkflowVersionByName(
+                    ProductWorkflowDefVersion workflowVersion = workflowConfig.getWorkflowVersionByName(
                             workflowName, effectiveBatch.getCreatedOn());
                     if (workflowVersion != null) {
                         List<ProductWorkflowDefVersion.ValidationError> errors =
@@ -286,5 +279,10 @@ public class WorkflowValidator {
     @Inject
     public void setProductOrderDao(ProductOrderDao productOrderDao) {
         this.productOrderDao = productOrderDao;
+    }
+
+    @Inject
+    public void setWorkflowConfig(WorkflowConfig workflowConfig) {
+        this.workflowConfig = workflowConfig;
     }
 }
