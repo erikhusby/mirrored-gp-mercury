@@ -98,7 +98,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
     public static final String RESEARCH_PROJECT_TAB_PARAMETER = "rpSelectedTab";
     private static final String LIBRARY_DESCRIPTOR_PARAMETER = "selectedSubmissionLibraryDescriptor";
     private static final String REPOSITORY_PARAMETER = "selectedSubmissionRepository";
-    private static final String SUBMISSION_SAMPLES_PARAMETER = "selectedSubmissionSamples";
+    public static final String SUBMISSION_TUPLES_PARAMETER = "selectedSubmissionTuples";
     public static final String RESEARCH_PROJECT_DEFAULT_TAB = "0";
     public static final String RESEARCH_PROJECT_SUBMISSIONS_TAB = "1";
 
@@ -213,7 +213,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
      */
     private Map<String, Long> projectOrderCounts;
 
-    private List<String> selectedSubmissionSamples;
+    private List<String> selectedSubmissionTuples;
 
     @Inject
     private AlignerDao alignerDao;
@@ -908,9 +908,17 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
 
         rpSelectedTab = RESEARCH_PROJECT_SUBMISSIONS_TAB;
 
-        if (CollectionUtils.isEmpty(selectedSubmissionSamples)) {
+        if (CollectionUtils.isEmpty(selectedSubmissionTuples)) {
             addGlobalValidationError("You must select at least one sample in order to post for submission.");
             errors = true;
+        }
+
+        Map<SubmissionTuple, String> tupleToSampleMap=new HashMap<>();
+        for (String selectedSubmissionTuple : selectedSubmissionTuples) {
+            SubmissionTuple submissionTuple = SubmissionTuple.fromJson(selectedSubmissionTuple);
+            if (submissionTuple!=null) {
+                tupleToSampleMap.put(submissionTuple, submissionTuple.getSampleName());
+            }
         }
         BioProject selectedProject = bioProjectTokenInput.getTokenObject();
 
@@ -934,11 +942,13 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
             List<SubmissionDto> selectedSubmissions = new ArrayList<>();
             Map<SubmissionTuple, BassDTO> bassDtoMap = submissionDtoFetcher.fetchBassDtos(
                     editResearchProject.getBusinessKey(),
-                    selectedSubmissionSamples.toArray(new String[selectedSubmissionSamples.size()]));
+                    tupleToSampleMap.values().toArray(new String[tupleToSampleMap.values().size()]));
             for (BassDTO bassDTO : bassDtoMap.values()) {
-
-                // All required data are in the bassDTO
-                selectedSubmissions.add(new SubmissionDto(bassDTO, null, editResearchProject.getProductOrders(), null));
+                if (tupleToSampleMap.containsKey(bassDTO.getTuple())) {
+                    // All required data are in the bassDTO
+                    selectedSubmissions
+                            .add(new SubmissionDto(bassDTO, null, editResearchProject.getProductOrders(), null));
+                }
             }
 
             try {
@@ -961,7 +971,7 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
                 .addParameter(BIOPROJECT_PARAMETER, bioProjectTokenInput.getListOfKeys())
                 .addParameter(LIBRARY_DESCRIPTOR_PARAMETER, selectedSubmissionLibraryDescriptor)
                 .addParameter(REPOSITORY_PARAMETER, selectedSubmissionRepository)
-                .addParameter(SUBMISSION_SAMPLES_PARAMETER, selectedSubmissionSamples)
+                .addParameter(SUBMISSION_TUPLES_PARAMETER, selectedSubmissionTuples)
                 .addParameter(RESEARCH_PROJECT_TAB_PARAMETER, RESEARCH_PROJECT_SUBMISSIONS_TAB);
     }
 
@@ -1224,12 +1234,12 @@ public class ResearchProjectActionBean extends CoreActionBean implements Validat
         this.bioProjectTokenInput = bioProjectTokenInput;
     }
 
-    public void setSelectedSubmissionSamples(List<String> selectedSubmissionSamples) {
-        this.selectedSubmissionSamples = selectedSubmissionSamples;
+    public List<String> getSelectedSubmissionTuples() {
+        return selectedSubmissionTuples;
     }
 
-    public List<String> getSelectedSubmissionSamples() {
-        return selectedSubmissionSamples;
+    public void setSelectedSubmissionTuples(List<String> selectedSubmissionTuples) {
+        this.selectedSubmissionTuples = selectedSubmissionTuples;
     }
 
     public String getRpSelectedTab() {
