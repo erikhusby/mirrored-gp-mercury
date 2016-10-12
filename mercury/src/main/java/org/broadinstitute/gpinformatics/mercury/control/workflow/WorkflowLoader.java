@@ -67,7 +67,6 @@ public class WorkflowLoader extends AbstractCache implements Serializable {
     }
     /**
      * Pull workflow configuration from preferences when running in container
-     * TODO JMS This is an expensive reload for rarely changing data.  A 30 minute cache would be nice...
      * @return
      */
     private WorkflowConfig loadFromPrefs() {
