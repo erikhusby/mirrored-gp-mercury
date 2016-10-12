@@ -101,7 +101,7 @@ public class LabBatchEjb {
 
     private ControlDao controlDao;
 
-    private WorkflowConfig workflowConfig;;
+    private WorkflowConfig workflowConfig;
 
     private LabVesselDao labVesselDao;
 
