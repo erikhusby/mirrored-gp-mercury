@@ -9,7 +9,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.GenericReagentDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowMatcher;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
@@ -17,6 +16,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.labevent.ManualTransferActionBean;
@@ -84,7 +84,7 @@ public class BatchWorkflowActionBean extends CoreActionBean {
     private GenericReagentDao genericReagentDao;
 
     @Inject
-    private WorkflowLoader workflowLoader;
+    private WorkflowConfig workflowConfig;
 
     @Inject
     private WorkflowMatcher workflowMatcher;
@@ -105,7 +105,7 @@ public class BatchWorkflowActionBean extends CoreActionBean {
     }
 
     private void fetchWorkflow() {
-        ProductWorkflowDef workflowDef = workflowLoader.load().getWorkflowByName(labBatch.getWorkflowName());
+        ProductWorkflowDef workflowDef = workflowConfig.getWorkflowByName(labBatch.getWorkflowName());
         effectiveWorkflowDef = workflowDef.getEffectiveVersion(labBatch.getCreatedOn());
         // Set relationship between steps and process
         effectiveWorkflowDef.buildLabEventGraph();
@@ -127,7 +127,7 @@ public class BatchWorkflowActionBean extends CoreActionBean {
     public Resolution batchReagent() {
         labBatch = labBatchDao.findByName(batchName);
         WorkflowStepDef workflowStepDef = ManualTransferActionBean.loadWorkflowStepDef(workflowEffectiveDate,
-                workflowLoader, workflowProcessName, workflowStepName);
+                workflowConfig, workflowProcessName, workflowStepName);
         if (reagentNames.size() != workflowStepDef.getReagentTypes().size() ||
                 !reagentNames.containsAll(workflowStepDef.getReagentTypes())) {
             addGlobalValidationError("Mismatch in reagent names between form and workflow");

@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.mercury.entity.labevent;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.Metadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -732,8 +731,7 @@ todo jmt adder methods
      * Using workflow config, searches the Mercury supported workflows for events that can follow a bucketing
      * step. Takes into account that the optional steps after a bucket may be skipped.
      */
-    public static void setupEventTypesThatCanFollowBucket(WorkflowLoader workflowLoader) {
-        WorkflowConfig workflowConfig = workflowLoader.load();
+    public static void setupEventTypesThatCanFollowBucket(WorkflowConfig workflowConfig) {
         for (Workflow workflow : Workflow.SUPPORTED_WORKFLOWS) {
             ProductWorkflowDef workflowDef  = workflowConfig.getWorkflowByName(workflow.getWorkflowName());
             ProductWorkflowDefVersion effectiveWorkflow = workflowDef.getEffectiveVersion();

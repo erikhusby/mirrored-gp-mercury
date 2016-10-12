@@ -464,7 +464,7 @@
                     </td>
                     <td>
                         <div class="ellipsis" style="max-width: 250px;">
-                                ${mercuryStatic:join(entry.workflowNames, "<br/>")}
+                                ${mercuryStatic:join(actionBean.bucketWorkflowNames(entry), "<br/>")}
                         </div>
                     </td>
                     <td>

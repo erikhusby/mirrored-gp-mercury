@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.Nonnull;
@@ -29,13 +30,15 @@ import java.util.TreeSet;
  */
 public abstract class AbstractBatchJiraFieldFactory {
 
+    private WorkflowConfig workflowConfig;
     protected final LabBatch batch;
 
     private final CreateFields.ProjectType projectType;
 
-    public AbstractBatchJiraFieldFactory(@Nonnull LabBatch batch, @Nonnull CreateFields.ProjectType projectType) {
+    public AbstractBatchJiraFieldFactory(@Nonnull LabBatch batch, @Nonnull CreateFields.ProjectType projectType, WorkflowConfig workflowConfig) {
         this.batch = batch;
         this.projectType = projectType;
+        this.workflowConfig = workflowConfig;
     }
 
     /**
@@ -128,29 +131,29 @@ public abstract class AbstractBatchJiraFieldFactory {
      *
      *
      * @param projectType         type of JIRA Project for which the user needs to generate submission values
-     * @param batch               an instance of a {@link org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch} entity and is the primary source of the data from
+     * @param batch               an instance of a {@link LabBatch} entity and is the primary source of the data from
      *                            which the custom submission fields will be generated
-     * @param productOrderDao
      * @return The instance of the JIRA field factory for the given project type
      */
     public static AbstractBatchJiraFieldFactory getInstance(@Nonnull CreateFields.ProjectType projectType,
                                                             @Nonnull LabBatch batch,
-                                                            ProductOrderDao productOrderDao) {
+                                                            ProductOrderDao productOrderDao,
+                                                            WorkflowConfig workflowConfig) {
         AbstractBatchJiraFieldFactory builder;
 
         if (projectType == null) {
-            return getInstanceByBatchType(batch);
+            return getInstanceByBatchType(batch, workflowConfig);
         }
         switch (projectType) {
         case FCT_PROJECT:
-            builder = getInstanceByBatchType(batch);
+            builder = getInstanceByBatchType(batch, workflowConfig);
             break;
         case EXTRACTION_PROJECT:
-            builder = new ExtractionJiraFieldFactory(batch, productOrderDao);
+            builder = new ExtractionJiraFieldFactory(batch, productOrderDao, workflowConfig);
             break;
         case LCSET_PROJECT:
         default:
-            builder = new LCSetJiraFieldFactory(batch, productOrderDao);
+            builder = new LCSetJiraFieldFactory(batch, productOrderDao, workflowConfig);
             break;
         }
 
@@ -162,12 +165,12 @@ public abstract class AbstractBatchJiraFieldFactory {
      *              and is the primary source of the data from which the custom submission fields will be generated
      * @return The instance of the JIRA field factory for the given project type
      */
-    private static AbstractBatchJiraFieldFactory getInstanceByBatchType(LabBatch batch) {
+    private static AbstractBatchJiraFieldFactory getInstanceByBatchType(LabBatch batch, WorkflowConfig workflowConfig) {
         AbstractBatchJiraFieldFactory builder;
         switch (batch.getLabBatchType()) {
         case MISEQ:
         case FCT:
-            builder = new FCTJiraFieldFactory(batch);
+            builder = new FCTJiraFieldFactory(batch, workflowConfig);
             break;
         default:
             throw new IllegalArgumentException("Not enough information was passed to determine the type of Jira ticket"

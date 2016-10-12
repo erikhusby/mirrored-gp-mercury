@@ -4,8 +4,6 @@ import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -35,7 +33,6 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -313,7 +310,7 @@ public class BucketEntry {
                 bucket != null ? bucket.getBucketDefinitionName() : "(no bucket)",
                 productOrder != null?productOrder.getBusinessKey():"(no product order)",
                 labVessel != null ? labVessel.getLabel() : "(no vessel)",
-                workflows != null && !workflows.isEmpty() ? getWorkflowNames(): "(no workflows)",
+                workflows != null && !workflows.isEmpty() ? workflows: "(no workflows)",
                 labBatch != null ? labBatch.getBatchName() : "(not batched)");
     }
 
@@ -328,10 +325,8 @@ public class BucketEntry {
     }
 
     @Nonnull
-    private Collection<Workflow> loadWorkflows() {
-        WorkflowLoader workflowLoader = ServiceAccessUtility.getBean(WorkflowLoader.class);
+    private Collection<Workflow> loadWorkflows(WorkflowConfig workflowConfig) {
         Collection<Workflow> workflows = new HashSet<>();
-        WorkflowConfig workflowConfig = workflowLoader.load();
         for (Workflow workflow : getProductOrder().getProductWorkflows()) {
             ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflow(workflow);
             for (WorkflowBucketDef workflowBucketDef : productWorkflowDef.getEffectiveVersion().getBuckets()) {
@@ -348,20 +343,11 @@ public class BucketEntry {
      * @return
      */
     @Nonnull
-    public Collection<Workflow> getWorkflows() {
+    public Collection<Workflow> getWorkflows(WorkflowConfig workflowConfig) {
         if (workflows == null) {
-            workflows = loadWorkflows();
+            workflows = loadWorkflows(workflowConfig);
         }
         return workflows;
-    }
-
-    @Nonnull
-    public Collection<String> getWorkflowNames() {
-        Set<String> workflowNames = new HashSet<>();
-        for (Workflow workflow : getWorkflows()) {
-            workflowNames.add(workflow.getWorkflowName());
-        }
-        return workflowNames;
     }
 
     public enum BucketEntryType {

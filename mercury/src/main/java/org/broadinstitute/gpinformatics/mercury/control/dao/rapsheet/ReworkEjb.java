@@ -29,7 +29,6 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDa
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.ReworkReasonDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.ReworkDetail;
@@ -96,13 +95,13 @@ public class ReworkEjb {
     private BucketEntryDao bucketEntryDao;
 
     @Inject
-    private WorkflowLoader workflowLoader;
-
-    @Inject
     private ReworkReasonDao reworkReasonDao;
 
     @Inject
     private ProductOrderSampleDao productOrderSampleDao;
+
+    @Inject
+    private WorkflowConfig workflowConfig;
 
     public ReworkEjb() {
     }
@@ -425,7 +424,6 @@ public class ReworkEjb {
     }
 
     private WorkflowBucketDef findWorkflowBucketDef(@Nonnull ProductOrder productOrder, String bucketName) {
-        WorkflowConfig workflowConfig = workflowLoader.load();
         WorkflowBucketDef bucketDef = null;
         for (Workflow productWorkflow : productOrder.getProductWorkflows()) {
             ProductWorkflowDefVersion workflowDefVersion = workflowConfig.getWorkflow(productWorkflow)

@@ -13,18 +13,36 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.rackscan.ScannerException;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.ObjectMarshaller;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.*;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.CherryPickSourceType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.MetadataType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReagentType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleTransferEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationSetupEvent;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResource;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselTypeGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
@@ -36,7 +54,15 @@ import org.codehaus.jackson.type.TypeReference;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * A Stripes Action Bean to record manual transfers.
@@ -91,7 +117,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
     private LabVesselDao labVesselDao;
 
     @Inject
-    private WorkflowLoader workflowLoader;
+    private WorkflowConfig workflowConfig;
 
     @Inject
     private LabBatchDao labBatchDao;
@@ -113,7 +139,7 @@ public class ManualTransferActionBean extends RackScanActionBean {
             String workflowEffectiveDateLocal = getContext().getRequest().getParameter("workflowEffectiveDate");
             if (!StringUtils.isEmpty(workflowEffectiveDateLocal)) {
                 workflowStepDef = loadWorkflowStepDef(new Date(workflowEffectiveDateLocal),
-                        workflowLoader, getContext().getRequest().getParameter("workflowProcessName"),
+                        workflowConfig, getContext().getRequest().getParameter("workflowProcessName"),
                         getContext().getRequest().getParameter("workflowStepName"));
             }
             if (workflowStepDef == null) {
@@ -300,11 +326,10 @@ public class ManualTransferActionBean extends RackScanActionBean {
     }
 
     @Nullable
-    public static WorkflowStepDef loadWorkflowStepDef(Date workflowEffectiveDate, WorkflowLoader workflowLoader,
-            String workflowProcessName, String workflowStepName) {
+    public static WorkflowStepDef loadWorkflowStepDef(Date workflowEffectiveDate, WorkflowConfig workflowConfig,
+                                                      String workflowProcessName, String workflowStepName) {
         WorkflowStepDef workflowStepDef = null;
         if (workflowProcessName != null) {
-            WorkflowConfig workflowConfig = workflowLoader.load();
             workflowStepDef = workflowConfig.getStep(workflowProcessName, workflowStepName,
                     workflowEffectiveDate);
             workflowStepDef.getReagentTypes();

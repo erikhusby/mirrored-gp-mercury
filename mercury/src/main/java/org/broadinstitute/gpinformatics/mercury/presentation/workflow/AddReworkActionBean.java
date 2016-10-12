@@ -20,7 +20,6 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.ReworkReasonD
 import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.ReworkReason;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
@@ -59,7 +58,7 @@ public class AddReworkActionBean extends CoreActionBean {
     private LabEventHandler labEventHandler;
 
     @Inject
-    private WorkflowLoader workflowLoader;
+    private WorkflowConfig workflowConfig;
 
     @Inject
     private ReworkReasonDao reworkReasonDao;
@@ -180,7 +179,6 @@ public class AddReworkActionBean extends CoreActionBean {
 
     @Before(stages = LifecycleStage.BindingAndValidation, on = {VESSEL_INFO_ACTION, ADD_SAMPLE_ACTION})
     public void initWorkflowBuckets() {
-        WorkflowConfig workflowConfig = workflowLoader.load();
         Set<String> bucketNames = new HashSet<>();
         for (Workflow workflow : Workflow.SUPPORTED_WORKFLOWS) {
             ProductWorkflowDef workflowDef  = workflowConfig.getWorkflowByName(workflow.getWorkflowName());
@@ -201,6 +199,7 @@ public class AddReworkActionBean extends CoreActionBean {
     public void setUpReworkCandidates() {
         List<String> searchTerms = SearchActionBean.cleanInputStringForSamples(vesselLabel);
         numQueryInputs = searchTerms.size();
+
         bucketCandidates = new ArrayList<>(reworkEjb.findBucketCandidates(searchTerms));
 
         Set<String> barcodes = new HashSet<>();

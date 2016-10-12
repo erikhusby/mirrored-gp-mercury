@@ -28,7 +28,6 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDa
 import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketCount;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -78,7 +77,7 @@ public class BucketViewActionBean extends CoreActionBean {
     @Inject
     JiraUserTokenInput jiraUserTokenInput;
     @Inject
-    private WorkflowLoader workflowLoader;
+    private WorkflowConfig workflowConfig;
     @Inject
     private BucketDao bucketDao;
     @Inject
@@ -129,7 +128,6 @@ public class BucketViewActionBean extends CoreActionBean {
 
     @Before(stages = LifecycleStage.BindingAndValidation)
     public void init() {
-        WorkflowConfig workflowConfig = workflowLoader.load();
         // Gets bucket names for supported products (workflows), and associates workflow(s) for each bucket.
         Multimap<String, String> bucketWorkflows = HashMultimap.create();
         for (Workflow workflow : Workflow.SUPPORTED_WORKFLOWS) {
@@ -355,7 +353,6 @@ public class BucketViewActionBean extends CoreActionBean {
 
     private Map<String, BucketCount> initBucketCountsMap(Map<String, BucketCount> bucketCountMap) {
         Map<String, BucketCount> resultBucketCountMap = new TreeMap<>();
-        WorkflowConfig workflowConfig = workflowLoader.load();
         for (Workflow workflow : Workflow.SUPPORTED_WORKFLOWS) {
             ProductWorkflowDef workflowDef = workflowConfig.getWorkflowByName(workflow.getWorkflowName());
             ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
@@ -489,6 +486,8 @@ public class BucketViewActionBean extends CoreActionBean {
                 String.valueOf(projectType == CreateFields.ProjectType.fromIssueKey(jiraTicketId)));
     }
 
+
+
     public CreateFields.ProjectType getProjectType() {
         return projectType;
     }
@@ -511,5 +510,13 @@ public class BucketViewActionBean extends CoreActionBean {
 
     public void setJiraUserTokenInput(JiraUserTokenInput jiraUserTokenInput) {
         this.jiraUserTokenInput = jiraUserTokenInput;
+    }
+
+    public List<String> bucketWorkflowNames(BucketEntry bucketEntry) {
+        List<String> workflowNames = new ArrayList<>();
+        for (Workflow workflow : bucketEntry.getWorkflows(workflowConfig)) {
+            workflowNames.add(workflow.getWorkflowName());
+        }
+        return workflowNames;
     }
 }

@@ -21,11 +21,11 @@ import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.BettaLimsMessageUtils;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowValidator;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
@@ -107,21 +107,21 @@ public class BettaLimsMessageResource {
     private UserBean userBean;
 
     @Inject
-    private WorkflowLoader workflowLoader;
+    private WorkflowConfig workflowConfig;;
 
     public BettaLimsMessageResource() {
     }
 
     /** Constructor used for test purposes. */
-    public BettaLimsMessageResource(WorkflowLoader workflowLoader) {
-        this.workflowLoader = workflowLoader;
+    public BettaLimsMessageResource(WorkflowConfig workflowConfig) {
+        this.workflowConfig = workflowConfig;
         postConstructor();
     }
 
     @PostConstruct
     public void postConstructor() {
         // Does the one-time lab event setup that is needed when processing messages.
-        LabEvent.setupEventTypesThatCanFollowBucket(workflowLoader);
+        LabEvent.setupEventTypesThatCanFollowBucket(workflowConfig);
     }
 
     /**

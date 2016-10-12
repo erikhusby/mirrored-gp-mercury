@@ -76,7 +76,7 @@ public class BucketEjbDbFreeTest {
     private ProductOrder pdo;
     private List<LabVessel> mockVessels;
     private LabBatch labBatch;
-    private final WorkflowLoader workflowLoader = new WorkflowLoader();
+    private WorkflowConfig workflowConfig = new WorkflowLoader().load();
     private BSPUserList bspUserList;
     private Bucket bucket;
     private String pdoCreator;
@@ -128,7 +128,7 @@ public class BucketEjbDbFreeTest {
 
         bucketEjb = new BucketEjb(labEventFactory, JiraServiceProducer.stubInstance(), bucketDao, bucketEntryDao,
                                   labVesselDao, labVesselFactory, bspSampleDataFetcher,
-                                  bspUserList, workflowLoader, createNiceMock(ProductOrderDao.class), mercurysampleDao);
+                                  bspUserList, workflowConfig, createNiceMock(ProductOrderDao.class), mercurysampleDao);
     }
 
     // Creates test samples and updates expectedSamples and labVessels.
@@ -278,7 +278,6 @@ public class BucketEjbDbFreeTest {
                 .andReturn(bspSampleDataMap);
 
         replay(mocks);
-        WorkflowConfig workflowConfig = workflowLoader.load();
         ProductWorkflowDef workflowDef = workflowConfig.getWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
 
         WorkflowBucketDef picoBucket = workflowDef.getEffectiveVersion().findBucketDefByName("Pico/Plating Bucket");

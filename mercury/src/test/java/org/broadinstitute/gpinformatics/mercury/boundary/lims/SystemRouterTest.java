@@ -148,7 +148,7 @@ public class SystemRouterTest extends BaseEventTest {
         // existed before that method was factored out.
         mockLabVesselDao = mock(LabVesselDao.class);
         mockBspExportService = mock(BSPExportsService.class);
-        systemRouter = new SystemRouter(mockLabVesselDao, new WorkflowLoader(), mockBspExportService);
+        systemRouter = new SystemRouter(mockLabVesselDao, new WorkflowLoader().load(), mockBspExportService);
 
         // By default, make BSP answer that it knows about all vessels and returns that they have not been exported.
         when(mockBspExportService.findExportDestinations(anyCollectionOf(LabVessel.class))).thenAnswer(

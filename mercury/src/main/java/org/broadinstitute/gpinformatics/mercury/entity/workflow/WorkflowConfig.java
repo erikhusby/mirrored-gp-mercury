@@ -1,11 +1,9 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
 import com.google.common.collect.HashMultimap;
-
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceDefinitionCreator;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceDefinitionValue;
-import org.broadinstitute.gpinformatics.infrastructure.datawh.LabEventEtl;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 
 import javax.annotation.Nonnull;
 import javax.xml.bind.JAXBContext;
@@ -16,6 +14,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import java.io.Reader;
+import java.io.Serializable;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -30,7 +29,8 @@ import java.util.Map;
  */
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
-public class WorkflowConfig implements PreferenceDefinitionValue {
+@Impl
+public class WorkflowConfig implements PreferenceDefinitionValue, Serializable {
 
     // JAXBContext is threadsafe
     @XmlTransient

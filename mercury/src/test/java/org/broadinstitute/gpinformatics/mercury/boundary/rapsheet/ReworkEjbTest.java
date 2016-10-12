@@ -33,6 +33,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
@@ -40,9 +41,11 @@ import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionJaxbBuilder;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -469,8 +472,7 @@ public class ReworkEjbTest extends Arquillian {
         productOrderDao.persist(draftProductOrder);
 
 
-        WorkflowBucketDef bucketDef = ProductWorkflowDefVersion
-                .findBucketDef(Workflow.AGILENT_EXOME_EXPRESS, LabEventType.PICO_PLATING_BUCKET);
+        WorkflowBucketDef bucketDef = findBucketDef(Workflow.AGILENT_EXOME_EXPRESS, LabEventType.PICO_PLATING_BUCKET);
 
         bucketName = bucketDef.getName();
 
@@ -485,6 +487,28 @@ public class ReworkEjbTest extends Arquillian {
 
         bucketDao.persist(pBucket);
         resetExExProductWorkflow();
+    }
+
+    /**
+     * findBucketDef will utilize the WorkflowConfig to return an instance of a {@link org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef} based
+     * on a given workflow definition and and step labEventType
+     */
+    public static WorkflowBucketDef findBucketDef(@Nonnull Workflow workflow, @Nonnull LabEventType stepDef) {
+
+        WorkflowConfig workflowConfig = (new WorkflowLoader()).load();
+        assert (workflowConfig != null && workflowConfig.getProductWorkflowDefs() != null &&
+                !workflowConfig.getProductWorkflowDefs().isEmpty());
+        ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflow(workflow);
+        ProductWorkflowDefVersion versionResult = productWorkflowDef.getEffectiveVersion();
+
+        ProductWorkflowDefVersion.LabEventNode labEventNode =
+                versionResult.findStepByEventType(stepDef.getName());
+
+        WorkflowBucketDef bucketDef = null;
+        if (labEventNode != null) {
+            bucketDef = (WorkflowBucketDef) labEventNode.getStepDef();
+        }
+        return bucketDef;
     }
 
     @AfterMethod(groups = TestGroups.ALTERNATIVES)

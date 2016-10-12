@@ -22,7 +22,6 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -33,6 +32,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.jvnet.inflector.Noun;
 
 import javax.annotation.Nonnull;
+import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -70,12 +70,9 @@ public class ExtractionJiraFieldFactory extends AbstractBatchJiraFieldFactory {
      * @param batch               instance of the Lab Batch entity for which a new LCSetT Ticket is to be created
      * @param productOrderDao
      */
-    public ExtractionJiraFieldFactory(@Nonnull LabBatch batch, @Nonnull ProductOrderDao productOrderDao) {
-        super(batch, CreateFields.ProjectType.EXTRACTION_PROJECT);
-
-        WorkflowLoader wfLoader = new WorkflowLoader();
-        WorkflowConfig wfConfig = wfLoader.load();
-
+    @Inject
+    public ExtractionJiraFieldFactory(@Nonnull LabBatch batch, @Nonnull ProductOrderDao productOrderDao, WorkflowConfig workflowConfig) {
+        super(batch, CreateFields.ProjectType.EXTRACTION_PROJECT, workflowConfig);
 
         if (!batch.getBucketEntries().isEmpty()) {
             for (BucketEntry bucketEntry : batch.getBucketEntries()) {
@@ -108,7 +105,7 @@ public class ExtractionJiraFieldFactory extends AbstractBatchJiraFieldFactory {
                 log.error("Unable to find a PDO for the business key of " + currPdo);
             }
             if (batch.getWorkflowName() != null) {
-                workflowDefs.put(currPdo, wfConfig.getWorkflowByName(batch.getWorkflowName()));
+                workflowDefs.put(currPdo, workflowConfig.getWorkflowByName(batch.getWorkflowName()));
             }
         }
 
