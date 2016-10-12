@@ -19,6 +19,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMess
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SequencingTemplateFactory;
+import org.broadinstitute.gpinformatics.mercury.boundary.run.FlowcellDesignationEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.CrspPipelineUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
@@ -34,6 +35,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
+import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
@@ -61,6 +63,7 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -73,6 +76,8 @@ import java.util.Map;
 import java.util.Random;
 
 import static org.broadinstitute.gpinformatics.Matchers.argThat;
+import static org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation_.loadingConc;
+import static org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation_.poolTest;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -112,11 +117,11 @@ public class ZimsIlluminaRunFactoryTest {
     private Map<String, Control> controlMap;
     private Product testProduct;
     private ResearchProject testResearchProject;
-
+    private FlowcellDesignationEjb flowcellDesignationEjb;
     private void setupCrsp() {
         CrspControlsTestUtils crspControlsTestUtils = new CrspControlsTestUtils();
     }
-
+    private final List<FlowcellDesignation> flowcellDesignations = new ArrayList<>();
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void setUp() {
@@ -132,6 +137,15 @@ public class ZimsIlluminaRunFactoryTest {
 
         mockJiraService = Mockito.mock(JiraService.class);
         productOrderDao = Mockito.mock(ProductOrderDao.class);
+        flowcellDesignationEjb = Mockito.mock(FlowcellDesignationEjb.class);
+
+        Mockito.when(flowcellDesignationEjb.getFlowcellDesignations(Mockito.any(LabBatch.class))).
+                thenReturn(flowcellDesignations);
+        Mockito.when(flowcellDesignationEjb.getFlowcellDesignations(Mockito.any(Collection.class))).
+                thenReturn(flowcellDesignations);
+
+        SequencingTemplateFactory sequencingTemplateFactory = new SequencingTemplateFactory();
+        sequencingTemplateFactory.setFlowcellDesignationEjb(flowcellDesignationEjb);
 
         Mockito.when(mockJiraService.createTicketUrl(Mockito.anyString())).thenReturn("jira://LCSET-1");
 
@@ -146,7 +160,7 @@ public class ZimsIlluminaRunFactoryTest {
         testProduct.setAnalysisTypeKey("HybridSelection.Resequencing");
 
         zimsIlluminaRunFactory = new ZimsIlluminaRunFactory(mockSampleDataFetcher, mockControlDao,
-                new SequencingTemplateFactory(), productOrderDao, crspPipelineUtils);
+                sequencingTemplateFactory, productOrderDao, crspPipelineUtils, flowcellDesignationEjb);
 
         // Create a test research project
         testResearchProject = new ResearchProject(101L, "Test Project", "ZimsIlluminaRunFactoryTest project", true,
@@ -359,6 +373,30 @@ public class ZimsIlluminaRunFactoryTest {
             assertThat(libraryBean.getSampleId(), equalTo("TestSM-0"));
             assertThat(libraryBean.getProductOrderSample(), equalTo("TestSM-1"));
         }
+    }
+
+    public void testMakeZimsIlluminaRunWithDesignation() {
+        Date runDate = new Date(1359000000000L);
+        String testRunDirectory = "TestRun2";
+        doSequencing("TestSM-2", false);
+        LabVessel denatureTube = flowcell.getNearestTubeAncestorsForLanes().values().iterator().next();
+
+        // This is the only thing tested here. All other designation values are from the IlluminaRun entity.
+        boolean pairedRead = false;
+
+        FlowcellDesignation flowcellDesignation = new FlowcellDesignation(denatureTube, null,
+                new LabEvent(LabEventType.DENATURE_TRANSFER, runDate, "location", 1L, 2L, "programName"),
+                FlowcellDesignation.IndexType.DUAL, false, IlluminaFlowcell.FlowcellType.HiSeqFlowcell, 8,
+                78, new BigDecimal(199), pairedRead, FlowcellDesignation.Status.IN_FCT,
+                FlowcellDesignation.Priority.NORMAL);
+        flowcellDesignations.add(flowcellDesignation);
+
+        IlluminaSequencingRun sequencingRun = new IlluminaSequencingRun(flowcell, testRunDirectory, "Run-234",
+                "ZimsIlluminaRunFactoryTest", 101L, true, runDate, "/root/path/to/run/" + testRunDirectory);
+        ZimsIlluminaRun zimsIlluminaRun = zimsIlluminaRunFactory.makeZimsIlluminaRun(sequencingRun);
+
+        assertThat(zimsIlluminaRun.getError(), nullValue());
+        assertThat(zimsIlluminaRun.getPairedRun(), equalTo(pairedRead));
     }
 
     private void doSequencing(String sampleId, boolean withExtractionInMercury) {

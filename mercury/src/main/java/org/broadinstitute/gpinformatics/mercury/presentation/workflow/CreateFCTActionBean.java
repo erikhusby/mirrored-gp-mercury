@@ -20,11 +20,11 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.run.DesignationUtils;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
@@ -83,7 +83,7 @@ public class CreateFCTActionBean extends CoreActionBean {
     private IlluminaFlowcell.FlowcellType selectedFlowcellType;
     private LabEventType selectedEventType;
     private String selectedEventTypeDisplay;
-    private List<RowDto> rowDtos = new ArrayList<>();
+    private List<CreateFctDto> createFctDtos = new ArrayList<>();
     private BigDecimal defaultLoadingConc = BigDecimal.ZERO;
     private String hasCrsp = "none";
     private Format dateFormat = FastDateFormat.getInstance("yyyy-MM-dd hh:mm a");
@@ -166,9 +166,9 @@ public class CreateFCTActionBean extends CoreActionBean {
      * the lcsets and finding all descendant tubes for the event type selected in the UI.
      */
     private Resolution loadTubes() {
-        // Keeps any existing rowDtos (regardless of current lcset names) and only adds to them.
+        // Keeps any existing createFctDtos (regardless of current lcset names) and only adds to them.
         for (LabBatch targetLcset : loadLcsets()) {
-            int previousRowDtoCount = rowDtos.size();
+            int previousRowDtoCount = createFctDtos.size();
 
             Map<LabVessel, BucketEntry> batchStartingVesselToBucketEntry = new HashMap<>();
             for (BucketEntry bucketEntry : targetLcset.getBucketEntries()) {
@@ -191,20 +191,7 @@ public class CreateFCTActionBean extends CoreActionBean {
                 for (LabEvent targetEvent : loadingEventsAndVessels.keySet()) {
                     for (LabVessel loadingTube : loadingEventsAndVessels.get(targetEvent)) {
                         // Finds the best lcset(s) for the loading tube.
-                        Set<LabBatch> bestLcsets = new HashSet<>();
-                        Set<LabBatch> allLcsets = new HashSet<>();
-                        for (SampleInstanceV2 sampleInstance : loadingTube.getSampleInstancesV2()) {
-                            LabBatch singleBatch = sampleInstance.getSingleBatch();
-                            if (singleBatch != null) {
-                                // Multiple single lcsets can exist in one loading tube (e.g. norm tube 0185941254).
-                                bestLcsets.add(singleBatch);
-                            } else {
-                                allLcsets.addAll(sampleInstance.getAllWorkflowBatches());
-                            }
-                        }
-                        if (bestLcsets.isEmpty()) {
-                            bestLcsets.addAll(allLcsets);
-                        }
+                        Set<LabBatch> bestLcsets = DesignationUtils.findBestLcsets(loadingTube).getLeft();
                         // Only keeps the loading tube if the target lcset is found.
                         if (bestLcsets.contains(targetLcset)) {
                             loadingTubeToLcsets.put(loadingTube, bestLcsets);
@@ -281,7 +268,7 @@ public class CreateFCTActionBean extends CoreActionBean {
                     }
                 }
 
-                RowDto rowDto = new RowDto(loadingTube.getLabel(), targetLcset.getBatchName(), additionalLcsets,
+                CreateFctDto createFctDto = new CreateFctDto(loadingTube.getLabel(), targetLcset.getBatchName(), additionalLcsets,
                         StringUtils.join(eventDates, "<br/>"),
                         StringUtils.join(productNameList, "<br/>"),
                         StringUtils.join(startingVesselList, "\n"),
@@ -289,30 +276,30 @@ public class CreateFCTActionBean extends CoreActionBean {
                         regulatoryDesignation, numberSamples);
 
                 // Each tube barcode should only be present once.
-                RowDto existingDto = null;
-                for (RowDto dto : rowDtos) {
-                    if (dto.getBarcode().equals(rowDto.getBarcode())) {
+                CreateFctDto existingDto = null;
+                for (CreateFctDto dto : createFctDtos) {
+                    if (dto.getBarcode().equals(createFctDto.getBarcode())) {
                         existingDto = dto;
                     }
                 }
                 if (existingDto == null) {
-                    rowDtos.add(rowDto);
+                    createFctDtos.add(createFctDto);
                 } else {
                     // Updates an existing row if it hasn't already been selected.
                     if (existingDto.getNumberLanes() == 0) {
-                        rowDtos.remove(existingDto);
-                        rowDtos.add(rowDto);
-                    } else if (!existingDto.getLcset().equals(rowDto.getLcset())) {
+                        createFctDtos.remove(existingDto);
+                        createFctDtos.add(createFctDto);
+                    } else if (!existingDto.getLcset().equals(createFctDto.getLcset())) {
                         addMessage("Tube " + existingDto.getBarcode() + " is already selected in " +
-                                   existingDto.getLcset() + " and will not be updated to " + rowDto.getLcset());
+                                   existingDto.getLcset() + " and will not be updated to " + createFctDto.getLcset());
                     }
                 }
             }
-            if (rowDtos.size() == previousRowDtoCount) {
+            if (createFctDtos.size() == previousRowDtoCount) {
                 addMessage("No additional tubes found for " + targetLcset.getBatchName());
             }
         }
-        Collections.sort(rowDtos, RowDto.BY_BARCODE);
+        Collections.sort(createFctDtos, CreateFctDto.BY_BARCODE);
         return new ForwardResolution(VIEW_PAGE);
     }
 
@@ -347,24 +334,24 @@ public class CreateFCTActionBean extends CoreActionBean {
     public Resolution createFCTTicket() {
         String regulatoryDesignation = null;
         // Checks selected tubes for a mix of regulatory designations.
-        for (RowDto rowDto : rowDtos) {
-            if (rowDto.getNumberLanes() > 0) {
+        for (CreateFctDto createFctDto : createFctDtos) {
+            if (createFctDto.getNumberLanes() > 0) {
                 if (regulatoryDesignation == null) {
-                    regulatoryDesignation = rowDto.getRegulatoryDesignation();
+                    regulatoryDesignation = createFctDto.getRegulatoryDesignation();
                 }
-                if (!regulatoryDesignation.equals(rowDto.getRegulatoryDesignation()) ||
+                if (!regulatoryDesignation.equals(createFctDto.getRegulatoryDesignation()) ||
                     regulatoryDesignation.equals(MIXED)) {
                     addGlobalValidationError("Cannot mix Clinical and Research on a flowcell.");
                     return new ForwardResolution(VIEW_PAGE);
                 }
             }
         }
-        labBatchEjb.makeFcts(rowDtos, selectedFlowcellType, userBean.getLoginUserName(), this);
+        labBatchEjb.makeFcts(createFctDtos, selectedFlowcellType, userBean.getLoginUserName(), this);
         return new RedirectResolution(CreateFCTActionBean.class, VIEW_ACTION);
     }
 
-    public List<RowDto> getRowDtos() {
-        return rowDtos;
+    public List<CreateFctDto> getCreateFctDtos() {
+        return createFctDtos;
     }
 
     public String getLcsetNames() {
@@ -375,8 +362,8 @@ public class CreateFCTActionBean extends CoreActionBean {
         this.lcsetNames = lcsetNames;
     }
 
-    public void setRowDtos(List<RowDto> rowDtos) {
-        this.rowDtos = rowDtos;
+    public void setCreateFctDtos(List<CreateFctDto> createFctDtos) {
+        this.createFctDtos = createFctDtos;
     }
 
     public IlluminaFlowcell.FlowcellType getSelectedFlowcellType() {

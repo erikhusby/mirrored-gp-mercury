@@ -254,6 +254,11 @@ public class MercurySampleData implements SampleData {
     }
 
     @Override
+    public String getCollectionId() {
+        return "";
+    }
+
+    @Override
     public String getCollaboratorsSampleName() {
         return collaboratorSampleId;
     }

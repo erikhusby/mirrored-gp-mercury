@@ -87,6 +87,30 @@ public class WorkflowProcessDefVersion implements Serializable {
         return workflowBucketDefs;
     }
 
+    /**
+     * Returns batchJiraIssueType to override the value from productWorkflowDefs
+     */
+    public String getBatchJiraIssueType() {
+        List<String> jiraIssueTypes = new ArrayList<>();
+        for (WorkflowStepDef workflowStepDef : workflowStepDefs) {
+            workflowStepDef.getBatchJiraIssueType();
+            jiraIssueTypes.add(workflowStepDef.getBatchJiraIssueType());
+        }
+        return jiraIssueTypes.get(0);
+    }
+
+    /**
+     * Returns batchJiraProjectType to override the value from productWorkflowDefs
+     */
+    public String getBatchJiraProjectType() {
+        List<String> jiraProjectTypes = new ArrayList<>();
+        for (WorkflowStepDef workflowStepDef : workflowStepDefs) {
+            workflowStepDef.getBatchJiraIssueType();
+            jiraProjectTypes.add(workflowStepDef.getBatchJiraProjectType());
+        }
+        return jiraProjectTypes.get(0);
+    }
+
     public List<WorkflowBucketDef> getCreationBuckets() {
         List<WorkflowBucketDef> workflowBucketDefs = new ArrayList<>();
         for (WorkflowBucketDef workflowBucketDef : getBuckets()) {

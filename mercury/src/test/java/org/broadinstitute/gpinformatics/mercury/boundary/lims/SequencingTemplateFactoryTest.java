@@ -2,16 +2,17 @@ package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
 import com.google.common.collect.Lists;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
+import org.broadinstitute.gpinformatics.mercury.boundary.run.FlowcellDesignationEjb;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
+import org.broadinstitute.gpinformatics.mercury.entity.run.FlowcellDesignation;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MiSeqReagentKit;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselAndPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
@@ -31,13 +32,13 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.hamcrest.core.AnyOf;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -66,6 +67,7 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
     public static final String FLOWCELL_2000_TICKET = "FCT-4";
     public static final String FLOWCELL_4000_TICKET = "FCT-5";
     private static final BigDecimal BIG_DECIMAL_12_33 = new BigDecimal("12.33");
+    private static final BigDecimal BIG_DECIMAL_7_77 = new BigDecimal("7.77");
     private SequencingTemplateFactory factory = null;
     private BarcodedTube denatureTube2500 = null;
     private BarcodedTube denatureTube2000 = null;
@@ -73,31 +75,48 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
     private IlluminaFlowcell flowcellHiSeq2500 = null;
     private MiSeqReagentKit reagentKit = null;
     private static final String PRODUCTION_CIGAR = "76T8B8B76T";
+    private static final String DESIGNATION_CIGAR = "99T8B8B99T";
     private static final String POOL_TEST_CIGAR = "8B8B";
     private SequencingTemplateType template;
     private Date runDate;
     private String flowcellHiSeq2500Barcode;
     private BarcodedTube dilutionTube2500;
     private LabBatch fctBatch;
+    private LabBatch miSeqBatch;
     private LabBatch fctBatchHiSeq2000;
     private LabBatch fctBatchHiSeq4000;
     private LabBatch.VesselToLanesInfo vesselToLanesInfo;
     private LabBatch.VesselToLanesInfo vesselToLanesInfo2;
     private IlluminaFlowcell flowcellHiSeq4000;
+    private LabBatch workflowBatch;
+    private final List<FlowcellDesignation> flowcellDesignations = new ArrayList<>();
 
     @Override
-    @BeforeTest(alwaysRun = true)
+    @BeforeMethod
     public void setUp() {
         expectedRouting = SystemRouter.System.MERCURY;
 
         super.setUp();
         factory = new SequencingTemplateFactory();
 
+        // Method calls on factory will always use our list of flowcell designations.
+        factory.setFlowcellDesignationEjb(new FlowcellDesignationEjb(){
+            @Override
+            public List<FlowcellDesignation> getFlowcellDesignations(LabBatch fct) {
+                return flowcellDesignations;
+            }
+            @Override
+            public List<FlowcellDesignation> getFlowcellDesignations(Collection<LabVessel> loadingTubes) {
+                return flowcellDesignations;
+            }
+        });
+        flowcellDesignations.clear();
+
         final ProductOrder
                 productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
         runDate = new Date();
         Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
-        LabBatch workflowBatch = new LabBatch("Exome Express Batch",
+        workflowBatch = new LabBatch("Exome Express Batch",
                 new HashSet<LabVessel>(mapBarcodeToTube.values()),
                 LabBatch.LabBatchType.WORKFLOW);
         workflowBatch.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
@@ -136,7 +155,7 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
 
 
         //create a Miseq batch then one FCT (2500) batch
-        new LabBatch("FCT-1", LabBatch.LabBatchType.MISEQ, IlluminaFlowcell.FlowcellType.MiSeqFlowcell,
+        miSeqBatch = new LabBatch("FCT-1", LabBatch.LabBatchType.MISEQ, IlluminaFlowcell.FlowcellType.MiSeqFlowcell,
                 denatureTube2500, BigDecimal.valueOf(7f));
 
         fctBatch = new LabBatch("FCT-3", LabBatch.LabBatchType.FCT,
@@ -234,9 +253,9 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
     }
 
     public void testGetSequencingTemplatePoolTest() {
-        // fixme this is a bit shady.  The flowcell here is a production flowcell, not a MiSeq flowcell
         Set<VesselAndPosition> vesselsAndPositions = flowcellHiSeq2500.getLoadingVessels();
         MatcherAssert.assertThat(vesselsAndPositions, not(Matchers.empty()));
+        // Does a pool test with the HiSeq flowcell.
         template = factory.getSequencingTemplate(flowcellHiSeq2500, vesselsAndPositions, true);
         assertThat(template.getOnRigChemistry(), is("Default"));
         assertThat(template.getOnRigWorkflow(), is("Resequencing"));
@@ -458,4 +477,116 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
             assertThat(allLanes, hasItem("LANE" + i));
         }
     }
+
+    // Tests getSequencingTemplate from a denature tube with designation parameter override.
+    public void testDesignationVessel() {
+
+        for (boolean poolTest : new boolean[]{false, true}) {
+
+            FlowcellDesignation designation = new FlowcellDesignation(dilutionTube2500, workflowBatch,
+                    denatureTube2500.getLatestEvent(), FlowcellDesignation.IndexType.DUAL, poolTest,
+                    IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell, 4, 99, BIG_DECIMAL_7_77, true,
+                    FlowcellDesignation.Status.IN_FCT, FlowcellDesignation.Priority.NORMAL);
+            flowcellDesignations.clear();
+            flowcellDesignations.add(designation);
+
+            template = factory.getSequencingTemplate(denatureTube2500, false);
+            assertThat(template.getBarcode(), Matchers.nullValue());
+            if (poolTest) {
+                assertThat(template.getOnRigChemistry(), is("Default"));
+                assertThat(template.getOnRigWorkflow(), is("Resequencing"));
+                assertThat(template.getReadStructure(), is(POOL_TEST_CIGAR));
+            } else {
+                assertThat(template.getOnRigChemistry(), is(nullValue()));
+                assertThat(template.getOnRigWorkflow(), is(nullValue()));
+                assertThat(template.getReadStructure(), is(DESIGNATION_CIGAR));
+            }
+            assertThat(template.getRegulatoryDesignation(), Matchers.hasSize(1));
+            assertThat(template.getRegulatoryDesignation(), Matchers.hasItem("RESEARCH_ONLY"));
+            assertThat(template.getProducts(), not(empty()));
+            assertThat(template.getLanes().size(), is(2));
+            assertThat(template.getConcentration(), is(BIG_DECIMAL_7_77));
+
+            Set<String> allLanes = new HashSet<>();
+            for (SequencingTemplateLaneType lane : template.getLanes()) {
+                allLanes.add(lane.getLaneName());
+                assertThat(lane.getLoadingVesselLabel(), equalTo(""));
+                assertThat(lane.getDerivedVesselLabel(), equalTo(denatureTube2500.getLabel()));
+                assertThat(lane.getLoadingConcentration(), is(BIG_DECIMAL_7_77));
+            }
+            assertThat(allLanes, hasItem("LANE1"));
+            assertThat(allLanes, hasItem("LANE2"));
+        }
+    }
+
+    // Tests getSequencingTemplate from a flowcell that has a designation.
+    public void testDesignationFlowcell() {
+
+        for (boolean poolTest : new boolean[]{false, true}) {
+
+            FlowcellDesignation designation = new FlowcellDesignation(dilutionTube2500, workflowBatch,
+                    denatureTube2500.getLatestEvent(), FlowcellDesignation.IndexType.DUAL, poolTest,
+                    IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell, 4, 99, BIG_DECIMAL_7_77, true,
+                    FlowcellDesignation.Status.IN_FCT, FlowcellDesignation.Priority.NORMAL);
+            flowcellDesignations.clear();
+            flowcellDesignations.add(designation);
+
+            Set<VesselAndPosition> vesselsAndPositions = flowcellHiSeq2500.getLoadingVessels();
+            MatcherAssert.assertThat(vesselsAndPositions, not(Matchers.empty()));
+            template = factory.getSequencingTemplate(flowcellHiSeq2500, vesselsAndPositions, true);
+            if (poolTest) {
+                assertThat(template.getOnRigChemistry(), is("Default"));
+                assertThat(template.getOnRigWorkflow(), is("Resequencing"));
+                assertThat(template.getReadStructure(), is(POOL_TEST_CIGAR));
+            } else {
+                assertThat(template.getOnRigChemistry(), is(nullValue()));
+                assertThat(template.getOnRigWorkflow(), is(nullValue()));
+                assertThat(template.getReadStructure(), is(DESIGNATION_CIGAR));
+            }
+            assertThat(template.getBarcode(), equalTo(flowcellHiSeq2500Barcode));
+            assertThat(template.getLanes().size(), is(2));
+            Set<String> allLanes = new HashSet<>();
+            for (SequencingTemplateLaneType lane : template.getLanes()) {
+                allLanes.add(lane.getLaneName());
+                assertThat(lane.getDerivedVesselLabel(), equalTo(denatureTube2500.getLabel()));
+                assertThat(lane.getLoadingVesselLabel(), equalTo(dilutionTube2500.getLabel()));
+                assertThat(lane.getLoadingConcentration(), is(BIG_DECIMAL_7_77));
+            }
+            assertThat(allLanes, hasItem("LANE1"));
+            assertThat(allLanes, hasItem("LANE2"));
+        }
+    }
+
+    // Tests getSequencingTemplate from a reagent kit with designation parameter override.
+    public void testDesignationReagentKit() {
+        for (boolean poolTest : new boolean[]{false, true}) {
+
+            FlowcellDesignation designation = new FlowcellDesignation(dilutionTube2500, workflowBatch,
+                    denatureTube2500.getLatestEvent(), FlowcellDesignation.IndexType.DUAL, poolTest,
+                    IlluminaFlowcell.FlowcellType.MiSeqFlowcell, 4, 100, BIG_DECIMAL_7_77, true,
+                    FlowcellDesignation.Status.IN_FCT, FlowcellDesignation.Priority.NORMAL);
+            flowcellDesignations.clear();
+            flowcellDesignations.add(designation);
+
+            template = factory.getSequencingTemplate(reagentKit, false);
+            assertThat(template.getBarcode(), Matchers.nullValue());
+            assertThat(template.getLanes().size(), is(1));
+            assertThat(template.getBarcode(), Matchers.nullValue());
+            if (poolTest) {
+                assertThat(template.getOnRigChemistry(), is("Default"));
+                assertThat(template.getOnRigWorkflow(), is("Resequencing"));
+                assertThat(template.getReadStructure(), is(POOL_TEST_CIGAR));
+            } else {
+                assertThat(template.getOnRigChemistry(), is(nullValue()));
+                assertThat(template.getOnRigWorkflow(), is(nullValue()));
+                assertThat(template.getReadStructure(), is(PRODUCTION_CIGAR));
+            }
+            assertThat(template.getLanes().get(0).getLaneName(), is("LANE1"));
+            assertThat(template.getLanes().get(0).getLoadingVesselLabel(), is(""));
+            assertThat(template.getLanes().get(0).getDerivedVesselLabel(), is(denatureTube2500.getLabel()));
+            assertThat(template.getLanes().get(0).getLoadingConcentration(), is(BIG_DECIMAL_7_77));
+            assertThat(template.getConcentration(), Matchers.nullValue());
+        }
+    }
+
 }

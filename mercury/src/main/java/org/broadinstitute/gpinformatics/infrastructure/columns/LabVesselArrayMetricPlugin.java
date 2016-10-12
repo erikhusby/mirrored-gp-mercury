@@ -145,9 +145,13 @@ public class LabVesselArrayMetricPlugin implements ListPlugin {
             row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.P95_RED.getResultHeader(),
                     value, value));
 
-            ArraysQcFingerprint arraysQcFingerprint = arraysQc.getArraysQcFingerprints().iterator().next();
-            value = String.valueOf(Math.abs(arraysQcFingerprint.getHaplotypesConfidentlyChecked() -
-                    arraysQcFingerprint.getHaplotypesConfidentlyMatchin()));
+            if (arraysQc.getArraysQcFingerprints().isEmpty()) {
+                value = null;
+            } else {
+                ArraysQcFingerprint arraysQcFingerprint = arraysQc.getArraysQcFingerprints().iterator().next();
+                value = String.valueOf(Math.abs(arraysQcFingerprint.getHaplotypesConfidentlyChecked() -
+                        arraysQcFingerprint.getHaplotypesConfidentlyMatchin()));
+            }
             row.addCell(new ConfigurableList.Cell(VALUE_COLUMN_TYPE.HAPLOTYPE_DIFF.getResultHeader(),
                     value, value));
 

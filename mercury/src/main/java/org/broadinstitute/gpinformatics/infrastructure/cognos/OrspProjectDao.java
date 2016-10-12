@@ -1,9 +1,16 @@
 package org.broadinstitute.gpinformatics.infrastructure.cognos;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Collections2;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.OrspProject;
+import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.OrspProjectConsent;
+import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.OrspProjectConsentKey_;
+import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.OrspProjectConsent_;
 import org.broadinstitute.gpinformatics.infrastructure.cognos.entity.OrspProject_;
+import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
 
+import javax.annotation.Nullable;
 import javax.ejb.Stateful;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
@@ -11,10 +18,14 @@ import javax.enterprise.context.RequestScoped;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
+import javax.persistence.criteria.CollectionJoin;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -49,7 +60,7 @@ public class OrspProjectDao {
         criteria.select(orspProject)
                 .where(cb.and(
                         cb.equal(orspProject.get(OrspProject_.projectKey), id),
-                        orspProject.get(OrspProject_.rawType).in(RegulatoryInfo.Type.getOrspServiceTypeIds())));
+                        restrictType(orspProject)));
         OrspProject project;
         try {
             project = entityManager.createQuery(criteria).getSingleResult();
@@ -69,13 +80,48 @@ public class OrspProjectDao {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<OrspProject> criteria = cb.createQuery(OrspProject.class);
         Root<OrspProject> orspProject = criteria.from(OrspProject.class);
-        criteria.select(orspProject)
-                .where(orspProject.get(OrspProject_.rawType).in(RegulatoryInfo.Type.getOrspServiceTypeIds()));
+        criteria.select(orspProject).where(restrictType(orspProject));
 
         try {
             return entityManager.createQuery(criteria).getResultList();
         } catch (NoResultException e) {
             return Collections.emptyList();
         }
+    }
+
+    /**
+     * Finds suggested ORSP Projects for the given samples. Suggestions are made based on the samples' collections which
+     * come from SampleData. It is recommended to pre-fetch the sample data in bulk before calling this method in order
+     * to avoid the data being fetched one sample at a time.
+     *
+     * @param samples    the samples to suggest ORSP Projects for
+     * @return the ORSP Projects that apply to one or more of the samples
+     */
+    public List<OrspProject> findBySamples(Collection<? extends AbstractSample> samples) {
+        Collection<String> sampleCollections = Collections2.transform(samples, new Function<AbstractSample, String>() {
+            @Override
+            public String apply(@Nullable AbstractSample input) {
+                return input.getSampleData().getCollectionId();
+            }
+        });
+
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        CriteriaQuery<OrspProject> criteria = cb.createQuery(OrspProject.class);
+        Root<OrspProject> orspProject = criteria.from(OrspProject.class);
+        CollectionJoin<OrspProject, OrspProjectConsent> consents = orspProject.join(OrspProject_.consents);
+        criteria.select(orspProject)
+                .where(cb.and(
+                        consents.get(OrspProjectConsent_.key).get(OrspProjectConsentKey_.sampleCollection)
+                                .in(new HashSet<>(sampleCollections)),
+                        restrictType(orspProject)));
+        try {
+            return entityManager.createQuery(criteria).getResultList();
+        } catch (NoResultException e) {
+            return Collections.emptyList();
+        }
+    }
+
+    private Predicate restrictType(Root<OrspProject> orspProject) {
+        return orspProject.get(OrspProject_.rawType).in(RegulatoryInfo.Type.getOrspServiceTypeIds());
     }
 }

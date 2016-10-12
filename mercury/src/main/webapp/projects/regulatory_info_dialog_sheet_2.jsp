@@ -1,13 +1,16 @@
+<%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.RegulatoryInfoActionBean" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
+<%@ taglib prefix="d-stripes" uri="http://stripes.sourceforge.net/stripes-dynattr.tld" %>
 <stripes:useActionBean var="actionBean"
-                       beanclass="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean"/>
+                       beanclass="org.broadinstitute.gpinformatics.athena.presentation.projects.RegulatoryInfoActionBean"/>
 
 <c:choose>
     <c:when test="${not empty actionBean.searchResults}">
         <p class="alert alert-block" style="font-weight: bold">Found existing regulatory information in Mercury.</p>
-        <stripes:form beanclass="${actionBean.class.name}">
-            <input type="hidden" name="addRegulatoryInfoToResearchProject"/>
-            <stripes:hidden name="researchProject" value="${actionBean.editResearchProject.jiraTicketKey}"/>
+        <stripes:form id="regulatoryInfoForm" beanclass="org.broadinstitute.gpinformatics.athena.presentation.projects.RegulatoryInfoActionBean">
+            <%-- Hidden action is needed because the form is being submitted via AJAX and form serialization doesn't include submit buttons. --%>
+            <input type="hidden" name="<%= RegulatoryInfoActionBean.ADD_REGULATORY_INFO_TO_RESEARCH_PROJECT_ACTION %>"/>
+            <stripes:hidden name="researchProjectKey" value="${actionBean.researchProject.jiraTicketKey}"/>
             <input type="hidden" id="regulatoryInfoId" name="regulatoryInfoId">
             <table id="addRegulatoryInfoDialogQueryResults" class="table simple">
                 <thead>
@@ -24,7 +27,7 @@
                             <td>${regulatoryInfo.identifier}</td>
                             <td>${regulatoryInfo.name}</td>
                             <td>${regulatoryInfo.type.name}</td>
-                            <td><stripes:submit name="${regulatoryInfo.regulatoryInfoId}" disabled="${actionBean.isRegulatoryInfoInResearchProject(regulatoryInfo)}" class="btn">Add</stripes:submit></td>
+                            <td><d-stripes:submit name="<%= RegulatoryInfoActionBean.ADD_REGULATORY_INFO_TO_RESEARCH_PROJECT_ACTION %>" regulatoryInfoId="${regulatoryInfo.regulatoryInfoId}" disabled="${actionBean.isRegulatoryInfoInResearchProject(regulatoryInfo)}" class="btn">Add</d-stripes:submit></td>
                         </tr>
                     </c:forEach>
                 </tbody>
@@ -33,8 +36,8 @@
     </c:when>
     <c:when test="${actionBean.orspSearchResult != null}">
         <p class="alert alert-block" style="font-weight: bold">Found existing regulatory information in ORSP Portal.</p>
-        <stripes:form beanclass="${actionBean.class.name}">
-            <stripes:hidden name="researchProject" value="${actionBean.editResearchProject.jiraTicketKey}"/>
+        <stripes:form id="regulatoryInfoForm" beanclass="${actionBean.class.name}">
+            <stripes:hidden name="researchProjectKey" value="${actionBean.researchProject.jiraTicketKey}"/>
             <input type="hidden" id="regulatoryInfoId" name="regulatoryInfoId">
             <table class="table simple">
                 <thead>
@@ -57,7 +60,7 @@
                         </td>
                         <td>
                             ${actionBean.orspSearchResult.type.name}
-                            <input type="hidden" name="regulatoryInfoType" value="${actionBean.orspSearchResult.type}"
+                            <input type="hidden" name="regulatoryInfoType" value="${actionBean.orspSearchResult.type}">
                         </td>
                         <td>${actionBean.orspSearchResult.status}</td>
                     </tr>
@@ -71,7 +74,9 @@
                     </c:if>
                 </tbody>
             </table>
-            <stripes:submit name="addNewRegulatoryInfo" value="Add to Mercury" class="btn btn-primary"/>
+            <stripes:submit name="<%= RegulatoryInfoActionBean.ADD_NEW_REGULATORY_INFO_ACTION %>" value="Add to Mercury" class="btn btn-primary"/>
+            <%-- Hidden action is needed because the form is being submitted via AJAX and form serialization doesn't include submit buttons. --%>
+            <input type="hidden" name="<%= RegulatoryInfoActionBean.ADD_NEW_REGULATORY_INFO_ACTION %>">
         </stripes:form>
     </c:when>
     <c:otherwise>
@@ -85,15 +90,25 @@
 
 <script type="text/javascript">
     (function() {
-        // Catch clicks on the table, check that it's an "Add" button, and take the button's "name" as the ID to use.
-        var table = $j('#addRegulatoryInfoDialogQueryResults tbody');
-        table.click(function (event) {
+        // Catch clicks on the form, check that it's an "Add" button, and take the button's "name" as the ID to use.
+        $j('#regulatoryInfoForm').click(function (event) {
             var target = event.target;
-            if (target.nodeName == "INPUT" &&
-                    target.type == "submit" &&
-                    target.value == "Add") {
-                $j('#regulatoryInfoId').val(target.name);
+            if (target.nodeName == 'INPUT' &&
+                    target.type == 'submit' &&
+                    target.name == '<%= RegulatoryInfoActionBean.ADD_REGULATORY_INFO_TO_RESEARCH_PROJECT_ACTION %>') {
+                $j('#regulatoryInfoId').val($j(target).attr('regulatoryInfoId'));
             }
+        });
+
+        $j('#regulatoryInfoForm').submit(function (event) {
+            event.preventDefault();
+            $j.ajax({
+                url: $j(this).attr('action'),
+                method: $j(this).attr('method'),
+                data: $j(this).serialize(),
+                success: successfulAddCallback,
+                error: handleRegInfoAjaxError
+            })
         });
     })();
 </script>

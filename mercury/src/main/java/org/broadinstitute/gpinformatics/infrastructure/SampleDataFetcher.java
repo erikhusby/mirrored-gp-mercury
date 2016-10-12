@@ -222,7 +222,10 @@ public class SampleDataFetcher implements Serializable {
                     }
                 } else {
                     productOrderSample = OrmUtil.proxySafeCast(sample, ProductOrderSample.class);
-                    product = productOrderSample.getProductOrder().getProduct();
+                    // Allow loading sample data for transient instances (while editing a PDO).
+                    if (productOrderSample.getProductOrder() != null) {
+                        product = productOrderSample.getProductOrder().getProduct();
+                    }
                     mercurySample = productOrderSample.getMercurySample();
                     sampleName = productOrderSample.getName();
                 }
