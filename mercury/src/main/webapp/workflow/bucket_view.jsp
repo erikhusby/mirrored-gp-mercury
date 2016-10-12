@@ -294,7 +294,7 @@
                             };
                         },
 //                        If you need to debug the generated html you need to ignore onblur events
-                        "onblur" : "ignore",
+//                        "onblur" : "ignore",
                         cssclass: "editable",
                         tooltip: 'Click the value in this field to edit',
                         type: "select",
@@ -363,9 +363,11 @@
                     console.log("stateLoaded");
                 },
                 "stateLoadCallback": function (settings) {
-                    console.log("stateLoad");
-                    var serverData = '${actionBean.tableState}' === '' ? '' :${actionBean.tableState};
-                    return serverData;
+                        console.log("stateLoad");
+                        var serverData = '${actionBean.tableState}' === '' ? '' : '${actionBean.tableState}';
+                        if (serverData) {
+                            return JSON.parse(serverData);
+                        }
                 },
 
                 "columns": [
@@ -376,7 +378,7 @@
                     {"bSortable":true},
                     {"bSortable":true},
                     {"bSortable":true},
-                    {"bSortable":true},
+                    {"bSortable": true},
                     {"bSortable":true},
                     {"bSortable":true},
                     {"bSortable":true, "sType":"date"},
@@ -735,7 +737,6 @@
             </tbody>
         </table>
     </stripes:form>
-
 </stripes:layout-component>
 </stripes:layout-render>
 
