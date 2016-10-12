@@ -319,7 +319,7 @@
                 saveState: true,
                 paging: true,
                 info:true,
-                searchDelay: 10000,
+                searchDelay: 500,
                 displayLength: 100,
                 deferRender: true,
                 select: {
@@ -328,15 +328,15 @@
                 },
                 "aaSorting": [[1,'asc'], [7,'asc']],
                 stateSaveCallback: function (settings, data) {
-                    console.log("stateSave");
-                    var api = new $j.fn.dataTable.Api(settings);
-                    for (var index = 0; index < data.columns.length; index++) {
-                        var item = data.columns[index];
-                        var header = $j(api.data().column(index).header());
-                        if (header) {
-                            item.headerName = header.text().trim();
+
+                        var api = new $j.fn.dataTable.Api(settings);
+                        for (var index = 0; index < data.columns.length; index++) {
+                            var item = data.columns[index];
+                            var header = $j(api.data().column(index).header());
+                            if (header) {
+                                item.headerName = header.text().trim();
+                            }
                         }
-                    }
 
                     if (bucketName !== '') {
                         var stateData = {
@@ -357,17 +357,11 @@
 //                        return serverData;
                     }
                 },
-                "stateLoaded": function (settings, data) {
-                    var dataTable = new $j.fn.dataTable.Api(settings);
-                    dataTable.draw();
-                    console.log("stateLoaded");
-                },
                 "stateLoadCallback": function (settings) {
-                        console.log("stateLoad");
-                        var serverData = '${actionBean.tableState}' === '' ? '' : '${actionBean.tableState}';
-                        if (serverData) {
-                            return JSON.parse(serverData);
-                        }
+                    var serverData = '${actionBean.tableState}' === '' ? '' : '${actionBean.tableState}';
+                    if (serverData) {
+                        return JSON.parse(serverData);
+                    }
                 },
 
                 "columns": [
