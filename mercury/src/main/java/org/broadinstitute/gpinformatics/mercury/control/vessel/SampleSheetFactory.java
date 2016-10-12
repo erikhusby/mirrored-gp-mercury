@@ -1,9 +1,10 @@
 package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
-import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.SampleData;
@@ -37,11 +38,16 @@ public class SampleSheetFactory {
         add(LabEventType.INFINIUM_HYBRIDIZATION);
     }};
 
+    private static final FastDateFormat DATE_FORMAT = FastDateFormat.getInstance("MM/dd/yyyy");
+
     @Inject
     private SampleDataFetcher sampleDataFetcher;
 
     @Inject
     private BSPUserList bspUserList;
+
+    @Inject
+    private ProductEjb productEjb;
 
     public List<Pair<LabVessel, VesselPosition>> loadByPdo(ProductOrder productOrder) {
         List<Pair<LabVessel, VesselPosition>> vesselPositionPairs = new ArrayList<>();
@@ -66,7 +72,28 @@ public class SampleSheetFactory {
     }
 
     public void write(PrintStream printStream, List<Pair<LabVessel, VesselPosition>> vesselPositionPairs,
-            ResearchProject researchProject, MessageCollection messageCollection) {
+            ResearchProject researchProject) {
+        // Get samples
+        ArrayList<String> sampleNames = new ArrayList<>();
+        Map<Pair<LabVessel, VesselPosition>, SampleInstanceV2> mapPairToSampleInstance = new HashMap<>();
+        boolean errors = false;
+        for (Pair<LabVessel, VesselPosition> vesselPositionPair : vesselPositionPairs) {
+            Set<SampleInstanceV2> sampleInstances = vesselPositionPair.getLeft().getContainerRole().
+                    getSampleInstancesAtPositionV2(vesselPositionPair.getRight());
+            if (sampleInstances.size() == 1) {
+                SampleInstanceV2 sampleInstance = sampleInstances.iterator().next();
+                sampleNames.add(sampleInstance.getNearestMercurySampleName());
+                mapPairToSampleInstance.put(vesselPositionPair, sampleInstance);
+            } else {
+                printStream.println("Expecting 1 sample at " + vesselPositionPair.getLeft().getLabel() + "_" +
+                        vesselPositionPair.getRight() + ", found " + sampleInstances.size());
+                errors = true;
+            }
+        }
+        if (errors) {
+            return;
+        }
+
         // Write header
         printStream.println("[Header]");
 
@@ -84,8 +111,7 @@ public class SampleSheetFactory {
         printStream.println("Experiment Name");
 
         printStream.print("Date,");
-        // todo jmt format
-        printStream.println(researchProject.getCreatedDate());
+        printStream.println(DATE_FORMAT.format(researchProject.getCreatedDate()));
 
         // Write manifests
         printStream.println();
@@ -97,29 +123,16 @@ public class SampleSheetFactory {
         printStream.println();
         printStream.println("[Manifests]");
         printStream.print("A,");
-        // todo jmt chip type
-        printStream.println();
+        LabVessel labVessel1 = vesselPositionPairs.get(0).getLeft();
+        String chipType = productEjb.getGenotypingChip(researchProject.getProductOrders().get(0),
+                labVessel1.getEvents().iterator().next().getEventDate()).getRight();
+        printStream.println(chipType);
 
         // Write data columns
         printStream.println("[Data]");
         printStream.println("Sample_ID,SentrixBarcode_A,SentrixPosition_A,Sample_Plate,Sample_Well,Sample_Group," +
                 "Gender,Sample_Name,Replicate,Parent1,Parent2,CallRate");
 
-        // Get samples
-        ArrayList<String> sampleNames = new ArrayList<>();
-        Map<Pair<LabVessel, VesselPosition>, SampleInstanceV2> mapPairToSampleInstance = new HashMap<>();
-        for (Pair<LabVessel, VesselPosition> vesselPositionPair : vesselPositionPairs) {
-            Set<SampleInstanceV2> sampleInstances = vesselPositionPair.getLeft().getContainerRole().
-                    getSampleInstancesAtPositionV2(vesselPositionPair.getRight());
-            if (sampleInstances.size() == 1) {
-                SampleInstanceV2 sampleInstance = sampleInstances.iterator().next();
-                sampleNames.add(sampleInstance.getNearestMercurySampleName());
-                mapPairToSampleInstance.put(vesselPositionPair, sampleInstance);
-            } else {
-                messageCollection.addError("Expecting 1 sample at " + vesselPositionPair.getLeft().getLabel() + "_" +
-                vesselPositionPair.getRight() + ", found " + sampleInstances.size());
-            }
-        }
         Map<String, SampleData> mapSampleNameToData = sampleDataFetcher.fetchSampleData(sampleNames);
 
         // Write a row per chip well

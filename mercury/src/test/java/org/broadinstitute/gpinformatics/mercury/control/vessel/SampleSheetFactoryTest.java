@@ -58,7 +58,7 @@ public class SampleSheetFactoryTest extends Arquillian {
 //            vesselPositionPairs.add(new ImmutablePair<LabVessel, VesselPosition>(chip, vesselPosition));
 //        }
         sampleSheetFactory.write(new PrintStream(byteArrayOutputStream), vesselPositionPairs,
-                productOrder.getResearchProject(), messageCollection);
+                productOrder.getResearchProject());
         System.out.println(byteArrayOutputStream.toString());
         // todo jmt asserts
 //        Controller.stopProbeRecording(Controller.PROBE_NAME_JDBC);
