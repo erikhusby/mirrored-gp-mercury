@@ -572,6 +572,23 @@
                                         class="defaultText" title="Enter size of insert"/>
                             </div>
                         </div>
+
+                        <div class="control-group">
+                            <stripes:label for="loadingConcentration" name="LoadingConcentration" class="control-label"/>
+                            <div class="controls">
+                                <stripes:text id="loadingConcentration" name="editProduct.loadingConcentration"
+                                        class="defaultText" title="Sets the default loading concentration."/>
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <stripes:label for="pairedEndRead" class="control-label">
+                                Paired End Read
+                            </stripes:label>
+                            <div class="controls">
+                                <stripes:checkbox id="pairedEndRead" name="editProduct.pairedEndRead" style="margin-top: 10px;"/>
+                            </div>
+                        </div>
                     </fieldset>
                 </div>
             </div>
