@@ -32,7 +32,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.jvnet.inflector.Noun;
 
 import javax.annotation.Nonnull;
-import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -70,7 +69,6 @@ public class ExtractionJiraFieldFactory extends AbstractBatchJiraFieldFactory {
      * @param batch               instance of the Lab Batch entity for which a new LCSetT Ticket is to be created
      * @param productOrderDao
      */
-    @Inject
     public ExtractionJiraFieldFactory(@Nonnull LabBatch batch, @Nonnull ProductOrderDao productOrderDao, WorkflowConfig workflowConfig) {
         super(batch, CreateFields.ProjectType.EXTRACTION_PROJECT, workflowConfig);
 
