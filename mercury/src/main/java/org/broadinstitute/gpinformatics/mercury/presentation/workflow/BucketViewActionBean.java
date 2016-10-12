@@ -486,8 +486,6 @@ public class BucketViewActionBean extends CoreActionBean {
                 String.valueOf(projectType == CreateFields.ProjectType.fromIssueKey(jiraTicketId)));
     }
 
-
-
     public CreateFields.ProjectType getProjectType() {
         return projectType;
     }
